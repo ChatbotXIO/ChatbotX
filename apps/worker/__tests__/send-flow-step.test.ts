@@ -442,7 +442,14 @@ describe("sendFlowStep", () => {
 
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.objectContaining({
-        quickReplies,
+        quickReplies: [
+          expect.objectContaining({
+            id: "qr-1",
+            label: "Yes",
+            buttonType: "postback",
+            postback: expect.stringContaining("flow-1"),
+          }),
+        ],
       }),
     )
     expect(mockRepositoryCreate).toHaveBeenCalledWith(

@@ -232,7 +232,10 @@ export async function* convertFlowStepToInstagramMessage(
       ))
       break
     case stepTypes.enum.sendGif:
-      yield* convertFlowStepGif(step.url) as Generator<InstagramSendMessage>
+      yield* convertFlowStepGif(
+        step.url,
+        props.data.quickReplies ?? [],
+      ) as Generator<InstagramSendMessage>
       break
     case stepTypes.enum.sendQuickReply:
       yield* convertFlowStepQuickReply(

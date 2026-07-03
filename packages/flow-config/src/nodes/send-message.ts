@@ -27,48 +27,32 @@ import {
   nodeTypeSchema,
 } from "./base"
 
-export const QUICK_REPLIES_REQUIRE_TEXT_CARRIER_MESSAGE =
-  "flows.quickReplies.requiresTextCarrier"
-
 export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(nodeTypeSchema.enum.sendMessage),
   data: baseNodeDataSchema.extend({
-    details: z
-      .object({
-        beforeStep: chooseChannelStepSchema,
-        steps: z.array(
-          z.discriminatedUnion("stepType", [
-            sendAudioStepSchema,
-            sendFileStepSchema,
-            sendImageStepSchema,
-            sendTextStepSchema,
-            sendVideoStepSchema,
-            // sendCardStepSchema,
-            sendCarouselStepSchema,
-            getUserDataStepSchema,
-            sendGifStepSchema,
-            typingStepSchema,
-            sendWaTemplateMessageStepSchema,
-            sendMessengerTemplateMessageStepSchema,
-            whatsappOptionListStepSchema,
-            whatsappFlowStepSchema,
-            ...actionSteps,
-          ]),
-        ),
-        quickReplies: z.array(buttonStepSchema).max(MAX_QUICK_REPLIES),
-      })
-      .superRefine((details, ctx) => {
-        if (
-          details.quickReplies.length > 0 &&
-          !details.steps.some((step) => step.stepType === "sendText")
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["quickReplies"],
-            message: QUICK_REPLIES_REQUIRE_TEXT_CARRIER_MESSAGE,
-          })
-        }
-      }),
+    details: z.object({
+      beforeStep: chooseChannelStepSchema,
+      steps: z.array(
+        z.discriminatedUnion("stepType", [
+          sendAudioStepSchema,
+          sendFileStepSchema,
+          sendImageStepSchema,
+          sendTextStepSchema,
+          sendVideoStepSchema,
+          // sendCardStepSchema,
+          sendCarouselStepSchema,
+          getUserDataStepSchema,
+          sendGifStepSchema,
+          typingStepSchema,
+          sendWaTemplateMessageStepSchema,
+          sendMessengerTemplateMessageStepSchema,
+          whatsappOptionListStepSchema,
+          whatsappFlowStepSchema,
+          ...actionSteps,
+        ]),
+      ),
+      quickReplies: z.array(buttonStepSchema).max(MAX_QUICK_REPLIES),
+    }),
   }),
 })
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>

@@ -13,7 +13,11 @@ import type {
   TelegramSendPhotoRequest,
   TelegramSendVideoRequest,
 } from "../../../schema"
-import { buildInlineKeyboard } from "./send-button"
+import {
+  buildCanonicalInlineButton,
+  buildInlineButton,
+  buildInlineKeyboardFromButtons,
+} from "./send-button"
 
 export function* convertFlowStepImage(
   props: Parameters<
@@ -28,18 +32,20 @@ export function* convertFlowStepImage(
   if (!chatId) {
     return
   }
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  const buttons = [
+    ...step.buttons.map((button) => buildInlineButton({ flowId, button })),
+    ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
+  ]
 
   if (buttons.length === 0) {
     yield { chat_id: chatId, photo: step.url }
     return
   }
 
-  const keyboard = buildInlineKeyboard({
-    flowId,
+  const keyboard = buildInlineKeyboardFromButtons(
     buttons,
-    buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
-  })
+    MAX_INLINE_BUTTONS_PER_ROW,
+  )
 
   yield {
     chat_id: chatId,
@@ -61,15 +67,14 @@ export function* convertFlowStepVideo(
   if (!chatId) {
     return
   }
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  const buttons = [
+    ...step.buttons.map((button) => buildInlineButton({ flowId, button })),
+    ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
+  ]
 
   const keyboard =
     buttons.length > 0
-      ? buildInlineKeyboard({
-          flowId,
-          buttons,
-          buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
-        })
+      ? buildInlineKeyboardFromButtons(buttons, MAX_INLINE_BUTTONS_PER_ROW)
       : undefined
 
   yield {
@@ -92,18 +97,20 @@ export function* convertFlowStepAudio(
   if (!chatId) {
     return
   }
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  const buttons = [
+    ...step.buttons.map((button) => buildInlineButton({ flowId, button })),
+    ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
+  ]
 
   if (buttons.length === 0) {
     yield { chat_id: chatId, audio: step.url }
     return
   }
 
-  const keyboard = buildInlineKeyboard({
-    flowId,
+  const keyboard = buildInlineKeyboardFromButtons(
     buttons,
-    buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
-  })
+    MAX_INLINE_BUTTONS_PER_ROW,
+  )
 
   yield {
     chat_id: chatId,
@@ -125,18 +132,20 @@ export function* convertFlowStepFile(
   if (!chatId) {
     return
   }
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  const buttons = [
+    ...step.buttons.map((button) => buildInlineButton({ flowId, button })),
+    ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
+  ]
 
   if (buttons.length === 0) {
     yield { chat_id: chatId, document: step.url }
     return
   }
 
-  const keyboard = buildInlineKeyboard({
-    flowId,
+  const keyboard = buildInlineKeyboardFromButtons(
     buttons,
-    buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
-  })
+    MAX_INLINE_BUTTONS_PER_ROW,
+  )
 
   yield {
     chat_id: chatId,

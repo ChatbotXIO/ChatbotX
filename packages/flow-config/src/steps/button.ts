@@ -17,10 +17,12 @@ export const buttonTypes = z.enum([
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
+export const BUTTON_LABEL_MAX = 20
+
 export const buttonStepSchema = z
   .object({
     id: zodBigintAsString(),
-    label: z.string().min(1).max(20),
+    label: z.string().min(1).max(BUTTON_LABEL_MAX),
   })
   .and(
     z.discriminatedUnion("buttonType", [

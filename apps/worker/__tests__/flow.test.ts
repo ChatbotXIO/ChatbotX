@@ -616,30 +616,51 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
     expect(nextJob.data.startFromStepId).toBe("step-2")
   })
 
-  test("warns and skips quick replies when the active channel has no carrier", async () => {
-    const { logger } = await import("../src/lib/logger")
+  test("attaches quick replies to an image carrier for whatsapp", async () => {
     const quickReplies = [makeQuickReply()]
-    const stepWithButtons = {
-      ...makeStep("sendText"),
+    const imageStep = {
+      ...makeStep("sendImage"),
       id: "step-1",
-      text: "Choose",
-      buttons: [
-        {
-          id: "btn-1",
-          label: "Existing",
-          buttonType: null,
-          beforeStep: null,
-          steps: [],
-        },
-      ],
+      url: "https://example.com/image.png",
+      buttons: [],
     }
     const props = {
       ...makeBaseProps(),
       contactInbox: {
         ...makeContactInbox(),
-        channel: "messenger",
+        channel: "whatsapp",
       },
-      details: { steps: [stepWithButtons], quickReplies },
+      details: { steps: [imageStep], quickReplies },
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { step: { id: string }; quickReplies?: ButtonStepProps[] } },
+    ]
+    expect(job.data.step.id).toBe("step-1")
+    expect(job.data.quickReplies).toEqual(quickReplies)
+  })
+
+  test("warns and skips quick replies when the active channel has no carrier", async () => {
+    const { logger } = await import("../src/lib/logger")
+    const quickReplies = [makeQuickReply()]
+    const imageOnlyStep = {
+      ...makeStep("sendImage"),
+      id: "step-1",
+      url: "https://example.com/image.png",
+      buttons: [],
+    }
+    const props = {
+      ...makeBaseProps(),
+      contactInbox: {
+        ...makeContactInbox(),
+        channel: "tiktok",
+      },
+      details: { steps: [imageOnlyStep], quickReplies },
       triggerNextNode: false,
     }
 
@@ -653,7 +674,7 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
     expect(job.data.quickReplies).toBeUndefined()
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
-        channel: "messenger",
+        channel: "tiktok",
         flowId: "flow-1",
         targetNodeId: "node-1",
       }),

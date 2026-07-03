@@ -1,7 +1,12 @@
 import type { SendTextStepSchema } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import type { TiktokAuthValue, TiktokSendMessageRequest } from "../../../schema"
-import { buildTiktokTemplates } from "./send-button"
+import {
+  buildTiktokTemplates,
+  buildTiktokTemplatesFromGroups,
+  getButtonTemplateGroup,
+  getCanonicalButtonTemplateGroup,
+} from "./send-button"
 
 export function* convertFlowStepText(
   businessId: string,
@@ -10,9 +15,9 @@ export function* convertFlowStepText(
   const {
     data: { step, contact, flowId, flowVersionId, metadata },
   } = props
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  const quickReplies = props.data.quickReplies ?? []
 
-  if (buttons.length === 0) {
+  if (step.buttons.length === 0 && quickReplies.length === 0) {
     yield {
       business_id: businessId,
       recipient_type: "CONVERSATION",
@@ -23,14 +28,33 @@ export function* convertFlowStepText(
     return
   }
 
-  for (const template of buildTiktokTemplates({
-    title: step.text,
-    flowId,
-    flowVersionId,
-    buttons,
-    metadata,
-    contactInboxId: contact.id,
-  })) {
+  const templates =
+    quickReplies.length === 0
+      ? buildTiktokTemplates({
+          title: step.text,
+          flowId,
+          flowVersionId,
+          buttons: step.buttons,
+          metadata,
+          contactInboxId: contact.id,
+        })
+      : buildTiktokTemplatesFromGroups({
+          title: step.text,
+          groups: [
+            ...step.buttons.map((button) =>
+              getButtonTemplateGroup({
+                flowId,
+                flowVersionId,
+                button,
+                metadata,
+                contactInboxId: contact.id,
+              }),
+            ),
+            ...quickReplies.map(getCanonicalButtonTemplateGroup),
+          ],
+        })
+
+  for (const template of templates) {
     yield {
       business_id: businessId,
       recipient_type: "CONVERSATION",

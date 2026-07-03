@@ -5,7 +5,11 @@ import type {
   TelegramAuthValue,
   TelegramSendMessageRequest,
 } from "../../../schema"
-import { buildInlineKeyboard } from "./send-button"
+import {
+  buildCanonicalInlineButton,
+  buildInlineButton,
+  buildInlineKeyboardFromButtons,
+} from "./send-button"
 
 export function* convertFlowStepText(
   props: Parameters<
@@ -15,18 +19,22 @@ export function* convertFlowStepText(
   const {
     data: { step, contact },
   } = props
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  const buttons = [
+    ...step.buttons.map((button) =>
+      buildInlineButton({ flowId: props.data.flowId, button }),
+    ),
+    ...(props.data.quickReplies ?? []).map(buildCanonicalInlineButton),
+  ]
 
   if (buttons.length === 0) {
     yield { chat_id: contact.sourceId, text: step.text }
     return
   }
 
-  const keyboard = buildInlineKeyboard({
-    flowId: props.data.flowId,
+  const keyboard = buildInlineKeyboardFromButtons(
     buttons,
-    buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
-  })
+    MAX_INLINE_BUTTONS_PER_ROW,
+  )
 
   yield {
     chat_id: contact.sourceId,

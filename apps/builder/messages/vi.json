@@ -1522,7 +1522,10 @@
   "flows": {
     "title": "Luồng",
     "quickReplies": {
-      "requiresTextCarrier": "Trả lời nhanh cần có một tin nhắn văn bản trong node này."
+      "limitReached": "Đã đạt giới hạn trả lời nhanh ({max})."
+    },
+    "buttons": {
+      "limitReached": "Đã đạt giới hạn nút ({max})."
     },
     "aiGenerateText": {
       "label": "{name}: Tạo văn bản"

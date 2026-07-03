@@ -8,6 +8,7 @@ import { logger } from "../../../lib/logger"
 import type { MessengerAuthValue } from "../../../schema"
 import { convertMediaType } from "./send-attachment"
 import { convertFacebookButtons } from "./send-button"
+import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
 
 export async function* convertFlowStepMedia(
   props: SendFlowStepProps<
@@ -22,6 +23,7 @@ export async function* convertFlowStepMedia(
   try {
     const media_type = convertMediaType(step.stepType)
     const attachment = await uploadAttachment(ctx.auth, step.url, media_type)
+    const quickReplies = props.data.quickReplies ?? []
     const buttons = convertFacebookButtons({
       flowId,
       flowVersionId,
@@ -42,6 +44,9 @@ export async function* convertFlowStepMedia(
           ],
         },
       },
+      ...(quickReplies.length > 0
+        ? { quick_replies: convertCanonicalFacebookQuickReplies(quickReplies) }
+        : {}),
     }
   } catch (error) {
     logger.error(error, "Error uploading media")

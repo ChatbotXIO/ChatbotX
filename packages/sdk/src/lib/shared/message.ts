@@ -114,12 +114,24 @@ export type MessageButtonTemplate = {
   | {
       buttonType: "url"
       url: string
+      /** Encoded flow payload for channels that cannot render URL quick replies. */
+      postback?: string
     }
   | {
       buttonType: "postback"
       postback: string
     }
 )
+
+export function getCanonicalReplyPayload(
+  button: MessageButtonTemplate,
+): string {
+  if (button.buttonType === "postback") {
+    return button.postback
+  }
+
+  return button.postback ?? button.url
+}
 
 export type MessageCardTemplate = {
   id: string

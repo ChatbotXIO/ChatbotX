@@ -11,6 +11,8 @@ import { useFieldArray, useFormContext } from "react-hook-form"
 import type { ButtonEditorConfig } from "../../stores/step-store"
 import { useStepStore } from "../../stores/step-store-provider"
 
+const MAX_BUTTON_GROUP_BUTTONS = 3
+
 type ButtonStepEditorProps = {
   parentName: string
   editorConfig?: ButtonEditorConfig
@@ -89,7 +91,7 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
 
       <Button
         className="my-1.5 w-full"
-        disabled={fields.length >= 3}
+        disabled={fields.length >= MAX_BUTTON_GROUP_BUTTONS}
         onClick={addButton}
         type="button"
         variant="secondary"
@@ -97,6 +99,11 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
         <PlusIcon />
         {t("actions.add")}
       </Button>
+      {fields.length >= MAX_BUTTON_GROUP_BUTTONS ? (
+        <p className="text-muted-foreground text-sm">
+          {t("flows.buttons.limitReached", { max: MAX_BUTTON_GROUP_BUTTONS })}
+        </p>
+      ) : null}
     </>
   )
 }

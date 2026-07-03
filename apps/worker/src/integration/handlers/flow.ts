@@ -18,6 +18,7 @@ import {
   type FlowNode,
   flowEventTypeSchema,
   getNodeFromButton,
+  isQuickReplyCarrierStep,
   type MetadataPayload,
   type StepType,
   stepTypes,
@@ -55,39 +56,6 @@ const ROUTING_STATUSES = new Set<StepRoutingStatus>([
   "error",
   "skip",
 ])
-
-const hasButtons = (step: BaseStepSchema) =>
-  "buttons" in step &&
-  Array.isArray((step as BaseStepSchema & { buttons?: unknown }).buttons) &&
-  ((step as BaseStepSchema & { buttons: unknown[] }).buttons?.length ?? 0) > 0
-
-export function isQuickReplyCarrierStep(
-  channel: string | null | undefined,
-  step: BaseStepSchema,
-) {
-  switch (channel) {
-    case "messenger":
-    case "instagram":
-      return step.stepType === stepTypes.enum.sendText && !hasButtons(step)
-    case "telegram":
-      return (
-        step.stepType === stepTypes.enum.sendText ||
-        step.stepType === stepTypes.enum.sendImage ||
-        step.stepType === stepTypes.enum.sendVideo ||
-        step.stepType === stepTypes.enum.sendAudio ||
-        step.stepType === stepTypes.enum.sendFile ||
-        step.stepType === stepTypes.enum.sendGif
-      )
-    case "whatsapp":
-    case "zalo":
-      return (
-        step.stepType === stepTypes.enum.sendText ||
-        step.stepType === stepTypes.enum.sendImage
-      )
-    default:
-      return step.stepType === stepTypes.enum.sendText
-  }
-}
 
 function findQuickReplyCarrierStep(props: {
   channel: string | null | undefined

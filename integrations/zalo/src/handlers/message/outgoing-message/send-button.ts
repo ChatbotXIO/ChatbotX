@@ -6,6 +6,7 @@ import {
   extractMetadata,
   type MetadataPayload,
 } from "@chatbotx.io/flow-config"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../../../constants"
 import type { ButtonPayload } from "../../../schema/webhook"
@@ -64,5 +65,23 @@ export function convertZaloButtons(props: {
         contactInboxId: props.contactInboxId,
       }),
     )
+  }
+}
+
+export function getCanonicalButtonTemplate(
+  button: MessageButtonTemplate,
+): ButtonPayload {
+  if (button.buttonType === "url") {
+    return {
+      type: "oa.open.url",
+      title: button.label,
+      payload: { url: button.url },
+    }
+  }
+
+  return {
+    type: "oa.query.hide",
+    title: button.label,
+    payload: `postback_${button.postback}`,
   }
 }

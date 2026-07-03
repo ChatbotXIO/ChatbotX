@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  BUTTON_LABEL_MAX,
   type ButtonStepInput,
   type ButtonStepProps,
   type ButtonType,
@@ -457,14 +458,14 @@ export function ButtonEditorDialog() {
           <form
             className="flex w-full flex-col gap-4"
             onSubmit={(e) => {
-              e.preventDefault()
               e.stopPropagation()
-              onSave()
+              return form.handleSubmit(onSave)(e)
             }}
           >
             <InputField
               disabled={!!buttonEditorConfig?.lockLabel}
               label={t("fields.name.label")}
+              maxLength={BUTTON_LABEL_MAX}
               name="label"
               required
             />
@@ -510,7 +511,11 @@ export function ButtonEditorDialog() {
               {t("actions.cancel")}
             </Button>
           </DialogClose>
-          <Button disabled={!form.formState.isValid} onClick={onSave} size="sm">
+          <Button
+            disabled={!form.formState.isValid}
+            onClick={form.handleSubmit(onSave)}
+            size="sm"
+          >
             {t("actions.confirm")}
           </Button>
         </DialogFooter>

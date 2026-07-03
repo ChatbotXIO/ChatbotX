@@ -1513,7 +1513,10 @@
   "flows": {
     "title": "Flows",
     "quickReplies": {
-      "requiresTextCarrier": "Quick replies require a text message in this node."
+      "limitReached": "Quick reply limit reached ({max})."
+    },
+    "buttons": {
+      "limitReached": "Button limit reached ({max})."
     },
     "aiGenerateText": {
       "label": "{name}: Generate Text"

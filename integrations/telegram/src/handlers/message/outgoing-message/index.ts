@@ -30,7 +30,10 @@ import {
   convertFlowStepImage,
   convertFlowStepVideo,
 } from "./send-attachment"
-import { buildInlineKeyboard } from "./send-button"
+import {
+  buildCanonicalInlineButton,
+  buildInlineKeyboardFromButtons,
+} from "./send-button"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
@@ -195,11 +198,10 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
               document: step.url as string,
               reply_markup:
                 props.data.quickReplies && props.data.quickReplies.length > 0
-                  ? buildInlineKeyboard({
-                      flowId: props.data.flowId,
-                      buttons: props.data.quickReplies,
-                      buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
-                    })
+                  ? buildInlineKeyboardFromButtons(
+                      props.data.quickReplies.map(buildCanonicalInlineButton),
+                      MAX_INLINE_BUTTONS_PER_ROW,
+                    )
                   : undefined,
             })
             messageIds.push(String(messageId))

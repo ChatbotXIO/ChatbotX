@@ -8,7 +8,6 @@ import type {
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import {
-  type ButtonStepProps,
   type MetadataPayload,
   messageEventTypeSchema,
   stepTypes,
@@ -16,6 +15,7 @@ import {
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   ChannelError,
+  type MessageButtonTemplate,
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
@@ -338,7 +338,7 @@ export async function sendFlowStepToChannel({
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
-  quickReplies?: ButtonStepProps[]
+  quickReplies?: MessageButtonTemplate[]
   metadata?: MetadataPayload
   richResponse?: ChatJobSendFlowStep["data"]["richResponse"]
   messageId?: string

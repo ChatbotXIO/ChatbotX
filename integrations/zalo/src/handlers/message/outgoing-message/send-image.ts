@@ -8,8 +8,8 @@ import { uploadAttachment } from "../../../api/message"
 import { MAX_BUTTONS } from "../../../constants"
 import { logger } from "../../../lib/logger"
 import type { ZaloAuthValue } from "../../../schema/definition"
-import type { MessageTemplate } from "../../../schema/webhook"
-import { convertZaloButtons } from "./send-button"
+import type { ButtonPayload, MessageTemplate } from "../../../schema/webhook"
+import { convertZaloButtons, getCanonicalButtonTemplate } from "./send-button"
 
 export async function* convertFlowStepImage(
   props: SendFlowStepProps<
@@ -34,23 +34,32 @@ export async function* convertFlowStepImage(
       throw new Error("Failed to upload image: No attachment ID received")
     }
 
-    const buttonsToSend =
-      step.stepType === stepTypes.enum.sendImage
-        ? [...step.buttons, ...(props.data.quickReplies ?? [])]
-        : []
-    if (buttonsToSend.length > MAX_BUTTONS) {
-      throw new Error(`Zalo template buttons support at most ${MAX_BUTTONS}`)
+    const canonicalButtons = (props.data.quickReplies ?? []).map(
+      getCanonicalButtonTemplate,
+    )
+    let rawButtons: ButtonPayload[] = []
+
+    if (step.stepType === stepTypes.enum.sendImage) {
+      rawButtons =
+        convertZaloButtons({
+          flowId: props.data.flowId,
+          flowVersionId: props.data.flowVersionId,
+          buttons: step.buttons,
+          metadata: props.data.metadata,
+          contactInboxId: props.data.contact.id,
+        }) ?? []
     }
-    const buttons =
-      buttonsToSend.length > 0
-        ? await convertZaloButtons({
-            flowId: props.data.flowId,
-            flowVersionId: props.data.flowVersionId,
-            buttons: buttonsToSend,
-            metadata: props.data.metadata,
-            contactInboxId: props.data.contact.id,
-          })
-        : undefined
+
+    const combinedButtons = [...rawButtons, ...canonicalButtons]
+    const buttonsToSend = combinedButtons.slice(0, MAX_BUTTONS)
+    if (buttonsToSend.length < combinedButtons.length) {
+      logger.warn(
+        { total: combinedButtons.length, kept: MAX_BUTTONS },
+        `Zalo template buttons support at most ${MAX_BUTTONS}; truncating extra buttons`,
+      )
+    }
+
+    const buttons = buttonsToSend.length > 0 ? buttonsToSend : undefined
     yield {
       attachment: {
         type: "template",

@@ -1,4 +1,4 @@
-import type { ButtonStepProps, MetadataPayload } from "@chatbotx.io/flow-config"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
 import {
   AuthException,
@@ -13,6 +13,7 @@ import type {
   HandleRequestProps,
   Handler,
   IncomingContact,
+  MessageButtonTemplate,
   OutgoingContact,
   OutgoingMessage,
   ReceivedMessageResult,
@@ -64,7 +65,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     flowId: string
     flowVersionId?: string
     step: SendFlowStepData
-    quickReplies?: ButtonStepProps[]
+    quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
     sendFrom?: "inbox"
@@ -108,7 +109,7 @@ export type MessageHandlers<
         flowId: string
         flowVersionId?: string
         step: TStep
-        quickReplies?: ButtonStepProps[]
+        quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
         richResponse?: RichResponseContentAttributes
         sendFrom?: "inbox"

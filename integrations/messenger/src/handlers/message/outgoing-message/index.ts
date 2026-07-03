@@ -288,7 +288,10 @@ async function* convertFlowStepToFacebookMessage(
       ))
       break
     case stepTypes.enum.sendGif:
-      yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
+      yield* convertFlowStepGif(
+        step.url,
+        props.data.quickReplies ?? [],
+      ) as Generator<FacebookMessage>
       break
     case stepTypes.enum.sendQuickReply:
       yield* convertFlowStepQuickReply(

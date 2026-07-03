@@ -12,8 +12,9 @@ export function* convertFlowStepText(
   const {
     data: { step },
   } = props
-  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
-  if (buttons.length === 0) {
+  const buttonCount =
+    step.buttons.length + (props.data.quickReplies?.length ?? 0)
+  if (buttonCount === 0) {
     yield new Text(step.text)
     return
   }
@@ -21,7 +22,8 @@ export function* convertFlowStepText(
   for (const message of buildWhatsappButtonMessages({
     flowId: props.data.flowId,
     flowVersionId: props.data.flowVersionId,
-    buttons,
+    buttons: step.buttons,
+    quickReplies: props.data.quickReplies,
     metadata: props.data.metadata,
     bodyText: step.text,
   })) {

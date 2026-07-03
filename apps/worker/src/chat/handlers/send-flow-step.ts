@@ -84,6 +84,7 @@ export const convertButtonsToTemplate = (props: {
         label: button.label,
         buttonType: "url",
         url: appendCodeToMagicLink(button.beforeStep.url, buttonPayload),
+        postback: buttonPayload,
       }
     }
 
@@ -264,23 +265,39 @@ export async function sendFlowStep({
         flowVersionId,
       }
 
-    const displayButtons =
-      "buttons" in resolvedStep
-        ? [...resolvedStep.buttons, ...(quickReplies ?? [])]
-        : (quickReplies ?? [])
+    const canonicalQuickReplies =
+      quickReplies && quickReplies.length > 0
+        ? convertButtonsToTemplate({
+            flowId,
+            flowVersionId,
+            buttons: quickReplies,
+            metadata,
+            contactInboxId: targetContactInbox.id,
+          })
+        : undefined
+
+    const canonicalStepButtons =
+      "buttons" in resolvedStep && resolvedStep.buttons.length > 0
+        ? convertButtonsToTemplate({
+            flowId,
+            flowVersionId,
+            buttons: resolvedStep.buttons,
+            metadata,
+            contactInboxId: targetContactInbox.id,
+          })
+        : []
+
+    const displayButtons = [
+      ...canonicalStepButtons,
+      ...(canonicalQuickReplies ?? []),
+    ]
 
     if (displayButtons.length > 0) {
       contentAttributes = {
         type: "template",
         payload: {
           templateType: "button",
-          buttons: convertButtonsToTemplate({
-            flowId,
-            flowVersionId,
-            buttons: displayButtons,
-            metadata,
-            contactInboxId: targetContactInbox.id,
-          }),
+          buttons: displayButtons,
         },
         ...contentAttributes,
       }
@@ -369,7 +386,7 @@ export async function sendFlowStep({
         step: resolvedStep as SendFlowStepData,
         metadata,
         richResponse,
-        quickReplies,
+        quickReplies: canonicalQuickReplies,
         messageId: message?.id,
         sendFrom,
       }),

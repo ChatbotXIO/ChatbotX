@@ -3,6 +3,7 @@ import {
   buttonTypes,
   encodeButtonPayload,
 } from "@chatbotx.io/flow-config"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { chunk } from "remeda"
 import type {
   TelegramInlineKeyboardButton,
@@ -44,3 +45,17 @@ export const buildInlineKeyboard = (props: {
 
   return { inline_keyboard: rows }
 }
+
+export const buildCanonicalInlineButton = (
+  button: MessageButtonTemplate,
+): TelegramInlineKeyboardButton =>
+  button.buttonType === "url"
+    ? { text: button.label, url: button.url }
+    : { text: button.label, callback_data: button.postback }
+
+export const buildInlineKeyboardFromButtons = (
+  buttons: TelegramInlineKeyboardButton[],
+  buttonsPerRow = 3,
+): TelegramInlineKeyboardMarkup => ({
+  inline_keyboard: chunk(buttons, buttonsPerRow),
+})
