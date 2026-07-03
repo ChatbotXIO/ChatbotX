@@ -60,7 +60,7 @@ export function ContactListAction({
   const router = useRouter()
 
   const rows = table.getFilteredSelectedRowModel().rows
-  const exportAll = false
+  const exportAll = table.getIsAllPageRowsSelected()
 
   return (
     <DropdownMenu>
