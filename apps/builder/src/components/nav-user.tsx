@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { ChevronsUpDown, Crown, Settings2 } from "lucide-react"
+import { ChevronsUpDown, Crown, Settings2, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -32,7 +32,8 @@ import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
-  managementHref,
+  isSuperAdmin,
+  isPlatformAdmin,
   planName,
 }: {
   user: {
@@ -40,7 +41,8 @@ export function NavUser({
     email: string
     avatar: string
   }
-  managementHref?: string | null
+  isSuperAdmin?: boolean
+  isPlatformAdmin?: boolean
   planName?: string | null
 }) {
   const { isMobile } = useSidebar()
@@ -144,15 +146,25 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
-            {managementHref && (
+            {(isSuperAdmin || isPlatformAdmin) && (
               <>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem asChild>
-                    <Link href={managementHref}>
-                      <Settings2 className="mr-2 h-4 w-4" />
-                      {t("actions.manage")}
-                    </Link>
-                  </DropdownMenuItem>
+                  {isSuperAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <ShieldCheck className="h-4 w-4" />
+                        {t("actions.admin")}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isPlatformAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/manage">
+                        <Settings2 className="h-4 w-4" />
+                        {t("actions.manage")}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
               </>

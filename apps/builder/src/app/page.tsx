@@ -1,4 +1,6 @@
 import {
+  isPlatformAdmin,
+  isSuperAdmin,
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
@@ -25,10 +27,11 @@ export default async function MainPage() {
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
-  const [usageSummary, atLimit, quota] = await Promise.all([
+  const [usageSummary, atLimit, quota, platformAdmin] = await Promise.all([
     cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
     cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
     cloud ? userQuotaService.getForUser(user.id) : null,
+    isPlatformAdmin(user),
   ])
 
   const ownerWorkspaceIds = allWorkspaceMembers
@@ -48,6 +51,8 @@ export default async function MainPage() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:flex-row md:py-16">
       <AccountRail
+        isPlatformAdmin={platformAdmin}
+        isSuperAdmin={isSuperAdmin(user)}
         metrics={buildQuotaMetrics(usageSummary)}
         planName={quota?.planName ?? null}
         planStatus={quota?.planStatus ?? null}

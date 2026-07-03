@@ -4,7 +4,8 @@ import {
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { CrownIcon } from "lucide-react"
+import { CrownIcon, Settings2Icon, ShieldCheckIcon } from "lucide-react"
+import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import type { QuotaMetric } from "@/components/usage-bars"
 import { UsageBars } from "@/components/usage-bars"
@@ -25,6 +26,8 @@ type AccountRailProps = {
   planStatus?: string | null
   /** ISO date of the self-managed trial end, or null when not on a trial. */
   trialEndsAt?: string | null
+  isSuperAdmin?: boolean
+  isPlatformAdmin?: boolean
 }
 
 export const AccountRail = async ({
@@ -33,6 +36,8 @@ export const AccountRail = async ({
   metrics = [],
   planStatus = null,
   trialEndsAt = null,
+  isSuperAdmin = false,
+  isPlatformAdmin = false,
 }: AccountRailProps) => {
   const t = await getTranslations()
   const cloud = isCloud()
@@ -43,7 +48,7 @@ export const AccountRail = async ({
   const usageLabels = buildUsageLabels(t)
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-6 rounded-xl border bg-card p-6 md:w-72">
+    <aside className="flex w-full shrink-0 flex-col gap-2 rounded-xl border bg-card p-6 md:w-72">
       <div className="flex items-center gap-3">
         <Avatar className="size-11">
           <AvatarImage alt={displayName} src={user.image ?? ""} />
@@ -61,7 +66,7 @@ export const AccountRail = async ({
 
       {cloud && (
         <div className="flex flex-col gap-4 border-t pt-5">
-          <div className="mb-3 flex flex-col items-start justify-between gap-2">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
               {t("billing.plan.label", {
                 plan: planName ?? t("billing.plan.free"),
@@ -93,8 +98,33 @@ export const AccountRail = async ({
         </div>
       )}
 
-      <div className="mt-auto border-t pt-4">
-        <SignOut />
+      <div className="mt-auto">
+        {(isSuperAdmin || isPlatformAdmin) && (
+          <div className="mt-auto flex flex-0 flex-col gap-1 border-t py-2">
+            {isSuperAdmin && (
+              <Link
+                className="flex items-center gap-2 px-2 py-1.5"
+                href="/admin"
+              >
+                <ShieldCheckIcon aria-hidden className="size-4" />
+                {t("actions.admin")}
+              </Link>
+            )}
+            {isPlatformAdmin && (
+              <Link
+                className="flex items-center gap-2 px-2 py-1.5"
+                href="/manage"
+              >
+                <Settings2Icon aria-hidden className="size-4" />
+                {t("actions.manage")}
+              </Link>
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto flex flex-col gap-2 border-t pt-4">
+          <SignOut />
+        </div>
       </div>
     </aside>
   )
