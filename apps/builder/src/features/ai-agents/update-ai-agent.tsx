@@ -38,7 +38,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
+import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import {
   type UpdateAIAgentRequest,
@@ -211,7 +211,7 @@ export function UpdateAIAgentDialog({
                 </Popover>
               </div>
 
-              <TiptapEditorField name="prompt" />
+              <PlainTextEditorField name="prompt" />
             </div>
 
             <div className="flex flex-col gap-3">
@@ -231,7 +231,7 @@ export function UpdateAIAgentDialog({
                     />
                   </div>
                   <div className="pt-14 pr-12 pb-3 pl-3">
-                    <TiptapEditorField name={`messages.${index}.content`} />
+                    <PlainTextEditorField name={`messages.${index}.content`} />
                   </div>
                   <Button
                     aria-label={t("actions.delete")}

@@ -59,6 +59,10 @@
   border-radius: 0.5rem;
 }
 
+.tiptap.tiptap-plain-text {
+  white-space: pre-wrap;
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   float: left;
   height: 0;

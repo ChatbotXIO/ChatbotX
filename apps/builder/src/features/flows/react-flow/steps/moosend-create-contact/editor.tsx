@@ -105,6 +105,7 @@ const MoosendDialog = ({ parentName }: { parentName: string }) => {
               name="listId"
               options={listOptions}
               placeholder={t("moosend.fields.listPlaceholder")}
+              portal
               required
             />
             {listsLoading && <p>{t("moosend.lists.loading")}</p>}
@@ -120,6 +121,7 @@ const MoosendDialog = ({ parentName }: { parentName: string }) => {
               includeReserved
               label={t("moosend.fields.email")}
               name="emailField"
+              portal
               required
             />
             <DialogFooter>

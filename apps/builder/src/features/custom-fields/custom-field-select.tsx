@@ -25,6 +25,7 @@ type CustomFieldSelectProps = {
   includeReserved?: boolean
   placeholder?: string
   onValueChange?: (value: string) => void
+  portal?: boolean
 }
 
 export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
@@ -37,6 +38,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     includeReserved = false,
     placeholder,
     onValueChange,
+    portal,
   } = props
 
   const t = useTranslations()
@@ -90,6 +92,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
         name={name}
         options={customFieldSelectOptions}
         placeholder={placeholder || "Please select"}
+        portal={portal}
         triggerValueChange={onValueChange}
       />
     </FormItem>
