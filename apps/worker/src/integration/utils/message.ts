@@ -9,6 +9,7 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { QueueEvents } from "bullmq"
+import { logger } from "../../lib/logger"
 
 let chatQueueEvents: QueueEvents | null = null
 
@@ -68,13 +69,37 @@ async function enqueueChatMessage(
   })
 }
 
-export async function sendMessageWithRender(
+export function sendMessageWithRender(
   conversationId: string,
   text: string,
   trackingContext?: BotResponseTrackingContext,
   options?: SendMessageOptions,
+) {
+  return enqueueChatMessage(conversationId, text, trackingContext, options)
+}
+
+/**
+ * Block until an enqueued chat job processor reaches a terminal state.
+ * This preserves step ordering; channel delivery failures may already be handled
+ * inside the chat worker and may not surface here. Propagated failures are
+ * logged with context and swallowed so the flow still advances in order.
+ */
+export async function waitForChatJobCompletion(
+  job: Awaited<ReturnType<typeof chatQueue.add>>,
+  context?: Record<string, unknown>,
 ): Promise<void> {
-  await enqueueChatMessage(conversationId, text, trackingContext, options)
+  if (!(typeof job === "object" && "waitUntilFinished" in job)) {
+    return
+  }
+
+  try {
+    await job.waitUntilFinished(getChatQueueEvents())
+  } catch (err) {
+    logger.error(
+      { ...context, err },
+      "Flow message chat job failed; continuing flow",
+    )
+  }
 }
 
 export async function sendMessageAndWait(

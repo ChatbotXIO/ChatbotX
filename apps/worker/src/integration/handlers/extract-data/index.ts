@@ -11,7 +11,10 @@ import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
-import { sendMessageWithRender } from "../../utils/message"
+import {
+  sendMessageWithRender,
+  waitForChatJobCompletion,
+} from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
 
@@ -240,7 +243,11 @@ ${schemaDescription}`
       "Error in handleAIExtractData",
     )
 
-    await sendMessageWithRender(conversation.id, "Error extracting data")
+    const job = await sendMessageWithRender(
+      conversation.id,
+      "Error extracting data",
+    )
+    await waitForChatJobCompletion(job, { conversationId: conversation.id })
 
     return {
       status: "error",

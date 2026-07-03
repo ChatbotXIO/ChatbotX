@@ -26,6 +26,7 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
+import { waitForChatJobCompletion } from "../utils/message"
 import { syncActiveCampaignContact } from "./active-campaign-handler"
 import { handleAIAnalyzeImage } from "./analyze-image"
 import {
@@ -99,7 +100,7 @@ export async function sendFlowMessage(
     quickReplies,
     sendFrom,
   } = props
-  await chatQueue.add(ChatJobAction.sendFlowMessage, {
+  const job = await chatQueue.add(ChatJobAction.sendFlowMessage, {
     type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId: conversation.id,
@@ -111,6 +112,10 @@ export async function sendFlowMessage(
       quickReplies,
       sendFrom,
     },
+  })
+  await waitForChatJobCompletion(job, {
+    conversationId: conversation.id,
+    stepId: step.id,
   })
 }
 

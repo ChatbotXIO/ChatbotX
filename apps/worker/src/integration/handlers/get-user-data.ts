@@ -19,6 +19,7 @@ import { createId } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { add, isBefore } from "date-fns"
 import { logger } from "../../lib/logger"
+import { waitForChatJobCompletion } from "../utils/message"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
@@ -252,7 +253,7 @@ async function sendMessage(
     )
   }
 
-  await chatQueue.add(ChatJobAction.sendChatMessage, {
+  const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
       contactInbox,
@@ -282,6 +283,8 @@ async function sendMessage(
       } as ConversationAttributes,
     })
     .where(eq(conversationModel.id, conversation.id))
+
+  await waitForChatJobCompletion(job, { conversationId: conversation.id })
 }
 
 function checkSkipCondition(

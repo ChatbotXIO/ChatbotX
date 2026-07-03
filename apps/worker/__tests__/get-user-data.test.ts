@@ -80,6 +80,11 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   chatQueue: { add: chatQueueAdd },
 }))
 
+const waitForChatJobCompletion = vi.fn(async () => undefined)
+vi.mock("../src/integration/utils/message", () => ({
+  waitForChatJobCompletion,
+}))
+
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
   return {
@@ -100,6 +105,8 @@ const { getUserData } = await import(
 
 beforeEach(() => {
   repositoryError.current = null
+  chatQueueAdd.mockResolvedValue(undefined)
+  waitForChatJobCompletion.mockResolvedValue(undefined)
 })
 
 type StepOverride = Partial<GetUserDataStepSchema>
@@ -325,11 +332,70 @@ describe("getUserData — auto-skip", () => {
 })
 
 describe("getUserData — first send (no challenge state)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    waitForChatJobCompletion.mockClear()
+    vi.mocked(dbUpdateBuilder.where as ReturnType<typeof vi.fn>).mockClear()
+  })
+
   test("sends message and returns wait when no challenge active", async () => {
     const props = makeProps(ReplyFormat.email)
     props.ctx = { variables: { conversation: {} } }
     const result = await getUserData(props)
     expect(result.status).toBe("wait")
     expect(chatQueueAdd).toHaveBeenCalledOnce()
+  })
+
+  test("writes challenge state before waiting for prompt delivery", async () => {
+    const order: string[] = []
+    const fakeJob = { waitUntilFinished: vi.fn() }
+    chatQueueAdd.mockImplementationOnce(() => {
+      order.push("enqueue")
+      return Promise.resolve(fakeJob)
+    })
+    vi.mocked(
+      dbUpdateBuilder.where as ReturnType<typeof vi.fn>,
+    ).mockImplementationOnce(() => {
+      order.push("state")
+      return dbUpdateBuilder
+    })
+    waitForChatJobCompletion.mockImplementationOnce(() => {
+      order.push("wait")
+      return Promise.resolve()
+    })
+
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(order).toEqual(["enqueue", "state", "wait"])
+    expect(waitForChatJobCompletion).toHaveBeenCalledWith(fakeJob, {
+      conversationId: "conv-1",
+    })
+  })
+
+  test("does not return wait until prompt delivery wait completes", async () => {
+    let releaseWait!: () => void
+    const waitPromise = new Promise<void>((resolve) => {
+      releaseWait = resolve
+    })
+    chatQueueAdd.mockResolvedValueOnce({ waitUntilFinished: vi.fn() })
+    waitForChatJobCompletion.mockReturnValueOnce(waitPromise)
+
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    let resolved = false
+    const resultPromise = getUserData(props).then((result) => {
+      resolved = true
+      return result
+    })
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(resolved).toBe(false)
+
+    releaseWait()
+    await expect(resultPromise).resolves.toMatchObject({ status: "wait" })
   })
 })
