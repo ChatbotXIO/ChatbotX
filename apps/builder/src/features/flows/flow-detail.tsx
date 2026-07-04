@@ -8,6 +8,7 @@ import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field
 import { EmailTopicStoreProvider } from "../email-topics/provider/email-topic-store-context"
 import type { FlowVersionResource } from "../flow-versions/schema/resource"
 import { InboxStoreProvider } from "../inboxes/provider/inbox-store-context"
+import type { IntegrationOpenaiCompatibleResource } from "../integration-openai-compatible/schemas/resource"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import { UserStoreProvider } from "../users/provider/user-store-context"
 import { FlowStoreProvider } from "./provider/flow-store-context"
@@ -20,9 +21,14 @@ import type { FlowResource } from "./schemas/resource"
 type FlowDetailProps = {
   flow: FlowResource
   flowVersion: FlowVersionResource
+  openaiCompatibleIntegrations: IntegrationOpenaiCompatibleResource[]
 }
 
-export function FlowDetail({ flow, flowVersion }: FlowDetailProps) {
+export function FlowDetail({
+  flow,
+  flowVersion,
+  openaiCompatibleIntegrations,
+}: FlowDetailProps) {
   return (
     <ReactFlowProvider>
       <StepStoreProvider
@@ -30,7 +36,10 @@ export function FlowDetail({ flow, flowVersion }: FlowDetailProps) {
           activeFlowId: flow.id,
         }}
       >
-        <FlowTemplateStoreProvider workspaceId={flow.workspaceId}>
+        <FlowTemplateStoreProvider
+          openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+          workspaceId={flow.workspaceId}
+        >
           <WhatsappFlowStoreProvider workspaceId={flow.workspaceId}>
             <InboxStoreProvider workspaceId={flow.workspaceId}>
               <FlowStoreProvider workspaceId={flow.workspaceId}>

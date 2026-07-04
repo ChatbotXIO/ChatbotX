@@ -2,7 +2,10 @@ import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { db } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
-import { aiAgentProviders } from "@chatbotx.io/database/partials"
+import {
+  aiAgentProviderModels,
+  aiAgentProviders,
+} from "@chatbotx.io/database/partials"
 import type { AIGenerateTextAgentSchema } from "@chatbotx.io/flow-config"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
@@ -40,9 +43,11 @@ export async function handleAIGenerateTextAgent({
       }
     }
 
+    const aiAgentModels = aiAgentProviderModels.parse(aiAgent.models)
     const aiContext = await aiContextService.getOrInitContext({
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
+      preferredModels: aiAgentModels,
     })
 
     const messages = await buildAIAgentMessages(

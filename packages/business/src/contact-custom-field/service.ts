@@ -29,6 +29,21 @@ class ContactCustomFieldService extends BaseService {
     })
   }
 
+  async findValue(input: {
+    contactId: string
+    customFieldId: string
+  }): Promise<string | null> {
+    const row = await db.query.contactCustomFieldModel.findFirst({
+      where: {
+        contactId: input.contactId,
+        customFieldId: input.customFieldId,
+      },
+      columns: { value: true },
+    })
+
+    return row?.value ?? null
+  }
+
   async setValues(
     input: SetValuesInput,
     tx: DatabaseClient = db,

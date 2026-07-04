@@ -17,6 +17,7 @@ import { use, useMemo, useState } from "react"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
 import type { listAIAgents } from "@/features/ai-agents/queries"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
+import type { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { ChangeDefault } from "./components/change-default"
 import { CreateAIAgentDialog } from "./create-ai-agent"
 import {
@@ -26,11 +27,16 @@ import {
 
 type AIAgentsTableProps = {
   workspaceId: string
-  promises: Promise<[Awaited<ReturnType<typeof listAIAgents>>]>
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof listAIAgents>>,
+      Awaited<ReturnType<typeof listIntegrationOpenaiCompatible>>,
+    ]
+  >
 }
 
 export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
-  const [{ data, pageCount }] = use(promises)
+  const [{ data, pageCount }, openaiCompatibleIntegrations] = use(promises)
 
   const t = useTranslations()
   const router = useRouter()
@@ -73,6 +79,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
               onSuccess={() => {
                 router.refresh()
               }}
+              openaiCompatibleIntegrations={openaiCompatibleIntegrations}
               workspaceId={workspaceId}
             />
           </DataTableToolbar>
@@ -97,6 +104,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
             router.refresh()
           }}
           open={rowAction?.variant === "update"}
+          openaiCompatibleIntegrations={openaiCompatibleIntegrations}
           workspaceId={workspaceId}
         />
 

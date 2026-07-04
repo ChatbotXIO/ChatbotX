@@ -22,14 +22,20 @@ const analyzeModelOptions: Record<AIAnalyzeImageProvider, SelectOption[]> = {
 }
 
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {
-  provider: AIAnalyzeImageProvider
+  provider: AIAnalyzeImageProvider | "openaiCompatible"
 }
 
 export const AIModelSelect = (props: AIModelSelectProps) => {
   const { provider, ...rest } = props
   const t = useTranslations()
 
-  const options = useMemo(() => analyzeModelOptions[provider] ?? [], [provider])
+  const options = useMemo(
+    () =>
+      provider === "openaiCompatible"
+        ? []
+        : (analyzeModelOptions[provider] ?? []),
+    [provider],
+  )
 
   return (
     <ComboboxField

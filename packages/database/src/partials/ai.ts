@@ -52,7 +52,22 @@ export const aiAgentProviderModel = z.object({
 })
 export type AIAgentProviderModel = z.infer<typeof aiAgentProviderModel>
 
-export const aiAgentProviderModels = z.array(aiAgentProviderModel).catch([])
+export const aiAgentOpenaiCompatibleProviderModel = z.object({
+  kind: z.literal("openaiCompatible"),
+  integrationId: z.string().trim().min(1),
+  model: z.string().trim().min(1),
+})
+export type AIAgentOpenaiCompatibleProviderModel = z.infer<
+  typeof aiAgentOpenaiCompatibleProviderModel
+>
+
+export const aiAgentModelConfig = z.union([
+  aiAgentProviderModel,
+  aiAgentOpenaiCompatibleProviderModel,
+])
+export type AIAgentModelConfig = z.infer<typeof aiAgentModelConfig>
+
+export const aiAgentProviderModels = z.array(aiAgentModelConfig).catch([])
 export type AIAgentProviderModels = z.infer<typeof aiAgentProviderModels>
 
 export const aiMcpServerAuth = z.discriminatedUnion("type", [

@@ -7,7 +7,10 @@ import { aiContextService } from "@chatbotx.io/ai/server"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { db } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import {
+  aiAgentProviderModels,
+  aiMessageRoles,
+} from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   findConversationAIContextState,
@@ -138,9 +141,11 @@ export async function processAutomatedResponse(
       return
     }
 
+    const aiAgentModels = aiAgentProviderModels.parse(aiAgent.models)
     const aiContext = await aiContextService.getOrInitContext({
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
+      preferredModels: aiAgentModels,
     })
     const markerMessageId =
       aiContext?.markerMessageId ??

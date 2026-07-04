@@ -11,11 +11,15 @@ import {
   appendKnowledgeBaseGuard,
   appendToolOutputGuard,
   createAIModelInstance,
+  createOpenaiCompatibleModelInstance,
   getAIToolset,
   McpClient,
   normalizeMcpContent,
 } from "@chatbotx.io/ai/server"
+import { integrationOpenaiCompatibleService } from "@chatbotx.io/business"
 import type {
+  AIAgentModelConfig,
+  AIAgentOpenaiCompatibleProviderModel,
   AIAgentProvider,
   AIAgentProviderModel,
   AIAgentProviderModels,
@@ -38,7 +42,7 @@ export type ReplyByAIProps = {
 
 export type ReplyByAIExecutionResult = {
   responded: boolean
-  provider: AIAgentProvider
+  provider: AIAgentProvider | "openaiCompatible"
   modelId: string
   usedFallbackText: boolean
   fullText: string
@@ -63,7 +67,9 @@ export async function runAIAgentRunner(
   const providers = aiAgent.models as AIAgentProviderModels
   const providersToRun = preferredProvider
     ? providers.filter(
-        (providerInfo) => providerInfo.provider === preferredProvider,
+        (providerInfo) =>
+          isNativeProviderModel(providerInfo) &&
+          providerInfo.provider === preferredProvider,
       )
     : providers
 
@@ -113,30 +119,23 @@ export async function runAIAgentRunner(
 
 async function runAIReplyInternal(
   props: ReplyByAIProps,
-  providerInfo: AIAgentProviderModel,
+  providerInfo: AIAgentModelConfig,
   tools: ToolSet,
   abortSignal: AbortSignal,
 ): Promise<null | ReplyByAIExecutionResult> {
   const { conversation, messages, aiAgent } = props
-  const provider = providerInfo.provider
+  const provider = getProviderName(providerInfo)
   try {
     const selectedModelId = providerInfo.model
-
-    const integration = await aiIntegrationService.findBy({
+    const model = await createAgentModel({
+      conversationId: conversation.id,
+      providerInfo,
       workspaceId: conversation.workspaceId,
-      provider,
     })
 
-    if (!integration) {
+    if (!model) {
       return null
     }
-
-    const model = createAIModelInstance({
-      model: integration,
-      provider,
-      modelId: selectedModelId,
-      traceId: conversation.id,
-    })
 
     const variables = await contactVariableService.getAll(
       conversation.contactId,
@@ -274,7 +273,7 @@ async function runAIReplyInternal(
 
       return {
         responded: true,
-        provider: provider as AIAgentProvider,
+        provider,
         modelId: selectedModelId,
         usedFallbackText: false,
         fullText,
@@ -292,7 +291,7 @@ async function runAIReplyInternal(
     if (toolCallsCount > 0 || toolResultsCount > 0) {
       return {
         responded: true,
-        provider: provider as AIAgentProvider,
+        provider,
         modelId: selectedModelId,
         usedFallbackText: true,
         fullText: helpTexts.fallbackLookup,
@@ -320,6 +319,65 @@ async function runAIReplyInternal(
     )
     return null
   }
+}
+
+async function createAgentModel(props: {
+  conversationId: string
+  providerInfo: AIAgentModelConfig
+  workspaceId: string
+}) {
+  const { conversationId, providerInfo, workspaceId } = props
+
+  if (isOpenaiCompatibleProviderModel(providerInfo)) {
+    const integration =
+      await integrationOpenaiCompatibleService.findByWorkspaceIdAndId({
+        workspaceId,
+        id: providerInfo.integrationId,
+      })
+
+    if (!integration?.enabled) {
+      return null
+    }
+
+    return createOpenaiCompatibleModelInstance({
+      integration,
+      modelId: providerInfo.model,
+    })
+  }
+
+  const integration = await aiIntegrationService.findBy({
+    workspaceId,
+    provider: providerInfo.provider,
+  })
+
+  if (!integration) {
+    return null
+  }
+
+  return createAIModelInstance({
+    model: integration,
+    provider: providerInfo.provider,
+    modelId: providerInfo.model,
+    traceId: conversationId,
+  })
+}
+
+function isNativeProviderModel(
+  providerInfo: AIAgentModelConfig,
+): providerInfo is AIAgentProviderModel {
+  return "provider" in providerInfo
+}
+
+function isOpenaiCompatibleProviderModel(
+  providerInfo: AIAgentModelConfig,
+): providerInfo is AIAgentOpenaiCompatibleProviderModel {
+  return "kind" in providerInfo && providerInfo.kind === "openaiCompatible"
+}
+
+function getProviderName(providerInfo: AIAgentModelConfig) {
+  return isOpenaiCompatibleProviderModel(providerInfo)
+    ? "openaiCompatible"
+    : providerInfo.provider
 }
 
 function hasToolResultError(value: unknown): boolean {

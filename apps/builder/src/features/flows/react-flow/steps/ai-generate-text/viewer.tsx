@@ -2,8 +2,10 @@
 
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
+import { useFlowTemplate } from "../../stores/flow-template-store-provider"
 import { StateHandle } from "../base/step-state-handles"
 import { AIIcon } from "./components/ai-icon"
+import { getOpenaiCompatibleStepProviderLabel } from "./components/openai-compatible-label"
 
 type AIGenerateTextViewerProps = {
   data: AIGenerateTextSchema
@@ -12,6 +14,9 @@ type AIGenerateTextViewerProps = {
 export const AIGenerateTextViewer = (props: AIGenerateTextViewerProps) => {
   const { data } = props
   const t = useTranslations()
+  const openaiCompatibleIntegrations = useFlowTemplate(
+    (store) => store.openaiCompatibleIntegrations,
+  )
 
   const successState = data.states?.find((s) => s.stateType === "success")
   const errorState = data.states?.find((s) => s.stateType === "error")
@@ -21,7 +26,11 @@ export const AIGenerateTextViewer = (props: AIGenerateTextViewerProps) => {
       <div className="flex w-full items-center justify-center gap-2 text-center font-bold">
         <AIIcon
           label={t("fields.flows.aiGenerateText", {
-            aiName: t(`aiProviders.${data.provider}`),
+            aiName: getOpenaiCompatibleStepProviderLabel({
+              fallback: t(`aiProviders.${data.provider}`),
+              integrations: openaiCompatibleIntegrations,
+              step: data,
+            }),
           })}
           provider={data.provider}
         />

@@ -2,6 +2,7 @@ import { db } from "@chatbotx.io/database/client"
 import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { FlowDetail } from "@/features/flows/flow-detail"
+import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
@@ -40,11 +41,16 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
+  const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
+    workspaceId: data.workspaceId,
+  })
+
   return (
     <div className="flex h-screen w-screen flex-col">
       <FlowDetail
         flow={flow}
         flowVersion={draftFlowVersion as FlowVersionResource}
+        openaiCompatibleIntegrations={openaiCompatibleIntegrations}
       />
     </div>
   )

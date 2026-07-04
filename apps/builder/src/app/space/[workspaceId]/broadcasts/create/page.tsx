@@ -5,6 +5,7 @@ import { ContactStoreProvider } from "@/features/contacts/provider/contact-store
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
+import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provider/integration-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
@@ -18,12 +19,19 @@ export default async function CreateBroadcastPage({
     return notFound()
   }
 
+  const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
+    workspaceId,
+  })
+
   return (
     <FlowStoreProvider workspaceId={workspaceId}>
       <CustomFieldStoreProvider workspaceId={workspaceId}>
         <IntegrationStoreProvider workspaceId={workspaceId}>
           <TagStoreProvider workspaceId={workspaceId}>
-            <FlowTemplateStoreProvider workspaceId={workspaceId}>
+            <FlowTemplateStoreProvider
+              openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+              workspaceId={workspaceId}
+            >
               <ContactStoreProvider
                 autoInitialize={false}
                 workspaceId={workspaceId}

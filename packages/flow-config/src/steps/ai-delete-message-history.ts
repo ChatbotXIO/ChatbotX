@@ -14,6 +14,7 @@ export const aiDeleteMessageHistoryProvider = z.enum([
   "gemini",
   "claude",
   "deepseek",
+  "openrouter",
 ])
 export type AIDeleteMessageHistoryProvider = z.infer<
   typeof aiDeleteMessageHistoryProvider

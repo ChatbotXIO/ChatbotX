@@ -246,6 +246,25 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
       },
     ],
   },
+  {
+    label: "OpenAI Compatible",
+    icon: BotIcon,
+    providerKey: "openaiCompatible",
+    steps: [
+      {
+        stepType: stepTypes.enum.aiGenerateText,
+        getLabel: stepWithName("flows.aiGenerateText.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiAnalyzeImage,
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiExtractData,
+        getLabel: stepWithName("flows.aiExtractData.label"),
+      },
+    ],
+  },
 ]
 
 function buildProviderMenus(t: TranslationFn): MenuItem[] {
@@ -257,7 +276,10 @@ function buildProviderMenus(t: TranslationFn): MenuItem[] {
       label: step.getLabel(t, label),
       icon,
       stepType: step.stepType,
-      props: { provider: providerKey },
+      props:
+        providerKey === "openaiCompatible"
+          ? { provider: providerKey, integrationId: "", model: "" }
+          : { provider: providerKey },
     })),
   }))
 }

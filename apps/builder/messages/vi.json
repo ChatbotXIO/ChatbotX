@@ -734,6 +734,7 @@
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
       "aiEditImage": "{aiName}: Chỉnh sửa hình ảnh",
       "aiAnalyzeImage": "{aiName}: Phân tích hình ảnh",
+      "aiExtractData": "{aiName}: Trích xuất dữ liệu",
       "aiSpeechToText": "{aiName}: Chuyển giọng nói thành văn bản",
       "aiTextToSpeech": "{aiName}: Chuyển văn bản thành giọng nói",
       "label": "Luồng",
@@ -1542,10 +1543,16 @@
     "aiExtractData": {
       "label": "{name}: Trích xuất dữ liệu"
     },
+    "openaiCompatible": {
+      "empty": "Hãy kết nối provider tương thích OpenAI trong phần cài đặt tích hợp trước khi dùng bước này.",
+      "integration": "Provider tương thích OpenAI",
+      "none": "Không có"
+    },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",
       "addContactTag": "Thêm thẻ liên hệ",
       "aiDeleteMessageHistory": "Xóa lịch sử tin nhắn",
+      "aiExtractData": "AI trích xuất dữ liệu",
       "aiAnalyzeImage": "AI phân tích hình ảnh",
       "aiSpeechToText": "AI chuyển giọng nói thành văn bản",
       "aiGenerateImage": "AI tạo hình ảnh",
@@ -2269,6 +2276,30 @@
     },
     "title": "OpenRouter"
   },
+  "openaiCompatible": {
+    "addProvider": "Thêm AI Provider",
+    "addProviderModel": "Thêm {name}",
+    "apiKeyKeepExisting": "Để trống để giữ API key hiện tại.",
+    "autoReply": {
+      "description": "Cho phép provider này được dùng cho phản hồi AI tự động.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Kết nối các provider tương thích OpenAI cho danh sách fallback của AI Agent.",
+      "label": "Provider tương thích OpenAI"
+    },
+    "empty": "Chưa cấu hình provider tương thích OpenAI.",
+    "fields": {
+      "baseURL": "Base URL",
+      "defaultModel": "Model mặc định",
+      "enabled": "Đang bật"
+    },
+    "provider": "AI Provider",
+    "title": "OpenAI Compatible",
+    "validation": {
+      "presetAlreadyConnected": "Preset này đã được kết nối trong workspace."
+    }
+  },
   "settings": {
     "title": "Cài đặt",
     "agents": {
@@ -2791,7 +2822,8 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
-    "openrouter": "OpenRouter"
+    "openrouter": "OpenRouter",
+    "openaiCompatible": "OpenAI Compatible"
   },
   "smtp": {
     "setting": {

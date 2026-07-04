@@ -1533,6 +1533,11 @@
     "aiExtractData": {
       "label": "{name}: Extract Data"
     },
+    "openaiCompatible": {
+      "empty": "Connect an OpenAI-compatible provider in integration settings before using this step.",
+      "integration": "OpenAI-compatible provider",
+      "none": "None"
+    },
     "actions": {
       "addContactNotes": "Add Contact Notes",
       "addContactTag": "Add Contact Tag",
@@ -2260,6 +2265,30 @@
     },
     "title": "OpenRouter"
   },
+  "openaiCompatible": {
+    "addProvider": "Add AI Provider",
+    "addProviderModel": "Add {name}",
+    "apiKeyKeepExisting": "Leave blank to keep the existing API key.",
+    "autoReply": {
+      "description": "Allow this provider to be used for automated AI replies.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Connect OpenAI-compatible providers for AI Agent fallback models.",
+      "label": "OpenAI-compatible providers"
+    },
+    "empty": "No OpenAI-compatible providers configured.",
+    "fields": {
+      "baseURL": "Base URL",
+      "defaultModel": "Default model",
+      "enabled": "Enabled"
+    },
+    "provider": "AI Provider",
+    "title": "OpenAI Compatible",
+    "validation": {
+      "presetAlreadyConnected": "This preset is already connected for this workspace."
+    }
+  },
   "settings": {
     "title": "Settings",
     "agents": {
@@ -2798,7 +2827,8 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
-    "openrouter": "OpenRouter"
+    "openrouter": "OpenRouter",
+    "openaiCompatible": "OpenAI Compatible"
   },
   "smtp": {
     "setting": {

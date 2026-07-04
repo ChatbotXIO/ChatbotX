@@ -28,26 +28,33 @@ export const createAIAgentRequest = z.object({
     }),
   ),
   models: z.array(
-    z.discriminatedUnion("provider", [
+    z.union([
+      z.discriminatedUnion("provider", [
+        z.object({
+          provider: z.literal(aiProviders.enum.gemini),
+          model: geminiModels,
+        }),
+        z.object({
+          provider: z.literal(aiProviders.enum.openai),
+          model: openaiModels,
+        }),
+        z.object({
+          provider: z.literal(aiProviders.enum.claude),
+          model: claudeModels,
+        }),
+        z.object({
+          provider: z.literal(aiProviders.enum.deepseek),
+          model: deepseekModels,
+        }),
+        z.object({
+          provider: z.literal(aiProviders.enum.openrouter),
+          model: openrouterModels,
+        }),
+      ]),
       z.object({
-        provider: z.literal(aiProviders.enum.gemini),
-        model: geminiModels,
-      }),
-      z.object({
-        provider: z.literal(aiProviders.enum.openai),
-        model: openaiModels,
-      }),
-      z.object({
-        provider: z.literal(aiProviders.enum.claude),
-        model: claudeModels,
-      }),
-      z.object({
-        provider: z.literal(aiProviders.enum.deepseek),
-        model: deepseekModels,
-      }),
-      z.object({
-        provider: z.literal(aiProviders.enum.openrouter),
-        model: openrouterModels,
+        kind: z.literal("openaiCompatible"),
+        integrationId: z.string().trim().min(1),
+        model: z.string().trim().min(1),
       }),
     ]),
   ),

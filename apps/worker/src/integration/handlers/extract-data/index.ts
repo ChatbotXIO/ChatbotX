@@ -1,9 +1,5 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
-import {
-  aiIntegrationService,
-  createAIModelInstance,
-} from "@chatbotx.io/ai/server"
-import { db } from "@chatbotx.io/database/client"
+import { contactCustomFieldService } from "@chatbotx.io/business"
 import type { AIExtractDataSchema } from "@chatbotx.io/flow-config"
 import { contactVariableService } from "@chatbotx.io/variables"
 import { APICallError, generateObject } from "ai"
@@ -16,6 +12,7 @@ import {
   waitForChatJobCompletion,
 } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
+import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 
 const ERROR_INSUFFICIENT_CREDITS =
@@ -65,17 +62,11 @@ const getInputValue = async (props: {
     return inputText.length > 0 ? inputText : null
   }
 
-  const inputField = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      customFieldId: step.inputFieldId,
-    },
-    columns: {
-      value: true,
-    },
+  const inputValue = await contactCustomFieldService.findValue({
+    contactId: conversation.contactId,
+    customFieldId: step.inputFieldId,
   })
 
-  const inputValue = inputField?.value
   if (typeof inputValue !== "string") {
     return null
   }
@@ -145,27 +136,35 @@ export async function handleAIExtractData({
       }
     }
 
-    const aiConfig = await aiIntegrationService.findBy({
+    const resolvedModel = await resolveFlowAIModel({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
+      integrationId:
+        step.provider === "openaiCompatible" ? step.integrationId : undefined,
+      modelId: step.model,
+      conversationId: conversation.id,
     })
 
-    if (!aiConfig) {
-      const errorMsg = `AI Config not found for provider ${step.provider}`
-      logger.error(logContext, errorMsg)
+    if (!resolvedModel.ok) {
+      logger.warn(
+        {
+          ...logContext,
+          provider: step.provider,
+          integrationId:
+            step.provider === "openaiCompatible"
+              ? step.integrationId
+              : undefined,
+          modelId: step.model,
+          reason: resolvedModel.reason,
+        },
+        "[ai-extract-data] Failed to resolve AI model",
+      )
       return {
         status: "error",
-        errorMessage: errorMsg,
+        errorMessage: resolvedModel.message,
         result: null,
       }
     }
-
-    const model = createAIModelInstance({
-      model: aiConfig,
-      provider: step.provider,
-      modelId: step.model,
-      traceId: conversation.id,
-    })
 
     const schemaDescription = step.extractFields
       .map((f) =>
@@ -197,7 +196,7 @@ ${schemaDescription}`
     } as const
 
     const { object: extractedData } = await generateObject({
-      model,
+      model: resolvedModel.model,
       system: systemPrompt,
       messages: [userMessage],
       abortSignal: controller.signal,
@@ -237,7 +236,7 @@ ${schemaDescription}`
     logger.error(
       {
         ...logContext,
-        err: error,
+        err: parsedError,
         reason: "ai_generation_failed",
       },
       "Error in handleAIExtractData",
