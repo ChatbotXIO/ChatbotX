@@ -1592,7 +1592,7 @@
       "autoAssignConversation": "Auto Assign Conversation",
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
-      "callApi": "External Request",
+      "callApi": "External API Request",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "contactActions": "Contact Actions",

@@ -7,7 +7,7 @@ export const helpItemSchema = z.object({
     (val) => (val === "" ? null : val),
     z.string().trim().nullable().default(null),
   ),
-  position: z.number().int().min(0).default(0),
+  position: z.coerce.number().int().min(0).default(0),
 })
 
 export const helpItemIdSchema = z.object({
