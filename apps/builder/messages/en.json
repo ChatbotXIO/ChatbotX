@@ -26,6 +26,8 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "clearCustomField": "Clear Custom Field",
+    "collapse": "Collapse",
+    "expand": "Expand",
     "confirm": "Confirm",
     "connect": "Connect",
     "continue": "Continue",
@@ -934,6 +936,34 @@
     "outputCustomField": {
       "label": "Output Custom Field"
     },
+    "httpMethod": {
+      "label": "Method"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.example.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "Headers",
+      "keyPlaceholder": "Header",
+      "valuePlaceholder": "Value"
+    },
+    "requestBody": {
+      "label": "Body",
+      "keyPlaceholder": "Field",
+      "valuePlaceholder": "Value"
+    },
+    "bodyType": {
+      "label": "Body Type",
+      "options": {
+        "allContactData": "All Contact Data",
+        "json": "JSON",
+        "formEncoded": "Form Encoded"
+      }
+    },
+    "statusCode": {
+      "label": "Status Code"
+    },
     "outputMessage": {
       "label": "Output Message",
       "placeholder": "What is the output message?"
@@ -1277,7 +1307,21 @@
       "placeholder": "Speak in a cheerful tone."
     },
     "jsonPath": {
-      "placeholder": "Enter JSON path"
+      "placeholder": "Enter JSON path",
+      "targetThisRow": "Fill this row from JSON"
+    },
+    "jsonSource": {
+      "title": "Pick JSON path",
+      "tabs": {
+        "testResponse": "Test response",
+        "pasteSample": "Paste sample"
+      },
+      "pastePlaceholder": "Paste a sample JSON response",
+      "invalidJson": "Invalid JSON",
+      "noTestResponse": "Run Test Now to browse a live response",
+      "activeTarget": "Filling row {row}",
+      "showMore": "Show more",
+      "showMoreCount": "Show {count} more"
     },
     "spreadsheets": {
       "label": "Spreadsheets"
@@ -1542,6 +1586,7 @@
       "autoAssignConversation": "Auto Assign Conversation",
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
+      "callApi": "External Request",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "contactActions": "Contact Actions",

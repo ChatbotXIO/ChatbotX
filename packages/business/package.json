@@ -24,6 +24,7 @@
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
+    "dot-prop": "^10.1.0",
     "drizzle-orm": "1.0.0-beta.22",
     "jose": "^6.2.3",
     "libphonenumber-js": "^1.12.42",

@@ -26,6 +26,8 @@
     "unblockContact": "Bỏ chặn liên hệ",
     "cancel": "Hủy",
     "clearCustomField": "Xóa trường tùy chỉnh",
+    "collapse": "Thu gọn",
+    "expand": "Mở rộng",
     "confirm": "Xác nhận",
     "connect": "Kết nối",
     "continue": "Tiếp tục",
@@ -923,6 +925,34 @@
     "outputCustomField": {
       "label": "Trường tùy chỉnh đầu ra"
     },
+    "httpMethod": {
+      "label": "Phương thức"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.example.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "Headers",
+      "keyPlaceholder": "Header",
+      "valuePlaceholder": "Giá trị"
+    },
+    "requestBody": {
+      "label": "Nội dung",
+      "keyPlaceholder": "Trường",
+      "valuePlaceholder": "Giá trị"
+    },
+    "bodyType": {
+      "label": "Loại nội dung",
+      "options": {
+        "allContactData": "Toàn bộ dữ liệu liên hệ",
+        "json": "JSON",
+        "formEncoded": "Form Encoded"
+      }
+    },
+    "statusCode": {
+      "label": "Mã trạng thái"
+    },
     "outputMessage": {
       "label": "Tin nhắn đầu ra",
       "placeholder": "Tin nhắn đầu ra là gì?"
@@ -1257,7 +1287,21 @@
       "placeholder": "Nói với giọng điệu vui vẻ."
     },
     "jsonPath": {
-      "placeholder": "Nhập đường dẫn JSON"
+      "placeholder": "Nhập đường dẫn JSON",
+      "targetThisRow": "Điền dòng này từ JSON"
+    },
+    "jsonSource": {
+      "title": "Chọn đường dẫn JSON",
+      "tabs": {
+        "testResponse": "Phản hồi thử nghiệm",
+        "pasteSample": "Dán mẫu"
+      },
+      "pastePlaceholder": "Dán một mẫu phản hồi JSON",
+      "invalidJson": "JSON không hợp lệ",
+      "noTestResponse": "Chạy Test Now để xem phản hồi thực tế",
+      "activeTarget": "Đang điền dòng {row}",
+      "showMore": "Xem thêm",
+      "showMoreCount": "Xem thêm {count}"
     },
     "spreadsheets": {
       "label": "Bảng tính"
@@ -1550,6 +1594,7 @@
       "autoAssignConversation": "Tự động gán cuộc trò chuyện",
       "blockContact": "Chặn liên hệ",
       "broadcastActions": "Hành động phát sóng",
+      "callApi": "Yêu cầu bên ngoài",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
       "contactActions": "Hành động liên hệ",

@@ -77,7 +77,7 @@ export function ComboboxField<T extends FieldValues>({
   side,
   triggerValueChange,
   disableValues,
-  portal = false,
+  portal = true,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
 

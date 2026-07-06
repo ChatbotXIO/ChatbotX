@@ -1,4 +1,9 @@
+import { externalRequestService } from "@chatbotx.io/business"
 import { and, db, inArray } from "@chatbotx.io/database/client"
+import {
+  type SystemFieldType,
+  systemFieldTypes,
+} from "@chatbotx.io/database/partials"
 import {
   contactCustomFieldModel,
   customFieldModel,
@@ -6,12 +11,19 @@ import {
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import {
   type CountCharactersStepSchema,
+  type ExternalRequestStepSchema,
   type FormatDateStepSchema,
   type GenerateCodeStepSchema,
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import {
+  contactVariableService,
+  extractVariables,
+  getSystemFieldValue,
+  resolveContactVariablesDeep,
+} from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"
@@ -334,4 +346,98 @@ export async function getDataFromJSON({
   }
 
   return { status: "success", result: null }
+}
+
+/**
+ * Substitutes `{{var}}` placeholders in a JSON-body string with
+ * JSON.stringify-escaped values so contact data containing quotes,
+ * backslashes, or newlines can't break the resulting JSON payload.
+ */
+async function resolveJsonBodyVariables(
+  contactId: string,
+  jsonBody: string,
+): Promise<string> {
+  const variableNames = extractVariables(jsonBody)
+  if (variableNames.length === 0) {
+    return jsonBody
+  }
+
+  const { contact, customFieldsMap } =
+    await contactVariableService.getAll(contactId)
+
+  const mapping: Record<string, string> = {}
+  for (const variable of variableNames) {
+    if (systemFieldTypes.options.includes(variable as SystemFieldType)) {
+      const systemValue = await getSystemFieldValue(
+        contact,
+        variable as SystemFieldType,
+      )
+      if (systemValue) {
+        mapping[variable] = JSON.stringify(systemValue).slice(1, -1)
+      }
+    } else if (customFieldsMap.has(variable)) {
+      const rawValue = String(customFieldsMap.get(variable)?.value)
+      mapping[variable] = JSON.stringify(rawValue).slice(1, -1)
+    }
+  }
+
+  return jsonBody.replace(
+    /\{\{(\w+)\}\}/g,
+    (match, variable) => mapping[variable] ?? match,
+  )
+}
+
+export async function externalRequest({
+  conversation,
+  step,
+}: ExecuteStepProps<ExternalRequestStepSchema>): Promise<ExecuteStepResult> {
+  // Resolve everything except body.jsonBody through the generic deep-replace
+  // (raw substitution); jsonBody needs JSON-escaped substitution instead so
+  // contact data can't produce invalid or maliciously-injected JSON.
+  const { body, ...stepWithoutBody } = step
+  const resolvedStepWithoutBody = await resolveContactVariablesDeep(
+    conversation.contactId,
+    stepWithoutBody,
+  )
+  const resolvedBody =
+    body?.bodyType === "json"
+      ? {
+          ...body,
+          jsonBody: await resolveJsonBodyVariables(
+            conversation.contactId,
+            body.jsonBody,
+          ),
+        }
+      : await resolveContactVariablesDeep(conversation.contactId, body)
+
+  try {
+    const result = await externalRequestService.executeAndMap({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      input: {
+        method: resolvedStepWithoutBody.method,
+        url: resolvedStepWithoutBody.url,
+        headers: resolvedStepWithoutBody.headers,
+        body: resolvedBody,
+      },
+      mapping: resolvedStepWithoutBody.mapping,
+    })
+
+    if (result.statusCode >= 400) {
+      return {
+        status: "error",
+        errorMessage: `Request failed with status ${result.statusCode}`,
+        result: null,
+      }
+    }
+
+    return { status: "success", result: null }
+  } catch (error) {
+    return {
+      status: "error",
+      errorMessage:
+        error instanceof Error ? error.message : "External request failed",
+      result: null,
+    }
+  }
 }
