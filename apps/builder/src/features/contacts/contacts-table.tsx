@@ -181,16 +181,6 @@ export function ContactsTable({
     setOptimisticContactFilter(contactFilter)
   }, [contactFilter])
 
-  const handleContactFilterChange = useCallback(
-    (next: ContactFilterCriteria) => {
-      setOptimisticContactFilter(next)
-      setContactFilter(next).catch(() => {
-        setOptimisticContactFilter(contactFilter)
-      })
-    },
-    [contactFilter, setContactFilter],
-  )
-
   const exportFilter = useMemo<ExportContactsFilter>(
     () => ({
       keyword,
@@ -368,6 +358,17 @@ export function ContactsTable({
     shallow: false,
     clearOnDefault: true,
   })
+
+  const handleContactFilterChange = useCallback(
+    (next: ContactFilterCriteria) => {
+      table.setPageIndex(0)
+      setOptimisticContactFilter(next)
+      setContactFilter(next).catch(() => {
+        setOptimisticContactFilter(contactFilter)
+      })
+    },
+    [contactFilter, setContactFilter, table],
+  )
 
   return (
     <DataTable table={table}>

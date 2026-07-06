@@ -21,6 +21,10 @@ const BOOLEAN_OPERATORS = [
   operatorTypes.enum.isEmpty,
 ] as const satisfies readonly OperatorType[]
 
+const NON_NULLABLE_BOOLEAN_OPERATORS = [
+  operatorTypes.enum.eq,
+] as const satisfies readonly OperatorType[]
+
 const TEXT_FREE_OPERATORS = [
   operatorTypes.enum.eq,
   operatorTypes.enum.ne,
@@ -61,8 +65,8 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   followUp: BOOLEAN_OPERATORS,
   archived: BOOLEAN_OPERATORS,
   blocked: BOOLEAN_OPERATORS,
-  emailWasVerified: BOOLEAN_OPERATORS,
-  optedInForEmail: BOOLEAN_OPERATORS,
+  emailWasVerified: NON_NULLABLE_BOOLEAN_OPERATORS,
+  optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
 
   fullName: TEXT_FREE_OPERATORS,
   email: TEXT_FREE_OPERATORS,

@@ -41,6 +41,10 @@ const BOOLEAN_OPERATORS = [
   operatorTypes.enum.isEmpty,
 ] as const satisfies readonly OperatorType[]
 
+const NON_NULLABLE_BOOLEAN_OPERATORS = [
+  operatorTypes.enum.eq,
+] as const satisfies readonly OperatorType[]
+
 const TEXT_FREE_OPERATORS = [
   operatorTypes.enum.eq,
   operatorTypes.enum.ne,
@@ -75,6 +79,11 @@ const dropdownRule = {
 
 const booleanRule = {
   enabledOperators: BOOLEAN_OPERATORS,
+  singleInput: "boolean",
+} as const satisfies StaticFieldRule
+
+const nonNullableBooleanRule = {
+  enabledOperators: NON_NULLABLE_BOOLEAN_OPERATORS,
   singleInput: "boolean",
 } as const satisfies StaticFieldRule
 
@@ -158,8 +167,8 @@ const staticFieldRules: Record<string, StaticFieldRule> = {
   unread: booleanRule,
   phoneWasVerified: booleanRule,
   optedInForSms: booleanRule,
-  emailWasVerified: booleanRule,
-  optedInForEmail: booleanRule,
+  emailWasVerified: nonNullableBooleanRule,
+  optedInForEmail: nonNullableBooleanRule,
   shoppingCartIsEmpty: booleanRule,
   lastSentMessageFailed: booleanRule,
 

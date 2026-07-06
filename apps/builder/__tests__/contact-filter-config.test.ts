@@ -48,6 +48,21 @@ describe("contact filter operator config", () => {
     expect(option(options, operatorTypes.enum.isBetween)?.disabled).toBe(true)
   })
 
+  test("disables empty operators for non-nullable boolean fields", () => {
+    for (const name of ["emailWasVerified", "optedInForEmail"]) {
+      const config: FieldConfig = {
+        name,
+        formField: formFieldTypes.enum.boolean,
+        group: "email",
+      }
+
+      const options = getStaticFieldConditionOptions(config, conditionOptions)
+
+      expect(option(options, operatorTypes.enum.eq)?.disabled).toBe(false)
+      expect(option(options, operatorTypes.enum.isEmpty)?.disabled).toBe(true)
+    }
+  })
+
   test("enables all number custom-field operator families", () => {
     const config: FieldConfig = {
       name: "customField:cf-1",

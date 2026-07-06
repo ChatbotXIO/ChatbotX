@@ -83,6 +83,32 @@ describe("staticFieldFilter", () => {
       }).success,
     ).toBe(true)
   })
+
+  test("rejects empty operators for non-nullable boolean fields", () => {
+    for (const field of ["emailWasVerified", "optedInForEmail"] as const) {
+      expect(
+        staticFieldFilter(field).safeParse({
+          field,
+          operator: operatorTypes.enum.isEmpty,
+        }).success,
+      ).toBe(false)
+
+      expect(
+        staticFieldFilter(field).safeParse({
+          field,
+          operator: operatorTypes.enum.eq,
+          value: "true",
+        }).success,
+      ).toBe(true)
+    }
+
+    expect(
+      staticFieldFilter("subscribedToBroadcast").safeParse({
+        field: "subscribedToBroadcast",
+        operator: operatorTypes.enum.isEmpty,
+      }).success,
+    ).toBe(true)
+  })
 })
 
 describe("customFieldConditionSchema", () => {

@@ -1,12 +1,11 @@
 import {
   type AnyColumn,
   inArray,
-  notInArray,
   relationsFilterToSQL,
   type SQL,
   sql,
 } from "drizzle-orm"
-import { operatorTypes } from "../partials"
+import { type OperatorType, operatorTypes } from "../partials"
 import {
   contactCustomFieldModel,
   contactInboxModel,
@@ -47,6 +46,9 @@ export type ContactWhereInput = {
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
 
+const escapeLikePattern = (value: string): string =>
+  value.replace(/[\\%_]/g, "\\$&")
+
 // ── Relation conditions as correlated EXISTS subqueries ─────────────────────────
 // `relationsFilterToSQL` (used by the count / broadcast-audience / export paths)
 // does NOT understand nested relation filter fields (`contactInboxes`, `tags`,
@@ -85,17 +87,41 @@ const tagsExists = (predicate: SQL | undefined, negate = false): ContactWhere =>
     negate,
   )
 
-const conversationExists = (predicate: SQL): ContactWhere =>
+const conversationExists = (predicate: SQL, negate = false): ContactWhere =>
   existsWhere(
     (contactId) =>
       sql`SELECT 1 FROM ${conversationModel} WHERE ${conversationModel.contactId} = ${contactId} AND ${predicate}`,
+    negate,
   )
 
 const toArrayValue = (value: unknown): string[] =>
   Array.isArray(value) ? (value as string[]) : [value as string]
 
+const RELATION_SET_OPERATORS = new Set<string>([
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
+  operatorTypes.enum.eq,
+  operatorTypes.enum.ne,
+  operatorTypes.enum.isEmpty,
+])
+
+type RelationSetFilter = {
+  exists: (predicate: SQL | undefined, negate?: boolean) => ContactWhere
+  column: AnyColumn
+}
+
+const RELATION_SET_FILTERS: Record<string, RelationSetFilter> = {
+  source: { exists: contactInboxExists, column: contactInboxModel.source },
+  currentChannel: {
+    exists: contactInboxExists,
+    column: contactInboxModel.channel,
+  },
+  inbox: { exists: contactInboxExists, column: contactInboxModel.inboxId },
+  tags: { exists: tagsExists, column: contactsToTagsModel.tagId },
+}
+
 const buildKeywordWhere = (keyword: string): ContactWhere => {
-  const normalizedKeyword = `%${keyword.toLowerCase()}%`
+  const normalizedKeyword = `%${escapeLikePattern(keyword.toLowerCase())}%`
 
   return {
     OR: [
@@ -169,9 +195,10 @@ export const buildContactInboxContactFilterSQL = ({
  *  - Direct columns (fullName, email, gender, country, locale, timezone)
  *  - Column aliases (phone → phoneNumber, contactCreatedAt → createdAt)
  *  - Boolean-from-timestamp (subscribedToBroadcast → broadcastSubscribedAt, blocked → blockedAt)
- *  - Time-based booleans (interactedInLast24h → lastActivityAt)
- *  - Relations (tags, source / currentChannel / inbox → contactInboxes)
- *  - Conversation relations (archived, conversationTransferredToHuman)
+ *  - ContactInbox timestamps (lastInteraction → latest incoming message,
+ *    interactedInLast24h → incoming message within the last 24 hours)
+ *  - Relation sets (tags, source / currentChannel / inbox) as correlated EXISTS
+ *  - Conversation booleans (archived, followUp, transferred-to-human) as EXISTS
  *
  * Fields that require complex SQL and are not yet implemented produce no condition.
  */
@@ -224,7 +251,11 @@ function buildConditionWhere(
       return buildDateColumnWhere("lastReadAt", operator, value)
 
     case "lastInteraction":
-      return buildDateColumnWhere("lastActivityAt", operator, value)
+      return buildLatestContactInboxDateWhere(
+        contactInboxModel.lastIncomingMessageAt,
+        operator,
+        value,
+      )
 
     // ── Direct boolean columns ────────────────────────────────────────────────
     case "emailWasVerified":
@@ -241,109 +272,20 @@ function buildConditionWhere(
       return buildBooleanFromTimestamp("blockedAt", operator, value)
 
     // ── Computed time-based boolean ───────────────────────────────────────────
-    case "interactedInLast24h": {
-      if (operator !== operatorTypes.enum.eq) {
-        return {}
-      }
-      const predicate = sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`
-      return contactInboxExists(predicate, value !== "true")
-    }
-
-    // ── Relation: tags (name in / notIn) ─────────────────────────────────────
-    case "tags": {
-      if (
-        operator !== operatorTypes.enum.in &&
-        operator !== operatorTypes.enum.notIn &&
-        operator !== operatorTypes.enum.eq &&
-        operator !== operatorTypes.enum.ne &&
-        operator !== operatorTypes.enum.isEmpty
-      ) {
-        return {}
-      }
-      if (operator === operatorTypes.enum.isEmpty) {
-        return tagsExists(undefined, true)
-      }
-      const values = toArrayValue(value)
-      const positive =
-        operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-      return tagsExists(
-        positive
-          ? inArray(contactsToTagsModel.tagId, values)
-          : notInArray(contactsToTagsModel.tagId, values),
+    case "interactedInLast24h":
+      return buildExistsBooleanWhere(
+        contactInboxExists,
+        sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`,
+        operator,
+        value,
       )
-    }
 
-    // ── Relation: contactInboxes (source) ────────────────────────────────────
-    case "source": {
-      if (
-        operator !== operatorTypes.enum.in &&
-        operator !== operatorTypes.enum.notIn &&
-        operator !== operatorTypes.enum.eq &&
-        operator !== operatorTypes.enum.ne &&
-        operator !== operatorTypes.enum.isEmpty
-      ) {
-        return {}
-      }
-      if (operator === operatorTypes.enum.isEmpty) {
-        return contactInboxExists(undefined, true)
-      }
-      const values = toArrayValue(value)
-      const positive =
-        operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-      return contactInboxExists(
-        positive
-          ? inArray(contactInboxModel.source, values)
-          : notInArray(contactInboxModel.source, values),
-      )
-    }
-
-    // ── Relation: contactInboxes (currentChannel) ───────────────────────────
-    case "currentChannel": {
-      if (
-        operator !== operatorTypes.enum.in &&
-        operator !== operatorTypes.enum.notIn &&
-        operator !== operatorTypes.enum.eq &&
-        operator !== operatorTypes.enum.ne &&
-        operator !== operatorTypes.enum.isEmpty
-      ) {
-        return {}
-      }
-      if (operator === operatorTypes.enum.isEmpty) {
-        return contactInboxExists(undefined, true)
-      }
-      const values = toArrayValue(value)
-      const positive =
-        operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-      return contactInboxExists(
-        positive
-          ? inArray(contactInboxModel.channel, values)
-          : notInArray(contactInboxModel.channel, values),
-      )
-    }
-
-    // ── Relation: contactInboxes (inboxId) ──────────────────────────────────
-    case "inbox": {
-      if (
-        operator !== operatorTypes.enum.in &&
-        operator !== operatorTypes.enum.notIn &&
-        operator !== operatorTypes.enum.eq &&
-        operator !== operatorTypes.enum.ne &&
-        operator !== operatorTypes.enum.isEmpty
-      ) {
-        return {}
-      }
-      if (operator === operatorTypes.enum.isEmpty) {
-        return contactInboxExists(undefined, true)
-      }
-      const values = toArrayValue(value)
-      const positive =
-        operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-      return contactInboxExists(
-        positive
-          ? inArray(contactInboxModel.inboxId, values)
-          : notInArray(contactInboxModel.inboxId, values),
-      )
-    }
+    // ── Relation set fields ──────────────────────────────────────────────────
+    case "tags":
+    case "source":
+    case "currentChannel":
+    case "inbox":
+      return buildRelationSetWhere(field, operator, value)
 
     // ── Dynamic custom field (value match on contactCustomFields) ─────────────
     case "customField": {
@@ -351,7 +293,7 @@ function buildConditionWhere(
       if (!customFieldId) {
         return {}
       }
-      const comparison = buildCustomFieldValueComparison(
+      const comparison = buildCustomFieldComparison(
         operator,
         value,
         condition.valueType,
@@ -362,38 +304,39 @@ function buildConditionWhere(
       // contactCustomFields.value is text; numeric/date operators cast it. A
       // correlated EXISTS keeps the cast out of the relational filter (which
       // cannot cast a joined column).
-      return {
-        RAW: (table: Record<string, AnyColumn>): SQL =>
-          sql`EXISTS (SELECT 1 FROM ${contactCustomFieldModel} WHERE ${contactCustomFieldModel.contactId} = ${table.id} AND ${contactCustomFieldModel.customFieldId} = ${customFieldId} AND ${comparison})`,
-      }
+      return existsWhere(
+        (contactId) =>
+          sql`SELECT 1 FROM ${contactCustomFieldModel} WHERE ${contactCustomFieldModel.contactId} = ${contactId} AND ${contactCustomFieldModel.customFieldId} = ${customFieldId} AND ${comparison.predicate}`,
+        comparison.negate,
+      )
     }
 
     // ── Conversation relation: archived ───────────────────────────────────────
     case "archived":
-      return buildBooleanConversationRelation(
-        conversationModel.archivedAt,
+      return buildExistsBooleanWhere(
+        conversationExists,
+        sql`${conversationModel.archivedAt} IS NOT NULL`,
         operator,
         value,
       )
 
     // ── Conversation relation: followUp ───────────────────────────────────────
     case "followUp":
-      return buildBooleanConversationColumn(
-        conversationModel.followed,
+      return buildExistsBooleanWhere(
+        conversationExists,
+        sql`${conversationModel.followed} = true`,
         operator,
         value,
       )
 
     // ── Conversation relation: conversationTransferredToHuman ─────────────────
-    case "conversationTransferredToHuman": {
-      if (operator !== operatorTypes.enum.eq) {
-        return {}
-      }
-      // transferred to human ⟺ bot disabled
-      return conversationExists(
-        sql`${conversationModel.botEnabled} = ${value !== "true"}`,
+    case "conversationTransferredToHuman":
+      return buildExistsBooleanWhere(
+        conversationExists,
+        sql`${conversationModel.botEnabled} = false`,
+        operator,
+        value,
       )
-    }
 
     // ── Not yet implemented (complex SQL or low-priority) ─────────────────────
     // continent — not a DB column (derived from country)
@@ -415,6 +358,32 @@ const DATETIME_VALUE_RE = new RegExp(DATETIME_VALUE_PATTERN)
 const isValidDateTimeFilterValue = (value: string): boolean =>
   DATETIME_VALUE_RE.test(value) && !Number.isNaN(Date.parse(value))
 
+const COLUMN_NEGATION_OPERATORS = new Set<string>([
+  operatorTypes.enum.ne,
+  operatorTypes.enum.notIn,
+  operatorTypes.enum.notContains,
+])
+
+function buildRelationSetWhere(
+  field: string,
+  operator: string,
+  value: unknown,
+): ContactWhere {
+  const filter = RELATION_SET_FILTERS[field]
+  if (!(filter && RELATION_SET_OPERATORS.has(operator))) {
+    return {}
+  }
+
+  if (operator === operatorTypes.enum.isEmpty) {
+    return filter.exists(undefined, true)
+  }
+
+  const values = toArrayValue(value)
+  const positive =
+    operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
+  return filter.exists(inArray(filter.column, values), !positive)
+}
+
 const buildRawColumnWhere = (
   columnName: string,
   comparison: (column: AnyColumn) => SQL,
@@ -432,9 +401,10 @@ function buildColumnWhere(
     value !== "" &&
     operator === operatorTypes.enum.startsWith
   ) {
+    const escapedValue = escapeLikePattern(value)
     return buildRawColumnWhere(
       columnName,
-      (column) => sql`${column} ILIKE ${`${value}%`}`,
+      (column) => sql`${column} ILIKE ${`${escapedValue}%`}`,
     )
   }
 
@@ -443,10 +413,34 @@ function buildColumnWhere(
     value !== "" &&
     operator === operatorTypes.enum.endsWith
   ) {
+    const escapedValue = escapeLikePattern(value)
     return buildRawColumnWhere(
       columnName,
-      (column) => sql`${column} ILIKE ${`%${value}`}`,
+      (column) => sql`${column} ILIKE ${`%${escapedValue}`}`,
     )
+  }
+
+  if (operator === operatorTypes.enum.isEmpty) {
+    if (columnName === "gender") {
+      return { [columnName]: { isNull: true } }
+    }
+
+    return {
+      OR: [{ [columnName]: { isNull: true } }, { [columnName]: "" }],
+    }
+  }
+
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    if (columnName === "gender") {
+      return { [columnName]: { isNotNull: true } }
+    }
+
+    return {
+      AND: [
+        { [columnName]: { isNotNull: true } },
+        { [columnName]: { ne: "" } },
+      ],
+    }
   }
 
   if (
@@ -456,7 +450,10 @@ function buildColumnWhere(
     return {}
   }
 
-  return { [columnName]: applyOperator(operator, value) }
+  const condition = { [columnName]: applyOperator(operator, value) }
+  return COLUMN_NEGATION_OPERATORS.has(operator)
+    ? { OR: [condition, { [columnName]: { isNull: true } }] }
+    : condition
 }
 
 function buildDateColumnWhere(
@@ -491,7 +488,7 @@ function buildDateColumnWhere(
     return buildRawColumnWhere(columnName, (column) =>
       operator === operatorTypes.enum.isBetween
         ? sql`(${column} >= ${intervalValue[0]}::timestamptz AND ${column} <= ${intervalValue[1]}::timestamptz)`
-        : sql`(${column} < ${intervalValue[0]}::timestamptz OR ${column} > ${intervalValue[1]}::timestamptz)`,
+        : sql`(${column} < ${intervalValue[0]}::timestamptz OR ${column} > ${intervalValue[1]}::timestamptz OR ${column} IS NULL)`,
     )
   }
 
@@ -515,7 +512,7 @@ function buildDateColumnWhere(
     return buildRawColumnWhere(columnName, (column) => {
       const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
       const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
-      return sql`(${column} < ${dayStart} OR ${column} >= ${dayEnd})`
+      return sql`(${column} < ${dayStart} OR ${column} >= ${dayEnd} OR ${column} IS NULL)`
     })
   }
 
@@ -545,175 +542,290 @@ function buildDateColumnWhere(
   }
 }
 
-/**
- * Builds the `value`-comparison SQL for a custom-field condition. The stored
- * value is `text`, so numeric/date operators cast it. Date casts use a guarded
- * CASE expression so arbitrary text in a custom-field row does not abort the
- * whole contact list/export query. Returns `undefined` for unsupported
- * operator/type combos, which the caller treats as a no-op condition.
- */
-function buildCustomFieldValueComparison(
+function buildLatestContactInboxDateWhere(
+  column: AnyColumn,
   operator: string,
   value: unknown,
-  valueType: string | undefined,
-): SQL | undefined {
-  const column = contactCustomFieldModel.value
+): ContactWhere {
+  const buildLatestWhere = (
+    comparison: (latestValue: SQL) => SQL,
+  ): ContactWhere => ({
+    RAW: (table: Record<string, AnyColumn>): SQL => {
+      const latestValue = sql.raw('"latestInteraction"."latest"')
+      return sql`EXISTS (
+        SELECT 1
+        FROM (
+          SELECT MAX(${column}) AS "latest"
+          FROM ${contactInboxModel}
+          WHERE ${contactInboxModel.contactId} = ${table.id}
+        ) AS "latestInteraction"
+        WHERE ${comparison(latestValue)}
+      )`
+    },
+  })
 
   if (operator === operatorTypes.enum.isEmpty) {
-    return sql`(${column} IS NULL OR ${column} = '')`
+    return buildLatestWhere((latestValue) => sql`${latestValue} IS NULL`)
   }
   if (operator === operatorTypes.enum.isNotEmpty) {
-    return sql`(${column} IS NOT NULL AND ${column} <> '')`
+    return buildLatestWhere((latestValue) => sql`${latestValue} IS NOT NULL`)
   }
 
-  const isIntervalOperator =
-    operator === operatorTypes.enum.isBetween ||
-    operator === operatorTypes.enum.notBetween
   const intervalValue =
     Array.isArray(value) &&
     typeof value[0] === "string" &&
     typeof value[1] === "string" &&
-    value[0] !== "" &&
-    value[1] !== ""
+    isValidDateTimeFilterValue(value[0]) &&
+    isValidDateTimeFilterValue(value[1])
       ? [value[0], value[1]]
       : undefined
 
-  if (isIntervalOperator && !intervalValue) {
-    return
+  if (
+    operator === operatorTypes.enum.isBetween ||
+    operator === operatorTypes.enum.notBetween
+  ) {
+    if (!intervalValue) {
+      return {}
+    }
+
+    return buildLatestWhere((latestValue) =>
+      operator === operatorTypes.enum.isBetween
+        ? sql`(${latestValue} >= ${intervalValue[0]}::timestamptz AND ${latestValue} <= ${intervalValue[1]}::timestamptz)`
+        : sql`(${latestValue} < ${intervalValue[0]}::timestamptz OR ${latestValue} > ${intervalValue[1]}::timestamptz OR ${latestValue} IS NULL)`,
+    )
   }
 
+  if (
+    typeof value !== "string" ||
+    value === "" ||
+    !isValidDateTimeFilterValue(value)
+  ) {
+    return {}
+  }
+
+  if (
+    operator === operatorTypes.enum.eq ||
+    operator === operatorTypes.enum.ne
+  ) {
+    const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
+    const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
+    return buildLatestWhere((latestValue) =>
+      operator === operatorTypes.enum.eq
+        ? sql`(${latestValue} >= ${dayStart} AND ${latestValue} < ${dayEnd})`
+        : sql`(${latestValue} < ${dayStart} OR ${latestValue} >= ${dayEnd} OR ${latestValue} IS NULL)`,
+    )
+  }
+
+  switch (operator) {
+    case operatorTypes.enum.gt:
+      return buildLatestWhere(
+        (latestValue) => sql`${latestValue} > ${value}::timestamptz`,
+      )
+    case operatorTypes.enum.gte:
+      return buildLatestWhere(
+        (latestValue) => sql`${latestValue} >= ${value}::timestamptz`,
+      )
+    case operatorTypes.enum.lt:
+      return buildLatestWhere(
+        (latestValue) => sql`${latestValue} < ${value}::timestamptz`,
+      )
+    case operatorTypes.enum.lte:
+      return buildLatestWhere(
+        (latestValue) => sql`${latestValue} <= ${value}::timestamptz`,
+      )
+    default:
+      return {}
+  }
+}
+
+type CustomFieldComparison = { predicate: SQL; negate: boolean }
+type IntervalValue = [string, string]
+
+const NEGATION_TO_POSITIVE: Partial<Record<OperatorType, OperatorType>> = {
+  [operatorTypes.enum.ne]: operatorTypes.enum.eq,
+  [operatorTypes.enum.notContains]: operatorTypes.enum.contains,
+  [operatorTypes.enum.notBetween]: operatorTypes.enum.isBetween,
+  [operatorTypes.enum.isEmpty]: operatorTypes.enum.isNotEmpty,
+}
+
+function buildCustomFieldComparison(
+  operator: string,
+  value: unknown,
+  valueType: string | undefined,
+): CustomFieldComparison | undefined {
+  const positiveOperator = NEGATION_TO_POSITIVE[operator as OperatorType]
+  const negate = positiveOperator !== undefined
+  const predicate = buildCustomFieldPositivePredicate(
+    positiveOperator ?? operator,
+    value,
+    valueType,
+  )
+  return predicate ? { predicate, negate } : undefined
+}
+
+/**
+ * Builds the positive `value` predicate for a custom-field condition. The stored
+ * value is `text`, so numeric/date operators cast it. Date casts use a guarded
+ * CASE expression so arbitrary text in a custom-field row does not abort the
+ * whole contact list/export query.
+ */
+function buildCustomFieldPositivePredicate(
+  operator: string,
+  value: unknown,
+  valueType: string | undefined,
+): SQL | undefined {
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    const column = contactCustomFieldModel.value
+    return sql`(${column} IS NOT NULL AND ${column} <> '')`
+  }
+
+  const intervalValue = getCustomFieldIntervalValue(value)
   if (valueType === "number") {
-    if (intervalValue) {
-      if (
-        !(
-          NUMERIC_VALUE_PATTERN.test(intervalValue[0]) &&
-          NUMERIC_VALUE_PATTERN.test(intervalValue[1])
-        )
-      ) {
-        return
-      }
-      const numeric = sql`NULLIF(${column}, '')::numeric`
-      const guard = sql`${column} ~ '^-?[0-9]+(\\.[0-9]+)?$'`
-      const min = Number(intervalValue[0])
-      const max = Number(intervalValue[1])
-      if (operator === operatorTypes.enum.isBetween) {
-        return sql`(${guard} AND ${numeric} >= ${min} AND ${numeric} <= ${max})`
-      }
-      // Invalid stored values are intentionally outside a negated numeric range.
-      return sql`(NOT ${guard} OR ${numeric} < ${min} OR ${numeric} > ${max})`
-    }
-
-    if (typeof value !== "string" || value === "") {
-      return
-    }
-
-    switch (operator) {
-      case operatorTypes.enum.contains:
-        return sql`${column} ILIKE ${`%${value}%`}`
-      case operatorTypes.enum.notContains:
-        return sql`${column} NOT ILIKE ${`%${value}%`}`
-      case operatorTypes.enum.startsWith:
-        return sql`${column} ILIKE ${`${value}%`}`
-      case operatorTypes.enum.endsWith:
-        return sql`${column} ILIKE ${`%${value}`}`
-      default:
-        break
-    }
-
-    if (!NUMERIC_VALUE_PATTERN.test(value)) {
-      return
-    }
-    const numeric = sql`NULLIF(${column}, '')::numeric`
-    const guard = sql`${column} ~ '^-?[0-9]+(\\.[0-9]+)?$'`
-    const n = Number(value)
-    switch (operator) {
-      case operatorTypes.enum.eq:
-        return sql`(${guard} AND ${numeric} = ${n})`
-      case operatorTypes.enum.ne:
-        // Invalid stored values are intentionally not equal to any valid number.
-        return sql`(NOT ${guard} OR ${numeric} <> ${n})`
-      case operatorTypes.enum.gt:
-        return sql`(${guard} AND ${numeric} > ${n})`
-      case operatorTypes.enum.gte:
-        return sql`(${guard} AND ${numeric} >= ${n})`
-      case operatorTypes.enum.lt:
-        return sql`(${guard} AND ${numeric} < ${n})`
-      case operatorTypes.enum.lte:
-        return sql`(${guard} AND ${numeric} <= ${n})`
-      default:
-        return
-    }
+    return buildNumberCustomFieldPredicate(operator, value, intervalValue)
   }
-
   if (valueType === "datetime") {
-    const guard = sql`(${column} IS NOT NULL AND ${column} <> '' AND ${column} ~ ${DATETIME_VALUE_PATTERN})`
-    const ts = sql`CASE WHEN ${guard} THEN NULLIF(${column}, '')::timestamptz END`
+    return buildDatetimeCustomFieldPredicate(operator, value, intervalValue)
+  }
+  return buildTextCustomFieldPredicate(operator, value)
+}
 
-    if (intervalValue) {
-      if (
-        !(
-          isValidDateTimeFilterValue(intervalValue[0]) &&
-          isValidDateTimeFilterValue(intervalValue[1])
-        )
-      ) {
-        return
-      }
+function getCustomFieldIntervalValue(
+  value: unknown,
+): IntervalValue | undefined {
+  return Array.isArray(value) &&
+    typeof value[0] === "string" &&
+    typeof value[1] === "string" &&
+    value[0] !== "" &&
+    value[1] !== ""
+    ? [value[0], value[1]]
+    : undefined
+}
 
-      if (operator === operatorTypes.enum.isBetween) {
-        return sql`(${guard} AND ${ts} >= ${intervalValue[0]}::timestamptz AND ${ts} <= ${intervalValue[1]}::timestamptz)`
-      }
+function buildNumberCustomFieldPredicate(
+  operator: string,
+  value: unknown,
+  intervalValue: IntervalValue | undefined,
+): SQL | undefined {
+  const column = contactCustomFieldModel.value
+  const numeric = sql`NULLIF(${column}, '')::numeric`
+  const guard = sql`${column} ~ '^-?[0-9]+(\\.[0-9]+)?$'`
 
-      // Invalid stored values are intentionally outside a negated date range.
-      return sql`(${guard} IS NOT TRUE OR ${ts} < ${intervalValue[0]}::timestamptz OR ${ts} > ${intervalValue[1]}::timestamptz)`
-    }
-
+  if (operator === operatorTypes.enum.isBetween) {
     if (
-      typeof value !== "string" ||
-      value === "" ||
-      !isValidDateTimeFilterValue(value)
+      !(
+        intervalValue &&
+        NUMERIC_VALUE_PATTERN.test(intervalValue[0]) &&
+        NUMERIC_VALUE_PATTERN.test(intervalValue[1])
+      )
     ) {
       return
     }
-    const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
-    const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
-
-    switch (operator) {
-      case operatorTypes.enum.eq:
-        return sql`(${guard} AND ${ts} >= ${dayStart} AND ${ts} < ${dayEnd})`
-      case operatorTypes.enum.ne:
-        // Invalid stored values are intentionally not equal to any valid date.
-        return sql`(${guard} IS NOT TRUE OR ${ts} < ${dayStart} OR ${ts} >= ${dayEnd})`
-      case operatorTypes.enum.gt:
-        return sql`(${guard} AND ${ts} > ${value}::timestamptz)`
-      case operatorTypes.enum.gte:
-        return sql`(${guard} AND ${ts} >= ${value}::timestamptz)`
-      case operatorTypes.enum.lt:
-        return sql`(${guard} AND ${ts} < ${value}::timestamptz)`
-      case operatorTypes.enum.lte:
-        return sql`(${guard} AND ${ts} <= ${value}::timestamptz)`
-      default:
-        return
-    }
+    return sql`(${guard} AND ${numeric} >= ${Number(intervalValue[0])} AND ${numeric} <= ${Number(intervalValue[1])})`
   }
 
   if (typeof value !== "string" || value === "") {
     return
   }
 
-  // text / boolean / select — plain text comparison
+  switch (operator) {
+    case operatorTypes.enum.contains:
+      return sql`${column} ILIKE ${`%${escapeLikePattern(value)}%`}`
+    case operatorTypes.enum.startsWith:
+      return sql`${column} ILIKE ${`${escapeLikePattern(value)}%`}`
+    case operatorTypes.enum.endsWith:
+      return sql`${column} ILIKE ${`%${escapeLikePattern(value)}`}`
+    default:
+      break
+  }
+
+  if (!NUMERIC_VALUE_PATTERN.test(value)) {
+    return
+  }
+
+  const n = Number(value)
+  switch (operator) {
+    case operatorTypes.enum.eq:
+      return sql`(${guard} AND ${numeric} = ${n})`
+    case operatorTypes.enum.gt:
+      return sql`(${guard} AND ${numeric} > ${n})`
+    case operatorTypes.enum.gte:
+      return sql`(${guard} AND ${numeric} >= ${n})`
+    case operatorTypes.enum.lt:
+      return sql`(${guard} AND ${numeric} < ${n})`
+    case operatorTypes.enum.lte:
+      return sql`(${guard} AND ${numeric} <= ${n})`
+    default:
+      return
+  }
+}
+
+function buildDatetimeCustomFieldPredicate(
+  operator: string,
+  value: unknown,
+  intervalValue: IntervalValue | undefined,
+): SQL | undefined {
+  const column = contactCustomFieldModel.value
+  const guard = sql`(${column} IS NOT NULL AND ${column} <> '' AND ${column} ~ ${DATETIME_VALUE_PATTERN})`
+  const ts = sql`CASE WHEN ${guard} THEN NULLIF(${column}, '')::timestamptz END`
+
+  if (operator === operatorTypes.enum.isBetween) {
+    if (
+      !(
+        intervalValue &&
+        isValidDateTimeFilterValue(intervalValue[0]) &&
+        isValidDateTimeFilterValue(intervalValue[1])
+      )
+    ) {
+      return
+    }
+    return sql`(${guard} AND ${ts} >= ${intervalValue[0]}::timestamptz AND ${ts} <= ${intervalValue[1]}::timestamptz)`
+  }
+
+  if (
+    typeof value !== "string" ||
+    value === "" ||
+    !isValidDateTimeFilterValue(value)
+  ) {
+    return
+  }
+
+  const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
+  const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
+
+  switch (operator) {
+    case operatorTypes.enum.eq:
+      return sql`(${guard} AND ${ts} >= ${dayStart} AND ${ts} < ${dayEnd})`
+    case operatorTypes.enum.gt:
+      return sql`(${guard} AND ${ts} > ${value}::timestamptz)`
+    case operatorTypes.enum.gte:
+      return sql`(${guard} AND ${ts} >= ${value}::timestamptz)`
+    case operatorTypes.enum.lt:
+      return sql`(${guard} AND ${ts} < ${value}::timestamptz)`
+    case operatorTypes.enum.lte:
+      return sql`(${guard} AND ${ts} <= ${value}::timestamptz)`
+    default:
+      return
+  }
+}
+
+function buildTextCustomFieldPredicate(
+  operator: string,
+  value: unknown,
+): SQL | undefined {
+  if (typeof value !== "string" || value === "") {
+    return
+  }
+
+  const column = contactCustomFieldModel.value
   switch (operator) {
     case operatorTypes.enum.eq:
       return sql`${column} = ${value}`
-    case operatorTypes.enum.ne:
-      return sql`${column} <> ${value}`
     case operatorTypes.enum.contains:
-      return sql`${column} ILIKE ${`%${value}%`}`
-    case operatorTypes.enum.notContains:
-      return sql`${column} NOT ILIKE ${`%${value}%`}`
+      return sql`${column} ILIKE ${`%${escapeLikePattern(value)}%`}`
     case operatorTypes.enum.startsWith:
-      return sql`${column} ILIKE ${`${value}%`}`
+      return sql`${column} ILIKE ${`${escapeLikePattern(value)}%`}`
     case operatorTypes.enum.endsWith:
-      return sql`${column} ILIKE ${`%${value}`}`
+      return sql`${column} ILIKE ${`%${escapeLikePattern(value)}`}`
     default:
       return
   }
@@ -740,9 +852,9 @@ function applyOperator(operator: string, value: unknown): unknown {
     case operatorTypes.enum.isNotEmpty:
       return { isNotNull: true }
     case operatorTypes.enum.contains:
-      return { ilike: `%${value}%` }
+      return { ilike: `%${escapeLikePattern(String(value))}%` }
     case operatorTypes.enum.notContains:
-      return { notIlike: `%${value}%` }
+      return { notIlike: `%${escapeLikePattern(String(value))}%` }
     case operatorTypes.enum.lt:
       return { lt: value }
     case operatorTypes.enum.lte:
@@ -789,35 +901,20 @@ function buildBooleanColumn(
   return {}
 }
 
-function buildBooleanConversationColumn(
-  column: AnyColumn,
+function buildExistsBooleanWhere(
+  exists: (predicate: SQL, negate?: boolean) => ContactWhere,
+  yesPredicate: SQL,
   operator: string,
   value: unknown,
 ): ContactWhere {
-  if (operator === operatorTypes.enum.isEmpty) {
-    return conversationExists(sql`${column} IS NULL`)
+  const isYes =
+    (operator === operatorTypes.enum.eq && value === "true") ||
+    operator === operatorTypes.enum.isNotEmpty
+  const isNo =
+    (operator === operatorTypes.enum.eq && value !== "true") ||
+    operator === operatorTypes.enum.isEmpty
+  if (!(isYes || isNo)) {
+    return {}
   }
-  if (operator === operatorTypes.enum.eq) {
-    return conversationExists(sql`${column} = ${value === "true"}`)
-  }
-  return {}
-}
-
-function buildBooleanConversationRelation(
-  column: AnyColumn,
-  operator: string,
-  value: unknown,
-): ContactWhere {
-  if (operator === operatorTypes.enum.isEmpty) {
-    return conversationExists(sql`${column} IS NULL`)
-  }
-  if (operator === operatorTypes.enum.isNotEmpty) {
-    return conversationExists(sql`${column} IS NOT NULL`)
-  }
-  if (operator === operatorTypes.enum.eq) {
-    return conversationExists(
-      value === "true" ? sql`${column} IS NOT NULL` : sql`${column} IS NULL`,
-    )
-  }
-  return {}
+  return exists(yesPredicate, isNo)
 }

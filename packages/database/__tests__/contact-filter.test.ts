@@ -185,7 +185,24 @@ describe("applyContactFilter", () => {
     expect(query.params).toContain(param)
   })
 
-  test("maps dropdown eq/ne array values to in/notIn EXISTS subqueries", () => {
+  test("escapes LIKE wildcards for static text filters", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "email",
+            operator: operatorTypes.enum.contains,
+            value: "100%_ready\\ok",
+          },
+        ],
+      }),
+    )
+
+    expect(query.params).toContain("%100\\%\\_ready\\\\ok%")
+  })
+
+  test("maps dropdown eq/ne array values to EXISTS/NOT EXISTS IN subqueries", () => {
     const channelQuery = renderContactWhere(
       applyContactFilter({
         operator: "and",
@@ -214,7 +231,9 @@ describe("applyContactFilter", () => {
       }),
     )
 
-    expect(tagQuery.sql).toContain('"ContactToTag"."tagId" not in')
+    expect(tagQuery.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactToTag"')
+    expect(tagQuery.sql).toContain('"ContactToTag"."tagId" in')
+    expect(tagQuery.sql).not.toContain('"ContactToTag"."tagId" not in')
   })
 
   test("renders currentChannel isEmpty as NOT EXISTS ContactInbox", () => {
@@ -399,6 +418,7 @@ describe("applyContactFilter", () => {
       "2026-05-01T00:00:00Z",
       "2026-05-31T23:59:59Z",
     ])
+    expect(query.sql).not.toContain('"Contact"."lastReadAt" IS NULL')
   })
 
   test("renders static date notBetween with supported SQL", () => {
@@ -417,6 +437,7 @@ describe("applyContactFilter", () => {
 
     expect(query.sql).toContain('"Contact"."lastReadAt" <')
     expect(query.sql).toContain('"Contact"."lastReadAt" >')
+    expect(query.sql).toContain('"Contact"."lastReadAt" IS NULL')
     expect(query.sql).toContain("::timestamptz")
   })
 
@@ -631,13 +652,40 @@ describe("applyContactFilter — direct column fields", () => {
 
   test.each([
     [operatorTypes.enum.eq, "Ada", { fullName: "Ada" }],
-    [operatorTypes.enum.ne, "Ada", { fullName: { ne: "Ada" } }],
+    [
+      operatorTypes.enum.ne,
+      "Ada",
+      {
+        OR: [{ fullName: { ne: "Ada" } }, { fullName: { isNull: true } }],
+      },
+    ],
     [operatorTypes.enum.eq, ["a", "b"], { fullName: { in: ["a", "b"] } }],
-    [operatorTypes.enum.ne, ["a"], { fullName: { notIn: ["a"] } }],
+    [
+      operatorTypes.enum.ne,
+      ["a"],
+      {
+        OR: [{ fullName: { notIn: ["a"] } }, { fullName: { isNull: true } }],
+      },
+    ],
     [operatorTypes.enum.in, ["a", "b"], { fullName: { in: ["a", "b"] } }],
-    [operatorTypes.enum.notIn, ["a"], { fullName: { notIn: ["a"] } }],
+    [
+      operatorTypes.enum.notIn,
+      ["a"],
+      {
+        OR: [{ fullName: { notIn: ["a"] } }, { fullName: { isNull: true } }],
+      },
+    ],
     [operatorTypes.enum.contains, "ad", { fullName: { ilike: "%ad%" } }],
-    [operatorTypes.enum.notContains, "ad", { fullName: { notIlike: "%ad%" } }],
+    [
+      operatorTypes.enum.notContains,
+      "ad",
+      {
+        OR: [
+          { fullName: { notIlike: "%ad%" } },
+          { fullName: { isNull: true } },
+        ],
+      },
+    ],
     [operatorTypes.enum.gt, "M", { fullName: { gt: "M" } }],
     [operatorTypes.enum.gte, "M", { fullName: { gte: "M" } }],
     [operatorTypes.enum.lt, "M", { fullName: { lt: "M" } }],
@@ -647,14 +695,43 @@ describe("applyContactFilter — direct column fields", () => {
   })
 
   test.each([
-    operatorTypes.enum.isEmpty,
-    operatorTypes.enum.isNotEmpty,
-  ])("maps fullName %s to a null-check", (operator) => {
-    expect(firstAnd("fullName", operator)).toEqual({
-      fullName:
-        operator === operatorTypes.enum.isEmpty
-          ? { isNull: true }
-          : { isNotNull: true },
+    [
+      operatorTypes.enum.isEmpty,
+      { OR: [{ fullName: { isNull: true } }, { fullName: "" }] },
+    ],
+    [
+      operatorTypes.enum.isNotEmpty,
+      {
+        AND: [{ fullName: { isNotNull: true } }, { fullName: { ne: "" } }],
+      },
+    ],
+  ])("maps fullName %s to include empty strings", (operator, expected) => {
+    expect(firstAnd("fullName", operator)).toEqual(expected)
+  })
+
+  test.each([
+    ["fullName", "fullName"],
+    ["email", "email"],
+    ["gender", "gender"],
+    ["country", "country"],
+    ["locale", "locale"],
+    ["timezone", "timezone"],
+    ["phone", "phoneNumber"],
+  ])("includes NULL rows for %s negation operators", (field, column) => {
+    expect(firstAnd(field, operatorTypes.enum.ne, "x")).toEqual({
+      OR: [{ [column]: { ne: "x" } }, { [column]: { isNull: true } }],
+    })
+    expect(firstAnd(field, operatorTypes.enum.notContains, "x")).toEqual({
+      OR: [{ [column]: { notIlike: "%x%" } }, { [column]: { isNull: true } }],
+    })
+  })
+
+  test("does not compare the gender enum to an empty string", () => {
+    expect(firstAnd("gender", operatorTypes.enum.isEmpty)).toEqual({
+      gender: { isNull: true },
+    })
+    expect(firstAnd("gender", operatorTypes.enum.isNotEmpty)).toEqual({
+      gender: { isNotNull: true },
     })
   })
 
@@ -770,6 +847,7 @@ describe("applyContactFilter — date columns", () => {
     )
     expect(query.sql).toContain('"Contact"."lastReadAt" <')
     expect(query.sql).toContain('"Contact"."lastReadAt" >=')
+    expect(query.sql).toContain('"Contact"."lastReadAt" IS NULL')
     expect(query.sql).toContain("date_trunc('day'")
   })
 
@@ -816,25 +894,29 @@ describe("applyContactFilter — contactInbox relation fields", () => {
     ["currentChannel", "channel"],
     ["inbox", "inboxId"],
     ["source", "source"],
-  ])("renders %s in/notIn/isEmpty as EXISTS on ContactInbox.%s", (field, column) => {
-    const inQuery = renderContactWhere(
-      applyContactFilter({
-        operator: "and",
-        conditions: [{ field, operator: operatorTypes.enum.in, value: ["a"] }],
-      }),
-    )
-    expect(inQuery.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
-    expect(inQuery.sql).toContain(`"ContactInbox"."${column}" in`)
+  ])("renders all supported %s operators as EXISTS on ContactInbox.%s", (field, column) => {
+    for (const operator of [operatorTypes.enum.in, operatorTypes.enum.eq]) {
+      const query = renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [{ field, operator, value: ["a"] }],
+        }),
+      )
+      expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+      expect(query.sql).toContain(`"ContactInbox"."${column}" in`)
+    }
 
-    const notInQuery = renderContactWhere(
-      applyContactFilter({
-        operator: "and",
-        conditions: [
-          { field, operator: operatorTypes.enum.notIn, value: ["a"] },
-        ],
-      }),
-    )
-    expect(notInQuery.sql).toContain(`"ContactInbox"."${column}" not in`)
+    for (const operator of [operatorTypes.enum.notIn, operatorTypes.enum.ne]) {
+      const query = renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [{ field, operator, value: ["a"] }],
+        }),
+      )
+      expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+      expect(query.sql).toContain(`"ContactInbox"."${column}" in`)
+      expect(query.sql).not.toContain(`"ContactInbox"."${column}" not in`)
+    }
 
     const emptyQuery = renderContactWhere(
       applyContactFilter({
@@ -891,6 +973,107 @@ describe("applyContactFilter — contactInbox relation fields", () => {
       }),
     )
     expect(negative.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "interactedInLast24h",
+            operator: operatorTypes.enum.isEmpty,
+          },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(empty.sql).toContain(
+      '"ContactInbox"."lastIncomingMessageAt" >= NOW()',
+    )
+  })
+
+  test("renders lastInteraction date filters against latest ContactInbox.lastIncomingMessageAt", () => {
+    const eq = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastInteraction",
+            operator: operatorTypes.enum.eq,
+            value: "2026-05-19T10:00:00Z",
+          },
+        ],
+      }),
+    )
+    expect(eq.sql).not.toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(eq.sql).toContain(
+      'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
+    )
+    expect(eq.sql).toContain('"latestInteraction"."latest" >=')
+    expect(eq.sql).toContain("date_trunc('day'")
+
+    const ne = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastInteraction",
+            operator: operatorTypes.enum.ne,
+            value: "2026-05-19T10:00:00Z",
+          },
+        ],
+      }),
+    )
+    expect(ne.sql).not.toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(ne.sql).toContain(
+      'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
+    )
+    expect(ne.sql).toContain('"latestInteraction"."latest" >=')
+    expect(ne.sql).toContain("IS NULL")
+
+    const lt = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastInteraction",
+            operator: operatorTypes.enum.lt,
+            value: "2026-02-01T00:00:00Z",
+          },
+        ],
+      }),
+    )
+    expect(lt.sql).toContain(
+      'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
+    )
+    expect(lt.sql).toContain("<")
+
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "lastInteraction", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(empty.sql).not.toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(empty.sql).toContain(
+      'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
+    )
+    expect(empty.sql).toContain('AS "latest"')
+    expect(empty.sql).toContain("IS NULL")
+
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastInteraction",
+            operator: operatorTypes.enum.gt,
+            value: "not-a-date",
+          },
+        ],
+      }),
+    ).toEqual({})
   })
 })
 
@@ -898,8 +1081,8 @@ describe("applyContactFilter — tags relation", () => {
   test.each([
     [operatorTypes.enum.in, "in"],
     [operatorTypes.enum.eq, "in"],
-    [operatorTypes.enum.notIn, "not in"],
-    [operatorTypes.enum.ne, "not in"],
+    [operatorTypes.enum.notIn, "in"],
+    [operatorTypes.enum.ne, "in"],
   ])("renders tags %s as EXISTS ContactToTag.tagId %s", (operator, sqlOp) => {
     const query = renderContactWhere(
       applyContactFilter({
@@ -907,8 +1090,23 @@ describe("applyContactFilter — tags relation", () => {
         conditions: [{ field: "tags", operator, value: ["tag-1"] }],
       }),
     )
-    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactToTag"')
+    expect(query.sql).toContain(
+      operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
+        ? 'EXISTS (SELECT 1 FROM "ContactToTag"'
+        : 'NOT EXISTS (SELECT 1 FROM "ContactToTag"',
+    )
     expect(query.sql).toContain(`"ContactToTag"."tagId" ${sqlOp}`)
+    expect(query.sql).not.toContain('"ContactToTag"."tagId" not in')
+  })
+
+  test("renders tags isEmpty as NOT EXISTS ContactToTag", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field: "tags", operator: operatorTypes.enum.isEmpty }],
+      }),
+    )
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactToTag"')
   })
 })
 
@@ -922,7 +1120,8 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
-    expect(empty.sql).toContain('"Conversation"."archivedAt" IS NULL')
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "Conversation"')
+    expect(empty.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
 
     const notEmpty = renderContactWhere(
       applyContactFilter({
@@ -932,6 +1131,7 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
+    expect(notEmpty.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
     expect(notEmpty.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
 
     const truthy = renderContactWhere(
@@ -942,6 +1142,7 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
+    expect(truthy.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
     expect(truthy.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
 
     const falsy = renderContactWhere(
@@ -956,7 +1157,8 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
-    expect(falsy.sql).toContain('"Conversation"."archivedAt" IS NULL')
+    expect(falsy.sql).toContain('NOT EXISTS (SELECT 1 FROM "Conversation"')
+    expect(falsy.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
   })
 
   test("followUp eq true/false and isEmpty map to the followed column", () => {
@@ -968,8 +1170,9 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
+    expect(truthy.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
     expect(truthy.sql).toContain('"Conversation"."followed" =')
-    expect(truthy.params).toContain(true)
+    expect(truthy.sql).toContain("= true")
 
     const falsy = renderContactWhere(
       applyContactFilter({
@@ -983,7 +1186,8 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
-    expect(falsy.params).toContain(false)
+    expect(falsy.sql).toContain('NOT EXISTS (SELECT 1 FROM "Conversation"')
+    expect(falsy.sql).toContain('"Conversation"."followed" = true')
 
     const empty = renderContactWhere(
       applyContactFilter({
@@ -993,7 +1197,8 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
-    expect(empty.sql).toContain('"Conversation"."followed" IS NULL')
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "Conversation"')
+    expect(empty.sql).toContain('"Conversation"."followed" = true')
   })
 
   test("conversationTransferredToHuman maps to inverted botEnabled", () => {
@@ -1010,8 +1215,9 @@ describe("applyContactFilter — conversation relation fields", () => {
       }),
     )
     // transferred to human ⟺ bot disabled
+    expect(transferred.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
     expect(transferred.sql).toContain('"Conversation"."botEnabled" =')
-    expect(transferred.params).toContain(false)
+    expect(transferred.sql).toContain("= false")
 
     const notTransferred = renderContactWhere(
       applyContactFilter({
@@ -1025,7 +1231,10 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
-    expect(notTransferred.params).toContain(true)
+    expect(notTransferred.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "Conversation"',
+    )
+    expect(notTransferred.sql).toContain('"Conversation"."botEnabled" = false')
   })
 })
 
@@ -1047,33 +1256,150 @@ describe("applyContactFilter — custom fields", () => {
     })
 
   test.each([
-    operatorTypes.enum.eq,
-    operatorTypes.enum.ne,
-    operatorTypes.enum.contains,
-    operatorTypes.enum.notContains,
-    operatorTypes.enum.startsWith,
-    operatorTypes.enum.endsWith,
-  ])("renders text custom-field operator %s as EXISTS", (operator) => {
-    const query = renderFirstRawCondition(customField("text", operator, "vip"))
-    expect(query.sql).toContain("EXISTS")
-    expect(query.sql).toContain('"ContactCustomField"."value"')
+    {
+      valueType: "number",
+      operator: operatorTypes.enum.ne,
+      value: "2",
+      contains: ["::numeric", "~"],
+      absent: ["<>"],
+      params: [2],
+    },
+    {
+      valueType: "text",
+      operator: operatorTypes.enum.ne,
+      value: "vip",
+      contains: ['"ContactCustomField"."value" ='],
+      absent: ["<>"],
+      params: ["vip"],
+    },
+    {
+      valueType: "datetime",
+      operator: operatorTypes.enum.ne,
+      value: "2026-05-19T10:00:00Z",
+      contains: [">=", "<"],
+      absent: [" IS NOT TRUE OR ", " OR "],
+      params: ["2026-05-19T10:00:00Z"],
+    },
+    {
+      valueType: "text",
+      operator: operatorTypes.enum.notContains,
+      value: "vip",
+      contains: ["ILIKE"],
+      absent: ["NOT ILIKE"],
+      params: ["%vip%"],
+    },
+    {
+      valueType: "number",
+      operator: operatorTypes.enum.notContains,
+      value: "2",
+      contains: ["ILIKE"],
+      absent: ["NOT ILIKE"],
+      params: ["%2%"],
+    },
+    {
+      valueType: "number",
+      operator: operatorTypes.enum.notBetween,
+      value: ["1", "5"],
+      contains: ["::numeric", ">=", "<="],
+      absent: [" OR "],
+      params: [1, 5],
+    },
+    {
+      valueType: "datetime",
+      operator: operatorTypes.enum.notBetween,
+      value: ["2026-01-01T00:00:00Z", "2026-12-31T00:00:00Z"],
+      contains: [">=", "<="],
+      absent: [" OR "],
+      params: ["2026-01-01T00:00:00Z", "2026-12-31T00:00:00Z"],
+    },
+    {
+      valueType: "text",
+      operator: operatorTypes.enum.isEmpty,
+      value: undefined,
+      contains: ["IS NOT NULL", "<> ''"],
+      absent: [],
+      params: [],
+    },
+    {
+      valueType: "boolean",
+      operator: operatorTypes.enum.isEmpty,
+      value: undefined,
+      contains: ["IS NOT NULL"],
+      absent: [],
+      params: [],
+    },
+  ])("renders custom-field $valueType $operator as NOT EXISTS over a positive predicate", ({
+    valueType,
+    operator,
+    value,
+    contains,
+    absent,
+    params,
+  }) => {
+    const query = renderFirstRawCondition(
+      customField(valueType, operator, value),
+    )
+    expect(query.sql).toContain("NOT EXISTS (")
+    for (const token of contains) {
+      expect(query.sql).toContain(token)
+    }
+    for (const token of absent) {
+      expect(query.sql).not.toContain(token)
+    }
+    for (const param of params) {
+      expect(query.params).toContain(param)
+    }
   })
 
   test.each([
-    operatorTypes.enum.eq,
-    operatorTypes.enum.ne,
-    operatorTypes.enum.gt,
-    operatorTypes.enum.gte,
-    operatorTypes.enum.lt,
-    operatorTypes.enum.lte,
-  ])("renders numeric custom-field operator %s with a numeric guard", (operator) => {
-    const query = renderFirstRawCondition(customField("number", operator, "12"))
-    expect(query.sql).toContain("::numeric")
-    expect(query.sql).toContain("~")
+    ["text", operatorTypes.enum.eq, "vip", ['"ContactCustomField"."value" =']],
+    ["text", operatorTypes.enum.eq, "1", ['"ContactCustomField"."value" =']],
+    ["text", operatorTypes.enum.isNotEmpty, undefined, ["IS NOT NULL"]],
+    ["text", operatorTypes.enum.contains, "vip", ["ILIKE"]],
+    ["text", operatorTypes.enum.startsWith, "vip", ["ILIKE"]],
+    ["text", operatorTypes.enum.endsWith, "vip", ["ILIKE"]],
+    ["number", operatorTypes.enum.gt, "12", ["::numeric", ">"]],
+    ["number", operatorTypes.enum.gte, "12", ["::numeric", ">="]],
+    ["number", operatorTypes.enum.lt, "12", ["::numeric", "<"]],
+    ["number", operatorTypes.enum.lte, "12", ["::numeric", "<="]],
+    [
+      "number",
+      operatorTypes.enum.isBetween,
+      ["10", "20"],
+      ["::numeric", ">=", "<="],
+    ],
+  ])("renders positive custom-field %s %s as EXISTS", (valueType, operator, value, contains) => {
+    const query = renderFirstRawCondition(
+      customField(valueType, operator, value),
+    )
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    for (const token of contains) {
+      expect(query.sql).toContain(token)
+    }
+  })
+
+  test("escapes LIKE wildcards for custom-field text search", () => {
+    const query = renderFirstRawCondition(
+      customField("text", operatorTypes.enum.contains, "100%_ready\\ok"),
+    )
+
+    expect(query.params).toContain("cf-1")
+    expect(query.params).toContain("%100\\%\\_ready\\\\ok%")
   })
 
   test("drops numeric custom-field conditions with non-numeric values", () => {
     expect(customField("number", operatorTypes.enum.gt, "abc")).toEqual({})
+  })
+
+  test("drops numeric custom-field negation with a non-numeric value", () => {
+    expect(customField("number", operatorTypes.enum.ne, "abc")).toEqual({})
+  })
+
+  test("drops datetime custom-field negation with an invalid date", () => {
+    expect(
+      customField("datetime", operatorTypes.enum.ne, "not-a-date"),
+    ).toEqual({})
   })
 
   test.each([
@@ -1085,6 +1411,8 @@ describe("applyContactFilter — custom fields", () => {
     const query = renderFirstRawCondition(
       customField("datetime", operator, "2026-05-19T10:00:00Z"),
     )
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
     expect(query.sql).toContain("CASE WHEN")
     expect(query.sql).toContain("::timestamptz")
   })
@@ -1097,17 +1425,10 @@ describe("applyContactFilter — custom fields", () => {
     const query = renderFirstRawCondition(
       customField(valueType, operatorTypes.enum.eq, "yes"),
     )
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
     expect(query.sql).toContain('"ContactCustomField"."value" =')
     expect(query.params).toContain("yes")
-  })
-
-  test.each([
-    operatorTypes.enum.isEmpty,
-    operatorTypes.enum.isNotEmpty,
-  ])("renders custom-field %s as a null/empty check", (operator) => {
-    const query = renderFirstRawCondition(customField("text", operator))
-    expect(query.sql.toUpperCase()).toContain("IS")
-    expect(query.sql).toContain('"ContactCustomField"."value"')
   })
 })
 
@@ -1286,11 +1607,3 @@ describe("applyContactFilter — custom field remaining branches", () => {
     expect(cf("text", operatorTypes.enum.gt, "x")).toEqual({})
   })
 })
-
-// lastInteraction currently maps to `contactModel.lastActivityAt`, a column that
-// does not exist on the contact table (contact only has `lastReadAt`). It renders
-// an empty column → invalid SQL. Left as a todo pending the correct source column
-// (likely contactInbox.lastIncomingMessageAt, matching interactedInLast24h).
-test.todo(
-  "lastInteraction maps to a real activity column (currently broken: contactModel.lastActivityAt does not exist)",
-)
