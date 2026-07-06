@@ -1,0 +1,185 @@
+name: chatbotx
+
+# ─────────────────────────────────────────────────────────────
+# Easypanel-ready Compose stack for ChatbotX (community edition).
+#
+# Differences vs docker-compose.dev.yml:
+#   - No `env_file: ./.env` dependency — all env is inline here.
+#   - Internal service hostnames (postgres/redis/filesystem/mailhog)
+#     instead of localhost.
+#   - Secrets & public domains come from Easypanel's Environment tab
+#     via ${VAR} interpolation.
+#   - No host port bindings — Easypanel routes domains to the
+#     builder (port 3000) and realtime (port 1999) over the shared
+#     compose network.
+#   - Dev-only UIs (adminer, redis-ui) dropped to save RAM. Mailhog
+#     kept so signup/verification emails are viewable at :8025.
+#
+# Required env (set in Easypanel → this service → Environment):
+#   PLATFORM_ADMIN_EMAIL       your email → admin of /manage
+#   BETTER_AUTH_SECRET         openssl rand -base64 32
+#   ENCRYPTION_KEY             openssl rand -hex 32
+#   REALTIME_BROADCAST_SECRET  openssl rand -hex 32
+#   BUILDER_URL                https://<builder-domain>
+#   REALTIME_URL               https://<realtime-domain>
+# Optional (have safe defaults):
+#   POSTGRES_PASSWORD (secretkey)  S3_ACCESS_KEY (chatbotx)  S3_SECRET_KEY (secretkey)
+# ─────────────────────────────────────────────────────────────
+
+x-app-env: &app-env
+  NEXT_PUBLIC_EDITION: community
+  PLATFORM_ADMIN_EMAIL: ${PLATFORM_ADMIN_EMAIL}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+  BETTER_AUTH_URL: ${BUILDER_URL}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+  DATABASE_URL: postgresql://chatbotx:${POSTGRES_PASSWORD:-secretkey}@postgres:5432/chatbotx?schema=public
+  REDIS_URL: redis://redis:6379
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-chatbotx}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-secretkey}
+  S3_BUCKET: chatbotx
+  S3_REGION: us-west-2
+  S3_ENDPOINT: http://filesystem:9000
+  SMTP_SERVER: smtp://user:pass@mailhog:1025
+  SMTP_FROM: no-reply@localhost
+  REALTIME_BROADCAST_SECRET: ${REALTIME_BROADCAST_SECRET}
+  NEXT_PUBLIC_BUILDER_URL: ${BUILDER_URL}
+  NEXT_PUBLIC_INTERNAL_WS_URL: ${REALTIME_URL}
+  FORCE_PUBLIC_HTTPS: "true"
+  SCHEDULER_BUCKET_RANGE: 0-255
+  LOG_LEVEL: info
+
+x-service-common: &service-common
+  platform: linux/amd64
+  restart: unless-stopped
+  networks:
+    - chatbotx-network
+
+x-rustfs-environment: &rustfs-environment
+  RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-chatbotx}
+  RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-secretkey}
+  RUSTFS_API_CORS_ALLOW_ORIGIN: "*"
+
+services:
+  # ─── Infrastructure ───────────────────────────────────────
+  postgres:
+    <<: *service-common
+    image: timescale/timescaledb-ha:pg18-all
+    volumes:
+      - db-data:/home/postgres/pgdata
+    environment:
+      - POSTGRES_DB=chatbotx
+      - POSTGRES_USER=chatbotx
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secretkey}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d chatbotx -U chatbotx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    <<: *service-common
+    image: redis:8-alpine
+    volumes:
+      - cache-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  filesystem:
+    <<: *service-common
+    image: rustfs/rustfs:latest
+    command: server /data --console-address ":9001"
+    environment:
+      <<: *rustfs-environment
+    volumes:
+      - filesystem-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "curl -f http://127.0.0.1:9000/health && curl -f http://127.0.0.1:9001/rustfs/console/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  filesystem-init:
+    <<: *service-common
+    image: rustfs/rc:latest
+    restart: "no"
+    depends_on:
+      filesystem:
+        condition: service_healthy
+    environment:
+      <<: *rustfs-environment
+    entrypoint: >
+      /bin/sh -c "rc alias set local http://filesystem:9000
+      $${RUSTFS_ACCESS_KEY} $${RUSTFS_SECRET_KEY}; rc mb local/chatbotx
+      --ignore-existing; touch /tmp/empty && rc cp /tmp/empty
+      local/chatbotx/public/; rc anonymous set public local/chatbotx/public;"
+
+  mailhog:
+    <<: *service-common
+    image: mailhog/mailhog
+    # UI on container port 8025 — map a domain to it in Easypanel to read test emails.
+
+  # ─── Application ──────────────────────────────────────────
+  builder:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: apps/builder/docker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      filesystem:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+      RUN_DB_MIGRATE: "true"
+      RUN_DB_SEED: "true"
+    # Map your builder domain → this service, container port 3000, in Easypanel.
+
+  worker:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: apps/worker/docker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      filesystem:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+
+  realtime:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: apps/realtime/docker/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    # Map your realtime domain → this service, container port 1999, in Easypanel.
+
+networks:
+  chatbotx-network:
+    driver: bridge
+
+volumes:
+  db-data:
+  filesystem-data:
+  cache-data:
