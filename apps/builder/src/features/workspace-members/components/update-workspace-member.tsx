@@ -19,10 +19,11 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
-import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { isCommunity } from "@/env"
 import { updateWorkspaceMemberAction } from "../actions/update-workspace-member.action"
+import { getSuperAdminPermissions } from "../helpers"
+import { useWorkspaceMemberPermissionsCoupling } from "../hooks/use-permissions-coupling"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
 import type { WorkspaceMemberResource } from "../schema/resource"
 
@@ -113,16 +114,7 @@ export function UpdateWorkspaceMemberForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            permissions: {
-              superAdmin: true,
-              analytics: true,
-              flows: true,
-              contacts: true,
-              onlyAssignedContacts: true,
-              emailAndPhone: true,
-              broadcast: true,
-              ecommerce: true,
-            },
+            permissions: getSuperAdminPermissions(),
             notificationTypes: {
               notifyAdmin: false,
               newMessageToHuman: false,
@@ -139,23 +131,9 @@ export function UpdateWorkspaceMemberForm({
       },
     )
 
-  const { setValue, reset } = form
-  const isSuperAdmin = useWatch({
-    control: form.control,
-    name: "permissions.superAdmin",
-  })
-
-  useEffect(() => {
-    if (isSuperAdmin) {
-      setValue("permissions.analytics", true)
-      setValue("permissions.flows", true)
-      setValue("permissions.contacts", true)
-      setValue("permissions.onlyAssignedContacts", true)
-      setValue("permissions.emailAndPhone", true)
-      setValue("permissions.broadcast", true)
-      setValue("permissions.ecommerce", true)
-    }
-  }, [isSuperAdmin, setValue])
+  const { reset } = form
+  const { isSuperAdmin, contactsEnabled } =
+    useWorkspaceMemberPermissionsCoupling(form)
 
   useEffect(() => {
     if (workspaceMember) {
@@ -203,12 +181,14 @@ export function UpdateWorkspaceMemberForm({
                   name="permissions.contacts"
                   required
                 />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.onlyAssignedContacts")}
-                  name="permissions.onlyAssignedContacts"
-                  required
-                />
+                {!contactsEnabled && (
+                  <SwitchField
+                    formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
+                    label={t("fields.permissions.onlyAssignedContacts")}
+                    name="permissions.onlyAssignedContacts"
+                    required
+                  />
+                )}
                 <SwitchField
                   formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
                   label={t("fields.permissions.emailAndPhone")}

@@ -37,6 +37,10 @@ export type JobExportContacts = {
     workspaceId: string
     fileId: string
     fields: string[]
+    // Required so the export always states PII visibility explicitly and can
+    // never fail open: an omitted flag must not silently re-enable PII export.
+    canExportEmailAndPhone: boolean
+    restrictToAssignedUserId?: string
     outputPath: string
     outputFormat: "csv"
   } & (

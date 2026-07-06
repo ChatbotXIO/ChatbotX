@@ -10,6 +10,7 @@ import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/cust
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
+import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 
 export default async function ContactsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -19,6 +20,7 @@ export default async function ContactsPage(props: {
   if (!workspaceId) {
     return notFound()
   }
+  await requireContactsAccess(workspaceId)
 
   const t = await getTranslations()
   const searchParams = await props.searchParams

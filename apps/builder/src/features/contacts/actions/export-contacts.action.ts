@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import {
   exportSubTypes,
@@ -10,11 +11,13 @@ import { fileModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
+import { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { resolveContactPermissionScope } from "../permissions"
 import {
   type ExportContactsRequest,
   type ExportContactsResponse,
@@ -34,7 +37,18 @@ export const exportContactsAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: ExportContactsRequest
     }): Promise<ExportContactsResponse> => {
-      const { fields } = parsedInput
+      const scope = await resolveContactPermissionScope(workspaceId)
+      if (!scope) {
+        throw new ChatbotXException(
+          "User is not associated with this workspace",
+        )
+      }
+
+      const canExportEmailAndPhone = scope.canViewEmailAndPhone
+      const fields = stripContactPIIFields(
+        parsedInput.fields,
+        canExportEmailAndPhone,
+      )
 
       // The worker resolves the filter and counts records. The action only
       // records the export request and enqueues the job.
@@ -72,8 +86,12 @@ export const exportContactsAction = workspaceActionClient
             requestedUserId: user.id,
             fileId,
             fields,
+            canExportEmailAndPhone,
             outputPath,
             outputFormat: "csv",
+            ...(scope.restrictToAssignedUserId
+              ? { restrictToAssignedUserId: scope.restrictToAssignedUserId }
+              : {}),
             ...(filter ? { filter } : { contactIds: contactIds ?? [] }),
           },
         }),

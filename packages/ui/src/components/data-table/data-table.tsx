@@ -20,12 +20,14 @@ interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   labels?: DataTablePaginationLabels & {
     noResults?: string
   }
+  scrollable?: boolean
 }
 
 export function DataTable<TData>({
   table,
   actionBar,
   labels,
+  scrollable = false,
   children,
   className,
   ...props
@@ -36,7 +38,12 @@ export function DataTable<TData>({
       {...props}
     >
       {children}
-      <div className="overflow-hidden rounded-md border">
+      <div
+        className={cn(
+          "rounded-md border",
+          scrollable ? "overflow-x-auto" : "overflow-hidden",
+        )}
+      >
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

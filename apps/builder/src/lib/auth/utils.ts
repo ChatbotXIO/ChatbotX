@@ -8,6 +8,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
+import { cache } from "react"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { auth } from "./auth"
 
@@ -49,47 +50,54 @@ export const assertCurrentUserCanAccessChatbot = async (
   }
 }
 
-export const getCurrentUserAndAllLinkedWorkspaces = async (): Promise<{
-  user: SessionUser
-  allWorkspaces: WorkspaceModel[]
-  allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
-} | null> => {
-  const user = await getCurrentUser()
-  if (!user) {
-    return null
-  }
+const getCachedCurrentUserAndAllLinkedWorkspaces = cache(
+  async (): Promise<{
+    user: SessionUser
+    allWorkspaces: WorkspaceModel[]
+    allWorkspaceMembers: (WorkspaceMemberModel & {
+      workspace: WorkspaceModel
+    })[]
+  } | null> => {
+    const user = await getCurrentUser()
+    if (!user) {
+      return null
+    }
 
-  const [workspaceMembers, { storageUrl }] = await Promise.all([
-    db.query.workspaceMemberModel.findMany({
-      where: {
-        userId: user.id,
+    const [workspaceMembers, { storageUrl }] = await Promise.all([
+      db.query.workspaceMemberModel.findMany({
+        where: {
+          userId: user.id,
+        },
+        with: {
+          workspace: true,
+        },
+      }),
+      getTenantSettings(),
+    ])
+
+    const resolveLogoUrl = (logo: string | null) =>
+      logo ? new URL(logo, storageUrl).toString() : null
+
+    const membersWithResolvedLogos = workspaceMembers.map((member) => ({
+      ...member,
+      workspace: {
+        ...member.workspace,
+        logo: resolveLogoUrl(member.workspace.logo),
       },
-      with: {
-        workspace: true,
-      },
-    }),
-    getTenantSettings(),
-  ])
+    }))
 
-  const resolveLogoUrl = (logo: string | null) =>
-    logo ? new URL(logo, storageUrl).toString() : null
+    return {
+      user,
+      allWorkspaces: membersWithResolvedLogos.map(
+        (workspaceMember) => workspaceMember.workspace,
+      ),
+      allWorkspaceMembers: membersWithResolvedLogos,
+    }
+  },
+)
 
-  const membersWithResolvedLogos = workspaceMembers.map((member) => ({
-    ...member,
-    workspace: {
-      ...member.workspace,
-      logo: resolveLogoUrl(member.workspace.logo),
-    },
-  }))
-
-  return {
-    user,
-    allWorkspaces: membersWithResolvedLogos.map(
-      (workspaceMember) => workspaceMember.workspace,
-    ),
-    allWorkspaceMembers: membersWithResolvedLogos,
-  }
-}
+export const getCurrentUserAndAllLinkedWorkspaces = async () =>
+  getCachedCurrentUserAndAllLinkedWorkspaces()
 
 export const getCurrentUserAndTargetWorkspace = async (
   workspaceId: string,

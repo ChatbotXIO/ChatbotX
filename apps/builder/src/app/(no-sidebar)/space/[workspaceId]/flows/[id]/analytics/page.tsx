@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { FlowAnalytics } from "@/features/flows/flow-analytics"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 type FlowAnalyticsPageProps = {
   params: Promise<{ workspaceId: string; id: string }>
@@ -18,12 +18,7 @@ export default async function FlowAnalyticsPage({
     return notFound()
   }
 
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(
-    data.workspaceId,
-  )
-  if (!userAndWorkspace) {
-    return notFound()
-  }
+  await requireWorkspacePermission(data.workspaceId, "flows")
 
   const flow = await db.query.flowModel.findFirst({
     where: {

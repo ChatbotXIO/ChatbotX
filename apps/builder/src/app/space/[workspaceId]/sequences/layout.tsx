@@ -1,6 +1,7 @@
-import { getIdFromParams } from "@chatbotx.io/utils"
-import { notFound } from "next/navigation"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
+
+// This layout and the grouped sequences layout both exist because route groups split URL-equivalent routes.
 
 export default async function SequencesLayout({
   children,
@@ -9,10 +10,7 @@ export default async function SequencesLayout({
   params: Promise<{ workspaceId: string }>
   children: React.ReactNode
 }) {
-  const workspaceId = getIdFromParams(await params, "workspaceId")
-  if (!workspaceId) {
-    return notFound()
-  }
+  const workspaceId = await resolveGuardedWorkspaceId(params, "broadcast")
 
   return (
     <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>

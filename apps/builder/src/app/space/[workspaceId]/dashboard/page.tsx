@@ -4,6 +4,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function Dashboard({
   params,
@@ -14,6 +15,7 @@ export default async function Dashboard({
   if (!workspaceId) {
     return notFound()
   }
+  await requireWorkspacePermission(workspaceId, "analytics")
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 

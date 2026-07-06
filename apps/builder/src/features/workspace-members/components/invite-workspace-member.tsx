@@ -22,14 +22,15 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { CopyIcon, CrownIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
-import { useWatch } from "react-hook-form"
+import { useState } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud, isCommunity } from "@/env"
 import { useWorkspaceId } from "@/hooks/routing"
 import { inviteWorkspaceMemberAction } from "../actions/invite-workspace-member.action"
+import { getSuperAdminPermissions } from "../helpers"
+import { useWorkspaceMemberPermissionsCoupling } from "../hooks/use-permissions-coupling"
 import { inviteWorkspaceMemberRequest } from "../schema/mutation"
 export function InviteWorkspaceMemberDialog({
   atLimit = false,
@@ -173,37 +174,14 @@ export function AddWorkspaceMemberForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            permissions: {
-              superAdmin: true,
-              analytics: false,
-              flows: false,
-              contacts: false,
-              onlyAssignedContacts: false,
-              emailAndPhone: false,
-              broadcast: false,
-              ecommerce: false,
-            },
+            permissions: getSuperAdminPermissions(),
           },
         },
       },
     )
 
-  const { setValue } = form
-  const isSuperAdmin = useWatch({
-    control: form.control,
-    name: "permissions.superAdmin",
-  })
-  useEffect(() => {
-    if (isSuperAdmin) {
-      setValue("permissions.analytics", true)
-      setValue("permissions.flows", true)
-      setValue("permissions.contacts", true)
-      setValue("permissions.onlyAssignedContacts", true)
-      setValue("permissions.emailAndPhone", true)
-      setValue("permissions.broadcast", true)
-      setValue("permissions.ecommerce", true)
-    }
-  }, [isSuperAdmin, setValue])
+  const { isSuperAdmin, contactsEnabled } =
+    useWorkspaceMemberPermissionsCoupling(form)
 
   return (
     <Form {...form}>
@@ -237,12 +215,14 @@ export function AddWorkspaceMemberForm({
                 name="permissions.contacts"
                 required
               />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.onlyAssignedContacts")}
-                name="permissions.onlyAssignedContacts"
-                required
-              />
+              {!contactsEnabled && (
+                <SwitchField
+                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
+                  label={t("fields.permissions.onlyAssignedContacts")}
+                  name="permissions.onlyAssignedContacts"
+                  required
+                />
+              )}
               <SwitchField
                 formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
                 label={t("fields.permissions.emailAndPhone")}

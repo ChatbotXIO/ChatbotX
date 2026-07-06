@@ -1,11 +1,18 @@
 import type { ReactNode } from "react"
+import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 import { SettingsTab } from "./tab"
 
 type LayoutSettingProps = {
   children: ReactNode
+  params: Promise<{ workspaceId: string }>
 }
 
-export default function SettingLayout({ children }: LayoutSettingProps) {
+export default async function SettingLayout({
+  children,
+  params,
+}: LayoutSettingProps) {
+  await resolveGuardedWorkspaceId(params, "superAdmin")
+
   return (
     <>
       <SettingsTab />

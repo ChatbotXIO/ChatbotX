@@ -1,5 +1,6 @@
 "use client"
 
+import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +13,7 @@ import {
   ChartPieIcon,
   ChevronsRight,
   LightbulbIcon,
+  type LucideIcon,
   MessageCircleMoreIcon,
   RadioIcon,
   SlidersHorizontalIcon,
@@ -30,14 +32,28 @@ import { NavMain } from "@/components/nav-main"
 import { NavUsage, type QuotaSummary } from "@/components/nav-usage"
 import { NavUser } from "@/components/nav-user"
 import { WorkspaceSwitcher } from "@/components/workspace-switcher"
+import { canAccessContactsSection } from "@/features/contacts/permissions"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
+import {
+  hasWorkspacePermission,
+  PERMISSION_NAV,
+  type WorkspacePermissionKey,
+} from "@/lib/auth/permission-routes"
+
+type SidebarNavItem = {
+  title: string
+  url: string
+  icon: LucideIcon
+  permission?: WorkspacePermissionKey
+}
 
 export function AppSidebar({
   workspaceId,
   allWorkspaces,
   isSuperAdmin,
   isPlatformAdmin,
+  permissions,
   quota,
   ...props
 }: ComponentProps<typeof Sidebar> & {
@@ -45,6 +61,9 @@ export function AppSidebar({
   allWorkspaces: WorkspaceResource[]
   isSuperAdmin?: boolean
   isPlatformAdmin?: boolean
+  // Runtime may be a partial object (the jsonb column defaults to `{}`);
+  // `hasWorkspacePermission` fails closed on any missing flag.
+  permissions: WorkspaceMemberPermissions
   quota: QuotaSummary
 }) {
   const t = useTranslations()
@@ -61,6 +80,7 @@ export function AppSidebar({
         title: t("fields.analytics.label"),
         url: `/space/${workspaceId}/dashboard`,
         icon: ChartPieIcon,
+        permission: PERMISSION_NAV.dashboard,
       },
       {
         title: t("fields.inbox.label"),
@@ -71,11 +91,13 @@ export function AppSidebar({
         title: t("fields.flows.label"),
         url: `/space/${workspaceId}/flows`,
         icon: WorkflowIcon,
+        permission: PERMISSION_NAV.flows,
       },
       {
         title: t("fields.contacts.label"),
         url: `/space/${workspaceId}/contacts`,
         icon: UsersIcon,
+        permission: PERMISSION_NAV.contacts,
       },
       {
         title: t("aiAgent.title"),
@@ -91,11 +113,13 @@ export function AppSidebar({
         title: t("broadcasts.title"),
         url: `/space/${workspaceId}/broadcasts`,
         icon: RadioIcon,
+        permission: PERMISSION_NAV.broadcasts,
       },
       {
         title: t("sequences.title"),
         url: `/space/${workspaceId}/sequences`,
         icon: ChevronsRight,
+        permission: PERMISSION_NAV.sequences,
       },
       {
         title: t("triggers.title"),
@@ -116,9 +140,18 @@ export function AppSidebar({
         title: t("settings.title"),
         url: `/space/${workspaceId}/settings/general`,
         icon: SlidersHorizontalIcon,
+        permission: "superAdmin",
       },
-    ],
+    ] satisfies SidebarNavItem[],
   }
+
+  const navMain = data.navMain.filter(
+    (item) =>
+      !item.permission ||
+      (item.permission === PERMISSION_NAV.contacts
+        ? canAccessContactsSection(permissions)
+        : hasWorkspacePermission(permissions, item.permission)),
+  )
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -134,7 +167,7 @@ export function AppSidebar({
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUsage

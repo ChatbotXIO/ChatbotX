@@ -10,8 +10,11 @@ import {
   invitationModel,
   workspaceMemberModel,
 } from "@chatbotx.io/database/schema"
+import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { isCommunity } from "@/env"
+import { getSuperAdminPermissions } from "@/features/workspace-members/helpers"
 import { authActionClient } from "@/lib/safe-action"
 
 export const acceptInvitationAction = authActionClient
@@ -64,12 +67,19 @@ export const acceptInvitationAction = authActionClient
       }
     }
 
+    // Defense in depth: even though invite-time normalization is the source of
+    // truth, re-force full super-admin permissions for community here so a row
+    // written by any other path can't grant a restricted community member.
+    const permissions = isCommunity()
+      ? getSuperAdminPermissions()
+      : invitation.permissions
+
     await db.insert(workspaceMemberModel).values({
       id: createId(),
       workspaceId: invitation.workspaceId,
       userId: ctx.user.id,
       role: "agent",
-      permissions: invitation.permissions,
+      permissions,
       notificationTypes: {
         notifyAdmin: true,
         newMessageToHuman: true,
@@ -82,4 +92,8 @@ export const acceptInvitationAction = authActionClient
         browser: true,
       },
     })
+
+    // The new membership must show up in the invitee's cached workspace list
+    // right away; bust the tag so the workspace becomes reachable immediately.
+    await invalidateCacheByTags([`users:${ctx.user.id}:workspace-members`])
   })

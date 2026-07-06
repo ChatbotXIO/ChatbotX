@@ -86,6 +86,7 @@ const buildData = (overrides: Partial<ExportData> = {}): ExportData =>
     workspaceId: "ws-1",
     fileId: "file-1",
     fields: ["sys:fullName", "sys:email"],
+    canExportEmailAndPhone: true,
     outputPath: "exports/ws-1/contacts.csv",
     outputFormat: "csv",
     contactIds: ["1", "2"],

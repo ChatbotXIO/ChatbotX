@@ -9,8 +9,15 @@ import { db } from "@chatbotx.io/database/client"
 import { invitationModel } from "@chatbotx.io/database/schema"
 import { createId, SymbolicSnowflakeIDs } from "@chatbotx.io/utils"
 import { addDays } from "date-fns"
+import { isCommunity } from "@/env"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
+import {
+  getSuperAdminPermissions,
+  normalizeContactsPermissions,
+} from "../helpers"
 import { inviteWorkspaceMemberRequest } from "../schema/mutation"
 
 export const inviteWorkspaceMemberAction = workspaceActionClient
@@ -21,6 +28,22 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
     // is accepted (accept-invitation.ts), so block issuing a new invitation
     // once the workspace owner is already at the limit (own or reseller pool).
     const workspace = await workspaceService.findById({ id: workspaceId })
+    const currentUserAndTargetChatbot =
+      await getCurrentUserAndTargetWorkspace(workspaceId)
+    if (!currentUserAndTargetChatbot) {
+      throw new ChatbotXException(
+        "You are not authorized to invite a workspace member",
+      )
+    }
+
+    const currentPermissions =
+      currentUserAndTargetChatbot.targetWorkspaceMember.permissions
+    if (!hasWorkspacePermission(currentPermissions, "superAdmin")) {
+      throw new ChatbotXException(
+        "You are not authorized to invite a workspace member. You need to be a super admin to do this.",
+      )
+    }
+
     const atLimit = await quotaEnforcementService.hasReachedLimit({
       userId: workspace.ownerId,
       metric: "teamMembers",
@@ -36,7 +59,9 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
       .values({
         id: createId(),
         code: SymbolicSnowflakeIDs.generate(),
-        permissions: parsedInput.permissions,
+        permissions: isCommunity()
+          ? getSuperAdminPermissions()
+          : normalizeContactsPermissions(parsedInput.permissions),
         expiresAt: addDays(new Date(), 1),
         workspaceId,
         invitedBy: ctx.user.id,

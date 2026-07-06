@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { listFlowsRSC } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/query"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function FlowsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -15,6 +16,7 @@ export default async function FlowsPage(props: {
   if (!workspaceId) {
     return notFound()
   }
+  await requireWorkspacePermission(workspaceId, "flows")
   const searchParams = await props.searchParams
 
   const search = await listFlowsSearchParams.parse(searchParams)

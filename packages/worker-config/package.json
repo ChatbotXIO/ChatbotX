@@ -23,6 +23,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./contact-pii": "./src/lib/contact-pii.ts",
     "./keys": "./src/keys.ts",
     "./message-queue/factory": "./src/message-queue/factory.ts"
   },

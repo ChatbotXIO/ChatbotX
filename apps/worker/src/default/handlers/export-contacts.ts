@@ -12,6 +12,7 @@ import {
   type JobExportContacts,
   loopableItemsCount,
 } from "@chatbotx.io/worker-config"
+import { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
 
 type ExportData = JobExportContacts["data"]
 
@@ -117,6 +118,7 @@ export const buildBaseWhere = (data: ExportData): Record<string, unknown> => {
 
   if (!data.filter) {
     where.id = { in: data.contactIds }
+    addAssignedContactScope(where, data.restrictToAssignedUserId)
     return where
   }
 
@@ -125,8 +127,9 @@ export const buildBaseWhere = (data: ExportData): Record<string, unknown> => {
     where.OR = [
       { firstName: { ilike: keyword } },
       { lastName: { ilike: keyword } },
-      { email: { ilike: keyword } },
-      { phoneNumber: { ilike: keyword } },
+      ...(data.canExportEmailAndPhone === true
+        ? [{ email: { ilike: keyword } }, { phoneNumber: { ilike: keyword } }]
+        : []),
     ]
   }
 
@@ -134,7 +137,30 @@ export const buildBaseWhere = (data: ExportData): Record<string, unknown> => {
     Object.assign(where, applyContactFilter(data.filter.contactFilter))
   }
 
+  addAssignedContactScope(where, data.restrictToAssignedUserId)
+
   return where
+}
+
+const addAssignedContactScope = (
+  where: Record<string, unknown>,
+  restrictToAssignedUserId?: string,
+) => {
+  if (!restrictToAssignedUserId) {
+    return
+  }
+
+  const conversation =
+    typeof where.conversation === "object" &&
+    where.conversation !== null &&
+    !Array.isArray(where.conversation)
+      ? where.conversation
+      : {}
+
+  where.conversation = {
+    ...conversation,
+    assignedUserId: restrictToAssignedUserId,
+  }
 }
 
 // ── Selected-field resolution ─────────────────────────────────────────────────
@@ -283,7 +309,10 @@ export const loopableExportContacts = async (data: ExportData) => {
     return
   }
 
-  const selectedFields = await buildSelectedFields(fields, workspaceId)
+  const selectedFields = await buildSelectedFields(
+    stripContactPIIFields(fields, data.canExportEmailAndPhone === true),
+    workspaceId,
+  )
   const baseWhere = buildBaseWhere(data)
 
   const { stream, done } = createUpload(outputPath, {

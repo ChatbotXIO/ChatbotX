@@ -3,7 +3,9 @@
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
+import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -36,11 +38,17 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
 
     const permissions =
       currentUserAndTargetChatbot.targetWorkspaceMember.permissions
-    if (!permissions.superAdmin) {
+    if (!hasWorkspacePermission(permissions, "superAdmin")) {
       throw new ChatbotXException(
         "You are not authorized to delete this workspace member. You need to be a super admin to do this.",
       )
     }
 
     await db.delete(workspaceMemberModel).where(eq(workspaceMemberModel.id, id))
+
+    // The removed member's cached `listByUserId` result still lists this
+    // workspace; bust it so their access is revoked immediately.
+    await invalidateCacheByTags([
+      `users:${workspaceMember.userId}:workspace-members`,
+    ])
   })
