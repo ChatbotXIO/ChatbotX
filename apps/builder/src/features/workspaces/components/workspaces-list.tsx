@@ -108,7 +108,7 @@ type WorkspaceCardProps = {
 const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
-  const href = `/space/${workspace.id}/dashboard`
+  const href = `/space/${workspace.id}`
 
   return (
     <Card className={cn(CARD_STYLES, "relative")}>

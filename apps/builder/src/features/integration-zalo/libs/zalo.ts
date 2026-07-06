@@ -15,7 +15,7 @@ export async function generateZaloRedirectUri(
   // `referer` (the callback relays back to it), matching the other integrations.
   const redirectUrl = buildBrokerCallbackUrl("/integrations/zalo/callback")
   const referer = workspaceId
-    ? new URL(`/space/${workspaceId}/dashboard`, baseUrl).toString()
+    ? new URL(`/space/${workspaceId}`, baseUrl).toString()
     : baseUrl
 
   return generateAuthUrl({

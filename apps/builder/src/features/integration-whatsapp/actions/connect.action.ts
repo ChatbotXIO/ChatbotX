@@ -326,7 +326,7 @@ function buildResult(params: {
 
   return {
     type: "redirect",
-    redirectUrl: `/space/${workspaceId}/dashboard`,
+    redirectUrl: `/space/${workspaceId}`,
     integrationId,
     workspaceId,
     isCoexist,
