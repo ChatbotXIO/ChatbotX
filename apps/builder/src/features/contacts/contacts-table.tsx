@@ -21,12 +21,15 @@ import { format, formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useEffect, useMemo, useState } from "react"
+import { use, useCallback, useEffect, useMemo, useState } from "react"
 import {
+  type ContactFilterCriteria,
   ContactListFilterButton,
   ContactListFilterPanel,
+  EMPTY_CONTACT_FILTER,
   useContactFilterQueryState,
 } from "@/features/contact-filter"
+import { client } from "@/lib/orpc/orpc"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
@@ -35,6 +38,26 @@ import type { ExportContactsFilter } from "./schemas/action"
 import type { ListContactsResponse } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
 import { getLatestContactLastReadAt, useAvatarUrl } from "./utils"
+
+const parseSortParam = (value: string | null) => {
+  if (!value) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(value)
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed.filter(
+      (sort): sort is { id: string; desc: boolean } =>
+        typeof sort?.id === "string" && typeof sort?.desc === "boolean",
+    )
+  } catch {
+    return []
+  }
+}
 
 function NameCell({
   contact,
@@ -71,23 +94,35 @@ function NameCell({
 }
 
 type ContactsTableProps = {
+  initialContactFilter?: ContactFilterCriteria
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
 
-export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
+export function ContactsTable({
+  initialContactFilter = EMPTY_CONTACT_FILTER,
+  workspaceId,
+  promises,
+}: ContactsTableProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
   const searchParamsKey = searchParams.toString()
-  const [{ data, pageCount }] = use(promises)
+  const [{ data: initialData, pageCount: initialPageCount }] = use(promises)
+  const [tableData, setTableData] =
+    useState<ListContactsResponse["data"]>(initialData)
+  const [tablePageCount, setTablePageCount] = useState(initialPageCount)
   const {
     filter: contactFilter,
     setFilter: setContactFilter,
     isActive: isContactFilterActive,
-  } = useContactFilterQueryState()
+  } = useContactFilterQueryState({ initialFilter: initialContactFilter })
+  const [optimisticContactFilter, setOptimisticContactFilter] =
+    useState<ContactFilterCriteria>(contactFilter)
   const [showContactFilterPanel, setShowContactFilterPanel] = useState(
     isContactFilterActive,
   )
+  const isOptimisticContactFilterActive =
+    optimisticContactFilter.conditions.length > 0
 
   const keyword = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
@@ -95,17 +130,75 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
   }, [searchParamsKey])
 
   useEffect(() => {
+    let ignore = false
+    const params = new URLSearchParams(searchParamsKey)
+
+    client.contactsAPIs
+      .listContactsByPOSTAuthenticatedAPI({
+        workspaceId,
+        page: Number(params.get("page") ?? "1"),
+        perPage: Number(params.get("perPage") ?? "10"),
+        sort: parseSortParam(params.get("sort")),
+        keyword: params.get("keyword") ?? undefined,
+        contactFilter: isContactFilterActive ? contactFilter : undefined,
+      })
+      .then((response) => {
+        if (ignore) {
+          return
+        }
+
+        setTableData(response.data)
+        setTablePageCount(response.pageCount)
+      })
+      .catch(() => {
+        if (ignore) {
+          return
+        }
+
+        setTableData(initialData)
+        setTablePageCount(initialPageCount)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [
+    contactFilter,
+    initialData,
+    initialPageCount,
+    isContactFilterActive,
+    searchParamsKey,
+    workspaceId,
+  ])
+
+  useEffect(() => {
     if (isContactFilterActive) {
       setShowContactFilterPanel(true)
     }
   }, [isContactFilterActive])
 
+  useEffect(() => {
+    setOptimisticContactFilter(contactFilter)
+  }, [contactFilter])
+
+  const handleContactFilterChange = useCallback(
+    (next: ContactFilterCriteria) => {
+      setOptimisticContactFilter(next)
+      setContactFilter(next).catch(() => {
+        setOptimisticContactFilter(contactFilter)
+      })
+    },
+    [contactFilter, setContactFilter],
+  )
+
   const exportFilter = useMemo<ExportContactsFilter>(
     () => ({
       keyword,
-      contactFilter: isContactFilterActive ? contactFilter : undefined,
+      contactFilter: isOptimisticContactFilterActive
+        ? optimisticContactFilter
+        : undefined,
     }),
-    [keyword, isContactFilterActive, contactFilter],
+    [keyword, isOptimisticContactFilterActive, optimisticContactFilter],
   )
 
   const columns = useMemo<ColumnDef<ListContactsResponse["data"][number]>[]>(
@@ -264,9 +357,9 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
   )
 
   const { table } = useDataTable({
-    data,
+    data: tableData,
     columns,
-    pageCount,
+    pageCount: tablePageCount,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -280,13 +373,14 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
     <DataTable table={table}>
       {showContactFilterPanel && (
         <ContactListFilterPanel
-          filter={contactFilter}
-          onFilterChange={setContactFilter}
+          filter={optimisticContactFilter}
+          onFilterChange={handleContactFilterChange}
         />
       )}
       <DataTableToolbar table={table}>
         <ContactListFilterButton
-          active={isContactFilterActive}
+          active={isOptimisticContactFilterActive}
+          filter={optimisticContactFilter}
           onToggle={() => setShowContactFilterPanel((current) => !current)}
           open={showContactFilterPanel}
         />

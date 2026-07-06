@@ -71,6 +71,21 @@ export const contactsAuthenticatedAPI = {
       return await listContacts({ ...rest, workspaceId })
     }),
 
+  listContactsByPOSTAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: "/workspaces/{workspaceId}/contacts/list",
+      summary: "List contacts using POST request",
+      tags: ["Contacts"],
+    })
+    .input(listContactsRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactsResponse)
+    .handler(async ({ input }) => {
+      const { workspaceId, ...rest } = input
+      return await listContacts({ ...rest, workspaceId })
+    }),
+
   countContactsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",

@@ -3,13 +3,19 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   assertCurrentUserCanAccessChatbot: vi.fn(),
-  inboxFindMany: vi.fn(),
+  resolveBroadcastInboxIds: vi.fn(),
   count: vi.fn(),
   relationsFilterToSQL: vi.fn(),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
   assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  inboxService: {
+    resolveBroadcastInboxIds: mocks.resolveBroadcastInboxIds,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -22,11 +28,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: {
-      inboxModel: {
-        findMany: mocks.inboxFindMany,
-      },
-    },
     $count: mocks.count,
   },
   relationsFilterToSQL: mocks.relationsFilterToSQL,
@@ -47,7 +48,7 @@ const hasKeyDeep = (value: unknown, keys: Set<string>): boolean => {
 
 beforeEach(() => {
   mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
-  mocks.inboxFindMany.mockResolvedValue([{ id: "inbox-1" }])
+  mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
   mocks.count.mockResolvedValue(2)
   mocks.relationsFilterToSQL.mockImplementation((_model, where) => ({
     renderedFromWhere: where,
@@ -59,6 +60,7 @@ describe("countContactInboxes", () => {
     await countContactInboxes({
       workspaceId: "ws-1",
       channels: ["messenger"],
+      integrationWhatsappId: "wa-1",
       contactFilter: {
         operator: "and",
         conditions: [
@@ -78,10 +80,26 @@ describe("countContactInboxes", () => {
         inboxId: { in: ["inbox-1"] },
       }),
     )
-    // RED today: generateWhere only keeps inboxId and drops contactFilter.
-    // The fixed query should add RAW/EXISTS/contactId-IN/contact-rooted predicate.
     expect(hasKeyDeep(where, new Set(["RAW", "contactId", "Contact"]))).toBe(
       true,
     )
+    expect(mocks.resolveBroadcastInboxIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationWhatsappId: "wa-1",
+    })
+  })
+
+  test("passes all requested channels to the broadcast inbox resolver", async () => {
+    await countContactInboxes({
+      workspaceId: "ws-1",
+      channels: ["messenger", "whatsapp"],
+    })
+
+    expect(mocks.resolveBroadcastInboxIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channels: ["messenger", "whatsapp"],
+      integrationWhatsappId: undefined,
+    })
   })
 })

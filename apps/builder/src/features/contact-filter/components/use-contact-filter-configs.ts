@@ -26,11 +26,13 @@ type UseContactFilterConfigsResult = {
  * underlying `useTagSelectOptions` / `useCustomFieldSelectOptions` /
  * `useFlowSelectOptions` calls aren't duplicated.
  */
-export const useContactFilterConfigs = (): UseContactFilterConfigsResult => {
+export const useContactFilterConfigs = (
+  inboxChannel?: string,
+): UseContactFilterConfigsResult => {
   const t = useTranslations()
 
   const tagOptions = useTagSelectOptions()
-  const inboxOptions = useInboxOptionsByChannel()
+  const inboxOptions = useInboxOptionsByChannel(inboxChannel)
   const customFields = useCustomFieldStore((state) => state.customFields)
   const flowVersionOptions = useFlowSelectOptions()
 

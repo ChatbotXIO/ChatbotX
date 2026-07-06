@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  type ContactFilterField,
   type FormFieldType,
   formFieldTypes,
   operatorTypes,
@@ -216,6 +217,8 @@ const ContactFilterValueFields = ({
 
 type ContactFilterConditionFormProps = {
   onAdd: (data: ContactFilterCondition) => void
+  excludeFields?: ContactFilterField[]
+  inboxChannel?: string
 }
 
 const OPERATORS_WITHOUT_VALUE: string[] = [
@@ -223,13 +226,26 @@ const OPERATORS_WITHOUT_VALUE: string[] = [
   operatorTypes.enum.isNotEmpty,
 ]
 
+const EMPTY_EXCLUDE_FIELDS: ContactFilterField[] = []
+
 export const ContactFilterConditionForm = ({
   onAdd,
+  excludeFields = EMPTY_EXCLUDE_FIELDS,
+  inboxChannel,
 }: ContactFilterConditionFormProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
-  const { configs, conditionOptions } = useContactFilterConfigs()
+  const { configs: allConfigs, conditionOptions } =
+    useContactFilterConfigs(inboxChannel)
+
+  const configs = useMemo(
+    () =>
+      allConfigs.filter(
+        (config) => !excludeFields.includes(config.name as ContactFilterField),
+      ),
+    [allConfigs, excludeFields],
+  )
 
   const getConditionOptionsForConfig = useCallback(
     (config: FieldConfig | undefined) => {

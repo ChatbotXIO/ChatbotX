@@ -1,3 +1,4 @@
+import { inboxService } from "@chatbotx.io/business"
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { buildContactInboxContactFilterSQL } from "@chatbotx.io/database/queries"
 import { contactInboxModel } from "@chatbotx.io/database/schema"
@@ -9,8 +10,15 @@ export async function countContactInboxes(
 ): Promise<{ total: number }> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const filters = await parseContactFilters(input)
-  const where = generateWhere(filters)
+  const inboxIds = await inboxService.resolveBroadcastInboxIds({
+    workspaceId: input.workspaceId,
+    channels: input.channels,
+    integrationWhatsappId: input.integrationWhatsappId,
+  })
+  const where = generateWhere({
+    ...input,
+    inboxIds: inboxIds.length ? inboxIds : ["0"],
+  })
 
   const total = await db.$count(
     contactInboxModel,
@@ -18,27 +26,6 @@ export async function countContactInboxes(
   )
 
   return { total }
-}
-
-async function parseContactFilters(
-  input: ListContactsRequest,
-): Promise<ListContactsRequest> {
-  if (!input.channels?.length) {
-    throw new Error("Channels are required")
-  }
-
-  const isOmnichannel = input.channels.includes("omnichannel")
-
-  const inboxes = await db.query.inboxModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-      ...(isOmnichannel ? {} : { channel: { in: input.channels } }),
-    },
-    columns: { id: true },
-  })
-  input.inboxIds = inboxes.length ? inboxes.map((inbox) => inbox.id) : ["0"]
-
-  return input
 }
 
 const generateWhere = (input: ListContactsRequest) => {

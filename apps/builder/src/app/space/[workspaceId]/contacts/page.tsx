@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { EMPTY_CONTACT_FILTER } from "@/features/contact-filter"
 import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { listContactsRSC } from "@/features/contacts/queries/list-contacts.queries"
@@ -29,6 +30,7 @@ export default async function ContactsPage(props: {
   const { data: search } = listContactsRequest
     .omit({ workspaceId: true })
     .safeParse(searchParams)
+  const initialContactFilter = search?.contactFilter ?? EMPTY_CONTACT_FILTER
 
   const promises = Promise.all([
     listContactsRSC({
@@ -51,6 +53,7 @@ export default async function ContactsPage(props: {
               <FlowStoreProvider workspaceId={workspaceId}>
                 <InboxStoreProvider workspaceId={workspaceId}>
                   <ContactsTable
+                    initialContactFilter={initialContactFilter}
                     promises={promises}
                     workspaceId={workspaceId}
                   />

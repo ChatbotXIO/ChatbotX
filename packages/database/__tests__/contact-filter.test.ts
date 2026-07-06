@@ -27,7 +27,7 @@ const renderFirstRawCondition = (where: Record<string, unknown>) => {
 }
 
 describe("applyContactFilter", () => {
-  test("maps inbox filters to contactInboxes.inboxId", () => {
+  test("maps inbox filters to an EXISTS ContactInbox.inboxId subquery", () => {
     const where = applyContactFilter({
       operator: "and",
       conditions: [
@@ -39,20 +39,15 @@ describe("applyContactFilter", () => {
       ],
     })
 
-    expect(where).toEqual({
-      AND: [
-        {
-          contactInboxes: {
-            inboxId: {
-              in: ["123", "456"],
-            },
-          },
-        },
-      ],
-    })
+    const query = renderContactWhere(where)
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(query.sql).toContain('"ContactInbox"."inboxId" in')
+    expect(JSON.stringify(query.params)).toContain("123")
+    expect(JSON.stringify(query.params)).toContain("456")
   })
 
-  test("preserves multiple AND conditions on contactInboxes", () => {
+  test("renders multiple AND conditions on contactInboxes as EXISTS subqueries", () => {
     const where = applyContactFilter({
       operator: "and",
       conditions: [
@@ -69,27 +64,14 @@ describe("applyContactFilter", () => {
       ],
     })
 
-    expect(where).toEqual({
-      AND: [
-        {
-          contactInboxes: {
-            channel: {
-              in: ["messenger"],
-            },
-          },
-        },
-        {
-          contactInboxes: {
-            inboxId: {
-              in: ["123"],
-            },
-          },
-        },
-      ],
-    })
+    const query = renderContactWhere(where)
+
+    expect(query.sql).toContain('"ContactInbox"."channel" in')
+    expect(query.sql).toContain('"ContactInbox"."inboxId" in')
+    expect(query.sql.match(/EXISTS/g)?.length).toBe(2)
   })
 
-  test("maps tag filters to tag ids", () => {
+  test("maps tag filters to an EXISTS ContactToTag subquery", () => {
     const where = applyContactFilter({
       operator: "and",
       conditions: [
@@ -101,17 +83,11 @@ describe("applyContactFilter", () => {
       ],
     })
 
-    expect(where).toEqual({
-      AND: [
-        {
-          tags: {
-            id: {
-              in: ["tag-1"],
-            },
-          },
-        },
-      ],
-    })
+    const query = renderContactWhere(where)
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactToTag"')
+    expect(query.sql).toContain('"ContactToTag"."tagId" in')
+    expect(JSON.stringify(query.params)).toContain("tag-1")
   })
 
   test("maps a custom-field condition to an EXISTS RAW filter", () => {
@@ -209,8 +185,8 @@ describe("applyContactFilter", () => {
     expect(query.params).toContain(param)
   })
 
-  test("maps dropdown eq/ne array values to in/notIn relations", () => {
-    expect(
+  test("maps dropdown eq/ne array values to in/notIn EXISTS subqueries", () => {
+    const channelQuery = renderContactWhere(
       applyContactFilter({
         operator: "and",
         conditions: [
@@ -221,19 +197,11 @@ describe("applyContactFilter", () => {
           },
         ],
       }),
-    ).toEqual({
-      AND: [
-        {
-          contactInboxes: {
-            channel: {
-              in: ["messenger", "whatsapp"],
-            },
-          },
-        },
-      ],
-    })
+    )
 
-    expect(
+    expect(channelQuery.sql).toContain('"ContactInbox"."channel" in')
+
+    const tagQuery = renderContactWhere(
       applyContactFilter({
         operator: "and",
         conditions: [
@@ -244,17 +212,119 @@ describe("applyContactFilter", () => {
           },
         ],
       }),
-    ).toEqual({
-      AND: [
-        {
-          tags: {
-            id: {
-              notIn: ["tag-1"],
-            },
+    )
+
+    expect(tagQuery.sql).toContain('"ContactToTag"."tagId" not in')
+  })
+
+  test("renders currentChannel isEmpty as NOT EXISTS ContactInbox", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "currentChannel", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("renders source filters as an EXISTS ContactInbox.source subquery", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "source",
+            operator: operatorTypes.enum.in,
+            value: ["direct"],
           },
-        },
-      ],
-    })
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('"ContactInbox"."source" in')
+  })
+
+  test("renders interactedInLast24h as an EXISTS ContactInbox recency subquery", () => {
+    const positive = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "interactedInLast24h",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(positive.sql).toContain(
+      '"ContactInbox"."lastIncomingMessageAt" >= NOW()',
+    )
+
+    const negated = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "interactedInLast24h",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(negated.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("renders tags isEmpty as NOT EXISTS ContactToTag", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field: "tags", operator: operatorTypes.enum.isEmpty }],
+      }),
+    )
+
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactToTag"')
+  })
+
+  test("renders conversation-based conditions as EXISTS Conversation subqueries", () => {
+    const archived = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "archived", operator: operatorTypes.enum.eq, value: "true" },
+        ],
+      }),
+    )
+    expect(archived.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
+    expect(archived.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
+
+    const followUp = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "followUp", operator: operatorTypes.enum.eq, value: "true" },
+        ],
+      }),
+    )
+    expect(followUp.sql).toContain('"Conversation"."followed" =')
+
+    const transferred = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "conversationTransferredToHuman",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(transferred.sql).toContain('"Conversation"."botEnabled" =')
   })
 
   test("maps boolean field operators to boolean/timestamp predicates", () => {
@@ -336,7 +406,7 @@ describe("applyContactFilter", () => {
       operator: "and",
       conditions: [
         {
-          field: "lastInteraction",
+          field: "lastSeen",
           operator: operatorTypes.enum.notBetween,
           value: ["2026-05-01T00:00:00Z", "2026-05-31T23:59:59Z"],
         },
@@ -345,8 +415,8 @@ describe("applyContactFilter", () => {
 
     const query = renderContactWhere(where)
 
-    expect(query.sql).toContain('"Contact"."lastActivityAt" <')
-    expect(query.sql).toContain('"Contact"."lastActivityAt" >')
+    expect(query.sql).toContain('"Contact"."lastReadAt" <')
+    expect(query.sql).toContain('"Contact"."lastReadAt" >')
     expect(query.sql).toContain("::timestamptz")
   })
 
@@ -527,3 +597,700 @@ describe("applyContactFilter", () => {
     expect(query.params).toEqual(["ws-1", "%Ada%"])
   })
 })
+
+// ── Full field × operator coverage ─────────────────────────────────────────────
+
+const firstAnd = (
+  field: string,
+  operator: string,
+  value?: unknown,
+): Record<string, unknown> => {
+  const where = applyContactFilter({
+    operator: "and",
+    conditions: [
+      value === undefined ? { field, operator } : { field, operator, value },
+    ],
+  }) as { AND?: Record<string, unknown>[] }
+  return where.AND?.[0] ?? (where as Record<string, unknown>)
+}
+
+describe("applyContactFilter — direct column fields", () => {
+  test.each([
+    ["fullName", "fullName"],
+    ["email", "email"],
+    ["gender", "gender"],
+    ["country", "country"],
+    ["locale", "locale"],
+    ["timezone", "timezone"],
+    ["phone", "phoneNumber"],
+  ])("maps %s eq to the %s column", (field, column) => {
+    expect(firstAnd(field, operatorTypes.enum.eq, "x")).toEqual({
+      [column]: "x",
+    })
+  })
+
+  test.each([
+    [operatorTypes.enum.eq, "Ada", { fullName: "Ada" }],
+    [operatorTypes.enum.ne, "Ada", { fullName: { ne: "Ada" } }],
+    [operatorTypes.enum.eq, ["a", "b"], { fullName: { in: ["a", "b"] } }],
+    [operatorTypes.enum.ne, ["a"], { fullName: { notIn: ["a"] } }],
+    [operatorTypes.enum.in, ["a", "b"], { fullName: { in: ["a", "b"] } }],
+    [operatorTypes.enum.notIn, ["a"], { fullName: { notIn: ["a"] } }],
+    [operatorTypes.enum.contains, "ad", { fullName: { ilike: "%ad%" } }],
+    [operatorTypes.enum.notContains, "ad", { fullName: { notIlike: "%ad%" } }],
+    [operatorTypes.enum.gt, "M", { fullName: { gt: "M" } }],
+    [operatorTypes.enum.gte, "M", { fullName: { gte: "M" } }],
+    [operatorTypes.enum.lt, "M", { fullName: { lt: "M" } }],
+    [operatorTypes.enum.lte, "M", { fullName: { lte: "M" } }],
+  ])("maps fullName operator %s", (operator, value, expected) => {
+    expect(firstAnd("fullName", operator, value)).toEqual(expected)
+  })
+
+  test.each([
+    operatorTypes.enum.isEmpty,
+    operatorTypes.enum.isNotEmpty,
+  ])("maps fullName %s to a null-check", (operator) => {
+    expect(firstAnd("fullName", operator)).toEqual({
+      fullName:
+        operator === operatorTypes.enum.isEmpty
+          ? { isNull: true }
+          : { isNotNull: true },
+    })
+  })
+
+  test("renders startsWith / endsWith as anchored ILIKE", () => {
+    const starts = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fullName",
+            operator: operatorTypes.enum.startsWith,
+            value: "Ad",
+          },
+        ],
+      }),
+    )
+    expect(starts.sql.toLowerCase()).toContain('"contact"."fullname" ilike')
+    expect(starts.params).toContain("Ad%")
+
+    const ends = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "email",
+            operator: operatorTypes.enum.endsWith,
+            value: "@acme.com",
+          },
+        ],
+      }),
+    )
+    expect(ends.params).toContain("%@acme.com")
+  })
+
+  test("drops isBetween/notBetween for non-date columns", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fullName",
+            operator: operatorTypes.enum.isBetween,
+            value: ["a", "b"],
+          },
+        ],
+      }),
+    ).toEqual({})
+  })
+})
+
+describe("applyContactFilter — boolean columns", () => {
+  test.each([
+    ["emailWasVerified", "emailVerified"],
+    ["optedInForEmail", "emailOptIn"],
+  ])("maps %s eq true/false + isEmpty to %s", (field, column) => {
+    expect(firstAnd(field, operatorTypes.enum.eq, "true")).toEqual({
+      [column]: true,
+    })
+    expect(firstAnd(field, operatorTypes.enum.eq, "false")).toEqual({
+      [column]: false,
+    })
+    expect(firstAnd(field, operatorTypes.enum.isEmpty)).toEqual({
+      [column]: { isNull: true },
+    })
+  })
+})
+
+describe("applyContactFilter — boolean-from-timestamp columns", () => {
+  test.each([
+    ["subscribedToBroadcast", "broadcastSubscribedAt"],
+    ["blocked", "blockedAt"],
+  ])("maps %s to %s null-checks", (field, column) => {
+    expect(firstAnd(field, operatorTypes.enum.eq, "true")).toEqual({
+      [column]: { isNotNull: true },
+    })
+    expect(firstAnd(field, operatorTypes.enum.eq, "false")).toEqual({
+      [column]: { isNull: true },
+    })
+    expect(firstAnd(field, operatorTypes.enum.isEmpty)).toEqual({
+      [column]: { isNull: true },
+    })
+    expect(firstAnd(field, operatorTypes.enum.isNotEmpty)).toEqual({
+      [column]: { isNotNull: true },
+    })
+  })
+})
+
+describe("applyContactFilter — date columns", () => {
+  test.each([
+    ["contactCreatedAt", "createdAt"],
+    ["lastSeen", "lastReadAt"],
+  ])("maps %s isEmpty/isNotEmpty to %s null-checks", (field, column) => {
+    expect(firstAnd(field, operatorTypes.enum.isEmpty)).toEqual({
+      [column]: { isNull: true },
+    })
+    expect(firstAnd(field, operatorTypes.enum.isNotEmpty)).toEqual({
+      [column]: { isNotNull: true },
+    })
+  })
+
+  test("renders ne as an outside-the-day range", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastSeen",
+            operator: operatorTypes.enum.ne,
+            value: "2026-05-19T10:00:00Z",
+          },
+        ],
+      }),
+    )
+    expect(query.sql).toContain('"Contact"."lastReadAt" <')
+    expect(query.sql).toContain('"Contact"."lastReadAt" >=')
+    expect(query.sql).toContain("date_trunc('day'")
+  })
+
+  test.each([
+    operatorTypes.enum.gt,
+    operatorTypes.enum.gte,
+    operatorTypes.enum.lt,
+    operatorTypes.enum.lte,
+  ])("renders %s as a timestamptz comparison", (operator) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "contactCreatedAt",
+            operator,
+            value: "2026-05-19T10:00:00Z",
+          },
+        ],
+      }),
+    )
+    expect(query.sql).toContain('"Contact"."createdAt"')
+    expect(query.sql).toContain("::timestamptz")
+  })
+
+  test("drops invalid single date values", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastSeen",
+            operator: operatorTypes.enum.gt,
+            value: "not-a-date",
+          },
+        ],
+      }),
+    ).toEqual({})
+  })
+})
+
+describe("applyContactFilter — contactInbox relation fields", () => {
+  test.each([
+    ["currentChannel", "channel"],
+    ["inbox", "inboxId"],
+    ["source", "source"],
+  ])("renders %s in/notIn/isEmpty as EXISTS on ContactInbox.%s", (field, column) => {
+    const inQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field, operator: operatorTypes.enum.in, value: ["a"] }],
+      }),
+    )
+    expect(inQuery.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(inQuery.sql).toContain(`"ContactInbox"."${column}" in`)
+
+    const notInQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field, operator: operatorTypes.enum.notIn, value: ["a"] },
+        ],
+      }),
+    )
+    expect(notInQuery.sql).toContain(`"ContactInbox"."${column}" not in`)
+
+    const emptyQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field, operator: operatorTypes.enum.isEmpty }],
+      }),
+    )
+    expect(emptyQuery.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("drops unsupported operators for relation fields", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "currentChannel",
+            operator: operatorTypes.enum.contains,
+            value: "x",
+          },
+        ],
+      }),
+    ).toEqual({})
+  })
+
+  test("renders interactedInLast24h true/false as EXISTS / NOT EXISTS", () => {
+    const positive = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "interactedInLast24h",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(positive.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(positive.sql).toContain(
+      '"ContactInbox"."lastIncomingMessageAt" >= NOW()',
+    )
+
+    const negative = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "interactedInLast24h",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(negative.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+})
+
+describe("applyContactFilter — tags relation", () => {
+  test.each([
+    [operatorTypes.enum.in, "in"],
+    [operatorTypes.enum.eq, "in"],
+    [operatorTypes.enum.notIn, "not in"],
+    [operatorTypes.enum.ne, "not in"],
+  ])("renders tags %s as EXISTS ContactToTag.tagId %s", (operator, sqlOp) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field: "tags", operator, value: ["tag-1"] }],
+      }),
+    )
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactToTag"')
+    expect(query.sql).toContain(`"ContactToTag"."tagId" ${sqlOp}`)
+  })
+})
+
+describe("applyContactFilter — conversation relation fields", () => {
+  test("archived isEmpty/isNotEmpty/eq map to archivedAt null-checks", () => {
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "archived", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('"Conversation"."archivedAt" IS NULL')
+
+    const notEmpty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "archived", operator: operatorTypes.enum.isNotEmpty },
+        ],
+      }),
+    )
+    expect(notEmpty.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
+
+    const truthy = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "archived", operator: operatorTypes.enum.eq, value: "true" },
+        ],
+      }),
+    )
+    expect(truthy.sql).toContain('"Conversation"."archivedAt" IS NOT NULL')
+
+    const falsy = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "archived",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(falsy.sql).toContain('"Conversation"."archivedAt" IS NULL')
+  })
+
+  test("followUp eq true/false and isEmpty map to the followed column", () => {
+    const truthy = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "followUp", operator: operatorTypes.enum.eq, value: "true" },
+        ],
+      }),
+    )
+    expect(truthy.sql).toContain('"Conversation"."followed" =')
+    expect(truthy.params).toContain(true)
+
+    const falsy = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "followUp",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(falsy.params).toContain(false)
+
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "followUp", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('"Conversation"."followed" IS NULL')
+  })
+
+  test("conversationTransferredToHuman maps to inverted botEnabled", () => {
+    const transferred = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "conversationTransferredToHuman",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    // transferred to human ⟺ bot disabled
+    expect(transferred.sql).toContain('"Conversation"."botEnabled" =')
+    expect(transferred.params).toContain(false)
+
+    const notTransferred = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "conversationTransferredToHuman",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(notTransferred.params).toContain(true)
+  })
+})
+
+describe("applyContactFilter — custom fields", () => {
+  const customField = (valueType: string, operator: string, value?: unknown) =>
+    applyContactFilter({
+      operator: "and",
+      conditions: [
+        value === undefined
+          ? { field: "customField", customFieldId: "cf-1", valueType, operator }
+          : {
+              field: "customField",
+              customFieldId: "cf-1",
+              valueType,
+              operator,
+              value,
+            },
+      ],
+    })
+
+  test.each([
+    operatorTypes.enum.eq,
+    operatorTypes.enum.ne,
+    operatorTypes.enum.contains,
+    operatorTypes.enum.notContains,
+    operatorTypes.enum.startsWith,
+    operatorTypes.enum.endsWith,
+  ])("renders text custom-field operator %s as EXISTS", (operator) => {
+    const query = renderFirstRawCondition(customField("text", operator, "vip"))
+    expect(query.sql).toContain("EXISTS")
+    expect(query.sql).toContain('"ContactCustomField"."value"')
+  })
+
+  test.each([
+    operatorTypes.enum.eq,
+    operatorTypes.enum.ne,
+    operatorTypes.enum.gt,
+    operatorTypes.enum.gte,
+    operatorTypes.enum.lt,
+    operatorTypes.enum.lte,
+  ])("renders numeric custom-field operator %s with a numeric guard", (operator) => {
+    const query = renderFirstRawCondition(customField("number", operator, "12"))
+    expect(query.sql).toContain("::numeric")
+    expect(query.sql).toContain("~")
+  })
+
+  test("drops numeric custom-field conditions with non-numeric values", () => {
+    expect(customField("number", operatorTypes.enum.gt, "abc")).toEqual({})
+  })
+
+  test.each([
+    operatorTypes.enum.gt,
+    operatorTypes.enum.gte,
+    operatorTypes.enum.lt,
+    operatorTypes.enum.lte,
+  ])("renders datetime custom-field comparison %s with guarded cast", (operator) => {
+    const query = renderFirstRawCondition(
+      customField("datetime", operator, "2026-05-19T10:00:00Z"),
+    )
+    expect(query.sql).toContain("CASE WHEN")
+    expect(query.sql).toContain("::timestamptz")
+  })
+
+  test.each([
+    "boolean",
+    "select",
+    "text",
+  ])("renders %s custom-field eq as a plain value comparison", (valueType) => {
+    const query = renderFirstRawCondition(
+      customField(valueType, operatorTypes.enum.eq, "yes"),
+    )
+    expect(query.sql).toContain('"ContactCustomField"."value" =')
+    expect(query.params).toContain("yes")
+  })
+
+  test.each([
+    operatorTypes.enum.isEmpty,
+    operatorTypes.enum.isNotEmpty,
+  ])("renders custom-field %s as a null/empty check", (operator) => {
+    const query = renderFirstRawCondition(customField("text", operator))
+    expect(query.sql.toUpperCase()).toContain("IS")
+    expect(query.sql).toContain('"ContactCustomField"."value"')
+  })
+})
+
+describe("applyContactFilter — operator combining", () => {
+  test("wraps multiple conditions in OR when operator is 'or'", () => {
+    const where = applyContactFilter({
+      operator: "or",
+      conditions: [
+        { field: "fullName", operator: operatorTypes.enum.eq, value: "Ada" },
+        { field: "email", operator: operatorTypes.enum.eq, value: "a@b.co" },
+      ],
+    })
+    expect(where).toEqual({
+      OR: [{ fullName: "Ada" }, { email: "a@b.co" }],
+    })
+  })
+
+  test("returns an empty object for empty conditions", () => {
+    expect(applyContactFilter({ operator: "and", conditions: [] })).toEqual({})
+  })
+
+  test("drops unknown fields and keeps only recognized conditions", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        { field: "notARealField", operator: operatorTypes.enum.eq, value: "x" },
+        { field: "email", operator: operatorTypes.enum.eq, value: "a@b.co" },
+      ],
+    })
+    expect(where).toEqual({ AND: [{ email: "a@b.co" }] })
+  })
+})
+
+describe("applyContactFilter — buildContactWhere base", () => {
+  test("returns a workspace-only where when no keyword and no filter", () => {
+    expect(buildContactWhere({ workspaceId: "ws-1" })).toEqual({
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("returns a workspace-only where when the filter has no conditions", () => {
+    expect(
+      buildContactWhere({
+        workspaceId: "ws-1",
+        contactFilter: { operator: "and", conditions: [] },
+      }),
+    ).toEqual({ workspaceId: "ws-1" })
+  })
+})
+
+describe("applyContactFilter — unsupported operator fallbacks (dropped → {})", () => {
+  test.each([
+    ["interactedInLast24h", operatorTypes.enum.contains, "x"],
+    ["tags", operatorTypes.enum.contains, ["t"]],
+    ["source", operatorTypes.enum.contains, ["s"]],
+    ["inbox", operatorTypes.enum.gt, ["i"]],
+    ["currentChannel", operatorTypes.enum.gt, ["c"]],
+    ["conversationTransferredToHuman", operatorTypes.enum.contains, "x"],
+    ["subscribedToBroadcast", operatorTypes.enum.contains, "x"],
+    ["blocked", operatorTypes.enum.gt, "x"],
+    ["emailWasVerified", operatorTypes.enum.ne, "true"],
+    ["optedInForEmail", operatorTypes.enum.ne, "true"],
+    ["followUp", operatorTypes.enum.ne, "true"],
+    ["archived", operatorTypes.enum.in, ["x"]],
+  ])("drops %s with unsupported operator %s", (field, operator, value) => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field, operator, value }],
+      }),
+    ).toEqual({})
+  })
+
+  test("drops a date field with an unsupported operator on a valid value", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastSeen",
+            operator: operatorTypes.enum.contains,
+            value: "2026-05-19T10:00:00Z",
+          },
+        ],
+      }),
+    ).toEqual({})
+  })
+
+  test("passes the raw value through for an unrecognized column operator", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field: "fullName", operator: "weirdOp", value: "x" }],
+      }),
+    ).toEqual({ AND: [{ fullName: "x" }] })
+  })
+})
+
+describe("applyContactFilter — custom field remaining branches", () => {
+  const cf = (valueType: string, operator: string, value?: unknown) =>
+    applyContactFilter({
+      operator: "and",
+      conditions: [
+        value === undefined
+          ? { field: "customField", customFieldId: "cf-1", valueType, operator }
+          : {
+              field: "customField",
+              customFieldId: "cf-1",
+              valueType,
+              operator,
+              value,
+            },
+      ],
+    })
+  const cfSql = (valueType: string, operator: string, value?: unknown) =>
+    renderFirstRawCondition(cf(valueType, operator, value)).sql
+
+  // ── number ──────────────────────────────────────────────────────────────────
+  test("drops number isBetween when the value is not a valid interval", () => {
+    expect(cf("number", operatorTypes.enum.isBetween, "10")).toEqual({})
+  })
+  test("drops number isBetween when interval bounds are non-numeric", () => {
+    expect(cf("number", operatorTypes.enum.isBetween, ["a", "b"])).toEqual({})
+  })
+  test("renders number notBetween with a negated numeric guard", () => {
+    const sql = cfSql("number", operatorTypes.enum.notBetween, ["10", "20"])
+    expect(sql).toContain("::numeric")
+    expect(sql.toUpperCase()).toContain("NOT")
+  })
+  test("drops number comparison with an empty value", () => {
+    expect(cf("number", operatorTypes.enum.eq, "")).toEqual({})
+  })
+  test.each([
+    operatorTypes.enum.notContains,
+    operatorTypes.enum.startsWith,
+    operatorTypes.enum.endsWith,
+  ])("renders number text-search operator %s as ILIKE", (operator) => {
+    expect(cfSql("number", operator, "12").toLowerCase()).toContain("ilike")
+  })
+  test("drops number with an unsupported operator", () => {
+    expect(cf("number", operatorTypes.enum.in, "12")).toEqual({})
+  })
+
+  // ── datetime ────────────────────────────────────────────────────────────────
+  test("drops datetime isBetween when a bound is invalid", () => {
+    expect(
+      cf("datetime", operatorTypes.enum.isBetween, [
+        "not-a-date",
+        "2026-05-31T23:59:59Z",
+      ]),
+    ).toEqual({})
+  })
+  test("renders datetime notBetween with a guarded cast", () => {
+    const sql = cfSql("datetime", operatorTypes.enum.notBetween, [
+      "2026-05-01T00:00:00Z",
+      "2026-05-31T23:59:59Z",
+    ])
+    expect(sql).toContain("CASE WHEN")
+    expect(sql).toContain("::timestamptz")
+  })
+  test("renders datetime ne as a guarded outside-the-day range", () => {
+    const sql = cfSql("datetime", operatorTypes.enum.ne, "2026-05-19T10:00:00Z")
+    expect(sql).toContain("CASE WHEN")
+  })
+  test("drops datetime with an unsupported operator", () => {
+    expect(
+      cf("datetime", operatorTypes.enum.in, "2026-05-19T10:00:00Z"),
+    ).toEqual({})
+  })
+
+  // ── text / boolean / select ───────────────────────────────────────────────
+  test("drops text custom field with an empty value", () => {
+    expect(cf("text", operatorTypes.enum.eq, "")).toEqual({})
+  })
+  test("drops text custom field with an unsupported operator", () => {
+    expect(cf("text", operatorTypes.enum.gt, "x")).toEqual({})
+  })
+})
+
+// lastInteraction currently maps to `contactModel.lastActivityAt`, a column that
+// does not exist on the contact table (contact only has `lastReadAt`). It renders
+// an empty column → invalid SQL. Left as a todo pending the correct source column
+// (likely contactInbox.lastIncomingMessageAt, matching interactedInLast24h).
+test.todo(
+  "lastInteraction maps to a real activity column (currently broken: contactModel.lastActivityAt does not exist)",
+)

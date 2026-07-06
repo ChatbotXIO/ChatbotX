@@ -4,7 +4,7 @@ import {
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
 import z from "zod"
-import { contactFilterCriteriaSchema } from "@/features/contacts/schemas/contact-filter"
+import { contactFilterCriteriaSchema } from "@/features/contact-filter"
 import { cursorPaginationRequest } from "@/lib/pagination"
 import { workspaceTokenAuthAPI } from "@/orpc"
 import { listConversations } from "../queries/list-conversations.query"

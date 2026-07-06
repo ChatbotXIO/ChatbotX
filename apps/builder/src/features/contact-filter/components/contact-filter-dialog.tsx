@@ -1,5 +1,6 @@
 "use client"
 
+import type { ContactFilterField } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -24,15 +25,23 @@ const EMPTY_CONTACT_FILTER: ContactFilterCriteria = {
 }
 
 type ContactFilterDialogCoreProps = {
+  btnTitle?: string
   value: ContactFilterCriteria
   onApply: (next: ContactFilterCriteria) => void
+  onSubmitted?: (submitted: ContactFilterCriteria) => void
   trigger?: ReactNode
+  excludeFields?: ContactFilterField[]
+  inboxChannel?: string
 }
 
 const ContactFilterDialogCore = ({
   value,
   onApply,
+  onSubmitted,
   trigger,
+  btnTitle,
+  excludeFields,
+  inboxChannel,
 }: ContactFilterDialogCoreProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -47,7 +56,10 @@ const ContactFilterDialogCore = ({
   const handleApply = () => {
     onApply(draft)
     setOpen(false)
+    onSubmitted?.(draft)
   }
+
+  const filterCount = draft.conditions.length
 
   const handleCancel = () => {
     setOpen(false)
@@ -58,9 +70,11 @@ const ContactFilterDialogCore = ({
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
-            {t("actions.addFeature", {
-              feature: t("fields.contactFilter.label"),
-            })}
+            {btnTitle ??
+              t("actions.addFeature", {
+                feature: t("fields.contactFilter.label"),
+              })}{" "}
+            {filterCount > 0 ? `(${filterCount})` : ""}
           </Button>
         )}
       </DialogTrigger>
@@ -78,7 +92,12 @@ const ContactFilterDialogCore = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-6">
-          <ContactListFilterPanel filter={draft} onFilterChange={setDraft} />
+          <ContactListFilterPanel
+            excludeFields={excludeFields}
+            filter={draft}
+            inboxChannel={inboxChannel}
+            onFilterChange={setDraft}
+          />
 
           <DialogFooter>
             <Button
@@ -107,20 +126,40 @@ export const ContactFilterDialog = (props: ContactFilterDialogProps = {}) => {
   if (props.value && props.onApply) {
     return (
       <ContactFilterDialogCore
+        btnTitle={props.btnTitle}
+        excludeFields={props.excludeFields}
+        inboxChannel={props.inboxChannel}
         onApply={props.onApply}
+        onSubmitted={props.onSubmitted}
         trigger={props.trigger}
         value={props.value}
       />
     )
   }
 
-  return <ContactFilterDialogWithFormContext trigger={props.trigger} />
+  return (
+    <ContactFilterDialogWithFormContext
+      btnTitle={props.btnTitle}
+      excludeFields={props.excludeFields}
+      inboxChannel={props.inboxChannel}
+      onSubmitted={props.onSubmitted}
+      trigger={props.trigger}
+    />
+  )
 }
 
 const ContactFilterDialogWithFormContext = ({
   trigger,
+  btnTitle,
+  onSubmitted,
+  excludeFields,
+  inboxChannel,
 }: {
   trigger?: ReactNode
+  btnTitle?: string
+  onSubmitted?: (submitted: ContactFilterCriteria) => void
+  excludeFields?: ContactFilterField[]
+  inboxChannel?: string
 }) => {
   const { control, setValue } = useFormContext()
   const value =
@@ -131,7 +170,11 @@ const ContactFilterDialogWithFormContext = ({
 
   return (
     <ContactFilterDialogCore
+      btnTitle={btnTitle}
+      excludeFields={excludeFields}
+      inboxChannel={inboxChannel}
       onApply={(next) => setValue("contactFilter", next)}
+      onSubmitted={onSubmitted}
       trigger={trigger}
       value={value}
     />

@@ -583,7 +583,8 @@
       "allConditions": "All of the following conditions",
       "anyConditions": "Any of the below conditions.",
       "label": "Contact filter",
-      "onlyContactsMatch": "Only contacts, that match to"
+      "onlyContactsMatch": "Only contacts, that match to",
+      "moreOptions": "More Options"
     },
     "contactNote": {
       "label": "Contact Note"

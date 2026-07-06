@@ -1,3 +1,4 @@
+import { inboxService } from "@chatbotx.io/business"
 import { and, asc, db, eq, gt, inArray } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
@@ -26,9 +27,6 @@ export const prepareBroadcast = async (broadcastId: string) => {
       id: broadcastId,
       status: "scheduled",
     },
-    with: {
-      integrationWhatsapp: true,
-    },
   })
 
   if (!broadcast) {
@@ -36,24 +34,12 @@ export const prepareBroadcast = async (broadcastId: string) => {
     return
   }
 
-  // Get inboxIds based on integrationWhatsappId or channel
-  let inboxIds: string[] = []
-  if (broadcast.integrationWhatsappId && broadcast.integrationWhatsapp) {
-    inboxIds = [broadcast.integrationWhatsapp.inboxId]
-  } else {
-    const inboxes = await db.query.inboxModel.findMany({
-      where: {
-        workspaceId: broadcast.workspaceId,
-        ...(broadcast.channel &&
-          broadcast.channel !== channelTypes.enum.omnichannel && {
-            channel: broadcast.channel,
-          }),
-      },
-    })
-    if (inboxes.length > 0) {
-      inboxIds = inboxes.map((inbox) => inbox.id)
-    }
-  }
+  const parsedChannel = channelTypes.safeParse(broadcast.channel)
+  const inboxIds = await inboxService.resolveBroadcastInboxIds({
+    workspaceId: broadcast.workspaceId,
+    channels: parsedChannel.success ? [parsedChannel.data] : [],
+    integrationWhatsappId: broadcast.integrationWhatsappId,
+  })
 
   if (inboxIds.length === 0) {
     await db

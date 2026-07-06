@@ -5,5 +5,8 @@ export {
   ContactListFilterPanel,
 } from "./components/contact-list-filter"
 export { useContactFilterConfigs } from "./components/use-contact-filter-configs"
-export { useContactFilterQueryState } from "./components/use-contact-filter-query-state"
+export {
+  EMPTY_CONTACT_FILTER,
+  useContactFilterQueryState,
+} from "./components/use-contact-filter-query-state"
 export * from "./schemas"

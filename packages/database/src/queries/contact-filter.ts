@@ -1,11 +1,19 @@
 import {
   type AnyColumn,
+  inArray,
+  notInArray,
   relationsFilterToSQL,
   type SQL,
   sql,
 } from "drizzle-orm"
 import { operatorTypes } from "../partials"
-import { contactCustomFieldModel, contactModel } from "../schema"
+import {
+  contactCustomFieldModel,
+  contactInboxModel,
+  contactModel,
+  contactsToTagsModel,
+  conversationModel,
+} from "../schema"
 
 export type ContactFilterConditionInput = {
   field: string
@@ -38,6 +46,53 @@ export type ContactWhereInput = {
 
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
+
+// ── Relation conditions as correlated EXISTS subqueries ─────────────────────────
+// `relationsFilterToSQL` (used by the count / broadcast-audience / export paths)
+// does NOT understand nested relation filter fields (`contactInboxes`, `tags`,
+// `conversation`) — only columns, logical operators and `RAW`. So relation
+// conditions must render as `RAW` EXISTS subqueries correlated on the contact id;
+// this form works in both the relational query builder and `relationsFilterToSQL`.
+
+const existsWhere = (
+  buildSelect: (contactId: AnyColumn) => SQL,
+  negate = false,
+): ContactWhere => ({
+  RAW: (table: Record<string, AnyColumn>): SQL => {
+    const inner = buildSelect(table.id)
+    return negate ? sql`NOT EXISTS (${inner})` : sql`EXISTS (${inner})`
+  },
+})
+
+const contactInboxExists = (
+  predicate: SQL | undefined,
+  negate = false,
+): ContactWhere =>
+  existsWhere(
+    (contactId) =>
+      predicate
+        ? sql`SELECT 1 FROM ${contactInboxModel} WHERE ${contactInboxModel.contactId} = ${contactId} AND ${predicate}`
+        : sql`SELECT 1 FROM ${contactInboxModel} WHERE ${contactInboxModel.contactId} = ${contactId}`,
+    negate,
+  )
+
+const tagsExists = (predicate: SQL | undefined, negate = false): ContactWhere =>
+  existsWhere(
+    (contactId) =>
+      predicate
+        ? sql`SELECT 1 FROM ${contactsToTagsModel} WHERE ${contactsToTagsModel.contactId} = ${contactId} AND ${predicate}`
+        : sql`SELECT 1 FROM ${contactsToTagsModel} WHERE ${contactsToTagsModel.contactId} = ${contactId}`,
+    negate,
+  )
+
+const conversationExists = (predicate: SQL): ContactWhere =>
+  existsWhere(
+    (contactId) =>
+      sql`SELECT 1 FROM ${conversationModel} WHERE ${conversationModel.contactId} = ${contactId} AND ${predicate}`,
+  )
+
+const toArrayValue = (value: unknown): string[] =>
+  Array.isArray(value) ? (value as string[]) : [value as string]
 
 const buildKeywordWhere = (keyword: string): ContactWhere => {
   const normalizedKeyword = `%${keyword.toLowerCase()}%`
@@ -190,18 +245,8 @@ function buildConditionWhere(
       if (operator !== operatorTypes.enum.eq) {
         return {}
       }
-      const threshold = sql`NOW() - INTERVAL '24 hours'`
-      return value === "true"
-        ? {
-            contactInboxes: {
-              some: { lastIncomingMessageAt: { gte: threshold } },
-            },
-          }
-        : {
-            contactInboxes: {
-              none: { lastIncomingMessageAt: { gte: threshold } },
-            },
-          }
+      const predicate = sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`
+      return contactInboxExists(predicate, value !== "true")
     }
 
     // ── Relation: tags (name in / notIn) ─────────────────────────────────────
@@ -216,13 +261,16 @@ function buildConditionWhere(
         return {}
       }
       if (operator === operatorTypes.enum.isEmpty) {
-        return { tags: { isNull: true } }
+        return tagsExists(undefined, true)
       }
-      const tagOp =
+      const values = toArrayValue(value)
+      const positive =
         operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-          ? "in"
-          : "notIn"
-      return { tags: { id: { [tagOp]: value } } }
+      return tagsExists(
+        positive
+          ? inArray(contactsToTagsModel.tagId, values)
+          : notInArray(contactsToTagsModel.tagId, values),
+      )
     }
 
     // ── Relation: contactInboxes (source) ────────────────────────────────────
@@ -237,13 +285,16 @@ function buildConditionWhere(
         return {}
       }
       if (operator === operatorTypes.enum.isEmpty) {
-        return { contactInboxes: { isNull: true } }
+        return contactInboxExists(undefined, true)
       }
-      const sourceOp =
+      const values = toArrayValue(value)
+      const positive =
         operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-          ? "in"
-          : "notIn"
-      return { contactInboxes: { source: { [sourceOp]: value } } }
+      return contactInboxExists(
+        positive
+          ? inArray(contactInboxModel.source, values)
+          : notInArray(contactInboxModel.source, values),
+      )
     }
 
     // ── Relation: contactInboxes (currentChannel) ───────────────────────────
@@ -258,13 +309,16 @@ function buildConditionWhere(
         return {}
       }
       if (operator === operatorTypes.enum.isEmpty) {
-        return { contactInboxes: { isNull: true } }
+        return contactInboxExists(undefined, true)
       }
-      const channelOp =
+      const values = toArrayValue(value)
+      const positive =
         operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-          ? "in"
-          : "notIn"
-      return { contactInboxes: { channel: { [channelOp]: value } } }
+      return contactInboxExists(
+        positive
+          ? inArray(contactInboxModel.channel, values)
+          : notInArray(contactInboxModel.channel, values),
+      )
     }
 
     // ── Relation: contactInboxes (inboxId) ──────────────────────────────────
@@ -279,13 +333,16 @@ function buildConditionWhere(
         return {}
       }
       if (operator === operatorTypes.enum.isEmpty) {
-        return { contactInboxes: { isNull: true } }
+        return contactInboxExists(undefined, true)
       }
-      const inboxOp =
+      const values = toArrayValue(value)
+      const positive =
         operator === operatorTypes.enum.in || operator === operatorTypes.enum.eq
-          ? "in"
-          : "notIn"
-      return { contactInboxes: { inboxId: { [inboxOp]: value } } }
+      return contactInboxExists(
+        positive
+          ? inArray(contactInboxModel.inboxId, values)
+          : notInArray(contactInboxModel.inboxId, values),
+      )
     }
 
     // ── Dynamic custom field (value match on contactCustomFields) ─────────────
@@ -313,11 +370,19 @@ function buildConditionWhere(
 
     // ── Conversation relation: archived ───────────────────────────────────────
     case "archived":
-      return buildBooleanConversationRelation("archivedAt", operator, value)
+      return buildBooleanConversationRelation(
+        conversationModel.archivedAt,
+        operator,
+        value,
+      )
 
     // ── Conversation relation: followUp ───────────────────────────────────────
     case "followUp":
-      return buildBooleanConversationColumn("followed", operator, value)
+      return buildBooleanConversationColumn(
+        conversationModel.followed,
+        operator,
+        value,
+      )
 
     // ── Conversation relation: conversationTransferredToHuman ─────────────────
     case "conversationTransferredToHuman": {
@@ -325,7 +390,9 @@ function buildConditionWhere(
         return {}
       }
       // transferred to human ⟺ bot disabled
-      return { conversation: { botEnabled: value !== "true" } }
+      return conversationExists(
+        sql`${conversationModel.botEnabled} = ${value !== "true"}`,
+      )
     }
 
     // ── Not yet implemented (complex SQL or low-priority) ─────────────────────
@@ -723,34 +790,34 @@ function buildBooleanColumn(
 }
 
 function buildBooleanConversationColumn(
-  column: string,
+  column: AnyColumn,
   operator: string,
   value: unknown,
 ): ContactWhere {
   if (operator === operatorTypes.enum.isEmpty) {
-    return { conversation: { [column]: { isNull: true } } }
+    return conversationExists(sql`${column} IS NULL`)
   }
   if (operator === operatorTypes.enum.eq) {
-    return { conversation: { [column]: value === "true" } }
+    return conversationExists(sql`${column} = ${value === "true"}`)
   }
   return {}
 }
 
 function buildBooleanConversationRelation(
-  column: string,
+  column: AnyColumn,
   operator: string,
   value: unknown,
 ): ContactWhere {
   if (operator === operatorTypes.enum.isEmpty) {
-    return { conversation: { [column]: { isNull: true } } }
+    return conversationExists(sql`${column} IS NULL`)
   }
   if (operator === operatorTypes.enum.isNotEmpty) {
-    return { conversation: { [column]: { isNotNull: true } } }
+    return conversationExists(sql`${column} IS NOT NULL`)
   }
   if (operator === operatorTypes.enum.eq) {
-    return value === "true"
-      ? { conversation: { [column]: { isNotNull: true } } }
-      : { conversation: { [column]: { isNull: true } } }
+    return conversationExists(
+      value === "true" ? sql`${column} IS NOT NULL` : sql`${column} IS NULL`,
+    )
   }
   return {}
 }

@@ -6,6 +6,8 @@ import type { ContactFilterRequest } from "../schemas/query"
 
 export type ContactState = {
   loadingCounts: boolean
+  loadingInboxesCount: boolean
+  inboxesCountReqId: number
   error: string | null
   initialized: boolean
 
@@ -20,6 +22,7 @@ export type ContactActions = {
   getContactInboxesCount: (params?: {
     contactFilter?: ContactFilterRequest["contactFilter"]
     channel?: ChannelType
+    integrationWhatsappId?: string
   }) => Promise<void>
 }
 
@@ -28,6 +31,8 @@ export type ContactStore = ContactState & ContactActions
 export const createContactStore = (props: Partial<ContactState>) =>
   createStore<ContactStore>((set, get) => ({
     loadingCounts: false,
+    loadingInboxesCount: false,
+    inboxesCountReqId: 0,
     error: null,
     initialized: false,
 
@@ -77,13 +82,18 @@ export const createContactStore = (props: Partial<ContactState>) =>
     },
 
     getContactInboxesCount: async (params) => {
-      const { workspaceId, loadingCounts } = get()
+      const { workspaceId } = get()
 
-      if (loadingCounts || !workspaceId) {
+      if (!workspaceId) {
         return
       }
 
-      set({ loadingCounts: true, error: null })
+      const reqId = get().inboxesCountReqId + 1
+      set({
+        inboxesCountReqId: reqId,
+        loadingInboxesCount: true,
+        error: null,
+      })
 
       try {
         const { total } =
@@ -91,19 +101,31 @@ export const createContactStore = (props: Partial<ContactState>) =>
             workspaceId,
             sort: [],
             channels: [params?.channel || channelTypes.enum.omnichannel],
+            integrationWhatsappId: params?.integrationWhatsappId,
             contactFilter: params?.contactFilter,
           })
 
-        set({ contactInboxesCount: total, loadingCounts: false })
+        if (get().inboxesCountReqId !== reqId) {
+          return
+        }
+
+        set({ contactInboxesCount: total, loadingInboxesCount: false })
       } catch (error: unknown) {
+        if (get().inboxesCountReqId !== reqId) {
+          return
+        }
+
         set({
           error:
             error instanceof HTTPError
               ? error.message
               : "Failed to fetch contacts count",
+          loadingInboxesCount: false,
         })
       } finally {
-        set({ loadingCounts: false })
+        if (get().inboxesCountReqId === reqId) {
+          set({ loadingInboxesCount: false })
+        }
       }
     },
   }))

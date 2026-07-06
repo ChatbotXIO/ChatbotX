@@ -590,7 +590,8 @@
       "allConditions": "Tất cả các điều kiện bên dưới",
       "anyConditions": "Bất kỳ điều kiện nào bên dưới.",
       "label": "Bộ lọc liên hệ",
-      "onlyContactsMatch": "Chỉ các liên hệ khớp với"
+      "onlyContactsMatch": "Chỉ các liên hệ khớp với",
+      "moreOptions": "Thêm tùy chọn"
     },
     "contactNote": {
       "label": "Ghi chú liên hệ"

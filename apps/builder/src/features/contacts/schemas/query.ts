@@ -51,6 +51,7 @@ export const listContactsRequest = basePaginationRequest.extend({
     contactFilterCriteriaSchema.optional(),
   ),
   channels: z.array(channelTypes).optional(),
+  integrationWhatsappId: zodBigintAsString().optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
