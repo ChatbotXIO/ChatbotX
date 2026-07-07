@@ -486,7 +486,7 @@ export const MessageInput = () => {
             </div>
           )}
           <div className="flex w-full items-center pl-2.5">
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <InboxIcon
                 channel={
                   (conversation?.contactInboxes[0]?.channel ??

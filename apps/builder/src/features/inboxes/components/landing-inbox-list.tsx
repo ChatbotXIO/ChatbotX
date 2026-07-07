@@ -45,7 +45,7 @@ function QrLandingInboxItem({
 
   return (
     <div className="flex w-full items-center gap-3 border-t py-4 first:border-t-0">
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <InboxIcon
           channel={inbox.channel as ChannelType}
           label={inbox.name}
