@@ -95,5 +95,10 @@ export const acceptInvitationAction = authActionClient
 
     // The new membership must show up in the invitee's cached workspace list
     // right away; bust the tag so the workspace becomes reachable immediately.
-    await invalidateCacheByTags([`users:${ctx.user.id}:workspace-members`])
+    // Also bust the workspace-side member list so existing admins see the new
+    // member without waiting for that cache's TTL to expire.
+    await invalidateCacheByTags([
+      `users:${ctx.user.id}:workspace-members`,
+      `workspaces:${invitation.workspaceId}:workspace-members`,
+    ])
   })

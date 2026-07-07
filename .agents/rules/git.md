@@ -42,6 +42,7 @@ Examples: `feat/instagram-channel`, `fix/whatsapp-webhook`
 ## Pull Requests
 
 - Keep PRs small and focused — one feature or fix per PR
+- **PR title must follow the same format as commit messages:** `<type>(<scope>): <subject>` (lowercase after the colon, no trailing period, ≤ 100 chars). Scope is optional but preferred when the change is localized to one area. This is not enforced by a hook, so it must be applied manually/by the assistant when opening the PR.
 - Reference the issue number in the PR title or body (e.g. `#414`)
 - Run `pnpm lint` and `pnpm --filter <app> check-types` before opening a PR
 - All user-facing strings must use `useTranslations()` — never hardcode labels
