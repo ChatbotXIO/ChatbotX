@@ -55,6 +55,7 @@ const StartExternalNodeStepEditor = (
           label={t("fields.flow.label")}
           name={flowIdField}
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
 
@@ -62,6 +63,7 @@ const StartExternalNodeStepEditor = (
           label={t("fields.node.label")}
           name={nodeIdField}
           options={nodeOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 import { languageOptions } from "../type"
 
 export function WhatsappMessageTemplateLanguageSelect({
@@ -12,12 +13,14 @@ export function WhatsappMessageTemplateLanguageSelect({
   label: string
   required?: boolean
 }) {
+  const t = useTranslations()
+
   return (
     <SelectField
       label={label}
       name={name}
       options={languageOptions}
-      placeholder="Please select"
+      placeholder={t("actions.pleaseSelect")}
       required={required}
     />
   )

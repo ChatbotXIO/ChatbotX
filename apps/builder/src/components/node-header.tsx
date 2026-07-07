@@ -8,6 +8,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Slot } from "@radix-ui/react-slot"
 import { useNodeId, useReactFlow } from "@xyflow/react"
 import { EllipsisVertical, Trash } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { type HTMLAttributes, type ReactNode, useCallback } from "react"
 
 /* NODE HEADER -------------------------------------------------------------- */
@@ -189,6 +190,7 @@ NodeHeaderMenuAction.displayName = "NodeHeaderMenuAction"
 /* NODE HEADER DELETE ACTION --------------------------------------- */
 
 export const NodeHeaderDeleteAction = () => {
+  const t = useTranslations()
   const id = useNodeId()
   const { setNodes } = useReactFlow()
 
@@ -197,7 +199,11 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes])
 
   return (
-    <NodeHeaderAction label="Delete node" onClick={handleClick} variant="ghost">
+    <NodeHeaderAction
+      label={t("actions.delete")}
+      onClick={handleClick}
+      variant="ghost"
+    >
       <Trash />
     </NodeHeaderAction>
   )

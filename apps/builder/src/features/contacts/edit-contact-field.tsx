@@ -149,6 +149,7 @@ export function EditContactField(props: EditContactField) {
               <Button
                 onClick={() => onOpenChange(false)}
                 size="sm"
+                type="button"
                 variant="ghost"
               >
                 {t("actions.cancel")}

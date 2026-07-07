@@ -57,6 +57,8 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   label?: string
   required?: boolean
   placeholder?: string
+  searchPlaceholder?: string
+  emptyText?: string
   description?: string
   descriptionType?: "inline" | "tooltip"
   options: SelectOption[]
@@ -73,6 +75,8 @@ export function ComboboxField<T extends FieldValues>({
   label,
   required,
   placeholder,
+  searchPlaceholder,
+  emptyText,
   description,
   descriptionType = "inline",
   options,
@@ -136,9 +140,12 @@ export function ComboboxField<T extends FieldValues>({
               side={side}
             >
               <Command>
-                <CommandInput className="h-9" placeholder="Search..." />
+                <CommandInput
+                  className="h-9"
+                  placeholder={searchPlaceholder ?? "Search..."}
+                />
                 <CommandList>
-                  <CommandEmpty>No record found.</CommandEmpty>
+                  <CommandEmpty>{emptyText ?? "No record found."}</CommandEmpty>
                   {options.map((option) =>
                     option.children ? (
                       <CommandGroup heading={option.label} key={option.value}>

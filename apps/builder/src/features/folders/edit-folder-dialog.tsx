@@ -13,6 +13,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -32,6 +33,7 @@ export function EditFolderDialog({
   folder: FolderResource | null
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -47,6 +49,7 @@ export function EditFolderDialog({
             )
             resetFormAndAction()
             onOpenChange(false)
+            router.refresh()
           },
           onError: ({ error }) => {
             if (error.serverError) {

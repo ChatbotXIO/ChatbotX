@@ -5,6 +5,7 @@ import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { TrashIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { SpreadsheetOperatorSelect } from "../spreadsheet-operator-select"
 import { WorksheetColumnSelect } from "../worksheet-column-select"
@@ -20,6 +21,7 @@ export const SpreadsheetColumnFilter = ({
 }: {
   parentName?: string
 }) => {
+  const t = useTranslations()
   const { control } = useFormContext()
   const getFieldName = (field: string) => {
     if (!parentName) {
@@ -42,13 +44,15 @@ export const SpreadsheetColumnFilter = ({
   return (
     <div className="flex flex-col gap-2">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="flex-1 text-nowrap">Lookup Columns:</span>
+        <span className="flex-1 text-nowrap">
+          {t("flows.fields.lookupColumnsLabel")}
+        </span>
         <SelectField
           defaultValue={FilterMode.AND}
           name={getFieldName("lookup.mode")}
           options={[
-            { label: "AND", value: FilterMode.AND },
-            { label: "OR", value: FilterMode.OR },
+            { label: t("flows.fields.filterModeAnd"), value: FilterMode.AND },
+            { label: t("flows.fields.filterModeOr"), value: FilterMode.OR },
           ]}
         />
       </div>
@@ -67,7 +71,7 @@ export const SpreadsheetColumnFilter = ({
           />
           <InputField
             name={getFieldName(`lookup.conditions.${idx}.value`)}
-            placeholder="Value"
+            placeholder={t("fields.value.label")}
           />
           <Button onClick={() => remove(idx)} type="button" variant="ghost">
             <TrashIcon size={20} />
@@ -80,7 +84,7 @@ export const SpreadsheetColumnFilter = ({
         type="button"
         variant="secondary"
       >
-        + Filter
+        + {t("actions.filter")}
       </Button>
     </div>
   )

@@ -91,7 +91,7 @@ export function AddInboxTeamMemberDialog({
               onSubmit={handleSubmitWithAction}
             >
               <MultiSelectField
-                label="Select users"
+                label={t("fields.selectUsers.label")}
                 name="userIds"
                 options={userOptions}
               />

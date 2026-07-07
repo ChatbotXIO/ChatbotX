@@ -33,6 +33,7 @@ export const AIModelSelect = (props: AIModelSelectProps) => {
     <ComboboxField
       label={t("fields.model.label")}
       options={options}
+      placeholder={t("actions.pleaseSelect")}
       {...rest}
     />
   )

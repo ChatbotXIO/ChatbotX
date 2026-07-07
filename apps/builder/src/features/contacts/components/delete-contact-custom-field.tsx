@@ -88,6 +88,7 @@ export default function ClearContactCustomFieldDialog({
               label={t("fields.customField.label")}
               name="customFieldId"
               options={customFieldSelectOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
             />
 

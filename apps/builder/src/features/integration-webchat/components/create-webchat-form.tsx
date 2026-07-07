@@ -128,6 +128,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
         />
 
         <Separator />

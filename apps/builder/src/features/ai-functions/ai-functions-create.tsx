@@ -184,7 +184,10 @@ export function AIFunctionsCreate({
                     placeholder="Attribute"
                   />
                   <MoveRightIcon className="size-10" />
-                  <CustomFieldField name={`dataCollect.${index}.to`} />
+                  <CustomFieldField
+                    name={`dataCollect.${index}.to`}
+                    placeholder={t("actions.pleaseSelect")}
+                  />
                   <Button
                     onClick={() => remove(index)}
                     type="button"

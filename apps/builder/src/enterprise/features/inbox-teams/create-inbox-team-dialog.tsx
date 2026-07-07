@@ -98,10 +98,10 @@ export function CreateInboxTeamDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label="Name" name="name" required />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <MultiSelectField
-                label="Select users"
+                label={t("fields.selectUsers.label")}
                 name="userIds"
                 options={userOptions}
               />

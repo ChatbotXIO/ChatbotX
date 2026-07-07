@@ -237,6 +237,7 @@ export const ContactFilterConditionForm = ({
                 className="overflow-hidden truncate"
                 name="field"
                 options={fieldOptions}
+                placeholder={t("actions.pleaseSelect")}
                 triggerValueChange={triggerFieldChange}
               />
               <SelectField

@@ -92,8 +92,12 @@ export default function AddContactTagDialog({
             onSubmit={handleSubmitWithAction}
           >
             <TagsInputField
+              addAnotherPlaceholder={t("actions.addAnother")}
               label={t("fields.tag.label")}
               name="tags"
+              placeholder={t("actions.enterFieldAndPressEnter", {
+                field: t("fields.tag.label").toLowerCase(),
+              })}
               suggestions={tagOptions}
             />
 

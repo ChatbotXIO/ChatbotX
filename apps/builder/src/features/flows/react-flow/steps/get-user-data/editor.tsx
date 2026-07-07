@@ -102,6 +102,7 @@ const GetUserDataStepForm = ({
         <CustomFieldField
           label={t("fields.outputCustomField.label")}
           name="outputFieldId"
+          placeholder={t("actions.pleaseSelect")}
           required
         />
 
@@ -173,7 +174,7 @@ const GetUserDataStepEditor = ({ parentName }: { parentName: string }) => {
     <BaseStepEditor icon={KeyboardIcon} title={t("flows.actions.getUserData")}>
       <div className="flex flex-col gap-3">
         <TiptapEditorField
-          label="Message"
+          label={t("fields.messages.label")}
           name={`${parentName}.message`}
           required
         />

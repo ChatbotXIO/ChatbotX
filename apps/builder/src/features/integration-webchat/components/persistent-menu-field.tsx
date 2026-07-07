@@ -72,6 +72,7 @@ const PersistentMenuItem = memo(
             label={t("fields.flowId.label")}
             name={`persistentMenus.${index}.flowId`}
             options={flowOptions}
+            placeholder={t("actions.pleaseSelect")}
             required
           />
         )}

@@ -47,6 +47,7 @@ export const ActionEditor = ({
         <ComboboxField
           name={`${parentName}.flowId`}
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
       )

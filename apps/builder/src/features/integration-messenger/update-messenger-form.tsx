@@ -163,6 +163,7 @@ export function UpdateMessengerForm({
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
         />
 
         <Card>

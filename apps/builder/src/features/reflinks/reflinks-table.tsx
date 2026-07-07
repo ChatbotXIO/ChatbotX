@@ -60,7 +60,7 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         id: "select",
         header: ({ table: tableData }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label={t("actions.selectAll")}
             checked={
               tableData.getIsAllPageRowsSelected() ||
               (tableData.getIsSomePageRowsSelected() && "indeterminate")
@@ -73,7 +73,7 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label={t("actions.selectRow")}
             checked={row.getIsSelected()}
             className="translate-y-0.5"
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}

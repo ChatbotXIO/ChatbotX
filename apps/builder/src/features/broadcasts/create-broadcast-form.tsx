@@ -704,6 +704,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                   label: integration.name,
                   value: integration.id,
                 }))}
+                placeholder={t("actions.pleaseSelect")}
                 required={true}
               />
 
@@ -717,6 +718,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                       label: `${template.name} (${template.language})`,
                       value: template.id,
                     }))}
+                    placeholder={t("actions.pleaseSelect")}
                     required={true}
                   />
 
@@ -756,6 +758,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                 label={t("fields.messengerChannel.label")}
                 name="integrationMessengerId"
                 options={messengerIntegrationOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required={true}
               />
 
@@ -769,6 +772,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                       label: `${template.name} (${template.language})`,
                       value: template.id,
                     }))}
+                    placeholder={t("actions.pleaseSelect")}
                     required={true}
                   />
 
@@ -820,6 +824,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                 label: flow.name,
                 value: flow.id,
               }))}
+              placeholder={t("actions.pleaseSelect")}
               required={true}
             />
           )}

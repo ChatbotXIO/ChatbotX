@@ -115,6 +115,7 @@ export function BulkMoveFolderDialog({
               label={t("fields.folder.label")}
               name="newFolderId"
               options={folderOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
             />
 

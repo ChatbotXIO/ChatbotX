@@ -134,6 +134,7 @@ export function ProductVariantsSection() {
                 />
 
                 <TagsInputField
+                  addAnotherPlaceholder={tActions("addAnother")}
                   className="[&>label+div]:mt-0 [&>label]:hidden"
                   name={`variantOptions.${index}.values`}
                   placeholder={t("fields.optionValue.label")}

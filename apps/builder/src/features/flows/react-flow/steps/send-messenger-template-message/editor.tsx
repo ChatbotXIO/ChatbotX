@@ -198,6 +198,7 @@ function SendMessengerTemplateMessageStepEditor(
         <ComboboxField
           name={`${parentName}.template.inboxId`}
           options={messengerInboxOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
 

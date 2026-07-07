@@ -100,6 +100,7 @@ export function UpdateQrCodeForm({
                 label={t("fields.botResponse.label")}
                 name="flowId"
                 options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required
               />
 

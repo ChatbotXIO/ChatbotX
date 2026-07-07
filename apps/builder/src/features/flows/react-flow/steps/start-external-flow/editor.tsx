@@ -25,6 +25,7 @@ const SendExternalFlowStepEditor = ({ parentName }: { parentName: string }) => {
         disableValues={activeFlowId ? [activeFlowId] : undefined}
         name={name}
         options={flowOptions}
+        placeholder={t("actions.pleaseSelect")}
         required={true}
       />
     </BaseStepEditor>

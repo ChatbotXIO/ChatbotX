@@ -126,6 +126,7 @@ export function UpdateReflinkForm(props: {
           label={t("fields.flow.label")}
           name="flowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required
         />
 

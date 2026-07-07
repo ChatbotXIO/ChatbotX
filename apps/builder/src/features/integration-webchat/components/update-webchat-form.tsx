@@ -147,6 +147,7 @@ export function UpdateWebchatForm({
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
         />
 
         <Separator />
