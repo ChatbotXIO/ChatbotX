@@ -27,6 +27,7 @@ import type {
 } from "@chatbotx.io/database/partials"
 import type {
   AIAgentModel,
+  ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
@@ -52,7 +53,7 @@ import { createUrlReaderExecutor } from "./system-tools/url-reader"
 
 export type ReplyByAIProps = {
   conversation: ConversationModel
-  contactInboxId: string
+  contactInbox: ContactInboxModel
   channel?: string
   messages: ModelMessage[]
   aiAgent: AIAgentModel
@@ -158,7 +159,7 @@ function createReplyToolset(options: {
           type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: conversation.id,
-            contactInboxId: options.props.contactInboxId,
+            contactInboxId: options.props.contactInbox.id,
             flowId,
           },
         })
@@ -466,9 +467,10 @@ async function runAIReply(
     const tools = toolset.tools
     cleanup = toolset.cleanup
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox: props.contactInbox,
+    })
     const promptBase = aiAgent.prompt
       ? await contactVariableService.replaceAll({
           text: aiAgent.prompt,

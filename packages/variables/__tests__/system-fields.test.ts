@@ -1,29 +1,17 @@
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
-import type { ContactModel } from "@chatbotx.io/database/types"
+import type {
+  ContactInboxModel,
+  ContactModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { describe, expect, test, vi } from "vitest"
 
-const {
-  mockFindLatestContactLastReadAt,
-  mockFindLatestLastIncomingMessageAt,
-  mockResolveTenantSettings,
-  mockWorkspaceFind,
-} = vi.hoisted(() => ({
-  mockFindLatestContactLastReadAt: vi.fn(),
-  mockFindLatestLastIncomingMessageAt: vi.fn(),
+const { mockResolveTenantSettings } = vi.hoisted(() => ({
   mockResolveTenantSettings: vi.fn(),
-  mockWorkspaceFind: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactInboxService: {
-    findLatestContactLastReadAtByContactId: mockFindLatestContactLastReadAt,
-    findLatestLastIncomingMessageAtByContactId:
-      mockFindLatestLastIncomingMessageAt,
-  },
   resolveTenantSettings: mockResolveTenantSettings,
-  workspaceService: {
-    find: mockWorkspaceFind,
-  },
 }))
 
 vi.mock("@chatbotx.io/business/utils", () => ({
@@ -39,6 +27,34 @@ const contact = {
   timezone: "UTC",
 } as ContactModel
 
+const contactInbox = {
+  id: "contact-inbox-1",
+  createdAt: new Date("2026-01-02T03:04:05.000Z"),
+  contactLastReadAt: new Date("2026-01-02T03:04:05.000Z"),
+  lastIncomingMessageAt: new Date("2026-01-02T03:04:05.000Z"),
+} as ContactInboxModel
+
+const workspace = {
+  id: "workspace-1",
+  name: "Workspace One",
+  logo: null,
+  timezone: "UTC",
+} as WorkspaceModel
+
+const createContext = (overrides?: {
+  contact?: ContactModel
+  contactInbox?: ContactInboxModel | null
+  workspace?: WorkspaceModel | null
+}) => ({
+  contact: overrides?.contact ?? contact,
+  contactInbox:
+    overrides && "contactInbox" in overrides
+      ? overrides.contactInbox
+      : contactInbox,
+  workspace:
+    overrides && "workspace" in overrides ? overrides.workspace : workspace,
+})
+
 describe("getSystemFieldValue", () => {
   test("profile_pic resolves storage paths to public URLs", async () => {
     mockResolveTenantSettings.mockResolvedValue({
@@ -47,10 +63,12 @@ describe("getSystemFieldValue", () => {
 
     await expect(
       getSystemFieldValue(
-        {
-          ...contact,
-          avatar: "public/space/workspace-1/avatars/a.png",
-        } as ContactModel,
+        createContext({
+          contact: {
+            ...contact,
+            avatar: "public/space/workspace-1/avatars/a.png",
+          } as ContactModel,
+        }),
         systemFieldTypes.enum.profile_pic,
       ),
     ).resolves.toBe(
@@ -61,20 +79,24 @@ describe("getSystemFieldValue", () => {
   test("avatar keeps absolute URLs and leaves null as null", async () => {
     await expect(
       getSystemFieldValue(
-        {
-          ...contact,
-          avatar: "https://cdn.example.com/a.png",
-        } as ContactModel,
+        createContext({
+          contact: {
+            ...contact,
+            avatar: "https://cdn.example.com/a.png",
+          } as ContactModel,
+        }),
         systemFieldTypes.enum.avatar,
       ),
     ).resolves.toBe("https://cdn.example.com/a.png")
 
     await expect(
       getSystemFieldValue(
-        {
-          ...contact,
-          avatar: null,
-        } as ContactModel,
+        createContext({
+          contact: {
+            ...contact,
+            avatar: null,
+          } as ContactModel,
+        }),
         systemFieldTypes.enum.avatar,
       ),
     ).resolves.toBeNull()
@@ -84,12 +106,17 @@ describe("getSystemFieldValue", () => {
     mockResolveTenantSettings.mockResolvedValue({
       storageUrl: "http://localhost:3123/storage/",
     })
-    mockWorkspaceFind.mockResolvedValue({
-      logo: "public/space/workspace-1/logo.png",
-    })
 
     await expect(
-      getSystemFieldValue(contact, systemFieldTypes.enum.account_image),
+      getSystemFieldValue(
+        createContext({
+          workspace: {
+            ...workspace,
+            logo: "public/space/workspace-1/logo.png",
+          } as WorkspaceModel,
+        }),
+        systemFieldTypes.enum.account_image,
+      ),
     ).resolves.toBe(
       "http://localhost:3123/storage/public/space/workspace-1/logo.png",
     )
@@ -98,78 +125,127 @@ describe("getSystemFieldValue", () => {
   test("locale2 returns the language from underscore and hyphen locales", async () => {
     await expect(
       getSystemFieldValue(
-        { ...contact, locale: "en_US" } as ContactModel,
+        createContext({
+          contact: { ...contact, locale: "en_US" } as ContactModel,
+        }),
         systemFieldTypes.enum.locale2,
       ),
     ).resolves.toBe("en")
 
     await expect(
       getSystemFieldValue(
-        { ...contact, locale: "en-US" } as ContactModel,
+        createContext({
+          contact: { ...contact, locale: "en-US" } as ContactModel,
+        }),
         systemFieldTypes.enum.locale2,
       ),
     ).resolves.toBe("en")
   })
 
-  test("last_seen uses the latest contact inbox read timestamp", async () => {
-    mockFindLatestContactLastReadAt.mockResolvedValue(
-      new Date("2026-01-02T03:04:05.000Z"),
-    )
-
+  test("last_seen uses the context contact inbox read timestamp", async () => {
     await expect(
-      getSystemFieldValue(contact, systemFieldTypes.enum.last_seen),
-    ).resolves.toBe("2026-01-02 03:04:05")
-    expect(mockFindLatestContactLastReadAt).toHaveBeenCalledWith({
-      contactId: "contact-1",
-    })
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            contactLastReadAt: new Date("2026-01-03T03:04:05.000Z"),
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.last_seen,
+      ),
+    ).resolves.toBe("2026-01-03 03:04:05")
   })
 
-  test("last_interaction uses the latest inbound contact inbox timestamp", async () => {
-    mockFindLatestLastIncomingMessageAt.mockResolvedValue(
-      new Date("2026-01-02T03:04:05.000Z"),
-    )
-
+  test("last_interaction uses the context contact inbox inbound timestamp", async () => {
     await expect(
-      getSystemFieldValue(contact, systemFieldTypes.enum.last_interaction),
-    ).resolves.toBe("2026-01-02 03:04:05")
-    expect(mockFindLatestLastIncomingMessageAt).toHaveBeenCalledWith({
-      contactId: "contact-1",
-    })
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            lastIncomingMessageAt: new Date("2026-01-03T03:04:05.000Z"),
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.last_interaction,
+      ),
+    ).resolves.toBe("2026-01-03 03:04:05")
   })
 
   test("last_seen and last_interaction return null when no inbox timestamp exists", async () => {
-    mockFindLatestContactLastReadAt.mockResolvedValue(null)
-    mockFindLatestLastIncomingMessageAt.mockResolvedValue(null)
-
     await expect(
-      getSystemFieldValue(contact, systemFieldTypes.enum.last_seen),
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            contactLastReadAt: null,
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.last_seen,
+      ),
     ).resolves.toBeNull()
     await expect(
-      getSystemFieldValue(contact, systemFieldTypes.enum.last_interaction),
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            lastIncomingMessageAt: null,
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.last_interaction,
+      ),
     ).resolves.toBeNull()
   })
 
-  test("last_seen formats using the contact timezone", async () => {
-    mockFindLatestContactLastReadAt.mockResolvedValue(
-      new Date("2026-01-01T23:30:00.000Z"),
-    )
-
+  test("subscribed_date formats the context contact inbox createdAt", async () => {
     await expect(
       getSystemFieldValue(
-        { ...contact, timezone: "Asia/Ho_Chi_Minh" } as ContactModel,
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            createdAt: new Date("2026-01-01T23:30:00.000Z"),
+          } as ContactInboxModel,
+          workspace: { ...workspace, timezone: "Asia/Ho_Chi_Minh" },
+        }),
+        systemFieldTypes.enum.subscribed_date,
+      ),
+    ).resolves.toBe("2026-01-02")
+  })
+
+  test("subscribed_date returns null without a context contact inbox", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: null }),
+        systemFieldTypes.enum.subscribed_date,
+      ),
+    ).resolves.toBeNull()
+  })
+
+  test("last_seen formats using the workspace timezone before contact timezone", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, timezone: "UTC" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            contactLastReadAt: new Date("2026-01-01T23:30:00.000Z"),
+          } as ContactInboxModel,
+          workspace: { ...workspace, timezone: "Asia/Ho_Chi_Minh" },
+        }),
         systemFieldTypes.enum.last_seen,
       ),
     ).resolves.toBe("2026-01-02 06:30:00")
   })
 
-  test("last_interaction formats date and time using the contact timezone", async () => {
-    mockFindLatestLastIncomingMessageAt.mockResolvedValue(
-      new Date("2026-01-01T23:30:00.000Z"),
-    )
-
+  test("last_interaction falls back to the contact timezone when workspace is missing", async () => {
     await expect(
       getSystemFieldValue(
-        { ...contact, timezone: "Asia/Ho_Chi_Minh" } as ContactModel,
+        createContext({
+          contact: { ...contact, timezone: "Asia/Ho_Chi_Minh" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            lastIncomingMessageAt: new Date("2026-01-01T23:30:00.000Z"),
+          } as ContactInboxModel,
+          workspace: null,
+        }),
         systemFieldTypes.enum.last_interaction,
       ),
     ).resolves.toBe("2026-01-02 06:30:00")
@@ -177,29 +253,46 @@ describe("getSystemFieldValue", () => {
 
   test("last_seen and last_interaction fall back to UTC when timezone is null", async () => {
     const utcContact = { ...contact, timezone: null } as ContactModel
-    mockFindLatestContactLastReadAt.mockResolvedValue(
-      new Date("2026-01-01T23:30:00.000Z"),
-    )
-    mockFindLatestLastIncomingMessageAt.mockResolvedValue(
-      new Date("2026-01-01T23:30:00.000Z"),
-    )
 
     await expect(
-      getSystemFieldValue(utcContact, systemFieldTypes.enum.last_seen),
+      getSystemFieldValue(
+        createContext({
+          contact: utcContact,
+          contactInbox: {
+            ...contactInbox,
+            contactLastReadAt: new Date("2026-01-01T23:30:00.000Z"),
+          } as ContactInboxModel,
+          workspace: null,
+        }),
+        systemFieldTypes.enum.last_seen,
+      ),
     ).resolves.toBe("2026-01-01 23:30:00")
     await expect(
-      getSystemFieldValue(utcContact, systemFieldTypes.enum.last_interaction),
+      getSystemFieldValue(
+        createContext({
+          contact: utcContact,
+          contactInbox: {
+            ...contactInbox,
+            lastIncomingMessageAt: new Date("2026-01-01T23:30:00.000Z"),
+          } as ContactInboxModel,
+          workspace: null,
+        }),
+        systemFieldTypes.enum.last_interaction,
+      ),
     ).resolves.toBe("2026-01-01 23:30:00")
   })
 
   test("last_seen falls back to UTC when timezone is invalid", async () => {
-    mockFindLatestContactLastReadAt.mockResolvedValue(
-      new Date("2026-01-01T23:30:00.000Z"),
-    )
-
     await expect(
       getSystemFieldValue(
-        { ...contact, timezone: "7" } as ContactModel,
+        createContext({
+          contact: { ...contact, timezone: "7" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            contactLastReadAt: new Date("2026-01-01T23:30:00.000Z"),
+          } as ContactInboxModel,
+          workspace: null,
+        }),
         systemFieldTypes.enum.last_seen,
       ),
     ).resolves.toBe("2026-01-01 23:30:00")

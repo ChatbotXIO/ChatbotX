@@ -1,3 +1,7 @@
+import type {
+  ContactInboxModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { contactVariableService } from "./contact-variable"
 import type { ReplaceVariableProps } from "./schema"
 
@@ -65,10 +69,17 @@ const deepReplaceStrings = async <T>(
 export const resolveContactVariablesDeep = async <T>(
   contactId: string,
   value: T,
+  source: {
+    contactInbox: ContactInboxModel | string
+    workspace?: WorkspaceModel
+  },
 ): Promise<T> => {
   if (!valueContainsVariablePlaceholder(value)) {
     return value
   }
-  const variables = await contactVariableService.getAll(contactId)
+  const variables = await contactVariableService.getAll({
+    contactId,
+    ...source,
+  })
   return deepReplaceStrings(value, variables)
 }

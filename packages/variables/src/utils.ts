@@ -1,9 +1,7 @@
-import { contactInboxService } from "@chatbotx.io/business"
 import {
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
-import type { ContactModel } from "@chatbotx.io/database/types"
 import { formatInTimeZone } from "date-fns-tz"
 import {
   getAssignedAdminEmail,
@@ -25,9 +23,11 @@ import {
 } from "./helpers/last-input"
 import { getChatHistory } from "./helpers/message"
 import { toPublicStorageUrl } from "./helpers/storage-url"
-import { getWorkspaceImageUrl, getWorkspaceName } from "./helpers/workspace"
+import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
+const DATE_PATTERN = "yyyy-MM-dd"
+const DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss"
 
 export const extractVariables = (text: string): string[] => {
   const regex = /\{\{(\w+)\}\}/g
@@ -55,10 +55,56 @@ const safeFormatInTimeZone = (
   }
 }
 
+const getTimezone = ({
+  contact,
+  workspace,
+}: ContactVariableContext): string | null => {
+  if (workspace?.timezone) {
+    return workspace.timezone
+  }
+
+  return contact.timezone
+}
+
+const formatDate = (
+  date: Date | string | null | undefined,
+  timezone: string | null,
+): string | null => {
+  if (!date) {
+    return null
+  }
+
+  return safeFormatInTimeZone(date, timezone, DATE_PATTERN)
+}
+
+const formatDateTime = (
+  date: Date | string | null | undefined,
+  timezone: string | null,
+): string | null => {
+  if (!date) {
+    return null
+  }
+
+  return safeFormatInTimeZone(date, timezone, DATE_TIME_PATTERN)
+}
+
+const getWorkspaceLogo = ({
+  workspace,
+}: ContactVariableContext): string | null => {
+  if (!workspace?.logo) {
+    return null
+  }
+
+  return workspace.logo
+}
+
 export const getSystemFieldValue = async (
-  contact: ContactModel,
+  context: ContactVariableContext,
   key: SystemFieldType,
 ): Promise<string | null> => {
+  const { contact, contactInbox, workspace } = context
+  const timezone = getTimezone(context)
+
   switch (key) {
     case systemFieldTypes.enum.email:
       return contact.email
@@ -89,26 +135,9 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.user_id:
       return contact.id
     case systemFieldTypes.enum.subscribed_date:
-      return contact.subscribedAt
-        ? safeFormatInTimeZone(
-            contact.subscribedAt,
-            contact.timezone,
-            "yyyy-MM-dd",
-          )
-        : null
-    case systemFieldTypes.enum.last_seen: {
-      const lastSeenAt =
-        await contactInboxService.findLatestContactLastReadAtByContactId({
-          contactId: contact.id,
-        })
-      return lastSeenAt
-        ? safeFormatInTimeZone(
-            lastSeenAt,
-            contact.timezone,
-            "yyyy-MM-dd HH:mm:ss",
-          )
-        : null
-    }
+      return formatDate(contactInbox?.createdAt, timezone)
+    case systemFieldTypes.enum.last_seen:
+      return formatDateTime(contactInbox?.contactLastReadAt, timezone)
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
@@ -130,11 +159,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.assigned_admin_id:
       return await getAssignedAdminId(contact.workspaceId)
     case systemFieldTypes.enum.current_user_time:
-      return safeFormatInTimeZone(
-        new Date(),
-        contact.timezone,
-        "yyyy-MM-dd HH:mm:ss",
-      )
+      return safeFormatInTimeZone(new Date(), timezone, DATE_TIME_PATTERN)
     case systemFieldTypes.enum.chat_history:
       return await getChatHistory(contact.id, 50)
     case systemFieldTypes.enum.chat_history_large:
@@ -148,18 +173,17 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.avatar:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.current_time:
-      return safeFormatInTimeZone(
-        new Date(),
-        contact.timezone,
-        "yyyy-MM-dd HH:mm:ss",
-      )
+      return safeFormatInTimeZone(new Date(), timezone, DATE_TIME_PATTERN)
     case systemFieldTypes.enum.workspace_name:
     case systemFieldTypes.enum.account_name:
-      return await getWorkspaceName(contact.workspaceId)
+      return workspace?.name ?? null
     case systemFieldTypes.enum.account_id:
       return contact.workspaceId
     case systemFieldTypes.enum.account_image:
-      return await getWorkspaceImageUrl(contact.workspaceId)
+      return await toPublicStorageUrl(
+        getWorkspaceLogo(context),
+        contact.workspaceId,
+      )
     case systemFieldTypes.enum.page_user_name:
     case systemFieldTypes.enum.inbox_link:
     case systemFieldTypes.enum.ig_user_name:
@@ -175,19 +199,8 @@ export const getSystemFieldValue = async (
       return await getIntegrationField(contact, key)
     case systemFieldTypes.enum.last_ref:
       return contact.ref
-    case systemFieldTypes.enum.last_interaction: {
-      const lastInteractionAt =
-        await contactInboxService.findLatestLastIncomingMessageAtByContactId({
-          contactId: contact.id,
-        })
-      return lastInteractionAt
-        ? safeFormatInTimeZone(
-            lastInteractionAt,
-            contact.timezone,
-            "yyyy-MM-dd HH:mm:ss",
-          )
-        : null
-    }
+    case systemFieldTypes.enum.last_interaction:
+      return formatDateTime(contactInbox?.lastIncomingMessageAt, timezone)
     case systemFieldTypes.enum.last_user_note:
       return await getLatestContactNoteString(contact.id)
     case systemFieldTypes.enum.member_name:

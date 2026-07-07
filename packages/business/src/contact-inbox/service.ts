@@ -154,24 +154,6 @@ class ContactInboxService extends BaseService {
     )[0]
   }
 
-  async findLatestContactLastReadAtByContactId(props: {
-    tx?: DatabaseClient
-    contactId: string
-  }): Promise<Date | null> {
-    const { tx = db, contactId } = props
-    const contactInboxes = await tx.query.contactInboxModel.findMany({
-      where: { contactId },
-      columns: { contactLastReadAt: true },
-    })
-
-    return (
-      contactInboxes
-        .map((contactInbox) => contactInbox.contactLastReadAt)
-        .filter((date): date is Date => Boolean(date))
-        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null
-    )
-  }
-
   /**
    * Set (or clear) the channel persona for a contact-inbox connection. Used by
    * the "Set Persona" Messenger flow action; stores the local persona id (or

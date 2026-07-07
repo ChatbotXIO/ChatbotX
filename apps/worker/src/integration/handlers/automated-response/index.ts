@@ -254,7 +254,7 @@ export async function processAutomatedResponse(
     try {
       aiResult = await replyByAI({
         conversation,
-        contactInboxId: contactInbox.id,
+        contactInbox,
         channel: contactInbox.channel,
         messages,
         aiAgent,

@@ -43,15 +43,17 @@ const stringifyFieldValue = (value: unknown) => {
 const getInputValue = async (props: {
   step: AIExtractDataSchema
   conversation: ExecuteStepProps<AIExtractDataSchema>["conversation"]
+  contactInbox: ExecuteStepProps<AIExtractDataSchema>["contactInbox"]
 }) => {
-  const { step, conversation } = props
+  const { step, conversation, contactInbox } = props
 
   if (step.inputType === "text") {
     let inputText = step.inputFieldId.trim()
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+    })
 
     inputText = await contactVariableService.replaceAll({
       text: inputText,
@@ -112,6 +114,7 @@ const buildUserContent = (props: {
 }
 
 export async function handleAIExtractData({
+  contactInbox,
   conversation,
   step,
 }: ExecuteStepProps<AIExtractDataSchema>): Promise<ExecuteStepResult> {
@@ -136,6 +139,7 @@ export async function handleAIExtractData({
     const inputValue = await getInputValue({
       step,
       conversation,
+      contactInbox,
     })
 
     if (!inputValue) {
