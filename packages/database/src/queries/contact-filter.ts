@@ -171,6 +171,10 @@ export const buildContactInboxContactFilterSQL = ({
   workspaceId: string
   contactFilter: ContactFilterCriteriaInput
 }): SQL => {
+  if (contactFilter.conditions.length === 0) {
+    return sql`TRUE`
+  }
+
   const contactWhere = buildContactWhere({
     workspaceId,
     contactFilter,
