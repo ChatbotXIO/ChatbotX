@@ -11,6 +11,7 @@ export async function countContactInboxes(
     workspaceId: input.workspaceId,
     channels: input.channels,
     integrationWhatsappId: input.integrationWhatsappId,
+    integrationMessengerId: input.integrationMessengerId,
     contactFilter: input.contactFilter,
     subaction: input.subaction,
   })

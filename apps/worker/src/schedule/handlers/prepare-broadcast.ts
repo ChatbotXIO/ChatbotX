@@ -32,6 +32,23 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
   const parsedChannel = channelTypes.safeParse(broadcast.channel)
   const parsedSubaction = broadcastSubactions.safeParse(broadcast.subaction)
+  let integrationMessengerId: string | null = null
+
+  if (
+    parsedSubaction.success &&
+    parsedSubaction.data ===
+      broadcastSubactions.enum.messengerTemplateMessage &&
+    broadcast.templateId
+  ) {
+    const template = await db.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        id: broadcast.templateId,
+        integrationMessenger: { workspaceId: broadcast.workspaceId },
+      },
+      columns: { integrationMessengerId: true },
+    })
+    integrationMessengerId = template?.integrationMessengerId ?? null
+  }
 
   let hasContactOnBroadcast = false
   let contactCount = 0
@@ -41,6 +58,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
       workspaceId: broadcast.workspaceId,
       channels: parsedChannel.success ? [parsedChannel.data] : [],
       integrationWhatsappId: broadcast.integrationWhatsappId,
+      integrationMessengerId,
       contactFilter:
         broadcast.contactFilter as ContactFilterCriteriaInput | null,
       subaction: parsedSubaction.success ? parsedSubaction.data : undefined,

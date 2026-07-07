@@ -141,6 +141,25 @@ describe("broadcastService.countAudience", () => {
     expect(where.__and).not.toContainEqual({ RAW: "recent-interaction" })
     expect(mocks.buildContactInboxContactFilterSQL).not.toHaveBeenCalled()
   })
+
+  test("forwards integrationMessengerId when resolving the audience inboxes", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-messenger"])
+    mocks.count.mockResolvedValue(4)
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationMessengerId: "messenger-1",
+      subaction: "messengerTemplateMessage",
+    })
+
+    expect(mocks.resolveBroadcastInboxIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationWhatsappId: undefined,
+      integrationMessengerId: "messenger-1",
+    })
+  })
 })
 
 describe("broadcastService.forEachAudienceChunk", () => {

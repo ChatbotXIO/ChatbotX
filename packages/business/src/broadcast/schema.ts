@@ -8,6 +8,7 @@ export type BroadcastAudienceInput = {
   workspaceId: string
   channels?: ChannelType[] | null
   integrationWhatsappId?: string | null
+  integrationMessengerId?: string | null
   contactFilter?: ContactFilterCriteriaInput | null
   subaction?: BroadcastSubaction | null
 }

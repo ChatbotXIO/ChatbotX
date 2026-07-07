@@ -90,11 +90,24 @@ class InboxService extends BaseService {
     workspaceId: string
     channels?: ChannelType[] | null
     integrationWhatsappId?: string | null
+    integrationMessengerId?: string | null
   }): Promise<string[]> {
     if (input.integrationWhatsappId) {
       const integration = await db.query.integrationWhatsappModel.findFirst({
         where: {
           id: input.integrationWhatsappId,
+          workspaceId: input.workspaceId,
+        },
+        columns: { inboxId: true },
+      })
+
+      return integration ? [integration.inboxId] : []
+    }
+
+    if (input.integrationMessengerId) {
+      const integration = await db.query.integrationMessengerModel.findFirst({
+        where: {
+          id: input.integrationMessengerId,
           workspaceId: input.workspaceId,
         },
         columns: { inboxId: true },

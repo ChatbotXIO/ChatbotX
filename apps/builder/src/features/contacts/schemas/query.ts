@@ -55,6 +55,7 @@ export const listContactsRequest = basePaginationRequest.extend({
   ),
   channels: z.array(channelTypes).optional(),
   integrationWhatsappId: zodBigintAsString().optional(),
+  integrationMessengerId: zodBigintAsString().optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
   subaction: broadcastSubactions.optional(),
 })

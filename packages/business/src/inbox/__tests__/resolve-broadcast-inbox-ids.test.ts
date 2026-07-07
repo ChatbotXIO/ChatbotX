@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   integrationFindFirst: vi.fn(),
+  messengerIntegrationFindFirst: vi.fn(),
   inboxFindMany: vi.fn(),
 }))
 
@@ -10,6 +11,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       integrationWhatsappModel: {
         findFirst: mocks.integrationFindFirst,
+      },
+      integrationMessengerModel: {
+        findFirst: mocks.messengerIntegrationFindFirst,
       },
       inboxModel: {
         findMany: mocks.inboxFindMany,
@@ -40,6 +44,7 @@ const { inboxService } = await import("../service")
 
 beforeEach(() => {
   mocks.integrationFindFirst.mockReset()
+  mocks.messengerIntegrationFindFirst.mockReset()
   mocks.inboxFindMany.mockReset()
 })
 
@@ -71,6 +76,45 @@ describe("InboxService.resolveBroadcastInboxIds", () => {
     })
 
     expect(result).toEqual([])
+    expect(mocks.inboxFindMany).not.toHaveBeenCalled()
+  })
+
+  test("returns the Messenger integration inbox when integrationMessengerId is present", async () => {
+    mocks.messengerIntegrationFindFirst.mockResolvedValue({
+      inboxId: "inbox-messenger",
+    })
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationMessengerId: "messenger-1",
+    })
+
+    expect(result).toEqual(["inbox-messenger"])
+    expect(mocks.messengerIntegrationFindFirst).toHaveBeenCalledWith({
+      where: { id: "messenger-1", workspaceId: "ws-1" },
+      columns: { inboxId: true },
+    })
+    expect(mocks.integrationFindFirst).not.toHaveBeenCalled()
+    expect(mocks.inboxFindMany).not.toHaveBeenCalled()
+  })
+
+  test("prefers WhatsApp integration over Messenger integration and channel", async () => {
+    mocks.integrationFindFirst.mockResolvedValue({ inboxId: "inbox-wa" })
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationWhatsappId: "wa-1",
+      integrationMessengerId: "messenger-1",
+    })
+
+    expect(result).toEqual(["inbox-wa"])
+    expect(mocks.integrationFindFirst).toHaveBeenCalledWith({
+      where: { id: "wa-1", workspaceId: "ws-1" },
+      columns: { inboxId: true },
+    })
+    expect(mocks.messengerIntegrationFindFirst).not.toHaveBeenCalled()
     expect(mocks.inboxFindMany).not.toHaveBeenCalled()
   })
 

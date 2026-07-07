@@ -64,7 +64,7 @@ describe("contact store getContactInboxesCount", () => {
     expect(store.getState().contactInboxesCount).toBe(20)
   })
 
-  test("forwards channel, integrationWhatsappId, contactFilter, and subaction to the count API", async () => {
+  test("forwards channel, integration ids, contactFilter, and subaction to the count API", async () => {
     mocks.countContactInboxesAuthenticatedAPI.mockResolvedValue({ total: 3 })
 
     const store = createContactStore({ workspaceId: "ws-1" })
@@ -82,6 +82,7 @@ describe("contact store getContactInboxesCount", () => {
     await store.getState().getContactInboxesCount({
       channel: channelTypes.enum.whatsapp,
       integrationWhatsappId: "wa-1",
+      integrationMessengerId: "messenger-1",
       contactFilter,
       subaction: broadcastSubactions.enum.whatsappWithin24Hours,
     })
@@ -91,6 +92,7 @@ describe("contact store getContactInboxesCount", () => {
       sort: [],
       channels: [channelTypes.enum.whatsapp],
       integrationWhatsappId: "wa-1",
+      integrationMessengerId: "messenger-1",
       contactFilter,
       subaction: broadcastSubactions.enum.whatsappWithin24Hours,
     })
@@ -109,6 +111,7 @@ describe("contact store getContactInboxesCount", () => {
       sort: [],
       channels: [],
       integrationWhatsappId: undefined,
+      integrationMessengerId: undefined,
       contactFilter: undefined,
       subaction: undefined,
     })

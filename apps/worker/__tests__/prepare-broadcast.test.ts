@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findFirstBroadcast = vi.fn()
+const findFirstMessengerTemplate = vi.fn()
 const findManyConversation = vi.fn()
 const forEachAudienceChunk = vi.fn()
 const scheduleAddSpy = vi.fn()
@@ -37,6 +38,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       broadcastModel: {
         findFirst: (...args: unknown[]) => findFirstBroadcast(...args),
+      },
+      messengerMessageTemplateModel: {
+        findFirst: (...args: unknown[]) => findFirstMessengerTemplate(...args),
       },
       conversationModel: {
         findMany: (...args: unknown[]) => findManyConversation(...args),
@@ -93,12 +97,14 @@ const baseBroadcast = () => ({
   status: "scheduled",
   subaction: null as string | null,
   contactFilter: null as unknown,
+  templateId: null as string | null,
 })
 
 beforeEach(() => {
   updateCalls.length = 0
   insertCalls.length = 0
   findFirstBroadcast.mockResolvedValue(undefined)
+  findFirstMessengerTemplate.mockResolvedValue(undefined)
   findManyConversation.mockResolvedValue([])
   forEachAudienceChunk.mockResolvedValue(undefined)
   scheduleAddSpy.mockReset()
@@ -137,9 +143,41 @@ describe("prepareBroadcast", () => {
         workspaceId: WORKSPACE_ID,
         channels: ["whatsapp"],
         integrationWhatsappId: "wa-int-1",
+        integrationMessengerId: null,
         contactFilter,
         subaction: "whatsappWithin24Hours",
       },
+      expect.any(Function),
+    )
+  })
+
+  test("derives Messenger template integration id and forwards it to the audience input", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "messenger",
+      subaction: "messengerTemplateMessage",
+      templateId: "template-1",
+    })
+    findFirstMessengerTemplate.mockResolvedValue({
+      integrationMessengerId: "messenger-int-1",
+    })
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findFirstMessengerTemplate).toHaveBeenCalledWith({
+      where: {
+        id: "template-1",
+        integrationMessenger: { workspaceId: WORKSPACE_ID },
+      },
+      columns: { integrationMessengerId: true },
+    })
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        channels: ["messenger"],
+        integrationMessengerId: "messenger-int-1",
+        subaction: "messengerTemplateMessage",
+      }),
       expect.any(Function),
     )
   })

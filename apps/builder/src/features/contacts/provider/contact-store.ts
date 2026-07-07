@@ -26,6 +26,7 @@ export type ContactActions = {
     contactFilter?: ContactFilterRequest["contactFilter"]
     channel?: ChannelType
     integrationWhatsappId?: string
+    integrationMessengerId?: string
     subaction?: BroadcastSubaction
   }) => Promise<void>
 }
@@ -106,6 +107,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
             sort: [],
             channels: params?.channel ? [params.channel] : [],
             integrationWhatsappId: params?.integrationWhatsappId,
+            integrationMessengerId: params?.integrationMessengerId,
             contactFilter: params?.contactFilter,
             subaction: params?.subaction,
           })

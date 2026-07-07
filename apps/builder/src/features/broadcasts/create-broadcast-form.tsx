@@ -623,6 +623,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
       contactFilter: watchedContactFilter,
       channel: props.channel,
       integrationWhatsappId: watchedIntegrationWhatsappId,
+      integrationMessengerId: watchedIntegrationMessengerId,
       subaction: props.subaction,
     })
   }, [
@@ -630,6 +631,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     props.channel,
     props.subaction,
     watchedIntegrationWhatsappId,
+    watchedIntegrationMessengerId,
     fetchReceiversCount,
   ])
 

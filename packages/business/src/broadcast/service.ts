@@ -46,6 +46,7 @@ class BroadcastService extends BaseService {
       workspaceId: input.workspaceId,
       channels: input.channels,
       integrationWhatsappId: input.integrationWhatsappId,
+      integrationMessengerId: input.integrationMessengerId,
     })
   }
 

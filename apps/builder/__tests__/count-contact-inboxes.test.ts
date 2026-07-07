@@ -43,6 +43,7 @@ describe("countContactInboxes", () => {
       workspaceId: "ws-1",
       channels: ["messenger"],
       integrationWhatsappId: "wa-1",
+      integrationMessengerId: "messenger-1",
       contactFilter,
       subaction: "messengerActiveContacts",
     })
@@ -53,6 +54,7 @@ describe("countContactInboxes", () => {
       workspaceId: "ws-1",
       channels: ["messenger"],
       integrationWhatsappId: "wa-1",
+      integrationMessengerId: "messenger-1",
       contactFilter,
       subaction: "messengerActiveContacts",
     })
