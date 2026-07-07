@@ -370,22 +370,114 @@
       "source": "Nguồn",
       "conversationTransferredToHuman": "Cuộc trò chuyện đã chuyển cho người",
       "interactedInLast24H": "Đã tương tác trong 24 giờ qua",
+      "interactedInLast24h": "Đã tương tác trong 24 giờ qua",
+      "followUp": "Theo dõi",
       "isGuestUser": "Người dùng khách",
       "existingContact": "Liên hệ hiện có",
-      "currentChannel": "Kênh hiện tại",
+      "currentChannel": "Kênh",
+      "inbox": "Hộp thư",
+      "subjectToEuRules": "Thuộc quy định EU",
       "timezone": "Múi giờ",
+      "hasOpportunity": "Có cơ hội (Mở, Thắng, Thua)",
+      "hasOpenOpportunity": "Có cơ hội đang mở",
+      "hasWonOpportunity": "Có cơ hội đã thắng",
+      "hasLostOpportunity": "Có cơ hội đã thua",
+      "instagramStoryReply": "Tin nhắn là trả lời story Instagram",
+      "followsBusinessOnInstagram": "Theo dõi doanh nghiệp trên Instagram",
+      "businessFollowsUserOnInstagram": "Doanh nghiệp theo dõi người dùng trên Instagram",
+      "verifiedAccountOnInstagram": "Tài khoản đã xác minh trên Instagram",
+      "followerCountOnInstagram": "Số người theo dõi trên Instagram",
+      "lastSent": "Gửi lần cuối",
+      "lastDelivered": "Đã giao lần cuối",
+      "lastSeen": "Đã xem lần cuối",
+      "lastSeenMinutesAgo": "Đã xem lần cuối (phút trước)",
+      "lastInteraction": "Tương tác lần cuối",
+      "lastInteractionMinutesAgo": "Tương tác lần cuối (phút trước)",
+      "unreplied": "Chưa phản hồi",
+      "unread": "Chưa đọc",
+      "appliedJobs": "Công việc đã ứng tuyển",
       "tags": "Thẻ",
       "customFields": "Trường tùy chỉnh",
       "phone": "Số điện thoại",
+      "completedWhatsAppFlows": "WhatsApp Flow đã hoàn tất",
+      "messengerList": "Danh sách Messenger",
+      "subscribedToDripCampaign": "Đã đăng ký drip campaign",
+      "conversationAssigned": "Cuộc trò chuyện đã gán",
+      "entryPointsLinks": "Liên kết điểm vào",
+      "sentMessage": "Đã gửi tin nhắn",
+      "keywordsReceived": "Từ khóa đã nhận",
       "executedFlow": "Đã thực thi luồng",
+      "executedStep": "Đã thực thi bước",
+      "consecutiveAiFailures": "Số lần AI lỗi liên tiếp",
+      "questionnaireStarted": "Bảng câu hỏi đã bắt đầu",
+      "questionnaireInProgress": "Bảng câu hỏi đang thực hiện",
+      "questionnaireFinished": "Bảng câu hỏi đã hoàn tất",
+      "votedOnPoll": "Đã bình chọn khảo sát",
+      "lastComment": "Bình luận cuối",
+      "commentedOnPost": "Đã bình luận bài viết",
+      "reactedOnPost": "Đã bày tỏ cảm xúc bài viết",
+      "lastTotalTaggedUsers": "Tổng người được gắn thẻ lần cuối",
+      "lastTotalNewTaggedUsers": "Tổng người mới được gắn thẻ lần cuối",
       "email": "Email",
-      "followUp": "Theo dõi",
-      "unread": "Chưa đọc",
+      "phoneWasVerified": "Số điện thoại đã xác minh",
+      "optedInForSms": "Đã đăng ký SMS",
+      "broadcastSent": "Broadcast đã gửi",
+      "broadcastDelivered": "Broadcast đã giao",
+      "broadcastSeen": "Broadcast đã xem",
+      "broadcastClicked": "Broadcast đã nhấn",
+      "broadcastFailed": "Broadcast thất bại",
+      "emailWasVerified": "Email đã xác minh",
+      "optedInForEmail": "Đã đăng ký Email",
+      "emailSent": "Email đã gửi",
+      "emailDelivered": "Email đã giao",
+      "emailOpened": "Email đã mở",
+      "emailClicked": "Email đã nhấn",
+      "isWithinWorkingHours": "Trong giờ làm việc",
+      "currentDate": "Ngày hiện tại",
+      "currentTime": "Giờ hiện tại",
+      "currentDayOfMonth": "Ngày trong tháng hiện tại",
+      "currentDayOfWeek": "Ngày trong tuần hiện tại",
+      "currentMonth": "Tháng hiện tại",
+      "bought": "Đã mua",
+      "boughtItems": "Đã mua sản phẩm",
+      "totalSpent": "Tổng chi tiêu",
+      "numberOfOrders": "Số đơn hàng",
+      "shoppingCartTotal": "Tổng giỏ hàng",
+      "shoppingCartSubtotal": "Tạm tính giỏ hàng",
+      "shoppingCartIsEmpty": "Giỏ hàng trống",
+      "shoppingCartContainsItems": "Giỏ hàng có sản phẩm",
+      "lastSentMessageFailed": "Tin nhắn gửi cuối thất bại",
+      "lastUserInput": "Đầu vào người dùng cuối",
+      "lastUserInputType": "Loại đầu vào người dùng cuối",
       "archived": "Đã lưu trữ",
       "blocked": "Đã chặn",
       "noAdminReply": "Không có phản hồi quản trị viên",
-      "contactCreatedAt": "Ngày tạo liên hệ",
-      "interactedInLast24h": "Đã tương tác trong 24 giờ qua"
+      "contactCreatedAt": "Ngày tạo liên hệ"
+    },
+    "fieldGroups": {
+      "opportunity": "Cơ hội",
+      "instagram": "Instagram",
+      "analytics": "Phân tích",
+      "facebookInstagramComment": "Bình luận Facebook/Instagram",
+      "broadcastWhatsapp": "Broadcast (WhatsApp)",
+      "systemTime": "Thời gian hệ thống",
+      "ecommerce": "Thương mại điện tử",
+      "systemFields": "Trường hệ thống",
+      "customFields": "Trường tùy chỉnh",
+      "email": "Email",
+      "sms": "SMS"
+    },
+    "sources": {
+      "direct": "Trực tiếp",
+      "comments": "Bình luận",
+      "ads": "Quảng cáo",
+      "fbLeadAd": "FB Lead Ad",
+      "inboundMessage": "Tin nhắn đến",
+      "imported": "Đã nhập",
+      "api": "API",
+      "webchat": "Webchat",
+      "botLink": "Liên kết bot",
+      "chatPlugin": "C. chat plugin"
     }
   },
   "channels": {
@@ -417,6 +509,9 @@
   "fields": {
     "omnichannel": {
       "label": "Đa kênh"
+    },
+    "smtp": {
+      "label": "SMTP"
     },
     "messenger": {
       "label": "Messenger"
@@ -469,8 +564,8 @@
       "isNot": "Không phải",
       "in": "Thuộc",
       "notIn": "Không thuộc",
-      "isEmpty": "Trống",
-      "isNotEmpty": "Không trống",
+      "isEmpty": "Không có giá trị",
+      "isNotEmpty": "Có bất kỳ giá trị nào",
       "gt": "Lớn hơn",
       "lt": "Nhỏ hơn",
       "gte": "Lớn hơn hoặc bằng",
@@ -479,8 +574,8 @@
       "notContains": "Không chứa",
       "startsWith": "Bắt đầu bằng",
       "endsWith": "Kết thúc bằng",
-      "isBetween": "Trong khoảng",
-      "notBetween": "Ngoài khoảng",
+      "isBetween": "Khoảng",
+      "notBetween": "Không phải khoảng",
       "hasAnyValue": "Có bất kỳ giá trị nào",
       "hasNoValue": "Không có giá trị",
       "greaterThan": "Lớn hơn",
@@ -492,7 +587,11 @@
       "notInterval": "Không phải khoảng"
     },
     "contactFilter": {
-      "label": "Bộ lọc liên hệ"
+      "allConditions": "Tất cả các điều kiện bên dưới",
+      "anyConditions": "Bất kỳ điều kiện nào bên dưới.",
+      "label": "Bộ lọc liên hệ",
+      "onlyContactsMatch": "Chỉ các liên hệ khớp với",
+      "moreOptions": "Thêm tùy chọn"
     },
     "contactNote": {
       "label": "Ghi chú liên hệ"
@@ -1215,6 +1314,24 @@
     },
     "whatsapp": {
       "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "SMS"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "Voice"
+    },
+    "googleBm": {
+      "label": "Google BM"
+    },
+    "landingPage": {
+      "label": "Trang đích"
     },
     "whatsappFlow": {
       "label": "Luồng WhatsApp"

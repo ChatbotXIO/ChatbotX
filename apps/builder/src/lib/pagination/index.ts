@@ -11,6 +11,11 @@ export const basePaginationRequest = z.object({
     }
 
     try {
+      const parsedArray = sortSchema.safeParse(val)
+      if (parsedArray.success) {
+        return parsedArray.data
+      }
+
       const value = JSON.parse(decodeURIComponent(`${val}`))
       const { success, data } = sortSchema.safeParse(value)
       if (!success) {
@@ -32,6 +37,11 @@ export const cursorPaginationRequest = z.object({
     }
 
     try {
+      const parsedArray = sortSchema.safeParse(val)
+      if (parsedArray.success) {
+        return parsedArray.data
+      }
+
       const value = JSON.parse(decodeURIComponent(`${val}`))
       const { success, data } = sortSchema.safeParse(value)
       if (!success) {

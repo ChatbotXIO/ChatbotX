@@ -34,4 +34,5 @@ export type ReceivedMessageResult = {
   postbackAction: string | null
   quickReplyAction: string | null
   ref: string | null
+  referralSource?: string | null
 }

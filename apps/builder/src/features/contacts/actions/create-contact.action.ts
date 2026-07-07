@@ -217,7 +217,7 @@ export const createContact = async ({
           contactId: contact.id,
           inboxId: inbox.id,
           channel: inboxChannel,
-          source: contactSources.enum.imported,
+          source: contactSources.enum.direct,
           sourceId,
         })
         .returning()

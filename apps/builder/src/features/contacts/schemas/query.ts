@@ -1,7 +1,11 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  broadcastSubactions,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
+import { contactFilterCriteriaSchema } from "@/features/contact-filter/schemas"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
 import { contactOnSequenceWithRelations } from "@/features/contact-sequences/schema"
 import { conversationResource } from "@/features/conversations/schema/resource"
@@ -13,29 +17,47 @@ import {
   contactCustomFieldResource,
   publicContactCustomFieldResource,
 } from "./contact-custom-field"
-import { contactFilterCriteriaSchema } from "./contact-filter"
 import { contactNoteResource } from "./contact-note"
 import { contactResource } from "./resource"
 
 /** Same as contact filter payload (strict discriminated `conditions`). */
 export const contactFilterSchema = contactFilterCriteriaSchema
 
+const parseContactFilterSearchParam = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value
+  }
+
+  try {
+    const parsed = contactFilterCriteriaSchema.safeParse(JSON.parse(value))
+    return parsed.success ? parsed.data : undefined
+  } catch {
+    return
+  }
+}
+
 export type {
   ContactFilterCondition,
   ContactFilterCriteria,
   ContactFilterRequest,
-} from "./contact-filter"
+} from "@/features/contact-filter/schemas"
 export {
   contactFilterRequest,
   singleContactFilterConditionSchema,
-} from "./contact-filter"
+} from "@/features/contact-filter/schemas"
 
 export const listContactsRequest = basePaginationRequest.extend({
   keyword: z.string().optional(),
   workspaceId: zodBigintAsString(),
-  contactFilter: contactFilterCriteriaSchema.optional(),
+  contactFilter: z.preprocess(
+    parseContactFilterSearchParam,
+    contactFilterCriteriaSchema.optional(),
+  ),
   channels: z.array(channelTypes).optional(),
+  integrationWhatsappId: zodBigintAsString().optional(),
+  integrationMessengerId: zodBigintAsString().optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
+  subaction: broadcastSubactions.optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 

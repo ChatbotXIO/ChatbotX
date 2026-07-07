@@ -19,8 +19,8 @@ import { Controller, useFormContext } from "react-hook-form"
 import {
   convertCustomFieldTypeToConditionType,
   getConditionOptions,
-} from "@/features/contacts/components/contact-filter-config"
-import { mappingConditions } from "@/features/contacts/schemas/contact-filter"
+} from "@/features/contact-filter/components/contact-filter-config"
+import { mappingConditions } from "@/features/contact-filter/schemas"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 

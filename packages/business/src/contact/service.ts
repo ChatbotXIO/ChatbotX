@@ -6,7 +6,10 @@ import {
   findOrFail,
   inArray,
 } from "@chatbotx.io/database/client"
-import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
+import {
+  type ContactSource,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
@@ -296,9 +299,10 @@ class ContactService extends BaseService {
     workspaceId: string
     identifier: string
     data: Omit<ContactWriteData, "blockedAt" | "emailOptIn">
+    source: ContactSource
     avatar?: string
   }): Promise<{ contact: ContactModel; isNew: boolean }> {
-    const { workspaceId, identifier, data, avatar } = props
+    const { workspaceId, identifier, data, source, avatar } = props
 
     const colonIdx = identifier.indexOf(":")
     if (colonIdx === -1) {
@@ -400,7 +404,7 @@ class ContactService extends BaseService {
             contactId: newContact.id,
             inboxId: inbox.id,
             channel: channelTypes.enum.webchat,
-            source: contactSources.enum.imported,
+            source,
             sourceId: createId(),
           })
           .returning()

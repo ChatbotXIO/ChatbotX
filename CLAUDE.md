@@ -18,6 +18,7 @@
 | New DB table or migration | `drizzle-database` |
 | New background job or queue | `worker-development` |
 | New channel integration | `integration-channel` |
+| Contact filter field/operator, filter SQL, or contact-based audience | `contact-filter` |
 | New flow step with states (success/error/skip routing) | `flow-step-development` |
 | Dev/build/lint commands | `turborepo-workflow` |
 | Approved implementation plan | `implement-plan` |

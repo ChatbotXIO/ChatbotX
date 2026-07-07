@@ -30,6 +30,7 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
@@ -43,7 +44,7 @@ import { createBroadcastAction } from "@/features/broadcasts/actions/create-broa
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { useWorkspaceId } from "@/hooks/routing"
-import { ContactFilter } from "../contacts/components/contact-filter"
+import { ContactFilter } from "../contact-filter"
 import { useContactStore } from "../contacts/provider/contact-store-context"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { useFlowTemplate } from "../flows/react-flow/stores/flow-template-store-provider"
@@ -55,6 +56,7 @@ import { TemplatePreview } from "../integration-whatsapp/message-templates/compo
 import type { MessageTemplateWithComponents } from "../integration-whatsapp/message-templates/schema/resource"
 import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 import { MessengerBroadcastFlowButtons } from "./components/messenger-broadcast-flow-buttons"
+import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -467,6 +469,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const router = useRouter()
   const { contactInboxesCount: count, getContactInboxesCount } =
     useContactStore((state) => state)
+  const fetchReceiversCount = useDebouncedCallback(getContactInboxesCount, 300)
 
   const workspaceId = useWorkspaceId()
 
@@ -557,6 +560,15 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
   const [confirmOpen, setConfirmOpen] = useState(false)
 
+  const excludeFields = useMemo(
+    () =>
+      getBroadcastExcludedFilterFields({
+        channel: props.channel,
+        subaction: props.subaction,
+      }),
+    [props.channel, props.subaction],
+  )
+
   const handleCancel = useCallback(() => {
     router.push(`/space/${workspaceId}/broadcasts`)
   }, [router, workspaceId])
@@ -607,11 +619,21 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId, setValue])
 
   useEffect(() => {
-    getContactInboxesCount({
+    fetchReceiversCount({
       contactFilter: watchedContactFilter,
       channel: props.channel,
+      integrationWhatsappId: watchedIntegrationWhatsappId,
+      integrationMessengerId: watchedIntegrationMessengerId,
+      subaction: props.subaction,
     })
-  }, [watchedContactFilter, props.channel, getContactInboxesCount])
+  }, [
+    watchedContactFilter,
+    props.channel,
+    props.subaction,
+    watchedIntegrationWhatsappId,
+    watchedIntegrationMessengerId,
+    fetchReceiversCount,
+  ])
 
   useEffect(() => {
     if (watchedTemplateId && whatsappTemplates.length > 0) {
@@ -862,7 +884,11 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
       <Card>
         <CardContent className="flex flex-col gap-6">
-          <ContactFilter parentName="contactFilter" />
+          <ContactFilter
+            excludeFields={excludeFields}
+            inboxChannel={props.channel}
+            parentName="contactFilter"
+          />
         </CardContent>
       </Card>
 
