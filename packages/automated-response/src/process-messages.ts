@@ -132,9 +132,10 @@ const replyByAutomatedResponse = async (props: {
           return replied
         }
       } else if (automatedResponse.text) {
-        const variables = await contactVariableService.getAll(
-          conversation.contactId,
-        )
+        const variables = await contactVariableService.getAll({
+          contactId: conversation.contactId,
+          contactInbox,
+        })
         const stepMessage = await contactVariableService.replaceAll({
           text: automatedResponse.text,
           variables,

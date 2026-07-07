@@ -139,9 +139,10 @@ export async function processMessengerTemplate(
       throw new Error(`Messenger template validation failed: ${template.id}`)
     }
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+    })
     const completeParams = mergeMessengerTemplateButtonParams(
       template.params,
       (validated.template.components as MessengerTemplateComponent[]) || [],

@@ -19,7 +19,7 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/variables", () => ({
   resolveContactVariablesDeep: vi.fn(
-    async (_contactId: string, value: unknown) => value,
+    async (_contactId: string, value: unknown, _source: unknown) => value,
   ),
   extractVariables: vi.fn((text: string) => {
     const matches = [...text.matchAll(/\{\{(\w+)\}\}/g)]
@@ -29,12 +29,14 @@ vi.mock("@chatbotx.io/variables", () => ({
   contactVariableService: {
     getAll: vi.fn(async () => ({
       contact: {},
+      contactInbox: {},
       customFieldsMap: new Map([
         [
           "name",
           { key: "name", type: "text", value: 'O"Brien', description: "" },
         ],
       ]),
+      workspace: {},
     })),
   },
 }))
@@ -50,6 +52,9 @@ vi.mock("@chatbotx.io/events", () => ({
 const { externalRequest } = await import(
   "../src/integration/handlers/tool-handler"
 )
+const { contactVariableService, resolveContactVariablesDeep } = await import(
+  "@chatbotx.io/variables"
+)
 
 const createProps = () =>
   ({
@@ -57,6 +62,11 @@ const createProps = () =>
       id: "conversation-1",
       workspaceId: "workspace-1",
       contactId: "contact-1",
+    },
+    contactInbox: {
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      inboxId: "inbox-1",
     },
     step: {
       ...externalRequestStepDefaultFn(),
@@ -91,6 +101,13 @@ describe("externalRequest step handler", () => {
         workspaceId: "workspace-1",
         contactId: "contact-1",
         mapping: [{ jsonPath: "id", outputFieldId: "field-1" }],
+      }),
+    )
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      expect.anything(),
+      expect.objectContaining({
+        contactInbox: expect.objectContaining({ id: "contact-inbox-1" }),
       }),
     )
   })
@@ -144,5 +161,9 @@ describe("externalRequest step handler", () => {
       jsonBody: '{"name":"O\\"Brien"}',
     })
     expect(() => JSON.parse(call.input.body.jsonBody)).not.toThrow()
+    expect(contactVariableService.getAll).toHaveBeenCalledWith({
+      contactId: "contact-1",
+      contactInbox: expect.objectContaining({ id: "contact-inbox-1" }),
+    })
   })
 })

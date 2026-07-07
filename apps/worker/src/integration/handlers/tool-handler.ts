@@ -355,6 +355,7 @@ export async function getDataFromJSON({
  */
 async function resolveJsonBodyVariables(
   contactId: string,
+  contactInbox: ExecuteStepProps<ExternalRequestStepSchema>["contactInbox"],
   jsonBody: string,
 ): Promise<string> {
   const variableNames = extractVariables(jsonBody)
@@ -362,14 +363,17 @@ async function resolveJsonBodyVariables(
     return jsonBody
   }
 
-  const { contact, customFieldsMap } =
-    await contactVariableService.getAll(contactId)
+  const variables = await contactVariableService.getAll({
+    contactId,
+    contactInbox,
+  })
+  const { customFieldsMap } = variables
 
   const mapping: Record<string, string> = {}
   for (const variable of variableNames) {
     if (systemFieldTypes.options.includes(variable as SystemFieldType)) {
       const systemValue = await getSystemFieldValue(
-        contact,
+        variables,
         variable as SystemFieldType,
       )
       if (systemValue) {
@@ -388,6 +392,7 @@ async function resolveJsonBodyVariables(
 }
 
 export async function externalRequest({
+  contactInbox,
   conversation,
   step,
 }: ExecuteStepProps<ExternalRequestStepSchema>): Promise<ExecuteStepResult> {
@@ -398,6 +403,7 @@ export async function externalRequest({
   const resolvedStepWithoutBody = await resolveContactVariablesDeep(
     conversation.contactId,
     stepWithoutBody,
+    { contactInbox },
   )
   const resolvedBody =
     body?.bodyType === "json"
@@ -405,10 +411,13 @@ export async function externalRequest({
           ...body,
           jsonBody: await resolveJsonBodyVariables(
             conversation.contactId,
+            contactInbox,
             body.jsonBody,
           ),
         }
-      : await resolveContactVariablesDeep(conversation.contactId, body)
+      : await resolveContactVariablesDeep(conversation.contactId, body, {
+          contactInbox,
+        })
 
   try {
     const result = await externalRequestService.executeAndMap({

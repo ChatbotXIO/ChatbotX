@@ -103,9 +103,10 @@ export async function processWhatsappTemplate(
       throw new Error(`Template validation failed: ${template.id}`)
     }
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+    })
     const replacedParams = await replaceWhatsappTemplateVariables({
       templateParams: template.params,
       variables,

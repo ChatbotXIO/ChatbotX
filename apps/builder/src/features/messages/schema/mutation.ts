@@ -78,6 +78,8 @@ export const createWebchatMessageRequest = z
       webchatId: zodBigintAsString(),
       guestConversationId: zodBigintAsString(),
       ref: z.string().optional(),
+      locale: z.string().max(35).optional(),
+      timezone: z.string().max(64).optional(),
     }),
   )
 export type CreateWebchatMessageRequest = z.infer<

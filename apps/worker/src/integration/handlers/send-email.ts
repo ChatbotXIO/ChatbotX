@@ -159,7 +159,11 @@ export async function sendEmail({
     },
   })
 
-  const variables = await contactVariableService.getAll(conversation.contactId)
+  const variables = await contactVariableService.getAll({
+    contactId: conversation.contactId,
+    contactInbox,
+    workspace,
+  })
   const { appUrl } = await resolveTenantSettings({
     workspaceId: conversation.workspaceId,
   })
