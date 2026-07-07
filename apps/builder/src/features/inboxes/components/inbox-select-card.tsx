@@ -57,7 +57,7 @@ function InboxSelectCard({ configuredChannels }: InboxSelectCardProps) {
         <ul aria-label="Available inbox types" className="flex flex-col gap-4">
           {inboxOptions.map((channel) => (
             <li className="flex items-center gap-2" key={channel}>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <InboxIcon channel={channel} size="large" />
               </div>
               <Button

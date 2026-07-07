@@ -81,7 +81,7 @@ function GetInboxUrlItem({
       className="flex w-full items-center gap-3 border-t py-4 first:border-t-0"
       key={inbox.id}
     >
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <InboxIcon
           channel={inbox.channel as ChannelType}
           iconClassName="size-6"

@@ -279,7 +279,7 @@ function CreateBroadcastChooseChannel() {
       <CardContent className="flex flex-col gap-4">
         {configs.map((config) => (
           <div className="flex w-full items-center gap-2" key={config.value}>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <InboxIcon channel={config.value} />
             </div>
             <Button
@@ -690,7 +690,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <Card>
         <CardContent className="flex px-3">
-          <div className="flex flex-1 flex-col gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <InboxIcon channel={props.channel} label={subactionInfo.name} />
             {subactionInfo.description && (
               <span className="text-gray-500 text-sm">

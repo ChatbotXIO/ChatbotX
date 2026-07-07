@@ -33,10 +33,10 @@ const ICON_SIZE_CLASSES: Record<IconSize, string> = {
 }
 
 const LABEL_SIZE_CLASSES: Record<IconSize, string> = {
-  small: "text-xs truncate",
-  medium: "text-sm truncate",
-  large: "text-base truncate",
-  xlarge: "text-base truncate",
+  small: "text-xs truncate min-w-0",
+  medium: "text-sm truncate min-w-0",
+  large: "text-base truncate min-w-0",
+  xlarge: "text-base truncate min-w-0",
 }
 
 type InboxIconConfig = {
@@ -128,7 +128,7 @@ export const InboxIcon = memo(
     } = config
 
     return (
-      <div className={cn("flex items-center gap-2", wrapperClassName)}>
+      <div className={cn("flex min-w-0 items-center gap-2", wrapperClassName)}>
         <Icon
           className={cn(
             ICON_SIZE_CLASSES[size],
@@ -138,7 +138,9 @@ export const InboxIcon = memo(
           {...(fill !== undefined && { fill })}
         />
         {showLabel && (
-          <span className={cn(LABEL_SIZE_CLASSES[size], labelClassName)}>
+          <span
+            className={cn("flex-1", LABEL_SIZE_CLASSES[size], labelClassName)}
+          >
             {label ?? defaultLabel}
           </span>
         )}
