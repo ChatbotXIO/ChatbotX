@@ -1,4 +1,7 @@
-import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
+import type {
+  BroadcastSubaction,
+  ChannelType,
+} from "@chatbotx.io/database/partials"
 import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { client } from "@/lib/orpc/orpc"
@@ -23,6 +26,7 @@ export type ContactActions = {
     contactFilter?: ContactFilterRequest["contactFilter"]
     channel?: ChannelType
     integrationWhatsappId?: string
+    subaction?: BroadcastSubaction
   }) => Promise<void>
 }
 
@@ -100,9 +104,10 @@ export const createContactStore = (props: Partial<ContactState>) =>
           await client.contactsAPIs.countContactInboxesAuthenticatedAPI({
             workspaceId,
             sort: [],
-            channels: [params?.channel || channelTypes.enum.omnichannel],
+            channels: params?.channel ? [params.channel] : [],
             integrationWhatsappId: params?.integrationWhatsappId,
             contactFilter: params?.contactFilter,
+            subaction: params?.subaction,
           })
 
         if (get().inboxesCountReqId !== reqId) {

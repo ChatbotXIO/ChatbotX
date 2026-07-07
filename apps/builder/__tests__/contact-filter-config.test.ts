@@ -1,6 +1,10 @@
 // @vitest-environment node
 
-import { formFieldTypes, operatorTypes } from "@chatbotx.io/database/partials"
+import {
+  contactSources,
+  formFieldTypes,
+  operatorTypes,
+} from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import { buildConditionDraft } from "@/features/contact-filter/components/contact-filter-condition-form"
 import {
@@ -156,6 +160,47 @@ describe("contact filter field config helpers", () => {
         name: "customField:cf-2",
         formField: formFieldTypes.enum.number,
       }),
+    )
+  })
+
+  test("assigns supported static fields to their configured option groups", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+    const groupFor = (name: string) =>
+      configs.find((config) => config.name === name)?.group
+
+    expect(groupFor("fullName")).toBe("contactInfo")
+    expect(groupFor("tags")).toBe("analytics")
+    expect(groupFor("lastSeen")).toBe("analytics")
+    expect(groupFor("lastInteraction")).toBe("analytics")
+    expect(groupFor("phone")).toBe("sms")
+    expect(groupFor("email")).toBe("email")
+    expect(groupFor("emailWasVerified")).toBe("email")
+    expect(groupFor("optedInForEmail")).toBe("email")
+  })
+
+  test("derives contact source options from the contact source taxonomy", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+    const sourceOptions = configs.find(
+      (config) => config.name === "source",
+    )?.options
+
+    expect(sourceOptions?.map((option) => option.value)).toEqual(
+      contactSources.options,
+    )
+    expect(sourceOptions?.map((option) => option.value)).not.toContain(
+      "fbLeadAd",
     )
   })
 

@@ -3,9 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   assertCurrentUserCanAccessChatbot: vi.fn(),
-  resolveBroadcastInboxIds: vi.fn(),
-  count: vi.fn(),
-  relationsFilterToSQL: vi.fn(),
+  countAudience: vi.fn(),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -13,93 +11,50 @@ vi.mock("@/lib/auth/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  inboxService: {
-    resolveBroadcastInboxIds: mocks.resolveBroadcastInboxIds,
+  broadcastService: {
+    countAudience: mocks.countAudience,
   },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: {
-    id: "ContactInbox.id",
-    inboxId: "ContactInbox.inboxId",
-    contactId: "ContactInbox.contactId",
-  },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    $count: mocks.count,
-  },
-  relationsFilterToSQL: mocks.relationsFilterToSQL,
 }))
 
 const { countContactInboxes } = await import(
   "../src/features/contacts/queries/list-contact-inboxes.queries"
 )
 
-const hasKeyDeep = (value: unknown, keys: Set<string>): boolean => {
-  if (!value || typeof value !== "object") {
-    return false
-  }
-  return Object.entries(value).some(
-    ([key, child]) => keys.has(key) || hasKeyDeep(child, keys),
-  )
-}
-
 beforeEach(() => {
   mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
-  mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
-  mocks.count.mockResolvedValue(2)
-  mocks.relationsFilterToSQL.mockImplementation((_model, where) => ({
-    renderedFromWhere: where,
-  }))
+  mocks.countAudience.mockReset()
+  mocks.countAudience.mockResolvedValue(12)
 })
 
 describe("countContactInboxes", () => {
-  test("applies contactFilter to the inbox-rooted preview count", async () => {
-    await countContactInboxes({
+  test("authorizes the workspace and delegates broadcast audience counting", async () => {
+    const contactFilter = {
+      operator: "and" as const,
+      conditions: [
+        {
+          field: "fullName" as const,
+          operator: "contains" as const,
+          value: "Ada",
+        },
+      ],
+    }
+
+    const result = await countContactInboxes({
       workspaceId: "ws-1",
       channels: ["messenger"],
       integrationWhatsappId: "wa-1",
-      contactFilter: {
-        operator: "and",
-        conditions: [
-          {
-            field: "fullName",
-            operator: "contains",
-            value: "Ada",
-          },
-        ],
-      },
+      contactFilter,
+      subaction: "messengerActiveContacts",
     })
 
-    const where = mocks.relationsFilterToSQL.mock.calls[0]?.[1]
-
-    expect(where).toEqual(
-      expect.objectContaining({
-        inboxId: { in: ["inbox-1"] },
-      }),
-    )
-    expect(hasKeyDeep(where, new Set(["RAW", "contactId", "Contact"]))).toBe(
-      true,
-    )
-    expect(mocks.resolveBroadcastInboxIds).toHaveBeenCalledWith({
+    expect(result).toEqual({ total: 12 })
+    expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith("ws-1")
+    expect(mocks.countAudience).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channels: ["messenger"],
       integrationWhatsappId: "wa-1",
-    })
-  })
-
-  test("passes all requested channels to the broadcast inbox resolver", async () => {
-    await countContactInboxes({
-      workspaceId: "ws-1",
-      channels: ["messenger", "whatsapp"],
-    })
-
-    expect(mocks.resolveBroadcastInboxIds).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      channels: ["messenger", "whatsapp"],
-      integrationWhatsappId: undefined,
+      contactFilter,
+      subaction: "messengerActiveContacts",
     })
   })
 })

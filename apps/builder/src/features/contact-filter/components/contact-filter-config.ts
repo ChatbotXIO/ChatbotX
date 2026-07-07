@@ -1,5 +1,6 @@
 import {
   type ContactFilterField,
+  contactSources,
   type FormFieldType,
   formFieldTypes,
   type OperatorType,
@@ -57,6 +58,11 @@ export type ContactFilterFieldGroup =
   | "ecommerce"
   | "systemFields"
   | "customFields"
+
+type GroupedContactFilterFieldGroup = Exclude<
+  ContactFilterFieldGroup,
+  "contactInfo"
+>
 
 /**
  * Transient shape used by the “add condition” dialog before
@@ -121,20 +127,11 @@ const getChannelMultiSelectOptions = (
   { label: t("fields.tiktok.label"), value: "tiktok" },
 ]
 
-const getContactSourceOptions = (
-  t: (key: string) => string,
-): SelectOption[] => [
-  { label: t("condition.sources.direct"), value: "direct" },
-  { label: t("condition.sources.comments"), value: "comments" },
-  { label: t("condition.sources.ads"), value: "ads" },
-  { label: t("condition.sources.fbLeadAd"), value: "fbLeadAd" },
-  { label: t("condition.sources.inboundMessage"), value: "inboundMessage" },
-  { label: t("condition.sources.imported"), value: "imported" },
-  { label: t("condition.sources.api"), value: "api" },
-  { label: t("condition.sources.webchat"), value: "webchat" },
-  { label: t("condition.sources.botLink"), value: "botLink" },
-  { label: t("condition.sources.chatPlugin"), value: "chatPlugin" },
-]
+const getContactSourceOptions = (t: (key: string) => string): SelectOption[] =>
+  contactSources.options.map((source) => ({
+    label: t(`condition.sources.${source}`),
+    value: source,
+  }))
 
 const resolveContactFilterOptions = (
   optionSource: ContactFilterOptionSource,
@@ -178,96 +175,113 @@ const resolveContactFilterOptions = (
   }
 }
 
+const CONTACT_FILTER_GROUP_FIELDS = {
+  opportunity: [
+    "hasOpportunity",
+    "hasOpenOpportunity",
+    "hasWonOpportunity",
+    "hasLostOpportunity",
+  ],
+  instagram: [
+    "instagramStoryReply",
+    "followsBusinessOnInstagram",
+    "businessFollowsUserOnInstagram",
+    "verifiedAccountOnInstagram",
+    "followerCountOnInstagram",
+  ],
+  analytics: [
+    "tags",
+    "lastSent",
+    "lastDelivered",
+    "lastSeen",
+    "lastSeenMinutesAgo",
+    "lastInteraction",
+    "lastInteractionMinutesAgo",
+    "unreplied",
+    "unread",
+    "appliedJobs",
+    "completedWhatsAppFlows",
+    "messengerList",
+    "subscribedToDripCampaign",
+    "conversationAssigned",
+    "entryPointsLinks",
+    "sentMessage",
+    "keywordsReceived",
+    "executedFlow",
+    "executedStep",
+    "consecutiveAiFailures",
+    "questionnaireStarted",
+    "questionnaireInProgress",
+    "questionnaireFinished",
+    "votedOnPoll",
+  ],
+  facebookInstagramComment: [
+    "lastComment",
+    "commentedOnPost",
+    "reactedOnPost",
+    "lastTotalTaggedUsers",
+    "lastTotalNewTaggedUsers",
+  ],
+  sms: ["phone", "phoneWasVerified", "optedInForSms"],
+  broadcastWhatsapp: [
+    "broadcastSent",
+    "broadcastDelivered",
+    "broadcastSeen",
+    "broadcastClicked",
+    "broadcastFailed",
+  ],
+  email: [
+    "email",
+    "emailWasVerified",
+    "optedInForEmail",
+    "emailSent",
+    "emailDelivered",
+    "emailOpened",
+    "emailClicked",
+  ],
+  systemTime: [
+    "isWithinWorkingHours",
+    "currentDate",
+    "currentTime",
+    "currentDayOfMonth",
+    "currentDayOfWeek",
+    "currentMonth",
+  ],
+  ecommerce: [
+    "bought",
+    "boughtItems",
+    "totalSpent",
+    "numberOfOrders",
+    "shoppingCartTotal",
+    "shoppingCartSubtotal",
+    "shoppingCartIsEmpty",
+    "shoppingCartContainsItems",
+    "lastSentMessageFailed",
+  ],
+  systemFields: ["lastUserInput", "lastUserInputType"],
+  customFields: ["customFields"],
+} as const satisfies Record<
+  GroupedContactFilterFieldGroup,
+  readonly ContactFilterField[]
+>
+
+const CONTACT_FILTER_FIELD_GROUPS = Object.keys(
+  CONTACT_FILTER_GROUP_FIELDS,
+) as GroupedContactFilterFieldGroup[]
+
+const CONTACT_FILTER_GROUP_BY_FIELD = new Map<
+  ContactFilterField,
+  ContactFilterFieldGroup
+>(
+  CONTACT_FILTER_FIELD_GROUPS.flatMap((group) =>
+    CONTACT_FILTER_GROUP_FIELDS[group].map((field) => [field, group] as const),
+  ),
+)
+
 const getContactFilterFieldGroup = (
   field: ContactFilterField,
-): ContactFilterFieldGroup => {
-  switch (field) {
-    case "hasOpportunity":
-    case "hasOpenOpportunity":
-    case "hasWonOpportunity":
-    case "hasLostOpportunity":
-      return "opportunity"
-    case "instagramStoryReply":
-    case "followsBusinessOnInstagram":
-    case "businessFollowsUserOnInstagram":
-    case "verifiedAccountOnInstagram":
-    case "followerCountOnInstagram":
-      return "instagram"
-    case "tags":
-    case "lastSent":
-    case "lastDelivered":
-    case "lastSeen":
-    case "lastSeenMinutesAgo":
-    case "lastInteraction":
-    case "lastInteractionMinutesAgo":
-    case "unreplied":
-    case "unread":
-    case "appliedJobs":
-    case "completedWhatsAppFlows":
-    case "messengerList":
-    case "subscribedToDripCampaign":
-    case "conversationAssigned":
-    case "entryPointsLinks":
-    case "sentMessage":
-    case "keywordsReceived":
-    case "executedFlow":
-    case "executedStep":
-    case "consecutiveAiFailures":
-    case "questionnaireStarted":
-    case "questionnaireInProgress":
-    case "questionnaireFinished":
-    case "votedOnPoll":
-      return "analytics"
-    case "lastComment":
-    case "commentedOnPost":
-    case "reactedOnPost":
-    case "lastTotalTaggedUsers":
-    case "lastTotalNewTaggedUsers":
-      return "facebookInstagramComment"
-    case "phone":
-    case "phoneWasVerified":
-    case "optedInForSms":
-      return "sms"
-    case "broadcastSent":
-    case "broadcastDelivered":
-    case "broadcastSeen":
-    case "broadcastClicked":
-    case "broadcastFailed":
-      return "broadcastWhatsapp"
-    case "email":
-    case "emailWasVerified":
-    case "optedInForEmail":
-    case "emailSent":
-    case "emailDelivered":
-    case "emailOpened":
-    case "emailClicked":
-      return "email"
-    case "isWithinWorkingHours":
-    case "currentDate":
-    case "currentTime":
-    case "currentDayOfMonth":
-    case "currentDayOfWeek":
-    case "currentMonth":
-      return "systemTime"
-    case "bought":
-    case "boughtItems":
-    case "totalSpent":
-    case "numberOfOrders":
-    case "shoppingCartTotal":
-    case "shoppingCartSubtotal":
-    case "shoppingCartIsEmpty":
-    case "shoppingCartContainsItems":
-    case "lastSentMessageFailed":
-      return "ecommerce"
-    case "lastUserInput":
-    case "lastUserInputType":
-      return "systemFields"
-    case "customFields":
-      return "customFields"
-    default:
-      return "contactInfo"
-  }
-}
+): ContactFilterFieldGroup =>
+  CONTACT_FILTER_GROUP_BY_FIELD.get(field) ?? "contactInfo"
 
 export const getFieldConfigs = ({
   t,
@@ -327,7 +341,7 @@ export const getFieldOptions = (
     .filter((config) => config.group === "contactInfo")
     .map(toOption)
 
-  const groupOptions = (group: ContactFilterFieldGroup, label: string) => {
+  const groupOptions = (group: GroupedContactFilterFieldGroup) => {
     const children = configs
       .filter((config) => config.group === group)
       .map(toOption)
@@ -335,7 +349,7 @@ export const getFieldOptions = (
     return children.length > 0
       ? [
           {
-            label,
+            label: t(`condition.fieldGroups.${group}`),
             value: `group-${group}`,
             children,
           },
@@ -345,23 +359,7 @@ export const getFieldOptions = (
 
   return [
     ...contactInfoOptions,
-    ...groupOptions("opportunity", t("condition.fieldGroups.opportunity")),
-    ...groupOptions("instagram", t("condition.fieldGroups.instagram")),
-    ...groupOptions("analytics", t("condition.fieldGroups.analytics")),
-    ...groupOptions(
-      "facebookInstagramComment",
-      t("condition.fieldGroups.facebookInstagramComment"),
-    ),
-    ...groupOptions("sms", t("condition.fieldGroups.sms")),
-    ...groupOptions(
-      "broadcastWhatsapp",
-      t("condition.fieldGroups.broadcastWhatsapp"),
-    ),
-    ...groupOptions("email", t("condition.fieldGroups.email")),
-    ...groupOptions("systemTime", t("condition.fieldGroups.systemTime")),
-    ...groupOptions("ecommerce", t("condition.fieldGroups.ecommerce")),
-    ...groupOptions("systemFields", t("condition.fieldGroups.systemFields")),
-    ...groupOptions("customFields", t("condition.fieldGroups.customFields")),
+    ...CONTACT_FILTER_FIELD_GROUPS.flatMap(groupOptions),
   ]
 }
 

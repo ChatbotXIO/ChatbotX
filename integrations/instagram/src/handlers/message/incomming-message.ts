@@ -84,6 +84,7 @@ const getMessageEntity = async (
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
   let ref: string | null = null
+  let referralSource: string | null = null
 
   const contactSourceId =
     messaging.sender.id === ctx.auth.metadata.igId
@@ -119,7 +120,15 @@ const getMessageEntity = async (
 
   if (messaging.referral) {
     ref = messaging.referral.ref
+    referralSource = messaging.referral.source
   }
 
-  return { message, postbackAction, quickReplyAction, ref, contact }
+  return {
+    message,
+    postbackAction,
+    quickReplyAction,
+    ref,
+    referralSource,
+    contact,
+  }
 }

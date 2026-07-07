@@ -1,20 +1,16 @@
-import { inboxService } from "@chatbotx.io/business"
-import { and, asc, db, eq, gt, inArray } from "@chatbotx.io/database/client"
+import { broadcastService } from "@chatbotx.io/business"
+import { db, eq } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
   broadcastStatuses,
+  broadcastSubactions,
   channelTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  buildContactInboxContactFilterSQL,
-  type ContactFilterCriteriaInput,
-} from "@chatbotx.io/database/queries"
+import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import {
   broadcastModel,
-  contactInboxModel,
   contactsOnBroadcastsModel,
 } from "@chatbotx.io/database/schema"
-import { chunkById } from "@chatbotx.io/database/utils"
 import {
   broadcastSendJobId,
   ScheduleJobData,
@@ -35,86 +31,59 @@ export const prepareBroadcast = async (broadcastId: string) => {
   }
 
   const parsedChannel = channelTypes.safeParse(broadcast.channel)
-  const inboxIds = await inboxService.resolveBroadcastInboxIds({
-    workspaceId: broadcast.workspaceId,
-    channels: parsedChannel.success ? [parsedChannel.data] : [],
-    integrationWhatsappId: broadcast.integrationWhatsappId,
-  })
-
-  if (inboxIds.length === 0) {
-    await db
-      .update(broadcastModel)
-      .set({ status: "sent" })
-      .where(eq(broadcastModel.id, broadcastId))
-    return
-  }
+  const parsedSubaction = broadcastSubactions.safeParse(broadcast.subaction)
 
   let hasContactOnBroadcast = false
   let contactCount = 0
 
-  await chunkById(
-    async (lastId) =>
-      await db
-        .select()
-        .from(contactInboxModel)
-        .where(
-          and(
-            inArray(contactInboxModel.inboxId, inboxIds),
-            lastId ? gt(contactInboxModel.id, lastId) : undefined,
-            broadcast.contactFilter
-              ? buildContactInboxContactFilterSQL({
-                  contactIdColumn: contactInboxModel.contactId,
-                  workspaceId: broadcast.workspaceId,
-                  contactFilter:
-                    broadcast.contactFilter as ContactFilterCriteriaInput,
-                })
-              : undefined,
-          ),
-        )
-        .orderBy(asc(contactInboxModel.id))
-        .limit(1000),
+  await broadcastService.forEachAudienceChunk(
     {
-      chunkSize: 1000,
-      callback: async (contactInboxes): Promise<boolean | undefined> => {
-        hasContactOnBroadcast = true
+      workspaceId: broadcast.workspaceId,
+      channels: parsedChannel.success ? [parsedChannel.data] : [],
+      integrationWhatsappId: broadcast.integrationWhatsappId,
+      contactFilter:
+        broadcast.contactFilter as ContactFilterCriteriaInput | null,
+      subaction: parsedSubaction.success ? parsedSubaction.data : undefined,
+    },
+    async (contactInboxes): Promise<boolean | undefined> => {
+      hasContactOnBroadcast = true
 
-        const conversations = await db.query.conversationModel.findMany({
-          where: {
-            contactId: {
-              in: Array.from(
-                new Set(
-                  contactInboxes.map((contactInbox) => contactInbox.contactId),
-                ),
+      const conversations = await db.query.conversationModel.findMany({
+        where: {
+          contactId: {
+            in: Array.from(
+              new Set(
+                contactInboxes.map((contactInbox) => contactInbox.contactId),
               ),
-            },
-            workspaceId: broadcast.workspaceId,
+            ),
           },
-        })
+          workspaceId: broadcast.workspaceId,
+        },
+      })
 
-        const conversationMap = new Map(
-          conversations.map((conversation) => [
-            conversation.contactId,
-            conversation,
-          ]),
+      const conversationMap = new Map(
+        conversations.map((conversation) => [
+          conversation.contactId,
+          conversation,
+        ]),
+      )
+
+      await db
+        .insert(contactsOnBroadcastsModel)
+        .values(
+          contactInboxes.map((contactInbox) => ({
+            broadcastId,
+            contactId: contactInbox.contactId,
+            contactInboxId: contactInbox.id,
+            conversationId:
+              conversationMap.get(contactInbox.contactId)?.id || "",
+          })),
         )
+        .onConflictDoNothing()
 
-        await db
-          .insert(contactsOnBroadcastsModel)
-          .values(
-            contactInboxes.map((contactInbox) => ({
-              broadcastId,
-              contactId: contactInbox.contactId,
-              contactInboxId: contactInbox.id,
-              conversationId:
-                conversationMap.get(contactInbox.contactId)?.id || "",
-            })),
-          )
-          .onConflictDoNothing()
+      contactCount += contactInboxes.length
 
-        contactCount += contactInboxes.length
-
-        return
-      },
+      return
     },
   )
 

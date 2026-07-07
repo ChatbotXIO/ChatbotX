@@ -136,6 +136,8 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 }))
 
 vi.mock("@chatbotx.io/sdk", () => ({
+  contentTypes: { enum: { text: "text" } },
+  messageTypes: { enum: { incoming: "incoming" } },
   SdkException: class SdkException extends Error {},
 }))
 
@@ -178,9 +180,8 @@ vi.mock("../src/services/integrations", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-const { receiveMessage } = await import(
-  "../src/integration/handlers/received-message"
-)
+const { metaReferralToContactSource, receiveComment, receiveMessage } =
+  await import("../src/integration/handlers/received-message")
 const { integrationService } = await import("../src/services/integrations")
 
 // ---------------------------------------------------------------------------
@@ -248,6 +249,51 @@ const baseProps = {
   integrationType: "messenger",
   integrationIdentifier: "inbox-1",
   payload: {},
+}
+
+type CreateNewContactWithMacArgs = {
+  create: (tx: {
+    insert: (model: unknown) => {
+      values: (row: Record<string, unknown>) => {
+        returning: () => Promise<Record<string, unknown>[]>
+      }
+    }
+  }) => Promise<unknown>
+}
+
+const runCapturedNewContactCreate = async () => {
+  const rows: Record<string, unknown>[] = []
+  const args = mockCreateNewContactWithMac.mock.calls.at(-1)?.[0] as
+    | CreateNewContactWithMacArgs
+    | undefined
+  if (!args) {
+    throw new Error("Expected createNewContactWithMac to be called")
+  }
+
+  await args.create({
+    insert: () => ({
+      values: (row) => {
+        rows.push(row)
+        return {
+          returning: () =>
+            Promise.resolve([
+              {
+                id:
+                  "source" in row
+                    ? "ci-from-callback"
+                    : "contact-from-callback",
+                contactId: "contact-from-callback",
+                createdAt: new Date("2026-06-21T00:00:00Z"),
+                workspaceId: "ws-1",
+                ...row,
+              },
+            ]),
+        }
+      },
+    }),
+  })
+
+  return rows
 }
 
 // ---------------------------------------------------------------------------
@@ -527,5 +573,142 @@ describe("receiveMessage — new contact MAC gate", () => {
     // `contacts` is recorded inside createNewContactWithMac now, so the handler
     // must not increment it separately (avoids double-counting).
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("writes inboundMessage as the source for plain inbound DMs", async () => {
+    const newContact = {
+      id: "contact-new",
+      workspaceId: "ws-1",
+      firstName: "Test",
+      phoneNumber: null,
+      email: null,
+      blockedAt: null,
+      createdAt: new Date("2026-06-21T00:00:00Z"),
+    }
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact,
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({ source: "inboundMessage" }),
+    )
+  })
+
+  test("writes mapped Meta referral source for inbound DMs with referral", async () => {
+    const newContact = {
+      id: "contact-new",
+      workspaceId: "ws-1",
+      firstName: "Test",
+      phoneNumber: null,
+      email: null,
+      blockedAt: null,
+      createdAt: new Date("2026-06-21T00:00:00Z"),
+    }
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: "m.me-link",
+      referralSource: "SHORTLINK",
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact,
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(expect.objectContaining({ source: "botLink" }))
+  })
+})
+
+describe("contact source taxonomy", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindContactInbox.mockResolvedValue(undefined)
+    mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+    mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+  })
+
+  test("maps Meta referral source buckets", () => {
+    expect(metaReferralToContactSource("ADS")).toBe("ads")
+    expect(metaReferralToContactSource("SHORTLINK")).toBe("botLink")
+    expect(metaReferralToContactSource("CUSTOMER_CHAT_PLUGIN")).toBe(
+      "chatPlugin",
+    )
+    expect(metaReferralToContactSource("UNKNOWN")).toBeUndefined()
+    expect(metaReferralToContactSource()).toBeUndefined()
+  })
+
+  test("writes comments as the source for feed comment contacts", async () => {
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "post-1",
+      },
+    })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(expect.objectContaining({ source: "comments" }))
   })
 })

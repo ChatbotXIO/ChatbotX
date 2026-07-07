@@ -1201,7 +1201,7 @@ describe("applyContactFilter — conversation relation fields", () => {
     expect(empty.sql).toContain('"Conversation"."followed" = true')
   })
 
-  test("conversationTransferredToHuman maps to inverted botEnabled", () => {
+  test("conversationTransferredToHuman maps to active bot handoff window", () => {
     const transferred = renderContactWhere(
       applyContactFilter({
         operator: "and",
@@ -1214,10 +1214,12 @@ describe("applyContactFilter — conversation relation fields", () => {
         ],
       }),
     )
-    // transferred to human ⟺ bot disabled
+    // transferred to human ⟺ bot disabled and the handoff has not expired.
     expect(transferred.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
     expect(transferred.sql).toContain('"Conversation"."botEnabled" =')
     expect(transferred.sql).toContain("= false")
+    expect(transferred.sql).toContain('"Conversation"."botResumeAt" IS NULL')
+    expect(transferred.sql).toContain('"Conversation"."botResumeAt" > NOW()')
 
     const notTransferred = renderContactWhere(
       applyContactFilter({
@@ -1235,6 +1237,7 @@ describe("applyContactFilter — conversation relation fields", () => {
       'NOT EXISTS (SELECT 1 FROM "Conversation"',
     )
     expect(notTransferred.sql).toContain('"Conversation"."botEnabled" = false')
+    expect(notTransferred.sql).toContain('"Conversation"."botResumeAt" > NOW()')
   })
 })
 

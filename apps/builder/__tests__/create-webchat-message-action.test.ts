@@ -376,6 +376,12 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
     )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "webchat",
+        source: "webchat",
+      }),
+    )
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
   })
 

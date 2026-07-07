@@ -186,6 +186,12 @@ export const buildContactInboxContactFilterSQL = ({
   return sql`${contactIdColumn} IN (SELECT ${contactModel.id} FROM ${contactModel} WHERE ${contactWhereSQL})`
 }
 
+// Shared 24h incoming-message window (Meta non-template rule) — same SQL, two scopes:
+// - ContactInbox query root (broadcast audience / count): gates the current inbox row
+// - inside a contact filter: wrapped by contactInboxExists → any inbox within 24h
+export const contactInboxInteractedWithin24hSQL = (): SQL =>
+  sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`
+
 /**
  * Maps a contact filter criteria to a Drizzle relational `where` object for
  * ContactModel. Shared between the builder app (contact list) and the worker
@@ -275,7 +281,7 @@ function buildConditionWhere(
     case "interactedInLast24h":
       return buildExistsBooleanWhere(
         contactInboxExists,
-        sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`,
+        contactInboxInteractedWithin24hSQL(),
         operator,
         value,
       )
@@ -333,7 +339,7 @@ function buildConditionWhere(
     case "conversationTransferredToHuman":
       return buildExistsBooleanWhere(
         conversationExists,
-        sql`${conversationModel.botEnabled} = false`,
+        sql`${conversationModel.botEnabled} = false AND (${conversationModel.botResumeAt} IS NULL OR ${conversationModel.botResumeAt} > NOW())`,
         operator,
         value,
       )

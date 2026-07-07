@@ -9,7 +9,11 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
-import type { IntegrationType } from "@chatbotx.io/database/partials"
+import {
+  type ContactSource,
+  contactSources,
+  type IntegrationType,
+} from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
@@ -56,6 +60,21 @@ import {
   allIntegrations,
   integrationService,
 } from "../../services/integrations"
+
+export const metaReferralToContactSource = (
+  raw?: string | null,
+): ContactSource | undefined => {
+  switch (raw) {
+    case "ADS":
+      return contactSources.enum.ads
+    case "SHORTLINK":
+      return contactSources.enum.botLink
+    case "CUSTOMER_CHAT_PLUGIN":
+      return contactSources.enum.chatPlugin
+    default:
+      return
+  }
+}
 
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
@@ -110,12 +129,16 @@ export const receiveMessage = async (
     postbackAction,
     quickReplyAction,
     ref,
+    referralSource,
   } = parsedMessage
 
   const detected = await detectContactAndConversation({
     incomingContact,
     inbox,
     integrationRow,
+    source:
+      metaReferralToContactSource(referralSource) ??
+      contactSources.enum.inboundMessage,
   })
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
@@ -368,6 +391,7 @@ export const receiveComment = async (
     incomingContact,
     inbox,
     integrationRow,
+    source: contactSources.enum.comments,
   })
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
@@ -530,12 +554,13 @@ const detectContactAndConversation = async (props: {
     inboxId: string
     [x: string]: unknown
   }
+  source: ContactSource
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
 }> => {
-  const { incomingContact, inbox, integrationRow } = props
+  const { incomingContact, inbox, integrationRow, source } = props
 
   const existingContactInbox = await db.query.contactInboxModel.findFirst({
     where: {
@@ -627,7 +652,7 @@ const detectContactAndConversation = async (props: {
           inboxId: inbox.id,
           contactId: newContact.id,
           originalContactId: newContact.id,
-          source: inbox.channel,
+          source,
           sourceId: incomingContact.sourceId,
           channel: inbox.channel,
         })

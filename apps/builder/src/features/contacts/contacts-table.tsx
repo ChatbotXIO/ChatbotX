@@ -68,20 +68,43 @@ function NameCell({
 }) {
   const avatarUrl = useAvatarUrl(contact)
   const inboxHref = `/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`
+  const channel = contact.contactInboxes?.[0]?.channel as
+    | ChannelType
+    | undefined
 
   return (
-    <div className="flex max-w-50 items-center gap-2">
+    <div className="flex max-w-56 items-center gap-3">
       <Link href={inboxHref} target="_blank">
-        <Avatar className="size-6 shrink-0">
-          <AvatarImage alt={contact.fullName ?? ""} src={avatarUrl} />
-          <AvatarFallback className="text-xs">
-            {contact.fullName?.charAt(0)?.toUpperCase() ?? "?"}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="size-9 shrink-0">
+            <AvatarImage
+              alt={contact.fullName ?? ""}
+              className="object-cover"
+              src={avatarUrl}
+            />
+            <AvatarFallback className="bg-gray-300 text-sm dark:bg-zinc-100 dark:text-zinc-800">
+              {contact.fullName?.slice(0, 2) ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          {channel && (
+            <div className="absolute right-0 bottom-0 translate-x-1">
+              <InboxIcon
+                channel={channel}
+                iconClassName="size-3"
+                showLabel={false}
+                size="small"
+              />
+            </div>
+          )}
+        </div>
       </Link>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link className="truncate" href={inboxHref} target="_blank">
+          <Link
+            className="truncate font-medium leading-5"
+            href={inboxHref}
+            target="_blank"
+          >
             {contact.fullName}
           </Link>
         </TooltipTrigger>
@@ -253,13 +276,20 @@ export function ContactsTable({
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            {row.original.contactInboxes?.map((contactInbox) => (
-              <InboxIcon
-                channel={contactInbox.channel as ChannelType}
-                key={contactInbox.id}
-                showLabel={false}
-              />
-            ))}
+            {[
+              ...new Set(
+                row.original.contactInboxes?.map(
+                  (contactInbox) => contactInbox.source,
+                ) ?? [],
+              ),
+            ].map((source) => {
+              const labelKey = `condition.sources.${source}` as const
+              return (
+                <span key={source}>
+                  {t.has(labelKey) ? t(labelKey) : source}
+                </span>
+              )
+            })}
           </div>
         ),
         enableSorting: false,
@@ -371,7 +401,10 @@ export function ContactsTable({
   )
 
   return (
-    <DataTable table={table}>
+    <DataTable
+      className="[&_tbody_td]:py-3 [&_tbody_td]:text-[15px] [&_tbody_tr]:h-16"
+      table={table}
+    >
       {showContactFilterPanel && (
         <ContactListFilterPanel
           filter={optimisticContactFilter}

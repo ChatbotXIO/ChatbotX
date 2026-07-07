@@ -1,4 +1,7 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  broadcastSubactions,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
@@ -53,6 +56,7 @@ export const listContactsRequest = basePaginationRequest.extend({
   channels: z.array(channelTypes).optional(),
   integrationWhatsappId: zodBigintAsString().optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
+  subaction: broadcastSubactions.optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 

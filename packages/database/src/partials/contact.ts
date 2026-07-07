@@ -1,6 +1,17 @@
 import z from "zod"
 
-export const contactSources = z.enum(["imported"])
+export const contactSources = z.enum([
+  "inboundMessage",
+  "webchat",
+  "ads",
+  "botLink",
+  "chatPlugin",
+  "comments",
+  "imported",
+  "api",
+  "direct",
+])
+export type ContactSource = z.infer<typeof contactSources>
 
 export const genderTypes = z.enum(["male", "female", "unknown"])
 export type GenderType = z.infer<typeof genderTypes>

@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ── db spies ──────────────────────────────────────────────────────────────────
 const findFirstBroadcast = vi.fn()
-const findManyInbox = vi.fn()
 const findManyConversation = vi.fn()
-const resolveBroadcastInboxIds = vi.fn()
+const forEachAudienceChunk = vi.fn()
+const scheduleAddSpy = vi.fn()
 
 type UpdateCall = {
   table: unknown
@@ -18,40 +17,19 @@ const insertCalls: InsertCall[] = []
 
 const onConflictSpy = vi.fn()
 
-// ── audience where capture (for contactFilter wiring assertion) ────────────────
-const audienceWhereCalls: unknown[] = []
+vi.mock("@chatbotx.io/business", () => ({
+  broadcastService: {
+    forEachAudienceChunk: (...args: unknown[]) => forEachAudienceChunk(...args),
+  },
+}))
 
-// ── queue spy ─────────────────────────────────────────────────────────────────
-const scheduleAddSpy = vi.fn()
-
-// ── chunkById spy – controls whether callback is invoked ──────────────────────
-const chunkByIdMock = vi.fn()
-
-// ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock("@chatbotx.io/database/partials", async () =>
   vi.importActual("@chatbotx.io/database/partials"),
 )
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: { id: "Broadcast.id", __name: "broadcastModel" },
-  contactInboxModel: {
-    id: "ContactInbox.id",
-    inboxId: "ContactInbox.inboxId",
-    contactId: "ContactInbox.contactId",
-    __name: "contactInboxModel",
-  },
   contactsOnBroadcastsModel: { __name: "contactsOnBroadcastsModel" },
-}))
-
-vi.mock("@chatbotx.io/database/queries", () => ({
-  buildContactInboxContactFilterSQL: vi.fn(() => ({ RAW: "contact-filter" })),
-}))
-
-vi.mock("@chatbotx.io/business", () => ({
-  inboxService: {
-    resolveBroadcastInboxIds: (...args: unknown[]) =>
-      resolveBroadcastInboxIds(...args),
-  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -59,9 +37,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       broadcastModel: {
         findFirst: (...args: unknown[]) => findFirstBroadcast(...args),
-      },
-      inboxModel: {
-        findMany: (...args: unknown[]) => findManyInbox(...args),
       },
       conversationModel: {
         findMany: (...args: unknown[]) => findManyConversation(...args),
@@ -86,28 +61,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
         }
       },
     }),
-    select: () => ({
-      from: () => ({
-        where: (where: unknown) => {
-          audienceWhereCalls.push(where)
-          return {
-            orderBy: () => ({
-              limit: () => Promise.resolve([]),
-            }),
-          }
-        },
-      }),
-    }),
   },
-  and: (...args: unknown[]) => ({ __and: args }),
-  eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
-  gt: (a: unknown, b: unknown) => ({ __gt: [a, b] }),
-  inArray: (a: unknown, b: unknown) => ({ __inArray: [a, b] }),
-  asc: (a: unknown) => ({ __asc: a }),
-}))
-
-vi.mock("@chatbotx.io/database/utils", () => ({
-  chunkById: (...args: unknown[]) => chunkByIdMock(...args),
+  eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -127,7 +82,6 @@ const { prepareBroadcast } = await import(
   "../src/schedule/handlers/prepare-broadcast"
 )
 
-// ── helpers ───────────────────────────────────────────────────────────────────
 const BROADCAST_ID = "broadcast-1"
 const WORKSPACE_ID = "workspace-1"
 
@@ -135,267 +89,158 @@ const baseBroadcast = () => ({
   id: BROADCAST_ID,
   workspaceId: WORKSPACE_ID,
   integrationWhatsappId: null as string | null,
-  channel: null as string | null,
+  channel: "messenger" as string | null,
   status: "scheduled",
+  subaction: null as string | null,
   contactFilter: null as unknown,
 })
 
-const hasKeyDeep = (value: unknown, keys: Set<string>): boolean => {
-  if (!value || typeof value !== "object") {
-    return false
-  }
-  return Object.entries(value).some(
-    ([key, child]) => keys.has(key) || hasKeyDeep(child, keys),
-  )
-}
-
-// ── setup ─────────────────────────────────────────────────────────────────────
 beforeEach(() => {
   updateCalls.length = 0
   insertCalls.length = 0
-  audienceWhereCalls.length = 0
   findFirstBroadcast.mockResolvedValue(undefined)
-  findManyInbox.mockResolvedValue([])
   findManyConversation.mockResolvedValue([])
-  resolveBroadcastInboxIds.mockResolvedValue([])
-  chunkByIdMock.mockResolvedValue(undefined)
+  forEachAudienceChunk.mockResolvedValue(undefined)
+  scheduleAddSpy.mockReset()
+  onConflictSpy.mockReset()
 })
 
-// ── tests ─────────────────────────────────────────────────────────────────────
 describe("prepareBroadcast", () => {
-  describe("broadcast not found", () => {
-    test("returns without any db writes or queue enqueues", async () => {
-      findFirstBroadcast.mockResolvedValue(undefined)
+  test("returns without db writes or queue enqueues when the broadcast is missing", async () => {
+    findFirstBroadcast.mockResolvedValue(undefined)
 
-      await prepareBroadcast(BROADCAST_ID)
+    await prepareBroadcast(BROADCAST_ID)
 
-      expect(updateCalls).toHaveLength(0)
-      expect(insertCalls).toHaveLength(0)
-      expect(scheduleAddSpy).not.toHaveBeenCalled()
-    })
+    expect(updateCalls).toHaveLength(0)
+    expect(insertCalls).toHaveLength(0)
+    expect(forEachAudienceChunk).not.toHaveBeenCalled()
+    expect(scheduleAddSpy).not.toHaveBeenCalled()
   })
 
-  describe("broadcast audience resolver", () => {
-    test("passes broadcast targeting inputs to inboxService.resolveBroadcastInboxIds", async () => {
-      findFirstBroadcast.mockResolvedValue({
-        ...baseBroadcast(),
-        channel: "whatsapp",
-        integrationWhatsappId: "wa-int-1",
-      })
-      resolveBroadcastInboxIds.mockResolvedValue(["inbox-wa"])
+  test("forwards parsed targeting inputs to broadcastService.forEachAudienceChunk", async () => {
+    const contactFilter = {
+      operator: "and",
+      conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
+    }
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "whatsapp",
+      integrationWhatsappId: "wa-int-1",
+      subaction: "whatsappWithin24Hours",
+      contactFilter,
+    })
 
-      await prepareBroadcast(BROADCAST_ID)
+    await prepareBroadcast(BROADCAST_ID)
 
-      expect(resolveBroadcastInboxIds).toHaveBeenCalledWith({
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      {
         workspaceId: WORKSPACE_ID,
         channels: ["whatsapp"],
         integrationWhatsappId: "wa-int-1",
-      })
-      expect(findManyInbox).not.toHaveBeenCalled()
-      expect(chunkByIdMock).toHaveBeenCalledTimes(1)
-    })
+        contactFilter,
+        subaction: "whatsappWithin24Hours",
+      },
+      expect.any(Function),
+    )
   })
 
-  describe("inboxIds resolves to empty list", () => {
-    test("updates broadcast status to 'sent' and returns early without calling chunkById", async () => {
-      findFirstBroadcast.mockResolvedValue(baseBroadcast())
-      resolveBroadcastInboxIds.mockResolvedValue([])
-
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].values).toMatchObject({ status: "sent" })
-      expect(chunkByIdMock).not.toHaveBeenCalled()
-      expect(scheduleAddSpy).not.toHaveBeenCalled()
+  test("fails closed for invalid persisted channel and subaction values", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "bad-channel",
+      subaction: "bad-subaction",
     })
 
-    test("fails closed when the stored broadcast channel is invalid", async () => {
-      findFirstBroadcast.mockResolvedValue({
-        ...baseBroadcast(),
-        channel: "bad-channel",
-      })
-      resolveBroadcastInboxIds.mockResolvedValue([])
+    await prepareBroadcast(BROADCAST_ID)
 
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(resolveBroadcastInboxIds).toHaveBeenCalledWith({
-        workspaceId: WORKSPACE_ID,
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({
         channels: [],
-        integrationWhatsappId: null,
-      })
-      expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].values).toMatchObject({ status: "sent" })
-      expect(chunkByIdMock).not.toHaveBeenCalled()
-      expect(scheduleAddSpy).not.toHaveBeenCalled()
+        subaction: undefined,
+      }),
+      expect.any(Function),
+    )
+    expect(updateCalls[0].values).toMatchObject({
+      status: "sent",
+      contactCount: 0,
     })
   })
 
-  describe("contacts are found (chunkById invokes callback)", () => {
-    type FakeContactInbox = { id: string; contactId: string }
+  test("inserts recipients, marks sending, and enqueues sendBroadcast when contacts are found", async () => {
+    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    findManyConversation.mockResolvedValue([
+      { id: "conv-1", contactId: "contact-1" },
+    ])
+    forEachAudienceChunk.mockImplementation(
+      async (
+        _input: unknown,
+        onChunk: (
+          rows: Array<{ id: string; contactId: string }>,
+        ) => Promise<unknown>,
+      ) => {
+        await onChunk([
+          { id: "ci-1", contactId: "contact-1" },
+          { id: "ci-2", contactId: "contact-2" },
+        ])
+      },
+    )
 
-    beforeEach(() => {
-      findFirstBroadcast.mockResolvedValue({
-        ...baseBroadcast(),
-        channel: "whatsapp",
-      })
-      resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
-      findManyConversation.mockResolvedValue([
-        { id: "conv-1", contactId: "contact-1" },
-      ])
-      chunkByIdMock.mockImplementation(
-        async (
-          _queryFn: unknown,
-          opts: {
-            callback: (
-              items: FakeContactInbox[],
-            ) => Promise<boolean | undefined>
-          },
-        ) => {
-          await opts.callback([{ id: "ci-1", contactId: "contact-1" }])
-        },
-      )
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findManyConversation).toHaveBeenCalledWith({
+      where: {
+        contactId: { in: ["contact-1", "contact-2"] },
+        workspaceId: WORKSPACE_ID,
+      },
     })
-
-    test("inserts a contactsOnBroadcasts row with correct shape", async () => {
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(insertCalls).toHaveLength(1)
-      expect(onConflictSpy).toHaveBeenCalledTimes(1)
-      const rows = insertCalls[0].values as Record<string, unknown>[]
-      expect(rows).toHaveLength(1)
-      expect(Object.keys(rows[0]).sort()).toEqual(
-        ["broadcastId", "contactId", "contactInboxId", "conversationId"].sort(),
-      )
-      expect(rows[0]).toEqual({
+    expect(insertCalls).toHaveLength(1)
+    expect(onConflictSpy).toHaveBeenCalledTimes(1)
+    expect(insertCalls[0].values).toEqual([
+      {
         broadcastId: BROADCAST_ID,
         contactId: "contact-1",
         contactInboxId: "ci-1",
         conversationId: "conv-1",
-      })
+      },
+      {
+        broadcastId: BROADCAST_ID,
+        contactId: "contact-2",
+        contactInboxId: "ci-2",
+        conversationId: "",
+      },
+    ])
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].values).toMatchObject({
+      status: "sending",
+      contactCount: 2,
     })
-
-    test("updates broadcast to status 'sending' with correct contactCount", async () => {
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].values).toMatchObject({
-        status: "sending",
-        contactCount: 1,
-      })
-    })
-
-    test("enqueues sendBroadcast job in scheduleQueue", async () => {
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(scheduleAddSpy).toHaveBeenCalledTimes(1)
-      expect(scheduleAddSpy).toHaveBeenCalledWith(
-        "sendBroadcast",
-        expect.objectContaining({
-          type: "sendBroadcast",
-          data: { broadcastId: BROADCAST_ID },
-        }),
-        {
-          jobId: `broadcast-send-${BROADCAST_ID}`,
-          attempts: 1,
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-      )
-    })
-
-    test("maps conversationId from conversationMap or empty string when missing", async () => {
-      // contactId "contact-2" has no matching conversation → conversationId = ""
-      chunkByIdMock.mockImplementation(
-        async (
-          _queryFn: unknown,
-          opts: {
-            callback: (
-              items: FakeContactInbox[],
-            ) => Promise<boolean | undefined>
-          },
-        ) => {
-          await opts.callback([
-            { id: "ci-1", contactId: "contact-1" },
-            { id: "ci-2", contactId: "contact-2" },
-          ])
-        },
-      )
-
-      await prepareBroadcast(BROADCAST_ID)
-
-      const rows = insertCalls[0].values as Record<string, unknown>[]
-      expect(rows).toHaveLength(2)
-      expect(rows[0]).toMatchObject({ conversationId: "conv-1" })
-      expect(rows[1]).toMatchObject({ conversationId: "" })
-    })
+    expect(scheduleAddSpy).toHaveBeenCalledWith(
+      "sendBroadcast",
+      expect.objectContaining({
+        type: "sendBroadcast",
+        data: { broadcastId: BROADCAST_ID },
+      }),
+      {
+        jobId: `broadcast-send-${BROADCAST_ID}`,
+        attempts: 1,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    )
   })
 
-  describe("no contacts found (chunkById never invokes callback)", () => {
-    beforeEach(() => {
-      findFirstBroadcast.mockResolvedValue({
-        ...baseBroadcast(),
-        channel: "whatsapp",
-      })
-      resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
-      chunkByIdMock.mockResolvedValue(undefined)
+  test("marks sent with contactCount zero and does not enqueue when the audience is empty", async () => {
+    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    forEachAudienceChunk.mockResolvedValue(undefined)
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(insertCalls).toHaveLength(0)
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].values).toMatchObject({
+      status: "sent",
+      contactCount: 0,
     })
-
-    test("updates broadcast to status 'sent' with contactCount 0", async () => {
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].values).toMatchObject({
-        status: "sent",
-        contactCount: 0,
-      })
-    })
-
-    test("does not enqueue sendBroadcast job", async () => {
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(scheduleAddSpy).not.toHaveBeenCalled()
-    })
-  })
-
-  describe("contactFilter wiring", () => {
-    test("applies contactFilter to the inbox-rooted audience query", async () => {
-      findFirstBroadcast.mockResolvedValue({
-        ...baseBroadcast(),
-        channel: "messenger",
-        contactFilter: {
-          operator: "and",
-          conditions: [
-            {
-              field: "fullName",
-              operator: "contains",
-              value: "Ada",
-            },
-          ],
-        },
-      })
-      resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
-      chunkByIdMock.mockImplementation(
-        async (queryFn: (lastId?: string) => Promise<unknown>) => {
-          await queryFn("last-contact-inbox-id")
-        },
-      )
-
-      await prepareBroadcast(BROADCAST_ID)
-
-      expect(audienceWhereCalls.length).toBeGreaterThan(0)
-      const where = audienceWhereCalls[0]
-
-      expect(where).toEqual(
-        expect.objectContaining({
-          __and: expect.arrayContaining([
-            { __inArray: ["ContactInbox.inboxId", ["inbox-1"]] },
-            { __gt: ["ContactInbox.id", expect.anything()] },
-          ]),
-        }),
-      )
-      expect(hasKeyDeep(where, new Set(["RAW", "contactId", "Contact"]))).toBe(
-        true,
-      )
-    })
+    expect(scheduleAddSpy).not.toHaveBeenCalled()
   })
 })

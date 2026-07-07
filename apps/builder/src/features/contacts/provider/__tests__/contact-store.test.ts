@@ -1,4 +1,7 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  broadcastSubactions,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { createContactStore } from "../contact-store"
 
@@ -61,7 +64,7 @@ describe("contact store getContactInboxesCount", () => {
     expect(store.getState().contactInboxesCount).toBe(20)
   })
 
-  test("forwards channel, integrationWhatsappId, and contactFilter to the count API", async () => {
+  test("forwards channel, integrationWhatsappId, contactFilter, and subaction to the count API", async () => {
     mocks.countContactInboxesAuthenticatedAPI.mockResolvedValue({ total: 3 })
 
     const store = createContactStore({ workspaceId: "ws-1" })
@@ -80,6 +83,7 @@ describe("contact store getContactInboxesCount", () => {
       channel: channelTypes.enum.whatsapp,
       integrationWhatsappId: "wa-1",
       contactFilter,
+      subaction: broadcastSubactions.enum.whatsappWithin24Hours,
     })
 
     expect(mocks.countContactInboxesAuthenticatedAPI).toHaveBeenCalledWith({
@@ -88,7 +92,26 @@ describe("contact store getContactInboxesCount", () => {
       channels: [channelTypes.enum.whatsapp],
       integrationWhatsappId: "wa-1",
       contactFilter,
+      subaction: broadcastSubactions.enum.whatsappWithin24Hours,
     })
     expect(store.getState().contactInboxesCount).toBe(3)
+  })
+
+  test("fails closed by forwarding an empty channel list when channel is missing", async () => {
+    mocks.countContactInboxesAuthenticatedAPI.mockResolvedValue({ total: 0 })
+
+    const store = createContactStore({ workspaceId: "ws-1" })
+
+    await store.getState().getContactInboxesCount()
+
+    expect(mocks.countContactInboxesAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      sort: [],
+      channels: [],
+      integrationWhatsappId: undefined,
+      contactFilter: undefined,
+      subaction: undefined,
+    })
+    expect(store.getState().contactInboxesCount).toBe(0)
   })
 })

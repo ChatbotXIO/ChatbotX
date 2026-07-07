@@ -31,22 +31,28 @@ describe("getBroadcastExcludedFilterFields", () => {
     ])
   })
 
-  test("keeps inbox for WhatsApp within-24-hours broadcasts", () => {
+  test("excludes current channel and interacted-in-last-24h for WhatsApp within-24-hours broadcasts", () => {
     expect(
       getBroadcastExcludedFilterFields({
         channel: channelTypes.enum.whatsapp,
         subaction: broadcastSubactions.enum.whatsappWithin24Hours,
       }),
-    ).toEqual([contactFilterFields.enum.currentChannel])
+    ).toEqual([
+      contactFilterFields.enum.currentChannel,
+      contactFilterFields.enum.interactedInLast24h,
+    ])
   })
 
-  test("keeps inbox for Messenger active-contact broadcasts", () => {
+  test("excludes current channel and interacted-in-last-24h for Messenger active-contact broadcasts", () => {
     expect(
       getBroadcastExcludedFilterFields({
         channel: channelTypes.enum.messenger,
         subaction: broadcastSubactions.enum.messengerActiveContacts,
       }),
-    ).toEqual([contactFilterFields.enum.currentChannel])
+    ).toEqual([
+      contactFilterFields.enum.currentChannel,
+      contactFilterFields.enum.interactedInLast24h,
+    ])
   })
 
   test("keeps inbox for all-contact broadcasts", () => {
