@@ -1,6 +1,6 @@
 "use server"
 
-import { contactService } from "@chatbotx.io/business"
+import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   type BulkUpdateIdsRequest,
@@ -9,10 +9,12 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireContactPermissionScope } from "../permissions"
 
 export const deleteContact = async (ctx: {
   workspaceId: string
   ids: string[]
+  accessScope?: ContactAccessScope
 }) => {
   const contacts = await contactService.delete(ctx)
 
@@ -50,6 +52,7 @@ export const deleteContactAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await deleteContact({ workspaceId, ids: parsedInput.ids })
+      const accessScope = await requireContactPermissionScope(workspaceId)
+      await deleteContact({ workspaceId, ids: parsedInput.ids, accessScope })
     },
   )

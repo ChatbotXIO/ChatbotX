@@ -1,6 +1,10 @@
 "use server"
 
-import { contactService, tagSyncService } from "@chatbotx.io/business"
+import {
+  type ContactAccessScope,
+  contactService,
+  tagSyncService,
+} from "@chatbotx.io/business"
 import { and, db, eq, isNull, notInArray } from "@chatbotx.io/database/client"
 import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
@@ -13,6 +17,7 @@ import {
 import type { TagResource } from "@/features/tags/schema/resource"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireContactPermissionScope } from "../permissions"
 import {
   type UpdateContactTagRequest,
   updateContactTagRequest,
@@ -28,19 +33,25 @@ export const updateContactTagAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateContactTagRequest
-    }) => await updateContactTags({ workspaceId, parsedInput }),
+    }) => {
+      const accessScope = await requireContactPermissionScope(workspaceId)
+      return await updateContactTags({ workspaceId, parsedInput, accessScope })
+    },
   )
 
 export const updateContactTags = async ({
   workspaceId,
   parsedInput,
+  accessScope,
 }: {
   workspaceId: string
   parsedInput: UpdateContactTagRequest
+  accessScope?: ContactAccessScope
 }): Promise<TagResource[]> => {
   const contact = await contactService.findByIdOrFail({
     workspaceId,
     id: parsedInput.contactId,
+    accessScope,
   })
 
   // Get old tags before update

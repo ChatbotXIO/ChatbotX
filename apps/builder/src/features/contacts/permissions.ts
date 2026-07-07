@@ -1,3 +1,4 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -45,6 +46,32 @@ export async function resolveContactPermissionScope(
 
   const { user, targetWorkspaceMember } = userAndWorkspace
   const permissions = targetWorkspaceMember.permissions
+  if (!canAccessContactsSection(permissions)) {
+    return null
+  }
+
+  return {
+    canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
+    restrictToAssignedUserId: getAssignedContactsUserId({
+      permissions,
+      userId: user.id,
+    }),
+  }
+}
+
+export async function requireContactPermissionScope(
+  workspaceId: string,
+): Promise<ContactPermissionScope> {
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (!userAndWorkspace) {
+    throw new ChatbotXException("User is not associated with this workspace")
+  }
+
+  const { user, targetWorkspaceMember } = userAndWorkspace
+  const permissions = targetWorkspaceMember.permissions
+  if (!canAccessContactsSection(permissions)) {
+    throw new ChatbotXException("User is not authorized to access contacts")
+  }
 
   return {
     canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),

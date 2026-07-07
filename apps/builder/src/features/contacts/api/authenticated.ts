@@ -8,6 +8,7 @@ import { addContactTags } from "../actions/add-contact-tag.action"
 import { createContact } from "../actions/create-contact.action"
 import { deleteContactCustomFields } from "../actions/delete-contact-custom-field.action"
 import { removeContactTags } from "../actions/remove-contact-tag.action"
+import { requireContactPermissionScope } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
 import { listContactCustomFields } from "../queries/list-contact-fields.query"
@@ -92,7 +93,10 @@ export const contactsAuthenticatedAPI = {
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
-    .handler(async ({ input }) => await countContactInboxes(input)),
+    .handler(async ({ input }) => {
+      await requireContactPermissionScope(input.workspaceId)
+      return await countContactInboxes(input)
+    }),
 
   createContactAuthenticatedAPI: authorizedAPI
     .route({
@@ -106,6 +110,7 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, ...parsedInput } = input
+      await requireContactPermissionScope(workspaceId)
       return await createContact({ workspaceId, parsedInput })
     }),
 
@@ -119,7 +124,10 @@ export const contactsAuthenticatedAPI = {
     .input(getExportFileRequest)
     .output(getExportFileResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => await getExportFile(input)),
+    .handler(async ({ input }) => {
+      await requireContactPermissionScope(input.workspaceId)
+      return await getExportFile(input)
+    }),
 
   listContactTagsAuthenticatedAPI: authorizedAPI
     .route({
@@ -133,9 +141,11 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, contactId } = input
+      const accessScope = await requireContactPermissionScope(workspaceId)
       return await listContactTags({
         workspaceId,
         contactId,
+        accessScope,
       })
     }),
 
@@ -150,12 +160,14 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, tags, ids } = input
+      const accessScope = await requireContactPermissionScope(workspaceId)
       await addContactTags({
         workspaceId,
         parsedInput: {
           ids,
           tags,
         },
+        accessScope,
       })
     }),
 
@@ -170,6 +182,7 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, contactId, tagId } = input
+      const accessScope = await requireContactPermissionScope(workspaceId)
       // removeContactTags resolves tags by name; this endpoint takes a tag id.
       const tag = await db.query.tagModel.findFirst({
         where: { workspaceId, id: tagId, deletedAt: { isNull: true as const } },
@@ -184,6 +197,7 @@ export const contactsAuthenticatedAPI = {
           ids: [contactId],
           tags: [tag.name],
         },
+        accessScope,
       })
     }),
 
@@ -199,10 +213,12 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, contactId } = input
+      const accessScope = await requireContactPermissionScope(workspaceId)
 
       return await listContactCustomFields({
         workspaceId,
         contactId,
+        accessScope,
       })
     }),
 
@@ -217,11 +233,13 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, contactId } = input
+      const accessScope = await requireContactPermissionScope(workspaceId)
       return await setContactCustomFieldValue({
         workspaceId,
         contactId,
         customFieldId: input.customFieldId,
         value: input.value,
+        accessScope,
       })
     }),
 
@@ -236,10 +254,12 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, contactId, customFieldId } = input
+      const accessScope = await requireContactPermissionScope(workspaceId)
       return await deleteContactCustomFields({
         workspaceId,
         contactIds: [contactId],
         customFieldId,
+        accessScope,
       })
     }),
 }

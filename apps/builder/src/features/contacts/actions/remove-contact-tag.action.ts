@@ -1,6 +1,10 @@
 "use server"
 
-import { tagSyncService } from "@chatbotx.io/business"
+import {
+  type ContactAccessScope,
+  contactService,
+  tagSyncService,
+} from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { contactsToTagsModel } from "@chatbotx.io/database/schema"
 import { emitTagRemoved } from "@chatbotx.io/events"
@@ -11,6 +15,7 @@ import {
 } from "@/features/common/schemas"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireContactPermissionScope } from "../permissions"
 import {
   type RemoveContactTagsRequest,
   removeContactTagsRequest,
@@ -29,9 +34,11 @@ export const removeContactTagAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: RemoveContactTagsRequest
     }) => {
+      const accessScope = await requireContactPermissionScope(workspaceId)
       await removeContactTags({
         workspaceId,
         parsedInput,
+        accessScope,
       })
     },
   )
@@ -39,9 +46,11 @@ export const removeContactTagAction = workspaceActionClient
 export const removeContactTags = async ({
   workspaceId,
   parsedInput,
+  accessScope,
 }: {
   workspaceId: string
   parsedInput: RemoveContactTagsRequest
+  accessScope?: ContactAccessScope
 }) => {
   if (parsedInput.ids.length === 0 || parsedInput.tags.length === 0) {
     return
@@ -67,14 +76,10 @@ export const removeContactTags = async ({
   // Process selected contacts in chunks — never load all contacts at once.
   for (let i = 0; i < parsedInput.ids.length; i += CONTACT_CHUNK_SIZE) {
     const idChunk = parsedInput.ids.slice(i, i + CONTACT_CHUNK_SIZE)
-    const contacts = await db.query.contactModel.findMany({
-      where: {
-        workspaceId,
-        id: { in: idChunk },
-      },
-      columns: {
-        id: true,
-      },
+    const contacts = await contactService.findManyByIds({
+      workspaceId,
+      ids: idChunk,
+      accessScope,
     })
     if (contacts.length === 0) {
       continue

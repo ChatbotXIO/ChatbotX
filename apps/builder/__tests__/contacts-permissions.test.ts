@@ -47,8 +47,11 @@ const {
   canAccessContactsSection,
   canViewContactEmailAndPhone,
   getAssignedContactsUserId,
+  requireContactPermissionScope,
+  resolveContactPermissionScope,
   stripContactPIIFields,
 } = await import("../src/features/contacts/permissions")
+const { getCurrentUserAndTargetWorkspace } = await import("@/lib/auth/utils")
 const { generateWhere } = await import(
   "../src/features/contacts/queries/list-contacts.queries"
 )
@@ -123,6 +126,57 @@ describe("contact permission helpers", () => {
         false,
       ),
     ).toEqual(["sys:firstName", "tag:t1"])
+  })
+
+  test("requires contacts access for mutation scopes", async () => {
+    vi.mocked(getCurrentUserAndTargetWorkspace).mockResolvedValue({
+      user: { id: "user-1" },
+      targetWorkspaceMember: {
+        permissions: {
+          ...basePermissions,
+          contacts: false,
+          onlyAssignedContacts: false,
+        },
+      },
+    } as never)
+
+    await expect(requireContactPermissionScope("ws-1")).rejects.toThrow(
+      "User is not authorized to access contacts",
+    )
+  })
+
+  test("returns no contact permission scope without contact access", async () => {
+    vi.mocked(getCurrentUserAndTargetWorkspace).mockResolvedValue({
+      user: { id: "user-1" },
+      targetWorkspaceMember: {
+        permissions: {
+          ...basePermissions,
+          contacts: false,
+          onlyAssignedContacts: false,
+        },
+      },
+    } as never)
+
+    await expect(resolveContactPermissionScope("ws-1")).resolves.toBeNull()
+  })
+
+  test("returns assigned-only mutation scope for assigned contacts members", async () => {
+    vi.mocked(getCurrentUserAndTargetWorkspace).mockResolvedValue({
+      user: { id: "user-1" },
+      targetWorkspaceMember: {
+        permissions: {
+          ...basePermissions,
+          contacts: false,
+          onlyAssignedContacts: true,
+          emailAndPhone: true,
+        },
+      },
+    } as never)
+
+    await expect(requireContactPermissionScope("ws-1")).resolves.toEqual({
+      canViewEmailAndPhone: true,
+      restrictToAssignedUserId: "user-1",
+    })
   })
 })
 

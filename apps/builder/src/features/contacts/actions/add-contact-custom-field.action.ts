@@ -1,6 +1,6 @@
 "use server"
 
-import { contactService } from "@chatbotx.io/business"
+import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -14,6 +14,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireContactPermissionScope } from "../permissions"
 import {
   type AddContactCustomFieldRequest,
   addContactCustomFieldRequest,
@@ -27,23 +28,28 @@ export const addContactCustomFieldAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     } = props
+    const accessScope = await requireContactPermissionScope(workspaceId)
 
     await addContactCustomFields({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      accessScope,
     })
   })
 
 export const addContactCustomFields = async ({
   bindArgsParsedInputs: [workspaceId],
   parsedInput,
+  accessScope,
 }: {
   bindArgsParsedInputs: WorkspaceIdRequestParams
   parsedInput: AddContactCustomFieldRequest
+  accessScope?: ContactAccessScope
 }) => {
   const contacts = await contactService.findManyByIds({
     workspaceId,
     ids: parsedInput.ids,
+    accessScope,
   })
   if (contacts.length === 0) {
     return
@@ -127,12 +133,20 @@ export const setContactCustomFieldValue = async ({
   contactId,
   customFieldId,
   value,
+  accessScope,
 }: {
   workspaceId: string
   contactId: string
   customFieldId: string
   value: string
+  accessScope?: ContactAccessScope
 }) => {
+  await contactService.findByIdOrFail({
+    workspaceId,
+    id: contactId,
+    accessScope,
+  })
+
   // Get custom field info for event emission
   const customField = await db.query.customFieldModel.findFirst({
     where: {
@@ -186,11 +200,19 @@ export const setContactCustomFieldValues = async ({
   workspaceId,
   contactId,
   fields,
+  accessScope,
 }: {
   workspaceId: string
   contactId: string
   fields: Array<{ customFieldId: string; value: string }>
+  accessScope?: ContactAccessScope
 }) => {
+  await contactService.findByIdOrFail({
+    workspaceId,
+    id: contactId,
+    accessScope,
+  })
+
   const customFieldIds = fields.map((f) => f.customFieldId)
 
   const customFields = await db.query.customFieldModel.findMany({

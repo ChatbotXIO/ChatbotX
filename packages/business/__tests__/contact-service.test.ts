@@ -96,3 +96,82 @@ describe("contactService.unblockIfBlocked", () => {
     expect(unblock).not.toHaveBeenCalled()
   })
 })
+
+describe("contactService assigned-contact access scope", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test("adds assigned conversation scope when finding one contact", async () => {
+    const findFirst = vi.fn().mockResolvedValue(contact({ id: "contact-1" }))
+    const tx = {
+      query: {
+        contactModel: {
+          findFirst,
+        },
+      },
+    }
+
+    await contactService.findById({
+      workspaceId: "ws-1",
+      id: "contact-1",
+      accessScope: { restrictToAssignedUserId: "user-1" },
+      tx: tx as never,
+    })
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "contact-1",
+        workspaceId: "ws-1",
+        conversation: { assignedUserId: "user-1" },
+      },
+    })
+  })
+
+  test("adds assigned conversation scope when finding many contacts", async () => {
+    const findMany = vi.fn().mockResolvedValue([{ id: "contact-1" }])
+    const tx = {
+      query: {
+        contactModel: {
+          findMany,
+        },
+      },
+    }
+
+    await contactService.findManyByIds({
+      workspaceId: "ws-1",
+      ids: ["contact-1", "contact-2"],
+      accessScope: { restrictToAssignedUserId: "user-1" },
+      tx: tx as never,
+    })
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        workspaceId: "ws-1",
+        id: { in: ["contact-1", "contact-2"] },
+        conversation: { assignedUserId: "user-1" },
+      },
+      columns: { id: true },
+    })
+  })
+
+  test("throws not found when scoped contact lookup has no assigned match", async () => {
+    const findFirst = vi.fn().mockResolvedValue(undefined)
+    const tx = {
+      query: {
+        contactModel: {
+          findFirst,
+        },
+      },
+    }
+
+    await expect(
+      contactService.findByIdOrFail({
+        workspaceId: "ws-1",
+        id: "contact-2",
+        accessScope: { restrictToAssignedUserId: "user-1" },
+        tx: tx as never,
+      }),
+    ).rejects.toThrow("Contact not found")
+  })
+})
