@@ -89,6 +89,13 @@
     "flowVersions": "Flow Versions",
     "revertToPublished": "Revert to Published",
     "search": "Search",
+    "pleaseSelect": "Please select",
+    "noRecordFound": "No record found.",
+    "typeMessage": "Type a message",
+    "enterText": "Enter text",
+    "enterFieldAndPressEnter": "Enter {field} and press Enter",
+    "addAnother": "Add another...",
+    "messagePlaceholder": "Message...",
     "signOut": "Sign Out",
     "backToSignIn": "Back to sign in",
     "connectFeature": "Connect {feature}",
@@ -701,6 +708,12 @@
     "file": {
       "label": "File"
     },
+    "link": {
+      "label": "Link"
+    },
+    "message": {
+      "label": "Message"
+    },
     "filter": {
       "label": "Filter"
     },
@@ -911,6 +924,9 @@
       "label": "Name",
       "placeholder": "Enter name",
       "searchPlaceholder": "Search name..."
+    },
+    "selectUsers": {
+      "label": "Select users"
     },
     "node": {
       "label": "Node"
@@ -1344,6 +1360,9 @@
     "spreadsheet": {
       "label": "Spreadsheet"
     },
+    "worksheet": {
+      "label": "Worksheet"
+    },
     "source": {
       "label": "Source",
       "placeholder": "Select a source"
@@ -1713,7 +1732,11 @@
     "fields": {
       "selectTemplatePlaceholder": "Choose a WhatsApp template",
       "selectMessengerTemplatePlaceholder": "Choose a Messenger template",
-      "preview": "Preview"
+      "preview": "Preview",
+      "typingSecondsLabel": "Typing for (seconds)",
+      "lookupColumnsLabel": "Lookup Columns:",
+      "filterModeAnd": "AND",
+      "filterModeOr": "OR"
     },
     "operators": {
       "append": "Append to the end",
@@ -1747,7 +1770,8 @@
       "maxLabel": "Max",
       "unitLabel": "Unit",
       "specific": "Specific",
-      "dynamic": "Dynamic"
+      "dynamic": "Dynamic",
+      "selectTimePlaceholder": "Select a time"
     }
   },
   "folders": {
@@ -2467,7 +2491,8 @@
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Location name (optional)",
-        "locationAddress": "Address (optional)"
+        "locationAddress": "Address (optional)",
+        "enterFormatUrl": "Enter {format} URL"
       }
     },
     "sampleBodyCardContent": {
@@ -2481,6 +2506,9 @@
     },
     "showFooter": {
       "label": "Show footer"
+    },
+    "showHeader": {
+      "label": "Show header"
     },
     "tabs": {
       "accountHealths": "Account Health",

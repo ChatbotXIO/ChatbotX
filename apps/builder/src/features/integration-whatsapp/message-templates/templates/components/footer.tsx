@@ -50,7 +50,7 @@ const TemplateFooterComponent = ({ parentName }: { parentName: string }) => {
             autoFocus
             maxLength={60}
             onChange={handleTextChange}
-            placeholder="Enter text"
+            placeholder={t("actions.enterText")}
             value={localFooter}
           />
         </div>

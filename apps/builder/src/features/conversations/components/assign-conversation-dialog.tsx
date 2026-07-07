@@ -112,6 +112,7 @@ export default function AssignConversationDialog({
               label={t("fields.assignedId.label")}
               name="assignedId"
               options={contactAssigneeOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
             />
 

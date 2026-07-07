@@ -75,6 +75,7 @@ const WhatsappFlowStepEditor = ({
         <ComboboxField
           name={`${parentName}.inboxId`}
           options={whatsappInboxOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
 

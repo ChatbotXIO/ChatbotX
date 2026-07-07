@@ -91,7 +91,7 @@ export function FbCommentsTable({
         id: "select",
         header: ({ table: dataTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label={t("actions.selectAll")}
             checked={
               dataTable.getIsAllPageRowsSelected() ||
               (dataTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -104,7 +104,7 @@ export function FbCommentsTable({
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label={t("actions.selectRow")}
             checked={row.getIsSelected()}
             className="translate-y-0.5 cursor-pointer"
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}

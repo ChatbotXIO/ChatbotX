@@ -117,6 +117,7 @@ export function CreateReflinkForm({
           label={t("fields.botResponse.label")}
           name="flowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required
         />
 

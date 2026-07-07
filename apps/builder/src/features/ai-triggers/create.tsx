@@ -140,6 +140,7 @@ export function CreateAITriggerDialog({
                       <ComboboxField
                         name={`questions.${i}.customFieldId`}
                         options={customFieldSelectOptions}
+                        placeholder={t("actions.pleaseSelect")}
                       />
                     </div>
 
@@ -168,6 +169,7 @@ export function CreateAITriggerDialog({
                 label={t("fields.flowId.label")}
                 name="flowId"
                 options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
               />
 
               <TextareaField

@@ -93,28 +93,28 @@ export const ContactDetail = ({
           {
             key: "email",
             icon: AtSignIcon,
-            label: "Email",
+            label: t("fields.email.label"),
             value: conversation.contact.email,
             type: "shortText",
           },
           {
             key: "firstName",
             icon: TextIcon,
-            label: "First Name",
+            label: t("fields.firstName.label"),
             value: conversation.contact.firstName,
             type: "shortText",
           },
           {
             key: "lastName",
             icon: TextIcon,
-            label: "Last Name",
+            label: t("fields.lastName.label"),
             value: conversation.contact.lastName,
             type: "shortText",
           },
           {
             key: "phoneNumber",
             icon: PhoneIcon,
-            label: "Phone Number",
+            label: t("fields.phoneNumber.label"),
             value: conversation.contact.phoneNumber,
             type: "shortText",
           },
@@ -148,6 +148,7 @@ export const ContactDetail = ({
     initializedCustomFields,
     contact,
     customFieldMap,
+    t,
   ])
 
   return contact ? (

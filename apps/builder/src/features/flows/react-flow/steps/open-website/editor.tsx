@@ -14,7 +14,7 @@ const OpenWebsiteStepEditor = ({ parentName }: OpenWebsiteStepEditorProps) => {
 
   return (
     <BaseStepEditor icon={LinkIcon} title={t("flows.actions.openWebsite")}>
-      <InputField label="Link" name={`${parentName}.url`} />
+      <InputField label={t("fields.link.label")} name={`${parentName}.url`} />
     </BaseStepEditor>
   )
 }

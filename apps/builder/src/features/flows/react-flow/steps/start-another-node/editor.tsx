@@ -33,6 +33,7 @@ const StartAnotherNodeStepEditor = (props: StartAnotherNodeStepEditorProps) => {
             label: node.data.name as string,
             value: node.id,
           }))}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
       </div>

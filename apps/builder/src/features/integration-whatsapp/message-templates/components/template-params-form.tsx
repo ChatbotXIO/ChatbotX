@@ -134,11 +134,20 @@ function CarouselParamField({
           {t("whatsapp.messageTemplate.params.carouselCard", {
             index: (param.cardIndex ?? 0) + 1,
           })}{" "}
-          - {param.format === "image" ? "Image" : "Video"} URL
+          -{" "}
+          {param.format === "image"
+            ? t("whatsapp.messageTemplate.image.label")
+            : t("whatsapp.messageTemplate.video.label")}{" "}
+          {t("fields.url.label")}
         </Label>
         <TiptapEditorField
           name={`${fieldName}.header[0].${param.format}.link`}
-          placeholder={`Enter ${param.format} URL`}
+          placeholder={t("whatsapp.messageTemplate.params.enterFormatUrl", {
+            format:
+              param.format === "image"
+                ? t("whatsapp.messageTemplate.image.label")
+                : t("whatsapp.messageTemplate.video.label"),
+          })}
           showEmojiPicker={false}
         />
       </div>
@@ -229,6 +238,7 @@ export function TemplateParamsForm({
   components,
   parentName,
 }: TemplateParamsFormProps) {
+  const t = useTranslations()
   const { setValue } = useFormContext()
   const parameters = useMemo(
     () => extractParameterInfos(components),
@@ -295,7 +305,12 @@ export function TemplateParamsForm({
             <div className="space-y-1" key={key}>
               <TiptapEditorField
                 name={`${fieldName}.${param.format}.link`}
-                placeholder={`Enter ${param.format} URL`}
+                placeholder={t(
+                  "whatsapp.messageTemplate.params.enterFormatUrl",
+                  {
+                    format: t(`whatsapp.messageTemplate.${param.format}.label`),
+                  },
+                )}
                 showEmojiPicker={false}
               />
             </div>

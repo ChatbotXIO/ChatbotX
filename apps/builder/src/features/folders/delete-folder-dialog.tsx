@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -28,6 +29,7 @@ export function DeleteFolderDialog({
   folder: FolderResource | null
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteFolderAction.bind(null, workspaceId),
@@ -39,6 +41,7 @@ export function DeleteFolderDialog({
           }),
         )
         onOpenChange(false)
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {

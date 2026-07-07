@@ -21,8 +21,12 @@ const RemoveContactTagStepEditor = (props: RemoveContactTagStepEditorProps) => {
       title={t("flows.actions.removeContactTag")}
     >
       <TagsInputField
+        addAnotherPlaceholder={t("actions.addAnother")}
         label={t("fields.tag.label")}
         name={`${parentName}.tags`}
+        placeholder={t("actions.enterFieldAndPressEnter", {
+          field: t("fields.tag.label").toLowerCase(),
+        })}
         suggestions={tagOptions}
       />
     </BaseStepEditor>

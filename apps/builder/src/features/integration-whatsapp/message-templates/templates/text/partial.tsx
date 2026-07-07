@@ -16,17 +16,21 @@ const VariableInput = memo(
     parentName: string
     index: number
     type: "header" | "body"
-  }) => (
-    <div className="mt-2 flex w-full gap-2">
-      <Button variant="secondary">{`{{${index + 1}}}`}</Button>
-      <div className="flex-1">
-        <InputField
-          name={`${parentName}.${type}.variables.${index}`}
-          placeholder="Type a message"
-        />
+  }) => {
+    const t = useTranslations()
+
+    return (
+      <div className="mt-2 flex w-full gap-2">
+        <Button variant="secondary">{`{{${index + 1}}}`}</Button>
+        <div className="flex-1">
+          <InputField
+            name={`${parentName}.${type}.variables.${index}`}
+            placeholder={t("actions.typeMessage")}
+          />
+        </div>
       </div>
-    </div>
-  ),
+    )
+  },
 )
 
 type TemplateTextPartialComponentProps = {
@@ -84,7 +88,7 @@ const TemplateTextPartialComponent = (
           name={`${parentName}.hideHeader`}
           options={[
             {
-              label: "Show header",
+              label: t("whatsapp.showHeader.label"),
               value: "hideHeader",
             },
           ]}
@@ -95,7 +99,7 @@ const TemplateTextPartialComponent = (
           name={`${parentName}.showFooter`}
           options={[
             {
-              label: "Show footer",
+              label: t("whatsapp.showFooter.label"),
               value: "showFooter",
             },
           ]}

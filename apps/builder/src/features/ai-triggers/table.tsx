@@ -6,6 +6,7 @@ import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-tab
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -25,11 +26,12 @@ export function AITriggersTable({
   workspaceId,
 }: AITriggersTableProps) {
   const [{ data, pageCount }] = use(promises)
+  const t = useTranslations()
   const router = useRouter()
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AITriggerModel> | null>(null)
 
-  const columns = useMemo(() => getAITriggersColumns({ setRowAction }), [])
+  const columns = useMemo(() => getAITriggersColumns({ setRowAction, t }), [t])
 
   const { execute } = useAction(
     duplicateAITriggerAction.bind(

@@ -1,6 +1,7 @@
 "use client"
 
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
@@ -16,6 +17,7 @@ export const WorksheetColumnSelect = ({
   name,
   label = "",
 }: IWorksheetColumnSelectProps) => {
+  const t = useTranslations()
   const workspaceId = useWorkspaceId()
   const getFieldName = (field: string) => {
     if (!parentName) {
@@ -46,7 +48,7 @@ export const WorksheetColumnSelect = ({
       label={label}
       name={getFieldName(name)}
       options={headers}
-      placeholder="Please select"
+      placeholder={t("actions.pleaseSelect")}
     />
   )
 }

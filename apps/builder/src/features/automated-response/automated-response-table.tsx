@@ -69,7 +69,7 @@ export function AutomatedResponsesTable({
         size: 32,
         header: ({ table: innerTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label={t("actions.selectAll")}
             checked={
               innerTable.getIsAllPageRowsSelected() ||
               (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -81,7 +81,7 @@ export function AutomatedResponsesTable({
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label={t("actions.selectRow")}
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />

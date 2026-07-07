@@ -111,6 +111,7 @@ export function UpdateInstagramForm({
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
         />
 
         <Card>

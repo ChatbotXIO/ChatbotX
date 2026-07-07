@@ -204,6 +204,7 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
               label={t("mailchimp.fields.audience")}
               name="listId"
               options={audienceOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
               triggerValueChange={onChangeAudience}
             />

@@ -8,17 +8,21 @@ import { memo, useCallback } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 
 const VariableInput = memo(
-  ({ index, parentName }: { index: number; parentName: string }) => (
-    <div className="mt-2 flex w-full gap-2">
-      <Button variant="secondary">{`{{${index + 1}}}`}</Button>
-      <div className="flex-1">
-        <InputField
-          name={`${parentName}.body.variables.${index}`}
-          placeholder="Type a message"
-        />
+  ({ index, parentName }: { index: number; parentName: string }) => {
+    const t = useTranslations()
+
+    return (
+      <div className="mt-2 flex w-full gap-2">
+        <Button variant="secondary">{`{{${index + 1}}}`}</Button>
+        <div className="flex-1">
+          <InputField
+            name={`${parentName}.body.variables.${index}`}
+            placeholder={t("actions.typeMessage")}
+          />
+        </div>
       </div>
-    </div>
-  ),
+    )
+  },
 )
 
 const TemplateVideoPartialComponent = (props: { parentName?: string }) => {
@@ -49,7 +53,7 @@ const TemplateVideoPartialComponent = (props: { parentName?: string }) => {
           name={`${parentName}.showFooter`}
           options={[
             {
-              label: "Show footer",
+              label: t("whatsapp.showFooter.label"),
               value: "showFooter",
             },
           ]}

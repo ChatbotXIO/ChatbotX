@@ -259,6 +259,7 @@ export function FbCommentForm({
                 label={t("fields.flow.label")}
                 name="privateReply.value"
                 options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required
               />
             )}
@@ -267,6 +268,7 @@ export function FbCommentForm({
                 label={t("fields.aiAgent.label")}
                 name="privateReply.value"
                 options={aiAgentOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required
               />
             )}
@@ -299,6 +301,7 @@ export function FbCommentForm({
                 label={t("fields.flow.label")}
                 name="publicReply.value"
                 options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required
               />
             )}
@@ -307,6 +310,7 @@ export function FbCommentForm({
                 label={t("fields.aiAgent.label")}
                 name="publicReply.value"
                 options={aiAgentOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required
               />
             )}

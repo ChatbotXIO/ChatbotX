@@ -178,6 +178,7 @@ export function CreateAutomatedResponseForm(
             label={t("fields.flowId.label")}
             name="flowId"
             options={flowOptions}
+            placeholder={t("actions.pleaseSelect")}
             required
           />
         )}

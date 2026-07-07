@@ -25,6 +25,7 @@ const AssignConversationStepEditor = (
         label={t("fields.agent.label")}
         name={`${props.parentName}.assignedId`}
         options={contactAssigneeOptions}
+        placeholder={t("actions.pleaseSelect")}
       />
     </BaseStepEditor>
   )

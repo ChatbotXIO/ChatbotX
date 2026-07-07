@@ -29,9 +29,10 @@ type CustomFieldSelectProps = {
 }
 
 export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
+  const t = useTranslations()
   const {
     name,
-    label = "Select Custom Field",
+    label = t("fields.customField.label"),
     required,
     allowCreate,
     customFieldTypes,
@@ -41,7 +42,6 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     portal,
   } = props
 
-  const t = useTranslations()
   const workspaceId = useWorkspaceId()
   const customFieldSelectOptions = useCustomFieldSelectOptions({
     customFieldTypes,
@@ -91,7 +91,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
       <ComboboxField
         name={name}
         options={customFieldSelectOptions}
-        placeholder={placeholder || "Please select"}
+        placeholder={placeholder || t("actions.pleaseSelect")}
         portal={portal}
         triggerValueChange={onValueChange}
       />

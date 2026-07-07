@@ -10,6 +10,11 @@ import {
 } from "@chatbotx.io/ui/components/ui/form";
 import { Input } from "@chatbotx.io/ui/components/ui/input";
 import { Badge } from "@chatbotx.io/ui/components/ui/badge";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@chatbotx.io/ui/components/ui/popover";
 import { cn } from "@chatbotx.io/ui/lib/utils";
 import {
   type ReactNode,
@@ -29,6 +34,7 @@ interface TagsInputFieldProps<TFieldValues extends FieldValues> {
   description?: string;
   label?: string;
   placeholder?: string;
+  addAnotherPlaceholder?: string;
   disabled?: boolean;
   className?: string;
   maxTags?: number;
@@ -49,6 +55,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
   description,
   label,
   placeholder,
+  addAnotherPlaceholder,
   disabled = false,
   className,
   maxTags,
@@ -192,6 +199,16 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
             </FormLabel>}
 
             <FormControl>
+              <Popover
+                open={showSuggestions && visibleSuggestions.length > 0}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setShowSuggestions(false);
+                    setShowAllSuggestions(false);
+                  }
+                }}
+              >
+              <PopoverAnchor asChild>
               <div ref={containerRef} className="relative mb-0">
                 <div
                   className={cn(
@@ -263,7 +280,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                             `Enter ${label?.toLowerCase()} and press Enter`
                           : maxTags && tags.length >= maxTags
                           ? `Maximum ${maxTags} tags reached`
-                          : "Add another..."
+                          : addAnotherPlaceholder ?? "Add another..."
                       }
                       className={styles.input}
                       disabled={
@@ -299,60 +316,50 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                     </button>
                   )}
                 </div>
-
-                {/* Suggestions Dropdown */}
-                <AnimatePresence>
-                  {showSuggestions && visibleSuggestions.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className={cn(
-                        "absolute z-50 w-full mt-1 rounded-md max-h-60 overflow-auto",
-                        styles.suggestions
-                      )}
-                    >
-                      {visibleSuggestions.map((suggestion) => {
-                        const isSelected =
-                          !allowDuplicates && tags.includes(suggestion);
-
-                        return (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() =>
-                              addTag(suggestion, tags, field.onChange)
-                            }
-                            className={cn(
-                              "w-full px-3 py-2 text-left hover:bg-muted transition-colors text-sm disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-50 disabled:hover:bg-transparent",
-                              isSelected &&
-                                "cursor-not-allowed text-muted-foreground hover:bg-transparent"
-                            )}
-                            disabled={isSelected}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={cn(
-                                  "text-muted-foreground",
-                                  isSelected && "text-muted-foreground"
-                                )}
-                              >
-                                {startIcon ? (
-                                  startIcon
-                                ) : (
-                                  <Tag className="w-3 h-3" />
-                                )}
-                              </span>
-                              <span>{suggestion}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
+              </PopoverAnchor>
+
+              <PopoverContent
+                align="start"
+                className={cn(
+                  "w-(--radix-popover-trigger-width) max-h-60 overflow-auto rounded-md p-0",
+                  styles.suggestions
+                )}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                {visibleSuggestions.map((suggestion) => {
+                  const isSelected =
+                    !allowDuplicates && tags.includes(suggestion);
+
+                  return (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => addTag(suggestion, tags, field.onChange)}
+                      className={cn(
+                        "w-full px-3 py-2 text-left hover:bg-muted transition-colors text-sm disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-50 disabled:hover:bg-transparent",
+                        isSelected &&
+                          "cursor-not-allowed text-muted-foreground hover:bg-transparent"
+                      )}
+                      disabled={isSelected}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "text-muted-foreground",
+                            isSelected && "text-muted-foreground"
+                          )}
+                        >
+                          {startIcon ? startIcon : <Tag className="w-3 h-3" />}
+                        </span>
+                        <span>{suggestion}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </PopoverContent>
+              </Popover>
             </FormControl>
 
             {description && <FormDescription>{description}</FormDescription>}
