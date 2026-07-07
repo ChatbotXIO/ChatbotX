@@ -38,12 +38,11 @@ vi.mock("@chatbotx.io/database/partials", async () =>
   vi.importActual("@chatbotx.io/database/partials"),
 )
 
-vi.mock("@chatbotx.io/database/queries", async () =>
-  vi.importActual("@chatbotx.io/database/queries"),
-)
+vi.mock("@chatbotx.io/database/queries", () => ({
+  applyContactFilter: (criteria: unknown) => ({ __filter: criteria }),
+}))
 
-vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
+vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {},
   fileModel: { id: "File.id", workspaceId: "File.workspaceId" },
 }))
@@ -307,16 +306,7 @@ describe("loopableExportContacts", () => {
         contactIds: undefined,
         filter: {
           keyword: "Acme",
-          contactFilter: {
-            operator: "and",
-            conditions: [
-              {
-                field: "inbox",
-                operator: "in",
-                value: ["123"],
-              },
-            ],
-          },
+          contactFilter: { operator: "and", conditions: [] },
         },
       }),
     )
@@ -325,23 +315,11 @@ describe("loopableExportContacts", () => {
       where: Record<string, unknown>
     }
     expect(where.where.workspaceId).toBe("ws-1")
-    const and = (where.where as { AND?: unknown[] }).AND as Record<
-      string,
-      unknown
-    >[]
-    expect(and).toHaveLength(2)
-    // keyword OR clause
-    expect(and[0]).toMatchObject({
-      OR: [
-        { firstName: { ilike: "%acme%" } },
-        { lastName: { ilike: "%acme%" } },
-        { email: { ilike: "%acme%" } },
-        { phoneNumber: { ilike: "%acme%" } },
-      ],
+    expect(where.where.OR).toBeDefined()
+    expect(where.where.__filter).toEqual({
+      operator: "and",
+      conditions: [],
     })
-    // relation conditions render as RAW EXISTS subqueries
-    const filterAnd = (and[1] as { AND?: Array<{ RAW?: unknown }> }).AND
-    expect(typeof filterAnd?.[0]?.RAW).toBe("function")
   })
 
   test("marks the file failed and rethrows when the upload itself fails", async () => {

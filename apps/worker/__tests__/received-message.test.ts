@@ -169,6 +169,8 @@ vi.mock("../src/services/integrations", () => ({
   allIntegrations: {
     messenger: {
       runChannelHandler: mockRunChannelHandler,
+      // Messenger comment path fetches the comment attachment; no attachment here.
+      runAction: vi.fn().mockResolvedValue(undefined),
     },
   },
   integrationService: {
