@@ -33,6 +33,8 @@ refactor/<description>
 
 Examples: `feat/instagram-channel`, `fix/whatsapp-webhook`
 
+Bot-generated branches (`dependabot/*`, `renovate/*`) are exempt from this convention and are skipped by the `post-checkout` hook.
+
 ## Staging Rules
 
 - **Never** use `git add -A` or `git add .` — stage specific files only

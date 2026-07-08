@@ -4,8 +4,8 @@ post-checkout:
       run: |
         BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
         PATTERN='^(feat|fix|bugfix|refactor|docs|style|test|chore|ci|perf|build|revert)/.+'
-        # Skip checks for detached HEAD, main, master, develop, and release branches
-        if echo "$BRANCH" | grep -qE '^(main|master|develop|HEAD|release/.+)$'; then
+        # Skip checks for detached HEAD, main, master, develop, release, and bot-generated branches
+        if echo "$BRANCH" | grep -qE '^(main|master|develop|HEAD|release/.+|dependabot/.+|renovate/.+)$'; then
           exit 0
         fi
         if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
