@@ -36,11 +36,13 @@ type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<FlowResource> | null>
   >
+  locale: string
 }
 
 export function getFlowColumns({
   t,
   setRowAction,
+  locale,
 }: GetColumnsProps): ColumnDef<FlowResource>[] {
   return [
     {
@@ -188,7 +190,9 @@ export function getFlowColumns({
           title={t("fields.modified.label")}
         />
       ),
-      cell: ({ row }) => <div>{formatDate(row.original.updatedAt)}</div>,
+      cell: ({ row }) => (
+        <div>{formatDate(row.original.updatedAt, undefined, locale)}</div>
+      ),
       size: 50,
       enableSorting: true,
       meta: {

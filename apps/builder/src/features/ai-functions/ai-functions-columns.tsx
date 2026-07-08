@@ -33,6 +33,7 @@ export type AIFunctionRowAction = {
 export const getAIFunctionsColumns = (
   t: ReturnType<typeof useTranslations>,
   setRowAction: (action: AIFunctionRowAction | null) => void,
+  locale: string,
 ): ColumnDef<AIFunctionModel>[] => [
   {
     id: "select",
@@ -90,7 +91,7 @@ export const getAIFunctionsColumns = (
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-medium">
-          {formatDate(row.original.createdAt)}
+          {formatDate(row.original.createdAt, undefined, locale)}
         </span>
       </div>
     ),

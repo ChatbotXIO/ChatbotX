@@ -11,7 +11,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import {
   type AIFunctionRowAction,
@@ -33,11 +33,15 @@ export function AIFunctionsTable({
 }: AIFunctionsTableProps) {
   const [{ data, pageCount }] = use(promises)
   const t = useTranslations()
+  const locale = useLocale()
   const router = useRouter()
 
   const [rowAction, setRowAction] = useState<AIFunctionRowAction | null>(null)
 
-  const columns = useMemo(() => getAIFunctionsColumns(t, setRowAction), [t])
+  const columns = useMemo(
+    () => getAIFunctionsColumns(t, setRowAction, locale),
+    [t, locale],
+  )
 
   const { table } = useDataTable({
     data,
