@@ -101,6 +101,7 @@ const MoosendDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(submit)}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("moosend.fields.list")}
               name="listId"
               options={listOptions}

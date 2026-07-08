@@ -97,6 +97,7 @@ export function UpdateQrCodeForm({
               <InputField label={t("fields.name.label")} name="name" required />
 
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.botResponse.label")}
                 name="flowId"
                 options={flowOptions}

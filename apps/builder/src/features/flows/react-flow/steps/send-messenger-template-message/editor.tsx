@@ -196,6 +196,7 @@ function SendMessengerTemplateMessageStepEditor(
     <BaseStepEditor>
       <div className="space-y-3">
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           name={`${parentName}.template.inboxId`}
           options={messengerInboxOptions}
           placeholder={t("actions.pleaseSelect")}

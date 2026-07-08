@@ -33,6 +33,7 @@ export const AIModelSelect = (props: AIModelSelectProps) => {
 
   return (
     <ComboboxField
+      emptyText={t("actions.noRecordFound")}
       label={t("fields.model.label")}
       options={options}
       placeholder={t("actions.pleaseSelect")}

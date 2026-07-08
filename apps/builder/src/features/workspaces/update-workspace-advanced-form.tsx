@@ -77,6 +77,7 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.defaultReply.label")}
             >
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 name="defaultReply"
                 options={flowOptions}
                 placeholder={t("actions.pleaseSelect")}
@@ -88,6 +89,7 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.targetCountry.label")}
             >
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 name="targetCountry"
                 options={allCountryOptions}
                 placeholder={t("actions.pleaseSelect")}
@@ -113,6 +115,7 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.timezone.label")}
             >
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 name="timezone"
                 options={allTimezoneOptions}
                 placeholder={t("actions.pleaseSelect")}

@@ -69,6 +69,7 @@ const PersistentMenuItem = memo(
 
         {menuType === webchatPersistentMenuType.enum.flow && (
           <ComboboxField
+            emptyText={t("actions.noRecordFound")}
             label={t("fields.flowId.label")}
             name={`persistentMenus.${index}.flowId`}
             options={flowOptions}

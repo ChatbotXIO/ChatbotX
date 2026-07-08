@@ -239,6 +239,7 @@ const ActiveCampaignDialog = ({ parentName }: { parentName: string }) => {
                 )}
                 {!(automationsLoading || automationsError) && (
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     label={t("activeCampaign.fields.automation")}
                     name="automationId"
                     options={automationOptions}
@@ -337,6 +338,7 @@ const ActiveCampaignDialog = ({ parentName }: { parentName: string }) => {
                       />
                       <ArrowRightIcon className="size-4 text-muted-foreground" />
                       <ComboboxField
+                        emptyText={t("actions.noRecordFound")}
                         label=""
                         name={`fieldValues.${index}.activeCampaignFieldId`}
                         options={customFieldOptions}

@@ -473,6 +473,7 @@ export const ContactFilterConditionForm = ({
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <ComboboxField
                 className="overflow-hidden truncate"
+                emptyText={t("actions.noRecordFound")}
                 name="field"
                 options={fieldOptions}
                 placeholder={t("actions.pleaseSelect")}

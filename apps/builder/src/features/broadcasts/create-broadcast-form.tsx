@@ -719,6 +719,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             broadcastSubactions.enum.whatsappTemplateMessage && (
             <>
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 key="integrationWhatsappId"
                 label={t("fields.whatsappChannel.label")}
                 name="integrationWhatsappId"
@@ -733,6 +734,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               {watchedTemplateType === broadcastFlowTypes.enum.template && (
                 <>
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     key="templateId"
                     label={t("fields.templateId.label")}
                     name="templateId"
@@ -776,6 +778,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             broadcastSubactions.enum.messengerTemplateMessage && (
             <>
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 key="integrationMessengerId"
                 label={t("fields.messengerChannel.label")}
                 name="integrationMessengerId"
@@ -787,6 +790,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               {watchedTemplateType === broadcastFlowTypes.enum.template && (
                 <>
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     key="messengerTemplateId"
                     label={t("fields.messengerTemplateId.label")}
                     name="templateId"
@@ -839,6 +843,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           {(!watchedTemplateType ||
             watchedTemplateType !== broadcastFlowTypes.enum.template) && (
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               key="flowId"
               label={t("fields.flowId.label")}
               name="flowId"

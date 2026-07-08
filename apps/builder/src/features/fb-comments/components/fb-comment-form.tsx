@@ -256,6 +256,7 @@ export function FbCommentForm({
             )}
             {privateReplyType === "flow" && (
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.flow.label")}
                 name="privateReply.value"
                 options={flowOptions}
@@ -265,6 +266,7 @@ export function FbCommentForm({
             )}
             {privateReplyType === "AIAgent" && (
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.aiAgent.label")}
                 name="privateReply.value"
                 options={aiAgentOptions}
@@ -298,6 +300,7 @@ export function FbCommentForm({
             )}
             {publicReplyType === "flow" && (
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.flow.label")}
                 name="publicReply.value"
                 options={flowOptions}
@@ -307,6 +310,7 @@ export function FbCommentForm({
             )}
             {publicReplyType === "AIAgent" && (
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.aiAgent.label")}
                 name="publicReply.value"
                 options={aiAgentOptions}
