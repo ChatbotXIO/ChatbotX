@@ -62,17 +62,14 @@ export function ConversationInfo() {
           />
         )}
         <span className="text-[11px] text-muted-foreground">
-          {formatDate(
-            activePost.createdAt,
-            {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            },
+          {formatDate(activePost.createdAt, {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
             locale,
-          )}
+          })}
         </span>
         {postLink && (
           <Link

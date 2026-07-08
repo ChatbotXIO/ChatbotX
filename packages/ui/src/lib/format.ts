@@ -1,16 +1,17 @@
 export function formatDate(
   date: Date | string | number | undefined,
-  opts: Intl.DateTimeFormatOptions = {},
-  locale = "en-US",
+  opts: Intl.DateTimeFormatOptions & { locale?: string } = {},
 ) {
   if (!date) return ""
 
+  const { locale = "en-US", ...dateTimeOpts } = opts
+
   try {
     return new Intl.DateTimeFormat(locale, {
-      month: opts.month ?? "long",
-      day: opts.day ?? "numeric",
-      year: opts.year ?? "numeric",
-      ...opts,
+      month: dateTimeOpts.month ?? "long",
+      day: dateTimeOpts.day ?? "numeric",
+      year: dateTimeOpts.year ?? "numeric",
+      ...dateTimeOpts,
     }).format(new Date(date))
   } catch (_err) {
     return ""

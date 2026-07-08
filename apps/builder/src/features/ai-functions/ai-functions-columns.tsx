@@ -91,7 +91,7 @@ export const getAIFunctionsColumns = (
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-medium">
-          {formatDate(row.original.createdAt, undefined, locale)}
+          {formatDate(row.original.createdAt, { locale })}
         </span>
       </div>
     ),

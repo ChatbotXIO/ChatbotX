@@ -32,11 +32,10 @@ export function ContactNoteList({
                   <div className="flex flex-1 items-center gap-2 text-sm">
                     <CircleUserRound />
                     <div>
-                      {formatDate(
-                        contactNote.updatedAt,
-                        { month: "short" },
+                      {formatDate(contactNote.updatedAt, {
+                        month: "short",
                         locale,
-                      )}
+                      })}
                     </div>
                   </div>
                 </TooltipTrigger>

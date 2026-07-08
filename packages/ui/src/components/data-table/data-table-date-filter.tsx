@@ -122,9 +122,9 @@ export function DataTableDateFilter<TData>({
     (range: DateRange) => {
       if (!range.from && !range.to) return ""
       if (range.from && range.to) {
-        return `${formatDate(range.from, undefined, locale)} - ${formatDate(range.to, undefined, locale)}`
+        return `${formatDate(range.from, { locale })} - ${formatDate(range.to, { locale })}`
       }
-      return formatDate(range.from ?? range.to, undefined, locale)
+      return formatDate(range.from ?? range.to, { locale })
     },
     [locale],
   )
@@ -158,7 +158,7 @@ export function DataTableDateFilter<TData>({
 
     const hasSelectedDate = selectedDates.length > 0
     const dateText = hasSelectedDate
-      ? formatDate(selectedDates[0], undefined, locale)
+      ? formatDate(selectedDates[0], { locale })
       : "Select date"
 
     return (

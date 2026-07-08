@@ -191,7 +191,7 @@ export function getFlowColumns({
         />
       ),
       cell: ({ row }) => (
-        <div>{formatDate(row.original.updatedAt, undefined, locale)}</div>
+        <div>{formatDate(row.original.updatedAt, { locale })}</div>
       ),
       size: 50,
       enableSorting: true,
