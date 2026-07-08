@@ -494,6 +494,21 @@
       "zalo": "Zalo OA này đã được kết nối với một workspace khác."
     }
   },
+  "workspace": {
+    "schedule": {
+      "title": "Cài đặt khung giờ hoạt động",
+      "description": "Chọn giờ bắt đầu và kết thúc. Nếu giờ kết thúc sớm hơn giờ bắt đầu, khung giờ sẽ kéo dài qua đêm.",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "alwaysRun": "Luôn luôn chạy",
+      "save": "Lưu",
+      "invalidTimeRange": "Giờ bắt đầu và giờ kết thúc phải khác nhau",
+      "timeRequired": "Vui lòng chọn cả giờ bắt đầu và giờ kết thúc",
+      "activated": "Đã kích hoạt workspace",
+      "deactivated": "Đã tắt workspace",
+      "activeHours": "Hoạt động từ {startTime} đến {endTime} giờ"
+    }
+  },
   "workspaces": {
     "list": {
       "title": "Danh sách workspace"
@@ -3037,11 +3052,12 @@
     "replyAfterValue": "Giá trị",
     "schedule": {
       "title": "Cài đặt khung giờ hoạt động",
+      "description": "Chọn giờ bắt đầu và kết thúc. Nếu giờ kết thúc sớm hơn giờ bắt đầu, khung giờ sẽ kéo dài qua đêm.",
       "startTime": "Giờ bắt đầu",
       "endTime": "Giờ kết thúc",
       "alwaysRun": "Luôn luôn chạy",
       "save": "Lưu",
-      "invalidTimeRange": "Giờ kết thúc phải sau giờ bắt đầu",
+      "invalidTimeRange": "Giờ bắt đầu và giờ kết thúc phải khác nhau",
       "timeRequired": "Vui lòng chọn cả giờ bắt đầu và giờ kết thúc"
     },
     "card": {

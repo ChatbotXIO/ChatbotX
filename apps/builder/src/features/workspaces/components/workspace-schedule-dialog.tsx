@@ -17,24 +17,30 @@ import { useAction } from "next-safe-action/hooks"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { updateFbCommentAction } from "../actions/update-fb-comment.action"
-import type { FBCommentResource } from "../schema/resource"
+import { updateWorkspaceStatusAction } from "../actions/update-workspace-status-action"
 
 type ScheduleFormValues = {
   startTime: string
   endTime: string
 }
 
-export function FbCommentScheduleDialog({
-  fbComment,
+export function WorkspaceScheduleDialog({
+  workspace,
   open,
   onOpenChange,
   onSuccess,
 }: {
-  fbComment: FBCommentResource | null
+  workspace: {
+    id: string
+    startTime: string | null
+    endTime: string | null
+  } | null
   open: boolean
   onOpenChange: (val: boolean) => void
-  onSuccess?: () => void
+  onSuccess?: (schedule: {
+    startTime: string | null
+    endTime: string | null
+  }) => void
 }) {
   const t = useTranslations()
 
@@ -43,25 +49,24 @@ export function FbCommentScheduleDialog({
   })
 
   useEffect(() => {
-    if (fbComment) {
+    if (workspace) {
       form.reset({
-        startTime: fbComment.startTime ?? "",
-        endTime: fbComment.endTime ?? "",
+        startTime: workspace.startTime ?? "",
+        endTime: workspace.endTime ?? "",
       })
     }
-  }, [fbComment, form])
+  }, [workspace, form])
 
   const { execute, isPending } = useAction(
-    updateFbCommentAction.bind(
-      null,
-      fbComment?.workspaceId ?? "",
-      fbComment?.id ?? "",
-    ),
+    updateWorkspaceStatusAction.bind(null, workspace?.id ?? ""),
     {
-      onSuccess: () => {
-        toast.success(t("facebookCommentAutomation.activated"))
+      onSuccess: ({ input }) => {
+        toast.success(t("workspace.schedule.activated"))
         onOpenChange(false)
-        onSuccess?.()
+        onSuccess?.({
+          startTime: input.startTime,
+          endTime: input.endTime,
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -80,12 +85,12 @@ export function FbCommentScheduleDialog({
     const { startTime, endTime } = form.getValues()
 
     if (!(startTime && endTime)) {
-      toast.error(t("facebookCommentAutomation.schedule.timeRequired"))
+      toast.error(t("workspace.schedule.timeRequired"))
       return
     }
 
     if (startTime === endTime) {
-      toast.error(t("facebookCommentAutomation.schedule.invalidTimeRange"))
+      toast.error(t("workspace.schedule.invalidTimeRange"))
       return
     }
 
@@ -96,18 +101,16 @@ export function FbCommentScheduleDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
-          <DialogTitle>
-            {t("facebookCommentAutomation.schedule.title")}
-          </DialogTitle>
+          <DialogTitle>{t("workspace.schedule.title")}</DialogTitle>
           <DialogDescription>
-            {t("facebookCommentAutomation.schedule.description")}
+            {t("workspace.schedule.description")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <div className="flex w-full items-end gap-2">
             <div className="flex-1">
               <TimeField<ScheduleFormValues>
-                label={t("facebookCommentAutomation.schedule.startTime")}
+                label={t("workspace.schedule.startTime")}
                 name="startTime"
                 required
               />
@@ -115,7 +118,7 @@ export function FbCommentScheduleDialog({
             <span className="mb-2 text-muted-foreground">-</span>
             <div className="flex-1">
               <TimeField<ScheduleFormValues>
-                label={t("facebookCommentAutomation.schedule.endTime")}
+                label={t("workspace.schedule.endTime")}
                 name="endTime"
                 required
               />
@@ -131,7 +134,7 @@ export function FbCommentScheduleDialog({
             variant="outline"
           >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("facebookCommentAutomation.schedule.alwaysRun")}
+            {t("workspace.schedule.alwaysRun")}
           </Button>
           <Button
             className="ml-auto"
@@ -141,7 +144,7 @@ export function FbCommentScheduleDialog({
             type="button"
           >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("facebookCommentAutomation.schedule.save")}
+            {t("workspace.schedule.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

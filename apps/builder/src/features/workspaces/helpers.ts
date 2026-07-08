@@ -17,3 +17,9 @@ export function getWorkspaceLogoUrl(
     ? new URL(workspace.logo, storageUrl).toString()
     : undefined
 }
+
+export function formatScheduleTime(time: string): string {
+  const [hourStr, minuteStr] = time.split(":")
+  const hour = Number(hourStr)
+  return minuteStr && minuteStr !== "00" ? `${hour}:${minuteStr}` : String(hour)
+}

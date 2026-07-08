@@ -105,6 +105,8 @@ export const receiveMessage = async (
       `No integration registered for channel: ${integrationType}`,
     )
   }
+  const workspace = await workspaceService.findById({ id: inbox.workspaceId })
+  const isWorkspaceActive = workspaceService.isActiveNow(workspace)
   await resolveTenantSettings({
     workspaceId: inbox.workspaceId,
   })
@@ -194,7 +196,7 @@ export const receiveMessage = async (
     if (isNewMessage) {
       createdMessage = newMessage
 
-      if (postbackAction) {
+      if (postbackAction && isWorkspaceActive) {
         await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
           type: IntegrationJobAction.runFlowPostback,
           data: {
@@ -213,7 +215,7 @@ export const receiveMessage = async (
         })
       }
 
-      if (quickReplyAction) {
+      if (quickReplyAction && isWorkspaceActive) {
         await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
           type: IntegrationJobAction.runFlowQuickReply,
           data: {
@@ -228,7 +230,7 @@ export const receiveMessage = async (
     }
   }
 
-  if (ref) {
+  if (ref && isWorkspaceActive) {
     await integrationQueue.add(IntegrationJobAction.runRef, {
       type: IntegrationJobAction.runRef,
       data: {
@@ -447,6 +449,11 @@ export const receiveComment = async (
     conversation,
     incomingMessage,
   })
+
+  const workspace = await workspaceService.findById({ id: inbox.workspaceId })
+  if (!workspaceService.isActiveNow(workspace)) {
+    return
+  }
 
   await integrationQueue.add(
     IntegrationJobAction.processCommentAutomation,
