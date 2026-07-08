@@ -14,7 +14,7 @@
     "check:unused": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.1",
+    "@biomejs/biome": "^2.4.16",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "dependency-cruiser": "^17.3.10",
@@ -23,7 +23,7 @@
     "tsx": "^4.23.0",
     "turbo": "^2.10.4",
     "typescript": "^5",
-    "ultracite": "7.9.2",
+    "ultracite": "7.8.3",
     "vitest": "^4.1.0",
     "zod": "^4.3.6"
   },
