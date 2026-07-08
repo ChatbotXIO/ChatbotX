@@ -23,6 +23,8 @@
     "back": "Back",
     "blockContact": "Block Contact",
     "unblockContact": "Unblock Contact",
+    "undo": "Undo",
+    "redo": "Redo",
     "cancel": "Cancel",
     "clear": "Clear",
     "clearCustomField": "Clear Custom Field",
@@ -2295,7 +2297,9 @@
     "publishVersionSuccess": "A new version has been published",
     "flowConfigIncomplete": "Some configurations are incomplete",
     "duplicateNodeError": "Could not duplicate the block. Please try again.",
-    "deleteNodeError": "Could not delete the block. Please try again."
+    "deleteNodeError": "Could not delete the block. Please try again.",
+    "redoHistoryCleared": "Redo history cleared",
+    "historyDepth": "({count})"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

@@ -18,6 +18,7 @@ import {
   type FinalConnectionState,
   MarkerType,
   type Node,
+  type NodeChange,
   Panel,
   ReactFlow,
   useEdgesState,
@@ -57,6 +58,9 @@ import { createId } from "@chatbotx.io/utils"
 import type { ButtonProps } from "react-day-picker"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import ButtonEdge from "./edges/button-edge"
+import { hasMeaningfulNodeChange } from "./react-flow-node-change"
+import { useFlowHistoryStoreApi } from "./stores/flow-history-store-provider"
+import { useFlowHistory } from "./stores/use-flow-history"
 
 const viewerNodeTypes = {
   [nodeTypeSchema.enum.sendMessage]: NodeViewer,
@@ -73,13 +77,52 @@ const edgeTypes = {
   buttonedge: ButtonEdge,
 }
 
+const normalizeNodeForSave = (node: FlowNode) => {
+  const {
+    selected: _selected,
+    dragging: _dragging,
+    width: _width,
+    height: _height,
+    data,
+    ...rest
+  } = node as FlowNode & {
+    dragging?: boolean
+    height?: number
+    width?: number
+  }
+  const { forceToolbarVisible: _forceToolbarVisible, ...restData } = {
+    ...((data ?? {}) as Record<string, unknown>),
+  }
+
+  return {
+    ...rest,
+    data: restData as FlowNode["data"],
+  }
+}
+
+const normalizeEdgeForSave = (edge: Edge) => ({
+  id: edge.id,
+  source: edge.source,
+  sourceHandle: edge.sourceHandle,
+  target: edge.target,
+  targetHandle: edge.targetHandle,
+})
+
+const serializeFlow = (nodes: FlowNode[], edges: Edge[]) =>
+  JSON.stringify({
+    nodes: nodes.map(normalizeNodeForSave),
+    edges: edges.map(normalizeEdgeForSave),
+  })
+
 type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
   setOpenNodeDetailSheet: (open: boolean) => void
+  onAutosaveFlushChange: (flushAutosave: (() => void) | null) => void
 }
 
 export function ReactFlowWrapper({
   flowVersion,
+  onAutosaveFlushChange,
   setOpenNodeDetailSheet,
 }: ReactFlowFrameProps) {
   const reactFlow = useReactFlow()
@@ -94,7 +137,7 @@ export function ReactFlowWrapper({
     screenToFlowPosition,
   } = reactFlow
 
-  const [nodes, _setNodes, onNodesChange] = useNodesState(
+  const [nodes, setNodes, onNodesChange] = useNodesState(
     flowVersion.nodes as unknown as FlowNode[],
   )
   const [edges, setEdges, onEdgesChange] = useEdgesState(
@@ -104,8 +147,13 @@ export function ReactFlowWrapper({
       markerEnd: {
         type: MarkerType.ArrowClosed,
       },
-      // data: edge.data,
     })),
+  )
+  const lastSavedSerializedRef = useRef(
+    serializeFlow(
+      flowVersion.nodes as unknown as FlowNode[],
+      flowVersion.edges as unknown as Edge[],
+    ),
   )
 
   const { execute: savingDraft, executeAsync: savingDraftAsync } =
@@ -132,12 +180,102 @@ export function ReactFlowWrapper({
     (changedNodes: any[], changedEdges: any[]) => {
       savingDraft({ nodes: changedNodes, edges: changedEdges })
     },
-    1000,
+    1500,
+    4000,
   )
 
   const t = useTranslations()
   const [isFlowMutating, setIsFlowMutating] = useState(false)
   const isMutatingRef = useRef(false)
+  const snapshotSessionRef = useRef(false)
+  // Capture deliberately reads React Flow's internal store here. The restore
+  // path writes through the controlled props so undo/redo stays out of
+  // onNodesChange/onEdgesChange.
+  const { takeSnapshot } = useFlowHistory()
+  const historyStore = useFlowHistoryStoreApi()
+
+  // Register the local state setters as the history store's restore handlers so
+  // undo/redo write through the controlled nodes/edges props. React Flow's
+  // StoreUpdater syncs those props into its internal store WITHOUT firing
+  // onNodesChange/onEdgesChange, so restoring never re-enters the snapshot path.
+  useEffect(() => {
+    const restoreNodes = (restoredNodes: Node[]) =>
+      setNodes(restoredNodes as unknown as FlowNode[])
+
+    const restoreEdges = (restoredEdges: Edge[]) =>
+      setEdges(
+        restoredEdges.map((edge) => ({
+          ...edge,
+          type: "buttonedge",
+          markerEnd: { type: MarkerType.ArrowClosed },
+        })),
+      )
+
+    historyStore
+      .getState()
+      .setRestoreHandlers({ setNodes: restoreNodes, setEdges: restoreEdges })
+
+    return () => historyStore.getState().setRestoreHandlers(null)
+  }, [historyStore, setNodes, setEdges])
+
+  const releaseSnapshotSession = useDebouncedCallback(() => {
+    snapshotSessionRef.current = false
+  }, 500)
+
+  const takeCoalescedSnapshot = useCallback(() => {
+    if (!snapshotSessionRef.current) {
+      takeSnapshot()
+      snapshotSessionRef.current = true
+    }
+    releaseSnapshotSession()
+  }, [takeSnapshot, releaseSnapshotSession])
+
+  // Snapshot first, then mutate React Flow's live node data. updateNodeData
+  // writes directly into the internal store, so callers must preserve the
+  // pre-mutation state before passing data in.
+  const updateNodeDataWithHistory = useCallback(
+    (nodeId: string, data: FlowNode["data"]) => {
+      takeCoalescedSnapshot()
+      updateNodeData(nodeId, data)
+    },
+    [takeCoalescedSnapshot, updateNodeData],
+  )
+
+  const hasMeaningfulEdgeChange = useCallback(
+    (changes: Parameters<typeof onEdgesChange>[0]) =>
+      changes.some(
+        (change) => change.type === "add" || change.type === "remove",
+      ),
+    [],
+  )
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange<FlowNode>[]) => {
+      if (hasMeaningfulNodeChange(changes)) {
+        takeCoalescedSnapshot()
+      }
+      onNodesChange(changes)
+    },
+    [onNodesChange, takeCoalescedSnapshot],
+  )
+
+  const handleEdgesChange = useCallback(
+    (changes: Parameters<typeof onEdgesChange>[0]) => {
+      if (hasMeaningfulEdgeChange(changes)) {
+        takeCoalescedSnapshot()
+      }
+      onEdgesChange(changes)
+    },
+    [hasMeaningfulEdgeChange, onEdgesChange, takeCoalescedSnapshot],
+  )
+
+  const handleNodeDragStart = useCallback(() => {
+    takeCoalescedSnapshot()
+  }, [takeCoalescedSnapshot])
+
+  const handleNodeDragStop = useCallback(() => {
+    releaseSnapshotSession()
+  }, [releaseSnapshotSession])
 
   const duplicateNode = useMemo(
     () =>
@@ -183,14 +321,53 @@ export function ReactFlowWrapper({
     [getNodes, getEdges, deleteElements, handleChanges, savingDraftAsync, t],
   )
 
+  const duplicateNodeWithHistory = useCallback(
+    async (sourceNode: FlowNode) => {
+      takeSnapshot()
+      await duplicateNode(sourceNode)
+    },
+    [duplicateNode, takeSnapshot],
+  )
+
+  const deleteNodeWithHistory = useCallback(
+    async (nodeId: string) => {
+      takeSnapshot()
+      await deleteNode(nodeId)
+    },
+    [deleteNode, takeSnapshot],
+  )
+
   const flowMutationValue = useMemo(
-    () => ({ isFlowMutating, duplicateNode, deleteNode }),
-    [isFlowMutating, duplicateNode, deleteNode],
+    () => ({
+      deleteNode: deleteNodeWithHistory,
+      duplicateNode: duplicateNodeWithHistory,
+      isFlowMutating,
+    }),
+    [isFlowMutating, duplicateNodeWithHistory, deleteNodeWithHistory],
   )
 
   useEffect(() => {
+    const serialized = serializeFlow(nodes, edges as Edge[])
+    if (serialized === lastSavedSerializedRef.current) {
+      return
+    }
+
+    lastSavedSerializedRef.current = serialized
     handleChanges(nodes, edges)
   }, [nodes, edges, handleChanges])
+
+  useEffect(() => {
+    onAutosaveFlushChange(handleChanges.flush)
+
+    return () => onAutosaveFlushChange(null)
+  }, [handleChanges.flush, onAutosaveFlushChange])
+
+  useEffect(
+    () => () => {
+      releaseSnapshotSession.cancel()
+    },
+    [releaseSnapshotSession],
+  )
 
   const handleNodeClick = useCallback(() => {
     setOpenNodeDetailSheet(true)
@@ -215,7 +392,8 @@ export function ReactFlowWrapper({
   )
 
   const onConnect = useCallback(
-    (params: Connection) =>
+    (params: Connection) => {
+      takeCoalescedSnapshot()
       setEdges((eds) =>
         addEdge(
           {
@@ -224,8 +402,9 @@ export function ReactFlowWrapper({
           },
           eds,
         ),
-      ),
-    [setEdges],
+      )
+    },
+    [setEdges, takeCoalescedSnapshot],
   )
 
   const connectButtonToNode = useCallback(
@@ -234,6 +413,7 @@ export function ReactFlowWrapper({
         return
       }
 
+      takeCoalescedSnapshot()
       const fromNodeId = connectionState.fromNode.id
       const handleId = connectionState.fromHandle?.id
       const data = connectionState.fromNode.data as FlowNode["data"]
@@ -254,7 +434,7 @@ export function ReactFlowWrapper({
           viewOnly: true,
         })
         step.buttons[buttonIndex] = targetButton
-        updateNodeData(fromNodeId, data)
+        updateNodeDataWithHistory(fromNodeId, data)
         return true
       }
 
@@ -277,7 +457,7 @@ export function ReactFlowWrapper({
               viewOnly: true,
             })
             elements[elementIndex] = element
-            updateNodeData(fromNodeId, data)
+            updateNodeDataWithHistory(fromNodeId, data)
             return true
           }
         }
@@ -296,7 +476,7 @@ export function ReactFlowWrapper({
         }
       }
     },
-    [updateNodeData],
+    [takeCoalescedSnapshot, updateNodeDataWithHistory],
   )
 
   const onConnectEnd = useCallback(
@@ -334,6 +514,7 @@ export function ReactFlowWrapper({
               name: `Send Message #${messageNodesLength + 1}`,
             },
           })
+          takeCoalescedSnapshot()
           addNodes([newNode])
 
           addEdges({
@@ -379,6 +560,7 @@ export function ReactFlowWrapper({
               (edge) => edge.sourceHandle === connectionState.fromHandle?.id,
             )
 
+            takeCoalescedSnapshot()
             deleteElements({
               edges: connectedEdges.map((edge) => ({
                 id: edge.id,
@@ -406,6 +588,7 @@ export function ReactFlowWrapper({
       getEdges,
       connectButtonToNode,
       screenToFlowPosition,
+      takeCoalescedSnapshot,
     ],
   )
 
@@ -433,6 +616,8 @@ export function ReactFlowWrapper({
 
   const onEdgesDelete = useCallback(
     (edges: Edge[]) => {
+      takeCoalescedSnapshot()
+
       for (const edge of edges) {
         // if the edge is from node to node, do nothing
         if (edge.source === edge.sourceHandle) {
@@ -463,7 +648,7 @@ export function ReactFlowWrapper({
                 null
 
               // update the node data
-              updateNodeData(foundedNode.id, data)
+              updateNodeDataWithHistory(foundedNode.id, data)
             }
             continue
           }
@@ -481,7 +666,7 @@ export function ReactFlowWrapper({
                 element.beforeStep.id === edge.sourceHandle
               ) {
                 Object.assign(element, { buttonType: null, beforeStep: null })
-                updateNodeData(foundedNode.id, data)
+                updateNodeDataWithHistory(foundedNode.id, data)
                 elementFound = true
                 break
               }
@@ -493,7 +678,7 @@ export function ReactFlowWrapper({
         }
       }
     },
-    [getNodes, updateNodeData],
+    [getNodes, takeCoalescedSnapshot, updateNodeDataWithHistory],
   )
 
   return (
@@ -521,16 +706,17 @@ export function ReactFlowWrapper({
         onConnectEnd={onConnectEnd}
         onEdgeMouseEnter={onEdgeMouseEnter}
         onEdgeMouseLeave={onEdgeMouseLeave}
-        onEdgesChange={onEdgesChange}
+        onEdgesChange={handleEdgesChange}
         onEdgesDelete={onEdgesDelete}
         onNodeClick={handleNodeClick}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDragStop={handleNodeDragStop}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onPaneClick={handlePaneClick}
         proOptions={{ hideAttribution: true }}
       >
-        {/* <MiniMap /> */}
         {isFlowMutating && (
           <div
             className="absolute inset-0 z-50 cursor-wait bg-white/40 dark:bg-black/40"

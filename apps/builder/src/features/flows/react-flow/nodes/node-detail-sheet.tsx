@@ -7,8 +7,8 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@chatbotx.io/ui/components/ui/sheet"
-import { type ReactFlowState, useStore } from "@xyflow/react"
-import { memo } from "react"
+import { type ReactFlowState, useReactFlow, useStore } from "@xyflow/react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { NodeEditor } from "./editor"
 import { NodeNameEditor } from "./node-name-editor"
 
@@ -21,32 +21,54 @@ type NodeDetailSheetProps = {
 const selectSelectedNode = (state: ReactFlowState): FlowNode | null =>
   (state.nodes.find((node) => node.selected) as FlowNode) || null
 
-// Custom equality function that compares node ID and data reference
-// This prevents re-renders from position/dragging changes but allows data updates
+// Keep the sheet mounted against the selected node ID so the editor does not
+// re-render from its own form writes while typing.
 const equalityFn = (a: FlowNode | null, b: FlowNode | null): boolean => {
   if (a === b) {
     return true
   }
-  if (!a) {
-    return false
-  }
-  if (!b) {
-    return false
-  }
-
-  // Compare ID and data reference (data reference changes when updateNodeData is called)
-  return a.id === b.id && a.data === b.data
+  return a?.id === b?.id
 }
 
 export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
   // Use store selector with custom equality function
   const activeNode = useStore(selectSelectedNode, equalityFn)
+  const { getNode } = useReactFlow()
 
-  return open && activeNode ? (
+  // Bump the editor key only on the discrete open transition so reopening a
+  // node re-seeds from the latest flow data without disturbing typing.
+  const prevOpenRef = useRef(false)
+  const [openToken, setOpenToken] = useState(0)
+  const isOpening = open && !prevOpenRef.current
+  const renderToken = openToken + (isOpening ? 1 : 0)
+
+  useEffect(() => {
+    if (isOpening) {
+      setOpenToken((token) => token + 1)
+    }
+    prevOpenRef.current = open
+  }, [isOpening, open])
+
+  const activeNodeId = activeNode?.id
+  // Read the latest node data at open time instead of trusting the stale
+  // id-only store snapshot.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getNode is stable; re-read only on open/node changes
+  const freshDetails = useMemo(
+    () =>
+      activeNodeId
+        ? ((getNode(activeNodeId) as FlowNode | null)?.data.details ??
+          activeNode?.data.details)
+        : undefined,
+    [activeNodeId, renderToken],
+  )
+
+  return open && activeNode && freshDetails !== undefined ? (
     <NodeDetailSheetContent
       activeNode={activeNode}
+      freshDetails={freshDetails}
       onOpenChange={onOpenChange}
       open={open}
+      openToken={renderToken}
     />
   ) : null
 }
@@ -54,11 +76,15 @@ export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
 export const NodeDetailSheetContent = memo(
   ({
     activeNode,
+    freshDetails,
     open,
+    openToken,
     onOpenChange,
   }: {
     activeNode: FlowNode
+    freshDetails: FlowNode["data"]["details"]
     open: boolean
+    openToken: number
     onOpenChange: (open: boolean) => void
   }) => (
     <Sheet onOpenChange={onOpenChange} open={open}>
@@ -69,7 +95,8 @@ export const NodeDetailSheetContent = memo(
         <SheetDescription />
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
           <NodeEditor
-            nodeDetails={activeNode.data.details}
+            key={`${activeNode.id}:${openToken}`}
+            nodeDetails={freshDetails}
             nodeId={activeNode.id}
             nodeType={activeNode.type as NodeType}
           />
