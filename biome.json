@@ -40,7 +40,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended",
+      "recommended": true,
       "correctness": {
         "noUnusedImports": {
           "level": "error",
@@ -61,8 +61,7 @@
       },
       "suspicious": {
         "noUnknownAtRules": "off",
-        "noDuplicateCustomProperties": "off",
-        "noLeakedRender": "off"
+        "noDuplicateCustomProperties": "off"
       },
       "complexity": {
         "noExcessiveLinesPerFunction": "off",
