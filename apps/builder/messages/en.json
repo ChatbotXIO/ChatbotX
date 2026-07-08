@@ -23,6 +23,8 @@
     "back": "Back",
     "blockContact": "Block Contact",
     "unblockContact": "Unblock Contact",
+    "undo": "Undo",
+    "redo": "Redo",
     "cancel": "Cancel",
     "clear": "Clear",
     "clearCustomField": "Clear Custom Field",

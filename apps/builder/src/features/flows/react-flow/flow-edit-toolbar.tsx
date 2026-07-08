@@ -10,6 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { type Edge, MarkerType, type Node, useReactFlow } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
@@ -27,7 +32,7 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { GetInboxUrlDialog } from "@/features/inboxes/components/get-inbox-url"
 import { publishFlowAction } from "../actions/publish-flow-action"
@@ -40,6 +45,19 @@ import AnalyticsFlow from "./components/analytics-flow"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
 import { FlowVersionsDialog } from "./components/flow-versions-dialog"
 import { RenameFlowDialog } from "./components/rename-flow"
+import { useFlowHistory } from "./stores/use-flow-history"
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.isContentEditable
+  )
+}
 
 export function FlowEditToolbar({
   workspaceId,
@@ -67,6 +85,31 @@ export function FlowEditToolbar({
 
   // NOTES: DO NOT use useNodes & useEdges, it makes component re-render when node or edge is changed
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow()
+  const { canUndo, canRedo, undo, redo, reset } = useFlowHistory()
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return
+      }
+
+      const isModifierPressed = event.metaKey || event.ctrlKey
+      if (!isModifierPressed || event.key.toLowerCase() !== "z") {
+        return
+      }
+
+      if (event.shiftKey) {
+        event.preventDefault()
+        redo()
+      } else {
+        event.preventDefault()
+        undo()
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [undo, redo])
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
     publishFlowAction.bind(null, workspaceId, flow.id),
@@ -101,12 +144,38 @@ export function FlowEditToolbar({
 
   return (
     <div className="flex gap-2">
-      <Button className="px-1.5" size="sm" variant="ghost">
-        <RotateCcwIcon />
-      </Button>
-      <Button className="px-1.5" size="sm" variant="ghost">
-        <RotateCwIcon />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="px-1.5"
+            disabled={!canUndo}
+            onClick={undo}
+            size="sm"
+            variant="ghost"
+          >
+            <RotateCcwIcon />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{t("actions.undo")}</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="px-1.5"
+            disabled={!canRedo}
+            onClick={redo}
+            size="sm"
+            variant="ghost"
+          >
+            <RotateCwIcon />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{t("actions.redo")}</p>
+        </TooltipContent>
+      </Tooltip>
       <Button
         className="ml-5"
         disabled={isValidating || isPendingPublish}
@@ -224,6 +293,7 @@ export function FlowEditToolbar({
               markerEnd: { type: MarkerType.ArrowClosed },
             })),
           )
+          reset()
         }}
         open={action === "flowVersions"}
         workspaceId={workspaceId}
