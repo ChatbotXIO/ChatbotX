@@ -10,7 +10,10 @@ import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
-import { workspaceMemberService } from "../workspace-member/service"
+import {
+  workspaceMemberCacheTag,
+  workspaceMemberService,
+} from "../workspace-member/service"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string; token: string }>
 
@@ -66,7 +69,15 @@ class WorkspaceService extends BaseService {
       .set(data)
       .where(eq(workspaceModel.id, id))
       .returning()
-    await this.invalidateCacheTags([`workspaces:${id}`])
+
+    const memberUserIds = await workspaceMemberService.listUserIdsByWorkspaceId(
+      { tx, workspaceId: id },
+    )
+    await this.invalidateCacheTags([
+      `workspaces:${id}`,
+      ...memberUserIds.map((userId) => workspaceMemberCacheTag(userId)),
+    ])
+
     return updated
   }
 
@@ -146,7 +157,7 @@ class WorkspaceService extends BaseService {
       tx,
     })
 
-    this.invalidateCacheTags([`users:${props.createdBy}:workspace-members`])
+    await this.invalidateCacheTags([workspaceMemberCacheTag(props.createdBy)])
 
     return newWorkspace
   }

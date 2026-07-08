@@ -58,8 +58,10 @@ export const invalidateCacheByTags = async (tags: string[]) => {
   if (tags.length === 0) {
     return
   }
-  for (const tag of tags) {
-    const keys = await distributedStore.smembers(`tags:${tag}`)
-    await distributedStore.delete([...keys, `tags:${tag}`])
-  }
+  await Promise.all(
+    tags.map(async (tag) => {
+      const keys = await distributedStore.smembers(`tags:${tag}`)
+      await distributedStore.delete([...keys, `tags:${tag}`])
+    }),
+  )
 }

@@ -1,5 +1,6 @@
 "use server"
 
+import { workspaceMemberCacheTag } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
@@ -49,6 +50,6 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
     // The removed member's cached `listByUserId` result still lists this
     // workspace; bust it so their access is revoked immediately.
     await invalidateCacheByTags([
-      `users:${workspaceMember.userId}:workspace-members`,
+      workspaceMemberCacheTag(workspaceMember.userId),
     ])
   })
