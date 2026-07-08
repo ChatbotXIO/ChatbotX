@@ -11,7 +11,7 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateFlowDialog } from "./create-flow-dialog"
@@ -34,13 +34,17 @@ export function FlowsTable({
   folderId,
 }: FlowsTableProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const router = useRouter()
 
   const [{ data, pageCount }] = use(promises)
 
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<FlowResource> | null>(null)
-  const columns = useMemo(() => getFlowColumns({ t, setRowAction }), [t])
+  const columns = useMemo(
+    () => getFlowColumns({ t, setRowAction, locale }),
+    [t, locale],
+  )
 
   const { table } = useDataTable({
     data,

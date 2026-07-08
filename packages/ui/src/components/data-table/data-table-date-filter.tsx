@@ -54,12 +54,14 @@ interface DataTableDateFilterProps<TData> {
   column: Column<TData, unknown>
   title?: string
   multiple?: boolean
+  locale?: string
 }
 
 export function DataTableDateFilter<TData>({
   column,
   title,
   multiple,
+  locale,
 }: DataTableDateFilterProps<TData>) {
   const columnFilterValue = column.getFilterValue()
 
@@ -116,13 +118,16 @@ export function DataTableDateFilter<TData>({
     return selectedDates.length > 0
   }, [multiple, selectedDates])
 
-  const formatDateRange = React.useCallback((range: DateRange) => {
-    if (!range.from && !range.to) return ""
-    if (range.from && range.to) {
-      return `${formatDate(range.from)} - ${formatDate(range.to)}`
-    }
-    return formatDate(range.from ?? range.to)
-  }, [])
+  const formatDateRange = React.useCallback(
+    (range: DateRange) => {
+      if (!range.from && !range.to) return ""
+      if (range.from && range.to) {
+        return `${formatDate(range.from, { locale })} - ${formatDate(range.to, { locale })}`
+      }
+      return formatDate(range.from ?? range.to, { locale })
+    },
+    [locale],
+  )
 
   const label = React.useMemo(() => {
     if (multiple) {
@@ -153,7 +158,7 @@ export function DataTableDateFilter<TData>({
 
     const hasSelectedDate = selectedDates.length > 0
     const dateText = hasSelectedDate
-      ? formatDate(selectedDates[0])
+      ? formatDate(selectedDates[0], { locale })
       : "Select date"
 
     return (
@@ -170,7 +175,7 @@ export function DataTableDateFilter<TData>({
         )}
       </span>
     )
-  }, [selectedDates, multiple, formatDateRange, title])
+  }, [selectedDates, multiple, formatDateRange, title, locale])
 
   return (
     <Popover>
