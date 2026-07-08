@@ -60,7 +60,10 @@ export async function sendMessageToChannel(
         ...message,
         contentAttributes: {
           ...message.contentAttributes,
-          replyToCommentId: parentMsg?.sourceId ?? null,
+          replyToCommentId:
+            parentMsg?.sourceId ??
+            message.contentAttributes?.replyToCommentId ??
+            null,
         },
       }
     }
