@@ -60,6 +60,14 @@ describe("createFlowHistoryStore", () => {
 
     expect(store.getState().future).toEqual([])
     expect(store.getState().redo(third)).toBeNull()
+    expect(store.getState().branchClearedCount).toBe(1)
+  })
+
+  test("does not mark a branch clear when no redo history exists", () => {
+    const store = createFlowHistoryStore()
+    store.getState().takeSnapshot([node("first")], [])
+
+    expect(store.getState().branchClearedCount).toBe(0)
   })
 
   test("reset clears both history stacks without touching restore handlers", () => {

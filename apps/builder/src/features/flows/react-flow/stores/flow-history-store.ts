@@ -47,10 +47,11 @@ export type FlowHistoryState = {
   past: Snapshot[]
   future: Snapshot[]
   restoreHandlers: RestoreHandlers | null
+  branchClearedCount: number
 }
 
 export type FlowHistoryStore = FlowHistoryState & {
-  takeSnapshot: (nodes: Node[], edges: Edge[]) => void
+  takeSnapshot: (nodes: Node[], edges: Edge[]) => boolean
   undo: (current: Snapshot) => Snapshot | null
   redo: (current: Snapshot) => Snapshot | null
   reset: () => void
@@ -76,13 +77,19 @@ export const createFlowHistoryStore = () =>
       past: [],
       future: [],
       restoreHandlers: null,
+      branchClearedCount: 0,
 
       takeSnapshot: (nodes, edges) => {
         const snapshot = cloneSnapshot({ nodes, edges })
+        const hadRedoHistory = get().future.length > 0
         set((state) => ({
           past: appendPast(state.past, snapshot),
           future: [],
+          branchClearedCount: hadRedoHistory
+            ? state.branchClearedCount + 1
+            : state.branchClearedCount,
         }))
+        return hadRedoHistory
       },
 
       undo: (current) => {

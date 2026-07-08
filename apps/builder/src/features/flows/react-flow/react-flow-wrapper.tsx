@@ -188,6 +188,9 @@ export function ReactFlowWrapper({
   const [isFlowMutating, setIsFlowMutating] = useState(false)
   const isMutatingRef = useRef(false)
   const snapshotSessionRef = useRef(false)
+  // Capture deliberately reads React Flow's internal store here. The restore
+  // path writes through the controlled props so undo/redo stays out of
+  // onNodesChange/onEdgesChange.
   const { takeSnapshot } = useFlowHistory()
   const historyStore = useFlowHistoryStoreApi()
 

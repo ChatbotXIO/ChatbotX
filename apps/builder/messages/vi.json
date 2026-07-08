@@ -2164,7 +2164,9 @@
     "publishVersionSuccess": "Đã xuất bản phiên bản mới",
     "flowConfigIncomplete": "Một số cấu hình chưa hoàn chỉnh",
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",
-    "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại."
+    "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại.",
+    "redoHistoryCleared": "Đã xoá lịch sử làm lại",
+    "historyDepth": "({count})"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

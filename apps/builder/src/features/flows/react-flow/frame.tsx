@@ -42,7 +42,7 @@ export function ReactFlowFrame({ flow, flowVersion }: ReactFlowFrameProps) {
   )
 
   return (
-    <FlowHistoryStoreProvider>
+    <FlowHistoryStoreProvider key={flowVersion.id}>
       <FrameHeader flow={flow} />
 
       <ReactFlowWrapper

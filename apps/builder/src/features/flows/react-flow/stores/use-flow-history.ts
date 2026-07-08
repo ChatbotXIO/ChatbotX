@@ -15,6 +15,11 @@ type TakeSnapshot = {
 export const useFlowHistory = () => {
   const { getEdges, getNodes } = useReactFlow()
   const store = useFlowHistoryStoreApi()
+  const pastCount = useFlowHistoryStore((state) => state.past.length)
+  const futureCount = useFlowHistoryStore((state) => state.future.length)
+  const branchClearedCount = useFlowHistoryStore(
+    (state) => state.branchClearedCount,
+  )
   const canUndo = useFlowHistoryStore((state) => state.past.length > 0)
   const canRedo = useFlowHistoryStore((state) => state.future.length > 0)
 
@@ -40,5 +45,15 @@ export const useFlowHistory = () => {
     store.getState().reset()
   }, [store])
 
-  return { canRedo, canUndo, redo, reset, takeSnapshot, undo }
+  return {
+    branchClearedCount,
+    canRedo,
+    canUndo,
+    futureCount,
+    pastCount,
+    redo,
+    reset,
+    takeSnapshot,
+    undo,
+  }
 }
