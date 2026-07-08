@@ -13,6 +13,9 @@ type WorkspaceMemberWithWorkspace = WorkspaceMemberModel & {
   workspace: WorkspaceModel
 }
 
+export const workspaceMemberCacheTag = (userId: string) =>
+  `users:${userId}:workspace-members`
+
 export class WorkspaceMemberService extends BaseService {
   async create(props: {
     tx?: DatabaseClient
@@ -47,12 +50,12 @@ export class WorkspaceMemberService extends BaseService {
     tx?: DatabaseClient
     userId: string
   }): Promise<WorkspaceMemberWithWorkspace[]> {
-    const key = `users:${props.userId}:workspace-members`
+    const key = workspaceMemberCacheTag(props.userId)
     return await withCache(
       key,
       async () => await this.listByUserIdUncached(props),
       {
-        tags: [`users:${props.userId}:workspace-members`],
+        tags: [workspaceMemberCacheTag(props.userId)],
       },
     )
   }
@@ -120,6 +123,19 @@ export class WorkspaceMemberService extends BaseService {
       )
       .limit(1)
     return !!row
+  }
+
+  async listUserIdsByWorkspaceId(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+  }): Promise<string[]> {
+    const { tx = db, workspaceId } = props
+    const rows = await tx
+      .select({ userId: workspaceMemberModel.userId })
+      .from(workspaceMemberModel)
+      .where(eq(workspaceMemberModel.workspaceId, workspaceId))
+
+    return rows.map((row) => row.userId)
   }
 
   async listByWorkspaceId(props: {

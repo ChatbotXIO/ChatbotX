@@ -1,5 +1,6 @@
 "use server"
 
+import { workspaceMemberCacheTag } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
@@ -59,6 +60,6 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     // The member's permissions/nav are served from the cached
     // `listByUserId` result; bust it so the change takes effect immediately.
     await invalidateCacheByTags([
-      `users:${workspaceMember.userId}:workspace-members`,
+      workspaceMemberCacheTag(workspaceMember.userId),
     ])
   })

@@ -6,9 +6,23 @@ const returningWorkspace = vi.fn(async () => [
 const valuesWorkspace = vi.fn(() => ({ returning: returningWorkspace }))
 const insert = vi.fn(() => ({ values: valuesWorkspace }))
 
+const returningUpdatedWorkspace = vi.fn(async () => [
+  { id: "ws-1", name: "New Name" },
+])
+const whereUpdate = vi.fn(() => ({ returning: returningUpdatedWorkspace }))
+const setUpdate = vi.fn(() => ({ where: whereUpdate }))
+const update = vi.fn(() => ({ set: setUpdate }))
+
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
-const db = { insert, query: { userModel: { findFirst: findFirstUser } } }
-vi.mock("@chatbotx.io/database/client", () => ({ db }))
+const db = {
+  insert,
+  update,
+  query: { userModel: { findFirst: findFirstUser } },
+}
+vi.mock("@chatbotx.io/database/client", () => ({
+  db,
+  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+}))
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceModel: {},
   ROOT_TENANT_ID: "1",
@@ -19,8 +33,9 @@ vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
 vi.mock("@chatbotx.io/database/partials", () => ({
   workspaceMemberRoles: { enum: { owner: "owner" } },
 }))
+const invalidateCacheByTags = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: vi.fn(async () => undefined),
+  invalidateCacheByTags,
   withCache: vi.fn(async (_key: string, fn: () => unknown) => fn()),
 }))
 vi.mock("@chatbotx.io/utils", () => ({ createId: () => "usage-1" }))
@@ -37,8 +52,13 @@ vi.mock("../src/quota-enforcement/service", () => ({ quotaEnforcementService }))
 
 const workspaceMemberService = {
   create: vi.fn(async () => undefined),
+  listUserIdsByWorkspaceId: vi.fn(async () => [] as string[]),
 }
-vi.mock("../src/workspace-member/service", () => ({ workspaceMemberService }))
+vi.mock("../src/workspace-member/service", () => ({
+  workspaceMemberService,
+  workspaceMemberCacheTag: (userId: string) =>
+    `users:${userId}:workspace-members`,
+}))
 
 const macRepository = {
   ensureWorkspaceMac: vi.fn(async () => new Map<string, string>()),
@@ -72,11 +92,20 @@ beforeEach(() => {
   quotaEnforcementService.tryConsume.mockReset().mockResolvedValue({ ok: true })
   userQuotaService.getForUser.mockReset().mockResolvedValue(null)
   workspaceMemberService.create.mockClear()
+  workspaceMemberService.listUserIdsByWorkspaceId
+    .mockReset()
+    .mockResolvedValue([])
   macRepository.ensureWorkspaceMac
     .mockReset()
     .mockResolvedValue(new Map<string, string>())
   anchoredPeriod.mockClear()
   logger.error.mockClear()
+  returningUpdatedWorkspace
+    .mockReset()
+    .mockResolvedValue([{ id: "ws-1", name: "New Name" }])
+  setUpdate.mockClear()
+  update.mockClear()
+  invalidateCacheByTags.mockClear()
 })
 
 describe("WorkspaceService.create — MAC pre-provisioning", () => {
@@ -157,5 +186,37 @@ describe("WorkspaceService.create — happy path", () => {
     const memberArg = workspaceMemberService.create.mock.calls[0][0]
     expect(memberArg.data.workspaceId).toBe("ws-1")
     expect(memberArg.data.role).toBe("owner")
+  })
+})
+
+describe("WorkspaceService.update — member cache invalidation", () => {
+  test("invalidates the workspace tag and every member's workspace-members tag", async () => {
+    workspaceMemberService.listUserIdsByWorkspaceId.mockResolvedValue([
+      "user-1",
+      "user-2",
+    ])
+
+    const result = await workspaceService.update({
+      id: "ws-1",
+      data: { name: "New Name" },
+    })
+
+    expect(result).toEqual({ id: "ws-1", name: "New Name" })
+    expect(
+      workspaceMemberService.listUserIdsByWorkspaceId,
+    ).toHaveBeenCalledWith({ tx: db, workspaceId: "ws-1" })
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "workspaces:ws-1",
+      "users:user-1:workspace-members",
+      "users:user-2:workspace-members",
+    ])
+  })
+
+  test("invalidates only the workspace tag when the workspace has no members", async () => {
+    workspaceMemberService.listUserIdsByWorkspaceId.mockResolvedValue([])
+
+    await workspaceService.update({ id: "ws-1", data: { name: "New Name" } })
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["workspaces:ws-1"])
   })
 })

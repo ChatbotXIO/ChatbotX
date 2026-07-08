@@ -8,6 +8,7 @@ import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { CopyIcon, Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
@@ -23,6 +24,7 @@ export function UpdateWorkspaceBasicForm({
   workspace: WorkspaceResource
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const session = authClient.useSession()
 
@@ -44,6 +46,7 @@ export function UpdateWorkspaceBasicForm({
               feature: t("fields.workspace.label"),
             }),
           )
+          router.refresh()
         },
         onError: ({ error }) => {
           if (error.serverError) {
