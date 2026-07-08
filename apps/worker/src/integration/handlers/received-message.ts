@@ -455,6 +455,14 @@ export const receiveComment = async (
     return
   }
 
+  const processCommentAutomationJobId = `comment-auto-${commentData.commentId}`
+  const existingJob = await integrationQueue.getJob(
+    processCommentAutomationJobId,
+  )
+  if (existingJob && (await existingJob.isFailed())) {
+    await existingJob.remove()
+  }
+
   await integrationQueue.add(
     IntegrationJobAction.processCommentAutomation,
     {
@@ -473,7 +481,7 @@ export const receiveComment = async (
         createdTime: commentData.createdTime,
       },
     },
-    { jobId: `comment-auto-${commentData.commentId}` },
+    { jobId: processCommentAutomationJobId },
   )
 }
 

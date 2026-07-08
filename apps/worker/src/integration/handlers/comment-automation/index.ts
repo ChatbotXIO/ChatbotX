@@ -359,6 +359,10 @@ export async function processCommentAutomation(
     where: { id: contactInboxId },
   })
   if (!contactInbox) {
+    logger.warn(
+      { contactInboxId, workspaceId, commentId },
+      "Comment automation skipped: contactInbox not found",
+    )
     return
   }
 
@@ -425,13 +429,6 @@ export async function processCommentAutomation(
         }
       }
 
-      await fbCommentAutomationService.insertDedup({
-        automationId: automation.id,
-        contactId: contactInbox.contactId,
-        postId,
-        workspaceId,
-      })
-
       const delay = computeDelayMs(automation.replyAfter)
 
       const messageRepo = await createMessageRepository()
@@ -494,43 +491,64 @@ export async function processCommentAutomation(
         )
       }
 
-      executePublicReply(automation.publicReply, {
-        auth,
-        commentId,
-        channelType,
-        conversationId,
-        contactInboxId,
-        delay,
-        workspaceId,
-        contactInbox,
-        parentMessageId,
-        parentMessageCreatedAt,
-      }).catch((err) =>
+      let dispatchFailed = false
+
+      try {
+        await executePublicReply(automation.publicReply, {
+          auth,
+          commentId,
+          channelType,
+          conversationId,
+          contactInboxId,
+          delay,
+          workspaceId,
+          contactInbox,
+          parentMessageId,
+          parentMessageCreatedAt,
+        })
+      } catch (err) {
         logger.error(
           { err, automationId: automation.id, commentId },
           "Failed to send public reply",
-        ),
-      )
+        )
+        if (willSendReply(automation.publicReply)) {
+          dispatchFailed = true
+        }
+      }
 
-      executePrivateReply(automation.privateReply, {
-        auth,
-        commentId,
-        channelType,
-        conversationId,
-        contactInboxId,
-        delay,
-      }).catch((err) =>
+      try {
+        await executePrivateReply(automation.privateReply, {
+          auth,
+          commentId,
+          channelType,
+          conversationId,
+          contactInboxId,
+          delay,
+        })
+      } catch (err) {
         logger.error(
           { err, automationId: automation.id, commentId },
           "Failed to send private reply",
-        ),
-      )
+        )
+        if (willSendReply(automation.privateReply)) {
+          dispatchFailed = true
+        }
+      }
 
-      if (
-        willSendReply(automation.publicReply) ||
-        willSendReply(automation.privateReply)
-      ) {
-        await fbCommentAutomationService.incrementRepliesCount(automation.id)
+      if (!dispatchFailed) {
+        await fbCommentAutomationService.insertDedup({
+          automationId: automation.id,
+          contactId: contactInbox.contactId,
+          postId,
+          workspaceId,
+        })
+
+        if (
+          willSendReply(automation.publicReply) ||
+          willSendReply(automation.privateReply)
+        ) {
+          await fbCommentAutomationService.incrementRepliesCount(automation.id)
+        }
       }
     } catch (err) {
       logger.error(

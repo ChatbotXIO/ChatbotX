@@ -1,6 +1,7 @@
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
+import { logger } from "../lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import {
   incomingWebhookEventSchema,
@@ -83,12 +84,20 @@ const handleWebhookEvent = async (
       return
     }
 
-    const feedChange = entry.changes?.find(
-      (c: { field: string }) => c.field === "feed",
-    )
-    if (feedChange) {
-      const parsed = messengerFeedCommentValueSchema.safeParse(feedChange.value)
-      if (parsed.success) {
+    const feedChanges =
+      entry.changes?.filter((c: { field: string }) => c.field === "feed") ?? []
+    if (feedChanges.length > 0) {
+      for (const feedChange of feedChanges) {
+        const parsed = messengerFeedCommentValueSchema.safeParse(
+          feedChange.value,
+        )
+        if (!parsed.success) {
+          logger.warn(
+            { issues: parsed.error.issues, value: feedChange.value },
+            "Unrecognized feed webhook payload",
+          )
+          continue
+        }
         const value = parsed.data
         if (value.verb === "add" && value.from.id !== entry.id) {
           // New comment from an external user — route to inbox
