@@ -139,6 +139,7 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.folder.label")}
           name="newFolderId"
           options={folderOptions}

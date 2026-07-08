@@ -175,6 +175,7 @@ export function CreateAutomatedResponseForm(
 
         {responseMode === responseModes.enum.flowId && (
           <ComboboxField
+            emptyText={t("actions.noRecordFound")}
             label={t("fields.flowId.label")}
             name="flowId"
             options={flowOptions}

@@ -100,6 +100,7 @@ const GetUserDataStepForm = ({
         />
 
         <CustomFieldField
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.outputCustomField.label")}
           name="outputFieldId"
           placeholder={t("actions.pleaseSelect")}

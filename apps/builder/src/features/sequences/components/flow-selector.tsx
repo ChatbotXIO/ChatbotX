@@ -45,6 +45,7 @@ export function FlowSelectorSimple({
     <Form {...form}>
       <ComboboxField
         className={cn("flex-1", showError && "border-destructive")}
+        emptyText={t("actions.noRecordFound")}
         name="flowId"
         options={flowOptions}
         placeholder={t("sequences.selectFlow")}

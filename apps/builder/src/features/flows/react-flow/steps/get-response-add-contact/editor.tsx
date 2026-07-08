@@ -153,6 +153,7 @@ const GetResponseDialog = ({ parentName }: { parentName: string }) => {
             )}
             {!(campaignsLoading || campaignsError) && (
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("getResponse.fields.list")}
                 name="campaignId"
                 options={campaignOptions}

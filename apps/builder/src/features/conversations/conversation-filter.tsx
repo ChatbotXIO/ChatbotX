@@ -104,6 +104,7 @@ export function ConversationFilter() {
           />
 
           <ComboboxField
+            emptyText={t("actions.noRecordFound")}
             label={t("fields.assignedId.label")}
             name="assignedId"
             options={contactAssigneeOptions}

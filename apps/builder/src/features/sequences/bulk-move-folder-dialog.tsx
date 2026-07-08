@@ -114,6 +114,7 @@ export function BulkMoveFolderDialog({
             onSubmit={form.handleSubmit(handleBulkMove)}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("fields.folder.label")}
               name="newFolderId"
               options={folderOptions}

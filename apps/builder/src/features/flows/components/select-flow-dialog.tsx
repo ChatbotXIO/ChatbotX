@@ -158,6 +158,7 @@ export function SelectFlowDialog({
 
                 <TabsContent value="flows">
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     label={t("fields.flows.label")}
                     name="flowId"
                     options={flowOptions}
@@ -169,6 +170,7 @@ export function SelectFlowDialog({
 
                 <TabsContent value="steps">
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     label={t("fields.steps.label")}
                     name="nodeId"
                     options={nodesSelectOptions}

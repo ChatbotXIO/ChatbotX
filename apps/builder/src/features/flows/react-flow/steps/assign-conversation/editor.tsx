@@ -22,6 +22,7 @@ const AssignConversationStepEditor = (
       title={t("flows.actions.assignConversation")}
     >
       <ComboboxField
+        emptyText={t("actions.noRecordFound")}
         label={t("fields.agent.label")}
         name={`${props.parentName}.assignedId`}
         options={contactAssigneeOptions}

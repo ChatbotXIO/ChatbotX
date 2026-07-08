@@ -89,6 +89,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
         </div>
       )}
       <ComboboxField
+        emptyText={t("actions.noRecordFound")}
         name={name}
         options={customFieldSelectOptions}
         placeholder={placeholder || t("actions.pleaseSelect")}
