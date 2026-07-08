@@ -4,6 +4,7 @@ import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import { ROOT_TENANT_ID, workspaceModel } from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
+import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
 import { tenantService } from "../enterprise/tenant/service"
 import { ChatbotXException, notFoundException } from "../errors"
@@ -56,6 +57,32 @@ class WorkspaceService extends BaseService {
           result ? [`workspaces:${result.id}`] : undefined,
       },
     )
+  }
+
+  isActiveNow(workspace: {
+    isActive: boolean
+    startTime: string | null
+    endTime: string | null
+    timezone: string
+  }): boolean {
+    if (!workspace.isActive) {
+      return false
+    }
+    if (!(workspace.startTime && workspace.endTime)) {
+      return true
+    }
+    const { startTime, endTime } = workspace
+    const currentTime = formatInTimeZone(
+      new Date(),
+      workspace.timezone,
+      "HH:mm",
+    )
+
+    if (startTime <= endTime) {
+      return currentTime >= startTime && currentTime <= endTime
+    }
+    // Overnight window (endTime is earlier than startTime, e.g. 22:00-06:00).
+    return currentTime >= startTime || currentTime <= endTime
   }
 
   async update(props: {

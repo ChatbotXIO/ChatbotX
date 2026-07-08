@@ -26,13 +26,17 @@ class FbCommentAutomationService extends BaseService {
     automation: { startTime: string | null; endTime: string | null },
     timezone: string,
   ): boolean {
-    if (!(automation.startTime && automation.endTime)) {
+    const { startTime, endTime } = automation
+    if (!(startTime && endTime)) {
       return true
     }
     const currentTime = formatInTimeZone(new Date(), timezone, "HH:mm")
-    return (
-      currentTime >= automation.startTime && currentTime <= automation.endTime
-    )
+
+    if (startTime <= endTime) {
+      return currentTime >= startTime && currentTime <= endTime
+    }
+    // Overnight window (endTime is earlier than startTime, e.g. 22:00-06:00).
+    return currentTime >= startTime || currentTime <= endTime
   }
 
   getPriorContactInboxCount(props: { contactId: string }) {

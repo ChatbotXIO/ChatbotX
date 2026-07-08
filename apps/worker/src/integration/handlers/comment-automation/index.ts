@@ -238,9 +238,7 @@ async function executePrivateReply(
 
   if (privateReply.type === "text" && privateReply.value) {
     if (ctx.channelType === "messenger") {
-      await sendPrivateReply(ctx.auth, ctx.commentId, privateReply.value).catch(
-        (_e) => undefined,
-      )
+      await sendPrivateReply(ctx.auth, ctx.commentId, privateReply.value)
     }
     // Instagram private DM text reply: out of scope MVP (no private_replies API)
     return

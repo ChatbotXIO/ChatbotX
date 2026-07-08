@@ -15,7 +15,9 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud, isCommunity } from "@/env"
+import { formatScheduleTime } from "../helpers"
 import type { WorkspaceResource } from "../schema/resource"
+import { WorkspaceStatusSwitch } from "./workspace-status-switch"
 
 type WorkspacesListProps = {
   user: {
@@ -103,12 +105,20 @@ const CreateWorkspaceCard = ({
 type WorkspaceCardProps = {
   workspace: WorkspaceResource
   ownerLabel?: string
+  t: Awaited<ReturnType<typeof getTranslations>>
 }
 
-const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
+const WorkspaceCard = ({ workspace, ownerLabel, t }: WorkspaceCardProps) => {
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
   const href = `/space/${workspace.id}`
+  const activeHours =
+    workspace.isActive && workspace.startTime && workspace.endTime
+      ? t("workspace.schedule.activeHours", {
+          startTime: formatScheduleTime(workspace.startTime),
+          endTime: formatScheduleTime(workspace.endTime),
+        })
+      : null
 
   return (
     <Card className={cn(CARD_STYLES, "relative")}>
@@ -118,6 +128,14 @@ const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
             {ownerLabel}
           </span>
         ) : null}
+        <WorkspaceStatusSwitch
+          workspace={{
+            id: workspace.id,
+            isActive: workspace.isActive,
+            startTime: workspace.startTime,
+            endTime: workspace.endTime,
+          }}
+        />
         <Link
           aria-label={name}
           className={LINK_STYLES}
@@ -130,8 +148,15 @@ const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
               {firstLetter}
             </AvatarFallback>
           </Avatar>
-          <div className="line-clamp-2 px-3 text-center font-medium text-sm">
-            {name}
+          <div className="flex flex-col gap-0.5 px-3">
+            <div className="line-clamp-2 text-center font-medium text-sm">
+              {name}
+            </div>
+            {activeHours ? (
+              <div className="line-clamp-1 text-center text-muted-foreground text-xs">
+                {activeHours}
+              </div>
+            ) : null}
           </div>
         </Link>
       </CardContent>
@@ -205,6 +230,7 @@ const WorkspacesList = async ({
             <li className="list-none" key={workspace.id}>
               <WorkspaceCard
                 ownerLabel={ownerIds.has(workspace.id) ? ownerLabel : undefined}
+                t={t}
                 workspace={workspace}
               />
             </li>

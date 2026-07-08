@@ -491,6 +491,21 @@
       "zalo": "This Zalo OA is already connected to another workspace."
     }
   },
+  "workspace": {
+    "schedule": {
+      "title": "Set active hours",
+      "description": "Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight.",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "alwaysRun": "Always run",
+      "save": "Save",
+      "invalidTimeRange": "Start and end time must be different",
+      "timeRequired": "Please select both start and end time",
+      "activated": "Workspace activated",
+      "deactivated": "Workspace deactivated",
+      "activeHours": "Active from {startTime} to {endTime}"
+    }
+  },
   "workspaces": {
     "list": {
       "title": "Workspaces List"
@@ -3040,11 +3055,12 @@
     "replyAfterValue": "Value",
     "schedule": {
       "title": "Set active hours",
+      "description": "Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight.",
       "startTime": "Start time",
       "endTime": "End time",
       "alwaysRun": "Always run",
       "save": "Save",
-      "invalidTimeRange": "End time must be after start time",
+      "invalidTimeRange": "Start and end time must be different",
       "timeRequired": "Please select both start and end time"
     },
     "card": {

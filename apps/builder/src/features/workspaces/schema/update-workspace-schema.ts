@@ -19,3 +19,21 @@ export const updateWorkspaceAdvancedRequest = z.object({
 export type UpdateWorkspaceAdvancedRequest = z.infer<
   typeof updateWorkspaceAdvancedRequest
 >
+
+const timeFormat = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format")
+
+export const updateWorkspaceStatusRequest = z
+  .object({
+    isActive: z.boolean(),
+    startTime: timeFormat.nullable(),
+    endTime: timeFormat.nullable(),
+  })
+  .refine((data) => (data.startTime === null) === (data.endTime === null), {
+    message: "startTime and endTime must both be set or both be null",
+    path: ["endTime"],
+  })
+export type UpdateWorkspaceStatusRequest = z.infer<
+  typeof updateWorkspaceStatusRequest
+>
