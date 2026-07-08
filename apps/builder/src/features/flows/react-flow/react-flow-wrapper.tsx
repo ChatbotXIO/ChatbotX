@@ -57,6 +57,7 @@ import "./react-flow-wrapper.css"
 import { createId } from "@chatbotx.io/utils"
 import type { ButtonProps } from "react-day-picker"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
+import { serializeFlowContent } from "../flow-version-content"
 import ButtonEdge from "./edges/button-edge"
 import { hasMeaningfulNodeChange } from "./react-flow-node-change"
 import { useFlowHistoryStoreApi } from "./stores/flow-history-store-provider"
@@ -77,52 +78,23 @@ const edgeTypes = {
   buttonedge: ButtonEdge,
 }
 
-const normalizeNodeForSave = (node: FlowNode) => {
-  const {
-    selected: _selected,
-    dragging: _dragging,
-    width: _width,
-    height: _height,
-    data,
-    ...rest
-  } = node as FlowNode & {
-    dragging?: boolean
-    height?: number
-    width?: number
-  }
-  const { forceToolbarVisible: _forceToolbarVisible, ...restData } = {
-    ...((data ?? {}) as Record<string, unknown>),
-  }
-
-  return {
-    ...rest,
-    data: restData as FlowNode["data"],
-  }
-}
-
-const normalizeEdgeForSave = (edge: Edge) => ({
-  id: edge.id,
-  source: edge.source,
-  sourceHandle: edge.sourceHandle,
-  target: edge.target,
-  targetHandle: edge.targetHandle,
-})
-
-const serializeFlow = (nodes: FlowNode[], edges: Edge[]) =>
-  JSON.stringify({
-    nodes: nodes.map(normalizeNodeForSave),
-    edges: edges.map(normalizeEdgeForSave),
-  })
-
 type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
   setOpenNodeDetailSheet: (open: boolean) => void
   onAutosaveFlushChange: (flushAutosave: (() => void) | null) => void
+  onAutosaveCancelChange: (cancelAutosave: (() => void) | null) => void
+  onDraftDirtiedChange: (dirtied: boolean) => void
+  onMarkSavedChange: (
+    markSaved: ((nodes: Node[], edges: Edge[]) => void) | null,
+  ) => void
 }
 
 export function ReactFlowWrapper({
   flowVersion,
   onAutosaveFlushChange,
+  onAutosaveCancelChange,
+  onDraftDirtiedChange,
+  onMarkSavedChange,
   setOpenNodeDetailSheet,
 }: ReactFlowFrameProps) {
   const reactFlow = useReactFlow()
@@ -150,7 +122,7 @@ export function ReactFlowWrapper({
     })),
   )
   const lastSavedSerializedRef = useRef(
-    serializeFlow(
+    serializeFlowContent(
       flowVersion.nodes as unknown as FlowNode[],
       flowVersion.edges as unknown as Edge[],
     ),
@@ -347,20 +319,45 @@ export function ReactFlowWrapper({
   )
 
   useEffect(() => {
-    const serialized = serializeFlow(nodes, edges as Edge[])
+    const serialized = serializeFlowContent(nodes, edges as Edge[])
     if (serialized === lastSavedSerializedRef.current) {
       return
     }
 
     lastSavedSerializedRef.current = serialized
+    onDraftDirtiedChange(true)
     handleChanges(nodes, edges)
-  }, [nodes, edges, handleChanges])
+  }, [handleChanges, nodes, edges, onDraftDirtiedChange])
+
+  const markSaved = useCallback(
+    (savedNodes: Node[], savedEdges: Edge[]) => {
+      lastSavedSerializedRef.current = serializeFlowContent(
+        savedNodes,
+        savedEdges,
+      )
+      onDraftDirtiedChange(false)
+    },
+    [onDraftDirtiedChange],
+  )
 
   useEffect(() => {
     onAutosaveFlushChange(handleChanges.flush)
+    onAutosaveCancelChange(handleChanges.cancel)
+    onMarkSavedChange(markSaved)
 
-    return () => onAutosaveFlushChange(null)
-  }, [handleChanges.flush, onAutosaveFlushChange])
+    return () => {
+      onAutosaveFlushChange(null)
+      onAutosaveCancelChange(null)
+      onMarkSavedChange(null)
+    }
+  }, [
+    handleChanges.cancel,
+    handleChanges.flush,
+    markSaved,
+    onAutosaveCancelChange,
+    onAutosaveFlushChange,
+    onMarkSavedChange,
+  ])
 
   useEffect(
     () => () => {

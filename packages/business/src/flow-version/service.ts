@@ -83,6 +83,47 @@ class FlowVersionService extends BaseService {
     await this.invalidateCacheTags(`flows:${version.flowId}:versions`)
   }
 
+  async revertDraftToPublished({
+    flowId,
+    workspaceId,
+  }: {
+    flowId: string
+    workspaceId: string
+  }): Promise<Pick<FlowVersionModel, "nodes" | "edges">> {
+    const publishedVersion = await db.query.flowVersionModel.findFirst({
+      where: {
+        flowId,
+        workspaceId,
+        isDraft: false,
+        isLatest: true,
+      },
+    })
+
+    if (!publishedVersion) {
+      throw notFoundException("Flow version not found")
+    }
+
+    await db
+      .update(flowVersionModel)
+      .set({
+        nodes: publishedVersion.nodes,
+        edges: publishedVersion.edges,
+        startNodeId: publishedVersion.startNodeId,
+      })
+      .where(
+        and(
+          eq(flowVersionModel.flowId, flowId),
+          eq(flowVersionModel.workspaceId, workspaceId),
+          eq(flowVersionModel.isDraft, true),
+        ),
+      )
+
+    return {
+      nodes: publishedVersion.nodes,
+      edges: publishedVersion.edges,
+    }
+  }
+
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
   }

@@ -1,11 +1,22 @@
 "use client"
 
+import type { Edge, Node } from "@xyflow/react"
 import { useTranslations } from "next-intl"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import type { FlowResource } from "../schemas/resource"
 import { FlowEditToolbar } from "./flow-edit-toolbar"
 
-export function FrameHeader({ flow }: { flow: FlowResource }) {
+export function FrameHeader({
+  flow,
+  canRevertToPublished,
+  cancelAutosave,
+  markSaved,
+}: {
+  flow: FlowResource
+  canRevertToPublished: boolean
+  cancelAutosave: (() => void) | null
+  markSaved: ((nodes: Node[], edges: Edge[]) => void) | null
+}) {
   const t = useTranslations()
 
   return (
@@ -23,7 +34,13 @@ export function FrameHeader({ flow }: { flow: FlowResource }) {
       </div>
       {/* <ThemeSwitcher /> */}
 
-      <FlowEditToolbar flow={flow} workspaceId={flow.workspaceId} />
+      <FlowEditToolbar
+        cancelAutosave={cancelAutosave}
+        canRevertToPublished={canRevertToPublished}
+        flow={flow}
+        markSaved={markSaved}
+        workspaceId={flow.workspaceId}
+      />
     </header>
   )
 }
