@@ -1,6 +1,16 @@
 "use client"
 
 import type { FlowModel } from "@chatbotx.io/database/types"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -33,10 +43,11 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { GetInboxUrlDialog } from "@/features/inboxes/components/get-inbox-url"
 import { publishFlowAction } from "../actions/publish-flow-action"
+import { revertToPublishedAction } from "../actions/revert-to-published-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import {
   type PublishFlowSchema,
@@ -56,9 +67,15 @@ import { useFlowHistory } from "./stores/use-flow-history"
 export function FlowEditToolbar({
   workspaceId,
   flow,
+  canRevertToPublished,
+  cancelAutosave,
+  markSaved,
 }: {
   workspaceId: string
   flow: FlowModel
+  canRevertToPublished: boolean
+  cancelAutosave: (() => void) | null
+  markSaved: ((nodes: Node[], edges: Edge[]) => void) | null
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -90,6 +107,21 @@ export function FlowEditToolbar({
     redo,
     reset,
   } = useFlowHistory()
+
+  const applyVersionToCanvas = useCallback(
+    (nodes: Node[], edges: Edge[]) => {
+      const normalizedEdges = edges.map((edge) => ({
+        ...edge,
+        type: "buttonedge",
+        markerEnd: { type: MarkerType.ArrowClosed },
+      }))
+      setNodes(nodes)
+      setEdges(normalizedEdges)
+      reset()
+      markSaved?.(nodes, normalizedEdges)
+    },
+    [markSaved, reset, setEdges, setNodes],
+  )
 
   useEffect(() => {
     if (branchClearedCount > lastBranchClearedCountRef.current) {
@@ -125,6 +157,26 @@ export function FlowEditToolbar({
     {
       onSuccess: () => {
         toast.success(t("messages.publishVersionSuccess"))
+      },
+    },
+  )
+
+  const { execute: executeRevert, isPending: isPendingRevert } = useAction(
+    revertToPublishedAction.bind(null, workspaceId, flow.id),
+    {
+      onSuccess: ({ data }) => {
+        if (data) {
+          cancelAutosave?.()
+          applyVersionToCanvas(data.nodes as Node[], data.edges as Edge[])
+          toast.success(t("messages.revertToPublishedSuccess"))
+          setAction(null)
+          router.refresh()
+        }
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )
@@ -261,7 +313,10 @@ export function FlowEditToolbar({
               <HistoryIcon />
               {t("actions.flowVersions")}
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem
+              disabled={!canRevertToPublished}
+              onClick={() => setAction("revertToPublished")}
+            >
               <RefreshCcwIcon />
               {t("actions.revertToPublished")}
             </DropdownMenuItem>
@@ -318,21 +373,46 @@ export function FlowEditToolbar({
         flow={flow}
         onOpenChange={() => setAction(null)}
         onRestoreSuccess={(nodes, edges) => {
-          setNodes(nodes as Node[])
-          setEdges(
-            (edges as Edge[]).map((edge) => ({
-              ...edge,
-              type: "buttonedge",
-              markerEnd: { type: MarkerType.ArrowClosed },
-            })),
-          )
-          reset()
+          applyVersionToCanvas(nodes as Node[], edges as Edge[])
         }}
         open={action === "flowVersions"}
         workspaceId={workspaceId}
       />
 
       {action === "analytics" && <AnalyticsFlow flow={flow} />}
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setAction(null)
+          }
+        }}
+        open={action === "revertToPublished"}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("messages.revertToPublishedConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-wrap">
+              {t("messages.revertToPublishedConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPendingRevert}
+              onClick={(event) => {
+                event.preventDefault()
+                executeRevert()
+              }}
+            >
+              {isPendingRevert && <Loader2Icon className="animate-spin" />}
+              {t("actions.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
