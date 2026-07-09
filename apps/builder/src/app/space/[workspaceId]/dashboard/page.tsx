@@ -4,7 +4,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
-import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function Dashboard({
   params,
@@ -15,7 +16,19 @@ export default async function Dashboard({
   if (!workspaceId) {
     return notFound()
   }
-  await requireWorkspacePermission(workspaceId, "analytics")
+
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (
+    !(
+      userAndWorkspace &&
+      hasWorkspacePermission(
+        userAndWorkspace.targetWorkspaceMember.permissions,
+        "analytics",
+      )
+    )
+  ) {
+    return notFound()
+  }
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
@@ -28,7 +41,14 @@ export default async function Dashboard({
 
   return (
     <div className="flex flex-col gap-4">
-      <InboxCardList inboxes={inboxes} workspaceId={workspaceId} />
+      <InboxCardList
+        allowAddNew={hasWorkspacePermission(
+          userAndWorkspace.targetWorkspaceMember.permissions,
+          "superAdmin",
+        )}
+        inboxes={inboxes}
+        workspaceId={workspaceId}
+      />
 
       <BaseDashboard
         defaultSearchParams={{

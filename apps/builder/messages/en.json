@@ -505,7 +505,8 @@
       "timeRequired": "Please select both start and end time",
       "activated": "Workspace activated",
       "deactivated": "Workspace deactivated",
-      "activeHours": "Active from {startTime} to {endTime}"
+      "activeHours": "Active from {startTime} to {endTime}",
+      "permissionRequired": "Only a super admin can change workspace active hours"
     }
   },
   "workspaces": {

@@ -1,6 +1,11 @@
 "use client"
 
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
@@ -11,8 +16,10 @@ import { WorkspaceScheduleDialog } from "./workspace-schedule-dialog"
 type Schedule = { startTime: string | null; endTime: string | null }
 
 export function WorkspaceStatusSwitch({
+  canManageStatus,
   workspace,
 }: {
+  canManageStatus: boolean
   workspace: {
     id: string
     isActive: boolean
@@ -61,14 +68,32 @@ export function WorkspaceStatusSwitch({
     }
   }
 
+  const switchElement = (
+    <Switch
+      checked={isActive}
+      className="absolute top-3 left-3 z-10"
+      disabled={!canManageStatus}
+      onCheckedChange={canManageStatus ? handleCheckedChange : undefined}
+      onClick={(e) => e.stopPropagation()}
+    />
+  )
+
   return (
     <>
-      <Switch
-        checked={isActive}
-        className="absolute top-3 left-3 z-10"
-        onCheckedChange={handleCheckedChange}
-        onClick={(e) => e.stopPropagation()}
-      />
+      {canManageStatus ? (
+        switchElement
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="absolute top-3 left-3 z-10 inline-flex">
+              {switchElement}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {t("workspace.schedule.permissionRequired")}
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       <WorkspaceScheduleDialog
         onOpenChange={setShowScheduleDialog}

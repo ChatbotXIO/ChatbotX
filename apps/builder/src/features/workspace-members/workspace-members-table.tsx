@@ -23,7 +23,12 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
+import {
+  CheckCircle2Icon,
+  CircleDashedIcon,
+  MoreHorizontalIcon,
+  XCircleIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { DeleteWorkspaceMemberDialog } from "./components/delete-workspace-member"
@@ -43,6 +48,38 @@ const renderPermissionCell = (enabled: boolean) =>
   ) : (
     <XCircleIcon className="size-5" />
   )
+
+const renderContactsCell = (
+  contacts: boolean,
+  onlyAssignedContacts: boolean,
+  t: ReturnType<typeof useTranslations>,
+) => {
+  if (contacts) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CheckCircle2Icon className="size-5 text-primary" />
+        </TooltipTrigger>
+        <TooltipContent>{t("fields.permissions.contacts")}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  if (onlyAssignedContacts) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CircleDashedIcon className="size-5 text-primary" />
+        </TooltipTrigger>
+        <TooltipContent>
+          {t("fields.permissions.onlyAssignedContacts")}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return <XCircleIcon className="size-5" />
+}
 
 export function WorkspaceMembersTable({
   promises,
@@ -137,19 +174,11 @@ export function WorkspaceMembersTable({
           />
         ),
         cell: ({ row }) =>
-          renderPermissionCell(row.original.permissions.contacts),
-        enableHiding: false,
-      },
-      {
-        id: "onlyAssignedContacts",
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t("fields.permissions.onlyAssignedContacts")}
-          />
-        ),
-        cell: ({ row }) =>
-          renderPermissionCell(row.original.permissions.onlyAssignedContacts),
+          renderContactsCell(
+            row.original.permissions.contacts,
+            row.original.permissions.onlyAssignedContacts,
+            t,
+          ),
         enableHiding: false,
       },
       {
