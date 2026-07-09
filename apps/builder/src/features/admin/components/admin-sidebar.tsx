@@ -9,6 +9,7 @@ import {
 import {
   CircleHelpIcon,
   Grid2x2PlusIcon,
+  ListTodoIcon,
   MailIcon,
   PaletteIcon,
 } from "lucide-react"
@@ -70,6 +71,15 @@ export function AdminSidebar({
       : []),
   ]
 
+  const toolsItems = [
+    {
+      title: t("platformAdmin.queues.title"),
+      url: "/developer/queues",
+      icon: ListTodoIcon,
+      crossZone: true,
+    },
+  ]
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-0 px-0 py-0">
@@ -82,6 +92,7 @@ export function AdminSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={platformItems} label={tManage("platformGroup")} />
+        <NavMain items={toolsItems} label={tManage("toolsGroup")} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

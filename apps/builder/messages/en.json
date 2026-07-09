@@ -3167,6 +3167,9 @@
     "helpItems": {
       "title": "Help Links",
       "description": "Help links shown in the sidebar for all workspaces that don't belong to a white-label tenant."
+    },
+    "queues": {
+      "title": "Queues"
     }
   },
   "platformCredentials": {
@@ -3236,6 +3239,7 @@
   },
   "manageSidebar": {
     "platformGroup": "Platform",
+    "toolsGroup": "Tools",
     "saasGroup": "SaaS",
     "portalUsers": "Sub-accounts",
     "portalWorkspaces": "Workspaces",

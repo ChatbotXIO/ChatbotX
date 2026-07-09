@@ -17,6 +17,7 @@ type NavItem = {
   icon?: LucideIcon
   isActive?: boolean
   items?: { title: string; url: string }[]
+  crossZone?: boolean
 }
 
 export function NavMain({
@@ -44,8 +45,8 @@ export function NavMain({
                 isActive={isActive}
                 tooltip={item.title}
               >
-                {crossZone ? (
-                  // Cross-zone: use <a> to force full navigation to portal app
+                {crossZone || item.crossZone ? (
+                  // Cross-zone: use <a> to force full navigation outside the Next router
                   <a className={linkClass} href={item.url}>
                     {item.icon && <item.icon className="size-5 shrink-0" />}
                     <span>{item.title}</span>
