@@ -106,6 +106,21 @@ const nextConfig: NextConfig = {
     new URL(env.NEXT_PUBLIC_BUILDER_URL).host,
     ...(env.NEXT_PUBLIC_ALLOWED_DEV_ORIGINS ?? []),
   ],
+
+  // Resolve bull-board and bullmq from node_modules at runtime, not from the bundle.
+  serverExternalPackages: [
+    "@bull-board/api",
+    "@bull-board/ui",
+    "@bull-board/hono",
+    "bullmq",
+  ],
+
+  outputFileTracingRoot: require("path").join(import.meta.dirname, "../../"),
+
+  // Force the compiled UI into the serverless function (the tracer can't see the eval).
+  outputFileTracingIncludes: {
+    "/developer/queues/*": ["./node_modules/@bull-board/ui/dist/**/*"],
+  },
 }
 
 export default withNextIntl(nextConfig)

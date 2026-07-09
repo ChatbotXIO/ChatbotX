@@ -3169,6 +3169,9 @@
     "helpItems": {
       "title": "Liên kết hỗ trợ",
       "description": "Liên kết hỗ trợ hiển thị trong thanh bên cho tất cả workspace không thuộc về tenant white-label."
+    },
+    "queues": {
+      "title": "Hàng chờ"
     }
   },
   "platformCredentials": {
@@ -3238,6 +3241,7 @@
   },
   "manageSidebar": {
     "platformGroup": "Nền tảng",
+    "toolsGroup": "Công cụ",
     "saasGroup": "SaaS",
     "portalUsers": "Tài khoản con",
     "portalWorkspaces": "Workspace",
