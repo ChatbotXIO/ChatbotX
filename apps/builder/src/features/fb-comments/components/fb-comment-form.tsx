@@ -448,7 +448,7 @@ export function FbCommentForm({
               name="options.ignoreCommentReplies"
               required
             />
-            <SwitchField
+            {/* <SwitchField
               description={t(
                 "facebookCommentAutomation.options.trackUserTagsDescription",
               )}
@@ -456,7 +456,7 @@ export function FbCommentForm({
               label={t("facebookCommentAutomation.options.trackUserTags")}
               name="options.trackUserTags"
               required
-            />
+            /> */}
           </div>
         </CardContent>
       </Card>

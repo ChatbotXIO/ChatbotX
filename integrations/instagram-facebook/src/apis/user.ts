@@ -1,10 +1,53 @@
 import type { Context, IncomingContact } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { API_URL } from "../constants"
-import { rescue } from "../exception"
+import { InstagramAPIException, rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type { InstagramAuthValue, InstagramUserProfile } from "../schemas"
+
+const GRAPH_NONEXISTING_FIELD_ERROR_CODE = 100
+
+const isNonexistingFieldError = (error: unknown): boolean =>
+  error instanceof InstagramAPIException &&
+  error.code === GRAPH_NONEXISTING_FIELD_ERROR_CODE &&
+  error.message.includes("nonexisting field")
+
+const fetchProfileFields = async ({
+  ctx,
+  psid,
+  includeProfilePic,
+}: {
+  ctx: Context<InstagramAuthValue>
+  psid: string
+  includeProfilePic: boolean
+}): Promise<InstagramUserProfile> => {
+  const fields = includeProfilePic
+    ? "name,username,profile_pic"
+    : "name,username"
+  const queries = new URLSearchParams({
+    fields,
+    access_token: ctx.auth.tokens.accessToken,
+  })
+
+  try {
+    return await instagramGraphClient.get<InstagramUserProfile>(
+      `${ctx.auth.metadata.version}/${psid}?${queries.toString()}`,
+    )
+  } catch (error) {
+    // Graph rejects `profile_pic` on some nodes (e.g. the business account's
+    // own id echoed back as a commenter). Retry without it instead of failing
+    // the whole profile lookup over one unavailable field.
+    if (includeProfilePic && isNonexistingFieldError(error)) {
+      logger.warn(
+        { psid },
+        "getUserProfile: profile_pic unavailable, retrying without it",
+      )
+      return await fetchProfileFields({ ctx, psid, includeProfilePic: false })
+    }
+    throw error
+  }
+}
 
 export const getUserProfile = ({
   ctx,
@@ -16,13 +59,11 @@ export const getUserProfile = ({
   const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${psid}`
 
   return rescue(endpoint, async () => {
-    const queries = new URLSearchParams({
-      fields: "name,username,profile_pic",
-      access_token: ctx.auth.tokens.accessToken,
+    const response = await fetchProfileFields({
+      ctx,
+      psid,
+      includeProfilePic: true,
     })
-    const response = await instagramGraphClient.get<InstagramUserProfile>(
-      `${ctx.auth.metadata.version}/${psid}?${queries.toString()}`,
-    )
 
     const result: IncomingContact = {
       sourceId: psid,

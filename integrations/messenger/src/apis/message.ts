@@ -21,6 +21,7 @@ export const sendPageMessage = (
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
       json: payload,
+      retry: 0,
     }),
   )
 }

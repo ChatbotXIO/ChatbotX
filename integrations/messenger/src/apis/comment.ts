@@ -30,6 +30,7 @@ export const sendComment = (
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
       json: body,
+      retry: 0,
     }),
   )
 }
@@ -125,6 +126,7 @@ export const sendPrivateReply = (
           recipient: { comment_id: commentId },
           message: { text: message },
         },
+        retry: 0,
       },
     ),
   )

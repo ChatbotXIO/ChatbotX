@@ -384,6 +384,14 @@ export const receiveComment = async (
 
   const { integrationType, integrationIdentifier, commentData } = props
 
+  if (commentData.fromId === integrationIdentifier) {
+    logger.info(
+      { commentId: commentData.commentId, integrationIdentifier },
+      "receiveComment: skipping self-authored comment",
+    )
+    return
+  }
+
   const { inbox, integrationRow } =
     await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
       integrationType as IntegrationType,

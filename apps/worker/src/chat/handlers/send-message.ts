@@ -14,7 +14,6 @@ import {
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
-  ChannelError,
   type MessageButtonTemplate,
   parseSdkError,
   type SendFlowStepData,
@@ -33,6 +32,7 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
+import { shouldSuppressRetryableChannelError } from "../utils/retry"
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
@@ -146,7 +146,7 @@ export async function sendMessageToChannel(
       occurredAt: new Date(),
       metadata,
     })
-    if (error instanceof ChannelError && !error.isRetryable) {
+    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
       return
     }
     throw error
