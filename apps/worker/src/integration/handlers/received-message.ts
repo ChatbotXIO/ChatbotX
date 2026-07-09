@@ -147,6 +147,7 @@ export const receiveMessage = async (
     incomingContact,
     inbox,
     integrationRow,
+    skipProfileLookup: incomingMessage?.messageType === "outgoing",
     source:
       metaReferralToContactSource(referralSource) ??
       contactSources.enum.inboundMessage,
@@ -587,12 +588,14 @@ const detectContactAndConversation = async (props: {
     [x: string]: unknown
   }
   source: ContactSource
+  skipProfileLookup?: boolean
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
 }> => {
-  const { incomingContact, inbox, integrationRow, source } = props
+  const { incomingContact, inbox, integrationRow, source, skipProfileLookup } =
+    props
 
   const existingContactInbox = await db.query.contactInboxModel.findFirst({
     where: {
@@ -628,7 +631,7 @@ const detectContactAndConversation = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
-  if (canGetUserProfileIfNeeded(inbox.channel)) {
+  if (canGetUserProfileIfNeeded(inbox.channel) && !skipProfileLookup) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
         ? "instagramFacebook"
@@ -640,17 +643,24 @@ const detectContactAndConversation = async (props: {
         integrationType,
         integration: integrationRow,
       })
-      const userProfile = await profileIntegration.runChannelHandler(
-        "contact",
-        "getProfile",
-        {
-          ctx: profileCtx,
-          data: { sourceId: incomingContact.sourceId },
-        },
-      )
-      contactData = {
-        ...contactData,
-        ...userProfile,
+      try {
+        const userProfile = await profileIntegration.runChannelHandler(
+          "contact",
+          "getProfile",
+          {
+            ctx: profileCtx,
+            data: { sourceId: incomingContact.sourceId },
+          },
+        )
+        contactData = {
+          ...contactData,
+          ...userProfile,
+        }
+      } catch (error) {
+        logger.warn(
+          { error, sourceId: incomingContact.sourceId, channel: inbox.channel },
+          "detectContactAndConversation: getProfile failed, creating contact without profile data",
+        )
       }
     }
   }

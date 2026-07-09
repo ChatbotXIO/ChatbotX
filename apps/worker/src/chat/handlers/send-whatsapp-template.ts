@@ -203,11 +203,19 @@ export async function processWhatsappTemplate(
     const providerMessageId = result?.messageIds?.[0]
 
     if (providerMessageId) {
-      await repository.updateSourceId(
-        newMessage.id,
-        providerMessageId,
-        conversation.workspaceId,
-      )
+      try {
+        await repository.updateSourceId(
+          newMessage.id,
+          providerMessageId,
+          conversation.workspaceId,
+          newMessage.createdAt,
+        )
+      } catch (err) {
+        logger.error(
+          err,
+          "Failed to persist WhatsApp template sourceId after a successful send",
+        )
+      }
     }
 
     return {

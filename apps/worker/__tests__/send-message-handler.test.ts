@@ -141,6 +141,8 @@ describe("chat send-message handlers", () => {
       messageIds: ["wamid.echo-1"],
     })
 
+    const createdAt = new Date("2026-07-09T08:37:21.108Z")
+
     await sendMessageToChannel({
       conversation: conversation as never,
       contactInbox: contactInbox as never,
@@ -154,6 +156,7 @@ describe("chat send-message handlers", () => {
         senderType: "bot",
         sourceId: null,
         text: "automated reply",
+        createdAt,
       } as never,
     })
 
@@ -161,7 +164,40 @@ describe("chat send-message handlers", () => {
       "msg-bot-1",
       "wamid.echo-1",
       "ws-1",
+      createdAt,
     )
+  })
+
+  test("does not retry the send when persisting a comment reply's sourceId fails", async () => {
+    // Regression: the reply is already live on the channel at this point — a
+    // thrown error here must be swallowed, not rethrown, or BullMQ redelivers
+    // the job and sendComment fires again, posting a second duplicate reply.
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["reply-1"],
+    })
+    mockUpdateSourceId.mockRejectedValueOnce(new Error("shard write failed"))
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-comment-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "comment reply",
+          type: "comment",
+          parentId: "parent-1",
+          createdAt: new Date("2026-07-09T08:37:21.108Z"),
+        } as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
   })
 
   test("auto-unblocks after a successful non-comment send", async () => {

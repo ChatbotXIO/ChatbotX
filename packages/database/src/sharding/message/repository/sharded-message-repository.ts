@@ -460,18 +460,19 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
-  async updateSourceId(
+  updateSourceId(
     id: string,
     sourceId: string,
     workspaceId: string,
-  ): Promise<void> {
-    return await withShardRetry(async () => {
-      const db = await this.shardManager.getShardForWrite(workspaceId)
-      await db
-        .update(messageModel)
-        .set({ sourceId })
-        .where(eq(messageModel.id, id))
-    })
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      id,
+      workspaceId,
+      { sourceId },
+      "updateSourceId",
+      createdAt,
+    )
   }
 
   async deleteBySourceId(

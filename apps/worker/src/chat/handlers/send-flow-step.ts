@@ -389,6 +389,7 @@ export async function sendFlowStep({
         richResponse,
         quickReplies: canonicalQuickReplies,
         messageId: message?.id,
+        messageCreatedAt: message?.createdAt,
         sendFrom,
       }),
     ]
