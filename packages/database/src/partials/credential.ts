@@ -4,6 +4,7 @@ export const credentialTypes = z.enum([
   "whatsapp",
   "messenger",
   "instagram",
+  "instagramFacebook",
   "google",
   "zalo",
   "giphy",
@@ -77,6 +78,13 @@ export const instagramCredentialPublicSchema = instagramCredentialSchema.pick({
 export type InstagramCredentialPublic = z.infer<
   typeof instagramCredentialPublicSchema
 >
+
+export const instagramFacebookCredentialSchema = instagramCredentialSchema
+export type InstagramFacebookCredential = InstagramCredential
+
+export const instagramFacebookCredentialPublicSchema =
+  instagramCredentialPublicSchema
+export type InstagramFacebookCredentialPublic = InstagramCredentialPublic
 
 export const googleCredentialSchema = z.object({
   clientId: z.string(),
@@ -179,6 +187,7 @@ export const credentialSchemas = {
   whatsapp: whatsappCredentialSchema,
   messenger: messengerCredentialSchema,
   instagram: instagramCredentialSchema,
+  instagramFacebook: instagramFacebookCredentialSchema,
   google: googleCredentialSchema,
   zalo: zaloCredentialSchema,
   giphy: giphyCredentialSchema,
@@ -192,6 +201,7 @@ export const credentialPublicSchemas = {
   whatsapp: whatsappCredentialPublicSchema,
   messenger: messengerCredentialPublicSchema,
   instagram: instagramCredentialPublicSchema,
+  instagramFacebook: instagramFacebookCredentialPublicSchema,
   google: googleCredentialPublicSchema,
   zalo: zaloCredentialPublicSchema,
   giphy: giphyCredentialPublicSchema,
@@ -205,6 +215,7 @@ export type CredentialByType = {
   whatsapp: WhatsappCredential
   messenger: MessengerCredential
   instagram: InstagramCredential
+  instagramFacebook: InstagramFacebookCredential
   google: GoogleCredential
   zalo: ZaloCredential
   giphy: GiphyCredential
@@ -218,6 +229,7 @@ export type CredentialPublicByType = {
   whatsapp: WhatsappCredentialPublic
   messenger: MessengerCredentialPublic
   instagram: InstagramCredentialPublic
+  instagramFacebook: InstagramFacebookCredentialPublic
   google: GoogleCredentialPublic
   zalo: ZaloCredentialPublic
   giphy: GiphyCredentialPublic
@@ -263,6 +275,10 @@ export const instagramCredentialUpdateSchema = z.object({
 export type InstagramCredentialUpdate = z.infer<
   typeof instagramCredentialUpdateSchema
 >
+
+export const instagramFacebookCredentialUpdateSchema =
+  instagramCredentialUpdateSchema
+export type InstagramFacebookCredentialUpdate = InstagramCredentialUpdate
 
 export const googleCredentialUpdateSchema = z.object({
   clientId: z.string().trim(),

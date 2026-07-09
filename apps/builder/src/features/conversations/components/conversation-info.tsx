@@ -55,10 +55,10 @@ export function ConversationInfo() {
           <Image
             alt=""
             className="shrink-0 rounded object-cover"
-            height={56}
+            height={100}
             src={activePost.picture}
             unoptimized
-            width={56}
+            width={100}
           />
         )}
         <span className="text-[11px] text-muted-foreground">

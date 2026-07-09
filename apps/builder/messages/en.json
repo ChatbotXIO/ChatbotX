@@ -530,7 +530,15 @@
       "label": "Image"
     },
     "instagram": {
-      "label": "Instagram"
+      "label": "Instagram",
+      "loginTitle": "Login with Instagram",
+      "loginDescription": "Connect your Instagram Business account directly via Instagram OAuth.",
+      "facebookLoginTitle": "Login with Facebook",
+      "facebookLoginDescription": "Connect an Instagram account linked to your Facebook Page via Facebook OAuth.",
+      "connectViaFacebook": "Connect Instagram via Facebook",
+      "viaFacebookTitle": "Instagram via Facebook",
+      "cloneFromMessenger": "Clone from Messenger",
+      "clonedFromMessenger": "Cloned from Messenger"
     },
     "zalo": {
       "label": "Zalo OA"

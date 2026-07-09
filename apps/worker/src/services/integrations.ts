@@ -14,6 +14,7 @@ import type {
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
 import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
+import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import { integration as integrationSmtp } from "@chatbotx.io/integration-smtp"
 import { integration as integrationTelegram } from "@chatbotx.io/integration-telegram"
@@ -47,6 +48,19 @@ export const allIntegrations: Record<
   chatbotx: integrationChatbotx,
   smtp: integrationSmtp,
   instagram: integrationInstagram,
+  instagramFacebook: integrationInstagramFacebook,
+}
+
+export type IntegrationRow = {
+  id: string
+  auth: AuthValue
+  inboxId: string
+  type?: string
+  [x: string]: unknown
+}
+
+export function isInstagramViaFacebook(row: IntegrationRow): boolean {
+  return row.type === "facebook"
 }
 
 export const integrationService = {
@@ -56,12 +70,7 @@ export const integrationService = {
   ): Promise<{
     workspace: WorkspaceModel
     inbox: InboxModel
-    integrationRow: {
-      id: string
-      auth: AuthValue
-      inboxId: string
-      [x: string]: unknown
-    }
+    integrationRow: IntegrationRow
   }> => {
     let modelName: string | null = null
     let columnName: string | null = null
@@ -88,6 +97,11 @@ export const integrationService = {
         break
       }
       case "instagram": {
+        modelName = "IntegrationInstagram"
+        columnName = "igId"
+        break
+      }
+      case "instagramFacebook": {
         modelName = "IntegrationInstagram"
         columnName = "igId"
         break
@@ -140,12 +154,7 @@ export const integrationService = {
 
   getIntegrationFromContactInbox: async (
     contactInbox: ContactInboxModel,
-  ): Promise<{
-    id: string
-    auth: AuthValue
-    inboxId: string
-    [x: string]: unknown
-  }> => {
+  ): Promise<IntegrationRow> => {
     const inboxName = contactInbox.channel
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -195,7 +204,7 @@ export async function resolveIntegrationContextFromContactInbox(args: {
   workspaceId: string
   contactInbox: ContactInboxModel
 }): Promise<ResolvedIntegrationContext> {
-  const integration = allIntegrations[args.contactInbox.channel]
+  let integration = allIntegrations[args.contactInbox.channel]
   if (!integration) {
     throw new SdkException(
       `No integration registered for channel: ${args.contactInbox.channel}`,
@@ -204,6 +213,13 @@ export async function resolveIntegrationContextFromContactInbox(args: {
 
   const integrationRow =
     await integrationService.getIntegrationFromContactInbox(args.contactInbox)
+
+  if (
+    args.contactInbox.channel === "instagram" &&
+    isInstagramViaFacebook(integrationRow)
+  ) {
+    integration = allIntegrations.instagramFacebook ?? integration
+  }
 
   return {
     integration,

@@ -2,6 +2,8 @@ import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 
 export const FB_MESSENGER_PENDING_AUTH_COOKIE = "fb_messenger_pending_auth"
 export const FB_INSTAGRAM_PENDING_AUTH_COOKIE = "fb_instagram_pending_auth"
+export const FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE =
+  "fb_instagram_facebook_pending_auth"
 export const FB_PENDING_AUTH_MAX_AGE = 600 // seconds — 10 minutes
 
 export type FacebookAuthCallback = {

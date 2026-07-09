@@ -10,6 +10,7 @@ import {
   integrationModel,
 } from "@chatbotx.io/database/schema"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
+import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import { exchangeCodeForToken as exchangeMessengerCode } from "@chatbotx.io/integration-messenger"
 import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
 import {
@@ -27,6 +28,7 @@ import { integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import {
   encryptAuth,
+  FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
   FB_INSTAGRAM_PENDING_AUTH_COOKIE,
   FB_MESSENGER_PENDING_AUTH_COOKIE,
   FB_PENDING_AUTH_MAX_AGE,
@@ -198,6 +200,45 @@ export const handleCallback = async (
       })
       return redirect(
         new URL("/channels/instagram/select", safeReferer).toString(),
+      )
+    }
+
+    case "instagramFacebook": {
+      const instagramFacebookCredential =
+        await platformCredentialService.resolveForOwner({
+          ownerId: workspace.ownerId,
+          type: "instagramFacebook",
+        })
+      if (!instagramFacebookCredential) {
+        return notFound()
+      }
+
+      const callbackUrl = buildBrokerCallbackUrl(
+        "/integrations/instagram-facebook/callback",
+      )
+
+      const userToken = await exchangeInstagramFacebookCode(
+        instagramFacebookCredential.config,
+        code,
+        callbackUrl,
+      )
+      const token = await encryptAuth({
+        userToken,
+        workspaceId: workspace.id,
+        referer: safeReferer,
+        version: instagramFacebookCredential.config.version,
+        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
+      })
+      const cookieStore = await cookies()
+      cookieStore.set(FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: FB_PENDING_AUTH_MAX_AGE,
+        path: "/channels/instagram-facebook/select",
+      })
+      return redirect(
+        new URL("/channels/instagram-facebook/select", safeReferer).toString(),
       )
     }
 

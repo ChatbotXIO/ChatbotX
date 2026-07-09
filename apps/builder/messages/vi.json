@@ -537,7 +537,15 @@
       "label": "Hình ảnh"
     },
     "instagram": {
-      "label": "Instagram"
+      "label": "Instagram",
+      "loginTitle": "Đăng nhập bằng Instagram",
+      "loginDescription": "Kết nối tài khoản Instagram Business trực tiếp qua Instagram OAuth.",
+      "facebookLoginTitle": "Đăng nhập bằng Facebook",
+      "facebookLoginDescription": "Kết nối tài khoản Instagram được liên kết với Facebook Page qua Facebook OAuth.",
+      "connectViaFacebook": "Kết nối Instagram qua Facebook",
+      "viaFacebookTitle": "Instagram qua Facebook",
+      "cloneFromMessenger": "Sao chép từ Messenger",
+      "clonedFromMessenger": "Đã sao chép từ Messenger"
     },
     "zalo": {
       "label": "Zalo OA"

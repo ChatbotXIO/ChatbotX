@@ -467,6 +467,42 @@ logger.error({ error }, "Webhook handler failed");
 
 Always use `err: error` (not `error: error`) — pino's built-in serializer is registered under the `err` key.
 
+## Comment Handler Pattern
+
+Some integrations (messenger, instagram-facebook) expose a `comment` channel alongside `message`. The structure mirrors `message` handlers:
+
+```
+handlers/
+  comment/
+    index.ts                    ← exports commentHandlers object
+    actions.ts                  ← deleteComment, hideComment, likeComment, editComment
+    outgoing-comment/
+      index.ts                  ← sendComment
+```
+
+**`index.ts`:**
+
+```typescript
+import { deleteComment, editComment, hideComment, likeComment } from "./actions"
+import { sendComment } from "./outgoing-comment"
+
+export const commentHandlers = {
+  sendComment,
+  editComment,
+  deleteComment,
+  likeComment,
+  hideComment,
+}
+```
+
+**`actions.ts`** — wrap API calls, catch errors, re-throw as `mapToChannelError(error)`.
+
+**`sendComment`** — requires `message.contentAttributes.replyToCommentId` (string); throw `ChannelError(PAYLOAD_INVALID)` if missing.
+
+**`editComment`** — if the platform does not support editing comments (e.g. Facebook/Instagram), resolve immediately with no-op and log a warning.
+
+**Webhook routing** — comment events arrive as `changes` entries with `field === "comments"`. Parse with a typed Zod schema, then `queue.add("incomingComment", { type: "incomingComment", data: { commentData: {...} } })`.
+
 ## Webhook Flow
 
 1. External platform sends webhook to `/integrations/<channel>/webhook`
@@ -488,14 +524,15 @@ branded domain, so a webhook on the reseller domain silently fails. See
 
 ## Existing Integrations Reference
 
-| Integration   | Auth type | Platform credentials? | Notes                                                     |
-| ------------- | --------- | --------------------- | --------------------------------------------------------- |
-| messenger     | OAuth2    | YES                   | clientId/clientSecret as platform credential              |
-| whatsapp      | OAuth2    | YES                   | clientId/clientSecret + systemUser as platform credential |
-| zalo          | OAuth2    | YES                   | clientId/clientSecret as platform credential              |
-| tiktok        | OAuth2    | YES                   | clientId/clientSecret as platform credential              |
-| google-sheets | OAuth2    | YES                   | clientId/clientSecret as platform credential              |
-| email         | Custom    | NO                    | SMTP credentials per workspace                            |
-| smtp          | Custom    | NO                    | SMTP with provider presets                                |
-| webchat       | Custom    | NO                    | PartySocket-based                                         |
-| chatbotx      | Custom    | NO                    | Internal chatbot                                          |
+| Integration         | Auth type | Platform credentials? | Notes                                                                                                                              |
+| ------------------- | --------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| messenger           | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
+| whatsapp            | OAuth2    | YES                   | clientId/clientSecret + systemUser as platform credential                                                                          |
+| zalo                | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
+| tiktok              | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
+| google-sheets       | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
+| instagram-facebook  | OAuth2    | YES                   | Meta/Facebook app (clientId/clientSecret); auth via Facebook Graph API for Instagram Business/Creator accounts linked to FB Pages; handles DMs + post comments; Personal accounts filtered out; integration name in code: `instagramFacebook` |
+| email               | Custom    | NO                    | SMTP credentials per workspace                                                                                                     |
+| smtp                | Custom    | NO                    | SMTP with provider presets                                                                                                         |
+| webchat             | Custom    | NO                    | PartySocket-based                                                                                                                  |
+| chatbotx            | Custom    | NO                    | Internal chatbot                                                                                                                   |
