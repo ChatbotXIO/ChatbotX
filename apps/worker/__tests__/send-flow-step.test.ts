@@ -89,8 +89,9 @@ const {
       .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
     mockResolveContactVariables: vi
       .fn()
-      .mockImplementation((_contactId: string, step: unknown) =>
-        Promise.resolve(step),
+      .mockImplementation(
+        (_contactId: string, step: unknown, _source: unknown) =>
+          Promise.resolve(step),
       ),
     mockUploadFileFromUrl: vi.fn().mockResolvedValue({
       originPath: "public/space/ws-1/conversations/conv-1/file-id",
@@ -299,7 +300,8 @@ describe("sendFlowStep", () => {
       storageUrl: "https://storage.example.com",
     })
     mockResolveContactVariables.mockImplementation(
-      (_contactId: string, step: unknown) => Promise.resolve(step),
+      (_contactId: string, step: unknown, _source: unknown) =>
+        Promise.resolve(step),
     )
     mockRepositoryCreate.mockResolvedValue({
       id: "msg-created",
@@ -376,6 +378,13 @@ describe("sendFlowStep", () => {
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.objectContaining({
         sendFrom: "inbox",
+      }),
+    )
+    expect(mockResolveContactVariables).toHaveBeenCalledWith(
+      "contact-1",
+      sendTextStep,
+      expect.objectContaining({
+        contactInbox: expect.objectContaining({ id: "ci-1" }),
       }),
     )
   })

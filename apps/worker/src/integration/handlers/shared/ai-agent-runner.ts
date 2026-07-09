@@ -26,6 +26,7 @@ import type {
 } from "@chatbotx.io/database/partials"
 import type {
   AIAgentModel,
+  ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
@@ -34,6 +35,7 @@ import { logger } from "../../../lib/logger"
 
 export type ReplyByAIProps = {
   conversation: ConversationModel
+  contactInbox: ContactInboxModel
   messages: ModelMessage[]
   aiAgent: AIAgentModel
   summary?: string
@@ -137,9 +139,10 @@ async function runAIReplyInternal(
       return null
     }
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox: props.contactInbox,
+    })
     const promptBase = aiAgent.prompt
       ? await contactVariableService.replaceAll({
           text: aiAgent.prompt,

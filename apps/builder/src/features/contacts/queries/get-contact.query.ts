@@ -1,11 +1,20 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import {
+  maskContactEmailAndPhone,
+  resolveContactPermissionScope,
+} from "../permissions"
 import type { GetContactRequest, GetContactResponse } from "../schemas/query"
 
 export async function getContact(
   input: GetContactRequest,
 ): Promise<GetContactResponse> {
+  const scope = await resolveContactPermissionScope(input.workspaceId)
+  if (!scope) {
+    throw notFoundException("Contact not found")
+  }
+
   const contact = await db.query.contactModel.findFirst({
     where: {
       id: input.contactId,
@@ -24,6 +33,7 @@ export async function getContact(
           sequence: true,
         },
       },
+      conversation: true,
     },
   })
 
@@ -31,10 +41,24 @@ export async function getContact(
     throw notFoundException("Contact not found")
   }
 
-  const { contactCustomFields, ...contactFields } = contact
+  if (
+    scope.restrictToAssignedUserId &&
+    contact.conversation?.assignedUserId !== scope.restrictToAssignedUserId
+  ) {
+    throw notFoundException("Contact not found")
+  }
+
+  const {
+    contactCustomFields,
+    conversation: _conversation,
+    ...contactFields
+  } = contact
+  const visibleContactFields = scope.canViewEmailAndPhone
+    ? contactFields
+    : maskContactEmailAndPhone(contactFields)
 
   return {
-    ...contactFields,
+    ...visibleContactFields,
     customFields: contactCustomFields.map((ccf) => ({
       ...ccf.customField,
       type: ccf.customField.type as CustomFieldType,

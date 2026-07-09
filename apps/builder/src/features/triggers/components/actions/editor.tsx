@@ -45,8 +45,10 @@ export const ActionEditor = ({
     case triggerActions.enum.startAnotherFlow:
       return (
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           name={`${parentName}.flowId`}
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
       )

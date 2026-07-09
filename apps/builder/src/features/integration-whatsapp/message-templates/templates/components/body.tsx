@@ -83,7 +83,7 @@ const TemplateBodyComponent = ({ parentName }: { parentName: string }) => {
             autoFocus
             maxLength={1024}
             onChange={(e) => onChangeValue(e.target.value)}
-            placeholder="Enter text"
+            placeholder={t("actions.enterText")}
             value={localBody}
           />
           <Button onClick={addParam} variant="link">

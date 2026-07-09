@@ -14,7 +14,6 @@ import {
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
-  ChannelError,
   type MessageButtonTemplate,
   parseSdkError,
   type SendFlowStepData,
@@ -33,6 +32,7 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
+import { shouldSuppressRetryableChannelError } from "../utils/retry"
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
@@ -60,7 +60,10 @@ export async function sendMessageToChannel(
         ...message,
         contentAttributes: {
           ...message.contentAttributes,
-          replyToCommentId: parentMsg?.sourceId ?? null,
+          replyToCommentId:
+            parentMsg?.sourceId ??
+            message.contentAttributes?.replyToCommentId ??
+            null,
         },
       }
     }
@@ -95,20 +98,35 @@ export async function sendMessageToChannel(
       // ID of the new reply so the page manager can edit/delete it later.
       const replyId = result.messageIds[0]
       if (message.parentId && replyId && message.id) {
-        const repo = await createMessageRepository()
-        await repo.updateSourceId(message.id, replyId, conversation.workspaceId)
+        // The reply was already sent successfully — a failure past this
+        // point must never rethrow, or BullMQ retries the whole job and
+        // sendComment fires again, posting a second live duplicate reply.
+        try {
+          const repo = await createMessageRepository()
+          await repo.updateSourceId(
+            message.id,
+            replyId,
+            conversation.workspaceId,
+            new Date(message.createdAt),
+          )
 
-        // Notify the client so edit/delete buttons appear immediately without a refresh.
-        await chatQueue.add(ChatJobAction.broadcastEvent, {
-          type: ChatJobAction.broadcastEvent,
-          data: {
-            workspaceId: conversation.workspaceId,
-            event: {
-              eventType: RealtimeEventType.messageIdAssigned,
-              data: { messageId: message.id, commentId: replyId },
+          // Notify the client so edit/delete buttons appear immediately without a refresh.
+          await chatQueue.add(ChatJobAction.broadcastEvent, {
+            type: ChatJobAction.broadcastEvent,
+            data: {
+              workspaceId: conversation.workspaceId,
+              event: {
+                eventType: RealtimeEventType.messageIdAssigned,
+                data: { messageId: message.id, commentId: replyId },
+              },
             },
-          },
-        })
+          })
+        } catch (err) {
+          logger.error(
+            err,
+            "Failed to persist comment reply sourceId after a successful send",
+          )
+        }
       }
     } else {
       // Persist the provider message id as this row's sourceId. The channel
@@ -116,7 +134,12 @@ export async function sendMessageToChannel(
       // handler dedups through createOrUpdate → findBySourceId. Without a
       // sourceId here, bot/agent outgoing rows stay sourceId=null, the echo
       // lookup misses, and a duplicate row is inserted as senderType=user.
-      await updateMessageSourceId(message.id, conversation.workspaceId, result)
+      await updateMessageSourceId(
+        message.id,
+        conversation.workspaceId,
+        new Date(message.createdAt),
+        result,
+      )
       try {
         await contactService.unblockIfBlocked({
           workspaceId: conversation.workspaceId,
@@ -143,7 +166,7 @@ export async function sendMessageToChannel(
       occurredAt: new Date(),
       metadata,
     })
-    if (error instanceof ChannelError && !error.isRetryable) {
+    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
       return
     }
     throw error
@@ -257,6 +280,19 @@ export async function changeMessageStateOnChannel(
     return
   }
 
+  const current =
+    (found.attributes as { liked?: boolean; hidden?: boolean } | null) ?? {}
+  const newAttributes = {
+    liked: liked === undefined ? (current.liked ?? false) : liked,
+    hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
+  }
+  await repository.updateMessageAttributes(
+    message.id,
+    conversation.workspaceId,
+    newAttributes,
+    found.createdAt,
+  )
+
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,
@@ -308,13 +344,19 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
 async function updateMessageSourceId(
   messageId: string | undefined,
   workspaceId: string,
+  createdAt: Date | undefined,
   result: { messageIds: string[] },
 ) {
   try {
     const firstMessageId = result?.messageIds?.[0]
-    if (messageId && firstMessageId) {
+    if (messageId && firstMessageId && createdAt) {
       const repo = await createMessageRepository()
-      await repo.updateSourceId(messageId, firstMessageId, workspaceId)
+      await repo.updateSourceId(
+        messageId,
+        firstMessageId,
+        workspaceId,
+        createdAt,
+      )
     }
   } catch (err) {
     logger.error(err, "Failed to update message sourceId with provider id")
@@ -331,6 +373,7 @@ export async function sendFlowStepToChannel({
   metadata,
   richResponse,
   messageId,
+  messageCreatedAt,
   sendFrom,
 }: {
   conversation: ConversationModel
@@ -342,6 +385,7 @@ export async function sendFlowStepToChannel({
   metadata?: MetadataPayload
   richResponse?: ChatJobSendFlowStep["data"]["richResponse"]
   messageId?: string
+  messageCreatedAt?: Date
   sendFrom?: "inbox"
 }): Promise<{ messageIds: string[] }> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
@@ -391,7 +435,12 @@ export async function sendFlowStepToChannel({
     },
   )
 
-  await updateMessageSourceId(messageId, conversation.workspaceId, result)
+  await updateMessageSourceId(
+    messageId,
+    conversation.workspaceId,
+    messageCreatedAt,
+    result,
+  )
 
   return result
 }

@@ -147,6 +147,7 @@ const SendGridDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(submit)}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("sendGrid.fields.list")}
               name="listId"
               options={listOptions}
@@ -197,6 +198,7 @@ const SendGridDialog = ({ parentName }: { parentName: string }) => {
                   />
                   <ArrowRightIcon className="size-4 text-muted-foreground" />
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     label=""
                     name={`mergeFields.${index}.sendGridField`}
                     options={customFieldOptions}

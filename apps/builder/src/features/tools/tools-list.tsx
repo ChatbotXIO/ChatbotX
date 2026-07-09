@@ -26,6 +26,7 @@ const TOOLS_CONFIG = [
     labelKey: "facebookCommentAutomation.title",
     descriptionKey: "facebookCommentAutomation.description",
     icon: SiFacebook,
+    getLink: (id: string) => `/space/${id}/fb-comments`,
   },
   {
     id: "facebook-lead-ads",

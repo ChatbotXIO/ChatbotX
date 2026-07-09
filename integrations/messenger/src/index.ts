@@ -1,4 +1,12 @@
 export * from "./apis/auth"
+export {
+  deleteComment,
+  editComment,
+  hideComment,
+  likeComment,
+  sendComment,
+  sendPrivateReply,
+} from "./apis/comment"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export {

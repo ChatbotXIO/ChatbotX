@@ -77,6 +77,7 @@ export async function handleAIGenerateTextAgent({
 
     const result = await runAIAgentRunner({
       conversation,
+      contactInbox,
       messages,
       aiAgent,
       summary,

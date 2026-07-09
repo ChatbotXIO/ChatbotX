@@ -30,6 +30,7 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   label?: string
   placeholder?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   options?: SelectOption[]
   fetchOptionsUrl?: string
   className?: string
@@ -59,6 +60,7 @@ export const SelectField = <T extends FieldValues>(
     required,
     placeholder,
     description,
+    descriptionType = "inline",
     options = [],
     fetchOptionsUrl,
     allowClear,
@@ -130,6 +132,7 @@ export const SelectField = <T extends FieldValues>(
   return (
     <FormFieldWrapper<T>
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

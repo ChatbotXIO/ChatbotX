@@ -78,9 +78,9 @@ export function ContactCustomFieldManage({
         </div>
 
         <Command className="rounded-lg border">
-          <CommandInput className="h-9" placeholder="Search..." />
+          <CommandInput className="h-9" placeholder={t("actions.search")} />
           <CommandList>
-            <CommandEmpty>No record found.</CommandEmpty>
+            <CommandEmpty>{t("actions.noRecordFound")}</CommandEmpty>
             {options.map((option) => (
               <CommandItem
                 key={option.value}

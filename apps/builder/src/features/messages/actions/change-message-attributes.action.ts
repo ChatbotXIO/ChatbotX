@@ -41,20 +41,6 @@ export const changeMessageAttributesAction = workspaceActionClient
       throw new ChatbotXException("Inbox not found")
     }
 
-    const current =
-      (message.attributes as { liked?: boolean; hidden?: boolean } | null) ?? {}
-    const newAttributes = {
-      liked: liked === undefined ? (current.liked ?? false) : liked,
-      hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
-    }
-
-    await repository.updateMessageAttributes(
-      messageId,
-      workspaceId,
-      newAttributes,
-      message.createdAt,
-    )
-
     await Promise.allSettled([
       chatQueue.add(ChatJobAction.changeChannelMessageState, {
         type: ChatJobAction.changeChannelMessageState,
@@ -68,5 +54,5 @@ export const changeMessageAttributesAction = workspaceActionClient
       }),
     ])
 
-    return { success: true, messageId, attributes: newAttributes }
+    return { success: true, messageId }
   })

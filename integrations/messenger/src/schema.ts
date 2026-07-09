@@ -1,6 +1,7 @@
 import type {
   Context,
   Handler,
+  IncomingAttachment,
   Oauth2AuthValue,
   Oauth2Config,
 } from "@chatbotx.io/sdk"
@@ -61,6 +62,14 @@ export type MessengerActions<
     ctx: Context<IAuth>
     input: { postId: string }
   }) => Promise<FacebookPostDetails>
+  getCommentAttachmentType: (props: {
+    ctx: Context<IAuth>
+    input: { commentId: string }
+  }) => Promise<string | null>
+  getCommentAttachment: (props: {
+    ctx: Context<IAuth>
+    input: { commentId: string }
+  }) => Promise<{ type: string | null; attachment?: IncomingAttachment }>
   listMessageTemplates: Handler<
     { ctx: Context<IAuth>; input?: ListMessengerMessageTemplatesProps },
     ListMessengerMessageTemplatesResponse

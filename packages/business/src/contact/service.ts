@@ -6,7 +6,10 @@ import {
   findOrFail,
   inArray,
 } from "@chatbotx.io/database/client"
-import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
+import {
+  type ContactSource,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
@@ -67,6 +70,10 @@ export function isRichSystemContactField(
 
 type ContactWithInboxes = ContactModel & { contactInboxes: ContactInboxModel[] }
 
+export type ContactAccessScope = {
+  restrictToAssignedUserId?: string
+}
+
 class ContactService extends BaseService {
   // ─── Legacy generic find (preserved for backward compat) ────────────────
   async findBy(props: {
@@ -90,14 +97,15 @@ class ContactService extends BaseService {
   async findById(props: {
     workspaceId: string
     id: string
+    accessScope?: ContactAccessScope
     tx?: DatabaseClient
   }): Promise<ContactModel | undefined> {
-    const { workspaceId, id, tx = db } = props
+    const { workspaceId, id, accessScope, tx = db } = props
     // return await withCache(
     //   `contacts:${workspaceId}:${id}`,
     //   async () =>
     return await tx.query.contactModel.findFirst({
-      where: { id, workspaceId },
+      where: withContactAccessScope({ id, workspaceId }, accessScope),
     })
     // {
     //   dynamicTags: (result) =>
@@ -111,6 +119,7 @@ class ContactService extends BaseService {
   async findByIdOrFail(props: {
     workspaceId: string
     id: string
+    accessScope?: ContactAccessScope
     tx?: DatabaseClient
   }): Promise<ContactModel> {
     const contact = await this.findById(props)
@@ -124,11 +133,15 @@ class ContactService extends BaseService {
   async findManyByIds(props: {
     workspaceId: string
     ids: string[]
+    accessScope?: ContactAccessScope
     tx?: DatabaseClient
   }): Promise<{ id: string }[]> {
-    const { workspaceId, ids, tx = db } = props
+    const { workspaceId, ids, accessScope, tx = db } = props
     return await tx.query.contactModel.findMany({
-      where: { workspaceId, id: { in: ids } },
+      where: withContactAccessScope(
+        { workspaceId, id: { in: ids } },
+        accessScope,
+      ),
       columns: { id: true },
     })
   }
@@ -159,11 +172,16 @@ class ContactService extends BaseService {
   }
 
   async update(
-    ctx: { workspaceId: string; id: string },
+    ctx: { workspaceId: string; id: string; accessScope?: ContactAccessScope },
     data: ContactWriteData,
     tx: DatabaseClient = db,
   ): Promise<ContactModel> {
-    await this.findByIdOrFail({ workspaceId: ctx.workspaceId, id: ctx.id, tx })
+    await this.findByIdOrFail({
+      workspaceId: ctx.workspaceId,
+      id: ctx.id,
+      accessScope: ctx.accessScope,
+      tx,
+    })
     const [updated] = await tx
       .update(contactModel)
       .set(data)
@@ -173,13 +191,18 @@ class ContactService extends BaseService {
     return updated
   }
 
-  async block(ctx: { workspaceId: string; id: string }): Promise<ContactModel> {
+  async block(ctx: {
+    workspaceId: string
+    id: string
+    accessScope?: ContactAccessScope
+  }): Promise<ContactModel> {
     return await this.update(ctx, { blockedAt: new Date() })
   }
 
   async unblock(ctx: {
     workspaceId: string
     id: string
+    accessScope?: ContactAccessScope
   }): Promise<ContactModel> {
     return await this.update(ctx, { blockedAt: null })
   }
@@ -227,10 +250,14 @@ class ContactService extends BaseService {
   async delete(props: {
     workspaceId: string
     ids: string[]
+    accessScope?: ContactAccessScope
   }): Promise<ContactWithInboxes[]> {
-    const { workspaceId, ids } = props
+    const { workspaceId, ids, accessScope } = props
     const contacts = await db.query.contactModel.findMany({
-      where: { workspaceId, id: { in: ids } },
+      where: withContactAccessScope(
+        { workspaceId, id: { in: ids } },
+        accessScope,
+      ),
       with: { contactInboxes: true },
     })
 
@@ -272,9 +299,10 @@ class ContactService extends BaseService {
     workspaceId: string
     identifier: string
     data: Omit<ContactWriteData, "blockedAt" | "emailOptIn">
+    source: ContactSource
     avatar?: string
   }): Promise<{ contact: ContactModel; isNew: boolean }> {
-    const { workspaceId, identifier, data, avatar } = props
+    const { workspaceId, identifier, data, source, avatar } = props
 
     const colonIdx = identifier.indexOf(":")
     if (colonIdx === -1) {
@@ -376,7 +404,7 @@ class ContactService extends BaseService {
             contactId: newContact.id,
             inboxId: inbox.id,
             channel: channelTypes.enum.webchat,
-            source: contactSources.enum.imported,
+            source,
             sourceId: createId(),
           })
           .returning()
@@ -492,6 +520,30 @@ function richSystemFieldToContactData(
     }
     default:
       return {}
+  }
+}
+
+function withContactAccessScope<TWhere extends Record<string, unknown>>(
+  where: TWhere,
+  accessScope?: ContactAccessScope,
+) {
+  if (!accessScope?.restrictToAssignedUserId) {
+    return where
+  }
+
+  const conversation =
+    typeof where.conversation === "object" &&
+    where.conversation !== null &&
+    !Array.isArray(where.conversation)
+      ? where.conversation
+      : {}
+
+  return {
+    ...where,
+    conversation: {
+      ...conversation,
+      assignedUserId: accessScope.restrictToAssignedUserId,
+    },
   }
 }
 

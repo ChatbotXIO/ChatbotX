@@ -18,6 +18,9 @@ export const workspaceModel = pgTable(
     timezone: text().notNull().default("UTC"),
     brandColor: text().notNull().default("#016DFF"),
     developmentMode: boolean().default(false).notNull(),
+    isActive: boolean().notNull().default(true),
+    startTime: text(),
+    endTime: text(),
     logo: text(),
     ownerId: bigintAsString()
       .notNull()

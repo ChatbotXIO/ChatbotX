@@ -1,4 +1,8 @@
-import type { Context, IncomingContact } from "@chatbotx.io/sdk"
+import {
+  type Context,
+  type IncomingContact,
+  normalizeGender,
+} from "@chatbotx.io/sdk"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError, ZaloException } from "../lib/exception"
 import { ZaloHttpClient } from "../lib/http-client"
@@ -15,6 +19,18 @@ export type ZaloUserProfileResponse = {
     shared_info?: {
       phone?: string
     }
+    user_gender?: number | string
+  }
+}
+
+const normalizeZaloGender = (
+  gender: number | string | undefined,
+): string | undefined => {
+  if (gender === 1 || gender === "1") {
+    return normalizeGender("male")
+  }
+  if (gender === 2 || gender === "2") {
+    return normalizeGender("female")
   }
 }
 
@@ -50,6 +66,7 @@ export const getUserProfile = ({
       sourceId: psid,
       firstName: response.data?.display_name || "",
       phoneNumber: response.data?.shared_info?.phone || "",
+      gender: normalizeZaloGender(response.data?.user_gender),
     }
 
     if (response.data?.avatar) {

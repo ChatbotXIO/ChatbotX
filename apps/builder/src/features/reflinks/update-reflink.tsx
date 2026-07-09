@@ -123,9 +123,11 @@ export function UpdateReflinkForm(props: {
         <InputField label={t("fields.name.label")} name="name" required />
 
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.flow.label")}
           name="flowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required
         />
 

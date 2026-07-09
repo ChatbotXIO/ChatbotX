@@ -20,20 +20,22 @@ import {
   SortableItem,
   SortableItemHandle,
 } from "@chatbotx.io/ui/components/ui/sortable"
+import { createDebouncedFn } from "@chatbotx.io/ui/hooks/create-debounced-fn"
+import { useCallbackRef } from "@chatbotx.io/ui/hooks/use-callback-ref"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { memo, useCallback, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
+  type Control,
   useFieldArray,
   useForm,
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import { funnel } from "remeda"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
@@ -41,6 +43,7 @@ import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
 import { useFlowTemplate } from "../stores/flow-template-store-provider"
 import { useStepStore } from "../stores/step-store-provider"
+import { useFlowHistory } from "../stores/use-flow-history"
 import { useWhatsappFlow } from "../stores/whatsapp-flow-store-provider"
 import { allNodesConfig } from "./node-config"
 import type { MenuItem } from "./types"
@@ -72,6 +75,23 @@ type NodeEditorProps = {
   nodeId: string
   nodeType: NodeType
   nodeDetails: FlowNode["data"]["details"]
+}
+
+const replaceIds = (data: unknown): unknown => {
+  if (Array.isArray(data)) {
+    return data.map(replaceIds)
+  }
+
+  if (data && typeof data === "object") {
+    const nextData: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(data)) {
+      nextData[key] = key === "id" ? createId() : replaceIds(value)
+    }
+
+    return nextData
+  }
+
+  return data
 }
 
 const NodeEditorQuickReplies = () => {
@@ -190,6 +210,25 @@ const NodeEditorMenu = memo(
   },
 )
 
+const FlowValueSync = memo(
+  ({
+    control,
+    pushToFlow,
+  }: {
+    // biome-ignore lint/suspicious/noExplicitAny: form value shape is dynamic per node
+    control: Control<any>
+    pushToFlow: (values: FlowNode["data"]["details"]) => void
+  }) => {
+    const values = useWatch({ control })
+
+    useEffect(() => {
+      pushToFlow(values as FlowNode["data"]["details"])
+    }, [pushToFlow, values])
+
+    return null
+  },
+)
+
 export const NodeEditor = memo((props: NodeEditorProps) => {
   const { nodeId, nodeType, nodeDetails } = props
 
@@ -197,10 +236,11 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
   const validator = nodeConfig?.validator.shape.data.shape.details
 
-  const { getNodes, updateNodeData } = useReactFlow()
+  const { getNode, updateNodeData } = useReactFlow()
   const { updatedButtonData, onChangeButtonData } = useStepStore(
     (state) => state,
   )
+  const { takeSnapshot } = useFlowHistory()
 
   // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
   const form = useForm<any>({
@@ -224,38 +264,55 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     name: "steps",
   })
 
-  const allValues = useWatch({ control })
-  const debounceUpdateNodeData = useMemo(
+  const editSnapshotTakenRef = useRef(false)
+  const pushNodeDetailsToFlow = useCallbackRef(
+    (values: FlowNode["data"]["details"]) => {
+      const currentNode = getNode(nodeId)
+
+      if (currentNode) {
+        updateNodeData(nodeId, {
+          ...currentNode.data,
+          details: values,
+        })
+      }
+    },
+  )
+  const releaseEditSnapshot = useMemo(
     () =>
-      funnel(
-        () => {
-          if (nodeId) {
-            const currentNode = getNodes().find((node) => node.id === nodeId)
-            if (currentNode) {
-              updateNodeData(nodeId, {
-                ...currentNode.data,
-                details: allValues,
-              })
-            }
-          }
-        },
-        { minQuietPeriodMs: 500 },
-      ),
-    [updateNodeData, nodeId, getNodes, allValues],
+      createDebouncedFn(() => {
+        editSnapshotTakenRef.current = false
+      }, 500),
+    [],
+  )
+
+  const pushToFlow = useMemo(
+    () => createDebouncedFn(pushNodeDetailsToFlow, 700),
+    [pushNodeDetailsToFlow],
   )
 
   useEffect(() => {
-    debounceUpdateNodeData.call()
-  }, [debounceUpdateNodeData])
+    const subscription = form.watch((_values, { type } = {}) => {
+      if (type && !editSnapshotTakenRef.current) {
+        takeSnapshot()
+        editSnapshotTakenRef.current = true
+      }
 
-  // useEffect(() => {
-  // if (nodeId && targetNode) {
-  //   updateNodeData(nodeId, {
-  //     ...targetNode.data,
-  //     details: debouncedValue,
-  //   })
-  // }
-  // }, [debouncedValue, nodeId, targetNode, updateNodeData])
+      if (type) {
+        releaseEditSnapshot()
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [form, releaseEditSnapshot, takeSnapshot])
+
+  useEffect(
+    () => () => {
+      pushToFlow.flush()
+    },
+    [pushToFlow],
+  )
 
   useEffect(() => {
     if (updatedButtonData) {
@@ -279,7 +336,6 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
 
       // reset updatedButtonData
       onChangeButtonData(null)
-      //   setOpenNodeDetailSheet(false)
     }
   }, [updatedButtonData, getValues, onChangeButtonData, setValue])
 
@@ -295,38 +351,23 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     [appendStep],
   )
 
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  const replaceIds = (data: any): any => {
-    if (typeof data === "object" && data !== null) {
-      if (Array.isArray(data)) {
-        return data.map((item) => replaceIds(item))
+  const onCopyStep = useCallback(
+    (index: number) => {
+      // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
+      const values = getValues(`steps.${index}` as any)
+      if (values) {
+        insertStep(index + 1, replaceIds(values))
       }
+    },
+    [getValues, insertStep],
+  )
 
-      // biome-ignore lint/suspicious/noExplicitAny: wip
-      const newData: any = {}
-      for (const key in data) {
-        if (key === "id") {
-          newData[key] = createId()
-        } else {
-          newData[key] = replaceIds(data[key])
-        }
-      }
-      return newData
-    }
-    return data
-  }
-
-  const onCopyStep = (index: number) => {
-    // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
-    const values = getValues(`steps.${index}` as any)
-    if (values) {
-      insertStep(index + 1, replaceIds(values))
-    }
-  }
-
-  const onRemoveStep = (index: number) => {
-    removeStep(index)
-  }
+  const onRemoveStep = useCallback(
+    (index: number) => {
+      removeStep(index)
+    },
+    [removeStep],
+  )
 
   return (
     <Form {...form}>
@@ -447,6 +488,8 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
       )}
 
       <NodeEditorMenu nodeType={nodeType} onClick={onAddStep} />
+
+      <FlowValueSync control={control} pushToFlow={pushToFlow} />
 
       <TriggerFormInitially form={form} />
     </Form>

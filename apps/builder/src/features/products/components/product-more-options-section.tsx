@@ -144,6 +144,7 @@ export function ProductMoreOptionsSection() {
         </CardHeader>
         <CardContent className="space-y-2">
           <TagsInputField<ProductFormRequest>
+            addAnotherPlaceholder={tActions("addAnother")}
             className="[&>label]:hidden"
             name="tags"
             placeholder={t("sections.tags")}

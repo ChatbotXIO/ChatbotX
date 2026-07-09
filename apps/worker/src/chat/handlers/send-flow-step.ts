@@ -245,6 +245,7 @@ export async function sendFlowStep({
   const resolvedStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
+    { contactInbox: targetContactInbox },
   )
   const messageText =
     resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
@@ -388,6 +389,7 @@ export async function sendFlowStep({
         richResponse,
         quickReplies: canonicalQuickReplies,
         messageId: message?.id,
+        messageCreatedAt: message?.createdAt,
         sendFrom,
       }),
     ]

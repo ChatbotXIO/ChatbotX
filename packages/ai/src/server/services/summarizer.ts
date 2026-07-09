@@ -19,7 +19,9 @@ import { createOpenaiCompatibleModelInstance } from "../openai-compatible"
 type ProviderResult =
   | {
       provider: string
-      integration: NonNullable<Awaited<ReturnType<typeof getCachedAIIntegration>>>
+      integration: NonNullable<
+        Awaited<ReturnType<typeof getCachedAIIntegration>>
+      >
       kind: "legacy"
       modelId: string
     }

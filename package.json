@@ -14,14 +14,14 @@
     "check:unused": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.1",
+    "@biomejs/biome": "^2.4.16",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "dependency-cruiser": "^17.3.10",
-    "knip": "^6.23.0",
+    "knip": "^6.25.0",
     "lefthook": "^2.1.6",
-    "tsx": "^4.21.0",
-    "turbo": "^2.10.2",
+    "tsx": "^4.23.0",
+    "turbo": "^2.10.4",
     "typescript": "^5",
     "ultracite": "7.8.3",
     "vitest": "^4.1.0",

@@ -10,22 +10,26 @@ const VariableInput = memo(
   ({
     parentName,
     index,
-    placeholder = "Type a message",
+    placeholder,
   }: {
     parentName: string
     index: number
     placeholder?: string
-  }) => (
-    <div className="mt-2 flex w-full gap-2">
-      <Button variant="secondary">{`{{${index + 1}}}`}</Button>
-      <div className="flex-1">
-        <InputField
-          name={`${parentName}.variables.${index}`}
-          placeholder={placeholder}
-        />
+  }) => {
+    const t = useTranslations()
+
+    return (
+      <div className="mt-2 flex w-full gap-2">
+        <Button variant="secondary">{`{{${index + 1}}}`}</Button>
+        <div className="flex-1">
+          <InputField
+            name={`${parentName}.variables.${index}`}
+            placeholder={placeholder ?? t("actions.typeMessage")}
+          />
+        </div>
       </div>
-    </div>
-  ),
+    )
+  },
 )
 
 const CardVariables = memo(

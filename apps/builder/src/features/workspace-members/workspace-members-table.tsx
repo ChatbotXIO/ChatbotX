@@ -23,7 +23,12 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
+import {
+  CheckCircle2Icon,
+  CircleDashedIcon,
+  MoreHorizontalIcon,
+  XCircleIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { DeleteWorkspaceMemberDialog } from "./components/delete-workspace-member"
@@ -35,6 +40,45 @@ import type { ListWorkspaceMembersResponse } from "./schema/query"
 type WorkspaceMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listWorkspaceMembers>>]>
   teamMembersAtLimit?: boolean
+}
+
+const renderPermissionCell = (enabled: boolean) =>
+  enabled ? (
+    <CheckCircle2Icon className="size-5 text-primary" />
+  ) : (
+    <XCircleIcon className="size-5" />
+  )
+
+const renderContactsCell = (
+  contacts: boolean,
+  onlyAssignedContacts: boolean,
+  t: ReturnType<typeof useTranslations>,
+) => {
+  if (contacts) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CheckCircle2Icon className="size-5 text-primary" />
+        </TooltipTrigger>
+        <TooltipContent>{t("fields.permissions.contacts")}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  if (onlyAssignedContacts) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CircleDashedIcon className="size-5 text-primary" />
+        </TooltipTrigger>
+        <TooltipContent>
+          {t("fields.permissions.onlyAssignedContacts")}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return <XCircleIcon className="size-5" />
 }
 
 export function WorkspaceMembersTable({
@@ -55,7 +99,10 @@ export function WorkspaceMembersTable({
       {
         id: "name",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.name.label")}
+          />
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
@@ -84,71 +131,92 @@ export function WorkspaceMembersTable({
         enableHiding: false,
       },
       {
-        id: "enableContacts",
+        id: "superAdmin",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Contacts" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.superAdmin")}
+          />
         ),
         cell: ({ row }) =>
-          row.original.permissions.contacts ? (
-            <CheckCircle2Icon className="size-5 text-primary" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
+          renderPermissionCell(row.original.permissions.superAdmin),
         enableHiding: false,
       },
       {
-        id: "enableAnalytics",
+        id: "analytics",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Analytics" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.analytics")}
+          />
         ),
         cell: ({ row }) =>
-          row.original.permissions.analytics ? (
-            <CheckCircle2Icon className="size-5 text-primary" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
-        enableHiding: false,
-      },
-      {
-        id: "enableFlows",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Flows" />
-        ),
-        cell: ({ row }) =>
-          row.original.permissions.flows ? (
-            <CheckCircle2Icon className="size-5 text-primary" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
+          renderPermissionCell(row.original.permissions.analytics),
         enableHiding: false,
       },
       {
         id: "flows",
-        className: "justify-center",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Flows" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.flows")}
+          />
+        ),
+        cell: ({ row }) => renderPermissionCell(row.original.permissions.flows),
+        enableHiding: false,
+      },
+      {
+        id: "contacts",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.contacts")}
+          />
         ),
         cell: ({ row }) =>
-          row.original.permissions.flows ? (
-            <CheckCircle2Icon className="size-5 text-primary" />
-          ) : (
-            <XCircleIcon className="size-5" />
+          renderContactsCell(
+            row.original.permissions.contacts,
+            row.original.permissions.onlyAssignedContacts,
+            t,
           ),
         enableHiding: false,
       },
-      // {
-      //   id: "notificationTypes",
-      //   header: ({ column }) => (
-      //     <DataTableColumnHeader column={column} title="Notifications" />
-      //   ),
-      //   cell: ({ row }) =>
-      //     isEnableAtLeastOneNotification(row.original.notificationTypes) ? (
-      //       <CheckCircle2Icon className="size-5 text-green-500" />
-      //     ) : (
-      //       <XCircleIcon className="size-5" />
-      //     ),
-      //   enableHiding: false,
-      // },
+      {
+        id: "emailAndPhone",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.emailAndPhone")}
+          />
+        ),
+        cell: ({ row }) =>
+          renderPermissionCell(row.original.permissions.emailAndPhone),
+        enableHiding: false,
+      },
+      {
+        id: "broadcast",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.broadcast")}
+          />
+        ),
+        cell: ({ row }) =>
+          renderPermissionCell(row.original.permissions.broadcast),
+        enableHiding: false,
+      },
+      {
+        id: "ecommerce",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.permissions.ecommerce")}
+          />
+        ),
+        cell: ({ row }) =>
+          renderPermissionCell(row.original.permissions.ecommerce),
+        enableHiding: false,
+      },
       {
         id: "actions",
         cell: ({ row }) => (
@@ -156,7 +224,7 @@ export function WorkspaceMembersTable({
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{t("actions.openMenu")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -195,7 +263,7 @@ export function WorkspaceMembersTable({
 
   return (
     <>
-      <DataTable table={table}>
+      <DataTable scrollable table={table}>
         <DataTableToolbar table={table}>
           <InviteWorkspaceMemberDialog atLimit={teamMembersAtLimit} />
         </DataTableToolbar>

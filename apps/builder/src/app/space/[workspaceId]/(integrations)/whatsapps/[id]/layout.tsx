@@ -1,9 +1,8 @@
-import { getIdFromParams } from "@chatbotx.io/utils"
-import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { WhatsappSettingTabs } from "@/features/integration-whatsapp/components/whatsapp-setting-tabs"
+import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 type LayoutProps = {
   children: ReactNode
@@ -15,10 +14,7 @@ export default async function WhatsappLayout({
   params,
 }: LayoutProps) {
   const t = await getTranslations()
-  const workspaceId = getIdFromParams(await params, "workspaceId")
-  if (!workspaceId) {
-    return notFound()
-  }
+  const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
 
   return (
     <>

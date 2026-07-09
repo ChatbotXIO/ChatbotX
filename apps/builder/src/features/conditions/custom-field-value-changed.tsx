@@ -19,8 +19,8 @@ import { Controller, useFormContext } from "react-hook-form"
 import {
   convertCustomFieldTypeToConditionType,
   getConditionOptions,
-} from "@/features/contacts/components/contact-filter-config"
-import { mappingConditions } from "@/features/contacts/schemas/contact-filter"
+} from "@/features/contact-filter/components/contact-filter-config"
+import { mappingConditions } from "@/features/contact-filter/schemas"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 
@@ -82,7 +82,7 @@ export const CustomFieldValueChanged = ({
             value={currentOperator}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select operator" />
+              <SelectValue placeholder={t("actions.pleaseSelect")} />
             </SelectTrigger>
             <SelectContent>
               {operatorOptions.map((option) => (
@@ -195,11 +195,15 @@ export const CustomFieldValueChanged = ({
                     value={field.value?.text || ""}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select value" />
+                      <SelectValue placeholder={t("actions.pleaseSelect")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">True</SelectItem>
-                      <SelectItem value="false">False</SelectItem>
+                      <SelectItem value="true">
+                        {t("fields.boolean.true")}
+                      </SelectItem>
+                      <SelectItem value="false">
+                        {t("fields.boolean.false")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 )}

@@ -5,6 +5,7 @@ import type {
   PersistentMenu,
   UserCustomSettings,
 } from "@chatbotx.io/sdk"
+import { normalizeGender, normalizeUtcOffset } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
@@ -113,6 +114,9 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
           headers: {
             Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
           },
+          searchParams: {
+            fields: "first_name,last_name,profile_pic,locale,timezone,gender",
+          },
         },
       )
 
@@ -120,6 +124,9 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
         sourceId,
         firstName: response.first_name,
         lastName: response.last_name,
+        locale: response.locale,
+        timezone: normalizeUtcOffset(response.timezone),
+        gender: normalizeGender(response.gender),
       }
 
       if (response.profile_pic) {

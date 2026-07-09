@@ -14,7 +14,7 @@ export async function generateInstagramRedirectUri(
   const redirectUrl = buildBrokerCallbackUrl("/integrations/instagram/callback")
   const baseUrl = await getOriginUrlFromHeader()
   const referer = workspaceId
-    ? new URL(`/space/${workspaceId}/dashboard`, baseUrl).toString()
+    ? new URL(`/space/${workspaceId}`, baseUrl).toString()
     : baseUrl
 
   return generateAuthUrl({

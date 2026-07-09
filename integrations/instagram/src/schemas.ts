@@ -106,6 +106,8 @@ export const instagramPageEntrySchema = z.object({
   changes: z
     .array(z.object({ field: z.string(), value: z.unknown() }))
     .optional(),
+  field: z.string().optional(),
+  value: z.unknown().optional(),
 })
 export type InstagramPageEntry = z.infer<typeof instagramPageEntrySchema>
 

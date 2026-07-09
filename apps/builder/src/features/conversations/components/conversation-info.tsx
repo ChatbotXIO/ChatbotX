@@ -5,13 +5,14 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import Image from "next/image"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { useWorkspaceId } from "@/hooks/routing"
 
 export function ConversationInfo() {
   const t = useTranslations()
+  const locale = useLocale()
   const workspaceId = useWorkspaceId()
   const { activePost, loadActivePost, activeConversationId, conversations } =
     useChatStore((state) => state)
@@ -54,10 +55,10 @@ export function ConversationInfo() {
           <Image
             alt=""
             className="shrink-0 rounded object-cover"
-            height={56}
+            height={100}
             src={activePost.picture}
             unoptimized
-            width={56}
+            width={100}
           />
         )}
         <span className="text-[11px] text-muted-foreground">
@@ -67,6 +68,7 @@ export function ConversationInfo() {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
+            locale,
           })}
         </span>
         {postLink && (

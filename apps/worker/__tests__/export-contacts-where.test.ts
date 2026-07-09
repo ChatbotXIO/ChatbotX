@@ -49,6 +49,9 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 const { buildBaseWhere } = await import(
   "../src/default/handlers/export-contacts"
 )
+const { stripContactPIIFields } = await import(
+  "@chatbotx.io/worker-config/contact-pii"
+)
 
 // ── Type helpers ──────────────────────────────────────────────────────────────
 
@@ -62,6 +65,8 @@ const buildData = (
     workspaceId: "ws-1",
     fileId: "file-1",
     fields: ["sys:email"],
+    // The real producer always sets this; PII export fails closed when omitted.
+    canExportEmailAndPhone: true,
     outputPath: "exports/ws-1/contacts.csv",
     outputFormat: "csv",
     contactIds: ["c-1", "c-2"],
@@ -103,6 +108,20 @@ describe("buildBaseWhere", () => {
       // Assert
       expect(where).not.toHaveProperty("OR")
     })
+
+    test("where includes assigned-user relation scope when provided", () => {
+      // Arrange
+      const data = buildData({
+        filter: undefined,
+        restrictToAssignedUserId: "user-1",
+      })
+
+      // Act
+      const where = buildBaseWhere(data)
+
+      // Assert
+      expect(where.conversation).toEqual({ assignedUserId: "user-1" })
+    })
   })
 
   describe("filter with keyword only", () => {
@@ -136,6 +155,40 @@ describe("buildBaseWhere", () => {
       expect(or[1]).toEqual({ lastName: { ilike: "%hello%" } })
       expect(or[2]).toEqual({ email: { ilike: "%hello%" } })
       expect(or[3]).toEqual({ phoneNumber: { ilike: "%hello%" } })
+    })
+
+    test("OR array omits email and phoneNumber when PII export is denied", () => {
+      // Arrange
+      const data = buildData({
+        filter: { keyword: "hello" },
+        canExportEmailAndPhone: false,
+      })
+
+      // Act
+      const where = buildBaseWhere(data)
+
+      // Assert
+      expect(where.OR).toEqual([
+        { firstName: { ilike: "%hello%" } },
+        { lastName: { ilike: "%hello%" } },
+      ])
+    })
+
+    test("OR array omits email and phoneNumber when PII flag is omitted (fails closed)", () => {
+      // Arrange
+      const data = buildData({
+        filter: { keyword: "hello" },
+        canExportEmailAndPhone: undefined,
+      })
+
+      // Act
+      const where = buildBaseWhere(data)
+
+      // Assert
+      expect(where.OR).toEqual([
+        { firstName: { ilike: "%hello%" } },
+        { lastName: { ilike: "%hello%" } },
+      ])
     })
 
     test("where does not contain an id key when filter is present", () => {
@@ -202,6 +255,27 @@ describe("buildBaseWhere", () => {
 
       // Assert
       expect(where).not.toHaveProperty("OR")
+    })
+
+    test("assigned-user scope merges with contact filter conversation clauses", () => {
+      // Arrange
+      const criteria = { operator: "and" as const, conditions: [] }
+      applyContactFilterSpy.mockReturnValueOnce({
+        conversation: { botEnabled: false },
+      })
+      const data = buildData({
+        filter: { contactFilter: criteria },
+        restrictToAssignedUserId: "user-1",
+      })
+
+      // Act
+      const where = buildBaseWhere(data)
+
+      // Assert
+      expect(where.conversation).toEqual({
+        botEnabled: false,
+        assignedUserId: "user-1",
+      })
     })
   })
 
@@ -301,5 +375,22 @@ describe("buildBaseWhere", () => {
       expect(where).not.toHaveProperty("id")
       expect(applyContactFilterSpy).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe("stripContactPIIFields", () => {
+  test("removes email and phoneNumber fields when PII export is denied", () => {
+    expect(
+      stripContactPIIFields(
+        ["sys:firstName", "sys:email", "sys:phoneNumber", "tag:t1"],
+        false,
+      ),
+    ).toEqual(["sys:firstName", "tag:t1"])
+  })
+
+  test("preserves fields when PII export is allowed", () => {
+    expect(
+      stripContactPIIFields(["sys:email", "sys:phoneNumber"], true),
+    ).toEqual(["sys:email", "sys:phoneNumber"])
   })
 })

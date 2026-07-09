@@ -33,12 +33,13 @@ export type AIFunctionRowAction = {
 export const getAIFunctionsColumns = (
   t: ReturnType<typeof useTranslations>,
   setRowAction: (action: AIFunctionRowAction | null) => void,
+  locale: string,
 ): ColumnDef<AIFunctionModel>[] => [
   {
     id: "select",
     header: ({ table: innerTable }) => (
       <Checkbox
-        aria-label="Select all"
+        aria-label={t("actions.selectAll")}
         checked={
           innerTable.getIsAllPageRowsSelected() ||
           (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -50,7 +51,7 @@ export const getAIFunctionsColumns = (
     ),
     cell: ({ row }) => (
       <Checkbox
-        aria-label="Select row"
+        aria-label={t("actions.selectRow")}
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
       />
@@ -90,7 +91,7 @@ export const getAIFunctionsColumns = (
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-medium">
-          {formatDate(row.original.createdAt)}
+          {formatDate(row.original.createdAt, { locale })}
         </span>
       </div>
     ),

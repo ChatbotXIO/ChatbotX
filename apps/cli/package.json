@@ -38,7 +38,7 @@
     "@types/node": "~24.12.2",
     "@types/yargs": "^17.0.35",
     "tsdown": "0.22.3",
-    "tsx": "^4.0.0",
+    "tsx": "^4.23.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   }

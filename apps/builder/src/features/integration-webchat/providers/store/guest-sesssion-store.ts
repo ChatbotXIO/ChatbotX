@@ -8,6 +8,7 @@ import type { CreateWebchatMessageRequest } from "@/features/messages/schema/mut
 import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schemas/resource"
+import { getWebchatProfileFields } from "../../browser-profile-fields"
 
 export const GUEST_CONVERSATION_ID_KEY = "x-conversation-id" as const
 
@@ -143,9 +144,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     sendMessage: (text: string) => {
       const { appendMessage } = get()
 
-      appendMessage({
-        text,
-      })
+      appendMessage({ text })
     },
 
     sendPostback: async (button: MessageButtonTemplate) => {
@@ -167,6 +166,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
               guestConversationId,
               clientId: newMessage.clientId,
               webchatId: config.id,
+              ...getWebchatProfileFields(),
             } as CreateWebchatMessageRequest,
           })
         }

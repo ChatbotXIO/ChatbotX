@@ -139,9 +139,10 @@ export async function processMessengerTemplate(
       throw new Error(`Messenger template validation failed: ${template.id}`)
     }
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+    })
     const completeParams = mergeMessengerTemplateButtonParams(
       template.params,
       (validated.template.components as MessengerTemplateComponent[]) || [],
@@ -228,11 +229,19 @@ export async function processMessengerTemplate(
     const providerMessageId = result?.messageIds?.[0]
 
     if (providerMessageId) {
-      await messageRepository.updateSourceId(
-        newMessage.id,
-        providerMessageId,
-        conversation.workspaceId,
-      )
+      try {
+        await messageRepository.updateSourceId(
+          newMessage.id,
+          providerMessageId,
+          conversation.workspaceId,
+          newMessage.createdAt,
+        )
+      } catch (err) {
+        logger.error(
+          err,
+          "Failed to persist Messenger template sourceId after a successful send",
+        )
+      }
     }
 
     return {

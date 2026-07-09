@@ -1,12 +1,13 @@
 "use client"
 
 import {
-  assignerFilterTypes,
+  contactFilterFields,
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
@@ -23,24 +24,31 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { ContactFilterDialog } from "../contacts/components/contact-filter-dialog"
+import { ContactFilterDialog } from "../contact-filter"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
+
+// Channel is picked in the top-level filter above, so the contact filter's own
+// "Channel" condition is redundant here; the Inbox condition is scoped to that
+// chosen channel ("omnichannel" → all channels).
+const EXCLUDED_FILTER_FIELDS = [contactFilterFields.enum.currentChannel]
 
 export function ConversationFilter() {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { filters } = useChatStore((state) => state)
+  const { control } = useFormContext()
+  const watchedChannel = useWatch({ control, name: "channel" }) as
+    | string
+    | undefined
 
   const inboxOptions = useConfiguredInboxTypeOptions()
 
-  const hasFilter = Boolean(
-    (filters.channel && filters.channel !== "omnichannel") ||
-      (filters.assignedId &&
-        filters.assignedId !== assignerFilterTypes.enum.all) ||
-      filters.status,
-  )
+  const filterCount = filters.contactFilter?.conditions.length ?? 0
+  const hasFilter = filterCount > 0
+
   const contactAssigneeOptions = useContactAssigneeOptions({
     includeAll: true,
     includeUnassigned: true,
@@ -77,11 +85,16 @@ export function ConversationFilter() {
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
-        <Button className="px-2" size="sm" variant="outline">
+        <Button className="relative px-2" size="sm" variant="outline">
           <FilterIcon className={hasFilter ? "text-primary" : ""} />
+          {hasFilter && (
+            <Badge className="absolute -top-1.5 -right-1.5 size-4 justify-center rounded-full p-0 text-[10px]">
+              {filterCount}
+            </Badge>
+          )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-[min(calc(100vw-2rem),36rem)]">
         <div className="flex flex-col gap-4">
           <SelectField
             label={t("fields.channel.label")}
@@ -91,9 +104,11 @@ export function ConversationFilter() {
           />
 
           <ComboboxField
+            emptyText={t("actions.noRecordFound")}
             label={t("fields.assignedId.label")}
             name="assignedId"
             options={contactAssigneeOptions}
+            placeholder={t("actions.pleaseSelect")}
             required
           />
 
@@ -105,7 +120,16 @@ export function ConversationFilter() {
             required
           />
 
-          <ContactFilterDialog />
+          <ContactFilterDialog
+            btnTitle={t("fields.contactFilter.moreOptions")}
+            excludeFields={EXCLUDED_FILTER_FIELDS}
+            inboxChannel={watchedChannel}
+            onSubmitted={(submitted) => {
+              if (submitted.conditions.length > 0) {
+                setOpen(false)
+              }
+            }}
+          />
         </div>
       </PopoverContent>
     </Popover>

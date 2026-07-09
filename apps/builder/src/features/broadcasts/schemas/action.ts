@@ -9,7 +9,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterRequest } from "@/features/contacts/schemas/contact-filter"
+import { contactFilterRequest } from "@/features/contact-filter/schemas"
 
 export const createBroadcastRequest = z
   .object({

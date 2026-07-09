@@ -28,11 +28,13 @@ const StartAnotherNodeStepEditor = (props: StartAnotherNodeStepEditorProps) => {
       <div className="flex flex-col gap-4">
         <ComboboxField
           disableValues={currentNodeId ? [currentNodeId] : undefined}
+          emptyText={t("actions.noRecordFound")}
           name={`${parentName}.nodeId`}
           options={nodes.map((node) => ({
             label: node.data.name as string,
             value: node.id,
           }))}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
       </div>

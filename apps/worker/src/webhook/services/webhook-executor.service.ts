@@ -1,3 +1,4 @@
+import { assertPublicUrl } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import { logger } from "../../lib/logger"
@@ -194,7 +195,12 @@ export class WebhookExecutor {
     }
   }
 
-  private executeRequest(url: string, payload: unknown): Promise<Response> {
+  private async executeRequest(
+    url: string,
+    payload: unknown,
+  ): Promise<Response> {
+    await assertPublicUrl(url, "Webhook URL")
+
     return fetch(url, {
       method: "POST",
       headers: {

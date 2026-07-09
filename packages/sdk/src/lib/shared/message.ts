@@ -11,6 +11,8 @@ export type IncomingContact = {
   email?: string
   avatar?: string
   gender?: string
+  locale?: string
+  timezone?: string
 }
 
 export type OutgoingContact = {

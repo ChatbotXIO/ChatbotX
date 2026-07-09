@@ -43,7 +43,12 @@ vi.mock("@chatbotx.io/database/partials", async () => {
   >("@chatbotx.io/database/partials")
   return {
     ...actual,
-    contactSources: { enum: { imported: "imported" } },
+    contactSources: {
+      enum: {
+        direct: "direct",
+        imported: "imported",
+      },
+    },
   }
 })
 
@@ -101,7 +106,7 @@ const contact = {
 
 const contactInbox = {
   id: "contact-inbox-1",
-  source: "imported",
+  source: "direct",
   sourceId: "source-1",
 }
 
@@ -256,6 +261,7 @@ describe("createContact", () => {
       expect.objectContaining({
         channel: selectedInbox.channel,
         inboxId: selectedInbox.id,
+        source: "direct",
         sourceId: "psid-123",
       }),
     )

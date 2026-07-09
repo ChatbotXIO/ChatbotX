@@ -15,7 +15,9 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud, isCommunity } from "@/env"
+import { formatScheduleTime } from "../helpers"
 import type { WorkspaceResource } from "../schema/resource"
+import { WorkspaceStatusSwitch } from "./workspace-status-switch"
 
 type WorkspacesListProps = {
   user: {
@@ -27,6 +29,7 @@ type WorkspacesListProps = {
   workspacesLimit?: number | null
   isAtLimit?: boolean
   ownerWorkspaceIds?: string[]
+  superAdminWorkspaceIds?: string[]
 }
 
 const CARD_STYLES =
@@ -103,12 +106,26 @@ const CreateWorkspaceCard = ({
 type WorkspaceCardProps = {
   workspace: WorkspaceResource
   ownerLabel?: string
+  canManageStatus: boolean
+  t: Awaited<ReturnType<typeof getTranslations>>
 }
 
-const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
+const WorkspaceCard = ({
+  workspace,
+  ownerLabel,
+  canManageStatus,
+  t,
+}: WorkspaceCardProps) => {
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
-  const href = `/space/${workspace.id}/dashboard`
+  const href = `/space/${workspace.id}`
+  const activeHours =
+    workspace.isActive && workspace.startTime && workspace.endTime
+      ? t("workspace.schedule.activeHours", {
+          startTime: formatScheduleTime(workspace.startTime),
+          endTime: formatScheduleTime(workspace.endTime),
+        })
+      : null
 
   return (
     <Card className={cn(CARD_STYLES, "relative")}>
@@ -118,6 +135,15 @@ const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
             {ownerLabel}
           </span>
         ) : null}
+        <WorkspaceStatusSwitch
+          canManageStatus={canManageStatus}
+          workspace={{
+            id: workspace.id,
+            isActive: workspace.isActive,
+            startTime: workspace.startTime,
+            endTime: workspace.endTime,
+          }}
+        />
         <Link
           aria-label={name}
           className={LINK_STYLES}
@@ -130,8 +156,15 @@ const WorkspaceCard = ({ workspace, ownerLabel }: WorkspaceCardProps) => {
               {firstLetter}
             </AvatarFallback>
           </Avatar>
-          <div className="line-clamp-2 px-3 text-center font-medium text-sm">
-            {name}
+          <div className="flex flex-col gap-0.5 px-3">
+            <div className="line-clamp-2 text-center font-medium text-sm">
+              {name}
+            </div>
+            {activeHours ? (
+              <div className="line-clamp-1 text-center text-muted-foreground text-xs">
+                {activeHours}
+              </div>
+            ) : null}
           </div>
         </Link>
       </CardContent>
@@ -145,6 +178,7 @@ const WorkspacesList = async ({
   workspacesLimit,
   isAtLimit = false,
   ownerWorkspaceIds = [],
+  superAdminWorkspaceIds = [],
 }: WorkspacesListProps) => {
   const t = await getTranslations()
   const createLabel = t("actions.createFeature", {
@@ -152,6 +186,7 @@ const WorkspacesList = async ({
   })
   const showCreateCard = !isCommunity()
   const ownerIds = new Set(ownerWorkspaceIds)
+  const superAdminIds = new Set(superAdminWorkspaceIds)
   const ownerLabel = t("home.owner")
 
   const usedCount = workspaces.length
@@ -204,7 +239,9 @@ const WorkspacesList = async ({
           {workspaces.map((workspace) => (
             <li className="list-none" key={workspace.id}>
               <WorkspaceCard
+                canManageStatus={superAdminIds.has(workspace.id)}
                 ownerLabel={ownerIds.has(workspace.id) ? ownerLabel : undefined}
+                t={t}
                 workspace={workspace}
               />
             </li>

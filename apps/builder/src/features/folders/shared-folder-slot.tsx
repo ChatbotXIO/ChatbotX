@@ -56,6 +56,9 @@ export default async function SharedFolderSlot(props: {
     case "email-topics":
       folderType = folderTypes.enum.emailTopic
       break
+    case "fb-comments":
+      folderType = folderTypes.enum.fbComment
+      break
     default:
       break
   }

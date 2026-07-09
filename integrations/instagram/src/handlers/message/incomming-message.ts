@@ -27,20 +27,31 @@ const getMessageAttachments = async (
   }
 
   try {
-    const attachmentPromises = message.attachments
-      .filter((attachment) => attachment.payload.url)
-      .map((attachment) =>
-        getMessageAttachmentEntity({ ctx, attachment }).catch((error) => {
-          logger.error("Error processing attachment", error)
-          return null
-        }),
-      )
+    // Instagram/Messenger can send the same sticker/attachment twice in one
+    // message's attachments array (same payload.url repeated) — dedupe
+    // before downloading, otherwise it gets uploaded and stored twice.
+    const seenUrls = new Set<string>()
+    const uniqueAttachments = message.attachments.filter((attachment) => {
+      const url = attachment.payload.url
+      if (!url || seenUrls.has(url)) {
+        return false
+      }
+      seenUrls.add(url)
+      return true
+    })
+
+    const attachmentPromises = uniqueAttachments.map((attachment) =>
+      getMessageAttachmentEntity({ ctx, attachment }).catch((error) => {
+        logger.error("Error processing attachment", error)
+        return null
+      }),
+    )
 
     const attachmentResults = await Promise.allSettled(attachmentPromises)
     return attachmentResults
       .filter(
         (result): result is PromiseFulfilledResult<IncomingAttachment> =>
-          result.status === "fulfilled" && result.value !== null,
+          result.status === "fulfilled" && result.value != null,
       )
       .map((result) => result.value)
   } catch (error) {
@@ -84,6 +95,7 @@ const getMessageEntity = async (
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
   let ref: string | null = null
+  let referralSource: string | null = null
 
   const contactSourceId =
     messaging.sender.id === ctx.auth.metadata.igId
@@ -119,7 +131,15 @@ const getMessageEntity = async (
 
   if (messaging.referral) {
     ref = messaging.referral.ref
+    referralSource = messaging.referral.source
   }
 
-  return { message, postbackAction, quickReplyAction, ref, contact }
+  return {
+    message,
+    postbackAction,
+    quickReplyAction,
+    ref,
+    referralSource,
+    contact,
+  }
 }

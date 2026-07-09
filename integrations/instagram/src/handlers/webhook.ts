@@ -69,18 +69,16 @@ const handleWebhookEvent = async (
       return
     }
 
-    // Handle Instagram post comment events (changes.comments).
-    // Instagram only sends webhooks for new comments — no edit/delete events.
-    const commentChange = entry.changes?.find(
-      (c: { field: string }) => c.field === "comments",
-    )
-    if (commentChange) {
-      const parsed = instagramCommentEventValueSchema.safeParse(
-        commentChange.value,
-      )
+    const commentValue =
+      entry.field === "comments"
+        ? entry.value
+        : entry.changes?.find((c: { field: string }) => c.field === "comments")
+            ?.value
+    if (commentValue !== undefined) {
+      const parsed = instagramCommentEventValueSchema.safeParse(commentValue)
       if (!parsed.success) {
         logger.warn(
-          { error: parsed.error, value: commentChange.value },
+          { error: parsed.error, value: commentValue },
           "comment event parse failed — skipping",
         )
         return

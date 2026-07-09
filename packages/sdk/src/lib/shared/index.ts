@@ -5,6 +5,7 @@ export * from "./context"
 export * from "./message"
 export * from "./meta-messaging"
 export * from "./mime-types"
+export * from "./profile-fields"
 
 export type Handler<I, O> = (props: I) => Promise<O>
 
@@ -34,4 +35,5 @@ export type ReceivedMessageResult = {
   postbackAction: string | null
   quickReplyAction: string | null
   ref: string | null
+  referralSource?: string | null
 }

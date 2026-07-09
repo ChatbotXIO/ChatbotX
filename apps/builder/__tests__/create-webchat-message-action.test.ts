@@ -376,6 +376,12 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
     )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "webchat",
+        source: "webchat",
+      }),
+    )
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
   })
 
@@ -395,5 +401,55 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
 
     expect(tx.insert).not.toHaveBeenCalled()
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("stores locale and timezone on new webchat contacts", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(undefined)
+    seedNewContactInserts()
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        ...input,
+        locale: "vi-VN",
+        timezone: "Asia/Ho_Chi_Minh",
+      },
+    })
+
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstName: "Guest",
+        locale: "vi-VN",
+        timezone: "Asia/Ho_Chi_Minh",
+      }),
+    )
+  })
+
+  test("creates new webchat contacts when locale and timezone are absent", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(undefined)
+    seedNewContactInserts()
+
+    await handleCreateWebchatMessage({ parsedInput: input })
+
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstName: "Guest",
+        locale: undefined,
+        timezone: undefined,
+      }),
+    )
+  })
+
+  test("does not create a contact for existing webchat inbox even with payload locale and timezone", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        ...input,
+        locale: "vi-VN",
+        timezone: "Asia/Ho_Chi_Minh",
+      },
+    })
+
+    expect(tx.insert).not.toHaveBeenCalled()
   })
 })

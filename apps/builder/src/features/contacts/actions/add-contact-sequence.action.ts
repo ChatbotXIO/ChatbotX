@@ -9,6 +9,7 @@ import {
 } from "@/features/common/schemas"
 import { calculateNextRunAtBulk } from "@/features/contact-sequences/utils/calculate-next-run-at"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireContactPermissionScope } from "../permissions"
 import {
   type AddContactSequenceRequest,
   addContactSequenceRequest,
@@ -84,12 +85,7 @@ export const addContactSequenceAction = workspaceActionClient
         parsedInput.sequences,
         now,
       )
-
-      const existingKeys = await getExistingEnrollments(
-        workspaceId,
-        parsedInput.ids,
-        parsedInput.sequences,
-      )
+      const accessScope = await requireContactPermissionScope(workspaceId)
 
       for (let i = 0; i < parsedInput.ids.length; i += CHUNK_SIZE) {
         const contactIdChunk = parsedInput.ids.slice(i, i + CHUNK_SIZE)
@@ -97,11 +93,18 @@ export const addContactSequenceAction = workspaceActionClient
         const contacts = await contactService.findManyByIds({
           workspaceId,
           ids: contactIdChunk,
+          accessScope,
         })
 
         if (contacts.length === 0) {
           continue
         }
+
+        const existingKeys = await getExistingEnrollments(
+          workspaceId,
+          contacts.map((contact) => contact.id),
+          parsedInput.sequences,
+        )
 
         const records = buildEnrollmentRecords(
           contacts,

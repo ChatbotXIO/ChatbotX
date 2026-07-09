@@ -1,7 +1,7 @@
 import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterCriteriaSchema } from "./contact-filter"
+import { contactFilterCriteriaSchema } from "@/features/contact-filter/schemas"
 
 export const contactPrefix = "sys"
 export const contactFieldPrefix = "cus"

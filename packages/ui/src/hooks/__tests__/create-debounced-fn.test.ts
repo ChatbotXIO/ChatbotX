@@ -4,6 +4,7 @@ import { createDebouncedFn } from "../create-debounced-fn"
 describe("createDebouncedFn", () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    vi.setSystemTime(0)
   })
 
   afterEach(() => {
@@ -68,6 +69,50 @@ describe("createDebouncedFn", () => {
     const debounced = createDebouncedFn(spy, 1000)
 
     debounced.flush()
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  test("fires at maxWait during a continuous burst", () => {
+    const spy = vi.fn()
+    const debounced = createDebouncedFn(spy, 1000, 2500)
+
+    debounced("a")
+    vi.advanceTimersByTime(900)
+    debounced("b")
+    vi.advanceTimersByTime(900)
+    debounced("c")
+
+    vi.advanceTimersByTime(700)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith("c")
+  })
+
+  test("flush() uses the latest args even when maxWait is configured", () => {
+    const spy = vi.fn()
+    const debounced = createDebouncedFn(spy, 1000, 2500)
+
+    debounced("a")
+    vi.advanceTimersByTime(900)
+    debounced("b")
+    debounced.flush()
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith("b")
+
+    vi.advanceTimersByTime(5000)
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  test("cancel() clears a pending maxWait invocation", () => {
+    const spy = vi.fn()
+    const debounced = createDebouncedFn(spy, 1000, 2500)
+
+    debounced("a")
+    vi.advanceTimersByTime(900)
+    debounced("b")
+    debounced.cancel()
+
+    vi.advanceTimersByTime(5000)
     expect(spy).not.toHaveBeenCalled()
   })
 })

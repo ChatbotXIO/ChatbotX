@@ -43,6 +43,39 @@ export type Transaction = Parameters<
 export type { PgTable } from "drizzle-orm/pg-core"
 export type DatabaseClient = typeof db | Transaction
 
+export const countWithRelationsFilter = <TTable extends PgTable>(props: {
+  client?: DatabaseClient
+  table: TTable
+  tsName: string
+  where: Record<string, unknown> | undefined
+}): Promise<number> => {
+  const { client = db, table, tsName, where } = props
+
+  if (!where || Object.keys(where).length === 0) {
+    return client.$count(table)
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: reaching drizzle beta relation internals in one place
+  const anyDb = client as any
+  const rootDb = db as typeof anyDb
+  const relationInternals = anyDb._?.relations ?? rootDb._.relations
+  const tableRelations = relationInternals[tsName]?.relations
+
+  if (!tableRelations) {
+    throw new Error(`Relation config not found for table: ${tsName}`)
+  }
+
+  const filter = relationsFilterToSQL(
+    table,
+    where as RelationsFilterArg,
+    tableRelations,
+    relationInternals,
+    anyDb.dialect?.casing ?? rootDb.dialect.casing,
+  )
+
+  return client.$count(table, filter)
+}
+
 export const findOrFail = async <TTable extends PgTable>(props: {
   client?: DatabaseClient
   table: TTable

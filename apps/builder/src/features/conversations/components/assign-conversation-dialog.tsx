@@ -109,9 +109,11 @@ export default function AssignConversationDialog({
             onSubmit={handleSubmitWithAction}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("fields.assignedId.label")}
               name="assignedId"
               options={contactAssigneeOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
             />
 

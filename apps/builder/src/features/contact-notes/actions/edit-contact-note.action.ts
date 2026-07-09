@@ -1,9 +1,10 @@
 "use server"
 
-import { contactService } from "@chatbotx.io/business"
+import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { contactNoteModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { requireContactPermissionScope } from "@/features/contacts/permissions"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactNoteRequest,
@@ -18,20 +19,23 @@ export const editContactNoteAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
     } = props
+    const accessScope = await requireContactPermissionScope(workspaceId)
 
-    return await editContactNote({ workspaceId, id }, parsedInput)
+    return await editContactNote({ workspaceId, id, accessScope }, parsedInput)
   })
 
 export const editContactNote = async (
   ctx: {
     workspaceId: string
     id: string
+    accessScope?: ContactAccessScope
   },
   parsedInput: UpdateContactNoteRequest,
 ) => {
   const contact = await contactService.findByIdOrFail({
     workspaceId: ctx.workspaceId,
     id: ctx.id,
+    accessScope: ctx.accessScope,
   })
 
   const foundContactNote = await findOrFail({

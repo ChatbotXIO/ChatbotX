@@ -73,8 +73,10 @@ const WhatsappFlowStepEditor = ({
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="space-y-3 bg-slate-100 px-4 py-2 dark:bg-neutral-900">
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           name={`${parentName}.inboxId`}
           options={whatsappInboxOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
 

@@ -326,11 +326,32 @@ describe("processWhatsappTemplate", () => {
       "msg-created",
       "prov-123",
       "ws-1",
+      createdAt,
     )
     // db.update touches contactInbox.lastMessageAt and conversation.lastActivityAt
     expect(mockDbUpdate).toHaveBeenCalledTimes(2)
     expect(mockDbSet).toHaveBeenCalledWith({ lastMessageAt: createdAt })
     expect(mockDbSet).toHaveBeenCalledWith({ lastActivityAt: createdAt })
+  })
+
+  test("does not rethrow when persisting sourceId fails after a successful send", async () => {
+    // Regression: the template was already sent (billable, non-idempotent) —
+    // a thrown error here must not propagate, or BullMQ redelivers the job
+    // and sends the same template a second time.
+    mockSendFlowStep.mockResolvedValue({ messageIds: ["prov-123"] })
+    mockRepositoryUpdateSourceId.mockRejectedValueOnce(
+      new Error("shard write failed"),
+    )
+
+    await expect(
+      processWhatsappTemplate({
+        conversation: fakeConversation,
+        contactInbox: fakeContactInbox,
+        template: fakeTemplate,
+      }),
+    ).resolves.toBeDefined()
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
   })
 
   test("emits message:failed on error and rethrows", async () => {

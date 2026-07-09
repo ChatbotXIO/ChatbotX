@@ -14,12 +14,14 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 
 interface DataTableToolbarProps<TData> extends React.ComponentProps<"div"> {
   table: Table<TData>
+  locale?: string
 }
 
 export function DataTableToolbar<TData>({
   table,
   children,
   className,
+  locale,
   ...props
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
@@ -45,7 +47,11 @@ export function DataTableToolbar<TData>({
     >
       <div className="flex flex-1 flex-wrap items-center gap-2">
         {columns.map((column) => (
-          <DataTableToolbarFilter key={column.id} column={column} />
+          <DataTableToolbarFilter
+            key={column.id}
+            column={column}
+            locale={locale}
+          />
         ))}
         {isFiltered && (
           <Button
@@ -68,10 +74,12 @@ export function DataTableToolbar<TData>({
 }
 interface DataTableToolbarFilterProps<TData> {
   column: Column<TData>
+  locale?: string
 }
 
 function DataTableToolbarFilter<TData>({
   column,
+  locale,
 }: DataTableToolbarFilterProps<TData>) {
   {
     const columnMeta = column.columnDef.meta
@@ -124,6 +132,7 @@ function DataTableToolbarFilter<TData>({
               column={column}
               title={columnMeta.label ?? column.id}
               multiple={columnMeta.variant === "dateRange"}
+              locale={locale}
             />
           )
 
@@ -141,7 +150,7 @@ function DataTableToolbarFilter<TData>({
         default:
           return null
       }
-    }, [column, columnMeta])
+    }, [column, columnMeta, locale])
 
     return onFilterRender()
   }

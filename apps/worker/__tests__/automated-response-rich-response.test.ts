@@ -1,5 +1,6 @@
 import type {
   AIAgentModel,
+  ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { type ModelMessage, streamText } from "ai"
@@ -257,7 +258,14 @@ function makeConversation(
 
 const baseProps = {
   conversation: makeConversation(),
-  contactInboxId: "inbox-1",
+  contactInbox: {
+    id: "inbox-1",
+    contactId: "contact-1",
+    inboxId: "channel-inbox-1",
+    channel: "webchat",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as ContactInboxModel,
   channel: "webchat",
   messages: [] as ModelMessage[],
   fileOnlyTrigger: false,

@@ -1,6 +1,6 @@
 "use server"
 
-import { contactService } from "@chatbotx.io/business"
+import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   type FillableContactKey,
@@ -13,6 +13,7 @@ import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { maxPerPageString } from "@/lib/shared-request"
+import { requireContactPermissionScope } from "../permissions"
 import {
   type UpdateContactFieldRequest,
   updateContactFieldRequest,
@@ -26,20 +27,23 @@ export const updateContactFieldAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
     } = props
+    const accessScope = await requireContactPermissionScope(workspaceId)
 
-    await updateContactFields({ workspaceId, id }, parsedInput)
+    await updateContactFields({ workspaceId, id, accessScope }, parsedInput)
   })
 
 export const updateContactFields = async (
   ctx: {
     workspaceId: string
     id: string
+    accessScope?: ContactAccessScope
   },
   parsedInput: UpdateContactFieldRequest,
 ) => {
   await contactService.findByIdOrFail({
     workspaceId: ctx.workspaceId,
     id: ctx.id,
+    accessScope: ctx.accessScope,
   })
 
   const allCustomFields = await listCustomFields({

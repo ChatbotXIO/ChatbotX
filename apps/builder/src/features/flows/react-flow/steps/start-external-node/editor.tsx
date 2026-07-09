@@ -52,16 +52,20 @@ const StartExternalNodeStepEditor = (
       <div className="flex flex-col gap-4">
         <ComboboxField
           disableValues={activeFlowId ? [activeFlowId] : undefined}
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.flow.label")}
           name={flowIdField}
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
 
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.node.label")}
           name={nodeIdField}
           options={nodeOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
       </div>

@@ -94,7 +94,7 @@ export function WorkspaceSwitcher({
                 key={workspace.name}
                 onClick={() => setActiveWorkspace(workspace)}
               >
-                <Link href={`/space/${workspace.id}/dashboard`}>
+                <Link href={`/space/${workspace.id}`}>
                   <Avatar className="rounded-lg border">
                     <AvatarImage
                       alt={workspace.name}

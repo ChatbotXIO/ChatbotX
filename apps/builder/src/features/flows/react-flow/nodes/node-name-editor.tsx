@@ -58,7 +58,7 @@ export function NodeNameEditor({ activeNode }: { activeNode: FlowNode }) {
             className="flex w-full flex-col gap-6"
             onSubmit={form.handleSubmit(onSubmit)}
           >
-            <InputField label="Name" name="name" required />
+            <InputField label={t("fields.name.label")} name="name" required />
 
             <DialogFooter>
               <Button

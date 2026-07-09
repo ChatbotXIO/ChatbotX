@@ -19,17 +19,45 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo } from "react"
+import { use, useCallback, useEffect, useMemo, useState } from "react"
+import {
+  type ContactFilterCriteria,
+  ContactListFilterButton,
+  ContactListFilterPanel,
+  EMPTY_CONTACT_FILTER,
+  useContactFilterQueryState,
+} from "@/features/contact-filter"
+import { client } from "@/lib/orpc/orpc"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
-import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ExportContactsFilter } from "./schemas/action"
 import type { ListContactsResponse } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
 import { getLatestContactLastReadAt, useAvatarUrl } from "./utils"
+
+const parseSortParam = (value: string | null) => {
+  if (!value) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(value)
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed.filter(
+      (sort): sort is { id: string; desc: boolean } =>
+        typeof sort?.id === "string" && typeof sort?.desc === "boolean",
+    )
+  } catch {
+    return []
+  }
+}
 
 function NameCell({
   contact,
@@ -40,20 +68,43 @@ function NameCell({
 }) {
   const avatarUrl = useAvatarUrl(contact)
   const inboxHref = `/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`
+  const channel = contact.contactInboxes?.[0]?.channel as
+    | ChannelType
+    | undefined
 
   return (
-    <div className="flex max-w-50 items-center gap-2">
+    <div className="flex max-w-56 items-center gap-3">
       <Link href={inboxHref} target="_blank">
-        <Avatar className="size-6 shrink-0">
-          <AvatarImage alt={contact.fullName ?? ""} src={avatarUrl} />
-          <AvatarFallback className="text-xs">
-            {contact.fullName?.charAt(0)?.toUpperCase() ?? "?"}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="size-9 shrink-0">
+            <AvatarImage
+              alt={contact.fullName ?? ""}
+              className="object-cover"
+              src={avatarUrl}
+            />
+            <AvatarFallback className="bg-gray-300 text-sm dark:bg-zinc-100 dark:text-zinc-800">
+              {contact.fullName?.slice(0, 2) ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          {channel && (
+            <div className="absolute right-0 bottom-0 translate-x-1">
+              <InboxIcon
+                channel={channel}
+                iconClassName="size-3"
+                showLabel={false}
+                size="small"
+              />
+            </div>
+          )}
+        </div>
       </Link>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link className="truncate" href={inboxHref} target="_blank">
+          <Link
+            className="truncate font-medium leading-5"
+            href={inboxHref}
+            target="_blank"
+          >
             {contact.fullName}
           </Link>
         </TooltipTrigger>
@@ -66,18 +117,102 @@ function NameCell({
 }
 
 type ContactsTableProps = {
+  initialContactFilter?: ContactFilterCriteria
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
-  filter?: ExportContactsFilter
 }
 
 export function ContactsTable({
+  initialContactFilter = EMPTY_CONTACT_FILTER,
   workspaceId,
   promises,
-  filter,
 }: ContactsTableProps) {
   const t = useTranslations()
-  const [{ data, pageCount }] = use(promises)
+  const searchParams = useSearchParams()
+  const searchParamsKey = searchParams.toString()
+  const [{ data: initialData, pageCount: initialPageCount }] = use(promises)
+  const [tableData, setTableData] =
+    useState<ListContactsResponse["data"]>(initialData)
+  const [tablePageCount, setTablePageCount] = useState(initialPageCount)
+  const {
+    filter: contactFilter,
+    setFilter: setContactFilter,
+    isActive: isContactFilterActive,
+  } = useContactFilterQueryState({ initialFilter: initialContactFilter })
+  const [optimisticContactFilter, setOptimisticContactFilter] =
+    useState<ContactFilterCriteria>(contactFilter)
+  const [showContactFilterPanel, setShowContactFilterPanel] = useState(
+    isContactFilterActive,
+  )
+  const isOptimisticContactFilterActive =
+    optimisticContactFilter.conditions.length > 0
+
+  const keyword = useMemo(() => {
+    const params = new URLSearchParams(searchParamsKey)
+    return params.get("keyword") ?? undefined
+  }, [searchParamsKey])
+
+  useEffect(() => {
+    let ignore = false
+    const params = new URLSearchParams(searchParamsKey)
+
+    client.contactsAPIs
+      .listContactsByPOSTAuthenticatedAPI({
+        workspaceId,
+        page: Number(params.get("page") ?? "1"),
+        perPage: Number(params.get("perPage") ?? "10"),
+        sort: parseSortParam(params.get("sort")),
+        keyword: params.get("keyword") ?? undefined,
+        contactFilter: isContactFilterActive ? contactFilter : undefined,
+      })
+      .then((response) => {
+        if (ignore) {
+          return
+        }
+
+        setTableData(response.data)
+        setTablePageCount(response.pageCount)
+      })
+      .catch(() => {
+        if (ignore) {
+          return
+        }
+
+        setTableData(initialData)
+        setTablePageCount(initialPageCount)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [
+    contactFilter,
+    initialData,
+    initialPageCount,
+    isContactFilterActive,
+    searchParamsKey,
+    workspaceId,
+  ])
+
+  useEffect(() => {
+    if (isContactFilterActive) {
+      setShowContactFilterPanel(true)
+    }
+  }, [isContactFilterActive])
+
+  useEffect(() => {
+    setOptimisticContactFilter(contactFilter)
+  }, [contactFilter])
+
+  const exportFilter = useMemo<ExportContactsFilter>(
+    () => ({
+      keyword,
+      contactFilter: isOptimisticContactFilterActive
+        ? optimisticContactFilter
+        : undefined,
+    }),
+    [keyword, isOptimisticContactFilterActive, optimisticContactFilter],
+  )
 
   const columns = useMemo<ColumnDef<ListContactsResponse["data"][number]>[]>(
     () => [
@@ -85,7 +220,7 @@ export function ContactsTable({
         id: "select",
         header: ({ table: innerTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label={t("actions.selectAll")}
             checked={
               innerTable.getIsAllPageRowsSelected() ||
               (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -97,7 +232,7 @@ export function ContactsTable({
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label={t("actions.selectRow")}
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
@@ -141,13 +276,20 @@ export function ContactsTable({
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            {row.original.contactInboxes?.map((contactInbox) => (
-              <InboxIcon
-                channel={contactInbox.channel as ChannelType}
-                key={contactInbox.id}
-                showLabel={false}
-              />
-            ))}
+            {[
+              ...new Set(
+                row.original.contactInboxes?.map(
+                  (contactInbox) => contactInbox.source,
+                ) ?? [],
+              ),
+            ].map((source) => {
+              const labelKey = `condition.sources.${source}` as const
+              return (
+                <span key={source}>
+                  {t.has(labelKey) ? t(labelKey) : source}
+                </span>
+              )
+            })}
           </div>
         ),
         enableSorting: false,
@@ -235,9 +377,9 @@ export function ContactsTable({
   )
 
   const { table } = useDataTable({
-    data,
+    data: tableData,
     columns,
-    pageCount,
+    pageCount: tablePageCount,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -247,12 +389,37 @@ export function ContactsTable({
     clearOnDefault: true,
   })
 
+  const handleContactFilterChange = useCallback(
+    (next: ContactFilterCriteria) => {
+      table.setPageIndex(0)
+      setOptimisticContactFilter(next)
+      setContactFilter(next).catch(() => {
+        setOptimisticContactFilter(contactFilter)
+      })
+    },
+    [contactFilter, setContactFilter, table],
+  )
+
   return (
-    <DataTable table={table}>
+    <DataTable
+      className="[&_tbody_td]:py-3 [&_tbody_td]:text-[15px] [&_tbody_tr]:h-16"
+      table={table}
+    >
+      {showContactFilterPanel && (
+        <ContactListFilterPanel
+          filter={optimisticContactFilter}
+          onFilterChange={handleContactFilterChange}
+        />
+      )}
       <DataTableToolbar table={table}>
-        <CreateContactDialog workspaceId={workspaceId} />
+        <ContactListFilterButton
+          active={isOptimisticContactFilterActive}
+          filter={optimisticContactFilter}
+          onToggle={() => setShowContactFilterPanel((current) => !current)}
+          open={showContactFilterPanel}
+        />
         <ContactListAction
-          filter={filter}
+          filter={exportFilter}
           table={table}
           workspaceId={workspaceId}
         />

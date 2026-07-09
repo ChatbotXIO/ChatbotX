@@ -23,8 +23,10 @@ const SendExternalFlowStepEditor = ({ parentName }: { parentName: string }) => {
     >
       <ComboboxField
         disableValues={activeFlowId ? [activeFlowId] : undefined}
+        emptyText={t("actions.noRecordFound")}
         name={name}
         options={flowOptions}
+        placeholder={t("actions.pleaseSelect")}
         required={true}
       />
     </BaseStepEditor>

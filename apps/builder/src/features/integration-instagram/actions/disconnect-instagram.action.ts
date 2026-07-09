@@ -10,6 +10,7 @@ import {
   type InstagramAuthValue,
   isRevokedTokenError,
 } from "@chatbotx.io/integration-instagram"
+import { isRevokedTokenError as isRevokedTokenErrorFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -37,15 +38,25 @@ export const disconnectInstagramAction = workspaceActionClient
 
       const authValue = integrationInstagram.auth as InstagramAuthValue
 
+      const isFacebook = integrationInstagram.type === "facebook"
+
       try {
-        await integrations.instagram.disconnect(authValue)
+        if (isFacebook) {
+          await integrations.instagramFacebook.disconnect(authValue)
+        } else {
+          await integrations.instagram.disconnect(authValue)
+        }
       } catch (error) {
         logger.warn(
           error,
           "Instagram disconnect API call failed — proceeding with local cleanup",
         )
 
-        if (!isRevokedTokenError(error)) {
+        const isRevoked = isFacebook
+          ? isRevokedTokenErrorFacebook(error)
+          : isRevokedTokenError(error)
+
+        if (!isRevoked) {
           throw error
         }
       }

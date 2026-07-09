@@ -9,6 +9,7 @@ import fetch from "cross-fetch"
 import imageSize from "image-size"
 import { rescue } from "../exception"
 import { facebookAttachmentClient } from "../lib/http-client"
+import { logger } from "../lib/logger"
 import type {
   FacebookMessageAttachment,
   FacebookSendMessageResponse,
@@ -59,36 +60,44 @@ export const getMessageAttachmentEntity = async ({
       "User-Agent": "node",
     },
   })
-  if (response.ok && response.body) {
-    const originPath = `${ctx.storagePrefix}/${createId()}`
-    const bytes = await response.arrayBuffer()
-    const mimeType = response.headers.get("content-type") ?? "image/png"
-    const fileType = guessFileTypeFromMimeType(mimeType)
+  if (!(response.ok && response.body)) {
+    throw new Error(
+      `Failed to download attachment (status ${response.status} ${response.statusText}): ${attachment.payload.url}`,
+    )
+  }
 
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
-    })
+  const originPath = `${ctx.storagePrefix}/${createId()}`
+  const bytes = await response.arrayBuffer()
+  const mimeType = response.headers.get("content-type") ?? "image/png"
+  const fileType = guessFileTypeFromMimeType(mimeType)
 
-    const imageProperties: {
-      width?: number
-      height?: number
-    } = {}
-    if (mimeType.startsWith("image/")) {
-      // Retrieve width / height
+  await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
+    ACL: "public-read",
+    ContentType: mimeType,
+  })
+
+  const imageProperties: {
+    width?: number
+    height?: number
+  } = {}
+  if (mimeType.startsWith("image/")) {
+    // Retrieve width / height
+    try {
       const arrayBytes = new Uint8Array(bytes)
       const dimensions = imageSize(arrayBytes)
       imageProperties.width = dimensions.width
       imageProperties.height = dimensions.height
+    } catch (error) {
+      logger.warn(error, "Failed to read attachment image dimensions")
     }
+  }
 
-    return {
-      sourceId: createId(),
-      originPath,
-      fileType,
-      mimeType,
-      size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
-      ...imageProperties,
-    }
+  return {
+    sourceId: createId(),
+    originPath,
+    fileType,
+    mimeType,
+    size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
+    ...imageProperties,
   }
 }

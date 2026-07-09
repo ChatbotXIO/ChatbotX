@@ -6,7 +6,11 @@ import {
   ne,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
+import {
+  type ChannelType,
+  channelTypes,
+  inboxStatuses,
+} from "@chatbotx.io/database/partials"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
@@ -80,6 +84,65 @@ class InboxService extends BaseService {
       where: { id: props.id },
       with: InboxService.withIntegrations,
     })
+  }
+
+  async resolveBroadcastInboxIds(input: {
+    workspaceId: string
+    channels?: ChannelType[] | null
+    integrationWhatsappId?: string | null
+    integrationMessengerId?: string | null
+  }): Promise<string[]> {
+    if (input.integrationWhatsappId) {
+      const integration = await db.query.integrationWhatsappModel.findFirst({
+        where: {
+          id: input.integrationWhatsappId,
+          workspaceId: input.workspaceId,
+        },
+        columns: { inboxId: true },
+      })
+
+      return integration ? [integration.inboxId] : []
+    }
+
+    if (input.integrationMessengerId) {
+      const integration = await db.query.integrationMessengerModel.findFirst({
+        where: {
+          id: input.integrationMessengerId,
+          workspaceId: input.workspaceId,
+        },
+        columns: { inboxId: true },
+      })
+
+      return integration ? [integration.inboxId] : []
+    }
+
+    const channels = Array.from(new Set(input.channels ?? []))
+
+    // No channel specified -> no audience. Only an explicit "omnichannel"
+    // selection means "all inboxes"; a missing/unknown channel should target
+    // nobody rather than silently blast every inbox.
+    if (channels.length === 0) {
+      return []
+    }
+
+    const isOmnichannel = channels.includes(channelTypes.enum.omnichannel)
+
+    const where: {
+      workspaceId: string
+      channel?: ChannelType | { in: ChannelType[] }
+    } = {
+      workspaceId: input.workspaceId,
+    }
+    if (!isOmnichannel) {
+      where.channel = channels.length === 1 ? channels[0] : { in: channels }
+    }
+
+    const inboxes = await db.query.inboxModel.findMany({
+      where,
+      columns: { id: true },
+    })
+
+    return inboxes.map((inbox) => inbox.id)
   }
 
   async create(props: {

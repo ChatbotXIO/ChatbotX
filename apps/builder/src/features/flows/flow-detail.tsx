@@ -16,18 +16,22 @@ import { ReactFlowFrame } from "./react-flow/frame"
 import { FlowTemplateStoreProvider } from "./react-flow/stores/flow-template-store-provider"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
 import { WhatsappFlowStoreProvider } from "./react-flow/stores/whatsapp-flow-store-provider"
-import type { FlowResource } from "./schemas/resource"
+import type { FlowWithVersionsResource } from "./schemas/resource"
 
 type FlowDetailProps = {
-  flow: FlowResource
+  flow: FlowWithVersionsResource
   flowVersion: FlowVersionResource
   openaiCompatibleIntegrations: IntegrationOpenaiCompatibleResource[]
+  canRevertToPublished: boolean
+  hasPublishedVersion: boolean
 }
 
 export function FlowDetail({
   flow,
   flowVersion,
   openaiCompatibleIntegrations,
+  canRevertToPublished,
+  hasPublishedVersion,
 }: FlowDetailProps) {
   return (
     <ReactFlowProvider>
@@ -53,8 +57,10 @@ export function FlowDetail({
                               workspaceId={flow.workspaceId}
                             >
                               <ReactFlowFrame
+                                canRevertToPublished={canRevertToPublished}
                                 flow={flow}
                                 flowVersion={flowVersion}
+                                hasPublishedVersion={hasPublishedVersion}
                               />
                             </AIAgentStoreProvider>
                           </PlatformCredentialsStoreProvider>

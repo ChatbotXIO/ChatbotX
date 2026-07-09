@@ -39,7 +39,7 @@ export function getColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label={t("actions.selectAll")}
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -52,7 +52,7 @@ export function getColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label={t("actions.selectRow")}
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}

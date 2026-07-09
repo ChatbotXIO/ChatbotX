@@ -30,6 +30,7 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
@@ -43,7 +44,7 @@ import { createBroadcastAction } from "@/features/broadcasts/actions/create-broa
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { useWorkspaceId } from "@/hooks/routing"
-import { ContactFilter } from "../contacts/components/contact-filter"
+import { ContactFilter } from "../contact-filter"
 import { useContactStore } from "../contacts/provider/contact-store-context"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { useFlowTemplate } from "../flows/react-flow/stores/flow-template-store-provider"
@@ -55,6 +56,7 @@ import { TemplatePreview } from "../integration-whatsapp/message-templates/compo
 import type { MessageTemplateWithComponents } from "../integration-whatsapp/message-templates/schema/resource"
 import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 import { MessengerBroadcastFlowButtons } from "./components/messenger-broadcast-flow-buttons"
+import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -277,7 +279,7 @@ function CreateBroadcastChooseChannel() {
       <CardContent className="flex flex-col gap-4">
         {configs.map((config) => (
           <div className="flex w-full items-center gap-2" key={config.value}>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <InboxIcon channel={config.value} />
             </div>
             <Button
@@ -467,6 +469,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const router = useRouter()
   const { contactInboxesCount: count, getContactInboxesCount } =
     useContactStore((state) => state)
+  const fetchReceiversCount = useDebouncedCallback(getContactInboxesCount, 300)
 
   const workspaceId = useWorkspaceId()
 
@@ -557,6 +560,15 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
   const [confirmOpen, setConfirmOpen] = useState(false)
 
+  const excludeFields = useMemo(
+    () =>
+      getBroadcastExcludedFilterFields({
+        channel: props.channel,
+        subaction: props.subaction,
+      }),
+    [props.channel, props.subaction],
+  )
+
   const handleCancel = useCallback(() => {
     router.push(`/space/${workspaceId}/broadcasts`)
   }, [router, workspaceId])
@@ -607,11 +619,21 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId, setValue])
 
   useEffect(() => {
-    getContactInboxesCount({
+    fetchReceiversCount({
       contactFilter: watchedContactFilter,
       channel: props.channel,
+      integrationWhatsappId: watchedIntegrationWhatsappId,
+      integrationMessengerId: watchedIntegrationMessengerId,
+      subaction: props.subaction,
     })
-  }, [watchedContactFilter, props.channel, getContactInboxesCount])
+  }, [
+    watchedContactFilter,
+    props.channel,
+    props.subaction,
+    watchedIntegrationWhatsappId,
+    watchedIntegrationMessengerId,
+    fetchReceiversCount,
+  ])
 
   useEffect(() => {
     if (watchedTemplateId && whatsappTemplates.length > 0) {
@@ -668,7 +690,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <Card>
         <CardContent className="flex px-3">
-          <div className="flex flex-1 flex-col gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <InboxIcon channel={props.channel} label={subactionInfo.name} />
             {subactionInfo.description && (
               <span className="text-gray-500 text-sm">
@@ -697,6 +719,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             broadcastSubactions.enum.whatsappTemplateMessage && (
             <>
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 key="integrationWhatsappId"
                 label={t("fields.whatsappChannel.label")}
                 name="integrationWhatsappId"
@@ -704,12 +727,14 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                   label: integration.name,
                   value: integration.id,
                 }))}
+                placeholder={t("actions.pleaseSelect")}
                 required={true}
               />
 
               {watchedTemplateType === broadcastFlowTypes.enum.template && (
                 <>
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     key="templateId"
                     label={t("fields.templateId.label")}
                     name="templateId"
@@ -717,6 +742,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                       label: `${template.name} (${template.language})`,
                       value: template.id,
                     }))}
+                    placeholder={t("actions.pleaseSelect")}
                     required={true}
                   />
 
@@ -752,16 +778,19 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             broadcastSubactions.enum.messengerTemplateMessage && (
             <>
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 key="integrationMessengerId"
                 label={t("fields.messengerChannel.label")}
                 name="integrationMessengerId"
                 options={messengerIntegrationOptions}
+                placeholder={t("actions.pleaseSelect")}
                 required={true}
               />
 
               {watchedTemplateType === broadcastFlowTypes.enum.template && (
                 <>
                   <ComboboxField
+                    emptyText={t("actions.noRecordFound")}
                     key="messengerTemplateId"
                     label={t("fields.messengerTemplateId.label")}
                     name="templateId"
@@ -769,6 +798,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                       label: `${template.name} (${template.language})`,
                       value: template.id,
                     }))}
+                    placeholder={t("actions.pleaseSelect")}
                     required={true}
                   />
 
@@ -813,6 +843,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           {(!watchedTemplateType ||
             watchedTemplateType !== broadcastFlowTypes.enum.template) && (
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               key="flowId"
               label={t("fields.flowId.label")}
               name="flowId"
@@ -820,6 +851,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                 label: flow.name,
                 value: flow.id,
               }))}
+              placeholder={t("actions.pleaseSelect")}
               required={true}
             />
           )}
@@ -857,7 +889,11 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
       <Card>
         <CardContent className="flex flex-col gap-6">
-          <ContactFilter parentName="contactFilter" />
+          <ContactFilter
+            excludeFields={excludeFields}
+            inboxChannel={props.channel}
+            parentName="contactFilter"
+          />
         </CardContent>
       </Card>
 

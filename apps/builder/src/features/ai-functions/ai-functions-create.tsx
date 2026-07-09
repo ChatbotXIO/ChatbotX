@@ -184,7 +184,11 @@ export function AIFunctionsCreate({
                     placeholder="Attribute"
                   />
                   <MoveRightIcon className="size-10" />
-                  <CustomFieldField name={`dataCollect.${index}.to`} />
+                  <CustomFieldField
+                    emptyText={t("actions.noRecordFound")}
+                    name={`dataCollect.${index}.to`}
+                    placeholder={t("actions.pleaseSelect")}
+                  />
                   <Button
                     onClick={() => remove(index)}
                     type="button"
@@ -209,6 +213,7 @@ export function AIFunctionsCreate({
               placeholder={t("fields.outputMessage.placeholder")}
             />
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("fields.triggerFlowId.label")}
               name="triggerFlowId"
               options={flowOptions}

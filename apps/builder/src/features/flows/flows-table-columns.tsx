@@ -36,18 +36,20 @@ type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<FlowResource> | null>
   >
+  locale: string
 }
 
 export function getFlowColumns({
   t,
   setRowAction,
+  locale,
 }: GetColumnsProps): ColumnDef<FlowResource>[] {
   return [
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label={t("actions.selectAll")}
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -60,7 +62,7 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label={t("actions.selectRow")}
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
@@ -188,7 +190,9 @@ export function getFlowColumns({
           title={t("fields.modified.label")}
         />
       ),
-      cell: ({ row }) => <div>{formatDate(row.original.updatedAt)}</div>,
+      cell: ({ row }) => (
+        <div>{formatDate(row.original.updatedAt, { locale })}</div>
+      ),
       size: 50,
       enableSorting: true,
       meta: {

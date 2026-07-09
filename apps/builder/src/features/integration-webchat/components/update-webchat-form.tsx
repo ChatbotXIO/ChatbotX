@@ -144,9 +144,11 @@ export function UpdateWebchatForm({
         <InputField label="Name" name="name" required />
         <ComboboxField
           description={t("fields.welcomeFlowId.description")}
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
         />
 
         <Separator />

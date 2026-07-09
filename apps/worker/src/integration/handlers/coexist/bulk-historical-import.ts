@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noBitwiseOperators: bit-packing 63-bit snowflake IDs
 
 import { db, inArray, sql } from "@chatbotx.io/database/client"
+import { contactSources } from "@chatbotx.io/database/partials"
 import type {
   BulkCreateAttachmentInput,
   CreateMessageInput,
@@ -480,7 +481,7 @@ export const bulkImportContacts = async (props: {
         inboxId: inbox.id,
         contactId: contactRows[i]?.id,
         originalContactId: contactRows[i]?.id,
-        source: inbox.channel,
+        source: contactSources.enum.inboundMessage,
         sourceId,
         channel: inbox.channel,
         createdAt: new Date(),
@@ -594,7 +595,7 @@ export const bulkImportContacts = async (props: {
             phoneNumber: entry.phoneNumber,
             email: entry.email,
             channel: inbox.channel,
-            source: inbox.channel,
+            source: contactSources.enum.inboundMessage,
             createdAt: new Date(),
           })
         }

@@ -2,8 +2,13 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { findByIdOrFailSpy, updateContactSequencesSpy } = vi.hoisted(() => ({
+const {
+  findByIdOrFailSpy,
+  requireContactPermissionScopeSpy,
+  updateContactSequencesSpy,
+} = vi.hoisted(() => ({
   findByIdOrFailSpy: vi.fn(),
+  requireContactPermissionScopeSpy: vi.fn(),
   updateContactSequencesSpy: vi.fn(),
 }))
 
@@ -27,6 +32,10 @@ vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   },
 }))
 
+vi.mock("../src/features/contacts/permissions", () => ({
+  requireContactPermissionScope: requireContactPermissionScopeSpy,
+}))
+
 vi.mock("../src/features/contact-sequences/schema", () => ({
   updateContactSequenceRequest: {},
 }))
@@ -47,6 +56,9 @@ describe("updateContactSequenceAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     findByIdOrFailSpy.mockResolvedValue({ id: "contact-1" })
+    requireContactPermissionScopeSpy.mockResolvedValue({
+      restrictToAssignedUserId: "user-1",
+    })
     updateContactSequencesSpy.mockResolvedValue([
       { id: "enrollment-1", sequence: { id: "sequence-1" } },
     ])
@@ -61,6 +73,7 @@ describe("updateContactSequenceAction", () => {
     expect(findByIdOrFailSpy).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       id: "contact-1",
+      accessScope: { restrictToAssignedUserId: "user-1" },
     })
     expect(updateContactSequencesSpy).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,

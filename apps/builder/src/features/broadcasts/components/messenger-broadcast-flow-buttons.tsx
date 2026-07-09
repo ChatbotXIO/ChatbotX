@@ -86,9 +86,11 @@ function FlowSelectDialog({
         <FormProvider {...dialogForm}>
           <div className="py-2">
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("fields.flowId.label")}
               name="flowId"
               options={flowOptions}
+              placeholder={t("actions.pleaseSelect")}
               required={true}
             />
           </div>

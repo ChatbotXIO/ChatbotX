@@ -6,13 +6,16 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
+import { InstagramLoginSelect } from "@/features/integration-instagram/components/instagram-login-select"
 import { generateInstagramRedirectUri } from "@/features/integration-instagram/libs/oauth"
+import { generateInstagramFacebookRedirectUri } from "@/features/integration-instagram/libs/oauth-facebook"
 import { generateMessengerRedirectUri } from "@/features/integration-messenger/libs/oauth"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { generateTiktokRedirectUri } from "@/features/integration-tiktok/libs/tiktok"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserId } from "@/lib/auth/utils"
 
 export const dynamic = "force-dynamic"
@@ -27,6 +30,11 @@ type CreateChannelPageProps = {
 export default async function CreateChannelPage(props: CreateChannelPageProps) {
   const searchParams = await props.searchParams
   const workspaceId = getIdFromParams(searchParams, "workspaceId")
+
+  if (workspaceId) {
+    await requireWorkspacePermission(workspaceId, "superAdmin")
+  }
+
   const selectedChannel = searchParams.channel
 
   if (selectedChannel === "telegram") {
@@ -47,28 +55,33 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
       userId)
     : userId
 
-  const [whatsapp, messenger, instagram, zalo, tiktok] = await Promise.all([
-    platformCredentialService.resolveForOwner({
-      ownerId: platformOwnerId,
-      type: "whatsapp",
-    }),
-    platformCredentialService.resolveForOwner({
-      ownerId: platformOwnerId,
-      type: "messenger",
-    }),
-    platformCredentialService.resolveForOwner({
-      ownerId: platformOwnerId,
-      type: "instagram",
-    }),
-    platformCredentialService.resolveForOwner({
-      ownerId: platformOwnerId,
-      type: "zalo",
-    }),
-    platformCredentialService.resolveForOwner({
-      ownerId: platformOwnerId,
-      type: "tiktok",
-    }),
-  ])
+  const [whatsapp, messenger, instagram, instagramFacebook, zalo, tiktok] =
+    await Promise.all([
+      platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "whatsapp",
+      }),
+      platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "messenger",
+      }),
+      platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "instagram",
+      }),
+      platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "instagramFacebook",
+      }),
+      platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "zalo",
+      }),
+      platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "tiktok",
+      }),
+    ])
 
   if (selectedChannel === "whatsapp" && whatsapp) {
     return (
@@ -88,8 +101,20 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   if (selectedChannel === "instagram" && instagram) {
+    return <InstagramLoginSelect workspaceId={workspaceId} />
+  }
+
+  if (selectedChannel === "instagram-direct" && instagram) {
     const redirectUri = await generateInstagramRedirectUri(
       instagram.publicConfig,
+      workspaceId,
+    )
+    redirect(redirectUri)
+  }
+
+  if (selectedChannel === "instagram-facebook" && instagramFacebook) {
+    const redirectUri = await generateInstagramFacebookRedirectUri(
+      instagramFacebook.publicConfig,
       workspaceId,
     )
     redirect(redirectUri)

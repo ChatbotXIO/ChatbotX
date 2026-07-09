@@ -39,6 +39,7 @@ export const IntegrationJobAction = {
   coexistAttachmentDownload: "coexistAttachmentDownload",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
+  processCommentAutomation: "processCommentAutomation",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -313,6 +314,23 @@ export type IntegrationJobUpdateContactAvatar = {
   }
 }
 
+export type IntegrationJobProcessCommentAutomation = {
+  type: typeof IntegrationJobAction.processCommentAutomation
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    commentId: string
+    postId: string
+    parentId?: string
+    fromId: string
+    message?: string
+    createdTime: number
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveComment
@@ -335,6 +353,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
+  | IntegrationJobProcessCommentAutomation
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"

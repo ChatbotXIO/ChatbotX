@@ -34,10 +34,16 @@ export function getPostDetailsQuery(
             auth: integration.auth as InstagramAuthValue,
           },
         })
-        const raw = await integrations.instagram.runAction("getPostDetails", {
-          ctx,
-          input: { postId },
-        })
+        const raw =
+          integration.type === "facebook"
+            ? await integrations.instagramFacebook.runAction("getPostDetails", {
+                ctx,
+                input: { postId },
+              })
+            : await integrations.instagram.runAction("getPostDetails", {
+                ctx,
+                input: { postId },
+              })
         return {
           text: raw.caption,
           picture: raw.thumbnail_url ?? raw.media_url,

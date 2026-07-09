@@ -160,6 +160,7 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(submit)}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("drip.fields.account")}
               name="accountId"
               options={accountOptions}
@@ -256,6 +257,7 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
                       />
                       <ArrowRightIcon className="size-4 text-muted-foreground" />
                       <ComboboxField
+                        emptyText={t("actions.noRecordFound")}
                         label=""
                         name={`mergeFields.${index}.dripField`}
                         options={customFieldOptions}

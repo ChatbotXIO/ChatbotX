@@ -112,7 +112,7 @@ export const AIExtractDataDialog = ({
 
               {inputType === "text" ? (
                 <TiptapEditorField
-                  label="Input Text"
+                  label={t("fields.inputText.label")}
                   name="inputFieldId"
                   required
                 />
@@ -120,7 +120,11 @@ export const AIExtractDataDialog = ({
                 <CustomFieldSelect
                   allowCreate={true}
                   includeReserved={false}
-                  label={inputType === "image" ? "Image" : "File"}
+                  label={
+                    inputType === "image"
+                      ? t("fields.image.label")
+                      : t("fields.file.label")
+                  }
                   name="inputFieldId"
                   required
                 />

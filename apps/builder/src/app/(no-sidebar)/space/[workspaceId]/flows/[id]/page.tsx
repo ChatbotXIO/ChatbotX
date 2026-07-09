@@ -1,10 +1,10 @@
 import { db } from "@chatbotx.io/database/client"
 import { notFound } from "next/navigation"
-import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { FlowDetail } from "@/features/flows/flow-detail"
+import { isSameContent } from "@/features/flows/flow-version-content"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 type FlowPageProps = {
   params: Promise<{ workspaceId: string; id: string }>
@@ -16,12 +16,7 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(
-    data.workspaceId,
-  )
-  if (!userAndWorkspace) {
-    return notFound()
-  }
+  await requireWorkspacePermission(data.workspaceId, "flows")
 
   const flow = await db.query.flowModel.findFirst({
     where: {
@@ -44,12 +39,26 @@ export default async function FlowPage({ params }: FlowPageProps) {
   const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
     workspaceId: data.workspaceId,
   })
+  const publishedVersion = flow.flowVersions?.find(
+    (v) => v.isLatest && !v.isDraft,
+  )
+  const hasPublishedVersion = publishedVersion !== undefined
+  const canRevertToPublished =
+    hasPublishedVersion &&
+    !isSameContent(
+      draftFlowVersion.nodes,
+      draftFlowVersion.edges,
+      publishedVersion.nodes,
+      publishedVersion.edges,
+    )
 
   return (
     <div className="flex h-screen w-screen flex-col">
       <FlowDetail
+        canRevertToPublished={canRevertToPublished}
         flow={flow}
-        flowVersion={draftFlowVersion as FlowVersionResource}
+        flowVersion={draftFlowVersion}
+        hasPublishedVersion={hasPublishedVersion}
         openaiCompatibleIntegrations={openaiCompatibleIntegrations}
       />
     </div>

@@ -4,6 +4,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
@@ -23,6 +24,7 @@ export default function UpdateContactTagField({
   tags: TagResource[]
   onSuccess: (updatedTags: TagResource[]) => void
 }) {
+  const t = useTranslations()
   const [currentTagsName, setCurrentTagsName] = useState<string[]>(
     tags.map((tag) => tag.name) ?? [],
   )
@@ -64,12 +66,14 @@ export default function UpdateContactTagField({
     <Form {...form}>
       <form className="flex flex-1 flex-col gap-2">
         <TagsInputField
+          addAnotherPlaceholder={t("actions.addAnother")}
           label=""
           name="tags"
           onSelect={(value: string[]) => {
             setCurrentTagsName(value)
             handleSubmitWithAction()
           }}
+          placeholder={t("actions.enterText")}
           suggestions={tagOptions}
         />
       </form>

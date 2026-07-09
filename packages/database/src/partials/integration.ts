@@ -11,6 +11,7 @@ export const integrationTypes = z.enum([
   "klaviyo",
   "googleSheets",
   "instagram",
+  "instagramFacebook",
   "mailchimp",
   "mailerLite",
   "messenger",

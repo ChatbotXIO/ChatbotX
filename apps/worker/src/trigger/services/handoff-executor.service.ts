@@ -1,3 +1,4 @@
+import { BOT_DISABLE_DURATION_MS } from "@chatbotx.io/business"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
@@ -34,7 +35,10 @@ export class HandoffExecutorService {
       // Using WHERE botEnabled = true eliminates the TOCTOU race between a separate check and update.
       const updated = await db
         .update(conversationModel)
-        .set({ botEnabled: false })
+        .set({
+          botEnabled: false,
+          botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
+        })
         .where(
           and(
             eq(conversationModel.id, conversationId),

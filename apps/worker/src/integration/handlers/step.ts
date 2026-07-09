@@ -83,6 +83,7 @@ import {
 import { handleAITextToSpeech } from "./text-to-speech"
 import {
   countCharacters,
+  externalRequest,
   formatDate,
   generateCode,
   getDataFromJSON,
@@ -363,7 +364,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.assignConversation]: stepAssignConversation,
   [stepTypes.enum.autoAssignConversation]: stepAutoAssignConversation,
   [stepTypes.enum.blockContact]: stepBlockContact,
-  [stepTypes.enum.callApi]: undefined,
+  [stepTypes.enum.callApi]: externalRequest,
   [stepTypes.enum.cancelContactInput]: undefined,
   [stepTypes.enum.clearCustomField]: clearContactCustomField,
   [stepTypes.enum.countCharacters]: countCharacters,

@@ -76,14 +76,24 @@ export function UpdateWorkspaceAdvancedForm({
               description={t("fields.defaultReply.description")}
               label={t("fields.defaultReply.label")}
             >
-              <ComboboxField name="defaultReply" options={flowOptions} />
+              <ComboboxField
+                emptyText={t("actions.noRecordFound")}
+                name="defaultReply"
+                options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
+              />
             </SettingRow>
 
             <SettingRow
               description={t("fields.targetCountry.description")}
               label={t("fields.targetCountry.label")}
             >
-              <ComboboxField name="targetCountry" options={allCountryOptions} />
+              <ComboboxField
+                emptyText={t("actions.noRecordFound")}
+                name="targetCountry"
+                options={allCountryOptions}
+                placeholder={t("actions.pleaseSelect")}
+              />
             </SettingRow>
 
             <SettingRow
@@ -96,6 +106,7 @@ export function UpdateWorkspaceAdvancedForm({
                   { value: "en", label: t("fields.language.english") },
                   { value: "vi", label: t("fields.language.vietnamese") },
                 ]}
+                placeholder={t("actions.pleaseSelect")}
               />
             </SettingRow>
 
@@ -103,7 +114,12 @@ export function UpdateWorkspaceAdvancedForm({
               description={t("fields.timezone.description")}
               label={t("fields.timezone.label")}
             >
-              <ComboboxField name="timezone" options={allTimezoneOptions} />
+              <ComboboxField
+                emptyText={t("actions.noRecordFound")}
+                name="timezone"
+                options={allTimezoneOptions}
+                placeholder={t("actions.pleaseSelect")}
+              />
             </SettingRow>
 
             <SettingRow

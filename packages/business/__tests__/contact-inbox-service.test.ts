@@ -26,69 +26,6 @@ describe("contactInboxService timestamp helpers", () => {
     vi.clearAllMocks()
   })
 
-  test("findLatestContactLastReadAtByContactId returns the newest non-null timestamp", async () => {
-    const latest = new Date("2026-01-03T00:00:00Z")
-    mockDbFindMany.mockResolvedValue([
-      { contactLastReadAt: new Date("2026-01-01T00:00:00Z") },
-      { contactLastReadAt: null },
-      { contactLastReadAt: latest },
-    ])
-
-    await expect(
-      contactInboxService.findLatestContactLastReadAtByContactId({
-        contactId: "contact-1",
-      }),
-    ).resolves.toBe(latest)
-    expect(mockDbFindMany).toHaveBeenCalledWith({
-      where: { contactId: "contact-1" },
-      columns: { contactLastReadAt: true },
-    })
-  })
-
-  test("findLatestContactLastReadAtByContactId returns null when no timestamp exists", async () => {
-    mockDbFindMany.mockResolvedValue([
-      { contactLastReadAt: null },
-      { contactLastReadAt: null },
-    ])
-
-    await expect(
-      contactInboxService.findLatestContactLastReadAtByContactId({
-        contactId: "contact-1",
-      }),
-    ).resolves.toBeNull()
-
-    mockDbFindMany.mockResolvedValue([])
-    await expect(
-      contactInboxService.findLatestContactLastReadAtByContactId({
-        contactId: "contact-1",
-      }),
-    ).resolves.toBeNull()
-  })
-
-  test("findLatestContactLastReadAtByContactId uses tx when provided", async () => {
-    const txFindMany = vi
-      .fn()
-      .mockResolvedValue([{ contactLastReadAt: new Date("2026-01-04") }])
-    const tx = {
-      query: {
-        contactInboxModel: {
-          findMany: txFindMany,
-        },
-      },
-    }
-
-    await contactInboxService.findLatestContactLastReadAtByContactId({
-      tx: tx as never,
-      contactId: "contact-1",
-    })
-
-    expect(txFindMany).toHaveBeenCalledWith({
-      where: { contactId: "contact-1" },
-      columns: { contactLastReadAt: true },
-    })
-    expect(mockDbFindMany).not.toHaveBeenCalled()
-  })
-
   test("findLatestLastIncomingMessageAtByContactId returns the newest non-null timestamp", async () => {
     const latest = new Date("2026-01-03T00:00:00Z")
     mockDbFindMany.mockResolvedValue([

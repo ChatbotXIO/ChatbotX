@@ -114,9 +114,11 @@ export function CreateReflinkForm({
         />
 
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           label={t("fields.botResponse.label")}
           name="flowId"
           options={flowOptions}
+          placeholder={t("actions.pleaseSelect")}
           required
         />
 

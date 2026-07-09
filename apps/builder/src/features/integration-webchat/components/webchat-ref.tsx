@@ -3,6 +3,7 @@ import { useSearchParams } from "next/navigation"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
 import { createWebchatMessageAction } from "@/features/messages/actions/create-webchat-message.action"
+import { getWebchatProfileFields } from "../browser-profile-fields"
 
 type WebchatRefProps = {
   workspaceId: string
@@ -34,6 +35,7 @@ export default function WebchatRef({
         webchatId,
         guestConversationId,
         initRef: ref,
+        ...getWebchatProfileFields(),
       })
     }
   }, [

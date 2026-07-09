@@ -34,7 +34,7 @@ import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 
-const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
+export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
 
 export type TriggerContext = {
   triggerSource: string

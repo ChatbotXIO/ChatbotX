@@ -14,6 +14,16 @@ A focused, repo-specific checklist. For OWASP-depth analysis dispatch the global
 - RAG/embedding queries: see the `rag-eval` agent. A `sourceId`-only filter with no `workspaceId` predicate is a defense-in-depth gap.
 - Repositories/services are the boundary — app/integration code must not reach `db` directly (`.agents/rules/data-access.md`).
 
+## 1b. Workspace-member permission enforcement
+
+The per-member permission jsonb (`WorkspaceMemberPermissions`: `superAdmin`, `analytics`, `flows`, `contacts`, `onlyAssignedContacts`, `emailAndPhone`, `broadcast`, `ecommerce`) is enforced server-side across three layers that MUST stay in sync — a client-only check is bypassable:
+
+- **Route guard:** `requireWorkspacePermission(workspaceId, key)` / `requireContactsAccess` / `resolveGuardedWorkspaceId` in `apps/builder/src/lib/auth/require-workspace-permission.ts` — call `notFound()` on failure. Gate every new page/layout in a mapped segment (`PERMISSION_NAV` in `lib/auth/permission-routes.ts`). Note route groups split URL-equivalent routes (`products`/`(e-commerce)/products`), so both layouts need the guard.
+- **Nav filter:** `app-sidebar.tsx` hides items via `hasWorkspacePermission` (and `canAccessContactsSection` for the compound contacts gate).
+- **Data scope:** contacts queries thread `resolveContactPermissionScope` → `onlyAssignedContacts` row filter (via `conversation.assignedUserId`) + `emailAndPhone` PII masking. The CSV export mirrors this in the worker; `canExportEmailAndPhone` is a **required** job field so it can never fail open.
+
+Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fail-closed) and `superAdmin` bypasses every gate. `isCommunity()` normalizes stored permissions to full `getSuperAdminPermissions()` (no granular control in CE). `invite`/`update`/`delete` member actions require caller `superAdmin`. The workspace-token contacts surface (`listContactsForAPI`) is intentionally **unscoped** — verify new token surfaces don't leak member-scoped data.
+
 ## 2. Prompt injection (untrusted channel content → agent context)
 
 - Customer messages (WhatsApp/Messenger/webchat), uploaded documents, and fetched URLs are **untrusted**. When their content reaches an AI prompt or RAG context, it must be framed as data, not instructions (clear delimiters, "the following is user-provided content").

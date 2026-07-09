@@ -2,6 +2,7 @@
 
 import { Operator } from "@chatbotx.io/flow-config"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
 type ISpreadsheetOperatorSelectProps = {
@@ -13,20 +14,25 @@ export const SpreadsheetOperatorSelect = ({
   name,
   label = "",
 }: ISpreadsheetOperatorSelectProps) => {
+  const t = useTranslations()
+
   const operators = useMemo(
     () => [
-      { label: "Is", value: Operator.IS },
-      { label: "Is Not", value: Operator.IS_NOT },
-      { label: "Greater than or Equal to", value: Operator.GTE },
-      { label: "Less than or Equal to", value: Operator.LTE },
-      { label: "Greater than", value: Operator.GT },
-      { label: "Less than", value: Operator.LT },
-      { label: "Contains", value: Operator.CONTAINS },
-      { label: "Not Contains", value: Operator.NOT_CONTAINS },
-      { label: "Starts With", value: Operator.STARTS_WITH },
-      { label: "Ends With", value: Operator.ENDS_WITH },
+      { label: t("fields.operator.is"), value: Operator.IS },
+      { label: t("fields.operator.isNot"), value: Operator.IS_NOT },
+      { label: t("fields.operator.gte"), value: Operator.GTE },
+      { label: t("fields.operator.lte"), value: Operator.LTE },
+      { label: t("fields.operator.gt"), value: Operator.GT },
+      { label: t("fields.operator.lt"), value: Operator.LT },
+      { label: t("fields.operator.contains"), value: Operator.CONTAINS },
+      {
+        label: t("fields.operator.notContains"),
+        value: Operator.NOT_CONTAINS,
+      },
+      { label: t("fields.operator.startsWith"), value: Operator.STARTS_WITH },
+      { label: t("fields.operator.endsWith"), value: Operator.ENDS_WITH },
     ],
-    [],
+    [t],
   )
 
   return (
@@ -34,7 +40,7 @@ export const SpreadsheetOperatorSelect = ({
       label={label}
       name={name}
       options={operators}
-      placeholder="Please select"
+      placeholder={t("actions.pleaseSelect")}
     />
   )
 }

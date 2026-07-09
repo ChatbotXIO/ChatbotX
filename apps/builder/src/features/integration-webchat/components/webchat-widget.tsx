@@ -5,6 +5,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card } from "@chatbotx.io/ui/components/ui/card"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { MessageCircleIcon, SendIcon, XIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import {
   GuestSessionStoreProvider,
@@ -21,6 +22,7 @@ type WebchatWidgetProps = {
 }
 
 const WebchatWidgetContent = () => {
+  const t = useTranslations()
   const { initGuestSession, guestConversationId, config } =
     useGuestSessionStore((state) => state)
   const [message, setMessage] = useState("")
@@ -102,7 +104,7 @@ const WebchatWidgetContent = () => {
                 disabled={false}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
+                placeholder={t("actions.typeMessage")}
                 value={message}
               />
               <Button

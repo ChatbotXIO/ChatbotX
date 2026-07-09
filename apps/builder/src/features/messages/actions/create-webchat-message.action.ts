@@ -15,6 +15,7 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type ConversationAttributes,
   channelTypes,
+  contactSources,
 } from "@chatbotx.io/database/partials"
 import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
@@ -334,6 +335,8 @@ async function getConversationFromInput(
           gender: "unknown",
           firstName: "Guest",
           lastName: randomString(10),
+          locale: parsedInput.locale,
+          timezone: parsedInput.timezone,
         })
         .returning()
         .then((rows) => rows[0])
@@ -348,7 +351,7 @@ async function getConversationFromInput(
           inboxId: integrationWebchat.inboxId,
           contactId: contact.id,
           originalContactId: contact.id,
-          source: "webchat",
+          source: contactSources.enum.webchat,
           sourceId,
           channel: "webchat",
         })

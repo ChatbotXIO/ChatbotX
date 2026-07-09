@@ -106,7 +106,9 @@ describe("summarizeConversation OpenAI Compatible fallback", () => {
 
     expect(result).toBe("Agent summary")
     expect(mocks.createAIModelInstance).not.toHaveBeenCalled()
-    expect(mocks.getOpenaiCompatibleAutoReplyIntegrationInDB).not.toHaveBeenCalled()
+    expect(
+      mocks.getOpenaiCompatibleAutoReplyIntegrationInDB,
+    ).not.toHaveBeenCalled()
     expect(mocks.createOpenaiCompatibleModelInstance).toHaveBeenCalledWith({
       integration,
       modelId: "deepseek-ai/deepseek-v4-pro",

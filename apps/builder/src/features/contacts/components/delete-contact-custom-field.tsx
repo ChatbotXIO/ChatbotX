@@ -85,9 +85,11 @@ export default function ClearContactCustomFieldDialog({
             onSubmit={handleSubmitWithAction}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("fields.customField.label")}
               name="customFieldId"
               options={customFieldSelectOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
             />
 

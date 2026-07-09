@@ -201,9 +201,11 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(submit)}
           >
             <ComboboxField
+              emptyText={t("actions.noRecordFound")}
               label={t("mailchimp.fields.audience")}
               name="listId"
               options={audienceOptions}
+              placeholder={t("actions.pleaseSelect")}
               required
               triggerValueChange={onChangeAudience}
             />

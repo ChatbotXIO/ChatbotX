@@ -39,12 +39,15 @@ type Props = {
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
   const tenantSettings = await getTenantSettings()
+  const pancakeChatPageId = env.NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <PublicEnvScript />
-        {env.NEXT_PUBLIC_ENABLE_PANCAKE_CHAT && (
-          <script src="https://chat-plugin.pancake.vn/main/auto?page_id=web_chatbotx&hide_supplier=true" />
+        {env.NEXT_PUBLIC_ENABLE_PANCAKE_CHAT && pancakeChatPageId && (
+          <script
+            src={`https://chat-plugin.pancake.vn/main/auto?page_id=${encodeURIComponent(pancakeChatPageId)}&hide_supplier=true`}
+          />
         )}
       </head>
       <body

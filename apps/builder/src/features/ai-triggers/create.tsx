@@ -138,8 +138,10 @@ export function CreateAITriggerDialog({
 
                     <div className="basis-5/12">
                       <ComboboxField
+                        emptyText={t("actions.noRecordFound")}
                         name={`questions.${i}.customFieldId`}
                         options={customFieldSelectOptions}
+                        placeholder={t("actions.pleaseSelect")}
                       />
                     </div>
 
@@ -165,9 +167,11 @@ export function CreateAITriggerDialog({
               </div>
 
               <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.flowId.label")}
                 name="flowId"
                 options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
               />
 
               <TextareaField

@@ -103,9 +103,10 @@ export async function processWhatsappTemplate(
       throw new Error(`Template validation failed: ${template.id}`)
     }
 
-    const variables = await contactVariableService.getAll(
-      conversation.contactId,
-    )
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+    })
     const replacedParams = await replaceWhatsappTemplateVariables({
       templateParams: template.params,
       variables,
@@ -202,11 +203,19 @@ export async function processWhatsappTemplate(
     const providerMessageId = result?.messageIds?.[0]
 
     if (providerMessageId) {
-      await repository.updateSourceId(
-        newMessage.id,
-        providerMessageId,
-        conversation.workspaceId,
-      )
+      try {
+        await repository.updateSourceId(
+          newMessage.id,
+          providerMessageId,
+          conversation.workspaceId,
+          newMessage.createdAt,
+        )
+      } catch (err) {
+        logger.error(
+          err,
+          "Failed to persist WhatsApp template sourceId after a successful send",
+        )
+      }
     }
 
     return {

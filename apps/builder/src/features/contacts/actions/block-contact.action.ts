@@ -1,9 +1,10 @@
 "use server"
 
-import { contactService } from "@chatbotx.io/business"
+import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireContactPermissionScope } from "../permissions"
 
 export const blockContactAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -11,13 +12,15 @@ export const blockContactAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, id],
     } = props
+    const accessScope = await requireContactPermissionScope(workspaceId)
 
-    await blockContact({ workspaceId, id })
+    await blockContact({ workspaceId, id, accessScope })
   })
 
 export const blockContact = async (ctx: {
   workspaceId: string
   id: string
+  accessScope?: ContactAccessScope
 }) => {
   const contact = await contactService.block(ctx)
 

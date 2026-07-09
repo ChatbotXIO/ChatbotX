@@ -114,17 +114,19 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // ---------------------------------------------------------------------------
 const enqueueAttach = vi.fn(async () => undefined)
 const enqueueDetach = vi.fn(async () => undefined)
+const contactFindManyByIds = vi.fn(async () => state.contactFindMany)
+const contactFindByIdOrFail = vi.fn(() => {
+  if (state.findOrFailError) {
+    return Promise.reject(state.findOrFailError)
+  }
+  return Promise.resolve(state.findOrFailResult ?? {})
+})
 
 vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach, enqueueDetach },
-  // update-contact-tag.action.ts resolves the contact via contactService.
   contactService: {
-    findByIdOrFail: vi.fn(() => {
-      if (state.findOrFailError) {
-        return Promise.reject(state.findOrFailError)
-      }
-      return Promise.resolve(state.findOrFailResult ?? {})
-    }),
+    findByIdOrFail: contactFindByIdOrFail,
+    findManyByIds: contactFindManyByIds,
   },
   // safe-action.ts also imports isPlatformAdmin
   isPlatformAdmin: vi.fn(async () => false),
@@ -201,6 +203,7 @@ vi.mock("@/features/workspace-members/queries", () => ({
   getAllWorkspaceMembers: vi.fn(async () => []),
 }))
 vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserAndTargetWorkspace: vi.fn(),
   getCurrentUserId: vi.fn(async () => "user-1"),
 }))
 vi.mock("@/lib/log", () => ({ logger: { error: vi.fn(), info: vi.fn() } }))
@@ -294,7 +297,7 @@ describe("addContactTags", () => {
     const { db } = await import("@chatbotx.io/database/client")
     expect(db.transaction).toHaveBeenCalledOnce()
     // No contact queries or inserts beyond the tag resolution
-    expect(db.query.contactModel.findMany).not.toHaveBeenCalled()
+    expect(contactFindManyByIds).not.toHaveBeenCalled()
     expect(enqueueAttach).not.toHaveBeenCalled()
   })
 
@@ -390,12 +393,8 @@ describe("addContactTags", () => {
 
     const ids = Array.from({ length: 250 }, (_, i) => `c-${i}`)
     // contactModel.findMany resolves with contacts from current chunk
-    const { db } = await import("@chatbotx.io/database/client")
-    const contactFindMany = db.query.contactModel.findMany as ReturnType<
-      typeof vi.fn
-    >
     // first chunk (200), second chunk (50)
-    contactFindMany
+    contactFindManyByIds
       .mockResolvedValueOnce(ids.slice(0, 200).map((id) => ({ id })))
       .mockResolvedValueOnce(ids.slice(200).map((id) => ({ id })))
 
@@ -406,8 +405,26 @@ describe("addContactTags", () => {
       parsedInput: { ids, tags: ["tag-a"] },
     })
 
-    expect(contactFindMany).toHaveBeenCalledTimes(2)
+    expect(contactFindManyByIds).toHaveBeenCalledTimes(2)
     expect(invalidateCacheByTags).toHaveBeenCalledOnce()
+  })
+
+  test("passes assigned-contact access scope to contact lookup", async () => {
+    const accessScope = { restrictToAssignedUserId: "user-1" }
+    state.txTagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+
+    await addContactTags({
+      workspaceId: "ws-1",
+      parsedInput: { ids: ["c-1"], tags: ["tag-a"] },
+      accessScope,
+    })
+
+    expect(contactFindManyByIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["c-1"],
+      accessScope,
+    })
   })
 
   // ── partial mix: some pairs new, some existing ───────────────────────────
@@ -506,7 +523,7 @@ describe("removeContactTags", () => {
 
     const { db } = await import("@chatbotx.io/database/client")
     expect(db.query.tagModel.findMany).toHaveBeenCalledOnce()
-    expect(db.query.contactModel.findMany).not.toHaveBeenCalled()
+    expect(contactFindManyByIds).not.toHaveBeenCalled()
     expect(enqueueDetach).not.toHaveBeenCalled()
   })
 
@@ -605,6 +622,24 @@ describe("removeContactTags", () => {
       "workspaces:ws-99#conversations",
       "workspaces:ws-99#tags",
     ])
+  })
+
+  test("passes assigned-contact access scope to contact lookup", async () => {
+    const accessScope = { restrictToAssignedUserId: "user-1" }
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+
+    await removeContactTags({
+      workspaceId: "ws-1",
+      parsedInput: { ids: ["c-1"], tags: ["tag-a"] },
+      accessScope,
+    })
+
+    expect(contactFindManyByIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["c-1"],
+      accessScope,
+    })
   })
 })
 

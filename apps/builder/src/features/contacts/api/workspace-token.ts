@@ -6,7 +6,7 @@ import {
   tagService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { genderTypes } from "@chatbotx.io/database/partials"
+import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { createMessage } from "@/features/messages/actions/create-message.action"
@@ -698,6 +698,7 @@ export const workspaceTokenAuthAPIs = {
         workspaceId,
         identifier,
         avatar,
+        source: contactSources.enum.api,
         data: {
           ...(fields.firstName !== undefined && {
             firstName: fields.firstName,

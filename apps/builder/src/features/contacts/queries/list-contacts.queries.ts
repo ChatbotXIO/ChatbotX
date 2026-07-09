@@ -1,12 +1,17 @@
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { countWithRelationsFilter, db } from "@chatbotx.io/database/client"
 import { applyContactFilter } from "@chatbotx.io/database/queries"
 import { contactModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
+import {
+  type ContactPermissionScope,
+  maskContactEmailAndPhone,
+  resolveContactPermissionScope,
+} from "../permissions"
 import type {
   ListContactsRequest,
   ListContactsResponse,
@@ -28,20 +33,24 @@ export function resolveOrderBy(input: ListContactsRequest) {
 export async function listContacts(
   input: ListContactsRequest,
 ): Promise<ListContactsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-  return queryContacts(input)
+  const scope = await requireContactPermissionScope(input.workspaceId)
+  return queryContacts(input, scope)
 }
 
 export function listContactsForAPI(
   input: ListContactsRequest,
 ): Promise<ListContactsResponse> {
-  return queryContacts(input)
+  // Workspace-token surface: not scoped to a workspace member. Callers must opt
+  // out of member scoping explicitly so it can never be dropped by accident.
+  return queryContacts(input, "unscoped")
 }
 
 async function queryContacts(
   input: ListContactsRequest,
+  scopeInput: ContactPermissionScope | "unscoped",
 ): Promise<ListContactsResponse> {
-  const where = generateWhere(input)
+  const scope = scopeInput === "unscoped" ? undefined : scopeInput
+  const where = generateWhere(input, scope)
 
   const pagination = getPaginationWithDefaults(input)
   const orderBy = resolveOrderBy(input)
@@ -67,21 +76,29 @@ async function queryContacts(
         },
       },
     }),
-    // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
-    db.$count(contactModel, relationsFilterToSQL(contactModel, where as any)),
+    countWithRelationsFilter({
+      table: contactModel,
+      tsName: "contactModel",
+      where,
+    }),
   ])
 
   const pageCount = Math.ceil(totalRows / pagination.limit)
+  // Unscoped (token) callers see PII; scoped members only when permitted.
+  const visibleData =
+    scope && !scope.canViewEmailAndPhone
+      ? data.map(maskContactEmailAndPhone)
+      : data
 
-  return { data, pageCount }
+  return { data: visibleData, pageCount }
 }
 
 export async function listContactsRSC(
   input: ListContactsRequest & { workspaceId: string },
 ): Promise<ListContactsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+  const scope = await requireContactPermissionScope(input.workspaceId)
 
-  const where = generateWhere(input)
+  const where = generateWhere(input, scope)
 
   const pagination = getPaginationWithDefaults(input)
   const orderBy = resolveOrderBy(input)
@@ -106,31 +123,39 @@ export async function listContactsRSC(
         },
       },
     }),
-    // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
-    db.$count(contactModel, relationsFilterToSQL(contactModel, where as any)),
+    countWithRelationsFilter({
+      table: contactModel,
+      tsName: "contactModel",
+      where,
+    }),
   ])
 
   const pageCount = Math.ceil(totalRows / pagination.limit)
+  const visibleData = scope.canViewEmailAndPhone
+    ? data
+    : data.map(maskContactEmailAndPhone)
 
-  return { data, pageCount }
+  return { data: visibleData, pageCount }
 }
 
 export async function countContacts(
   input: ListContactsRequest,
 ): Promise<{ total: number }> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+  const scope = await requireContactPermissionScope(input.workspaceId)
 
-  if (!input.keyword) {
+  if (
+    !(input.keyword || input.contactFilter || scope.restrictToAssignedUserId)
+  ) {
     return getTotalContactsFromStats(input.workspaceId)
   }
 
-  const where = generateWhere(input)
+  const where = generateWhere(input, scope)
 
-  const total = await db.$count(
-    contactModel,
-    // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
-    relationsFilterToSQL(contactModel, where as any),
-  )
+  const total = await countWithRelationsFilter({
+    table: contactModel,
+    tsName: "contactModel",
+    where,
+  })
   return { total }
 }
 
@@ -157,7 +182,21 @@ async function getTotalContactsFromStats(
   }
 }
 
-const generateWhere = (input: ListContactsRequest) => {
+async function requireContactPermissionScope(
+  workspaceId: string,
+): Promise<ContactPermissionScope> {
+  const scope = await resolveContactPermissionScope(workspaceId)
+  if (!scope) {
+    throw new ChatbotXException("User is not associated with this workspace")
+  }
+
+  return scope
+}
+
+export const generateWhere = (
+  input: ListContactsRequest,
+  scope?: ContactPermissionScope,
+) => {
   const keyword = input.keyword?.toLowerCase()
   const where: Record<string, unknown> = {
     workspaceId: input.workspaceId,
@@ -166,8 +205,12 @@ const generateWhere = (input: ListContactsRequest) => {
           OR: [
             { firstName: { ilike: `%${keyword}%` } },
             { lastName: { ilike: `%${keyword}%` } },
-            { email: { ilike: `%${keyword}%` } },
-            { phoneNumber: { ilike: `%${keyword}%` } },
+            ...(scope?.canViewEmailAndPhone === false
+              ? []
+              : [
+                  { email: { ilike: `%${keyword}%` } },
+                  { phoneNumber: { ilike: `%${keyword}%` } },
+                ]),
           ],
         }
       : {}),
@@ -175,6 +218,20 @@ const generateWhere = (input: ListContactsRequest) => {
 
   if (input.contactFilter) {
     Object.assign(where, applyContactFilter(input.contactFilter))
+  }
+
+  if (scope?.restrictToAssignedUserId) {
+    const conversation =
+      typeof where.conversation === "object" &&
+      where.conversation !== null &&
+      !Array.isArray(where.conversation)
+        ? where.conversation
+        : {}
+
+    where.conversation = {
+      ...conversation,
+      assignedUserId: scope.restrictToAssignedUserId,
+    }
   }
 
   return where

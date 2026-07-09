@@ -59,7 +59,7 @@ const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
   smtp: 0,
   telegram: 0,
   instagram: 24 * 60 * 60,
-  tiktok: 0,
+  tiktok: 24 * 60 * 60,
 }
 
 const MESSENGER_HUMAN_AGENT_WINDOW_SECONDS = 7 * 24 * 60 * 60
@@ -353,8 +353,8 @@ export const MessageInput = () => {
     )
   }, [isMetaDm, lastIncomingTs, clockTick])
 
-  const isWhatsappWindowClosed = useMemo(
-    () => channel === "whatsapp" && isWindowExpired,
+  const isDirectChannelWindowClosed = useMemo(
+    () => (channel === "whatsapp" || channel === "tiktok") && isWindowExpired,
     [channel, isWindowExpired],
   )
 
@@ -417,7 +417,7 @@ export const MessageInput = () => {
     )
   }
 
-  if (isWhatsappWindowClosed) {
+  if (isDirectChannelWindowClosed) {
     return (
       <div className="m-3 rounded-xl border pt-2">
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
@@ -468,10 +468,10 @@ export const MessageInput = () => {
                   onSelect={setContent}
                 >
                   <Textarea
-                    aria-label="Type your message"
+                    aria-label={t("actions.typeMessage")}
                     autoComplete="off"
                     className="h-16 resize-none border-0 px-1.5 py-1 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
-                    placeholder="Message..."
+                    placeholder={t("actions.messagePlaceholder")}
                     {...field}
                     onKeyDown={onKeyDown}
                     ref={textareaRef}
@@ -486,7 +486,7 @@ export const MessageInput = () => {
             </div>
           )}
           <div className="flex w-full items-center pl-2.5">
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <InboxIcon
                 channel={
                   (conversation?.contactInboxes[0]?.channel ??

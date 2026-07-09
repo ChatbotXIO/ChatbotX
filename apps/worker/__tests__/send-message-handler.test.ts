@@ -141,6 +141,8 @@ describe("chat send-message handlers", () => {
       messageIds: ["wamid.echo-1"],
     })
 
+    const createdAt = new Date("2026-07-09T08:37:21.108Z")
+
     await sendMessageToChannel({
       conversation: conversation as never,
       contactInbox: contactInbox as never,
@@ -154,6 +156,7 @@ describe("chat send-message handlers", () => {
         senderType: "bot",
         sourceId: null,
         text: "automated reply",
+        createdAt,
       } as never,
     })
 
@@ -161,7 +164,40 @@ describe("chat send-message handlers", () => {
       "msg-bot-1",
       "wamid.echo-1",
       "ws-1",
+      createdAt,
     )
+  })
+
+  test("does not retry the send when persisting a comment reply's sourceId fails", async () => {
+    // Regression: the reply is already live on the channel at this point — a
+    // thrown error here must be swallowed, not rethrown, or BullMQ redelivers
+    // the job and sendComment fires again, posting a second duplicate reply.
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["reply-1"],
+    })
+    mockUpdateSourceId.mockRejectedValueOnce(new Error("shard write failed"))
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-comment-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "comment reply",
+          type: "comment",
+          parentId: "parent-1",
+          createdAt: new Date("2026-07-09T08:37:21.108Z"),
+        } as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
   })
 
   test("auto-unblocks after a successful non-comment send", async () => {
@@ -287,7 +323,7 @@ describe("chat send-message handlers", () => {
     )
   })
 
-  test("throws retryable ChannelError after emitting failure", async () => {
+  test("does not retry a retryable ChannelError for messenger/instagram channels", async () => {
     const error = new ChannelError(
       "rate limited",
       ChannelErrorCategory.RATE_LIMITED,
@@ -298,7 +334,67 @@ describe("chat send-message handlers", () => {
     await expect(
       sendMessageToChannel({
         conversation: conversation as never,
-        contactInbox: contactInbox as never,
+        contactInbox: contactInbox as never, // channel: "messenger"
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "hello",
+        } as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({
+        action: { messageId: "msg-1" },
+        errorData: { message: "sdk error" },
+      }),
+    )
+  })
+
+  test("does not retry a retryable ChannelError for the instagram channel", async () => {
+    const error = new ChannelError(
+      "network error",
+      ChannelErrorCategory.NETWORK_ERROR,
+      { code: "network_error" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: { ...contactInbox, channel: "instagram" } as never,
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "hello",
+        } as never,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("still throws a retryable ChannelError for channels outside the fix scope", async () => {
+    const error = new ChannelError(
+      "rate limited",
+      ChannelErrorCategory.RATE_LIMITED,
+      { code: "rate_limited" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: { ...contactInbox, channel: "whatsapp" } as never,
         message: {
           id: "msg-1",
           workspaceId: "ws-1",

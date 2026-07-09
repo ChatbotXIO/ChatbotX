@@ -20,15 +20,18 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisVerticalIcon } from "lucide-react"
+import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
 type GetColumnsProps = {
+  t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<AITriggerModel> | null>
   >
 }
 
 export function getAITriggersColumns({
+  t,
   setRowAction,
 }: GetColumnsProps): ColumnDef<AITriggerModel>[] {
   return [
@@ -36,7 +39,7 @@ export function getAITriggersColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label={t("actions.selectAll")}
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -49,7 +52,7 @@ export function getAITriggersColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label={t("actions.selectRow")}
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}

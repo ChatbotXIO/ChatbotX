@@ -3,7 +3,7 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
-import { resolveTenantSettings } from "@chatbotx.io/business"
+import { assertPublicUrl, resolveTenantSettings } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
@@ -17,7 +17,6 @@ import { generateImage, type ImageModel } from "ai"
 import ky from "ky"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
-import { assertPublicUrl } from "../../../lib/ssrf-guard"
 import {
   getIntegrationContext,
   readCustomFieldValue,
@@ -138,7 +137,7 @@ export async function handleAIEditImage({
       }
     }
 
-    assertPublicUrl(inputValidation.data.imageUrl, "image URL")
+    await assertPublicUrl(inputValidation.data.imageUrl, "image URL")
 
     const inputImageBuffer = await fetchImageAsBuffer(
       inputValidation.data.imageUrl,

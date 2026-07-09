@@ -1,4 +1,5 @@
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 
 type TimeSelectProps = {
   name: string
@@ -6,6 +7,7 @@ type TimeSelectProps = {
 
 const TimeSelect = (props: TimeSelectProps) => {
   const { name } = props
+  const t = useTranslations()
 
   const times: { value: string; label: string }[] = []
   for (let hour = 0; hour < 24; hour++) {
@@ -16,7 +18,13 @@ const TimeSelect = (props: TimeSelectProps) => {
     })
   }
 
-  return <SelectField name={name} options={times} placeholder="Select a time" />
+  return (
+    <SelectField
+      name={name}
+      options={times}
+      placeholder={t("flows.wait.selectTimePlaceholder")}
+    />
+  )
 }
 
 export default TimeSelect

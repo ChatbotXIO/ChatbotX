@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import { CircleUserRound, PencilIcon, TrashIcon } from "lucide-react"
+import { useLocale } from "next-intl"
 import type { ContactNoteResource } from "./schemas/resource"
 
 export function ContactNoteList({
@@ -18,6 +19,8 @@ export function ContactNoteList({
   onEdit: (contactNote: ContactNoteResource) => void
   onDelete: (contactNote: ContactNoteResource) => void
 }) {
+  const locale = useLocale()
+
   return (
     <div className="flex w-full flex-col">
       {allContactNotes.map((contactNote) => (
@@ -31,6 +34,7 @@ export function ContactNoteList({
                     <div>
                       {formatDate(contactNote.updatedAt, {
                         month: "short",
+                        locale,
                       })}
                     </div>
                   </div>

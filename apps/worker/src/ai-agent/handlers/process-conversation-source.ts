@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto"
+import { assertPublicUrl } from "@chatbotx.io/business"
 import { aiConversationSourceStatuses } from "@chatbotx.io/database/partials"
 import {
   type AiConversationSourceWithAttachment,
@@ -19,7 +20,6 @@ import { parseHTML } from "linkedom"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { logger } from "../../lib/logger"
-import { assertPublicUrl } from "../../lib/ssrf-guard"
 import { withTimeout } from "../lib/async-utils"
 import { isSupportedDocumentMimeType } from "../lib/mime-utils"
 import { extractTextFromFile } from "../lib/text-extractor"
@@ -220,7 +220,7 @@ async function fetchSafe(
   signal: AbortSignal,
   redirectsLeft = MAX_REDIRECTS,
 ): Promise<Response> {
-  assertPublicUrl(url, "URL source")
+  await assertPublicUrl(url, "URL source")
 
   const response = await fetch(url, {
     signal,

@@ -28,6 +28,7 @@ import { dripSubscribeSubscriberStep } from "./drip-subscribe-subscriber"
 import emailStep from "./email"
 import { enableBotStep } from "./enable-bot"
 import { enableMessengerComposerStep } from "./enable-messenger-composer"
+import { externalRequestStep } from "./external-request"
 import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
@@ -97,7 +98,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.removeContactTag]: removeContactTagStep,
   [stepTypes.enum.notifyAgent]: undefined,
   [stepTypes.enum.deleteContact]: deleteContactStep,
-  [stepTypes.enum.callApi]: undefined,
+  [stepTypes.enum.callApi]: externalRequestStep,
   [stepTypes.enum.disableBot]: disableBotStep,
   [stepTypes.enum.enableBot]: enableBotStep,
   [stepTypes.enum.assignConversation]: assignConversationStep,

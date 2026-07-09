@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterRequest } from "@/features/contacts/schemas/contact-filter"
+import { contactFilterRequest } from "@/features/contact-filter/schemas"
 import { cursorPaginationRequest } from "@/lib/pagination"
 
 export const listConversationsRequest = z.object({

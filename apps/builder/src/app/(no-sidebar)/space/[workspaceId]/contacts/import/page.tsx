@@ -5,6 +5,7 @@ import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/cust
 import { ImportForm } from "@/features/import/components/import-form"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
+import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 
 export default async function ImportContactsPage({
   params,
@@ -15,6 +16,7 @@ export default async function ImportContactsPage({
   if (!workspaceId) {
     return notFound()
   }
+  await requireContactsAccess(workspaceId)
 
   return (
     <InboxStoreProvider autoInitialize={true} workspaceId={workspaceId}>

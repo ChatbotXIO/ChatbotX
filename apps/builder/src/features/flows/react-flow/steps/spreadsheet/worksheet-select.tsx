@@ -1,6 +1,7 @@
 "use client"
 
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 
@@ -14,9 +15,10 @@ type WorksheetSelectProps = {
 export const WorksheetSelect = ({
   name,
   spreadsheetId,
-  label = "Worksheet",
+  label,
   required = true,
 }: WorksheetSelectProps) => {
+  const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
   const url = `/api/workspaces/${workspaceId}/worksheets?spreadsheetId=${spreadsheetId}`
@@ -36,10 +38,10 @@ export const WorksheetSelect = ({
 
   return (
     <SelectField
-      label={label}
+      label={label ?? t("fields.worksheet.label")}
       name={name}
       options={worksheetOptions}
-      placeholder="Please select"
+      placeholder={t("actions.pleaseSelect")}
       required={required}
     />
   )

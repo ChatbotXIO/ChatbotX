@@ -131,8 +131,10 @@ function SendWaTemplateMessageStepEditor(
     <BaseStepEditor>
       <div className="space-y-3">
         <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           name={`${parentName}.template.inboxId`}
           options={whatsappInboxOptions}
+          placeholder={t("actions.pleaseSelect")}
           required={true}
         />
 
