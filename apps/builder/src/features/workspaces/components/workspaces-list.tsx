@@ -29,6 +29,7 @@ type WorkspacesListProps = {
   workspacesLimit?: number | null
   isAtLimit?: boolean
   ownerWorkspaceIds?: string[]
+  superAdminWorkspaceIds?: string[]
 }
 
 const CARD_STYLES =
@@ -105,10 +106,16 @@ const CreateWorkspaceCard = ({
 type WorkspaceCardProps = {
   workspace: WorkspaceResource
   ownerLabel?: string
+  canManageStatus: boolean
   t: Awaited<ReturnType<typeof getTranslations>>
 }
 
-const WorkspaceCard = ({ workspace, ownerLabel, t }: WorkspaceCardProps) => {
+const WorkspaceCard = ({
+  workspace,
+  ownerLabel,
+  canManageStatus,
+  t,
+}: WorkspaceCardProps) => {
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
   const href = `/space/${workspace.id}`
@@ -129,6 +136,7 @@ const WorkspaceCard = ({ workspace, ownerLabel, t }: WorkspaceCardProps) => {
           </span>
         ) : null}
         <WorkspaceStatusSwitch
+          canManageStatus={canManageStatus}
           workspace={{
             id: workspace.id,
             isActive: workspace.isActive,
@@ -170,6 +178,7 @@ const WorkspacesList = async ({
   workspacesLimit,
   isAtLimit = false,
   ownerWorkspaceIds = [],
+  superAdminWorkspaceIds = [],
 }: WorkspacesListProps) => {
   const t = await getTranslations()
   const createLabel = t("actions.createFeature", {
@@ -177,6 +186,7 @@ const WorkspacesList = async ({
   })
   const showCreateCard = !isCommunity()
   const ownerIds = new Set(ownerWorkspaceIds)
+  const superAdminIds = new Set(superAdminWorkspaceIds)
   const ownerLabel = t("home.owner")
 
   const usedCount = workspaces.length
@@ -229,6 +239,7 @@ const WorkspacesList = async ({
           {workspaces.map((workspace) => (
             <li className="list-none" key={workspace.id}>
               <WorkspaceCard
+                canManageStatus={superAdminIds.has(workspace.id)}
                 ownerLabel={ownerIds.has(workspace.id) ? ownerLabel : undefined}
                 t={t}
                 workspace={workspace}

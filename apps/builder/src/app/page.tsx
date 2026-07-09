@@ -8,6 +8,7 @@ import { notFound, redirect } from "next/navigation"
 import { isCloud } from "@/env"
 import { AccountRail } from "@/features/workspaces/components/account-rail"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
 import { buildQuotaMetrics, resolveTrialEndsAt } from "@/lib/quota-metrics"
@@ -37,6 +38,11 @@ export default async function MainPage() {
   const ownerWorkspaceIds = allWorkspaceMembers
     .filter((member) => member.role === "owner")
     .map((member) => member.workspace.id)
+  const superAdminWorkspaceIds = allWorkspaceMembers
+    .filter((member) =>
+      hasWorkspacePermission(member.permissions, "superAdmin"),
+    )
+    .map((member) => member.workspace.id)
 
   // Self-managed trial gate (cloud only): a consumed trial can't reach
   // workspaces. Derived from the quota already fetched above — no extra query.
@@ -63,6 +69,7 @@ export default async function MainPage() {
       <WorkspacesList
         isAtLimit={atLimit?.workspaces ?? false}
         ownerWorkspaceIds={ownerWorkspaceIds}
+        superAdminWorkspaceIds={superAdminWorkspaceIds}
         user={userInfo}
         workspaces={allWorkspaces}
         workspacesLimit={usageSummary?.workspaces.limit ?? null}

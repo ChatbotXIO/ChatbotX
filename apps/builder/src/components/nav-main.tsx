@@ -47,7 +47,12 @@ export function NavMain({
               >
                 {crossZone || item.crossZone ? (
                   // Cross-zone: use <a> to force full navigation outside the Next router
-                  <a className={linkClass} href={item.url}>
+                  <a
+                    className={linkClass}
+                    href={item.url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     {item.icon && <item.icon className="size-5 shrink-0" />}
                     <span>{item.title}</span>
                   </a>

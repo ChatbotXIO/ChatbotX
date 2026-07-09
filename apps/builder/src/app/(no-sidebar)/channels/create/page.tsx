@@ -15,6 +15,7 @@ import { generateTiktokRedirectUri } from "@/features/integration-tiktok/libs/ti
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserId } from "@/lib/auth/utils"
 
 export const dynamic = "force-dynamic"
@@ -29,6 +30,11 @@ type CreateChannelPageProps = {
 export default async function CreateChannelPage(props: CreateChannelPageProps) {
   const searchParams = await props.searchParams
   const workspaceId = getIdFromParams(searchParams, "workspaceId")
+
+  if (workspaceId) {
+    await requireWorkspacePermission(workspaceId, "superAdmin")
+  }
+
   const selectedChannel = searchParams.channel
 
   if (selectedChannel === "telegram") {

@@ -57,11 +57,26 @@ await requireContactsAccess(workspaceId)
 Existing examples:
 
 - `apps/builder/src/app/space/[workspaceId]/dashboard/page.tsx` gates analytics
-  with `requireWorkspacePermission(workspaceId, "analytics")`.
+  access and additionally reads the member's raw `permissions` (via
+  `getCurrentUserAndTargetWorkspace`) to decide whether to show the "add
+  channel" card (`allowAddNew`, gated on `superAdmin`). Read the raw
+  permissions object directly — instead of `requireWorkspacePermission` — when
+  a page needs more than a pass/fail gate.
+- `apps/builder/src/features/workspaces/components/workspace-status-switch.tsx`
+  reads the raw member permissions on the home page, threads a `canManageStatus`
+  boolean down from the list, and disables the toggle for non-super admins
+  instead of failing after a click.
 - `apps/builder/src/app/space/[workspaceId]/broadcasts/layout.tsx` gates
   broadcasts with `resolveGuardedWorkspaceId(params, "broadcast")`.
 - `apps/builder/src/app/space/[workspaceId]/contacts/page.tsx` gates contacts
   with `requireContactsAccess(workspaceId)`.
+- Channel create/edit surfaces outside the superAdmin-gated settings tree are
+  gated on `superAdmin` directly: `apps/builder/src/app/(no-sidebar)/channels/create/page.tsx`
+  (when a `workspaceId` query param is present),
+  `apps/builder/src/app/space/[workspaceId]/messengers/[id]/layout.tsx` and
+  `.../(integrations)/whatsapps/[id]/layout.tsx` (via
+  `resolveGuardedWorkspaceId`), and the instagram/webchat edit and
+  webchat-create pages (via `requireWorkspacePermission`).
 
 ## Contact data scoping
 
@@ -150,6 +165,7 @@ Useful tests:
 
 - `apps/builder/__tests__/workspace-permission-routes.test.ts`
 - `apps/builder/__tests__/require-workspace-permission.test.ts`
+- `apps/builder/__tests__/channel-route-guards.test.ts`
 - `apps/builder/__tests__/contacts-route-guards.test.ts`
 - `apps/builder/__tests__/contacts-permissions.test.ts`
 - `apps/worker/__tests__/export-contacts-where.test.ts`

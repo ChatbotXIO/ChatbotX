@@ -506,7 +506,8 @@
       "timeRequired": "Vui lòng chọn cả giờ bắt đầu và giờ kết thúc",
       "activated": "Đã kích hoạt workspace",
       "deactivated": "Đã tắt workspace",
-      "activeHours": "Hoạt động từ {startTime} đến {endTime} giờ"
+      "activeHours": "Hoạt động từ {startTime} đến {endTime} giờ",
+      "permissionRequired": "Chỉ super admin mới có thể thay đổi khung giờ hoạt động của workspace"
     }
   },
   "workspaces": {

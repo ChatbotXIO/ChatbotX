@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { MessengerSettingTabs } from "@/features/integration-messenger/components/messenger-setting-tabs"
+import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 type LayoutProps = {
   children: ReactNode
@@ -16,10 +17,7 @@ export default async function MessengerLayout({
 }: LayoutProps) {
   const t = await getTranslations()
   const resolvedParams = await params
-  const workspaceId = getIdFromParams(resolvedParams, "workspaceId")
-  if (!workspaceId) {
-    return notFound()
-  }
+  const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
   const integrationId = getIdFromParams(resolvedParams, "id")
   if (!integrationId) {
     return notFound()
