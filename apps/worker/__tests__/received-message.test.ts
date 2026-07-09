@@ -111,7 +111,16 @@ vi.mock("@chatbotx.io/business", () => ({
   updateContactFromMessage: mockUpdateContactFromMessage,
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: { findOrCreate: mockConversationFindOrCreate },
-  workspaceService: { find: mockWorkspaceFind },
+  workspaceService: {
+    find: mockWorkspaceFind,
+    findById: vi.fn().mockResolvedValue({
+      isActive: true,
+      startTime: null,
+      endTime: null,
+      timezone: "UTC",
+    }),
+    isActiveNow: vi.fn().mockReturnValue(true),
+  },
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
     createNewContactWithMac: mockCreateNewContactWithMac,
@@ -158,7 +167,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runFlowQuickReply: "runFlowQuickReply",
     runRef: "runRef",
   },
-  integrationQueue: { add: mockIntegrationQueueAdd },
+  integrationQueue: {
+    add: mockIntegrationQueueAdd,
+    getJob: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -575,6 +587,92 @@ describe("receiveMessage — new contact MAC gate", () => {
     // `contacts` is recorded inside createNewContactWithMac now, so the handler
     // must not increment it separately (avoids double-counting).
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("skips getProfile for outgoing webhook echo when creating a new contact", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          id: "contact-new",
+          workspaceId: "ws-1",
+          firstName: null,
+          phoneNumber: null,
+          email: null,
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    // The parse call ("message"/"receiveMessage") happens; getProfile must not.
+    expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+    expect(mockRunChannelHandler).not.toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.anything(),
+    )
+  })
+
+  test("creates the contact without profile data when getProfile rejects (e.g. consent error)", async () => {
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.reject(
+            new Error("(#230) User consent is required to access user profile"),
+          )
+        }
+        return Promise.resolve({
+          message: { ...baseIncomingMessage, attachments: [] },
+          contact: { sourceId: "psid-123" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+        })
+      },
+    )
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          id: "contact-new",
+          workspaceId: "ws-1",
+          firstName: null,
+          phoneNumber: null,
+          email: null,
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await expect(receiveMessage(baseProps)).resolves.toBeDefined()
+    expect(mockCreateMessageRepository).toHaveBeenCalled()
   })
 
   test("writes inboundMessage as the source for plain inbound DMs", async () => {

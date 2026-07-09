@@ -229,11 +229,19 @@ export async function processMessengerTemplate(
     const providerMessageId = result?.messageIds?.[0]
 
     if (providerMessageId) {
-      await messageRepository.updateSourceId(
-        newMessage.id,
-        providerMessageId,
-        conversation.workspaceId,
-      )
+      try {
+        await messageRepository.updateSourceId(
+          newMessage.id,
+          providerMessageId,
+          conversation.workspaceId,
+          newMessage.createdAt,
+        )
+      } catch (err) {
+        logger.error(
+          err,
+          "Failed to persist Messenger template sourceId after a successful send",
+        )
+      }
     }
 
     return {

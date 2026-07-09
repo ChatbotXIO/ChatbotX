@@ -7,20 +7,44 @@ import {
   vi,
 } from "vitest"
 
+function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
+  const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
+    Record<string, unknown>
+  chain.from = vi.fn(() => chain)
+  chain.innerJoin = vi.fn(() => chain)
+  chain.where = vi.fn(() => chain)
+  chain.orderBy = vi.fn(() => chain)
+  return chain
+}
+
+// updateSourceId routes shards via getShardsForRange, which wraps the lookup
+// in withCache(); without this stub it hits a real (non-routable) Redis.
+vi.mock("@chatbotx.io/redis", () => ({
+  withCache: vi.fn((_key: string, factory: () => unknown) => factory()),
+  invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
+  distributedLock: { runExclusive: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: (() => {
     const update = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "msg-1" }]),
+        }),
       }),
     })
 
     return {
       insert: vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi
-            .fn()
-            .mockResolvedValue([{ id: "msg-1", sourceId: null }]),
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: "msg-1",
+              sourceId: null,
+              createdAt: new Date("2026-01-01T00:00:00Z"),
+            },
+          ]),
         }),
       }),
       update,
@@ -32,16 +56,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
         messengerMessageTemplateModel: { findFirst: vi.fn() },
         flowModel: { findFirst: vi.fn() },
       },
-      // ShardedMessageRepository calls registry.listActive() → db.select().
-      // Return [] so manager falls back to mainDbShardClient (= this mock db).
-      select: vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue([]),
-          }),
-          orderBy: vi.fn().mockResolvedValue([]),
-        }),
-      }),
+      // ShardedMessageRepository/MessageShardRegistry query the shard
+      // registry (listActive, findShardsForTimeRange, countShards, …) via
+      // chained select().from().innerJoin().where().orderBy() calls that can
+      // be awaited from any point in the chain. A thenable stub that always
+      // resolves empty makes every registry lookup fall back to the main db
+      // (= this mock db), which is what a single-shard/unsharded setup does.
+      select: vi.fn(() => makeEmptySelectChain()),
     }
   })(),
   and: vi.fn(),
@@ -63,6 +84,10 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
+}))
+
+vi.mock("../src/lib/logger", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

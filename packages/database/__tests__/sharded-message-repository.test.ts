@@ -73,7 +73,6 @@ describe("ShardedMessageRepository.bulkCreate", () => {
   let insert: ReturnType<typeof vi.fn>
   let chain: ReturnType<typeof makeShardDbMock>["chain"]
   let update: ReturnType<typeof vi.fn>
-  let updateChain: ReturnType<typeof makeShardDbMock>["updateChain"]
   let shardManager: ReturnType<typeof makeShardManagerMock>
 
   beforeEach(() => {
@@ -82,7 +81,6 @@ describe("ShardedMessageRepository.bulkCreate", () => {
     insert = mock.insert
     chain = mock.chain
     update = mock.update
-    updateChain = mock.updateChain
     shardManager = makeShardManagerMock({ insert, update } as never)
     repo = new ShardedMessageRepository(shardManager as never)
   })
@@ -197,15 +195,6 @@ describe("ShardedMessageRepository.bulkCreate", () => {
     ).rejects.toThrow(
       "bulkCreate: all messages must belong to the same workspace",
     )
-  })
-
-  test("updateSourceId calls shard db.update with correct id and sourceId", async () => {
-    await repo.updateSourceId("msg-1", "prov-abc", "ws-1")
-
-    expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
-    expect(update).toHaveBeenCalledWith(messageModel)
-    expect(updateChain.set).toHaveBeenCalledWith({ sourceId: "prov-abc" })
-    expect(updateChain.where).toHaveBeenCalled()
   })
 
   test("bulkCreateAttachments routes to shard db and passes messageCreatedAt", async () => {
@@ -663,6 +652,78 @@ function objectContainsValue(value: unknown, expected: string): boolean {
   }
   return visit(value)
 }
+
+describe("ShardedMessageRepository.updateSourceId", () => {
+  const createdAt = new Date("2026-01-01T00:00:00Z")
+  const rangeShard = makeShardInfo("tr:range", "range")
+  const writeShard = makeShardInfo("tr:write", "write")
+
+  function makeUpdateClient(rows: unknown[]) {
+    const chain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue(rows),
+    }
+    return { update: vi.fn().mockReturnValue(chain), chain }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("routes by the message's createdAt shard, not the current write shard", async () => {
+    // Regression: updateSourceId used to hit getShardForWrite (the currently
+    // active write shard) regardless of where the message actually lives,
+    // so the update silently missed rows created before the shard rotated.
+    const rangeClient = makeUpdateClient([{ id: "msg-1" }])
+    const writeClient = makeUpdateClient([])
+    const clients = new Map([
+      ["range", rangeClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        Promise.resolve(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.updateSourceId(
+      "msg-1",
+      "prov-abc",
+      "ws-1",
+      createdAt,
+    )
+
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledWith(
+      createdAt,
+      new Date("2026-01-01T00:59:59.999Z"),
+    )
+    expect(shardManager.getWriteShardInfo).toHaveBeenCalledWith("ws-1")
+    expect(rangeClient.update).toHaveBeenCalledWith(messageModel)
+    expect(rangeClient.chain.set).toHaveBeenCalledWith({
+      sourceId: "prov-abc",
+    })
+    expect(result).toEqual({ id: "msg-1" })
+  })
+
+  test("swallows a shard-level failure instead of throwing", async () => {
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi
+        .fn()
+        .mockRejectedValue(new Error("connection refused")),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.updateSourceId("msg-1", "prov-abc", "ws-1", createdAt),
+    ).resolves.toBeNull()
+  })
+})
 
 describe("ShardedMessageRepository.listByConversation — write-shard union", () => {
   beforeEach(() => {

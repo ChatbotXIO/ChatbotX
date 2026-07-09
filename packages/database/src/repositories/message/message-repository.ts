@@ -295,7 +295,8 @@ export interface IMessageRepository {
     id: string,
     sourceId: string,
     workspaceId: string,
-  ): Promise<void>
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
 
   updateTextBySourceId(
     sourceId: string,
