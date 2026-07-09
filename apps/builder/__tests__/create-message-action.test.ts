@@ -65,6 +65,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   findOrFail: vi.fn(),
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    values,
+  })),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -72,7 +76,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: { id: "contactInboxId" },
+  contactInboxModel: {
+    id: "contactInboxId",
+    firstInteractionAt: "firstInteractionAt",
+  },
   conversationModel: { id: "conversationId" },
 }))
 
@@ -163,8 +170,12 @@ describe("createMessage", () => {
     const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
       createdAt: Date
     }
-    expect(updateBuilder.set).toHaveBeenNthCalledWith(2, {
-      lastMessageAt: messageInput.createdAt,
-    })
+    expect(updateBuilder.set).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        firstInteractionAt: expect.anything(),
+        lastMessageAt: messageInput.createdAt,
+      }),
+    )
   })
 })

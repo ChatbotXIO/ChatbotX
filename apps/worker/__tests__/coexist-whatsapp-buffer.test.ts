@@ -51,9 +51,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   inboxModel: {},
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: () => "test-id-123",
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "test-id-123",
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Import handler after mocks are registered

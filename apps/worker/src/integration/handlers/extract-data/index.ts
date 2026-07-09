@@ -50,6 +50,7 @@ const getInputValue = async (props: {
     const variables = await contactVariableService.getAll({
       contactId: conversation.contactId,
       contactInbox,
+      conversation,
     })
 
     inputText = await contactVariableService.replaceAll({

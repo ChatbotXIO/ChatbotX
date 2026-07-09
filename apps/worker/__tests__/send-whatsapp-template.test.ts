@@ -18,6 +18,7 @@ const {
   mockSendFlowStep,
   mockConvertButtons,
   mockParseSdkError,
+  mockRecordSendFailure,
   mockDbSet,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -78,6 +79,7 @@ const {
       .mockResolvedValue({ messageIds: ["provider-wa-1"] }),
     mockConvertButtons: vi.fn().mockReturnValue([]),
     mockParseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
+    mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
   }
 })
@@ -114,6 +116,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
+  contactInboxService: {
+    recordOutboundMessage: vi.fn().mockResolvedValue(undefined),
+    recordOutboundMessageCreated: vi.fn().mockResolvedValue(undefined),
+    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
+    recordSendFailure: mockRecordSendFailure,
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -328,9 +336,7 @@ describe("processWhatsappTemplate", () => {
       "ws-1",
       createdAt,
     )
-    // db.update touches contactInbox.lastMessageAt and conversation.lastActivityAt
-    expect(mockDbUpdate).toHaveBeenCalledTimes(2)
-    expect(mockDbSet).toHaveBeenCalledWith({ lastMessageAt: createdAt })
+    expect(mockDbUpdate).toHaveBeenCalledTimes(1)
     expect(mockDbSet).toHaveBeenCalledWith({ lastActivityAt: createdAt })
   })
 

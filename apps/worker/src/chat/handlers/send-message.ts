@@ -1,4 +1,4 @@
-import { contactService } from "@chatbotx.io/business"
+import { contactInboxService, contactService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
@@ -140,6 +140,15 @@ export async function sendMessageToChannel(
         new Date(message.createdAt),
         result,
       )
+    }
+
+    await contactInboxService.recordOutboundMessageSent({
+      contactInboxId: contactInbox.id,
+      contactId: contactInbox.contactId,
+      at: message.createdAt ?? new Date(),
+    })
+
+    if (!isComment) {
       try {
         await contactService.unblockIfBlocked({
           workspaceId: conversation.workspaceId,
@@ -151,6 +160,7 @@ export async function sendMessageToChannel(
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
+    const errorData = await parseSdkError(error)
     await emit(messageEventTypeSchema.enum["message:failed"], {
       context: {
         workspaceId: conversation.workspaceId,
@@ -162,7 +172,7 @@ export async function sendMessageToChannel(
       action: {
         messageId: message?.id ?? "",
       },
-      errorData: await parseSdkError(error),
+      errorData,
       occurredAt: new Date(),
       metadata,
     })
@@ -441,6 +451,11 @@ export async function sendFlowStepToChannel({
     messageCreatedAt,
     result,
   )
+  await contactInboxService.recordOutboundMessageSent({
+    contactInboxId: contactInbox.id,
+    contactId: contactInbox.contactId,
+    at: new Date(),
+  })
 
   return result
 }

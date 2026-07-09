@@ -5,9 +5,11 @@ import type { InstagramContactProfile } from "../schemas"
 
 type RawContactProfileResponse = {
   id: string
+  username?: string
   follower_count?: number
   is_user_follow_business?: boolean
   is_business_follow_user?: boolean
+  is_verified_user?: boolean
 }
 
 export const fetchInstagramContactProfile = (props: {
@@ -20,7 +22,8 @@ export const fetchInstagramContactProfile = (props: {
 
   return rescue(endpoint, async () => {
     const queries = new URLSearchParams({
-      fields: "follower_count,is_user_follow_business,is_business_follow_user",
+      fields:
+        "username,follower_count,is_user_follow_business,is_business_follow_user,is_verified_user",
       access_token: accessToken,
     })
 
@@ -30,9 +33,11 @@ export const fetchInstagramContactProfile = (props: {
       )
 
     return {
+      username: response.username ?? null,
       followersCount: response.follower_count ?? null,
       followsBusiness: response.is_user_follow_business ?? null,
       businessFollowUser: response.is_business_follow_user ?? null,
+      isVerified: response.is_verified_user ?? null,
     }
   })
 }

@@ -190,9 +190,13 @@ vi.mock("@chatbotx.io/sequence-scheduler", () => ({
 }))
 
 let idCounter = 0
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: vi.fn(() => `generated-id-${++idCounter}`),
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: vi.fn(() => `generated-id-${++idCounter}`),
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Import handlers under test (after all vi.mock calls)

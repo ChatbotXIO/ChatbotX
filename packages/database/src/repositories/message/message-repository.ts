@@ -127,6 +127,30 @@ export interface FindManyBySourceIdsParams {
   workspaceId: string
 }
 
+export interface HardDeleteAllByContactInboxParams {
+  contactInboxId: string
+  conversationId?: string
+  sinceTime: Date
+  workspaceId: string
+}
+
+export interface HardDeleteAllByContactInboxResult {
+  attachmentPaths: string[]
+}
+
+export interface ListIncomingTextsByContactInboxParams {
+  contactInboxId: string
+  conversationId?: string
+  sinceTime: Date
+  workspaceId: string
+}
+
+export interface ListIncomingTextsByConversationParams {
+  conversationId: string
+  sinceTime: Date
+  workspaceId: string
+}
+
 export type MessageSourceRow = Pick<
   MessageModel,
   "id" | "conversationId" | "contactInboxId" | "sourceId" | "createdAt"
@@ -273,7 +297,19 @@ export interface IMessageRepository {
     options: FindTriggerMessageOptions,
   ): Promise<MessageWithAttachments | null>
 
+  hardDeleteAllByContactInbox(
+    params: HardDeleteAllByContactInboxParams,
+  ): Promise<HardDeleteAllByContactInboxResult>
+
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
+
+  listIncomingTextsByContactInbox(
+    params: ListIncomingTextsByContactInboxParams,
+  ): Promise<string[]>
+
+  listIncomingTextsByConversation(
+    params: ListIncomingTextsByConversationParams,
+  ): Promise<string[]>
 
   updateAttachment(params: UpdateAttachmentParams): Promise<void>
 

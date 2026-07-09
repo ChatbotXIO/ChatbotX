@@ -125,6 +125,22 @@ class ConversationService extends BaseService {
     })
   }
 
+  async findByContactAndSource(props: {
+    workspaceId: string
+    contactId: string
+    sourceId: string | null
+    tx?: DatabaseClient
+  }): Promise<ConversationModel | undefined> {
+    const { tx = db, workspaceId, contactId, sourceId } = props
+    return await tx.query.conversationModel.findFirst({
+      where: {
+        workspaceId,
+        contactId,
+        sourceId: sourceId === null ? { isNull: true } : sourceId,
+      },
+    })
+  }
+
   async findByContactWithInboxes(props: {
     contactId: string
     workspaceId: string
@@ -510,6 +526,38 @@ class ConversationService extends BaseService {
     await tx
       .update(conversationModel)
       .set({ aiContextLastMessageId: messageId })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+        ),
+      )
+    await this.invalidate({ workspaceId, ids: [conversationId] })
+  }
+
+  async updateFlowStepState(props: {
+    workspaceId: string
+    conversationId: string
+    currentStep?: string | null
+    lastStep?: string | null
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, conversationId, tx = db } = props
+    const data: Partial<typeof conversationModel.$inferInsert> = {}
+    if ("currentStep" in props) {
+      data.currentStep = props.currentStep
+    }
+    if ("lastStep" in props) {
+      data.lastStep = props.lastStep
+    }
+
+    if (Object.keys(data).length === 0) {
+      return
+    }
+
+    await tx
+      .update(conversationModel)
+      .set(data)
       .where(
         and(
           eq(conversationModel.id, conversationId),

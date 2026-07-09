@@ -9,10 +9,13 @@ const mocks = vi.hoisted(() => ({
   env: {
     NEXT_PUBLIC_BUILDER_URL: "https://app.chatbotx.io",
     NEXT_PUBLIC_STORAGE_URL: undefined as string | undefined,
+    FORCE_PUBLIC_HTTPS: false,
     REALTIME_BROADCAST_SECRET: "secret",
   },
   findActiveByDomain: vi.fn(),
+  findByTenantId: vi.fn(),
   findTenantById: vi.fn(),
+  findWorkspaceById: vi.fn(),
   hasEnterpriseFeatures: vi.fn(),
   listByTenant: vi.fn(),
 }))
@@ -22,7 +25,10 @@ vi.mock("../src/integration-context/keys", () => ({
 }))
 
 vi.mock("../src/enterprise/custom-domain/service", () => ({
-  customDomainService: { findActiveByDomain: mocks.findActiveByDomain },
+  customDomainService: {
+    findActiveByDomain: mocks.findActiveByDomain,
+    findByTenantId: mocks.findByTenantId,
+  },
 }))
 
 vi.mock("../src/enterprise/tenant/service", () => ({
@@ -38,16 +44,18 @@ vi.mock("../src/user/entitlements", () => ({
 }))
 
 vi.mock("../src/workspace/service", () => ({
-  workspaceService: { findById: vi.fn() },
+  workspaceService: { findById: mocks.findWorkspaceById },
 }))
 
-const { resolveTenantSettingsByDomain } = await import(
+const { resolveTenantSettingsByDomain, resolveWorkspaceAppUrl } = await import(
   "../src/platform/settings"
 )
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.env.NEXT_PUBLIC_BUILDER_URL = BUILDER_URL
   mocks.env.NEXT_PUBLIC_STORAGE_URL = undefined
+  mocks.env.FORCE_PUBLIC_HTTPS = false
   mocks.listByTenant.mockResolvedValue([])
 })
 
@@ -158,5 +166,76 @@ describe("resolveTenantSettingsByDomain", () => {
 
     expect(settings.appUrl).toBe(BUILDER_URL)
     expect(mocks.findActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("forces HTTPS for env-derived default URLs when configured", async () => {
+    mocks.env.NEXT_PUBLIC_BUILDER_URL = "http://app.chatbotx.io"
+    mocks.env.NEXT_PUBLIC_STORAGE_URL = "http://files.chatbotx.io/assets"
+    mocks.env.FORCE_PUBLIC_HTTPS = true
+    mocks.hasEnterpriseFeatures.mockResolvedValue(false)
+
+    const settings = await resolveTenantSettingsByDomain(CUSTOM_DOMAIN)
+
+    expect(settings.appUrl).toBe(BUILDER_URL)
+    expect(settings.wsUrl).toBe(`${BUILDER_URL}/ws/`)
+    expect(settings.storageUrl).toBe("https://files.chatbotx.io/assets/")
+    expect(settings.logoDarkUrl).toBe(`${BUILDER_URL}/brand/logo_black.svg`)
+  })
+})
+
+describe("resolveWorkspaceAppUrl", () => {
+  test("uses the builder URL for root-tenant workspaces", async () => {
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "workspace-1",
+      tenantId: "1",
+    })
+
+    await expect(
+      resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),
+    ).resolves.toBe(BUILDER_URL)
+    expect(mocks.findByTenantId).not.toHaveBeenCalled()
+  })
+
+  test("uses the active custom domain for non-root tenant workspaces", async () => {
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "workspace-1",
+      tenantId: "tenant-1",
+    })
+    mocks.findByTenantId.mockResolvedValue([
+      { domain: "pending.customer.com", status: "pending" },
+      { domain: CUSTOM_DOMAIN, status: "active" },
+    ])
+
+    await expect(
+      resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),
+    ).resolves.toBe(`https://${CUSTOM_DOMAIN}`)
+  })
+
+  test("falls back to the builder URL when a tenant has no active domain", async () => {
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "workspace-1",
+      tenantId: "tenant-1",
+    })
+    mocks.findByTenantId.mockResolvedValue([
+      { domain: "pending.customer.com", status: "pending" },
+      { domain: "failed.customer.com", status: "failed" },
+    ])
+
+    await expect(
+      resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),
+    ).resolves.toBe(BUILDER_URL)
+  })
+
+  test("forces HTTPS for fallback workspace app links when configured", async () => {
+    mocks.env.NEXT_PUBLIC_BUILDER_URL = "http://app.chatbotx.io"
+    mocks.env.FORCE_PUBLIC_HTTPS = true
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "workspace-1",
+      tenantId: "1",
+    })
+
+    await expect(
+      resolveWorkspaceAppUrl({ workspaceId: "workspace-1" }),
+    ).resolves.toBe(BUILDER_URL)
   })
 })

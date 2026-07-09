@@ -96,6 +96,14 @@ const attachmentTypeSchema = z.enum([
 // Base attachment payload — url optional because template attachments have no url
 const baseAttachmentPayloadSchema = z.object({
   url: z.url().optional(),
+  coordinates: z
+    .object({
+      lat: z.number().optional(),
+      long: z.number().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+    })
+    .optional(),
 })
 
 // Common ID schemas
@@ -118,6 +126,7 @@ export const messengerMessageSchema = z.object({
   quick_reply: z
     .object({
       payload: z.string(),
+      title: z.string().optional(),
     })
     .optional(),
 })
@@ -142,6 +151,19 @@ export const messengerReferralSchema = z.object({
   ref: z.string(),
   source: z.string(),
   type: z.string(),
+  ad_id: z.string().optional(),
+  source_url: z.string().optional(),
+  source_platform: z.string().optional(),
+  ads_context_data: z
+    .object({
+      ad_title: z.string().optional(),
+      post_id: z.string().optional(),
+      photo_url: z.string().optional(),
+      video_url: z.string().optional(),
+      product_id: z.string().optional(),
+      flow_id: z.string().optional(),
+    })
+    .optional(),
 })
 export type MessengerReferral = z.infer<typeof messengerReferralSchema>
 

@@ -72,9 +72,13 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 const createId = vi.fn(() => "logo-id")
-vi.mock("@chatbotx.io/utils", () => ({
-  createId,
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId,
+  }
+})
 
 const { updateWorkspaceLogo } = await import(
   "../src/features/workspaces/actions/upload-logo"

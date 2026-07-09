@@ -86,7 +86,13 @@ vi.mock("@chatbotx.io/scheduler", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({ createId: () => "test-id" }))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "test-id",
+  }
+})
 
 // --- lazy imports after mocks ---
 import { getContactInboxes } from "../src/contacts-on-sequences"

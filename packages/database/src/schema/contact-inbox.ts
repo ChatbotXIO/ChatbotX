@@ -1,5 +1,7 @@
 import {
   index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -12,6 +14,23 @@ import {
 } from "../partials/shared"
 import { contactModel } from "./contact"
 import { inboxModel } from "./inbox"
+
+export type ContactInboxReferral = {
+  ref?: string | null
+  source?: string | null
+  type?: string | null
+  adId?: string | null
+  adTitle?: string | null
+  sourceUrl?: string | null
+  sourcePlatform?: string | null
+  ctwaClid?: string | null
+  postId?: string | null
+  photoUrl?: string | null
+  videoUrl?: string | null
+  productId?: string | null
+  flowId?: string | null
+  raw?: Record<string, unknown>
+}
 
 export const contactInboxModel = pgTable(
   "ContactInbox",
@@ -38,8 +57,18 @@ export const contactInboxModel = pgTable(
     // persona id at send time; null means the page default persona is used.
     personaId: text(),
     contactLastReadAt: timestamp(timestampConfig),
+    firstInteractionAt: timestamp(timestampConfig),
     lastMessageAt: timestamp(timestampConfig),
     lastIncomingMessageAt: timestamp(timestampConfig),
+    lastOutboundMessageAt: timestamp(timestampConfig),
+    referral: jsonb().$type<ContactInboxReferral>(),
+    lastCommentMessageId: text(),
+    lastCommentMessageAt: timestamp(timestampConfig),
+    consecutiveFailedReply: integer().default(0).notNull(),
+    lastInputFailure: text(),
+    lastErrorLog: text(),
+    lastBtnTitle: text(),
+    webchatParentUrl: text(),
   },
   (table) => [
     uniqueIndex("ContactInbox_inboxId_sourceId_key").using(

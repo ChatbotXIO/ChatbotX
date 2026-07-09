@@ -20,6 +20,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./keys": "./src/keys.ts"
+    "./keys": "./src/keys.ts",
+    "./link-signature": "./src/link-signature.ts"
   }
 }

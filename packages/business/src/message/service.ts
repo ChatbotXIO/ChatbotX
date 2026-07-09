@@ -21,9 +21,13 @@ class MessageService extends BaseService {
   }): Promise<MessageModel | undefined> {
     const { tx = db, where, sinceTime } = props
     const repo = await createMessageRepository(tx)
+    let messageTypesFilter: MessageType[] | undefined
+    if (where.messageType) {
+      messageTypesFilter = [where.messageType]
+    }
 
     const messages = await repo.findLastByConversation(where.conversationId, {
-      messageTypes: where.messageType ? [where.messageType] : undefined,
+      messageTypes: messageTypesFilter,
       limit: 1,
       sinceTime,
       workspaceId: where.workspaceId,
@@ -69,7 +73,22 @@ class MessageService extends BaseService {
     })
   }
 
-  listLastMessages(props: {
+  async findById(props: {
+    tx?: DatabaseClient
+    id: string
+    createdAt: Date
+    workspaceId: string
+  }): Promise<MessageModel | null> {
+    const { tx = db, id, createdAt, workspaceId } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.findById({
+      id,
+      createdAt,
+      workspaceId,
+    })
+  }
+
+  async listLastMessages(props: {
     tx?: DatabaseClient
     conversationId: string
     limit: number
@@ -77,28 +96,49 @@ class MessageService extends BaseService {
     workspaceId: string
   }): Promise<MessageModel[]> {
     const { tx = db, conversationId, limit, sinceTime, workspaceId } = props
-    return withCache(
-      `messages:${workspaceId}:${conversationId}:latest:${limit}`,
-      async () => {
-        const repo = await createMessageRepository(tx)
-        const messages = await repo.findLastByConversation(conversationId, {
-          messageTypes: [
-            messageTypes.enum.incoming,
-            messageTypes.enum.outgoing,
-          ],
-          limit,
-          sinceTime,
-          workspaceId,
-        })
-        return [...messages].reverse()
-      },
-      {
-        tags: [
-          `conversations:${conversationId}`,
-          `conversations:${conversationId}:messages`,
-        ],
-      },
-    )
+    const repo = await createMessageRepository(tx)
+    const messages = await repo.findLastByConversation(conversationId, {
+      messageTypes: [messageTypes.enum.incoming, messageTypes.enum.outgoing],
+      limit,
+      sinceTime,
+      workspaceId,
+    })
+    return [...messages].reverse()
+  }
+
+  async listIncomingTextsByContactInbox(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    conversationId?: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<string[]> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.listIncomingTextsByContactInbox(params)
+  }
+
+  async listIncomingTextsByConversation(props: {
+    tx?: DatabaseClient
+    conversationId: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<string[]> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.listIncomingTextsByConversation(params)
+  }
+
+  async hardDeleteAllByContactInbox(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    conversationId?: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<{ attachmentPaths: string[] }> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.hardDeleteAllByContactInbox(params)
   }
 }
 

@@ -297,7 +297,7 @@ describe("bulkImportMessages", () => {
     expect(result.importedMessages).toBe(1)
   })
 
-  test("does not bump activity itself — returns newestMessageAt for the caller to batch", async () => {
+  test("does not bump activity itself — returns message timestamps for the caller to batch", async () => {
     // Activity bumps (lastMessageAt / lastActivityAt) are the caller's job now;
     // bulkImportMessages only inserts and reports the newest message time.
     const newest = new Date("2026-06-20T10:00:00.000Z")
@@ -316,11 +316,12 @@ describe("bulkImportMessages", () => {
     })
 
     expect(result.newestMessageAt).toEqual(newest)
+    expect(result.oldestMessageAt).toEqual(older)
     // No per-contact activity UPDATE — leaves that to applyCoexistActivityUpdates.
     expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 
-  test("reports newestMessageAt only from API message timestamps", async () => {
+  test("reports newest and oldest message timestamps only from API message timestamps", async () => {
     const apiTimestamp = new Date("2026-06-19T08:00:00.000Z")
     mockBulkCreate.mockResolvedValue([
       { id: "msg-1", sourceId: "src-with-api-time" },
@@ -336,6 +337,7 @@ describe("bulkImportMessages", () => {
     })
 
     expect(result.newestMessageAt).toEqual(apiTimestamp)
+    expect(result.oldestMessageAt).toEqual(apiTimestamp)
     expect(result.skippedMessages).toBe(0)
     const rows = mockBulkCreate.mock.calls[0][0] as Array<{
       sourceId: string
@@ -372,6 +374,7 @@ describe("bulkImportMessages", () => {
     })
 
     expect(result.newestMessageAt).toEqual(newerOutgoingTimestamp)
+    expect(result.oldestMessageAt).toEqual(incomingTimestamp)
     expect(result.newestIncomingMessageAt).toEqual(incomingTimestamp)
   })
 
@@ -399,18 +402,21 @@ describe("applyCoexistActivityUpdates", () => {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
         newestMessageAt: new Date("2026-06-20T10:00:00.000Z"),
+        oldestMessageAt: new Date("2026-06-20T09:00:00.000Z"),
         newestIncomingMessageAt: null,
       },
       {
         contactInboxId: "ci-2",
         conversationId: "conv-2",
         newestMessageAt: new Date("2026-06-21T10:00:00.000Z"),
+        oldestMessageAt: new Date("2026-06-21T09:00:00.000Z"),
         newestIncomingMessageAt: null,
       },
       {
         contactInboxId: "ci-3",
         conversationId: "conv-3",
         newestMessageAt: new Date("2026-06-22T10:00:00.000Z"),
+        oldestMessageAt: new Date("2026-06-22T09:00:00.000Z"),
         newestIncomingMessageAt: null,
       },
     ])
@@ -420,14 +426,16 @@ describe("applyCoexistActivityUpdates", () => {
     expect(mockDbExecute).toHaveBeenCalledTimes(2)
   })
 
-  test("updates both ContactInbox last-message timestamps from the API message time", async () => {
+  test("updates ContactInbox first and last message timestamps from API message time", async () => {
     const incomingAt = new Date("2026-06-19T08:00:00.000Z")
+    const firstAt = new Date("2026-06-18T08:00:00.000Z")
     const latestAt = new Date("2026-06-20T10:00:00.000Z")
     await applyCoexistActivityUpdates([
       {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
         newestMessageAt: latestAt,
+        oldestMessageAt: firstAt,
         newestIncomingMessageAt: incomingAt,
       },
     ])
@@ -437,6 +445,7 @@ describe("applyCoexistActivityUpdates", () => {
       | undefined
 
     expect(contactInboxSql?.strings?.join("")).toContain('"lastMessageAt"')
+    expect(contactInboxSql?.strings?.join("")).toContain('"firstInteractionAt"')
     expect(contactInboxSql?.strings?.join("")).toContain(
       '"lastIncomingMessageAt"',
     )
@@ -450,6 +459,7 @@ describe("applyCoexistActivityUpdates", () => {
     expect(contactRows?.__join?.[0]?.values).toEqual([
       "ci-1",
       latestAt,
+      firstAt,
       incomingAt,
     ])
 
@@ -468,6 +478,7 @@ describe("applyCoexistActivityUpdates", () => {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
         newestMessageAt: outgoingAt,
+        oldestMessageAt: outgoingAt,
         newestIncomingMessageAt: null,
       },
     ])
@@ -479,10 +490,16 @@ describe("applyCoexistActivityUpdates", () => {
     const contactRows = contactInboxSql?.values?.[0] as
       | { __join?: Array<{ values?: unknown[] }> }
       | undefined
-    expect(contactRows?.__join?.[0]?.values).toEqual(["ci-1", outgoingAt, null])
+    expect(contactRows?.__join?.[0]?.values).toEqual([
+      "ci-1",
+      outgoingAt,
+      outgoingAt,
+      null,
+    ])
   })
 
-  test("deduplicates repeated activity updates to the newest API message times", async () => {
+  test("deduplicates repeated activity updates to the newest and oldest API message times", async () => {
+    const oldestMessage = new Date("2026-06-18T08:00:00.000Z")
     const olderMessage = new Date("2026-06-19T08:00:00.000Z")
     const newerMessage = new Date("2026-06-20T10:00:00.000Z")
     const olderIncoming = new Date("2026-06-19T07:00:00.000Z")
@@ -493,12 +510,14 @@ describe("applyCoexistActivityUpdates", () => {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
         newestMessageAt: newerMessage,
+        oldestMessageAt: olderMessage,
         newestIncomingMessageAt: olderIncoming,
       },
       {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
         newestMessageAt: olderMessage,
+        oldestMessageAt: oldestMessage,
         newestIncomingMessageAt: newerIncoming,
       },
     ])
@@ -513,6 +532,7 @@ describe("applyCoexistActivityUpdates", () => {
     expect(contactRows?.__join?.[0]?.values).toEqual([
       "ci-1",
       newerMessage,
+      oldestMessage,
       newerIncoming,
     ])
 
@@ -543,6 +563,7 @@ describe("applyCoexistActivityUpdates", () => {
           contactInboxId: "ci-1",
           conversationId: "conv-1",
           newestMessageAt: new Date("2026-06-20T10:00:00.000Z"),
+          oldestMessageAt: new Date("2026-06-20T09:00:00.000Z"),
           newestIncomingMessageAt: null,
         },
       ]),

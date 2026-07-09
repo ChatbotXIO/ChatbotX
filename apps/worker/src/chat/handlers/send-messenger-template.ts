@@ -1,8 +1,10 @@
-import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  contactInboxService,
+} from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
-  contactInboxModel,
   conversationModel,
   type messageModel,
 } from "@chatbotx.io/database/schema"
@@ -142,6 +144,7 @@ export async function processMessengerTemplate(
     const variables = await contactVariableService.getAll({
       contactId: conversation.contactId,
       contactInbox,
+      conversation,
     })
     const completeParams = mergeMessengerTemplateButtonParams(
       template.params,
@@ -188,10 +191,12 @@ export async function processMessengerTemplate(
     const createdMessage = newMessage
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(contactInboxModel)
-        .set({ lastMessageAt: createdMessage.createdAt })
-        .where(eq(contactInboxModel.id, contactInbox.id))
+      await contactInboxService.recordOutboundMessageCreated({
+        tx,
+        contactInboxId: contactInbox.id,
+        contactId: contactInbox.contactId,
+        at: createdMessage.createdAt,
+      })
 
       await tx
         .update(conversationModel)
@@ -250,6 +255,8 @@ export async function processMessengerTemplate(
       message: { ...newMessage, sourceId: providerMessageId || null },
     }
   } catch (error) {
+    const errorData = await parseSdkError(error)
+
     logger.error(
       {
         error,
@@ -266,7 +273,7 @@ export async function processMessengerTemplate(
         messageId: newMessage?.id || "",
         flowId: flow?.id || "",
       },
-      errorData: await parseSdkError(error),
+      errorData,
       occurredAt: new Date(),
     })
 

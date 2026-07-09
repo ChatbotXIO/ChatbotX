@@ -149,14 +149,13 @@ vi.mock("@chatbotx.io/events", () => ({
 let idCounter = 0
 const createId = vi.fn(() => `generated-id-${++idCounter}`)
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId,
-  zodBigintAsString: () => ({
-    describe: vi.fn(),
-    safeParse: vi.fn(() => ({ data: "ws-1" })),
-    parse: vi.fn((v: unknown) => String(v)),
-  }),
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId,
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/redis — invalidateCacheByTags

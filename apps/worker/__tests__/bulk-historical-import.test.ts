@@ -106,7 +106,12 @@ vi.mock("@chatbotx.io/event-bus", () => ({ emit: mockEmit }))
 vi.mock("@chatbotx.io/events", () => ({
   emitContactCreated: mockEmitContactCreated,
 }))
-vi.mock("@chatbotx.io/utils", () => ({ createId: mockCreateId }))
+// Partial: `@chatbotx.io/database/partials` calls `zodBigintAsString()` at
+// module scope, so replacing the whole module breaks the import chain.
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return { ...actual, createId: mockCreateId }
+})
 
 // ---------------------------------------------------------------------------
 // Import after mocks

@@ -7,6 +7,7 @@
     "./branding": "./src/platform/branding.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
     "./errors": "./src/errors.ts",
+    "./system-field": "./src/system-field/index.ts",
     "./utils": "./src/utils.ts"
   },
   "dependencies": {

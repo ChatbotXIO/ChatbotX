@@ -8,6 +8,7 @@ import StarterKit from "@tiptap/starter-kit"
 import emojiSuggestion from "./extensions/emoij/suggestion"
 import variableInjectionSuggestion from "./extensions/variable-injection/suggestion"
 import "./tiptap-editor.css"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
@@ -24,12 +25,14 @@ type TiptapEditorProps = {
   initValue?: string
   placeholder?: string
   showEmojiPicker?: boolean
+  channels?: ChannelType[]
   onChange?: (content: string) => void
 }
 
 export const TiptapEditor = ({
   initValue,
   onChange,
+  channels,
   placeholder = "Type a message...",
   showEmojiPicker = true,
 }: TiptapEditorProps) => {
@@ -39,6 +42,7 @@ export const TiptapEditor = ({
   const customFieldSelectOptions = useCustomFieldSelectOptions({
     includeReserved: true,
     customFieldValueKey: "name",
+    channels,
   })
 
   const tiptapEditor = useEditor({

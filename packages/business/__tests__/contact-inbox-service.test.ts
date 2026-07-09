@@ -1,16 +1,42 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockDbFindMany } = vi.hoisted(() => ({
-  mockDbFindMany: vi.fn(),
-}))
+const { mockDbFindMany, mockDbSet, mockDbUpdate } = vi.hoisted(() => {
+  const mockDbSet = vi.fn()
+  const updateChain = {
+    set: mockDbSet,
+    where: vi.fn().mockResolvedValue(undefined),
+  }
+  mockDbSet.mockReturnValue(updateChain)
+  return {
+    mockDbFindMany: vi.fn(),
+    mockDbSet,
+    mockDbUpdate: vi.fn().mockReturnValue(updateChain),
+  }
+})
+
+const mockSql = (strings: TemplateStringsArray, ...values: unknown[]) => ({
+  strings: [...strings],
+  values,
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    update: mockDbUpdate,
     query: {
       contactInboxModel: {
         findMany: mockDbFindMany,
       },
     },
+  },
+  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  sql: mockSql,
+}))
+
+vi.mock("@chatbotx.io/database/schema", () => ({
+  contactInboxModel: {
+    firstInteractionAt: "firstInteractionAt",
+    id: "id",
+    referral: "referral",
   },
 }))
 
@@ -87,5 +113,75 @@ describe("contactInboxService timestamp helpers", () => {
       columns: { lastIncomingMessageAt: true },
     })
     expect(mockDbFindMany).not.toHaveBeenCalled()
+  })
+
+  test("updateTracking does not infer firstInteractionAt from lastMessageAt", async () => {
+    const lastMessageAt = new Date("2026-07-09T07:43:30.676Z")
+
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      data: { lastMessageAt },
+    })
+
+    expect(mockDbUpdate).toHaveBeenCalled()
+    expect(mockDbSet).toHaveBeenCalledWith({ lastMessageAt })
+  })
+
+  test("updateTracking stores explicit firstInteractionAt as an earliest timestamp", async () => {
+    const firstInteractionAt = new Date("2026-05-11T04:02:22.000Z")
+    const lastMessageAt = new Date("2026-07-09T07:43:30.676Z")
+
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      data: { firstInteractionAt, lastMessageAt },
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith({
+      firstInteractionAt: {
+        strings: [
+          "CASE WHEN ",
+          " IS NULL OR ",
+          " > ",
+          " THEN ",
+          " ELSE ",
+          " END",
+        ],
+        values: [
+          "firstInteractionAt",
+          "firstInteractionAt",
+          firstInteractionAt,
+          firstInteractionAt,
+          "firstInteractionAt",
+        ],
+      },
+      lastMessageAt,
+    })
+  })
+
+  test("updateTracking merges only populated referral keys", async () => {
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      data: {
+        referral: {
+          adTitle: null,
+          ctwaClid: "clid-1",
+          raw: {},
+          sourceUrl: "https://example.com/ad",
+        },
+      },
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith({
+      referral: {
+        strings: ["COALESCE(", ", '{}'::jsonb) || ", "::jsonb"],
+        values: [
+          "referral",
+          JSON.stringify({
+            ctwaClid: "clid-1",
+            sourceUrl: "https://example.com/ad",
+          }),
+        ],
+      },
+    })
   })
 })

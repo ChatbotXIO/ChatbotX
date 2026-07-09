@@ -1,4 +1,5 @@
 import {
+  type ChannelType,
   type CustomFieldType,
   type SystemFieldType,
   systemFieldTypes,
@@ -29,10 +30,11 @@ export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
   phoneNumber: PhoneIcon,
 }
 
-const reservedCustomFieldIds: {
+export const reservedCustomFieldIds: {
   type: CustomFieldType
   id: SystemFieldType
   labelKey: string
+  channels?: ChannelType[]
 }[] = [
   {
     id: systemFieldTypes.enum.first_name,
@@ -57,7 +59,9 @@ const reservedCustomFieldIds: {
   {
     id: systemFieldTypes.enum.phone,
     type: "shortText",
-    labelKey: "fields.phoneNumber.label",
+    // Dedicated key: `fields.phoneNumber` is the form-field label ("Phone
+    // number") reused across contact forms and template dialogs.
+    labelKey: "fields.phone.label",
   },
   {
     id: systemFieldTypes.enum.avatar,
@@ -114,6 +118,38 @@ const reservedCustomFieldIds: {
     type: "shortText",
     labelKey: "fields.currentTime.label",
   },
+  {
+    id: systemFieldTypes.enum.last_seen,
+    type: "datetime",
+    labelKey: "fields.lastSeen.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_interaction,
+    type: "datetime",
+    labelKey: "fields.lastInteraction.label",
+  },
+  {
+    id: systemFieldTypes.enum.inbox_link,
+    type: "shortText",
+    labelKey: "fields.inboxLink.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_btn_title,
+    type: "shortText",
+    labelKey: "fields.lastButtonTitle.label",
+  },
+  {
+    id: systemFieldTypes.enum.fb_chat_link,
+    type: "shortText",
+    labelKey: "fields.fbChatLink.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_fb_comment,
+    type: "shortText",
+    labelKey: "fields.lastFbComment.label",
+    channels: ["messenger", "instagram"],
+  },
 ]
 
 export const useCustomFieldSelectOptions = (
@@ -122,16 +158,23 @@ export const useCustomFieldSelectOptions = (
     includeReserved?: boolean
     prefix?: string
     customFieldValueKey?: "name"
+    channels?: ChannelType[]
   } = {},
 ): SelectOption[] => {
-  const { customFieldTypes, includeReserved, prefix, customFieldValueKey } =
-    props
+  const {
+    customFieldTypes,
+    includeReserved,
+    prefix,
+    customFieldValueKey,
+    channels,
+  } = props
   const t = useTranslations()
 
   const { customFields: rawCustomFields } = useCustomFieldStore(
     (state) => state,
   )
 
+  // `channels` still drives the filter below; it no longer prefixes the label.
   const reservedCustomFieldOptions = useMemo(
     () =>
       reservedCustomFieldIds.map((field) => ({
@@ -156,7 +199,12 @@ export const useCustomFieldSelectOptions = (
 
     const reservedOptions = includeReserved
       ? reservedCustomFieldOptions
-          .filter((field) => matchesType(field.type))
+          .filter(
+            (field) =>
+              matchesType(field.type) &&
+              (!(field.channels && channels) ||
+                field.channels.some((channel) => channels.includes(channel))),
+          )
           .map((field) => toOption(field, field.id.toString()))
       : []
 
@@ -173,6 +221,7 @@ export const useCustomFieldSelectOptions = (
   }, [
     customFieldTypes,
     customFieldValueKey,
+    channels,
     includeReserved,
     rawCustomFields,
     prefix,

@@ -164,6 +164,8 @@ describe("externalRequest step handler", () => {
     expect(contactVariableService.getAll).toHaveBeenCalledWith({
       contactId: "contact-1",
       contactInbox: expect.objectContaining({ id: "contact-inbox-1" }),
+      // Conversation context is what lets {{me}} scope its privacy link.
+      conversation: expect.objectContaining({ id: "conversation-1" }),
     })
   })
 })

@@ -7,6 +7,7 @@ const {
   mockDbSet,
   mockDbUpdate,
   mockEmit,
+  mockFindConversation,
   mockFindContactInbox,
   mockIdentifyIntegration,
   mockRunChannelHandler,
@@ -31,6 +32,7 @@ const {
     mockDbSet,
     mockDbUpdate,
     mockEmit: vi.fn().mockResolvedValue(undefined),
+    mockFindConversation: vi.fn(),
     mockFindContactInbox: vi.fn(),
     mockIdentifyIntegration: vi.fn(),
     mockRunChannelHandler: vi.fn(),
@@ -39,6 +41,9 @@ const {
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mockBuildContext,
+  conversationService: {
+    findDMByContact: mockFindConversation,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -138,6 +143,7 @@ describe("read receipt timestamp handling", () => {
       integrationRow: { id: "integration-1" },
     })
     mockFindContactInbox.mockResolvedValue(contactInbox)
+    mockFindConversation.mockResolvedValue(contactInbox.conversation)
     mockRunChannelHandler.mockResolvedValue({
       contact: { sourceId: "source-contact-1" },
     })

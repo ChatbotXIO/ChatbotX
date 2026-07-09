@@ -46,6 +46,7 @@ type ContactWriteData = Partial<
     | "emailOptIn"
     | "timezone"
     | "avatar"
+    | "location"
   >
 >
 

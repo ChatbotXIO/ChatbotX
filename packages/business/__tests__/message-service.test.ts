@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
   const repo = {
+    findById: vi.fn(),
     findLastByConversation: vi.fn(),
+    hardDeleteAllByContactInbox: vi.fn(),
+    listIncomingTextsByContactInbox: vi.fn(),
+    listIncomingTextsByConversation: vi.fn(),
   }
   return {
     db: { query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } } },
@@ -57,13 +61,9 @@ describe("messageService", () => {
       workspaceId: "ws-1",
     })
     expect(result).toEqual([older, newer])
-    expect(mocks.withCache).toHaveBeenCalledWith(
-      "messages:ws-1:conv-1:latest:2",
-      expect.any(Function),
-      {
-        tags: ["conversations:conv-1", "conversations:conv-1:messages"],
-      },
-    )
+    // Reads straight through to the repository — caching this call was removed
+    // deliberately, so re-introducing it should break here first.
+    expect(mocks.withCache).not.toHaveBeenCalled()
   })
 
   test("findLatestIncomingMessage reads the newest incoming message through the repository", async () => {
@@ -85,5 +85,93 @@ describe("messageService", () => {
       workspaceId: "ws-1",
     })
     expect(result).toBe(message)
+  })
+
+  test("findById reads one message through the repository", async () => {
+    const { messageService } = await import("../src/message/service")
+    const message = {
+      id: "msg-1",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      workspaceId: "ws-1",
+    }
+    mocks.repo.findById.mockResolvedValue(message)
+
+    const result = await messageService.findById({
+      id: "msg-1",
+      createdAt: message.createdAt,
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.findById).toHaveBeenCalledWith({
+      id: "msg-1",
+      createdAt: message.createdAt,
+      workspaceId: "ws-1",
+    })
+    expect(result).toBe(message)
+  })
+
+  test("listIncomingTextsByContactInbox delegates to the repository", async () => {
+    const { messageService } = await import("../src/message/service")
+    const sinceTime = new Date("2025-01-01")
+    mocks.repo.listIncomingTextsByContactInbox.mockResolvedValue([
+      "newest",
+      "older",
+    ])
+
+    const result = await messageService.listIncomingTextsByContactInbox({
+      contactInboxId: "contact-inbox-1",
+      sinceTime,
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.listIncomingTextsByContactInbox).toHaveBeenCalledWith({
+      contactInboxId: "contact-inbox-1",
+      sinceTime,
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual(["newest", "older"])
+  })
+
+  test("listIncomingTextsByConversation delegates to the text-only repository method", async () => {
+    const { messageService } = await import("../src/message/service")
+    const sinceTime = new Date("2025-01-01")
+    mocks.repo.listIncomingTextsByConversation.mockResolvedValue([
+      "newest",
+      "older",
+    ])
+
+    const result = await messageService.listIncomingTextsByConversation({
+      conversationId: "conv-1",
+      sinceTime,
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.listIncomingTextsByConversation).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      sinceTime,
+    })
+    expect(result).toEqual(["newest", "older"])
+  })
+
+  test("hardDeleteAllByContactInbox delegates to the repository", async () => {
+    const { messageService } = await import("../src/message/service")
+    const sinceTime = new Date("2025-01-01")
+    mocks.repo.hardDeleteAllByContactInbox.mockResolvedValue({
+      attachmentPaths: ["origin.jpg", "thumb.jpg"],
+    })
+
+    const result = await messageService.hardDeleteAllByContactInbox({
+      contactInboxId: "contact-inbox-1",
+      sinceTime,
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.hardDeleteAllByContactInbox).toHaveBeenCalledWith({
+      contactInboxId: "contact-inbox-1",
+      sinceTime,
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual({ attachmentPaths: ["origin.jpg", "thumb.jpg"] })
   })
 })

@@ -44,9 +44,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   sequenceModel: { id: "id", name: "name", workspaceId: "workspaceId" },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: mockCreateId,
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: mockCreateId,
+  }
+})
 
 vi.mock("next-intl/server", () => ({
   getTranslations: mockGetTranslations,

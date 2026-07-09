@@ -52,9 +52,13 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 const createId = vi.fn(() => "member-id")
-vi.mock("@chatbotx.io/utils", () => ({
-  createId,
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId,
+  }
+})
 
 const isCommunity = vi.fn(() => false)
 vi.mock("@/env", () => ({

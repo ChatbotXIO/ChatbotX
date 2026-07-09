@@ -16,6 +16,7 @@ const {
   mockReplaceVariables,
   mockContactVariables,
   mockSendFlowStep,
+  mockRecordSendFailure,
   mockDbSet,
 } = vi.hoisted(() => {
   const insertChain = {
@@ -74,6 +75,7 @@ const {
     mockSendFlowStep: vi
       .fn()
       .mockResolvedValue({ messageIds: ["provider-msg-1"] }),
+    mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
   }
 })
@@ -110,6 +112,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
+  contactInboxService: {
+    recordOutboundMessage: vi.fn().mockResolvedValue(undefined),
+    recordOutboundMessageCreated: vi.fn().mockResolvedValue(undefined),
+    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
+    recordSendFailure: mockRecordSendFailure,
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -298,8 +306,7 @@ describe("processMessengerTemplate", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockDbUpdate).toHaveBeenCalledTimes(2)
-    expect(mockDbSet).toHaveBeenCalledWith({ lastMessageAt: createdAt })
+    expect(mockDbUpdate).toHaveBeenCalledTimes(1)
     expect(mockDbSet).toHaveBeenCalledWith({ lastActivityAt: createdAt })
   })
 

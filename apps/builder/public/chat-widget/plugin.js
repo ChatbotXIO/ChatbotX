@@ -51,6 +51,10 @@
       }
 
       url.searchParams.set("domain", window.location.hostname)
+      const parentUrl = getParentPageUrl(config)
+      if (parentUrl) {
+        url.searchParams.set("parentUrl", parentUrl)
+      }
 
       csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}" alt="Chat"></button>`
       csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}"></iframe></div>`
@@ -132,6 +136,26 @@
       link.onerror = reject
       document.head.appendChild(link)
     })
+  }
+
+  function getParentPageUrl(config) {
+    if (isHttpUrl(config.parentUrl)) {
+      return config.parentUrl
+    }
+
+    if (isHttpUrl(window.location.href)) {
+      return window.location.href
+    }
+
+    return null
+  }
+
+  function isHttpUrl(value) {
+    if (typeof value !== "string") {
+      return false
+    }
+
+    return value.startsWith("https://") || value.startsWith("http://")
   }
 
   window.csmChatWidget = csmChatWidget

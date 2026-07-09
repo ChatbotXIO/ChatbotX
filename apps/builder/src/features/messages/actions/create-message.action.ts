@@ -3,7 +3,7 @@
 import { resolveTenantSettings } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
@@ -147,7 +147,10 @@ export const createMessage = async (props: {
 
   await db
     .update(contactInboxModel)
-    .set({ lastMessageAt: message.createdAt })
+    .set({
+      firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${message.createdAt} THEN ${message.createdAt} ELSE ${contactInboxModel.firstInteractionAt} END`,
+      lastMessageAt: message.createdAt,
+    })
     .where(eq(contactInboxModel.id, contactInbox.id))
 
   const attachments =

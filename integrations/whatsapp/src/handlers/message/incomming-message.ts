@@ -6,6 +6,7 @@ import {
   type IncomingContact,
   type IncomingMessage,
   type MessageHandlers,
+  type MessageReferral,
   type MessageWhatsappFlowResponseEntity,
   messageTypes,
   SdkException,
@@ -35,6 +36,45 @@ type WhatsappNfmFlowResponse = Record<string, unknown> & {
   flow_token?: string
 }
 
+type WhatsappReferralPayload = Record<string, unknown> & {
+  ctwa_clid?: string
+  source_url?: string
+  source_type?: string
+  source_id?: string
+  headline?: string
+  body?: string
+  media_type?: string
+  image_url?: string
+  video_url?: string
+  thumbnail_url?: string
+}
+
+const asString = (value: unknown): string | null =>
+  typeof value === "string" && value.length > 0 ? value : null
+
+const getWhatsappReferral = (
+  message: WhatsappWebhookEvent["message"],
+): MessageReferral | null => {
+  const referral = (message as { referral?: WhatsappReferralPayload }).referral
+  if (!referral) {
+    return null
+  }
+
+  return {
+    ref: asString(referral.source_id),
+    source: asString(referral.source_type),
+    type: asString(referral.source_type),
+    adId: asString(referral.source_id),
+    adTitle: asString(referral.headline),
+    sourceUrl: asString(referral.source_url),
+    sourcePlatform: "whatsapp",
+    ctwaClid: asString(referral.ctwa_clid),
+    photoUrl: asString(referral.image_url) ?? asString(referral.thumbnail_url),
+    videoUrl: asString(referral.video_url),
+    raw: referral,
+  }
+}
+
 export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"] =
   async (props) => {
     const {
@@ -56,6 +96,8 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
     }
     let postbackAction: string | null = null
     let ref: string | null = null
+    let buttonTitle: string | null = null
+    const referral = getWhatsappReferral(data.message)
 
     switch (data.message.type) {
       case "text": {
@@ -143,7 +185,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       }
       case "location": {
         const attached = (data.message as ServerLocationMessage).location
-        // message.contentType = ContentType.location
+        message.contentType = contentTypes.enum.location
         message.text =
           [attached.name, attached.address]
             .filter((v) => Boolean(v))
@@ -163,12 +205,14 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
           case "button_reply": {
             message.text = data.message.interactive.button_reply.title
             postbackAction = data.message.interactive.button_reply.id
+            buttonTitle = data.message.interactive.button_reply.title
             break
           }
           case "list_reply": {
             message.text = data.message.interactive.list_reply.title
             message.contentAttributes = data.message.interactive.list_reply
             postbackAction = data.message.interactive.list_reply.id
+            buttonTitle = data.message.interactive.list_reply.title
             break
           }
           case "nfm_reply": {
@@ -186,6 +230,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
             }
 
             message.text = reply.body ?? ""
+            buttonTitle = reply.body ?? null
             const flowResponseEntity: MessageWhatsappFlowResponseEntity = {
               type: "whatsapp_flow_response",
               name: reply.name,
@@ -206,6 +251,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       case "button": {
         const attached = (data.message as ServerButtonMessage).button
         message.text = attached.text
+        buttonTitle = attached.text
         break
       }
       case "order": {
@@ -225,7 +271,10 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       contact,
       postbackAction,
       quickReplyAction: null,
-      ref,
+      ref: ref ?? referral?.ref ?? null,
+      referralSource: referral?.source ?? null,
+      referral,
+      buttonTitle,
     }
   }
 

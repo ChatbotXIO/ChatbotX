@@ -1,4 +1,5 @@
-import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, eq, sql } from "@chatbotx.io/database/client"
+import type { ContactInboxReferral } from "@chatbotx.io/database/schema"
 import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -24,6 +25,29 @@ type FindByProps = {
   contactId: string
   inboxId: string
   channel: string
+}
+
+const compactReferral = (
+  referral: ContactInboxReferral,
+): Partial<ContactInboxReferral> => {
+  const nextReferral: Partial<ContactInboxReferral> = {}
+
+  for (const [key, value] of Object.entries(referral)) {
+    if (value == null) {
+      continue
+    }
+    if (
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.keys(value).length === 0
+    ) {
+      continue
+    }
+
+    Object.assign(nextReferral, { [key]: value })
+  }
+
+  return nextReferral
 }
 
 class ContactInboxService extends BaseService {
@@ -179,6 +203,121 @@ class ContactInboxService extends BaseService {
     ])
   }
 
+  async updateTracking(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    contactId?: string
+    data: Partial<
+      Pick<
+        ContactInboxModel,
+        | "firstInteractionAt"
+        | "lastMessageAt"
+        | "lastIncomingMessageAt"
+        | "lastOutboundMessageAt"
+        | "lastCommentMessageId"
+        | "lastCommentMessageAt"
+        | "consecutiveFailedReply"
+        | "lastInputFailure"
+        | "lastErrorLog"
+        | "lastBtnTitle"
+        | "webchatParentUrl"
+      >
+    > & { referral?: ContactInboxReferral | null }
+  }): Promise<void> {
+    const { tx = db, contactInboxId, contactId, data } = props
+    const {
+      firstInteractionAt: explicitFirstInteractionAt,
+      referral,
+      ...nextData
+    } = data
+
+    const updateData = { ...nextData }
+    if (explicitFirstInteractionAt) {
+      Object.assign(updateData, {
+        firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${explicitFirstInteractionAt} THEN ${explicitFirstInteractionAt} ELSE ${contactInboxModel.firstInteractionAt} END`,
+      })
+    }
+    if (referral) {
+      const nextReferral = compactReferral(referral)
+      if (Object.keys(nextReferral).length > 0) {
+        Object.assign(updateData, {
+          referral: sql`COALESCE(${contactInboxModel.referral}, '{}'::jsonb) || ${JSON.stringify(nextReferral)}::jsonb`,
+        })
+      }
+    }
+
+    await tx
+      .update(contactInboxModel)
+      .set(updateData)
+      .where(eq(contactInboxModel.id, contactInboxId))
+
+    await this.invalidateTracking(contactId)
+  }
+
+  async recordOutboundMessage(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    contactId?: string
+    at: Date
+  }): Promise<void> {
+    await this.recordOutboundMessageSent(props)
+  }
+
+  async recordOutboundMessageCreated(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    contactId?: string
+    at: Date
+  }): Promise<void> {
+    await this.updateTracking({
+      tx: props.tx,
+      contactInboxId: props.contactInboxId,
+      contactId: props.contactId,
+      data: {
+        firstInteractionAt: props.at,
+        lastMessageAt: props.at,
+      },
+    })
+  }
+
+  async recordOutboundMessageSent(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    contactId?: string
+    at: Date
+  }): Promise<void> {
+    await this.updateTracking({
+      tx: props.tx,
+      contactInboxId: props.contactInboxId,
+      contactId: props.contactId,
+      data: {
+        firstInteractionAt: props.at,
+        lastMessageAt: props.at,
+        lastOutboundMessageAt: props.at,
+        consecutiveFailedReply: 0,
+        lastErrorLog: null,
+      },
+    })
+  }
+
+  async recordSendFailure(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    contactId?: string
+    error: string
+  }): Promise<void> {
+    const { tx = db, contactInboxId, contactId, error } = props
+    await tx
+      .update(contactInboxModel)
+      .set({
+        lastErrorLog: error,
+        consecutiveFailedReply: sql`${contactInboxModel.consecutiveFailedReply} + 1`,
+      })
+      .where(eq(contactInboxModel.id, contactInboxId))
+
+    await this.invalidateTracking(contactId)
+  }
+
   async findLatestLastIncomingMessageAtByContactId(props: {
     tx?: DatabaseClient
     contactId: string
@@ -195,6 +334,16 @@ class ContactInboxService extends BaseService {
         .filter((date): date is Date => Boolean(date))
         .sort((a, b) => b.getTime() - a.getTime())[0] ?? null
     )
+  }
+
+  private async invalidateTracking(contactId?: string): Promise<void> {
+    if (!contactId) {
+      return
+    }
+    await this.invalidateCacheTags([
+      `contacts:${contactId}:contact-inboxes`,
+      `tags:contacts:${contactId}`,
+    ])
   }
 }
 

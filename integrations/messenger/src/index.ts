@@ -7,6 +7,7 @@ export {
   sendComment,
   sendPrivateReply,
 } from "./apis/comment"
+export { getPostDetails } from "./apis/post"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export {

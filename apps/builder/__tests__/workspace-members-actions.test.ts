@@ -89,15 +89,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: () => "invitation-id",
-  SymbolicSnowflakeIDs: {
-    generate: () => "invite-code",
-  },
-  zodBigintAsString: () => ({
-    describe: () => ({ _: "zodBigintAsString" }),
-  }),
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "invitation-id",
+    SymbolicSnowflakeIDs: {
+      generate: () => "invite-code",
+    },
+  }
+})
 
 const { inviteWorkspaceMemberAction } = await import(
   "../src/features/workspace-members/actions/invite-workspace-member.action"

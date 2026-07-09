@@ -1,3 +1,4 @@
+import { contactInboxService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
@@ -77,6 +78,12 @@ async function handleSkipOrError(
 
   // if user data is valid, save to custom field if configured
   if (validUserData.userInput) {
+    await contactInboxService.updateTracking({
+      contactInboxId: props.contactInbox.id,
+      contactId: props.contactInbox.contactId,
+      data: { lastInputFailure: null },
+    })
+
     if (step.outputFieldId) {
       await findOrFail({
         table: customFieldModel,
@@ -132,6 +139,15 @@ async function handleSkipOrError(
   }
 
   // if user data is invalid, retry
+  await contactInboxService.updateTracking({
+    contactInboxId: props.contactInbox.id,
+    contactId: props.contactInbox.contactId,
+    data: {
+      lastInputFailure:
+        validUserData.errorMessage ?? "getUserData: invalid user data",
+    },
+  })
+
   await sendMessage(
     props,
     step.retryMessage ?? step.message,

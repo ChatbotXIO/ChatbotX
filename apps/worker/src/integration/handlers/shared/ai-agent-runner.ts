@@ -148,6 +148,7 @@ async function runAIReplyInternal(
     const variables = await contactVariableService.getAll({
       contactId: conversation.contactId,
       contactInbox: props.contactInbox,
+      conversation,
     })
     const promptBase = aiAgent.prompt
       ? await contactVariableService.replaceAll({

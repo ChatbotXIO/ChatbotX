@@ -21,6 +21,8 @@ const {
   mockProcessWhatsappTemplate,
   mockProcessMessengerTemplate,
   mockDbSet,
+  mockRecordOutboundMessage,
+  mockRecordSendFailure,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -109,6 +111,8 @@ const {
       .fn()
       .mockResolvedValue({ messageId: "msg-ms" }),
     mockDbSet,
+    mockRecordOutboundMessage: vi.fn().mockResolvedValue(undefined),
+    mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -169,6 +173,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
+  contactInboxService: {
+    recordOutboundMessage: mockRecordOutboundMessage,
+    recordOutboundMessageCreated: mockRecordOutboundMessage,
+    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
+    recordSendFailure: mockRecordSendFailure,
+  },
   resolveTenantSettings: mockresolveTenantSettings,
 }))
 
@@ -538,11 +548,16 @@ describe("sendFlowStep", () => {
     await sendFlowStep({ ...baseParams, step: sendTextStep })
 
     const createdMessage = await mockRepositoryCreate.mock.results[0]?.value
-    expect(mockDbSet).toHaveBeenCalledWith({
-      lastMessageAt: createdMessage.createdAt,
+    expect(mockRecordOutboundMessage).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      at: createdMessage.createdAt,
     })
     expect(mockDbSet).toHaveBeenCalledWith({
       lastActivityAt: createdMessage.createdAt,
+      lastStep: undefined,
+      currentStep: "step-1",
     })
   })
 
@@ -629,8 +644,11 @@ describe("sendChatMessage", () => {
     })
 
     const createdMessage = await mockRepositoryCreate.mock.results[0]?.value
-    expect(mockDbSet).toHaveBeenCalledWith({
-      lastMessageAt: createdMessage.createdAt,
+    expect(mockRecordOutboundMessage).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      at: createdMessage.createdAt,
     })
     expect(mockDbSet).toHaveBeenCalledWith({
       lastActivityAt: createdMessage.createdAt,

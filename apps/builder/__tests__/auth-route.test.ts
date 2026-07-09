@@ -35,11 +35,15 @@ vi.mock("@chatbotx.io/auth/tenant", () => ({
   withTenant: (_tenantId: string, fn: () => unknown) => fn(),
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  // The route uses the public URL for host comparison; in tests the request URL
-  // already carries the public host.
-  getPublicUrlFromRequest: (request: Request) => new URL(request.url),
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    // The route uses the public URL for host comparison; in tests the request
+    // URL already carries the public host.
+    getPublicUrlFromRequest: (request: Request) => new URL(request.url),
+  }
+})
 
 vi.mock("@/lib/auth/auth", () => ({
   auth: { handler: defaultHandler },

@@ -909,10 +909,10 @@
       "label": "Mô hình Gemini"
     },
     "gender": {
-      "female": "Nữ",
+      "female": "Chị",
       "label": "Giới tính",
-      "male": "Nam",
-      "unknown": "Không xác định"
+      "male": "Anh",
+      "unknown": "Anh/Chị"
     },
     "googleSheets": {
       "label": "Google Sheets"
@@ -1317,7 +1317,7 @@
       }
     },
     "userTags": {
-      "label": "Nhãn người dùng"
+      "label": "Nhãn đã gắn cho người dùng"
     },
     "username": {
       "label": "Tên đăng nhập",
@@ -1724,7 +1724,118 @@
     "sendGrid": {
       "label": "SendGrid"
     },
-    "currentVersion": "Hiện tại"
+    "currentVersion": "Hiện tại",
+    "consecutiveFailedReply": {
+      "label": "Số lần trả lời lỗi liên tiếp"
+    },
+    "currentPassword": {
+      "label": "Mật khẩu hiện tại"
+    },
+    "currentStep": {
+      "label": "Bước hiện tại"
+    },
+    "fbChatLink": {
+      "label": "Liên kết hộp thư Facebook"
+    },
+    "inboxLink": {
+      "label": "Liên kết hộp thư"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "Doanh nghiệp theo dõi người dùng Instagram"
+    },
+    "instagramFollowers": {
+      "label": "Người theo dõi Instagram"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Instagram theo dõi doanh nghiệp"
+    },
+    "instagramUsername": {
+      "label": "Tên người dùng Instagram"
+    },
+    "instagramVerified": {
+      "label": "Instagram đã xác minh"
+    },
+    "lastAd": {
+      "label": "Quảng cáo cuối"
+    },
+    "lastAdSourcePlatform": {
+      "label": "Nền tảng nguồn quảng cáo cuối"
+    },
+    "lastAdSourceUrl": {
+      "label": "URL nguồn quảng cáo cuối"
+    },
+    "lastButtonTitle": {
+      "label": "Tiêu đề nút cuối"
+    },
+    "lastCommentId": {
+      "label": "ID bình luận cuối"
+    },
+    "lastCommentedPostText": {
+      "label": "Nội dung bài viết được bình luận cuối"
+    },
+    "lastCtwa": {
+      "label": "CTWA cuối"
+    },
+    "lastFbComment": {
+      "label": "Bình luận FB cuối"
+    },
+    "lastInputFailure": {
+      "label": "Lỗi nhập cuối"
+    },
+    "lastInteraction": {
+      "label": "Tương tác lần cuối"
+    },
+    "lastLatitude": {
+      "label": "Vĩ độ cuối"
+    },
+    "lastLongitude": {
+      "label": "Kinh độ cuối"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Thời điểm gửi tin cuối"
+    },
+    "lastPostId": {
+      "label": "ID bài viết cuối"
+    },
+    "lastSeen": {
+      "label": "Đã xem lần cuối"
+    },
+    "lastStep": {
+      "label": "Bước cuối"
+    },
+    "me": {
+      "label": "Liên kết dữ liệu của tôi"
+    },
+    "messengerTemplateId": {
+      "label": "Mẫu Messenger"
+    },
+    "phone": {
+      "label": "Điện thoại"
+    },
+    "timezoneName": {
+      "label": "Tên múi giờ"
+    },
+    "totalNewTagged": {
+      "label": "Tổng số được gắn thẻ mới"
+    },
+    "totalTagged": {
+      "label": "Tổng số được gắn thẻ"
+    },
+    "userChannel": {
+      "label": "Kênh người dùng"
+    },
+    "userExternalId": {
+      "label": "ID ngoài của người dùng"
+    },
+    "userHash": {
+      "label": "Mã băm người dùng"
+    },
+    "userSource": {
+      "label": "Nguồn người dùng"
+    },
+    "webchatParentUrl": {
+      "label": "URL cha của Webchat"
+    }
   },
   "flows": {
     "title": "Luồng",
@@ -2568,7 +2679,10 @@
     "passwordResetSuccess": "Đặt lại mật khẩu thành công",
     "resetPasswordTitle": "Đặt lại mật khẩu",
     "resetPasswordDescription": "Nhập mật khẩu mới của bạn bên dưới.",
-    "signUpTitle": "Đăng ký vào {name}"
+    "signUpTitle": "Đăng ký vào {name}",
+    "changePasswordTitle": "Đổi mật khẩu",
+    "changePasswordDescription": "Đặt mật khẩu mới trước khi tiếp tục.",
+    "passwordChangeSuccess": "Đã đổi mật khẩu"
   },
   "emailTopics": {
     "title": "Chủ đề Email"
@@ -2829,7 +2943,15 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Làm mới quyền"
+    "refreshPermissions": "Làm mới quyền",
+    "duplicated": "Tài khoản Zalo OA này đã được kết nối với một workspace khác.",
+    "tagSync": {
+      "title": "Đồng bộ nhãn",
+      "description": "Đồng bộ gán nhãn nội bộ sang Zalo OA này.",
+      "toggleSuccess": "Đã cập nhật cài đặt đồng bộ nhãn.",
+      "enabledSince": "Đã bật từ {date}",
+      "disabled": "Đã tắt"
+    }
   },
   "telegram": {
     "description": "Tích hợp này cho phép bạn tạo bot Telegram.",
@@ -2907,7 +3029,16 @@
   "contacts": {
     "title": "Liên hệ",
     "exportTakingLong": "Xuất dữ liệu đang mất nhiều thời gian hơn dự kiến",
-    "exportTakingLongDescription": "Quá trình xuất vẫn đang xử lý. Bạn có thể đóng hộp thoại này và kiểm tra lại sau vài phút từ lịch sử xuất."
+    "exportTakingLongDescription": "Quá trình xuất vẫn đang xử lý. Bạn có thể đóng hộp thoại này và kiểm tra lại sau vài phút từ lịch sử xuất.",
+    "exportPreparing": "Đang chuẩn bị file xuất...",
+    "exportPreparingDescription": "Chúng tôi đang tạo file CSV của bạn. Quá trình này có thể mất một chút thời gian.",
+    "exportReadyTitle": "File xuất đã sẵn sàng",
+    "exportReadyDescription": "Sao chép liên kết bên dưới hoặc tải file trực tiếp.",
+    "exportDownloadCount": "Tải xuống ({count})",
+    "exportFailed": "Xuất dữ liệu thất bại. Vui lòng thử lại.",
+    "copyLink": "Sao chép liên kết",
+    "linkCopied": "Đã sao chép liên kết vào clipboard",
+    "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
   },
   "errorLogs": {
     "title": "Nhật ký lỗi"
@@ -3291,6 +3422,32 @@
     "description": "Bạn sẽ không còn nhận email từ người gửi này nữa.",
     "invalidTitle": "Liên kết hủy đăng ký không hợp lệ.",
     "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn."
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "Xóa dữ liệu của tôi",
+      "download": "Tải dữ liệu của tôi"
+    },
+    "deleteDialog": {
+      "title": "Xóa dữ liệu của bạn?",
+      "description": "Thao tác này sẽ xóa vĩnh viễn thông tin liên hệ, thẻ, trường tùy chỉnh, tệp đính kèm và tất cả tin nhắn cho hồ sơ liên hệ này."
+    },
+    "empty": {
+      "customFields": "Không có trường tùy chỉnh",
+      "tags": "Không có thẻ"
+    },
+    "fields": {
+      "email": "Email",
+      "gender": "Giới tính",
+      "locale": "Ngôn ngữ",
+      "phone": "Điện thoại",
+      "timezone": "Thời gian"
+    },
+    "sections": {
+      "customFields": "Trường tùy chỉnh",
+      "tags": "Thẻ người dùng"
+    },
+    "unknown": "Không xác định"
   },
   "orders": {
     "title": "Đơn hàng"

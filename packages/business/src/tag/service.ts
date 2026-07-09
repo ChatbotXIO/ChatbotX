@@ -168,6 +168,33 @@ class TagService extends BaseService {
         .catch(() => {})
     }
   }
+
+  async detachAllFromContact(props: {
+    workspaceId: string
+    contactId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, contactId, tx = db } = props
+
+    await findOrFail({
+      table: contactModel,
+      where: { id: contactId, workspaceId },
+    })
+
+    const tags = await this.listByContactId({ contactId, tx })
+    if (tags.length === 0) {
+      return
+    }
+
+    await tx
+      .delete(contactsToTagsModel)
+      .where(eq(contactsToTagsModel.contactId, contactId))
+
+    for (const tag of tags) {
+      emitTagRemoved(workspaceId, contactId, tag.id) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
+        .catch(() => {})
+    }
+  }
 }
 
 export const tagService = new TagService()

@@ -29,6 +29,11 @@ const lastMessage: {
 const repositoryError: { current: Error | null } = { current: null }
 
 const findOrFailResult: { current: unknown } = { current: { id: "field-1" } }
+const contactInboxUpdateTracking = vi.fn(async () => undefined)
+
+vi.mock("@chatbotx.io/business", () => ({
+  contactInboxService: { updateTracking: contactInboxUpdateTracking },
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {

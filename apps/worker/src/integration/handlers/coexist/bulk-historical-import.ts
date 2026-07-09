@@ -158,6 +158,9 @@ export type BulkImportMessagesResult = {
    *  Conversation activity bumps and apply them in a single statement per table
    *  for the whole bulk. */
   newestMessageAt: Date | null
+  /** Oldest API-provided message createdAt in this call (null when none).
+   *  Used only for ContactInbox.firstInteractionAt. */
+  oldestMessageAt: Date | null
   /** Newest API-provided incoming message createdAt in this call (null when
    *  none). Used only for ContactInbox.lastIncomingMessageAt. */
   newestIncomingMessageAt: Date | null
@@ -168,6 +171,7 @@ export type CoexistActivityUpdate = {
   contactInboxId: string
   conversationId: string
   newestMessageAt: Date
+  oldestMessageAt: Date
   newestIncomingMessageAt: Date | null
 }
 
@@ -176,6 +180,7 @@ export type CoexistActivityUpdate = {
  * queries per contact in the import loop). In coexist these columns must mirror
  * the newest API-provided message time, not the sync worker's wall clock:
  *
+ *   - ContactInbox.firstInteractionAt: set once from the oldest message.
  *   - ContactInbox.lastMessageAt: set from the newest message.
  *   - ContactInbox.lastIncomingMessageAt: advance from the newest incoming
  *     message only; outgoing history must not move this field.
@@ -200,6 +205,7 @@ export const applyCoexistActivityUpdates = async (
     string,
     {
       newestMessageAt: Date
+      oldestMessageAt: Date
       newestIncomingMessageAt: Date | null
     }
   >()
@@ -209,6 +215,9 @@ export const applyCoexistActivityUpdates = async (
     if (ci) {
       if (ci.newestMessageAt < u.newestMessageAt) {
         ci.newestMessageAt = u.newestMessageAt
+      }
+      if (ci.oldestMessageAt > u.oldestMessageAt) {
+        ci.oldestMessageAt = u.oldestMessageAt
       }
       if (
         u.newestIncomingMessageAt &&
@@ -220,6 +229,7 @@ export const applyCoexistActivityUpdates = async (
     } else {
       newestByContactInbox.set(u.contactInboxId, {
         newestMessageAt: u.newestMessageAt,
+        oldestMessageAt: u.oldestMessageAt,
         newestIncomingMessageAt: u.newestIncomingMessageAt,
       })
     }
@@ -234,6 +244,7 @@ export const applyCoexistActivityUpdates = async (
       ([id, u]) => sql`(
         ${id}::int8,
         ${u.newestMessageAt}::timestamptz,
+        ${u.oldestMessageAt}::timestamptz,
         ${u.newestIncomingMessageAt}::timestamptz
       )`,
     )
@@ -241,6 +252,11 @@ export const applyCoexistActivityUpdates = async (
     await db.execute(sql`
       UPDATE "ContactInbox" AS t
       SET
+        "firstInteractionAt" = CASE
+          WHEN t."firstInteractionAt" IS NULL OR t."firstInteractionAt" > u.first_ts
+            THEN u.first_ts
+          ELSE t."firstInteractionAt"
+        END,
         "lastMessageAt" = CASE
           WHEN t."lastMessageAt" IS NULL OR t."lastMessageAt" < u.message_ts
             THEN u.message_ts
@@ -257,7 +273,7 @@ export const applyCoexistActivityUpdates = async (
           ELSE t."lastIncomingMessageAt"
         END
       FROM (VALUES ${sql.join(contactInboxRows, sql`, `)})
-        AS u(id, message_ts, incoming_ts)
+        AS u(id, message_ts, first_ts, incoming_ts)
       WHERE t."id" = u.id
     `)
   }
@@ -693,6 +709,7 @@ export const bulkImportMessages = async (props: {
     skippedMessages: 0,
     insertedAttachmentIds: [],
     newestMessageAt: null,
+    oldestMessageAt: null,
     newestIncomingMessageAt: null,
   }
 
@@ -863,6 +880,10 @@ export const bulkImportMessages = async (props: {
     (max, m) => (!max || m.createdAt > max ? m.createdAt : max),
     null,
   )
+  const oldestMessageAt = messagesWithApiTime.reduce<Date | null>(
+    (min, m) => (!min || m.createdAt < min ? m.createdAt : min),
+    null,
+  )
   const newestIncomingMessageAt = messagesWithApiTime.reduce<Date | null>(
     (max, m) =>
       m.messageType === "incoming" && (!max || m.createdAt > max)
@@ -876,6 +897,7 @@ export const bulkImportMessages = async (props: {
     skippedMessages,
     insertedAttachmentIds,
     newestMessageAt,
+    oldestMessageAt,
     newestIncomingMessageAt,
   }
 }
@@ -945,10 +967,15 @@ export const bulkImportHistorical = async (props: {
             insertedAttachmentIds.push(id)
           }
           if (res.newestMessageAt) {
+            let oldestMessageAt = res.oldestMessageAt
+            if (!oldestMessageAt) {
+              oldestMessageAt = res.newestMessageAt
+            }
             activityUpdates.push({
               contactInboxId: link.contactInboxId,
               conversationId: link.conversationId,
               newestMessageAt: res.newestMessageAt,
+              oldestMessageAt,
               newestIncomingMessageAt: res.newestIncomingMessageAt,
             })
           }

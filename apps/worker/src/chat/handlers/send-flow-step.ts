@@ -7,6 +7,7 @@ import {
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
+  contactInboxService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
@@ -19,7 +20,6 @@ import {
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
-  contactInboxModel,
   conversationModel,
   type messageModel,
 } from "@chatbotx.io/database/schema"
@@ -287,7 +287,7 @@ export async function sendFlowStep({
   const resolvedStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
-    { contactInbox: targetContactInbox },
+    { contactInbox: targetContactInbox, conversation },
   )
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
@@ -420,14 +420,20 @@ export async function sendFlowStep({
     }
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(contactInboxModel)
-        .set({ lastMessageAt: message.createdAt })
-        .where(eq(contactInboxModel.id, targetContactInbox.id))
+      await contactInboxService.recordOutboundMessageCreated({
+        tx,
+        contactInboxId: targetContactInbox.id,
+        contactId: targetContactInbox.contactId,
+        at: message.createdAt,
+      })
 
       await tx
         .update(conversationModel)
-        .set({ lastActivityAt: message.createdAt })
+        .set({
+          lastActivityAt: message.createdAt,
+          lastStep: conversation.currentStep,
+          currentStep: resolvedStep.id,
+        })
         .where(eq(conversationModel.id, conversation.id))
     })
 
@@ -658,10 +664,12 @@ export const sendChatMessage = async (
     }
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(contactInboxModel)
-        .set({ lastMessageAt: message.createdAt })
-        .where(eq(contactInboxModel.id, contactInbox.id))
+      await contactInboxService.recordOutboundMessageCreated({
+        tx,
+        contactInboxId: contactInbox.id,
+        contactId: contactInbox.contactId,
+        at: message.createdAt,
+      })
 
       await tx
         .update(conversationModel)

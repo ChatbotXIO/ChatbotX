@@ -38,7 +38,13 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags,
   withCache: vi.fn(async (_key: string, fn: () => unknown) => fn()),
 }))
-vi.mock("@chatbotx.io/utils", () => ({ createId: () => "usage-1" }))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "usage-1",
+  }
+})
 
 const userQuotaService = {
   getForUser: vi.fn(async () => null as unknown),
