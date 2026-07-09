@@ -18,6 +18,7 @@ type GetOptions = {
 type PostOptions = {
   headers?: Record<string, string>
   json?: unknown
+  retry?: number
 }
 
 type DeleteOptions = {

@@ -18,6 +18,7 @@ export const sendComment = (
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
       json: { message },
+      retry: 0,
     }),
   )
 }

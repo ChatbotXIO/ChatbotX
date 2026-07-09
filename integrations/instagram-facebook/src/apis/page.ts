@@ -135,6 +135,7 @@ export const sendInstagramMessage = (
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
       json: payload,
+      retry: 0,
     }),
   )
 }

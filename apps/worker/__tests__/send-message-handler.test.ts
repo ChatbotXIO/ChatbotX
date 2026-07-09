@@ -287,7 +287,7 @@ describe("chat send-message handlers", () => {
     )
   })
 
-  test("throws retryable ChannelError after emitting failure", async () => {
+  test("does not retry a retryable ChannelError for messenger/instagram channels", async () => {
     const error = new ChannelError(
       "rate limited",
       ChannelErrorCategory.RATE_LIMITED,
@@ -298,7 +298,67 @@ describe("chat send-message handlers", () => {
     await expect(
       sendMessageToChannel({
         conversation: conversation as never,
-        contactInbox: contactInbox as never,
+        contactInbox: contactInbox as never, // channel: "messenger"
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "hello",
+        } as never,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({
+        action: { messageId: "msg-1" },
+        errorData: { message: "sdk error" },
+      }),
+    )
+  })
+
+  test("does not retry a retryable ChannelError for the instagram channel", async () => {
+    const error = new ChannelError(
+      "network error",
+      ChannelErrorCategory.NETWORK_ERROR,
+      { code: "network_error" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: { ...contactInbox, channel: "instagram" } as never,
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "hello",
+        } as never,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("still throws a retryable ChannelError for channels outside the fix scope", async () => {
+    const error = new ChannelError(
+      "rate limited",
+      ChannelErrorCategory.RATE_LIMITED,
+      { code: "rate_limited" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: { ...contactInbox, channel: "whatsapp" } as never,
         message: {
           id: "msg-1",
           workspaceId: "ws-1",

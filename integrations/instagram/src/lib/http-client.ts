@@ -21,6 +21,7 @@ type PostOptions = {
   json?: unknown
   body?: URLSearchParams | string
   searchParams?: Record<string, string>
+  retry?: number
 }
 
 type DeleteOptions = {
