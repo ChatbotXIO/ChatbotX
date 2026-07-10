@@ -1,3 +1,4 @@
+import { getPublicFileUrl } from "@chatbotx.io/utils"
 import { useTenantSettings } from "@/features/tenant"
 import type { ContactResource } from "./schemas/resource"
 
@@ -25,6 +26,6 @@ export function useAvatarUrl(
   }
 
   return contact.avatar
-    ? new URL(contact.avatar, storageUrl).toString()
+    ? getPublicFileUrl(contact.avatar, storageUrl)
     : undefined
 }
