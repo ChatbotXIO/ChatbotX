@@ -2,6 +2,7 @@ import { MessageShardUnavailableError } from "@chatbotx.io/database/errors"
 import type { GetUserDataStepSchema } from "@chatbotx.io/flow-config"
 import { ReplyFormat } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import type { ExecuteStepProps } from "../src/integration/handlers/flow"
 
 // --- mocks ---
 
@@ -99,7 +100,7 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 })
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
 // --- helpers ---
@@ -112,6 +113,7 @@ beforeEach(() => {
   repositoryError.current = null
   chatQueueAdd.mockResolvedValue(undefined)
   waitForChatJobCompletion.mockResolvedValue(undefined)
+  contactInboxUpdateTracking.mockClear()
 })
 
 type StepOverride = Partial<GetUserDataStepSchema>
@@ -120,7 +122,8 @@ function makeProps(
   replyFormat: ReplyFormat,
   overrides: StepOverride = {},
   attempts = 1,
-) {
+  lastAttemptAt = new Date(),
+): ExecuteStepProps<GetUserDataStepSchema> {
   return {
     conversation: {
       id: "conv-1",
@@ -159,11 +162,30 @@ function makeProps(
       variables: {
         conversation: {
           challengeAttempts: { value: attempts },
-          challengeLastAttemptAt: { value: new Date() },
+          challengeLastAttemptAt: { value: lastAttemptAt },
         },
       },
     },
-  } as any
+  } as ExecuteStepProps<GetUserDataStepSchema>
+}
+
+function expectLastInputFailureUpdate(
+  lastInputFailure: "timeout" | "invalid_input_attempts" | null,
+) {
+  expect(contactInboxUpdateTracking).toHaveBeenCalledWith({
+    contactInboxId: "ci-1",
+    contactId: "contact-1",
+    data: { lastInputFailure },
+  })
+}
+
+function expectNoLastInputFailureUpdate() {
+  const callsWithLastInputFailure =
+    contactInboxUpdateTracking.mock.calls.filter(([update]) =>
+      Object.hasOwn(update.data, "lastInputFailure"),
+    )
+
+  expect(callsWithLastInputFailure).toHaveLength(0)
 }
 
 // --- tests ---
@@ -180,12 +202,14 @@ describe("getUserData — validation logic", () => {
       lastMessage.current = { text: "user@example.com", attachments: [] }
       const result = await getUserData(makeProps(ReplyFormat.email))
       expect(result.status).toBe("success")
+      expectLastInputFailureUpdate(null)
     })
 
     test("invalid email → returns retry", async () => {
       lastMessage.current = { text: "not-an-email", attachments: [] }
       const result = await getUserData(makeProps(ReplyFormat.email))
       expect(result.status).toBe("retry")
+      expectNoLastInputFailureUpdate()
     })
   })
 
@@ -318,6 +342,26 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
 })
 
 describe("getUserData — auto-skip", () => {
+  test("records timeout when skipping after auto-skip time elapses", async () => {
+    lastMessage.current = { text: "invalid", attachments: [] }
+    const result = await getUserData(
+      makeProps(
+        ReplyFormat.email,
+        {
+          autoSkip: true,
+          autoSkipFailAttempts: 3,
+          autoSkipTimeValue: 1,
+          autoSkipTimeUnit: "hours" as const,
+        },
+        1,
+        new Date(0),
+      ),
+    )
+
+    expect(result.status).toBe("skip")
+    expectLastInputFailureUpdate("timeout")
+  })
+
   test("skips after exceeding max attempts", async () => {
     lastMessage.current = { text: "invalid", attachments: [] }
     const result = await getUserData(
@@ -333,6 +377,7 @@ describe("getUserData — auto-skip", () => {
       ),
     )
     expect(result.status).toBe("skip")
+    expectLastInputFailureUpdate("invalid_input_attempts")
   })
 })
 

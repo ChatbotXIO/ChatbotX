@@ -13,6 +13,8 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   type GetUserDataStepSchema,
+  type InputFailureReason,
+  inputFailureReasons,
   ReplyFormat,
 } from "@chatbotx.io/flow-config"
 import { IntegrationException, type Variable } from "@chatbotx.io/sdk"
@@ -134,19 +136,24 @@ async function handleSkipOrError(
   if (step.autoSkip) {
     const skipResult = checkSkipCondition(step, ctx.variables.conversation)
     if (skipResult.skip) {
+      await contactInboxService.updateTracking({
+        contactInboxId: props.contactInbox.id,
+        contactId: props.contactInbox.contactId,
+        data: { lastInputFailure: skipResult.reason },
+      })
+
       return { result: undefined, status: "skip" }
     }
   }
 
   // if user data is invalid, retry
-  await contactInboxService.updateTracking({
-    contactInboxId: props.contactInbox.id,
-    contactId: props.contactInbox.contactId,
-    data: {
-      lastInputFailure:
-        validUserData.errorMessage ?? "getUserData: invalid user data",
+  logger.info(
+    {
+      conversationId: props.conversation.id,
+      reason: validUserData.errorMessage ?? "getUserData: invalid user data",
     },
-  })
+    "getUserData: input rejected, retrying",
+  )
 
   await sendMessage(
     props,
@@ -306,7 +313,7 @@ async function sendMessage(
 function checkSkipCondition(
   step: GetUserDataStepSchema,
   conversationVariables: Record<string, Variable>,
-): { skip: boolean; skipReason?: string } {
+): { skip: true; reason: InputFailureReason } | { skip: false } {
   const lastAttemptAt =
     (conversationVariables.challengeLastAttemptAt?.value as Date) ?? new Date()
   const attempts =
@@ -322,14 +329,14 @@ function checkSkipCondition(
   ) {
     return {
       skip: true,
-      skipReason: "out of time",
+      reason: inputFailureReasons.timeout,
     }
   }
 
   if (attempts >= step.autoSkipFailAttempts) {
     return {
       skip: true,
-      skipReason: "out of attempts",
+      reason: inputFailureReasons.invalidInputAttempts,
     }
   }
 
