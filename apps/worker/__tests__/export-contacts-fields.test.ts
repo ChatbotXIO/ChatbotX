@@ -105,9 +105,25 @@ describe("buildSelectedFields", () => {
       ])
     })
 
+    test("resolves the virtual contactId field to the Contact ID header", async () => {
+      // Arrange
+      const fields = ["sys:contactId"]
+
+      // Act
+      const result = await buildSelectedFields(fields, WORKSPACE_ID)
+
+      // Assert
+      expect(result).toEqual([
+        { type: "contact", value: "contactId", header: "Contact ID" },
+      ])
+      expect(findManyTags).not.toHaveBeenCalled()
+      expect(findManyCustomFields).not.toHaveBeenCalled()
+    })
+
     test("maps all known contact column keys to their correct display headers", async () => {
       // Arrange
       const cases: [string, string][] = [
+        ["contactId", "Contact ID"],
         ["firstName", "First Name"],
         ["lastName", "Last Name"],
         ["fullName", "Full Name"],
