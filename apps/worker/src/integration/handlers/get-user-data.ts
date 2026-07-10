@@ -83,6 +83,7 @@ async function handleSkipOrError(
     await contactInboxService.updateTracking({
       contactInboxId: props.contactInbox.id,
       contactId: props.contactInbox.contactId,
+      workspaceId: props.conversation.workspaceId,
       data: { lastInputFailure: null },
     })
 
@@ -139,6 +140,7 @@ async function handleSkipOrError(
       await contactInboxService.updateTracking({
         contactInboxId: props.contactInbox.id,
         contactId: props.contactInbox.contactId,
+        workspaceId: props.conversation.workspaceId,
         data: { lastInputFailure: skipResult.reason },
       })
 

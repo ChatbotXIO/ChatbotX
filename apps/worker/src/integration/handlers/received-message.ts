@@ -1,6 +1,7 @@
 import {
   broadcastToWorkspaceParty,
   buildContext,
+  type ContactInboxTrackingData,
   contactInboxService,
   contactService,
   conversationService,
@@ -65,9 +66,7 @@ import {
   isInstagramViaFacebook,
 } from "../../services/integrations"
 
-type ContactInboxTracking = Parameters<
-  typeof contactInboxService.updateTracking
->[0]["data"]
+type ContactInboxTracking = ContactInboxTrackingData
 
 type ContactLocation = {
   latitude: number
@@ -464,11 +463,12 @@ const persistNewMessageSideEffects = async (props: {
     contactLocation,
   } = props
 
-  await db.transaction(async (tx) => {
-    await contactInboxService.updateTracking({
+  const trackingInvalidation = await db.transaction(async (tx) => {
+    const invalidation = await contactInboxService.updateTracking({
       tx,
       contactInboxId: contactInbox.id,
       contactId: contactInbox.contactId,
+      workspaceId: inbox.workspaceId,
       data: {
         ...getMessageActivityTracking({ incomingMessage, message }),
         ...contactInboxTracking,
@@ -487,7 +487,13 @@ const persistNewMessageSideEffects = async (props: {
       .update(conversationModel)
       .set({ lastActivityAt: message.createdAt })
       .where(eq(conversationModel.id, conversation.id))
+
+    return invalidation
   })
+
+  if (trackingInvalidation) {
+    await contactInboxService.invalidateTracking(trackingInvalidation)
+  }
 }
 
 const getMessageActivityTracking = (props: {

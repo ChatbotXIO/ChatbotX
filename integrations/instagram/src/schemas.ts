@@ -22,7 +22,7 @@ export type InstagramAuthValue = Oauth2AuthValue & {
 
 export type InstagramActions = {
   getPostDetails: (props: {
-    ctx: Context<InstagramAuthValue>
+    ctx: Pick<Context<InstagramAuthValue>, "auth">
     input: { postId: string }
   }) => Promise<import("./apis/post").InstagramMediaDetails>
 }

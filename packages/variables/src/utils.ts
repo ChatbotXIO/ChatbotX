@@ -1,19 +1,19 @@
 import { conversationService, messageService } from "@chatbotx.io/business"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import {
+  type ContactSource,
   contactSources,
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
-import { env as encryptionEnv } from "@chatbotx.io/encryption/keys"
+import { signUserHash } from "@chatbotx.io/encryption/user-hash"
 import { formatInTimeZone } from "date-fns-tz"
 import {
-  getAssignedAdminEmail,
-  getAssignedAdminId,
-  getAssignedAdminName,
-  getAssignedMemberName,
   getAssignedTeamName,
+  resolveAssigneeEmail,
+  resolveAssigneeId,
+  resolveAssigneeName,
 } from "./helpers/assigned"
 import {
   findPrimaryContactChannel,
@@ -35,52 +35,11 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
+const TIMEZONE_SIGN_RE = /^[+-]/
 const DATE_PATTERN = "yyyy-MM-dd"
 const DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss"
 
-const hexToBytes = (value: string): Uint8Array<ArrayBuffer> => {
-  const buffer = new ArrayBuffer(value.length / 2)
-  const bytes = new Uint8Array(buffer)
-  for (let index = 0; index < bytes.length; index += 1) {
-    bytes[index] = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16)
-  }
-  return bytes
-}
-
-const bytesToHex = (bytes: Uint8Array): string => {
-  let result = ""
-  for (const byte of bytes) {
-    result += byte.toString(16).padStart(2, "0")
-  }
-  return result
-}
-
-const hmacSha256 = async (
-  secret: Uint8Array<ArrayBuffer>,
-  value: string,
-): Promise<string> => {
-  const key = await globalThis.crypto.subtle.importKey(
-    "raw",
-    secret.buffer,
-    {
-      name: "HMAC",
-      hash: "SHA-256",
-    },
-    false,
-    ["sign"],
-  )
-  const signature = await globalThis.crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(value),
-  )
-  return bytesToHex(new Uint8Array(signature))
-}
-
-const serializeUserHashInput = (sourceId: string, contactInboxId: string) =>
-  `${sourceId}:${contactInboxId}`
-
-const contactSourceLabels: Record<string, string> = {
+const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.inboundMessage]: "Inbound Message",
   [contactSources.enum.webchat]: "Webchat",
   [contactSources.enum.ads]: "Ads",
@@ -90,6 +49,17 @@ const contactSourceLabels: Record<string, string> = {
   [contactSources.enum.imported]: "Imported",
   [contactSources.enum.api]: "API",
   [contactSources.enum.direct]: "Direct",
+}
+
+const formatContactSource = (source: string | null | undefined): string => {
+  if (!source) {
+    return "Unknown"
+  }
+  const parsedSource = contactSources.safeParse(source)
+  if (!parsedSource.success) {
+    return source
+  }
+  return contactSourceLabels[parsedSource.data]
 }
 
 const capitalizeFirstLetter = (value: string | null): string | null => {
@@ -134,6 +104,16 @@ const getTimezone = ({
   }
 
   return contact.timezone
+}
+
+const formatTimezoneOffset = (timezone: string | null): string | null => {
+  if (!timezone) {
+    return null
+  }
+  if (TIMEZONE_SIGN_RE.test(timezone)) {
+    return timezone
+  }
+  return Number.isNaN(Number(timezone)) ? timezone : `+${timezone}`
 }
 
 const formatDate = (
@@ -259,7 +239,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.locale2:
       return contact.locale?.split(LOCALE_SEPARATOR_RE)[0] ?? null
     case systemFieldTypes.enum.timezone:
-      return contact.timezone
+      return formatTimezoneOffset(contact.timezone)
     case systemFieldTypes.enum.user_id:
       return contact.id
     case systemFieldTypes.enum.subscribed_date:
@@ -280,24 +260,21 @@ export const getSystemFieldValue = async (
       if (!contactInbox) {
         return null
       }
-      const secret = hexToBytes(encryptionEnv.ENCRYPTION_KEY)
-      return await hmacSha256(
-        secret,
-        serializeUserHashInput(contactInbox.sourceId, contactInbox.id),
-      )
+      return await signUserHash({
+        sourceId: contactInbox.sourceId,
+        contactInboxId: contactInbox.id,
+      })
     }
     case systemFieldTypes.enum.workspace_id:
       return contact.workspaceId
     case systemFieldTypes.enum.user_source:
-      return contactInbox?.source
-        ? (contactSourceLabels[contactInbox.source] ?? contactInbox.source)
-        : null
+      return formatContactSource(contactInbox?.source)
     case systemFieldTypes.enum.assigned_admin_name:
-      return await getAssignedAdminName(contact.workspaceId)
+      return await resolveAssigneeName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.assigned_admin_email:
-      return await getAssignedAdminEmail(contact.workspaceId)
+      return await resolveAssigneeEmail(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.assigned_admin_id:
-      return await getAssignedAdminId(contact.workspaceId)
+      return await resolveAssigneeId(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.current_user_time:
       return safeFormatInTimeZone(new Date(), timezone, DATE_TIME_PATTERN)
     case systemFieldTypes.enum.chat_history:
@@ -349,7 +326,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.last_user_note:
       return await getLatestContactNoteString(contact.id)
     case systemFieldTypes.enum.member_name:
-      return await getAssignedMemberName(contact.id, contact.workspaceId)
+      return await resolveAssigneeName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.team_name:
       return await getAssignedTeamName(contact.id)
     // No upstream tracking yet — intentionally null
@@ -368,7 +345,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.api_key:
       return workspace?.token ?? null
     case systemFieldTypes.enum.last_ad:
-      return getReferralValue(contactInbox, "adTitle")
+      return getReferralValue(contactInbox, "adId")
     case systemFieldTypes.enum.last_ctwa:
       return getReferralValue(contactInbox, "ctwaClid")
     case systemFieldTypes.enum.last_ad_source_url:

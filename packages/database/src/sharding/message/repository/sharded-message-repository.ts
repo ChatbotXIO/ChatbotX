@@ -41,7 +41,6 @@ import type {
   HardDeleteAllByContactInboxResult,
   IMessageRepository,
   ListIncomingTextsByContactInboxParams,
-  ListIncomingTextsByConversationParams,
   ListMessagesQuery,
   MessageSourceRow,
   MessageWithAttachments,
@@ -68,6 +67,7 @@ const SHARD_RANGE_CACHE_TAG = "message-shard-range"
 const SHARD_RANGE_CACHE_TTL_S = 30
 const ATTACHMENT_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 const RICH_RESPONSE_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
+const LIST_INCOMING_TEXTS_BATCH_SIZE = 1000
 
 function dedupeShardsByPhysicalId<T extends { shard: { id: string } }>(
   shards: T[],
@@ -102,17 +102,6 @@ function compareMessageDesc(
   } catch {
     return b.id.localeCompare(a.id)
   }
-}
-
-function dedupeMessagesById<T extends { id: string }>(messages: T[]): T[] {
-  const seen = new Set<string>()
-  return messages.filter((message) => {
-    if (seen.has(message.id)) {
-      return false
-    }
-    seen.add(message.id)
-    return true
-  })
 }
 
 export class ShardedMessageRepository implements IMessageRepository {
@@ -631,21 +620,45 @@ export class ShardedMessageRepository implements IMessageRepository {
 
   async listIncomingTextsByContactInbox({
     contactInboxId,
-    conversationId,
+    limit,
     sinceTime,
     workspaceId,
   }: ListIncomingTextsByContactInboxParams): Promise<string[]> {
-    const shards = await this.getConversationReadShards(sinceTime, workspaceId)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const timeRangeShards = await this.getShardsForRange(sinceTime, new Date())
+
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
     if (shards.length === 0) {
       return []
     }
 
-    const shardResults = await Promise.all(
-      shards.map(async (shardInfo) => {
-        try {
-          return await this.shardManager.withShardClientForRead(
-            shardInfo.shard,
-            async (shardClient) => {
+    const messages: string[] = []
+    const newestShardsFirst = [...shards].reverse()
+
+    for (const shardInfo of newestShardsFirst) {
+      if (limit !== undefined && messages.length >= limit) {
+        break
+      }
+
+      try {
+        await this.shardManager.withShardClientForRead(
+          shardInfo.shard,
+          async (shardClient) => {
+            let cursor: { createdAt: Date; id: string } | null = null
+
+            while (true) {
+              if (limit !== undefined && messages.length >= limit) {
+                break
+              }
+
+              let remainingLimit = LIST_INCOMING_TEXTS_BATCH_SIZE
+              if (limit !== undefined) {
+                remainingLimit = Math.min(
+                  LIST_INCOMING_TEXTS_BATCH_SIZE,
+                  limit - messages.length,
+                )
+              }
+
               const whereConditions = [
                 eq(messageModel.workspaceId, workspaceId),
                 eq(messageModel.contactInboxId, contactInboxId),
@@ -654,13 +667,21 @@ export class ShardedMessageRepository implements IMessageRepository {
                 isNull(messageModel.deletedAt),
                 gte(messageModel.createdAt, sinceTime),
               ]
-              if (conversationId) {
-                whereConditions.push(
-                  eq(messageModel.conversationId, conversationId),
+
+              if (cursor !== null) {
+                const cursorCondition = or(
+                  lt(messageModel.createdAt, cursor.createdAt),
+                  and(
+                    eq(messageModel.createdAt, cursor.createdAt),
+                    lt(messageModel.id, cursor.id),
+                  ),
                 )
+                if (cursorCondition) {
+                  whereConditions.push(cursorCondition)
+                }
               }
 
-              return await shardClient
+              const rows = await shardClient
                 .select({
                   createdAt: messageModel.createdAt,
                   id: messageModel.id,
@@ -668,79 +689,40 @@ export class ShardedMessageRepository implements IMessageRepository {
                 })
                 .from(messageModel)
                 .where(and(...whereConditions))
-            },
-          )
-        } catch (error) {
-          logger.warn(
-            { err: error, shardId: shardInfo.shard.id, contactInboxId },
-            "Shard query failed in listIncomingTextsByContactInbox",
-          )
-          return []
-        }
-      }),
-    )
+                .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+                .limit(remainingLimit)
 
-    return dedupeMessagesById(shardResults.flat().sort(compareMessageDesc))
-      .map((row) => row.text)
-      .filter((text): text is string => text !== null)
-  }
+              for (const row of rows) {
+                if (row.text !== null) {
+                  messages.push(row.text)
+                }
+              }
 
-  async listIncomingTextsByConversation({
-    conversationId,
-    sinceTime,
-    workspaceId,
-  }: ListIncomingTextsByConversationParams): Promise<string[]> {
-    const timeRangeShards = await this.getShardsForRange(sinceTime, new Date())
-    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
-    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
-    if (shards.length === 0) {
-      return []
-    }
+              if (rows.length < remainingLimit) {
+                break
+              }
 
-    const rows: Pick<MessageModel, "createdAt" | "id" | "text">[] = []
-    for (const shardInfo of shards) {
-      try {
-        const shardRows = await this.shardManager.withShardClientForRead(
-          shardInfo.shard,
-          async (shardClient) =>
-            await shardClient
-              .select({
-                createdAt: messageModel.createdAt,
-                id: messageModel.id,
-                text: messageModel.text,
-              })
-              .from(messageModel)
-              .where(
-                and(
-                  eq(messageModel.workspaceId, workspaceId),
-                  eq(messageModel.conversationId, conversationId),
-                  eq(messageModel.messageType, "incoming"),
-                  isNotNull(messageModel.text),
-                  isNull(messageModel.deletedAt),
-                  gte(messageModel.createdAt, sinceTime),
-                ),
-              )
-              .orderBy(desc(messageModel.createdAt), desc(messageModel.id)),
-        )
-        rows.push(
-          ...(shardRows as Pick<MessageModel, "createdAt" | "id" | "text">[]),
+              const lastRow = rows.at(-1)
+              if (!lastRow) {
+                break
+              }
+              cursor = { createdAt: lastRow.createdAt, id: lastRow.id }
+            }
+          },
         )
       } catch (error) {
         logger.warn(
-          { err: error, shardId: shardInfo.shard.id, conversationId },
-          "Shard query failed in listIncomingTextsByConversation",
+          { err: error, shardId: shardInfo.shard.id, contactInboxId },
+          "Shard query failed in listIncomingTextsByContactInbox",
         )
       }
     }
 
-    return dedupeMessagesById(rows.sort(compareMessageDesc))
-      .map((row) => row.text)
-      .filter((text): text is string => text !== null)
+    return messages
   }
 
   async hardDeleteAllByContactInbox({
     contactInboxId,
-    conversationId,
     sinceTime,
     workspaceId,
   }: HardDeleteAllByContactInboxParams): Promise<HardDeleteAllByContactInboxResult> {
@@ -754,22 +736,10 @@ export class ShardedMessageRepository implements IMessageRepository {
         const client = await this.shardManager.getShardClient(shardInfo.shard)
         const messageWhereConditions = [
           eq(messageModel.workspaceId, workspaceId),
+          eq(messageModel.contactInboxId, contactInboxId),
           gte(messageModel.createdAt, sinceTime),
         ]
-        if (conversationId) {
-          messageWhereConditions.push(
-            eq(messageModel.conversationId, conversationId),
-          )
-        } else {
-          messageWhereConditions.push(
-            eq(messageModel.contactInboxId, contactInboxId),
-          )
-        }
 
-        let attachmentMessageScope = sql`AND ${messageModel.contactInboxId} = ${contactInboxId}`
-        if (conversationId) {
-          attachmentMessageScope = sql`AND ${messageModel.conversationId} = ${conversationId}`
-        }
         const attachmentMessageExists = sql`EXISTS (
           SELECT 1
           FROM ${messageModel}
@@ -777,17 +747,12 @@ export class ShardedMessageRepository implements IMessageRepository {
             AND ${messageModel.createdAt} >= ${sinceTime}
             AND ${messageModel.id} = ${attachmentModel.messageId}
             AND ${messageModel.createdAt} = ${attachmentModel.messageCreatedAt}
-            ${attachmentMessageScope}
+            AND ${messageModel.contactInboxId} = ${contactInboxId}
         )`
         const attachmentWhereConditions = [
           eq(attachmentModel.workspaceId, workspaceId),
           attachmentMessageExists,
         ]
-        if (conversationId) {
-          attachmentWhereConditions.push(
-            eq(attachmentModel.conversationId, conversationId),
-          )
-        }
 
         const attachments = await client
           .select({

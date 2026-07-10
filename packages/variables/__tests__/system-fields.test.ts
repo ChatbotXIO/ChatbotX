@@ -9,7 +9,9 @@ import type {
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockConversationFindBy,
   mockFindDMByContact,
+  mockFindMemberWithUserByWorkspaceIdAndUserId,
   mockFindRecentByContactId,
   mockFindWithIntegrationsById,
   mockMessageFindById,
@@ -18,10 +20,18 @@ const {
   mockSystemFieldCreate,
   mockResolveGenderLabel,
   mockSignMeLink,
+  mockMessengerGetUserInboxLink,
   mockMessengerGetPostDetails,
   testEncryptionKey,
 } = vi.hoisted(() => ({
+  mockConversationFindBy: vi.fn().mockResolvedValue({
+    assignedUserId: "user-1",
+  }),
   mockFindDMByContact: vi.fn(),
+  mockFindMemberWithUserByWorkspaceIdAndUserId: vi.fn().mockResolvedValue({
+    userId: "user-1",
+    user: { id: "user-1", name: "Admin", email: "admin@example.com" },
+  }),
   mockFindRecentByContactId: vi.fn(),
   mockFindWithIntegrationsById: vi.fn(),
   mockMessageFindById: vi.fn(),
@@ -30,6 +40,7 @@ const {
   mockSystemFieldCreate: vi.fn(),
   mockResolveGenderLabel: vi.fn(),
   mockSignMeLink: vi.fn(),
+  mockMessengerGetUserInboxLink: vi.fn(),
   mockMessengerGetPostDetails: vi.fn(),
   testEncryptionKey:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -40,6 +51,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findRecentByContactId: mockFindRecentByContactId,
   },
   conversationService: {
+    findBy: mockConversationFindBy,
     findDMByContact: mockFindDMByContact,
   },
   inboxService: {
@@ -50,6 +62,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   resolveWorkspaceAppUrl: mockResolveWorkspaceAppUrl,
   resolveTenantSettings: mockResolveTenantSettings,
+  workspaceMemberService: {
+    findWithUserByWorkspaceIdAndUserId:
+      mockFindMemberWithUserByWorkspaceIdAndUserId,
+  },
 }))
 
 vi.mock("@chatbotx.io/encryption/keys", () => ({
@@ -87,12 +103,22 @@ vi.mock("@chatbotx.io/integration-instagram", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
+  getUserInboxLink: mockMessengerGetUserInboxLink,
   getPostDetails: mockMessengerGetPostDetails,
 }))
 
 vi.mock("@chatbotx.io/business/utils", () => ({
   getPublicFileUrl: (path: string, baseUrl: string) =>
     new URL(path, baseUrl).toString(),
+  toPublicStorageUrl: (path: string | null | undefined, baseUrl: string) => {
+    if (!path) {
+      return null
+    }
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path
+    }
+    return new URL(path, baseUrl).toString()
+  },
 }))
 
 const { getSystemFieldValue } = await import("../src/utils")
@@ -348,17 +374,32 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBeNull()
   })
 
-  test("fb_chat_link builds an m.me link from the messenger page id", async () => {
+  test("fb_chat_link resolves the Business Suite conversation link", async () => {
+    mockMessengerGetUserInboxLink.mockResolvedValue(
+      "https://business.facebook.com/1453585961452628/inbox/1453594044785153",
+    )
     mockFindWithIntegrationsById.mockResolvedValue({
-      integrationMessenger: { id: "messenger-integration-1", pageId: "12345" },
+      integrationMessenger: {
+        id: "messenger-integration-1",
+        pageId: "12345",
+        auth: { tokens: { accessToken: "token" }, version: "v23.0" },
+      },
     })
 
     await expect(
       getSystemFieldValue(createContext(), systemFieldTypes.enum.fb_chat_link),
-    ).resolves.toBe("https://m.me/12345")
+    ).resolves.toBe(
+      "https://business.facebook.com/1453585961452628/inbox/1453594044785153",
+    )
+    expect(mockMessengerGetUserInboxLink).toHaveBeenCalledWith({
+      ctx: {
+        auth: { tokens: { accessToken: "token" }, version: "v23.0" },
+      },
+      input: { userId: "source-1" },
+    })
   })
 
-  test("fb_chat_link returns null when the inbox has no messenger page id", async () => {
+  test("fb_chat_link returns null when the inbox has no messenger integration", async () => {
     mockFindWithIntegrationsById.mockResolvedValue({})
 
     await expect(
@@ -449,6 +490,7 @@ describe("getSystemFieldValue", () => {
       lastInputFailure: "Invalid email",
       referral: {
         ref: "launch",
+        adId: "ad-123",
         adTitle: "Launch ad",
         ctwaClid: "ctwa-1",
         sourceUrl: "https://example.com/ad",
@@ -479,7 +521,7 @@ describe("getSystemFieldValue", () => {
         createContext({ contactInbox: trackingInbox }),
         systemFieldTypes.enum.last_ad,
       ),
-    ).resolves.toBe("Launch ad")
+    ).resolves.toBe("ad-123")
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: trackingInbox }),
@@ -584,12 +626,38 @@ describe("getSystemFieldValue", () => {
       systemFieldTypes.enum.user_external_id,
       systemFieldTypes.enum.webchat_parent_url,
       systemFieldTypes.enum.last_error_log,
-      systemFieldTypes.enum.user_source,
     ]) {
       await expect(
         getSystemFieldValue(createContext({ contactInbox: null }), key),
       ).resolves.toBeNull()
     }
+  })
+
+  test("timezone prefixes non-negative numeric offsets", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, timezone: "7" } as ContactModel,
+        }),
+        systemFieldTypes.enum.timezone,
+      ),
+    ).resolves.toBe("+7")
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, timezone: "-5" } as ContactModel,
+        }),
+        systemFieldTypes.enum.timezone,
+      ),
+    ).resolves.toBe("-5")
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, timezone: null } as ContactModel,
+        }),
+        systemFieldTypes.enum.timezone,
+      ),
+    ).resolves.toBeNull()
   })
 
   test("user_source maps the stored source to a human label", async () => {
@@ -622,6 +690,23 @@ describe("getSystemFieldValue", () => {
         systemFieldTypes.enum.user_source,
       ),
     ).resolves.toBe("some_future_source")
+  })
+
+  test("user_source returns Unknown without a contact inbox source", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: null }),
+        systemFieldTypes.enum.user_source,
+      ),
+    ).resolves.toBe("Unknown")
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contactInbox: { ...contactInbox, source: null } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.user_source,
+      ),
+    ).resolves.toBe("Unknown")
   })
 
   test("comment fields resolve from the stored message pointer", async () => {
@@ -1091,8 +1176,8 @@ describe("getSystemFieldValue — contact profile columns", () => {
       [systemFieldTypes.enum.user_state, "Ho Chi Minh"],
       [systemFieldTypes.enum.user_city, "Thu Duc"],
       [systemFieldTypes.enum.user_id, "contact-1"],
-      // timezone is the raw stored offset; timezone_name is the IANA mapping
-      [systemFieldTypes.enum.timezone, "7"],
+      // timezone follows the ChatRace signed-offset shape; timezone_name maps to IANA.
+      [systemFieldTypes.enum.timezone, "+7"],
     ]
 
     for (const [key, value] of expected) {

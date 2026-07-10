@@ -21,6 +21,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./keys": "./src/keys.ts",
-    "./link-signature": "./src/link-signature.ts"
+    "./link-signature": "./src/link-signature.ts",
+    "./user-hash": "./src/user-hash.ts"
   }
 }

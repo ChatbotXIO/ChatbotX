@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockFindConversationBy,
   mockFindLatestLastIncomingMessageAt,
-  mockFindLatestIncomingMessage,
+  mockFindLatestIncomingMessageWithAttachments,
+  mockResolveTenantSettings,
 } = vi.hoisted(() => ({
   mockFindConversationBy: vi.fn(),
   mockFindLatestLastIncomingMessageAt: vi.fn(),
-  mockFindLatestIncomingMessage: vi.fn(),
+  mockFindLatestIncomingMessageWithAttachments: vi.fn(),
+  mockResolveTenantSettings: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -20,8 +22,15 @@ vi.mock("@chatbotx.io/business", () => ({
       mockFindLatestLastIncomingMessageAt,
   },
   messageService: {
-    findLatestIncomingMessage: mockFindLatestIncomingMessage,
+    findLatestIncomingMessageWithAttachments:
+      mockFindLatestIncomingMessageWithAttachments,
   },
+  resolveTenantSettings: mockResolveTenantSettings,
+}))
+
+vi.mock("@chatbotx.io/business/utils", () => ({
+  getPublicFileUrl: (path: string, baseUrl: string) =>
+    new URL(path, baseUrl).toString(),
 }))
 
 const { getContactLastInput, getContactLastInputType } = await import(
@@ -38,18 +47,22 @@ describe("last input helpers", () => {
     // A recent lastAt keeps getSafeSinceTime bounded but non-null so the
     // message lookup runs.
     mockFindLatestLastIncomingMessageAt.mockResolvedValue(new Date())
+    mockResolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://cdn.example/storage/",
+    })
   })
 
   test("last_input returns latest text message text", async () => {
-    mockFindLatestIncomingMessage.mockResolvedValue({
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
       contentType: contentTypes.enum.text,
       text: "latest incoming text",
+      attachments: [],
     })
 
     await expect(getContactLastInput("contact-1")).resolves.toBe(
       "latest incoming text",
     )
-    expect(mockFindLatestIncomingMessage).toHaveBeenCalledWith(
+    expect(mockFindLatestIncomingMessageWithAttachments).toHaveBeenCalledWith(
       expect.objectContaining({
         conversationId: "conversation-1",
         workspaceId: "workspace-1",
@@ -57,19 +70,25 @@ describe("last input helpers", () => {
     )
   })
 
-  test("last_input returns Attached File for non-text messages", async () => {
-    mockFindLatestIncomingMessage.mockResolvedValue({
-      contentType: contentTypes.enum.location,
+  test("last_input returns a public URL for media messages", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
       text: null,
+      attachments: [
+        {
+          fileType: "image",
+          originPath: "public/space/workspace-1/messages/image.png",
+        },
+      ],
     })
 
     await expect(getContactLastInput("contact-1")).resolves.toBe(
-      "Attached File",
+      "https://cdn.example/storage/public/space/workspace-1/messages/image.png",
     )
   })
 
   test("last_input and last_input_type return null when no message exists", async () => {
-    mockFindLatestIncomingMessage.mockResolvedValue(null)
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue(null)
 
     await expect(getContactLastInput("contact-1")).resolves.toBeNull()
     await expect(getContactLastInputType("contact-1")).resolves.toBeNull()
@@ -79,17 +98,28 @@ describe("last input helpers", () => {
     mockFindLatestLastIncomingMessageAt.mockResolvedValue(null)
 
     await expect(getContactLastInput("contact-1")).resolves.toBeNull()
-    expect(mockFindLatestIncomingMessage).not.toHaveBeenCalled()
+    expect(mockFindLatestIncomingMessageWithAttachments).not.toHaveBeenCalled()
   })
 
   test("last_input_type returns latest message content type", async () => {
-    mockFindLatestIncomingMessage.mockResolvedValue({
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
       contentType: contentTypes.enum.text,
       text: "latest incoming text",
+      attachments: [],
     })
 
     await expect(getContactLastInputType("contact-1")).resolves.toBe(
       contentTypes.enum.text,
     )
+  })
+
+  test("last_input_type returns the attachment file type for media messages", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: null,
+      attachments: [{ fileType: "image", originPath: "image.png" }],
+    })
+
+    await expect(getContactLastInputType("contact-1")).resolves.toBe("image")
   })
 })

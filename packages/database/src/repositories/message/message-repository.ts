@@ -129,7 +129,6 @@ export interface FindManyBySourceIdsParams {
 
 export interface HardDeleteAllByContactInboxParams {
   contactInboxId: string
-  conversationId?: string
   sinceTime: Date
   workspaceId: string
 }
@@ -140,13 +139,7 @@ export interface HardDeleteAllByContactInboxResult {
 
 export interface ListIncomingTextsByContactInboxParams {
   contactInboxId: string
-  conversationId?: string
-  sinceTime: Date
-  workspaceId: string
-}
-
-export interface ListIncomingTextsByConversationParams {
-  conversationId: string
+  limit?: number
   sinceTime: Date
   workspaceId: string
 }
@@ -305,10 +298,6 @@ export interface IMessageRepository {
 
   listIncomingTextsByContactInbox(
     params: ListIncomingTextsByContactInboxParams,
-  ): Promise<string[]>
-
-  listIncomingTextsByConversation(
-    params: ListIncomingTextsByConversationParams,
   ): Promise<string[]>
 
   updateAttachment(params: UpdateAttachmentParams): Promise<void>

@@ -29,6 +29,7 @@ const {
   mockQuotaIncrement,
   mockContactUpdate,
   mockUpdateTracking,
+  mockInvalidateTracking,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -77,7 +78,10 @@ const {
     mockCreateNewContactWithMac: vi.fn(),
     mockWorkspaceFind: vi.fn().mockResolvedValue(null),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
-    mockUpdateTracking: vi.fn().mockResolvedValue(undefined),
+    mockUpdateTracking: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
+    mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -122,7 +126,10 @@ vi.mock("@chatbotx.io/business", () => ({
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
-  contactInboxService: { updateTracking: mockUpdateTracking },
+  contactInboxService: {
+    updateTracking: mockUpdateTracking,
+    invalidateTracking: mockInvalidateTracking,
+  },
   contactService: {
     unblockIfBlocked: mockContactUnblockIfBlocked,
     update: mockContactUpdate,
@@ -448,6 +455,7 @@ describe("receiveMessage — message repository branch", () => {
       tx: expect.any(Object),
       contactInboxId: "ci-1",
       contactId: "contact-1",
+      workspaceId: "ws-1",
       data: {
         firstInteractionAt: fakeCreatedMessage.createdAt,
         lastMessageAt: fakeCreatedMessage.createdAt,
@@ -483,6 +491,7 @@ describe("receiveMessage — message repository branch", () => {
       tx: expect.any(Object),
       contactInboxId: "ci-1",
       contactId: "contact-1",
+      workspaceId: "ws-1",
       data: {
         firstInteractionAt: fakeCreatedMessage.createdAt,
         lastMessageAt: fakeCreatedMessage.createdAt,
@@ -821,6 +830,7 @@ describe("receiveMessage — new contact MAC gate", () => {
       tx: expect.any(Object),
       contactInboxId: "ci-new",
       contactId: "contact-new",
+      workspaceId: "ws-1",
       data: {
         firstInteractionAt: fakeCreatedMessage.createdAt,
         lastMessageAt: fakeCreatedMessage.createdAt,
@@ -947,6 +957,7 @@ describe("contact source taxonomy", () => {
       tx: expect.any(Object),
       contactInboxId: "ci-new",
       contactId: "contact-new",
+      workspaceId: "ws-1",
       data: {
         firstInteractionAt: fakeCreatedMessage.createdAt,
         lastMessageAt: fakeCreatedMessage.createdAt,

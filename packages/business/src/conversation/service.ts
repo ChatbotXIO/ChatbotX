@@ -125,22 +125,6 @@ class ConversationService extends BaseService {
     })
   }
 
-  async findByContactAndSource(props: {
-    workspaceId: string
-    contactId: string
-    sourceId: string | null
-    tx?: DatabaseClient
-  }): Promise<ConversationModel | undefined> {
-    const { tx = db, workspaceId, contactId, sourceId } = props
-    return await tx.query.conversationModel.findFirst({
-      where: {
-        workspaceId,
-        contactId,
-        sourceId: sourceId === null ? { isNull: true } : sourceId,
-      },
-    })
-  }
-
   async findByContactWithInboxes(props: {
     contactId: string
     workspaceId: string
@@ -539,6 +523,7 @@ class ConversationService extends BaseService {
     workspaceId: string
     conversationId: string
     currentStep?: string | null
+    lastActivityAt?: Date
     lastStep?: string | null
     tx?: DatabaseClient
   }): Promise<void> {
@@ -546,6 +531,9 @@ class ConversationService extends BaseService {
     const data: Partial<typeof conversationModel.$inferInsert> = {}
     if ("currentStep" in props) {
       data.currentStep = props.currentStep
+    }
+    if ("lastActivityAt" in props) {
+      data.lastActivityAt = props.lastActivityAt
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep
@@ -564,7 +552,9 @@ class ConversationService extends BaseService {
           eq(conversationModel.workspaceId, workspaceId),
         ),
       )
-    await this.invalidate({ workspaceId, ids: [conversationId] })
+    if (!props.tx) {
+      await this.invalidate({ workspaceId, ids: [conversationId] })
+    }
   }
 
   // ─── Bot state helpers ───────────────────────────────────────────────────

@@ -71,15 +71,7 @@ export class MessageShardRegistry {
     const rows = await this.mainDb
       .select()
       .from(messageShardModel)
-      .where(
-        and(
-          eq(messageShardModel.isActive, true),
-          or(
-            isNull(messageShardModel.isMain),
-            eq(messageShardModel.isMain, false),
-          ),
-        ),
-      )
+      .where(and(eq(messageShardModel.isActive, true)))
       .orderBy(asc(messageShardModel.createdAt))
     return rows.map(toShardRecord)
   }

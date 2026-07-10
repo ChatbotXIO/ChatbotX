@@ -18,6 +18,7 @@ const {
   mockEmit,
   mockCreateId,
   mockBulkCreate,
+  mockBulkUpdateTracking,
   mockCreateMessageRepository,
 } = vi.hoisted(() => {
   const mockBulkCreate = vi.fn().mockResolvedValue([])
@@ -38,6 +39,7 @@ const {
     mockEmit: vi.fn(() => Promise.resolve()),
     mockCreateId: vi.fn(),
     mockBulkCreate,
+    mockBulkUpdateTracking: vi.fn().mockResolvedValue(null),
     mockCreateMessageRepository,
   }
 })
@@ -61,6 +63,7 @@ vi.mock("@chatbotx.io/database/client", () => {
   })
   return {
     db: {
+      execute: mockTxExecute,
       transaction: mockTransaction,
       update: mockDbUpdate,
     },
@@ -100,6 +103,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  contactInboxService: {
+    bulkUpdateTracking: mockBulkUpdateTracking,
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({ emit: mockEmit }))
@@ -300,6 +309,7 @@ describe("bulkImportHistorical", () => {
     })
     // Re-wire repository mock after clearAllMocks.
     mockBulkCreate.mockResolvedValue([])
+    mockBulkUpdateTracking.mockResolvedValue(null)
     mockCreateMessageRepository.mockResolvedValue({
       bulkCreate: mockBulkCreate,
       bulkCreateAttachments: vi.fn().mockResolvedValue([]),
@@ -351,6 +361,64 @@ describe("bulkImportHistorical", () => {
     expect(result.skippedContacts).toBe(0)
     expect(result.failedMessages).toBe(0)
     expect(result.contactInboxIds.get("src-1")).toBe("ci-1")
+  })
+
+  it("flushes contact-inbox activity in one bulk service call", async () => {
+    const firstMessageAt = new Date("2026-07-01T01:00:00.000Z")
+    const secondMessageAt = new Date("2026-07-02T02:00:00.000Z")
+    stubNewContactsTransaction([
+      {
+        sourceId: "src-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+      {
+        sourceId: "src-2",
+        contactId: "contact-2",
+        contactInboxId: "ci-2",
+        conversationId: "conv-2",
+      },
+    ])
+    mockBulkCreate.mockResolvedValue([{ id: "m-1", sourceId: "m-src" }])
+
+    await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      batch: [
+        {
+          contact: contact("src-1"),
+          messages: [msg("m-src-1", { createdAt: firstMessageAt })],
+        },
+        {
+          contact: contact("src-2"),
+          messages: [msg("m-src-2", { createdAt: secondMessageAt })],
+        },
+      ],
+    })
+
+    expect(mockBulkUpdateTracking).toHaveBeenCalledTimes(1)
+    expect(mockBulkUpdateTracking).toHaveBeenCalledWith({
+      rows: expect.arrayContaining([
+        {
+          contactInboxId: "ci-1",
+          contactId: "contact-1",
+          workspaceId: "ws-1",
+          firstInteractionAt: firstMessageAt,
+          lastMessageAt: firstMessageAt,
+          lastIncomingMessageAt: firstMessageAt,
+        },
+        {
+          contactInboxId: "ci-2",
+          contactId: "contact-2",
+          workspaceId: "ws-1",
+          firstInteractionAt: secondMessageAt,
+          lastMessageAt: secondMessageAt,
+          lastIncomingMessageAt: secondMessageAt,
+        },
+      ]),
+    })
   })
 
   it("counts duplicates as skippedMessages when message INSERT returns fewer rows than input", async () => {

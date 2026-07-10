@@ -11,11 +11,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // matters here is *which* helper each field calls and with which arguments —
 // several fields share one helper and differ only by argument.
 const mocks = vi.hoisted(() => ({
-  getAssignedAdminName: vi.fn(),
-  getAssignedAdminEmail: vi.fn(),
-  getAssignedAdminId: vi.fn(),
-  getAssignedMemberName: vi.fn(),
   getAssignedTeamName: vi.fn(),
+  resolveAssigneeEmail: vi.fn(),
+  resolveAssigneeId: vi.fn(),
+  resolveAssigneeName: vi.fn(),
   listContactTagsString: vi.fn(),
   listContactNotesString: vi.fn(),
   getLatestContactNoteString: vi.fn(),
@@ -25,11 +24,10 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/helpers/assigned", () => ({
-  getAssignedAdminName: mocks.getAssignedAdminName,
-  getAssignedAdminEmail: mocks.getAssignedAdminEmail,
-  getAssignedAdminId: mocks.getAssignedAdminId,
-  getAssignedMemberName: mocks.getAssignedMemberName,
   getAssignedTeamName: mocks.getAssignedTeamName,
+  resolveAssigneeEmail: mocks.resolveAssigneeEmail,
+  resolveAssigneeId: mocks.resolveAssigneeId,
+  resolveAssigneeName: mocks.resolveAssigneeName,
 }))
 
 vi.mock("../src/helpers/contact", () => ({
@@ -115,10 +113,10 @@ describe("getSystemFieldValue — helper-backed fields", () => {
     )
   })
 
-  test("assigned admin fields are scoped by workspace, not by contact", async () => {
-    mocks.getAssignedAdminName.mockResolvedValue("Ada")
-    mocks.getAssignedAdminEmail.mockResolvedValue("ada@example.com")
-    mocks.getAssignedAdminId.mockResolvedValue("admin-1")
+  test("assigned admin fields resolve from the conversation assignee", async () => {
+    mocks.resolveAssigneeName.mockResolvedValue("Ada")
+    mocks.resolveAssigneeEmail.mockResolvedValue("ada@example.com")
+    mocks.resolveAssigneeId.mockResolvedValue("admin-1")
 
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.assigned_admin_name),
@@ -130,13 +128,22 @@ describe("getSystemFieldValue — helper-backed fields", () => {
       getSystemFieldValue(context, systemFieldTypes.enum.assigned_admin_id),
     ).resolves.toBe("admin-1")
 
-    expect(mocks.getAssignedAdminName).toHaveBeenCalledWith("workspace-1")
-    expect(mocks.getAssignedAdminEmail).toHaveBeenCalledWith("workspace-1")
-    expect(mocks.getAssignedAdminId).toHaveBeenCalledWith("workspace-1")
+    expect(mocks.resolveAssigneeName).toHaveBeenCalledWith(
+      "contact-1",
+      "workspace-1",
+    )
+    expect(mocks.resolveAssigneeEmail).toHaveBeenCalledWith(
+      "contact-1",
+      "workspace-1",
+    )
+    expect(mocks.resolveAssigneeId).toHaveBeenCalledWith(
+      "contact-1",
+      "workspace-1",
+    )
   })
 
-  test("member_name is scoped by contact and workspace, team_name by contact", async () => {
-    mocks.getAssignedMemberName.mockResolvedValue("Grace")
+  test("member_name shares the assignee name resolver, team_name resolves by contact", async () => {
+    mocks.resolveAssigneeName.mockResolvedValue("Grace")
     mocks.getAssignedTeamName.mockResolvedValue("Support")
 
     await expect(
@@ -146,7 +153,7 @@ describe("getSystemFieldValue — helper-backed fields", () => {
       getSystemFieldValue(context, systemFieldTypes.enum.team_name),
     ).resolves.toBe("Support")
 
-    expect(mocks.getAssignedMemberName).toHaveBeenCalledWith(
+    expect(mocks.resolveAssigneeName).toHaveBeenCalledWith(
       "contact-1",
       "workspace-1",
     )
@@ -194,11 +201,11 @@ describe("getSystemFieldValue — helper-backed fields", () => {
       [systemFieldTypes.enum.user_tags, mocks.listContactTagsString],
       [systemFieldTypes.enum.user_notes, mocks.listContactNotesString],
       [systemFieldTypes.enum.last_user_note, mocks.getLatestContactNoteString],
-      [systemFieldTypes.enum.member_name, mocks.getAssignedMemberName],
+      [systemFieldTypes.enum.member_name, mocks.resolveAssigneeName],
       [systemFieldTypes.enum.team_name, mocks.getAssignedTeamName],
-      [systemFieldTypes.enum.assigned_admin_name, mocks.getAssignedAdminName],
-      [systemFieldTypes.enum.assigned_admin_email, mocks.getAssignedAdminEmail],
-      [systemFieldTypes.enum.assigned_admin_id, mocks.getAssignedAdminId],
+      [systemFieldTypes.enum.assigned_admin_name, mocks.resolveAssigneeName],
+      [systemFieldTypes.enum.assigned_admin_email, mocks.resolveAssigneeEmail],
+      [systemFieldTypes.enum.assigned_admin_id, mocks.resolveAssigneeId],
       [systemFieldTypes.enum.last_input, mocks.getContactLastInput],
       [systemFieldTypes.enum.last_input_type, mocks.getContactLastInputType],
     ]

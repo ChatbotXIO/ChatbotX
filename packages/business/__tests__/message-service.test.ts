@@ -6,7 +6,6 @@ const mocks = vi.hoisted(() => {
     findLastByConversation: vi.fn(),
     hardDeleteAllByContactInbox: vi.fn(),
     listIncomingTextsByContactInbox: vi.fn(),
-    listIncomingTextsByConversation: vi.fn(),
   }
   return {
     db: { query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } } },
@@ -87,6 +86,33 @@ describe("messageService", () => {
     expect(result).toBe(message)
   })
 
+  test("findLatestIncomingMessageWithAttachments requests attachments from the repository", async () => {
+    const { messageService } = await import("../src/message/service")
+    const message = {
+      id: "msg-1",
+      attachments: [{ id: "attachment-1", fileType: "image" }],
+    }
+    const sinceTime = new Date("2025-01-01")
+    mocks.repo.findLastByConversation.mockResolvedValue([message])
+
+    const result =
+      await messageService.findLatestIncomingMessageWithAttachments({
+        conversationId: "conv-1",
+        sinceTime,
+        workspaceId: "ws-1",
+      })
+
+    expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith("conv-1", {
+      messageTypes: ["incoming"],
+      limit: 1,
+      requireCompleteResults: true,
+      sinceTime,
+      withAttachments: true,
+      workspaceId: "ws-1",
+    })
+    expect(result).toBe(message)
+  })
+
   test("findById reads one message through the repository", async () => {
     const { messageService } = await import("../src/message/service")
     const message = {
@@ -120,36 +146,16 @@ describe("messageService", () => {
 
     const result = await messageService.listIncomingTextsByContactInbox({
       contactInboxId: "contact-inbox-1",
+      limit: 200,
       sinceTime,
       workspaceId: "ws-1",
     })
 
     expect(mocks.repo.listIncomingTextsByContactInbox).toHaveBeenCalledWith({
       contactInboxId: "contact-inbox-1",
+      limit: 200,
       sinceTime,
       workspaceId: "ws-1",
-    })
-    expect(result).toEqual(["newest", "older"])
-  })
-
-  test("listIncomingTextsByConversation delegates to the text-only repository method", async () => {
-    const { messageService } = await import("../src/message/service")
-    const sinceTime = new Date("2025-01-01")
-    mocks.repo.listIncomingTextsByConversation.mockResolvedValue([
-      "newest",
-      "older",
-    ])
-
-    const result = await messageService.listIncomingTextsByConversation({
-      conversationId: "conv-1",
-      sinceTime,
-      workspaceId: "ws-1",
-    })
-
-    expect(mocks.repo.listIncomingTextsByConversation).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      conversationId: "conv-1",
-      sinceTime,
     })
     expect(result).toEqual(["newest", "older"])
   })

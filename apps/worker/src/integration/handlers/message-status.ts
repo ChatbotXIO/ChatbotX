@@ -1,14 +1,11 @@
-import { buildContext } from "@chatbotx.io/business"
+import { buildContext, contactInboxService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
-import {
-  contactInboxModel,
-  conversationModel,
-} from "@chatbotx.io/database/schema"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   type MetadataPayload,
@@ -140,17 +137,23 @@ export const handleMessageStatus = async (
     }
 
     if (eventStatus === "read") {
-      await db.transaction(async (tx) => {
+      const trackingInvalidation = await db.transaction(async (tx) => {
         await tx
           .update(conversationModel)
           .set({ contactLastReadAt: seenAt })
           .where(eq(conversationModel.id, contactInbox.conversation.id))
 
-        await tx
-          .update(contactInboxModel)
-          .set({ contactLastReadAt: seenAt })
-          .where(eq(contactInboxModel.id, contactInbox.id))
+        return await contactInboxService.updateTracking({
+          tx,
+          contactInboxId: contactInbox.id,
+          contactId: contactInbox.contactId,
+          workspaceId: contactInbox.conversation.workspaceId,
+          data: { contactLastReadAt: seenAt },
+        })
       })
+      if (trackingInvalidation) {
+        await contactInboxService.invalidateTracking(trackingInvalidation)
+      }
 
       await emit(messageEventTypeSchema.enum["message:seen"], eventLog)
     }

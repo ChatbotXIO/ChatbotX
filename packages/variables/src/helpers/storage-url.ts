@@ -1,7 +1,5 @@
 import { resolveTenantSettings } from "@chatbotx.io/business"
-import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-
-const ABSOLUTE_URL_RE = /^https?:\/\//i
+import { toPublicStorageUrl as resolvePublicStorageUrl } from "@chatbotx.io/business/utils"
 
 export const toPublicStorageUrl = async (
   path: string | null,
@@ -10,10 +8,6 @@ export const toPublicStorageUrl = async (
   if (!path) {
     return null
   }
-  if (ABSOLUTE_URL_RE.test(path)) {
-    return path
-  }
-
   const { storageUrl } = await resolveTenantSettings({ workspaceId })
-  return getPublicFileUrl(path, storageUrl)
+  return resolvePublicStorageUrl(path, storageUrl)
 }

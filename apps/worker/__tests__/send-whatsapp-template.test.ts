@@ -117,10 +117,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   contactInboxService: {
-    recordOutboundMessage: vi.fn().mockResolvedValue(undefined),
-    recordOutboundMessageCreated: vi.fn().mockResolvedValue(undefined),
+    recordOutboundMessageCreated: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
     recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     recordSendFailure: mockRecordSendFailure,
+    invalidateTracking: vi.fn().mockResolvedValue(undefined),
   },
 }))
 

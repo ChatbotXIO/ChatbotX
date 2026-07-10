@@ -9,6 +9,7 @@ const {
   mockContactFindById,
   mockContactUnblockIfBlocked,
   mockContactInboxFindLatest,
+  mockContactInboxUpdateTracking,
   mockConversationEnsureActive,
   mockConversationFindBy,
   mockCreateMessageRepository,
@@ -49,6 +50,7 @@ const {
     mockContactFindById: vi.fn(),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactInboxFindLatest: vi.fn(),
+    mockContactInboxUpdateTracking: vi.fn().mockResolvedValue(null),
     mockConversationFindBy: vi.fn(),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockConversationEnsureActive: vi.fn().mockResolvedValue(false),
@@ -93,7 +95,10 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactInboxService: { findLatestBySource: mockContactInboxFindLatest },
+  contactInboxService: {
+    findLatestBySource: mockContactInboxFindLatest,
+    updateTracking: mockContactInboxUpdateTracking,
+  },
   contactService: {
     findById: mockContactFindById,
     unblockIfBlocked: mockContactUnblockIfBlocked,
@@ -295,15 +300,17 @@ describe("handleCreateWebchatMessage", () => {
     const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
       createdAt: Date
     }
-    expect(updateBuilder.set).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        firstInteractionAt: expect.anything(),
+    expect(mockContactInboxUpdateTracking).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: {
+        firstInteractionAt: messageInput.createdAt,
         contactLastReadAt: messageInput.createdAt,
         lastMessageAt: messageInput.createdAt,
         lastIncomingMessageAt: messageInput.createdAt,
-      }),
-    )
+      },
+    })
   })
 
   test("auto-unblocks using the resolved contact row after creating an inbound message", async () => {

@@ -18,7 +18,6 @@ export type {
   HardDeleteAllByContactInboxResult,
   IMessageRepository,
   ListIncomingTextsByContactInboxParams,
-  ListIncomingTextsByConversationParams,
   ListMessagesQuery,
   MessageSourceRow,
   MessageWithAttachments,

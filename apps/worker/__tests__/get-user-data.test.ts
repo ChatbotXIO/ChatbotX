@@ -175,6 +175,7 @@ function expectLastInputFailureUpdate(
   expect(contactInboxUpdateTracking).toHaveBeenCalledWith({
     contactInboxId: "ci-1",
     contactId: "contact-1",
+    workspaceId: "ws-1",
     data: { lastInputFailure },
   })
 }

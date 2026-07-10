@@ -142,6 +142,7 @@ describe("chat send-message handlers", () => {
     expect(mockRecordOutboundMessageSent).toHaveBeenCalledWith({
       contactInboxId: "ci-1",
       contactId: "contact-1",
+      workspaceId: "ws-1",
       at: expect.any(Date),
     })
   })
@@ -258,6 +259,7 @@ describe("chat send-message handlers", () => {
     expect(mockRecordOutboundMessageSent).toHaveBeenCalledWith({
       contactInboxId: "ci-1",
       contactId: "contact-1",
+      workspaceId: "ws-1",
       at: createdAt,
     })
   })
@@ -310,6 +312,7 @@ describe("chat send-message handlers", () => {
     expect(mockRecordOutboundMessageSent).toHaveBeenCalledWith({
       contactInboxId: "ci-1",
       contactId: "contact-1",
+      workspaceId: "ws-1",
       at: expect.any(Date),
     })
   })
@@ -352,9 +355,9 @@ describe("chat send-message handlers", () => {
 
   test("does not retry a retryable ChannelError for messenger/instagram channels", async () => {
     const error = new ChannelError(
-      "rate limited",
-      ChannelErrorCategory.RATE_LIMITED,
-      { code: "rate_limited" },
+      "network error",
+      ChannelErrorCategory.NETWORK_ERROR,
+      { code: "network_error" },
     )
     mockRunChannelHandler.mockRejectedValueOnce(error)
 

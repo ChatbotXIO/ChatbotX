@@ -59,9 +59,13 @@ export type MessengerActions<
     personas: SyncPersonaInput[]
   }) => Promise<{ personas: Array<{ id: string; facebookPersonaId?: string }> }>
   getPostDetails: (props: {
-    ctx: Context<IAuth>
+    ctx: Pick<Context<IAuth>, "auth">
     input: { postId: string }
   }) => Promise<FacebookPostDetails>
+  getUserInboxLink: (props: {
+    ctx: { auth: IAuth }
+    input: { userId: string }
+  }) => Promise<string | null>
   getCommentAttachmentType: (props: {
     ctx: Context<IAuth>
     input: { commentId: string }

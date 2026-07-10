@@ -85,10 +85,12 @@ vi.mock("@chatbotx.io/variables", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
   contactInboxService: {
-    recordOutboundMessage: vi.fn().mockResolvedValue(undefined),
-    recordOutboundMessageCreated: vi.fn().mockResolvedValue(undefined),
+    recordOutboundMessageCreated: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
     recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     recordSendFailure: vi.fn().mockResolvedValue(undefined),
+    invalidateTracking: vi.fn().mockResolvedValue(undefined),
   },
 }))
 

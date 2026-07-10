@@ -58,6 +58,7 @@ async function recordContactInboxSendFailure(payloads: MessagePayload[]) {
       await contactInboxService.recordSendFailure({
         contactInboxId,
         contactId: payload.context.contactId,
+        workspaceId: payload.context.workspaceId,
         error: formatSendFailureError(payload.errorData),
       })
     } catch (err) {

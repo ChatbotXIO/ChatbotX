@@ -1,6 +1,9 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { type MessageType, messageTypes } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import {
+  createMessageRepository,
+  type MessageWithAttachments,
+} from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
@@ -73,6 +76,25 @@ class MessageService extends BaseService {
     })
   }
 
+  async findLatestIncomingMessageWithAttachments(props: {
+    tx?: DatabaseClient
+    conversationId: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<MessageWithAttachments | undefined> {
+    const { tx = db, conversationId, sinceTime, workspaceId } = props
+    const repo = await createMessageRepository(tx)
+    const messages = await repo.findLastByConversation(conversationId, {
+      messageTypes: [messageTypes.enum.incoming],
+      limit: 1,
+      requireCompleteResults: true,
+      sinceTime,
+      withAttachments: true,
+      workspaceId,
+    })
+    return messages[0]
+  }
+
   async findById(props: {
     tx?: DatabaseClient
     id: string
@@ -109,7 +131,7 @@ class MessageService extends BaseService {
   async listIncomingTextsByContactInbox(props: {
     tx?: DatabaseClient
     contactInboxId: string
-    conversationId?: string
+    limit?: number
     sinceTime: Date
     workspaceId: string
   }): Promise<string[]> {
@@ -118,21 +140,9 @@ class MessageService extends BaseService {
     return await repo.listIncomingTextsByContactInbox(params)
   }
 
-  async listIncomingTextsByConversation(props: {
-    tx?: DatabaseClient
-    conversationId: string
-    sinceTime: Date
-    workspaceId: string
-  }): Promise<string[]> {
-    const { tx = db, ...params } = props
-    const repo = await createMessageRepository(tx)
-    return await repo.listIncomingTextsByConversation(params)
-  }
-
   async hardDeleteAllByContactInbox(props: {
     tx?: DatabaseClient
     contactInboxId: string
-    conversationId?: string
     sinceTime: Date
     workspaceId: string
   }): Promise<{ attachmentPaths: string[] }> {

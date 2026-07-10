@@ -538,6 +538,8 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
                 }
                 activityUpdates.push({
                   contactInboxId: link.contactInboxId,
+                  contactId: link.contactId,
+                  workspaceId: ctx.workspaceId,
                   conversationId: link.conversationId,
                   newestMessageAt: convNewest,
                   oldestMessageAt,

@@ -164,19 +164,26 @@ export async function processWhatsappTemplate(
     }
     const createdMessage = newMessage
 
-    await db.transaction(async (tx) => {
-      await contactInboxService.recordOutboundMessageCreated({
-        tx,
-        contactInboxId: contactInbox.id,
-        contactId: contactInbox.contactId,
-        at: createdMessage.createdAt,
-      })
+    const trackingInvalidation = await db.transaction(async (tx) => {
+      const invalidation =
+        await contactInboxService.recordOutboundMessageCreated({
+          tx,
+          contactInboxId: contactInbox.id,
+          contactId: contactInbox.contactId,
+          workspaceId: conversation.workspaceId,
+          at: createdMessage.createdAt,
+        })
 
       await tx
         .update(conversationModel)
         .set({ lastActivityAt: createdMessage.createdAt })
         .where(eq(conversationModel.id, conversation.id))
+
+      return invalidation
     })
+    if (trackingInvalidation) {
+      await contactInboxService.invalidateTracking(trackingInvalidation)
+    }
 
     broadcastToWorkspaceParty(conversation.workspaceId, {
       eventType: RealtimeEventType.messageCreated,

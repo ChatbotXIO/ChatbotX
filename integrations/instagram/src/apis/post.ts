@@ -13,7 +13,7 @@ export type InstagramMediaDetails = {
 }
 
 export const getPostDetails = (props: {
-  ctx: Context<InstagramAuthValue>
+  ctx: Pick<Context<InstagramAuthValue>, "auth">
   input: { postId: string }
 }): Promise<InstagramMediaDetails> => {
   const { ctx, input } = props

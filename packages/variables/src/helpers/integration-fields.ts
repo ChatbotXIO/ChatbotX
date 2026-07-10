@@ -21,6 +21,7 @@ import {
 } from "@chatbotx.io/integration-instagram"
 import {
   getPostDetails as getMessengerPostDetails,
+  getUserInboxLink,
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
 import { withCache } from "@chatbotx.io/redis"
@@ -42,16 +43,18 @@ type IntegrationFieldKey = Extract<
 >
 
 const IG_PROFILE_CACHE_TTL = 300
+const FB_CHAT_LINK_CACHE_TTL = 60 * 60
 // Short: page owners edit post captions in place, and a stale caption renders
 // straight into an outgoing message.
 const POST_TEXT_CACHE_TTL = 60
 
-const EMPTY_IG_PROFILE: InstagramContactProfile = {
-  username: null,
-  followersCount: null,
-  followsBusiness: null,
-  businessFollowUser: null,
-  isVerified: null,
+const toStringOrNull = (
+  value: boolean | number | string | null,
+): string | null => {
+  if (value == null) {
+    return null
+  }
+  return String(value)
 }
 
 const timezoneOffsetNameMap: Record<string, string> = {
@@ -88,14 +91,14 @@ const resolveInstagramContactProfile = (
   contactInboxId: string,
   igsid: string,
   integration: { auth: unknown; id: string },
-): Promise<InstagramContactProfile> =>
+): Promise<InstagramContactProfile | null> =>
   withCache(
     `ig-contact-profile:${contactInboxId}`,
     async () => {
       const auth = integration.auth as InstagramAuthValue
       const accessToken = auth?.tokens?.accessToken
       if (!accessToken) {
-        return EMPTY_IG_PROFILE
+        return null
       }
 
       try {
@@ -105,7 +108,7 @@ const resolveInstagramContactProfile = (
           version: auth.metadata?.version,
         })
       } catch {
-        return EMPTY_IG_PROFILE
+        return null
       }
     },
     {
@@ -124,6 +127,26 @@ const getCachedPostText = (
     ttl: POST_TEXT_CACHE_TTL,
     tags: cacheTags,
   })
+
+const getCachedFacebookChatLink = (
+  pageId: string,
+  sourceId: string,
+  integration: { auth: unknown; id: string },
+): Promise<string | null> =>
+  withCache(
+    `fb-chat-link:${pageId}:${sourceId}`,
+    async () =>
+      await getUserInboxLink({
+        ctx: {
+          auth: integration.auth as MessengerAuthValue,
+        },
+        input: { userId: sourceId },
+      }),
+    {
+      ttl: FB_CHAT_LINK_CACHE_TTL,
+      tags: [`integration:messenger:${integration.id}`],
+    },
+  )
 
 const getChannelIntegrationId = (
   inbox: InboxWithIntegrations,
@@ -179,7 +202,7 @@ export const getLastCommentedPostText = async (
           const post = await getMessengerPostDetails({
             ctx: {
               auth: integration.auth as MessengerAuthValue,
-            } as never,
+            },
             input: { postId },
           })
           return post.message ?? null
@@ -204,7 +227,7 @@ export const getLastCommentedPostText = async (
           const post = await getInstagramPostDetails({
             ctx: {
               auth: integration.auth as InstagramAuthValue,
-            } as never,
+            },
             input: { postId },
           })
           return post.caption ?? null
@@ -225,11 +248,12 @@ export const getIntegrationField = async (
   contextContactInbox?: ContactInboxModel | null,
   conversationId?: string | null,
 ): Promise<string | null> => {
-  const contactInbox =
-    contextContactInbox ??
-    (await contactInboxService.findRecentByContactId({
+  let contactInbox = contextContactInbox
+  if (contactInbox == null) {
+    contactInbox = await contactInboxService.findRecentByContactId({
       contactId: contact.id,
-    }))
+    })
+  }
   if (!contactInbox) {
     return null
   }
@@ -269,11 +293,20 @@ export const getIntegrationField = async (
     }
 
     case "fb_chat_link": {
-      const pageId = inbox.integrationMessenger?.pageId
-      return pageId == null ? null : `https://m.me/${pageId}`
+      if (
+        channel !== channelTypes.enum.messenger ||
+        !inbox.integrationMessenger?.pageId
+      ) {
+        return null
+      }
+
+      return await getCachedFacebookChatLink(
+        inbox.integrationMessenger.pageId,
+        contactInbox.sourceId,
+        inbox.integrationMessenger,
+      )
     }
 
-    //
     case "webchat": {
       if (channel !== channelTypes.enum.webchat || !inbox.integrationWebchat) {
         return null
@@ -297,9 +330,10 @@ export const getIntegrationField = async (
     }
 
     case "timezone_name":
-      return contact.timezone
-        ? (timezoneOffsetNameMap[contact.timezone] ?? contact.timezone)
-        : null
+      if (!contact.timezone) {
+        return null
+      }
+      return timezoneOffsetNameMap[contact.timezone] ?? contact.timezone
 
     case "user_code":
       return contactInbox.sourceId ?? null
@@ -354,23 +388,20 @@ export const getIntegrationField = async (
         contactInbox.sourceId,
         inbox.integrationInstagram,
       )
+      if (!profile) {
+        return null
+      }
       switch (key) {
         case "ig_user_name":
           return profile.username
         case "ig_followers":
-          return profile.followersCount == null
-            ? null
-            : String(profile.followersCount)
+          return toStringOrNull(profile.followersCount)
         case "ig_follow_business":
-          return profile.followsBusiness == null
-            ? null
-            : String(profile.followsBusiness)
+          return toStringOrNull(profile.followsBusiness)
         case "ig_verified":
-          return profile.isVerified == null ? null : String(profile.isVerified)
+          return toStringOrNull(profile.isVerified)
         default:
-          return profile.businessFollowUser == null
-            ? null
-            : String(profile.businessFollowUser)
+          return toStringOrNull(profile.businessFollowUser)
       }
     }
 

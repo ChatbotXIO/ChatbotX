@@ -1,8 +1,9 @@
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
-import type {
-  MeSystemFieldPayload,
-  SystemFieldPayload,
-  SystemFieldRowType,
+import {
+  type MeSystemFieldPayload,
+  meSystemFieldPayload,
+  type SystemFieldPayload,
+  type SystemFieldRowType,
 } from "@chatbotx.io/database/partials"
 import { systemFieldModel } from "@chatbotx.io/database/schema"
 import type {
@@ -307,17 +308,22 @@ class SystemFieldService extends BaseService {
     if (row?.type !== "me") {
       return null
     }
-    if (!payloadMatchesParams(row.payload, signedParams)) {
+    const parsedPayload = meSystemFieldPayload.safeParse(row.payload)
+    if (!parsedPayload.success) {
+      return null
+    }
+    const payload = parsedPayload.data
+    if (!payloadMatchesParams(payload, signedParams)) {
       return null
     }
 
     const [contact, contactInbox] = await Promise.all([
       contactService.findById({
-        workspaceId: row.payload.workspaceId,
-        id: row.payload.contactId,
+        workspaceId: payload.workspaceId,
+        id: payload.contactId,
       }),
       contactInboxService.findByUncached({
-        where: { id: row.payload.contactInboxId },
+        where: { id: payload.contactInboxId },
       }),
     ])
 
@@ -326,24 +332,24 @@ class SystemFieldService extends BaseService {
     }
 
     if (
-      contactInbox.contactId !== row.payload.contactId ||
-      contactInbox.sourceId !== row.payload.sourceId ||
-      contactInbox.channel !== row.payload.channel
+      contactInbox.contactId !== payload.contactId ||
+      contactInbox.sourceId !== payload.sourceId ||
+      contactInbox.channel !== payload.channel
     ) {
       return null
     }
 
-    const conversation = row.payload.conversationId
+    const conversation = payload.conversationId
       ? await conversationService.findByUncached({
           where: {
-            id: row.payload.conversationId,
-            workspaceId: row.payload.workspaceId,
-            contactId: row.payload.contactId,
+            id: payload.conversationId,
+            workspaceId: payload.workspaceId,
+            contactId: payload.contactId,
           },
         })
       : null
 
-    if (row.payload.conversationId && !conversation) {
+    if (payload.conversationId && !conversation) {
       return null
     }
 
@@ -351,7 +357,7 @@ class SystemFieldService extends BaseService {
       contact,
       contactInbox,
       conversation: conversation ?? null,
-      payload: row.payload,
+      payload,
       row,
     }
   }

@@ -46,11 +46,10 @@ vi.mock("@chatbotx.io/encryption/keys", () => ({
 }))
 
 vi.mock("../src/helpers/assigned", () => ({
-  getAssignedAdminName: vi.fn().mockResolvedValue("Admin"),
-  getAssignedAdminEmail: vi.fn().mockResolvedValue("admin@example.com"),
-  getAssignedAdminId: vi.fn().mockResolvedValue("admin-1"),
-  getAssignedMemberName: vi.fn().mockResolvedValue("Member"),
   getAssignedTeamName: vi.fn().mockResolvedValue("Team"),
+  resolveAssigneeEmail: vi.fn().mockResolvedValue("admin@example.com"),
+  resolveAssigneeId: vi.fn().mockResolvedValue("admin-1"),
+  resolveAssigneeName: vi.fn().mockResolvedValue("Admin"),
 }))
 
 vi.mock("../src/helpers/contact", () => ({
@@ -117,6 +116,7 @@ const contactInbox = {
   lastCommentMessageAt: new Date("2026-01-03T03:04:05.000Z"),
   referral: {
     ref: "launch",
+    adId: "ad-123",
     adTitle: "Launch ad",
     ctwaClid: "ctwa-1",
     sourceUrl: "https://example.com/ad",

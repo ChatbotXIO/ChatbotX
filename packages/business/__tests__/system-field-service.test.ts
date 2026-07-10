@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => ({
   detachTags: vi.fn(),
   hardDeleteAllByContactInbox: vi.fn(),
   listIncomingTextsByContactInbox: vi.fn(),
-  listIncomingTextsByConversation: vi.fn(),
   resolveTenantSettings: vi.fn(),
   verifyMeLink: vi.fn(),
   workspaceFindById: vi.fn(),
@@ -58,7 +57,6 @@ vi.mock("../src/message/service", () => ({
   messageService: {
     hardDeleteAllByContactInbox: mocks.hardDeleteAllByContactInbox,
     listIncomingTextsByContactInbox: mocks.listIncomingTextsByContactInbox,
-    listIncomingTextsByConversation: mocks.listIncomingTextsByConversation,
   },
 }))
 
@@ -159,7 +157,19 @@ describe("systemFieldService privacy message window", () => {
       sinceTime: firstInteractionAt,
       workspaceId: payload.workspaceId,
     })
-    expect(mocks.listIncomingTextsByConversation).not.toHaveBeenCalled()
+  })
+
+  test("buildMeExport rejects malformed stored payloads before loading contact data", async () => {
+    vi.spyOn(systemFieldService, "findById").mockResolvedValue({
+      ...row,
+      payload: { ...payload, contactId: undefined },
+    } as never)
+
+    const result = await systemFieldService.buildMeExport(params)
+
+    expect(result).toBeNull()
+    expect(mocks.contactFindById).not.toHaveBeenCalled()
+    expect(mocks.contactInboxFindByUncached).not.toHaveBeenCalled()
   })
 
   test("buildMeExport uses firstInteractionAt when no conversation is available", async () => {

@@ -11,7 +11,7 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type ConversationAttributes,
   channelTypes,
@@ -152,18 +152,20 @@ export async function handleCreateWebchatMessage({
       })
       .where(eq(conversationModel.id, conversation.id))
 
-    await db
-      .update(contactInboxModel)
-      .set({
-        firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${message.createdAt} THEN ${message.createdAt} ELSE ${contactInboxModel.firstInteractionAt} END`,
+    await contactInboxService.updateTracking({
+      contactInboxId: contactInbox.id,
+      contactId: contactInbox.contactId,
+      workspaceId: conversation.workspaceId,
+      data: {
+        firstInteractionAt: message.createdAt,
         contactLastReadAt: now,
         lastMessageAt: message.createdAt,
         lastIncomingMessageAt: message.createdAt,
         ...(parsedInput.parentUrl && {
           webchatParentUrl: parsedInput.parentUrl,
         }),
-      })
-      .where(eq(contactInboxModel.id, contactInbox.id))
+      },
+    })
 
     try {
       await contactService.unblockIfBlocked(

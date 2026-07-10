@@ -145,6 +145,7 @@ export async function sendMessageToChannel(
     await contactInboxService.recordOutboundMessageSent({
       contactInboxId: contactInbox.id,
       contactId: contactInbox.contactId,
+      workspaceId: conversation.workspaceId,
       at: message.createdAt ?? new Date(),
     })
 
@@ -454,6 +455,7 @@ export async function sendFlowStepToChannel({
   await contactInboxService.recordOutboundMessageSent({
     contactInboxId: contactInbox.id,
     contactId: contactInbox.contactId,
+    workspaceId: conversation.workspaceId,
     at: new Date(),
   })
 

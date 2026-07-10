@@ -1,14 +1,14 @@
 "use server"
 
-import { resolveTenantSettings } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  resolveTenantSettings,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import {
-  contactInboxModel,
-  conversationModel,
-} from "@chatbotx.io/database/schema"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -145,13 +145,15 @@ export const createMessage = async (props: {
     })
     .where(eq(conversationModel.id, conversation.id))
 
-  await db
-    .update(contactInboxModel)
-    .set({
-      firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${message.createdAt} THEN ${message.createdAt} ELSE ${contactInboxModel.firstInteractionAt} END`,
+  await contactInboxService.updateTracking({
+    contactInboxId: contactInbox.id,
+    contactId: contactInbox.contactId,
+    workspaceId: conversation.workspaceId,
+    data: {
+      firstInteractionAt: message.createdAt,
       lastMessageAt: message.createdAt,
-    })
-    .where(eq(contactInboxModel.id, contactInbox.id))
+    },
+  })
 
   const attachments =
     "attachments" in message && Array.isArray(message.attachments)

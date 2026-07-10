@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 
 type SettingIntegrationLayoutProps = {
+  children?: ReactNode
   workspaceToken?: ReactNode
   openAI?: ReactNode
   gemini?: ReactNode
