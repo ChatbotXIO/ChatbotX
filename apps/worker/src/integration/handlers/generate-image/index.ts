@@ -99,6 +99,8 @@ export async function handleAIGenerateImage({
       }
     }
 
+    let buffer: Buffer | null = null
+
     const modelId = step.model
 
     const model = createAIImageModelInstance({
@@ -137,13 +139,13 @@ export async function handleAIGenerateImage({
       abortSignal: controller.signal,
     })
 
-    let buffer: Buffer | null = null
-
     if (image.uint8Array && image.uint8Array.byteLength > 0) {
       buffer = Buffer.from(image.uint8Array)
     } else if (image.base64) {
       buffer = Buffer.from(image.base64, IMAGE_BASE64_ENCODING)
     }
+
+    const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
 
     if (!buffer || buffer.length === 0) {
       throw new Error("[ai-generate-image] Empty image payload from provider")
@@ -155,7 +157,6 @@ export async function handleAIGenerateImage({
       )
     }
 
-    const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
     const rawExt = contentType.split("/")[1]?.split(";")[0]?.trim() ?? ""
     const extension = ALLOWED_EXTENSIONS.has(rawExt)
       ? rawExt

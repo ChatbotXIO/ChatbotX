@@ -1,6 +1,5 @@
 import { processStreamingText } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
-import type { AIAgentProvider } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { createId } from "@chatbotx.io/utils"
 import type { BotResponseTrackingContext } from "@chatbotx.io/worker-config"
@@ -10,7 +9,11 @@ import { sendMessageAndWait } from "../../utils/message"
 import { parseRichResponse } from "../rich-response"
 import { executeRichActions } from "../rich-response/action-executor"
 import { sendRichMessages } from "../rich-response/message-sender"
-import type { ReplyByAIExecutionResult, ReplyByAIProps } from "./replies"
+import type {
+  ReplyAIProvider,
+  ReplyByAIExecutionResult,
+  ReplyByAIProps,
+} from "./replies"
 
 type DirectSendTracker = {
   sent: boolean
@@ -22,7 +25,7 @@ type HandleRichAIReplyOptions = {
   directSendTracker: DirectSendTracker
   modelId: string
   props: ReplyByAIProps
-  provider: AIAgentProvider
+  provider: ReplyAIProvider
   startTime: number
   textStream: AsyncIterable<string>
 }
@@ -185,7 +188,7 @@ async function appendAssistantHistory(
 function buildTrackingContext(input: {
   conversationId: string
   executionId: string
-  provider: AIAgentProvider
+  provider: ReplyAIProvider
   startTime: number
   workspaceId: string
 }): BotResponseTrackingContext {
@@ -204,7 +207,7 @@ async function emitStreamFailureAnalytics(input: {
   conversationId: string
   messageId?: string
   modelId: string
-  provider: AIAgentProvider
+  provider: ReplyAIProvider
   startTime: number
   workspaceId: string
 }): Promise<void> {
@@ -240,7 +243,7 @@ async function emitStreamFailureAnalytics(input: {
 function buildSuccessResult(input: {
   buildToolStats: () => ReplyByAIExecutionResult["toolStats"]
   modelId: string
-  provider: AIAgentProvider
+  provider: ReplyAIProvider
 }): ReplyByAIExecutionResult {
   return {
     responded: true,

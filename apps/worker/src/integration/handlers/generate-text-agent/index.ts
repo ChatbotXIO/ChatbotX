@@ -2,7 +2,11 @@ import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { db } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
-import { aiAgentProviders } from "@chatbotx.io/database/partials"
+import {
+  type AIAgentModelConfig,
+  aiAgentProviderModels,
+  aiAgentProviders,
+} from "@chatbotx.io/database/partials"
 import type { AIGenerateTextAgentSchema } from "@chatbotx.io/flow-config"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
@@ -11,6 +15,9 @@ import type { ExecuteStepProps } from "../flow"
 import { runAIAgentRunner } from "../shared/ai-agent-runner"
 import type { ExecuteStepResult } from "../step"
 import { buildAIAgentMessages } from "./messages"
+
+const OPENAI_COMPATIBLE_INTEGRATION_MISSING_OR_DISABLED =
+  "OpenAI-compatible integration is missing or disabled"
 
 export async function handleAIGenerateTextAgent({
   conversation,
@@ -40,9 +47,11 @@ export async function handleAIGenerateTextAgent({
       }
     }
 
+    const aiAgentModels = aiAgentProviderModels.parse(aiAgent.models)
     const aiContext = await aiContextService.getOrInitContext({
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
+      preferredModels: aiAgentModels,
     })
 
     const messages = await buildAIAgentMessages(
@@ -51,9 +60,13 @@ export async function handleAIGenerateTextAgent({
       step,
     )
     const summary = aiContext?.summary || ""
-    const preferredProvider = aiAgentProviders.safeParse(step.provider)
+    const preferredModel = resolvePreferredModel(step)
+    const preferredProvider =
+      step.provider === "openaiCompatible"
+        ? null
+        : aiAgentProviders.safeParse(step.provider)
 
-    if (!preferredProvider.success) {
+    if (!(preferredModel || preferredProvider?.success)) {
       logger.error(
         {
           workspaceId: conversation.workspaceId,
@@ -76,8 +89,18 @@ export async function handleAIGenerateTextAgent({
       messages,
       aiAgent,
       summary,
-      preferredProvider: preferredProvider.data,
+      ...(preferredModel
+        ? { preferredModel }
+        : { preferredProvider: preferredProvider?.data }),
     })
+
+    if (!result?.responded && step.provider === "openaiCompatible") {
+      return {
+        status: "error",
+        errorMessage: OPENAI_COMPATIBLE_INTEGRATION_MISSING_OR_DISABLED,
+        result: null,
+      }
+    }
 
     if (result?.responded && result.fullText && step.outputFieldId) {
       await saveResultToCustomField({
@@ -106,5 +129,23 @@ export async function handleAIGenerateTextAgent({
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)
+  }
+}
+
+function resolvePreferredModel(
+  step: AIGenerateTextAgentSchema,
+): AIAgentModelConfig | null {
+  if (step.provider !== "openaiCompatible") {
+    return null
+  }
+
+  if (!(step.integrationId?.trim() && step.model?.trim())) {
+    return null
+  }
+
+  return {
+    kind: "openaiCompatible",
+    integrationId: step.integrationId,
+    model: step.model,
   }
 }

@@ -4,6 +4,7 @@ import type {
   IntegrationDeepseekModel,
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
+  IntegrationOpenaiCompatibleModel,
   IntegrationOpenrouterModel,
 } from "@chatbotx.io/database/types"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
@@ -21,6 +22,9 @@ export type AIIntegrationModel =
   | IntegrationClaudeModel
   | IntegrationDeepseekModel
   | IntegrationOpenrouterModel
+
+export type OpenaiCompatibleAIIntegrationModel =
+  IntegrationOpenaiCompatibleModel
 
 export type AIProviderInstance = ReturnType<
   (typeof providerSdkFactories)[keyof typeof providerSdkFactories]
@@ -62,6 +66,33 @@ export async function getAIIntegrationInDB(props: {
     default:
       return null
   }
+}
+
+export async function getOpenaiCompatibleAutoReplyIntegrationInDB(props: {
+  workspaceId: string
+}) {
+  return await db.query.integrationOpenaiCompatibleModel.findFirst({
+    where: {
+      autoReply: true,
+      enabled: true,
+      workspaceId: props.workspaceId,
+    },
+    orderBy: (table, { asc }) => [asc(table.createdAt)],
+  })
+}
+
+export async function getOpenaiCompatibleIntegrationInDB(props: {
+  workspaceId: string
+  id: string
+  autoReply?: boolean
+}) {
+  return await db.query.integrationOpenaiCompatibleModel.findFirst({
+    where: {
+      id: props.id,
+      workspaceId: props.workspaceId,
+      ...(props.autoReply === undefined ? {} : { autoReply: props.autoReply }),
+    },
+  })
 }
 
 function resolveProviderFactory(provider: string) {

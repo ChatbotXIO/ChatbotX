@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
-import { aiMessageRoles, senderTypes } from "@chatbotx.io/database/partials"
+import {
+  type AIAgentProviderModels,
+  aiMessageRoles,
+  senderTypes,
+} from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   findConversationAIContextState,
@@ -222,8 +226,9 @@ export const aiContextService = {
   async getOrInitContext(props: {
     workspaceId: string
     conversationId: string
+    preferredModels?: AIAgentProviderModels
   }): Promise<AIContext | null> {
-    const { workspaceId, conversationId } = props
+    const { workspaceId, conversationId, preferredModels } = props
 
     return await aiContextStore
       .runExclusive(conversationId, async () => {
@@ -269,6 +274,7 @@ export const aiContextService = {
               ? await summarizeConversation({
                   workspaceId,
                   messages: modelMessages,
+                  preferredModels,
                 })
               : ""
 

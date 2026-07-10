@@ -49,7 +49,10 @@ export type CreateAIAgentRequest = {
   name: string
   prompt: string
   messages: Array<{ role: string; content: string }>
-  models: Array<{ provider: string; model: string }>
+  models: Array<
+    | { provider: string; model: string }
+    | { kind: "openaiCompatible"; integrationId: string; model: string }
+  >
   temperature: number
   maxOutputTokens: number
   tools: string[]

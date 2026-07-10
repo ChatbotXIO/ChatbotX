@@ -1,7 +1,5 @@
 import { helpTexts, processStreamingText, toolPrefixes } from "@chatbotx.io/ai"
 import {
-  aiIntegrationService,
-  createAIModelInstance,
   getAIToolset,
   McpClient,
   normalizeMcpContent,
@@ -13,6 +11,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow-utils"
+import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
 
@@ -32,25 +31,38 @@ export async function handleAIGenerateText({
   try {
     const messages = await buildAIMessages(conversation, contactInbox, step)
 
-    const aiConfig = await aiIntegrationService.findBy({
+    const resolvedModel = await resolveFlowAIModel({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
+      integrationId:
+        step.provider === "openaiCompatible" ? step.integrationId : undefined,
+      modelId: step.model,
+      conversationId: conversation.id,
     })
 
-    if (!aiConfig) {
+    if (!resolvedModel.ok) {
+      logger.warn(
+        {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          stepId: step.id,
+          stepType: step.stepType,
+          provider: step.provider,
+          integrationId:
+            step.provider === "openaiCompatible"
+              ? step.integrationId
+              : undefined,
+          modelId: step.model,
+          reason: resolvedModel.reason,
+        },
+        "Failed to resolve AI model for generate text step",
+      )
       return {
         status: "error",
-        errorMessage: "AI integration not found",
+        errorMessage: resolvedModel.message,
         result: null,
       }
     }
-
-    const model = createAIModelInstance({
-      model: aiConfig,
-      provider: step.provider,
-      modelId: step.model,
-      traceId: conversation.id,
-    })
 
     const { tools, cleanup } = await getAIToolset({
       workspaceId: conversation.workspaceId,
@@ -75,7 +87,7 @@ export async function handleAIGenerateText({
     cleanupToolset = cleanup
 
     const result = streamText({
-      model,
+      model: resolvedModel.model,
       system: step.system,
       messages,
       tools,
@@ -108,15 +120,15 @@ export async function handleAIGenerateText({
     if (isMessageStorageError(err)) {
       throw err
     }
+    const error = normalizeError(err)
     if (APICallError.isInstance(err) && err.statusCode === 402) {
-      logger.error({ err }, "AI provider insufficient credits")
+      logger.error({ err: error }, "AI provider insufficient credits")
       return {
         status: "error",
         errorMessage: ERROR_INSUFFICIENT_CREDITS,
         result: null,
       }
     }
-    const error = normalizeError(err)
     logger.error({ err: error }, "An error occurred while generating text")
     return { status: "error", errorMessage: error.message, result: null }
   } finally {

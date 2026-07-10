@@ -14,15 +14,18 @@ import {
   appendKnowledgeBaseGuard,
   appendToolOutputGuard,
   createAIProviderInstance,
+  createOpenaiCompatibleModelInstance,
   getAIIntegrationInDB,
   getAIToolset,
   McpClient,
   normalizeAuthorizedWebSearchDomains,
   normalizeMcpContent,
 } from "@chatbotx.io/ai/server"
+import { integrationOpenaiCompatibleService } from "@chatbotx.io/business"
 import type {
+  AIAgentModelConfig,
+  AIAgentOpenaiCompatibleProviderModel,
   AIAgentProvider,
-  AIAgentProviderModel,
   AIAgentProviderModels,
 } from "@chatbotx.io/database/partials"
 import type {
@@ -65,7 +68,7 @@ export type ReplyByAIProps = {
 
 export type ReplyByAIExecutionResult = {
   responded: boolean
-  provider: AIAgentProvider
+  provider: ReplyAIProvider
   modelId: string
   usedFallbackText: boolean
   toolStats: {
@@ -81,6 +84,8 @@ export type ReplyByAIExecutionResult = {
     }>
   }
 }
+
+export type ReplyAIProvider = AIAgentProvider | "openaiCompatible"
 
 export async function replyByAI(
   props: ReplyByAIProps,
@@ -111,8 +116,8 @@ function createReplyToolset(options: {
   model: LanguageModel
   modelId: string
   props: ReplyByAIProps
-  provider: string
-  providerInstance: AIProviderInstance
+  provider: ReplyAIProvider
+  providerInstance?: AIProviderInstance
 }) {
   const { conversation, aiAgent } = options.props
   const tools = filterToolsByAllowedSystemFunctions(
@@ -124,15 +129,22 @@ function createReplyToolset(options: {
   const toolsetTools = hasWebSearchTool
     ? tools.filter((tool) => tool !== webSearchToolValue)
     : tools
-  const nativeWebSearchTool = hasWebSearchTool
-    ? createNativeWebSearchTool({
-        aiAgent,
-        conversation,
-        modelId: options.modelId,
-        provider: options.provider,
-        providerInstance: options.providerInstance,
-      })
-    : { tool: undefined, omitReason: undefined }
+  let nativeWebSearchTool: { omitReason?: string; tool?: ToolSet[string] } = {
+    omitReason: undefined,
+    tool: undefined,
+  }
+
+  if (hasWebSearchTool) {
+    nativeWebSearchTool = options.providerInstance
+      ? createNativeWebSearchTool({
+          aiAgent,
+          conversation,
+          modelId: options.modelId,
+          provider: options.provider,
+          providerInstance: options.providerInstance,
+        })
+      : { omitReason: "provider_not_supported", tool: undefined }
+  }
 
   return getAIToolset({
     workspaceId: aiAgent.workspaceId,
@@ -319,7 +331,7 @@ function createNativeWebSearchTool(options: {
           externalWebAccess: true,
           filters,
           searchContextSize: "medium",
-        }),
+        }) as ToolSet[string],
       }
     }
   }
@@ -425,44 +437,98 @@ function filterToolsByAllowedSystemFunctions(
   })
 }
 
+function isOpenaiCompatibleProviderModel(
+  providerInfo: AIAgentModelConfig,
+): providerInfo is AIAgentOpenaiCompatibleProviderModel {
+  return "kind" in providerInfo && providerInfo.kind === "openaiCompatible"
+}
+
+function getProviderName(providerInfo: AIAgentModelConfig): ReplyAIProvider {
+  return isOpenaiCompatibleProviderModel(providerInfo)
+    ? "openaiCompatible"
+    : providerInfo.provider
+}
+
+async function createReplyModel(props: {
+  providerInfo: AIAgentModelConfig
+  workspaceId: string
+}): Promise<null | {
+  model: LanguageModel
+  providerInstance?: AIProviderInstance
+}> {
+  const { providerInfo, workspaceId } = props
+
+  if (isOpenaiCompatibleProviderModel(providerInfo)) {
+    const integration =
+      await integrationOpenaiCompatibleService.findByWorkspaceIdAndId({
+        workspaceId,
+        id: providerInfo.integrationId,
+      })
+
+    if (!(integration?.enabled && integration.autoReply)) {
+      return null
+    }
+
+    return {
+      model: createOpenaiCompatibleModelInstance({
+        integration,
+        modelId: providerInfo.model,
+      }),
+    }
+  }
+
+  const integration = await getAIIntegrationInDB({
+    workspaceId,
+    provider: providerInfo.provider,
+    autoReply: true,
+  })
+
+  if (!integration) {
+    return null
+  }
+
+  const providerInstance = createAIProviderInstance({
+    model: integration,
+    provider: providerInfo.provider,
+  })
+
+  return {
+    model: providerInstance(providerInfo.model),
+    providerInstance,
+  }
+}
+
 async function runAIReply(
   props: ReplyByAIProps,
-  providerInfo: AIAgentProviderModel,
+  providerInfo: AIAgentModelConfig,
   abortSignal: AbortSignal,
 ): Promise<null | ReplyByAIExecutionResult> {
   const { conversation, messages, aiAgent } = props
-  const provider = providerInfo.provider
+  const provider = getProviderName(providerInfo)
   let cleanup: (() => Promise<void>) | undefined
 
   try {
     const selectedModelId = providerInfo.model
-
-    const integration = await getAIIntegrationInDB({
+    const modelConfig = await createReplyModel({
       workspaceId: conversation.workspaceId,
-      provider,
-      autoReply: true,
+      providerInfo,
     })
 
-    if (!integration) {
+    if (!modelConfig) {
       return null
     }
 
-    const providerInstance = createAIProviderInstance({
-      model: integration,
-      provider,
-    })
-    const model = providerInstance(selectedModelId)
     const startTime = Date.now()
 
     const directSendTracker = { sent: false, sentText: "" }
     const toolset = await createReplyToolset({
       abortSignal,
       directSendTracker,
-      model,
+      model: modelConfig.model,
       modelId: selectedModelId,
       props,
       provider,
-      providerInstance,
+      providerInstance: modelConfig.providerInstance,
     })
     const tools = toolset.tools
     cleanup = toolset.cleanup
@@ -521,7 +587,7 @@ async function runAIReply(
 
     const hasTools = Object.keys(tools).length > 0
     const result = await streamText({
-      model,
+      model: modelConfig.model,
       system: systemPrompt,
       messages,
       maxOutputTokens: aiAgent.maxOutputTokens,
@@ -569,6 +635,7 @@ async function runAIReply(
         error,
       }) => {
         if (!success) {
+          const normalizedError = normalizeError(error)
           logger.warn(
             {
               provider,
@@ -578,11 +645,8 @@ async function runAIReply(
               toolName: toolCall?.toolName,
               toolCallId: toolCall?.toolCallId,
               durationMs,
-              error,
-              errorMessage:
-                error instanceof Error ? error.message : String(error),
-              errorCause: error instanceof Error ? error.cause : undefined,
-              errorStack: error instanceof Error ? error.stack : undefined,
+              error: normalizedError,
+              errorMessage: normalizedError.message,
             },
             "[automated-response] tool execution failed",
           )
@@ -605,7 +669,7 @@ async function runAIReply(
         props,
         textStream: result.textStream,
         directSendTracker,
-        provider: provider as AIAgentProvider,
+        provider,
         modelId: selectedModelId,
         startTime,
         buildToolStats,
@@ -654,7 +718,7 @@ async function runAIReply(
       }
       return {
         responded: true,
-        provider: provider as AIAgentProvider,
+        provider,
         modelId: selectedModelId,
         usedFallbackText: false,
         toolStats: buildToolStats(),
@@ -677,7 +741,7 @@ async function runAIReply(
 
       return {
         responded: true,
-        provider: provider as AIAgentProvider,
+        provider,
         modelId: selectedModelId,
         usedFallbackText: false,
         toolStats: buildToolStats(),
@@ -690,7 +754,7 @@ async function runAIReply(
       await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
       return {
         responded: true,
-        provider: provider as AIAgentProvider,
+        provider,
         modelId: selectedModelId,
         usedFallbackText: true,
         toolStats: buildToolStats(),

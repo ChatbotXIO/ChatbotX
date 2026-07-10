@@ -17,7 +17,7 @@ export const providerSdkFactories = {
   [aiProviders.enum.openrouter]: createOpenRouter,
 } as const satisfies Record<AIProvider, unknown>
 
-const providerApiKeyEnvVar: Record<AIProvider, string> = {
+const providerApiKeyEnvVar: Partial<Record<AIProvider, string>> = {
   [aiProviders.enum.openai]: "OPENAI_API_KEY",
   [aiProviders.enum.gemini]: "GOOGLE_GENERATIVE_AI_API_KEY",
   [aiProviders.enum.claude]: "ANTHROPIC_API_KEY",
@@ -27,5 +27,9 @@ const providerApiKeyEnvVar: Record<AIProvider, string> = {
 
 export const getAIProviderInstance = (provider: AIProvider) => {
   const createProvider = providerSdkFactories[provider]
-  return createProvider({ apiKey: process.env[providerApiKeyEnvVar[provider]] })
+  const envVar = providerApiKeyEnvVar[provider]
+  if (!envVar) {
+    throw new Error(`Provider ${provider} does not have a default env API key`)
+  }
+  return createProvider({ apiKey: process.env[envVar] })
 }

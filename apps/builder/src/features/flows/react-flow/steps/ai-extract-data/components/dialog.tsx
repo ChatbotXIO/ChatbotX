@@ -28,6 +28,7 @@ import {
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { AIModelSelect } from "../../ai-generate-text/components/ai-model-select"
+import { OpenaiCompatibleModelFields } from "../../ai-generate-text/components/openai-compatible-model-fields"
 
 type AIExtractDataDialogProps = {
   parentName: string
@@ -129,7 +130,11 @@ export const AIExtractDataDialog = ({
                 />
               )}
 
-              <AIModelSelect name="model" provider={provider} required />
+              {provider === "openaiCompatible" ? (
+                <OpenaiCompatibleModelFields />
+              ) : (
+                <AIModelSelect name="model" provider={provider} required />
+              )}
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

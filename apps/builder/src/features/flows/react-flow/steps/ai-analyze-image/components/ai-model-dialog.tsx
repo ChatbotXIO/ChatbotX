@@ -19,6 +19,7 @@ import { useEffect, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { OpenaiCompatibleModelFields } from "../../ai-generate-text/components/openai-compatible-model-fields"
 import { AIModelSelect } from "./ai-model-select"
 
 type AIModelDialogProps = {
@@ -80,7 +81,11 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
         <Form {...form}>
           <form className="flex flex-col space-y-6" onSubmit={handleSubmit}>
             <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-6 overflow-y-auto">
-              <AIModelSelect name="model" provider={provider} required />
+              {provider === "openaiCompatible" ? (
+                <OpenaiCompatibleModelFields kind="analyzeImage" />
+              ) : (
+                <AIModelSelect name="model" provider={provider} required />
+              )}
 
               <CustomFieldSelect
                 includeReserved={false}

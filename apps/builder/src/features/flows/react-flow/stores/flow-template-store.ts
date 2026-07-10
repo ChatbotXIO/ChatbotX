@@ -5,6 +5,7 @@ import {
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
 import type { ListMessengerPersonasResponse } from "@/features/personas/schemas/query"
 import { client } from "@/lib/orpc/orpc"
@@ -24,6 +25,8 @@ export type FlowTemplateState = {
 
   loadingMessengerPersonas: boolean
   messengerPersonas: ListMessengerPersonasResponse["data"]
+
+  openaiCompatibleIntegrations: IntegrationOpenaiCompatibleResource[]
 }
 
 export type FlowTemplateActions = {
@@ -59,6 +62,8 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
 
     loadingMessengerPersonas: false,
     messengerPersonas: [],
+
+    openaiCompatibleIntegrations: [],
 
     ...props,
 
