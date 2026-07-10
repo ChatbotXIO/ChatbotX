@@ -53,9 +53,10 @@ describe("buildFacebookOAuthDialogUrl", () => {
     const state = decodeOAuthState(result.searchParams.get("state") ?? "")
     expect(state).toEqual({ referer: RESELLER_ORIGIN, locale: "vi" })
 
-    // transferPhoneNumber drives the coexist onboarding featureType in extras.
+    // transferPhoneNumber sends the user to Meta's existing-WABA sharing screen,
+    // which is where a number hosted by another provider is migrated from.
     const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
-    expect(extras.featureType).toBe("whatsapp_business_app_onboarding")
+    expect(extras.featureType).toBe("only_waba_sharing")
   })
 
   test("falls back to the builder origin when no broker is configured", async () => {
@@ -112,7 +113,7 @@ describe("encodeOAuthState / decodeOAuthState", () => {
 })
 
 describe("resolveEmbeddedSignupFeatureType", () => {
-  test("returns the coexist onboarding type when transferring a phone", async () => {
+  test("returns WABA sharing when transferring a phone from another provider", async () => {
     const { resolveEmbeddedSignupFeatureType, EMBEDDED_SIGNUP_FEATURE_TYPES } =
       await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
 
@@ -121,10 +122,10 @@ describe("resolveEmbeddedSignupFeatureType", () => {
         connectExisting: false,
         transferPhoneNumber: true,
       }),
-    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING)
+    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING)
   })
 
-  test("returns WABA sharing when connecting an existing account", async () => {
+  test("returns the coexist onboarding type when connecting an existing account", async () => {
     const { resolveEmbeddedSignupFeatureType, EMBEDDED_SIGNUP_FEATURE_TYPES } =
       await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
 
@@ -133,7 +134,7 @@ describe("resolveEmbeddedSignupFeatureType", () => {
         connectExisting: true,
         transferPhoneNumber: false,
       }),
-    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING)
+    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING)
   })
 
   test("returns undefined for a fresh signup", async () => {
@@ -147,5 +148,75 @@ describe("resolveEmbeddedSignupFeatureType", () => {
         transferPhoneNumber: false,
       }),
     ).toBeUndefined()
+  })
+
+  test("lets the transfer intent win when both toggles are set", async () => {
+    const { resolveEmbeddedSignupFeatureType, EMBEDDED_SIGNUP_FEATURE_TYPES } =
+      await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
+
+    expect(
+      resolveEmbeddedSignupFeatureType({
+        connectExisting: true,
+        transferPhoneNumber: true,
+      }),
+    ).toBe(EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING)
+  })
+})
+
+describe("isCoexistOnboardingIntent", () => {
+  test("is true only when Meta was asked for the coexist onboarding flow", async () => {
+    const { isCoexistOnboardingIntent } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    expect(
+      isCoexistOnboardingIntent({
+        connectExisting: true,
+        transferPhoneNumber: false,
+      }),
+    ).toBe(true)
+  })
+
+  test("is false for a manual connect, which never opens the Meta dialog", async () => {
+    const { isCoexistOnboardingIntent } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    // The manualConnect toggle is only reachable with connectExisting on, so the
+    // coexist gate must exclude it explicitly.
+    expect(
+      isCoexistOnboardingIntent({
+        connectExisting: true,
+        transferPhoneNumber: false,
+        manualConnect: true,
+      }),
+    ).toBe(false)
+  })
+
+  test("is false for a transfer, a fresh signup, and an ambiguous both-on form", async () => {
+    const { isCoexistOnboardingIntent } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    expect(
+      isCoexistOnboardingIntent({
+        connectExisting: false,
+        transferPhoneNumber: true,
+      }),
+    ).toBe(false)
+    expect(
+      isCoexistOnboardingIntent({
+        connectExisting: false,
+        transferPhoneNumber: false,
+      }),
+    ).toBe(false)
+    // Both on resolves to only_waba_sharing, so the server must not run the
+    // coexist eligibility check for it.
+    expect(
+      isCoexistOnboardingIntent({
+        connectExisting: true,
+        transferPhoneNumber: true,
+      }),
+    ).toBe(false)
   })
 })

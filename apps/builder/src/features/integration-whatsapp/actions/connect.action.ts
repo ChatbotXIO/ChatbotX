@@ -40,7 +40,10 @@ import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
-import { WHATSAPP_OAUTH_CALLBACK_PATH } from "../libs/embedded-signup"
+import {
+  isCoexistOnboardingIntent,
+  WHATSAPP_OAUTH_CALLBACK_PATH,
+} from "../libs/embedded-signup"
 import {
   type ConnectWhatsappResult,
   type ConnectWhatsappSchema,
@@ -429,14 +432,15 @@ export const connectWhatsappAction = authActionClient
           await setupOAuthResources(auth, whatsappSettings)
         }
 
-        // Resolve Meta-truth eligibility: form field `transferPhoneNumber` is
-        // user intent, but Meta only places the phone in coexist mode when the
-        // app's config_id is registered for the whatsapp_business_app_onboarding
-        // solution AND the number is a WhatsApp Business App number. Calling
-        // /smb_app_data on a non-eligible phone yields error 131000/10.
+        // Resolve Meta-truth eligibility: the form only carries user intent, but
+        // Meta only places the phone in coexist mode when the app's config_id is
+        // registered for the whatsapp_business_app_onboarding solution AND the
+        // number is a WhatsApp Business App number. Calling /smb_app_data on a
+        // non-eligible phone yields error 131000/10. Gate on the same helper the
+        // browser used to pick `featureType`, so the two can never disagree.
         let isCoexist = false
         let platformType = ""
-        if (parsedInput.transferPhoneNumber === true) {
+        if (isCoexistOnboardingIntent(parsedInput)) {
           try {
             const eligibility = await getCoexistEligibility({
               phoneNumberId: phoneNumber.id,
