@@ -49,7 +49,7 @@ export const listConversations = async (
     limit: limit + 1,
     with: {
       contact: true,
-      contactInboxes: true,
+      contactInboxes: { with: { inbox: true } },
       assignedUser: true,
       assignedInboxTeam: true,
     },

@@ -14,6 +14,7 @@ import type {
   ContactNoteModel,
   ContactsOnSequenceModel,
   ConversationModel,
+  InboxModel,
   InboxTeamModel,
   MessageModel,
   SequenceModel,
@@ -53,7 +54,7 @@ type ContactWithFullRelations = ContactModel & {
 
 type ConversationRelationMap = {
   contact: ContactModel | null
-  contactInboxes: ContactInboxModel[]
+  contactInboxes: (ContactInboxModel & { inbox: InboxModel })[]
   assignedUser: UserModel | null
   assignedInboxTeam: InboxTeamModel | null
   messages: MessageModel[]
@@ -74,7 +75,7 @@ type ConversationWithRelations<W extends ConversationWithConfig> =
 
 export type ConversationWithFullRelations = ConversationModel & {
   contact: ContactWithFullRelations | null
-  contactInboxes: ContactInboxModel[]
+  contactInboxes: (ContactInboxModel & { inbox: InboxModel })[]
   messages: MessageModel[]
   assignedUser: UserModel | null
   assignedInboxTeam: InboxTeamModel | null
@@ -254,7 +255,7 @@ class ConversationService extends BaseService {
             tags: true,
           },
         },
-        contactInboxes: true,
+        contactInboxes: { with: { inbox: true } },
         messages: true,
         assignedUser: true,
         assignedInboxTeam: true,

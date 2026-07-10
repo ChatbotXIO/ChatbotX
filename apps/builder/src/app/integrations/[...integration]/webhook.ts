@@ -23,10 +23,27 @@ type CredentialType = Parameters<
   typeof platformCredentialService.resolveForOwner
 >[0]["type"]
 
+const logWebhookRequestBody = async (
+  integrationType: string,
+  req: NextRequest,
+) => {
+  try {
+    const body = await req.clone().text()
+    logger.debug({ integrationType, body }, "Webhook request body")
+  } catch (e: unknown) {
+    logger.debug(
+      { integrationType, err: e },
+      "Failed to read webhook request body for logging",
+    )
+  }
+}
+
 export const handleWebhook = async (
   integrationType: string,
   req: NextRequest,
 ) => {
+  await logWebhookRequestBody(integrationType, req)
+
   // Telegram uses per-bot config (not org-level settings)
   if (integrationType === "telegram") {
     return handleTelegramWebhook(req)

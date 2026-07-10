@@ -129,12 +129,20 @@ export default function ConversationItem({
           </div>
           <div className="absolute right-0 bottom-0 transform">
             {conversation.contactInboxes?.map((contactInbox) => (
-              <InboxIcon
-                channel={contactInbox.channel as ChannelType}
-                key={contactInbox.id}
-                showLabel={false}
-                size="small"
-              />
+              <Tooltip key={contactInbox.id}>
+                <TooltipTrigger asChild>
+                  <span>
+                    <InboxIcon
+                      channel={contactInbox.channel as ChannelType}
+                      showLabel={false}
+                      size="small"
+                    />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent align="center" side="right">
+                  {contactInbox.inbox.name}
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
           {conversation.followed && (
