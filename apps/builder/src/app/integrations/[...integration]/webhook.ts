@@ -29,9 +29,9 @@ const logWebhookRequestBody = async (
 ) => {
   try {
     const body = await req.clone().text()
-    logger.debug({ integrationType, body }, "Webhook request body")
+    logger.info({ integrationType, body }, "Webhook request body")
   } catch (e: unknown) {
-    logger.debug(
+    logger.info(
       { integrationType, err: e },
       "Failed to read webhook request body for logging",
     )
