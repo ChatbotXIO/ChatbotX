@@ -861,7 +861,7 @@
       "label": "Mã quốc gia"
     },
     "contactId": {
-      "label": "ID Liên hệ / ID Người đăng ký / PSID"
+      "label": "ID Liên hệ"
     },
     "flow": {
       "label": "Luồng"

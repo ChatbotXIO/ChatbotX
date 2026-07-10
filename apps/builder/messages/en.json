@@ -853,7 +853,7 @@
       "label": "Country Code"
     },
     "contactId": {
-      "label": "Contact ID / Subscriber ID / PSID"
+      "label": "Contact ID"
     },
     "flow": {
       "label": "Flow"
