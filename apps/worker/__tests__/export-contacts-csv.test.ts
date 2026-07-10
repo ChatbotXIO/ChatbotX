@@ -333,6 +333,34 @@ describe("buildCsvChunk", () => {
     expect(result).toBe('"No"\n')
   })
 
+  test("renders the Contact Id from the first contactInbox sourceId", () => {
+    // Arrange
+    const fields: SelectedField[] = [
+      { type: "contact", value: "contactId", header: "Contact ID" },
+    ]
+    const contacts = [{ id: "1", contactInboxes: [{ sourceId: "psid-123" }] }]
+
+    // Act
+    const result = buildCsvChunk(contacts, fields)
+
+    // Assert
+    expect(result).toBe('"psid-123"\n')
+  })
+
+  test("renders an empty string for Contact Id when the contact has no inbox", () => {
+    // Arrange
+    const fields: SelectedField[] = [
+      { type: "contact", value: "contactId", header: "Contact ID" },
+    ]
+    const contacts = [{ id: "1", contactInboxes: [] }, { id: "2" }]
+
+    // Act
+    const result = buildCsvChunk(contacts, fields)
+
+    // Assert — both a present-but-empty relation and an absent one yield ""
+    expect(result).toBe('""\n""\n')
+  })
+
   test("produces multiple rows separated by newlines for multiple contacts", () => {
     // Arrange
     const fields: SelectedField[] = [

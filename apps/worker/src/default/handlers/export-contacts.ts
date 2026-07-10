@@ -21,8 +21,14 @@ const contactFieldPrefix = "sys:"
 const customFieldPrefix = "cus:"
 const tagPrefix = "tag:"
 
+// Virtual contact column backed by the first ContactInbox.sourceId (the
+// platform-native id: WhatsApp wa_id, Messenger PSID, …). It is not a column on
+// the Contact row, so renderCell resolves it from the contactInboxes relation.
+const contactIdField = "contactId"
+
 // Human-readable headers for built-in contact columns.
 const headerNames: Record<string, string> = {
+  contactId: "Contact ID",
   firstName: "First Name",
   lastName: "Last Name",
   fullName: "Full Name",
@@ -43,6 +49,7 @@ type ContactRow = {
   [key: string]: unknown
   contactCustomFields?: (typeof contactCustomFieldModel.$inferSelect)[]
   tags?: { id: string }[]
+  contactInboxes?: { sourceId: string }[]
 }
 
 // ── CSV serialization ─────────────────────────────────────────────────────────
@@ -69,6 +76,12 @@ export const escapeCsvValue = (value: string): string => {
 /** Renders one selected field of one contact into a CSV cell. */
 const renderCell = (contact: ContactRow, field: SelectedField): string => {
   if (field.type === "contact") {
+    // The Contact Id column is not stored on the Contact row — it comes from the
+    // contact's first (earliest) inbox connection's platform-native sourceId.
+    if (field.value === contactIdField) {
+      const sourceId = contact.contactInboxes?.[0]?.sourceId
+      return sourceId ? escapeCsvValue(sourceId) : '""'
+    }
     const rawValue = contact[field.value]
     if (rawValue instanceof Date) {
       return escapeCsvValue(rawValue.toISOString())
@@ -274,7 +287,16 @@ const fetchContactPage = (
 ) =>
   db.query.contactModel.findMany({
     where: lastId ? { AND: [baseWhere, { id: { gt: lastId } }] } : baseWhere,
-    with: { contactCustomFields: true, tags: true },
+    with: {
+      contactCustomFields: true,
+      tags: true,
+      // Only the earliest inbox connection is needed for the Contact Id column.
+      contactInboxes: {
+        columns: { sourceId: true },
+        orderBy: { id: "asc" },
+        limit: 1,
+      },
+    },
     limit: loopableItemsCount,
     orderBy: { id: "asc" },
   })

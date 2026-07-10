@@ -75,6 +75,10 @@ export function ExportContactDialog({
       heading: t("fields.botFields.label"),
       options: [
         {
+          label: t("fields.contactId.label"),
+          value: `${contactPrefix}:contactId`,
+        },
+        {
           label: t("fields.firstName.label"),
           value: `${contactPrefix}:firstName`,
         },
@@ -123,7 +127,8 @@ export function ExportContactDialog({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            fields: options[0].options.slice(0, 5).map((opt) => opt.value),
+            // All built-in bot fields (incl. Contact Id) are selected by default.
+            fields: options[0].options.map((opt) => opt.value),
             ...(exportAll ? { exportAll: true, filter } : { contactIds }),
           },
         },
