@@ -97,6 +97,16 @@ function matchKeywords(
   return true
 }
 
+// Facebook feed webhooks set parent_id on every comment: for a top-level
+// comment it equals the post id, and only a reply to another comment carries
+// that comment's id instead.
+export function isCommentReply(
+  parentId: string | undefined,
+  postId: string,
+): boolean {
+  return Boolean(parentId) && parentId !== postId
+}
+
 function willSendReply(reply: FBCommentReply): boolean {
   if (reply.type === "none") {
     return false
@@ -390,12 +400,36 @@ export async function processCommentAutomation(
           workspace.timezone,
         )
       ) {
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: "outside schedule",
+        })
         continue
       }
       if (!matchPost(automation.post, postId)) {
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: "post does not match",
+        })
         continue
       }
-      if (automation.options.ignoreCommentReplies && parentId) {
+      if (
+        automation.options.ignoreCommentReplies &&
+        isCommentReply(parentId, postId)
+      ) {
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: "comment is a reply",
+        })
         continue
       }
       if (
@@ -405,6 +439,13 @@ export async function processCommentAutomation(
           message,
         )
       ) {
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: "keywords do not match",
+        })
         continue
       }
 
@@ -414,6 +455,13 @@ export async function processCommentAutomation(
             contactId: contactInbox.contactId,
           })
         if (priorCount > 1) {
+          logAutomationSkipped({
+            automationId: automation.id,
+            commentId,
+            postId,
+            workspaceId,
+            reason: "contact is not new",
+          })
           continue
         }
       }
@@ -425,6 +473,13 @@ export async function processCommentAutomation(
           postId,
         })
         if (existing) {
+          logAutomationSkipped({
+            automationId: automation.id,
+            commentId,
+            postId,
+            workspaceId,
+            reason: "already replied to this user on this post",
+          })
           continue
         }
       }
@@ -557,4 +612,23 @@ export async function processCommentAutomation(
       )
     }
   }
+}
+
+const logAutomationSkipped = ({
+  automationId,
+  commentId,
+  postId,
+  workspaceId,
+  reason,
+}: {
+  automationId: string
+  commentId: string
+  postId: string
+  workspaceId: string
+  reason: string
+}) => {
+  logger.info(
+    { automationId, commentId, postId, workspaceId, reason },
+    "Comment automation skipped",
+  )
 }
