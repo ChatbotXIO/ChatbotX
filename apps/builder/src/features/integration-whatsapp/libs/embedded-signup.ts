@@ -66,21 +66,53 @@ export function decodeOAuthState(raw: string): WhatsappOAuthState | null {
   }
 }
 
-/**
- * Derive Meta's embedded-signup `featureType` from the user's intent. Mirrors the
- * original inline logic: transfer (coexist) onboarding vs. existing-WABA sharing.
- */
-export function resolveEmbeddedSignupFeatureType(params: {
+export type EmbeddedSignupIntent = {
   connectExisting: boolean
   transferPhoneNumber: boolean
-}): string | undefined {
+  /** Manual connect bypasses embedded signup entirely. */
+  manualConnect?: boolean
+}
+
+/**
+ * Derive Meta's embedded-signup `featureType` from the user's intent.
+ *
+ * - Transferring a number hosted by another provider means the WABA already
+ *   exists elsewhere, so Meta must open the existing-WABA sharing screen.
+ * - Connecting an existing account means the number is live on the WhatsApp
+ *   Business App, which is Meta's coexistence onboarding screen.
+ *
+ * When both are set the transfer wins — sharing a foreign WABA cannot also be a
+ * coexist onboarding.
+ */
+export function resolveEmbeddedSignupFeatureType(
+  params: EmbeddedSignupIntent,
+): string | undefined {
   if (params.transferPhoneNumber) {
-    return EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
-  }
-  if (params.connectExisting) {
     return EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING
   }
+  if (params.connectExisting) {
+    return EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
+  }
   return
+}
+
+/**
+ * Whether this intent asked Meta for the coexistence flow. The server keys its
+ * coexist eligibility check on this, so it stays in lockstep with the
+ * `featureType` the browser actually sent to Meta. A manual connect never opens
+ * the dialog, so it is never a coexist onboarding — even though the form leaves
+ * `connectExisting` on behind it.
+ */
+export function isCoexistOnboardingIntent(
+  params: EmbeddedSignupIntent,
+): boolean {
+  if (params.manualConnect) {
+    return false
+  }
+  return (
+    resolveEmbeddedSignupFeatureType(params) ===
+    EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
+  )
 }
 
 /** The exact embedded-signup `extras` object Meta expects. */
