@@ -94,35 +94,72 @@ const extractFieldSchema = z.object({
 const extractDataBase = {
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiExtractData),
-  provider: z.enum(["openai", "gemini", "claude", "openrouter"]),
-  model: z.string().trim().min(1),
   extractFields: z.array(extractFieldSchema),
   states: z.tuple([successStateSchema, errorStateSchema]).optional(),
 }
 
-export const aiExtractDataSchema = z.discriminatedUnion("inputType", [
-  z.object({
-    ...extractDataBase,
-    inputType: z.literal("text"),
-    inputFieldId: z.string().trim().min(1),
-    file: z
-      .object({
-        attribute: z.string(),
-        value: z.string(),
-      })
-      .optional(),
-  }),
-  z.object({
-    ...extractDataBase,
-    inputType: z.literal("image"),
-    inputFieldId: z.string().trim().min(1),
-  }),
-  z.object({
-    ...extractDataBase,
-    inputType: z.literal("file"),
-    inputFieldId: z.string().trim().min(1),
-  }),
+export const aiExtractDataNativeProviderSchema = z.enum([
+  "openai",
+  "gemini",
+  "claude",
+  "openrouter",
 ])
+export type AIExtractDataNativeProvider = z.infer<
+  typeof aiExtractDataNativeProviderSchema
+>
+
+export const aiExtractDataProviderSchema = z.enum([
+  ...aiExtractDataNativeProviderSchema.options,
+  "openaiCompatible",
+])
+
+const extractDataWithProviderBase = {
+  ...extractDataBase,
+  provider: aiExtractDataProviderSchema,
+  integrationId: z.string().trim().optional(),
+  model: z.string().trim(),
+}
+
+export const aiExtractDataSchema = z
+  .discriminatedUnion("inputType", [
+    z.object({
+      ...extractDataWithProviderBase,
+      inputType: z.literal("text"),
+      inputFieldId: z.string().trim().min(1),
+      file: z
+        .object({
+          attribute: z.string(),
+          value: z.string(),
+        })
+        .optional(),
+    }),
+    z.object({
+      ...extractDataWithProviderBase,
+      inputType: z.literal("image"),
+      inputFieldId: z.string().trim().min(1),
+    }),
+    z.object({
+      ...extractDataWithProviderBase,
+      inputType: z.literal("file"),
+      inputFieldId: z.string().trim().min(1),
+    }),
+  ])
+  .superRefine((value, ctx) => {
+    if (!value.model.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["model"],
+        message: "Model is required",
+      })
+    }
+    if (value.provider === "openaiCompatible" && !value.integrationId?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["integrationId"],
+        message: "Integration is required",
+      })
+    }
+  })
 
 export type AIExtractDataSchema = z.infer<typeof aiExtractDataSchema>
 
@@ -130,13 +167,20 @@ export const aiExtractDataDefaultFn = (
   props: Partial<AIExtractDataSchema> = {},
 ): AIExtractDataSchema => {
   const provider = props.provider ?? "openai"
-  const model = props.model ?? aiExtractDataModels[provider].default
+  const model =
+    props.model ??
+    (provider === "openaiCompatible"
+      ? ""
+      : aiExtractDataModels[provider].default)
 
   return {
     id: createId(),
     inputType: "text",
     inputFieldId: "",
     provider,
+    ...(provider === "openaiCompatible"
+      ? { integrationId: "integrationId" in props ? props.integrationId : "" }
+      : {}),
     model,
     extractFields: [],
     ...props,

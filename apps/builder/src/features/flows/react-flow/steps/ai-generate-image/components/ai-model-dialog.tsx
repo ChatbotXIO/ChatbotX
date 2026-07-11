@@ -61,7 +61,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
     setOpen(false)
   })
 
-  const isGemini = provider === "gemini"
+  const isOpenAI = provider === "openai"
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
@@ -91,7 +91,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
                 required
               />
 
-              {!isGemini && <QualitySelect name="quality" />}
+              {isOpenAI && <QualitySelect name="quality" />}
 
               <SizeSelect name="size" provider={provider} />
 

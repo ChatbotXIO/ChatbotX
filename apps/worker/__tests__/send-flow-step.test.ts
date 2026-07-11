@@ -358,6 +358,43 @@ describe("sendFlowStep", () => {
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
   })
 
+  test("skips non-deliverable AI steps instead of sending an empty channel message", async () => {
+    const aiAnalyzeImageStep = {
+      id: "step-ai-image",
+      nodeId: "node-ai",
+      stepType: "aiAnalyzeImage",
+      provider: "openaiCompatible",
+      integrationId: "integration-1",
+      model: "vision-model",
+      prompt: "Describe this image",
+      inputFieldId: "image-field",
+      outputFieldId: "output-field",
+      temperature: 0.4,
+      maxOutputTokens: 512,
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step: aiAnalyzeImageStep })
+
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
+  test("skips blank sendText steps instead of sending an empty Messenger payload", async () => {
+    const blankSendTextStep = {
+      ...sendTextStep,
+      text: "",
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step: blankSendTextStep })
+
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
   test("calls repository.create() for step without url (sendText)", async () => {
     await sendFlowStep({
       ...baseParams,

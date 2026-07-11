@@ -57,6 +57,34 @@ import { sendFlowStepToChannel, sendMessageToChannel } from "./send-message"
 import { processMessengerTemplate } from "./send-messenger-template"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
+const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
+  stepTypes.enum.sendAudio,
+  stepTypes.enum.sendCard,
+  stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendFile,
+  stepTypes.enum.sendGif,
+  stepTypes.enum.sendImage,
+  stepTypes.enum.sendMessengerTemplateMessage,
+  stepTypes.enum.sendQuickReply,
+  stepTypes.enum.sendText,
+  stepTypes.enum.sendVideo,
+  stepTypes.enum.sendWaTemplateMessage,
+  stepTypes.enum.whatsappFlow,
+  stepTypes.enum.whatsappOptionList,
+])
+
+const isBlankTextCarrierStep = (step: SendFlowStepData) => {
+  if (step.stepType === stepTypes.enum.sendText) {
+    return !step.text.trim()
+  }
+
+  if (step.stepType === stepTypes.enum.sendQuickReply) {
+    return !step.message.trim()
+  }
+
+  return false
+}
+
 export const convertButtonsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
@@ -242,11 +270,40 @@ export async function sendFlowStep({
     nodeId: step.nodeId,
   }
 
+  if (!CHANNEL_DELIVERABLE_STEP_TYPES.has(step.stepType)) {
+    logger.debug(
+      {
+        conversationId,
+        flowId,
+        flowVersionId,
+        stepId: step.id,
+        stepType: step.stepType,
+      },
+      "Skipping non-deliverable flow step",
+    )
+    return
+  }
+
   const resolvedStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
     { contactInbox: targetContactInbox },
   )
+
+  if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
+    logger.warn(
+      {
+        conversationId,
+        flowId,
+        flowVersionId,
+        stepId: resolvedStep.id,
+        stepType: resolvedStep.stepType,
+      },
+      "Skipping blank text flow step",
+    )
+    return
+  }
+
   const messageText =
     resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
 

@@ -10,7 +10,7 @@ import { BotIcon } from "lucide-react"
 import { OpenAIIcon, OpenAIIconHex } from "@/icons/openai"
 
 type AIIconProps = {
-  provider: AIProvider
+  provider: AIProvider | "openaiCompatible"
   className?: string
   showLabel?: boolean
   label?: string

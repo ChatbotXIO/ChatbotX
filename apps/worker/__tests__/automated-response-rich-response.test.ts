@@ -27,6 +27,19 @@ const executeRichActionsMock = vi.hoisted(() =>
   vi.fn(async () => ({ executed: 0, failed: [] })),
 )
 const appendHistoryMock = vi.hoisted(() => vi.fn(async () => undefined))
+const createAIProviderInstanceMock = vi.hoisted(() =>
+  vi.fn(() => () => ({ type: "fake-model" })),
+)
+const createOpenaiCompatibleModelInstanceMock = vi.hoisted(() =>
+  vi.fn(() => ({ type: "openai-compatible-model" })),
+)
+const getAIIntegrationInDBMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    id: "integration-1",
+    apiKey: "key",
+  })),
+)
+const findOpenaiCompatibleMock = vi.hoisted(() => vi.fn())
 const emitMock = vi.hoisted(() => vi.fn(async () => undefined))
 const warnMock = vi.hoisted(() => vi.fn())
 const errorMock = vi.hoisted(() => vi.fn())
@@ -82,11 +95,9 @@ vi.mock("@chatbotx.io/ai/server", () => ({
   appendKnowledgeBaseGuard: (p: string) => p,
   appendToolOutputGuard: (p: string) => p,
   appendUnavailableWebSearchPolicy: (p: string) => p,
-  createAIProviderInstance: vi.fn(() => () => ({ type: "fake-model" })),
-  getAIIntegrationInDB: vi.fn(async () => ({
-    id: "integration-1",
-    apiKey: "key",
-  })),
+  createAIProviderInstance: createAIProviderInstanceMock,
+  createOpenaiCompatibleModelInstance: createOpenaiCompatibleModelInstanceMock,
+  getAIIntegrationInDB: getAIIntegrationInDBMock,
   getAIToolset: vi.fn(async () => ({
     tools: {},
     cleanup: undefined,
@@ -95,6 +106,12 @@ vi.mock("@chatbotx.io/ai/server", () => ({
   McpClient: vi.fn(),
   normalizeAuthorizedWebSearchDomains: vi.fn(() => []),
   normalizeMcpContent: vi.fn((c: unknown) => c),
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  integrationOpenaiCompatibleService: {
+    findByWorkspaceIdAndId: findOpenaiCompatibleMock,
+  },
 }))
 
 async function* emptyAsyncIterable() {
@@ -262,6 +279,22 @@ const baseProps = {
 describe("replyByAI — rich mode routing", () => {
   beforeEach(() => {
     state.aiResponseText = ""
+    createAIProviderInstanceMock.mockClear()
+    createOpenaiCompatibleModelInstanceMock.mockClear()
+    getAIIntegrationInDBMock.mockClear()
+    getAIIntegrationInDBMock.mockResolvedValue({
+      id: "integration-1",
+      apiKey: "key",
+    })
+    findOpenaiCompatibleMock.mockClear()
+    findOpenaiCompatibleMock.mockResolvedValue({
+      id: "dynamic-1",
+      autoReply: true,
+      enabled: true,
+      baseURL: "http://127.0.0.1:1234/v1",
+      preset: "lmstudio",
+      name: "Local",
+    })
     sendMessageAndWaitMock.mockClear()
     sendRichMessagesMock.mockClear().mockResolvedValue({
       enqueued: 1,
@@ -491,5 +524,120 @@ describe("replyByAI — rich mode routing", () => {
     // → no sendMessageAndWait, falls through to null
     expect(sendMessageAndWaitMock).not.toHaveBeenCalled()
     expect(result).toBeNull()
+  })
+})
+
+describe("replyByAI — OpenAI-compatible provider routing", () => {
+  beforeEach(() => {
+    state.aiResponseText = ""
+    createAIProviderInstanceMock.mockClear()
+    createOpenaiCompatibleModelInstanceMock.mockClear()
+    getAIIntegrationInDBMock.mockClear()
+    getAIIntegrationInDBMock.mockResolvedValue({
+      id: "integration-1",
+      apiKey: "key",
+    })
+    findOpenaiCompatibleMock.mockClear()
+    findOpenaiCompatibleMock.mockResolvedValue({
+      id: "dynamic-1",
+      autoReply: true,
+      enabled: true,
+      baseURL: "http://127.0.0.1:1234/v1",
+      preset: "lmstudio",
+      name: "Local",
+    })
+    appendHistoryMock.mockClear()
+    vi.mocked(streamText).mockClear()
+  })
+
+  test("runs an enabled auto-reply OpenAI-compatible provider", async () => {
+    state.aiResponseText = "Hello from compatible"
+
+    const result = await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({
+        isRichResponse: false,
+        models: [
+          {
+            kind: "openaiCompatible",
+            integrationId: "dynamic-1",
+            model: "local-model",
+          },
+        ] as AIAgentModel["models"],
+      }),
+    })
+
+    expect(result?.provider).toBe("openaiCompatible")
+    expect(findOpenaiCompatibleMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "dynamic-1",
+    })
+    expect(createOpenaiCompatibleModelInstanceMock).toHaveBeenCalledWith({
+      integration: expect.objectContaining({ id: "dynamic-1" }),
+      modelId: "local-model",
+    })
+    expect(getAIIntegrationInDBMock).not.toHaveBeenCalled()
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: { type: "openai-compatible-model" },
+      }),
+    )
+  })
+
+  test("skips OpenAI-compatible provider when auto reply is disabled and falls back to native provider", async () => {
+    state.aiResponseText = "Hello from native"
+    findOpenaiCompatibleMock.mockResolvedValueOnce({
+      id: "dynamic-1",
+      autoReply: false,
+      enabled: true,
+    })
+
+    const result = await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({
+        isRichResponse: false,
+        models: [
+          {
+            kind: "openaiCompatible",
+            integrationId: "dynamic-1",
+            model: "local-model",
+          },
+          { provider: "openai", model: "gpt-4o" },
+        ] as AIAgentModel["models"],
+      }),
+    })
+
+    expect(result?.provider).toBe("openai")
+    expect(createOpenaiCompatibleModelInstanceMock).not.toHaveBeenCalled()
+    expect(getAIIntegrationInDBMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "openai",
+      autoReply: true,
+    })
+    expect(createAIProviderInstanceMock).toHaveBeenCalled()
+  })
+
+  test("keeps native provider priority when native provider appears first", async () => {
+    state.aiResponseText = "Hello from native"
+
+    const result = await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({
+        isRichResponse: false,
+        models: [
+          { provider: "openai", model: "gpt-4o" },
+          {
+            kind: "openaiCompatible",
+            integrationId: "dynamic-1",
+            model: "local-model",
+          },
+        ] as AIAgentModel["models"],
+      }),
+    })
+
+    expect(result?.provider).toBe("openai")
+    expect(findOpenaiCompatibleMock).not.toHaveBeenCalled()
+    expect(createOpenaiCompatibleModelInstanceMock).not.toHaveBeenCalled()
+    expect(createAIProviderInstanceMock).toHaveBeenCalled()
   })
 })

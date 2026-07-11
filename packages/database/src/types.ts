@@ -38,6 +38,8 @@ export type IntegrationGeminiModel =
   typeof schema.integrationGeminiModel.$inferSelect
 export type IntegrationOpenrouterModel =
   typeof schema.integrationOpenrouterModel.$inferSelect
+export type IntegrationOpenaiCompatibleModel =
+  typeof schema.integrationOpenaiCompatibleModel.$inferSelect
 export type IntegrationGetResponseModel =
   typeof schema.integrationGetResponseModel.$inferSelect
 export type IntegrationModel = typeof schema.integrationModel.$inferSelect

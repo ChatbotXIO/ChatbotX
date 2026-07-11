@@ -1,6 +1,6 @@
 "use client"
 
-import { aiChatProviders } from "@chatbotx.io/ai"
+import { aiChatProviders, openaiCompatiblePresetConfigs } from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -42,15 +42,23 @@ import {
   createAIAgentRequest,
 } from "@/features/ai-agents/schemas/action"
 import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
 import { WebSearchAuthorizedDomainsField } from "./components/web-search-authorized-domains-field"
+import {
+  buildOpenaiCompatibleAgentModels,
+  getOpenaiCompatibleIntegrationLabel,
+  shouldUseCustomOpenaiCompatibleModelInput,
+} from "./openai-compatible-models"
 
 type CreateAIAgentDialogProps = {
   workspaceId: string
+  openaiCompatibleIntegrations: IntegrationOpenaiCompatibleResource[]
   onSuccess?: () => void
 }
 
 export function CreateAIAgentDialog({
   workspaceId,
+  openaiCompatibleIntegrations,
   onSuccess,
 }: CreateAIAgentDialogProps) {
   const [open, setOpen] = useState(false)
@@ -92,10 +100,15 @@ export function CreateAIAgentDialog({
           isDefault: false,
           isRichResponse: false,
           messages: [],
-          models: aiChatProviders.map((provider) => ({
-            provider: provider.provider,
-            model: provider.defaultModel,
-          })) as CreateAIAgentRequest["models"],
+          models: [
+            ...aiChatProviders.map((provider) => ({
+              provider: provider.provider,
+              model: provider.defaultModel,
+            })),
+            ...buildOpenaiCompatibleAgentModels({
+              integrations: openaiCompatibleIntegrations,
+            }),
+          ] as CreateAIAgentRequest["models"],
           temperature: 0.4,
           maxOutputTokens: 2048,
           tools: [],
@@ -106,9 +119,17 @@ export function CreateAIAgentDialog({
     },
   )
 
-  const { fields, append, remove } = useFieldArray({
+  const {
+    fields: messageFields,
+    append: appendMessage,
+    remove: removeMessage,
+  } = useFieldArray({
     control,
     name: "messages",
+  })
+  const { fields: modelFields } = useFieldArray({
+    control,
+    name: "models",
   })
 
   const messageRoleOptions = useMemo(
@@ -121,8 +142,8 @@ export function CreateAIAgentDialog({
 
   const addOptions = () => {
     const lastRole: string =
-      fields.at(-1)?.role || aiMessageRoles.enum.assistant
-    append({
+      messageFields.at(-1)?.role || aiMessageRoles.enum.assistant
+    appendMessage({
       role:
         lastRole === aiMessageRoles.enum.user
           ? aiMessageRoles.enum.assistant
@@ -173,16 +194,71 @@ export function CreateAIAgentDialog({
                       <SlidersHorizontalIcon aria-hidden className="size-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="flex w-[340px] flex-col gap-6 p-4">
-                    {aiChatProviders.map((provider, index) => (
-                      <SelectField
-                        key={provider.provider}
-                        label={`${t(`aiProviders.${provider.provider}`)} ${t("fields.model.label")}`}
-                        name={`models.${index}.model`}
-                        options={provider.modelOptions}
-                        required
-                      />
-                    ))}
+                  <PopoverContent
+                    align="start"
+                    className="flex w-[340px] flex-col gap-6 overflow-y-auto overscroll-contain p-4"
+                    collisionPadding={16}
+                    side="right"
+                    style={{
+                      maxHeight:
+                        "min(calc(var(--radix-popover-content-available-height) - 1rem), calc(100vh - 2rem))",
+                    }}
+                  >
+                    {modelFields.map((field, index) => {
+                      if ("kind" in field) {
+                        const integration = openaiCompatibleIntegrations.find(
+                          (item) => item.id === field.integrationId,
+                        )
+                        const presetConfig = integration
+                          ? openaiCompatiblePresetConfigs[
+                              integration.preset as keyof typeof openaiCompatiblePresetConfigs
+                            ]
+                          : undefined
+                        const providerLabel = integration
+                          ? getOpenaiCompatibleIntegrationLabel(integration)
+                          : t("openaiCompatible.provider")
+                        const label = `${providerLabel} ${t("fields.model.label")}`
+                        if (
+                          shouldUseCustomOpenaiCompatibleModelInput(
+                            presetConfig,
+                          )
+                        ) {
+                          return (
+                            <InputField
+                              key={field.id}
+                              label={label}
+                              name={`models.${index}.model`}
+                              required
+                            />
+                          )
+                        }
+                        return (
+                          <SelectField
+                            key={field.id}
+                            label={label}
+                            name={`models.${index}.model`}
+                            options={presetConfig?.modelOptions ?? []}
+                            required
+                          />
+                        )
+                      }
+
+                      const provider = aiChatProviders.find(
+                        (item) => item.provider === field.provider,
+                      )
+                      if (!provider) {
+                        return null
+                      }
+                      return (
+                        <SelectField
+                          key={field.id}
+                          label={`${t(`aiProviders.${provider.provider}`)} ${t("fields.model.label")}`}
+                          name={`models.${index}.model`}
+                          options={provider.modelOptions}
+                          required
+                        />
+                      )
+                    })}
 
                     <SliderField
                       label={t("fields.temperature.label")}
@@ -211,7 +287,7 @@ export function CreateAIAgentDialog({
                 {t("fields.messages.label")}
               </div>
 
-              {fields.map((item, index) => (
+              {messageFields.map((item, index) => (
                 <div
                   className="relative rounded-md border border-input"
                   key={item.id}
@@ -228,7 +304,7 @@ export function CreateAIAgentDialog({
                   <Button
                     aria-label={t("actions.delete")}
                     className="absolute top-1 right-1"
-                    onClick={() => remove(index)}
+                    onClick={() => removeMessage(index)}
                     size="icon"
                     type="button"
                     variant="ghost"

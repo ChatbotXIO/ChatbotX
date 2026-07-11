@@ -8,6 +8,7 @@ import {
   useRef,
 } from "react"
 import { useStore } from "zustand"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
 import {
   createFlowTemplateStore,
   type FlowTemplateStore,
@@ -21,18 +22,21 @@ const FlowActionContext = createContext<FlowTemplateStoreApi | undefined>(
 export type FlowTemplateProviderProps = {
   children: ReactNode
   workspaceId: string
+  openaiCompatibleIntegrations?: IntegrationOpenaiCompatibleResource[]
   autoInitialize?: boolean
 }
 
 export function FlowTemplateStoreProvider({
   children,
   workspaceId,
+  openaiCompatibleIntegrations = [],
   autoInitialize = true,
 }: FlowTemplateProviderProps) {
   const storeRef = useRef<FlowTemplateStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createFlowTemplateStore({
       workspaceId,
+      openaiCompatibleIntegrations,
     })
   }
 

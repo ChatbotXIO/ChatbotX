@@ -17,6 +17,7 @@ type SettingIntegrationLayoutProps = {
   claude?: ReactNode
   deepSeek?: ReactNode
   openRouter?: ReactNode
+  openaiCompatible?: ReactNode
   googleSheets?: ReactNode
   activeCampaign?: ReactNode
   getResponse?: ReactNode
@@ -35,6 +36,7 @@ export default function SettingIntegrationLayout({
   claude,
   deepSeek,
   openRouter,
+  openaiCompatible,
   googleSheets,
   activeCampaign,
   getResponse,
@@ -77,6 +79,11 @@ export default function SettingIntegrationLayout({
       keyName: t("openrouter.title"),
       icon: BotIcon,
       content: openRouter,
+    },
+    {
+      keyName: t("openaiCompatible.title"),
+      icon: BotIcon,
+      content: openaiCompatible,
     },
     {
       keyName: t("googleSheets.title"),

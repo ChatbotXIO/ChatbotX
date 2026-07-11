@@ -247,7 +247,46 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
       },
     ],
   },
+  {
+    label: "OpenAI Compatible",
+    icon: BotIcon,
+    providerKey: "openaiCompatible",
+    steps: [
+      {
+        stepType: stepTypes.enum.aiGenerateText,
+        getLabel: stepWithName("flows.aiGenerateText.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiAnalyzeImage,
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateTextAgent,
+        getLabel: stepWithAiName("fields.flows.aiGenerateTextAgent"),
+      },
+      {
+        stepType: stepTypes.enum.aiExtractData,
+        getLabel: stepWithName("flows.aiExtractData.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiDeleteMessageHistory,
+        getLabel: stepWithAiName("fields.flows.aiDeleteMessageHistory"),
+      },
+    ],
+  },
 ]
+
+function buildProviderStepProps(providerKey: string, stepType: StepType) {
+  if (providerKey !== "openaiCompatible") {
+    return { provider: providerKey }
+  }
+
+  if (stepType === stepTypes.enum.aiDeleteMessageHistory) {
+    return { provider: providerKey }
+  }
+
+  return { provider: providerKey, integrationId: "", model: "" }
+}
 
 function buildProviderMenus(t: TranslationFn): MenuItem[] {
   return PROVIDER_CONFIGS.map(({ label, icon, providerKey, steps }) => ({
@@ -258,7 +297,7 @@ function buildProviderMenus(t: TranslationFn): MenuItem[] {
       label: step.getLabel(t, label),
       icon,
       stepType: step.stepType,
-      props: { provider: providerKey },
+      props: buildProviderStepProps(providerKey, step.stepType),
     })),
   }))
 }

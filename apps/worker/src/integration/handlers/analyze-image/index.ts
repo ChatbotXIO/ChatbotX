@@ -1,8 +1,4 @@
 import { aiTimeouts, isImageUrl, processStreamingText } from "@chatbotx.io/ai"
-import {
-  aiIntegrationService,
-  createAIModelInstance,
-} from "@chatbotx.io/ai/server"
 import type { AIAnalyzeImageSchema } from "@chatbotx.io/flow-config"
 import { streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
@@ -12,6 +8,7 @@ import {
   saveResultToCustomField,
 } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 
 export async function handleAIAnalyzeImage({
@@ -22,24 +19,38 @@ export async function handleAIAnalyzeImage({
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    const aiConfig = await aiIntegrationService.findBy({
+    const resolvedModel = await resolveFlowAIModel({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
+      integrationId:
+        step.provider === "openaiCompatible" ? step.integrationId : undefined,
+      modelId: step.model,
+      conversationId: conversation.id,
     })
 
-    if (!aiConfig) {
+    if (!resolvedModel.ok) {
+      logger.warn(
+        {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          stepId: step.id,
+          stepType: step.stepType,
+          provider: step.provider,
+          integrationId:
+            step.provider === "openaiCompatible"
+              ? step.integrationId
+              : undefined,
+          modelId: step.model,
+          reason: resolvedModel.reason,
+        },
+        "[ai-analyze-image] Failed to resolve AI model",
+      )
       return {
         status: "error",
-        errorMessage: "AI integration not found",
+        errorMessage: resolvedModel.message,
         result: null,
       }
     }
-
-    const model = createAIModelInstance({
-      model: aiConfig,
-      provider: step.provider,
-      modelId: step.model,
-    })
 
     // Resolve Image URL
     const imageUrl = await readCustomFieldValue({
@@ -55,7 +66,7 @@ export async function handleAIAnalyzeImage({
     }
 
     const result = streamText({
-      model,
+      model: resolvedModel.model,
       messages: [
         {
           role: "user",
