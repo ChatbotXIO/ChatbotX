@@ -118,6 +118,7 @@ export const stepTypes = z.enum([
   "sendMessengerTemplateMessage",
 
   // Messenger Operations (N_)
+  "facebookCustomAudience",
   "setMessengerUserPersistentMenu",
   "enableMessengerComposer",
   "disableMessengerComposer",

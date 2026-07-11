@@ -35,6 +35,7 @@
     "@chatbotx.io/integration-active-campaign": "workspace:*",
     "@chatbotx.io/integration-chatbotx": "workspace:*",
     "@chatbotx.io/integration-drip": "workspace:*",
+    "@chatbotx.io/integration-facebook-ads": "workspace:*",
     "@chatbotx.io/integration-get-response": "workspace:*",
     "@chatbotx.io/integration-google-sheets": "workspace:*",
     "@chatbotx.io/integration-instagram": "workspace:*",

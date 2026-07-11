@@ -21,6 +21,7 @@ import {
   Layers2,
   LayersPlus,
   MailIcon,
+  MegaphoneIcon,
   MessageCircleMoreIcon,
   MessageCirclePlusIcon,
   MessageCircleXIcon,
@@ -558,6 +559,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     icon: SiMessenger,
     stepType: null,
     children: [
+      {
+        label: t("flows.actions.facebookCustomAudience"),
+        icon: MegaphoneIcon,
+        stepType: stepTypes.enum.facebookCustomAudience,
+      },
       {
         label: t("flows.actions.setMessengerUserPersistentMenu"),
         icon: SiMessenger,

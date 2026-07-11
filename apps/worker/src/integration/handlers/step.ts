@@ -48,6 +48,7 @@ import { handleAIDeleteMessageHistory } from "./delete-message-history"
 import { subscribeDripSubscriber } from "./drip-handler"
 import { handleAIEditImage } from "./edit-image"
 import { handleAIExtractData } from "./extract-data/index"
+import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
 import { type ExecuteStepProps, seekConnectedNode } from "./flow-utils"
 import { handleAIGenerateImage } from "./generate-image"
 import { handleAIGenerateText } from "./generate-text"
@@ -378,6 +379,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.landingPage]: undefined,
   [stepTypes.enum.markEmailVerified]: markEmailVerified,
   [stepTypes.enum.activeCampaignSyncContact]: syncActiveCampaignContact,
+  [stepTypes.enum.facebookCustomAudience]: handleFacebookCustomAudience,
   [stepTypes.enum.getResponseAddContact]: addGetResponseContact,
   [stepTypes.enum.dripSubscribeSubscriber]: subscribeDripSubscriber,
   [stepTypes.enum.mailchimpAddMember]: addMailchimpMember,

@@ -1774,6 +1774,7 @@
       "inboxActions": "Inbox Actions",
       "markEmailVerified": "Mark Email Verified",
       "activeCampaignSyncContact": "Add Contact to ActiveCampaign",
+      "facebookCustomAudience": "Facebook Custom Audience",
       "mailchimpAddMember": "Add Contact to MailChimp",
       "mailerLiteAddSubscriber": "Add Contact to MailerLite",
       "klaviyoSyncProfile": "Add Contact to Klaviyo",
@@ -1940,6 +1941,33 @@
   },
   "general": {
     "title": "General"
+  },
+  "facebookAds": {
+    "title": "Facebook Ads",
+    "setting": {
+      "label": "Facebook Ads",
+      "description": "Grow your business faster by connecting your Facebook Ads to your chatbot. Create custom audiences and add/remove people to custom audiences.",
+      "reconnect": "Reconnect"
+    },
+    "fields": {
+      "subscriberShouldBe": "Subscriber should be",
+      "addedToCustomAudience": "Added to Custom Audience",
+      "removedFromCustomAudience": "Removed from Custom Audience",
+      "adAccount": "Ad Account",
+      "customAudience": "Custom Audience",
+      "nothingSelected": "Nothing selected"
+    },
+    "adAccounts": {
+      "loading": "Loading ad accounts...",
+      "error": "Failed to load ad accounts. Please check your Facebook Ads connection."
+    },
+    "customAudiences": {
+      "loading": "Loading custom audiences...",
+      "error": "Failed to load custom audiences. Please check your Facebook Ads connection."
+    },
+    "errors": {
+      "invalidAppSettings": "Facebook App settings are not valid"
+    }
   },
   "googleSheets": {
     "setting": {
