@@ -68,6 +68,7 @@ export async function handleCreateWebchatMessage({
         conversationId: conversation,
         contactInboxId: contactInbox,
         flowId: parsedInput.flowId,
+        origin: "channel",
       },
     })
     return null
@@ -81,6 +82,7 @@ export async function handleCreateWebchatMessage({
         conversationId: conversation,
         contactInboxId: contactInbox,
         ref: parsedInput.initRef,
+        isNewContact,
       },
     })
     return null

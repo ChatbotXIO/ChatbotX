@@ -3,9 +3,14 @@ import {
   type DatabaseClient,
   db,
   eq,
+  inArray,
   type Transaction,
 } from "@chatbotx.io/database/client"
-import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
+import {
+  contactsOnSequenceModel,
+  sequenceModel,
+} from "@chatbotx.io/database/schema"
+import { emitSequenceUnsubscribed } from "@chatbotx.io/events"
 import {
   calculateNextRunAtFromStep,
   cancelPendingDispatches,
@@ -17,6 +22,15 @@ import { logger } from "../logger"
 
 type DrizzleClient = DatabaseClient | Transaction
 type DispatchToRemove = { id: string; bucket: number }
+type RemovedEnrollment = {
+  contactId: string
+  sequenceId: string
+  workspaceId: string
+}
+type RemoveEnrollmentsResult = {
+  dispatchesToRemove: DispatchToRemove[]
+  removedEnrollments: RemovedEnrollment[]
+}
 type RemoveReason = "enrollment_removed" | "unsubscribed_via_flow"
 
 type RemoveContactSequencesForContactsParams = {
@@ -71,6 +85,8 @@ class ContactSequenceService extends BaseService {
         },
         columns: {
           id: true,
+          contactId: true,
+          sequenceId: true,
           workspaceId: true,
         },
       })
@@ -78,9 +94,10 @@ class ContactSequenceService extends BaseService {
       return await this.removeEnrollmentsWithClient(tx, enrollments, reason)
     }
 
-    const dispatchesToRemove: DispatchToRemove[] = useTransaction
+    const removalResult: RemoveEnrollmentsResult = useTransaction
       ? await this.runInTransaction(removeWithClient)
       : await removeWithClient(client)
+    const { dispatchesToRemove, removedEnrollments } = removalResult
 
     if (removeFromSchedule) {
       try {
@@ -91,6 +108,17 @@ class ContactSequenceService extends BaseService {
           "Failed to remove dispatches from schedule after DB commit",
         )
       }
+    }
+
+    // A supplied client may be an outer transaction; emit only when this service
+    // owns the commit boundary so downstream workers never observe rolled-back removals.
+    if (!params.client) {
+      this.emitSequenceUnsubscribedEvents(removedEnrollments).catch((err) => {
+        logger.warn(
+          { err, removedCount: removedEnrollments.length },
+          "Failed to emit sequence unsubscribed events",
+        )
+      })
     }
 
     return dispatchesToRemove
@@ -144,7 +172,15 @@ class ContactSequenceService extends BaseService {
         },
       )
 
-      return { returnedSequences, dispatchesToRemove }
+      return {
+        returnedSequences,
+        dispatchesToRemove,
+        removedEnrollments: toRemove.map((sequenceId) => ({
+          contactId,
+          sequenceId,
+          workspaceId,
+        })),
+      }
     })
 
     try {
@@ -156,16 +192,30 @@ class ContactSequenceService extends BaseService {
       )
     }
 
+    this.emitSequenceUnsubscribedEvents(result.removedEnrollments).catch(
+      (err) => {
+        logger.warn(
+          { err, removedCount: result.removedEnrollments.length },
+          "Failed to emit sequence unsubscribed events",
+        )
+      },
+    )
+
     return result.returnedSequences
   }
 
   private async removeEnrollmentsWithClient(
     client: DrizzleClient,
-    enrollments: Array<{ id: string; workspaceId: string }>,
+    enrollments: Array<{
+      contactId: string
+      id: string
+      sequenceId: string
+      workspaceId: string
+    }>,
     reason: RemoveReason,
-  ): Promise<DispatchToRemove[]> {
+  ): Promise<RemoveEnrollmentsResult> {
     if (enrollments.length === 0) {
-      return []
+      return { dispatchesToRemove: [], removedEnrollments: [] }
     }
 
     const canceledDispatches = (
@@ -195,7 +245,44 @@ class ContactSequenceService extends BaseService {
       ),
     )
 
-    return canceledDispatches
+    return {
+      dispatchesToRemove: canceledDispatches,
+      removedEnrollments: enrollments.map((enrollment) => ({
+        contactId: enrollment.contactId,
+        sequenceId: enrollment.sequenceId,
+        workspaceId: enrollment.workspaceId,
+      })),
+    }
+  }
+
+  private async emitSequenceUnsubscribedEvents(
+    removedEnrollments: RemovedEnrollment[],
+  ): Promise<void> {
+    if (removedEnrollments.length === 0) {
+      return
+    }
+
+    const sequenceIds = [
+      ...new Set(removedEnrollments.map((enrollment) => enrollment.sequenceId)),
+    ]
+    const sequences = await db
+      .select({ id: sequenceModel.id, name: sequenceModel.name })
+      .from(sequenceModel)
+      .where(inArray(sequenceModel.id, sequenceIds))
+    const sequenceNameById = new Map(
+      sequences.map((sequence) => [sequence.id, sequence.name]),
+    )
+
+    await Promise.all(
+      removedEnrollments.map((enrollment) =>
+        emitSequenceUnsubscribed(
+          enrollment.workspaceId,
+          enrollment.contactId,
+          enrollment.sequenceId,
+          sequenceNameById.get(enrollment.sequenceId) ?? "",
+        ),
+      ),
+    )
   }
 
   private async getCurrentSequenceIds(

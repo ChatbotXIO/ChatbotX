@@ -11,7 +11,9 @@ import {
 } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  emitContactUnsubscribed,
   emitCustomFieldChanged,
+  emitSequenceSubscribed,
   emitTagApplied,
   emitTagRemoved,
 } from "@chatbotx.io/events"
@@ -393,6 +395,18 @@ export async function addContactSequence({
     nextStepId: firstStep?.id ?? null,
     enrolledAt: now,
   })
+
+  const sequence = await db.query.sequenceModel.findFirst({
+    where: { id: step.sequenceId },
+    columns: { name: true },
+  })
+
+  await emitSequenceSubscribed(
+    conversation.workspaceId,
+    conversation.contactId,
+    step.sequenceId,
+    sequence?.name ?? "",
+  )
 }
 
 export async function removeContactSequence({
@@ -438,4 +452,9 @@ export async function unsubscribeBroadcast({
         eq(contactModel.workspaceId, conversation.workspaceId),
       ),
     )
+
+  await emitContactUnsubscribed(
+    conversation.workspaceId,
+    conversation.contactId,
+  )
 }

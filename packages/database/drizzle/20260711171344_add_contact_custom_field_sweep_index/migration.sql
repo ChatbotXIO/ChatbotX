@@ -1,0 +1,1 @@
+CREATE INDEX "ContactCustomField_customFieldId_id_idx" ON "ContactCustomField" ("customFieldId","id");

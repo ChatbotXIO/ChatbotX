@@ -10,6 +10,11 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
+import {
+  emitContactReferredANewContact,
+  emitContactReferredExistingContact,
+} from "@chatbotx.io/events"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { flowEventTypeSchema } from "@chatbotx.io/flow-config"
 import {
   IntegrationJobAction,
@@ -21,7 +26,7 @@ import { logger } from "../../lib/logger"
 import { saveResultToCustomField } from "../utils/contact"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {
-  const { conversationId, contactInboxId, ref, messageId } = data
+  const { conversationId, contactInboxId, ref, messageId, isNewContact } = data
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId,
@@ -108,6 +113,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
           contactInboxId: contactInbox,
           flowId: flowVersion.flowId,
           flowVersionId: flowVersion.id,
+          origin: webhookChannelOrigin(),
         },
       })
       emitSuccess()
@@ -135,6 +141,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
           contactInboxId: contactInbox,
           flowId: flow.id,
           nodeId,
+          origin: webhookChannelOrigin(),
         },
       })
       emitSuccess()
@@ -142,10 +149,11 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
     }
 
     // Trigger reflink
-    handleReflink({
+    await handleReflink({
       conversation,
       contactInbox,
       refData,
+      isNewContact,
     })
     emitSuccess()
   } catch (error) {
@@ -158,8 +166,9 @@ async function handleReflink(props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
   refData: Extract<RefConfig, { type: "reflink" | "qr-code" }>
+  isNewContact?: boolean
 }) {
-  const { conversation, contactInbox } = props
+  const { conversation, contactInbox, isNewContact } = props
   const refData = props.refData
 
   const reflink = await findOrFail({
@@ -192,8 +201,19 @@ async function handleReflink(props: {
       conversationId: conversation,
       contactInboxId: contactInbox,
       flowId: reflink.flowId,
+      origin: webhookChannelOrigin(),
     },
   })
+
+  const emitReferral = isNewContact
+    ? emitContactReferredANewContact
+    : emitContactReferredExistingContact
+  await emitReferral(
+    conversation.workspaceId,
+    conversation.contactId,
+    refData.name,
+    reflink.id,
+  )
 
   if (reflink.customFieldId) {
     await saveResultToCustomField({

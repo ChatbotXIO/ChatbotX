@@ -121,6 +121,7 @@ export type IntegrationJobRunFlowNode = {
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
     sendFrom?: "inbox"
+    origin?: "channel"
   }
 }
 
@@ -185,6 +186,7 @@ export type IntegrationJobRunRef = {
     contactInboxId: string | ContactInboxModel
     ref: string
     messageId?: string
+    isNewContact?: boolean
   }
 }
 

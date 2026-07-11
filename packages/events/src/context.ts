@@ -9,5 +9,7 @@ export {
 export {
   getWebhookExecutionContext,
   isWebhookContext,
+  runWithWebhookExecutionContext,
   setWebhookExecutionContext,
+  webhookChannelOrigin,
 } from "./webhook/context"

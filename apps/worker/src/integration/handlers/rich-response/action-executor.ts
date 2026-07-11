@@ -6,6 +6,7 @@ import {
   isRichSystemContactField,
   workspaceMemberService,
 } from "@chatbotx.io/business"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   IntegrationJobAction,
   integrationQueue,
@@ -122,6 +123,7 @@ async function executeRichAction(
             conversationId: context.conversationId,
             contactInboxId: context.contactInboxId,
             flowId: action.flow_id,
+            origin: webhookChannelOrigin(),
           },
         },
         {

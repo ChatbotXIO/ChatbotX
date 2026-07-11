@@ -6,6 +6,7 @@ import {
   type WebhookJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { logger } from "../lib/logger"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
@@ -26,6 +27,7 @@ const worker = new Worker(
   {
     connection: getRedisConnection(),
     ...defaultWorkerOptions,
+    concurrency: env.WEBHOOK_WORKER_CONCURRENCY,
   },
 )
 

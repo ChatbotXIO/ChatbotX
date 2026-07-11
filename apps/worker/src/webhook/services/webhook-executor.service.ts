@@ -1,8 +1,168 @@
 import { assertPublicUrl } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import type { MatchableEventType } from "@chatbotx.io/events"
 import { logger } from "../../lib/logger"
-import type { WebhookEventData, WebhookWithConditions } from "../types"
+import type { MatchableWebhookEventData, WebhookWithConditions } from "../types"
+
+type WebhookPayloadBase = {
+  event: string
+  contact_id: string
+  timestamp: Date
+}
+
+type WebhookPayload = Record<string, unknown>
+
+type PayloadBuilder = (
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+) => Promise<WebhookPayload> | WebhookPayload
+
+const EVENT_NAMES = {
+  [triggerEventTypes.enum.tagApplied]: "tag_applied",
+  [triggerEventTypes.enum.tagRemoved]: "tag_removed",
+  [triggerEventTypes.enum.customFieldValueChanged]: "custom_field_changed",
+  [triggerEventTypes.enum.conversationTransferredToHuman]:
+    "conversation_transferred_to_human",
+  [triggerEventTypes.enum.conversationTransferredToBot]:
+    "conversation_transferred_to_bot",
+  [triggerEventTypes.enum.newContact]: "new_contact",
+  [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]:
+    "contact_unsubscribed",
+  [triggerEventTypes.enum.archived]: "conversation_archived",
+  [triggerEventTypes.enum.followUp]: "marked_as_follow_up",
+  [triggerEventTypes.enum.conversationAssigned]: "conversation_assigned",
+  [triggerEventTypes.enum.conversationUnassigned]: "conversation_unassigned",
+  [triggerEventTypes.enum.subscribedToSequence]: "subscribed_to_sequence",
+  [triggerEventTypes.enum.unsubscribedFromSequence]:
+    "unsubscribed_from_sequence",
+  [triggerEventTypes.enum.contactReferredANewContact]:
+    "contact_referred_a_new_contact",
+  [triggerEventTypes.enum.contactReferredExistingContact]:
+    "contact_referred_existing_contact",
+  [triggerEventTypes.enum.dateTimeBasedTrigger]: "datetime_based_trigger",
+} satisfies Record<MatchableEventType, string>
+
+async function buildTagPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): Promise<WebhookPayload> {
+  const tag = await db.query.tagModel.findFirst({
+    where: {
+      id: data.tagId as string,
+      deletedAt: { isNull: true as const },
+    },
+    columns: { name: true },
+  })
+
+  return {
+    ...basePayload,
+    tag: tag?.name || "",
+  }
+}
+
+function buildCustomFieldPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    custom_field: {
+      name: data.customFieldName as string,
+      old_value: data.oldValue,
+      new_value: data.newValue,
+    },
+  }
+}
+
+function buildSequencePayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    sequence_id: data.sequenceId as string,
+    sequence_name: data.sequenceName as string,
+  }
+}
+
+function buildReferralPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    ref_name: data.refName as string,
+    reflink_id: data.reflinkId as string,
+  }
+}
+
+function buildNewContactPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    name: data.name as string,
+    phone: data.phone as string,
+    email: data.email as string,
+    custom_fields: (data.customFields as Record<string, unknown>) || {},
+  }
+}
+
+const PAYLOAD_BUILDERS = {
+  [triggerEventTypes.enum.tagApplied]: buildTagPayload,
+  [triggerEventTypes.enum.tagRemoved]: buildTagPayload,
+  [triggerEventTypes.enum.customFieldValueChanged]: buildCustomFieldPayload,
+  [triggerEventTypes.enum.conversationTransferredToHuman]: (
+    basePayload,
+    data,
+  ) => ({
+    ...basePayload,
+    conversation_id: data.conversationId as string,
+    transferred_by: (data.transferredBy as string) || "bot",
+  }),
+  [triggerEventTypes.enum.conversationTransferredToBot]: (
+    basePayload,
+    data,
+  ) => ({
+    ...basePayload,
+    conversation_id: data.conversationId as string,
+    transferred_by: (data.transferredBy as string) || "system",
+  }),
+  [triggerEventTypes.enum.newContact]: buildNewContactPayload,
+  [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]: (basePayload) =>
+    basePayload,
+  [triggerEventTypes.enum.archived]: (basePayload, data) => ({
+    ...basePayload,
+    conversation_id: data.conversationId as string,
+    archived_by: (data.archivedBy as string) || "system",
+  }),
+  [triggerEventTypes.enum.followUp]: (basePayload, data) => ({
+    ...basePayload,
+    conversation_id: data.conversationId as string,
+    marked_by: (data.markedBy as string) || "system",
+  }),
+  [triggerEventTypes.enum.conversationAssigned]: (basePayload, data) => ({
+    ...basePayload,
+    conversation_id: data.conversationId as string,
+    assigned_to: data.assignedTo as string,
+    assigned_by: (data.assignedBy as string) || "system",
+  }),
+  [triggerEventTypes.enum.conversationUnassigned]: (basePayload, data) => ({
+    ...basePayload,
+    conversation_id: data.conversationId as string,
+    unassigned_by: (data.unassignedBy as string) || "system",
+  }),
+  [triggerEventTypes.enum.subscribedToSequence]: buildSequencePayload,
+  [triggerEventTypes.enum.unsubscribedFromSequence]: buildSequencePayload,
+  [triggerEventTypes.enum.contactReferredANewContact]: buildReferralPayload,
+  [triggerEventTypes.enum.contactReferredExistingContact]: buildReferralPayload,
+  [triggerEventTypes.enum.dateTimeBasedTrigger]: (basePayload, data) => ({
+    ...basePayload,
+    ...data,
+  }),
+} satisfies Record<MatchableEventType, PayloadBuilder>
 
 export class WebhookExecutor {
   private readonly MAX_RETRIES = 3
@@ -29,170 +189,17 @@ export class WebhookExecutor {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
-  private getEventName(eventType: string): string {
-    const eventMap: Record<string, string> = {
-      [triggerEventTypes.enum.tagApplied]: "tag_applied",
-      [triggerEventTypes.enum.tagRemoved]: "tag_removed",
-      [triggerEventTypes.enum.customFieldValueChanged]: "custom_field_changed",
-      [triggerEventTypes.enum.conversationTransferredToHuman]:
-        "conversation_transferred_to_human",
-      [triggerEventTypes.enum.conversationTransferredToBot]:
-        "conversation_transferred_to_bot",
-      [triggerEventTypes.enum.newContact]: "new_contact",
-      [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]:
-        "contact_unsubscribed",
-      [triggerEventTypes.enum.archived]: "conversation_archived",
-      [triggerEventTypes.enum.followUp]: "marked_as_follow_up",
-      [triggerEventTypes.enum.conversationAssigned]: "conversation_assigned",
-      [triggerEventTypes.enum.conversationUnassigned]:
-        "conversation_unassigned",
-      [triggerEventTypes.enum.subscribedToSequence]: "subscribed_to_sequence",
-      [triggerEventTypes.enum.unsubscribedFromSequence]:
-        "unsubscribed_from_sequence",
-    }
-    return eventMap[eventType] || `event_${eventType}`
-  }
-
-  private async createPayload(eventData: WebhookEventData) {
+  private async createPayload(eventData: MatchableWebhookEventData) {
     const basePayload = {
-      event: this.getEventName(eventData.eventType),
+      event: EVENT_NAMES[eventData.eventType],
       contact_id: eventData.contactId,
       timestamp: eventData.timestamp,
     }
 
-    // eventData.eventData is already the metadata object from webhook emitter
-    const data = eventData.eventData as Record<string, unknown>
-
-    // Tag events
-    if (
-      eventData.eventType === triggerEventTypes.enum.tagApplied ||
-      eventData.eventType === triggerEventTypes.enum.tagRemoved
-    ) {
-      const tag = await db.query.tagModel.findFirst({
-        where: {
-          id: data.tagId as string,
-          deletedAt: { isNull: true as const },
-        },
-        columns: { name: true },
-      })
-
-      return {
-        ...basePayload,
-        tag: tag?.name || "",
-      }
-    }
-
-    // Custom field events
-    if (
-      eventData.eventType === triggerEventTypes.enum.customFieldValueChanged
-    ) {
-      return {
-        ...basePayload,
-        custom_field: {
-          name: data.customFieldName as string,
-          old_value: data.oldValue,
-          new_value: data.newValue,
-        },
-      }
-    }
-
-    // Sequence events
-    if (
-      eventData.eventType === triggerEventTypes.enum.subscribedToSequence ||
-      eventData.eventType === triggerEventTypes.enum.unsubscribedFromSequence
-    ) {
-      return {
-        ...basePayload,
-        sequence_id: data.sequenceId as string,
-        sequence_name: data.sequenceName as string,
-      }
-    }
-
-    // Conversation transferred to human
-    if (
-      eventData.eventType ===
-      triggerEventTypes.enum.conversationTransferredToHuman
-    ) {
-      return {
-        ...basePayload,
-        conversation_id: data.conversationId as string,
-        transferred_by: (data.transferredBy as string) || "bot",
-      }
-    }
-
-    // Conversation transferred to bot
-    if (
-      eventData.eventType ===
-      triggerEventTypes.enum.conversationTransferredToBot
-    ) {
-      return {
-        ...basePayload,
-        conversation_id: data.conversationId as string,
-        transferred_by: (data.transferredBy as string) || "system",
-      }
-    }
-
-    // Conversation archived
-    if (eventData.eventType === triggerEventTypes.enum.archived) {
-      return {
-        ...basePayload,
-        conversation_id: data.conversationId as string,
-        archived_by: (data.archivedBy as string) || "system",
-      }
-    }
-
-    // Conversation follow up
-    if (eventData.eventType === triggerEventTypes.enum.followUp) {
-      return {
-        ...basePayload,
-        conversation_id: data.conversationId as string,
-        marked_by: (data.markedBy as string) || "system",
-      }
-    }
-
-    // Conversation assigned
-    if (eventData.eventType === triggerEventTypes.enum.conversationAssigned) {
-      return {
-        ...basePayload,
-        conversation_id: data.conversationId as string,
-        assigned_to: data.assignedTo as string,
-        assigned_by: (data.assignedBy as string) || "system",
-      }
-    }
-
-    // Conversation unassigned
-    if (eventData.eventType === triggerEventTypes.enum.conversationUnassigned) {
-      return {
-        ...basePayload,
-        conversation_id: data.conversationId as string,
-        unassigned_by: (data.unassignedBy as string) || "system",
-      }
-    }
-
-    // New contact
-    if (eventData.eventType === triggerEventTypes.enum.newContact) {
-      return {
-        ...basePayload,
-        name: data.name as string,
-        phone: data.phone as string,
-        email: data.email as string,
-        custom_fields: (data.customFields as Record<string, unknown>) || {},
-      }
-    }
-
-    // Contact unsubscribed from broadcast
-    if (
-      eventData.eventType ===
-      triggerEventTypes.enum.contactUnsubscribedFormBroadcast
-    ) {
-      return basePayload
-    }
-
-    // Default payload for other events
-    return {
-      ...basePayload,
-      ...eventData.eventData,
-    }
+    return await PAYLOAD_BUILDERS[eventData.eventType](
+      basePayload,
+      eventData.eventData,
+    )
   }
 
   private async executeRequest(
@@ -215,39 +222,55 @@ export class WebhookExecutor {
   private async attemptRequest(
     webhook: WebhookWithConditions,
     payload: unknown,
-    _attempt: number,
+    attempt: number,
   ): Promise<boolean> {
     try {
-      const _response = await this.executeRequest(webhook.url, payload)
+      const response = await this.executeRequest(webhook.url, payload)
 
-      // logger.info(`Webhook ${webhook.id} executed successfully`, {
-      //   webhookId: webhook.id,
-      //   url: webhook.url,
-      //   status: _response.status,
-      //   _attempt,
-      // })
+      if (!response.ok) {
+        logger.warn(
+          {
+            webhookId: webhook.id,
+            url: webhook.url,
+            status: response.status,
+            attempt,
+          },
+          "Webhook endpoint returned non-2xx response",
+        )
+      }
 
       return true
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        // logger.warn(`Webhook ${webhook.id} timeout, not retrying`, {
-        //   webhookId: webhook.id,
-        //   url: webhook.url,
-        // })
+        logger.warn(
+          { webhookId: webhook.id, url: webhook.url, attempt },
+          "Webhook endpoint timed out",
+        )
         return true
       }
 
       if (!this.isConnectionError(error)) {
-        // logger.error(
-        //   `Webhook ${webhook.id} failed with non-connection error, not retrying`,
-        //   {
-        //     webhookId: webhook.id,
-        //     url: webhook.url,
-        //     error: error instanceof Error ? error.message : "Unknown error",
-        //   },
-        // )
+        logger.warn(
+          {
+            err: error,
+            webhookId: webhook.id,
+            url: webhook.url,
+            attempt,
+          },
+          "Webhook request failed without retry",
+        )
         return true
       }
+
+      logger.warn(
+        {
+          err: error,
+          webhookId: webhook.id,
+          url: webhook.url,
+          attempt,
+        },
+        "Webhook connection failed",
+      )
 
       return false
     }
@@ -258,7 +281,7 @@ export class WebhookExecutor {
     eventData,
   }: {
     webhook: WebhookWithConditions
-    eventData: WebhookEventData
+    eventData: MatchableWebhookEventData
   }): Promise<void> {
     const payload = await this.createPayload(eventData)
 
@@ -270,20 +293,22 @@ export class WebhookExecutor {
       }
 
       if (attempt < this.MAX_RETRIES) {
-        // logger.warn(
-        //   `Webhook ${webhook.id} connection failed, retrying (${attempt}/${this.MAX_RETRIES})`,
-        //   {
-        //     webhookId: webhook.id,
-        //     url: webhook.url,
-        //     error: "Connection error",
-        //   },
-        // )
+        logger.warn(
+          {
+            webhookId: webhook.id,
+            url: webhook.url,
+            attempt,
+            maxRetries: this.MAX_RETRIES,
+          },
+          "Retrying webhook after connection failure",
+        )
         await this.delay(this.RETRY_DELAY_MS * attempt)
       }
     }
 
     logger.error(
-      `Webhook ${webhook.id} failed after ${this.MAX_RETRIES} retries - url: ${webhook.url}`,
+      { webhookId: webhook.id, url: webhook.url },
+      `Webhook failed after ${this.MAX_RETRIES} retries`,
     )
   }
 }

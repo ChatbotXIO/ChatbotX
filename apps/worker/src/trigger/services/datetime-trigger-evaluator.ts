@@ -1,17 +1,26 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import {
+  listContactCustomFieldsForDateTimeSweep,
+  listContactCustomFieldsForDateTimeSweepContacts,
+} from "@chatbotx.io/database/repositories"
 import { triggerExecutionModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
+import {
+  allDateTimeConditionsMatch,
+  buildContactCustomFieldMap,
+  type DateTimeSweepContactCustomField,
+  type DateTimeSweepEntity,
+  extractDateTimeCustomFieldIds,
+  filterContactsWithAnyCustomField,
+  forEachSweepPage,
+} from "../../shared/datetime-sweep"
 import type {
   DateTimeCondition,
   DateTimeOperator,
   DateTimeTriggerValue,
-} from "../utils/datetime-calculator"
-import {
-  matchesDateTimeCondition,
-  parseDateTimeValue,
 } from "../utils/datetime-calculator"
 import { ActionExecutor } from "./action-executor"
 
@@ -22,15 +31,16 @@ interface DateTimeTriggerResult {
   triggerId: string
 }
 
-interface TriggerMap {
-  [triggerId: string]: {
-    triggerId: string
-    workspaceId: string
-    actions: unknown
-    conditions: DateTimeCondition[]
-    timezone: string
-  }
+type TriggerSweepInfo = DateTimeSweepEntity & {
+  actions: unknown
+  triggerId: string
 }
+
+type TriggerMap = Record<string, TriggerSweepInfo>
+
+const CONTACT_FIELD_PAGE_SIZE = 1000
+const DATE_TIME_TRIGGER_CHUNK_SIZE = 100
+const MAX_DATE_TIME_TRIGGERS_PER_SCAN = 10_000
 
 async function fetchTriggerChunk(
   cursor: string | undefined,
@@ -39,6 +49,7 @@ async function fetchTriggerChunk(
   const triggers = await db.query.triggerModel.findMany({
     where: {
       active: true,
+      ...(cursor ? { id: { gt: cursor } } : {}),
     },
     with: {
       conditions: true,
@@ -48,15 +59,11 @@ async function fetchTriggerChunk(
     orderBy: { id: "asc" },
   })
 
-  // Filter triggers that have datetime conditions and apply cursor
-  const filteredTriggers = triggers
-    .filter((t) =>
-      t.conditions.some(
-        (c) => c.type === triggerEventTypes.enum.dateTimeBasedTrigger,
-      ),
-    )
-    .filter((t) => (cursor ? t.id > cursor : true))
-    .slice(0, chunkSize)
+  const filteredTriggers = triggers.filter((t) =>
+    t.conditions.some(
+      (c) => c.type === triggerEventTypes.enum.dateTimeBasedTrigger,
+    ),
+  )
 
   // Filter conditions to only include datetime conditions
   const triggersWithFilteredConditions = filteredTriggers.map((t) => ({
@@ -102,99 +109,9 @@ async function fetchTriggerChunk(
   }
 
   const nextCursor =
-    triggersWithFilteredConditions.length === chunkSize
-      ? triggersWithFilteredConditions.at(-1)?.id
-      : undefined
+    triggers.length === chunkSize ? triggers.at(-1)?.id : undefined
 
   return { triggerMap, nextCursor }
-}
-
-function extractCustomFieldIds(triggerMap: TriggerMap): Set<string> {
-  const customFieldIds = new Set<string>()
-  for (const trigger of Object.values(triggerMap)) {
-    for (const condition of trigger.conditions) {
-      customFieldIds.add(condition.customFieldId)
-    }
-  }
-  return customFieldIds
-}
-
-function buildContactCustomFieldMap(
-  contactCustomFields: Array<{
-    contactId: string
-    customFieldId: string
-    value: unknown
-  }>,
-): Map<string, Map<string, unknown>> {
-  const contactCustomFieldMap = new Map<string, Map<string, unknown>>()
-  for (const cf of contactCustomFields) {
-    if (!contactCustomFieldMap.has(cf.contactId)) {
-      contactCustomFieldMap.set(cf.contactId, new Map())
-    }
-    const fieldMap = contactCustomFieldMap.get(cf.contactId)
-    if (fieldMap) {
-      fieldMap.set(cf.customFieldId, cf.value)
-    }
-  }
-  return contactCustomFieldMap
-}
-
-function filterContactsWithAllCustomFields(
-  contactCustomFields: Array<{
-    contactId: string
-    contact: { workspaceId: string }
-  }>,
-  triggerInfo: TriggerMap[string],
-  contactCustomFieldMap: Map<string, Map<string, unknown>>,
-): Set<string> {
-  const contactsToCheck = new Set<string>()
-
-  for (const cf of contactCustomFields) {
-    if (cf.contact.workspaceId !== triggerInfo.workspaceId) {
-      return new Set()
-    }
-
-    const hasAllCustomFields = triggerInfo.conditions.every((cond) =>
-      contactCustomFieldMap.get(cf.contactId)?.has(cond.customFieldId),
-    )
-
-    if (hasAllCustomFields) {
-      contactsToCheck.add(cf.contactId)
-    }
-  }
-
-  return contactsToCheck
-}
-
-function evaluateContactForTrigger(
-  triggerInfo: TriggerMap[string],
-  customFieldValues: Map<string, unknown>,
-  params: {
-    startOfMinute: number
-  },
-): boolean {
-  const timezone = triggerInfo.timezone
-
-  for (const condition of triggerInfo.conditions) {
-    const customFieldValue = customFieldValues.get(condition.customFieldId)
-    const datetimeValue = parseDateTimeValue(customFieldValue, timezone)
-
-    if (!datetimeValue) {
-      return false
-    }
-
-    const matches = matchesDateTimeCondition(
-      datetimeValue,
-      condition,
-      params,
-      timezone,
-    )
-    if (!matches) {
-      return false
-    }
-  }
-
-  return true
 }
 
 async function getExecutedTriggers(
@@ -245,7 +162,7 @@ async function releaseExecutionLock(
 }
 
 async function executeActions(
-  triggerInfo: TriggerMap[string],
+  triggerInfo: TriggerSweepInfo,
   contactId: string,
 ): Promise<void> {
   const actions = Array.isArray(triggerInfo.actions) ? triggerInfo.actions : []
@@ -269,7 +186,7 @@ async function executeActions(
 
 async function markTriggerExecuted(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerInfo: TriggerMap[string],
+  triggerInfo: TriggerSweepInfo,
   contactId: string,
 ): Promise<void> {
   await db
@@ -289,7 +206,7 @@ async function markTriggerExecuted(
 }
 
 async function executeAndMarkTrigger(
-  triggerInfo: TriggerMap[string],
+  triggerInfo: TriggerSweepInfo,
   contactId: string,
 ): Promise<DateTimeTriggerResult> {
   const notExecutedResult = {
@@ -337,51 +254,86 @@ async function executeAndMarkTrigger(
   }
 }
 
+function collectPageTriggerCandidates(
+  triggerMap: TriggerMap,
+  contactCustomFields: DateTimeSweepContactCustomField[],
+): {
+  candidateContactIds: string[]
+  candidateCustomFieldIds: string[]
+  contactsByTriggerId: Map<string, Set<string>>
+} {
+  const candidateContactIds = new Set<string>()
+  const candidateCustomFieldIds = new Set<string>()
+  const contactsByTriggerId = new Map<string, Set<string>>()
+
+  for (const triggerInfo of Object.values(triggerMap)) {
+    const contactsToCheck = filterContactsWithAnyCustomField(
+      contactCustomFields,
+      triggerInfo,
+    )
+    if (contactsToCheck.size === 0) {
+      continue
+    }
+
+    contactsByTriggerId.set(triggerInfo.triggerId, contactsToCheck)
+    for (const contactId of contactsToCheck) {
+      candidateContactIds.add(contactId)
+    }
+    for (const condition of triggerInfo.conditions) {
+      candidateCustomFieldIds.add(condition.customFieldId)
+    }
+  }
+
+  return {
+    candidateContactIds: Array.from(candidateContactIds),
+    candidateCustomFieldIds: Array.from(candidateCustomFieldIds),
+    contactsByTriggerId,
+  }
+}
+
 async function processContactBatch(
   triggerMap: TriggerMap,
-  triggerIds: string[],
-  allCustomFieldIds: Set<string>,
-  skip: number,
-  batchSize: number,
+  contactCustomFields: DateTimeSweepContactCustomField[],
+  executedKeys: Set<string>,
   params: {
     startOfMinute: number
   },
-): Promise<{ results: DateTimeTriggerResult[]; hasMore: boolean }> {
-  const contactCustomFields = await db.query.contactCustomFieldModel.findMany({
-    where: {
-      customFieldId: { in: Array.from(allCustomFieldIds) },
-    },
-    with: {
-      contact: {
-        columns: {
-          id: true,
-          workspaceId: true,
-        },
-      },
-    },
-    offset: skip,
-    limit: batchSize,
-  })
-
+): Promise<DateTimeTriggerResult[]> {
   if (contactCustomFields.length === 0) {
-    return { results: [], hasMore: false }
+    return []
   }
 
-  const contactIds = [...new Set(contactCustomFields.map((cf) => cf.contactId))]
-  const executedSet = await getExecutedTriggers(triggerIds, contactIds)
-  const contactCustomFieldMap = buildContactCustomFieldMap(contactCustomFields)
+  const { candidateContactIds, candidateCustomFieldIds, contactsByTriggerId } =
+    collectPageTriggerCandidates(triggerMap, contactCustomFields)
+  if (
+    candidateContactIds.length === 0 ||
+    candidateCustomFieldIds.length === 0
+  ) {
+    return []
+  }
+
+  const candidateTriggerIds = Array.from(contactsByTriggerId.keys())
+  const executedSet = await getExecutedTriggers(
+    candidateTriggerIds,
+    candidateContactIds,
+  )
+  const hydratedCustomFields =
+    await listContactCustomFieldsForDateTimeSweepContacts({
+      contactIds: candidateContactIds,
+      customFieldIds: candidateCustomFieldIds,
+    })
+  const contactCustomFieldMap = buildContactCustomFieldMap(hydratedCustomFields)
   const results: DateTimeTriggerResult[] = []
 
-  for (const triggerInfo of Object.values(triggerMap)) {
-    const contactsToCheck = filterContactsWithAllCustomFields(
-      contactCustomFields,
-      triggerInfo,
-      contactCustomFieldMap,
-    )
+  for (const [triggerId, contactsToCheck] of contactsByTriggerId.entries()) {
+    const triggerInfo = triggerMap[triggerId]
+    if (!triggerInfo) {
+      continue
+    }
 
     for (const contactId of contactsToCheck) {
       const executionKey = `${triggerInfo.triggerId}:${contactId}`
-      if (executedSet.has(executionKey)) {
+      if (executedKeys.has(executionKey) || executedSet.has(executionKey)) {
         continue
       }
 
@@ -390,7 +342,7 @@ async function processContactBatch(
         continue
       }
 
-      const allConditionsMatch = evaluateContactForTrigger(
+      const allConditionsMatch = allDateTimeConditionsMatch(
         triggerInfo,
         customFieldValues,
         {
@@ -401,72 +353,67 @@ async function processContactBatch(
       if (allConditionsMatch) {
         const result = await executeAndMarkTrigger(triggerInfo, contactId)
         results.push(result)
-        executedSet.add(executionKey)
+        executedKeys.add(executionKey)
       }
     }
-  }
-
-  return {
-    results,
-    hasMore: contactCustomFields.length === batchSize,
-  }
-}
-
-async function processTriggerChunk(
-  triggerMap: TriggerMap,
-  params: {
-    startOfMinute: number
-  },
-): Promise<DateTimeTriggerResult[]> {
-  const triggerIds = Object.keys(triggerMap)
-  const allCustomFieldIds = extractCustomFieldIds(triggerMap)
-
-  const CONTACT_BATCH_SIZE = 1000
-  const results: DateTimeTriggerResult[] = []
-  let skip = 0
-  let hasMore = true
-
-  while (hasMore) {
-    const { results: batchResults, hasMore: more } = await processContactBatch(
-      triggerMap,
-      triggerIds,
-      allCustomFieldIds,
-      skip,
-      CONTACT_BATCH_SIZE,
-      params,
-    )
-
-    results.push(...batchResults)
-    hasMore = more
-    skip += CONTACT_BATCH_SIZE
   }
 
   return results
 }
 
-export async function evaluateDateTimeTriggers(params: {
-  startOfMinute: number
-}): Promise<DateTimeTriggerResult[]> {
-  const TRIGGER_CHUNK_SIZE = 100
-  const allResults: DateTimeTriggerResult[] = []
+async function processTriggerMap(
+  triggerMap: TriggerMap,
+  params: {
+    startOfMinute: number
+  },
+): Promise<DateTimeTriggerResult[]> {
+  const allCustomFieldIds = extractDateTimeCustomFieldIds(triggerMap)
+
+  const results: DateTimeTriggerResult[] = []
+  const executedKeys = new Set<string>()
+
+  await forEachSweepPage(
+    (cursor) =>
+      listContactCustomFieldsForDateTimeSweep({
+        customFieldIds: Array.from(allCustomFieldIds),
+        cursor,
+        limit: CONTACT_FIELD_PAGE_SIZE,
+      }),
+    async (contactCustomFields) => {
+      const batchResults = await processContactBatch(
+        triggerMap,
+        contactCustomFields,
+        executedKeys,
+        params,
+      )
+      results.push(...batchResults)
+    },
+  )
+
+  return results
+}
+
+async function collectDateTimeTriggerMap(): Promise<TriggerMap> {
+  const triggerMap: TriggerMap = {}
   let triggerCursor: string | undefined
-  let _triggerCount = 0
+  let storedTriggerCount = 0
+  let droppedTriggerCount = 0
 
   while (true) {
-    const { triggerMap, nextCursor } = await fetchTriggerChunk(
+    const { triggerMap: chunkMap, nextCursor } = await fetchTriggerChunk(
       triggerCursor,
-      TRIGGER_CHUNK_SIZE,
+      DATE_TIME_TRIGGER_CHUNK_SIZE,
     )
 
-    const triggerIds = Object.keys(triggerMap)
-    if (triggerIds.length === 0) {
-      break
+    for (const [triggerId, triggerInfo] of Object.entries(chunkMap)) {
+      if (storedTriggerCount >= MAX_DATE_TIME_TRIGGERS_PER_SCAN) {
+        droppedTriggerCount += 1
+        continue
+      }
+
+      triggerMap[triggerId] = triggerInfo
+      storedTriggerCount += 1
     }
-
-    _triggerCount += triggerIds.length
-
-    const results = await processTriggerChunk(triggerMap, params)
-    allResults.push(...results)
 
     if (!nextCursor) {
       break
@@ -475,7 +422,28 @@ export async function evaluateDateTimeTriggers(params: {
     triggerCursor = nextCursor
   }
 
-  return allResults
+  if (droppedTriggerCount > 0) {
+    logger.warn(
+      {
+        droppedTriggerCount,
+        maxTriggerCount: MAX_DATE_TIME_TRIGGERS_PER_SCAN,
+      },
+      "Datetime trigger scan exceeded the per-scan trigger cap",
+    )
+  }
+
+  return triggerMap
+}
+
+export async function evaluateDateTimeTriggers(params: {
+  startOfMinute: number
+}): Promise<DateTimeTriggerResult[]> {
+  const triggerMap = await collectDateTimeTriggerMap()
+  if (Object.keys(triggerMap).length === 0) {
+    return []
+  }
+
+  return await processTriggerMap(triggerMap, params)
 }
 
 export async function cleanupOldExecutions(): Promise<number> {

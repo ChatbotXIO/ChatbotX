@@ -1,4 +1,4 @@
-import { pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { contactModel } from "./contact"
 import { customFieldModel } from "./custom-field"
@@ -26,6 +26,11 @@ export const contactCustomFieldModel = pgTable(
       "btree",
       table.contactId.asc().nullsLast(),
       table.customFieldId.asc().nullsLast(),
+    ),
+    index("ContactCustomField_customFieldId_id_idx").using(
+      "btree",
+      table.customFieldId.asc(),
+      table.id.asc(),
     ),
   ],
 )

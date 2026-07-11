@@ -18,6 +18,14 @@ const state = {
   txNewlyLinked: [] as { tagId: string }[], // contactsToTags insert .returning()
   // removeContactTag
   tagFindMany: [] as { id: string }[], // db.query.tagModel.findMany()
+  sequenceEnrollments: [] as unknown[],
+  existingSequenceEnrollment: null as { id: string } | null,
+  firstSequenceStep: null as {
+    delayDays: number
+    delayMinutes: number
+    id: string
+  } | null,
+  sequence: null as { name: string } | null,
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +62,15 @@ mockDeleteBuilder.where.mockImplementation(() => {
   order.push("delete")
 })
 
+const mockUpdateBuilder = {
+  set: vi.fn(),
+  where: vi.fn(),
+}
+mockUpdateBuilder.set.mockReturnValue(mockUpdateBuilder)
+mockUpdateBuilder.where.mockImplementation(() => {
+  order.push("update")
+})
+
 // Records the relative order of side effects (transaction vs enqueue)
 const order: string[] = []
 
@@ -69,12 +86,20 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: dbTransaction,
     delete: vi.fn(() => mockDeleteBuilder),
+    update: vi.fn(() => mockUpdateBuilder),
     query: {
       tagModel: {
         findMany: vi.fn(async () => state.tagFindMany),
       },
       contactsOnSequenceModel: {
         findMany: vi.fn(async () => state.sequenceEnrollments),
+        findFirst: vi.fn(async () => state.existingSequenceEnrollment),
+      },
+      sequenceStepModel: {
+        findFirst: vi.fn(async () => state.firstSequenceStep),
+      },
+      sequenceModel: {
+        findFirst: vi.fn(async () => state.sequence),
       },
     },
   },
@@ -102,6 +127,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   contactsToTagsModel: {
     contactId: "contactsToTagsModel.contactId",
     tagId: "contactsToTagsModel.tagId",
+  },
+  contactModel: {
+    id: "contactModel.id",
+    workspaceId: "contactModel.workspaceId",
   },
 }))
 
@@ -131,10 +160,14 @@ vi.mock("@chatbotx.io/business/contact-sequence", () => ({
 const emitTagApplied = vi.fn(async () => undefined)
 const emitTagRemoved = vi.fn(async () => undefined)
 const emitCustomFieldChanged = vi.fn(async () => undefined)
+const emitContactUnsubscribed = vi.fn(async () => undefined)
+const emitSequenceSubscribed = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/events", () => ({
   emitTagApplied,
   emitTagRemoved,
   emitCustomFieldChanged,
+  emitContactUnsubscribed,
+  emitSequenceSubscribed,
 }))
 
 // ---------------------------------------------------------------------------
@@ -164,9 +197,13 @@ vi.mock("@chatbotx.io/utils", () => ({
 // ---------------------------------------------------------------------------
 // Import handlers under test (after all vi.mock calls)
 // ---------------------------------------------------------------------------
-const { addContactTag, removeContactSequence, removeContactTag } = await import(
-  "../src/integration/handlers/contact"
-)
+const {
+  addContactSequence,
+  addContactTag,
+  removeContactSequence,
+  removeContactTag,
+  unsubscribeBroadcast,
+} = await import("../src/integration/handlers/contact")
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -196,10 +233,31 @@ function removeSequenceProps(
   } as unknown as Parameters<typeof removeContactSequence>[0]
 }
 
+function addSequenceProps(
+  sequenceId: string | null = "seq-1",
+  workspaceId = "ws-1",
+  contactId = "c-1",
+) {
+  return {
+    conversation: { workspaceId, contactId },
+    step: { sequenceId },
+  } as unknown as Parameters<typeof addContactSequence>[0]
+}
+
+function unsubscribeBroadcastProps(workspaceId = "ws-1", contactId = "c-1") {
+  return {
+    conversation: { workspaceId, contactId },
+  } as unknown as Parameters<typeof unsubscribeBroadcast>[0]
+}
+
 function reset() {
   state.txExistingTags = []
   state.txNewlyLinked = []
   state.tagFindMany = []
+  state.sequenceEnrollments = []
+  state.existingSequenceEnrollment = null
+  state.firstSequenceStep = null
+  state.sequence = null
   order.length = 0
   idCounter = 0
   vi.clearAllMocks()
@@ -216,6 +274,10 @@ function reset() {
   mockTx.delete.mockReturnValue(mockDeleteBuilder)
   mockDeleteBuilder.where.mockImplementation(() => {
     order.push("delete")
+  })
+  mockUpdateBuilder.set.mockReturnValue(mockUpdateBuilder)
+  mockUpdateBuilder.where.mockImplementation(() => {
+    order.push("update")
   })
   cancelPendingDispatchesMock.mockImplementation(({ enrollmentId }) => {
     order.push("cancel")
@@ -260,6 +322,63 @@ describe("removeContactSequence", () => {
 
     expect(removeContactSequencesForContact).not.toHaveBeenCalled()
     expect(order).toEqual([])
+  })
+})
+
+// ============================================================================
+// addContactSequence
+// ============================================================================
+describe("addContactSequence", () => {
+  beforeEach(reset)
+
+  test("enrolls and emits subscribed event after successful enrollment", async () => {
+    state.firstSequenceStep = {
+      id: "step-1",
+      delayDays: 1,
+      delayMinutes: 30,
+    }
+    state.sequence = { name: "Welcome" }
+
+    await addContactSequence(addSequenceProps())
+
+    expect(enrollContactInSequenceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactId: "c-1",
+        sequenceId: "seq-1",
+        nextStepId: "step-1",
+      }),
+    )
+    expect(emitSequenceSubscribed).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "seq-1",
+      "Welcome",
+    )
+  })
+
+  test("does not emit when contact is already enrolled", async () => {
+    state.existingSequenceEnrollment = { id: "enrollment-1" }
+
+    await addContactSequence(addSequenceProps())
+
+    expect(enrollContactInSequenceMock).not.toHaveBeenCalled()
+    expect(emitSequenceSubscribed).not.toHaveBeenCalled()
+  })
+})
+
+// ============================================================================
+// unsubscribeBroadcast
+// ============================================================================
+describe("unsubscribeBroadcast", () => {
+  beforeEach(reset)
+
+  test("updates contact and emits contact unsubscribed event", async () => {
+    await unsubscribeBroadcast(unsubscribeBroadcastProps())
+
+    const { db } = await import("@chatbotx.io/database/client")
+    expect(db.update).toHaveBeenCalled()
+    expect(emitContactUnsubscribed).toHaveBeenCalledWith("ws-1", "c-1")
   })
 })
 

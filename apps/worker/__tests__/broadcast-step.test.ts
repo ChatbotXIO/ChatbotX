@@ -41,7 +41,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({ emit: vi.fn() }))
+const emitContactUnsubscribed = vi.fn()
 vi.mock("@chatbotx.io/events", () => ({
+  emitContactUnsubscribed,
   emitCustomFieldChanged: vi.fn(),
   emitTagApplied: vi.fn(),
   emitTagRemoved: vi.fn(),
@@ -70,6 +72,7 @@ beforeEach(() => {
   updateSpy.mockClear()
   setSpy.mockClear()
   whereSpy.mockClear()
+  emitContactUnsubscribed.mockClear()
 })
 
 describe("subscribeBroadcast", () => {
@@ -128,5 +131,9 @@ describe("unsubscribeBroadcast", () => {
 
     const whereArg = whereSpy.mock.calls[0][0] as { __and: unknown[] }
     expect(whereArg.__and).toHaveLength(2)
+    expect(emitContactUnsubscribed).toHaveBeenCalledWith(
+      "workspace-1",
+      "contact-1",
+    )
   })
 })

@@ -1,21 +1,32 @@
+import type { BaseEventEmitter } from "./base-emitter"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
 
 const EMITTER_REGISTRY = [TriggerEventEmitter, WebhookEventEmitter] as const
 
-async function emitToAllEmitters(
-  eventName: string,
-  ...args: unknown[]
+type EmitterEventMethod = {
+  [K in keyof BaseEventEmitter]: K extends "emit"
+    ? never
+    : BaseEventEmitter[K] extends (...args: infer _Args) => Promise<void>
+      ? K
+      : never
+}[keyof BaseEventEmitter]
+
+type EmitterEventArgs<M extends EmitterEventMethod> =
+  BaseEventEmitter[M] extends (...args: infer Args) => Promise<void>
+    ? Args
+    : never
+
+async function emitToAllEmitters<M extends EmitterEventMethod>(
+  eventName: M,
+  ...args: EmitterEventArgs<M>
 ): Promise<void> {
   const results = await Promise.allSettled(
     EMITTER_REGISTRY.map((emitter) => {
-      const method = (
-        emitter as unknown as Record<
-          string,
-          (...args: unknown[]) => Promise<void>
-        >
-      )[eventName]
+      const method = emitter[eventName] as unknown as (
+        ...methodArgs: EmitterEventArgs<M>
+      ) => Promise<void>
       return method.call(emitter, ...args)
     }),
   )
@@ -44,6 +55,34 @@ export const emitContactCreated = async (
     phone,
     email,
     customFields,
+  )
+
+export const emitContactReferredANewContact = async (
+  workspaceId: string,
+  contactId: string,
+  refName?: string,
+  reflinkId?: string,
+) =>
+  await emitToAllEmitters(
+    "contactReferredANewContact",
+    workspaceId,
+    contactId,
+    refName,
+    reflinkId,
+  )
+
+export const emitContactReferredExistingContact = async (
+  workspaceId: string,
+  contactId: string,
+  refName?: string,
+  reflinkId?: string,
+) =>
+  await emitToAllEmitters(
+    "contactReferredExistingContact",
+    workspaceId,
+    contactId,
+    refName,
+    reflinkId,
   )
 
 // Tag events

@@ -14,6 +14,8 @@ export const ScheduleJobData = {
   finalizeBroadcasts: "finalizeBroadcasts",
   evaluateTriggers: "evaluateTriggers",
   cleanupTriggers: "cleanupTriggers",
+  evaluateDateTimeWebhooks: "evaluateDateTimeWebhooks",
+  cleanupWebhookExecutions: "cleanupWebhookExecutions",
   scanSmartDelay: "scanSmartDelay",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
@@ -68,6 +70,16 @@ export type ScheduleJobCleanupTriggers = {
   data: Record<string, never>
 }
 
+export type ScheduleJobEvaluateDateTimeWebhooks = {
+  type: typeof ScheduleJobData.evaluateDateTimeWebhooks
+  data: Record<string, never>
+}
+
+export type ScheduleJobCleanupWebhookExecutions = {
+  type: typeof ScheduleJobData.cleanupWebhookExecutions
+  data: Record<string, never>
+}
+
 export type ScheduleJobScanSmartDelay = {
   type: typeof ScheduleJobData.scanSmartDelay
   data: Record<string, never>
@@ -116,6 +128,8 @@ export type ScheduleJobData =
   | ScheduleJobReconcileBroadcasts
   | ScheduleJobEvaluateTriggers
   | ScheduleJobCleanupTriggers
+  | ScheduleJobEvaluateDateTimeWebhooks
+  | ScheduleJobCleanupWebhookExecutions
   | ScheduleJobScanSmartDelay
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants

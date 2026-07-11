@@ -33,6 +33,7 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   IntegrationJobAction,
@@ -173,6 +174,7 @@ function createReplyToolset(options: {
             conversationId: conversation.id,
             contactInboxId: options.props.contactInbox.id,
             flowId,
+            origin: webhookChannelOrigin(),
           },
         })
       },

@@ -2,6 +2,7 @@
 
 export * from "./context"
 export * from "./event-dispatcher"
+export * from "./event-type-registry"
 // Trigger events
 export * from "./trigger/cache"
 export * as TriggerEventEmitter from "./trigger/emitter"

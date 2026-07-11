@@ -4,8 +4,11 @@ const {
   cancelPendingDispatchesSpy,
   deleteWhereSpy,
   enrollContactInSequenceSpy,
+  emitSequenceUnsubscribedSpy,
   findManySpy,
   loggerWarnSpy,
+  selectFromSpy,
+  selectWhereSpy,
   sequenceStepFindManySpy,
   order,
   removeDispatchesFromScheduleSpy,
@@ -22,8 +25,11 @@ const {
       return Promise.resolve(undefined)
     }),
     enrollContactInSequenceSpy: vi.fn().mockResolvedValue(undefined),
+    emitSequenceUnsubscribedSpy: vi.fn().mockResolvedValue(undefined),
     findManySpy: vi.fn(),
     loggerWarnSpy: vi.fn(),
+    selectFromSpy: vi.fn(),
+    selectWhereSpy: vi.fn(),
     order,
     removeDispatchesFromScheduleSpy: vi.fn().mockImplementation(() => {
       order.push("remove")
@@ -57,6 +63,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
         findMany: sequenceStepFindManySpy,
       },
     },
+    select: vi.fn(() => ({ from: selectFromSpy })),
     transaction: transactionSpy,
   },
   eq: (column: unknown, value: unknown) => ({ __eq: [column, value] }),
@@ -70,6 +77,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     id: { __column: "id" },
     workspaceId: { __column: "workspaceId" },
   },
+  sequenceModel: {
+    id: { __column: "sequence.id" },
+    name: { __column: "sequence.name" },
+  },
+}))
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitSequenceUnsubscribed: emitSequenceUnsubscribedSpy,
 }))
 
 vi.mock("../src/logger", () => ({
@@ -92,7 +107,16 @@ describe("contactSequenceService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     order.length = 0
-    findManySpy.mockResolvedValue([{ id: "enrollment-1", workspaceId: "ws-1" }])
+    findManySpy.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        id: "enrollment-1",
+        sequenceId: "sequence-1",
+        workspaceId: "ws-1",
+      },
+    ])
+    selectFromSpy.mockReturnValue({ where: selectWhereSpy })
+    selectWhereSpy.mockResolvedValue([{ id: "sequence-1", name: "Sequence 1" }])
     sequenceStepFindManySpy.mockResolvedValue([])
     deleteWhereSpy.mockImplementation(() => {
       order.push("delete")
@@ -225,6 +249,46 @@ describe("contactSequenceService", () => {
       { err: scheduleError, dispatchCount: 1 },
       "Failed to remove dispatches from schedule after DB commit",
     )
+  })
+
+  test("emits sequence unsubscribe events after update commit", async () => {
+    const returnedSequences = [
+      { id: "enrollment-new", sequence: { id: "sequence-new" } },
+    ]
+    findManySpy
+      .mockResolvedValueOnce([{ sequenceId: "sequence-old" }])
+      .mockResolvedValueOnce([
+        {
+          contactId: "contact-1",
+          id: "enrollment-old",
+          sequenceId: "sequence-old",
+          workspaceId: "ws-1",
+        },
+      ])
+      .mockResolvedValueOnce(returnedSequences)
+    sequenceStepFindManySpy.mockResolvedValueOnce([])
+    selectWhereSpy.mockResolvedValueOnce([
+      { id: "sequence-old", name: "Old sequence" },
+    ])
+
+    const result = await contactSequenceService.updateContactSequences({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      sequenceIds: ["sequence-new"],
+    })
+
+    expect(result).toEqual(returnedSequences)
+    await vi.waitFor(() => {
+      expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledWith(
+        "ws-1",
+        "contact-1",
+        "sequence-old",
+        "Old sequence",
+      )
+    })
+    expect(
+      removeDispatchesFromScheduleSpy.mock.invocationCallOrder[0],
+    ).toBeLessThan(emitSequenceUnsubscribedSpy.mock.invocationCallOrder[0])
   })
 
   test("removes with a supplied client without opening a nested transaction", async () => {

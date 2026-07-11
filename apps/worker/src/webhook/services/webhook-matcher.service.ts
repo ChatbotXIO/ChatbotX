@@ -1,11 +1,31 @@
 import { workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
-import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import {
+  isMatchableEventType,
+  matchableConditionTypesFor,
+  SCANNER_VERIFIED_EVENT_TYPES,
+} from "@chatbotx.io/events"
 import { logger } from "../../lib/logger"
 import { ConditionEvaluator } from "../../trigger/services/condition-evaluator"
-import type { WebhookEventData, WebhookWithConditions } from "../types"
+import type {
+  MatchableWebhookEventData,
+  WebhookEventData,
+  WebhookWithConditions,
+} from "../types"
 import { WebhookExecutor } from "./webhook-executor.service"
+
+const SCANNER_VERIFIED_EVENT_TYPE_SET: ReadonlySet<string> = new Set(
+  SCANNER_VERIFIED_EVENT_TYPES,
+)
+
+function hasConditionType(
+  conditionTypes: readonly TriggerEventType[],
+  conditionType: string,
+): boolean {
+  return conditionTypes.some((type) => type === conditionType)
+}
 
 export class WebhookMatcherService {
   private readonly conditionEvaluator: ConditionEvaluator
@@ -19,9 +39,16 @@ export class WebhookMatcherService {
   async findAndExecuteWebhooks(eventData: WebhookEventData): Promise<void> {
     const { workspaceId, eventType, eventData: metadata } = eventData
 
-    const conditionTypes = this.mapEventTypeToConditionTypes(eventType)
+    const conditionTypes = matchableConditionTypesFor(eventType)
     if (conditionTypes.length === 0) {
       return
+    }
+    if (!isMatchableEventType(eventType)) {
+      return
+    }
+    const matchableEventData: MatchableWebhookEventData = {
+      ...eventData,
+      eventType,
     }
 
     const sourceId = metadata.sourceId as string | undefined
@@ -40,7 +67,7 @@ export class WebhookMatcherService {
     const filteredWebhooks = webhooks.filter((webhook) =>
       webhook.conditions.some(
         (c) =>
-          conditionTypes.includes(c.type) &&
+          hasConditionType(conditionTypes, c.type) &&
           (sourceId ? c.sourceId === sourceId : true),
       ),
     )
@@ -57,18 +84,21 @@ export class WebhookMatcherService {
       return
     }
 
-    for (const webhook of filteredWebhooks) {
-      const isMatch = await this.evaluateWebhookConditions(
-        webhook,
-        eventData,
-        workspace,
-      )
+    await Promise.allSettled(
+      filteredWebhooks.map(async (webhook) => {
+        const isMatch = await this.evaluateWebhookConditions(
+          webhook,
+          matchableEventData,
+          workspace,
+        )
+        if (!isMatch) {
+          return
+        }
 
-      if (isMatch) {
         try {
           await this.webhookExecutor.execute({
             webhook,
-            eventData,
+            eventData: matchableEventData,
           })
         } catch (error) {
           logger.error(
@@ -76,13 +106,13 @@ export class WebhookMatcherService {
             `Failed to execute webhook ${webhook.id} for workspace ${workspaceId}`,
           )
         }
-      }
-    }
+      }),
+    )
   }
 
   private async evaluateWebhookConditions(
     webhook: WebhookWithConditions,
-    eventData: WebhookEventData,
+    eventData: MatchableWebhookEventData,
     workspace: WorkspaceModel,
   ): Promise<boolean> {
     const { conditions } = webhook
@@ -92,6 +122,18 @@ export class WebhookMatcherService {
     }
 
     for (const condition of conditions) {
+      if (SCANNER_VERIFIED_EVENT_TYPE_SET.has(eventData.eventType)) {
+        // Scanner-driven events were already temporally verified before enqueue.
+        // Re-evaluating them here can swallow one-shot datetime webhooks forever.
+        if (
+          condition.type === eventData.eventType &&
+          condition.sourceId === (eventData.eventData.sourceId as string)
+        ) {
+          return true
+        }
+        continue
+      }
+
       const isMatch = await this.conditionEvaluator.evaluate({
         condition,
         eventData: {
@@ -112,41 +154,5 @@ export class WebhookMatcherService {
     }
 
     return false
-  }
-
-  private mapEventTypeToConditionTypes(eventType: string): string[] {
-    const mapping: Record<string, string[]> = {
-      [triggerEventTypes.enum.tagApplied]: [triggerEventTypes.enum.tagApplied],
-      [triggerEventTypes.enum.tagRemoved]: [triggerEventTypes.enum.tagRemoved],
-      [triggerEventTypes.enum.customFieldValueChanged]: [
-        triggerEventTypes.enum.customFieldValueChanged,
-      ],
-      [triggerEventTypes.enum.conversationTransferredToHuman]: [
-        triggerEventTypes.enum.conversationTransferredToHuman,
-      ],
-      [triggerEventTypes.enum.conversationTransferredToBot]: [
-        triggerEventTypes.enum.conversationTransferredToBot,
-      ],
-      [triggerEventTypes.enum.newContact]: [triggerEventTypes.enum.newContact],
-      [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]: [
-        triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
-      ],
-      [triggerEventTypes.enum.archived]: [triggerEventTypes.enum.archived],
-      [triggerEventTypes.enum.followUp]: [triggerEventTypes.enum.followUp],
-      [triggerEventTypes.enum.conversationAssigned]: [
-        triggerEventTypes.enum.conversationAssigned,
-      ],
-      [triggerEventTypes.enum.conversationUnassigned]: [
-        triggerEventTypes.enum.conversationUnassigned,
-      ],
-      [triggerEventTypes.enum.subscribedToSequence]: [
-        triggerEventTypes.enum.subscribedToSequence,
-      ],
-      [triggerEventTypes.enum.unsubscribedFromSequence]: [
-        triggerEventTypes.enum.unsubscribedFromSequence,
-      ],
-    }
-
-    return mapping[eventType] || []
   }
 }
