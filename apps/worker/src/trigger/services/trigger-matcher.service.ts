@@ -1,9 +1,17 @@
 import { workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
-import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import { matchableConditionTypesFor } from "@chatbotx.io/events"
 import type { TriggerEventData, TriggerWithConditions } from "../types"
 import { ConditionEvaluator } from "./condition-evaluator"
+
+function hasConditionType(
+  conditionTypes: readonly TriggerEventType[],
+  conditionType: string,
+): boolean {
+  return conditionTypes.some((type) => type === conditionType)
+}
 
 export class TriggerMatcherService {
   private readonly conditionEvaluator: ConditionEvaluator
@@ -17,7 +25,7 @@ export class TriggerMatcherService {
   ): Promise<TriggerWithConditions[]> {
     const { workspaceId, eventType, eventData: metadata } = eventData
 
-    const conditionTypes = this.mapEventTypeToConditionTypes(eventType)
+    const conditionTypes = matchableConditionTypesFor(eventType)
     if (conditionTypes.length === 0) {
       return []
     }
@@ -38,7 +46,7 @@ export class TriggerMatcherService {
     const filteredTriggers = triggers.filter((trigger) =>
       trigger.conditions.some(
         (c) =>
-          conditionTypes.includes(c.type) &&
+          hasConditionType(conditionTypes, c.type) &&
           (sourceId ? c.sourceId === sourceId : true),
       ),
     )
@@ -95,41 +103,5 @@ export class TriggerMatcherService {
     }
 
     return true
-  }
-
-  private mapEventTypeToConditionTypes(eventType: string): string[] {
-    const mapping: Record<string, string[]> = {
-      [triggerEventTypes.enum.tagApplied]: [triggerEventTypes.enum.tagApplied],
-      [triggerEventTypes.enum.tagRemoved]: [triggerEventTypes.enum.tagRemoved],
-      [triggerEventTypes.enum.customFieldValueChanged]: [
-        triggerEventTypes.enum.customFieldValueChanged,
-      ],
-      [triggerEventTypes.enum.conversationTransferredToHuman]: [
-        triggerEventTypes.enum.conversationTransferredToHuman,
-      ],
-      [triggerEventTypes.enum.conversationTransferredToBot]: [
-        triggerEventTypes.enum.conversationTransferredToBot,
-      ],
-      [triggerEventTypes.enum.newContact]: [triggerEventTypes.enum.newContact],
-      [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]: [
-        triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
-      ],
-      [triggerEventTypes.enum.archived]: [triggerEventTypes.enum.archived],
-      [triggerEventTypes.enum.followUp]: [triggerEventTypes.enum.followUp],
-      [triggerEventTypes.enum.conversationAssigned]: [
-        triggerEventTypes.enum.conversationAssigned,
-      ],
-      [triggerEventTypes.enum.conversationUnassigned]: [
-        triggerEventTypes.enum.conversationUnassigned,
-      ],
-      [triggerEventTypes.enum.subscribedToSequence]: [
-        triggerEventTypes.enum.subscribedToSequence,
-      ],
-      [triggerEventTypes.enum.unsubscribedFromSequence]: [
-        triggerEventTypes.enum.unsubscribedFromSequence,
-      ],
-    }
-
-    return mapping[eventType] || []
   }
 }

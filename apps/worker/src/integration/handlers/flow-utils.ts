@@ -3,6 +3,7 @@ import type {
   ConversationModel,
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import type {
   BaseStepSchema,
   ButtonStepProps,
@@ -85,6 +86,7 @@ export async function sendFlow(
         metadata: props.metadata,
         sendFrom: props.sendFrom,
         nodeVisits: props.nodeVisits,
+        origin: webhookChannelOrigin(),
       },
     })
   }

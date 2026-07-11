@@ -8,6 +8,7 @@ import type {
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   type BaseStepSchema,
   BROADCAST_PAYLOAD_TYPE,
@@ -315,6 +316,7 @@ export async function runStepsAndQuickReplies(
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
           nodeVisits,
+          origin: webhookChannelOrigin(),
         },
       })
       return
@@ -357,6 +359,7 @@ export async function runStepsAndQuickReplies(
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
         nodeVisits,
+        origin: webhookChannelOrigin(),
       },
     })
   }
@@ -430,6 +433,7 @@ async function* executeMultipleStepsGenerator(
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
               nodeVisits: props.nodeVisits,
+              origin: webhookChannelOrigin(),
             },
           })
           branched = true

@@ -1,3 +1,4 @@
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -14,7 +15,7 @@ export const TriggerJobAction = {
 export type TriggerEvent = {
   workspaceId: string
   contactId: string
-  eventType: string
+  eventType: TriggerEventType
   eventData: Record<string, unknown>
   timestamp: Date
   source?: string

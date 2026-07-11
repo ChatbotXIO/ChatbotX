@@ -67,6 +67,48 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.cleanupTriggers,
+    {
+      pattern: "0 3 * * *",
+    },
+    {
+      name: ScheduleJobData.cleanupTriggers,
+      data: {
+        type: ScheduleJobData.cleanupTriggers,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.evaluateDateTimeWebhooks,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.evaluateDateTimeWebhooks,
+      data: {
+        type: ScheduleJobData.evaluateDateTimeWebhooks,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.cleanupWebhookExecutions,
+    {
+      pattern: "0 4 * * *",
+    },
+    {
+      name: ScheduleJobData.cleanupWebhookExecutions,
+      data: {
+        type: ScheduleJobData.cleanupWebhookExecutions,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.scanSmartDelay,
     {
       pattern: "*/5 * * * *",

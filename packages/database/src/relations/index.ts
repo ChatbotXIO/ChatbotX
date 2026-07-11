@@ -101,6 +101,7 @@ import { triggerStatsRelations } from "./trigger-stats"
 import { userRelations } from "./user"
 import { userPersistentMenuRelations } from "./user-persistent-menu"
 import { webhookRelations } from "./webhook"
+import { webhookExecutionRelations } from "./webhook-execution"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { workspaceRelations } from "./workspace"
@@ -181,6 +182,7 @@ export const relations = {
   ...inboxContactStatsRelations,
   ...triggerRelations,
   ...webhookRelations,
+  ...webhookExecutionRelations,
   ...conditionRelations,
   ...triggerStatsRelations,
   ...triggerContactHistoryRelations,

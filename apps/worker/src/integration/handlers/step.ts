@@ -4,6 +4,7 @@ import {
   smartDelayTypes,
 } from "@chatbotx.io/database/partials"
 import { contactOnSmartDelayModel } from "@chatbotx.io/database/schema"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   buildJobId,
   computeTriggerAt,
@@ -161,6 +162,7 @@ async function splitTraffic({
         nodeId: connectedEdge.target,
         sendFrom,
         nodeVisits,
+        origin: webhookChannelOrigin(),
       },
     })
   }
@@ -285,6 +287,7 @@ async function startAnotherNode(
       metadata: props.metadata,
       sendFrom: props.sendFrom,
       nodeVisits: props.nodeVisits,
+      origin: webhookChannelOrigin(),
     },
   })
 }
@@ -306,6 +309,7 @@ async function startExternalFlow({
       metadata,
       sendFrom,
       nodeVisits,
+      origin: webhookChannelOrigin(),
     },
   })
 }
@@ -328,6 +332,7 @@ async function startExternalNode({
       metadata,
       sendFrom,
       nodeVisits,
+      origin: webhookChannelOrigin(),
     },
   })
 }

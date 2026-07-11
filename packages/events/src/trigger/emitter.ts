@@ -1,30 +1,12 @@
-import {
-  type TriggerEventType,
-  triggerEventTypes,
-} from "@chatbotx.io/database/partials"
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { triggerQueue } from "@chatbotx.io/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
+import { EMITTED_EVENT_TYPE_SET } from "../event-type-registry"
 import { hasActiveTriggers } from "./cache"
 import { isWorkerContext } from "./context"
 
-const SUPPORTED_EVENT_TYPES: Set<TriggerEventType> = new Set([
-  triggerEventTypes.enum.tagApplied,
-  triggerEventTypes.enum.tagRemoved,
-  triggerEventTypes.enum.customFieldValueChanged,
-  triggerEventTypes.enum.conversationTransferredToHuman,
-  triggerEventTypes.enum.conversationTransferredToBot,
-  triggerEventTypes.enum.newContact,
-  triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
-  triggerEventTypes.enum.archived,
-  triggerEventTypes.enum.followUp,
-  triggerEventTypes.enum.conversationAssigned,
-  triggerEventTypes.enum.conversationUnassigned,
-  triggerEventTypes.enum.subscribedToSequence,
-  triggerEventTypes.enum.unsubscribedFromSequence,
-])
-
 class TriggerEventEmitterImpl extends BaseEventEmitter {
-  protected supportedEventTypes = SUPPORTED_EVENT_TYPES
+  protected supportedEventTypes = EMITTED_EVENT_TYPE_SET
 
   protected async shouldEmitEvent(
     eventType: TriggerEventType,

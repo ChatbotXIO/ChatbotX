@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { findTrigger } from "@/features/triggers/queries"
 import UpdateTriggerForm from "@/features/triggers/update-trigger-form"
@@ -26,7 +27,12 @@ export default async function UpdateTriggerPage({
     <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
       <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
         <TagStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-          <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
+          <SequenceStoreProvider
+            autoInitialize={true}
+            workspaceId={workspaceId}
+          >
+            <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
+          </SequenceStoreProvider>
         </TagStoreProvider>
       </CustomFieldStoreProvider>
     </FlowStoreProvider>

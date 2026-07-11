@@ -9,6 +9,7 @@ import type {
   ConversationModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { simpleQueue } from "@chatbotx.io/redis"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
@@ -126,6 +127,7 @@ const replyByAutomatedResponse = async (props: {
                 triggerType: "contact_message_in",
                 workspaceId: conversation.workspaceId,
               },
+              origin: webhookChannelOrigin(),
             },
           })
           replied = true

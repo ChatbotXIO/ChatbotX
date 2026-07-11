@@ -7,7 +7,7 @@ import {
  * Base event emitter class with common functionality
  */
 export abstract class BaseEventEmitter {
-  protected abstract supportedEventTypes: Set<TriggerEventType>
+  protected abstract supportedEventTypes: ReadonlySet<TriggerEventType>
   protected abstract shouldEmitEvent(
     eventType: TriggerEventType,
     workspaceId: string,
@@ -149,6 +149,32 @@ export abstract class BaseEventEmitter {
         email,
         customFields,
       },
+    })
+  }
+
+  async contactReferredANewContact(
+    workspaceId: string,
+    contactId: string,
+    refName?: string,
+    reflinkId?: string,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.contactReferredANewContact, {
+      workspaceId,
+      contactId,
+      metadata: { refName, reflinkId },
+    })
+  }
+
+  async contactReferredExistingContact(
+    workspaceId: string,
+    contactId: string,
+    refName?: string,
+    reflinkId?: string,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.contactReferredExistingContact, {
+      workspaceId,
+      contactId,
+      metadata: { refName, reflinkId },
     })
   }
 

@@ -155,7 +155,7 @@ export const receiveMessage = async (
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
   }
-  const { contactInbox, conversation, contact } = detected
+  const { contactInbox, conversation, contact, isNewContact } = detected
 
   // Overwrite Contact.phoneNumber/email from message text — every inbound
   // channel. Unconditional: the customer just typed the value, so it's
@@ -248,6 +248,7 @@ export const receiveMessage = async (
         contactInboxId: contactInbox,
         ref,
         messageId: createdMessage?.id,
+        isNewContact,
       },
     })
   }
@@ -593,6 +594,7 @@ const detectContactAndConversation = async (props: {
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
+  isNewContact: boolean
 }> => {
   const { incomingContact, inbox, integrationRow, source, skipProfileLookup } =
     props
@@ -624,6 +626,7 @@ const detectContactAndConversation = async (props: {
       contactInbox: existingContactInbox,
       contact: existingContactInbox.contact,
       conversation,
+      isNewContact: false,
     }
   }
 
@@ -766,7 +769,7 @@ const detectContactAndConversation = async (props: {
     })
   }
 
-  return { contactInbox, contact: newContact, conversation }
+  return { contactInbox, contact: newContact, conversation, isNewContact: true }
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>

@@ -17,6 +17,7 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   type MessengerAuthValue,
   sendPrivateReply,
@@ -209,6 +210,7 @@ async function executePublicReply(
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
           flowId: publicReply.value,
+          origin: webhookChannelOrigin(),
         },
       },
       { delay: ctx.delay },
@@ -224,6 +226,7 @@ async function executePublicReply(
         data: {
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
+          origin: webhookChannelOrigin(),
         },
       },
       { delay: ctx.delay },
@@ -263,6 +266,7 @@ async function executePrivateReply(
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
           flowId: privateReply.value,
+          origin: webhookChannelOrigin(),
         },
       },
       { delay: ctx.delay },
@@ -278,6 +282,7 @@ async function executePrivateReply(
         data: {
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
+          origin: webhookChannelOrigin(),
         },
       },
       { delay: ctx.delay },

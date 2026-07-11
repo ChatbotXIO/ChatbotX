@@ -12,6 +12,10 @@ import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
 } from "../trigger/datetime-trigger-scanner"
+import {
+  cleanupWebhookExecutions,
+  scanDateTimeWebhooks,
+} from "../webhook/datetime-webhook-scanner"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
@@ -75,6 +79,14 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.cleanupTriggers:
           await cleanupTriggerExecutions()
+          return
+
+        case ScheduleJobData.evaluateDateTimeWebhooks:
+          await scanDateTimeWebhooks()
+          return
+
+        case ScheduleJobData.cleanupWebhookExecutions:
+          await cleanupWebhookExecutions()
           return
 
         case ScheduleJobData.scanSmartDelay:

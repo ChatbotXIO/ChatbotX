@@ -1810,6 +1810,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
+      '@chatbotx.io/events':
+        specifier: workspace:*
+        version: link:../events
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger

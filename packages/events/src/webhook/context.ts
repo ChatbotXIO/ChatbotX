@@ -5,6 +5,7 @@ type ExecutionContext = {
 type AsyncLocalStorageType = {
   enterWith: (context: ExecutionContext) => void
   getStore: () => ExecutionContext | undefined
+  run: <T>(context: ExecutionContext, callback: () => T) => T
 }
 
 let asyncLocalStorage: AsyncLocalStorageType | null = null
@@ -32,6 +33,16 @@ export function setWebhookExecutionContext(context: ExecutionContext) {
   return asyncLocalStorage.enterWith(context)
 }
 
+export function runWithWebhookExecutionContext<T>(
+  context: ExecutionContext,
+  callback: () => T,
+): T {
+  if (!asyncLocalStorage) {
+    return callback()
+  }
+  return asyncLocalStorage.run(context, callback)
+}
+
 export function getWebhookExecutionContext(): ExecutionContext | undefined {
   if (!asyncLocalStorage) {
     return
@@ -45,4 +56,8 @@ export function isWebhookContext(): boolean {
   }
   const context = asyncLocalStorage.getStore()
   return context?.source === "webhook"
+}
+
+export function webhookChannelOrigin(): "channel" | undefined {
+  return isWebhookContext() ? "channel" : undefined
 }

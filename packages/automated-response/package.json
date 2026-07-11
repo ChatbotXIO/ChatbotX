@@ -10,6 +10,7 @@
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/events": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/variables": "workspace:*",
