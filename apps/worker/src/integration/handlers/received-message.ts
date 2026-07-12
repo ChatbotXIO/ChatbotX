@@ -10,6 +10,7 @@ import {
   updateContactFromMessage,
   workspaceService,
 } from "@chatbotx.io/business"
+import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
@@ -819,6 +820,25 @@ const detectContactAndConversation = async (props: {
     }
   }
 
+  const finalizedProfile = finalizeContactProfile(
+    {
+      locale: contactData.locale,
+      language: incomingContact.language,
+      timezone: contactData.timezone,
+    },
+    {
+      phoneHint:
+        incomingContact.phoneNumber ??
+        (inbox.channel === "whatsapp" ? incomingContact.sourceId : undefined),
+      fallbackLocale: inbox.channel === "zalo" ? "vi_VN" : undefined,
+    },
+  )
+  contactData = {
+    ...contactData,
+    locale: finalizedProfile.locale,
+    timezone: finalizedProfile.timezone,
+  }
+
   const ws = await workspaceService.find({ where: { id: inbox.workspaceId } })
   if (!ws) {
     throw new Error("Workspace not found")
@@ -855,6 +875,7 @@ const detectContactAndConversation = async (props: {
           source,
           sourceId: incomingContact.sourceId,
           channel: inbox.channel,
+          language: finalizedProfile.language,
         })
         .returning()
         .then((rows) => rows[0])

@@ -361,6 +361,7 @@
     "no": "No",
     "fields": {
       "locale": "Language",
+      "language": "Language",
       "fullName": "Full name",
       "country": "Country",
       "continent": "Continent",
@@ -467,6 +468,29 @@
       "customFields": "Custom Fields",
       "email": "Email",
       "sms": "SMS"
+    },
+    "languages": {
+      "ar": "Arabic",
+      "de": "German",
+      "en": "English",
+      "es": "Spanish",
+      "fil": "Filipino",
+      "fr": "French",
+      "hi": "Hindi",
+      "id": "Indonesian",
+      "it": "Italian",
+      "ja": "Japanese",
+      "km": "Khmer",
+      "ko": "Korean",
+      "lo": "Lao",
+      "ms": "Malay",
+      "my": "Burmese",
+      "nl": "Dutch",
+      "pt": "Portuguese",
+      "ru": "Russian",
+      "th": "Thai",
+      "vi": "Vietnamese",
+      "zh": "Chinese"
     },
     "sources": {
       "direct": "Direct",

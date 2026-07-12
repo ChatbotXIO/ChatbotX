@@ -1,4 +1,9 @@
 import { conversationService, messageService } from "@chatbotx.io/business"
+import {
+  languageFromLocale,
+  normalizeStoredTimezone,
+  offsetFromStoredTimezone,
+} from "@chatbotx.io/business/contact-locale"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import {
   type ContactSource,
@@ -35,7 +40,6 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const TIMEZONE_SIGN_RE = /^[+-]/
 const DATE_PATTERN = "yyyy-MM-dd"
 const DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss"
 
@@ -98,23 +102,14 @@ const safeFormatInTimeZone = (
 const getTimezone = ({
   contact,
   workspace,
-}: ContactVariableContext): string | null => {
-  if (workspace?.timezone) {
-    return workspace.timezone
-  }
+}: ContactVariableContext): string | null =>
+  workspace?.timezone ?? normalizeStoredTimezone(contact.timezone)
 
-  return contact.timezone
-}
-
-const formatTimezoneOffset = (timezone: string | null): string | null => {
-  if (!timezone) {
-    return null
-  }
-  if (TIMEZONE_SIGN_RE.test(timezone)) {
-    return timezone
-  }
-  return Number.isNaN(Number(timezone)) ? timezone : `+${timezone}`
-}
+const getContactTimezone = ({
+  contact,
+  workspace,
+}: ContactVariableContext): string | null =>
+  normalizeStoredTimezone(contact.timezone) ?? workspace?.timezone ?? "UTC"
 
 const formatDate = (
   date: Date | string | null | undefined,
@@ -239,7 +234,11 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.locale2:
       return contact.locale?.split(LOCALE_SEPARATOR_RE)[0] ?? null
     case systemFieldTypes.enum.timezone:
-      return formatTimezoneOffset(contact.timezone)
+      return offsetFromStoredTimezone(contact.timezone)
+    case systemFieldTypes.enum.language:
+      return (
+        contactInbox?.language ?? languageFromLocale(contact.locale) ?? null
+      )
     case systemFieldTypes.enum.user_id:
       return contact.id
     case systemFieldTypes.enum.subscribed_date:
@@ -276,7 +275,11 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.assigned_admin_id:
       return await resolveAssigneeId(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.current_user_time:
-      return safeFormatInTimeZone(new Date(), timezone, DATE_TIME_PATTERN)
+      return safeFormatInTimeZone(
+        new Date(),
+        getContactTimezone(context),
+        DATE_TIME_PATTERN,
+      )
     case systemFieldTypes.enum.chat_history:
       return await getChatHistory(contact.id, 50)
     case systemFieldTypes.enum.chat_history_large:

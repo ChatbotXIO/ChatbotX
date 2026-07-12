@@ -436,8 +436,14 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     expect(insertBuilder.values).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: "Guest",
-        locale: "vi-VN",
+        locale: "vi_VN",
         timezone: "Asia/Ho_Chi_Minh",
+      }),
+    )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "webchat",
+        language: "vi",
       }),
     )
   })
@@ -453,6 +459,12 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
         firstName: "Guest",
         locale: undefined,
         timezone: undefined,
+      }),
+    )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "webchat",
+        language: undefined,
       }),
     )
   })

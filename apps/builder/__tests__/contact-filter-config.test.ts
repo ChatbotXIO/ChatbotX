@@ -1,6 +1,10 @@
 // @vitest-environment node
 
 import {
+  contactLanguageOptions,
+  contactLocaleOptions,
+} from "@chatbotx.io/business/contact-locale"
+import {
   contactSources,
   formFieldTypes,
   operatorTypes,
@@ -30,6 +34,7 @@ import {
 
 const t = (key: string) => key
 const conditionOptions = getConditionOptions(t)
+const CONTACT_LANGUAGE_VALUE_RE = /^[a-z]+$/
 
 const option = (
   options: { value: string; disabled?: boolean }[],
@@ -175,6 +180,9 @@ describe("contact filter field config helpers", () => {
       configs.find((config) => config.name === name)?.group
 
     expect(groupFor("fullName")).toBe("contactInfo")
+    expect(groupFor("locale")).toBe("contactInfo")
+    expect(groupFor("language")).toBe("contactInfo")
+    expect(groupFor("timezone")).toBe("contactInfo")
     expect(groupFor("tags")).toBe("analytics")
     expect(groupFor("lastSeen")).toBe("analytics")
     expect(groupFor("lastInteraction")).toBe("analytics")
@@ -202,6 +210,85 @@ describe("contact filter field config helpers", () => {
     expect(sourceOptions?.map((option) => option.value)).not.toContain(
       "fbLeadAd",
     )
+  })
+
+  test("keeps locale labels from template language options and appends stored locale values", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+    const localeOptions = configs.find(
+      (config) => config.name === "locale",
+    )?.options
+
+    expect(localeOptions).toEqual(
+      expect.arrayContaining([
+        { label: "English (US)", value: "en_US" },
+        { label: "English (UK)", value: "en_GB" },
+        { label: "Arabic (UAE)", value: "ar_AE" },
+      ]),
+    )
+    expect(localeOptions?.map((option) => option.value)).toEqual(
+      expect.arrayContaining(
+        contactLocaleOptions.map((option) => option.value),
+      ),
+    )
+    const contactLocaleValues = new Set(
+      contactLocaleOptions.map((option) => option.value),
+    )
+    expect(
+      localeOptions
+        ?.filter((option) => contactLocaleValues.has(option.value))
+        .every((option) => option.label !== option.value),
+    ).toBe(true)
+    expect(localeOptions).toContainEqual({
+      label: "condition.languages.vi",
+      value: "vi_VN",
+    })
+  })
+
+  test("uses bare contact language values with human labels", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+    const languageOptions = configs.find(
+      (config) => config.name === "language",
+    )?.options
+
+    expect(languageOptions?.map((option) => option.value)).toEqual(
+      contactLanguageOptions.map((option) => option.value),
+    )
+    expect(
+      languageOptions?.every((option) =>
+        CONTACT_LANGUAGE_VALUE_RE.test(option.value),
+      ),
+    ).toBe(true)
+    expect(
+      languageOptions?.every((option) => option.label !== option.value),
+    ).toBe(true)
+  })
+
+  test("uses curated contact timezone option list", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    expect(
+      configs
+        .find((config) => config.name === "timezone")
+        ?.options?.map((option) => option.value),
+    ).toContain("Asia/Ho_Chi_Minh")
   })
 
   test("groups field options and keeps contact-info fields flat", () => {

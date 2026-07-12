@@ -4,6 +4,7 @@ import {
   resolveTenantSettings,
   resolveWorkspaceAppUrl,
 } from "@chatbotx.io/business"
+import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { systemFieldService } from "@chatbotx.io/business/system-field"
 import type { SystemFieldType } from "@chatbotx.io/database/partials"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -55,36 +56,6 @@ const toStringOrNull = (
     return null
   }
   return String(value)
-}
-
-const timezoneOffsetNameMap: Record<string, string> = {
-  "-12": "Etc/GMT+12",
-  "-11": "Pacific/Pago_Pago",
-  "-10": "Pacific/Honolulu",
-  "-9": "America/Anchorage",
-  "-8": "America/Los_Angeles",
-  "-7": "America/Denver",
-  "-6": "America/Chicago",
-  "-5": "America/New_York",
-  "-4": "America/Halifax",
-  "-3": "America/Sao_Paulo",
-  "-2": "Atlantic/South_Georgia",
-  "-1": "Atlantic/Azores",
-  "0": "UTC",
-  "1": "Europe/Berlin",
-  "2": "Europe/Athens",
-  "3": "Europe/Moscow",
-  "4": "Asia/Dubai",
-  "5": "Asia/Karachi",
-  "6": "Asia/Dhaka",
-  "7": "Asia/Bangkok",
-  "8": "Asia/Singapore",
-  "9": "Asia/Tokyo",
-  "10": "Australia/Sydney",
-  "11": "Pacific/Noumea",
-  "12": "Pacific/Auckland",
-  "13": "Pacific/Tongatapu",
-  "14": "Pacific/Kiritimati",
 }
 
 const resolveInstagramContactProfile = (
@@ -333,7 +304,7 @@ export const getIntegrationField = async (
       if (!contact.timezone) {
         return null
       }
-      return timezoneOffsetNameMap[contact.timezone] ?? contact.timezone
+      return normalizeStoredTimezone(contact.timezone) ?? contact.timezone
 
     case "user_code":
       return contactInbox.sourceId ?? null

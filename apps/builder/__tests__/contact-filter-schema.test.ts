@@ -33,6 +33,30 @@ describe("staticFieldFilter", () => {
     ).toBe(true)
 
     expect(
+      staticFieldFilter("locale").safeParse({
+        field: "locale",
+        operator: operatorTypes.enum.eq,
+        value: ["vi_VN"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter("language").safeParse({
+        field: "language",
+        operator: operatorTypes.enum.in,
+        value: ["vi"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter("timezone").safeParse({
+        field: "timezone",
+        operator: operatorTypes.enum.eq,
+        value: ["Asia/Ho_Chi_Minh"],
+      }).success,
+    ).toBe(true)
+
+    expect(
       staticFieldFilter("blocked").safeParse({
         field: "blocked",
         operator: operatorTypes.enum.eq,
@@ -55,6 +79,22 @@ describe("staticFieldFilter", () => {
         field: "tags",
         operator: operatorTypes.enum.contains,
         value: "vip",
+      }).success,
+    ).toBe(false)
+
+    expect(
+      staticFieldFilter("timezone").safeParse({
+        field: "timezone",
+        operator: operatorTypes.enum.contains,
+        value: "Asia",
+      }).success,
+    ).toBe(false)
+
+    expect(
+      staticFieldFilter("language").safeParse({
+        field: "language",
+        operator: operatorTypes.enum.contains,
+        value: "vi",
       }).success,
     ).toBe(false)
 

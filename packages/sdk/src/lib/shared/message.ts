@@ -12,6 +12,7 @@ export type IncomingContact = {
   avatar?: string
   gender?: string
   locale?: string
+  language?: string
   timezone?: string
 }
 

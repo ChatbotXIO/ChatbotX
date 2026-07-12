@@ -59,6 +59,34 @@ describe("listContactsRequest contactFilter search param", () => {
     })
   })
 
+  test("accepts locale, language, and timezone select values", () => {
+    const parsed = listContactsRequest.parse({
+      workspaceId: "1",
+      contactFilter: JSON.stringify({
+        operator: "and",
+        conditions: [
+          {
+            field: "locale",
+            operator: "eq",
+            value: ["vi_VN"],
+          },
+          {
+            field: "language",
+            operator: "in",
+            value: ["vi"],
+          },
+          {
+            field: "timezone",
+            operator: "eq",
+            value: ["Asia/Ho_Chi_Minh"],
+          },
+        ],
+      }),
+    })
+
+    expect(parsed.contactFilter?.conditions).toHaveLength(3)
+  })
+
   test("rejects disabled operators for a field", () => {
     const parsed = listContactsRequest.parse({
       workspaceId: "1",

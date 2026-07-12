@@ -893,6 +893,7 @@ describe("applyContactFilter — contactInbox relation fields", () => {
   test.each([
     ["currentChannel", "channel"],
     ["inbox", "inboxId"],
+    ["language", "language"],
     ["source", "source"],
   ])("renders all supported %s operators as EXISTS on ContactInbox.%s", (field, column) => {
     for (const operator of [operatorTypes.enum.in, operatorTypes.enum.eq]) {
@@ -925,6 +926,21 @@ describe("applyContactFilter — contactInbox relation fields", () => {
       }),
     )
     expect(emptyQuery.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("renders language isEmpty as no ContactInbox with a non-empty language", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "language", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(query.sql).toContain('"ContactInbox"."language" IS NOT NULL')
+    expect(query.sql).toContain(`"ContactInbox"."language" <> ''`)
   })
 
   test("drops unsupported operators for relation fields", () => {

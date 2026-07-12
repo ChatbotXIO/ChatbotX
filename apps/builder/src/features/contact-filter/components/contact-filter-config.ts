@@ -1,4 +1,9 @@
 import {
+  contactLanguageOptions,
+  contactLocaleOptions,
+  contactTimezoneOptions,
+} from "@chatbotx.io/business/contact-locale"
+import {
   type ContactFilterField,
   contactSources,
   type FormFieldType,
@@ -133,6 +138,36 @@ const getContactSourceOptions = (t: (key: string) => string): SelectOption[] =>
     value: source,
   }))
 
+const getLocaleOptions = (t: (key: string) => string): SelectOption[] => {
+  const localeOptions = [...languageOptions]
+  const existingValues = new Set(localeOptions.map((option) => option.value))
+  const contactLanguageLabelByLocale = new Map<string, string>(
+    contactLanguageOptions.map((option) => [option.locale, t(option.labelKey)]),
+  )
+
+  for (const option of contactLocaleOptions) {
+    if (existingValues.has(option.value)) {
+      continue
+    }
+
+    localeOptions.push({
+      label: contactLanguageLabelByLocale.get(option.value) ?? option.label,
+      value: option.value,
+    })
+    existingValues.add(option.value)
+  }
+
+  return localeOptions
+}
+
+const getContactLanguageOptions = (
+  t: (key: string) => string,
+): SelectOption[] =>
+  contactLanguageOptions.map((option) => ({
+    label: t(option.labelKey),
+    value: option.value,
+  }))
+
 const resolveContactFilterOptions = (
   optionSource: ContactFilterOptionSource,
   ctx: {
@@ -147,7 +182,11 @@ const resolveContactFilterOptions = (
     case "none":
       return
     case "languages":
-      return languageOptions
+      return getLocaleOptions(ctx.t)
+    case "contactLanguages":
+      return getContactLanguageOptions(ctx.t)
+    case "timezones":
+      return contactTimezoneOptions
     case "countries":
       return allCountryOptions
     case "continents":

@@ -28,6 +28,7 @@ export const systemFieldTypes = z.enum([
   "inbox_link",
   "gender",
   "locale",
+  "language",
   "locale2",
   "ig_user_name",
   "ig_followers",
@@ -111,6 +112,7 @@ export const fillableContactKeys = [
   "firstName",
   "lastName",
   "gender",
+  "timezone",
 ] as const
 export type FillableContactKey = (typeof fillableContactKeys)[number]
 
@@ -207,5 +209,6 @@ export const contactFilterFields = z.enum([
   "lastUserInput",
   "lastUserInputType",
   "locale",
+  "language",
 ])
 export type ContactFilterField = z.infer<typeof contactFilterFields>

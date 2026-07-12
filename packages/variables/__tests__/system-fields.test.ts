@@ -426,6 +426,14 @@ describe("getSystemFieldValue", () => {
         systemFieldTypes.enum.timezone_name,
       ),
     ).resolves.toBe("America/New_York")
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, timezone: "+07:00" } as ContactModel,
+        }),
+        systemFieldTypes.enum.timezone_name,
+      ),
+    ).resolves.toBe("Asia/Bangkok")
   })
 
   test("timezone_name falls back to the raw value for an unmapped offset", async () => {
@@ -633,7 +641,7 @@ describe("getSystemFieldValue", () => {
     }
   })
 
-  test("timezone prefixes non-negative numeric offsets", async () => {
+  test("timezone renders signed offsets from legacy and IANA storage", async () => {
     await expect(
       getSystemFieldValue(
         createContext({
@@ -653,11 +661,50 @@ describe("getSystemFieldValue", () => {
     await expect(
       getSystemFieldValue(
         createContext({
+          contact: {
+            ...contact,
+            timezone: "Asia/Ho_Chi_Minh",
+          } as ContactModel,
+        }),
+        systemFieldTypes.enum.timezone,
+      ),
+    ).resolves.toBe("+7")
+    await expect(
+      getSystemFieldValue(
+        createContext({
           contact: { ...contact, timezone: null } as ContactModel,
         }),
         systemFieldTypes.enum.timezone,
       ),
     ).resolves.toBeNull()
+  })
+
+  test("language reads ContactInbox.language before falling back to contact locale", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, locale: "vi_VN" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            language: "en",
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.language,
+      ),
+    ).resolves.toBe("en")
+
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contact: { ...contact, locale: "vi-VN" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            language: null,
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.language,
+      ),
+    ).resolves.toBe("vi")
   })
 
   test("user_source maps the stored source to a human label", async () => {
@@ -1129,7 +1176,7 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBe("2026-01-01 23:30:00")
   })
 
-  test("last_seen falls back to UTC when timezone is invalid", async () => {
+  test("last_seen normalizes legacy numeric contact timezone values", async () => {
     await expect(
       getSystemFieldValue(
         createContext({
@@ -1142,7 +1189,7 @@ describe("getSystemFieldValue", () => {
         }),
         systemFieldTypes.enum.last_seen,
       ),
-    ).resolves.toBe("2026-01-01 23:30:00")
+    ).resolves.toBe("2026-01-02 06:30:00")
   })
 })
 
@@ -1349,9 +1396,9 @@ describe("getSystemFieldValue — clock fields", () => {
     vi.useRealTimers()
   })
 
-  test("current_time and current_user_time render in the workspace timezone", async () => {
+  test("current_time uses workspace timezone while current_user_time uses contact timezone first", async () => {
     const context = createContext({
-      contact: profileContact,
+      contact: { ...profileContact, timezone: "Asia/Tokyo" } as ContactModel,
       workspace: { ...workspace, timezone: "Asia/Bangkok" } as WorkspaceModel,
     })
 
@@ -1360,7 +1407,7 @@ describe("getSystemFieldValue — clock fields", () => {
     ).resolves.toBe("2026-01-02 10:04:05")
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.current_user_time),
-    ).resolves.toBe("2026-01-02 10:04:05")
+    ).resolves.toBe("2026-01-02 12:04:05")
   })
 
   test("clock fields fall back to the contact timezone, then to UTC", async () => {

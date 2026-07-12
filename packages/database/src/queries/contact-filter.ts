@@ -108,6 +108,7 @@ const RELATION_SET_OPERATORS = new Set<string>([
 type RelationSetFilter = {
   exists: (predicate: SQL | undefined, negate?: boolean) => ContactWhere
   column: AnyColumn
+  hasValuePredicate?: SQL
 }
 
 const RELATION_SET_FILTERS: Record<string, RelationSetFilter> = {
@@ -117,6 +118,11 @@ const RELATION_SET_FILTERS: Record<string, RelationSetFilter> = {
     column: contactInboxModel.channel,
   },
   inbox: { exists: contactInboxExists, column: contactInboxModel.inboxId },
+  language: {
+    exists: contactInboxExists,
+    column: contactInboxModel.language,
+    hasValuePredicate: sql`${contactInboxModel.language} IS NOT NULL AND ${contactInboxModel.language} <> ''`,
+  },
   tags: { exists: tagsExists, column: contactsToTagsModel.tagId },
 }
 
@@ -295,6 +301,7 @@ function buildConditionWhere(
     case "source":
     case "currentChannel":
     case "inbox":
+    case "language":
       return buildRelationSetWhere(field, operator, value)
 
     // ── Dynamic custom field (value match on contactCustomFields) ─────────────
@@ -385,7 +392,7 @@ function buildRelationSetWhere(
   }
 
   if (operator === operatorTypes.enum.isEmpty) {
-    return filter.exists(undefined, true)
+    return filter.exists(filter.hasValuePredicate, true)
   }
 
   const values = toArrayValue(value)

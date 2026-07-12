@@ -208,6 +208,15 @@ vi.mock("../src/services/integrations", () => ({
       // Messenger comment path fetches the comment attachment; no attachment here.
       runAction: vi.fn().mockResolvedValue(undefined),
     },
+    telegram: {
+      runChannelHandler: mockRunChannelHandler,
+    },
+    whatsapp: {
+      runChannelHandler: mockRunChannelHandler,
+    },
+    zalo: {
+      runChannelHandler: mockRunChannelHandler,
+    },
   },
   integrationService: {
     identifyInboxAndIntegrationAuthFromIdentifier: vi.fn(),
@@ -784,6 +793,147 @@ describe("receiveMessage — new contact MAC gate", () => {
 
     const rows = await runCapturedNewContactCreate()
     expect(rows).toContainEqual(expect.objectContaining({ source: "botLink" }))
+  })
+
+  test("derives WhatsApp locale, timezone, and language from the wa_id phone country", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "whatsapp" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "84901234567", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+          channel: "whatsapp",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "whatsapp" })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        locale: "vi_VN",
+        timezone: "Asia/Ho_Chi_Minh",
+      }),
+    )
+    expect(rows).toContainEqual(expect.objectContaining({ language: "vi" }))
+  })
+
+  test("writes Telegram language_code to ContactInbox.language without region", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "telegram" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.resolve({ sourceId: "tg-1", locale: "zh-CN" })
+        }
+        return Promise.resolve({
+          message: { ...baseIncomingMessage, attachments: [] },
+          contact: { sourceId: "tg-1", locale: "zh-CN" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+        })
+      },
+    )
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+          channel: "telegram",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "telegram" })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(expect.objectContaining({ locale: "zh_CN" }))
+    expect(rows).toContainEqual(expect.objectContaining({ language: "zh" }))
+  })
+
+  test("keeps provided channel profile values while deriving only missing language", async () => {
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.resolve({
+            sourceId: "psid-123",
+            locale: "ja-JP",
+            timezone: "Asia/Tokyo",
+          })
+        }
+        return Promise.resolve({
+          message: { ...baseIncomingMessage, attachments: [] },
+          contact: { sourceId: "psid-123", locale: "en-US" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+        })
+      },
+    )
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        locale: "ja_JP",
+        timezone: "Asia/Tokyo",
+      }),
+    )
+    expect(rows).toContainEqual(expect.objectContaining({ language: "ja" }))
   })
 
   test("persists inbound payload tracking in the same activity update", async () => {

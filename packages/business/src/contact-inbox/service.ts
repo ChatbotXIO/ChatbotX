@@ -238,6 +238,43 @@ class ContactInboxService extends BaseService {
     await this.invalidateCacheTags([`contacts:${contactId}:contact-inboxes`])
   }
 
+  async updateLanguage(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    contactId: string
+    contactInboxId: string
+    language: string | null
+  }): Promise<ContactInboxTrackingInvalidation | null> {
+    const { tx = db, workspaceId, contactId, contactInboxId, language } = props
+
+    const updatedRows = await tx
+      .update(contactInboxModel)
+      .set({ language })
+      .where(
+        and(
+          eq(contactInboxModel.id, contactInboxId),
+          eq(contactInboxModel.contactId, contactId),
+          this.workspaceScope(workspaceId),
+        ),
+      )
+      .returning({ id: contactInboxModel.id })
+
+    if (updatedRows.length === 0) {
+      this.logSkippedTrackingUpdate({
+        contactInboxId,
+        contactId,
+        workspaceId,
+        operation: "updateLanguage",
+      })
+      return null
+    }
+
+    const invalidation = this.createTrackingInvalidation(contactId)
+    await this.invalidateTracking(invalidation)
+
+    return invalidation
+  }
+
   async updateTracking(props: {
     tx?: DatabaseClient
     contactInboxId: string

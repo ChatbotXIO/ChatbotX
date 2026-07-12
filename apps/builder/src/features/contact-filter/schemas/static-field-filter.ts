@@ -16,6 +16,12 @@ const BASE_OPERATORS = [
   operatorTypes.enum.isEmpty,
 ] as const satisfies readonly OperatorType[]
 
+const SET_OPERATORS = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
+  ...BASE_OPERATORS,
+] as const satisfies readonly OperatorType[]
+
 const BOOLEAN_OPERATORS = [
   operatorTypes.enum.eq,
   operatorTypes.enum.isEmpty,
@@ -54,10 +60,11 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   locale: BASE_OPERATORS,
   country: BASE_OPERATORS,
   gender: BASE_OPERATORS,
-  source: BASE_OPERATORS,
-  currentChannel: BASE_OPERATORS,
-  inbox: BASE_OPERATORS,
-  tags: BASE_OPERATORS,
+  source: SET_OPERATORS,
+  currentChannel: SET_OPERATORS,
+  inbox: SET_OPERATORS,
+  language: SET_OPERATORS,
+  tags: SET_OPERATORS,
 
   subscribedToBroadcast: BOOLEAN_OPERATORS,
   interactedInLast24h: BOOLEAN_OPERATORS,
@@ -71,7 +78,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   fullName: TEXT_FREE_OPERATORS,
   email: TEXT_FREE_OPERATORS,
   phone: TEXT_FREE_OPERATORS,
-  timezone: TEXT_FREE_OPERATORS,
+  timezone: BASE_OPERATORS,
 
   contactCreatedAt: DATE_OPERATORS,
   lastSeen: DATE_OPERATORS,
