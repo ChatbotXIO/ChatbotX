@@ -32,7 +32,7 @@ export const ContactFilter = ({
     name: `${parentName}.conditions`,
   })
 
-  const { configs, operatorLabelByValue } =
+  const { configs, conditionOptions, operatorLabelByValue } =
     useContactFilterConfigs(inboxChannel)
 
   useEffect(() => {
@@ -80,8 +80,9 @@ export const ContactFilter = ({
       ))}
 
       <ContactFilterConditionForm
+        conditionOptions={conditionOptions}
+        configs={configs}
         excludeFields={excludeFields}
-        inboxChannel={inboxChannel}
         onAdd={handleAdd}
       />
     </div>

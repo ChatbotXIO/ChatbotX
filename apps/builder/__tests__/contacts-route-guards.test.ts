@@ -24,7 +24,12 @@ vi.mock("next-intl/server", () => ({
 }))
 
 vi.mock("@/features/contacts/queries/list-contacts.queries", () => ({
-  listContactsRSC: vi.fn(async () => ({ data: [], pageCount: 0 })),
+  listContactsRSC: vi.fn(async () => ({
+    data: [],
+    pageCount: 0,
+    totalCount: 0,
+    totalCountCapped: false,
+  })),
 }))
 
 vi.mock("@/features/contacts/schemas/query", () => ({

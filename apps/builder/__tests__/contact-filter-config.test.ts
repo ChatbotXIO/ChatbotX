@@ -186,6 +186,10 @@ describe("contact filter field config helpers", () => {
     expect(groupFor("tags")).toBe("analytics")
     expect(groupFor("lastSeen")).toBe("analytics")
     expect(groupFor("lastInteraction")).toBe("analytics")
+    expect(groupFor("conversationAssigned")).toBe("analytics")
+    expect(groupFor("unreplied")).toBe("analytics")
+    expect(groupFor("unread")).toBe("analytics")
+    expect(groupFor("existingContact")).toBe("contactInfo")
     expect(groupFor("phone")).toBe("sms")
     expect(groupFor("email")).toBe("email")
     expect(groupFor("emailWasVerified")).toBe("email")
@@ -289,6 +293,37 @@ describe("contact filter field config helpers", () => {
         .find((config) => config.name === "timezone")
         ?.options?.map((option) => option.value),
     ).toContain("Asia/Ho_Chi_Minh")
+  })
+
+  test("uses fixed continent options with unknown sentinel", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    expect(
+      configs
+        .find((config) => config.name === "continent")
+        ?.options?.map((option) => option.value),
+    ).toEqual(["unknown", "AS", "EU", "AF", "OC", "NA", "SA"])
+  })
+
+  test("passes conversation assignee options through", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+      assigneeOptions: [{ label: "Unassigned", value: "unassigned" }],
+    })
+
+    expect(
+      configs.find((config) => config.name === "conversationAssigned")?.options,
+    ).toEqual([{ label: "Unassigned", value: "unassigned" }])
   })
 
   test("groups field options and keeps contact-info fields flat", () => {

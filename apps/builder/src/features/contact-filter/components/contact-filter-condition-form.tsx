@@ -33,6 +33,7 @@ import {
   singleContactFilterConditionSchema,
 } from "../schemas"
 import {
+  type ConditionOption,
   type ContactFilterConditionFormDraft,
   type FieldConfig,
   getFieldOptions,
@@ -51,7 +52,6 @@ import {
   getStaticFieldValueInputConfig,
   staticFieldOperatorRequiresArrayValue,
 } from "./static-field-filter-config"
-import { useContactFilterConfigs } from "./use-contact-filter-configs"
 
 /**
  * Maps a raw form draft to the condition shape validated by
@@ -217,8 +217,9 @@ const ContactFilterValueFields = ({
 
 type ContactFilterConditionFormProps = {
   onAdd: (data: ContactFilterCondition) => void
+  configs: FieldConfig[]
+  conditionOptions: ConditionOption[]
   excludeFields?: ContactFilterField[]
-  inboxChannel?: string
 }
 
 const OPERATORS_WITHOUT_VALUE: string[] = [
@@ -230,14 +231,12 @@ const EMPTY_EXCLUDE_FIELDS: ContactFilterField[] = []
 
 export const ContactFilterConditionForm = ({
   onAdd,
+  configs: allConfigs,
+  conditionOptions,
   excludeFields = EMPTY_EXCLUDE_FIELDS,
-  inboxChannel,
 }: ContactFilterConditionFormProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-
-  const { configs: allConfigs, conditionOptions } =
-    useContactFilterConfigs(inboxChannel)
 
   const configs = useMemo(
     () =>

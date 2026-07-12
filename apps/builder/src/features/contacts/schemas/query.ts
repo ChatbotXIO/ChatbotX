@@ -86,6 +86,8 @@ export type ContactResponse = z.infer<typeof contactResponse>
 export const listContactsResponse = z.object({
   data: z.array(contactResponse),
   pageCount: z.number(),
+  totalCount: z.number(),
+  totalCountCapped: z.boolean(),
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 

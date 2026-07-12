@@ -4,11 +4,25 @@ import {
   listBroadcastContactsRequest,
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
-import { contactInboxService } from "@chatbotx.io/business"
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import { broadcastService, contactInboxService } from "@chatbotx.io/business"
+import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+
+const selectOptionResource = z.object({
+  id: z.string(),
+  name: z.string(),
+})
+
+const listBroadcastOptionsRequest = z.object({
+  workspaceId: z.string(),
+  channel: channelTypes,
+})
+
+const listBroadcastOptionsResponse = z.object({
+  data: z.array(selectOptionResource),
+})
 
 const getBatchBroadcastStatsRequest = z.object({
   workspaceId: z.string(),
@@ -21,6 +35,20 @@ const getBatchBroadcastStatsResponse = z.record(
 )
 
 export const broadcastPrivateAPIs = {
+  privateListBroadcastOptionsAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/broadcasts/options",
+      summary: "List broadcast options",
+      tags: ["Broadcasts"],
+    })
+    .input(listBroadcastOptionsRequest)
+    .output(listBroadcastOptionsResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input }) => ({
+      data: await broadcastService.listOptions(input),
+    })),
+
   privateGetBatchBroadcastStatsAPI: authorizedAPI
     .route({
       method: "POST",

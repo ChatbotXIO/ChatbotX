@@ -1,4 +1,4 @@
-import { pgTable, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
+import { index, pgTable, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, timestampConfig } from "../partials/shared"
 import { reflinkModel } from "./reflink"
 import { workspaceModel } from "./workspace"
@@ -24,6 +24,7 @@ export const refLinkStatModel = pgTable(
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
   },
   (table) => [
+    index("RefLinkStat_contactId_idx").on(table.contactId),
     // Unique on the natural event key so worker re-deliveries dedupe via
     // onConflictDoNothing. The (workspaceId, linkId, occurredAt) prefix still
     // serves the date-range and per-contact aggregate queries.

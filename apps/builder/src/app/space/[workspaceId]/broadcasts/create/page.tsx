@@ -8,7 +8,9 @@ import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/fl
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provider/integration-store-context"
+import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
+import { UserStoreProvider } from "@/features/users/provider/user-store-context"
 
 export default async function CreateBroadcastPage({
   params,
@@ -34,12 +36,16 @@ export default async function CreateBroadcastPage({
               workspaceId={workspaceId}
             >
               <InboxStoreProvider workspaceId={workspaceId}>
-                <ContactStoreProvider
-                  autoInitialize={false}
-                  workspaceId={workspaceId}
-                >
-                  <CreateBroadcastForm workspaceId={workspaceId} />
-                </ContactStoreProvider>
+                <UserStoreProvider workspaceId={workspaceId}>
+                  <SequenceStoreProvider workspaceId={workspaceId}>
+                    <ContactStoreProvider
+                      autoInitialize={false}
+                      workspaceId={workspaceId}
+                    >
+                      <CreateBroadcastForm workspaceId={workspaceId} />
+                    </ContactStoreProvider>
+                  </SequenceStoreProvider>
+                </UserStoreProvider>
               </InboxStoreProvider>
             </FlowTemplateStoreProvider>
           </TagStoreProvider>

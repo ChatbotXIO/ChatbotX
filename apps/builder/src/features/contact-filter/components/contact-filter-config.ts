@@ -176,6 +176,10 @@ const resolveContactFilterOptions = (
     inboxOptions: SelectOption[]
     tagOptions: SelectOption[]
     flowVersionOptions: SelectOption[]
+    broadcastOptions: SelectOption[]
+    sequenceOptions: SelectOption[]
+    reflinkOptions: SelectOption[]
+    assigneeOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -207,6 +211,14 @@ const resolveContactFilterOptions = (
       return ctx.tagOptions
     case "flows":
       return ctx.flowVersionOptions
+    case "broadcasts":
+      return ctx.broadcastOptions
+    case "sequences":
+      return ctx.sequenceOptions
+    case "reflinks":
+      return ctx.reflinkOptions
+    case "assignees":
+      return ctx.assigneeOptions
     default: {
       const _exhaustive: never = optionSource
       return _exhaustive
@@ -328,12 +340,20 @@ export const getFieldConfigs = ({
   inboxOptions,
   customFields,
   flowVersionOptions,
+  broadcastOptions = [],
+  sequenceOptions = [],
+  reflinkOptions = [],
+  assigneeOptions = [],
 }: {
   t: (key: string) => string
   tagOptions: SelectOption[]
   inboxOptions: SelectOption[]
   customFields: CustomFieldFilterOption[]
   flowVersionOptions: SelectOption[]
+  broadcastOptions?: SelectOption[]
+  sequenceOptions?: SelectOption[]
+  reflinkOptions?: SelectOption[]
+  assigneeOptions?: SelectOption[]
 }): FieldConfig[] => {
   const channelOptions = getChannelMultiSelectOptions(t)
 
@@ -348,6 +368,10 @@ export const getFieldConfigs = ({
         inboxOptions,
         tagOptions,
         flowVersionOptions,
+        broadcastOptions,
+        sequenceOptions,
+        reflinkOptions,
+        assigneeOptions,
       }),
     }),
   )

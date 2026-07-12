@@ -60,7 +60,7 @@ export function ContactListFilterPanel({
   inboxChannel,
 }: ContactListFilterPanelProps) {
   const t = useTranslations()
-  const { configs, operatorLabelByValue } =
+  const { configs, conditionOptions, operatorLabelByValue } =
     useContactFilterConfigs(inboxChannel)
 
   useEffect(() => {
@@ -134,8 +134,9 @@ export function ContactListFilterPanel({
         ))}
 
         <ContactFilterConditionForm
+          conditionOptions={conditionOptions}
+          configs={configs}
           excludeFields={excludeFields}
-          inboxChannel={inboxChannel}
           onAdd={handleAddCondition}
         />
       </div>

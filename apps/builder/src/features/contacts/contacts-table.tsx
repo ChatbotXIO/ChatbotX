@@ -130,10 +130,21 @@ export function ContactsTable({
   const t = useTranslations()
   const searchParams = useSearchParams()
   const searchParamsKey = searchParams.toString()
-  const [{ data: initialData, pageCount: initialPageCount }] = use(promises)
+  const [
+    {
+      data: initialData,
+      pageCount: initialPageCount,
+      totalCount: initialTotalCount,
+      totalCountCapped: initialTotalCountCapped,
+    },
+  ] = use(promises)
   const [tableData, setTableData] =
     useState<ListContactsResponse["data"]>(initialData)
   const [tablePageCount, setTablePageCount] = useState(initialPageCount)
+  const [tableTotalCount, setTableTotalCount] = useState(initialTotalCount)
+  const [tableTotalCountCapped, setTableTotalCountCapped] = useState(
+    initialTotalCountCapped,
+  )
   const {
     filter: contactFilter,
     setFilter: setContactFilter,
@@ -172,6 +183,8 @@ export function ContactsTable({
 
         setTableData(response.data)
         setTablePageCount(response.pageCount)
+        setTableTotalCount(response.totalCount)
+        setTableTotalCountCapped(response.totalCountCapped)
       })
       .catch(() => {
         if (ignore) {
@@ -180,6 +193,8 @@ export function ContactsTable({
 
         setTableData(initialData)
         setTablePageCount(initialPageCount)
+        setTableTotalCount(initialTotalCount)
+        setTableTotalCountCapped(initialTotalCountCapped)
       })
 
     return () => {
@@ -189,6 +204,8 @@ export function ContactsTable({
     contactFilter,
     initialData,
     initialPageCount,
+    initialTotalCount,
+    initialTotalCountCapped,
     isContactFilterActive,
     searchParamsKey,
     workspaceId,
@@ -213,6 +230,10 @@ export function ContactsTable({
     }),
     [keyword, isOptimisticContactFilterActive, optimisticContactFilter],
   )
+  const totalCountDisplay = tableTotalCount.toLocaleString()
+  const totalCountLabel = tableTotalCountCapped
+    ? t("contacts.countCapped", { count: totalCountDisplay })
+    : t("contacts.countExact", { count: totalCountDisplay })
 
   const columns = useMemo<ColumnDef<ListContactsResponse["data"][number]>[]>(
     () => [
@@ -418,6 +439,9 @@ export function ContactsTable({
           onToggle={() => setShowContactFilterPanel((current) => !current)}
           open={showContactFilterPanel}
         />
+        <span className="whitespace-nowrap text-muted-foreground text-sm">
+          {totalCountLabel}
+        </span>
         <ContactListAction
           filter={exportFilter}
           table={table}

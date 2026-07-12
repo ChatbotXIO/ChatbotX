@@ -2,6 +2,7 @@ import {
   DrizzleQueryError,
   type InferSelectModel,
   relationsFilterToSQL,
+  sql,
 } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import type { PgTable } from "drizzle-orm/pg-core"
@@ -37,6 +38,12 @@ export const db = drizzle({
 export * from "drizzle-orm"
 
 type RelationsFilterArg = Parameters<typeof relationsFilterToSQL>[1]
+type RelationsFilterInternals = Parameters<typeof relationsFilterToSQL>[3]
+type RelationsFilterCasing = Parameters<typeof relationsFilterToSQL>[4]
+type DrizzleRelationInternalsClient = {
+  _?: { relations: RelationsFilterInternals }
+  dialect?: { casing: RelationsFilterCasing }
+}
 export type Transaction = Parameters<
   Parameters<(typeof db)["transaction"]>[0]
 >[0]
@@ -51,29 +58,80 @@ export const countWithRelationsFilter = <TTable extends PgTable>(props: {
 }): Promise<number> => {
   const { client = db, table, tsName, where } = props
 
+  const filter = resolveRelationsFilter({
+    client,
+    table,
+    tsName,
+    where,
+  })
+
+  return filter ? client.$count(table, filter) : client.$count(table)
+}
+
+export const countWithRelationsFilterCapped = async <
+  TTable extends PgTable,
+>(props: {
+  cap: number
+  client?: DatabaseClient
+  table: TTable
+  tsName: string
+  where: Record<string, unknown> | undefined
+}): Promise<{ total: number; capped: boolean; cap: number }> => {
+  const { cap, client = db, table, tsName, where } = props
+  const filter = resolveRelationsFilter({
+    client,
+    table,
+    tsName,
+    where,
+  })
+  const whereClause = filter ? sql`WHERE ${filter}` : sql``
+  const result = await client.execute<{ count: number }>(sql`
+    SELECT COUNT(*)::int AS count
+    FROM (
+      SELECT 1
+      FROM ${table}
+      ${whereClause}
+      LIMIT ${cap + 1}
+    ) AS "cappedCount"
+  `)
+  const count = result.rows[0]?.count ?? 0
+
+  return {
+    total: Math.min(count, cap),
+    capped: count > cap,
+    cap,
+  }
+}
+
+const resolveRelationsFilter = <TTable extends PgTable>(props: {
+  client: DatabaseClient
+  table: TTable
+  tsName: string
+  where: Record<string, unknown> | undefined
+}) => {
+  const { client, table, tsName, where } = props
+
   if (!where || Object.keys(where).length === 0) {
-    return client.$count(table)
+    return
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: reaching drizzle beta relation internals in one place
-  const anyDb = client as any
-  const rootDb = db as typeof anyDb
-  const relationInternals = anyDb._?.relations ?? rootDb._.relations
+  const internalClient = client as unknown as DrizzleRelationInternalsClient
+  const rootClient = db as unknown as Required<DrizzleRelationInternalsClient>
+  const relationInternals =
+    internalClient._?.relations ?? rootClient._.relations
   const tableRelations = relationInternals[tsName]?.relations
 
   if (!tableRelations) {
     throw new Error(`Relation config not found for table: ${tsName}`)
   }
 
-  const filter = relationsFilterToSQL(
+  return relationsFilterToSQL(
     table,
     where as RelationsFilterArg,
     tableRelations,
     relationInternals,
-    anyDb.dialect?.casing ?? rootDb.dialect.casing,
+    internalClient.dialect?.casing ?? rootClient.dialect.casing,
   )
-
-  return client.$count(table, filter)
 }
 
 export const findOrFail = async <TTable extends PgTable>(props: {

@@ -7,6 +7,7 @@ const applyContactFilterSpy = vi.fn<
 >(() => ({}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  countWithRelationsFilterCapped: vi.fn(),
   countWithRelationsFilter: vi.fn(),
   db: {
     query: {
