@@ -6,7 +6,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 
 - **Product:** Open-source omnichannel chatbot platform (inbox, flow builder, AI agents, broadcasts, webhooks, public APIs, CLI, MCP).
 - **Architecture:** **pnpm** workspaces + **Turborepo**. Shared packages use the **`@chatbotx.io/*`** npm scope.
-- **License:** Community Edition is **AGPLv3**; enterprise-specific code may fall under a separate commercial license (see `apps/builder/src/enterprise/LICENSE`).
+- **License:** Community Edition is **MIT**; enterprise-specific code may fall under a separate commercial license (see `apps/builder/src/enterprise/LICENSE`).
 
 ## Requirements
 

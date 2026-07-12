@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://opensource.org/license/agpl-v3">
-    <img alt="License" src="https://img.shields.io/badge/License-AGPL%203.0-2496ED?labelColor=111827">
+  <a href="https://opensource.org/license/mit">
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?labelColor=111827">
   </a>
 </p>
 
@@ -79,15 +79,15 @@
 
 ## ✨ Features
 
+- **Omnichannel:** WhatsApp, Facebook, Instagram, TikTok, Telegram, Zalo, Email, API, and Webchat
 - **Visual Flow Builder:** Drag-and-drop chatbot builder with 15+ node types
-- **AI Agent:** AI-powered responses and actions using OpenAI, Claude, Gemini, DeepSeek, or OpenRouter
+- **AI Agents:** OpenAI, Claude, Gemini, DeepSeek, OpenRouter, NVIDIA NIM, and Local LLMs
 - **Live Chat Inbox:** Real-time inbox with human takeover and conversation assignment
 - **Contact CRM:** Manage contacts with tags, custom fields, and segmentation
 - **Broadcasting:** Send targeted messages to specific contact segments
 - **Sequences:** Automate drip campaigns with scheduled messages and auto-enrollment
 - **Team Management:** Invite team members, assign roles, and manage permissions
-- **Multi-Platform:** Connect across WhatsApp, Facebook, Instagram, Tiktok, Telegram, Zalo, Email, and Webchat
-- **Rich Messaging:** Support for buttons, quick replies, catalogs, and carousel cards
+- **Rich Messaging:** Media, files, buttons, quick replies, catalogs, locations, and carousel cards
 - **Comment-to-DM:** Automatically message users who comment with specific keywords
 - **A/B Testing:** Test and optimize different message flows
 - **Triggers:** Execute actions based on events within your bot
@@ -99,6 +99,19 @@
 | ![Omnichannel Team Inbox](https://github.com/user-attachments/assets/daa23e91-7ba5-4093-8605-e77cddebe35c) | ![Smart Contact Import](https://github.com/user-attachments/assets/6a4a6c7d-5a77-4f3c-900b-d87cb849e589) |
 | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | ![Visual Flow Builder](https://github.com/user-attachments/assets/6f0448ad-0f32-4065-9e2a-f41b5354a68f)    | ![Built-in AI Agents](https://github.com/user-attachments/assets/365167c6-b4d9-498a-8b8c-a5079b82edbf)   |
+
+## Why ChatbotX?
+
+| Feature | ManyChat | ChatbotX |
+|---|---:|---:|
+| Self-Hosted | ❌ | ✅ |
+| White Label | ❌ | ✅ |
+| CLI & MCP | ❌ | ✅ |
+| Cost Growth | ✅ | ❌ |
+| Public API | Limited | ✅ |
+| Omnichannel | Limited | ✅ |
+| AI Agents | Limited | ✅ |
+| AI Credits | Add-on | BYOK |
 
 ## Tech Stack
 
@@ -147,7 +160,6 @@ To have the project up and running, please follow the [Quick Start Guide](https:
 |   |-- automated-response/
 |   |-- analytics/
 |   |-- event-bus/
-|   |-- kafka/
 |   |-- mail/
 |   |-- imports/
 |   |-- flow-config/
@@ -195,6 +207,11 @@ The default Docker Compose stack includes:
 - MailHog SMTP on `1025` and UI on `8025`
 - Adminer on `8080`
 
+## Support
+
+If ChatbotX helps you avoid expensive chatbot automation tools, please give us a ⭐ on GitHub.
+We're also working hard to bring open-source mobile apps to **iOS and Android** this year
+
 ## License
 
-ChatbotX' Community Edition is released as open source under the [AGPLv3 license](https://github.com/ChatbotXIO/ChatbotX/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/ChatbotXIO/ChatbotX/blob/main/apps/builder/src/enterprise/LICENSE)
+ChatbotX' Community Edition is released as open source under the [MIT License](https://github.com/ChatbotXIO/ChatbotX/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/ChatbotXIO/ChatbotX/blob/main/apps/builder/src/enterprise/LICENSE)

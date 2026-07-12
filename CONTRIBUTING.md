@@ -81,4 +81,4 @@ We aim to foster an inclusive and welcoming community. Harassment and abusive be
 
 ## License
 
-By contributing to ChatbotX, you agree that your contributions will be licensed under the AGPLv3 License.
+By contributing to ChatbotX, you agree that your contributions will be licensed under the MIT License.
