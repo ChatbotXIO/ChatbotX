@@ -8,8 +8,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@chatbotx.io/encryption": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/integration-instagram": "workspace:*",
+    "@chatbotx.io/integration-messenger": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/business": "workspace:*",

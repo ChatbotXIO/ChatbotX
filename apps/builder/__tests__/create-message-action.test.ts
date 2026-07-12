@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockChatQueueAdd,
+  mockContactInboxUpdateTracking,
   mockCreateMessageRepository,
   mockDbUpdate,
   mockIntegrationQueueAdd,
@@ -21,6 +22,7 @@ const {
 
   return {
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
+    mockContactInboxUpdateTracking: vi.fn().mockResolvedValue(null),
     mockCreateMessageRepository: vi.fn().mockResolvedValue({
       create: mockRepositoryCreate,
       createWithAttachments: vi.fn(),
@@ -43,6 +45,7 @@ vi.mock("@/lib/safe-action", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactInboxService: { updateTracking: mockContactInboxUpdateTracking },
   resolveTenantSettings: vi
     .fn()
     .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
@@ -65,6 +68,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   findOrFail: vi.fn(),
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    values,
+  })),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -72,7 +79,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: { id: "contactInboxId" },
+  contactInboxModel: {
+    id: "contactInboxId",
+    firstInteractionAt: "firstInteractionAt",
+  },
   conversationModel: { id: "conversationId" },
 }))
 
@@ -163,8 +173,14 @@ describe("createMessage", () => {
     const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
       createdAt: Date
     }
-    expect(updateBuilder.set).toHaveBeenNthCalledWith(2, {
-      lastMessageAt: messageInput.createdAt,
+    expect(mockContactInboxUpdateTracking).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: {
+        firstInteractionAt: messageInput.createdAt,
+        lastMessageAt: messageInput.createdAt,
+      },
     })
   })
 })

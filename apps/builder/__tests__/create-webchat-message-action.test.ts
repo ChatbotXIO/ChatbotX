@@ -9,6 +9,7 @@ const {
   mockContactFindById,
   mockContactUnblockIfBlocked,
   mockContactInboxFindLatest,
+  mockContactInboxUpdateTracking,
   mockConversationEnsureActive,
   mockConversationFindBy,
   mockCreateMessageRepository,
@@ -49,6 +50,7 @@ const {
     mockContactFindById: vi.fn(),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactInboxFindLatest: vi.fn(),
+    mockContactInboxUpdateTracking: vi.fn().mockResolvedValue(null),
     mockConversationFindBy: vi.fn(),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockConversationEnsureActive: vi.fn().mockResolvedValue(false),
@@ -93,7 +95,10 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactInboxService: { findLatestBySource: mockContactInboxFindLatest },
+  contactInboxService: {
+    findLatestBySource: mockContactInboxFindLatest,
+    updateTracking: mockContactInboxUpdateTracking,
+  },
   contactService: {
     findById: mockContactFindById,
     unblockIfBlocked: mockContactUnblockIfBlocked,
@@ -138,6 +143,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   findOrFail: mockFindOrFail,
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    values,
+  })),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -145,7 +154,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: { id: "contactInboxId" },
+  contactInboxModel: {
+    id: "contactInboxId",
+    firstInteractionAt: "firstInteractionAt",
+  },
   contactModel: { id: "contactId" },
   conversationModel: { id: "conversationId" },
   integrationWebchatModel: { id: "integrationWebchatId" },
@@ -288,10 +300,16 @@ describe("handleCreateWebchatMessage", () => {
     const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
       createdAt: Date
     }
-    expect(updateBuilder.set).toHaveBeenNthCalledWith(2, {
-      contactLastReadAt: messageInput.createdAt,
-      lastMessageAt: messageInput.createdAt,
-      lastIncomingMessageAt: messageInput.createdAt,
+    expect(mockContactInboxUpdateTracking).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: {
+        firstInteractionAt: messageInput.createdAt,
+        contactLastReadAt: messageInput.createdAt,
+        lastMessageAt: messageInput.createdAt,
+        lastIncomingMessageAt: messageInput.createdAt,
+      },
     })
   })
 
@@ -418,8 +436,14 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     expect(insertBuilder.values).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: "Guest",
-        locale: "vi-VN",
+        locale: "vi_VN",
         timezone: "Asia/Ho_Chi_Minh",
+      }),
+    )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "webchat",
+        language: "vi",
       }),
     )
   })
@@ -435,6 +459,12 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
         firstName: "Guest",
         locale: undefined,
         timezone: undefined,
+      }),
+    )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "webchat",
+        language: undefined,
       }),
     )
   })

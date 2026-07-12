@@ -1,6 +1,8 @@
 import {
   broadcastToWorkspaceParty,
   buildContext,
+  type ContactInboxTrackingData,
+  contactInboxService,
   contactService,
   conversationService,
   quotaEnforcementService,
@@ -8,6 +10,7 @@ import {
   updateContactFromMessage,
   workspaceService,
 } from "@chatbotx.io/business"
+import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
@@ -41,8 +44,10 @@ import {
   contentTypes,
   type IncomingContact,
   type IncomingMessage,
+  type MessageLocationEntity,
   type MessageWhatsappFlowResponseEntity,
   messageTypes,
+  type ReceivedMessageResult,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -61,6 +66,18 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+
+type ContactInboxTracking = ContactInboxTrackingData
+
+type ContactLocation = {
+  latitude: number
+  longitude: number
+}
+
+type ReceivedMessageSystemFieldUpdates = {
+  contactInboxTracking: ContactInboxTracking
+  contactLocation: ContactLocation | null
+}
 
 export const metaReferralToContactSource = (
   raw?: string | null,
@@ -156,6 +173,7 @@ export const receiveMessage = async (
     throw new SdkException("Unable to resolve contact and conversation")
   }
   const { contactInbox, conversation, contact, isNewContact } = detected
+  const systemFieldUpdates = getReceivedMessageSystemFieldUpdates(parsedMessage)
 
   // Overwrite Contact.phoneNumber/email from message text — every inbound
   // channel. Unconditional: the customer just typed the value, so it's
@@ -201,6 +219,7 @@ export const receiveMessage = async (
         contactInbox,
         conversation,
         incomingMessage,
+        ...systemFieldUpdates,
       })
 
     if (isNewMessage) {
@@ -262,6 +281,62 @@ export const receiveMessage = async (
   }
 }
 
+const getReceivedMessageSystemFieldUpdates = (
+  parsedMessage: Pick<
+    ReceivedMessageResult,
+    "buttonTitle" | "message" | "referral"
+  >,
+): ReceivedMessageSystemFieldUpdates => ({
+  contactInboxTracking: getReceivedMessageContactInboxTracking(parsedMessage),
+  contactLocation: parseIncomingLocation(parsedMessage.message),
+})
+
+const getReceivedMessageContactInboxTracking = (
+  parsedMessage: Pick<ReceivedMessageResult, "buttonTitle" | "referral">,
+): ContactInboxTracking => {
+  const tracking: ContactInboxTracking = {}
+
+  if (parsedMessage.referral) {
+    tracking.referral = parsedMessage.referral
+  }
+
+  if (parsedMessage.buttonTitle) {
+    tracking.lastBtnTitle = parsedMessage.buttonTitle
+  }
+
+  return tracking
+}
+
+const parseIncomingLocation = (
+  message?: IncomingMessage | null,
+): ContactLocation | null => {
+  if (!message) {
+    return null
+  }
+
+  if (message.messageType === messageTypes.enum.outgoing) {
+    return null
+  }
+
+  if (message.contentType !== contentTypes.enum.location) {
+    return null
+  }
+
+  const location = message.contentAttributes as
+    | (MessageLocationEntity & {
+        lat?: unknown
+        long?: unknown
+      })
+    | undefined
+  const latitude = Number(location?.latitude ?? location?.lat)
+  const longitude = Number(location?.longitude ?? location?.long)
+  if (!(Number.isFinite(latitude) && Number.isFinite(longitude))) {
+    return null
+  }
+
+  return { latitude, longitude }
+}
+
 // Creates or updates the message row (deduplicates webhook retries via sourceId),
 // updates contactInbox/conversation activity timestamps for new rows,
 // broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
@@ -271,10 +346,19 @@ const saveAndBroadcastMessage = async (props: {
   contactInbox: ContactInboxModel
   conversation: ConversationModel
   incomingMessage: IncomingMessage
+  contactInboxTracking?: ContactInboxTracking
+  contactLocation?: ContactLocation | null
   createdAt?: Date
 }): Promise<{ message: MessageModel; isNew: boolean }> => {
-  const { inbox, contactInbox, conversation, incomingMessage, createdAt } =
-    props
+  const {
+    inbox,
+    contactInbox,
+    conversation,
+    incomingMessage,
+    contactInboxTracking,
+    contactLocation,
+    createdAt,
+  } = props
   const repository = await createMessageRepository()
 
   const messageInput = {
@@ -326,27 +410,14 @@ const saveAndBroadcastMessage = async (props: {
   const newMessage = messageWithAttachments
 
   if (isNew) {
-    const lastMessageUpdate: Partial<typeof contactInboxModel.$inferInsert> = {
-      lastMessageAt: newMessage.createdAt,
-    }
-
-    if (
-      incomingMessage.messageType !== "outgoing" &&
-      messageInput.type === "message"
-    ) {
-      lastMessageUpdate.lastIncomingMessageAt = newMessage.createdAt
-    }
-
-    await db.transaction(async (tx) => {
-      await tx
-        .update(contactInboxModel)
-        .set(lastMessageUpdate)
-        .where(eq(contactInboxModel.id, contactInbox.id))
-
-      await tx
-        .update(conversationModel)
-        .set({ lastActivityAt: newMessage.createdAt })
-        .where(eq(conversationModel.id, conversation.id))
+    await persistNewMessageSideEffects({
+      inbox,
+      contactInbox,
+      conversation,
+      incomingMessage,
+      message: newMessage,
+      contactInboxTracking,
+      contactLocation,
     })
   }
 
@@ -372,6 +443,83 @@ const saveAndBroadcastMessage = async (props: {
   }
 
   return { message: newMessage, isNew }
+}
+
+const persistNewMessageSideEffects = async (props: {
+  inbox: InboxModel
+  contactInbox: ContactInboxModel
+  conversation: ConversationModel
+  incomingMessage: IncomingMessage
+  message: MessageModel
+  contactInboxTracking?: ContactInboxTracking
+  contactLocation?: ContactLocation | null
+}): Promise<void> => {
+  const {
+    inbox,
+    contactInbox,
+    conversation,
+    incomingMessage,
+    message,
+    contactInboxTracking,
+    contactLocation,
+  } = props
+
+  const trackingInvalidation = await db.transaction(async (tx) => {
+    const invalidation = await contactInboxService.updateTracking({
+      tx,
+      contactInboxId: contactInbox.id,
+      contactId: contactInbox.contactId,
+      workspaceId: inbox.workspaceId,
+      data: {
+        ...getMessageActivityTracking({ incomingMessage, message }),
+        ...contactInboxTracking,
+      },
+    })
+
+    if (contactLocation) {
+      await contactService.update(
+        { workspaceId: inbox.workspaceId, id: contactInbox.contactId },
+        { location: contactLocation },
+        tx,
+      )
+    }
+
+    await tx
+      .update(conversationModel)
+      .set({ lastActivityAt: message.createdAt })
+      .where(eq(conversationModel.id, conversation.id))
+
+    return invalidation
+  })
+
+  if (trackingInvalidation) {
+    await contactInboxService.invalidateTracking(trackingInvalidation)
+  }
+}
+
+const getMessageActivityTracking = (props: {
+  incomingMessage: IncomingMessage
+  message: MessageModel
+}): ContactInboxTracking => {
+  const { incomingMessage, message } = props
+  const tracking: ContactInboxTracking = {
+    firstInteractionAt: message.createdAt,
+    lastMessageAt: message.createdAt,
+  }
+
+  if (incomingMessage.type === "comment") {
+    tracking.lastCommentMessageId = message.id
+    tracking.lastCommentMessageAt = message.createdAt
+  }
+
+  if (
+    incomingMessage.messageType !== "outgoing" &&
+    (incomingMessage.type ?? "message") === "message"
+  ) {
+    tracking.lastIncomingMessageAt = message.createdAt
+  }
+
+  return tracking
 }
 
 // Handles a Facebook fanpage comment (enqueued as `incomingComment` by the
@@ -460,6 +608,10 @@ export const receiveComment = async (
     type: "comment",
     parentId,
     attachments,
+    // The commented post id lives on the comment message itself (not on the
+    // ContactInbox); the `last_post_id`/`last_commented_post_text` system fields
+    // read it back from here via the user's latest comment message.
+    contentAttributes: { postId: commentData.postId },
   }
 
   await saveAndBroadcastMessage({
@@ -668,6 +820,25 @@ const detectContactAndConversation = async (props: {
     }
   }
 
+  const finalizedProfile = finalizeContactProfile(
+    {
+      locale: contactData.locale,
+      language: incomingContact.language,
+      timezone: contactData.timezone,
+    },
+    {
+      phoneHint:
+        incomingContact.phoneNumber ??
+        (inbox.channel === "whatsapp" ? incomingContact.sourceId : undefined),
+      fallbackLocale: inbox.channel === "zalo" ? "vi_VN" : undefined,
+    },
+  )
+  contactData = {
+    ...contactData,
+    locale: finalizedProfile.locale,
+    timezone: finalizedProfile.timezone,
+  }
+
   const ws = await workspaceService.find({ where: { id: inbox.workspaceId } })
   if (!ws) {
     throw new Error("Workspace not found")
@@ -704,6 +875,7 @@ const detectContactAndConversation = async (props: {
           source,
           sourceId: incomingContact.sourceId,
           channel: inbox.channel,
+          language: finalizedProfile.language,
         })
         .returning()
         .then((rows) => rows[0])

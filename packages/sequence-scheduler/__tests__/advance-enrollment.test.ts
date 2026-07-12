@@ -70,7 +70,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({ createId: () => "test-id" }))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "test-id",
+  }
+})
 
 import { advanceEnrollment } from "../src/advance-enrollment"
 // --- lazy imports after mocks ---

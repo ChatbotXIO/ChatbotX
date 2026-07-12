@@ -44,6 +44,27 @@ class ContactCustomFieldService extends BaseService {
     return row?.value ?? null
   }
 
+  async listWithDefinitions(input: {
+    contactId: string
+    tx?: DatabaseClient
+  }): Promise<{ name: string; value: string }[]> {
+    const { contactId, tx = db } = input
+    const rows = await tx.query.contactCustomFieldModel.findMany({
+      where: { contactId },
+      columns: { value: true },
+      with: {
+        customField: {
+          columns: { name: true },
+        },
+      },
+      orderBy: { id: "asc" },
+    })
+    return rows.map((row) => ({
+      name: row.customField.name,
+      value: row.value,
+    }))
+  }
+
   async setValues(
     input: SetValuesInput,
     tx: DatabaseClient = db,
@@ -113,8 +134,10 @@ class ContactCustomFieldService extends BaseService {
   async clearByContactId(input: {
     workspaceId: string
     contactId: string
+    tx?: DatabaseClient
   }): Promise<void> {
-    await db
+    const { tx = db } = input
+    await tx
       .delete(contactCustomFieldModel)
       .where(eq(contactCustomFieldModel.contactId, input.contactId))
     await this.invalidate(input)

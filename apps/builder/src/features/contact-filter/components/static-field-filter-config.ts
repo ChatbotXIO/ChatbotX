@@ -36,6 +36,12 @@ const BASE_OPERATORS = [
   operatorTypes.enum.isEmpty,
 ] as const satisfies readonly OperatorType[]
 
+const SET_OPERATORS = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
+  ...BASE_OPERATORS,
+] as const satisfies readonly OperatorType[]
+
 const BOOLEAN_OPERATORS = [
   operatorTypes.enum.eq,
   operatorTypes.enum.isEmpty,
@@ -77,6 +83,11 @@ const dropdownRule = {
   singleInput: "field",
 } as const satisfies StaticFieldRule
 
+const relationSetRule = {
+  enabledOperators: SET_OPERATORS,
+  singleInput: "field",
+} as const satisfies StaticFieldRule
+
 const booleanRule = {
   enabledOperators: BOOLEAN_OPERATORS,
   singleInput: "boolean",
@@ -113,15 +124,16 @@ const staticFieldRules: Record<string, StaticFieldRule> = {
   country: dropdownRule,
   continent: dropdownRule,
   gender: dropdownRule,
-  source: dropdownRule,
-  currentChannel: dropdownRule,
-  inbox: dropdownRule,
+  source: relationSetRule,
+  currentChannel: relationSetRule,
+  inbox: relationSetRule,
+  language: relationSetRule,
   hasOpportunity: dropdownRule,
   hasOpenOpportunity: dropdownRule,
   hasWonOpportunity: dropdownRule,
   hasLostOpportunity: dropdownRule,
   appliedJobs: dropdownRule,
-  tags: dropdownRule,
+  tags: relationSetRule,
   completedWhatsAppFlows: dropdownRule,
   messengerList: dropdownRule,
   subscribedToDripCampaign: dropdownRule,
@@ -187,7 +199,7 @@ const staticFieldRules: Record<string, StaticFieldRule> = {
   bought: dateRule,
 
   contactCreatedDateMinutesAgo: numberRule,
-  timezone: textFreeRule,
+  timezone: dropdownRule,
   followerCountOnInstagram: numberRule,
   lastSeenMinutesAgo: numberRule,
   lastInteractionMinutesAgo: numberRule,

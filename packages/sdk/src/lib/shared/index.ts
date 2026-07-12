@@ -29,6 +29,23 @@ export const HandleRequestType = {
   generateAuthUrl: "generate-auth-url",
 } as const
 
+export type MessageReferral = {
+  ref?: string | null
+  source?: string | null
+  type?: string | null
+  adId?: string | null
+  adTitle?: string | null
+  sourceUrl?: string | null
+  sourcePlatform?: string | null
+  ctwaClid?: string | null
+  postId?: string | null
+  photoUrl?: string | null
+  videoUrl?: string | null
+  productId?: string | null
+  flowId?: string | null
+  raw?: Record<string, unknown>
+}
+
 export type ReceivedMessageResult = {
   message: IncomingMessage | null
   contact: IncomingContact
@@ -36,4 +53,6 @@ export type ReceivedMessageResult = {
   quickReplyAction: string | null
   ref: string | null
   referralSource?: string | null
+  referral?: MessageReferral | null
+  buttonTitle?: string | null
 }

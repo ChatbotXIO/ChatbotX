@@ -78,6 +78,7 @@ export const createWebchatMessageRequest = z
       webchatId: zodBigintAsString(),
       guestConversationId: zodBigintAsString(),
       ref: z.string().optional(),
+      parentUrl: z.url().max(2048).optional(),
       locale: z.string().max(35).optional(),
       timezone: z.string().max(64).optional(),
     }),

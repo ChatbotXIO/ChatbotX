@@ -7,9 +7,12 @@ const {
   mockDbSet,
   mockDbUpdate,
   mockEmit,
+  mockFindConversation,
   mockFindContactInbox,
   mockIdentifyIntegration,
+  mockInvalidateTracking,
   mockRunChannelHandler,
+  mockUpdateTracking,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -31,14 +34,26 @@ const {
     mockDbSet,
     mockDbUpdate,
     mockEmit: vi.fn().mockResolvedValue(undefined),
+    mockFindConversation: vi.fn(),
     mockFindContactInbox: vi.fn(),
     mockIdentifyIntegration: vi.fn(),
+    mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
     mockRunChannelHandler: vi.fn(),
+    mockUpdateTracking: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
   }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mockBuildContext,
+  contactInboxService: {
+    invalidateTracking: mockInvalidateTracking,
+    updateTracking: mockUpdateTracking,
+  },
+  conversationService: {
+    findDMByContact: mockFindConversation,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -138,6 +153,7 @@ describe("read receipt timestamp handling", () => {
       integrationRow: { id: "integration-1" },
     })
     mockFindContactInbox.mockResolvedValue(contactInbox)
+    mockFindConversation.mockResolvedValue(contactInbox.conversation)
     mockRunChannelHandler.mockResolvedValue({
       contact: { sourceId: "source-contact-1" },
     })
@@ -256,7 +272,17 @@ describe("read receipt timestamp handling", () => {
     })
 
     expect(mockDbSet).toHaveBeenCalledWith({ contactLastReadAt: seenAt })
-    expect(mockDbSet).toHaveBeenCalledTimes(2)
+    expect(mockDbSet).toHaveBeenCalledTimes(1)
+    expect(mockUpdateTracking).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: { contactLastReadAt: seenAt },
+    })
+    expect(mockInvalidateTracking).toHaveBeenCalledWith({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
     expect(mockEmit).toHaveBeenCalledWith(
       "message:seen",
       expect.objectContaining({ occurredAt: seenAt }),
@@ -318,7 +344,14 @@ describe("read receipt timestamp handling", () => {
     expect(mockDbSet).toHaveBeenCalledWith({
       contactLastReadAt: new Date(1_700_000_000_000),
     })
-    expect(mockDbSet).toHaveBeenCalledTimes(2)
+    expect(mockDbSet).toHaveBeenCalledTimes(1)
+    expect(mockUpdateTracking).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: { contactLastReadAt: new Date(1_700_000_000_000) },
+    })
   })
 
   test("messageStatus read keeps millisecond timestamp unchanged", async () => {
@@ -355,13 +388,13 @@ describe("read receipt timestamp handling", () => {
     const firstSet = mockDbSet.mock.calls[0]?.[0] as {
       contactLastReadAt: Date
     }
-    const secondSet = mockDbSet.mock.calls[1]?.[0] as {
-      contactLastReadAt: Date
+    const trackingCall = mockUpdateTracking.mock.calls[0]?.[0] as {
+      data: { contactLastReadAt: Date }
     }
     const event = mockEmit.mock.calls[0]?.[1] as { occurredAt: Date }
 
     expect(firstSet.contactLastReadAt).toBeInstanceOf(Date)
-    expect(firstSet.contactLastReadAt).toBe(secondSet.contactLastReadAt)
+    expect(firstSet.contactLastReadAt).toBe(trackingCall.data.contactLastReadAt)
     expect(firstSet.contactLastReadAt).toBe(event.occurredAt)
   })
 })

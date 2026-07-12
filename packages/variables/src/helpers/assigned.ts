@@ -4,46 +4,42 @@ import {
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 
-const getAssignedAdmin = async (workspaceId: string) => {
-  const members = await workspaceMemberService.listByWorkspaceId({
-    workspaceId,
-  })
-  return members.find((m) => m.role === "admin") ?? null
-}
-
-export const getAssignedAdminName = async (
-  workspaceId: string,
-): Promise<string | null> =>
-  (await getAssignedAdmin(workspaceId))?.user.name ?? null
-
-export const getAssignedAdminEmail = async (
-  workspaceId: string,
-): Promise<string | null> =>
-  (await getAssignedAdmin(workspaceId))?.user.email ?? null
-
-export const getAssignedAdminId = async (
-  workspaceId: string,
-): Promise<string | null> =>
-  (await getAssignedAdmin(workspaceId))?.user.id ?? null
-
-export const getAssignedMemberName = async (
-  contactId: string,
-  workspaceId: string,
-): Promise<string | null> => {
+const resolveAssigneeMember = async (props: {
+  contactId: string
+  workspaceId: string
+}) => {
   const conversation = await conversationService.findBy({
-    where: { contactId },
+    where: { contactId: props.contactId, workspaceId: props.workspaceId },
   })
   if (!conversation?.assignedUserId) {
     return null
   }
-  const members = await workspaceMemberService.listByWorkspaceId({
-    workspaceId,
-  })
+
   return (
-    members.find((m) => m.userId === conversation.assignedUserId)?.user.name ??
-    null
+    (await workspaceMemberService.findWithUserByWorkspaceIdAndUserId({
+      workspaceId: props.workspaceId,
+      userId: conversation.assignedUserId,
+    })) ?? null
   )
 }
+
+export const resolveAssigneeName = async (
+  contactId: string,
+  workspaceId: string,
+): Promise<string | null> =>
+  (await resolveAssigneeMember({ contactId, workspaceId }))?.user.name ?? null
+
+export const resolveAssigneeEmail = async (
+  contactId: string,
+  workspaceId: string,
+): Promise<string | null> =>
+  (await resolveAssigneeMember({ contactId, workspaceId }))?.user.email ?? null
+
+export const resolveAssigneeId = async (
+  contactId: string,
+  workspaceId: string,
+): Promise<string | null> =>
+  (await resolveAssigneeMember({ contactId, workspaceId }))?.user.id ?? null
 
 export const getAssignedTeamName = async (
   contactId: string,

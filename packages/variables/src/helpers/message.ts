@@ -1,10 +1,6 @@
-import {
-  contactInboxService,
-  conversationService,
-  messageService,
-} from "@chatbotx.io/business"
+import { messageService } from "@chatbotx.io/business"
 import { senderTypes } from "@chatbotx.io/database/partials"
-import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
+import { resolveContactMessageWindow } from "./message-window"
 
 export const listLastMessages = async (
   conversationId: string,
@@ -40,21 +36,12 @@ export const getChatHistory = async (
   limit: number,
   includeDetail = false,
 ): Promise<string | null> => {
-  const conversation = await conversationService.findBy({
-    where: { contactId },
-  })
-  if (!conversation) {
+  const window = await resolveContactMessageWindow(contactId)
+  if (!window) {
     return null
   }
 
-  const lastAt =
-    await contactInboxService.findLatestLastIncomingMessageAtByContactId({
-      contactId,
-    })
-  const sinceTime = getSafeSinceTime(lastAt, 365 * 24 * 60 * 60 * 1000)
-  if (!sinceTime) {
-    return null
-  }
+  const { conversation, sinceTime } = window
 
   return listLastMessages(
     conversation.id,

@@ -8,6 +8,8 @@ const {
   mockUpdateSourceId,
   mockCreateMessageRepository,
   mockContactUnblockIfBlocked,
+  mockRecordOutboundMessageSent,
+  mockRecordSendFailure,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -27,10 +29,16 @@ const {
       findById: vi.fn().mockResolvedValue(null),
     }),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
+    mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
+    mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
   }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactInboxService: {
+    recordOutboundMessageSent: mockRecordOutboundMessageSent,
+    recordSendFailure: mockRecordSendFailure,
+  },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
 }))
 
@@ -131,6 +139,12 @@ describe("chat send-message handlers", () => {
         }),
       }),
     )
+    expect(mockRecordOutboundMessageSent).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      at: expect.any(Date),
+    })
   })
 
   test("persists provider message id as sourceId for a bot outgoing message", async () => {
@@ -223,6 +237,7 @@ describe("chat send-message handlers", () => {
   })
 
   test("does not auto-unblock after a comment reply send", async () => {
+    const createdAt = new Date("2026-01-04T03:04:05.000Z")
     await sendMessageToChannel({
       conversation: conversation as never,
       contactInbox: contactInbox as never,
@@ -236,10 +251,17 @@ describe("chat send-message handlers", () => {
         senderType: "user",
         text: "comment reply",
         type: "comment",
+        createdAt,
       } as never,
     })
 
     expect(mockContactUnblockIfBlocked).not.toHaveBeenCalled()
+    expect(mockRecordOutboundMessageSent).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      at: createdAt,
+    })
   })
 
   test("does not update sourceId when the channel returns no provider id", async () => {
@@ -287,6 +309,12 @@ describe("chat send-message handlers", () => {
         }),
       }),
     )
+    expect(mockRecordOutboundMessageSent).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      at: expect.any(Date),
+    })
   })
 
   test("does not throw non-retryable ChannelError after emitting failure", async () => {
@@ -321,13 +349,15 @@ describe("chat send-message handlers", () => {
         errorData: { message: "sdk error" },
       }),
     )
+    expect(mockRecordOutboundMessageSent).not.toHaveBeenCalled()
+    expect(mockRecordSendFailure).not.toHaveBeenCalled()
   })
 
   test("does not retry a retryable ChannelError for messenger/instagram channels", async () => {
     const error = new ChannelError(
-      "rate limited",
-      ChannelErrorCategory.RATE_LIMITED,
-      { code: "rate_limited" },
+      "network error",
+      ChannelErrorCategory.NETWORK_ERROR,
+      { code: "network_error" },
     )
     mockRunChannelHandler.mockRejectedValueOnce(error)
 

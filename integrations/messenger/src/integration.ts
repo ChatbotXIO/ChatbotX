@@ -11,6 +11,7 @@ import {
 } from "./apis/message-templates"
 import { syncPersonas, unsubscribePageFromAppWebhook } from "./apis/page"
 import { getPostDetails } from "./apis/post"
+import { getUserInboxLink } from "./apis/user-inbox-link"
 import { MessengerAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { commentHandlers } from "./handlers/comment"
@@ -42,6 +43,7 @@ const config: IntegrationDefinition<
   actions: {
     syncPersonas,
     getPostDetails,
+    getUserInboxLink,
     getCommentAttachmentType,
     getCommentAttachment,
     listMessageTemplates: async ({ ctx, input }) =>

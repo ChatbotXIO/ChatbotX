@@ -1,6 +1,9 @@
 "use client"
 
-import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  CustomFieldType,
+} from "@chatbotx.io/database/partials"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import {
@@ -23,6 +26,7 @@ type CustomFieldSelectProps = {
   allowCreate?: boolean
   customFieldTypes?: CustomFieldType[]
   includeReserved?: boolean
+  channels?: ChannelType[]
   placeholder?: string
   onValueChange?: (value: string) => void
   portal?: boolean
@@ -37,6 +41,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     allowCreate,
     customFieldTypes,
     includeReserved = false,
+    channels,
     placeholder,
     onValueChange,
     portal,
@@ -46,6 +51,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   const customFieldSelectOptions = useCustomFieldSelectOptions({
     customFieldTypes,
     includeReserved,
+    channels,
   })
 
   const getAllCustomFields = useCustomFieldStore(

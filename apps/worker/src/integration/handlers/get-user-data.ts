@@ -1,3 +1,4 @@
+import { contactInboxService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
@@ -12,6 +13,8 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   type GetUserDataStepSchema,
+  type InputFailureReason,
+  inputFailureReasons,
   ReplyFormat,
 } from "@chatbotx.io/flow-config"
 import { IntegrationException, type Variable } from "@chatbotx.io/sdk"
@@ -77,6 +80,13 @@ async function handleSkipOrError(
 
   // if user data is valid, save to custom field if configured
   if (validUserData.userInput) {
+    await contactInboxService.updateTracking({
+      contactInboxId: props.contactInbox.id,
+      contactId: props.contactInbox.contactId,
+      workspaceId: props.conversation.workspaceId,
+      data: { lastInputFailure: null },
+    })
+
     if (step.outputFieldId) {
       await findOrFail({
         table: customFieldModel,
@@ -127,11 +137,26 @@ async function handleSkipOrError(
   if (step.autoSkip) {
     const skipResult = checkSkipCondition(step, ctx.variables.conversation)
     if (skipResult.skip) {
+      await contactInboxService.updateTracking({
+        contactInboxId: props.contactInbox.id,
+        contactId: props.contactInbox.contactId,
+        workspaceId: props.conversation.workspaceId,
+        data: { lastInputFailure: skipResult.reason },
+      })
+
       return { result: undefined, status: "skip" }
     }
   }
 
   // if user data is invalid, retry
+  logger.info(
+    {
+      conversationId: props.conversation.id,
+      reason: validUserData.errorMessage ?? "getUserData: invalid user data",
+    },
+    "getUserData: input rejected, retrying",
+  )
+
   await sendMessage(
     props,
     step.retryMessage ?? step.message,
@@ -290,7 +315,7 @@ async function sendMessage(
 function checkSkipCondition(
   step: GetUserDataStepSchema,
   conversationVariables: Record<string, Variable>,
-): { skip: boolean; skipReason?: string } {
+): { skip: true; reason: InputFailureReason } | { skip: false } {
   const lastAttemptAt =
     (conversationVariables.challengeLastAttemptAt?.value as Date) ?? new Date()
   const attempts =
@@ -306,14 +331,14 @@ function checkSkipCondition(
   ) {
     return {
       skip: true,
-      skipReason: "out of time",
+      reason: inputFailureReasons.timeout,
     }
   }
 
   if (attempts >= step.autoSkipFailAttempts) {
     return {
       skip: true,
-      skipReason: "out of attempts",
+      reason: inputFailureReasons.invalidInputAttempts,
     }
   }
 

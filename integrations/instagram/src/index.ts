@@ -1,6 +1,7 @@
 export * from "./apis/auth"
 export * from "./apis/contact-profile"
 export * from "./apis/page"
+export { getPostDetails } from "./apis/post"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export * from "./schemas"

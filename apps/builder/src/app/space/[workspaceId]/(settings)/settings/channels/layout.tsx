@@ -12,14 +12,15 @@ import type { ReactNode } from "react"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 
 type SettingsChannelsPageProps = {
-  readonly whatsapp: ReactNode
-  readonly messenger: ReactNode
-  readonly instagram: ReactNode
-  readonly zalo: ReactNode
-  readonly telegram: ReactNode
-  readonly tiktok: ReactNode
-  readonly webchat: ReactNode
-  readonly smtp: ReactNode
+  readonly children?: ReactNode
+  readonly whatsapp?: ReactNode
+  readonly messenger?: ReactNode
+  readonly instagram?: ReactNode
+  readonly zalo?: ReactNode
+  readonly telegram?: ReactNode
+  readonly tiktok?: ReactNode
+  readonly webchat?: ReactNode
+  readonly smtp?: ReactNode
 }
 
 type IntegrationItem = {

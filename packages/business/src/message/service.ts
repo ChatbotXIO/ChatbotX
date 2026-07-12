@@ -1,6 +1,9 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { type MessageType, messageTypes } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import {
+  createMessageRepository,
+  type MessageWithAttachments,
+} from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
@@ -21,9 +24,13 @@ class MessageService extends BaseService {
   }): Promise<MessageModel | undefined> {
     const { tx = db, where, sinceTime } = props
     const repo = await createMessageRepository(tx)
+    let messageTypesFilter: MessageType[] | undefined
+    if (where.messageType) {
+      messageTypesFilter = [where.messageType]
+    }
 
     const messages = await repo.findLastByConversation(where.conversationId, {
-      messageTypes: where.messageType ? [where.messageType] : undefined,
+      messageTypes: messageTypesFilter,
       limit: 1,
       sinceTime,
       workspaceId: where.workspaceId,
@@ -69,7 +76,41 @@ class MessageService extends BaseService {
     })
   }
 
-  listLastMessages(props: {
+  async findLatestIncomingMessageWithAttachments(props: {
+    tx?: DatabaseClient
+    conversationId: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<MessageWithAttachments | undefined> {
+    const { tx = db, conversationId, sinceTime, workspaceId } = props
+    const repo = await createMessageRepository(tx)
+    const messages = await repo.findLastByConversation(conversationId, {
+      messageTypes: [messageTypes.enum.incoming],
+      limit: 1,
+      requireCompleteResults: true,
+      sinceTime,
+      withAttachments: true,
+      workspaceId,
+    })
+    return messages[0]
+  }
+
+  async findById(props: {
+    tx?: DatabaseClient
+    id: string
+    createdAt: Date
+    workspaceId: string
+  }): Promise<MessageModel | null> {
+    const { tx = db, id, createdAt, workspaceId } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.findById({
+      id,
+      createdAt,
+      workspaceId,
+    })
+  }
+
+  async listLastMessages(props: {
     tx?: DatabaseClient
     conversationId: string
     limit: number
@@ -77,28 +118,37 @@ class MessageService extends BaseService {
     workspaceId: string
   }): Promise<MessageModel[]> {
     const { tx = db, conversationId, limit, sinceTime, workspaceId } = props
-    return withCache(
-      `messages:${workspaceId}:${conversationId}:latest:${limit}`,
-      async () => {
-        const repo = await createMessageRepository(tx)
-        const messages = await repo.findLastByConversation(conversationId, {
-          messageTypes: [
-            messageTypes.enum.incoming,
-            messageTypes.enum.outgoing,
-          ],
-          limit,
-          sinceTime,
-          workspaceId,
-        })
-        return [...messages].reverse()
-      },
-      {
-        tags: [
-          `conversations:${conversationId}`,
-          `conversations:${conversationId}:messages`,
-        ],
-      },
-    )
+    const repo = await createMessageRepository(tx)
+    const messages = await repo.findLastByConversation(conversationId, {
+      messageTypes: [messageTypes.enum.incoming, messageTypes.enum.outgoing],
+      limit,
+      sinceTime,
+      workspaceId,
+    })
+    return [...messages].reverse()
+  }
+
+  async listIncomingTextsByContactInbox(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    limit?: number
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<string[]> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.listIncomingTextsByContactInbox(params)
+  }
+
+  async hardDeleteAllByContactInbox(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<{ attachmentPaths: string[] }> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.hardDeleteAllByContactInbox(params)
   }
 }
 

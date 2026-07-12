@@ -39,6 +39,7 @@ function ButtonParamField({
           →
         </div>
         <TiptapEditorField
+          channels={["messenger"]}
           name={`${fieldName}.text`}
           placeholder=""
           showEmojiPicker={false}
@@ -112,6 +113,7 @@ export function MessengerTemplateParamsForm({
               →
             </div>
             <TiptapEditorField
+              channels={["messenger"]}
               name={`${fieldName}.text`}
               placeholder=""
               showEmojiPicker={false}

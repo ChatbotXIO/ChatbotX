@@ -178,6 +178,24 @@ export class WorkspaceMemberService extends BaseService {
       },
     })
   }
+
+  async findWithUserByWorkspaceIdAndUserId(input: {
+    tx?: DatabaseClient
+    workspaceId: string
+    userId: string
+  }): Promise<(WorkspaceMemberModel & { user: UserModel }) | undefined> {
+    const { tx = db, workspaceId, userId } = input
+
+    return await tx.query.workspaceMemberModel.findFirst({
+      where: {
+        workspaceId,
+        userId,
+      },
+      with: {
+        user: true,
+      },
+    })
+  }
 }
 
 export const workspaceMemberService = new WorkspaceMemberService()

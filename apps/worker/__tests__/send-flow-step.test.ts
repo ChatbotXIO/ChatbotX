@@ -21,6 +21,11 @@ const {
   mockProcessWhatsappTemplate,
   mockProcessMessengerTemplate,
   mockDbSet,
+  mockRecordOutboundMessage,
+  mockRecordSendFailure,
+  mockInvalidateTracking,
+  mockConversationInvalidate,
+  mockUpdateFlowStepState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -109,6 +114,13 @@ const {
       .fn()
       .mockResolvedValue({ messageId: "msg-ms" }),
     mockDbSet,
+    mockRecordOutboundMessage: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
+    mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
+    mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
+    mockConversationInvalidate: vi.fn().mockResolvedValue(undefined),
+    mockUpdateFlowStepState: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -169,6 +181,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
+  contactInboxService: {
+    recordOutboundMessageCreated: mockRecordOutboundMessage,
+    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
+    recordSendFailure: mockRecordSendFailure,
+    invalidateTracking: mockInvalidateTracking,
+  },
+  conversationService: {
+    invalidate: mockConversationInvalidate,
+    updateFlowStepState: mockUpdateFlowStepState,
+  },
   resolveTenantSettings: mockresolveTenantSettings,
 }))
 
@@ -538,11 +560,27 @@ describe("sendFlowStep", () => {
     await sendFlowStep({ ...baseParams, step: sendTextStep })
 
     const createdMessage = await mockRepositoryCreate.mock.results[0]?.value
-    expect(mockDbSet).toHaveBeenCalledWith({
-      lastMessageAt: createdMessage.createdAt,
+    expect(mockRecordOutboundMessage).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      at: createdMessage.createdAt,
     })
-    expect(mockDbSet).toHaveBeenCalledWith({
+    expect(mockUpdateFlowStepState).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
       lastActivityAt: createdMessage.createdAt,
+      lastStep: undefined,
+      currentStep: "step-1",
+    })
+    expect(mockInvalidateTracking).toHaveBeenCalledWith({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
+    expect(mockConversationInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["conv-1"],
     })
   })
 
@@ -629,8 +667,12 @@ describe("sendChatMessage", () => {
     })
 
     const createdMessage = await mockRepositoryCreate.mock.results[0]?.value
-    expect(mockDbSet).toHaveBeenCalledWith({
-      lastMessageAt: createdMessage.createdAt,
+    expect(mockRecordOutboundMessage).toHaveBeenCalledWith({
+      tx: expect.any(Object),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      at: createdMessage.createdAt,
     })
     expect(mockDbSet).toHaveBeenCalledWith({
       lastActivityAt: createdMessage.createdAt,

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { z } from "zod"
 
 const mockFindByPhone = vi.fn()
 const mockContactInboxFindLatestBySource = vi.fn()
@@ -66,10 +65,13 @@ vi.mock("@chatbotx.io/events", () => ({
   emitContactCreated: mockEmitContactCreated,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: () => "generated-id",
-  zodBigintAsString: () => z.string(),
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "generated-id",
+  }
+})
 
 vi.mock("next-safe-action", () => ({
   returnValidationErrors: mockReturnValidationErrors,

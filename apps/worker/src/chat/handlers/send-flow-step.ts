@@ -7,6 +7,8 @@ import {
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
+  contactInboxService,
+  conversationService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
@@ -19,7 +21,6 @@ import {
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
-  contactInboxModel,
   conversationModel,
   type messageModel,
 } from "@chatbotx.io/database/schema"
@@ -287,7 +288,7 @@ export async function sendFlowStep({
   const resolvedStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
-    { contactInbox: targetContactInbox },
+    { contactInbox: targetContactInbox, conversation },
   )
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
@@ -419,17 +420,36 @@ export async function sendFlowStep({
         }))
     }
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(contactInboxModel)
-        .set({ lastMessageAt: message.createdAt })
-        .where(eq(contactInboxModel.id, targetContactInbox.id))
+    const trackingInvalidation = await db.transaction(async (tx) => {
+      const invalidation =
+        await contactInboxService.recordOutboundMessageCreated({
+          tx,
+          contactInboxId: targetContactInbox.id,
+          contactId: targetContactInbox.contactId,
+          workspaceId: conversation.workspaceId,
+          at: message.createdAt,
+        })
 
-      await tx
-        .update(conversationModel)
-        .set({ lastActivityAt: message.createdAt })
-        .where(eq(conversationModel.id, conversation.id))
+      await conversationService.updateFlowStepState({
+        tx,
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        lastActivityAt: message.createdAt,
+        lastStep: conversation.currentStep,
+        currentStep: resolvedStep.id,
+      })
+
+      return invalidation
     })
+    await Promise.all([
+      trackingInvalidation
+        ? contactInboxService.invalidateTracking(trackingInvalidation)
+        : Promise.resolve(),
+      conversationService.invalidate({
+        workspaceId: conversation.workspaceId,
+        ids: [conversation.id],
+      }),
+    ])
 
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {
@@ -657,17 +677,26 @@ export const sendChatMessage = async (
         }))
     }
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(contactInboxModel)
-        .set({ lastMessageAt: message.createdAt })
-        .where(eq(contactInboxModel.id, contactInbox.id))
+    const trackingInvalidation = await db.transaction(async (tx) => {
+      const invalidation =
+        await contactInboxService.recordOutboundMessageCreated({
+          tx,
+          contactInboxId: contactInbox.id,
+          contactId: contactInbox.contactId,
+          workspaceId: conversation.workspaceId,
+          at: message.createdAt,
+        })
 
       await tx
         .update(conversationModel)
         .set({ lastActivityAt: message.createdAt })
         .where(eq(conversationModel.id, conversation.id))
+
+      return invalidation
     })
+    if (trackingInvalidation) {
+      await contactInboxService.invalidateTracking(trackingInvalidation)
+    }
 
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {

@@ -51,9 +51,13 @@ vi.mock("@chatbotx.io/scheduler", () => ({
   }),
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: () => "test-id",
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "test-id",
+  }
+})
 
 describe("calculateBucket", () => {
   test("returns a number between 0 and 255 inclusive", async () => {

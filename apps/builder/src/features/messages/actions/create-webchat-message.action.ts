@@ -9,6 +9,7 @@ import {
   resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
+import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
@@ -152,14 +153,20 @@ export async function handleCreateWebchatMessage({
       })
       .where(eq(conversationModel.id, conversation.id))
 
-    await db
-      .update(contactInboxModel)
-      .set({
+    await contactInboxService.updateTracking({
+      contactInboxId: contactInbox.id,
+      contactId: contactInbox.contactId,
+      workspaceId: conversation.workspaceId,
+      data: {
+        firstInteractionAt: message.createdAt,
         contactLastReadAt: now,
         lastMessageAt: message.createdAt,
         lastIncomingMessageAt: message.createdAt,
-      })
-      .where(eq(contactInboxModel.id, contactInbox.id))
+        ...(parsedInput.parentUrl && {
+          webchatParentUrl: parsedInput.parentUrl,
+        }),
+      },
+    })
 
     try {
       await contactService.unblockIfBlocked(
@@ -328,6 +335,10 @@ async function getConversationFromInput(
     ownerId: ws.ownerId,
     workspaceId: parsedInput.workspaceId,
     create: async (tx) => {
+      const finalizedProfile = finalizeContactProfile({
+        locale: parsedInput.locale,
+        timezone: parsedInput.timezone,
+      })
       const contact = await tx
         .insert(contactModel)
         .values({
@@ -337,8 +348,8 @@ async function getConversationFromInput(
           gender: "unknown",
           firstName: "Guest",
           lastName: randomString(10),
-          locale: parsedInput.locale,
-          timezone: parsedInput.timezone,
+          locale: finalizedProfile.locale,
+          timezone: finalizedProfile.timezone,
         })
         .returning()
         .then((rows) => rows[0])
@@ -356,6 +367,8 @@ async function getConversationFromInput(
           source: contactSources.enum.webchat,
           sourceId,
           channel: "webchat",
+          language: finalizedProfile.language,
+          webchatParentUrl: parsedInput.parentUrl,
         })
         .returning()
         .then((rows) => rows[0])

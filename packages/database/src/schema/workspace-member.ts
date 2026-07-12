@@ -12,7 +12,7 @@ import { workspaceModel } from "./workspace"
 
 export const workspaceMemberRole = pgEnum(
   "workspaceMemberRole",
-  workspaceMemberRoles.options as [string, ...string[]],
+  workspaceMemberRoles.enum,
 )
 
 export const workspaceMemberModel = pgTable("WorkspaceMember", {

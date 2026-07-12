@@ -109,6 +109,7 @@ function ButtonParamField({
             →
           </div>
           <TiptapEditorField
+            channels={["whatsapp"]}
             name={`${fieldName}.text`}
             placeholder=""
             showEmojiPicker={false}
@@ -141,6 +142,7 @@ function CarouselParamField({
           {t("fields.url.label")}
         </Label>
         <TiptapEditorField
+          channels={["whatsapp"]}
           name={`${fieldName}.header[0].${param.format}.link`}
           placeholder={t("whatsapp.messageTemplate.params.enterFormatUrl", {
             format:
@@ -167,6 +169,7 @@ function CarouselParamField({
           →
         </div>
         <TiptapEditorField
+          channels={["whatsapp"]}
           name={`${fieldName}.body[${param.index}].text`}
           placeholder=""
           showEmojiPicker={false}
@@ -304,6 +307,7 @@ export function TemplateParamsForm({
           return (
             <div className="space-y-1" key={key}>
               <TiptapEditorField
+                channels={["whatsapp"]}
                 name={`${fieldName}.${param.format}.link`}
                 placeholder={t(
                   "whatsapp.messageTemplate.params.enterFormatUrl",
@@ -329,6 +333,7 @@ export function TemplateParamsForm({
               →
             </div>
             <TiptapEditorField
+              channels={["whatsapp"]}
               name={`${fieldName}.text`}
               placeholder=""
               showEmojiPicker={false}

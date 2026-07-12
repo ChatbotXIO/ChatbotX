@@ -79,9 +79,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   emailTopicModel: emailTopicModelMock,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: vi.fn(() => "snowflake-id"),
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: vi.fn(() => "snowflake-id"),
+  }
+})
 
 const { db } = await import("@chatbotx.io/database/client")
 const { emailTopicStatsRepository } = await import(

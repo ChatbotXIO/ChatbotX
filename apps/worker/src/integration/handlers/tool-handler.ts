@@ -356,6 +356,7 @@ export async function getDataFromJSON({
 async function resolveJsonBodyVariables(
   contactId: string,
   contactInbox: ExecuteStepProps<ExternalRequestStepSchema>["contactInbox"],
+  conversation: ExecuteStepProps<ExternalRequestStepSchema>["conversation"],
   jsonBody: string,
 ): Promise<string> {
   const variableNames = extractVariables(jsonBody)
@@ -366,6 +367,7 @@ async function resolveJsonBodyVariables(
   const variables = await contactVariableService.getAll({
     contactId,
     contactInbox,
+    conversation,
   })
   const { customFieldsMap } = variables
 
@@ -403,7 +405,7 @@ export async function externalRequest({
   const resolvedStepWithoutBody = await resolveContactVariablesDeep(
     conversation.contactId,
     stepWithoutBody,
-    { contactInbox },
+    { contactInbox, conversation },
   )
   const resolvedBody =
     body?.bodyType === "json"
@@ -412,11 +414,13 @@ export async function externalRequest({
           jsonBody: await resolveJsonBodyVariables(
             conversation.contactId,
             contactInbox,
+            conversation,
             body.jsonBody,
           ),
         }
       : await resolveContactVariablesDeep(conversation.contactId, body, {
           contactInbox,
+          conversation,
         })
 
   try {

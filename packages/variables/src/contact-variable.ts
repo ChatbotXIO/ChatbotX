@@ -7,6 +7,7 @@ import {
 import type {
   ContactInboxModel,
   ContactModel,
+  ConversationModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { logger } from "./logger"
@@ -16,6 +17,7 @@ import { extractVariables, getSystemFieldValue, interpolate } from "./utils"
 type GetAllProps = {
   contactId: string
   contactInbox: ContactInboxModel | string
+  conversation?: ConversationModel | null
   workspace?: WorkspaceModel
 }
 
@@ -102,7 +104,13 @@ export const contactVariableService = {
       workspace: input.workspace,
     })
 
-    return { contact, contactInbox, customFieldsMap, workspace }
+    return {
+      contact,
+      contactInbox,
+      conversation: input.conversation ?? null,
+      customFieldsMap,
+      workspace,
+    }
   },
 
   replaceAll: async (props: {

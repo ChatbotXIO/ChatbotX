@@ -54,6 +54,8 @@ export const conversationModel = pgTable(
         onUpdate: "cascade",
       }),
     sourceId: text(),
+    lastStep: text(),
+    currentStep: text(),
     adminRepliedAt: timestamp(timestampConfig),
     contactRepliedAt: timestamp(timestampConfig),
   },

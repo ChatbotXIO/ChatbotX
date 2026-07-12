@@ -1,10 +1,17 @@
 "use server"
 
-import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
+import {
+  type ContactAccessScope,
+  contactInboxService,
+  contactService,
+  normalizeLanguage,
+  normalizeStoredTimezone,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   type FillableContactKey,
   fillableContactKeys,
+  genderTypes,
 } from "@chatbotx.io/database/partials"
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import type { ContactModel } from "@chatbotx.io/database/types"
@@ -18,6 +25,8 @@ import {
   type UpdateContactFieldRequest,
   updateContactFieldRequest,
 } from "../schemas/action"
+
+const contactInboxIdField = "contactInboxId"
 
 export const updateContactFieldAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -58,12 +67,17 @@ export const updateContactFields = async (
 
   // Prepare data
   const contactFields: Partial<ContactModel> = {}
-  const customFields: Record<string, unknown> = {}
+  const customFields: Record<string, string> = {}
+  const contactInboxId = parsedInput[contactInboxIdField]
+  const language = normalizeLanguage(parsedInput.language)
 
   for (const [key, value] of Object.entries(parsedInput)) {
+    if (key === contactInboxIdField || key === "language") {
+      continue
+    }
+
     if (fillableContactKeys.includes(key as FillableContactKey)) {
-      // biome-ignore lint/suspicious/noExplicitAny: we know the key is a valid field
-      ;(contactFields as any)[key] = value
+      assignContactFieldValue(contactFields, key as FillableContactKey, value)
     } else if (allCustomFieldsMap.has(key)) {
       customFields[key] = value
     }
@@ -74,6 +88,16 @@ export const updateContactFields = async (
       await contactService.update(ctx, contactFields, tx)
     }
 
+    if (contactInboxId && language) {
+      await contactInboxService.updateLanguage({
+        tx,
+        workspaceId: ctx.workspaceId,
+        contactId: ctx.id,
+        contactInboxId,
+        language,
+      })
+    }
+
     if (Object.keys(customFields).length > 0) {
       for (const [key, value] of Object.entries(customFields)) {
         await tx
@@ -81,7 +105,7 @@ export const updateContactFields = async (
           .values({
             contactId: ctx.id,
             customFieldId: key,
-            value: value as string,
+            value,
           })
           .onConflictDoUpdate({
             target: [
@@ -89,10 +113,45 @@ export const updateContactFields = async (
               contactCustomFieldModel.customFieldId,
             ],
             set: {
-              value: value as string,
+              value,
             },
           })
       }
     }
   })
+}
+
+const assignContactFieldValue = (
+  contactFields: Partial<ContactModel>,
+  key: FillableContactKey,
+  value: string,
+) => {
+  switch (key) {
+    case "phoneNumber":
+      contactFields.phoneNumber = value
+      break
+    case "email":
+      contactFields.email = value
+      break
+    case "firstName":
+      contactFields.firstName = value
+      break
+    case "lastName":
+      contactFields.lastName = value
+      break
+    case "gender": {
+      const parsedGender = genderTypes.safeParse(value)
+      if (parsedGender.success) {
+        contactFields.gender = parsedGender.data
+      }
+      break
+    }
+    case "timezone":
+      contactFields.timezone = normalizeStoredTimezone(value) ?? value
+      break
+    default: {
+      const exhaustiveKey: never = key
+      return exhaustiveKey
+    }
+  }
 }

@@ -107,7 +107,7 @@ export const listReelsPosts = (props: {
 }
 
 export const getPostDetails = (props: {
-  ctx: Context<MessengerAuthValue>
+  ctx: Pick<Context<MessengerAuthValue>, "auth">
   input: { postId: string }
 }): Promise<FacebookPostDetails> => {
   const { ctx, input } = props

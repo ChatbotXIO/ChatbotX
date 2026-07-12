@@ -830,6 +830,251 @@ describe("ShardedMessageRepository.listByConversation — write-shard union", ()
   })
 })
 
+describe("ShardedMessageRepository.listIncomingTextsByContactInbox", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function makeIncomingTextsShardClient(
+    batches: { id: string; createdAt: Date; text: string | null }[][],
+  ) {
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      limit: vi.fn(),
+      orderBy: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+    }
+    const pendingBatches = [...batches]
+    chain.limit.mockImplementation((limit: number) => {
+      const batch = pendingBatches.shift() ?? []
+      return Promise.resolve(batch.slice(0, limit))
+    })
+    return { select: vi.fn().mockReturnValue(chain), chain }
+  }
+
+  test("does not duplicate messages when the registry reports the same physical shard twice", async () => {
+    // A shard that was archived and later reactivated gets a second
+    // MessageShardTimeRange history row — findShardsForTimeRange legitimately
+    // returns two rows that both point at the same physical shard "s1".
+    const rows = [
+      { id: "m2", createdAt: new Date("2026-06-05T10:00:00Z"), text: "me" },
+      { id: "m1", createdAt: new Date("2026-06-05T09:00:00Z"), text: "loop" },
+    ]
+    const shardClient = makeIncomingTextsShardClient([rows])
+    const timeRangeShardA = makeShardInfo("tr:s1-a", "s1")
+    const timeRangeShardB = makeShardInfo("tr:s1-b", "s1")
+    const writeShard = makeShardInfo("write:s1", "s1")
+
+    const shardManager = {
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValue([timeRangeShardA, timeRangeShardB]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (_shard: unknown, fn: (client: unknown) => Promise<unknown>) =>
+          fn(shardClient),
+      ),
+    }
+    const localRepo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await localRepo.listIncomingTextsByContactInbox({
+      contactInboxId: "ci-1",
+      limit: 200,
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-06-01T00:00:00Z"),
+    })
+
+    // Deduped by physical shard id → queried once, texts appear exactly once.
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+    expect(shardClient.chain.limit).toHaveBeenCalledWith(200)
+    expect(result).toEqual(["me", "loop"])
+  })
+
+  test("stops after enough rows without querying older shards", async () => {
+    const duplicated = {
+      id: "m2",
+      createdAt: new Date("2026-06-05T10:00:00Z"),
+      text: "me",
+    }
+    const clients = new Map([
+      ["a", makeIncomingTextsShardClient([[duplicated]])],
+      [
+        "b",
+        makeIncomingTextsShardClient([
+          [
+            duplicated,
+            {
+              id: "m1",
+              createdAt: new Date("2026-06-05T09:00:00Z"),
+              text: "loop",
+            },
+          ],
+        ]),
+      ],
+    ])
+    const shardA = makeShardInfo("tr:a", "a")
+    const shardB = makeShardInfo("tr:b", "b")
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([shardA, shardB]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (client: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const localRepo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await localRepo.listIncomingTextsByContactInbox({
+      contactInboxId: "ci-1",
+      limit: 1,
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-06-01T00:00:00Z"),
+    })
+
+    expect(result).toEqual(["me"])
+    expect(clients.get("b")?.chain.limit).toHaveBeenCalledWith(1)
+    expect(clients.get("a")?.chain.limit).not.toHaveBeenCalled()
+    const whereArg = clients.get("b")?.chain.where.mock.calls[0][0]
+    expect(objectContainsValue(whereArg, "contactInboxId")).toBe(true)
+    expect(objectContainsValue(whereArg, "ci-1")).toBe(true)
+    expect(objectContainsValue(whereArg, "messageType")).toBe(true)
+    expect(objectContainsValue(whereArg, "incoming")).toBe(true)
+  })
+
+  test("reads unbounded exports in sequential chunks of at most 1000 rows per shard", async () => {
+    const firstBatch = Array.from({ length: 1000 }, (_, index) => ({
+      id: `${2000 - index}`,
+      createdAt: new Date(
+        `2026-06-05T10:${String(index % 60).padStart(2, "0")}:00Z`,
+      ),
+      text: `new-${index}`,
+    }))
+    const secondBatch = [
+      {
+        id: "999",
+        createdAt: new Date("2026-06-05T09:00:00Z"),
+        text: "new-last",
+      },
+    ]
+    const olderBatch = [
+      { id: "10", createdAt: new Date("2026-06-04T09:00:00Z"), text: "old" },
+    ]
+    const clients = new Map([
+      ["older", makeIncomingTextsShardClient([olderBatch])],
+      ["newer", makeIncomingTextsShardClient([firstBatch, secondBatch])],
+    ])
+    const callOrder: string[] = []
+    const olderShard = makeShardInfo("tr:older", "older")
+    const newerShard = makeShardInfo("tr:newer", "newer")
+    const shardManager = {
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValue([olderShard, newerShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        async (
+          shard: { id: string },
+          fn: (client: unknown) => Promise<unknown>,
+        ) => {
+          callOrder.push(shard.id)
+          return await fn(clients.get(shard.id))
+        },
+      ),
+    }
+    const localRepo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await localRepo.listIncomingTextsByContactInbox({
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-06-01T00:00:00Z"),
+    })
+
+    expect(callOrder).toEqual(["newer", "older"])
+    expect(clients.get("newer")?.chain.limit).toHaveBeenNthCalledWith(1, 1000)
+    expect(clients.get("newer")?.chain.limit).toHaveBeenNthCalledWith(2, 1000)
+    expect(clients.get("older")?.chain.limit).toHaveBeenCalledWith(1000)
+    expect(result).toHaveLength(1002)
+    expect(result[0]).toBe("new-0")
+    expect(result.at(-1)).toBe("old")
+  })
+})
+
+describe("ShardedMessageRepository.hardDeleteAllByContactInbox", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function makeHardDeleteShardClient() {
+    const attachmentSelectChain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue([]),
+    }
+    const attachmentDeleteChain = {
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+    const messageDeleteChain = {
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+    return {
+      delete: vi
+        .fn()
+        .mockReturnValueOnce(attachmentDeleteChain)
+        .mockReturnValueOnce(messageDeleteChain),
+      select: vi.fn().mockReturnValueOnce(attachmentSelectChain),
+      attachmentDeleteChain,
+      attachmentSelectChain,
+      messageDeleteChain,
+    }
+  }
+
+  test("scopes hard delete by contact inbox", async () => {
+    const shardClient = makeHardDeleteShardClient()
+    const shard = makeShardInfo("tr:s1", "s1")
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([shard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn().mockResolvedValue(shardClient),
+    }
+    const localRepo = new ShardedMessageRepository(shardManager as never)
+
+    await localRepo.hardDeleteAllByContactInbox({
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-06-01T00:00:00Z"),
+    })
+
+    const attachmentSelectWhereArg =
+      shardClient.attachmentSelectChain.where.mock.calls[0][0]
+    const deleteWhereArg = shardClient.messageDeleteChain.where.mock.calls[0][0]
+    expect(
+      objectContainsValue(attachmentSelectWhereArg, "contactInboxId"),
+    ).toBe(true)
+    expect(objectContainsValue(attachmentSelectWhereArg, "ci-1")).toBe(true)
+    expect(objectContainsValue(deleteWhereArg, "contactInboxId")).toBe(true)
+    expect(objectContainsValue(deleteWhereArg, "ci-1")).toBe(true)
+    expect(objectContainsValue(attachmentSelectWhereArg, "conv-1")).toBe(false)
+    expect(objectContainsValue(deleteWhereArg, "conv-1")).toBe(false)
+  })
+
+  test("rejects when a shard delete fails so the privacy link can be retried", async () => {
+    const shard = makeShardInfo("tr:s1", "s1")
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([shard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn().mockRejectedValue(new Error("shard down")),
+    }
+    const localRepo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      localRepo.hardDeleteAllByContactInbox({
+        contactInboxId: "ci-1",
+        workspaceId: "ws-1",
+        sinceTime: new Date("2026-06-01T00:00:00Z"),
+      }),
+    ).rejects.toThrow("Message shard operation failed")
+  })
+})
+
 describe("ShardedMessageRepository.findById", () => {
   test("scopes message lookup by workspaceId", async () => {
     const createdAt = new Date("2026-06-01T00:00:00Z")

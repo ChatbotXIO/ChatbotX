@@ -55,7 +55,13 @@ vi.mock("@chatbotx.io/sequence-scheduler", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach: vi.fn(), enqueueDetach: vi.fn() },
 }))
-vi.mock("@chatbotx.io/utils", () => ({ createId: () => "test-id" }))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "test-id",
+  }
+})
 
 const buildProps = () =>
   ({

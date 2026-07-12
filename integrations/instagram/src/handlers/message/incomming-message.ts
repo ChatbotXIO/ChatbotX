@@ -4,6 +4,7 @@ import {
   type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
+  type MessageReferral,
   messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
@@ -16,6 +17,7 @@ import {
   type InstagramMessage,
   type InstagramMessagingEvent,
   instagramWebhookEventSchema,
+  type InstagramReferral as RawInstagramReferral,
 } from "../../schemas"
 
 const getMessageAttachments = async (
@@ -60,6 +62,40 @@ const getMessageAttachments = async (
   }
 }
 
+const getMessageLocation = (message: InstagramMessage) => {
+  const location = message.attachments?.find(
+    (attachment) => attachment.type === "location",
+  )
+  const coordinates = location?.payload.coordinates
+  const latitude = coordinates?.latitude ?? coordinates?.lat
+  const longitude = coordinates?.longitude ?? coordinates?.long
+  if (latitude == null || longitude == null) {
+    return null
+  }
+  return {
+    latitude: String(latitude),
+    longitude: String(longitude),
+  }
+}
+
+const normalizeReferral = (
+  referral: RawInstagramReferral,
+): MessageReferral => ({
+  ref: referral.ref,
+  source: referral.source,
+  type: referral.type,
+  adId: referral.ad_id ?? null,
+  adTitle: referral.ads_context_data?.ad_title ?? null,
+  sourceUrl: referral.source_url ?? null,
+  sourcePlatform: referral.source_platform ?? null,
+  postId: referral.ads_context_data?.post_id ?? null,
+  photoUrl: referral.ads_context_data?.photo_url ?? null,
+  videoUrl: referral.ads_context_data?.video_url ?? null,
+  productId: referral.ads_context_data?.product_id ?? null,
+  flowId: referral.ads_context_data?.flow_id ?? null,
+  raw: referral,
+})
+
 export const receiveMessage = async ({
   ctx,
   data,
@@ -80,7 +116,7 @@ export const receiveMessage = async ({
   }
 
   const messaging = entry.messaging[0]
-  if (!(messaging.message || messaging.postback)) {
+  if (!(messaging.message || messaging.postback || messaging.referral)) {
     throw new InstagramException("No message found")
   }
 
@@ -96,6 +132,8 @@ const getMessageEntity = async (
   let quickReplyAction: string | null = null
   let ref: string | null = null
   let referralSource: string | null = null
+  let referral: MessageReferral | null = null
+  let buttonTitle: string | null = null
 
   const contactSourceId =
     messaging.sender.id === ctx.auth.metadata.igId
@@ -106,6 +144,7 @@ const getMessageEntity = async (
   }
 
   if (messaging.message) {
+    const location = getMessageLocation(messaging.message)
     message = {
       sourceId: messaging.message.mid,
       messageType:
@@ -113,10 +152,14 @@ const getMessageEntity = async (
           ? messageTypes.enum.outgoing
           : messageTypes.enum.incoming,
       text: messaging.message.text,
-      contentType: contentTypes.enum.text,
+      contentType: location
+        ? contentTypes.enum.location
+        : contentTypes.enum.text,
+      contentAttributes: location ?? undefined,
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
     quickReplyAction = messaging.message.quick_reply?.payload ?? null
+    buttonTitle = messaging.message.quick_reply?.title ?? null
   }
 
   if (messaging.postback) {
@@ -127,11 +170,13 @@ const getMessageEntity = async (
       contentType: contentTypes.enum.text,
     }
     postbackAction = messaging.postback.payload
+    buttonTitle = messaging.postback.title
   }
 
   if (messaging.referral) {
     ref = messaging.referral.ref
     referralSource = messaging.referral.source
+    referral = normalizeReferral(messaging.referral)
   }
 
   return {
@@ -140,6 +185,8 @@ const getMessageEntity = async (
     quickReplyAction,
     ref,
     referralSource,
+    referral,
+    buttonTitle,
     contact,
   }
 }

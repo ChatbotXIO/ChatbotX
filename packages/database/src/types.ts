@@ -72,6 +72,7 @@ export type IntegrationTiktokModel =
 export type MessageModel = typeof schema.messageModel.$inferSelect
 export type AttachmentModel = typeof schema.attachmentModel.$inferSelect
 export type SpreadsheetModel = typeof schema.spreadsheetModel.$inferSelect
+export type SystemFieldModel = typeof schema.systemFieldModel.$inferSelect
 export type AIConversationSourceModel =
   typeof schema.aiConversationSourceModel.$inferSelect
 export type AIConversationEmbeddingModel =

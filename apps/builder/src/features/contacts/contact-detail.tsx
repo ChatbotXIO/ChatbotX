@@ -1,5 +1,11 @@
 "use client"
 
+import {
+  contactLanguageOptions,
+  contactTimezoneOptions,
+  normalizeStoredTimezone,
+  offsetFromStoredTimezone,
+} from "@chatbotx.io/business/contact-locale"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import {
   Avatar,
@@ -7,7 +13,15 @@ import {
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
+import {
+  AtSignIcon,
+  ClockIcon,
+  IdCardIcon,
+  LanguagesIcon,
+  PhoneIcon,
+  TextIcon,
+  UserRoundIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -19,6 +33,56 @@ import { EditContactField } from "./edit-contact-field"
 import type { GetContactResponse } from "./schemas/query"
 import type { ContactEditableField } from "./schemas/resource"
 import { useAvatarUrl } from "./utils"
+
+const formatGender = (
+  gender: string | null | undefined,
+  t: (key: string) => string,
+) => {
+  switch (gender) {
+    case "male":
+    case "female":
+    case "unknown":
+      return t(`fields.gender.${gender}`)
+    default:
+      return gender
+  }
+}
+
+const formatTimezoneOffset = (timezone: string | null | undefined) => {
+  const offset = offsetFromStoredTimezone(timezone)
+  if (!offset) {
+    return null
+  }
+
+  return offset.startsWith("-") || offset.startsWith("+")
+    ? `UTC${offset}`
+    : `UTC+${offset}`
+}
+
+const formatTimezoneLabel = (timezone: string | null | undefined) => {
+  const normalizedTimezone = normalizeStoredTimezone(timezone)
+  if (!normalizedTimezone) {
+    return normalizedTimezone
+  }
+
+  const offsetLabel = formatTimezoneOffset(normalizedTimezone)
+  return offsetLabel
+    ? `${normalizedTimezone} (${offsetLabel})`
+    : normalizedTimezone
+}
+
+const timezoneOptions = contactTimezoneOptions.map((option) => ({
+  label: formatTimezoneLabel(option.value) ?? option.label,
+  value: option.value,
+}))
+
+const getLanguageLabel = (
+  language: string | null | undefined,
+  t: (key: string) => string,
+) => {
+  const option = contactLanguageOptions.find((item) => item.value === language)
+  return option ? t(option.labelKey) : language
+}
 
 export const ContactDetail = ({
   activeConversationId,
@@ -41,16 +105,53 @@ export const ContactDetail = ({
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
+  const genderOptions = useMemo(
+    () => [
+      { label: t("fields.gender.male"), value: "male" },
+      { label: t("fields.gender.female"), value: "female" },
+      { label: t("fields.gender.unknown"), value: "unknown" },
+    ],
+    [t],
+  )
+
+  const languageOptions = useMemo(
+    () =>
+      contactLanguageOptions.map((option) => ({
+        label: t(option.labelKey),
+        value: option.value,
+      })),
+    [t],
+  )
+
+  const getContactFieldDisplayValue = (key: string, value: string) => {
+    switch (key) {
+      case "language":
+        return getLanguageLabel(value, t)
+      case "gender":
+        return formatGender(value, t)
+      case "timezone":
+        return formatTimezoneLabel(value)
+      default:
+        return value
+    }
+  }
+
   const handleCustomFieldDeleted = (customFieldId: string) => {
     setContactFields((previous) =>
       previous.filter((field) => field.key !== customFieldId),
     )
   }
 
-  const handleCustomFieldUpdated = (customFieldId: string, value: string) => {
+  const handleCustomFieldUpdated = (fieldKey: string, value: string) => {
     setContactFields((previous) =>
       previous.map((field) =>
-        field.key === customFieldId ? { ...field, value } : field,
+        field.key === fieldKey
+          ? {
+              ...field,
+              formValue: value,
+              value: getContactFieldDisplayValue(fieldKey, value),
+            }
+          : field,
       ),
     )
   }
@@ -89,7 +190,47 @@ export const ContactDetail = ({
       )
 
       if (conversation?.contact) {
+        const activeContactInbox = conversation.contactInboxes[0]
+        const channelContactId = activeContactInbox?.sourceId
         const tmpContactFields: ContactEditableField[] = [
+          {
+            key: "channelContactId",
+            icon: IdCardIcon,
+            label: t("fields.contactId.label"),
+            value: channelContactId,
+            type: "shortText",
+            readOnly: true,
+          },
+          {
+            key: "language",
+            icon: LanguagesIcon,
+            label: t("fields.language.label"),
+            value: getLanguageLabel(activeContactInbox?.language, t),
+            formValue: activeContactInbox?.language,
+            contactInboxId: activeContactInbox?.id,
+            options: languageOptions,
+            type: "shortText",
+          },
+          {
+            key: "gender",
+            icon: UserRoundIcon,
+            label: t("fields.gender.label"),
+            value: formatGender(conversation.contact.gender, t),
+            formValue: conversation.contact.gender,
+            options: genderOptions,
+            type: "shortText",
+          },
+          {
+            key: "timezone",
+            icon: ClockIcon,
+            label: t("fields.timezone.label"),
+            value: formatTimezoneLabel(conversation.contact.timezone),
+            formValue:
+              normalizeStoredTimezone(conversation.contact.timezone) ??
+              conversation.contact.timezone,
+            options: timezoneOptions,
+            type: "shortText",
+          },
           {
             key: "email",
             icon: AtSignIcon,
@@ -148,6 +289,8 @@ export const ContactDetail = ({
     initializedCustomFields,
     contact,
     customFieldMap,
+    genderOptions,
+    languageOptions,
     t,
   ])
 
@@ -164,31 +307,42 @@ export const ContactDetail = ({
         </Avatar>
       </div>
       <div className="flex flex-col gap-1 font-medium text-[12px] text-gray-600">
-        {contactFields.map((editable) => (
-          <div className="flex w-full items-center gap-1" key={editable.key}>
-            <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
-              <editable.icon className="size-4" />
-              <div className="flex-1 truncate dark:text-gray-400">
-                {editable.label}
-              </div>
-            </div>
+        {contactFields.map((editable) => {
+          const fieldValue =
+            editable.value && editable.value.length > 0 ? (
+              <span className="truncate dark:text-white">{editable.value}</span>
+            ) : (
+              <span className="italic">
+                {editable.readOnly ? "--" : `-- ${t("actions.clickToEdit")} --`}
+              </span>
+            )
 
-            <Button
-              className="flex-1 justify-start truncate text-[12px]"
-              onClick={() => setSelectedField(editable)}
-              size="sm"
-              variant="ghost"
-            >
-              {editable.value && editable.value.length > 0 ? (
-                <span className="truncate dark:text-white">
-                  {editable.value}
-                </span>
+          return (
+            <div className="flex w-full items-center gap-1" key={editable.key}>
+              <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
+                <editable.icon className="size-4" />
+                <div className="flex-1 truncate dark:text-gray-400">
+                  {editable.label}
+                </div>
+              </div>
+
+              {editable.readOnly ? (
+                <div className="inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px] text-muted-foreground">
+                  {fieldValue}
+                </div>
               ) : (
-                <span className="italic">-- {t("actions.clickToEdit")} --</span>
+                <Button
+                  className="flex-1 justify-start truncate text-[12px]"
+                  onClick={() => setSelectedField(editable)}
+                  size="sm"
+                  variant="ghost"
+                >
+                  {fieldValue}
+                </Button>
               )}
-            </Button>
-          </div>
-        ))}
+            </div>
+          )
+        })}
         <ContactCustomFieldManage
           disabledIds={contactFields.map((field) => field.key)}
           onChooseCustomField={handleChooseCustomField}

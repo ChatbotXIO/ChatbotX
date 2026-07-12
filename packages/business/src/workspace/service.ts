@@ -145,7 +145,10 @@ class WorkspaceService extends BaseService {
       data.tenantId ?? (await this.resolveTenantForOwner(props.createdBy))
     const [newWorkspace] = await tx
       .insert(workspaceModel)
-      .values({ ...data, tenantId })
+      .values({
+        ...data,
+        tenantId,
+      })
       .returning()
 
     await workspaceMemberService.create({

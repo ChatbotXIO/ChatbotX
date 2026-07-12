@@ -40,6 +40,7 @@ const buildDefaults = (helpItems: TenantHelpItemModel[]): TenantSettings => {
   const derived = deriveUrls(
     env.NEXT_PUBLIC_BUILDER_URL,
     env.NEXT_PUBLIC_STORAGE_URL,
+    { forceHttps: env.FORCE_PUBLIC_HTTPS },
   )
   return {
     appUrl: derived.appUrl,
@@ -84,6 +85,9 @@ const applyCustomDomain = (
     appUrl: derived.appUrl,
     wsUrl: derived.wsUrl,
     storageUrl: derived.storageUrl,
+    logoLightUrl: `${derived.appUrl}/brand/logo_white.svg`,
+    logoDarkUrl: `${derived.appUrl}/brand/logo_black.svg`,
+    faviconUrl: `${derived.appUrl}/brand/icon_black.svg`,
   }
 }
 
@@ -152,6 +156,34 @@ export const resolveTenantSettings = async (args: {
     helpItems,
     await hasEnterpriseFeatures(),
   )
+}
+
+/**
+ * Resolve the app URL that should be embedded in workspace-generated public
+ * links. Unlike `resolveTenantSettings`, this applies an active custom domain
+ * when the workspace belongs to a non-root tenant.
+ */
+export const resolveWorkspaceAppUrl = async (args: {
+  workspaceId: string
+  tx?: DatabaseClient
+}): Promise<string> => {
+  const workspace = await workspaceService.findById({
+    id: args.workspaceId,
+    tx: args.tx,
+  })
+
+  if (workspace.tenantId !== ROOT_TENANT_ID) {
+    const domains = await customDomainService.findByTenantId(workspace.tenantId)
+    const activeDomain = domains.find((domain) => domain.status === "active")
+    if (activeDomain) {
+      return deriveUrls(`https://${activeDomain.domain}`).appUrl
+    }
+  }
+
+  const env = integrationContextEnv()
+  return deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
+    forceHttps: env.FORCE_PUBLIC_HTTPS,
+  }).appUrl
 }
 
 /**

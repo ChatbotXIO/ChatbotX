@@ -361,6 +361,7 @@
     "no": "No",
     "fields": {
       "locale": "Language",
+      "language": "Language",
       "fullName": "Full name",
       "country": "Country",
       "continent": "Continent",
@@ -467,6 +468,29 @@
       "customFields": "Custom Fields",
       "email": "Email",
       "sms": "SMS"
+    },
+    "languages": {
+      "ar": "Arabic",
+      "de": "German",
+      "en": "English",
+      "es": "Spanish",
+      "fil": "Filipino",
+      "fr": "French",
+      "hi": "Hindi",
+      "id": "Indonesian",
+      "it": "Italian",
+      "ja": "Japanese",
+      "km": "Khmer",
+      "ko": "Korean",
+      "lo": "Lao",
+      "ms": "Malay",
+      "my": "Burmese",
+      "nl": "Dutch",
+      "pt": "Portuguese",
+      "ru": "Russian",
+      "th": "Thai",
+      "vi": "Vietnamese",
+      "zh": "Chinese"
     },
     "sources": {
       "direct": "Direct",
@@ -685,7 +709,7 @@
       "label": "Automated Response"
     },
     "avatar": {
-      "label": "Avatar"
+      "label": "Profile Image"
     },
     "reflink": {
       "label": "Entry Point Link"
@@ -1277,7 +1301,7 @@
     },
     "timezone": {
       "description": "Contacts are assigned this timezone when the contact timezone is unknown.",
-      "label": "Time Zone"
+      "label": "Timezone"
     },
     "title": {
       "placeholder": "Enter title"
@@ -1333,7 +1357,7 @@
       }
     },
     "userTags": {
-      "label": "User Tags"
+      "label": "User Applied Tags"
     },
     "username": {
       "label": "Username",
@@ -1714,7 +1738,112 @@
     "sendGrid": {
       "label": "SendGrid"
     },
-    "currentVersion": "Current"
+    "currentVersion": "Current",
+    "consecutiveFailedReply": {
+      "label": "Consecutive Failed Replies"
+    },
+    "currentStep": {
+      "label": "Current Step"
+    },
+    "fbChatLink": {
+      "label": "Facebook Inbox Link"
+    },
+    "inboxLink": {
+      "label": "Inbox Link"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "Instagram Business Follows User"
+    },
+    "instagramFollowers": {
+      "label": "Instagram Followers"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Instagram Follows Business"
+    },
+    "instagramUsername": {
+      "label": "Instagram Username"
+    },
+    "instagramVerified": {
+      "label": "Instagram Verified"
+    },
+    "lastAd": {
+      "label": "Last Ad"
+    },
+    "lastAdSourcePlatform": {
+      "label": "Last Ad Source Platform"
+    },
+    "lastAdSourceUrl": {
+      "label": "Last Ad Source URL"
+    },
+    "lastButtonTitle": {
+      "label": "Last Button Title"
+    },
+    "lastCommentId": {
+      "label": "Last Comment ID"
+    },
+    "lastCommentedPostText": {
+      "label": "Last Commented Post Text"
+    },
+    "lastCtwa": {
+      "label": "Last CTWA"
+    },
+    "lastFbComment": {
+      "label": "Last FB comment"
+    },
+    "lastInputFailure": {
+      "label": "Last Input Failure"
+    },
+    "lastInteraction": {
+      "label": "Last Interaction"
+    },
+    "lastLatitude": {
+      "label": "Last Latitude"
+    },
+    "lastLongitude": {
+      "label": "Last Longitude"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Last Outbound Message At"
+    },
+    "lastPostId": {
+      "label": "Last Post ID"
+    },
+    "lastSeen": {
+      "label": "Last Seen"
+    },
+    "lastStep": {
+      "label": "Last Step"
+    },
+    "me": {
+      "label": "My Data Link"
+    },
+    "phone": {
+      "label": "Phone"
+    },
+    "timezoneName": {
+      "label": "Timezone Name"
+    },
+    "totalNewTagged": {
+      "label": "Total New Tagged"
+    },
+    "totalTagged": {
+      "label": "Total Tagged"
+    },
+    "userChannel": {
+      "label": "User Channel"
+    },
+    "userExternalId": {
+      "label": "User External ID"
+    },
+    "userHash": {
+      "label": "User Hash"
+    },
+    "userSource": {
+      "label": "User Source"
+    },
+    "webchatParentUrl": {
+      "label": "Webchat Parent URL"
+    }
   },
   "flows": {
     "title": "Flows",
@@ -3323,6 +3452,32 @@
     "description": "You will no longer receive emails from this sender.",
     "invalidTitle": "Invalid unsubscribe link.",
     "invalidDescription": "This link is invalid or has expired."
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "Delete My Data",
+      "download": "Download My Data"
+    },
+    "deleteDialog": {
+      "title": "Delete your data?",
+      "description": "This permanently deletes your profile contact details, tags, custom fields, attachments, and all messages for this contact record."
+    },
+    "empty": {
+      "customFields": "No custom fields",
+      "tags": "No tags"
+    },
+    "fields": {
+      "email": "Email",
+      "gender": "Gender",
+      "locale": "Locale",
+      "phone": "Phone",
+      "timezone": "Time"
+    },
+    "sections": {
+      "customFields": "Custom Fields",
+      "tags": "User Tags"
+    },
+    "unknown": "Unknown"
   },
   "orders": {
     "title": "Orders"

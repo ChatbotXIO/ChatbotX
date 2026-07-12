@@ -9,10 +9,15 @@ describe("contactInboxResource", () => {
       inboxId: "inbox-1",
       channel: "messenger",
       source: "inboundMessage",
+      sourceId: "psid-1",
+      language: "vi",
       lastIncomingMessageAt: null,
       contactLastReadAt: null,
+      inbox: { name: "Messenger Inbox" },
     })
 
     expect(parsed.source).toBe("inboundMessage")
+    expect(parsed.sourceId).toBe("psid-1")
+    expect(parsed.language).toBe("vi")
   })
 })

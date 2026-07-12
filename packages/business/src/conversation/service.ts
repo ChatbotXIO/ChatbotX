@@ -519,6 +519,44 @@ class ConversationService extends BaseService {
     await this.invalidate({ workspaceId, ids: [conversationId] })
   }
 
+  async updateFlowStepState(props: {
+    workspaceId: string
+    conversationId: string
+    currentStep?: string | null
+    lastActivityAt?: Date
+    lastStep?: string | null
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, conversationId, tx = db } = props
+    const data: Partial<typeof conversationModel.$inferInsert> = {}
+    if ("currentStep" in props) {
+      data.currentStep = props.currentStep
+    }
+    if ("lastActivityAt" in props) {
+      data.lastActivityAt = props.lastActivityAt
+    }
+    if ("lastStep" in props) {
+      data.lastStep = props.lastStep
+    }
+
+    if (Object.keys(data).length === 0) {
+      return
+    }
+
+    await tx
+      .update(conversationModel)
+      .set(data)
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+        ),
+      )
+    if (!props.tx) {
+      await this.invalidate({ workspaceId, ids: [conversationId] })
+    }
+  }
+
   // ─── Bot state helpers ───────────────────────────────────────────────────
 
   async disableBotState(props: {
