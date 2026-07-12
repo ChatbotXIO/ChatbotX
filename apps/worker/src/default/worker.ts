@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
+import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { runImport } from "./handlers/run-import"
 import { sendAuditLog } from "./handlers/send-audit-log"
@@ -29,6 +30,11 @@ const worker = new Worker(
         return
       case DefaultJobAction.exportContacts:
         await loopableExportContacts(job.data.data)
+        return
+      case DefaultJobAction.bulkTagContacts:
+        await handleBulkTagContacts(job.data.data, {
+          attemptsMade: job.attemptsMade,
+        })
         return
       case DefaultJobAction.runImport:
         await runImport(job.data.data)

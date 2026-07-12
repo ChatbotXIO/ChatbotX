@@ -114,6 +114,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // ---------------------------------------------------------------------------
 const enqueueAttach = vi.fn(async () => undefined)
 const enqueueDetach = vi.fn(async () => undefined)
+const tagUpsertByNames = vi.fn(async () => state.txTagFindMany)
 const contactFindManyByIds = vi.fn(async () => state.contactFindMany)
 const contactFindByIdOrFail = vi.fn(() => {
   if (state.findOrFailError) {
@@ -124,6 +125,7 @@ const contactFindByIdOrFail = vi.fn(() => {
 
 vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach, enqueueDetach },
+  tagService: { upsertByNames: tagUpsertByNames },
   contactService: {
     findByIdOrFail: contactFindByIdOrFail,
     findManyByIds: contactFindManyByIds,
@@ -267,6 +269,7 @@ describe("addContactTags", () => {
 
     const { db } = await import("@chatbotx.io/database/client")
     expect(db.transaction).not.toHaveBeenCalled()
+    expect(tagUpsertByNames).not.toHaveBeenCalled()
     expect(enqueueAttach).not.toHaveBeenCalled()
     expect(emitTagApplied).not.toHaveBeenCalled()
   })
@@ -279,6 +282,7 @@ describe("addContactTags", () => {
 
     const { db } = await import("@chatbotx.io/database/client")
     expect(db.transaction).not.toHaveBeenCalled()
+    expect(tagUpsertByNames).not.toHaveBeenCalled()
     expect(enqueueAttach).not.toHaveBeenCalled()
     expect(emitTagApplied).not.toHaveBeenCalled()
   })
@@ -286,15 +290,17 @@ describe("addContactTags", () => {
   // ── Tags resolve to zero rows ────────────────────────────────────────────
 
   test("returns early when no tags found in DB (zero rows)", async () => {
-    state.txTagFindMany = [] // transaction returns empty tag list
+    state.txTagFindMany = [] // tag service returns empty tag list
 
     await addContactTags({
       workspaceId: "ws-1",
       parsedInput: { ids: ["c-1"], tags: ["ghost-tag"] },
     })
 
-    const { db } = await import("@chatbotx.io/database/client")
-    expect(db.transaction).toHaveBeenCalledOnce()
+    expect(tagUpsertByNames).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      names: ["ghost-tag"],
+    })
     // No contact queries or inserts beyond the tag resolution
     expect(contactFindManyByIds).not.toHaveBeenCalled()
     expect(enqueueAttach).not.toHaveBeenCalled()

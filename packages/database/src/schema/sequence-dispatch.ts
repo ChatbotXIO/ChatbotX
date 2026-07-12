@@ -119,6 +119,12 @@ export const sequenceDispatchModel = pgTable(
       table.enrollmentId,
       table.workspaceId,
     ),
+    index("SequenceDispatch_workspace_sequence_step_id_idx").on(
+      table.workspaceId,
+      table.sequenceId,
+      table.stepId,
+      table.id,
+    ),
     index("SequenceDispatch_bucket_status_runAtMs_idx").on(
       table.bucket,
       table.status,

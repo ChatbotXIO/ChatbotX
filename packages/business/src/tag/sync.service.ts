@@ -2,6 +2,8 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 
+const SYNC_TAG_BULK_CHUNK_SIZE = 1000
+
 class TagSyncService extends BaseService {
   /**
    * Enqueue outbound sync of a newly created tag — creates the label on every
@@ -34,6 +36,36 @@ class TagSyncService extends BaseService {
       type: DefaultJobAction.syncTag,
       data: { action: "attach", workspaceId, contactId, tagId },
     })
+  }
+
+  /**
+   * Batched variant for high-volume bulk tag operations. The queued job shape
+   * stays one sync job per contact/tag pair, but Redis round-trips are grouped.
+   */
+  async enqueueAttachMany(
+    pairs: {
+      workspaceId: string
+      contactId: string
+      tagId: string
+    }[],
+  ): Promise<void> {
+    for (let i = 0; i < pairs.length; i += SYNC_TAG_BULK_CHUNK_SIZE) {
+      const chunk = pairs.slice(i, i + SYNC_TAG_BULK_CHUNK_SIZE)
+      await defaultQueue.addBulk(
+        chunk.map((pair) => ({
+          name: DefaultJobAction.syncTag,
+          data: {
+            type: DefaultJobAction.syncTag,
+            data: {
+              action: "attach",
+              workspaceId: pair.workspaceId,
+              contactId: pair.contactId,
+              tagId: pair.tagId,
+            },
+          },
+        })),
+      )
+    }
   }
 
   /**

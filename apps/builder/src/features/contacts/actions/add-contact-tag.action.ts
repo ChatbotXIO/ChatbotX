@@ -3,20 +3,13 @@
 import {
   type ContactAccessScope,
   contactService,
+  tagService,
   tagSyncService,
 } from "@chatbotx.io/business"
-import {
-  and,
-  db,
-  eq,
-  findOrFail,
-  inArray,
-  isNull,
-} from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
-import { createId } from "@chatbotx.io/utils"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -65,31 +58,9 @@ export const addContactTags = async ({
   }
 
   // Resolve/create the tag set once (bounded by the request, small).
-  const allTags = await db.transaction(async (tx) => {
-    await tx
-      .insert(tagModel)
-      .values(
-        parsedInput.tags.map((name) => ({
-          id: createId(),
-          name,
-          workspaceId,
-        })),
-      )
-      .onConflictDoNothing({
-        target: [tagModel.workspaceId, tagModel.name],
-        where: isNull(tagModel.deletedAt),
-      })
-
-    return await tx.query.tagModel.findMany({
-      where: {
-        workspaceId,
-        deletedAt: { isNull: true as const },
-        name: { in: parsedInput.tags },
-      },
-      columns: {
-        id: true,
-      },
-    })
+  const allTags = await tagService.upsertByNames({
+    workspaceId,
+    names: parsedInput.tags,
   })
   if (allTags.length === 0) {
     return
