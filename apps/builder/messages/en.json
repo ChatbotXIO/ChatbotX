@@ -306,7 +306,13 @@
       "clicked": "Clicked",
       "failed": "Failed",
       "noContacts": "No contacts found",
-      "pageInfo": "Page {page} of {pageCount}"
+      "pageInfo": "Page {page} of {pageCount}",
+      "selectedAll": "All selected",
+      "selectedCount": "{count} selected",
+      "tagAllDialogDescription": "Tags will be added to all selected contacts.",
+      "tagDialogDescription": "Tags will be added to {count} contact(s).",
+      "tagQueued": "Tagging {count} contacts in the background.",
+      "loadingMore": "Loading more..."
     },
     "messengerList": {
       "title": "Messenger List",
@@ -3177,7 +3183,13 @@
       "clicked": "Clicked",
       "failed": "Failed",
       "noContacts": "No contacts found",
-      "pageInfo": "Page {page} of {pageCount}"
+      "pageInfo": "Page {page} of {pageCount}",
+      "selectedAll": "All selected",
+      "selectedCount": "{count} selected",
+      "tagAllDialogDescription": "Tags will be added to all selected contacts.",
+      "tagDialogDescription": "Tags will be added to {count} contact(s).",
+      "tagQueued": "Tagging {count} contacts in the background.",
+      "loadingMore": "Loading more..."
     },
     "settings": "Settings",
     "flow": "Flow",

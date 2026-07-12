@@ -2,8 +2,11 @@ import {
   and,
   count,
   db,
+  eq,
+  gt,
   inArray,
   isNotNull,
+  notInArray,
   or,
   sql,
 } from "@chatbotx.io/database/client"
@@ -203,6 +206,36 @@ export class BroadcastStatsRepository extends BaseRepository {
     }
 
     return { contactInboxIds, contactEventMap }
+  }
+
+  async getContactIdsPage(input: {
+    broadcastId: string
+    eventType: BroadcastEventType
+    cursor: string | null
+    limit: number
+    excludeContactIds?: string[]
+  }): Promise<{ id: string; contactId: string }[]> {
+    const t = contactsOnBroadcastsModel
+    const { eventCondition } = this.buildEventFilter(input.eventType)
+
+    return await db
+      .select({
+        id: t.contactId,
+        contactId: t.contactId,
+      })
+      .from(t)
+      .where(
+        and(
+          eq(t.broadcastId, input.broadcastId),
+          eventCondition,
+          input.cursor ? gt(t.contactId, input.cursor) : undefined,
+          input.excludeContactIds?.length
+            ? notInArray(t.contactId, input.excludeContactIds)
+            : undefined,
+        ),
+      )
+      .orderBy(t.contactId)
+      .limit(input.limit)
   }
 
   private buildEventFilter(eventType: BroadcastEventType) {

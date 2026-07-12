@@ -113,6 +113,16 @@ export class BroadcastAnalyticsService {
     return broadcastStatsRepository.getContacts(input)
   }
 
+  getContactIdsPage(input: {
+    broadcastId: string
+    eventType: BroadcastEventType
+    cursor: string | null
+    limit: number
+    excludeContactIds?: string[]
+  }): Promise<{ id: string; contactId: string }[]> {
+    return broadcastStatsRepository.getContactIdsPage(input)
+  }
+
   async onMessageSent(payloads: MessageSentPayload[]) {
     const broadcastPayloads = payloads.filter(
       (p) =>

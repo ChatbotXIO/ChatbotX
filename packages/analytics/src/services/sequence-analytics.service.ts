@@ -124,6 +124,18 @@ export class SequenceAnalyticsService {
     return sequenceStatsRepository.getContacts(input)
   }
 
+  getContactIdsPage(input: {
+    workspaceId: string
+    sequenceId: string
+    stepId: string
+    eventType: SequenceStepEventType
+    cursor: string | null
+    limit: number
+    excludeContactIds?: string[]
+  }): Promise<{ id: string; contactId: string }[]> {
+    return sequenceStatsRepository.getContactIdsPage(input)
+  }
+
   async onMessageSent(payloads: MessageSentPayload[]) {
     const sequencePayloads = payloads.filter(
       (p) =>

@@ -1,3 +1,7 @@
+import type {
+  BroadcastEventType,
+  SequenceStepEventType,
+} from "@chatbotx.io/analytics/schemas"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import { Queue } from "bullmq"
@@ -18,6 +22,7 @@ export const defaultQueue =
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",
+  bulkTagContacts: "bulkTagContacts",
   runImport: "runImport",
   sendErrorLog: "sendErrorLog",
   sendAuditLog: "sendAuditLog",
@@ -46,6 +51,29 @@ export type JobExportContacts = {
   } & (
     | { contactIds: string[]; filter?: undefined }
     | { contactIds?: undefined; filter: ExportContactsFilter }
+  )
+}
+
+export type JobBulkTagContacts = {
+  type: typeof DefaultJobAction.bulkTagContacts
+  data: {
+    workspaceId: string
+    requestedUserId: string
+    tagIds: string[]
+    excludedContactIds: string[]
+    restrictToAssignedUserId?: string
+  } & (
+    | {
+        source: "broadcast"
+        broadcastId: string
+        eventType: BroadcastEventType
+      }
+    | {
+        source: "sequenceStep"
+        sequenceId: string
+        stepId: string
+        eventType: SequenceStepEventType
+      }
   )
 }
 
@@ -123,6 +151,7 @@ export type JobSyncChannelLabels = {
 
 export type DefaultJobData =
   | JobExportContacts
+  | JobBulkTagContacts
   | JobRunImport
   | JobSendErrorLog
   | JobSendAuditLog

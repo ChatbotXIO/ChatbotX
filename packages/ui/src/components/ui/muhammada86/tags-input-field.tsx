@@ -84,10 +84,13 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as HTMLElement | null;
+      // Suggestions render in a portal outside containerRef; a click on one must
+      // not be treated as "outside" or it would close the list before selecting.
+      if (target?.closest('[data-slot="popover-content"]')) {
+        return;
+      }
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setShowSuggestions(false);
         setShowAllSuggestions(false);
       }
@@ -222,14 +225,14 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                     <span className="text-muted-foreground">{startIcon}</span>
                   )}
 
-                  <AnimatePresence>
+                  <AnimatePresence initial={false}>
                     {tags.map((tag: string, index: number) => (
                       <motion.div
                         key={`${tag}-${index}`}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                       >
                         <Badge
                           variant={tagVariant}
@@ -322,7 +325,9 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
               <PopoverContent
                 align="start"
                 className={cn(
-                  "w-(--radix-popover-trigger-width) max-h-60 overflow-auto rounded-md p-0",
+                  // pointer-events-auto keeps the list clickable even when a
+                  // surrounding modal dialog locks pointer events on the body.
+                  "pointer-events-auto w-(--radix-popover-trigger-width) max-h-60 overflow-auto rounded-md p-0",
                   styles.suggestions
                 )}
                 onOpenAutoFocus={(e) => e.preventDefault()}

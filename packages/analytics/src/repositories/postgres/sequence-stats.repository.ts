@@ -3,7 +3,9 @@ import {
   count,
   db,
   eq,
+  gt,
   isNotNull,
+  notInArray,
   or,
   sql,
 } from "@chatbotx.io/database/client"
@@ -135,6 +137,40 @@ export class SequenceStatsRepository extends BaseRepository {
     }
 
     return { contactInboxIds, contactEventMap }
+  }
+
+  async getContactIdsPage(input: {
+    workspaceId: string
+    sequenceId: string
+    stepId: string
+    eventType: SequenceStepEventType
+    cursor: string | null
+    limit: number
+    excludeContactIds?: string[]
+  }): Promise<{ id: string; contactId: string }[]> {
+    const t = sequenceDispatchModel
+    const { eventCondition } = this.buildEventFilter(input.eventType)
+
+    return await db
+      .select({
+        id: t.id,
+        contactId: t.contactId,
+      })
+      .from(t)
+      .where(
+        and(
+          eq(t.workspaceId, input.workspaceId),
+          eq(t.sequenceId, input.sequenceId),
+          eq(t.stepId, input.stepId),
+          eventCondition,
+          input.cursor ? gt(t.id, input.cursor) : undefined,
+          input.excludeContactIds?.length
+            ? notInArray(t.contactId, input.excludeContactIds)
+            : undefined,
+        ),
+      )
+      .orderBy(t.id)
+      .limit(input.limit)
   }
 
   private buildEventFilter(eventType: SequenceStepEventType) {
