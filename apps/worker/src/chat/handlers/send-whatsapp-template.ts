@@ -34,6 +34,7 @@ import {
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
+import { shouldSuppressRetryableChannelError } from "../utils/retry"
 import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToChannel } from "./send-message"
 
@@ -263,7 +264,7 @@ export async function processWhatsappTemplate(
 
 export async function sendWhatsappTemplateMessage(
   data: ChatJobSendWhatsappTemplateMessage["data"],
-) {
+): Promise<ProcessWhatsappTemplateResult | undefined> {
   const {
     conversation,
     templateId,
@@ -328,8 +329,6 @@ export async function sendWhatsappTemplateMessage(
 
     return result
   } catch (error) {
-    console.error(error)
-
     logger.error(
       {
         error,
@@ -339,6 +338,9 @@ export async function sendWhatsappTemplateMessage(
       },
       "Error sending WhatsApp template message for broadcast",
     )
+    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
+      return
+    }
     throw error
   }
 }

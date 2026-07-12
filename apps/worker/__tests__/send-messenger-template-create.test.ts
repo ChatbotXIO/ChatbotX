@@ -130,9 +130,13 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
-  parseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
-}))
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
+  return {
+    ...actual,
+    parseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
+  }
+})
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
@@ -176,9 +180,10 @@ vi.mock("@chatbotx.io/flow-config", async (importOriginal) => {
 
 import type { ProcessMessengerTemplateParams } from "../src/chat/handlers/send-messenger-template"
 
-const { processMessengerTemplate } = await import(
+const { processMessengerTemplate, sendMessengerTemplateMessage } = await import(
   "../src/chat/handlers/send-messenger-template"
 )
+const { ChannelError, ChannelErrorCategory } = await import("@chatbotx.io/sdk")
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -205,6 +210,20 @@ const fakeTemplate = {
   params: {} as ProcessMessengerTemplateParams["template"]["params"],
   inboxId: "inbox-1",
 } as ProcessMessengerTemplateParams["template"]
+
+const broadcastTemplateJobData: Parameters<
+  typeof sendMessengerTemplateMessage
+>[0] = {
+  conversation: fakeConversation,
+  contactInbox: {
+    ...fakeContactInbox,
+    contactId: "contact-1",
+  },
+  templateId: "tmpl-1",
+  broadcastId: "broadcast-1",
+  templateData: {},
+  metadata: { type: "broadcast", broadcastId: "broadcast-1" },
+}
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -328,6 +347,36 @@ describe("processMessengerTemplate", () => {
         template: fakeTemplate,
       }),
     ).resolves.toBeDefined()
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not throw permanent ChannelError from broadcast template send", async () => {
+    const error = new ChannelError(
+      "(#551) This person isn't available at the moment.",
+      ChannelErrorCategory.USER_BLOCKED,
+      { code: 551 },
+    )
+    mockSendFlowStep.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessengerTemplateMessage(broadcastTemplateJobData),
+    ).resolves.toBeUndefined()
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({ occurredAt: expect.any(Date) }),
+    )
+  })
+
+  test("rethrows non-ChannelError from Messenger broadcast template send", async () => {
+    const error = new Error("unexpected provider failure")
+    mockSendFlowStep.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessengerTemplateMessage(broadcastTemplateJobData),
+    ).rejects.toBe(error)
 
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
   })
