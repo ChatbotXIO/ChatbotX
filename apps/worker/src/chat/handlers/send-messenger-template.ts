@@ -39,6 +39,7 @@ import {
   validateMessengerTemplate,
 } from "../../integration/handlers/messenger-template-handler"
 import { logger } from "../../lib/logger"
+import { shouldSuppressRetryableChannelError } from "../utils/retry"
 import { sendFlowStepToChannel } from "./send-message"
 
 export interface ProcessMessengerTemplateParams {
@@ -290,7 +291,7 @@ export async function processMessengerTemplate(
 
 export async function sendMessengerTemplateMessage(
   data: ChatJobSendMessengerTemplateMessage["data"],
-) {
+): Promise<ProcessMessengerTemplateResult | undefined> {
   const {
     conversation,
     templateId,
@@ -419,6 +420,9 @@ export async function sendMessengerTemplateMessage(
       },
       "Error sending Messenger template message for broadcast",
     )
+    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
+      return
+    }
     throw error
   }
 }

@@ -134,9 +134,13 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
-  parseSdkError: mockParseSdkError,
-}))
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
+  return {
+    ...actual,
+    parseSdkError: mockParseSdkError,
+  }
+})
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
@@ -184,9 +188,10 @@ vi.mock("../src/chat/handlers/send-flow-step", () => ({
 
 import type { ProcessWhatsappTemplateParams } from "../src/chat/handlers/send-whatsapp-template"
 
-const { processWhatsappTemplate } = await import(
+const { processWhatsappTemplate, sendWhatsappTemplateMessage } = await import(
   "../src/chat/handlers/send-whatsapp-template"
 )
+const { ChannelError, ChannelErrorCategory } = await import("@chatbotx.io/sdk")
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -209,6 +214,20 @@ const fakeTemplate: ProcessWhatsappTemplateParams["template"] = {
   name: "wa-template",
   language: "en",
   params: {},
+}
+
+const broadcastTemplateJobData: Parameters<
+  typeof sendWhatsappTemplateMessage
+>[0] = {
+  conversation: fakeConversation,
+  contactInbox: {
+    ...fakeContactInbox,
+    contactId: "contact-1",
+  },
+  templateId: "tmpl-wa-1",
+  broadcastId: "broadcast-1",
+  templateData: {},
+  metadata: { type: "broadcast", broadcastId: "broadcast-1" },
 }
 
 // ---------------------------------------------------------------------------
@@ -377,5 +396,50 @@ describe("processWhatsappTemplate", () => {
       "message:failed",
       expect.objectContaining({ occurredAt: expect.any(Date) }),
     )
+  })
+
+  test("does not throw permanent ChannelError from broadcast template send", async () => {
+    const error = new ChannelError(
+      "integration auth failed",
+      ChannelErrorCategory.AUTH_FAILED,
+      { code: "auth_failed" },
+    )
+    mockSendFlowStep.mockRejectedValueOnce(error)
+
+    await expect(
+      sendWhatsappTemplateMessage(broadcastTemplateJobData),
+    ).resolves.toBeUndefined()
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({ occurredAt: expect.any(Date) }),
+    )
+  })
+
+  test("rethrows retryable ChannelError from WhatsApp broadcast template send", async () => {
+    const error = new ChannelError(
+      "rate limited",
+      ChannelErrorCategory.RATE_LIMITED,
+      { code: "rate_limited" },
+    )
+    mockSendFlowStep.mockRejectedValueOnce(error)
+
+    await expect(
+      sendWhatsappTemplateMessage(broadcastTemplateJobData),
+    ).rejects.toBe(error)
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+  })
+
+  test("rethrows non-ChannelError from WhatsApp broadcast template send", async () => {
+    const error = new Error("unexpected provider failure")
+    mockSendFlowStep.mockRejectedValueOnce(error)
+
+    await expect(
+      sendWhatsappTemplateMessage(broadcastTemplateJobData),
+    ).rejects.toBe(error)
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
   })
 })
