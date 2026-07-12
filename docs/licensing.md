@@ -18,7 +18,7 @@ cloud`) — a client-exposed env var with no verification. Anyone could set
 
 The enterprise edition is installed on customer-owned, often near-air-gapped
 servers, so the gate must verify **fully offline** and be **tamper-proof** in an
-open-source (AGPL) codebase. The answer is an **Ed25519-signed JWS token**:
+open-source (MIT) codebase. The answer is an **Ed25519-signed JWS token**:
 
 - The **vendor** signs a payload (features, limits, customer, expiry) with a
   private key held only in `../aha.chat-enterprise`.
