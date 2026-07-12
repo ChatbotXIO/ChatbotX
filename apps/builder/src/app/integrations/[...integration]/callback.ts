@@ -1,4 +1,5 @@
 import {
+  integrationFacebookAdsService,
   platformCredentialService,
   workspaceMemberService,
   workspaceService,
@@ -9,10 +10,19 @@ import {
   integrationGoogleSheetsModel,
   integrationModel,
 } from "@chatbotx.io/database/schema"
+import {
+  exchangeCodeForToken as exchangeFacebookAdsCode,
+  exchangeLongLivedToken as exchangeFacebookAdsLongLivedToken,
+  type FacebookAdsAuthValue,
+} from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import { exchangeCodeForToken as exchangeMessengerCode } from "@chatbotx.io/integration-messenger"
-import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
+import {
+  AuthType,
+  type AuthValue,
+  type Oauth2AuthValue,
+} from "@chatbotx.io/sdk"
 import {
   createId,
   getPublicUrlFromRequest,
@@ -40,7 +50,46 @@ import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
   referer: z.url(),
+  // Facebook Ads reuses the Messenger OAuth callback (the only redirect_uri
+  // registered with the Facebook app); the connect action sets this flag so
+  // the Messenger branch dispatches to the Ads token-storage logic.
+  flow: z.literal("facebookAds").optional(),
 })
+
+// Exchange the OAuth code for a long-lived Facebook Ads token and store it
+// (encrypted) for the workspace. Shared by the Messenger-callback dispatch and
+// the dedicated facebook-ads callback case.
+const storeFacebookAdsConnection = async (args: {
+  credentialConfig: { clientId: string; clientSecret: string; version?: string }
+  code: string
+  callbackUrl: string
+  workspaceId: string
+}): Promise<void> => {
+  const shortLivedToken = await exchangeFacebookAdsCode(
+    args.credentialConfig,
+    args.code,
+    args.callbackUrl,
+  )
+  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
+    args.credentialConfig,
+    shortLivedToken,
+  )
+  const tokenExpiresAt = expiresIn
+    ? new Date(Date.now() + expiresIn * 1000)
+    : null
+
+  const facebookAdsAuth: FacebookAdsAuthValue = {
+    authType: AuthType.custom,
+    accessToken,
+    expiresAt: tokenExpiresAt?.toISOString(),
+    version: args.credentialConfig.version,
+  }
+  await integrationFacebookAdsService.upsert({
+    workspaceId: args.workspaceId,
+    auth: facebookAdsAuth,
+    tokenExpiresAt,
+  })
+}
 
 export const handleCallback = async (
   integrationType: IntegrationType,
@@ -135,6 +184,20 @@ export const handleCallback = async (
       const callbackUrl = buildBrokerCallbackUrl(
         "/integrations/messenger/callback",
       )
+
+      // Facebook Ads OAuth is routed through this same Messenger callback; the
+      // state `flow` flag marks it. Store the Ads token and return the user to
+      // the referer (the integrations settings page) instead of the Messenger
+      // page picker.
+      if (stateParams.flow === "facebookAds") {
+        await storeFacebookAdsConnection({
+          credentialConfig: messengerCredential.config,
+          code,
+          callbackUrl,
+          workspaceId: workspace.id,
+        })
+        return redirect(safeReferer)
+      }
 
       const userToken = await exchangeMessengerCode(
         messengerCredential.config,
@@ -280,6 +343,34 @@ export const handleCallback = async (
         zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
         req,
+      })
+
+      return redirect(safeReferer)
+    }
+
+    case "facebookAds": {
+      // Facebook Ads reuses the Messenger Facebook app credential; only the
+      // requested scopes differ (see `connect.action.ts`).
+      const facebookAdsCredential =
+        await platformCredentialService.resolveForOwner({
+          ownerId: workspace.ownerId,
+          type: "messenger",
+        })
+      if (!facebookAdsCredential) {
+        return notFound()
+      }
+
+      // Must match the redirect_uri used at authorize time (the fixed broker
+      // callback), even though this handler may run on a white-label host.
+      const callbackUrl = buildBrokerCallbackUrl(
+        "/integrations/facebook-ads/callback",
+      )
+
+      await storeFacebookAdsConnection({
+        credentialConfig: facebookAdsCredential.config,
+        code,
+        callbackUrl,
+        workspaceId: workspace.id,
       })
 
       return redirect(safeReferer)

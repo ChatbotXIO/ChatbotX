@@ -18,6 +18,7 @@ import { foldersAPI } from "@/features/folders/api"
 import { inboxesAPI } from "@/features/inboxes/api"
 import { integrationActiveCampaignAPI } from "@/features/integration-active-campaign/api"
 import { integrationDripAPI } from "@/features/integration-drip/api"
+import { integrationFacebookAdsAPI } from "@/features/integration-facebook-ads/api"
 import { integrationGetResponseAPI } from "@/features/integration-get-response/api"
 import { integrationKlaviyoAPI } from "@/features/integration-klaviyo/api"
 import { integrationMailchimpAPI } from "@/features/integration-mailchimp/api"
@@ -63,6 +64,7 @@ export const router = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),
   integrationActiveCampaignAPI,
+  integrationFacebookAdsAPI,
   integrationDripAPI,
   integrationGetResponseAPI,
   integrationKlaviyoAPI,

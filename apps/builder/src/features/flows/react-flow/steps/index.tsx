@@ -29,6 +29,7 @@ import emailStep from "./email"
 import { enableBotStep } from "./enable-bot"
 import { enableMessengerComposerStep } from "./enable-messenger-composer"
 import { externalRequestStep } from "./external-request"
+import { facebookCustomAudienceStep } from "./facebook-custom-audience"
 import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
@@ -112,6 +113,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.blockContact]: blockContactStep,
   [stepTypes.enum.markEmailVerified]: markEmailVerifiedStep,
   [stepTypes.enum.activeCampaignSyncContact]: activeCampaignSyncContactStep,
+  [stepTypes.enum.facebookCustomAudience]: facebookCustomAudienceStep,
   [stepTypes.enum.getResponseAddContact]: getResponseAddContactStep,
   [stepTypes.enum.dripSubscribeSubscriber]: dripSubscribeSubscriberStep,
   [stepTypes.enum.mailchimpAddMember]: mailchimpAddMemberStep,

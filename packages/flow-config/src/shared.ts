@@ -23,6 +23,7 @@ import { dripSubscribeSubscriberSchema } from "./steps/drip-subscribe-subscriber
 import { enableBotStepSchema } from "./steps/enable-bot"
 import { enableMessengerComposerStepSchema } from "./steps/enable-messenger-composer"
 import { externalRequestStepSchema } from "./steps/external-request"
+import { facebookCustomAudienceSchema } from "./steps/facebook-custom-audience"
 import { followConversationStepSchema } from "./steps/follow-conversation"
 import { formatDateStepSchema } from "./steps/format-date"
 import { generateCodeStepSchema } from "./steps/generate-code"
@@ -129,6 +130,7 @@ const aiSteps = [
 ]
 
 const messengerSteps = [
+  facebookCustomAudienceSchema,
   setMessengerUserPersistentMenuStepSchema,
   enableMessengerComposerStepSchema,
   disableMessengerComposerStepSchema,

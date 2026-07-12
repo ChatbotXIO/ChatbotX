@@ -1784,6 +1784,7 @@
       "inboxActions": "Hành động hộp thư",
       "markEmailVerified": "Đánh dấu email đã xác minh",
       "activeCampaignSyncContact": "Thêm liên hệ vào ActiveCampaign",
+      "facebookCustomAudience": "Facebook Custom Audience",
       "mailchimpAddMember": "Thêm liên hệ vào MailChimp",
       "mailerLiteAddSubscriber": "Thêm liên hệ vào MailerLite",
       "klaviyoSyncProfile": "Thêm liên hệ vào Klaviyo",
@@ -1950,6 +1951,33 @@
   },
   "general": {
     "title": "Chung"
+  },
+  "facebookAds": {
+    "title": "Facebook Ads",
+    "setting": {
+      "label": "Facebook Ads",
+      "description": "Phát triển kinh doanh nhanh hơn bằng cách kết nối Facebook Ads với chatbot của bạn. Tạo tệp đối tượng tùy chỉnh và thêm/xóa khách hàng khỏi tệp đối tượng tùy chỉnh.",
+      "reconnect": "Kết nối lại"
+    },
+    "fields": {
+      "subscriberShouldBe": "Người đăng ký sẽ được",
+      "addedToCustomAudience": "Thêm vào tệp đối tượng tùy chỉnh",
+      "removedFromCustomAudience": "Xóa khỏi tệp đối tượng tùy chỉnh",
+      "adAccount": "Tài khoản quảng cáo",
+      "customAudience": "Tệp đối tượng tùy chỉnh",
+      "nothingSelected": "Chưa chọn"
+    },
+    "adAccounts": {
+      "loading": "Đang tải tài khoản quảng cáo...",
+      "error": "Không thể tải tài khoản quảng cáo. Vui lòng kiểm tra kết nối Facebook Ads."
+    },
+    "customAudiences": {
+      "loading": "Đang tải tệp đối tượng tùy chỉnh...",
+      "error": "Không thể tải tệp đối tượng tùy chỉnh. Vui lòng kiểm tra kết nối Facebook Ads."
+    },
+    "errors": {
+      "invalidAppSettings": "Cấu hình Facebook App không hợp lệ"
+    }
   },
   "googleSheets": {
     "setting": {

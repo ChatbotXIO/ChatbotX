@@ -62,6 +62,7 @@ import { integrationActiveCampaignRelations } from "./integration-active-campaig
 import { integrationClaudeRelations } from "./integration-claude"
 import { integrationDeepseekRelations } from "./integration-deepseek"
 import { integrationDripRelations } from "./integration-drip"
+import { integrationFacebookAdsRelations } from "./integration-facebook-ads"
 import { integrationGeminiRelations } from "./integration-gemini"
 import { integrationGetResponseRelations } from "./integration-get-response"
 import { integrationGoogleSheetsRelations } from "./integration-google-sheets"
@@ -163,6 +164,7 @@ export const relations = {
   ...contactNoteRelations,
   ...aiEmbeddingRelations,
   ...integrationGoogleSheetsRelations,
+  ...integrationFacebookAdsRelations,
   ...integrationSmtpRelations,
   ...integrationClaudeRelations,
   ...integrationDeepseekRelations,
