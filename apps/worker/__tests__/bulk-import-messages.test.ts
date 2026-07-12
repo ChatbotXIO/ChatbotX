@@ -95,18 +95,39 @@ vi.mock("@chatbotx.io/database/client", () => ({
   ),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  messageModel: {
-    id: "id",
-    sourceId: "sourceId",
-    contactInboxId: "contactInboxId",
+// Partial: `@chatbotx.io/database/queries` builds filter maps from schema
+// tables at module scope, so replacing the whole module breaks the import
+// chain (e.g. `contactsToTagsModel`).
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
+  return {
+    ...actual,
+    messageModel: {
+      id: "id",
+      sourceId: "sourceId",
+      contactInboxId: "contactInboxId",
+    },
+    attachmentModel: { id: "id", messageId: "messageId" },
+    contactModel: { id: "id" },
+    contactInboxModel: {},
+    conversationModel: {},
+    workspaceModel: {},
+    userQuotaModel: {},
+  }
+})
+
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
+  withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
+  // Referenced at module scope by transitive imports (analytics mac-tracking).
+  bloomFilter: {},
+  cacheConnections: { useExisting: vi.fn(), create: vi.fn() },
+  distributedStore: {},
+  distributedSequenceStore: {},
+  distributedLock: {
+    runExclusive: vi.fn(async (_k: string, fn: () => unknown) => fn()),
   },
-  attachmentModel: { id: "id", messageId: "messageId" },
-  contactModel: { id: "id" },
-  contactInboxModel: {},
-  conversationModel: {},
-  workspaceModel: {},
-  userQuotaModel: {},
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -400,6 +421,8 @@ describe("applyCoexistActivityUpdates", () => {
     await applyCoexistActivityUpdates([
       {
         contactInboxId: "ci-1",
+        contactId: "contact-1",
+        workspaceId: "ws-1",
         conversationId: "conv-1",
         newestMessageAt: new Date("2026-06-20T10:00:00.000Z"),
         oldestMessageAt: new Date("2026-06-20T09:00:00.000Z"),
@@ -407,6 +430,8 @@ describe("applyCoexistActivityUpdates", () => {
       },
       {
         contactInboxId: "ci-2",
+        contactId: "contact-2",
+        workspaceId: "ws-1",
         conversationId: "conv-2",
         newestMessageAt: new Date("2026-06-21T10:00:00.000Z"),
         oldestMessageAt: new Date("2026-06-21T09:00:00.000Z"),
@@ -433,6 +458,8 @@ describe("applyCoexistActivityUpdates", () => {
     await applyCoexistActivityUpdates([
       {
         contactInboxId: "ci-1",
+        contactId: "contact-1",
+        workspaceId: "ws-1",
         conversationId: "conv-1",
         newestMessageAt: latestAt,
         oldestMessageAt: firstAt,
@@ -458,6 +485,8 @@ describe("applyCoexistActivityUpdates", () => {
       | undefined
     expect(contactRows?.__join?.[0]?.values).toEqual([
       "ci-1",
+      "contact-1",
+      "ws-1",
       latestAt,
       firstAt,
       incomingAt,
@@ -476,6 +505,8 @@ describe("applyCoexistActivityUpdates", () => {
     await applyCoexistActivityUpdates([
       {
         contactInboxId: "ci-1",
+        contactId: "contact-1",
+        workspaceId: "ws-1",
         conversationId: "conv-1",
         newestMessageAt: outgoingAt,
         oldestMessageAt: outgoingAt,
@@ -492,6 +523,8 @@ describe("applyCoexistActivityUpdates", () => {
       | undefined
     expect(contactRows?.__join?.[0]?.values).toEqual([
       "ci-1",
+      "contact-1",
+      "ws-1",
       outgoingAt,
       outgoingAt,
       null,
@@ -508,6 +541,8 @@ describe("applyCoexistActivityUpdates", () => {
     await applyCoexistActivityUpdates([
       {
         contactInboxId: "ci-1",
+        contactId: "contact-1",
+        workspaceId: "ws-1",
         conversationId: "conv-1",
         newestMessageAt: newerMessage,
         oldestMessageAt: olderMessage,
@@ -515,6 +550,8 @@ describe("applyCoexistActivityUpdates", () => {
       },
       {
         contactInboxId: "ci-1",
+        contactId: "contact-1",
+        workspaceId: "ws-1",
         conversationId: "conv-1",
         newestMessageAt: olderMessage,
         oldestMessageAt: oldestMessage,
@@ -531,6 +568,8 @@ describe("applyCoexistActivityUpdates", () => {
     expect(contactRows?.__join).toHaveLength(1)
     expect(contactRows?.__join?.[0]?.values).toEqual([
       "ci-1",
+      "contact-1",
+      "ws-1",
       newerMessage,
       oldestMessage,
       newerIncoming,

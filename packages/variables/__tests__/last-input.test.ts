@@ -28,9 +28,13 @@ vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettings: mockResolveTenantSettings,
 }))
 
+const ABSOLUTE_URL_RE = /^https?:\/\//i
+
 vi.mock("@chatbotx.io/business/utils", () => ({
   getPublicFileUrl: (path: string, baseUrl: string) =>
     new URL(path, baseUrl).toString(),
+  toPublicStorageUrl: (path: string, baseUrl: string) =>
+    ABSOLUTE_URL_RE.test(path) ? path : new URL(path, baseUrl).toString(),
 }))
 
 const { getContactLastInput, getContactLastInputType } = await import(

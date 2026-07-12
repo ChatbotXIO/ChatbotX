@@ -98,6 +98,7 @@ describe("messageListeners", () => {
     expect(mockRecordSendFailure).toHaveBeenCalledWith({
       contactInboxId: "ci-1",
       contactId: "contact-1",
+      workspaceId: "ws-1",
       error: "provider rejected message",
     })
   })

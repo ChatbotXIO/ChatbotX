@@ -60,6 +60,8 @@ vi.mock("@/lib/auth/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  workspaceMemberCacheTag: (userId: string) =>
+    `users:${userId}:workspace-members`,
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
   },
