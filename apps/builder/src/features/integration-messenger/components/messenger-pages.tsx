@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/alert"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -127,19 +128,21 @@ export function FacebookPages({
           <InputField name="pageName" type="hidden" />
         </div>
 
-        <div className="max-h-75 overflow-y-auto pr-1">
-          <RadioGroupField
-            label={t("messenger.selectFacebookPage")}
-            name="pageId"
-            options={pages.map((page) => ({
-              value: page.id,
-              label: page.name,
-              disabled: !page.isConnectable || page.isAlreadyConnected,
-              description: getPageOptionNote(page, t),
-            }))}
-            required
-          />
-        </div>
+        <ScrollArea className="max-h-75" type="auto">
+          <div className="pr-3">
+            <RadioGroupField
+              label={t("messenger.selectFacebookPage")}
+              name="pageId"
+              options={pages.map((page) => ({
+                value: page.id,
+                label: page.name,
+                disabled: !page.isConnectable || page.isAlreadyConnected,
+                description: getPageOptionNote(page, t),
+              }))}
+              required
+            />
+          </div>
+        </ScrollArea>
 
         <div className="flex justify-end gap-2">
           <Button asChild size="sm" variant="ghost">
