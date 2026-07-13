@@ -11,6 +11,7 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { logger } from "@/lib/log"
+import { CONTACTS_DEFAULT_PER_PAGE } from "../constants"
 import {
   type ContactPermissionScope,
   maskContactEmailAndPhone,
@@ -58,11 +59,15 @@ async function queryContacts(
   input: ListContactsRequest,
   scopeInput: ContactPermissionScope | "unscoped",
 ): Promise<ListContactsResponse> {
+  const normalizedInput = {
+    ...input,
+    perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
+  }
   const scope = scopeInput === "unscoped" ? undefined : scopeInput
-  const where = generateWhere(input, scope)
+  const where = generateWhere(normalizedInput, scope)
 
-  const pagination = getPaginationWithDefaults(input)
-  const orderBy = resolveOrderBy(input)
+  const pagination = getPaginationWithDefaults(normalizedInput)
+  const orderBy = resolveOrderBy(normalizedInput)
 
   const [data, countResult] = await Promise.all([
     db.query.contactModel.findMany({
@@ -112,11 +117,15 @@ export async function listContactsRSC(
   input: ListContactsRequest & { workspaceId: string },
 ): Promise<ListContactsResponse> {
   const scope = await requireContactPermissionScope(input.workspaceId)
+  const normalizedInput = {
+    ...input,
+    perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
+  }
 
-  const where = generateWhere(input, scope)
+  const where = generateWhere(normalizedInput, scope)
 
-  const pagination = getPaginationWithDefaults(input)
-  const orderBy = resolveOrderBy(input)
+  const pagination = getPaginationWithDefaults(normalizedInput)
+  const orderBy = resolveOrderBy(normalizedInput)
 
   const [data, countResult] = await Promise.all([
     db.query.contactModel.findMany({

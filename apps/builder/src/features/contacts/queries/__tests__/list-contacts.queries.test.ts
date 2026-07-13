@@ -28,6 +28,7 @@ const { countWithRelationsFilterCapped, db } = await import(
 const { generateWhere, listContactsForAPI, resolveOrderBy } = await import(
   "../list-contacts.queries"
 )
+const { CONTACTS_DEFAULT_PER_PAGE } = await import("../../constants")
 
 const baseInput = { workspaceId: "1" }
 
@@ -133,6 +134,28 @@ describe("generateWhere", () => {
 })
 
 describe("listContactsForAPI", () => {
+  test("defaults to the contacts table page size when perPage is omitted", async () => {
+    vi.mocked(db.query.contactModel.findMany).mockResolvedValue([])
+    vi.mocked(countWithRelationsFilterCapped).mockResolvedValue({
+      total: 10_000,
+      capped: true,
+      cap: 10_000,
+    })
+
+    const result = await listContactsForAPI({
+      workspaceId: "1",
+      page: 1,
+    })
+
+    expect(db.query.contactModel.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        limit: CONTACTS_DEFAULT_PER_PAGE,
+        offset: 0,
+      }),
+    )
+    expect(result.pageCount).toBe(200)
+  })
+
   test("uses capped count metadata for page count and total display", async () => {
     vi.mocked(db.query.contactModel.findMany).mockResolvedValue([])
     vi.mocked(countWithRelationsFilterCapped).mockResolvedValue({
