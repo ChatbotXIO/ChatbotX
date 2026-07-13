@@ -10,7 +10,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/alert"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -128,27 +127,21 @@ export function FacebookPages({
           <InputField name="pageName" type="hidden" />
         </div>
 
-        {/* Radix ScrollArea scrolls its viewport, not its root: a max-height
-            on the root is ignored (the viewport's 100% height resolves
-            against an auto-height parent), so cap the viewport directly. */}
-        <ScrollArea
-          className="[&>[data-slot=scroll-area-viewport]]:max-h-75"
-          type="auto"
-        >
-          <div className="pr-3">
-            <RadioGroupField
-              label={t("messenger.selectFacebookPage")}
-              name="pageId"
-              options={pages.map((page) => ({
-                value: page.id,
-                label: page.name,
-                disabled: !page.isConnectable || page.isAlreadyConnected,
-                description: getPageOptionNote(page, t),
-              }))}
-              required
-            />
-          </div>
-        </ScrollArea>
+        {/* Styling ::-webkit-scrollbar opts out of the OS overlay scrollbar,
+            so the bar stays visible whenever the list overflows. */}
+        <div className="max-h-75 overflow-y-auto pr-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:w-2">
+          <RadioGroupField
+            label={t("messenger.selectFacebookPage")}
+            name="pageId"
+            options={pages.map((page) => ({
+              value: page.id,
+              label: page.name,
+              disabled: !page.isConnectable || page.isAlreadyConnected,
+              description: getPageOptionNote(page, t),
+            }))}
+            required
+          />
+        </div>
 
         <div className="flex justify-end gap-2">
           <Button asChild size="sm" variant="ghost">
