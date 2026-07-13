@@ -1,3 +1,4 @@
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   DefaultJobAction,
   type DefaultJobData,
@@ -8,6 +9,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { runImport } from "./handlers/run-import"
@@ -29,6 +31,14 @@ const worker = new Worker(
         await sendErrorLog(job.data.data)
         return
       case DefaultJobAction.exportContacts:
+        if (
+          (await withBlockedOwnerGuard(
+            await resolveWorkspaceId(job.data.data),
+            async () => true,
+          )) === undefined
+        ) {
+          return
+        }
         await loopableExportContacts(job.data.data)
         return
       case DefaultJobAction.bulkTagContacts:
@@ -37,12 +47,36 @@ const worker = new Worker(
         })
         return
       case DefaultJobAction.runImport:
+        if (
+          (await withBlockedOwnerGuard(
+            await resolveWorkspaceId(job.data.data),
+            async () => true,
+          )) === undefined
+        ) {
+          return
+        }
         await runImport(job.data.data)
         return
       case DefaultJobAction.syncTag:
+        if (
+          (await withBlockedOwnerGuard(
+            await resolveWorkspaceId(job.data.data),
+            async () => true,
+          )) === undefined
+        ) {
+          return
+        }
         await handleSyncTag(job.data.data)
         return
       case DefaultJobAction.syncChannelLabels:
+        if (
+          (await withBlockedOwnerGuard(
+            await resolveWorkspaceId(job.data.data),
+            async () => true,
+          )) === undefined
+        ) {
+          return
+        }
         await handleSyncChannelLabels(job.data.data)
         return
       default:

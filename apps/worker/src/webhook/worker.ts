@@ -1,3 +1,4 @@
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -15,6 +16,15 @@ const webhookMatcher = new WebhookMatcherService()
 const worker = new Worker(
   queueNames.enum.webhook,
   async (job: Job<WebhookJobData>) => {
+    if (
+      (await withBlockedOwnerGuard(
+        job.data.data.workspaceId,
+        async () => true,
+      )) === undefined
+    ) {
+      return
+    }
+
     switch (job.data.type) {
       case WebhookJobAction.evaluateWebhooks: {
         await webhookMatcher.findAndExecuteWebhooks(job.data.data)

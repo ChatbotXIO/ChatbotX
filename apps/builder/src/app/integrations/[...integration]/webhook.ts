@@ -2,6 +2,8 @@ import {
   customDomainService,
   platformCredentialService,
   tenantService,
+  userQuotaService,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
@@ -37,6 +39,8 @@ const logWebhookRequestBody = async (
     )
   }
 }
+const isBlockedOwner = async (ownerId: string | undefined) =>
+  ownerId ? (await userQuotaService.getAccessState(ownerId)).blocked : false
 
 export const handleWebhook = async (
   integrationType: string,
@@ -61,6 +65,7 @@ export const handleWebhook = async (
         ReturnType<typeof platformCredentialService.findDecryptedPlatform>
       >
     | undefined
+  let domainOwnerId: string | undefined
 
   if (isCloud()) {
     const domain = req.headers.get("x-domain") ?? ""
@@ -98,6 +103,8 @@ export const handleWebhook = async (
           { status: 404, headers: { "Content-Type": "application/json" } },
         )
       }
+
+      domainOwnerId = tenant.ownerId
 
       // Tenant's own credential — no fallback to global platform
       credential = await platformCredentialService.findDecryptedForUser({
@@ -138,6 +145,14 @@ export const handleWebhook = async (
   ).toString()
 
   const settings = credential.config
+
+  const workspaceId = req.nextUrl.searchParams.get("workspaceId") ?? undefined
+  const workspaceOwnerId = workspaceId
+    ? (await workspaceService.find({ where: { id: workspaceId } }))?.ownerId
+    : domainOwnerId
+  if (await isBlockedOwner(workspaceOwnerId)) {
+    return new Response("ok")
+  }
 
   try {
     const result = await integration.handleRequest({
@@ -191,6 +206,13 @@ const handleTelegramWebhook = async (req: NextRequest) => {
       status: 404,
       headers: { "Content-Type": "application/json" },
     })
+  }
+
+  const telegramWorkspace = await workspaceService.findById({
+    id: integrationTelegram.workspaceId,
+  })
+  if (await isBlockedOwner(telegramWorkspace.ownerId)) {
+    return new Response("ok")
   }
 
   const auth = integrationTelegram.auth as {
@@ -266,6 +288,13 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       JSON.stringify({ message: "TikTok account not found" }),
       { status: 404, headers: { "Content-Type": "application/json" } },
     )
+  }
+
+  const tiktokWorkspace = await workspaceService.findById({
+    id: integrationTiktok.workspaceId,
+  })
+  if (await isBlockedOwner(tiktokWorkspace.ownerId)) {
+    return new Response("ok")
   }
 
   if (eventType === "authorization.removed") {

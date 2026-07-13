@@ -1,4 +1,4 @@
-import { broadcastService } from "@chatbotx.io/business"
+import { broadcastService, withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
@@ -27,6 +27,13 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
   if (!broadcast) {
     console.error("Broadcast not found or not scheduled", broadcastId)
+    return
+  }
+
+  if (
+    (await withBlockedOwnerGuard(broadcast.workspaceId, async () => true)) ===
+    undefined
+  ) {
     return
   }
 

@@ -1,3 +1,4 @@
+import { withBlockedOwnerGuard as guardBlockedOwner } from "@chatbotx.io/business"
 import {
   AIJobAction,
   type AIJobData,
@@ -8,6 +9,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { processAIFile } from "./handlers/process-ai-file"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
@@ -27,6 +29,15 @@ async function startAIAgentWorker() {
     queueNames.enum.aiAgent,
     async (job: Job<AIJobData>) => {
       logger.info(job.data, `Worker received job: ${job.id}`)
+
+      if (
+        (await guardBlockedOwner(
+          await resolveWorkspaceId(job.data.data),
+          async () => true,
+        )) === undefined
+      ) {
+        return
+      }
 
       switch (job.data.type) {
         case AIJobAction.processAIFile:

@@ -1,5 +1,8 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { conversationService } from "@chatbotx.io/business"
+import {
+  conversationService,
+  withBlockedOwnerGuard,
+} from "@chatbotx.io/business"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import {
@@ -13,6 +16,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
@@ -52,6 +56,14 @@ async function startIntegrationWorker() {
   const worker = new Worker(
     queueNames.enum.integration,
     async (job: Job<IntegrationJobData>) => {
+      const workspaceId = await resolveWorkspaceId(job.data.data)
+      if (
+        (await withBlockedOwnerGuard(workspaceId, async () => true)) ===
+        undefined
+      ) {
+        return
+      }
+
       return await runIntegrationJobWithWebhookContext(job.data, async () => {
         switch (job.data.type) {
           case IntegrationJobAction.incomingMessage: {

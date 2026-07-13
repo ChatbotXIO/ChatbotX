@@ -183,6 +183,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeWorkspaces,
+    {
+      pattern: "0 * * * *",
+    },
+    {
+      name: ScheduleJobData.purgeWorkspaces,
+      data: {
+        type: ScheduleJobData.purgeWorkspaces,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.refreshZaloTokens,
     {
       pattern: "0 2 * * *",
@@ -191,6 +205,20 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.refreshZaloTokens,
       data: {
         type: ScheduleJobData.refreshZaloTokens,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.unsubscribeExpiredTrials,
+    {
+      pattern: "0 * * * *",
+    },
+    {
+      name: ScheduleJobData.unsubscribeExpiredTrials,
+      data: {
+        type: ScheduleJobData.unsubscribeExpiredTrials,
         data: {},
       },
     },

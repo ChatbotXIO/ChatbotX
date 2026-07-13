@@ -22,6 +22,7 @@ import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
+import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { refreshZaloTokens } from "./handlers/refresh-zalo-tokens"
@@ -29,6 +30,7 @@ import { registerSchedules } from "./handlers/register-schedules"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { syncUserQuota } from "./handlers/sync-user-quota"
+import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
 async function startScheduleWorker() {
   try {
@@ -113,8 +115,16 @@ async function startScheduleWorker() {
           await purgeCoexistStaging()
           return
 
+        case ScheduleJobData.purgeWorkspaces:
+          await purgeWorkspaces()
+          return
+
         case ScheduleJobData.refreshZaloTokens:
           await refreshZaloTokens()
+          return
+
+        case ScheduleJobData.unsubscribeExpiredTrials:
+          await unsubscribeExpiredTrials()
           return
 
         default:

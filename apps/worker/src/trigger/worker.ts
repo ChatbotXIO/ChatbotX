@@ -1,3 +1,4 @@
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   defaultWorkerOptions,
@@ -8,6 +9,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
 import { TriggerMatcherService } from "./services/trigger-matcher.service"
 import type { TriggerEventData } from "./types"
@@ -18,6 +20,15 @@ const triggerExecutor = new TriggerExecutorService()
 const worker = new Worker(
   queueNames.enum.trigger,
   async (job: Job<TriggerJobData>) => {
+    if (
+      (await withBlockedOwnerGuard(
+        await resolveWorkspaceId(job.data.data),
+        async () => true,
+      )) === undefined
+    ) {
+      return
+    }
+
     switch (job.data.type) {
       case TriggerJobAction.evaluateTriggers: {
         const { data: eventData } = job.data

@@ -1,3 +1,4 @@
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
@@ -95,6 +96,13 @@ class DispatchConsumer {
 
   private async processDispatch(payload: DispatchMessage) {
     try {
+      if (
+        (await withBlockedOwnerGuard(payload.workspaceId, async () => true)) ===
+        undefined
+      ) {
+        return
+      }
+
       await this.scheduler.withLock(
         payload.bucket,
         payload.dispatchId,

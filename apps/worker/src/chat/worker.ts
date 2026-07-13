@@ -1,4 +1,7 @@
-import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  withBlockedOwnerGuard,
+} from "@chatbotx.io/business"
 import type { RealtimeEventData } from "@chatbotx.io/partysocket-config"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
@@ -11,6 +14,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
   changeMessageStateOnChannel,
@@ -34,6 +38,15 @@ async function startChatWorker() {
   const worker = new Worker(
     queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
+      if (
+        (await withBlockedOwnerGuard(
+          await resolveWorkspaceId(job.data.data),
+          async () => true,
+        )) === undefined
+      ) {
+        return
+      }
+
       switch (job.data.type) {
         case ChatJobAction.sendChannelMessage:
           await sendMessageToChannel(job.data.data)

@@ -23,7 +23,9 @@ export const ScheduleJobData = {
   maintainMacPartitions: "maintainMacPartitions",
   scanCoexistRuns: "scanCoexistRuns",
   purgeCoexistStaging: "purgeCoexistStaging",
+  purgeWorkspaces: "purgeWorkspaces",
   refreshZaloTokens: "refreshZaloTokens",
+  unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
 } as const
 
 export const broadcastSendJobId = (broadcastId: string) =>
@@ -115,8 +117,18 @@ export type ScheduleJobPurgeCoexistStaging = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeWorkspaces = {
+  type: typeof ScheduleJobData.purgeWorkspaces
+  data: Record<string, never>
+}
+
 export type ScheduleJobRefreshZaloTokens = {
   type: typeof ScheduleJobData.refreshZaloTokens
+  data: Record<string, never>
+}
+
+export type ScheduleJobUnsubscribeExpiredTrials = {
+  type: typeof ScheduleJobData.unsubscribeExpiredTrials
   data: Record<string, never>
 }
 
@@ -137,7 +149,9 @@ export type ScheduleJobData =
   | ScheduleJobMaintainMacPartitions
   | ScheduleJobScanCoexistRuns
   | ScheduleJobPurgeCoexistStaging
+  | ScheduleJobPurgeWorkspaces
   | ScheduleJobRefreshZaloTokens
+  | ScheduleJobUnsubscribeExpiredTrials
 
 export const scheduleQueue =
   process.env.NEXT_PHASE === "phase-production-build"

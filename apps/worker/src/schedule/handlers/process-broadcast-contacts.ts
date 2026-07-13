@@ -1,3 +1,4 @@
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { and, db, eq, sql } from "@chatbotx.io/database/client"
 import { broadcastStatuses, channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -219,6 +220,15 @@ export const processBroadcastContacts = async (broadcastId: string) => {
   })
 
   if (broadcasts.length === 0) {
+    return { processed: 0 }
+  }
+
+  if (
+    (await withBlockedOwnerGuard(
+      broadcasts[0].workspaceId,
+      async () => true,
+    )) === undefined
+  ) {
     return { processed: 0 }
   }
 
