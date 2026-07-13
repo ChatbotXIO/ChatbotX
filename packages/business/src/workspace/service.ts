@@ -1,7 +1,17 @@
 import { anchoredPeriod, macRepository } from "@chatbotx.io/analytics"
-import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
-import { ROOT_TENANT_ID, workspaceModel } from "@chatbotx.io/database/schema"
+import {
+  ROOT_TENANT_ID,
+  workspaceMemberModel,
+  workspaceModel,
+} from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
@@ -11,6 +21,10 @@ import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
+import {
+  type WorkspaceTeardownIntegrations,
+  workspaceLifecycleService,
+} from "../workspace-lifecycle/service"
 import {
   workspaceMemberCacheTag,
   workspaceMemberService,
@@ -106,6 +120,143 @@ class WorkspaceService extends BaseService {
     ])
 
     return updated
+  }
+
+  async scheduleDeletion(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel> {
+    const { tx = db } = props
+    return await this.update({
+      id: props.id,
+      tx,
+      data: {
+        scheduledDeletionAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
+    })
+  }
+
+  async cancelDeletion(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel> {
+    const { tx = db } = props
+    return await this.update({
+      id: props.id,
+      tx,
+      data: {
+        scheduledDeletionAt: null,
+      },
+    })
+  }
+
+  async purgeDueScheduled(props?: {
+    chunkSize?: number
+    maxChunks?: number
+    integrations?: WorkspaceTeardownIntegrations
+  }): Promise<number> {
+    const chunkSize = props?.chunkSize ?? 500
+    const maxChunks = props?.maxChunks ?? 20
+    let totalDeleted = 0
+    const reconciles = new Map<string, { ownerId: string; tenantId: string }>()
+
+    for (let chunk = 0; chunk < maxChunks; chunk++) {
+      const result = await db.transaction(async (tx) => {
+        const due = await tx.execute<
+          Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
+        >(sql`
+          SELECT "id", "ownerId", "tenantId"
+          FROM "Workspace"
+          WHERE "scheduledDeletionAt" IS NOT NULL
+            AND "scheduledDeletionAt" < NOW()
+          ORDER BY "scheduledDeletionAt" ASC, "id" ASC
+          LIMIT ${chunkSize}
+          FOR UPDATE SKIP LOCKED
+        `)
+
+        if (due.rows.length === 0) {
+          return {
+            deleted: [] as typeof due.rows,
+            memberUserIds: [] as string[],
+          }
+        }
+
+        const workspaceIds = due.rows.map((row) => row.id)
+        const memberUserIds = await tx
+          .select({ userId: workspaceMemberModel.userId })
+          .from(workspaceMemberModel)
+          .where(inArray(workspaceMemberModel.workspaceId, workspaceIds))
+
+        for (const workspace of due.rows) {
+          await workspaceLifecycleService
+            .disconnectWorkspaceIntegrations(workspace.id)
+            .catch((err) => {
+              logger.error(
+                { err, workspaceId: workspace.id },
+                "workspace-purge: failed to disconnect workspace integrations",
+              )
+            })
+
+          await workspaceLifecycleService.disconnectWorkspaceChannels({
+            integrations: props?.integrations,
+            teardownLevel: "disconnect",
+            tx,
+            workspaceId: workspace.id,
+          })
+        }
+
+        await tx
+          .delete(workspaceModel)
+          .where(inArray(workspaceModel.id, workspaceIds))
+
+        return {
+          deleted: due.rows,
+          memberUserIds: memberUserIds.map((row) => row.userId),
+        }
+      })
+
+      if (result.deleted.length === 0) {
+        break
+      }
+
+      totalDeleted += result.deleted.length
+      for (const workspace of result.deleted) {
+        reconciles.set(`${workspace.ownerId}:${workspace.tenantId}`, {
+          ownerId: workspace.ownerId,
+          tenantId: workspace.tenantId,
+        })
+      }
+
+      const cacheTags = [
+        ...result.deleted.map((workspace) => `workspaces:${workspace.id}`),
+        ...result.memberUserIds.map(workspaceMemberCacheTag),
+      ]
+      await this.invalidateCacheTags(cacheTags)
+
+      logger.info(
+        { deleted: result.deleted.length },
+        "workspace-purge: workspaces purged",
+      )
+
+      if (result.deleted.length < chunkSize) {
+        break
+      }
+    }
+
+    await Promise.allSettled(
+      [...reconciles.values()].map(async ({ ownerId, tenantId }) => {
+        try {
+          await userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)
+        } catch (err) {
+          logger.error(
+            { err, ownerId, tenantId },
+            "workspace-purge: failed to reconcile owner pool usage",
+          )
+        }
+      }),
+    )
+
+    return totalDeleted
   }
 
   /**

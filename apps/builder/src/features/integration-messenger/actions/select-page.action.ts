@@ -6,6 +6,7 @@ import {
   platformCredentialService,
   resolveTenantSettings,
   tagSyncService,
+  userQuotaService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -22,6 +23,7 @@ import {
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
+import { isCloud } from "@/env"
 import {
   BRANDING_TITLE,
   getBrandingUrl,
@@ -44,6 +46,13 @@ export const selectPageAction = authActionClient
       try {
         let workspaceId = parsedInput.workspaceId
         let connectedIntegrationId: string | undefined
+
+        if (!workspaceId && isCloud()) {
+          const { blocked } = await userQuotaService.getAccessState(ctx.user.id)
+          if (blocked) {
+            throw new ChatbotXException("Trial expired", "trialExpired", 403)
+          }
+        }
 
         const platformOwnerId = parsedInput.workspaceId
           ? ((

@@ -63,6 +63,18 @@ class InboxService extends BaseService {
     return { data, pageCount }
   }
 
+  async listWithIntegrationsByWorkspace(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<InboxWithIntegrations[]> {
+    return await tx.query.inboxModel.findMany({
+      where: {
+        workspaceId,
+      },
+      with: InboxService.withIntegrations,
+    })
+  }
+
   async find(props: { where: InboxWhere }): Promise<InboxModel | undefined> {
     const { where } = props
     // return await withCache(

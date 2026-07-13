@@ -3,27 +3,18 @@
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { integrationOpenRouterService } from "@chatbotx.io/business"
-import {
-  type WorkspaceIdRequestParams,
-  workspaceIdrequestParams,
-} from "@/features/common/schemas"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { createDisconnectAction } from "@/lib/integration-actions"
 
-export const disconnectOpenRouterAction = workspaceActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [workspaceId],
-    }: {
-      bindArgsParsedInputs: WorkspaceIdRequestParams
-    }) => {
-      await integrationOpenRouterService.disconnect(workspaceId)
-
+export const disconnectOpenRouterAction = createDisconnectAction(
+  integrationOpenRouterService,
+  {
+    name: "OpenRouter",
+    log: false,
+    afterDisconnect: async (workspaceId) => {
       await aiIntegrationService.invalidateCache(
         workspaceId,
         aiProviders.enum.openrouter,
       )
-
-      return
     },
-  )
+  },
+)

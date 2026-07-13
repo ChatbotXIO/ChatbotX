@@ -77,7 +77,7 @@ export const superAdminActionClient = authActionClient.use(({ ctx, next }) => {
   return next({ ctx })
 })
 
-export const workspaceActionClient = authActionClient.use(
+export const workspaceActionClientAllowExpired = authActionClient.use(
   async ({ bindArgsClientInputs, ctx, next }) => {
     const { user } = ctx
 
@@ -94,18 +94,24 @@ export const workspaceActionClient = authActionClient.use(
       throw new Error("Workspace not found")
     }
 
-    // Server-side trial gate: the RSC layout redirects a blocked user to
-    // /trial-expired, but a stale session could still POST a server action
+    return next({ ctx: { workspaceId: workspace.id, workspace } })
+  },
+)
+
+export const workspaceActionClient = workspaceActionClientAllowExpired.use(
+  async ({ ctx, next }) => {
+    // Server-side trial gate: the RSC banner shows a blocked user read/delete
+    // mode, but a stale session could still POST a create/change action
     // directly. Re-check the entitlement here so the paywall holds. Cloud-only;
     // self-hosted editions have no quota row and stay unrestricted. The quota
     // read is cached, so this adds no per-action DB round-trip in the hot path.
     if (isCloud()) {
-      const { blocked } = await userQuotaService.getAccessState(user.id)
+      const { blocked } = await userQuotaService.getAccessState(ctx.user.id)
       if (blocked) {
         throw new ChatbotXException("Trial expired", "trialExpired", 403)
       }
     }
 
-    return next({ ctx: { workspaceId: workspace.id, workspace } })
+    return next({ ctx })
   },
 )

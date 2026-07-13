@@ -3,6 +3,7 @@ import { tenantModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import type { EmailTemplate } from "../../platform/settings"
 import { userQuotaService } from "../../user-quota/service"
+import { workspaceLifecycleService } from "../../workspace-lifecycle/service"
 
 type TenantStatus = "active" | "suspended"
 
@@ -185,7 +186,11 @@ export const tenantService = {
    * the owner as a reseller (the pool is gated on an active tenant). Reversible
    * via `reactivate` — no data is deleted.
    */
-  suspend(ownerId: string): Promise<void> {
+  async suspend(ownerId: string): Promise<void> {
+    await workspaceLifecycleService.deactivateOwnerWorkspaces({
+      ownerId,
+      teardownLevel: "pause",
+    })
     return this.setStatusByOwner(ownerId, "suspended")
   },
 
