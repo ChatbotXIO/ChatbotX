@@ -128,7 +128,13 @@ export function FacebookPages({
           <InputField name="pageName" type="hidden" />
         </div>
 
-        <ScrollArea className="max-h-75" type="auto">
+        {/* Radix ScrollArea scrolls its viewport, not its root: a max-height
+            on the root is ignored (the viewport's 100% height resolves
+            against an auto-height parent), so cap the viewport directly. */}
+        <ScrollArea
+          className="[&>[data-slot=scroll-area-viewport]]:max-h-75"
+          type="auto"
+        >
           <div className="pr-3">
             <RadioGroupField
               label={t("messenger.selectFacebookPage")}
