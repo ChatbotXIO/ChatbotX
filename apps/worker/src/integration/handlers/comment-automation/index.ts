@@ -47,7 +47,23 @@ const RANDOM_DELAY_MINUTES: Record<string, number> = {
 }
 
 const PHONE_RE = /\+?\d[\d\s\-().]{7,}/
-const LINK_RE = /https?:\/\//
+// `http(s)://`/`www.` links match case-insensitively — the scheme itself is
+// never meaningfully cased. Bare domains without a scheme (e.g. "example.com",
+// common since Facebook comments frequently omit `http(s)://`) are matched
+// case-SENSITIVELY on purpose: real domains are written lowercase, while a
+// missing space after a sentence-ending period produces a capitalized
+// continuation word (e.g. "ban.Shop", "ngay.Info") that would otherwise be
+// misdetected as a link. `co` is deliberately excluded from the bare list —
+// it's too common as a standalone lowercase word/abbreviation (e.g.
+// "picture.co founder") to distinguish from a real ".co" domain; a bare `.co`
+// link still needs `www.`/`http(s)://` to be caught.
+const SCHEME_LINK_RE = /https?:\/\/|www\./i
+const BARE_DOMAIN_RE =
+  /\b[a-z0-9-]+\.(?:com|net|org|io|vn|shop|store|info|biz)\b/
+
+function hasLink(text: string): boolean {
+  return SCHEME_LINK_RE.test(text) || BARE_DOMAIN_RE.test(text)
+}
 
 const UNHIDE_DELAY_MS: Record<string, number> = {
   "6h": 6 * 3_600_000,
@@ -64,14 +80,21 @@ const UNHIDE_DELAY_MS: Record<string, number> = {
   "10d": 10 * 86_400_000,
 }
 
+// Facebook post ids are composite `{pageId}_{storyId}`. The published/ads
+// pickers store that composite form, but the reels picker stores a bare id and
+// users pasting an id manually often omit the `{pageId}_` prefix. Compare on the
+// trailing story id (unique) so all three formats match the webhook `post_id`.
+function normalizePostId(id: string): string {
+  const idx = id.indexOf("_")
+  return idx === -1 ? id : id.slice(idx + 1)
+}
+
 function matchPost(post: FBCommentPost, postId: string): boolean {
-  if (post.type === "all") {
+  if (post.type !== "postIds") {
     return true
   }
-  if (post.type === "postIds") {
-    return post.value.includes(postId)
-  }
-  return true
+  const target = normalizePostId(postId)
+  return post.value.some((v) => v === postId || normalizePostId(v) === target)
 }
 
 function matchKeywords(
@@ -112,9 +135,7 @@ function willSendReply(reply: FBCommentReply): boolean {
   if (reply.type === "none") {
     return false
   }
-  if (reply.type === "AIAgent") {
-    return true
-  }
+  // text/flow need a value; AIAgent needs the selected agent id in `value`.
   return Boolean(reply.value)
 }
 
@@ -136,10 +157,74 @@ function computeDelayMs(replyAfter: FBCommentReplyAfter): number {
   return Math.floor(Math.random() * (minutes ?? 3) * 60_000)
 }
 
+/**
+ * Post a public Facebook comment reply: creates the outgoing DB message,
+ * broadcasts it over realtime, and enqueues the actual send. Shared by the
+ * `text` reply type (dispatched immediately, sends after `delay`) and
+ * `processCommentAIReply` (already runs inside a job delayed by the caller, so
+ * no further `delay` applies).
+ */
+export async function postPublicCommentReply(props: {
+  text: string
+  commentId: string
+  conversationId: string
+  contactInboxId: string
+  workspaceId: string
+  contactInbox: ContactInboxModel
+  parentMessageId?: string | null
+  parentMessageCreatedAt?: Date | null
+  delay?: number
+}): Promise<void> {
+  const repo = await createMessageRepository()
+  const messageInput = {
+    conversationId: props.conversationId,
+    contactInboxId: props.contactInboxId,
+    workspaceId: props.workspaceId,
+    messageType: "outgoing" as const,
+    contentType: "text" as const,
+    senderType: "bot" as const,
+    text: props.text,
+    type: "comment" as const,
+    contentAttributes: { replyToCommentId: props.commentId },
+    parentId: props.parentMessageId ?? null,
+    createdAt: new Date(),
+  }
+  const message = await repo.create(messageInput)
+  broadcastToWorkspaceParty(props.workspaceId, {
+    eventType: RealtimeEventType.messageCreated,
+    data: message,
+  }).catch((err: unknown) =>
+    logger.error(
+      { err, commentId: props.commentId },
+      "Unable to emit realtime message",
+    ),
+  )
+  await chatQueue.add(
+    ChatJobAction.sendChannelMessage,
+    {
+      type: ChatJobAction.sendChannelMessage,
+      data: {
+        conversation: {
+          id: props.conversationId,
+          workspaceId: props.workspaceId,
+        } as ConversationModel,
+        contactInbox: props.contactInbox,
+        message: {
+          ...message,
+          parentCreatedAt: props.parentMessageCreatedAt ?? null,
+        },
+      },
+    },
+    ...(props.delay === undefined ? [] : [{ delay: props.delay }]),
+  )
+}
+
 async function executePublicReply(
   publicReply: FBCommentReply,
   ctx: {
     auth: MessengerAuthValue
+    integrationType: string
+    integrationIdentifier: string
     commentId: string
     channelType: "messenger" | "instagram"
     conversationId: string
@@ -147,6 +232,7 @@ async function executePublicReply(
     delay: number
     workspaceId: string
     contactInbox: ContactInboxModel
+    message?: string
     parentMessageId?: string | null
     parentMessageCreatedAt?: Date | null
   },
@@ -156,48 +242,17 @@ async function executePublicReply(
   }
 
   if (publicReply.type === "text" && publicReply.value) {
-    const repo = await createMessageRepository()
-    const messageInput = {
+    await postPublicCommentReply({
+      text: publicReply.value,
+      commentId: ctx.commentId,
       conversationId: ctx.conversationId,
       contactInboxId: ctx.contactInboxId,
       workspaceId: ctx.workspaceId,
-      messageType: "outgoing" as const,
-      contentType: "text" as const,
-      senderType: "bot" as const,
-      text: publicReply.value,
-      type: "comment" as const,
-      contentAttributes: { replyToCommentId: ctx.commentId },
-      parentId: ctx.parentMessageId ?? null,
-      createdAt: new Date(),
-    }
-    const message = await repo.create(messageInput)
-    broadcastToWorkspaceParty(ctx.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: message,
-    }).catch((err: unknown) =>
-      logger.error(
-        { err, commentId: ctx.commentId },
-        "Unable to emit realtime message",
-      ),
-    )
-    await chatQueue.add(
-      ChatJobAction.sendChannelMessage,
-      {
-        type: ChatJobAction.sendChannelMessage,
-        data: {
-          conversation: {
-            id: ctx.conversationId,
-            workspaceId: ctx.workspaceId,
-          } as ConversationModel,
-          contactInbox: ctx.contactInbox,
-          message: {
-            ...message,
-            parentCreatedAt: ctx.parentMessageCreatedAt ?? null,
-          },
-        },
-      },
-      { delay: ctx.delay },
-    )
+      contactInbox: ctx.contactInbox,
+      parentMessageId: ctx.parentMessageId,
+      parentMessageCreatedAt: ctx.parentMessageCreatedAt,
+      delay: ctx.delay,
+    })
     return
   }
 
@@ -218,15 +273,25 @@ async function executePublicReply(
     return
   }
 
-  if (publicReply.type === "AIAgent") {
+  if (publicReply.type === "AIAgent" && publicReply.value) {
     await integrationQueue.add(
-      IntegrationJobAction.sendFlow,
+      IntegrationJobAction.commentAIReply,
       {
-        type: IntegrationJobAction.sendFlow,
+        type: IntegrationJobAction.commentAIReply,
         data: {
+          integrationType: ctx.integrationType,
+          integrationIdentifier: ctx.integrationIdentifier,
+          workspaceId: ctx.workspaceId,
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
-          origin: webhookChannelOrigin(),
+          commentId: ctx.commentId,
+          agentId: publicReply.value,
+          replyChannel: "public",
+          channelType: ctx.channelType,
+          message: ctx.message,
+          parentMessageId: ctx.parentMessageId ?? null,
+          parentMessageCreatedAt:
+            ctx.parentMessageCreatedAt?.toISOString() ?? null,
         },
       },
       { delay: ctx.delay },
@@ -238,11 +303,15 @@ async function executePrivateReply(
   privateReply: FBCommentReply,
   ctx: {
     auth: MessengerAuthValue
+    integrationType: string
+    integrationIdentifier: string
     commentId: string
     channelType: "messenger" | "instagram"
     conversationId: string
     contactInboxId: string
+    workspaceId: string
     delay: number
+    message?: string
   },
 ) {
   if (privateReply.type === "none") {
@@ -274,18 +343,27 @@ async function executePrivateReply(
     return
   }
 
-  if (privateReply.type === "AIAgent") {
+  if (privateReply.type === "AIAgent" && privateReply.value) {
     await integrationQueue.add(
-      IntegrationJobAction.sendFlow,
+      IntegrationJobAction.commentAIReply,
       {
-        type: IntegrationJobAction.sendFlow,
+        type: IntegrationJobAction.commentAIReply,
         data: {
+          integrationType: ctx.integrationType,
+          integrationIdentifier: ctx.integrationIdentifier,
+          workspaceId: ctx.workspaceId,
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
-          origin: webhookChannelOrigin(),
+          commentId: ctx.commentId,
+          agentId: privateReply.value,
+          replyChannel: "private",
+          channelType: ctx.channelType,
+          message: ctx.message,
         },
       },
-      { delay: ctx.delay },
+      {
+        delay: ctx.delay,
+      },
     )
   }
 }
@@ -304,13 +382,14 @@ async function applyHideComments(
   },
 ) {
   const text = message ?? ""
+  const lowerText = text.toLowerCase()
 
   const shouldHide =
     hideComments.all ||
     (hideComments.hasPhoneNumber && PHONE_RE.test(text)) ||
-    (hideComments.hasLink && LINK_RE.test(text)) ||
+    (hideComments.hasLink && hasLink(text)) ||
     (hideComments.hasKeywords &&
-      hideComments.keywords.some((k) => text.includes(k))) ||
+      hideComments.keywords.some((k) => lowerText.includes(k.toLowerCase()))) ||
     (hideComments.hasImage && ctx.hasImage) ||
     (hideComments.hasVideo && ctx.hasVideo)
 
@@ -489,6 +568,25 @@ export async function processCommentAutomation(
         }
       }
 
+      if (!automation.options.replyToUsersWhoCommentedOnOtherPosts) {
+        const repliedElsewhere =
+          await fbCommentAutomationService.hasRepliedOnOtherPost({
+            automationId: automation.id,
+            contactId: contactInbox.contactId,
+            postId,
+          })
+        if (repliedElsewhere) {
+          logAutomationSkipped({
+            automationId: automation.id,
+            commentId,
+            postId,
+            workspaceId,
+            reason: "user already engaged on another post",
+          })
+          continue
+        }
+      }
+
       const delay = computeDelayMs(automation.replyAfter)
 
       const messageRepo = await createMessageRepository()
@@ -556,6 +654,8 @@ export async function processCommentAutomation(
       try {
         await executePublicReply(automation.publicReply, {
           auth,
+          integrationType,
+          integrationIdentifier,
           commentId,
           channelType,
           conversationId,
@@ -563,6 +663,7 @@ export async function processCommentAutomation(
           delay,
           workspaceId,
           contactInbox,
+          message,
           parentMessageId,
           parentMessageCreatedAt,
         })
@@ -579,11 +680,15 @@ export async function processCommentAutomation(
       try {
         await executePrivateReply(automation.privateReply, {
           auth,
+          integrationType,
+          integrationIdentifier,
           commentId,
           channelType,
           conversationId,
           contactInboxId,
+          workspaceId,
           delay,
+          message,
         })
       } catch (err) {
         logger.error(
@@ -595,6 +700,12 @@ export async function processCommentAutomation(
         }
       }
 
+      // Dedup/count fire once dispatch is *enqueued*, not once an async reply
+      // (flow, AIAgent) actually succeeds — a later failure inside that job
+      // (e.g. agent misconfigured, no auto-reply-enabled provider) still
+      // counts as "replied" here and won't be retried. Fixing this properly
+      // requires threading the dedup write into the async job itself for
+      // every async-dispatch reply type, which is out of scope for now.
       if (!dispatchFailed) {
         await fbCommentAutomationService.insertDedup({
           automationId: automation.id,

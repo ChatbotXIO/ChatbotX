@@ -40,6 +40,7 @@ export const IntegrationJobAction = {
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
+  commentAIReply: "commentAIReply",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -333,6 +334,24 @@ export type IntegrationJobProcessCommentAutomation = {
   }
 }
 
+export type IntegrationJobCommentAIReply = {
+  type: typeof IntegrationJobAction.commentAIReply
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    commentId: string
+    agentId: string
+    replyChannel: "public" | "private"
+    channelType: "messenger" | "instagram"
+    message?: string
+    parentMessageId?: string | null
+    parentMessageCreatedAt?: string | null
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveComment
@@ -356,6 +375,7 @@ export type IntegrationJobData =
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation
+  | IntegrationJobCommentAIReply
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"
