@@ -5,9 +5,10 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { FilterIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { pruneExcludedConditions } from "../lib/prune-conditions"
 import type { ContactFilterCondition, ContactFilterCriteria } from "../schemas"
+import { ContactFilterConditionEditDialog } from "./contact-filter-condition-dialog"
 import { ContactFilterConditionForm } from "./contact-filter-condition-form"
 import { ContactFilterConditionRow } from "./contact-filter-condition-row"
 import { useContactFilterConfigs } from "./use-contact-filter-configs"
@@ -62,6 +63,14 @@ export function ContactListFilterPanel({
   const t = useTranslations()
   const { configs, conditionOptions, operatorLabelByValue } =
     useContactFilterConfigs(inboxChannel)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const filteredConfigs = useMemo(
+    () =>
+      configs.filter(
+        (config) => !excludeFields.includes(config.name as ContactFilterField),
+      ),
+    [configs, excludeFields],
+  )
 
   useEffect(() => {
     const pruned = pruneExcludedConditions(filter.conditions, excludeFields)
@@ -87,6 +96,18 @@ export function ContactListFilterPanel({
     })
   }
 
+  const handleUpdateCondition = (
+    index: number,
+    condition: ContactFilterCondition,
+  ) => {
+    onFilterChange({
+      ...filter,
+      conditions: filter.conditions.map((currentCondition, currentIndex) =>
+        currentIndex === index ? condition : currentCondition,
+      ),
+    })
+  }
+
   const handleRemoveCondition = (index: number) => {
     const conditions = filter.conditions.filter((_, i) => i !== index)
     onFilterChange({
@@ -99,6 +120,9 @@ export function ContactListFilterPanel({
     `${condition.field}-${condition.operator}-${
       "value" in condition ? JSON.stringify(condition.value) : "empty"
     }`
+
+  const editingCondition =
+    editingIndex === null ? null : (filter.conditions[editingIndex] ?? null)
 
   return (
     <div
@@ -127,6 +151,7 @@ export function ContactListFilterPanel({
           <ContactFilterConditionRow
             configs={configs}
             key={getConditionKey(condition)}
+            onEdit={() => setEditingIndex(index)}
             onRemove={() => handleRemoveCondition(index)}
             operatorLabelByValue={operatorLabelByValue}
             row={condition}
@@ -135,10 +160,23 @@ export function ContactListFilterPanel({
 
         <ContactFilterConditionForm
           conditionOptions={conditionOptions}
-          configs={configs}
-          excludeFields={excludeFields}
+          configs={filteredConfigs}
           onAdd={handleAddCondition}
         />
+
+        {editingCondition && editingIndex !== null ? (
+          <ContactFilterConditionEditDialog
+            condition={editingCondition}
+            conditionOptions={conditionOptions}
+            configs={filteredConfigs}
+            key={editingIndex}
+            onClose={() => setEditingIndex(null)}
+            onSubmit={(data) => {
+              handleUpdateCondition(editingIndex, data)
+              setEditingIndex(null)
+            }}
+          />
+        ) : null}
       </div>
     </div>
   )

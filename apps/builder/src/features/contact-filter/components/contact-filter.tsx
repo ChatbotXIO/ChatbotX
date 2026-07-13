@@ -4,10 +4,11 @@ import type { ContactFilterField } from "@chatbotx.io/database/partials"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { pruneExcludedConditions } from "../lib/prune-conditions"
 import type { ContactFilterCondition } from "../schemas"
+import { ContactFilterConditionEditDialog } from "./contact-filter-condition-dialog"
 import { ContactFilterConditionForm } from "./contact-filter-condition-form"
 import { ContactFilterConditionRow } from "./contact-filter-condition-row"
 import { useContactFilterConfigs } from "./use-contact-filter-configs"
@@ -27,13 +28,21 @@ export const ContactFilter = ({
 }: ContactFilterProps) => {
   const t = useTranslations()
   const { control, getValues } = useFormContext()
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove, replace, update } = useFieldArray({
     control,
     name: `${parentName}.conditions`,
   })
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const { configs, conditionOptions, operatorLabelByValue } =
     useContactFilterConfigs(inboxChannel)
+  const filteredConfigs = useMemo(
+    () =>
+      configs.filter(
+        (config) => !excludeFields.includes(config.name as ContactFilterField),
+      ),
+    [configs, excludeFields],
+  )
 
   useEffect(() => {
     const conditions =
@@ -50,6 +59,13 @@ export const ContactFilter = ({
   const handleAdd = (data: ContactFilterCondition) => {
     append(data)
   }
+
+  const editingCondition =
+    editingIndex === null
+      ? null
+      : ((fields[editingIndex] as unknown as
+          | ContactFilterCondition
+          | undefined) ?? null)
 
   return (
     <div className="flex flex-col gap-2">
@@ -73,6 +89,7 @@ export const ContactFilter = ({
         <ContactFilterConditionRow
           configs={configs}
           key={field.id}
+          onEdit={() => setEditingIndex(index)}
           onRemove={() => remove(index)}
           operatorLabelByValue={operatorLabelByValue}
           row={field as unknown as ContactFilterCondition}
@@ -81,10 +98,23 @@ export const ContactFilter = ({
 
       <ContactFilterConditionForm
         conditionOptions={conditionOptions}
-        configs={configs}
-        excludeFields={excludeFields}
+        configs={filteredConfigs}
         onAdd={handleAdd}
       />
+
+      {editingCondition && editingIndex !== null ? (
+        <ContactFilterConditionEditDialog
+          condition={editingCondition}
+          conditionOptions={conditionOptions}
+          configs={filteredConfigs}
+          key={editingIndex}
+          onClose={() => setEditingIndex(null)}
+          onSubmit={(data) => {
+            update(editingIndex, data)
+            setEditingIndex(null)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
