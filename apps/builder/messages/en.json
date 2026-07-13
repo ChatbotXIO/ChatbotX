@@ -1345,6 +1345,12 @@
     "channel": {
       "label": "Channel"
     },
+    "comment": {
+      "label": "Comment"
+    },
+    "directMessage": {
+      "label": "Direct Message"
+    },
     "updatedAt": {
       "label": "Updated At"
     },

@@ -14,7 +14,13 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { formatDistanceToNowStrict, isAfter } from "date-fns"
-import { StarIcon, UsersRoundIcon } from "lucide-react"
+import {
+  MailIcon,
+  MessageCircleMoreIcon,
+  StarIcon,
+  UsersRoundIcon,
+} from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
@@ -64,10 +70,12 @@ export default function ConversationItem({
   conversation,
   onSelect,
 }: ConversationItemProps) {
+  const t = useTranslations()
   const { activeConversationId, readConversation } = useChatStore(
     (state) => state,
   )
   const isActive = conversation.id === activeConversationId
+  const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
 
   const contactAvatar = useMemo(
@@ -153,8 +161,26 @@ export default function ConversationItem({
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="truncate text-left font-medium dark:text-gray-200">
-            {conversation.contact?.fullName}
+          <div className="flex items-center justify-between gap-1">
+            <span className="truncate text-left font-medium dark:text-gray-200">
+              {conversation.contact?.fullName}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  {isComment ? (
+                    <MessageCircleMoreIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <MailIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent align="center" side="top">
+                {isComment
+                  ? t("fields.comment.label")
+                  : t("fields.directMessage.label")}
+              </TooltipContent>
+            </Tooltip>
           </div>
           <div
             className={cn(

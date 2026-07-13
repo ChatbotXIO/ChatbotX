@@ -1328,6 +1328,12 @@
     "channel": {
       "label": "Kênh"
     },
+    "comment": {
+      "label": "Bình luận"
+    },
+    "directMessage": {
+      "label": "Tin nhắn trực tiếp"
+    },
     "updatedAt": {
       "label": "Cập nhật lúc"
     },
