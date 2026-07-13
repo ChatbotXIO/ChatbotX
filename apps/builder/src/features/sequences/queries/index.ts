@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -33,7 +34,7 @@ export async function listSequences(
     folderId: folderIdFilter,
     name: input.name
       ? {
-          ilike: `%${input.name}%`,
+          ilike: likeContains(input.name),
         }
       : undefined,
     active:

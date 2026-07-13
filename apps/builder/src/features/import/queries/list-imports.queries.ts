@@ -11,6 +11,7 @@ import type { ImportStatus, ImportType } from "@chatbotx.io/database/partials"
 import { fileModel, importModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderBy,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -35,7 +36,7 @@ export async function listImports(
     conditions.push(eq(importModel.status, input.status))
   }
   if (keyword) {
-    conditions.push(ilike(fileModel.fileName, `%${keyword}%`))
+    conditions.push(ilike(fileModel.fileName, likeContains(keyword)))
   }
   const where = and(...conditions)
 

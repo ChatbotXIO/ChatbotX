@@ -2,7 +2,10 @@
 
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
-import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
+import {
+  getPaginationWithDefaults,
+  likeContains,
+} from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetWorkspaceMemberRequest,
@@ -24,7 +27,7 @@ export async function listWorkspaceMembers(
     user: input.keyword
       ? {
           name: {
-            ilike: `%${input.keyword.toLowerCase()}%`,
+            ilike: likeContains(input.keyword),
           },
         }
       : undefined,

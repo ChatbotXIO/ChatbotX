@@ -2,6 +2,7 @@ import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { errorLogModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -20,8 +21,8 @@ export async function listErrorLogs(
     ...(input.keyword
       ? {
           OR: [
-            { action: { ilike: `%${input.keyword}%` } },
-            { detail: { ilike: `%${input.keyword}%` } },
+            { action: { ilike: likeContains(input.keyword) } },
+            { detail: { ilike: likeContains(input.keyword) } },
           ],
         }
       : {}),

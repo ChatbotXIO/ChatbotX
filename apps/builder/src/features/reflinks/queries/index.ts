@@ -2,6 +2,7 @@ import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { reflinkModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -20,7 +21,7 @@ export async function listReflinks(
   const where = {
     workspaceId: input.workspaceId,
     type: "refLink" as const,
-    ...(input.keyword ? { name: { ilike: `%${input.keyword}%` } } : {}),
+    ...(input.keyword ? { name: { ilike: likeContains(input.keyword) } } : {}),
   }
 
   const pagination = getPaginationWithDefaults(input)

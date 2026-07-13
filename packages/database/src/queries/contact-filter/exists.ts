@@ -1,5 +1,6 @@
 import { type AnyColumn, type SQL, sql } from "drizzle-orm"
 import type { PgTable } from "drizzle-orm/pg-core"
+import { contactInboxModel } from "../../schema"
 import type { ContactWhere, RawTable, RelationExists } from "./types"
 
 export const existsWhere = (
@@ -22,3 +23,8 @@ export const joinTableExists =
           : sql`SELECT 1 FROM ${table} WHERE ${contactIdColumn} = ${contactId}`,
       negate,
     )
+
+export const contactInboxExists = joinTableExists(
+  contactInboxModel,
+  contactInboxModel.contactId,
+)

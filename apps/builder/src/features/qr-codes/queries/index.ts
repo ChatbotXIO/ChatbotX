@@ -2,6 +2,7 @@ import { and, db, eq, ilike } from "@chatbotx.io/database/client"
 import { flowModel, reflinkModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderBy,
 } from "@chatbotx.io/database/utils"
 import { withCache } from "@chatbotx.io/redis"
@@ -47,7 +48,7 @@ export async function listQrCodes(
         eq(reflinkModel.workspaceId, input.workspaceId),
         eq(reflinkModel.type, "qrCode"),
         input.keyword
-          ? ilike(reflinkModel.name, `%${input.keyword}%`)
+          ? ilike(reflinkModel.name, likeContains(input.keyword))
           : undefined,
       )
 

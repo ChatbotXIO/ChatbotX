@@ -6,9 +6,11 @@ import {
   applyContactFilter,
   buildContactInboxContactFilterSQL,
   buildContactWhere,
+  buildSmartKeywordWhere,
   parseConversationAssigneeValues,
 } from "../src/queries/contact-filter"
 import { contactInboxModel, contactModel } from "../src/schema"
+import { escapeLikePattern, likeContains } from "../src/utils"
 
 const renderContactWhere = (where: Record<string, unknown>) => {
   const sqlWhere = relationsFilterToSQL(contactModel, where as never)
@@ -26,6 +28,13 @@ const renderFirstRawCondition = (where: Record<string, unknown>) => {
     (raw as (table: typeof contactModel) => SQL)(contactModel),
   )
 }
+
+describe("LIKE pattern helpers", () => {
+  test("escapes LIKE metacharacters and wraps contains patterns", () => {
+    expect(escapeLikePattern("100%_ready\\")).toBe("100\\%\\_ready\\\\")
+    expect(likeContains("100%_ready\\")).toBe("%100\\%\\_ready\\\\%")
+  })
+})
 
 describe("applyContactFilter", () => {
   test("maps inbox filters to an EXISTS ContactInbox.inboxId subquery", () => {
@@ -201,6 +210,76 @@ describe("applyContactFilter", () => {
     )
 
     expect(query.params).toContain("%100\\%\\_ready\\\\ok%")
+  })
+
+  test("renders static free-text eq as wildcard-free case-insensitive SQL", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fullName",
+            operator: operatorTypes.enum.eq,
+            value: "JOHN%_DOE\\",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('"Contact"."fullName" ILIKE')
+    expect(query.params).toContain("JOHN\\%\\_DOE\\\\")
+    expect(query.params).not.toContain("%JOHN\\%\\_DOE\\\\%")
+  })
+
+  test("renders static free-text ne as NOT ILIKE plus null fallback", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "email",
+            operator: operatorTypes.enum.ne,
+            value: "John@Example.com",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."email" not ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."email" is null')
+    expect(query.params).toContain("John@Example.com")
+  })
+
+  test("keeps enum and select equality case-sensitive", () => {
+    const genderQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "gender",
+            operator: operatorTypes.enum.eq,
+            value: "male",
+          },
+        ],
+      }),
+    )
+    const countryQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "country",
+            operator: operatorTypes.enum.eq,
+            value: "VN",
+          },
+        ],
+      }),
+    )
+
+    expect(genderQuery.sql).toContain('"Contact"."gender" =')
+    expect(genderQuery.sql.toLowerCase()).not.toContain("ilike")
+    expect(countryQuery.sql).toContain('"Contact"."country" =')
+    expect(countryQuery.sql.toLowerCase()).not.toContain("ilike")
   })
 
   test("maps dropdown eq/ne array values to EXISTS/NOT EXISTS IN subqueries", () => {
@@ -511,6 +590,115 @@ describe("applyContactFilter", () => {
     expect(query.sql).toContain('"Contact"."country" =')
     expect(query.sql).toContain('NOT ("Contact"."country" in')
     expect(query.params).toContain("VN")
+  })
+
+  test("renders lastComment text filters through ContactInbox and Message", () => {
+    const containsQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastComment",
+            operator: operatorTypes.enum.contains,
+            value: "Need_%help\\",
+          },
+        ],
+      }),
+    )
+    const equalQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastComment",
+            operator: operatorTypes.enum.eq,
+            value: "Exact_%comment\\",
+          },
+        ],
+      }),
+    )
+
+    expect(containsQuery.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(containsQuery.sql).toContain('FROM "Message"')
+    expect(containsQuery.sql).toContain('"ContactInbox"."lastCommentMessageId"')
+    expect(containsQuery.sql).toContain("CASE")
+    expect(containsQuery.sql).toContain("^[0-9]+$")
+    expect(containsQuery.sql).toContain("::bigint")
+    expect(containsQuery.sql).toContain('"Message"."text" ILIKE')
+    expect(containsQuery.params).toContain("%Need\\_\\%help\\\\%")
+    expect(equalQuery.params).toContain("Exact\\_\\%comment\\\\")
+  })
+
+  test("renders lastComment negative and empty operators with expected EXISTS semantics", () => {
+    const notContainsQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastComment",
+            operator: operatorTypes.enum.notContains,
+            value: "spam",
+          },
+        ],
+      }),
+    )
+    const notEqualQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastComment",
+            operator: operatorTypes.enum.ne,
+            value: "spam",
+          },
+        ],
+      }),
+    )
+    const emptyQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "lastComment", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    const notEmptyQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "lastComment", operator: operatorTypes.enum.isNotEmpty },
+        ],
+      }),
+    )
+
+    expect(notContainsQuery.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "ContactInbox"',
+    )
+    expect(notContainsQuery.sql).toContain('"Message"."text" ILIKE')
+    expect(notEqualQuery.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "ContactInbox"',
+    )
+    expect(notEqualQuery.sql).toContain('"Message"."text" ILIKE')
+    expect(emptyQuery.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(emptyQuery.sql).toContain(
+      '"ContactInbox"."lastCommentMessageId" IS NOT NULL',
+    )
+    expect(notEmptyQuery.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("ignores lastComment value operators with empty values", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "lastComment",
+          operator: operatorTypes.enum.contains,
+          value: "",
+        },
+      ],
+    })
+
+    expect(where).toEqual({})
   })
 
   test("renders lastSent as latest outbound contact-inbox datetime", () => {
@@ -860,22 +1048,19 @@ describe("applyContactFilter", () => {
       },
     })
 
-    expect(where).toEqual({
-      workspaceId: "ws-1",
-      AND: [
-        {
-          OR: [
-            { firstName: { ilike: "%acme%" } },
-            { lastName: { ilike: "%acme%" } },
-            { email: { ilike: "%acme%" } },
-            { phoneNumber: { ilike: "%acme%" } },
-          ],
-        },
-        {
-          OR: [{ fullName: { ilike: "%bob%" } }],
-        },
-      ],
-    })
+    const query = renderContactWhere(where)
+
+    expect(query.sql).toContain('"Contact"."workspaceId" =')
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."lastname" ilike')
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.sql.toLowerCase()).toContain('"contact"."fullname" ilike')
+    expect(query.sql.toLowerCase()).not.toContain('"contact"."email" ilike')
+    expect(query.sql.toLowerCase()).not.toContain(
+      '"contact"."phonenumber" ilike',
+    )
+    expect(query.params).toEqual(["ws-1", "%acme%", "%acme%", "Acme", "%bob%"])
   })
 
   test("builds contact-inbox audience SQL from a contact-rooted filter", () => {
@@ -922,13 +1107,10 @@ const firstAnd = (
 
 describe("applyContactFilter — direct column fields", () => {
   test.each([
-    ["fullName", "fullName"],
-    ["email", "email"],
     ["gender", "gender"],
     ["country", "country"],
     ["locale", "locale"],
     ["timezone", "timezone"],
-    ["phone", "phoneNumber"],
   ])("maps %s eq to the %s column", (field, column) => {
     expect(firstAnd(field, operatorTypes.enum.eq, "x")).toEqual({
       [column]: "x",
@@ -936,14 +1118,24 @@ describe("applyContactFilter — direct column fields", () => {
   })
 
   test.each([
-    [operatorTypes.enum.eq, "Ada", { fullName: "Ada" }],
-    [
-      operatorTypes.enum.ne,
-      "Ada",
-      {
-        OR: [{ fullName: { ne: "Ada" } }, { fullName: { isNull: true } }],
-      },
-    ],
+    ["fullName", "fullName"],
+    ["email", "email"],
+    ["phone", "phoneNumber"],
+  ])("maps %s eq to case-insensitive %s SQL", (field, column) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field, operator: operatorTypes.enum.eq, value: "x" }],
+      }),
+    )
+
+    expect(query.sql.toLowerCase()).toContain(
+      `"contact"."${column.toLowerCase()}" ilike`,
+    )
+    expect(query.params).toContain("x")
+  })
+
+  test.each([
     [operatorTypes.enum.eq, ["a", "b"], { fullName: { in: ["a", "b"] } }],
     [
       operatorTypes.enum.ne,
@@ -980,6 +1172,21 @@ describe("applyContactFilter — direct column fields", () => {
   })
 
   test.each([
+    [operatorTypes.enum.eq, "Ada", '"contact"."fullname" ilike'],
+    [operatorTypes.enum.ne, "Ada", '"contact"."fullname" not ilike'],
+  ])("maps fullName operator %s as case-insensitive SQL", (operator, value, expected) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field: "fullName", operator, value }],
+      }),
+    )
+
+    expect(query.sql.toLowerCase()).toContain(expected)
+    expect(query.params).toContain(value)
+  })
+
+  test.each([
     [
       operatorTypes.enum.isEmpty,
       { OR: [{ fullName: { isNull: true } }, { fullName: "" }] },
@@ -995,17 +1202,44 @@ describe("applyContactFilter — direct column fields", () => {
   })
 
   test.each([
-    ["fullName", "fullName"],
-    ["email", "email"],
     ["gender", "gender"],
     ["country", "country"],
     ["locale", "locale"],
     ["timezone", "timezone"],
-    ["phone", "phoneNumber"],
   ])("includes NULL rows for %s negation operators", (field, column) => {
     expect(firstAnd(field, operatorTypes.enum.ne, "x")).toEqual({
       OR: [{ [column]: { ne: "x" } }, { [column]: { isNull: true } }],
     })
+    expect(firstAnd(field, operatorTypes.enum.notContains, "x")).toEqual({
+      OR: [{ [column]: { notIlike: "%x%" } }, { [column]: { isNull: true } }],
+    })
+  })
+
+  test.each([
+    ["fullName", "fullName"],
+    ["email", "email"],
+    ["phone", "phoneNumber"],
+  ])("includes NULL rows for %s case-insensitive ne", (field, column) => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [{ field, operator: operatorTypes.enum.ne, value: "x" }],
+      }),
+    )
+
+    expect(query.sql.toLowerCase()).toContain(
+      `"contact"."${column.toLowerCase()}" not ilike`,
+    )
+    expect(query.sql.toLowerCase()).toContain(
+      `"contact"."${column.toLowerCase()}" is null`,
+    )
+  })
+
+  test.each([
+    ["fullName", "fullName"],
+    ["email", "email"],
+    ["phone", "phoneNumber"],
+  ])("includes NULL rows for %s notContains", (field, column) => {
     expect(firstAnd(field, operatorTypes.enum.notContains, "x")).toEqual({
       OR: [{ [column]: { notIlike: "%x%" } }, { [column]: { isNull: true } }],
     })
@@ -1745,9 +1979,11 @@ describe("applyContactFilter — operator combining", () => {
         { field: "email", operator: operatorTypes.enum.eq, value: "a@b.co" },
       ],
     })
-    expect(where).toEqual({
-      OR: [{ fullName: "Ada" }, { email: "a@b.co" }],
-    })
+    const query = renderContactWhere(where)
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."fullname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."email" ilike')
+    expect(query.params).toEqual(["Ada", "a@b.co"])
   })
 
   test("returns an empty object for empty conditions", () => {
@@ -1762,7 +1998,10 @@ describe("applyContactFilter — operator combining", () => {
         { field: "email", operator: operatorTypes.enum.eq, value: "a@b.co" },
       ],
     })
-    expect(where).toEqual({ AND: [{ email: "a@b.co" }] })
+    const query = renderContactWhere(where)
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."email" ilike')
+    expect(query.params).toEqual(["a@b.co"])
   })
 })
 
@@ -1780,6 +2019,97 @@ describe("applyContactFilter — buildContactWhere base", () => {
         contactFilter: { operator: "and", conditions: [] },
       }),
     ).toEqual({ workspaceId: "ws-1" })
+  })
+})
+
+describe("buildSmartKeywordWhere", () => {
+  test("searches email-like input by email only when email is visible", () => {
+    expect(buildSmartKeywordWhere("john@x.com")).toEqual({
+      email: { ilike: "%john@x.com%" },
+    })
+  })
+
+  test("falls back to names and sourceId for email-like input when email is hidden", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("john@x.com", {
+        includeEmailAndPhone: false,
+      }),
+    })
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."lastname" ilike')
+    expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.sql.toLowerCase()).not.toContain('"contact"."email" ilike')
+  })
+
+  test("searches phone-like input by normalized phone only", () => {
+    expect(buildSmartKeywordWhere("+84 90-123-4567")).toEqual({
+      phoneNumber: { ilike: "%+84901234567%" },
+    })
+  })
+
+  test("falls back to names and sourceId for phone-like input when phone is hidden", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("+84 90-123-4567", {
+        includeEmailAndPhone: false,
+      }),
+    })
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."lastname" ilike')
+    expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.sql.toLowerCase()).not.toContain(
+      '"contact"."phonenumber" ilike',
+    )
+  })
+
+  test("searches pure digits across visible columns and exact sourceId", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("12345"),
+    })
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."lastname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."email" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."phonenumber" ilike')
+    expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.params).toEqual([
+      "ws-1",
+      "%12345%",
+      "%12345%",
+      "%12345%",
+      "%12345%",
+      "12345",
+    ])
+  })
+
+  test("searches plain text by names and exact sourceId only", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("john"),
+    })
+
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
+    expect(query.sql.toLowerCase()).toContain('"contact"."lastname" ilike')
+    expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.sql.toLowerCase()).not.toContain('"contact"."email" ilike')
+    expect(query.sql.toLowerCase()).not.toContain(
+      '"contact"."phonenumber" ilike',
+    )
+    expect(query.params).toEqual(["ws-1", "%john%", "%john%", "john"])
+  })
+
+  test("escapes LIKE metacharacters in keyword search", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("100%_ready\\"),
+    })
+
+    expect(query.params).toContain("%100\\%\\_ready\\\\%")
+    expect(query.params).toContain("100%_ready\\")
   })
 })
 

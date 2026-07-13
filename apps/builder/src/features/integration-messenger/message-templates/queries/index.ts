@@ -7,7 +7,10 @@ import {
 } from "@chatbotx.io/database/client"
 import type { MessengerTemplateStatus } from "@chatbotx.io/database/partials"
 import { messengerMessageTemplateModel } from "@chatbotx.io/database/schema"
-import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
+import {
+  getPaginationWithDefaults,
+  likeContains,
+} from "@chatbotx.io/database/utils"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
 
 type MessengerMessageTemplateListWhere = {
@@ -83,7 +86,7 @@ export const messengerMessageTemplateService = {
       where,
     })
     const queryWhere = {
-      name: where.name ? { ilike: `%${where.name}%` } : undefined,
+      name: where.name ? { ilike: likeContains(where.name) } : undefined,
       status: where.status,
       integrationMessengerId: resolvedIntegrationMessengerId,
       integrationMessenger: {
@@ -109,7 +112,10 @@ export const messengerMessageTemplateService = {
         messengerMessageTemplateModel,
         and(
           where.name
-            ? ilike(messengerMessageTemplateModel.name, `%${where.name}%`)
+            ? ilike(
+                messengerMessageTemplateModel.name,
+                likeContains(where.name),
+              )
             : undefined,
           where.status
             ? eq(messengerMessageTemplateModel.status, where.status)

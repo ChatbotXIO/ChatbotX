@@ -2,6 +2,7 @@ import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import type {
@@ -19,7 +20,7 @@ export const listAITriggers = async (
     workspaceId: input.workspaceId,
     name: input.name
       ? {
-          ilike: `%${input.name.toLowerCase()}%`,
+          ilike: likeContains(input.name),
         }
       : undefined,
   }

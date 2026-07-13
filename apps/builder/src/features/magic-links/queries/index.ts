@@ -2,6 +2,7 @@ import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { magicLinkModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -20,8 +21,8 @@ export async function listMagicLinks(
     ...(input.keyword
       ? {
           OR: [
-            { name: { ilike: `%${input.keyword}%` } },
-            { url: { ilike: `%${input.keyword}%` } },
+            { name: { ilike: likeContains(input.keyword) } },
+            { url: { ilike: likeContains(input.keyword) } },
           ],
         }
       : {}),

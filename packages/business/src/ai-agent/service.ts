@@ -11,6 +11,7 @@ import { aiAgentModel } from "@chatbotx.io/database/schema"
 import type { AIAgentModel } from "@chatbotx.io/database/types"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { withCache } from "@chatbotx.io/redis"
@@ -100,9 +101,7 @@ class AiAgentService extends BaseService {
       async () => {
         const where = {
           workspaceId: input.workspaceId,
-          name: input.name
-            ? { ilike: `%${input.name.toLowerCase()}%` }
-            : undefined,
+          name: input.name ? { ilike: likeContains(input.name) } : undefined,
         }
 
         const pagination = getPaginationWithDefaults(input)

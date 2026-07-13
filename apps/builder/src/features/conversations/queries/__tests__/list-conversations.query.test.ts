@@ -12,6 +12,27 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: vi.fn(() => ({})),
+  buildSmartKeywordWhere: vi.fn(
+    (keyword: string, options?: { includeEmailAndPhone?: boolean }) => ({
+      OR: [
+        { firstName: { ilike: `%${keyword}%` } },
+        { lastName: { ilike: `%${keyword}%` } },
+        ...(options?.includeEmailAndPhone === false
+          ? []
+          : [{ email: { ilike: `%${keyword}%` } }]),
+      ],
+    }),
+  ),
+  parseConversationAssigneeValues: vi.fn((values: string[]) => ({
+    hasUnassigned: values.includes("unassigned"),
+    inboxTeamIds: values
+      .filter((value) => value.startsWith("t_"))
+      .map((value) => value.slice(2)),
+    userIds: values
+      .filter((value) => value.startsWith("u_"))
+      .map((value) => value.slice(2)),
+  })),
+  UNASSIGNED_ASSIGNEE_VALUE: "unassigned",
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: vi.fn(),
@@ -25,6 +46,9 @@ vi.mock("@/lib/pagination", () => ({
 }))
 
 const { buildConversationWhere } = await import("../build-conversation-where")
+const { applyContactFilter, buildSmartKeywordWhere } = await import(
+  "@chatbotx.io/database/queries"
+)
 
 const baseInput = {
   perPage: 20,
@@ -54,5 +78,56 @@ describe("buildConversationWhere channel filter", () => {
     )
 
     expect(where.contactInboxes).toEqual({ channel: "messenger" })
+  })
+
+  test("composes keyword and contact filter OR branches without overwriting either", () => {
+    vi.mocked(applyContactFilter).mockReturnValueOnce({
+      OR: [{ email: { ilike: "%ada%" } }],
+    })
+
+    const where = buildConversationWhere(
+      "1",
+      {
+        ...baseInput,
+        keyword: "ada",
+        contactFilter: { operator: "or", conditions: [] },
+      },
+      null,
+    )
+
+    expect(where.contact).toEqual({
+      AND: [
+        { blockedAt: { isNull: true } },
+        {
+          OR: [
+            { firstName: { ilike: "%ada%" } },
+            { lastName: { ilike: "%ada%" } },
+            { email: { ilike: "%ada%" } },
+          ],
+        },
+        { OR: [{ email: { ilike: "%ada%" } }] },
+      ],
+    })
+  })
+
+  test("forwards a restricted email/phone scope to the smart keyword search", () => {
+    buildConversationWhere("1", { ...baseInput, keyword: "ada@x.com" }, null, {
+      includeEmailAndPhone: false,
+    })
+
+    expect(vi.mocked(buildSmartKeywordWhere)).toHaveBeenCalledWith(
+      "ada@x.com",
+      {
+        includeEmailAndPhone: false,
+      },
+    )
+  })
+
+  test("defaults to including email/phone when no scope is provided", () => {
+    buildConversationWhere("1", { ...baseInput, keyword: "ada" }, null)
+
+    expect(vi.mocked(buildSmartKeywordWhere)).toHaveBeenCalledWith("ada", {
+      includeEmailAndPhone: true,
+    })
   })
 })

@@ -1,6 +1,7 @@
 import { type SQL, sql } from "drizzle-orm"
 import { type OperatorType, operatorTypes } from "../../partials"
 import { contactCustomFieldModel } from "../../schema"
+import { escapeLikePattern, likeContains } from "../../utils"
 import { existsWhere } from "./exists"
 import type { ContactWhere } from "./types"
 
@@ -18,9 +19,6 @@ const NEGATION_TO_POSITIVE: Partial<Record<OperatorType, OperatorType>> = {
   [operatorTypes.enum.notBetween]: operatorTypes.enum.isBetween,
   [operatorTypes.enum.isEmpty]: operatorTypes.enum.isNotEmpty,
 }
-
-const escapeLikePattern = (value: string): string =>
-  value.replace(/[\\%_]/g, "\\$&")
 
 const isValidDateTimeFilterValue = (value: string): boolean =>
   DATETIME_VALUE_RE.test(value) && !Number.isNaN(Date.parse(value))
@@ -125,7 +123,7 @@ function buildNumberCustomFieldPredicate(
 
   switch (operator) {
     case operatorTypes.enum.contains:
-      return sql`${column} ILIKE ${`%${escapeLikePattern(value)}%`}`
+      return sql`${column} ILIKE ${likeContains(value)}`
     case operatorTypes.enum.startsWith:
       return sql`${column} ILIKE ${`${escapeLikePattern(value)}%`}`
     case operatorTypes.enum.endsWith:
@@ -217,7 +215,7 @@ function buildTextCustomFieldPredicate(
     case operatorTypes.enum.eq:
       return sql`${column} = ${value}`
     case operatorTypes.enum.contains:
-      return sql`${column} ILIKE ${`%${escapeLikePattern(value)}%`}`
+      return sql`${column} ILIKE ${likeContains(value)}`
     case operatorTypes.enum.startsWith:
       return sql`${column} ILIKE ${`${escapeLikePattern(value)}%`}`
     case operatorTypes.enum.endsWith:

@@ -12,6 +12,7 @@ import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { distributedStore } from "@chatbotx.io/redis"
@@ -89,7 +90,7 @@ class AutomatedResponseService extends BaseService {
     const where = {
       workspaceId: input.workspaceId,
       keywords: input.keyword
-        ? { ilike: `%${input.keyword.toLowerCase()}%` }
+        ? { ilike: likeContains(input.keyword) }
         : undefined,
       folderId: input.folderId
         ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
