@@ -50,6 +50,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
+import { triggerDefaultReplyFlow } from "./default-reply"
 import { handleRichAIReply } from "./rich-reply"
 import { createDocumentReaderExecutor } from "./system-tools/document-reader"
 import { createImageReaderExecutor } from "./system-tools/image-reader"
@@ -65,6 +66,7 @@ export type ReplyByAIProps = {
   fileOnlyTrigger: boolean
   allowedSystemFunctionIds?: string[]
   summary?: string
+  defaultReplyFlowId?: string | null
 }
 
 export type ReplyByAIExecutionResult = {
@@ -859,9 +861,29 @@ async function runAIReply(
     }
 
     // Last-resort fallback: loop finished but no assistant text was produced.
-    // Do NOT leak raw tool outputs; ask a clarifying question instead.
+    // Do NOT leak raw tool outputs; prefer the workspace's configured default
+    // reply flow, and only fall back to a clarifying question if none is set.
     if (toolCallsCount > 0 || toolResultsCount > 0) {
-      await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
+      const triggeredDefaultReplyFlow = await triggerDefaultReplyFlow({
+        workspaceId: conversation.workspaceId,
+        defaultReplyFlowId: props.defaultReplyFlowId,
+        conversation,
+        contactInbox: props.contactInbox,
+        trackingContext: props.triggerMessageId
+          ? {
+              aiProvider: provider,
+              conversationId: conversation.id,
+              messageId: props.triggerMessageId,
+              responseType: "flow",
+              startTime,
+              triggerType: "bot_response_ai_agent_default_reply_flow",
+              workspaceId: conversation.workspaceId,
+            }
+          : undefined,
+      })
+      if (!triggeredDefaultReplyFlow) {
+        await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
+      }
       return {
         responded: true,
         provider,
