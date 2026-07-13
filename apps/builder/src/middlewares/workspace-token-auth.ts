@@ -21,7 +21,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
 
-    // Adds session and user to the context
+    // Adds the token-authorized workspace to the context.
     return await next({
       context: {
         workspace,
