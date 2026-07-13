@@ -1,7 +1,7 @@
 "use server"
 
 import { conversationService } from "@chatbotx.io/business"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import {
   createMessageRepository,
   getSafeSinceTime,
@@ -30,19 +30,20 @@ export const unreadConversation = async (ctx: {
     message: "Conversation not found",
   })
 
-  const contactInbox = await db.query.contactInboxModel.findFirst({
-    where: { contactId: conversation.contactId },
-    orderBy: { lastMessageAt: "desc" },
-  })
-
   const messageRepository = await createMessageRepository()
   const last2Messages = await messageRepository.findLastByConversation(
     conversation.id,
     {
       messageTypes: ["incoming"],
       limit: 2,
+      // Anchor on this conversation's own lastActivityAt, not a shared
+      // ContactInbox's lastMessageAt — a contact's ContactInbox is shared
+      // across their DM and every comment-thread conversation, so its
+      // lastMessageAt can reflect a different, more recently active
+      // conversation and push sinceTime past this conversation's real last
+      // message, causing the sharded scan to miss it.
       sinceTime: getSafeSinceTime(
-        contactInbox?.lastMessageAt,
+        conversation.lastActivityAt ?? conversation.createdAt,
         365 * 24 * 60 * 60 * 1000,
       ),
       workspaceId: ctx.workspaceId,

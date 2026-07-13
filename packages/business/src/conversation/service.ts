@@ -137,6 +137,20 @@ class ConversationService extends BaseService {
     })) as ConversationWithContactInboxes | undefined
   }
 
+  async findLatestByContact(props: {
+    contactId: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel | undefined> {
+    const { tx = db, contactId } = props
+    // A contact can have multiple conversations (DM + comment threads), all
+    // sharing the same ContactInbox — order by lastActivityAt so callers get
+    // the conversation the contact is actually active in, not an arbitrary one.
+    return await tx.query.conversationModel.findFirst({
+      where: { contactId },
+      orderBy: { lastActivityAt: "desc" },
+    })
+  }
+
   async findBy(props: {
     tx?: DatabaseClient
     where: Partial<FindByProps>
