@@ -312,7 +312,8 @@
       "tagAllDialogDescription": "Thẻ sẽ được gắn cho tất cả liên hệ đã chọn.",
       "tagDialogDescription": "Thẻ sẽ được gắn cho {count} liên hệ.",
       "tagQueued": "Đang gắn thẻ cho {count} liên hệ trong nền.",
-      "loadingMore": "Đang tải thêm..."
+      "loadingMore": "Đang tải thêm...",
+      "receivers": "Người nhận"
     },
     "messengerList": {
       "title": "Danh sách Messenger",
@@ -339,6 +340,7 @@
       "description": "Gửi luồng đến tất cả liên hệ."
     },
     "receiversCount": "Người nhận: {count}",
+    "receiversLoading": "Người nhận: Đang tải...",
     "whatsappTemplateMessage": {
       "title": "Tin nhắn mẫu WhatsApp",
       "description": "Gửi tin nhắn mẫu WhatsApp đến các liên hệ của bạn"
@@ -360,11 +362,24 @@
         "title": "Template",
         "description": "Gửi template đến các liên hệ của bạn"
       }
+    },
+    "detail": {
+      "title": "Chi tiết phát sóng",
+      "subaction": "Hành động con",
+      "audienceFilter": "Bộ lọc người nhận",
+      "noAudienceFilter": "Không có bộ lọc người nhận",
+      "template": "Template",
+      "noTemplate": "Không có template",
+      "integration": "Tích hợp"
     }
   },
   "condition": {
     "yes": "Có",
     "no": "Không",
+    "operator": {
+      "and": "Tất cả điều kiện",
+      "or": "Bất kỳ điều kiện nào"
+    },
     "fields": {
       "locale": "Ngôn ngữ",
       "language": "Ngôn ngữ",

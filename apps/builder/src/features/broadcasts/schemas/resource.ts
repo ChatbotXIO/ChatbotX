@@ -8,7 +8,7 @@ export const broadcastResource = createSelectSchema(broadcastModel)
 export type BroadcastResource = BroadcastModel
 
 export type BroadcastResourceWithRelations = BroadcastResource & {
-  flow?: FlowModel
+  flow?: Pick<FlowModel, "id" | "name"> | null
   contactsCount?: number
 }
 

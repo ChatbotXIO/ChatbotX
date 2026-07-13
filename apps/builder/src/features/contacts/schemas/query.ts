@@ -61,6 +61,30 @@ export const listContactsRequest = basePaginationRequest.extend({
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
+export const listContactInboxesAudiencePreviewRequest =
+  listContactsRequest.extend({
+    perPage: z.coerce.number().int().min(1).max(50).nullish(),
+  })
+export type ListContactInboxesAudiencePreviewRequest = z.infer<
+  typeof listContactInboxesAudiencePreviewRequest
+>
+
+export const audiencePreviewContactResource = z.object({
+  contactId: z.string(),
+  contactInboxId: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  fullName: z.string().nullable(),
+  avatar: z.string().nullable(),
+  occurredAt: z.string().nullable(),
+  channel: channelTypes,
+  conversationId: z.string().nullable(),
+})
+
+export const listContactInboxesAudiencePreviewResponse = z.object({
+  data: z.array(audiencePreviewContactResource),
+})
+
 export const contactResponse = contactResource.and(
   z.object({
     contactCustomFields: z.array(contactCustomFieldResource).optional(),

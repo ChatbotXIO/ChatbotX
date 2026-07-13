@@ -312,7 +312,8 @@
       "tagAllDialogDescription": "Tags will be added to all selected contacts.",
       "tagDialogDescription": "Tags will be added to {count} contact(s).",
       "tagQueued": "Tagging {count} contacts in the background.",
-      "loadingMore": "Loading more..."
+      "loadingMore": "Loading more...",
+      "receivers": "Receivers"
     },
     "messengerList": {
       "title": "Messenger List",
@@ -339,6 +340,7 @@
       "description": "Send a flow to all contacts."
     },
     "receiversCount": "Receivers: {count}",
+    "receiversLoading": "Receivers: Loading...",
     "whatsappTemplateMessage": {
       "title": "Template Message",
       "description": "Send WhatsApp template message to your contacts"
@@ -360,11 +362,24 @@
         "title": "Template",
         "description": "Send a template to your contacts"
       }
+    },
+    "detail": {
+      "title": "Broadcast detail",
+      "subaction": "Subaction",
+      "audienceFilter": "Audience filter",
+      "noAudienceFilter": "No audience filter",
+      "template": "Template",
+      "noTemplate": "No template",
+      "integration": "Integration"
     }
   },
   "condition": {
     "yes": "Yes",
     "no": "No",
+    "operator": {
+      "and": "All conditions",
+      "or": "Any condition"
+    },
     "fields": {
       "locale": "Language",
       "language": "Language",

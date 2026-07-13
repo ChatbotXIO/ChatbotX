@@ -30,6 +30,14 @@ export async function listBroadcasts(
   const [data, total] = await Promise.all([
     db.query.broadcastModel.findMany({
       where,
+      with: {
+        flow: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       ...pagination,
       orderBy,
     }),

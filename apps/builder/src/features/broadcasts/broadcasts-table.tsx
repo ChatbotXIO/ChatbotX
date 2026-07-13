@@ -21,6 +21,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
+  EyeIcon,
   Loader2Icon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -33,6 +34,7 @@ import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
+import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
@@ -277,6 +279,12 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "view" })}
+              >
+                <EyeIcon className="mr-2" />
+                {t("actions.view")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "rename" })}
               >
                 <PencilIcon className="mr-2" />
@@ -345,6 +353,16 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         broadcast={rowAction?.row.original || null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "resend"}
+      />
+
+      <BroadcastDetailDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRowAction(null)
+          }
+        }}
+        open={rowAction?.variant === "view"}
       />
     </BroadcastStatsStoreProvider>
   )

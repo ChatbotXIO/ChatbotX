@@ -40,6 +40,7 @@ import {
   type StatsSelection,
   useStatsSelection,
 } from "../hooks/use-stats-selection"
+import { formatErrorContent } from "../lib/format-error-content"
 
 const perPage = 20
 const scrollThreshold = 200
@@ -58,9 +59,9 @@ export type StatsContactRow = {
   fullName: string | null
   avatar: string | null
   channel: ChannelType
-  conversationId: string
-  errorContent: string | null
-  occurredAt: string
+  conversationId: string | null
+  errorContent?: string | null
+  occurredAt?: string | null
 }
 
 type StatsContactsDialogProps = {
@@ -70,18 +71,24 @@ type StatsContactsDialogProps = {
   title: string
   total: number
   i18nNamespace: "broadcasts" | "sequences"
+  showErrors?: boolean
   fetchPage: (page: number, perPage: number) => Promise<StatsContactRow[]>
-  onManualTag: (contactIds: string[], tags: string[]) => Promise<void>
-  onBulkTag: (excludedContactIds: string[], tags: string[]) => Promise<void>
+  onManualTag?: (contactIds: string[], tags: string[]) => Promise<void>
+  onBulkTag?: (excludedContactIds: string[], tags: string[]) => Promise<void>
 }
 
 export const StatsContactsDialog = memo(function StatsContactsDialog(
   props: StatsContactsDialogProps,
 ) {
-  return (
+  const canTag = Boolean(props.onManualTag && props.onBulkTag)
+  const dialog = <StatsContactsDialogInner {...props} />
+
+  return canTag ? (
     <TagStoreProvider workspaceId={props.workspaceId}>
-      <StatsContactsDialogInner {...props} />
+      {dialog}
     </TagStoreProvider>
+  ) : (
+    dialog
   )
 })
 
@@ -92,6 +99,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
   title,
   total,
   i18nNamespace,
+  showErrors = false,
   fetchPage,
   onManualTag,
   onBulkTag,
@@ -106,6 +114,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
   const [tagDialogOpen, setTagDialogOpen] = useState(false)
   const loadInFlightRef = useRef(false)
   const selectionState = useStatsSelection(total)
+  const canTag = Boolean(onManualTag && onBulkTag)
   const hasSelectedAll =
     selectionState.selection.mode === "all" &&
     selectionState.selection.excludedIds.size === 0
@@ -211,31 +220,33 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center justify-between gap-3 border-y py-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <Checkbox
-              aria-label={t("actions.selectAll")}
-              checked={selectionState.headerState}
-              onCheckedChange={selectionState.toggleHeader}
-            />
-            <span className="truncate text-muted-foreground text-sm">
-              {hasSelectedAll
-                ? t(`${i18nNamespace}.stats.selectedAll`)
-                : t(`${i18nNamespace}.stats.selectedCount`, {
-                    count: selectionState.selectedCount,
-                  })}
-            </span>
+        {canTag && (
+          <div className="flex items-center justify-between gap-3 border-y py-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Checkbox
+                aria-label={t("actions.selectAll")}
+                checked={selectionState.headerState}
+                onCheckedChange={selectionState.toggleHeader}
+              />
+              <span className="truncate text-muted-foreground text-sm">
+                {hasSelectedAll
+                  ? t(`${i18nNamespace}.stats.selectedAll`)
+                  : t(`${i18nNamespace}.stats.selectedCount`, {
+                      count: selectionState.selectedCount,
+                    })}
+              </span>
+            </div>
+            <Button
+              disabled={selectionState.selectedCount === 0}
+              onClick={() => setTagDialogOpen(true)}
+              size="sm"
+              type="button"
+            >
+              <TagIcon className="size-4" />
+              {t("actions.addTag")}
+            </Button>
           </div>
-          <Button
-            disabled={selectionState.selectedCount === 0}
-            onClick={() => setTagDialogOpen(true)}
-            size="sm"
-            type="button"
-          >
-            <TagIcon className="size-4" />
-            {t("actions.addTag")}
-          </Button>
-        </div>
+        )}
 
         <div ref={scrollRootRef} style={{ height: "min(520px, 60vh)" }}>
           <ScrollArea className="h-full">
@@ -257,12 +268,14 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
               <div className="space-y-2 pr-4">
                 {contacts.map((contact) => (
                   <SelectableContactItem
+                    canTag={canTag}
                     contact={contact}
                     isSelected={selectionState.isSelected(contact.contactId)}
                     key={contact.contactId}
                     onToggle={() =>
                       selectionState.toggleContact(contact.contactId)
                     }
+                    showErrors={showErrors}
                     workspaceId={workspaceId}
                   />
                 ))}
@@ -276,15 +289,17 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
           </ScrollArea>
         </div>
 
-        <StatsTagDialog
-          i18nNamespace={i18nNamespace}
-          onBulkTag={onBulkTag}
-          onManualTag={onManualTag}
-          onOpenChange={setTagDialogOpen}
-          open={tagDialogOpen}
-          selectedCount={selectionState.selectedCount}
-          selection={selectionState.selection}
-        />
+        {canTag && onManualTag && onBulkTag && (
+          <StatsTagDialog
+            i18nNamespace={i18nNamespace}
+            onBulkTag={onBulkTag}
+            onManualTag={onManualTag}
+            onOpenChange={setTagDialogOpen}
+            open={tagDialogOpen}
+            selectedCount={selectionState.selectedCount}
+            selection={selectionState.selection}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -405,11 +420,15 @@ const SelectableContactItem = memo(function SelectableContactItem({
   workspaceId,
   contact,
   isSelected,
+  canTag,
+  showErrors,
   onToggle,
 }: {
   workspaceId: string
   contact: StatsContactRow
   isSelected: boolean
+  canTag: boolean
+  showErrors: boolean
   onToggle: () => void
 }) {
   const avatarUrl = useAvatarUrl({
@@ -420,11 +439,13 @@ const SelectableContactItem = memo(function SelectableContactItem({
 
   return (
     <div className="flex items-center gap-3 rounded-lg p-0 transition-colors hover:bg-muted/50">
-      <Checkbox
-        aria-label={contact.fullName ?? contact.contactId}
-        checked={isSelected}
-        onCheckedChange={onToggle}
-      />
+      {canTag && (
+        <Checkbox
+          aria-label={contact.fullName ?? contact.contactId}
+          checked={isSelected}
+          onCheckedChange={onToggle}
+        />
+      )}
 
       <Avatar className="size-8 shrink-0">
         <AvatarImage src={avatarUrl} />
@@ -435,15 +456,21 @@ const SelectableContactItem = memo(function SelectableContactItem({
 
       <div className="w-32 shrink space-y-1">
         <div className="flex items-center gap-1.5">
-          <Link
-            className="max-w-[200px] truncate text-blue-500"
-            href={`/space/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
-            target="_blank"
-          >
+          {contact.conversationId ? (
+            <Link
+              className="max-w-[200px] truncate text-blue-500"
+              href={`/space/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
+              target="_blank"
+            >
+              <span className="truncate font-medium text-sm leading-tight">
+                {contact.fullName}
+              </span>
+            </Link>
+          ) : (
             <span className="truncate font-medium text-sm leading-tight">
               {contact.fullName}
             </span>
-          </Link>
+          )}
           <InboxIcon
             channel={contact.channel || ""}
             showLabel={false}
@@ -457,13 +484,13 @@ const SelectableContactItem = memo(function SelectableContactItem({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center">
-        {contact.errorContent && (
+      <div className="flex min-w-0 flex-1 items-center justify-center self-center">
+        {showErrors && contact.errorContent && (
           <div
             className="space-y-0 whitespace-pre-wrap text-left text-destructive text-xs"
             style={{ overflowWrap: "anywhere" }}
           >
-            {contact.errorContent}
+            {formatErrorContent(contact.errorContent)}
           </div>
         )}
       </div>

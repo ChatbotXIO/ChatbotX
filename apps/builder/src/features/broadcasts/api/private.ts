@@ -34,6 +34,37 @@ const getBatchBroadcastStatsResponse = z.record(
   getBroadcastStatsResponse,
 )
 
+const getBroadcastTemplateDetailRequest = z.object({
+  workspaceId: z.string(),
+  broadcastId: z.string(),
+})
+
+const broadcastTemplateDetailResponse = z
+  .discriminatedUnion("channel", [
+    z.object({
+      channel: z.literal("whatsapp"),
+      id: z.string(),
+      name: z.string(),
+      language: z.string(),
+      category: z.string(),
+      status: z.string(),
+      components: z.unknown(),
+      integrationName: z.string().nullable(),
+    }),
+    z.object({
+      channel: z.literal("messenger"),
+      id: z.string(),
+      name: z.string(),
+      language: z.string(),
+      category: z.string(),
+      status: z.string(),
+      parameterFormat: z.string(),
+      components: z.unknown(),
+      integrationName: z.string().nullable(),
+    }),
+  ])
+  .nullable()
+
 export const broadcastPrivateAPIs = {
   privateListBroadcastOptionsAPI: authorizedAPI
     .route({
@@ -65,6 +96,20 @@ export const broadcastPrivateAPIs = {
           workspaceId: input.workspaceId,
           broadcastIds: input.broadcastIds,
         }),
+    ),
+
+  privateGetBroadcastTemplateDetailAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/broadcasts/{broadcastId}/template-detail",
+      summary: "Get broadcast template detail",
+      tags: ["Broadcasts"],
+    })
+    .input(getBroadcastTemplateDetailRequest)
+    .output(broadcastTemplateDetailResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(
+      async ({ input }) => await broadcastService.getTemplateDetail(input),
     ),
 
   privateListBroadcastContactsAPI: authorizedAPI

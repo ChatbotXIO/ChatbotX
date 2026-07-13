@@ -108,6 +108,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
       onManualTag={onManualTag}
       onOpenChange={onOpenChange}
       open={open}
+      showErrors={eventType === "message:failed"}
       title={t(`broadcasts.stats.${eventTypeToLabel[eventType]}`)}
       total={total}
       workspaceId={workspaceId}

@@ -12,7 +12,10 @@ import { requireContactPermissionScope } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
 import { listContactCustomFields } from "../queries/list-contact-fields.query"
-import { countContactInboxes } from "../queries/list-contact-inboxes.queries"
+import {
+  countContactInboxes,
+  listAudienceInboxesPreview,
+} from "../queries/list-contact-inboxes.queries"
 import { listContactTags } from "../queries/list-contact-tags.query"
 import { countContacts, listContacts } from "../queries/list-contacts.queries"
 import {
@@ -36,6 +39,8 @@ import {
 import {
   getContactRequest,
   getContactResponse,
+  listContactInboxesAudiencePreviewRequest,
+  listContactInboxesAudiencePreviewResponse,
   listContactsRequest,
   listContactsResponse,
 } from "../schemas/query"
@@ -109,8 +114,23 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
     .handler(async ({ input }) => {
-      await requireContactPermissionScope(input.workspaceId)
-      return await countContactInboxes(input)
+      const accessScope = await requireContactPermissionScope(input.workspaceId)
+      return await countContactInboxes(input, accessScope)
+    }),
+
+  listContactInboxesAudiencePreviewAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: "/workspaces/{workspaceId}/contacts/inboxes/audience-preview",
+      summary: "List audience contact inboxes preview",
+      tags: ["Contacts"],
+    })
+    .input(listContactInboxesAudiencePreviewRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactInboxesAudiencePreviewResponse)
+    .handler(async ({ input }) => {
+      const accessScope = await requireContactPermissionScope(input.workspaceId)
+      return await listAudienceInboxesPreview(input, accessScope)
     }),
 
   createContactAuthenticatedAPI: authorizedAPI
