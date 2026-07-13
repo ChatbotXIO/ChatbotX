@@ -29,8 +29,22 @@ type ConversationCursor = z.infer<typeof conversationCursorSchema>
 export const listConversations = async (
   data: ListConversationsRequest,
 ): Promise<ListConversationsResponse> => {
+  await assertCurrentUserCanAccessChatbot(data.workspaceId)
+  return await queryConversations(data)
+}
+
+export const listConversationsForAPI = async (
+  data: ListConversationsRequest,
+): Promise<ListConversationsResponse> => {
+  // Workspace-token callers are authorized by workspaceTokenAuthAPI, which
+  // derives workspaceId from the token rather than from request input.
+  return await queryConversations(data)
+}
+
+const queryConversations = async (
+  data: ListConversationsRequest,
+): Promise<ListConversationsResponse> => {
   const { workspaceId, ...input } = data
-  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const limit = input.perPage ?? DEFAULT_PER_PAGE
   const cursor = input.cursor

@@ -7,7 +7,7 @@ import z from "zod"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
 import { cursorPaginationRequest } from "@/lib/pagination"
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { listConversations } from "../queries/list-conversations.query"
+import { listConversationsForAPI } from "../queries/list-conversations.query"
 import { listConversationsResponse } from "../schema/resource"
 
 function jsonQueryParam<T>(schema: z.ZodType<T>) {
@@ -61,7 +61,7 @@ export const conversationWorkspaceTokenAPIs = {
     .output(listConversationsResponse)
     .handler(
       async ({ context, input }) =>
-        await listConversations({
+        await listConversationsForAPI({
           ...input,
           workspaceId: context.workspace.id,
         }),
