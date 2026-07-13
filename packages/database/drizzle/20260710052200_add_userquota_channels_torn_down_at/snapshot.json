@@ -2,80 +2,46 @@
   "version": "8",
   "dialect": "postgres",
   "id": "655697bf-15a9-45b4-9be7-fe98ff9f0a0d",
-  "prevIds": [
-    "b7994885-807e-4aeb-b987-9c8eda2539ca"
-  ],
+  "prevIds": ["b7994885-807e-4aeb-b987-9c8eda2539ca"],
   "ddl": [
     {
-      "values": [
-        "pending",
-        "success",
-        "error",
-        "processing"
-      ],
+      "values": ["pending", "success", "error", "processing"],
       "name": "aiConversationEmbeddingStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "pending",
-        "processing",
-        "success",
-        "error"
-      ],
+      "values": ["pending", "processing", "success", "error"],
       "name": "aiConversationSourceStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "document",
-        "image",
-        "url",
-        "web_search"
-      ],
+      "values": ["document", "image", "url", "web_search"],
       "name": "aiConversationSourceType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "pending",
-        "success",
-        "error",
-        "processing"
-      ],
+      "values": ["pending", "success", "error", "processing"],
       "name": "aiEmbeddingStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "automated_response",
-        "ai_agent",
-        "flow",
-        "none"
-      ],
+      "values": ["automated_response", "ai_agent", "flow", "none"],
       "name": "analyticsBotResponseType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "success",
-        "fallback"
-      ],
+      "values": ["success", "fallback"],
       "name": "analyticsBotResult",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "flow",
-        "agent",
-        "fallback"
-      ],
+      "values": ["flow", "agent", "fallback"],
       "name": "analyticsBotRouteType",
       "entityType": "enums",
       "schema": "public"
@@ -93,20 +59,13 @@
       "schema": "public"
     },
     {
-      "values": [
-        "contact_created",
-        "contact_deleted",
-        "contact_blocked"
-      ],
+      "values": ["contact_created", "contact_deleted", "contact_blocked"],
       "name": "analyticsContactEventType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "bot",
-        "human"
-      ],
+      "values": ["bot", "human"],
       "name": "analyticsContactSenderType",
       "entityType": "enums",
       "schema": "public"
@@ -128,109 +87,67 @@
       "schema": "public"
     },
     {
-      "values": [
-        "message_human_sent",
-        "message_bot_sent"
-      ],
+      "values": ["message_human_sent", "message_bot_sent"],
       "name": "analyticsMessageEventType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "processing",
-        "ingested",
-        "failed"
-      ],
+      "values": ["processing", "ingested", "failed"],
       "name": "analyticsStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "image",
-        "video",
-        "audio",
-        "gif",
-        "file"
-      ],
+      "values": ["image", "video", "audio", "gif", "file"],
       "name": "fileType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "now",
-        "future"
-      ],
+      "values": ["now", "future"],
       "name": "broadcastScheduleType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "scheduled",
-        "sent",
-        "sending"
-      ],
+      "values": ["scheduled", "sent", "sending"],
       "name": "broadcastStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "whatsapp",
-        "messenger"
-      ],
+      "values": ["whatsapp", "messenger"],
       "name": "coexistChannel",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "contacts",
-        "messages"
-      ],
+      "values": ["contacts", "messages"],
       "name": "coexistMessengerSyncPhase",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "init",
-        "running",
-        "succeeded",
-        "failed",
-        "partial"
-      ],
+      "values": ["init", "running", "succeeded", "failed", "partial"],
       "name": "coexistRunStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "male",
-        "female",
-        "unknown"
-      ],
+      "values": ["male", "female", "unknown"],
       "name": "gender",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "pending",
-        "completed",
-        "failed"
-      ],
+      "values": ["pending", "completed", "failed"],
       "name": "ContactOnSmartDelayStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "waitNode"
-      ],
+      "values": ["waitNode"],
       "name": "ContactOnSmartDelayType",
       "entityType": "enums",
       "schema": "public"
@@ -251,30 +168,19 @@
       "schema": "public"
     },
     {
-      "values": [
-        "messenger",
-        "instagram"
-      ],
+      "values": ["messenger", "instagram"],
       "name": "fbCommentAutomationType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "import",
-        "generic",
-        "export"
-      ],
+      "values": ["import", "generic", "export"],
       "name": "fileContextType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "pending",
-        "uploaded",
-        "failed"
-      ],
+      "values": ["pending", "uploaded", "failed"],
       "name": "fileStatus",
       "entityType": "enums",
       "schema": "public"
@@ -296,98 +202,61 @@
       "schema": "public"
     },
     {
-      "values": [
-        "csv",
-        "xlsx",
-        "xls"
-      ],
+      "values": ["csv", "xlsx", "xls"],
       "name": "importFormat",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "pending",
-        "processing",
-        "completed",
-        "failed"
-      ],
+      "values": ["pending", "processing", "completed", "failed"],
       "name": "importStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "contacts"
-      ],
+      "values": ["contacts"],
       "name": "importType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "text",
-        "location",
-        "refLink"
-      ],
+      "values": ["text", "location", "refLink"],
       "name": "contentType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "message",
-        "comment"
-      ],
+      "values": ["message", "comment"],
       "name": "messageKind",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "incoming",
-        "outgoing",
-        "activity"
-      ],
+      "values": ["incoming", "outgoing", "activity"],
       "name": "messageType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "bot",
-        "contact",
-        "system",
-        "user",
-        "api"
-      ],
+      "values": ["bot", "contact", "system", "user", "api"],
       "name": "senderType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "dont_track",
-        "track"
-      ],
+      "values": ["dont_track", "track"],
       "name": "inventoryPolicy",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "refLink",
-        "qrCode"
-      ],
+      "values": ["refLink", "qrCode"],
       "name": "ReflinkType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "owner",
-        "agent"
-      ],
+      "values": ["owner", "agent"],
       "name": "workspaceMemberRole",
       "entityType": "enums",
       "schema": "public"
@@ -22677,14 +22546,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "shardId"
-      ],
+      "columns": ["shardId"],
       "schemaTo": "public",
       "tableTo": "MessageShard",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ShardTimeRange_shardId_MessageShard_id_fkey",
@@ -22694,14 +22559,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIAgent_workspaceId_Workspace_id_fkey",
@@ -22711,14 +22572,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIAssistant_workspaceId_Workspace_id_fkey",
@@ -22728,14 +22585,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "sourceId"
-      ],
+      "columns": ["sourceId"],
       "schemaTo": "public",
       "tableTo": "AIConversationSource",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIConversationEmbedding_sourceId_AIConversationSource_id_fkey",
@@ -22745,14 +22598,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIConversationEmbedding_workspaceId_Workspace_id_fkey",
@@ -22762,14 +22611,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIConversationEmbedding_conversationId_Conversation_id_fkey",
@@ -22779,14 +22624,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIConversationSource_workspaceId_Workspace_id_fkey",
@@ -22796,14 +22637,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIConversationSource_conversationId_Conversation_id_fkey",
@@ -22813,14 +22650,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIEmbedding_workspaceId_Workspace_id_fkey",
@@ -22830,14 +22663,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "aiFileId"
-      ],
+      "columns": ["aiFileId"],
       "schemaTo": "public",
       "tableTo": "AIFile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIEmbedding_aiFileId_AIFile_id_fkey",
@@ -22847,14 +22676,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIFile_workspaceId_Workspace_id_fkey",
@@ -22864,14 +22689,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "triggerFlowId"
-      ],
+      "columns": ["triggerFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AIFunction_triggerFlowId_Flow_id_fkey",
@@ -22881,14 +22702,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIFunction_workspaceId_Workspace_id_fkey",
@@ -22898,14 +22715,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIMCPServer_workspaceId_Workspace_id_fkey",
@@ -22915,14 +22728,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AITrigger_workspaceId_Workspace_id_fkey",
@@ -22932,14 +22741,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AITrigger_flowId_Flow_id_fkey",
@@ -22949,14 +22754,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "aiTriggerId"
-      ],
+      "columns": ["aiTriggerId"],
       "schemaTo": "public",
       "tableTo": "AITrigger",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AITriggerToIntegrationOpenai_aiTriggerId_AITrigger_id_fkey",
@@ -22966,14 +22767,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationOpenaiId"
-      ],
+      "columns": ["integrationOpenaiId"],
       "schemaTo": "public",
       "tableTo": "IntegrationOpenai",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AITriggerToIntegrationOpenai_rSgeY7c25Tng_fkey",
@@ -22983,14 +22780,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsBotMessageEvent_workspaceId_Workspace_id_fkey",
@@ -23000,14 +22793,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsBroadcastEvent_workspaceId_Workspace_id_fkey",
@@ -23017,14 +22806,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsContactEvent_workspaceId_Workspace_id_fkey",
@@ -23034,14 +22819,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsConversationEvent_workspaceId_Workspace_id_fkey",
@@ -23051,14 +22832,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsFlowNodeEvent_workspaceId_Workspace_id_fkey",
@@ -23068,14 +22845,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsMessageEvent_workspaceId_Workspace_id_fkey",
@@ -23085,14 +22858,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "AnalyticsSequenceEvent_workspaceId_Workspace_id_fkey",
@@ -23102,14 +22871,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "topicId"
-      ],
+      "columns": ["topicId"],
       "schemaTo": "public",
       "tableTo": "EmailTopic",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AnalyticsEmailTopic_topicId_EmailTopic_id_fkey",
@@ -23119,14 +22884,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AnalyticsEmailTopic_workspaceId_Workspace_id_fkey",
@@ -23136,14 +22897,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AnalyticsEmailTopic_contactId_Contact_id_fkey",
@@ -23153,14 +22910,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AnalyticsEmailTopic_conversationId_Conversation_id_fkey",
@@ -23170,14 +22923,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactInboxId"
-      ],
+      "columns": ["contactInboxId"],
       "schemaTo": "public",
       "tableTo": "ContactInbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AnalyticsEmailTopic_contactInboxId_ContactInbox_id_fkey",
@@ -23187,14 +22936,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Attachment_workspaceId_Workspace_id_fkey",
@@ -23204,14 +22949,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Attachment_conversationId_Conversation_id_fkey",
@@ -23221,14 +22962,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Account_userId_User_id_fkey",
@@ -23238,14 +22975,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tenantId"
-      ],
+      "columns": ["tenantId"],
       "schemaTo": "public",
       "tableTo": "Tenant",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Account_tenantId_Tenant_id_fkey",
@@ -23255,14 +22988,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Invitation_workspaceId_Workspace_id_fkey",
@@ -23272,14 +23001,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "invitedBy"
-      ],
+      "columns": ["invitedBy"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Invitation_invitedBy_User_id_fkey",
@@ -23289,14 +23014,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Session_userId_User_id_fkey",
@@ -23306,14 +23027,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tenantId"
-      ],
+      "columns": ["tenantId"],
       "schemaTo": "public",
       "tableTo": "Tenant",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "User_tenantId_Tenant_id_fkey",
@@ -23323,14 +23040,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AutomatedResponse_workspaceId_Workspace_id_fkey",
@@ -23340,14 +23053,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AutomatedResponse_folderId_Folder_id_fkey",
@@ -23357,14 +23066,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AutomatedResponse_flowId_Flow_id_fkey",
@@ -23374,14 +23079,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "BotField_folderId_Folder_id_fkey",
@@ -23391,14 +23092,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "BotField_workspaceId_Workspace_id_fkey",
@@ -23408,14 +23105,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Broadcast_workspaceId_Workspace_id_fkey",
@@ -23425,14 +23118,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Broadcast_flowId_Flow_id_fkey",
@@ -23442,14 +23131,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationWhatsappId"
-      ],
+      "columns": ["integrationWhatsappId"],
       "schemaTo": "public",
       "tableTo": "IntegrationWhatsapp",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Broadcast_integrationWhatsappId_IntegrationWhatsapp_id_fkey",
@@ -23459,14 +23144,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Contact_workspaceId_Workspace_id_fkey",
@@ -23476,14 +23157,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactCustomField_contactId_Contact_id_fkey",
@@ -23493,14 +23170,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "customFieldId"
-      ],
+      "columns": ["customFieldId"],
       "schemaTo": "public",
       "tableTo": "CustomField",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactCustomField_customFieldId_CustomField_id_fkey",
@@ -23510,14 +23183,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactInbox_contactId_Contact_id_fkey",
@@ -23527,14 +23196,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactInbox_inboxId_Inbox_id_fkey",
@@ -23544,14 +23209,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactNote_contactId_Contact_id_fkey",
@@ -23561,14 +23222,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "createdById"
-      ],
+      "columns": ["createdById"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactNote_createdById_User_id_fkey",
@@ -23578,14 +23235,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "broadcastId"
-      ],
+      "columns": ["broadcastId"],
       "schemaTo": "public",
       "tableTo": "Broadcast",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_broadcastId_Broadcast_id_fkey",
@@ -23595,14 +23248,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_contactId_Contact_id_fkey",
@@ -23612,14 +23261,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactInboxId"
-      ],
+      "columns": ["contactInboxId"],
       "schemaTo": "public",
       "tableTo": "ContactInbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_contactInboxId_ContactInbox_id_fkey",
@@ -23629,14 +23274,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_conversationId_Conversation_id_fkey",
@@ -23646,14 +23287,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSequence_contactId_Contact_id_fkey",
@@ -23663,14 +23300,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "sequenceId"
-      ],
+      "columns": ["sequenceId"],
       "schemaTo": "public",
       "tableTo": "Sequence",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSequence_sequenceId_Sequence_id_fkey",
@@ -23680,14 +23313,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSequence_workspaceId_Workspace_id_fkey",
@@ -23697,14 +23326,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSmartDelay_workspaceId_Workspace_id_fkey",
@@ -23714,14 +23339,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSmartDelay_conversationId_Conversation_id_fkey",
@@ -23731,14 +23352,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTag_contactId_Contact_id_fkey",
@@ -23748,14 +23365,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tagId"
-      ],
+      "columns": ["tagId"],
       "schemaTo": "public",
       "tableTo": "Tag",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTag_tagId_Tag_id_fkey",
@@ -23765,14 +23378,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tagId"
-      ],
+      "columns": ["tagId"],
       "schemaTo": "public",
       "tableTo": "Tag",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTagChannel_tagId_Tag_id_fkey",
@@ -23782,14 +23391,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tagChannelId"
-      ],
+      "columns": ["tagChannelId"],
       "schemaTo": "public",
       "tableTo": "TagChannel",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTagChannel_tagChannelId_TagChannel_id_fkey",
@@ -23799,14 +23404,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactInboxId"
-      ],
+      "columns": ["contactInboxId"],
       "schemaTo": "public",
       "tableTo": "ContactInbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTagChannel_contactInboxId_ContactInbox_id_fkey",
@@ -23816,14 +23417,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "assignedUserId"
-      ],
+      "columns": ["assignedUserId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Conversation_assignedUserId_User_id_fkey",
@@ -23833,14 +23430,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "assignedInboxTeamId"
-      ],
+      "columns": ["assignedInboxTeamId"],
       "schemaTo": "public",
       "tableTo": "InboxTeam",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Conversation_assignedInboxTeamId_InboxTeam_id_fkey",
@@ -23850,14 +23443,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Conversation_workspaceId_Workspace_id_fkey",
@@ -23867,14 +23456,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Conversation_contactId_Contact_id_fkey",
@@ -23884,14 +23469,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ConversationParticipant_workspaceId_Workspace_id_fkey",
@@ -23901,14 +23482,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ConversationParticipant_conversationId_Conversation_id_fkey",
@@ -23918,14 +23495,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ConversationParticipant_userId_User_id_fkey",
@@ -23935,14 +23508,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "CustomField_folderId_Folder_id_fkey",
@@ -23952,14 +23521,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "CustomField_workspaceId_Workspace_id_fkey",
@@ -23969,14 +23534,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EmailTopic_workspaceId_Workspace_id_fkey",
@@ -23986,14 +23547,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "EmailTopic_folderId_Folder_id_fkey",
@@ -24003,14 +23560,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AuditLog_workspaceId_fkey",
@@ -24020,14 +23573,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AuditLog_userId_fkey",
@@ -24037,14 +23586,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tenantId"
-      ],
+      "columns": ["tenantId"],
       "schemaTo": "public",
       "tableTo": "Tenant",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "CustomDomain_tenantId_Tenant_id_fkey",
@@ -24054,14 +23599,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "ownerId"
-      ],
+      "columns": ["ownerId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Tenant_ownerId_User_id_fkey",
@@ -24071,14 +23612,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tenantId"
-      ],
+      "columns": ["tenantId"],
       "schemaTo": "public",
       "tableTo": "Tenant",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TenantHelpItem_tenantId_Tenant_id_fkey",
@@ -24088,14 +23625,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "UserQuota_userId_User_id_fkey",
@@ -24105,14 +23638,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ErrorLog_workspaceId_Workspace_id_fkey",
@@ -24122,14 +23651,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "ErrorLog_contactId_Contact_id_fkey",
@@ -24139,14 +23664,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FBCommentAutomation_workspaceId_Workspace_id_fkey",
@@ -24156,14 +23677,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "FBCommentAutomation_folderId_Folder_id_fkey",
@@ -24173,14 +23690,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "automationId"
-      ],
+      "columns": ["automationId"],
       "schemaTo": "public",
       "tableTo": "FBCommentAutomation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "FBCommentAutomationReply_Q6yXIfuQcsD0_fkey",
@@ -24190,14 +23703,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "FBCommentAutomationReply_contactId_Contact_id_fkey",
@@ -24207,14 +23716,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "FBCommentAutomationReply_workspaceId_Workspace_id_fkey",
@@ -24224,14 +23729,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "File_workspaceId_Workspace_id_fkey",
@@ -24241,14 +23742,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "File_userId_User_id_fkey",
@@ -24258,14 +23755,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Flow_workspaceId_Workspace_id_fkey",
@@ -24275,14 +23768,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Flow_folderId_Folder_id_fkey",
@@ -24292,14 +23781,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowNodeStat_workspaceId_Workspace_id_fkey",
@@ -24309,14 +23794,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_workspaceId_Workspace_id_fkey",
@@ -24326,14 +23807,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_flowId_Flow_id_fkey",
@@ -24343,14 +23820,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowVersionId"
-      ],
+      "columns": ["flowVersionId"],
       "schemaTo": "public",
       "tableTo": "FlowVersion",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_flowVersionId_FlowVersion_id_fkey",
@@ -24360,14 +23833,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_conversationId_Conversation_id_fkey",
@@ -24377,14 +23846,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowVersion_workspaceId_Workspace_id_fkey",
@@ -24394,14 +23859,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowVersion_flowId_Flow_id_fkey",
@@ -24411,14 +23872,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Folder_workspaceId_Workspace_id_fkey",
@@ -24428,14 +23885,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Import_workspaceId_Workspace_id_fkey",
@@ -24445,14 +23898,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Import_inboxId_Inbox_id_fkey",
@@ -24462,14 +23911,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Import_userId_User_id_fkey",
@@ -24479,14 +23924,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "fileId"
-      ],
+      "columns": ["fileId"],
       "schemaTo": "public",
       "tableTo": "File",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Import_fileId_File_id_fkey",
@@ -24496,14 +23937,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Inbox_workspaceId_Workspace_id_fkey",
@@ -24513,14 +23950,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxContactStat_inboxId_Inbox_id_fkey",
@@ -24530,14 +23963,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxTeam_workspaceId_Workspace_id_fkey",
@@ -24547,14 +23976,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxTeamId"
-      ],
+      "columns": ["inboxTeamId"],
       "schemaTo": "public",
       "tableTo": "InboxTeam",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxTeamMember_inboxTeamId_InboxTeam_id_fkey",
@@ -24564,14 +23989,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxTeamMember_userId_User_id_fkey",
@@ -24581,14 +24002,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationActiveCampaign_workspaceId_Workspace_id_fkey",
@@ -24598,14 +24015,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationActiveCampaign_integrationId_Integration_id_fkey",
@@ -24615,14 +24028,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Integration_workspaceId_Workspace_id_fkey",
@@ -24632,14 +24041,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationClaude_workspaceId_Workspace_id_fkey",
@@ -24649,14 +24054,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationClaude_integrationId_Integration_id_fkey",
@@ -24666,14 +24067,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationDeepseek_workspaceId_Workspace_id_fkey",
@@ -24683,14 +24080,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationDeepseek_integrationId_Integration_id_fkey",
@@ -24700,14 +24093,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationDrip_workspaceId_Workspace_id_fkey",
@@ -24717,14 +24106,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationDrip_integrationId_Integration_id_fkey",
@@ -24734,14 +24119,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGemini_workspaceId_Workspace_id_fkey",
@@ -24751,14 +24132,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGemini_integrationId_Integration_id_fkey",
@@ -24768,14 +24145,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGetResponse_workspaceId_Workspace_id_fkey",
@@ -24785,14 +24158,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGetResponse_integrationId_Integration_id_fkey",
@@ -24802,14 +24171,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGoogleSheet_workspaceId_Workspace_id_fkey",
@@ -24819,14 +24184,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGoogleSheet_integrationId_Integration_id_fkey",
@@ -24836,14 +24197,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationInstagram_workspaceId_fkey",
@@ -24853,14 +24210,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationInstagram_inboxId_fkey",
@@ -24870,14 +24223,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "welcomeFlowId"
-      ],
+      "columns": ["welcomeFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationInstagram_welcomeFlowId_fkey",
@@ -24887,14 +24236,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationKlaviyo_workspaceId_Workspace_id_fkey",
@@ -24904,14 +24249,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationKlaviyo_integrationId_Integration_id_fkey",
@@ -24921,14 +24262,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMailchimp_workspaceId_Workspace_id_fkey",
@@ -24938,14 +24275,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMailchimp_integrationId_Integration_id_fkey",
@@ -24955,14 +24288,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMailerLite_workspaceId_Workspace_id_fkey",
@@ -24972,14 +24301,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMailerLite_integrationId_Integration_id_fkey",
@@ -24989,14 +24314,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMessenger_workspaceId_Workspace_id_fkey",
@@ -25006,14 +24327,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMessenger_inboxId_Inbox_id_fkey",
@@ -25023,14 +24340,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "welcomeFlowId"
-      ],
+      "columns": ["welcomeFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationMessenger_welcomeFlowId_Flow_id_fkey",
@@ -25040,14 +24353,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMoosend_workspaceId_Workspace_id_fkey",
@@ -25057,14 +24366,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMoosend_integrationId_Integration_id_fkey",
@@ -25074,14 +24379,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenai_workspaceId_Workspace_id_fkey",
@@ -25091,14 +24392,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenai_integrationId_Integration_id_fkey",
@@ -25108,14 +24405,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "aiAssistantId"
-      ],
+      "columns": ["aiAssistantId"],
       "schemaTo": "public",
       "tableTo": "AIAssistant",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationOpenai_aiAssistantId_AIAssistant_id_fkey",
@@ -25125,14 +24418,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "aiAgentId"
-      ],
+      "columns": ["aiAgentId"],
       "schemaTo": "public",
       "tableTo": "AIAgent",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationOpenai_aiAgentId_AIAgent_id_fkey",
@@ -25142,14 +24431,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenrouter_workspaceId_Workspace_id_fkey",
@@ -25159,14 +24444,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenrouter_integrationId_Integration_id_fkey",
@@ -25176,14 +24457,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationSendGrid_workspaceId_Workspace_id_fkey",
@@ -25193,14 +24470,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationId"
-      ],
+      "columns": ["integrationId"],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationSendGrid_integrationId_Integration_id_fkey",
@@ -25210,14 +24483,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationSmtp_workspaceId_Workspace_id_fkey",
@@ -25227,14 +24496,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationSmtp_inboxId_Inbox_id_fkey",
@@ -25244,14 +24509,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationTelegram_workspaceId_Workspace_id_fkey",
@@ -25261,14 +24522,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationTelegram_inboxId_Inbox_id_fkey",
@@ -25278,14 +24535,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationTiktok_workspaceId_Workspace_id_fkey",
@@ -25295,14 +24548,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationTiktok_inboxId_Inbox_id_fkey",
@@ -25312,14 +24561,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWebchat_workspaceId_Workspace_id_fkey",
@@ -25329,14 +24574,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWebchat_inboxId_Inbox_id_fkey",
@@ -25346,14 +24587,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "welcomeFlowId"
-      ],
+      "columns": ["welcomeFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationWebchat_welcomeFlowId_Flow_id_fkey",
@@ -25363,14 +24600,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWhatsapp_workspaceId_Workspace_id_fkey",
@@ -25380,14 +24613,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWhatsapp_inboxId_Inbox_id_fkey",
@@ -25397,14 +24626,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationZalo_workspaceId_Workspace_id_fkey",
@@ -25414,14 +24639,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationZalo_inboxId_Inbox_id_fkey",
@@ -25431,14 +24652,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "fallbackFlowId"
-      ],
+      "columns": ["fallbackFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationZalo_fallbackFlowId_Flow_id_fkey",
@@ -25448,14 +24665,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "MagicLink_workspaceId_Workspace_id_fkey",
@@ -25465,14 +24678,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "MagicLinkStat_workspaceId_Workspace_id_fkey",
@@ -25482,14 +24691,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "linkId"
-      ],
+      "columns": ["linkId"],
       "schemaTo": "public",
       "tableTo": "MagicLink",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "MagicLinkStat_linkId_MagicLink_id_fkey",
@@ -25499,14 +24704,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "conversationId"
-      ],
+      "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Message_conversationId_Conversation_id_fkey",
@@ -25516,14 +24717,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactInboxId"
-      ],
+      "columns": ["contactInboxId"],
       "schemaTo": "public",
       "tableTo": "ContactInbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Message_contactInboxId_ContactInbox_id_fkey",
@@ -25533,14 +24730,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Message_workspaceId_Workspace_id_fkey",
@@ -25550,14 +24743,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationMessengerId"
-      ],
+      "columns": ["integrationMessengerId"],
       "schemaTo": "public",
       "tableTo": "IntegrationMessenger",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "MessengerMessageTemplate_x0Vv1d8cvLYN_fkey",
@@ -25567,14 +24756,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Credential_userId_User_id_fkey",
@@ -25584,14 +24769,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Product_workspaceId_Workspace_id_fkey",
@@ -25601,14 +24782,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "productId"
-      ],
+      "columns": ["productId"],
       "schemaTo": "public",
       "tableTo": "Product",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ProductAddon_productId_Product_id_fkey",
@@ -25618,14 +24795,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "productId"
-      ],
+      "columns": ["productId"],
       "schemaTo": "public",
       "tableTo": "Product",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ProductVariant_productId_Product_id_fkey",
@@ -25635,14 +24808,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "productId"
-      ],
+      "columns": ["productId"],
       "schemaTo": "public",
       "tableTo": "Product",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ProductVariantOption_productId_Product_id_fkey",
@@ -25652,14 +24821,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "RefLinkStat_workspaceId_Workspace_id_fkey",
@@ -25669,14 +24834,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "linkId"
-      ],
+      "columns": ["linkId"],
       "schemaTo": "public",
       "tableTo": "Reflink",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "RefLinkStat_linkId_Reflink_id_fkey",
@@ -25686,14 +24847,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Reflink_flowId_Flow_id_fkey",
@@ -25703,14 +24860,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Reflink_workspaceId_Workspace_id_fkey",
@@ -25720,14 +24873,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "customFieldId"
-      ],
+      "columns": ["customFieldId"],
       "schemaTo": "public",
       "tableTo": "CustomField",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Reflink_customFieldId_CustomField_id_fkey",
@@ -25737,14 +24886,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SavedReply_workspaceId_Workspace_id_fkey",
@@ -25754,14 +24899,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Sequence_folderId_Folder_id_fkey",
@@ -25771,14 +24912,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Sequence_workspaceId_Workspace_id_fkey",
@@ -25788,14 +24925,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_workspaceId_Workspace_id_fkey",
@@ -25805,14 +24938,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "sequenceId"
-      ],
+      "columns": ["sequenceId"],
       "schemaTo": "public",
       "tableTo": "Sequence",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_sequenceId_Sequence_id_fkey",
@@ -25822,14 +24951,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_contactId_Contact_id_fkey",
@@ -25839,14 +24964,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactInboxId"
-      ],
+      "columns": ["contactInboxId"],
       "schemaTo": "public",
       "tableTo": "ContactInbox",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_contactInboxId_ContactInbox_id_fkey",
@@ -25856,14 +24977,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "stepId"
-      ],
+      "columns": ["stepId"],
       "schemaTo": "public",
       "tableTo": "SequenceStep",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_stepId_SequenceStep_id_fkey",
@@ -25873,16 +24990,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "enrollmentId",
-        "workspaceId"
-      ],
+      "columns": ["enrollmentId", "workspaceId"],
       "schemaTo": "public",
       "tableTo": "ContactOnSequence",
-      "columnsTo": [
-        "id",
-        "workspaceId"
-      ],
+      "columnsTo": ["id", "workspaceId"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_enrollment_workspace_fkey",
@@ -25892,14 +25003,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
+      "columns": ["flowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "SequenceStep_flowId_Flow_id_fkey",
@@ -25909,14 +25016,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "sequenceId"
-      ],
+      "columns": ["sequenceId"],
       "schemaTo": "public",
       "tableTo": "Sequence",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceStep_sequenceId_Sequence_id_fkey",
@@ -25926,14 +25029,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Spreadsheet_workspaceId_Workspace_id_fkey",
@@ -25943,14 +25042,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Tag_folderId_Folder_id_fkey",
@@ -25960,14 +25055,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Tag_workspaceId_Workspace_id_fkey",
@@ -25977,14 +25068,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TagChannel_workspaceId_Workspace_id_fkey",
@@ -25994,14 +25081,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tagId"
-      ],
+      "columns": ["tagId"],
       "schemaTo": "public",
       "tableTo": "Tag",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TagChannel_tagId_Tag_id_fkey",
@@ -26011,14 +25094,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Trigger_folderId_Folder_id_fkey",
@@ -26028,14 +25107,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Trigger_workspaceId_Workspace_id_fkey",
@@ -26045,14 +25120,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "triggerId"
-      ],
+      "columns": ["triggerId"],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Condition_triggerId_Trigger_id_fkey",
@@ -26062,14 +25133,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "webhookId"
-      ],
+      "columns": ["webhookId"],
       "schemaTo": "public",
       "tableTo": "Webhook",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Condition_webhookId_Webhook_id_fkey",
@@ -26079,14 +25146,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "triggerId"
-      ],
+      "columns": ["triggerId"],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerContactHistory_triggerId_Trigger_id_fkey",
@@ -26096,14 +25159,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerContactHistory_contactId_Contact_id_fkey",
@@ -26113,14 +25172,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerContactHistory_workspaceId_Workspace_id_fkey",
@@ -26130,14 +25185,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "triggerId"
-      ],
+      "columns": ["triggerId"],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerExecution_triggerId_Trigger_id_fkey",
@@ -26147,14 +25198,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "contactId"
-      ],
+      "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerExecution_contactId_Contact_id_fkey",
@@ -26164,14 +25211,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerExecution_workspaceId_Workspace_id_fkey",
@@ -26181,14 +25224,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "triggerId"
-      ],
+      "columns": ["triggerId"],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerStat_triggerId_Trigger_id_fkey",
@@ -26198,14 +25237,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerStat_workspaceId_Workspace_id_fkey",
@@ -26215,14 +25250,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "UserPersistentMenu_workspaceId_Workspace_id_fkey",
@@ -26232,14 +25263,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "folderId"
-      ],
+      "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Webhook_folderId_Folder_id_fkey",
@@ -26249,14 +25276,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Webhook_workspaceId_Workspace_id_fkey",
@@ -26266,14 +25289,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationWhatsappId"
-      ],
+      "columns": ["integrationWhatsappId"],
       "schemaTo": "public",
       "tableTo": "IntegrationWhatsapp",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WhatsappFlow_integrationWhatsappId_IntegrationWhatsapp_id_fkey",
@@ -26283,14 +25302,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "integrationWhatsappId"
-      ],
+      "columns": ["integrationWhatsappId"],
       "schemaTo": "public",
       "tableTo": "IntegrationWhatsapp",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WhatsappMessageTemplate_p6pSomUTTJCm_fkey",
@@ -26300,14 +25315,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "ownerId"
-      ],
+      "columns": ["ownerId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Workspace_userId_User_id_fkey",
@@ -26317,14 +25328,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tenantId"
-      ],
+      "columns": ["tenantId"],
       "schemaTo": "public",
       "tableTo": "Tenant",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Workspace_tenantId_Tenant_id_fkey",
@@ -26334,14 +25341,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WorkspaceMac_workspaceId_Workspace_id_fkey",
@@ -26351,14 +25354,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
+      "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WorkspaceMember_workspaceId_Workspace_id_fkey",
@@ -26368,14 +25367,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WorkspaceMember_userId_User_id_fkey",
@@ -26384,10 +25379,7 @@
       "table": "WorkspaceMember"
     },
     {
-      "columns": [
-        "aiTriggerId",
-        "integrationOpenaiId"
-      ],
+      "columns": ["aiTriggerId", "integrationOpenaiId"],
       "nameExplicit": false,
       "name": "AITriggerToIntegrationOpenai_pkey",
       "entityType": "pks",
@@ -26395,10 +25387,7 @@
       "table": "AITriggerToIntegrationOpenai"
     },
     {
-      "columns": [
-        "occurredAt",
-        "eventId"
-      ],
+      "columns": ["occurredAt", "eventId"],
       "nameExplicit": false,
       "name": "AnalyticsBotMessageEvent_pkey",
       "entityType": "pks",
@@ -26420,10 +25409,7 @@
       "table": "AnalyticsBroadcastEvent"
     },
     {
-      "columns": [
-        "occurredAt",
-        "eventId"
-      ],
+      "columns": ["occurredAt", "eventId"],
       "nameExplicit": false,
       "name": "AnalyticsContactEvent_pkey",
       "entityType": "pks",
@@ -26431,10 +25417,7 @@
       "table": "AnalyticsContactEvent"
     },
     {
-      "columns": [
-        "occurredAt",
-        "eventId"
-      ],
+      "columns": ["occurredAt", "eventId"],
       "nameExplicit": false,
       "name": "AnalyticsConversationEvent_pkey",
       "entityType": "pks",
@@ -26458,10 +25441,7 @@
       "table": "AnalyticsFlowNodeEvent"
     },
     {
-      "columns": [
-        "occurredAt",
-        "eventId"
-      ],
+      "columns": ["occurredAt", "eventId"],
       "nameExplicit": false,
       "name": "AnalyticsMessageEvent_pkey",
       "entityType": "pks",
@@ -26483,10 +25463,7 @@
       "table": "AnalyticsSequenceEvent"
     },
     {
-      "columns": [
-        "id",
-        "createdAt"
-      ],
+      "columns": ["id", "createdAt"],
       "nameExplicit": false,
       "name": "Attachment_pkey",
       "entityType": "pks",
@@ -26494,11 +25471,7 @@
       "table": "Attachment"
     },
     {
-      "columns": [
-        "workspaceId",
-        "hourBucket",
-        "contactInboxId"
-      ],
+      "columns": ["workspaceId", "hourBucket", "contactInboxId"],
       "nameExplicit": false,
       "name": "ContactActiveHourly_pkey",
       "entityType": "pks",
@@ -26506,11 +25479,7 @@
       "table": "ContactActiveHourly"
     },
     {
-      "columns": [
-        "workspaceId",
-        "periodStart",
-        "contactInboxId"
-      ],
+      "columns": ["workspaceId", "periodStart", "contactInboxId"],
       "nameExplicit": false,
       "name": "ContactActiveMonthly_pkey",
       "entityType": "pks",
@@ -26518,10 +25487,7 @@
       "table": "ContactActiveMonthly"
     },
     {
-      "columns": [
-        "broadcastId",
-        "contactId"
-      ],
+      "columns": ["broadcastId", "contactId"],
       "nameExplicit": true,
       "name": "ContactsOnBroadcast_pkey",
       "entityType": "pks",
@@ -26529,10 +25495,7 @@
       "table": "ContactOnBroadcast"
     },
     {
-      "columns": [
-        "id",
-        "workspaceId"
-      ],
+      "columns": ["id", "workspaceId"],
       "nameExplicit": true,
       "name": "ContactOnSequence_pkey",
       "entityType": "pks",
@@ -26540,10 +25503,7 @@
       "table": "ContactOnSequence"
     },
     {
-      "columns": [
-        "contactId",
-        "tagId"
-      ],
+      "columns": ["contactId", "tagId"],
       "nameExplicit": false,
       "name": "ContactToTag_pkey",
       "entityType": "pks",
@@ -26551,10 +25511,7 @@
       "table": "ContactToTag"
     },
     {
-      "columns": [
-        "tagChannelId",
-        "contactInboxId"
-      ],
+      "columns": ["tagChannelId", "contactInboxId"],
       "nameExplicit": false,
       "name": "ContactToTagChannel_pkey",
       "entityType": "pks",
@@ -26562,10 +25519,7 @@
       "table": "ContactToTagChannel"
     },
     {
-      "columns": [
-        "id",
-        "createdAt"
-      ],
+      "columns": ["id", "createdAt"],
       "nameExplicit": false,
       "name": "Message_pkey",
       "entityType": "pks",
@@ -26573,10 +25527,7 @@
       "table": "Message"
     },
     {
-      "columns": [
-        "id",
-        "workspaceId"
-      ],
+      "columns": ["id", "workspaceId"],
       "nameExplicit": true,
       "name": "SequenceDispatch_pkey",
       "entityType": "pks",
@@ -26584,10 +25535,7 @@
       "table": "SequenceDispatch"
     },
     {
-      "columns": [
-        "id",
-        "contactId"
-      ],
+      "columns": ["id", "contactId"],
       "nameExplicit": true,
       "name": "TriggerContactHistory_pkey",
       "entityType": "pks",
@@ -26595,9 +25543,7 @@
       "table": "TriggerContactHistory"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "MessageShard_pkey",
       "schema": "public",
@@ -26605,9 +25551,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ShardTimeRange_pkey",
       "schema": "public",
@@ -26615,9 +25559,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIAgent_pkey",
       "schema": "public",
@@ -26625,9 +25567,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIAssistant_pkey",
       "schema": "public",
@@ -26635,9 +25575,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIConversationEmbedding_pkey",
       "schema": "public",
@@ -26645,9 +25583,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIConversationSource_pkey",
       "schema": "public",
@@ -26655,9 +25591,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIEmbedding_pkey",
       "schema": "public",
@@ -26665,9 +25599,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIFile_pkey",
       "schema": "public",
@@ -26675,9 +25607,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIFunction_pkey",
       "schema": "public",
@@ -26685,9 +25615,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AIMCPServer_pkey",
       "schema": "public",
@@ -26695,9 +25623,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AITrigger_pkey",
       "schema": "public",
@@ -26705,9 +25631,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AnalyticsEmailTopic_pkey",
       "schema": "public",
@@ -26715,9 +25639,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Account_pkey",
       "schema": "public",
@@ -26725,9 +25647,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Invitation_pkey",
       "schema": "public",
@@ -26735,9 +25655,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Jwk_pkey",
       "schema": "public",
@@ -26745,9 +25663,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Session_pkey",
       "schema": "public",
@@ -26755,9 +25671,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "User_pkey",
       "schema": "public",
@@ -26765,9 +25679,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Verification_pkey",
       "schema": "public",
@@ -26775,9 +25687,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AutomatedResponse_pkey",
       "schema": "public",
@@ -26785,9 +25695,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "BotField_pkey",
       "schema": "public",
@@ -26795,9 +25703,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Broadcast_pkey",
       "schema": "public",
@@ -26805,9 +25711,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "CoexistSyncRun_pkey",
       "schema": "public",
@@ -26815,9 +25719,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Contact_pkey",
       "schema": "public",
@@ -26825,9 +25727,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ContactCustomField_pkey",
       "schema": "public",
@@ -26835,9 +25735,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ContactInbox_pkey",
       "schema": "public",
@@ -26845,9 +25743,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ContactNote_pkey",
       "schema": "public",
@@ -26855,9 +25751,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ContactOnSmartDelay_pkey",
       "schema": "public",
@@ -26865,9 +25759,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Conversation_pkey",
       "schema": "public",
@@ -26875,9 +25767,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ConversationParticipant_pkey",
       "schema": "public",
@@ -26885,9 +25775,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "CustomField_pkey",
       "schema": "public",
@@ -26895,9 +25783,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EmailTopic_pkey",
       "schema": "public",
@@ -26905,9 +25791,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "AuditLog_pkey",
       "schema": "public",
@@ -26915,9 +25799,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "CustomDomain_pkey",
       "schema": "public",
@@ -26925,9 +25807,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Tenant_pkey",
       "schema": "public",
@@ -26935,9 +25815,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "TenantHelpItem_pkey",
       "schema": "public",
@@ -26945,9 +25823,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserQuota_pkey",
       "schema": "public",
@@ -26955,9 +25831,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ErrorLog_pkey",
       "schema": "public",
@@ -26965,9 +25839,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "FBCommentAutomation_pkey",
       "schema": "public",
@@ -26975,9 +25847,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "FBCommentAutomationReply_pkey",
       "schema": "public",
@@ -26985,9 +25855,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "File_pkey",
       "schema": "public",
@@ -26995,9 +25863,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Flow_pkey",
       "schema": "public",
@@ -27005,9 +25871,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "FlowAnalyticsSession_pkey",
       "schema": "public",
@@ -27015,9 +25879,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "FlowNodeStat_pkey",
       "schema": "public",
@@ -27025,9 +25887,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "FlowRun_pkey",
       "schema": "public",
@@ -27035,9 +25895,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "FlowVersion_pkey",
       "schema": "public",
@@ -27045,9 +25903,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Folder_pkey",
       "schema": "public",
@@ -27055,9 +25911,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Import_pkey",
       "schema": "public",
@@ -27065,9 +25919,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Inbox_pkey",
       "schema": "public",
@@ -27075,9 +25927,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "inboxId"
-      ],
+      "columns": ["inboxId"],
       "nameExplicit": false,
       "name": "InboxContactStat_pkey",
       "schema": "public",
@@ -27085,9 +25935,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "InboxTeam_pkey",
       "schema": "public",
@@ -27095,9 +25943,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "InboxTeamMember_pkey",
       "schema": "public",
@@ -27105,9 +25951,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationActiveCampaign_pkey",
       "schema": "public",
@@ -27115,9 +25959,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Integration_pkey",
       "schema": "public",
@@ -27125,9 +25967,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationClaude_pkey",
       "schema": "public",
@@ -27135,9 +25975,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationDeepseek_pkey",
       "schema": "public",
@@ -27145,9 +25983,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationDrip_pkey",
       "schema": "public",
@@ -27155,9 +25991,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationGemini_pkey",
       "schema": "public",
@@ -27165,9 +25999,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationGetResponse_pkey",
       "schema": "public",
@@ -27175,9 +26007,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationGoogleSheet_pkey",
       "schema": "public",
@@ -27185,9 +26015,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationInstagram_pkey",
       "schema": "public",
@@ -27195,9 +26023,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationKlaviyo_pkey",
       "schema": "public",
@@ -27205,9 +26031,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationMailchimp_pkey",
       "schema": "public",
@@ -27215,9 +26039,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationMailerLite_pkey",
       "schema": "public",
@@ -27225,9 +26047,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationMessenger_pkey",
       "schema": "public",
@@ -27235,9 +26055,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationMoosend_pkey",
       "schema": "public",
@@ -27245,9 +26063,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationOpenai_pkey",
       "schema": "public",
@@ -27255,9 +26071,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationOpenrouter_pkey",
       "schema": "public",
@@ -27265,9 +26079,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationSendGrid_pkey",
       "schema": "public",
@@ -27275,9 +26087,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationSmtp_pkey",
       "schema": "public",
@@ -27285,9 +26095,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationTelegram_pkey",
       "schema": "public",
@@ -27295,9 +26103,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationTiktok_pkey",
       "schema": "public",
@@ -27305,9 +26111,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationWebchat_pkey",
       "schema": "public",
@@ -27315,9 +26119,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationWhatsapp_pkey",
       "schema": "public",
@@ -27325,9 +26127,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "IntegrationZalo_pkey",
       "schema": "public",
@@ -27335,9 +26135,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "MagicLink_pkey",
       "schema": "public",
@@ -27345,9 +26143,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "MessengerMessageTemplate_pkey",
       "schema": "public",
@@ -27355,9 +26151,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Credential_pkey",
       "schema": "public",
@@ -27365,9 +26159,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Product_pkey",
       "schema": "public",
@@ -27375,9 +26167,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ProductAddon_pkey",
       "schema": "public",
@@ -27385,9 +26175,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ProductVariant_pkey",
       "schema": "public",
@@ -27395,9 +26183,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ProductVariantOption_pkey",
       "schema": "public",
@@ -27405,9 +26191,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Reflink_pkey",
       "schema": "public",
@@ -27415,9 +26199,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "SavedReply_pkey",
       "schema": "public",
@@ -27425,9 +26207,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Sequence_pkey",
       "schema": "public",
@@ -27435,9 +26215,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "SequenceStep_pkey",
       "schema": "public",
@@ -27445,9 +26223,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Spreadsheet_pkey",
       "schema": "public",
@@ -27455,9 +26231,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Tag_pkey",
       "schema": "public",
@@ -27465,9 +26239,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "TagChannel_pkey",
       "schema": "public",
@@ -27475,9 +26247,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Trigger_pkey",
       "schema": "public",
@@ -27485,9 +26255,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Condition_pkey",
       "schema": "public",
@@ -27495,9 +26263,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "TriggerExecution_pkey",
       "schema": "public",
@@ -27505,9 +26271,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "TriggerStat_pkey",
       "schema": "public",
@@ -27515,9 +26279,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserPersistentMenu_pkey",
       "schema": "public",
@@ -27525,9 +26287,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Webhook_pkey",
       "schema": "public",
@@ -27535,9 +26295,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "WhatsappCoexistStaging_pkey",
       "schema": "public",
@@ -27545,9 +26303,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "WhatsappFlow_pkey",
       "schema": "public",
@@ -27555,9 +26311,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "WhatsappMessageTemplate_pkey",
       "schema": "public",
@@ -27565,9 +26319,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Workspace_pkey",
       "schema": "public",
@@ -27575,9 +26327,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "WorkspaceMac_pkey",
       "schema": "public",
@@ -27585,9 +26335,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "WorkspaceMember_pkey",
       "schema": "public",
@@ -27596,11 +26344,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "contactInboxId",
-        "sourceId",
-        "createdAt"
-      ],
+      "columns": ["contactInboxId", "sourceId", "createdAt"],
       "nullsNotDistinct": false,
       "name": "Message_source_dedup_idx",
       "entityType": "uniques",
@@ -27609,11 +26353,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "workspaceId",
-        "periodStart",
-        "periodEnd"
-      ],
+      "columns": ["workspaceId", "periodStart", "periodEnd"],
       "nullsNotDistinct": false,
       "name": "WorkspaceMac_workspaceId_periodStart_periodEnd_unique",
       "entityType": "uniques",
@@ -27622,9 +26362,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "nullsNotDistinct": false,
       "name": "UserQuota_userId_key",
       "schema": "public",
