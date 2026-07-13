@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  sql,
 } from "@chatbotx.io/database/client"
 import {
   channelTypes,
@@ -28,12 +29,16 @@ import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
+import { integrationClaudeService } from "../integration-claude/service"
+import { integrationDeepSeekService } from "../integration-deepseek/service"
 import { integrationDripService } from "../integration-drip/service"
+import { integrationGeminiService } from "../integration-gemini/service"
 import { integrationGetResponseService } from "../integration-get-response/service"
 import { integrationKlaviyoService } from "../integration-klaviyo/service"
 import { integrationMailchimpService } from "../integration-mailchimp/service"
 import { integrationMailerLiteService } from "../integration-mailer-lite/service"
 import { integrationMoosendService } from "../integration-moosend/service"
+import { integrationOpenAIService } from "../integration-openai/service"
 import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
 import { logger } from "../logger"
@@ -44,12 +49,48 @@ type WorkspaceTeardownIntegration = {
   isRevokedTokenError?: (error: unknown) => boolean
 }
 
+type DisconnectService = {
+  disconnect(workspaceId: string): Promise<void>
+}
+
 export type WorkspaceTeardownIntegrations = Record<
   string,
   WorkspaceTeardownIntegration | undefined
 >
 
 export type WorkspaceTeardownLevel = "pause" | "disconnect"
+
+/**
+ * High-volume tables that carry a direct `workspaceId` FK, ordered
+ * children-before-parents so each batched delete respects referential
+ * integrity on its own (independent of the deferred cascade). A workspace can
+ * hold millions of messages/contacts; deleting them via the single
+ * `DELETE FROM "Workspace"` FK cascade would scan every child table inside one
+ * transaction, holding locks and bloating WAL. Instead we drain these tables
+ * in small `ctid`-bounded chunks — one short autocommit statement each — and
+ * leave the remaining low-volume tables to the final cascade.
+ *
+ * Table names are the physical PG identifiers (not Drizzle models) because the
+ * delete is a raw `ctid IN (... LIMIT ...)` statement the query builder cannot
+ * express; keep them in sync with the schema if a table is renamed.
+ */
+const HEAVY_WORKSPACE_TABLES = [
+  "Message",
+  "AIConversationEmbedding",
+  "AIEmbedding",
+  "Attachment",
+  "Conversation",
+  "TriggerExecution",
+  "FlowRun",
+  "Contact",
+] as const
+
+const HEAVY_PURGE_BATCH_SIZE = 5000
+const INTER_CHUNK_DELAY_MS = 100
+// Backstop so a single workspace with a runaway row count cannot spin forever;
+// 5000 * 2000 = 10M rows per table per purge run. Anything beyond that drains
+// on the next scheduled tick.
+const HEAVY_PURGE_MAX_BATCHES_PER_TABLE = 2000
 
 class WorkspaceLifecycleService extends BaseService {
   async disconnectWorkspaceChannels(props: {
@@ -79,17 +120,30 @@ class WorkspaceLifecycleService extends BaseService {
   }
 
   async disconnectWorkspaceIntegrations(workspaceId: string): Promise<void> {
-    const results = await Promise.allSettled([
-      integrationActiveCampaignService.disconnect(workspaceId),
-      integrationDripService.disconnect(workspaceId),
-      integrationGetResponseService.disconnect(workspaceId),
-      integrationKlaviyoService.disconnect(workspaceId),
-      integrationMailchimpService.disconnect(workspaceId),
-      integrationMailerLiteService.disconnect(workspaceId),
-      integrationMoosendService.disconnect(workspaceId),
-      integrationOpenRouterService.disconnect(workspaceId),
-      integrationSendGridService.disconnect(workspaceId),
-    ])
+    // Every non-channel integration (marketing/email providers + AI provider
+    // keys). AI providers were extracted into their own services in the same
+    // change that added this teardown; keep this list exhaustive so a purge
+    // does not leave orphaned provider rows behind for `teardownLevel: "pause"`
+    // (where the workspace row — and its FK cascade — is not deleted).
+    const providers: [name: string, service: DisconnectService][] = [
+      ["active-campaign", integrationActiveCampaignService],
+      ["claude", integrationClaudeService],
+      ["deepseek", integrationDeepSeekService],
+      ["drip", integrationDripService],
+      ["gemini", integrationGeminiService],
+      ["get-response", integrationGetResponseService],
+      ["klaviyo", integrationKlaviyoService],
+      ["mailchimp", integrationMailchimpService],
+      ["mailer-lite", integrationMailerLiteService],
+      ["moosend", integrationMoosendService],
+      ["openai", integrationOpenAIService],
+      ["openrouter", integrationOpenRouterService],
+      ["sendgrid", integrationSendGridService],
+    ]
+
+    const results = await Promise.allSettled(
+      providers.map(([, service]) => service.disconnect(workspaceId)),
+    )
 
     results.forEach((result, index) => {
       if (result.status === "rejected") {
@@ -97,12 +151,68 @@ class WorkspaceLifecycleService extends BaseService {
           {
             err: result.reason,
             workspaceId,
-            integrationIndex: index,
+            provider: providers[index]?.[0],
           },
           "workspace-teardown: integration cleanup failed",
         )
       }
     })
+  }
+
+  /**
+   * Drain a workspace's high-volume child tables in small, self-committing
+   * batches before the workspace row itself is deleted. Each batch is its own
+   * statement (run on `db`, never a caller transaction) so row locks and WAL
+   * are released between chunks — the deletion stays smooth under production
+   * load instead of one multi-million-row cascade. Idempotent and resumable: a
+   * partially-drained workspace simply continues on the next call.
+   */
+  async purgeWorkspaceHeavyData(props: {
+    workspaceId: string
+    batchSize?: number
+  }): Promise<number> {
+    const batchSize = props.batchSize ?? HEAVY_PURGE_BATCH_SIZE
+    let totalDeleted = 0
+
+    for (const table of HEAVY_WORKSPACE_TABLES) {
+      for (let batch = 0; batch < HEAVY_PURGE_MAX_BATCHES_PER_TABLE; batch++) {
+        const deleted = await this.deleteHeavyBatch(
+          table,
+          props.workspaceId,
+          batchSize,
+        )
+        totalDeleted += deleted
+        if (deleted < batchSize) {
+          break
+        }
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, INTER_CHUNK_DELAY_MS),
+        )
+      }
+    }
+
+    return totalDeleted
+  }
+
+  private async deleteHeavyBatch(
+    table: (typeof HEAVY_WORKSPACE_TABLES)[number],
+    workspaceId: string,
+    batchSize: number,
+  ): Promise<number> {
+    // `ctid` self-join keeps the delete bounded to `batchSize` physical rows —
+    // Postgres has no `DELETE ... LIMIT`. The table name is a compile-time
+    // constant from HEAVY_WORKSPACE_TABLES, never caller input, so this raw
+    // identifier interpolation is not an injection surface.
+    const result = await db.execute(sql`
+      DELETE FROM ${sql.raw(`"${table}"`)}
+      WHERE "ctid" IN (
+        SELECT "ctid" FROM ${sql.raw(`"${table}"`)}
+        WHERE "workspaceId" = ${workspaceId}
+        LIMIT ${batchSize}
+      )
+    `)
+    return result.rowCount ?? 0
   }
 
   async deactivateOwnerWorkspaces(props: {

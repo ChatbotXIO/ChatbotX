@@ -150,6 +150,16 @@ class WorkspaceService extends BaseService {
     })
   }
 
+  /**
+   * Purge workspaces whose scheduled deletion grace period has elapsed.
+   *
+   * Scheduled callers MUST wrap this method in the repository's distributed
+   * lock (`distributedLockFactory(...).runExclusive` or
+   * `scheduler.withLock`). The worker queue does not provide singleton
+   * execution across concurrent workers or replicas; the split claim/teardown
+   * transactions make the method idempotent, but do not prevent duplicate
+   * work without a caller-owned lock.
+   */
   async purgeDueScheduled(props?: {
     chunkSize?: number
     maxChunks?: number
@@ -161,7 +171,12 @@ class WorkspaceService extends BaseService {
     const reconciles = new Map<string, { ownerId: string; tenantId: string }>()
 
     for (let chunk = 0; chunk < maxChunks; chunk++) {
-      const result = await db.transaction(async (tx) => {
+      // Claim a chunk of due workspaces in a short transaction and immediately
+      // release the FOR UPDATE locks. The heavy per-workspace teardown runs
+      // outside any transaction so million-row deletes never hold a workspace
+      // row lock; the final workspace-row delete runs in its own short
+      // transaction below.
+      const claimed = await db.transaction(async (tx) => {
         const due = await tx.execute<
           Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
         >(sql`
@@ -175,43 +190,62 @@ class WorkspaceService extends BaseService {
         `)
 
         if (due.rows.length === 0) {
-          return {
-            deleted: [] as typeof due.rows,
-            memberUserIds: [] as string[],
-          }
+          return { rows: [] as typeof due.rows, memberUserIds: [] as string[] }
         }
 
-        const workspaceIds = due.rows.map((row) => row.id)
         const memberUserIds = await tx
           .select({ userId: workspaceMemberModel.userId })
           .from(workspaceMemberModel)
-          .where(inArray(workspaceMemberModel.workspaceId, workspaceIds))
+          .where(
+            inArray(
+              workspaceMemberModel.workspaceId,
+              due.rows.map((row) => row.id),
+            ),
+          )
 
-        for (const workspace of due.rows) {
-          await workspaceLifecycleService
-            .disconnectWorkspaceIntegrations(workspace.id)
-            .catch((err) => {
-              logger.error(
-                { err, workspaceId: workspace.id },
-                "workspace-purge: failed to disconnect workspace integrations",
-              )
-            })
-
-          await workspaceLifecycleService.disconnectWorkspaceChannels({
-            integrations: props?.integrations,
-            teardownLevel: "disconnect",
-            tx,
-            workspaceId: workspace.id,
-          })
+        return {
+          rows: due.rows,
+          memberUserIds: memberUserIds.map((row) => row.userId),
         }
+      })
 
+      if (claimed.rows.length === 0) {
+        break
+      }
+
+      for (const workspace of claimed.rows) {
+        await workspaceLifecycleService
+          .disconnectWorkspaceIntegrations(workspace.id)
+          .catch((err) => {
+            logger.error(
+              { err, workspaceId: workspace.id },
+              "workspace-purge: failed to disconnect workspace integrations",
+            )
+          })
+
+        await workspaceLifecycleService.disconnectWorkspaceChannels({
+          integrations: props?.integrations,
+          teardownLevel: "disconnect",
+          workspaceId: workspace.id,
+        })
+
+        // Drain high-volume child tables in small self-committing batches
+        // before the FK cascade, so no single statement deletes millions of
+        // rows under lock.
+        await workspaceLifecycleService.purgeWorkspaceHeavyData({
+          workspaceId: workspace.id,
+        })
+      }
+
+      const workspaceIds = claimed.rows.map((row) => row.id)
+      const result = await db.transaction(async (tx) => {
         await tx
           .delete(workspaceModel)
           .where(inArray(workspaceModel.id, workspaceIds))
 
         return {
-          deleted: due.rows,
-          memberUserIds: memberUserIds.map((row) => row.userId),
+          deleted: claimed.rows,
+          memberUserIds: claimed.memberUserIds,
         }
       })
 
