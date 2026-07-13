@@ -1,0 +1,99 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+import type { ContactFilterCriteria } from "../schemas"
+import {
+  formatConditionValueDisplay,
+  getConditionOptions,
+  getFieldConfigs,
+} from "./contact-filter-config"
+
+type ContactFilterSummaryProps = {
+  contactFilter?: ContactFilterCriteria | null
+}
+
+export function ContactFilterSummary({
+  contactFilter,
+}: ContactFilterSummaryProps) {
+  const t = useTranslations()
+
+  if (!contactFilter || contactFilter.conditions.length === 0) {
+    return (
+      <div className="text-muted-foreground text-sm">
+        {t("broadcasts.detail.noAudienceFilter")}
+      </div>
+    )
+  }
+
+  const configs = getFieldConfigs({
+    t,
+    tagOptions: [],
+    inboxOptions: [],
+    customFields: [],
+    flowVersionOptions: [],
+    broadcastOptions: [],
+    sequenceOptions: [],
+    reflinkOptions: [],
+    assigneeOptions: [],
+  })
+  const operatorLabelByValue = new Map(
+    getConditionOptions(t).map((option) => [option.value, option.label]),
+  )
+  const operatorLabel =
+    contactFilter.operator === "and"
+      ? t("condition.operator.and")
+      : t("condition.operator.or")
+  const conditionKeyCounts = new Map<string, number>()
+
+  return (
+    <div className="space-y-2">
+      <div className="text-muted-foreground text-xs uppercase">
+        {operatorLabel}
+      </div>
+      <div className="space-y-2">
+        {contactFilter.conditions.map((condition) => {
+          const isCustomField = condition.field === "customField"
+          const fieldConfig = configs.find((config) =>
+            isCustomField && "customFieldId" in condition
+              ? String(config.customFieldId) === String(condition.customFieldId)
+              : config.name === condition.field,
+          )
+          const fieldLabel =
+            fieldConfig?.label ??
+            (isCustomField
+              ? t("fields.customField.label")
+              : t(`condition.fields.${condition.field}`))
+          const conditionOperator =
+            operatorLabelByValue.get(condition.operator) ?? condition.operator
+          const valueDisplay = formatConditionValueDisplay(
+            "value" in condition ? condition.value : undefined,
+            fieldConfig?.options,
+          )
+          const conditionKey = [
+            condition.field,
+            "customFieldId" in condition ? condition.customFieldId : "",
+            condition.operator,
+            valueDisplay,
+          ].join(":")
+          const conditionKeyCount = conditionKeyCounts.get(conditionKey) ?? 0
+          conditionKeyCounts.set(conditionKey, conditionKeyCount + 1)
+
+          return (
+            <div
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              key={
+                conditionKeyCount === 0
+                  ? conditionKey
+                  : `${conditionKey}:${conditionKeyCount}`
+              }
+            >
+              <span className="font-medium">{fieldLabel}</span>{" "}
+              <span className="italic">{conditionOperator}</span>{" "}
+              {valueDisplay && <span>{valueDisplay}</span>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

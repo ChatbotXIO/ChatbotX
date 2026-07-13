@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   assertCurrentUserCanAccessChatbot: vi.fn(),
   countAudience: vi.fn(),
+  listAudiencePreview: vi.fn(),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -13,10 +14,11 @@ vi.mock("@/lib/auth/utils", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService: {
     countAudience: mocks.countAudience,
+    listAudiencePreview: mocks.listAudiencePreview,
   },
 }))
 
-const { countContactInboxes } = await import(
+const { countContactInboxes, listAudienceInboxesPreview } = await import(
   "../src/features/contacts/queries/list-contact-inboxes.queries"
 )
 
@@ -24,6 +26,8 @@ beforeEach(() => {
   mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
   mocks.countAudience.mockReset()
   mocks.countAudience.mockResolvedValue(12)
+  mocks.listAudiencePreview.mockReset()
+  mocks.listAudiencePreview.mockResolvedValue([])
 })
 
 describe("countContactInboxes", () => {
@@ -57,6 +61,95 @@ describe("countContactInboxes", () => {
       integrationMessengerId: "messenger-1",
       contactFilter,
       subaction: "messengerActiveContacts",
+      restrictToAssignedUserId: undefined,
+    })
+  })
+
+  test("forwards assigned-contact scope to broadcast audience counting", async () => {
+    await countContactInboxes(
+      {
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+      },
+      {
+        canViewEmailAndPhone: false,
+        restrictToAssignedUserId: "user-1",
+      },
+    )
+
+    expect(mocks.countAudience).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationWhatsappId: undefined,
+      integrationMessengerId: undefined,
+      contactFilter: undefined,
+      subaction: undefined,
+      restrictToAssignedUserId: "user-1",
+    })
+  })
+
+  test("forwards assigned-contact scope to audience preview listing", async () => {
+    const result = await listAudienceInboxesPreview(
+      {
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        page: 2,
+        perPage: 10,
+      },
+      {
+        canViewEmailAndPhone: false,
+        restrictToAssignedUserId: "user-1",
+      },
+    )
+
+    expect(result).toEqual({ data: [] })
+    expect(mocks.listAudiencePreview).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      integrationWhatsappId: undefined,
+      integrationMessengerId: undefined,
+      contactFilter: undefined,
+      subaction: undefined,
+      page: 2,
+      perPage: 10,
+      restrictToAssignedUserId: "user-1",
+    })
+  })
+
+  test("maps audience preview contact creation time to the stats dialog timestamp", async () => {
+    mocks.listAudiencePreview.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        contactInboxId: "contact-inbox-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        fullName: "Ada Lovelace",
+        avatar: null,
+        createdAt: new Date("2026-01-01T10:00:00.000Z"),
+        channel: "messenger",
+        conversationId: "conversation-1",
+      },
+    ])
+
+    const result = await listAudienceInboxesPreview({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+    })
+
+    expect(result).toEqual({
+      data: [
+        {
+          contactId: "contact-1",
+          contactInboxId: "contact-inbox-1",
+          firstName: "Ada",
+          lastName: "Lovelace",
+          fullName: "Ada Lovelace",
+          avatar: null,
+          occurredAt: "2026-01-01T10:00:00.000Z",
+          channel: "messenger",
+          conversationId: "conversation-1",
+        },
+      ],
     })
   })
 })

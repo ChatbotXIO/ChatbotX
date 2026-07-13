@@ -111,6 +111,7 @@ export const SequenceStepContactsDialog = memo(
         onManualTag={onManualTag}
         onOpenChange={onOpenChange}
         open={open}
+        showErrors={eventType === "message:failed"}
         title={t(`sequences.stats.${eventTypeToLabel[eventType]}`)}
         total={total}
         workspaceId={workspaceId}

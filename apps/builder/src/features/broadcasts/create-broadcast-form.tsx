@@ -37,10 +37,11 @@ import { add } from "date-fns"
 import { Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
+import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -467,9 +468,15 @@ type CreateBroadcastChooseFlowProps = {
 function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const t = useTranslations()
   const router = useRouter()
-  const { contactInboxesCount: count, getContactInboxesCount } =
-    useContactStore((state) => state)
-  const fetchReceiversCount = useDebouncedCallback(getContactInboxesCount, 300)
+  const {
+    contactInboxesCount: count,
+    getContactInboxesCount,
+    loadingInboxesCount,
+  } = useContactStore((state) => state)
+  const [audiencePreviewOpen, setAudiencePreviewOpen] = useState(false)
+  const latestReceiversCountQueryKeyRef = useRef<string | null>(null)
+  const [completedReceiversCountQueryKey, setCompletedReceiversCountQueryKey] =
+    useState<string | null>(null)
 
   const workspaceId = useWorkspaceId()
 
@@ -518,6 +525,46 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const watchedMessengerTemplateData = watchedTemplateData as
     | MessengerTemplateParams
     | undefined
+
+  const receiversCountParams = useMemo(
+    () => ({
+      contactFilter: watchedContactFilter,
+      channel: props.channel,
+      integrationWhatsappId: watchedIntegrationWhatsappId,
+      integrationMessengerId: watchedIntegrationMessengerId,
+      subaction: props.subaction,
+    }),
+    [
+      watchedContactFilter,
+      props.channel,
+      props.subaction,
+      watchedIntegrationWhatsappId,
+      watchedIntegrationMessengerId,
+    ],
+  )
+
+  const receiversCountQueryKey = useMemo(
+    () => JSON.stringify(receiversCountParams),
+    [receiversCountParams],
+  )
+
+  const fetchReceiversCount = useDebouncedCallback(
+    async (
+      params: typeof receiversCountParams,
+      queryKey: string,
+    ): Promise<void> => {
+      await getContactInboxesCount(params)
+
+      if (latestReceiversCountQueryKeyRef.current === queryKey) {
+        setCompletedReceiversCountQueryKey(queryKey)
+      }
+    },
+    300,
+  )
+
+  const isReceiversCountLoading =
+    loadingInboxesCount ||
+    completedReceiversCountQueryKey !== receiversCountQueryKey
 
   const [selectedTemplate, setSelectedTemplate] =
     useState<MessageTemplateWithComponents | null>(null)
@@ -619,21 +666,10 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId, setValue])
 
   useEffect(() => {
-    fetchReceiversCount({
-      contactFilter: watchedContactFilter,
-      channel: props.channel,
-      integrationWhatsappId: watchedIntegrationWhatsappId,
-      integrationMessengerId: watchedIntegrationMessengerId,
-      subaction: props.subaction,
-    })
-  }, [
-    watchedContactFilter,
-    props.channel,
-    props.subaction,
-    watchedIntegrationWhatsappId,
-    watchedIntegrationMessengerId,
-    fetchReceiversCount,
-  ])
+    latestReceiversCountQueryKeyRef.current = receiversCountQueryKey
+    setCompletedReceiversCountQueryKey(null)
+    fetchReceiversCount(receiversCountParams, receiversCountQueryKey)
+  }, [fetchReceiversCount, receiversCountParams, receiversCountQueryKey])
 
   useEffect(() => {
     if (watchedTemplateId && whatsappTemplates.length > 0) {
@@ -898,11 +934,24 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
       </Card>
 
       <div className="flex items-center justify-between">
-        <div className="flex-1 text-gray-500 text-sm">
-          {t("broadcasts.receiversCount", {
-            count: count || 0,
-          })}
-        </div>
+        <Button
+          className="h-auto px-0 text-gray-500 text-sm"
+          disabled={isReceiversCountLoading || !count}
+          onClick={() => setAudiencePreviewOpen(true)}
+          type="button"
+          variant="link"
+        >
+          {isReceiversCountLoading ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Loader2Icon className="size-3 animate-spin" />
+              {t("broadcasts.receiversLoading")}
+            </span>
+          ) : (
+            t("broadcasts.receiversCount", {
+              count: count || 0,
+            })
+          )}
+        </Button>
         <div className="flex justify-end gap-2">
           <Button onClick={handleCancel} type="button" variant="outline">
             {t("actions.cancel")}
@@ -919,9 +968,22 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
           <BroadcastConfirmDialog
             count={count || 0}
+            isReceiversCountLoading={isReceiversCountLoading}
             isSubmitting={formState.isSubmitting}
             onOpenChange={setConfirmOpen}
+            onPreviewReceivers={() => setAudiencePreviewOpen(true)}
             open={confirmOpen}
+          />
+          <BroadcastAudiencePreviewDialog
+            channel={props.channel}
+            contactFilter={watchedContactFilter}
+            integrationMessengerId={watchedIntegrationMessengerId}
+            integrationWhatsappId={watchedIntegrationWhatsappId}
+            onOpenChange={setAudiencePreviewOpen}
+            open={audiencePreviewOpen}
+            subaction={props.subaction}
+            total={count || 0}
+            workspaceId={workspaceId}
           />
         </div>
       </div>

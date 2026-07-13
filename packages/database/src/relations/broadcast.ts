@@ -14,6 +14,10 @@ export const broadcastRelations = defineRelationsPart(schema, (r) => ({
       ),
       to: r.contactModel.id.through(r.contactsOnBroadcastsModel.contactId),
     }),
+    flow: r.one.flowModel({
+      from: r.broadcastModel.flowId,
+      to: r.flowModel.id,
+    }),
     integrationWhatsapp: r.one.integrationWhatsappModel({
       from: r.broadcastModel.integrationWhatsappId,
       to: r.integrationWhatsappModel.id,
