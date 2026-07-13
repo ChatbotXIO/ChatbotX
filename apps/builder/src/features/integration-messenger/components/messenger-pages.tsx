@@ -1,8 +1,13 @@
 "use client"
 
-import type { FacebookPage } from "@chatbotx.io/integration-messenger/schema"
+import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@chatbotx.io/ui/components/ui/alert"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,17 +26,35 @@ export type CoexistTrigger = {
   resolvedWorkspaceId: string
 }
 
+export type PickerFacebookPage = ConnectableFacebookPage & {
+  isAlreadyConnected: boolean
+}
+
+function getPageOptionNote(
+  page: PickerFacebookPage,
+  t: ReturnType<typeof useTranslations>,
+): string | undefined {
+  if (page.isAlreadyConnected) {
+    return t("messenger.selectPage.alreadyConnectedNote")
+  }
+  if (!page.isConnectable) {
+    return t("messenger.selectPage.notAdminNote")
+  }
+  return
+}
+
 export function FacebookPages({
   workspaceId,
   pages,
   onCoexistRequired,
 }: {
   workspaceId?: string | null
-  pages: FacebookPage[]
+  pages: PickerFacebookPage[]
   onCoexistRequired: (trigger: CoexistTrigger) => void
 }) {
   const t = useTranslations()
 
+  const cancelHref = `/space/${workspaceId}/settings/channels?channel=messenger`
   const { form, handleSubmitWithAction } = useHookFormAction(
     selectPageAction,
     zodResolver(selectPageRequest),
@@ -73,6 +96,29 @@ export function FacebookPages({
     setValue("pageName", selectPage?.name ?? "")
   }, [watchedPageId, setValue, pages])
 
+  if (pages.length === 0) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="warning">
+          <AlertTitle>{t("messenger.selectPage.noPagesTitle")}</AlertTitle>
+          <AlertDescription>
+            {t("messenger.selectPage.noPagesDescription")}
+          </AlertDescription>
+        </Alert>
+        <div className="flex justify-end gap-2">
+          <Button asChild size="sm" variant="ghost">
+            <Link href={cancelHref}>{t("actions.cancel")}</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/channels/create">
+              {t("messenger.selectPage.tryAgain")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
@@ -81,13 +127,17 @@ export function FacebookPages({
           <InputField name="pageName" type="hidden" />
         </div>
 
-        <div className="max-h-75 overflow-y-auto pr-1">
+        {/* Styling ::-webkit-scrollbar opts out of the OS overlay scrollbar,
+            so the bar stays visible whenever the list overflows. */}
+        <div className="max-h-75 overflow-y-auto pr-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:w-2">
           <RadioGroupField
             label={t("messenger.selectFacebookPage")}
             name="pageId"
             options={pages.map((page) => ({
               value: page.id,
               label: page.name,
+              disabled: !page.isConnectable || page.isAlreadyConnected,
+              description: getPageOptionNote(page, t),
             }))}
             required
           />
@@ -95,11 +145,7 @@ export function FacebookPages({
 
         <div className="flex justify-end gap-2">
           <Button asChild size="sm" variant="ghost">
-            <Link
-              href={`/space/${workspaceId}/settings/channels?channel=messenger`}
-            >
-              {t("actions.cancel")}
-            </Link>
+            <Link href={cancelHref}>{t("actions.cancel")}</Link>
           </Button>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}

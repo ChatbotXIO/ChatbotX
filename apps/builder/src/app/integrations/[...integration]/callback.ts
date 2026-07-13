@@ -18,6 +18,7 @@ import {
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import { exchangeCodeForToken as exchangeMessengerCode } from "@chatbotx.io/integration-messenger"
+import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import {
   AuthType,
   type AuthValue,
@@ -199,11 +200,25 @@ export const handleCallback = async (
         return redirect(safeReferer)
       }
 
-      const userToken = await exchangeMessengerCode(
+      const shortLivedToken = await exchangeMessengerCode(
         messengerCredential.config,
         code,
         callbackUrl,
       )
+      // Exchange for a long-lived user token before the page-select step so
+      // the pending-auth cookie stays usable even when the user leaves the
+      // picker open for a long time. Best-effort: the short-lived token still
+      // covers the normal flow if the exchange fails.
+      const userToken = await exchangeMessengerLongLivedToken(
+        messengerCredential.config,
+        shortLivedToken,
+      ).catch((error) => {
+        logger.warn(
+          { err: error },
+          "Messenger long-lived token exchange failed, using short-lived token",
+        )
+        return shortLivedToken
+      })
       const token = await encryptAuth({
         userToken,
         workspaceId: workspace.id,
