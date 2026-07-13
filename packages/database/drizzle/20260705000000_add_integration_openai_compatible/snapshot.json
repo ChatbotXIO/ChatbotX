@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "c99c52e7-fc64-4a5c-8d7d-b49922292274",
-  "prevIds": ["0a09c779-f0c9-4b76-b65e-0c4e615d0b8e"],
+  "id": "0a09c779-f0c9-4b76-b65e-0c4e615d0b8e",
+  "prevIds": ["85aec655-d466-4f2d-b33c-02e570322584"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -168,12 +168,6 @@
       "schema": "public"
     },
     {
-      "values": ["messenger", "instagram"],
-      "name": "fbCommentAutomationType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
       "values": ["import", "generic", "export"],
       "name": "fileContextType",
       "entityType": "enums",
@@ -194,8 +188,7 @@
         "trigger",
         "webhook",
         "sequence",
-        "emailTopic",
-        "fbComment"
+        "emailTopic"
       ],
       "name": "folderType",
       "entityType": "enums",
@@ -563,6 +556,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "TenantHelpItem",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "UserQuota",
       "entityType": "tables",
       "schema": "public"
@@ -570,18 +569,6 @@
     {
       "isRlsEnabled": false,
       "name": "ErrorLog",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "FBCommentAutomation",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "FBCommentAutomationReply",
       "entityType": "tables",
       "schema": "public"
     },
@@ -744,6 +731,12 @@
     {
       "isRlsEnabled": false,
       "name": "IntegrationOpenai",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "IntegrationOpenaiCompatible",
       "entityType": "tables",
       "schema": "public"
     },
@@ -7797,6 +7790,110 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "icon",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "position",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "UserQuota"
     },
     {
@@ -8188,344 +8285,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ErrorLog"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "folderId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "fbCommentAutomationType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'messenger'",
-      "generated": null,
-      "identity": null,
-      "name": "type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "true",
-      "generated": null,
-      "identity": null,
-      "name": "isActive",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "startTime",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "endTime",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "repliesCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"type\":\"all\",\"value\":[]}'",
-      "generated": null,
-      "identity": null,
-      "name": "post",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"type\":\"text\",\"value\":\"\"}'",
-      "generated": null,
-      "identity": null,
-      "name": "privateReply",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"type\":\"none\",\"value\":null}'",
-      "generated": null,
-      "identity": null,
-      "name": "publicReply",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"type\":\"all\",\"value\":[]}'",
-      "generated": null,
-      "identity": null,
-      "name": "includeKeywords",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 1,
-      "default": "ARRAY[]",
-      "generated": null,
-      "identity": null,
-      "name": "excludeKeywords",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"replyToNewContactsOnly\":false,\"replyOncePerUserPerPost\":false,\"likeUserComment\":false,\"replyToUsersWhoCommentedOnOtherPosts\":true,\"ignoreCommentReplies\":true,\"trackUserTags\":false}'",
-      "generated": null,
-      "identity": null,
-      "name": "options",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"all\":false,\"hasPhoneNumber\":false,\"hasImage\":false,\"hasVideo\":false,\"hasLink\":false,\"hasKeywords\":false,\"keywords\":[],\"showCommentsAfter\":\"none\"}'",
-      "generated": null,
-      "identity": null,
-      "name": "hideComments",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{\"type\":\"immediately\",\"value\":0}'",
-      "generated": null,
-      "identity": null,
-      "name": "replyAfter",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "automationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "postId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
     },
     {
       "type": "bigint",
@@ -11633,6 +11392,162 @@
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationOpenai"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "autoReply",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "baseURL",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "defaultModel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "preset",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
     },
     {
       "type": "bigint",
@@ -18897,7 +18812,14 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "workspaceId",
+          "value": "tenantId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "position",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -18909,66 +18831,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "FBCommentAutomation_workspaceId_idx",
+      "name": "TenantHelpItem_tenantId_position_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "folderId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "FBCommentAutomation_folderId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "automationId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "contactId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "postId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "FBCommentAutomationReply_dedup_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
+      "table": "TenantHelpItem"
     },
     {
       "nameExplicit": true,
@@ -20061,6 +19927,76 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationOpenai"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationOpenaiCompatible_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationOpenaiCompatible_integrationId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "preset",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"preset\" <> 'custom'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationOpenaiCompatible_workspaceId_preset_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
     },
     {
       "nameExplicit": true,
@@ -23328,6 +23264,19 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["tenantId"],
+      "schemaTo": "public",
+      "tableTo": "Tenant",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TenantHelpItem_tenantId_Tenant_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TenantHelpItem"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
@@ -23364,71 +23313,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "ErrorLog"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["workspaceId"],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "FBCommentAutomation_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["folderId"],
-      "schemaTo": "public",
-      "tableTo": "Folder",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "FBCommentAutomation_folderId_Folder_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["automationId"],
-      "schemaTo": "public",
-      "tableTo": "FBCommentAutomation",
-      "columnsTo": ["id"],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "FBCommentAutomationReply_Q6yXIfuQcsD0_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["contactId"],
-      "schemaTo": "public",
-      "tableTo": "Contact",
-      "columnsTo": ["id"],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "FBCommentAutomationReply_contactId_Contact_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["workspaceId"],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": ["id"],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "FBCommentAutomationReply_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FBCommentAutomationReply"
     },
     {
       "nameExplicit": false,
@@ -24131,6 +24015,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationOpenai"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationId"],
+      "schemaTo": "public",
+      "tableTo": "Integration",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationOpenaiCompatible_integrationId_Integration_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationOpenaiCompatible_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible"
     },
     {
       "nameExplicit": false,
@@ -25520,6 +25430,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "TenantHelpItem_pkey",
+      "schema": "public",
+      "table": "TenantHelpItem",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "UserQuota_pkey",
       "schema": "public",
       "table": "UserQuota",
@@ -25531,22 +25449,6 @@
       "name": "ErrorLog_pkey",
       "schema": "public",
       "table": "ErrorLog",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "FBCommentAutomation_pkey",
-      "schema": "public",
-      "table": "FBCommentAutomation",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "FBCommentAutomationReply_pkey",
-      "schema": "public",
-      "table": "FBCommentAutomationReply",
       "entityType": "pks"
     },
     {
@@ -25763,6 +25665,14 @@
       "name": "IntegrationOpenai_pkey",
       "schema": "public",
       "table": "IntegrationOpenai",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "IntegrationOpenaiCompatible_pkey",
+      "schema": "public",
+      "table": "IntegrationOpenaiCompatible",
       "entityType": "pks"
     },
     {
