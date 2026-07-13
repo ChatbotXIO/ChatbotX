@@ -19,6 +19,7 @@ import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+  CopyPlus,
   EllipsisVerticalIcon,
   FolderUpIcon,
   TextIcon,
@@ -226,6 +227,12 @@ export function getFlowColumns({
             >
               <FolderUpIcon />
               {t("actions.move")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "duplicate" })}
+            >
+              <CopyPlus />
+              {t("actions.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "delete" })}

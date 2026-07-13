@@ -49,12 +49,12 @@ import { GetInboxUrlDialog } from "@/features/inboxes/components/get-inbox-url"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { revertToPublishedAction } from "../actions/revert-to-published-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
+import { DuplicateFlowDialog } from "../duplicate-flow-dialog"
 import {
   type PublishFlowSchema,
   updateFlowVersionSchema,
 } from "../schemas/action"
 import AnalyticsFlow from "./components/analytics-flow"
-import { DuplicateFlowDialog } from "./components/duplicate-flow"
 import { FlowVersionsDialog } from "./components/flow-versions-dialog"
 import { RenameFlowDialog } from "./components/rename-flow"
 import {
@@ -340,7 +340,11 @@ export function FlowEditToolbar({
       <DuplicateFlowDialog
         flow={flow}
         onOpenChange={() => setAction(null)}
+        onSuccess={(duplicatedFlowId) =>
+          router.push(`/space/${workspaceId}/flows/${duplicatedFlowId}`)
+        }
         open={action === "duplicate"}
+        workspaceId={workspaceId}
       />
 
       <DeleteFlowsDialog

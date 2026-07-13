@@ -1,4 +1,10 @@
-import { and, db, desc, eq } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  desc,
+  eq,
+} from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
@@ -6,6 +12,22 @@ import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 
 class FlowVersionService extends BaseService {
+  async findDraft(
+    {
+      flowId,
+      workspaceId,
+    }: {
+      flowId: string
+      workspaceId: string
+    },
+    tx?: DatabaseClient,
+  ): Promise<FlowVersionModel | undefined> {
+    const client = tx ?? db
+    return await client.query.flowVersionModel.findFirst({
+      where: { flowId, workspaceId, isDraft: true },
+    })
+  }
+
   async list({
     flowId,
     workspaceId,
