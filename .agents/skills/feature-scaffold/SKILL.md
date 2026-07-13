@@ -140,6 +140,7 @@ export const createItemAction = workspaceActionClient
 ### Action Clients
 
 - `workspaceActionClient` — requires workspace membership
+- `workspaceActionClientAllowExpired` — resolves membership the same way but skips the trial-expiry gate for delete, disconnect, and cancel actions that must remain available post-expiry. New actions should default to the gated client (fail closed) and opt into this escape hatch only when the operation is intentionally allowed.
 - `authActionClient` — requires authenticated session only
 
 ## Queries (Server-Side)

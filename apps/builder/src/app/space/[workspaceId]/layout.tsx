@@ -12,14 +12,19 @@ import {
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
+import { ExpiredBanner } from "@/components/expired-banner"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { isCloud } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
-import { buildQuotaMetrics, resolveTrialEndsAt } from "@/lib/quota-metrics"
+import {
+  buildQuotaMetrics,
+  isBlockedFromPlan,
+  resolveTrialEndsAt,
+} from "@/lib/quota-metrics"
 
 export default async function WorkspaceLayout({
   children,
@@ -60,13 +65,6 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  // Self-managed trial gate: block the workspace shell once the trial is
-  // consumed. /trial-expired sits outside this layout so it stays reachable.
-  // Derived from the quota already fetched above — no extra query.
-  if (cloud && userQuotaService.getAccessStateFromQuota(quota).blocked) {
-    redirect("/trial-expired")
-  }
-
   const allWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
     ...workspaceMember.workspace,
     logo: workspaceMember.workspace.logo
@@ -75,6 +73,7 @@ export default async function WorkspaceLayout({
   }))
 
   const trialEndsAt = resolveTrialEndsAt(quota)
+  const blocked = isBlockedFromPlan(quota?.planStatus ?? null, trialEndsAt)
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -98,6 +97,7 @@ export default async function WorkspaceLayout({
       />
       <SidebarInset>
         <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+          <ExpiredBanner blocked={cloud && blocked} />
           {children}
         </main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />

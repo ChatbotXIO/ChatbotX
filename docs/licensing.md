@@ -160,8 +160,10 @@ if (max !== null && currentCount >= max) {
   roll it back. Acceptable for an explicitly offline/air-gapped model — the
   signature makes `features`/`limits`/`exp` unforgeable, so only date
   manipulation is possible (low value). `nbf` guards pre-dating.
-- **Hard expiry.** Expiry is a hard cutoff with clear messaging today. A grace
-  window is a later refinement.
+- **Hard expiry.** Offline enterprise-license `exp` remains a hard cutoff with
+  clear messaging. The cloud trial path now has a degraded grace window instead:
+  an expired workspace is read/delete-only with a persistent banner, and its
+  channels are torn down at trial+7d.
 - **No revocation.** Pure offline verification cannot revoke an issued token
   before its `exp`. If online revocation is ever needed, it would be added in
   `../aha.chat-enterprise` as an optional online check layered on top — the

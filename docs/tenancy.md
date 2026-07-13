@@ -212,6 +212,26 @@ and safely acknowledge blocked work without retrying it; system, quota, and tena
 | `packages/business/src/quota-enforcement/service.ts` | Two-level gate (pool + user), live-counter helpers |
 | `packages/business/src/quota-shared/live-counter-store.ts` | `LiveCounterStore` — Redis HINCRBY + DB upsert + cache bust |
 | `apps/worker/src/schedule/handlers/sync-user-quota.ts` | Scheduled reconcile walker |
+| `apps/worker/src/schedule/handlers/purge-workspaces.ts` | Hourly disconnect-first soft-delete purge |
+| `apps/worker/src/schedule/handlers/unsubscribe-expired-trials.ts` | Trial+7d one-shot channel teardown |
+
+### Expired workspace lifecycle
+
+Cloud trial expiry is a degraded access state, not a redirect or hard block:
+the workspace remains read/delete-only and shows a persistent expired banner.
+Create actions use the normal trial-gated client; delete, disconnect, and cancel
+actions use `workspaceActionClientAllowExpired` so cleanup remains possible.
+
+When a user schedules deletion, `Workspace.scheduledDeletionAt` is set to now
+plus 24 hours. The row stays live during that grace window, then the hourly
+`purgeWorkspaces` handler disconnects integrations before hard-deleting the
+workspace and its cascading children. **Disconnect comes first because provider
+webhooks must be deregistered while the integration credentials still exist in
+the database.**
+
+Independently, `unsubscribeExpiredTrials` tears down channels once a trial has
+been expired for seven days. `UserQuota.channelsTornDownAt` is the one-shot
+marker, making retries safe and preventing repeated provider disconnects.
 
 ## Residual security considerations
 

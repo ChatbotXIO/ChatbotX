@@ -8,7 +8,7 @@ Enforced by `lefthook.yml` commit-msg hook. Pattern:
 <type>(<scope>): <subject>
 ```
 
-**Types:** `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `ci`, `perf`, `build`, `revert` (Conventional Commits; non-standard types like `bugfix` are dropped by release-note tooling)
+**Types:** `feat`, `fix`, `bugfix`, `refactor`, `docs`, `style`, `test`, `chore`, `ci`, `perf`, `build`, `revert`
 
 **Examples:**
 ```
@@ -27,11 +27,12 @@ refactor(broadcast): remove reconcile sequence
 ```
 feat/<issue-or-description>
 fix/<issue-or-description>
+bugfix/<issue-or-description>
 chore/<description>
 refactor/<description>
 ```
 
-Examples: `feat/instagram-channel`, `fix/whatsapp-webhook`
+Examples: `feat/instagram-channel`, `fix/whatsapp-webhook`, `bugfix/webhook-timeout`
 
 Bot-generated branches (`dependabot/*`, `renovate/*`) are exempt from this convention and are skipped by the `post-checkout` hook.
 

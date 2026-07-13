@@ -4,14 +4,19 @@ import {
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
+import { ExpiredBanner } from "@/components/expired-banner"
 import { isCloud } from "@/env"
 import { AccountRail } from "@/features/workspaces/components/account-rail"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
-import { buildQuotaMetrics, resolveTrialEndsAt } from "@/lib/quota-metrics"
+import {
+  buildQuotaMetrics,
+  isBlockedFromPlan,
+  resolveTrialEndsAt,
+} from "@/lib/quota-metrics"
 
 export default async function MainPage() {
   const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
@@ -44,36 +49,35 @@ export default async function MainPage() {
     )
     .map((member) => member.workspace.id)
 
-  // Self-managed trial gate (cloud only): a consumed trial can't reach
-  // workspaces. Derived from the quota already fetched above — no extra query.
-  if (cloud && userQuotaService.getAccessStateFromQuota(quota).blocked) {
-    redirect("/trial-expired")
-  }
-
   const trialEndsAt = resolveTrialEndsAt(quota)
+  const blocked = isBlockedFromPlan(quota?.planStatus ?? null, trialEndsAt)
 
   const userInfo = { name: user.name, email: user.email, image: user.image }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:flex-row md:py-16">
-      <AccountRail
-        isPlatformAdmin={platformAdmin}
-        isSuperAdmin={isSuperAdmin(user)}
-        metrics={buildQuotaMetrics(usageSummary)}
-        planName={quota?.planName ?? null}
-        planStatus={quota?.planStatus ?? null}
-        trialEndsAt={trialEndsAt}
-        user={userInfo}
-      />
+    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:py-16">
+      <ExpiredBanner blocked={cloud && blocked} />
+      <div className="flex flex-col gap-8 md:flex-row">
+        <AccountRail
+          isPlatformAdmin={platformAdmin}
+          isSuperAdmin={isSuperAdmin(user)}
+          metrics={buildQuotaMetrics(usageSummary)}
+          planName={quota?.planName ?? null}
+          planStatus={quota?.planStatus ?? null}
+          trialEndsAt={trialEndsAt}
+          user={userInfo}
+        />
 
-      <WorkspacesList
-        isAtLimit={atLimit?.workspaces ?? false}
-        ownerWorkspaceIds={ownerWorkspaceIds}
-        superAdminWorkspaceIds={superAdminWorkspaceIds}
-        user={userInfo}
-        workspaces={allWorkspaces}
-        workspacesLimit={usageSummary?.workspaces.limit ?? null}
-      />
+        <WorkspacesList
+          blocked={cloud && blocked}
+          isAtLimit={atLimit?.workspaces ?? false}
+          ownerWorkspaceIds={ownerWorkspaceIds}
+          superAdminWorkspaceIds={superAdminWorkspaceIds}
+          user={userInfo}
+          workspaces={allWorkspaces}
+          workspacesLimit={usageSummary?.workspaces.limit ?? null}
+        />
+      </div>
     </div>
   )
 }

@@ -291,7 +291,11 @@
     "trialExpired": {
       "title": "Your free trial has ended",
       "description": "Subscribe to a plan to keep using your workspaces.",
-      "cta": "View plans"
+      "cta": "View plans",
+      "bannerTitle": "Trial ended",
+      "bannerDescription": "Creating new resources is disabled. You can still disconnect channels and schedule workspace deletion.",
+      "bannerCta": "Upgrade",
+      "createDisabled": "Creating new {feature} is disabled. Upgrade to continue."
     }
   },
   "broadcasts": {
@@ -565,6 +569,16 @@
       "deactivated": "Workspace deactivated",
       "activeHours": "Active from {startTime} to {endTime}",
       "permissionRequired": "Only a super admin can change workspace active hours"
+    },
+    "deletion": {
+      "title": "Delete workspace",
+      "description": "Permanently delete this workspace. Contacts and all settings will be removed.",
+      "schedule": "Delete workspace",
+      "confirmTitle": "Delete this workspace?",
+      "confirmDescription": "Contacts and all settings will be permanently removed. You can undo this before the deletion completes.",
+      "pending": "This workspace will be deleted {countdown} ({date}). You can undo this at any time before then.",
+      "pendingFallback": "soon",
+      "undone": "Workspace deletion has been canceled"
     }
   },
   "workspaces": {
