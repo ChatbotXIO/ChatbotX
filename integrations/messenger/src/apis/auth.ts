@@ -16,14 +16,6 @@ type SourcedFacebookPage = {
 const MAX_PAGES = 20
 const GRAPH_PAGE_LIMIT = 100
 const BUSINESS_PAGE_BATCH_SIZE = 5
-/**
- * Business Manager owned/client pages lookup is disabled by default:
- * a fully paginated /me/accounts already lists every page the user can
- * actually connect (pages reachable only through a BM role come back
- * without an access_token, so they could not be connected anyway).
- * Kept behind this switch so it can be re-enabled without a rewrite.
- */
-const INCLUDE_BUSINESS_MANAGER_PAGES = false
 const ADMIN_PAGE_TASKS = [
   "ADVERTISE",
   "ANALYZE",
@@ -240,10 +232,7 @@ export function exchangeCodeForToken(
 export async function getUserPages(
   userAccessToken: string,
   version: string = DEFAULT_API_VERSION,
-  options: { includeBusinessManagerPages?: boolean } = {},
 ): Promise<{ pages: ConnectableFacebookPage[]; bmLookupFailed: boolean }> {
-  const includeBusinessManagerPages =
-    options.includeBusinessManagerPages ?? INCLUDE_BUSINESS_MANAGER_PAGES
   const directPagesEndpoint = `${version}/me/accounts`
   const directPages = await rescue(directPagesEndpoint, () =>
     fetchAllPages<FacebookPage>(
@@ -253,9 +242,10 @@ export async function getUserPages(
     ),
   )
 
-  const businessPagesResult = includeBusinessManagerPages
-    ? await getBusinessManagedPages(userAccessToken, version)
-    : { pages: [] as FacebookPage[], failed: false }
+  const businessPagesResult = await getBusinessManagedPages(
+    userAccessToken,
+    version,
+  )
 
   const merged = new Map<string, SourcedFacebookPage>()
   for (const page of directPages) {
@@ -275,12 +265,10 @@ export async function getUserPages(
   const nonConnectable = pages.filter((page) => !page.isConnectable).length
 
   logger.debug({ nonConnectable }, "Classified Messenger pages")
-  if (includeBusinessManagerPages) {
-    if (businessPagesResult.failed) {
-      logger.debug("Business Manager page lookup failed")
-    } else if (businessPagesResult.pages.length === 0) {
-      logger.debug("No Business Manager pages found")
-    }
+  if (businessPagesResult.failed) {
+    logger.debug("Business Manager page lookup failed")
+  } else if (businessPagesResult.pages.length === 0) {
+    logger.debug("No Business Manager pages found")
   }
 
   return { pages, bmLookupFailed: businessPagesResult.failed }
