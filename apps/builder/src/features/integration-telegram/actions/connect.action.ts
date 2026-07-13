@@ -2,6 +2,7 @@
 
 import {
   connectChannelIntegration,
+  userQuotaService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -12,6 +13,7 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
+import { isCloud } from "@/env"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
@@ -44,6 +46,13 @@ export const connectTelegramAction = authActionClient
             where: { id: workspaceId },
           })
           ownerId = workspace.ownerId
+        }
+
+        if (!workspaceId && isCloud()) {
+          const { blocked } = await userQuotaService.getAccessState(ctx.user.id)
+          if (blocked) {
+            throw new ChatbotXException("Trial expired", "trialExpired", 403)
+          }
         }
 
         return await db.transaction(async (tx) => {

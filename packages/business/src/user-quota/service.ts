@@ -319,6 +319,7 @@ class UserQuotaService extends BaseService {
       selectedTrialPlanId: null,
       periodStart: null,
       periodEnd: null,
+      channelsTornDownAt: null,
       syncedAt: now,
     }
 

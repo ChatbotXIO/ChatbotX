@@ -1,21 +1,9 @@
 "use server"
 
 import { integrationMailerLiteService } from "@chatbotx.io/business"
-import { normalizeError } from "universal-error-normalizer"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { logger } from "@/lib/log"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { createDisconnectAction } from "@/lib/integration-actions"
 
-export const disconnectMailerLiteAction = workspaceActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
-  .action(async ({ bindArgsParsedInputs: [workspaceId] }) => {
-    try {
-      await integrationMailerLiteService.disconnect(workspaceId)
-    } catch (error) {
-      logger.error(
-        { err: normalizeError(error), workspaceId },
-        "Failed to disconnect MailerLite",
-      )
-      throw error
-    }
-  })
+export const disconnectMailerLiteAction = createDisconnectAction(
+  integrationMailerLiteService,
+  { name: "MailerLite" },
+)
