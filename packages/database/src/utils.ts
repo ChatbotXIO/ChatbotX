@@ -1,4 +1,4 @@
-import { asc, desc, type SQL } from "drizzle-orm"
+import { type AnyColumn, asc, desc, type SQL } from "drizzle-orm"
 import type { PgTable } from "drizzle-orm/pg-core"
 
 type PaginationInput = {
@@ -17,6 +17,12 @@ export const defaultPagination = {
   limit: 20,
   offset: 0,
 }
+
+export const escapeLikePattern = (value: string): string =>
+  value.replace(/[\\%_]/g, "\\$&")
+
+export const likeContains = (value: string): string =>
+  `%${escapeLikePattern(value)}%`
 
 export const parsePagination = (
   input: PaginationInput,
@@ -65,13 +71,10 @@ export const parseOrderBy = (
 
   return input.sort.reduce((acc, sortItem) => {
     if (sortItem.id in modelSchema) {
-      acc.push(
-        sortItem.desc
-          ? // biome-ignore lint/suspicious/noExplicitAny: safe cast
-            desc((modelSchema as any)[sortItem.id])
-          : // biome-ignore lint/suspicious/noExplicitAny: safe cast
-            asc((modelSchema as any)[sortItem.id]),
-      )
+      const column = (modelSchema as unknown as Record<string, unknown>)[
+        sortItem.id
+      ] as AnyColumn
+      acc.push(sortItem.desc ? desc(column) : asc(column))
     }
     return acc
   }, [] as SQL[])

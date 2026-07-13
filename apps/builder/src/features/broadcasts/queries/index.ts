@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
@@ -20,7 +21,7 @@ export async function listBroadcasts(
 
   const where = {
     workspaceId: input.workspaceId,
-    name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
+    name: input.name ? { ilike: likeContains(input.name) } : undefined,
   }
 
   const pagination = getPaginationWithDefaults(input)

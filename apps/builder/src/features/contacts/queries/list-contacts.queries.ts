@@ -4,7 +4,10 @@ import {
   countWithRelationsFilterCapped,
   db,
 } from "@chatbotx.io/database/client"
-import { applyContactFilter } from "@chatbotx.io/database/queries"
+import {
+  applyContactFilter,
+  buildSmartKeywordWhere,
+} from "@chatbotx.io/database/queries"
 import { contactModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
@@ -227,25 +230,15 @@ export const generateWhere = (
   input: ListContactsRequest,
   scope?: ContactPermissionScope,
 ) => {
-  const keyword = input.keyword?.toLowerCase()
   const where: ContactWhere = {
     workspaceId: input.workspaceId,
   }
 
   const filters = [
-    keyword
-      ? {
-          OR: [
-            { firstName: { ilike: `%${keyword}%` } },
-            { lastName: { ilike: `%${keyword}%` } },
-            ...(scope?.canViewEmailAndPhone === false
-              ? []
-              : [
-                  { email: { ilike: `%${keyword}%` } },
-                  { phoneNumber: { ilike: `%${keyword}%` } },
-                ]),
-          ],
-        }
+    input.keyword
+      ? buildSmartKeywordWhere(input.keyword, {
+          includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
+        })
       : undefined,
     input.contactFilter ? applyContactFilter(input.contactFilter) : undefined,
   ].filter((filter): filter is ContactWhere =>

@@ -20,6 +20,7 @@ import type {
   ProductVariantOptionModel,
 } from "@chatbotx.io/database/types"
 import {
+  likeContains,
   parseOrderByAsObject,
   parsePagination,
 } from "@chatbotx.io/database/utils"
@@ -113,7 +114,7 @@ class ProductService extends BaseService {
   ): Promise<ListProductsResponse> {
     const where = {
       workspaceId: input.workspaceId,
-      name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
     }
     const pagination = parsePagination(input)
     const orderBy = parseOrderByAsObject(productModel, input)

@@ -3,11 +3,16 @@ import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { flowModel } from "@chatbotx.io/database/schema"
 import {
+  likeContains,
   parseOrderByAsObject,
   parsePagination,
 } from "@chatbotx.io/database/utils"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { filterFlowsByTemplateIds } from "../actions/filter-flow-action"
+import {
+  filterFlowsByStartStepType,
+  filterFlowsByTemplateIds,
+} from "../actions/filter-flow-action"
 import type {
   FindFlowParams,
   ListFlowsRequest,
@@ -36,7 +41,7 @@ export async function listFlows(
       : undefined,
     name: input.name
       ? {
-          ilike: `%${input.name.toLowerCase()}%`,
+          ilike: likeContains(input.name),
         }
       : undefined,
     active: input.active === null ? undefined : input.active,
@@ -66,19 +71,23 @@ export async function listFlows(
     db.$count(flowModel, relationsFilterToSQL(flowModel, where)),
   ])
 
-  if (input.startType === "WA_TM01") {
-    if (input.integrationWhatsappId) {
-      const templates = await db.query.whatsappMessageTemplateModel.findMany({
-        where: { integrationWhatsappId: input.integrationWhatsappId },
-        columns: { id: true },
-      })
-      const templateIds = templates.map((t) => t.id)
-      data = filterFlowsByTemplateIds(data, templateIds)
-      total = data.length
-    } else {
-      data = []
-      total = 0
+  if (input.startType) {
+    data = filterFlowsByStartStepType(data, input.startType)
+
+    if (input.startType === stepTypes.enum.sendWaTemplateMessage) {
+      if (input.integrationWhatsappId) {
+        const templates = await db.query.whatsappMessageTemplateModel.findMany({
+          where: { integrationWhatsappId: input.integrationWhatsappId },
+          columns: { id: true },
+        })
+        const templateIds = templates.map((t) => t.id)
+        data = filterFlowsByTemplateIds(data, templateIds)
+      } else {
+        data = []
+      }
     }
+
+    total = data.length
   }
 
   const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1

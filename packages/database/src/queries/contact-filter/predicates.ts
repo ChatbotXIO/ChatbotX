@@ -1,6 +1,8 @@
 import { type AnyColumn, type SQL, sql } from "drizzle-orm"
 import { operatorTypes } from "../../partials"
-import { contactInboxModel } from "../../schema"
+import { contactInboxModel, messageModel } from "../../schema"
+import { escapeLikePattern, likeContains } from "../../utils"
+import { contactInboxExists } from "./exists"
 import type { ContactWhere, RawTable, RelationExists } from "./types"
 
 const NUMERIC_VALUE_PATTERN = /^-?\d+(\.\d+)?$/
@@ -18,9 +20,6 @@ const COLUMN_NEGATION_OPERATORS = new Set<string>([
   operatorTypes.enum.notContains,
 ])
 
-export const escapeLikePattern = (value: string): string =>
-  value.replace(/[\\%_]/g, "\\$&")
-
 export const contactInboxInteractedWithin24hSQL = (): SQL =>
   sql`${contactInboxModel.lastIncomingMessageAt} >= NOW() - INTERVAL '24 hours'`
 
@@ -35,7 +34,36 @@ export function buildColumnWhere(
   columnName: string,
   operator: string,
   value: unknown,
+  options?: { caseInsensitiveEquality?: boolean },
 ): ContactWhere {
+  if (
+    typeof value === "string" &&
+    value !== "" &&
+    options?.caseInsensitiveEquality &&
+    operator === operatorTypes.enum.eq
+  ) {
+    return buildRawColumnWhere(
+      columnName,
+      (column) => sql`${column} ILIKE ${escapeLikePattern(value)}`,
+    )
+  }
+
+  if (
+    typeof value === "string" &&
+    value !== "" &&
+    options?.caseInsensitiveEquality &&
+    operator === operatorTypes.enum.ne
+  ) {
+    const condition = buildRawColumnWhere(
+      columnName,
+      (column) => sql`${column} NOT ILIKE ${escapeLikePattern(value)}`,
+    )
+
+    return {
+      OR: [condition, { [columnName]: { isNull: true } }],
+    }
+  }
+
   if (
     typeof value === "string" &&
     value !== "" &&
@@ -336,6 +364,50 @@ export function buildExistsBooleanWhere(
   return exists(yesPredicate, isNo)
 }
 
+export function buildLastCommentWhere(
+  operator: string,
+  value: unknown,
+): ContactWhere {
+  if (operator === operatorTypes.enum.isEmpty) {
+    return contactInboxExists(
+      sql`${contactInboxModel.lastCommentMessageId} IS NOT NULL`,
+      true,
+    )
+  }
+
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    return contactInboxExists(
+      sql`${contactInboxModel.lastCommentMessageId} IS NOT NULL`,
+      false,
+    )
+  }
+
+  if (typeof value !== "string" || value === "") {
+    return {}
+  }
+
+  const messageTextPredicate = buildLastCommentTextPredicate(operator, value)
+  if (!messageTextPredicate) {
+    return {}
+  }
+
+  const commentPredicate = sql`${contactInboxModel.lastCommentMessageId} ~ '^[0-9]+$' AND EXISTS (
+    SELECT 1
+    FROM ${messageModel}
+    WHERE ${messageModel.id} = CASE
+      WHEN ${contactInboxModel.lastCommentMessageId} ~ '^[0-9]+$'
+      THEN ${contactInboxModel.lastCommentMessageId}::bigint
+    END
+      AND ${messageTextPredicate}
+  )`
+
+  const shouldNegate =
+    operator === operatorTypes.enum.ne ||
+    operator === operatorTypes.enum.notContains
+
+  return contactInboxExists(commentPredicate, shouldNegate)
+}
+
 function buildDatetimeAggregateComparison(
   operator: string,
   value: unknown,
@@ -577,7 +649,7 @@ function canBuildMinutesAgoComparison(
   return isNonNegativeInteger(value)
 }
 
-function buildTextSearchComparison(
+export function buildTextSearchComparison(
   operator: string,
   value: string,
   textExpression: SQL,
@@ -585,15 +657,47 @@ function buildTextSearchComparison(
 ): SQL | undefined {
   switch (operator) {
     case operatorTypes.enum.contains:
-      return sql`${textExpression} ILIKE ${`%${escapeLikePattern(value)}%`}`
+      return sql`${textExpression} ILIKE ${likeContains(value)}`
     case operatorTypes.enum.notContains:
-      return sql`(${textExpression} NOT ILIKE ${`%${escapeLikePattern(value)}%`} OR ${emptyPredicate})`
+      return sql`(${textExpression} NOT ILIKE ${likeContains(value)} OR ${emptyPredicate})`
     case operatorTypes.enum.startsWith:
       return sql`${textExpression} ILIKE ${`${escapeLikePattern(value)}%`}`
     case operatorTypes.enum.endsWith:
       return sql`${textExpression} ILIKE ${`%${escapeLikePattern(value)}`}`
     default:
       return
+  }
+}
+
+function buildLastCommentTextPredicate(
+  operator: string,
+  value: string,
+): SQL | undefined {
+  const textExpression = sql`${messageModel.text}`
+  const emptyPredicate = sql`${messageModel.text} IS NULL OR ${messageModel.text} = ''`
+
+  switch (operator) {
+    // eq/ne both build the positive (case-insensitive equality) predicate; the
+    // caller applies NOT EXISTS for ne, so the SQL here is intentionally shared.
+    case operatorTypes.enum.eq:
+    case operatorTypes.enum.ne:
+      return sql`${textExpression} ILIKE ${escapeLikePattern(value)}`
+    // notContains builds the positive "contains" predicate; negation is applied
+    // by the caller's NOT EXISTS.
+    case operatorTypes.enum.notContains:
+      return buildTextSearchComparison(
+        operatorTypes.enum.contains,
+        value,
+        textExpression,
+        emptyPredicate,
+      )
+    default:
+      return buildTextSearchComparison(
+        operator,
+        value,
+        textExpression,
+        emptyPredicate,
+      )
   }
 }
 
@@ -655,9 +759,9 @@ function applyOperator(operator: string, value: unknown): unknown {
     case operatorTypes.enum.isNotEmpty:
       return { isNotNull: true }
     case operatorTypes.enum.contains:
-      return { ilike: `%${escapeLikePattern(String(value))}%` }
+      return { ilike: likeContains(String(value)) }
     case operatorTypes.enum.notContains:
-      return { notIlike: `%${escapeLikePattern(String(value))}%` }
+      return { notIlike: likeContains(String(value)) }
     case operatorTypes.enum.lt:
       return { lt: value }
     case operatorTypes.enum.lte:

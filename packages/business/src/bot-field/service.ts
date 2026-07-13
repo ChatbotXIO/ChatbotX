@@ -13,6 +13,7 @@ import {
 import { botFieldModel, customFieldModel } from "@chatbotx.io/database/schema"
 import type { BotFieldModel } from "@chatbotx.io/database/types"
 import {
+  likeContains,
   parseOrderByAsObject,
   parsePagination,
 } from "@chatbotx.io/database/utils"
@@ -56,7 +57,7 @@ class BotFieldService extends BaseService {
           ? { isNull: true as const }
           : input.folderId
         : undefined,
-      name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
     }
 
     const orderBy = parseOrderByAsObject(customFieldModel, input)

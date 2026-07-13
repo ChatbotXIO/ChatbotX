@@ -7,13 +7,9 @@ import {
   contactsToTagsModel,
   refLinkStatModel,
 } from "../../schema"
-import { joinTableExists } from "./exists"
+import { contactInboxExists, joinTableExists } from "./exists"
 import type { ContactWhere, RelationExists } from "./types"
 
-const contactInboxExists = joinTableExists(
-  contactInboxModel,
-  contactInboxModel.contactId,
-)
 const tagsExists = joinTableExists(
   contactsToTagsModel,
   contactsToTagsModel.contactId,
@@ -140,5 +136,3 @@ export function buildRelationSetWhere(
     !positive,
   )
 }
-
-export { contactInboxExists }

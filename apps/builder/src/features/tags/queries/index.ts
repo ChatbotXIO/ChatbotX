@@ -2,6 +2,7 @@ import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import {
+  likeContains,
   parseOrderByAsObject,
   parsePagination,
 } from "@chatbotx.io/database/utils"
@@ -27,7 +28,7 @@ export async function listTags(
   const where = {
     workspaceId: input.workspaceId,
     deletedAt: { isNull: true as const },
-    name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
+    name: input.name ? { ilike: likeContains(input.name) } : undefined,
     folderId: input.folderId
       ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
         input.folderId === rootFolderId

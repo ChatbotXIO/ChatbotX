@@ -3,6 +3,7 @@ import { rootFolderId } from "@chatbotx.io/database/partials"
 import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
+  likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -29,7 +30,7 @@ export async function listFbComments(
     folderId: folderIdFilter,
     name: input.name
       ? {
-          ilike: `%${input.name}%`,
+          ilike: likeContains(input.name),
         }
       : undefined,
     isActive:

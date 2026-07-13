@@ -23,6 +23,24 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: (criteria: unknown) => applyContactFilterSpy(criteria),
+  buildSmartKeywordWhere: (
+    keyword: string,
+    options?: { includeEmailAndPhone?: boolean },
+  ) => {
+    const normalizedKeyword = keyword.toLowerCase()
+    return {
+      OR: [
+        { firstName: { ilike: `%${normalizedKeyword}%` } },
+        { lastName: { ilike: `%${normalizedKeyword}%` } },
+        ...(options?.includeEmailAndPhone === false
+          ? []
+          : [
+              { email: { ilike: `%${normalizedKeyword}%` } },
+              { phoneNumber: { ilike: `%${normalizedKeyword}%` } },
+            ]),
+      ],
+    }
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

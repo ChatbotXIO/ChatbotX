@@ -11,10 +11,11 @@ import {
   contactModel,
   conversationModel,
 } from "../../schema"
+import { likeContains } from "../../utils"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import { buildCustomFieldWhere } from "./custom-field-predicates"
-import { joinTableExists } from "./exists"
+import { contactInboxExists, joinTableExists } from "./exists"
 import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
@@ -22,14 +23,14 @@ import {
   buildDateColumnWhere,
   buildExistingContactWhere,
   buildExistsBooleanWhere,
+  buildLastCommentWhere,
   buildLatestContactInboxDateWhere,
   buildLatestContactInboxMinutesAgoWhere,
   buildLatestContactInboxNumberWhere,
   buildMinutesAgoWhere,
   contactInboxInteractedWithin24hSQL as buildRecentInteractionPredicate,
-  escapeLikePattern,
 } from "./predicates"
-import { buildRelationSetWhere, contactInboxExists } from "./relation-sets"
+import { buildRelationSetWhere } from "./relation-sets"
 import type {
   ContactWhere,
   ContactFilterConditionInput as FilterConditionInput,
@@ -116,17 +117,77 @@ const buildConversationAssignedWhere = (
   return predicate ? conversationExists(predicate, negative) : {}
 }
 
-const buildKeywordWhere = (keyword: string): ContactWhere => {
-  const normalizedKeyword = `%${escapeLikePattern(keyword.toLowerCase())}%`
+const EMAIL_KEYWORD_PATTERN = /@/
+const PHONE_KEYWORD_PATTERN = /^[+\d\s\-()]+$/
+const PURE_DIGITS_KEYWORD_PATTERN = /^\d+$/
 
-  return {
+type SmartKeywordOptions = {
+  includeEmailAndPhone?: boolean
+  includeSourceId?: boolean
+}
+
+export const buildSmartKeywordWhere = (
+  keyword: string,
+  options: SmartKeywordOptions = {},
+): ContactWhere => {
+  const trimmedKeyword = keyword.trim()
+  if (trimmedKeyword === "") {
+    return {}
+  }
+
+  const includeEmailAndPhone = options.includeEmailAndPhone !== false
+  const includeSourceId = options.includeSourceId !== false
+  const normalizedKeyword = trimmedKeyword.toLowerCase()
+  const likeKeyword = likeContains(normalizedKeyword)
+  const sourceIdWhere = includeSourceId
+    ? contactInboxExists(
+        sql`${contactInboxModel.sourceId} = ${trimmedKeyword}`,
+        false,
+      )
+    : undefined
+
+  // When the scope hides email/phone, email- and phone-like inputs fall back
+  // here instead of returning {} — an empty where would silently drop the
+  // keyword and render a fully unfiltered list.
+  const namesAndSourceIdWhere: ContactWhere = {
     OR: [
-      { firstName: { ilike: normalizedKeyword } },
-      { lastName: { ilike: normalizedKeyword } },
-      { email: { ilike: normalizedKeyword } },
-      { phoneNumber: { ilike: normalizedKeyword } },
+      { firstName: { ilike: likeKeyword } },
+      { lastName: { ilike: likeKeyword } },
+      ...(sourceIdWhere ? [sourceIdWhere] : []),
     ],
   }
+
+  if (EMAIL_KEYWORD_PATTERN.test(trimmedKeyword)) {
+    return includeEmailAndPhone
+      ? { email: { ilike: likeKeyword } }
+      : namesAndSourceIdWhere
+  }
+
+  const digitCount = trimmedKeyword.replace(/\D/g, "").length
+  if (PURE_DIGITS_KEYWORD_PATTERN.test(trimmedKeyword)) {
+    return {
+      OR: [
+        { firstName: { ilike: likeKeyword } },
+        { lastName: { ilike: likeKeyword } },
+        ...(includeEmailAndPhone
+          ? [
+              { email: { ilike: likeKeyword } },
+              { phoneNumber: { ilike: likeKeyword } },
+            ]
+          : []),
+        ...(sourceIdWhere ? [sourceIdWhere] : []),
+      ],
+    }
+  }
+
+  if (PHONE_KEYWORD_PATTERN.test(trimmedKeyword) && digitCount >= 6) {
+    const normalizedPhoneKeyword = trimmedKeyword.replace(/[\s\-()]/g, "")
+    return includeEmailAndPhone
+      ? { phoneNumber: { ilike: likeContains(normalizedPhoneKeyword) } }
+      : namesAndSourceIdWhere
+  }
+
+  return namesAndSourceIdWhere
 }
 
 export function buildContactWhere(input: FilterWhereInput): ContactWhere {
@@ -135,7 +196,7 @@ export function buildContactWhere(input: FilterWhereInput): ContactWhere {
   }
 
   const filters = [
-    input.keyword ? buildKeywordWhere(input.keyword) : undefined,
+    input.keyword ? buildSmartKeywordWhere(input.keyword) : undefined,
     input.contactFilter ? applyContactFilter(input.contactFilter) : undefined,
   ].filter((filter): filter is ContactWhere =>
     filter ? hasWhereParts(filter) : false,
@@ -215,17 +276,26 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
   switch (field) {
     case "fullName":
     case "email":
-    case "gender":
-    case "country":
-    case "locale":
-    case "timezone":
-      return buildColumnWhere(field, operator, value)
+      return buildColumnWhere(field, operator, value, {
+        caseInsensitiveEquality: true,
+      })
 
     case "continent":
       return buildContinentWhere(operator, value)
 
     case "phone":
-      return buildColumnWhere("phoneNumber", operator, value)
+      return buildColumnWhere("phoneNumber", operator, value, {
+        caseInsensitiveEquality: true,
+      })
+
+    case "lastComment":
+      return buildLastCommentWhere(operator, value)
+
+    case "gender":
+    case "country":
+    case "locale":
+    case "timezone":
+      return buildColumnWhere(field, operator, value)
 
     case "contactCreatedAt":
       return buildDateColumnWhere("createdAt", operator, value)
