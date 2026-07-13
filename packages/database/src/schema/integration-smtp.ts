@@ -1,4 +1,4 @@
-import { index, jsonb, pgTable, text } from "drizzle-orm/pg-core"
+import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
@@ -28,5 +28,6 @@ export const integrationSmtpModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    uniqueIndex("IntegrationSmtp_inboxId_key").on(table.inboxId),
   ],
 )

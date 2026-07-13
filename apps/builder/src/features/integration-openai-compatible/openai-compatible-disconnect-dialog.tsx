@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
-import { AiIntegrationDisconnectDialog } from "@/features/integration-ai/components/ai-integration-disconnect-dialog"
+import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { useWorkspaceId } from "@/hooks/routing"
 import { disconnectOpenaiCompatibleAction } from "./actions/disconnect.action"
 
@@ -33,12 +33,12 @@ export function OpenaiCompatibleDisconnectDialog({
   )
 
   return (
-    <AiIntegrationDisconnectDialog
+    <DisconnectIntegrationDialog
+      featureLabel={`${t("openaiCompatible.provider")}: ${title}`}
       isPending={isPending}
       onConfirm={() => execute()}
       onOpenChange={setOpen}
       open={open}
-      title={`${t("openaiCompatible.provider")}: ${title}`}
     />
   )
 }

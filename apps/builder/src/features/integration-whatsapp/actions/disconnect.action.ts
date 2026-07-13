@@ -1,10 +1,9 @@
 "use server"
 
+import { inboxService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
   coexistSyncRunModel,
-  inboxModel,
   integrationWhatsappModel,
   whatsappCoexistStagingModel,
 } from "@chatbotx.io/database/schema"
@@ -76,10 +75,10 @@ export const disconnectWhatsappAction = workspaceActionClient
           .delete(integrationWhatsappModel)
           .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
 
-        await tx
-          .update(inboxModel)
-          .set({ status: inboxStatuses.enum.disconnected })
-          .where(eq(inboxModel.id, integrationWhatsapp.inboxId))
+        await inboxService.disconnect({
+          inboxId: integrationWhatsapp.inboxId,
+          tx,
+        })
       })
     },
   )

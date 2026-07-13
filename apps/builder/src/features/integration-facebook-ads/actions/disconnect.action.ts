@@ -10,7 +10,7 @@ import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
-export const disconnectFacebookAds = workspaceActionClient
+export const disconnectFacebookAdsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async ({

@@ -1,25 +1,16 @@
 "use client"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
+import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectFacebookAds } from "./actions/connect.action"
-import { disconnectFacebookAds } from "./actions/disconnect.action"
+import { disconnectFacebookAdsAction } from "./actions/disconnect.action"
 import type { IntegrationFacebookAdsResource } from "./schemas"
 
 type FacebookAdsManageProps = {
@@ -44,6 +35,7 @@ export function FacebookAdsManage({
   integrationFacebookAds,
 }: FacebookAdsManageProps) {
   const router = useRouter()
+  const [disconnectOpen, setDisconnectOpen] = useState(false)
   const t = useTranslations()
 
   const { executeAsync: onConnect, isPending: isPendingConnect } = useAction(
@@ -57,8 +49,9 @@ export function FacebookAdsManage({
     },
   )
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectFacebookAds.bind(null, workspaceId), {
+    useAction(disconnectFacebookAdsAction.bind(null, workspaceId), {
       onSuccess: () => {
+        setDisconnectOpen(false)
         router.refresh()
       },
       onError: ({ error }) => {
@@ -90,42 +83,13 @@ export function FacebookAdsManage({
             </Button>
           )}
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="destructive">
-                {t("actions.disconnect")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {t("messages.disconnectFeature", {
-                    feature: t("facebookAds.title"),
-                  })}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("messages.disconnectFeatureDescription", {
-                    feature: t("facebookAds.title"),
-                  })}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                <AlertDialogAction
-                  disabled={isPendingDisconnect}
-                  onClick={async (e) => {
-                    e.preventDefault()
-                    await onDisconnect()
-                  }}
-                >
-                  {isPendingDisconnect && (
-                    <Loader2Icon className="animate-spin" />
-                  )}
-                  {t("actions.disconnect")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <DisconnectIntegrationDialog
+            featureLabel={t("facebookAds.title")}
+            isPending={isPendingDisconnect}
+            onConfirm={onDisconnect}
+            onOpenChange={setDisconnectOpen}
+            open={disconnectOpen}
+          />
         </div>
       ) : (
         <Button

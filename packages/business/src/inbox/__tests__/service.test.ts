@@ -1,0 +1,106 @@
+import { beforeEach, describe, expect, test, vi } from "vitest"
+
+const mocks = vi.hoisted(() => ({
+  inboxFindMany: vi.fn(),
+  inboxUpdate: vi.fn(),
+  inboxUpdateSet: vi.fn(),
+  inboxUpdateWhere: vi.fn(),
+  count: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: {
+    query: {
+      inboxModel: {
+        findMany: mocks.inboxFindMany,
+      },
+    },
+    $count: mocks.count,
+    update: mocks.inboxUpdate,
+  },
+  eq: vi.fn((column, value) => ({ column, value })),
+  relationsFilterToSQL: vi.fn((_, where) => where),
+}))
+
+vi.mock("@chatbotx.io/database/schema", () => ({
+  inboxModel: { id: "id" },
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheByTags: vi.fn(),
+}))
+
+vi.mock("../../quota-enforcement/service", () => ({
+  quotaEnforcementService: {
+    tryConsume: vi.fn(),
+  },
+}))
+
+const { inboxService } = await import("../service")
+
+beforeEach(() => {
+  mocks.inboxFindMany.mockReset()
+  mocks.inboxUpdate.mockReset()
+  mocks.inboxUpdateSet.mockReset()
+  mocks.inboxUpdateWhere.mockReset()
+  mocks.count.mockReset()
+
+  mocks.inboxUpdate.mockReturnValue({
+    set: mocks.inboxUpdateSet.mockReturnValue({
+      where: mocks.inboxUpdateWhere,
+    }),
+  })
+})
+
+describe("InboxService.disconnect", () => {
+  test("disconnects only the requested inbox", async () => {
+    await inboxService.disconnect({ inboxId: "inbox-1" })
+
+    expect(mocks.inboxUpdate).toHaveBeenCalledTimes(1)
+    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith({
+      status: "disconnected",
+    })
+    expect(mocks.inboxUpdateWhere).toHaveBeenCalledWith({
+      column: "id",
+      value: "inbox-1",
+    })
+  })
+
+  test("uses an explicit transaction client when provided", async () => {
+    const tx = {
+      update: mocks.inboxUpdate,
+    }
+
+    await inboxService.disconnect({ inboxId: "inbox-2", tx: tx as never })
+
+    expect(mocks.inboxUpdate).toHaveBeenCalledTimes(1)
+    expect(mocks.inboxUpdateWhere).toHaveBeenCalledWith({
+      column: "id",
+      value: "inbox-2",
+    })
+  })
+})
+
+describe("InboxService.list", () => {
+  test("includes connected inboxes and excludes disconnected inboxes", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "connected-inbox" }])
+    mocks.count.mockResolvedValue(1)
+
+    const result = await inboxService.list({ workspaceId: "workspace-1" })
+
+    expect(result).toEqual({
+      data: [{ id: "connected-inbox" }],
+      pageCount: 1,
+    })
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      limit: 20,
+      offset: 0,
+      where: {
+        workspaceId: "workspace-1",
+        status: "connected",
+      },
+      with: undefined,
+    })
+    expect(mocks.count).toHaveBeenCalledTimes(1)
+  })
+})

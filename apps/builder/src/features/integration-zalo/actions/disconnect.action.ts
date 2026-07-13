@@ -1,9 +1,9 @@
 "use server"
 
+import { inboxService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes, inboxStatuses } from "@chatbotx.io/database/partials"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  inboxModel,
   integrationZaloModel,
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
@@ -57,9 +57,6 @@ export const disconnectZaloAction = workspaceActionClient
       await tx
         .delete(integrationZaloModel)
         .where(eq(integrationZaloModel.id, integrationZalo.id))
-      await tx
-        .update(inboxModel)
-        .set({ status: inboxStatuses.enum.disconnected })
-        .where(eq(inboxModel.id, integrationZalo.inboxId))
+      await inboxService.disconnect({ inboxId: integrationZalo.inboxId, tx })
     })
   })

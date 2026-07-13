@@ -61,7 +61,7 @@ export function WebchatTable({ promises }: WebchatTableProps) {
         }}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
-        webchats={rowAction?.row.original ? [rowAction.row.original] : []}
+        webchatId={rowAction?.row.original.id ?? ""}
         workspaceId={workspaceId}
       />
     </>
