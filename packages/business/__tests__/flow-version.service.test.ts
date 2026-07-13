@@ -47,6 +47,37 @@ vi.mock("../src/base.service", () => ({
 
 const { flowVersionService } = await import("../src/flow-version/service")
 
+describe("flowVersionService.findDraft", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("finds the draft version within the requested workspace", async () => {
+    const draftVersion = {
+      id: "draft-1",
+      flowId: "flow-1",
+      workspaceId: "ws-1",
+      isDraft: true,
+    }
+    mockFindFirst.mockResolvedValue(draftVersion)
+
+    await expect(
+      flowVersionService.findDraft({
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe(draftVersion)
+
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: {
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+        isDraft: true,
+      },
+    })
+  })
+})
+
 describe("flowVersionService.revertDraftToPublished", () => {
   afterEach(() => {
     vi.clearAllMocks()

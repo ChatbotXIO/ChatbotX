@@ -1,6 +1,5 @@
 "use client"
 
-import type { FlowModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -11,39 +10,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
-import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { CopyPlus, Loader } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { duplicateFlowAction } from "../../actions/duplicate-flow.action"
+import { duplicateFlowAction } from "./actions/duplicate-flow.action"
+import type { FlowResource } from "./schemas/resource"
 
 type DuplicateFlowDialogProps = {
+  workspaceId: string
+  flow: FlowResource | null
   open: boolean
   onOpenChange: (val: boolean) => void
-  flow: FlowModel | null
+  onSuccess?: (flowId: string) => void
 }
 
 export function DuplicateFlowDialog({
+  workspaceId,
   flow,
   open,
   onOpenChange,
+  onSuccess,
 }: DuplicateFlowDialogProps) {
   const t = useTranslations()
-  const router = useRouter()
 
   const { execute, isPending } = useAction(
-    duplicateFlowAction.bind(null, flow?.workspaceId ?? "", flow?.id ?? ""),
+    duplicateFlowAction.bind(null, workspaceId, flow?.id ?? ""),
     {
-      onSuccess: () => {
+      onSuccess: ({ data: duplicatedFlowId }) => {
         toast.success(
-          t("messages.duplicateSuccess", {
+          t("messages.duplicatedSuccess", {
             feature: t("fields.flow.label"),
           }),
         )
-
         onOpenChange(false)
-        router.refresh()
+        if (duplicatedFlowId) {
+          onSuccess?.(duplicatedFlowId)
+        }
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -55,27 +58,38 @@ export function DuplicateFlowDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
+      <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>
-            {t("messages.duplicateTitle", { feature: t("fields.flow.label") })}
+            {t("messages.duplicateFeature", {
+              feature: t("fields.flow.label"),
+            })}
           </DialogTitle>
-          <DialogDescription className="whitespace-pre-wrap">
-            {t("messages.duplicateDescription", {
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
+            {t("messages.duplicateConfirmation", {
               feature: t("fields.flow.label"),
             })}
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="justify-end">
+        <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button size="sm" type="button" variant="ghost">
+            <Button size="sm" variant="ghost">
               {t("actions.cancel")}
             </Button>
           </DialogClose>
-          <Button disabled={isPending} onClick={() => execute()} size="sm">
-            {isPending && <Loader2Icon className="animate-spin" />}
-            {t("actions.confirm")}
+          <Button
+            disabled={isPending || !flow}
+            onClick={() => execute()}
+            size="sm"
+            variant="default"
+          >
+            {isPending ? (
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
+            ) : (
+              <CopyPlus aria-hidden="true" className="mr-2 size-4" />
+            )}
+            {t("actions.duplicate")}
           </Button>
         </DialogFooter>
       </DialogContent>

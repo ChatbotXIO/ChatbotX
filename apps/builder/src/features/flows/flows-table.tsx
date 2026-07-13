@@ -16,6 +16,7 @@ import { use, useMemo, useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateFlowDialog } from "./create-flow-dialog"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
+import { DuplicateFlowDialog } from "./duplicate-flow-dialog"
 import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
 import type { listFlowsRSC } from "./queries"
@@ -85,6 +86,14 @@ export function FlowsTable({
           }}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
+          workspaceId={workspaceId}
+        />
+
+        <DuplicateFlowDialog
+          flow={rowAction?.row.original || null}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => router.refresh()}
+          open={rowAction?.variant === "duplicate"}
           workspaceId={workspaceId}
         />
 
