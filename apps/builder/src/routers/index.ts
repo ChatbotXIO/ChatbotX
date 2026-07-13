@@ -36,6 +36,7 @@ import { messagesAPI } from "@/features/messages/api"
 import { personasAPIs } from "@/features/personas/api"
 import { platformCredentialsAPI } from "@/features/platform-credentials/api"
 import { productsAPI } from "@/features/products/api"
+import { refLinksAPI } from "@/features/reflinks/api"
 import { savedRepliesAPI } from "@/features/saved-replies/api"
 import { sequencesAPI } from "@/features/sequences/api"
 import { spreadsheetsAPI } from "@/features/spreadsheets/api"
@@ -94,6 +95,7 @@ export const router = {
   aiFunctionsAPI,
   platformCredentialsAPI,
   productsAPI,
+  refLinksAPI,
   keywordsAPI,
   integrationsAPI,
   triggersAPI,

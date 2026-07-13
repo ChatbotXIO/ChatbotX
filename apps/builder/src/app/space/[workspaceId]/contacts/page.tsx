@@ -11,6 +11,7 @@ import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
+import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
@@ -52,11 +53,13 @@ export default async function ContactsPage(props: {
             <CustomFieldStoreProvider workspaceId={workspaceId}>
               <FlowStoreProvider workspaceId={workspaceId}>
                 <InboxStoreProvider workspaceId={workspaceId}>
-                  <ContactsTable
-                    initialContactFilter={initialContactFilter}
-                    promises={promises}
-                    workspaceId={workspaceId}
-                  />
+                  <SequenceStoreProvider workspaceId={workspaceId}>
+                    <ContactsTable
+                      initialContactFilter={initialContactFilter}
+                      promises={promises}
+                      workspaceId={workspaceId}
+                    />
+                  </SequenceStoreProvider>
                 </InboxStoreProvider>
               </FlowStoreProvider>
             </CustomFieldStoreProvider>

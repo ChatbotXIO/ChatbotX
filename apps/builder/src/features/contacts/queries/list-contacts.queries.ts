@@ -1,5 +1,9 @@
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { countWithRelationsFilter, db } from "@chatbotx.io/database/client"
+import {
+  countWithRelationsFilter,
+  countWithRelationsFilterCapped,
+  db,
+} from "@chatbotx.io/database/client"
 import { applyContactFilter } from "@chatbotx.io/database/queries"
 import { contactModel } from "@chatbotx.io/database/schema"
 import {
@@ -7,6 +11,7 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { logger } from "@/lib/log"
+import { CONTACTS_DEFAULT_PER_PAGE } from "../constants"
 import {
   type ContactPermissionScope,
   maskContactEmailAndPhone,
@@ -24,6 +29,11 @@ import type {
  * resolve to this same order instead of skipping ORDER BY entirely.
  */
 const DEFAULT_ORDER_BY = { createdAt: "desc" } as const
+const CONTACT_LIST_COUNT_CAP = 10_000
+type ContactWhere = Record<string, unknown>
+
+const hasWhereParts = (where: ContactWhere): boolean =>
+  Object.keys(where).length > 0
 
 export function resolveOrderBy(input: ListContactsRequest) {
   const orderBy = parseOrderByAsObject(contactModel, input)
@@ -49,13 +59,17 @@ async function queryContacts(
   input: ListContactsRequest,
   scopeInput: ContactPermissionScope | "unscoped",
 ): Promise<ListContactsResponse> {
+  const normalizedInput = {
+    ...input,
+    perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
+  }
   const scope = scopeInput === "unscoped" ? undefined : scopeInput
-  const where = generateWhere(input, scope)
+  const where = generateWhere(normalizedInput, scope)
 
-  const pagination = getPaginationWithDefaults(input)
-  const orderBy = resolveOrderBy(input)
+  const pagination = getPaginationWithDefaults(normalizedInput)
+  const orderBy = resolveOrderBy(normalizedInput)
 
-  const [data, totalRows] = await Promise.all([
+  const [data, countResult] = await Promise.all([
     db.query.contactModel.findMany({
       where,
       ...pagination,
@@ -76,34 +90,44 @@ async function queryContacts(
         },
       },
     }),
-    countWithRelationsFilter({
+    countWithRelationsFilterCapped({
+      cap: CONTACT_LIST_COUNT_CAP,
       table: contactModel,
       tsName: "contactModel",
       where,
     }),
   ])
 
-  const pageCount = Math.ceil(totalRows / pagination.limit)
+  const pageCount = Math.ceil(countResult.total / pagination.limit)
   // Unscoped (token) callers see PII; scoped members only when permitted.
   const visibleData =
     scope && !scope.canViewEmailAndPhone
       ? data.map(maskContactEmailAndPhone)
       : data
 
-  return { data: visibleData, pageCount }
+  return {
+    data: visibleData,
+    pageCount,
+    totalCount: countResult.total,
+    totalCountCapped: countResult.capped,
+  }
 }
 
 export async function listContactsRSC(
   input: ListContactsRequest & { workspaceId: string },
 ): Promise<ListContactsResponse> {
   const scope = await requireContactPermissionScope(input.workspaceId)
+  const normalizedInput = {
+    ...input,
+    perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
+  }
 
-  const where = generateWhere(input, scope)
+  const where = generateWhere(normalizedInput, scope)
 
-  const pagination = getPaginationWithDefaults(input)
-  const orderBy = resolveOrderBy(input)
+  const pagination = getPaginationWithDefaults(normalizedInput)
+  const orderBy = resolveOrderBy(normalizedInput)
 
-  const [data, totalRows] = await Promise.all([
+  const [data, countResult] = await Promise.all([
     db.query.contactModel.findMany({
       where,
       ...pagination,
@@ -123,19 +147,25 @@ export async function listContactsRSC(
         },
       },
     }),
-    countWithRelationsFilter({
+    countWithRelationsFilterCapped({
+      cap: CONTACT_LIST_COUNT_CAP,
       table: contactModel,
       tsName: "contactModel",
       where,
     }),
   ])
 
-  const pageCount = Math.ceil(totalRows / pagination.limit)
+  const pageCount = Math.ceil(countResult.total / pagination.limit)
   const visibleData = scope.canViewEmailAndPhone
     ? data
     : data.map(maskContactEmailAndPhone)
 
-  return { data: visibleData, pageCount }
+  return {
+    data: visibleData,
+    pageCount,
+    totalCount: countResult.total,
+    totalCountCapped: countResult.capped,
+  }
 }
 
 export async function countContacts(
@@ -198,9 +228,12 @@ export const generateWhere = (
   scope?: ContactPermissionScope,
 ) => {
   const keyword = input.keyword?.toLowerCase()
-  const where: Record<string, unknown> = {
+  const where: ContactWhere = {
     workspaceId: input.workspaceId,
-    ...(keyword
+  }
+
+  const filters = [
+    keyword
       ? {
           OR: [
             { firstName: { ilike: `%${keyword}%` } },
@@ -213,11 +246,16 @@ export const generateWhere = (
                 ]),
           ],
         }
-      : {}),
-  }
+      : undefined,
+    input.contactFilter ? applyContactFilter(input.contactFilter) : undefined,
+  ].filter((filter): filter is ContactWhere =>
+    filter ? hasWhereParts(filter) : false,
+  )
 
-  if (input.contactFilter) {
-    Object.assign(where, applyContactFilter(input.contactFilter))
+  if (filters.length === 1) {
+    Object.assign(where, filters[0])
+  } else if (filters.length > 1) {
+    where.AND = filters
   }
 
   if (scope?.restrictToAssignedUserId) {

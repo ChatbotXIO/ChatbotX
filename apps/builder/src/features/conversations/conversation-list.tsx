@@ -11,7 +11,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -31,6 +31,7 @@ export default function ConversationList({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const {
     conversations,
@@ -41,6 +42,7 @@ export default function ConversationList({
     nextCursorConversation,
     isLoadingConversation,
     setActiveConversationId,
+    initActiveConversationFromUrl,
   } = useChatStore((state) => state)
 
   const [showSearchInput, setShowSearchInput] = useState(false)
@@ -55,6 +57,11 @@ export default function ConversationList({
     loadMoreConversations(workspaceId)
   }, [page])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount to resolve deep-linked conversation
+  useEffect(() => {
+    initActiveConversationFromUrl(workspaceId)
+  }, [])
+
   // Load more items when reaching the end of the list
   const loadMoreItems = () => {
     if (!isLoadingConversation && hasNextPage) {
@@ -62,9 +69,21 @@ export default function ConversationList({
     }
   }
 
+  const removeConversationIdFromUrl = () => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (!params.has("conversationId")) {
+      return
+    }
+
+    params.delete("conversationId")
+    const queryString = params.toString()
+    router.replace(queryString ? `?${queryString}` : pathname)
+  }
+
   const handleChange = useDebouncedCallback(() => {
+    removeConversationIdFromUrl()
     resetState()
-    loadMoreConversations(workspaceId)
+    loadMoreConversations(workspaceId, { respectUrlConversationId: false })
   }, 300)
 
   const form = useForm<ConversationFilters>({

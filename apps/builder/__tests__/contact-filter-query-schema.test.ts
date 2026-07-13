@@ -59,7 +59,7 @@ describe("listContactsRequest contactFilter search param", () => {
     })
   })
 
-  test("accepts locale, language, and timezone select values", () => {
+  test("accepts locale and timezone select values", () => {
     const parsed = listContactsRequest.parse({
       workspaceId: "1",
       contactFilter: JSON.stringify({
@@ -71,11 +71,6 @@ describe("listContactsRequest contactFilter search param", () => {
             value: ["vi_VN"],
           },
           {
-            field: "language",
-            operator: "in",
-            value: ["vi"],
-          },
-          {
             field: "timezone",
             operator: "eq",
             value: ["Asia/Ho_Chi_Minh"],
@@ -84,7 +79,7 @@ describe("listContactsRequest contactFilter search param", () => {
       }),
     })
 
-    expect(parsed.contactFilter?.conditions).toHaveLength(3)
+    expect(parsed.contactFilter?.conditions).toHaveLength(2)
   })
 
   test("rejects disabled operators for a field", () => {

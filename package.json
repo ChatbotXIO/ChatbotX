@@ -32,7 +32,7 @@
     "node": ">=24"
   },
   "overrides": {
-    "@types/node": "24.x",
+    "@types/node": "$@types/node",
     "typescript": "^5",
     "zod": "^4.3.6",
     "@codemirror/state": "6.7.0"

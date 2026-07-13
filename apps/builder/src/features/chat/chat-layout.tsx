@@ -44,12 +44,21 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     conversations,
     isFirstLoadConversation,
     isLoadingConversation,
+    isBootstrappingUrlConversation,
     activeConversationId,
     updateConversation,
   } = useChatStore((state) => state)
 
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
+  const isResolvingConversation =
+    (isFirstLoadConversation && isLoadingConversation) ||
+    isBootstrappingUrlConversation
+  const shouldShowEmptyState = !(
+    activeConversation ||
+    isFirstLoadConversation ||
+    isBootstrappingUrlConversation
+  )
 
   const { execute: disableBot, isExecuting: isDisablingBot } = useAction(
     disableBotAction.bind(null, workspaceId),
@@ -101,7 +110,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
 
       {/* MESSAGE LIST */}
       <ResizablePanel className="pt-3" defaultSize={`${layout[1] ?? 50}%`}>
-        {isFirstLoadConversation && isLoadingConversation && (
+        {isResolvingConversation && (
           <Loader2Icon className="mx-auto my-4 animate-spin" />
         )}
         {activeConversation && (
@@ -124,7 +133,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             <MessageInput />
           </div>
         )}
-        {!(activeConversation || isFirstLoadConversation) && (
+        {shouldShowEmptyState && (
           <div
             aria-live="polite"
             className="flex h-full w-full flex-col items-center justify-center px-6 text-center"
@@ -155,7 +164,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         maxSize={"30%"}
         minSize={"20%"}
       >
-        {isFirstLoadConversation && isLoadingConversation && (
+        {isResolvingConversation && (
           <Loader2Icon className="mx-auto my-4 animate-spin" />
         )}
         {activeConversation && (
@@ -164,7 +173,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             workspaceId={workspaceId}
           />
         )}
-        {!(activeConversation || isFirstLoadConversation) && (
+        {shouldShowEmptyState && (
           <div
             aria-live="polite"
             className="flex h-full w-full flex-col items-center justify-center px-6 text-center"

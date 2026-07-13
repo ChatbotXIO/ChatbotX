@@ -2,26 +2,53 @@ import {
   and,
   asc,
   db,
+  desc,
+  eq,
   gt,
   inArray,
   type SQL,
 } from "@chatbotx.io/database/client"
-import { requiresRecentInteractionWindow } from "@chatbotx.io/database/partials"
+import {
+  type ChannelType,
+  requiresRecentInteractionWindow,
+} from "@chatbotx.io/database/partials"
 import {
   buildContactInboxContactFilterSQL,
   contactInboxInteractedWithin24hSQL,
 } from "@chatbotx.io/database/queries"
-import { contactInboxModel } from "@chatbotx.io/database/schema"
+import { broadcastModel, contactInboxModel } from "@chatbotx.io/database/schema"
 import { chunkById } from "@chatbotx.io/database/utils"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import type { BroadcastAudienceInput } from "./schema"
 
 const DEFAULT_CHUNK_SIZE = 1000
+const OPTION_LIST_LIMIT = 500
 
 type ContactInboxRow = typeof contactInboxModel.$inferSelect
+type SelectOptionRow = { id: string; name: string }
 
 class BroadcastService extends BaseService {
+  async listOptions(input: {
+    workspaceId: string
+    channel: ChannelType
+  }): Promise<SelectOptionRow[]> {
+    return await db
+      .select({
+        id: broadcastModel.id,
+        name: broadcastModel.name,
+      })
+      .from(broadcastModel)
+      .where(
+        and(
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          eq(broadcastModel.channel, input.channel),
+        ),
+      )
+      .orderBy(desc(broadcastModel.createdAt))
+      .limit(OPTION_LIST_LIMIT)
+  }
+
   private buildAudienceWhere(
     inboxIds: string[],
     input: BroadcastAudienceInput,

@@ -3097,6 +3097,8 @@
     "exportFailed": "Xuất dữ liệu thất bại. Vui lòng thử lại.",
     "copyLink": "Sao chép liên kết",
     "linkCopied": "Đã sao chép liên kết vào clipboard",
+    "countExact": "{count} liên hệ",
+    "countCapped": "{count}+ liên hệ",
     "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
   },
   "errorLogs": {

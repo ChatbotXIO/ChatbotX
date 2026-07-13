@@ -2,6 +2,7 @@
 import { describe, expect, test, vi } from "vitest"
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  countWithRelationsFilterCapped: vi.fn(),
   countWithRelationsFilter: vi.fn(),
   db: { query: { contactModel: { findMany: vi.fn() } }, $count: vi.fn() },
 }))
@@ -21,9 +22,13 @@ vi.mock("@/lib/log", () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
-const { generateWhere, resolveOrderBy } = await import(
+const { countWithRelationsFilterCapped, db } = await import(
+  "@chatbotx.io/database/client"
+)
+const { generateWhere, listContactsForAPI, resolveOrderBy } = await import(
   "../list-contacts.queries"
 )
+const { CONTACTS_DEFAULT_PER_PAGE } = await import("../../constants")
 
 const baseInput = { workspaceId: "1" }
 
@@ -85,6 +90,98 @@ describe("generateWhere", () => {
     expect(where.conversation).toEqual({
       status: "open",
       assignedUserId: "user-1",
+    })
+  })
+
+  test("ANDs keyword search with OR contact filter without overwriting keyword search", () => {
+    const contactFilter = {
+      operator: "or" as const,
+      conditions: [
+        {
+          field: "fullName" as const,
+          operator: "contains" as const,
+          value: "Bob",
+        },
+      ],
+    }
+    const where = generateWhere(
+      {
+        ...baseInput,
+        keyword: "Alice",
+        contactFilter,
+      },
+      { canViewEmailAndPhone: true },
+    )
+
+    expect(where).toEqual({
+      workspaceId: "1",
+      AND: [
+        {
+          OR: [
+            { firstName: { ilike: "%alice%" } },
+            { lastName: { ilike: "%alice%" } },
+            { email: { ilike: "%alice%" } },
+            { phoneNumber: { ilike: "%alice%" } },
+          ],
+        },
+        {
+          conversation: { status: "open" },
+          __filter: contactFilter,
+        },
+      ],
+    })
+  })
+})
+
+describe("listContactsForAPI", () => {
+  test("defaults to the contacts table page size when perPage is omitted", async () => {
+    vi.mocked(db.query.contactModel.findMany).mockResolvedValue([])
+    vi.mocked(countWithRelationsFilterCapped).mockResolvedValue({
+      total: 10_000,
+      capped: true,
+      cap: 10_000,
+    })
+
+    const result = await listContactsForAPI({
+      workspaceId: "1",
+      page: 1,
+    })
+
+    expect(db.query.contactModel.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        limit: CONTACTS_DEFAULT_PER_PAGE,
+        offset: 0,
+      }),
+    )
+    expect(result.pageCount).toBe(200)
+  })
+
+  test("uses capped count metadata for page count and total display", async () => {
+    vi.mocked(db.query.contactModel.findMany).mockResolvedValue([])
+    vi.mocked(countWithRelationsFilterCapped).mockResolvedValue({
+      total: 10_000,
+      capped: true,
+      cap: 10_000,
+    })
+
+    const result = await listContactsForAPI({
+      workspaceId: "1",
+      page: 1,
+      perPage: 20,
+    })
+
+    expect(countWithRelationsFilterCapped).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cap: 10_000,
+        table: { createdAt: "createdAt", fullName: "fullName" },
+        tsName: "contactModel",
+      }),
+    )
+    expect(result).toEqual({
+      data: [],
+      pageCount: 500,
+      totalCount: 10_000,
+      totalCountCapped: true,
     })
   })
 })

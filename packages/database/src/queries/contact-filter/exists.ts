@@ -1,0 +1,24 @@
+import { type AnyColumn, type SQL, sql } from "drizzle-orm"
+import type { PgTable } from "drizzle-orm/pg-core"
+import type { ContactWhere, RawTable, RelationExists } from "./types"
+
+export const existsWhere = (
+  buildSelect: (contactId: AnyColumn) => SQL,
+  negate = false,
+): ContactWhere => ({
+  RAW: (table: RawTable): SQL => {
+    const inner = buildSelect(table.id)
+    return negate ? sql`NOT EXISTS (${inner})` : sql`EXISTS (${inner})`
+  },
+})
+
+export const joinTableExists =
+  (table: PgTable, contactIdColumn: AnyColumn): RelationExists =>
+  (predicate, negate = false): ContactWhere =>
+    existsWhere(
+      (contactId) =>
+        predicate
+          ? sql`SELECT 1 FROM ${table} WHERE ${contactIdColumn} = ${contactId} AND ${predicate}`
+          : sql`SELECT 1 FROM ${table} WHERE ${contactIdColumn} = ${contactId}`,
+      negate,
+    )

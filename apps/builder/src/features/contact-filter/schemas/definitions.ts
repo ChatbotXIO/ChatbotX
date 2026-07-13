@@ -21,7 +21,6 @@ export type ContactFilterSchemaKind =
 export type ContactFilterOptionSource =
   | "none"
   | "languages"
-  | "contactLanguages"
   | "timezones"
   | "countries"
   | "continents"
@@ -31,6 +30,10 @@ export type ContactFilterOptionSource =
   | "inboxes"
   | "tags"
   | "flows"
+  | "broadcasts"
+  | "sequences"
+  | "reflinks"
+  | "assignees"
 
 export type ContactFilterFieldDefinition = {
   field: ContactFilterField
@@ -52,11 +55,6 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "languages",
   },
   {
-    field: contactFilterFields.enum.language,
-    schemaKind: "multiSelect",
-    optionSource: "contactLanguages",
-  },
-  {
     field: contactFilterFields.enum.fullName,
     schemaKind: "text",
     optionSource: "none",
@@ -65,6 +63,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.country,
     schemaKind: "multiSelect",
     optionSource: "countries",
+  },
+  {
+    field: contactFilterFields.enum.continent,
+    schemaKind: "multiSelect",
+    optionSource: "continents",
   },
   {
     field: contactFilterFields.enum.gender,
@@ -132,8 +135,28 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "none",
   },
   {
+    field: contactFilterFields.enum.lastSent,
+    schemaKind: "datetime",
+    optionSource: "none",
+  },
+  {
     field: contactFilterFields.enum.lastInteraction,
     schemaKind: "datetime",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.contactCreatedDateMinutesAgo,
+    schemaKind: "number",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastSeenMinutesAgo,
+    schemaKind: "number",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastInteractionMinutesAgo,
+    schemaKind: "number",
     optionSource: "none",
   },
   {
@@ -150,6 +173,66 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.tags,
     schemaKind: "multiSelect",
     optionSource: "tags",
+  },
+  {
+    field: contactFilterFields.enum.broadcastSent,
+    schemaKind: "multiSelect",
+    optionSource: "broadcasts",
+  },
+  {
+    field: contactFilterFields.enum.broadcastDelivered,
+    schemaKind: "multiSelect",
+    optionSource: "broadcasts",
+  },
+  {
+    field: contactFilterFields.enum.broadcastSeen,
+    schemaKind: "multiSelect",
+    optionSource: "broadcasts",
+  },
+  {
+    field: contactFilterFields.enum.broadcastClicked,
+    schemaKind: "multiSelect",
+    optionSource: "broadcasts",
+  },
+  {
+    field: contactFilterFields.enum.broadcastFailed,
+    schemaKind: "multiSelect",
+    optionSource: "broadcasts",
+  },
+  {
+    field: contactFilterFields.enum.subscribedToDripCampaign,
+    schemaKind: "multiSelect",
+    optionSource: "sequences",
+  },
+  {
+    field: contactFilterFields.enum.entryPointsLinks,
+    schemaKind: "multiSelect",
+    optionSource: "reflinks",
+  },
+  {
+    field: contactFilterFields.enum.conversationAssigned,
+    schemaKind: "multiSelect",
+    optionSource: "assignees",
+  },
+  {
+    field: contactFilterFields.enum.unreplied,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.unread,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.existingContact,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.consecutiveAiFailures,
+    schemaKind: "number",
+    optionSource: "none",
   },
   {
     field: contactFilterFields.enum.emailWasVerified,

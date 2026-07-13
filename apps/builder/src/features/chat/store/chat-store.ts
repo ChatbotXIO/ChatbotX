@@ -30,12 +30,17 @@ export type ConversationFilters = {
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
+type LoadMoreConversationsOptions = {
+  respectUrlConversationId?: boolean
+}
+
 export type ChatState = {
   // conversation list
   isFirstLoadConversation: boolean
   conversations: ListConversationsResponse["data"]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
+  isBootstrappingUrlConversation: boolean
   activeConversationId: string | null
   hasNextConversationPage: boolean
   filters: ConversationFilters
@@ -56,7 +61,11 @@ export type ChatState = {
 export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
-  loadMoreConversations: (workspaceId: string) => Promise<void>
+  initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
+  loadMoreConversations: (
+    workspaceId: string,
+    options?: LoadMoreConversationsOptions,
+  ) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
   updateConversation: (
     conversationId: string,
@@ -121,13 +130,30 @@ const appendUniqueConversations = (
   ]
 }
 
+const hasConversationIdInUrl = () =>
+  !!new URLSearchParams(
+    typeof window === "undefined" ? "" : window.location.search,
+  ).get("conversationId")
+
+const shouldAutoSelectConversation = ({
+  activeConversationId,
+  hasUrlConversationId,
+  conversations,
+}: {
+  activeConversationId: string | null
+  hasUrlConversationId: boolean
+  conversations: ListConversationsResponse["data"]
+}) =>
+  !(activeConversationId || hasUrlConversationId) && conversations.length > 0
+
 export const createChatStore = () => {
-  return createStore<ChatStore>((set, get) => ({
+  return createStore<ChatStore>((set, get, store) => ({
     // default conversation state
     isFirstLoadConversation: true,
     conversations: [],
     nextCursorConversation: null,
     isLoadingConversation: false,
+    isBootstrappingUrlConversation: false,
     hasNextConversationPage: true,
     activeConversationId: null,
     filters: {},
@@ -148,65 +174,124 @@ export const createChatStore = () => {
         ],
       })),
 
-    loadMoreConversations: async (workspaceId: string) => {
+    initActiveConversationFromUrl: async (workspaceId: string) => {
+      const urlParams = new URLSearchParams(
+        typeof window === "undefined" ? "" : window.location.search,
+      )
+      const conversationId = urlParams.get("conversationId")
+      if (!conversationId) {
+        return
+      }
+
+      const {
+        activeConversationId,
+        isBootstrappingUrlConversation,
+        prependConversation,
+        setActiveConversationId,
+      } = get()
+      if (activeConversationId || isBootstrappingUrlConversation) {
+        return
+      }
+
+      set({ isBootstrappingUrlConversation: true })
+
+      try {
+        if (get().isFirstLoadConversation && get().isLoadingConversation) {
+          await new Promise<void>((resolve) => {
+            const unsubscribe = store.subscribe((state) => {
+              if (
+                !(state.isFirstLoadConversation && state.isLoadingConversation)
+              ) {
+                unsubscribe()
+                resolve()
+              }
+            })
+          })
+        }
+
+        const { conversations: latestConversations } = get()
+        const loadedConversation = latestConversations.find(
+          (conversation) => conversation.id === conversationId,
+        )
+        if (loadedConversation) {
+          prependConversation(loadedConversation)
+          setActiveConversationId(conversationId)
+          return
+        }
+
+        const response =
+          await client.conversationsAPI.findConversationAuthenticatedAPI({
+            workspaceId,
+            id: conversationId,
+          })
+        prependConversation(response.data)
+        setActiveConversationId(conversationId)
+      } catch {
+        //
+      } finally {
+        set({ isBootstrappingUrlConversation: false })
+      }
+    },
+
+    loadMoreConversations: async (
+      workspaceId: string,
+      options: LoadMoreConversationsOptions = {},
+    ) => {
       const { isLoadingConversation, hasNextConversationPage } = get()
       if (isLoadingConversation || !hasNextConversationPage) {
         return
       }
 
       // fetch next conversation list
-      const {
-        conversations,
-        nextCursorConversation,
-        activeConversationId,
-        filters,
-      } = get()
+      const { nextCursorConversation, activeConversationId, filters } = get()
+      const shouldRespectUrlConversationId =
+        options.respectUrlConversationId ?? true
       set({ isLoadingConversation: true })
 
-      const searchParams = {
-        perPage: "20",
-        cursor: nextCursorConversation ?? "",
-        ...filters,
-      }
-      const { data: newConversations, nextCursor } = await ky
-        .post<ListConversationsResponse>(
-          `/api/workspaces/${workspaceId}/conversations/list`,
-          { json: searchParams },
-        )
-        .json()
-
-      const urlParams = new URLSearchParams(
-        typeof window === "undefined" ? "" : window.location.search,
-      )
       try {
-        const queryConversationId = urlParams.get("conversationId") ?? ""
-        if (!activeConversationId && newConversations.length > 0) {
-          if (queryConversationId) {
-            const found = newConversations.find(
-              (c) => c.id === queryConversationId,
-            )
-            if (found) {
-              set({ activeConversationId: queryConversationId })
-            }
-          } else {
-            set({
-              activeConversationId: newConversations[0].id,
-            })
-          }
-        }
-      } catch {
-        //
-      }
+        const { data: newConversations, nextCursor } = await ky
+          .post<ListConversationsResponse>(
+            `/api/workspaces/${workspaceId}/conversations/list`,
+            {
+              json: {
+                perPage: "20",
+                cursor: nextCursorConversation ?? "",
+                ...filters,
+              },
+            },
+          )
+          .json()
 
-      set({
-        conversations: appendUniqueConversations(
-          conversations,
-          newConversations,
-        ),
-        nextCursorConversation: nextCursor,
-        isLoadingConversation: false,
-        isFirstLoadConversation: false,
-      })
+        const hasUrlConversationId =
+          shouldRespectUrlConversationId && hasConversationIdInUrl()
+        const firstConversationToOpen = shouldAutoSelectConversation({
+          activeConversationId,
+          hasUrlConversationId,
+          conversations: newConversations,
+        })
+          ? newConversations[0]
+          : null
+
+        set((state) => ({
+          conversations: appendUniqueConversations(
+            state.conversations,
+            newConversations,
+          ),
+          nextCursorConversation: nextCursor,
+          isLoadingConversation: false,
+          isFirstLoadConversation: false,
+        }))
+
+        if (firstConversationToOpen) {
+          get().setActiveConversationId(firstConversationToOpen.id)
+        }
+      } catch (error) {
+        set({
+          isLoadingConversation: false,
+          isFirstLoadConversation: false,
+        })
+        throw error
+      }
     },
 
     setActiveConversationId: (activeConversationId: string | null) => {
@@ -262,6 +347,7 @@ export const createChatStore = () => {
         conversations: [],
         nextCursorConversation: null,
         isLoadingConversation: false,
+        isBootstrappingUrlConversation: false,
         hasNextConversationPage: true,
         activeConversationId: null,
 

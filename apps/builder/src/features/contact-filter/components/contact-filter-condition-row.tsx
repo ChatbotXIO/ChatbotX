@@ -13,6 +13,7 @@ type ContactFilterConditionRowProps = {
   row: ContactFilterCondition
   configs: FieldConfig[]
   operatorLabelByValue: Map<string, string>
+  onEdit: () => void
   onRemove: () => void
 }
 
@@ -20,6 +21,7 @@ export const ContactFilterConditionRow = ({
   row,
   configs,
   operatorLabelByValue,
+  onEdit,
   onRemove,
 }: ContactFilterConditionRowProps) => {
   const t = useTranslations()
@@ -39,16 +41,23 @@ export const ContactFilterConditionRow = ({
     "value" in row ? row.value : undefined,
     fieldConfig?.options,
   )
+  const operatorLabel = operatorLabelByValue.get(row.operator) ?? row.operator
+  const editLabel = [fieldLabel, operatorLabel, valueDisplay]
+    .filter(Boolean)
+    .join(" ")
 
   return (
-    <div className="flex min-h-11 items-center gap-2 rounded-md border bg-background px-3">
-      <div className="flex flex-1 flex-wrap items-center gap-2">
+    <div className="flex min-h-11 items-center gap-2 rounded-md border bg-background px-3 transition-colors hover:bg-muted/50">
+      <button
+        aria-label={`${t("actions.edit")}: ${editLabel}`}
+        className="flex flex-1 cursor-pointer flex-wrap items-center gap-2 text-left"
+        onClick={onEdit}
+        type="button"
+      >
         <span className="font-medium text-sm">{fieldLabel}</span>
-        <span className="font-medium text-sm italic">
-          {operatorLabelByValue.get(row.operator)}
-        </span>
+        <span className="font-medium text-sm italic">{operatorLabel}</span>
         <span className="text-sm">{valueDisplay}</span>
-      </div>
+      </button>
       <Button
         aria-label={t("actions.remove")}
         className="size-8 shrink-0 text-muted-foreground hover:text-destructive"

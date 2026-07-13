@@ -6,6 +6,7 @@ import {
   applyContactFilter,
   buildContactInboxContactFilterSQL,
   buildContactWhere,
+  parseConversationAssigneeValues,
 } from "../src/queries/contact-filter"
 import { contactInboxModel, contactModel } from "../src/schema"
 
@@ -344,6 +345,290 @@ describe("applyContactFilter", () => {
       }),
     )
     expect(transferred.sql).toContain('"Conversation"."botEnabled" =')
+  })
+
+  test("parses conversation assignee sentinel and prefixed ids", () => {
+    expect(
+      parseConversationAssigneeValues([
+        "unassigned",
+        "u_123",
+        "t_456",
+        "u_not-a-number",
+      ]),
+    ).toEqual({
+      hasUnassigned: true,
+      userIds: ["123"],
+      inboxTeamIds: ["456"],
+    })
+  })
+
+  test("renders conversationAssigned with user, team, and unassigned branches", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "conversationAssigned",
+            operator: operatorTypes.enum.in,
+            value: ["u_123", "t_456", "unassigned"],
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
+    expect(query.sql).toContain('"Conversation"."assignedUserId" in')
+    expect(query.sql).toContain('"Conversation"."assignedInboxTeamId" in')
+    expect(query.sql).toContain('"Conversation"."assignedUserId" IS NULL')
+    expect(query.sql).toContain('"Conversation"."assignedInboxTeamId" IS NULL')
+    expect(query.params).toEqual(["123", "456"])
+  })
+
+  test("renders conversationAssigned negative and empty branches as NOT EXISTS", () => {
+    const negative = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "conversationAssigned",
+            operator: operatorTypes.enum.notIn,
+            value: ["u_123"],
+          },
+        ],
+      }),
+    )
+    expect(negative.sql).toContain('NOT EXISTS (SELECT 1 FROM "Conversation"')
+    expect(negative.sql).toContain('"Conversation"."assignedUserId" in')
+
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "conversationAssigned",
+            operator: operatorTypes.enum.isEmpty,
+          },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "Conversation"')
+    expect(empty.sql).toContain('"Conversation"."assignedUserId" IS NOT NULL')
+    expect(empty.sql).toContain(
+      '"Conversation"."assignedInboxTeamId" IS NOT NULL',
+    )
+  })
+
+  test("renders unread and unreplied as boolean EXISTS predicates", () => {
+    const unread = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "unread", operator: operatorTypes.enum.eq, value: "true" },
+        ],
+      }),
+    )
+    expect(unread.sql).toContain('EXISTS (SELECT 1 FROM "Conversation"')
+    expect(unread.sql).toContain('"Conversation"."lastActivityAt" IS NOT NULL')
+    expect(unread.sql).toContain('"Conversation"."agentLastReadAt" IS NULL')
+    expect(unread.sql).toContain(
+      '"Conversation"."lastActivityAt" > "Conversation"."agentLastReadAt"',
+    )
+
+    const unreplied = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "unreplied",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(unreplied.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(unreplied.sql).toContain(
+      '"ContactInbox"."lastIncomingMessageAt" IS NOT NULL',
+    )
+    expect(unreplied.sql).toContain(
+      '"ContactInbox"."lastOutboundMessageAt" IS NULL',
+    )
+    expect(unreplied.sql).toContain(
+      '"ContactInbox"."lastIncomingMessageAt" > "ContactInbox"."lastOutboundMessageAt"',
+    )
+  })
+
+  test("renders existingContact as email-or-phone boolean predicate", () => {
+    const positive = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "existingContact",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(positive.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(positive.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+    expect(positive.sql).not.toContain("NOT (")
+
+    const negative = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "existingContact",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(negative.sql).toContain("NOT (")
+    expect(negative.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(negative.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+  })
+
+  test("renders continent country-code expansion and unknown sentinel", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "continent",
+            operator: operatorTypes.enum.eq,
+            value: ["AS", "unknown"],
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('"Contact"."country" in')
+    expect(query.sql).toContain('"Contact"."country" IS NULL')
+    expect(query.sql).toContain('"Contact"."country" =')
+    expect(query.sql).toContain('NOT ("Contact"."country" in')
+    expect(query.params).toContain("VN")
+  })
+
+  test("renders lastSent as latest outbound contact-inbox datetime", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastSent",
+            operator: operatorTypes.enum.eq,
+            value: "2026-05-19T10:00:00Z",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('MAX("ContactInbox"."lastOutboundMessageAt")')
+    expect(query.sql).toContain("date_trunc('day'")
+    expect(query.sql).toContain("INTERVAL '1 day'")
+  })
+
+  test("maps minutes-ago comparison directions to timestamp boundaries", () => {
+    const atLeast = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "contactCreatedDateMinutesAgo",
+            operator: operatorTypes.enum.gte,
+            value: "30",
+          },
+        ],
+      }),
+    )
+    expect(atLeast.sql).toContain(
+      '"Contact"."createdAt" <= NOW() - make_interval',
+    )
+    expect(atLeast.params).toEqual([30])
+
+    const lessThan = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastSeenMinutesAgo",
+            operator: operatorTypes.enum.lt,
+            value: "15",
+          },
+        ],
+      }),
+    )
+    expect(lessThan.sql).toContain(
+      '"Contact"."lastReadAt" > NOW() - make_interval',
+    )
+    expect(lessThan.params).toEqual([15])
+  })
+
+  test("renders minutes-ago between with inverted newer and older bounds", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "contactCreatedDateMinutesAgo",
+            operator: operatorTypes.enum.isBetween,
+            value: ["5", "30"],
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain(
+      '"Contact"."createdAt" >= NOW() - make_interval',
+    )
+    expect(query.sql).toContain(
+      '"Contact"."createdAt" <= NOW() - make_interval',
+    )
+    expect(query.params).toEqual([30, 5])
+  })
+
+  test("renders latest interaction minutes ago against max incoming message", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastInteractionMinutesAgo",
+            operator: operatorTypes.enum.gt,
+            value: "60",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('MAX("ContactInbox"."lastIncomingMessageAt")')
+    expect(query.sql).toContain(
+      '"latestInteraction"."latest" < NOW() - make_interval',
+    )
+    expect(query.params).toEqual([60])
+  })
+
+  test("renders consecutiveAiFailures as latest numeric aggregate", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "consecutiveAiFailures",
+            operator: operatorTypes.enum.gt,
+            value: "2",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('MAX("ContactInbox"."consecutiveFailedReply")')
+    expect(query.sql).toContain('"latestInteraction"."latest" >')
+    expect(query.params).toEqual([2])
   })
 
   test("maps boolean field operators to boolean/timestamp predicates", () => {
@@ -1624,5 +1909,70 @@ describe("applyContactFilter — custom field remaining branches", () => {
   })
   test("drops text custom field with an unsupported operator", () => {
     expect(cf("text", operatorTypes.enum.gt, "x")).toEqual({})
+  })
+})
+
+describe("applyContactFilter — W1 relation activations", () => {
+  const renderSingleCondition = (field: string, value = "option-1") =>
+    renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field,
+            operator: operatorTypes.enum.in,
+            value: [value],
+          },
+        ],
+      }),
+    )
+
+  test.each([
+    ["broadcastSent", '"ContactOnBroadcast"."sent" = true'],
+    ["broadcastDelivered", '"ContactOnBroadcast"."deliveredAt" IS NOT NULL'],
+    ["broadcastSeen", '"ContactOnBroadcast"."seenAt" IS NOT NULL'],
+    ["broadcastClicked", '"ContactOnBroadcast"."clickedAt" IS NOT NULL'],
+    ["broadcastFailed", '"ContactOnBroadcast"."failedAt" IS NOT NULL'],
+  ])("renders %s against ContactOnBroadcast", (field, predicate) => {
+    const query = renderSingleCondition(field)
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactOnBroadcast"')
+    expect(query.sql).toContain('"ContactOnBroadcast"."broadcastId" in')
+    expect(query.sql).toContain(predicate)
+  })
+
+  test("renders subscribedToDripCampaign against ContactOnSequence", () => {
+    const query = renderSingleCondition("subscribedToDripCampaign")
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactOnSequence"')
+    expect(query.sql).toContain('"ContactOnSequence"."sequenceId" in')
+  })
+
+  test("renders entryPointsLinks against RefLinkStat", () => {
+    const query = renderSingleCondition("entryPointsLinks")
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "RefLinkStat"')
+    expect(query.sql).toContain('"RefLinkStat"."linkId" in')
+  })
+
+  test("preserves extra predicates for empty broadcast event filters", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "broadcastDelivered",
+            operator: operatorTypes.enum.isEmpty,
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "ContactOnBroadcast"',
+    )
+    expect(query.sql).toContain(
+      '"ContactOnBroadcast"."deliveredAt" IS NOT NULL',
+    )
   })
 })

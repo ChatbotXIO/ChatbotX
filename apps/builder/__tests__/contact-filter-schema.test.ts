@@ -41,14 +41,6 @@ describe("staticFieldFilter", () => {
     ).toBe(true)
 
     expect(
-      staticFieldFilter("language").safeParse({
-        field: "language",
-        operator: operatorTypes.enum.in,
-        value: ["vi"],
-      }).success,
-    ).toBe(true)
-
-    expect(
       staticFieldFilter("timezone").safeParse({
         field: "timezone",
         operator: operatorTypes.enum.eq,
@@ -87,14 +79,6 @@ describe("staticFieldFilter", () => {
         field: "timezone",
         operator: operatorTypes.enum.contains,
         value: "Asia",
-      }).success,
-    ).toBe(false)
-
-    expect(
-      staticFieldFilter("language").safeParse({
-        field: "language",
-        operator: operatorTypes.enum.contains,
-        value: "vi",
       }).success,
     ).toBe(false)
 
@@ -148,6 +132,94 @@ describe("staticFieldFilter", () => {
         operator: operatorTypes.enum.isEmpty,
       }).success,
     ).toBe(true)
+  })
+
+  test.each([
+    "broadcastSent",
+    "broadcastDelivered",
+    "broadcastSeen",
+    "broadcastClicked",
+    "broadcastFailed",
+    "subscribedToDripCampaign",
+    "entryPointsLinks",
+    "conversationAssigned",
+  ])("accepts relation-set operators for activated field %s", (field) => {
+    expect(
+      staticFieldFilter(field).safeParse({
+        field,
+        operator: operatorTypes.enum.in,
+        value: ["option-1"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter(field).safeParse({
+        field,
+        operator: operatorTypes.enum.contains,
+        value: "option-1",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("accepts W1-2 activated field operators", () => {
+    expect(
+      staticFieldFilter("continent").safeParse({
+        field: "continent",
+        operator: operatorTypes.enum.eq,
+        value: ["AS", "unknown"],
+      }).success,
+    ).toBe(true)
+
+    for (const field of ["existingContact", "unreplied", "unread"] as const) {
+      expect(
+        staticFieldFilter(field).safeParse({
+          field,
+          operator: operatorTypes.enum.eq,
+          value: "true",
+        }).success,
+      ).toBe(true)
+
+      expect(
+        staticFieldFilter(field).safeParse({
+          field,
+          operator: operatorTypes.enum.contains,
+          value: "true",
+        }).success,
+      ).toBe(false)
+    }
+  })
+
+  test("accepts W1-3 activated date and number field operators", () => {
+    expect(
+      staticFieldFilter("lastSent").safeParse({
+        field: "lastSent",
+        operator: operatorTypes.enum.isBetween,
+        value: ["2026-05-01T00:00:00Z", "2026-05-31T23:59:59Z"],
+      }).success,
+    ).toBe(true)
+
+    for (const field of [
+      "contactCreatedDateMinutesAgo",
+      "lastSeenMinutesAgo",
+      "lastInteractionMinutesAgo",
+      "consecutiveAiFailures",
+    ] as const) {
+      expect(
+        staticFieldFilter(field).safeParse({
+          field,
+          operator: operatorTypes.enum.gte,
+          value: "30",
+        }).success,
+      ).toBe(true)
+
+      expect(
+        staticFieldFilter(field).safeParse({
+          field,
+          operator: operatorTypes.enum.isBetween,
+          value: ["10", "30"],
+        }).success,
+      ).toBe(true)
+    }
   })
 })
 

@@ -1,7 +1,10 @@
 import { sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { applyContactFilter } from "@chatbotx.io/database/queries"
-import { parseBigIntId } from "@chatbotx.io/utils"
+import {
+  applyContactFilter,
+  parseConversationAssigneeValues,
+  UNASSIGNED_ASSIGNEE_VALUE,
+} from "@chatbotx.io/database/queries"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 
 type ConversationCursor = {
@@ -64,19 +67,17 @@ export function buildConversationWhere(
 
   // ── assignedId ───────────────────────────────────────────────────────────
   if (input.assignedId !== null && input.assignedId !== undefined) {
-    if (input.assignedId === "unassigned") {
+    const assignedSelection = parseConversationAssigneeValues([
+      input.assignedId,
+    ])
+
+    if (input.assignedId === UNASSIGNED_ASSIGNEE_VALUE) {
       where.assignedUserId = { isNull: true }
       where.assignedInboxTeamId = { isNull: true }
-    } else if (input.assignedId.startsWith("u_")) {
-      const userId = parseBigIntId(input.assignedId.slice(2))
-      if (userId) {
-        where.assignedUserId = userId
-      }
-    } else if (input.assignedId.startsWith("t_")) {
-      const inboxTeamId = parseBigIntId(input.assignedId.slice(2))
-      if (inboxTeamId) {
-        where.assignedInboxTeamId = inboxTeamId
-      }
+    } else if (assignedSelection.userIds[0]) {
+      where.assignedUserId = assignedSelection.userIds[0]
+    } else if (assignedSelection.inboxTeamIds[0]) {
+      where.assignedInboxTeamId = assignedSelection.inboxTeamIds[0]
     }
   }
 

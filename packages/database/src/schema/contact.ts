@@ -66,5 +66,25 @@ export const contactModel = pgTable(
     index("idx_contact_broadcast_subscribed_at").on(
       table.broadcastSubscribedAt,
     ),
+    index("idx_contact_workspace_created_at").on(
+      table.workspaceId,
+      table.createdAt,
+    ),
+    index("Contact_firstName_trgm_idx").using(
+      "gin",
+      table.firstName.op("gin_trgm_ops"),
+    ),
+    index("Contact_lastName_trgm_idx").using(
+      "gin",
+      table.lastName.op("gin_trgm_ops"),
+    ),
+    index("Contact_email_trgm_idx").using(
+      "gin",
+      table.email.op("gin_trgm_ops"),
+    ),
+    index("Contact_phoneNumber_trgm_idx").using(
+      "gin",
+      table.phoneNumber.op("gin_trgm_ops"),
+    ),
   ],
 )

@@ -82,5 +82,10 @@ export const contactInboxModel = pgTable(
       table.contactId.asc().nullsLast(),
       table.lastIncomingMessageAt.asc().nullsLast(),
     ),
+    index("ContactInbox_contactId_lastOutboundMessageAt_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast(),
+      table.lastOutboundMessageAt.asc().nullsLast(),
+    ),
   ],
 )

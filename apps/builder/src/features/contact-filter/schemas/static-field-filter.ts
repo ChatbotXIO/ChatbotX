@@ -51,6 +51,15 @@ const RANGE_OPERATORS = [
   operatorTypes.enum.notBetween,
 ] as const satisfies readonly OperatorType[]
 
+const NUMBER_OPERATORS = [
+  ...BASE_OPERATORS,
+  ...RANGE_OPERATORS,
+  operatorTypes.enum.contains,
+  operatorTypes.enum.notContains,
+  operatorTypes.enum.startsWith,
+  operatorTypes.enum.endsWith,
+] as const satisfies readonly OperatorType[]
+
 const DATE_OPERATORS = [
   ...BASE_OPERATORS,
   ...RANGE_OPERATORS,
@@ -59,12 +68,24 @@ const DATE_OPERATORS = [
 const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   locale: BASE_OPERATORS,
   country: BASE_OPERATORS,
+  continent: BASE_OPERATORS,
   gender: BASE_OPERATORS,
   source: SET_OPERATORS,
   currentChannel: SET_OPERATORS,
   inbox: SET_OPERATORS,
-  language: SET_OPERATORS,
   tags: SET_OPERATORS,
+  broadcastSent: SET_OPERATORS,
+  broadcastDelivered: SET_OPERATORS,
+  broadcastSeen: SET_OPERATORS,
+  broadcastClicked: SET_OPERATORS,
+  broadcastFailed: SET_OPERATORS,
+  subscribedToDripCampaign: SET_OPERATORS,
+  entryPointsLinks: SET_OPERATORS,
+  conversationAssigned: SET_OPERATORS,
+  contactCreatedDateMinutesAgo: NUMBER_OPERATORS,
+  lastSeenMinutesAgo: NUMBER_OPERATORS,
+  lastInteractionMinutesAgo: NUMBER_OPERATORS,
+  consecutiveAiFailures: NUMBER_OPERATORS,
 
   subscribedToBroadcast: BOOLEAN_OPERATORS,
   interactedInLast24h: BOOLEAN_OPERATORS,
@@ -72,6 +93,9 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   followUp: BOOLEAN_OPERATORS,
   archived: BOOLEAN_OPERATORS,
   blocked: BOOLEAN_OPERATORS,
+  existingContact: BOOLEAN_OPERATORS,
+  unreplied: BOOLEAN_OPERATORS,
+  unread: BOOLEAN_OPERATORS,
   emailWasVerified: NON_NULLABLE_BOOLEAN_OPERATORS,
   optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
 
@@ -81,6 +105,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   timezone: BASE_OPERATORS,
 
   contactCreatedAt: DATE_OPERATORS,
+  lastSent: DATE_OPERATORS,
   lastSeen: DATE_OPERATORS,
   lastInteraction: DATE_OPERATORS,
 }

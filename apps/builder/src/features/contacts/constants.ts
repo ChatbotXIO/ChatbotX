@@ -1,0 +1,1 @@
+export const CONTACTS_DEFAULT_PER_PAGE = 50

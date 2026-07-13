@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   resolveBroadcastInboxIds: vi.fn(),
   count: vi.fn(),
+  selectLimit: vi.fn(),
+  selectOrderBy: vi.fn(),
   selectWhere: vi.fn(),
   chunkById: vi.fn(),
   buildContactInboxContactFilterSQL: vi.fn(() => ({ RAW: "contact-filter" })),
@@ -22,6 +24,13 @@ vi.mock("../../inbox/service", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  broadcastModel: {
+    id: "Broadcast.id",
+    name: "Broadcast.name",
+    workspaceId: "Broadcast.workspaceId",
+    channel: "Broadcast.channel",
+    createdAt: "Broadcast.createdAt",
+  },
   contactInboxModel: {
     id: "ContactInbox.id",
     inboxId: "ContactInbox.inboxId",
@@ -37,9 +46,19 @@ vi.mock("@chatbotx.io/database/client", () => ({
         where: (where: unknown) => {
           mocks.selectWhere(where)
           return {
-            orderBy: () => ({
-              limit: () => Promise.resolve([]),
-            }),
+            orderBy: (orderBy: unknown) => {
+              mocks.selectOrderBy(orderBy)
+              return {
+                limit: (limit: number) => {
+                  mocks.selectLimit(limit)
+                  return Promise.resolve([])
+                },
+              }
+            },
+            limit: (limit: number) => {
+              mocks.selectLimit(limit)
+              return Promise.resolve([])
+            },
           }
         },
       }),
@@ -47,6 +66,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: (...args: unknown[]) => ({ __and: args }),
   asc: (value: unknown) => ({ __asc: value }),
+  desc: (value: unknown) => ({ __desc: value }),
+  eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
   gt: (left: unknown, right: unknown) => ({ __gt: [left, right] }),
   inArray: (left: unknown, right: unknown) => ({ __inArray: [left, right] }),
 }))
@@ -76,10 +97,33 @@ const contactFilter = {
 beforeEach(() => {
   mocks.resolveBroadcastInboxIds.mockReset()
   mocks.count.mockReset()
+  mocks.selectLimit.mockReset()
+  mocks.selectOrderBy.mockReset()
   mocks.selectWhere.mockReset()
   mocks.chunkById.mockReset()
   mocks.buildContactInboxContactFilterSQL.mockClear()
   mocks.contactInboxInteractedWithin24hSQL.mockClear()
+})
+
+describe("broadcastService.listOptions", () => {
+  test("returns newest broadcast options with a bounded payload", async () => {
+    const result = await broadcastService.listOptions({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.selectWhere).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["Broadcast.workspaceId", "ws-1"] },
+        { __eq: ["Broadcast.channel", "whatsapp"] },
+      ],
+    })
+    expect(mocks.selectOrderBy).toHaveBeenCalledWith({
+      __desc: "Broadcast.createdAt",
+    })
+    expect(mocks.selectLimit).toHaveBeenCalledWith(500)
+  })
 })
 
 describe("broadcastService.countAudience", () => {
