@@ -1,5 +1,6 @@
 import type { RadioGroupProps } from "@radix-ui/react-radio-group"
 import type { FieldPath, FieldValues } from "react-hook-form"
+import { cn } from "../../lib/utils"
 import { Label } from "../ui/label"
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
 import { FormFieldWrapper } from "./field-wrapper"
@@ -13,6 +14,8 @@ type RadioGroupFieldProps<T extends FieldValues> = RadioGroupProps & {
   options: {
     value: string
     label: string
+    description?: string
+    disabled?: boolean
   }[]
 }
 
@@ -44,15 +47,37 @@ export function RadioGroupField<T extends FieldValues>({
           onValueChange={field.onChange}
         >
           {options.map((option) => (
-            <div className="flex items-center space-x-2" key={option.value}>
+            <div className="flex items-start space-x-2" key={option.value}>
               <RadioGroupItem
+                aria-describedby={
+                  option.description
+                    ? `${name}${option.value}-description`
+                    : undefined
+                }
+                disabled={option.disabled}
                 id={name + option.value}
                 key={option.value}
                 value={option.value}
               />
-              <Label className="font-normal" htmlFor={name + option.value}>
-                {option.label}
-              </Label>
+              <div className="grid gap-1">
+                <Label
+                  className={cn(
+                    "font-normal",
+                    option.disabled && "text-muted-foreground",
+                  )}
+                  htmlFor={name + option.value}
+                >
+                  {option.label}
+                </Label>
+                {option.description && (
+                  <p
+                    className="text-muted-foreground text-xs leading-snug"
+                    id={`${name}${option.value}-description`}
+                  >
+                    {option.description}
+                  </p>
+                )}
+              </div>
             </div>
           ))}
         </RadioGroup>

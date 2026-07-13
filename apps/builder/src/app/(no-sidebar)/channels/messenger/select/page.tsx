@@ -19,10 +19,14 @@ export default async function MessengerSelectPage() {
     redirect("/channels/create")
   }
 
-  const pages = await getUserPages(auth.userToken, auth.version)
+  const { pages, bmLookupFailed } = await getUserPages(
+    auth.userToken,
+    auth.version,
+  )
 
   return (
     <SelectPage
+      bmLookupFailed={bmLookupFailed}
       pages={pages}
       referer={auth.referer}
       workspaceId={auth.workspaceId}

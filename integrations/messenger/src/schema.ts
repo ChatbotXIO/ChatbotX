@@ -420,7 +420,7 @@ export type FacebookUserProfile = z.infer<typeof facebookUserProfileSchema>
 export const facebookPageSchema = z.object({
   id: z.string(),
   name: z.string(),
-  access_token: z.string(),
+  access_token: z.string().optional(),
   category: z.string().optional(),
   category_list: z
     .array(
@@ -433,6 +433,7 @@ export const facebookPageSchema = z.object({
   tasks: z.array(z.string()).optional(),
 })
 export type FacebookPage = z.infer<typeof facebookPageSchema>
+export type ConnectableFacebookPage = FacebookPage & { isConnectable: boolean }
 
 // Webhook verification schemas
 export const webhookVerificationRequestSchema = z.object({

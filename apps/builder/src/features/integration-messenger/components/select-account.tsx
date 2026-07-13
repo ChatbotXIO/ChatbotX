@@ -1,6 +1,11 @@
 "use client"
 
-import type { FacebookPage } from "@chatbotx.io/integration-messenger/schema"
+import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@chatbotx.io/ui/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -17,12 +22,18 @@ import {
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 
 type SelectPageProps = {
-  pages: FacebookPage[]
+  pages: ConnectableFacebookPage[]
+  bmLookupFailed: boolean
   workspaceId: string
   referer: string
 }
 
-export function SelectPage({ pages, workspaceId, referer }: SelectPageProps) {
+export function SelectPage({
+  pages,
+  bmLookupFailed,
+  workspaceId,
+  referer,
+}: SelectPageProps) {
   const t = useTranslations()
   const router = useRouter()
   const [coexist, setCoexist] = useState<CoexistTrigger | null>(null)
@@ -51,7 +62,17 @@ export function SelectPage({ pages, workspaceId, referer }: SelectPageProps) {
             {t("actions.connectFeature", { feature: "Messenger" })}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {bmLookupFailed && (
+            <Alert variant="warning">
+              <AlertTitle>
+                {t("messenger.selectPage.bmLookupFailedTitle")}
+              </AlertTitle>
+              <AlertDescription>
+                {t("messenger.selectPage.bmLookupFailedDescription")}
+              </AlertDescription>
+            </Alert>
+          )}
           <FacebookPages
             onCoexistRequired={handleCoexistRequired}
             pages={pages}

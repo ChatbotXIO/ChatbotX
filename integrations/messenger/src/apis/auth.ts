@@ -1,45 +1,45 @@
+import { fetchAllCursorPages } from "@chatbotx.io/utils"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
-import type { FacebookPage } from "../schema"
+import type { ConnectableFacebookPage, FacebookPage } from "../schema"
 
 type FacebookBusiness = { id: string; name: string }
+type FacebookPageSource = "direct" | "business"
+type BusinessPagesResult = { pages: FacebookPage[]; hadFailure: boolean }
+type SourcedFacebookPage = {
+  page: FacebookPage
+  source: FacebookPageSource
+}
 
 const MAX_PAGES = 20
+const GRAPH_PAGE_LIMIT = 100
+const BUSINESS_PAGE_BATCH_SIZE = 5
+const ADMIN_PAGE_TASKS = [
+  "ADVERTISE",
+  "ANALYZE",
+  "CREATE_CONTENT",
+  "MANAGE",
+  "MODERATE",
+]
 
-/**
- * Exhausts a Graph API cursor-paginated edge, following `paging.next` /
- * `paging.cursors.after` until pages run out or MAX_PAGES is hit.
- */
-async function fetchAllPages<T>(
+function fetchAllPages<T>(
   endpoint: string,
   fields: string,
   accessToken: string,
 ): Promise<T[]> {
-  const results: T[] = []
-  let cursor: string | undefined
-  let pageCount = 0
-
-  while (pageCount < MAX_PAGES) {
-    const res: {
-      data: T[]
-      paging?: { cursors?: { after?: string }; next?: string }
-    } = await facebookGraphClient.get(endpoint, {
-      searchParams: {
-        fields,
-        access_token: accessToken,
-        ...(cursor ? { after: cursor } : {}),
-      },
-    })
-    results.push(...res.data)
-    pageCount++
-    cursor = res.paging?.next ? res.paging.cursors?.after : undefined
-    if (!cursor) {
-      break
-    }
-  }
-  return results
+  return fetchAllCursorPages({
+    endpoint,
+    fields,
+    accessToken,
+    // Arrow wrapper keeps `this` bound to the client instance; passing the
+    // method reference directly detaches it and crashes at call time.
+    get: (pageEndpoint, options) =>
+      facebookGraphClient.get(pageEndpoint, options),
+    limit: GRAPH_PAGE_LIMIT,
+    maxPages: MAX_PAGES,
+  })
 }
 
 function getUserBusinesses(
@@ -57,21 +57,37 @@ async function getBusinessPages(
   businessId: string,
   userAccessToken: string,
   version: string,
-): Promise<FacebookPage[]> {
-  const fields = "id,name,access_token,category,tasks"
-  const [owned, client] = await Promise.all([
-    fetchAllPages<FacebookPage>(
-      `${version}/${businessId}/owned_pages`,
-      fields,
-      userAccessToken,
-    ),
-    fetchAllPages<FacebookPage>(
-      `${version}/${businessId}/client_pages`,
-      fields,
-      userAccessToken,
-    ),
-  ])
-  return [...owned, ...client]
+): Promise<BusinessPagesResult> {
+  const fields = "id,name,access_token,category"
+  const edges = [
+    { name: "owned_pages", endpoint: `${version}/${businessId}/owned_pages` },
+    { name: "client_pages", endpoint: `${version}/${businessId}/client_pages` },
+  ] as const
+  const edgeResults = await Promise.all(
+    edges.map(async (edge) => {
+      try {
+        return {
+          pages: await fetchAllPages<FacebookPage>(
+            edge.endpoint,
+            fields,
+            userAccessToken,
+          ),
+          failed: false,
+        }
+      } catch (error) {
+        logger.warn(
+          error,
+          `Failed to fetch BM ${edge.name} for business ${businessId}`,
+        )
+        return { pages: [], failed: true }
+      }
+    }),
+  )
+
+  return {
+    pages: edgeResults.flatMap((result) => result.pages),
+    hadFailure: edgeResults.some((result) => result.failed),
+  }
 }
 
 /**
@@ -83,30 +99,71 @@ async function getBusinessPages(
 async function getBusinessManagedPages(
   userAccessToken: string,
   version: string,
-): Promise<FacebookPage[]> {
+): Promise<{ pages: FacebookPage[]; failed: boolean }> {
   try {
     const businesses = await getUserBusinesses(userAccessToken, version)
-    const pagesPerBusiness = await Promise.all(
-      businesses.map((business) =>
-        getBusinessPages(business.id, userAccessToken, version).catch(
-          (error) => {
-            logger.warn(
-              error,
-              `Failed to fetch BM pages for business ${business.id}`,
-            )
-            return []
-          },
+    const pagesPerBusiness: BusinessPagesResult[] = []
+
+    for (
+      let index = 0;
+      index < businesses.length;
+      index += BUSINESS_PAGE_BATCH_SIZE
+    ) {
+      const batch = businesses.slice(index, index + BUSINESS_PAGE_BATCH_SIZE)
+      const batchPages = await Promise.all(
+        batch.map((business) =>
+          getBusinessPages(business.id, userAccessToken, version),
         ),
-      ),
-    )
-    return pagesPerBusiness.flat()
+      )
+      pagesPerBusiness.push(...batchPages)
+    }
+
+    const pages = pagesPerBusiness.flatMap((result) => result.pages)
+    const hadFailure = pagesPerBusiness.some((result) => result.hadFailure)
+
+    return { pages, failed: hadFailure && pages.length === 0 }
   } catch (error) {
     logger.warn(
       error,
       "Failed to fetch Business Manager pages, falling back to direct accounts",
     )
-    return []
+    return { pages: [], failed: true }
   }
+}
+
+function hasAllAdminTasks(tasks?: string[]): boolean {
+  if (!tasks?.length) {
+    return false
+  }
+
+  return ADMIN_PAGE_TASKS.every((task) => tasks.includes(task))
+}
+
+function classifyConnectable(
+  page: FacebookPage,
+  source: FacebookPageSource,
+): ConnectableFacebookPage {
+  const hasAccessToken = Boolean(page.access_token)
+
+  return {
+    ...page,
+    isConnectable:
+      source === "direct"
+        ? hasAccessToken && hasAllAdminTasks(page.tasks)
+        : hasAccessToken,
+  }
+}
+
+function sortConnectableFirst(
+  pages: ConnectableFacebookPage[],
+): ConnectableFacebookPage[] {
+  return [...pages].sort((current, next) => {
+    if (current.isConnectable === next.isConnectable) {
+      return 0
+    }
+
+    return current.isConnectable ? -1 : 1
+  })
 }
 
 const FACEBOOK_OAUTH_BASE = "https://www.facebook.com"
@@ -138,6 +195,7 @@ export function generateAuthUrl({
   stateParams?: Record<string, unknown>
 }): string {
   const params = new URLSearchParams({
+    auth_type: "rerequest",
     client_id: clientId,
     redirect_uri: redirectUrl,
     scope: MESSENGER_SCOPES.join(","),
@@ -174,31 +232,44 @@ export function exchangeCodeForToken(
 export async function getUserPages(
   userAccessToken: string,
   version: string = DEFAULT_API_VERSION,
-): Promise<FacebookPage[]> {
+): Promise<{ pages: ConnectableFacebookPage[]; bmLookupFailed: boolean }> {
   const directPagesEndpoint = `${version}/me/accounts`
-  const directPages = await rescue(directPagesEndpoint, async () => {
-    const res: { data: FacebookPage[] } = await facebookGraphClient.get(
+  const directPages = await rescue(directPagesEndpoint, () =>
+    fetchAllPages<FacebookPage>(
       directPagesEndpoint,
-      {
-        searchParams: {
-          fields: "id,name,access_token,category,tasks",
-          access_token: userAccessToken,
-        },
-      },
-    )
-    return res.data
-  })
+      "id,name,access_token,category,tasks",
+      userAccessToken,
+    ),
+  )
 
-  const businessPages = await getBusinessManagedPages(userAccessToken, version)
+  const businessPagesResult = await getBusinessManagedPages(
+    userAccessToken,
+    version,
+  )
 
-  const merged = new Map<string, FacebookPage>()
+  const merged = new Map<string, SourcedFacebookPage>()
   for (const page of directPages) {
-    merged.set(page.id, page)
+    merged.set(page.id, { page, source: "direct" })
   }
-  for (const page of businessPages) {
-    if (page.access_token && !merged.has(page.id)) {
-      merged.set(page.id, page)
+  for (const page of businessPagesResult.pages) {
+    if (!merged.has(page.id)) {
+      merged.set(page.id, { page, source: "business" })
     }
   }
-  return Array.from(merged.values())
+
+  const pages = sortConnectableFirst(
+    Array.from(merged.values()).map(({ page, source }) =>
+      classifyConnectable(page, source),
+    ),
+  )
+  const nonConnectable = pages.filter((page) => !page.isConnectable).length
+
+  logger.debug({ nonConnectable }, "Classified Messenger pages")
+  if (businessPagesResult.failed) {
+    logger.debug("Business Manager page lookup failed")
+  } else if (businessPagesResult.pages.length === 0) {
+    logger.debug("No Business Manager pages found")
+  }
+
+  return { pages, bmLookupFailed: businessPagesResult.failed }
 }
