@@ -111,6 +111,113 @@ export async function replyByAI(
   return null
 }
 
+export type GenerateAIReplyProps = {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  messages: ModelMessage[]
+  aiAgent: AIAgentModel
+}
+
+export type GeneratedAIReply = {
+  text: string
+  provider: ReplyAIProvider
+  modelId: string
+}
+
+/**
+ * Generate an AI agent reply as plain text WITHOUT sending it anywhere.
+ *
+ * Unlike `replyByAI`, this runs the provider-fallback loop with tools and rich
+ * mode disabled and returns the accumulated text, so the caller controls the
+ * delivery channel (e.g. a public Facebook comment reply vs a private DM). Tools
+ * are off so nothing can send out-of-band (the `sendMessage`/`triggerFlow`/
+ * handoff system tools all send DMs on their own). It mirrors the DM policy by
+ * only using auto-reply-enabled provider integrations.
+ */
+export async function generateAIReplyText(
+  props: GenerateAIReplyProps,
+): Promise<GeneratedAIReply | null> {
+  const { conversation, contactInbox, messages, aiAgent } = props
+  const providers = aiAgent.models as AIAgentProviderModels
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
+
+  try {
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+      conversation,
+    })
+    const systemPrompt = aiAgent.prompt
+      ? await contactVariableService.replaceAll({
+          text: aiAgent.prompt,
+          variables,
+        })
+      : ""
+
+    for (const providerInfo of providers) {
+      const modelConfig = await createReplyModel({
+        workspaceId: conversation.workspaceId,
+        providerInfo,
+      })
+      if (!modelConfig) {
+        continue
+      }
+      const provider = getProviderName(providerInfo)
+
+      const result = await streamText({
+        model: modelConfig.model,
+        system: systemPrompt,
+        messages,
+        maxOutputTokens: aiAgent.maxOutputTokens,
+        temperature: aiAgent.temperature,
+        tools: {},
+        toolChoice: "none",
+        stopWhen: stepCountIs(1),
+        timeout: {
+          totalMs: aiTimeouts.aiTotal,
+          stepMs: aiTimeouts.aiStep,
+          chunkMs: aiTimeouts.aiChunk,
+        },
+        abortSignal: controller.signal,
+      })
+
+      const { fullText } = await processStreamingText(
+        result.textStream,
+        async () => {
+          // generate-only: never send
+        },
+        { sendParts: false },
+      ).catch((streamError) => {
+        logger.error(
+          {
+            provider,
+            modelId: providerInfo.model,
+            conversationId: conversation.id,
+            error: normalizeError(streamError),
+          },
+          "[comment-ai-reply] processStreamingText threw error",
+        )
+        return { fullText: "" }
+      })
+
+      const text = fullText.trim()
+      if (text) {
+        return {
+          text,
+          provider,
+          modelId: providerInfo.model,
+        }
+      }
+    }
+
+    return null
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 function createReplyToolset(options: {
   abortSignal: AbortSignal
   directSendTracker: { sent: boolean; sentText: string }
