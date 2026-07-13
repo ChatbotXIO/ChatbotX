@@ -38,9 +38,27 @@ const directPage = {
   tasks: adminTasks,
 }
 
+// The Business Manager lookup is disabled by default; these tests opt in to
+// keep the BM code path covered while it stays switched off in production.
+const getUserPagesWithBm = (token: string) =>
+  getUserPages(token, undefined, { includeBusinessManagerPages: true })
+
 describe("getUserPages", () => {
   beforeEach(() => {
     mockGet.mockReset()
+  })
+
+  test("skips the Business Manager lookup by default", async () => {
+    mockGet.mockResolvedValueOnce({ data: [directPage] }) // /me/accounts
+
+    const result = await getUserPages("user-token")
+
+    expect(result).toEqual({
+      pages: [{ ...directPage, isConnectable: true }],
+      bmLookupFailed: false,
+    })
+    expect(mockGet).toHaveBeenCalledTimes(1)
+    expect(mockGet).toHaveBeenCalledWith("v23.0/me/accounts", expect.anything())
   })
 
   test("no businesses - returns /me/accounts pages with connectability", async () => {
@@ -48,7 +66,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [directPage] }) // /me/accounts
       .mockResolvedValueOnce({ data: [] }) // /me/businesses
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result).toEqual({
       pages: [{ ...directPage, isConnectable: true }],
@@ -75,7 +93,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [ownedPage] }) // owned_pages
       .mockResolvedValueOnce({ data: [clientPage] }) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result.bmLookupFailed).toBe(false)
     expect(result.pages).toEqual(
@@ -101,7 +119,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [bmDuplicate] }) // owned_pages
       .mockResolvedValueOnce({ data: [] }) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result.bmLookupFailed).toBe(false)
     expect(result.pages).toEqual([{ ...directPage, isConnectable: true }])
@@ -116,7 +134,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [pageWithoutToken] }) // owned_pages
       .mockResolvedValueOnce({ data: [] }) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result).toEqual({
       pages: [{ ...pageWithoutToken, isConnectable: false }],
@@ -129,7 +147,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [directPage] }) // /me/accounts
       .mockRejectedValueOnce(new Error("business_management not granted")) // /me/businesses
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result).toEqual({
       pages: [{ ...directPage, isConnectable: true }],
@@ -182,7 +200,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [ownedPage2] }) // owned_pages page 2
       .mockResolvedValueOnce({ data: [] }) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result.bmLookupFailed).toBe(false)
     expect(result.pages).toEqual(
@@ -233,7 +251,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [bmPageWithToken, bmPageWithoutToken] }) // owned_pages
       .mockResolvedValueOnce({ data: [] }) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result.pages).toEqual([
       { ...directPage, isConnectable: true },
@@ -257,7 +275,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [] }) // owned_pages
       .mockResolvedValueOnce({ data: [] }) // client_pages
 
-    await getUserPages("user-token")
+    await getUserPagesWithBm("user-token")
 
     for (const call of mockGet.mock.calls) {
       expect(call[1]?.searchParams).toEqual(
@@ -286,7 +304,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [recoveredPage] }) // biz2 owned_pages
       .mockResolvedValueOnce({ data: [] }) // biz2 client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result).toEqual({
       pages: [{ ...recoveredPage, isConnectable: true }],
@@ -307,7 +325,7 @@ describe("getUserPages", () => {
       .mockResolvedValueOnce({ data: [ownedPage] }) // owned_pages
       .mockRejectedValueOnce(new Error("client pages unavailable")) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result).toEqual({
       pages: [{ ...ownedPage, isConnectable: true }],
@@ -322,7 +340,7 @@ describe("getUserPages", () => {
       .mockRejectedValueOnce(new Error("owned pages unavailable")) // owned_pages
       .mockRejectedValueOnce(new Error("client pages unavailable")) // client_pages
 
-    const result = await getUserPages("user-token")
+    const result = await getUserPagesWithBm("user-token")
 
     expect(result).toEqual({
       pages: [{ ...directPage, isConnectable: true }],

@@ -2550,6 +2550,7 @@
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during connection. Reconnect Messenger and grant all requested permissions.",
       "bmLookupFailedTitle": "Business Manager pages may be missing",
       "bmLookupFailedDescription": "Reconnect Messenger and grant Business Manager access so pages managed through a Business Manager can be listed.",
+      "alreadyConnectedNote": "This page is already connected",
       "notAdminNote": "Full admin permission on the page is required to connect",
       "tryAgain": "Try reconnecting"
     },

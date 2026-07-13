@@ -26,13 +26,30 @@ export type CoexistTrigger = {
   resolvedWorkspaceId: string
 }
 
+export type PickerFacebookPage = ConnectableFacebookPage & {
+  isAlreadyConnected: boolean
+}
+
+function getPageOptionNote(
+  page: PickerFacebookPage,
+  t: ReturnType<typeof useTranslations>,
+): string | undefined {
+  if (page.isAlreadyConnected) {
+    return t("messenger.selectPage.alreadyConnectedNote")
+  }
+  if (!page.isConnectable) {
+    return t("messenger.selectPage.notAdminNote")
+  }
+  return
+}
+
 export function FacebookPages({
   workspaceId,
   pages,
   onCoexistRequired,
 }: {
   workspaceId?: string | null
-  pages: ConnectableFacebookPage[]
+  pages: PickerFacebookPage[]
   onCoexistRequired: (trigger: CoexistTrigger) => void
 }) {
   const t = useTranslations()
@@ -117,10 +134,8 @@ export function FacebookPages({
             options={pages.map((page) => ({
               value: page.id,
               label: page.name,
-              disabled: !page.isConnectable,
-              description: page.isConnectable
-                ? undefined
-                : t("messenger.selectPage.notAdminNote"),
+              disabled: !page.isConnectable || page.isAlreadyConnected,
+              description: getPageOptionNote(page, t),
             }))}
             required
           />

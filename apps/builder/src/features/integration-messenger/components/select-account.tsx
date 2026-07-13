@@ -1,6 +1,5 @@
 "use client"
 
-import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import {
   Alert,
   AlertDescription,
@@ -18,11 +17,12 @@ import { useState } from "react"
 import {
   type CoexistTrigger,
   FacebookPages,
+  type PickerFacebookPage,
 } from "@/features/integration-messenger/components/messenger-pages"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 
 type SelectPageProps = {
-  pages: ConnectableFacebookPage[]
+  pages: PickerFacebookPage[]
   bmLookupFailed: boolean
   workspaceId: string
   referer: string

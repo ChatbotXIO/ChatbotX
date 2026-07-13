@@ -2565,6 +2565,7 @@
       "noPagesDescription": "Các trang nằm trong Business Manager cần được cấp quyền Business Manager khi kết nối. Hãy kết nối lại Messenger và cấp tất cả quyền được yêu cầu.",
       "bmLookupFailedTitle": "Có thể thiếu trang trong Business Manager",
       "bmLookupFailedDescription": "Hãy kết nối lại Messenger và cấp quyền Business Manager để liệt kê các trang được quản lý qua Business Manager.",
+      "alreadyConnectedNote": "Trang này đã được kết nối",
       "notAdminNote": "Cần quyền quản trị đầy đủ trên trang để kết nối",
       "tryAgain": "Kết nối lại"
     },

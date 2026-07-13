@@ -1,6 +1,8 @@
+import { findConnectedMessengerPageIds } from "@chatbotx.io/business"
 import { getUserPages } from "@chatbotx.io/integration-messenger"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import type { PickerFacebookPage } from "@/features/integration-messenger/components/messenger-pages"
 import { SelectPage } from "@/features/integration-messenger/components/select-account"
 import type { FacebookAuthCallback } from "@/lib/facebook-pending-auth"
 import {
@@ -24,10 +26,18 @@ export default async function MessengerSelectPage() {
     auth.version,
   )
 
+  const connectedPageIds = new Set(
+    await findConnectedMessengerPageIds(pages.map((page) => page.id)),
+  )
+  const pickerPages: PickerFacebookPage[] = pages.map((page) => ({
+    ...page,
+    isAlreadyConnected: connectedPageIds.has(page.id),
+  }))
+
   return (
     <SelectPage
       bmLookupFailed={bmLookupFailed}
-      pages={pages}
+      pages={pickerPages}
       referer={auth.referer}
       workspaceId={auth.workspaceId}
     />
