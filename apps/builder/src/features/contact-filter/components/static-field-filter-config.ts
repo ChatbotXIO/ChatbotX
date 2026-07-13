@@ -14,6 +14,8 @@ type StaticFieldRule = {
 }
 
 const STATIC_FIELD_OPERATOR_ORDER = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
   operatorTypes.enum.eq,
   operatorTypes.enum.ne,
   operatorTypes.enum.isNotEmpty,
@@ -127,7 +129,6 @@ const staticFieldRules: Record<string, StaticFieldRule> = {
   source: relationSetRule,
   currentChannel: relationSetRule,
   inbox: relationSetRule,
-  language: relationSetRule,
   hasOpportunity: dropdownRule,
   hasOpenOpportunity: dropdownRule,
   hasWonOpportunity: dropdownRule,
@@ -249,6 +250,9 @@ const isIntervalOperator = (operator?: string): operator is OperatorType =>
   operator === operatorTypes.enum.isBetween ||
   operator === operatorTypes.enum.notBetween
 
+const isSetOperator = (operator?: string): operator is OperatorType =>
+  operator === operatorTypes.enum.in || operator === operatorTypes.enum.notIn
+
 const isValuelessOperator = (operator?: string): operator is OperatorType =>
   operator === operatorTypes.enum.isNotEmpty ||
   operator === operatorTypes.enum.isEmpty
@@ -316,13 +320,22 @@ export const getStaticFieldValueInputConfig = (
 export const getDefaultStaticFieldValue = (
   config: FieldConfig | undefined,
   operator: string | undefined,
-): string | string[] =>
-  getStaticFieldValueInputConfig(config, operator)?.defaultValue ?? ""
+): string | string[] => {
+  if (isSetOperator(operator)) {
+    return []
+  }
+
+  return getStaticFieldValueInputConfig(config, operator)?.defaultValue ?? ""
+}
 
 export const staticFieldOperatorRequiresArrayValue = (
   config: FieldConfig | undefined,
   operator: string | undefined,
 ): boolean => {
   const input = getStaticFieldValueInputConfig(config, operator)
-  return input?.kind === "numberInterval" || input?.kind === "datetimeInterval"
+  return (
+    isSetOperator(operator) ||
+    input?.kind === "numberInterval" ||
+    input?.kind === "datetimeInterval"
+  )
 }

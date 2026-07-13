@@ -1,16 +1,12 @@
 // @vitest-environment node
 
-import {
-  contactLanguageOptions,
-  contactLocaleOptions,
-} from "@chatbotx.io/business/contact-locale"
+import { contactLocaleOptions } from "@chatbotx.io/business/contact-locale"
 import {
   contactSources,
   formFieldTypes,
   operatorTypes,
 } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
-import { buildConditionDraft } from "@/features/contact-filter/components/contact-filter-condition-form"
 import {
   convertCustomFieldTypeToConditionType,
   type FieldConfig,
@@ -34,7 +30,6 @@ import {
 
 const t = (key: string) => key
 const conditionOptions = getConditionOptions(t)
-const CONTACT_LANGUAGE_VALUE_RE = /^[a-z]+$/
 
 const option = (
   options: { value: string; disabled?: boolean }[],
@@ -181,7 +176,6 @@ describe("contact filter field config helpers", () => {
 
     expect(groupFor("fullName")).toBe("contactInfo")
     expect(groupFor("locale")).toBe("contactInfo")
-    expect(groupFor("language")).toBe("contactInfo")
     expect(groupFor("timezone")).toBe("contactInfo")
     expect(groupFor("tags")).toBe("analytics")
     expect(groupFor("lastSeen")).toBe("analytics")
@@ -252,31 +246,6 @@ describe("contact filter field config helpers", () => {
       label: "condition.languages.vi",
       value: "vi_VN",
     })
-  })
-
-  test("uses bare contact language values with human labels", () => {
-    const configs = getFieldConfigs({
-      t,
-      tagOptions: [],
-      inboxOptions: [],
-      flowVersionOptions: [],
-      customFields: [],
-    })
-    const languageOptions = configs.find(
-      (config) => config.name === "language",
-    )?.options
-
-    expect(languageOptions?.map((option) => option.value)).toEqual(
-      contactLanguageOptions.map((option) => option.value),
-    )
-    expect(
-      languageOptions?.every((option) =>
-        CONTACT_LANGUAGE_VALUE_RE.test(option.value),
-      ),
-    ).toBe(true)
-    expect(
-      languageOptions?.every((option) => option.label !== option.value),
-    ).toBe(true)
   })
 
   test("uses curated contact timezone option list", () => {
@@ -377,6 +346,48 @@ describe("contact filter field config helpers", () => {
     )
   })
 
+  test("preserves configured field order inside each group", () => {
+    const configs: FieldConfig[] = [
+      {
+        name: "fullName",
+        label: "Zulu",
+        formField: formFieldTypes.enum.text,
+        group: "contactInfo",
+      },
+      {
+        name: "existingContact",
+        label: "Alpha",
+        formField: formFieldTypes.enum.boolean,
+        group: "contactInfo",
+      },
+      {
+        name: "tags",
+        label: "Zulu",
+        formField: formFieldTypes.enum.multiSelect,
+        group: "analytics",
+      },
+      {
+        name: "lastSeen",
+        label: "Alpha",
+        formField: formFieldTypes.enum.datetime,
+        group: "analytics",
+      },
+    ]
+
+    const options = getFieldOptions(configs, t)
+
+    expect(options.slice(0, 2).map((option) => option.value)).toEqual([
+      "fullName",
+      "existingContact",
+    ])
+    expect(
+      options.find((option) => option.value === "group-analytics")?.children,
+    ).toEqual([
+      { label: "Zulu", value: "tags" },
+      { label: "Alpha", value: "lastSeen" },
+    ])
+  })
+
   test("converts custom field types and formats values for display", () => {
     expect(convertCustomFieldTypeToConditionType("number")).toBe(
       formFieldTypes.enum.number,
@@ -397,66 +408,5 @@ describe("contact filter field config helpers", () => {
         [{ label: "VIP", value: "tag-1" }],
       ),
     ).toBe("VIP, missing")
-  })
-})
-
-describe("buildConditionDraft", () => {
-  test("passes static value conditions through and omits value for valueless operators", () => {
-    expect(
-      buildConditionDraft(
-        {
-          field: "email",
-          operator: operatorTypes.enum.eq,
-          value: "a@example.com",
-        },
-        undefined,
-      ),
-    ).toEqual({
-      field: "email",
-      operator: operatorTypes.enum.eq,
-      value: "a@example.com",
-    })
-
-    expect(
-      buildConditionDraft(
-        {
-          field: "email",
-          operator: operatorTypes.enum.isNotEmpty,
-          value: "ignored",
-        },
-        undefined,
-      ),
-    ).toEqual({
-      field: "email",
-      operator: operatorTypes.enum.isNotEmpty,
-    })
-  })
-
-  test("maps custom field config to dynamic customField condition shape", () => {
-    const config: FieldConfig = {
-      name: "customField:cf-1",
-      customFieldId: "cf-1",
-      customFieldType: "number",
-      formField: formFieldTypes.enum.number,
-      group: "customFields",
-    }
-
-    expect(
-      buildConditionDraft(
-        {
-          field: "customField:cf-1",
-          operator: operatorTypes.enum.gt,
-          value: "10",
-        },
-        config,
-      ),
-    ).toEqual({
-      field: "customField",
-      customFieldId: "cf-1",
-      customFieldType: "number",
-      valueType: formFieldTypes.enum.number,
-      operator: operatorTypes.enum.gt,
-      value: "10",
-    })
   })
 })

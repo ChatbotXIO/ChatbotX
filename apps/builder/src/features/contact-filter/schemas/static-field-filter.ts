@@ -73,7 +73,6 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   source: SET_OPERATORS,
   currentChannel: SET_OPERATORS,
   inbox: SET_OPERATORS,
-  language: SET_OPERATORS,
   tags: SET_OPERATORS,
   broadcastSent: SET_OPERATORS,
   broadcastDelivered: SET_OPERATORS,

@@ -41,14 +41,6 @@ describe("staticFieldFilter", () => {
     ).toBe(true)
 
     expect(
-      staticFieldFilter("language").safeParse({
-        field: "language",
-        operator: operatorTypes.enum.in,
-        value: ["vi"],
-      }).success,
-    ).toBe(true)
-
-    expect(
       staticFieldFilter("timezone").safeParse({
         field: "timezone",
         operator: operatorTypes.enum.eq,
@@ -87,14 +79,6 @@ describe("staticFieldFilter", () => {
         field: "timezone",
         operator: operatorTypes.enum.contains,
         value: "Asia",
-      }).success,
-    ).toBe(false)
-
-    expect(
-      staticFieldFilter("language").safeParse({
-        field: "language",
-        operator: operatorTypes.enum.contains,
-        value: "vi",
       }).success,
     ).toBe(false)
 

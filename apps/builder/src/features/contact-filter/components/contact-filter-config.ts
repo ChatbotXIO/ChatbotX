@@ -160,14 +160,6 @@ const getLocaleOptions = (t: (key: string) => string): SelectOption[] => {
   return localeOptions
 }
 
-const getContactLanguageOptions = (
-  t: (key: string) => string,
-): SelectOption[] =>
-  contactLanguageOptions.map((option) => ({
-    label: t(option.labelKey),
-    value: option.value,
-  }))
-
 const resolveContactFilterOptions = (
   optionSource: ContactFilterOptionSource,
   ctx: {
@@ -187,8 +179,6 @@ const resolveContactFilterOptions = (
       return
     case "languages":
       return getLocaleOptions(ctx.t)
-    case "contactLanguages":
-      return getContactLanguageOptions(ctx.t)
     case "timezones":
       return contactTimezoneOptions
     case "countries":

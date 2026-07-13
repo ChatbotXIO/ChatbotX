@@ -21,7 +21,6 @@ export type ContactFilterSchemaKind =
 export type ContactFilterOptionSource =
   | "none"
   | "languages"
-  | "contactLanguages"
   | "timezones"
   | "countries"
   | "continents"
@@ -54,11 +53,6 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.locale,
     schemaKind: "multiSelect",
     optionSource: "languages",
-  },
-  {
-    field: contactFilterFields.enum.language,
-    schemaKind: "multiSelect",
-    optionSource: "contactLanguages",
   },
   {
     field: contactFilterFields.enum.fullName,
