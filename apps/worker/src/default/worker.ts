@@ -1,4 +1,3 @@
-import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   DefaultJobAction,
   type DefaultJobData,
@@ -8,6 +7,7 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
@@ -31,12 +31,7 @@ const worker = new Worker(
         await sendErrorLog(job.data.data)
         return
       case DefaultJobAction.exportContacts:
-        if (
-          (await withBlockedOwnerGuard(
-            await resolveWorkspaceId(job.data.data),
-            async () => true,
-          )) === undefined
-        ) {
+        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
           return
         }
         await loopableExportContacts(job.data.data)
@@ -47,34 +42,19 @@ const worker = new Worker(
         })
         return
       case DefaultJobAction.runImport:
-        if (
-          (await withBlockedOwnerGuard(
-            await resolveWorkspaceId(job.data.data),
-            async () => true,
-          )) === undefined
-        ) {
+        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
           return
         }
         await runImport(job.data.data)
         return
       case DefaultJobAction.syncTag:
-        if (
-          (await withBlockedOwnerGuard(
-            await resolveWorkspaceId(job.data.data),
-            async () => true,
-          )) === undefined
-        ) {
+        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
           return
         }
         await handleSyncTag(job.data.data)
         return
       case DefaultJobAction.syncChannelLabels:
-        if (
-          (await withBlockedOwnerGuard(
-            await resolveWorkspaceId(job.data.data),
-            async () => true,
-          )) === undefined
-        ) {
+        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
           return
         }
         await handleSyncChannelLabels(job.data.data)

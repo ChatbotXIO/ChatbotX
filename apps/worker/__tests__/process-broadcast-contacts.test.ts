@@ -21,6 +21,13 @@ const scheduleAddSpy = vi.fn()
 const loggerErrorSpy = vi.fn()
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
+vi.mock("@chatbotx.io/business", () => ({
+  withBlockedOwnerGuard: async (
+    _workspaceId: unknown,
+    fn: () => Promise<unknown>,
+  ) => fn(),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {

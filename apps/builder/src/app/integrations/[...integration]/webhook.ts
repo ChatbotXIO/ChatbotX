@@ -151,6 +151,10 @@ export const handleWebhook = async (
     ? (await workspaceService.find({ where: { id: workspaceId } }))?.ownerId
     : domainOwnerId
   if (await isBlockedOwner(workspaceOwnerId)) {
+    logger.info(
+      { ownerId: workspaceOwnerId, integrationType },
+      "webhook skipped: blocked owner",
+    )
     return new Response("ok")
   }
 
@@ -208,10 +212,14 @@ const handleTelegramWebhook = async (req: NextRequest) => {
     })
   }
 
-  const telegramWorkspace = await workspaceService.findById({
-    id: integrationTelegram.workspaceId,
+  const telegramWorkspace = await workspaceService.find({
+    where: { id: integrationTelegram.workspaceId },
   })
-  if (await isBlockedOwner(telegramWorkspace.ownerId)) {
+  if (await isBlockedOwner(telegramWorkspace?.ownerId)) {
+    logger.info(
+      { ownerId: telegramWorkspace?.ownerId, integrationType: "telegram" },
+      "webhook skipped: blocked owner",
+    )
     return new Response("ok")
   }
 
@@ -290,10 +298,14 @@ const handleTiktokWebhook = async (req: NextRequest) => {
     )
   }
 
-  const tiktokWorkspace = await workspaceService.findById({
-    id: integrationTiktok.workspaceId,
+  const tiktokWorkspace = await workspaceService.find({
+    where: { id: integrationTiktok.workspaceId },
   })
-  if (await isBlockedOwner(tiktokWorkspace.ownerId)) {
+  if (await isBlockedOwner(tiktokWorkspace?.ownerId)) {
+    logger.info(
+      { ownerId: tiktokWorkspace?.ownerId, integrationType: "tiktok" },
+      "webhook skipped: blocked owner",
+    )
     return new Response("ok")
   }
 

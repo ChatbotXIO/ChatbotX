@@ -1,4 +1,3 @@
-import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -8,6 +7,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
@@ -16,12 +16,7 @@ const webhookMatcher = new WebhookMatcherService()
 const worker = new Worker(
   queueNames.enum.webhook,
   async (job: Job<WebhookJobData>) => {
-    if (
-      (await withBlockedOwnerGuard(
-        job.data.data.workspaceId,
-        async () => true,
-      )) === undefined
-    ) {
+    if (await isBlockedWorkspace(job.data.data.workspaceId)) {
       return
     }
 

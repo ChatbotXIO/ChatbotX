@@ -1,8 +1,5 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import {
-  conversationService,
-  withBlockedOwnerGuard,
-} from "@chatbotx.io/business"
+import { conversationService } from "@chatbotx.io/business"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import {
@@ -15,6 +12,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { processAutomatedResponse } from "./handlers/automated-response"
@@ -57,10 +55,7 @@ async function startIntegrationWorker() {
     queueNames.enum.integration,
     async (job: Job<IntegrationJobData>) => {
       const workspaceId = await resolveWorkspaceId(job.data.data)
-      if (
-        (await withBlockedOwnerGuard(workspaceId, async () => true)) ===
-        undefined
-      ) {
+      if (await isBlockedWorkspace(workspaceId)) {
         return
       }
 

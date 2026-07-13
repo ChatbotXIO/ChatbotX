@@ -190,7 +190,19 @@ Every `consume` and `incrementBy` call on `UserQuotaService` is write-through: i
    - **Reseller owner with active tenant** → calls `userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)`: runs five parallel `COUNT(*)`/`SUM` queries scoped to `workspaceModel.tenantId` and writes the authoritative current counts to both the `UserQuota` row and the Redis live hash.
    - **Everyone else** → runs per-owner self-count queries scoped to `workspaceModel.ownerId` and writes the same columns.
 
-Counts are written directly (not `GREATEST`), so deletions immediately free quota slots. The private `quota-worker` is the authority for plan limits, period resets, and trial/paid transitions — the OSS reconcile only updates `*Used`.
+Counts are written directly (not `GREATEST`), so deletions immediately free quota slots. The private
+`quota-worker` remains the authority for plan limits and period resets; this repository also owns the
+runtime trial-expiry lifecycle: an expired cloud trial enters a blocked, read/delete-only state.
+Blocked owners cannot process new workspace work or send messages, while existing data remains
+available for export or deletion.
+
+`UserQuota.channelsTornDownAt` records when an expired trial's channel integrations were disconnected.
+The hourly `unsubscribeExpiredTrials` schedule performs that teardown after the seven-day grace period
+and is idempotent. `Workspace.scheduledDeletionAt` marks a soft-deleted workspace's grace deadline;
+the hourly `purgeWorkspaces` schedule hard-deletes workspaces after that deadline and disconnects all
+integrations. Both schedules use a distributed lock because worker replicas do not provide singleton
+cron execution. Workspace-scoped workers and inbound webhook processing use `withBlockedOwnerGuard`
+and safely acknowledge blocked work without retrying it; system, quota, and tenancy jobs are excluded.
 
 ### Key files
 

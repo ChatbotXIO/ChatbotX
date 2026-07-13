@@ -19,6 +19,10 @@ const insertCalls: InsertCall[] = []
 const onConflictSpy = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
+  withBlockedOwnerGuard: async (
+    _workspaceId: unknown,
+    fn: () => Promise<unknown>,
+  ) => fn(),
   broadcastService: {
     forEachAudienceChunk: (...args: unknown[]) => forEachAudienceChunk(...args),
   },

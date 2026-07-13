@@ -1,4 +1,3 @@
-import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
@@ -11,6 +10,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { createConsumer } from "@chatbotx.io/worker-config/message-queue/factory"
 import pLimit, { type LimitFunction } from "p-limit"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { revertDispatchToPending } from "./revert-dispatch"
 import { MAX_PROCESS } from "./services/constants"
@@ -96,10 +96,7 @@ class DispatchConsumer {
 
   private async processDispatch(payload: DispatchMessage) {
     try {
-      if (
-        (await withBlockedOwnerGuard(payload.workspaceId, async () => true)) ===
-        undefined
-      ) {
+      if (await isBlockedWorkspace(payload.workspaceId)) {
         return
       }
 

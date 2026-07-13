@@ -45,6 +45,14 @@ export async function resolveWorkspaceId(
   }
 
   const conversationId = asString(jobData.conversationId)
+  if (jobData.conversationId && typeof jobData.conversationId === "object") {
+    const objectWorkspaceId = asString(
+      (jobData.conversationId as { workspaceId?: unknown }).workspaceId,
+    )
+    if (objectWorkspaceId) {
+      return objectWorkspaceId
+    }
+  }
   if (conversationId) {
     const conversation = await conversationService.findBy({
       where: { id: conversationId },
@@ -52,6 +60,9 @@ export async function resolveWorkspaceId(
     return conversation?.workspaceId
   }
 
+  // AI embedding/file jobs intentionally remain fail-open: their payloads do
+  // not carry a workspace identity and resolving through source/file records
+  // would add unnecessary database work to these background jobs.
   const importId = asString(jobData.importId)
   if (importId) {
     const contactImport = await db.query.importModel.findFirst({

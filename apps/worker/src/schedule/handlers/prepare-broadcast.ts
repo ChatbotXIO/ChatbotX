@@ -1,4 +1,4 @@
-import { broadcastService, withBlockedOwnerGuard } from "@chatbotx.io/business"
+import { broadcastService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
@@ -16,6 +16,7 @@ import {
   ScheduleJobData,
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
+import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 
 export const prepareBroadcast = async (broadcastId: string) => {
   const broadcast = await db.query.broadcastModel.findFirst({
@@ -30,10 +31,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
     return
   }
 
-  if (
-    (await withBlockedOwnerGuard(broadcast.workspaceId, async () => true)) ===
-    undefined
-  ) {
+  if (await isBlockedWorkspace(broadcast.workspaceId)) {
     return
   }
 

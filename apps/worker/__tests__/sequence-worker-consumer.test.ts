@@ -12,6 +12,13 @@ vi.mock("@chatbotx.io/flow-config", () => ({
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE: "sequence_schedule",
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  withBlockedOwnerGuard: async (
+    _workspaceId: unknown,
+    fn: () => Promise<unknown>,
+  ) => fn(),
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({
   sequenceConnections: { useExisting: vi.fn().mockResolvedValue({}) },
 }))

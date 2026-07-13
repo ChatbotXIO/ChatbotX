@@ -1,4 +1,3 @@
-import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { and, db, eq, sql } from "@chatbotx.io/database/client"
 import { broadcastStatuses, channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -20,6 +19,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
 
 const DEFAULT_BROADCAST_RATE_LIMIT = 500
@@ -223,12 +223,7 @@ export const processBroadcastContacts = async (broadcastId: string) => {
     return { processed: 0 }
   }
 
-  if (
-    (await withBlockedOwnerGuard(
-      broadcasts[0].workspaceId,
-      async () => true,
-    )) === undefined
-  ) {
+  if (await isBlockedWorkspace(broadcasts[0].workspaceId)) {
     return { processed: 0 }
   }
 
