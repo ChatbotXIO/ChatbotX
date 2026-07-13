@@ -12,6 +12,17 @@ import {
 
 export const dynamic = "force-dynamic"
 
+/**
+ * Picker ordering (mirrors v1): selectable pages first, then pages already
+ * connected elsewhere, then pages the user lacks admin permission on.
+ */
+function rankPickerPage(page: PickerFacebookPage): number {
+  if (page.isAlreadyConnected) {
+    return 1
+  }
+  return page.isConnectable ? 0 : 2
+}
+
 export default async function MessengerSelectPage() {
   const token = (await cookies()).get(FB_MESSENGER_PENDING_AUTH_COOKIE)?.value
 
@@ -29,10 +40,12 @@ export default async function MessengerSelectPage() {
   const connectedPageIds = new Set(
     await findConnectedMessengerPageIds(pages.map((page) => page.id)),
   )
-  const pickerPages: PickerFacebookPage[] = pages.map((page) => ({
-    ...page,
-    isAlreadyConnected: connectedPageIds.has(page.id),
-  }))
+  const pickerPages: PickerFacebookPage[] = pages
+    .map((page) => ({
+      ...page,
+      isAlreadyConnected: connectedPageIds.has(page.id),
+    }))
+    .sort((current, next) => rankPickerPage(current) - rankPickerPage(next))
 
   return (
     <SelectPage
