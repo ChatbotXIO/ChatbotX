@@ -5,7 +5,6 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { endOfHour } from "date-fns"
-import { groupBy } from "remeda"
 import z from "zod"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
@@ -75,21 +74,21 @@ export const listConversations = async (
   const page = hasMore ? conversations.slice(0, limit) : conversations
 
   // ── Shard-aware message lookups (parallelized) ──────────────────────────
-  const contactInboxesByContactId = groupBy(
-    page.flatMap((c) => c.contactInboxes),
-    (ci) => ci.contactId,
-  )
-
   const messageRepository = await createMessageRepository()
   const lastMessagesResults = await Promise.all(
     page.map((c) => {
-      const contactInbox = contactInboxesByContactId[c.contactId]?.[0]
-      // Don't bail when lastMessageAt is missing: historical imports populate
+      // Anchor on this conversation's own lastActivityAt, not a contactInbox's
+      // lastMessageAt — a contact's ContactInbox is shared across their DM and
+      // every comment-thread conversation, so its lastMessageAt reflects
+      // whichever of those was most recently active, not this specific one.
+      // Using the wrong (later) anchor excludes this conversation's real last
+      // message from the sharded time window, returning an empty preview.
+      // Don't bail when lastActivityAt is missing: historical imports populate
       // messages but never set it, so bailing hid the last-message preview.
       // resolveLastMessageSinceTime falls back to a full-history scan instead.
       return messageRepository.findLastByConversation(c.id, {
         limit: 1,
-        sinceTime: resolveLastMessageSinceTime(contactInbox?.lastMessageAt),
+        sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
         workspaceId,
       })
     }),
@@ -147,17 +146,19 @@ export const findConversation = async (
     throw notFoundException("Conversation not found")
   }
 
-  const contactInbox = conversation.contactInboxes?.[0]
   const messageRepository = await createMessageRepository()
   const lastMessages = await messageRepository.findLastByConversation(
     conversation.id,
     {
       messageTypes: ["incoming", "outgoing"],
       limit: 1,
-      // Falls back to a full-history scan when lastMessageAt is unset (historical
+      // Anchor on this conversation's own lastActivityAt — see the comment in
+      // listConversations() above for why contactInbox.lastMessageAt is wrong
+      // here (shared across a contact's DM and every comment-thread conversation).
+      // Falls back to a full-history scan when lastActivityAt is unset (historical
       // imports), so opening an imported conversation still shows its messages.
       sinceTime: resolveLastMessageSinceTime(
-        contactInbox?.lastMessageAt,
+        conversation.lastActivityAt,
         endOfHour,
       ),
       workspaceId: input.workspaceId,
