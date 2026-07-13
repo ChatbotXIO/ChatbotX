@@ -1,10 +1,10 @@
 "use server"
 
+import { inboxService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
-import { channelTypes, inboxStatuses } from "@chatbotx.io/database/partials"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   coexistSyncRunModel,
-  inboxModel,
   integrationMessengerModel,
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
@@ -82,9 +82,6 @@ const disconnectMessenger = async (ctx: {
       .delete(integrationMessengerModel)
       .where(eq(integrationMessengerModel.id, integrationMessenger.id))
 
-    await tx
-      .update(inboxModel)
-      .set({ status: inboxStatuses.enum.disconnected })
-      .where(eq(inboxModel.id, integrationMessenger.inboxId))
+    await inboxService.disconnect({ inboxId: integrationMessenger.inboxId, tx })
   })
 }

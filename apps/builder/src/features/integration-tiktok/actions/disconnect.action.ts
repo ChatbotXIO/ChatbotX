@@ -1,11 +1,8 @@
 "use server"
 
+import { inboxService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
-import {
-  inboxModel,
-  integrationTiktokModel,
-} from "@chatbotx.io/database/schema"
+import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -30,10 +27,10 @@ export const disconnectTiktokAction = workspaceActionClient
         await tx
           .delete(integrationTiktokModel)
           .where(eq(integrationTiktokModel.id, integrationTiktok.id))
-        await tx
-          .update(inboxModel)
-          .set({ status: inboxStatuses.enum.disconnected })
-          .where(eq(inboxModel.id, integrationTiktok.inboxId))
+        await inboxService.disconnect({
+          inboxId: integrationTiktok.inboxId,
+          tx,
+        })
       })
     },
   )

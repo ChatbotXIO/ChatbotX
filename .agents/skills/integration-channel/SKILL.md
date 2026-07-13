@@ -362,7 +362,9 @@ export type Integration<Channel>Resource = z.infer<typeof integration<Channel>Re
 
 - Uses `workspaceActionClient.bindArgsSchemas([zodBigintAsString(), zodBigintAsString()]).action(...)`
 - **No `.inputSchema()`** — delete has no input
-- Disconnect component calls `execute()` with NO arguments (not `execute({})`)
+- Runs the integration delete and `inboxService.disconnect({ inboxId, tx })` inside the same `db.transaction(...)`
+- Imports `inboxService` from `@chatbotx.io/business`; do not inline the inbox status update in the action
+- **CRITICAL:** Every channel delete action must call `inboxService.disconnect()` inside its transaction after deleting the integration row. This keeps disconnected inboxes out of active inbox queries and prevents channel-specific drift.
 
 **`queries/index.ts`** — Server-side queries:
 
@@ -390,8 +392,9 @@ export const listIntegration<Channel>s = async (input: { workspaceId: string }) 
 
 **`components/<channel>-disconnect.tsx`** — Disconnect pattern:
 
-- Uses `useAction(deleteAction.bind(null, workspaceId, integrationId), ...)`
-- Calls `execute()` with NO arguments
+- Renders `<DisconnectIntegrationDialog>` from `@/features/common/components/disconnect-integration-dialog`
+- Passes `featureLabel`, `open`, `onOpenChange`, `isPending`, and `onConfirm` to the shared dialog
+- Binds the action with `useAction(deleteAction.bind(null, workspaceId, integrationId), ...)` and calls `execute()` with NO arguments
 
 **`<channel>-manage.tsx`** — Manage table:
 

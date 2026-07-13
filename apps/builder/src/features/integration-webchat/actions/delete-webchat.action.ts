@@ -1,33 +1,37 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { inboxService } from "@chatbotx.io/business"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import {
-  type BulkUpdateIdsRequest,
-  bulkUpdateIdsRequest,
-  type WorkspaceIdRequestParams,
-  workspaceIdrequestParams,
+  type WorkspaceIdAndIdRequestParams,
+  workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteWebchatAction = workspaceActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
-  .inputSchema(bulkUpdateIdsRequest)
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({
-      bindArgsParsedInputs: [workspaceId],
-      parsedInput,
+      bindArgsParsedInputs: [workspaceId, id],
     }: {
-      bindArgsParsedInputs: WorkspaceIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
+      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await db
-        .delete(integrationWebchatModel)
-        .where(
-          and(
-            eq(integrationWebchatModel.workspaceId, workspaceId),
-            inArray(integrationWebchatModel.id, parsedInput.ids),
-          ),
-        )
+      const integrationWebchat = await findOrFail({
+        table: integrationWebchatModel,
+        where: { workspaceId, id },
+        message: "Integration Webchat not found",
+      })
+
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationWebchatModel)
+          .where(eq(integrationWebchatModel.id, integrationWebchat.id))
+
+        await inboxService.disconnect({
+          inboxId: integrationWebchat.inboxId,
+          tx,
+        })
+      })
     },
   )

@@ -1,28 +1,15 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import type { Row } from "@tanstack/react-table"
-import { Loader, Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { deleteWebchatAction } from "../actions/delete-webchat.action"
 
-type DeleteWebchatDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+type DeleteWebchatDialogProps = {
+  open: boolean
   workspaceId: string
-  webchats: Row<IntegrationWebchatModel>["original"][]
+  webchatId: string
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
@@ -30,16 +17,16 @@ type DeleteWebchatDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 
 export function DeleteWebchatDialog({
   workspaceId,
-  webchats,
+  webchatId,
   showTrigger = true,
+  open,
   onSuccess,
   onOpenChange,
-  ...props
 }: DeleteWebchatDialogProps) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteWebchatAction.bind(null, workspaceId),
+    deleteWebchatAction.bind(null, workspaceId, webchatId),
     {
       onSuccess: () => {
         toast.success(
@@ -59,53 +46,14 @@ export function DeleteWebchatDialog({
   )
 
   return (
-    <Dialog onOpenChange={onOpenChange} {...props}>
-      {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.delete")} ({webchats.length})
-          </Button>
-        </DialogTrigger>
-      ) : null}
-      <DialogContent className="max-h-screen max-w-xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {t("messages.deleteFeature", {
-              feature: t("fields.webchat.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("messages.deleteConfirmation", {
-              feature: t("fields.webchat.label"),
-            })}
-          </DialogDescription>
-        </DialogHeader>
-
-        <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button size="sm" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
-          <Button
-            aria-label="Delete selected rows"
-            disabled={isPending}
-            onClick={() =>
-              execute({
-                ids: webchats.map((webchat) => webchat.id),
-              })
-            }
-            size="sm"
-            variant="destructive"
-          >
-            {isPending && (
-              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
-            )}
-            {t("actions.delete")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DisconnectIntegrationDialog
+      featureLabel={t("fields.webchat.label")}
+      isPending={isPending}
+      onConfirm={execute}
+      onOpenChange={onOpenChange}
+      open={open}
+      showTrigger={showTrigger}
+      translationKey="delete"
+    />
   )
 }

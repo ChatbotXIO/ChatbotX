@@ -16,7 +16,7 @@ import {
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 
-export const disconnectGoogleSheets = authActionClient
+export const disconnectGoogleSheetsAction = authActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async ({

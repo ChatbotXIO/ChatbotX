@@ -1,17 +1,6 @@
 "use client"
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -33,6 +22,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
+import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectSendGridAction } from "../actions/connect.action"
 import { disconnectSendGridAction } from "../actions/disconnect.action"
 import { connectSendGridSchema } from "../schemas"
@@ -42,6 +32,7 @@ export function ManageSendGrid(props: {
   isConnected: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const [disconnectOpen, setDisconnectOpen] = useState(false)
   const router = useRouter()
   const t = useTranslations()
   const featureName = t("fields.sendGrid.label")
@@ -68,6 +59,7 @@ export function ManageSendGrid(props: {
     disconnectSendGridAction.bind(null, props.workspaceId),
     {
       onSuccess: () => {
+        setDisconnectOpen(false)
         router.refresh()
         toast.success(t("messages.disconnectSuccess", { feature: featureName }))
       },
@@ -82,38 +74,13 @@ export function ManageSendGrid(props: {
       label={t("sendGrid.setting.label")}
     >
       {props.isConnected ? (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button size="sm" variant="destructive">
-              {t("actions.disconnect")}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {t("messages.disconnectFeature", { feature: featureName })}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("messages.disconnectFeatureDescription", {
-                  feature: featureName,
-                })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={isPending}
-                onClick={(event) => {
-                  event.preventDefault()
-                  disconnect()
-                }}
-              >
-                {isPending && <Loader2Icon className="animate-spin" />}
-                {t("actions.disconnect")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <DisconnectIntegrationDialog
+          featureLabel={featureName}
+          isPending={isPending}
+          onConfirm={disconnect}
+          onOpenChange={setDisconnectOpen}
+          open={disconnectOpen}
+        />
       ) : (
         <Dialog onOpenChange={setOpen} open={open}>
           <DialogTrigger asChild>

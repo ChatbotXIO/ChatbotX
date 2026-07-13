@@ -187,6 +187,19 @@ class InboxService extends BaseService {
 
     return { inbox, wasCreated: true }
   }
+
+  async disconnect(props: {
+    inboxId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const client = props.tx ?? db
+
+    await client
+      .update(inboxModel)
+      .set({ status: inboxStatuses.enum.disconnected })
+      .where(eq(inboxModel.id, props.inboxId))
+  }
+
   async isConnected(props: {
     channel: string
     sourceId: string
