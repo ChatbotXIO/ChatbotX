@@ -63,6 +63,11 @@ type QuotaContextCacheValue = {
 }
 
 type DraftRow = Omit<PreparedRow, "workspaceMacId">
+type ResolvedOutPayload = {
+  payload: MacMessageOutPayload
+  contactInboxId: string
+  inboxId: string
+}
 
 function quotaContextCacheKey(workspaceId: string): string {
   return `mac:ctx:ws:${workspaceId}`
@@ -84,27 +89,95 @@ export class MacTrackingService {
     this.bloomFilterInstance = filter
   }
 
-  async trackMessageOut(payloads: MacMessageOutPayload[]): Promise<void> {
-    if (payloads.length === 0) {
-      return
+  /**
+   * Resolve missing outbound `inboxId` values from ContactInbox so legacy
+   * message:sent events already queued in Redis are recovered instead of
+   * dropped or written with an undefined NOT NULL column.
+   */
+  private async resolveInboxIds(
+    contexts: { contactInboxId?: string; inboxId?: string }[],
+  ): Promise<Map<string, string>> {
+    const inboxIdByContactInbox = new Map<string, string>()
+    const missing = new Set<string>()
+
+    for (const { contactInboxId, inboxId } of contexts) {
+      if (!contactInboxId) {
+        continue
+      }
+      if (inboxId) {
+        inboxIdByContactInbox.set(contactInboxId, inboxId)
+      } else {
+        missing.add(contactInboxId)
+      }
     }
-    const validPayloads = payloads.filter((p) => p.context.contactInboxId)
-    if (validPayloads.length === 0) {
+
+    for (const contactInboxId of inboxIdByContactInbox.keys()) {
+      missing.delete(contactInboxId)
+    }
+    if (missing.size === 0) {
+      return inboxIdByContactInbox
+    }
+
+    const fetched = await macRepository.getInboxIdsByContactInboxIds(
+      Array.from(missing),
+    )
+    for (const [contactInboxId, inboxId] of fetched) {
+      inboxIdByContactInbox.set(contactInboxId, inboxId)
+      missing.delete(contactInboxId)
+    }
+
+    if (missing.size > 0) {
+      logger.warn(
+        { contactInboxIds: Array.from(missing) },
+        "[MacTrackingService] dropped events with unresolvable inboxId",
+      )
+    }
+
+    return inboxIdByContactInbox
+  }
+
+  private async resolveOutPayloads(
+    payloads: MacMessageOutPayload[],
+  ): Promise<ResolvedOutPayload[]> {
+    if (payloads.length === 0) {
+      return []
+    }
+
+    const inboxIdByContactInbox = await this.resolveInboxIds(
+      payloads.map((payload) => payload.context),
+    )
+
+    const resolved: ResolvedOutPayload[] = []
+    for (const payload of payloads) {
+      const { contactInboxId } = payload.context
+      const inboxId = contactInboxId
+        ? inboxIdByContactInbox.get(contactInboxId)
+        : undefined
+      if (contactInboxId && inboxId) {
+        resolved.push({ payload, contactInboxId, inboxId })
+      }
+    }
+
+    return resolved
+  }
+
+  async trackMessageOut(payloads: MacMessageOutPayload[]): Promise<void> {
+    const resolved = await this.resolveOutPayloads(payloads)
+    if (resolved.length === 0) {
       return
     }
 
-    const events: MacInputEvent[] = []
-    for (const payload of validPayloads) {
-      events.push({
+    const events: MacInputEvent[] = resolved.map(
+      ({ payload, contactInboxId, inboxId }) => ({
         workspaceId: payload.context.workspaceId,
         contactId: payload.context.contactId,
-        contactInboxId: payload.context.contactInboxId as string,
-        inboxId: payload.context.inboxId as string,
+        contactInboxId,
+        inboxId,
         eventType: "message_out",
         occurredAt: coerceOccurredAt(payload.occurredAt),
         sourceId: payload.action.sourceId ?? payload.action.messageId,
-      })
-    }
+      }),
+    )
     await this.track(events)
   }
 
@@ -118,8 +191,8 @@ export class MacTrackingService {
       events.push({
         workspaceId: payload.workspaceId,
         contactId: payload.contactId,
-        contactInboxId: payload.contactInboxId as string,
-        inboxId: payload.inboxId as string,
+        contactInboxId: payload.contactInboxId,
+        inboxId: payload.inboxId,
         eventType: "message_in",
         occurredAt: coerceOccurredAt(payload.occurredAt),
         sourceId: payload.sourceId ?? undefined,
@@ -130,18 +203,23 @@ export class MacTrackingService {
 
   async trackMessageOutHourly(payloads: MacMessageOutPayload[]): Promise<void> {
     try {
-      const rows = payloads
-        .filter((payload) => payload.context.contactInboxId)
-        .map((payload) => {
-          const occurredAt = coerceOccurredAt(payload.occurredAt)
-          return {
-            workspaceId: payload.context.workspaceId,
-            contactId: payload.context.contactId,
-            contactInboxId: payload.context.contactInboxId as string,
-            inboxId: payload.context.inboxId as string,
-            hourBucket: truncateHourInTimezone(occurredAt, DEFAULT_TIMEZONE),
-          }
-        })
+      const resolved = await this.resolveOutPayloads(payloads)
+      if (resolved.length === 0) {
+        return
+      }
+
+      const rows: HourlyPresenceRow[] = resolved.map(
+        ({ payload, contactInboxId, inboxId }) => ({
+          workspaceId: payload.context.workspaceId,
+          contactId: payload.context.contactId,
+          contactInboxId,
+          inboxId,
+          hourBucket: truncateHourInTimezone(
+            coerceOccurredAt(payload.occurredAt),
+            DEFAULT_TIMEZONE,
+          ),
+        }),
+      )
 
       await this.recordHourlyPresence(rows)
     } catch (error) {
@@ -159,8 +237,8 @@ export class MacTrackingService {
         return {
           workspaceId: payload.workspaceId,
           contactId: payload.contactId,
-          contactInboxId: payload.contactInboxId as string,
-          inboxId: payload.inboxId as string,
+          contactInboxId: payload.contactInboxId,
+          inboxId: payload.inboxId,
           hourBucket: truncateHourInTimezone(occurredAt, DEFAULT_TIMEZONE),
         }
       })

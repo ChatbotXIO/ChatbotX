@@ -9,6 +9,22 @@ const runAction = vi.fn(async () => ({ job_id: "job-secret" }))
 const errorLog = vi.fn()
 const infoLog = vi.fn()
 
+function makeSendGridActionResult(action: string) {
+  if (action === "checkImportJob") {
+    return {
+      status: "completed",
+      results: {
+        requested_count: 1,
+        created_count: 1,
+        updated_count: 0,
+        errored_count: 0,
+      },
+    }
+  }
+
+  return { job_id: "job-secret" }
+}
+
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn(async ({ integration }: { integration: unknown }) => ({
     auth: state.auth,
@@ -67,7 +83,9 @@ beforeEach(() => {
     company: " Analytical Engines ",
   }
   vi.clearAllMocks()
-  runAction.mockResolvedValue({ job_id: "job-secret" })
+  runAction.mockImplementation(async (action: string) =>
+    makeSendGridActionResult(action),
+  )
 })
 
 describe("addSendGridContact", () => {
@@ -76,7 +94,6 @@ describe("addSendGridContact", () => {
       status: "success",
       result: null,
     })
-    expect(runAction).toHaveBeenCalledTimes(1)
     expect(runAction).toHaveBeenCalledWith("addOrUpdateContact", {
       ctx: expect.any(Object),
       props: {
@@ -86,11 +103,15 @@ describe("addSendGridContact", () => {
             email: "person@example.com",
             first_name: "Ada",
             last_name: "Lovelace",
-            phone_number_id: "phone-value",
+            phone_number: "phone-value",
             custom_fields: { "field-1": "Analytical Engines" },
           },
         ],
       },
+    })
+    expect(runAction).toHaveBeenCalledWith("checkImportJob", {
+      ctx: expect.any(Object),
+      props: { jobId: "job-secret" },
     })
     const logs = JSON.stringify(infoLog.mock.calls)
     expect(logs).not.toContain("job-secret")
@@ -109,7 +130,7 @@ describe("addSendGridContact", () => {
     expect(sentProps).not.toHaveProperty("list_ids")
   })
 
-  test("omits phone_number_id when phoneField is absent", async () => {
+  test("omits phone_number when phoneField is absent", async () => {
     const props = createProps()
     props.step.phoneField = undefined
     await addSendGridContact(props)
@@ -117,17 +138,17 @@ describe("addSendGridContact", () => {
       string,
       { props: { contacts: Record<string, unknown>[] } },
     ]
-    expect(sentProps.contacts[0]).not.toHaveProperty("phone_number_id")
+    expect(sentProps.contacts[0]).not.toHaveProperty("phone_number")
   })
 
-  test("omits phone_number_id when phone field value is blank", async () => {
+  test("omits phone_number when phone field value is blank", async () => {
     state.fields.phone = "   "
     await addSendGridContact(createProps())
     const [, { props: sentProps }] = runAction.mock.calls[0] as [
       string,
       { props: { contacts: Record<string, unknown>[] } },
     ]
-    expect(sentProps.contacts[0]).not.toHaveProperty("phone_number_id")
+    expect(sentProps.contacts[0]).not.toHaveProperty("phone_number")
   })
 
   test("omits custom_fields when all mapping values are blank", async () => {

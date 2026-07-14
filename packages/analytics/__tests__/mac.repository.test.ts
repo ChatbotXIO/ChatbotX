@@ -58,6 +58,7 @@ const and = vi.fn((...args: unknown[]) => args)
 const eq = vi.fn((...args: unknown[]) => ({ op: "eq", args }))
 const gte = vi.fn((...args: unknown[]) => ({ op: "gte", args }))
 const gt = vi.fn((...args: unknown[]) => ({ op: "gt", args }))
+const inArray = vi.fn((...args: unknown[]) => ({ op: "inArray", args }))
 const lte = vi.fn((...args: unknown[]) => ({ op: "lte", args }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -75,6 +76,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq,
   gt,
   gte,
+  inArray,
   lt: (...args: unknown[]) => args,
   lte,
 }))
@@ -97,6 +99,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     hourBucket: "cah.hourBucket",
     inboxId: "cah.inboxId",
     workspaceId: "cah.workspaceId",
+  },
+  contactInboxModel: {
+    id: "ci.id",
+    inboxId: "ci.inboxId",
   },
   workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
 }))
@@ -156,6 +162,7 @@ beforeEach(() => {
   eq.mockClear()
   gte.mockClear()
   gt.mockClear()
+  inArray.mockClear()
   lte.mockClear()
 })
 
@@ -317,6 +324,41 @@ describe("MacRepository — upsertHourlyPresence", () => {
       ?.value as QueryChain
     expect(chain.values).toHaveBeenCalledWith(rows)
     expect(chain.onConflictDoNothing).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("MacRepository — getInboxIdsByContactInboxIds", () => {
+  test("returns empty map without querying when input is empty", async () => {
+    const repo = new MacRepository()
+
+    const result = await repo.getInboxIdsByContactInboxIds([])
+
+    expect(result.size).toBe(0)
+    expect(dbSelect).not.toHaveBeenCalled()
+  })
+
+  test("maps each contactInboxId to its inboxId from fetched rows", async () => {
+    const repo = new MacRepository()
+    queueResult([
+      { contactInboxId: "ci-1", inboxId: "ib-1" },
+      { contactInboxId: "ci-2", inboxId: "ib-2" },
+    ])
+
+    const result = await repo.getInboxIdsByContactInboxIds(["ci-1", "ci-2"])
+
+    expect(result.get("ci-1")).toBe("ib-1")
+    expect(result.get("ci-2")).toBe("ib-2")
+    expect(result.size).toBe(2)
+  })
+
+  test("omits contactInboxIds the database did not return", async () => {
+    const repo = new MacRepository()
+    queueResult([{ contactInboxId: "ci-1", inboxId: "ib-1" }])
+
+    const result = await repo.getInboxIdsByContactInboxIds(["ci-1", "ci-gone"])
+
+    expect(result.get("ci-1")).toBe("ib-1")
+    expect(result.has("ci-gone")).toBe(false)
   })
 })
 

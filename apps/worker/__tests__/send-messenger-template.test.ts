@@ -111,11 +111,13 @@ const { sendFlowStepToChannel } = await import(
 const { validateMessengerTemplate, replaceMessengerTemplateVariables } =
   await import("../src/integration/handlers/messenger-template-handler")
 const { db } = await import("@chatbotx.io/database/client")
+const { emit } = await import("@chatbotx.io/event-bus")
 
 const mockSendFlowStep = sendFlowStepToChannel as MockInstance
 const mockValidate = validateMessengerTemplate as MockInstance
 const mockReplace = replaceMessengerTemplateVariables as MockInstance
 const mockDbUpdate = db.update as MockInstance
+const mockEmit = emit as MockInstance
 
 const CONVERSATION = {
   id: "conv-1",
@@ -169,6 +171,26 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(mockDbUpdate).toHaveBeenCalled()
     const setCall = mockDbUpdate.mock.results[0].value.set
     expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+  })
+
+  test("emits message:sent with inboxId for MAC tracking", async () => {
+    mockSendFlowStep.mockResolvedValueOnce({ messageIds: ["mid.ABC123"] })
+
+    await processMessengerTemplate({
+      conversation: CONVERSATION as never,
+      contactInbox: CONTACT_INBOX as never,
+      template: TEMPLATE,
+    })
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:sent",
+      expect.objectContaining({
+        context: expect.objectContaining({
+          contactInboxId: "ci-1",
+          inboxId: "inbox-1",
+        }),
+      }),
+    )
   })
 
   test("does NOT persist sourceId when providerMessageId is undefined", async () => {

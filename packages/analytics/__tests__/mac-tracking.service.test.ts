@@ -10,6 +10,7 @@ const macRepository = {
   upsertMonthlyPresence: vi.fn(async () => [] as unknown[]),
   upsertHourlyPresence: vi.fn(async () => undefined),
   addWorkspaceMacCount: vi.fn(async () => [] as unknown[]),
+  getInboxIdsByContactInboxIds: vi.fn(async () => new Map<string, string>()),
 }
 vi.mock("../src/repositories/postgres/mac.repository", () => ({
   macRepository,
@@ -138,6 +139,9 @@ beforeEach(() => {
   macRepository.upsertMonthlyPresence.mockResolvedValue([])
   macRepository.upsertHourlyPresence.mockResolvedValue(undefined)
   macRepository.addWorkspaceMacCount.mockResolvedValue([])
+  macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(
+    new Map<string, string>(),
+  )
   macRepository.ensureWorkspaceMac.mockImplementation(
     (
       entries: { workspaceId: string; periodStart: Date; periodEnd: Date }[],
@@ -206,6 +210,169 @@ describe("MacTrackingService — payload filtering", () => {
     ])
 
     expect(bloomFilter.addMany).not.toHaveBeenCalled()
+    expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
+  })
+})
+
+describe("MacTrackingService — inboxId guard and fallback", () => {
+  test("trackMessageOut resolves a missing inboxId via repository fallback", async () => {
+    seedQuotaContext()
+    macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(
+      new Map([["ci-1", "ib-resolved"]]),
+    )
+
+    await newService().trackMessageOut([
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-1",
+          channel: "messenger",
+        },
+      }),
+    ])
+
+    expect(macRepository.getInboxIdsByContactInboxIds).toHaveBeenCalledWith([
+      "ci-1",
+    ])
+    expect(macRepository.upsertMonthlyPresence).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          contactInboxId: "ci-1",
+          inboxId: "ib-resolved",
+        }),
+      ],
+      expect.anything(),
+    )
+  })
+
+  test("trackMessageOut drops (with warn) events whose inboxId cannot be resolved", async () => {
+    seedQuotaContext()
+    macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(new Map())
+
+    await newService().trackMessageOut([
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-orphan",
+          channel: "messenger",
+        },
+      }),
+    ])
+
+    expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ contactInboxIds: ["ci-orphan"] }),
+      expect.stringContaining("unresolvable inboxId"),
+    )
+  })
+
+  test("trackMessageOut skips the database lookup when every payload carries inboxId", async () => {
+    seedQuotaContext()
+
+    await newService().trackMessageOut([makeOutPayload()])
+
+    expect(macRepository.getInboxIdsByContactInboxIds).not.toHaveBeenCalled()
+    expect(macRepository.upsertMonthlyPresence).toHaveBeenCalledWith(
+      [expect.objectContaining({ inboxId: "ib-1" })],
+      expect.anything(),
+    )
+  })
+
+  test("trackMessageOut keeps valid events when a sibling event is dropped", async () => {
+    seedQuotaContext()
+    macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(new Map())
+
+    await newService().trackMessageOut([
+      makeOutPayload(),
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-2",
+          contactInboxId: "ci-orphan",
+          channel: "messenger",
+        },
+        action: { messageId: "m-2" },
+      }),
+    ])
+
+    expect(macRepository.upsertMonthlyPresence).toHaveBeenCalledWith(
+      [expect.objectContaining({ contactInboxId: "ci-1", inboxId: "ib-1" })],
+      expect.anything(),
+    )
+  })
+
+  test("trackMessageOut deduplicates fallback lookups per contactInboxId", async () => {
+    seedQuotaContext()
+    macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(
+      new Map([["ci-1", "ib-resolved"]]),
+    )
+
+    await newService().trackMessageOut([
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-1",
+          channel: "messenger",
+        },
+      }),
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-1",
+          channel: "messenger",
+        },
+        action: { messageId: "m-2" },
+      }),
+    ])
+
+    expect(macRepository.getInboxIdsByContactInboxIds).toHaveBeenCalledTimes(1)
+    expect(macRepository.getInboxIdsByContactInboxIds).toHaveBeenCalledWith([
+      "ci-1",
+    ])
+  })
+
+  test("trackMessageOutHourly resolves a missing inboxId via repository fallback", async () => {
+    macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(
+      new Map([["ci-1", "ib-resolved"]]),
+    )
+
+    await newService().trackMessageOutHourly([
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-1",
+          channel: "messenger",
+        },
+      }),
+    ])
+
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledWith([
+      expect.objectContaining({
+        contactInboxId: "ci-1",
+        inboxId: "ib-resolved",
+      }),
+    ])
+  })
+
+  test("trackMessageOutHourly drops events whose inboxId cannot be resolved", async () => {
+    macRepository.getInboxIdsByContactInboxIds.mockResolvedValue(new Map())
+
+    await newService().trackMessageOutHourly([
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-orphan",
+          channel: "messenger",
+        },
+      }),
+    ])
+
     expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
   })
 })
