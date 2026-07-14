@@ -96,6 +96,7 @@ async function getBusinessPages(
  * not in a Business Manager, missing permission, Graph error) falls back to
  * an empty list rather than blocking the direct-accounts result.
  */
+// biome-ignore lint/correctness/noUnusedVariables: BM page lookup is temporarily disabled in getUserPages
 async function getBusinessManagedPages(
   userAccessToken: string,
   version: string,
@@ -242,20 +243,20 @@ export async function getUserPages(
     ),
   )
 
-  const businessPagesResult = await getBusinessManagedPages(
-    userAccessToken,
-    version,
-  )
+  // const businessPagesResult = await getBusinessManagedPages(
+  //   userAccessToken,
+  //   version,
+  // )
 
   const merged = new Map<string, SourcedFacebookPage>()
   for (const page of directPages) {
     merged.set(page.id, { page, source: "direct" })
   }
-  for (const page of businessPagesResult.pages) {
-    if (!merged.has(page.id)) {
-      merged.set(page.id, { page, source: "business" })
-    }
-  }
+  // for (const page of businessPagesResult.pages) {
+  //   if (!merged.has(page.id)) {
+  //     merged.set(page.id, { page, source: "business" })
+  //   }
+  // }
 
   const pages = sortConnectableFirst(
     Array.from(merged.values()).map(({ page, source }) =>
@@ -265,11 +266,11 @@ export async function getUserPages(
   const nonConnectable = pages.filter((page) => !page.isConnectable).length
 
   logger.debug({ nonConnectable }, "Classified Messenger pages")
-  if (businessPagesResult.failed) {
-    logger.debug("Business Manager page lookup failed")
-  } else if (businessPagesResult.pages.length === 0) {
-    logger.debug("No Business Manager pages found")
-  }
+  // if (businessPagesResult.failed) {
+  //   logger.debug("Business Manager page lookup failed")
+  // } else if (businessPagesResult.pages.length === 0) {
+  //   logger.debug("No Business Manager pages found")
+  // }
 
-  return { pages, bmLookupFailed: businessPagesResult.failed }
+  return { pages, bmLookupFailed: false }
 }
