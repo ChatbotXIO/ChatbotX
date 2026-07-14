@@ -117,6 +117,8 @@ describe("IntegrationMailerLiteService", () => {
 
   test("fails when create rolls back and no concurrent row exists", async () => {
     mocks.updateReturning.mockResolvedValue([])
+    // Non-unique-violation errors are rethrown as-is so callers keep the
+    // original failure context instead of a generic wrapper message.
     mocks.transaction.mockRejectedValue(new Error("insert failed"))
 
     await expect(
@@ -124,6 +126,6 @@ describe("IntegrationMailerLiteService", () => {
         workspaceId: "workspace-1",
         auth: { authType: "custom", apiKey: "secret" },
       }),
-    ).rejects.toThrow("Failed to connect MailerLite integration")
+    ).rejects.toThrow("insert failed")
   })
 })

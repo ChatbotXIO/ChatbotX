@@ -1,6 +1,6 @@
 import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
-import { rescue } from "../exception"
+import { MessengerAPIException, rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
@@ -82,9 +82,12 @@ export const subscribePageToAppWebhook = (props: {
   pageId: string
   accessToken: string
   version?: string
+  subscribedFields?: string
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/me/subscribed_apps`
+  const subscribedFields =
+    props.subscribedFields ?? PAGE_SUBSCRIBE_SCOPES.join(",")
 
   return rescue(endpoint, () =>
     facebookGraphClient.post(endpoint, {
@@ -92,25 +95,36 @@ export const subscribePageToAppWebhook = (props: {
         Authorization: `Bearer ${props.accessToken}`,
       },
       json: {
-        subscribed_fields: PAGE_SUBSCRIBE_SCOPES.join(","),
+        subscribed_fields: subscribedFields,
       },
     }),
   )
 }
 
-export const unsubscribePageFromAppWebhook = (
-  auth: MessengerAuthValue,
-): Promise<void> => {
-  const { version = DEFAULT_API_VERSION } = auth.metadata
-  const endpoint = `${version}/me/subscribed_apps`
+export const unsubscribePageFromAppWebhook = (props: {
+  pageId: string
+  appAccessToken: string
+  version?: string
+}): Promise<void> => {
+  const { version = DEFAULT_API_VERSION } = props
+  const endpoint = `${version}/${props.pageId}/subscribed_apps`
 
-  return rescue(endpoint, () =>
-    facebookGraphClient.delete(endpoint, {
-      headers: {
-        Authorization: `Bearer ${auth.tokens.accessToken}`,
+  return rescue(endpoint, async () => {
+    const response = await facebookGraphClient.delete<{ success?: boolean }>(
+      endpoint,
+      {
+        headers: {
+          Authorization: `Bearer ${props.appAccessToken}`,
+        },
       },
-    }),
-  )
+    )
+
+    if (response.success !== true) {
+      throw new MessengerAPIException(
+        `Unsubscribe failed for page ${props.pageId}`,
+      )
+    }
+  })
 }
 
 export const updateMessengerProfile = (props: {
@@ -273,7 +287,7 @@ export const getPersistentMenu = (props: {
 }
 
 export const deleteMessengerProfileFields = (props: {
-  ctx: Context<MessengerAuthValue>
+  ctx: Pick<Context<MessengerAuthValue>, "auth">
   fields: string[]
 }): Promise<void> => {
   const { ctx, fields } = props

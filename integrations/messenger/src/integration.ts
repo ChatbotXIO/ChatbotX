@@ -9,7 +9,11 @@ import {
   clonePageMessageTemplate,
   listPageMessageTemplates,
 } from "./apis/message-templates"
-import { syncPersonas, unsubscribePageFromAppWebhook } from "./apis/page"
+import {
+  deleteMessengerProfileFields,
+  syncPersonas,
+  unsubscribePageFromAppWebhook,
+} from "./apis/page"
 import { getPostDetails } from "./apis/post"
 import { getUserInboxLink } from "./apis/user-inbox-link"
 import { MessengerAPIException } from "./exception"
@@ -19,6 +23,7 @@ import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
+import { logger } from "./lib/logger"
 import type {
   MessengerActions,
   MessengerAuthValue,
@@ -70,7 +75,25 @@ const config: IntegrationDefinition<
     }
   },
   disconnect: async (auth: MessengerAuthValue): Promise<void> => {
-    await unsubscribePageFromAppWebhook(auth)
+    try {
+      await deleteMessengerProfileFields({
+        ctx: { auth },
+        fields: ["persistent_menu"],
+      })
+    } catch (error) {
+      logger.warn(
+        {
+          err: error instanceof Error ? error.message : String(error),
+        },
+        "Failed to clear Messenger persistent menu before disconnect",
+      )
+    }
+
+    await unsubscribePageFromAppWebhook({
+      pageId: auth.metadata.pageId,
+      appAccessToken: `${auth.clientId}|${auth.clientSecret}`,
+      version: auth.metadata.version,
+    })
   },
 }
 

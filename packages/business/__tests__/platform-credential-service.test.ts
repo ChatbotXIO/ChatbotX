@@ -170,3 +170,29 @@ describe("resolvePublicForUser", () => {
     expect(result).toBeUndefined()
   })
 })
+
+describe("resolvePlatformAppAccessToken", () => {
+  test("returns clientId and clientSecret joined as a Meta app token", async () => {
+    vi.spyOn(
+      platformCredentialService,
+      "findDecryptedPlatform",
+    ).mockResolvedValue({
+      config: { clientId: "client-1", clientSecret: "secret-1" },
+    } as never)
+
+    await expect(
+      platformCredentialService.resolvePlatformAppAccessToken("messenger"),
+    ).resolves.toBe("client-1|secret-1")
+  })
+
+  test("returns undefined when the platform credential is missing", async () => {
+    vi.spyOn(
+      platformCredentialService,
+      "findDecryptedPlatform",
+    ).mockResolvedValue(undefined)
+
+    await expect(
+      platformCredentialService.resolvePlatformAppAccessToken("instagram"),
+    ).resolves.toBeUndefined()
+  })
+})

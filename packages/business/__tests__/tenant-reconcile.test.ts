@@ -26,11 +26,19 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: (strings: TemplateStringsArray) => ({ __sql: strings.join("?") }),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+// Partial mock: other modules in the import chain (e.g. analytics
+// repositories) read real models off the schema, so keep the originals and
+// only override tenantModel for the query assertions below.
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   tenantModel: { ownerId: "tenant.ownerId" },
 }))
 
-vi.mock("@chatbotx.io/redis", () => ({
+// Partial mock for the same reason as the schema mock above: analytics
+// services in the import chain read real exports (e.g. bloomFilter) at
+// module scope.
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   withCache: (_key: string, fn: () => unknown) => fn(),
   invalidateCacheByTags: vi.fn(async () => undefined),
 }))

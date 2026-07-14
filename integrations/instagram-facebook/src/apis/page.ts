@@ -7,7 +7,7 @@ import { createId } from "@chatbotx.io/utils"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
 import { DEFAULT_API_VERSION } from "../constants"
-import { rescue } from "../exception"
+import { InstagramAPIException, rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
 import type {
   InstagramAttachment,
@@ -87,38 +87,50 @@ export const subscribePageToInstagramWebhook = (props: {
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/${props.pageId}/subscribed_apps`
+  const subscribedFields = INSTAGRAM_SUBSCRIBE_FIELDS.join(",")
 
   return rescue(endpoint, async () => {
-    const res = await instagramGraphClient.post<{ success: boolean }>(
+    const res = await instagramGraphClient.post<{ success?: boolean }>(
       endpoint,
       {
         headers: {
           Authorization: `Bearer ${props.accessToken}`,
         },
         json: {
-          subscribed_fields: INSTAGRAM_SUBSCRIBE_FIELDS.join(","),
+          subscribed_fields: subscribedFields,
         },
       },
     )
-    if (!res.success) {
-      throw new Error("Failed to subscribe page to Instagram webhook")
+    if (res.success !== true) {
+      throw new InstagramAPIException(
+        `Subscribe failed for Instagram page ${props.pageId}`,
+      )
     }
   })
 }
 
 export const unsubscribePageFromInstagramWebhook = (props: {
-  auth: InstagramAuthValue
+  pageId: string
+  appAccessToken: string
+  version?: string
 }): Promise<void> => {
-  const { version = DEFAULT_API_VERSION } = props.auth
-  const endpoint = `${version}/${props.auth.metadata.pageId}/subscribed_apps`
+  const { version = DEFAULT_API_VERSION } = props
+  const endpoint = `${version}/${props.pageId}/subscribed_apps`
 
-  return rescue(endpoint, () =>
-    instagramGraphClient.delete(endpoint, {
+  return rescue(endpoint, async () => {
+    const response = await instagramGraphClient.delete<{
+      success?: boolean
+    }>(endpoint, {
       headers: {
-        Authorization: `Bearer ${props.auth.tokens.accessToken}`,
+        Authorization: `Bearer ${props.appAccessToken}`,
       },
-    }),
-  )
+    })
+    if (response.success !== true) {
+      throw new InstagramAPIException(
+        `Unsubscribe failed for Instagram page ${props.pageId}`,
+      )
+    }
+  })
 }
 
 export const sendInstagramMessage = (
