@@ -1,12 +1,30 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { invalidateCacheByTags, set, update, where } = vi.hoisted(() => {
+const {
+  invalidateCacheByTags,
+  invalidateTracking,
+  set,
+  transaction,
+  update,
+  updateTracking,
+  where,
+} = vi.hoisted(() => {
   const where = vi.fn().mockResolvedValue(undefined)
   const set = vi.fn(() => ({ where }))
+  const update = vi.fn(() => ({ set }))
   return {
     invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
+    invalidateTracking: vi.fn().mockResolvedValue(undefined),
     set,
-    update: vi.fn(() => ({ set })),
+    transaction: vi
+      .fn()
+      .mockImplementation((fn: (tx: { update: typeof update }) => unknown) =>
+        fn({ update }),
+      ),
+    update,
+    updateTracking: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
     where,
   }
 })
@@ -14,8 +32,14 @@ const { invalidateCacheByTags, set, update, where } = vi.hoisted(() => {
 vi.mock("@chatbotx.io/database/client", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@chatbotx.io/database/client")>()
-  return { ...original, db: { update } }
+  return { ...original, db: { transaction, update } }
 })
+vi.mock("../src/contact-inbox/service", () => ({
+  contactInboxService: {
+    invalidateTracking,
+    updateTracking,
+  },
+}))
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags,
   withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
@@ -93,5 +117,69 @@ describe("conversationService.updateAIContextLastMessageId", () => {
     const whereValues = collectSqlValues(where.mock.calls[0][0])
     expect(whereValues).toContain("conv-2")
     expect(whereValues).toContain("ws-2")
+  })
+})
+
+describe("conversationService.markReadByContact", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    updateTracking.mockResolvedValue({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
+  })
+
+  test("updates read timestamps, invalidates contact-inbox tracking, and invalidates conversation cache", async () => {
+    const seenAt = new Date("2026-07-14T00:00:00.000Z")
+
+    await conversationService.markReadByContact({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      seenAt,
+    })
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(set).toHaveBeenCalledWith({ contactLastReadAt: seenAt })
+
+    const whereValues = collectSqlValues(where.mock.calls[0][0])
+    expect(whereValues).toContain("conv-1")
+    expect(whereValues).toContain("ws-1")
+
+    expect(updateTracking).toHaveBeenCalledWith({
+      tx: expect.objectContaining({ update }),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: { contactLastReadAt: seenAt },
+    })
+    expect(invalidateTracking).toHaveBeenCalledWith({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "conversations",
+      "conversations:ws-1",
+      "conversations:conv-1",
+    ])
+  })
+
+  test("skips contact-inbox invalidation when tracking update returns null but still invalidates conversation cache", async () => {
+    const seenAt = new Date("2026-07-14T00:00:00.000Z")
+    updateTracking.mockResolvedValueOnce(null)
+
+    await conversationService.markReadByContact({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      seenAt,
+    })
+
+    expect(invalidateTracking).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "conversations",
+      "conversations:ws-1",
+      "conversations:conv-1",
+    ])
   })
 })

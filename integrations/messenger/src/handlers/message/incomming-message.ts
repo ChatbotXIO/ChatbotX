@@ -1,3 +1,4 @@
+import { deriveAdSourcePlatform } from "@chatbotx.io/business/referral"
 import {
   type Context,
   contentTypes,
@@ -87,7 +88,8 @@ const normalizeReferral = (
   adId: referral.ad_id ?? null,
   adTitle: referral.ads_context_data?.ad_title ?? null,
   sourceUrl: referral.source_url ?? null,
-  sourcePlatform: referral.source_platform ?? null,
+  sourcePlatform:
+    referral.source_platform ?? deriveAdSourcePlatform(referral.source_url),
   postId: referral.ads_context_data?.post_id ?? null,
   photoUrl: referral.ads_context_data?.photo_url ?? null,
   videoUrl: referral.ads_context_data?.video_url ?? null,

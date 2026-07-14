@@ -229,6 +229,8 @@ vi.mock("../src/services/integrations", () => ({
 
 const { metaReferralToContactSource, receiveComment, receiveMessage } =
   await import("../src/integration/handlers/received-message")
+const { encodeButtonPayload } = await import("@chatbotx.io/flow-config")
+const { logger } = await import("../src/lib/logger")
 const { allIntegrations, integrationService } = await import(
   "../src/services/integrations"
 )
@@ -550,6 +552,98 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
     expect(result.message).toBeNull()
+  })
+
+  test("drops garbage postback action and returns it as null", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: "foreign-postback",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.postbackAction).toBeNull()
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        kind: "postback",
+        integrationType: "messenger",
+        integrationIdentifier: "inbox-1",
+        action: "foreign-postback",
+      },
+      "Dropping undecodable flow action from channel webhook",
+    )
+  })
+
+  test("keeps valid postback action and enqueues the postback flow job", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42" })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.postbackAction).toBe(postbackAction)
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "runFlowPostback",
+      expect.objectContaining({
+        type: "runFlowPostback",
+        data: expect.objectContaining({ action: postbackAction }),
+      }),
+    )
+  })
+
+  test("drops garbage quick reply action and returns it as null", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: "foreign-quick-reply",
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.quickReplyAction).toBeNull()
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        kind: "quickReply",
+        integrationType: "messenger",
+        integrationIdentifier: "inbox-1",
+        action: "foreign-quick-reply",
+      },
+      "Dropping undecodable flow action from channel webhook",
+    )
+  })
+
+  test("keeps valid quick reply action and enqueues the quick reply flow job", async () => {
+    const quickReplyAction = encodeButtonPayload({ flowId: "42" })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction,
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.quickReplyAction).toBe(quickReplyAction)
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "runFlowQuickReply",
+      expect.objectContaining({
+        type: "runFlowQuickReply",
+        data: expect.objectContaining({ action: quickReplyAction }),
+      }),
+    )
   })
 
   test("throws for unsupported integration type", async () => {

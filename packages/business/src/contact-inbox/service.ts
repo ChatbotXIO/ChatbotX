@@ -63,6 +63,7 @@ type FindByProps = {
   contactId: string
   inboxId: string
   channel: string
+  sourceId: string
 }
 
 const compactReferral = (

@@ -1,16 +1,12 @@
-import { conversationService } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
+import { contactInboxService, conversationService } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import {
-  contactInboxModel,
-  conversationModel,
-} from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type {
   IntegrationJobAgentMarkAsRead,
   IntegrationJobContactMarkAsRead,
 } from "@chatbotx.io/worker-config"
+import { logger } from "../../lib/logger"
 import { integrationService } from "../../services/integrations"
 import { normalizeEpochTimestamp } from "../utils/message"
 
@@ -26,7 +22,7 @@ export const contactMarkAsRead = async (
     )
   const { inbox } = dbIntegration
 
-  const contactInbox = await db.query.contactInboxModel.findFirst({
+  const contactInbox = await contactInboxService.findByUncached({
     where: {
       sourceId: sourceConversationId,
       channel: integrationType,
@@ -34,7 +30,11 @@ export const contactMarkAsRead = async (
     },
   })
   if (!contactInbox) {
-    throw new Error("Contact inbox not found")
+    logger.warn(
+      { integrationType, integrationIdentifier, sourceConversationId },
+      "contactMarkAsRead: no contact inbox for this source id, skipping",
+    )
+    return
   }
 
   const conversation = await conversationService.findDMByContact({
@@ -42,25 +42,27 @@ export const contactMarkAsRead = async (
     contactId: contactInbox.contactId,
   })
   if (!conversation) {
-    throw new Error("Conversation not found")
+    logger.warn(
+      {
+        integrationType,
+        integrationIdentifier,
+        sourceConversationId,
+        contactInboxId: contactInbox.id,
+        contactId: contactInbox.contactId,
+      },
+      "contactMarkAsRead: no DM conversation for contact inbox, skipping",
+    )
+    return
   }
 
   const seenAt = parseReadTimestamp(props.payload) ?? new Date()
 
-  await db.transaction(async (tx) => {
-    await tx
-      .update(conversationModel)
-      .set({
-        contactLastReadAt: seenAt,
-      })
-      .where(eq(conversationModel.id, conversation.id))
-
-    await tx
-      .update(contactInboxModel)
-      .set({
-        contactLastReadAt: seenAt,
-      })
-      .where(eq(contactInboxModel.id, contactInbox.id))
+  await conversationService.markReadByContact({
+    workspaceId: conversation.workspaceId,
+    conversationId: conversation.id,
+    contactInboxId: contactInbox.id,
+    contactId: contactInbox.contactId,
+    seenAt,
   })
 
   await emit(messageEventTypeSchema.enum["message:seen"], {

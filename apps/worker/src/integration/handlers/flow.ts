@@ -107,6 +107,23 @@ type ExecuteStepsAndQuickRepliesProps = {
   nodeVisits?: NodeVisits
 }
 
+type FlowActionTarget =
+  | string
+  | Pick<ConversationModel | ContactInboxModel, "id">
+
+const getFlowActionTargetId = (value: FlowActionTarget): string =>
+  typeof value === "string" ? value : value.id
+
+const createFlowActionWarningContext = (data: {
+  conversationId: FlowActionTarget
+  contactInboxId: FlowActionTarget
+  action: string
+}) => ({
+  conversationId: getFlowActionTargetId(data.conversationId),
+  contactInboxId: getFlowActionTargetId(data.contactInboxId),
+  action: data.action,
+})
+
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
   if (!props.flowId) {
     logger.debug({ props }, "runFlowNode is called without flowId")
@@ -544,7 +561,11 @@ export async function runFlowPostback(
 ) {
   const parsedAction = decodeButtonPayload(data.action)
   if (!parsedAction) {
-    throw new SdkException("Invalid postback action")
+    logger.warn(
+      createFlowActionWarningContext(data),
+      "runFlowPostback: could not decode action payload, skipping",
+    )
+    return
   }
 
   if (!parsedAction.buttonId) {
@@ -714,7 +735,11 @@ export async function runFlowQuickReply(
 ) {
   const parsedAction = decodeButtonPayload(data.action)
   if (!parsedAction) {
-    throw new SdkException("Invalid quick reply action")
+    logger.warn(
+      createFlowActionWarningContext(data),
+      "runFlowQuickReply: could not decode action payload, skipping",
+    )
+    return
   }
 
   const { conversation, contactInbox } =
