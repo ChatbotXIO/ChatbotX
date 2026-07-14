@@ -1,4 +1,5 @@
 import { MessageShardUnavailableError } from "@chatbotx.io/database/errors"
+import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
 import type { GetUserDataStepSchema } from "@chatbotx.io/flow-config"
 import { ReplyFormat } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
@@ -132,6 +133,8 @@ function makeProps(
       assignedUserId: null,
       assignedInboxTeamId: null,
       additionalAttributes: {},
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      createdAt: new Date("2025-12-01T00:00:00Z"),
     },
     contactInbox: {
       id: "ci-1",
@@ -196,6 +199,18 @@ describe("getUserData — validation logic", () => {
     chatQueueAdd.mockClear()
     vi.mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>).mockClear?.()
     lastMessage.current = null
+  })
+
+  test("anchors the message lookup on conversation.lastActivityAt, not contactInbox", async () => {
+    lastMessage.current = { text: "user@example.com", attachments: [] }
+    const props = makeProps(ReplyFormat.email)
+
+    await getUserData(props)
+
+    expect(getSafeSinceTime).toHaveBeenCalledWith(
+      props.conversation.lastActivityAt,
+      365 * 24 * 60 * 60 * 1000,
+    )
   })
 
   describe("email format", () => {

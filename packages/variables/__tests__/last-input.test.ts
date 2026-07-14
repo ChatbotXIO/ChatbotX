@@ -2,24 +2,18 @@ import { contentTypes } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockFindConversationBy,
-  mockFindLatestLastIncomingMessageAt,
+  mockFindLatestByContact,
   mockFindLatestIncomingMessageWithAttachments,
   mockResolveTenantSettings,
 } = vi.hoisted(() => ({
-  mockFindConversationBy: vi.fn(),
-  mockFindLatestLastIncomingMessageAt: vi.fn(),
+  mockFindLatestByContact: vi.fn(),
   mockFindLatestIncomingMessageWithAttachments: vi.fn(),
   mockResolveTenantSettings: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
-    findBy: mockFindConversationBy,
-  },
-  contactInboxService: {
-    findLatestLastIncomingMessageAtByContactId:
-      mockFindLatestLastIncomingMessageAt,
+    findLatestByContact: mockFindLatestByContact,
   },
   messageService: {
     findLatestIncomingMessageWithAttachments:
@@ -44,13 +38,12 @@ const { getContactLastInput, getContactLastInputType } = await import(
 describe("last input helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFindConversationBy.mockResolvedValue({
+    mockFindLatestByContact.mockResolvedValue({
       id: "conversation-1",
       workspaceId: "workspace-1",
+      lastActivityAt: new Date(),
+      createdAt: new Date(),
     })
-    // A recent lastAt keeps getSafeSinceTime bounded but non-null so the
-    // message lookup runs.
-    mockFindLatestLastIncomingMessageAt.mockResolvedValue(new Date())
     mockResolveTenantSettings.mockResolvedValue({
       storageUrl: "https://cdn.example/storage/",
     })
@@ -98,11 +91,25 @@ describe("last input helpers", () => {
     await expect(getContactLastInputType("contact-1")).resolves.toBeNull()
   })
 
-  test("last_input returns null when the contact has no incoming activity", async () => {
-    mockFindLatestLastIncomingMessageAt.mockResolvedValue(null)
+  test("last_input returns null when the contact has no conversation", async () => {
+    mockFindLatestByContact.mockResolvedValue(undefined)
 
     await expect(getContactLastInput("contact-1")).resolves.toBeNull()
     expect(mockFindLatestIncomingMessageWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("last_input resolves the conversation the contact is most recently active in", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: "latest incoming text",
+      attachments: [],
+    })
+
+    await getContactLastInput("contact-1")
+
+    expect(mockFindLatestByContact).toHaveBeenCalledWith({
+      contactId: "contact-1",
+    })
   })
 
   test("last_input_type returns latest message content type", async () => {

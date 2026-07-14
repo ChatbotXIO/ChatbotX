@@ -169,7 +169,6 @@ async function handleSkipOrError(
 async function validateUserData(
   props: ExecuteStepProps<GetUserDataStepSchema>,
 ): Promise<GetUserDataResult> {
-  const { contactInbox } = props
   const messageRepository = await createMessageRepository()
   const lastMessages = await messageRepository.findLastByConversation(
     props.conversation.id,
@@ -178,8 +177,14 @@ async function validateUserData(
       limit: 1,
       requireCompleteResults: true,
       withAttachments: true,
+      // Anchor on this conversation's own lastActivityAt, not the
+      // ContactInbox's lastMessageAt — a contact's ContactInbox is shared
+      // across their DM and every comment-thread conversation, so its
+      // lastMessageAt can reflect a different, more recently active
+      // conversation and push sinceTime past this conversation's real last
+      // incoming message, causing the sharded scan to miss it.
       sinceTime: getSafeSinceTime(
-        contactInbox.lastMessageAt ?? contactInbox.createdAt,
+        props.conversation.lastActivityAt ?? props.conversation.createdAt,
         365 * 24 * 60 * 60 * 1000, // 1 year
       ),
       workspaceId: props.conversation.workspaceId,
