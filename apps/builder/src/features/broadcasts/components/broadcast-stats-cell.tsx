@@ -3,6 +3,7 @@
 import type { GetBroadcastStatsResponse } from "@chatbotx.io/analytics/schemas"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { useParams } from "next/navigation"
+import { useFormatter } from "next-intl"
 import { memo, useCallback, useState } from "react"
 import { useBroadcastStatsStore } from "../provider/broadcast-stats-store-context"
 import { BroadcastContactsDialog } from "./broadcast-contacts-dialog"
@@ -17,6 +18,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
   field,
 }: Props) {
   const { workspaceId } = useParams<{ workspaceId: string }>()
+  const formatter = useFormatter()
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const stats = useBroadcastStatsStore((state) => state.stats[broadcastId])
@@ -61,7 +63,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
         onClick={handleClick}
         type="button"
       >
-        {value ? value.toLocaleString() : "----"}
+        {value ? formatter.number(value) : "----"}
         {percentage && (
           <span className="ml-1 text-muted-foreground">({percentage}%)</span>
         )}

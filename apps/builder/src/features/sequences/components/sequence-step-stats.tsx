@@ -8,6 +8,7 @@ import type {
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import ky from "ky"
 import { useParams } from "next/navigation"
+import { useFormatter } from "next-intl"
 import { memo, useEffect, useState } from "react"
 import { SequenceStepContactsDialog } from "./sequence-step-contacts-dialog"
 
@@ -21,6 +22,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
   stepId,
 }: Props) {
   const { workspaceId } = useParams<{ workspaceId: string }>()
+  const formatter = useFormatter()
   const [stats, setStats] = useState<GetSequenceStepStatsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,7 +75,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
   }, [workspaceId, sequenceId, stepId])
 
   const formatValue = (value: number) =>
-    stats === null ? "----" : value.toLocaleString()
+    stats === null ? "----" : formatter.number(value)
 
   const handleStatClick = (eventType: SequenceStepEventType, total: number) => {
     if (total > 0 && stepId) {

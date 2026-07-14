@@ -1,4 +1,5 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { useFormatter } from "next-intl"
 import { quotaUsageState } from "@/lib/quota-metrics"
 
 const SIZE = 44
@@ -8,9 +9,10 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 /**
  * Presentational circular usage ring (ManyChat-style) for the sidebar footer.
- * Pure (no hooks/context) like {@link UsageBars} so the caller owns label and
- * value resolution. The ring fills clockwise from the top; the track turns
- * destructive once usage reaches the limit.
+ * Like {@link UsageBars} the caller owns label resolution; numbers are
+ * formatted via next-intl so server and client render the same text (works in
+ * both RSC and client trees). The ring fills clockwise from the top; the
+ * track turns destructive once usage reaches the limit.
  */
 export function UsageRing({
   used,
@@ -23,6 +25,7 @@ export function UsageRing({
   label: string
   className?: string
 }) {
+  const formatter = useFormatter()
   const { pct, isOverLimit } = quotaUsageState(used, limit)
   const dashOffset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE
 
@@ -68,7 +71,7 @@ export function UsageRing({
             isOverLimit && "text-destructive",
           )}
         >
-          {used.toLocaleString()} / {limit.toLocaleString()}
+          {formatter.number(used)} / {formatter.number(limit)}
         </span>
       </div>
     </div>

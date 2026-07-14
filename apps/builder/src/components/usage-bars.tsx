@@ -1,5 +1,6 @@
 import { Progress } from "@chatbotx.io/ui/components/ui/progress"
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { useFormatter } from "next-intl"
 import {
   type QuotaMetric,
   type QuotaMetricKey,
@@ -9,9 +10,10 @@ import {
 export type { QuotaMetric, QuotaMetricKey } from "@/lib/quota-metrics"
 
 /**
- * Presentational quota usage bars. Pure (no hooks/context) so it can render in
- * both the client sidebar (`NavUsage`) and the server-rendered account rail.
- * Labels are resolved by the caller to keep this component context-free.
+ * Presentational quota usage bars. Renders in both the client sidebar
+ * (`NavUsage`) and the server-rendered account rail; numbers are formatted
+ * via next-intl so server and client produce identical text. Labels are
+ * resolved by the caller.
  */
 export function UsageBars({
   metrics,
@@ -22,6 +24,7 @@ export function UsageBars({
   labels: Record<QuotaMetricKey, string>
   className?: string
 }) {
+  const formatter = useFormatter()
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       {metrics.map((metric) => {
@@ -38,7 +41,8 @@ export function UsageBars({
                   isOverLimit && "font-medium text-destructive",
                 )}
               >
-                {metric.used.toLocaleString()} / {metric.limit.toLocaleString()}
+                {formatter.number(metric.used)} /{" "}
+                {formatter.number(metric.limit)}
               </span>
             </div>
             <Progress

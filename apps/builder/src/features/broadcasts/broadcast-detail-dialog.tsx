@@ -20,7 +20,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { format } from "date-fns"
-import { useTranslations } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { ContactFilterSummary } from "@/features/contact-filter/components/contact-filter-summary"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schemas"
@@ -43,6 +43,7 @@ export function BroadcastDetailDialog({
   onOpenChange,
 }: BroadcastDetailDialogProps) {
   const t = useTranslations()
+  const formatter = useFormatter()
   const workspaceId = useWorkspaceId()
   const [templateDetail, setTemplateDetail] =
     useState<BroadcastTemplateDetail | null>(null)
@@ -166,7 +167,11 @@ export function BroadcastDetailDialog({
             />
             <DetailField
               label={t("fields.estimatedContacts.label")}
-              value={broadcast.contactCount?.toLocaleString() ?? "-"}
+              value={
+                broadcast.contactCount == null
+                  ? "-"
+                  : formatter.number(broadcast.contactCount)
+              }
             />
             <DetailField
               label={t("fields.flowId.label")}
