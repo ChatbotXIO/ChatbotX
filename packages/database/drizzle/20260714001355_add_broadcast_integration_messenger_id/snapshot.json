@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "43dbfa0b-5c41-4380-9103-04cea417022b",
-  "prevIds": ["54d5310f-03ec-4c42-9e6a-8bb868b55d46"],
+  "id": "2e8c9ec0-59e9-4135-a158-ac6d6e606144",
+  "prevIds": ["43dbfa0b-5c41-4380-9103-04cea417022b"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -8416,6 +8416,19 @@
       "generated": null,
       "identity": null,
       "name": "periodEnd",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channelsTornDownAt",
       "entityType": "columns",
       "schema": "public",
       "table": "UserQuota"
@@ -17199,6 +17212,19 @@
       "table": "Workspace"
     },
     {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scheduledDeletionAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -19916,6 +19942,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "TenantHelpItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "channelsTornDownAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "UserQuota_channelsTornDownAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "UserQuota"
     },
     {
       "nameExplicit": true,
@@ -23525,6 +23572,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "Workspace_tenantId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "scheduledDeletionAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Workspace_scheduledDeletionAt_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Workspace"

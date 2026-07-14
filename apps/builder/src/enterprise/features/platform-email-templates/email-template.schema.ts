@@ -4,6 +4,7 @@ export const emailTemplateTypes = [
   "signup",
   "forgotPassword",
   "magicLink",
+  "accountCredentials",
 ] as const
 export type EmailTemplateType = (typeof emailTemplateTypes)[number]
 

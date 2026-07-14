@@ -13,6 +13,7 @@
   "dependencies": {
     "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",

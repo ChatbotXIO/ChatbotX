@@ -110,6 +110,7 @@ export async function provisionResellerAccount(
       brandLogoUrl: settings.logoLightUrl,
       brandUrl: settings.appUrl,
       subject: DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
+      customTemplate: settings.accountCredentialsEmailTemplate,
       userName: name,
       loginEmail: email,
       initialPassword,

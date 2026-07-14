@@ -1807,6 +1807,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@chatbotx.io/mail':
         specifier: workspace:*
         version: link:../mail

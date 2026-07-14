@@ -1,5 +1,6 @@
 import {
   customDomainService,
+  platformCredentialService,
   resolveTenantSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
@@ -17,6 +18,7 @@ import {
   sendResetPassword,
   sendSignUpVerification,
 } from "@chatbotx.io/mail"
+import type { SmtpTransportOptions } from "@chatbotx.io/mail/transport"
 import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
@@ -24,6 +26,7 @@ import { nextCookies } from "better-auth/next-js"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env, getBrokerUrl } from "./keys"
+import { logger } from "./logger"
 import {
   getTenantId,
   isStrictTenantScope,
@@ -33,6 +36,49 @@ import {
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
   return await resolveTenantSettingsByDomain(domain)
+}
+
+type SmtpResolution =
+  | { kind: "default" }
+  | {
+      kind: "transport"
+      transport: SmtpTransportOptions & {
+        fromEmail: string
+        fromName?: string
+      }
+    }
+  | { kind: "blocked" }
+
+const resolveSmtpForTenant = async (): Promise<SmtpResolution> => {
+  const tenantId = getTenantId()
+  const ownerId = await resolveTenantOwnerId(tenantId)
+  if (!ownerId) {
+    return { kind: "default" }
+  }
+
+  const smtp = await platformCredentialService.findDecryptedForUser({
+    userId: ownerId,
+    type: "smtp",
+  })
+  if (!smtp) {
+    logger.warn(
+      { tenantId, ownerId },
+      "Reseller has no SMTP credential configured; skipping auth email send",
+    )
+    return { kind: "blocked" }
+  }
+
+  return {
+    kind: "transport",
+    transport: {
+      host: smtp.config.host,
+      port: smtp.config.port,
+      username: smtp.config.username,
+      password: smtp.config.password,
+      fromEmail: smtp.config.fromEmail,
+      fromName: smtp.config.fromName,
+    },
+  }
 }
 
 type AdapterFactory = ReturnType<typeof drizzleAdapter>
@@ -355,10 +401,15 @@ export function createAuth(config: AuthConfig) {
           })
         }
 
-        const [originUrl, platformInfo] = await Promise.all([
+        const [originUrl, platformInfo, smtpResolution] = await Promise.all([
           getPublicOriginFromRequest(request as unknown as Request),
           getTenantSettings(request),
+          resolveSmtpForTenant(),
         ])
+
+        if (smtpResolution.kind === "blocked") {
+          return
+        }
 
         const resetPasswordUrl = new URL(url)
         resetPasswordUrl.hostname = new URL(originUrl).hostname
@@ -369,7 +420,7 @@ export function createAuth(config: AuthConfig) {
           forgotPasswordEmailTemplate,
         } = platformInfo
 
-        await sendResetPassword(user.email, {
+        const props = {
           brandName,
           brandLogoUrl: logoLightUrl,
           brandUrl: new URL("/", originUrl).toString(),
@@ -377,7 +428,12 @@ export function createAuth(config: AuthConfig) {
           userName: user.name ?? user.email,
           resetPasswordUrl: resetPasswordUrl.toString(),
           customTemplate: forgotPasswordEmailTemplate,
-        })
+        }
+        if (smtpResolution.kind === "transport") {
+          await sendResetPassword(user.email, props, smtpResolution.transport)
+        } else {
+          await sendResetPassword(user.email, props)
+        }
       },
     },
     emailVerification: {
@@ -388,10 +444,15 @@ export function createAuth(config: AuthConfig) {
           })
         }
 
-        const [originUrl, platformInfo] = await Promise.all([
+        const [originUrl, platformInfo, smtpResolution] = await Promise.all([
           getPublicOriginFromRequest(request as unknown as Request),
           getTenantSettings(request),
+          resolveSmtpForTenant(),
         ])
+
+        if (smtpResolution.kind === "blocked") {
+          return
+        }
 
         const verificationUrl = new URL(url)
         verificationUrl.hostname = new URL(originUrl).hostname
@@ -402,7 +463,7 @@ export function createAuth(config: AuthConfig) {
           signupEmailTemplate,
         } = platformInfo
 
-        await sendSignUpVerification(user.email, {
+        const props = {
           brandName,
           brandLogoUrl: logoLightUrl,
           brandUrl: new URL("/", originUrl).toString(),
@@ -410,7 +471,16 @@ export function createAuth(config: AuthConfig) {
           userName: user.name ?? user.email,
           verificationUrl: verificationUrl.toString(),
           customTemplate: signupEmailTemplate,
-        })
+        }
+        if (smtpResolution.kind === "transport") {
+          await sendSignUpVerification(
+            user.email,
+            props,
+            smtpResolution.transport,
+          )
+        } else {
+          await sendSignUpVerification(user.email, props)
+        }
       },
     },
     plugins: [
@@ -422,10 +492,15 @@ export function createAuth(config: AuthConfig) {
             })
           }
 
-          const [originUrl, platformInfo] = await Promise.all([
+          const [originUrl, platformInfo, smtpResolution] = await Promise.all([
             getPublicOriginFromRequest(request as unknown as Request),
             getTenantSettings(request as unknown as Request),
+            resolveSmtpForTenant(),
           ])
+
+          if (smtpResolution.kind === "blocked") {
+            return
+          }
 
           const magicUrl = new URL(url)
           magicUrl.hostname = new URL(originUrl).hostname
@@ -461,7 +536,7 @@ export function createAuth(config: AuthConfig) {
             })
           }
 
-          await sendMagicLink(email, {
+          const props = {
             brandName,
             brandLogoUrl: logoLightUrl,
             brandUrl: new URL("/", originUrl).toString(),
@@ -469,7 +544,12 @@ export function createAuth(config: AuthConfig) {
             userName: user.name ?? email,
             magicUrl: magicUrl.toString(),
             customTemplate: magicLinkEmailTemplate,
-          })
+          }
+          if (smtpResolution.kind === "transport") {
+            await sendMagicLink(email, props, smtpResolution.transport)
+          } else {
+            await sendMagicLink(email, props)
+          }
         },
       }),
       oneTimeToken(),

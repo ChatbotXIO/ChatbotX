@@ -20,11 +20,13 @@ const templateKeyMap: Record<
     | "signupEmailTemplate"
     | "forgotPasswordEmailTemplate"
     | "magicLinkEmailTemplate"
+    | "accountCredentialsEmailTemplate"
   >
 > = {
   signup: "signupEmailTemplate",
   forgotPassword: "forgotPasswordEmailTemplate",
   magicLink: "magicLinkEmailTemplate",
+  accountCredentials: "accountCredentialsEmailTemplate",
 }
 
 const toTemplateUpdate = (input: UpdateEmailTemplateSchema) => {

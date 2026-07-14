@@ -53,6 +53,10 @@ export const tenantModel = pgTable(
       subject?: string
       body?: string
     }>(),
+    accountCredentialsEmailTemplate: jsonb().$type<{
+      subject?: string
+      body?: string
+    }>(),
   },
   (table) => [uniqueIndex("Tenant_ownerId_key").on(table.ownerId)],
 )

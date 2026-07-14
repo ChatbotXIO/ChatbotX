@@ -19,6 +19,7 @@ type TemplateConfig = {
     | "signupEmailTemplate"
     | "forgotPasswordEmailTemplate"
     | "magicLinkEmailTemplate"
+    | "accountCredentialsEmailTemplate"
   >
   type: string
   titleKey:
@@ -26,11 +27,13 @@ type TemplateConfig = {
     | "platformEmailTemplates.sections.invitation.title"
     | "platformEmailTemplates.sections.forgotPassword.title"
     | "platformEmailTemplates.sections.magicLink.title"
+    | "platformEmailTemplates.sections.accountCredentials.title"
   descriptionKey:
     | "platformEmailTemplates.sections.signup.description"
     | "platformEmailTemplates.sections.invitation.description"
     | "platformEmailTemplates.sections.forgotPassword.description"
     | "platformEmailTemplates.sections.magicLink.description"
+    | "platformEmailTemplates.sections.accountCredentials.description"
 }
 
 const TEMPLATES: TemplateConfig[] = [
@@ -52,6 +55,13 @@ const TEMPLATES: TemplateConfig[] = [
     type: "magicLink",
     titleKey: "platformEmailTemplates.sections.magicLink.title",
     descriptionKey: "platformEmailTemplates.sections.magicLink.description",
+  },
+  {
+    settingKey: "accountCredentialsEmailTemplate",
+    type: "accountCredentials",
+    titleKey: "platformEmailTemplates.sections.accountCredentials.title",
+    descriptionKey:
+      "platformEmailTemplates.sections.accountCredentials.description",
   },
 ]
 
