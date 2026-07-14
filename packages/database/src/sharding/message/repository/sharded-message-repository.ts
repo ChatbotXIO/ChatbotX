@@ -247,6 +247,20 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
+  private mapMessagesToWithAttachmentCounts(
+    messages: MessageModel[],
+    attachmentCountByMessageId: Record<string, number>,
+  ): MessageWithAttachments[] {
+    return messages.map(
+      (message) =>
+        ({
+          ...message,
+          attachmentCount: attachmentCountByMessageId[message.id] ?? 0,
+          attachments: [],
+        }) as MessageWithAttachments,
+    )
+  }
+
   private async queryAttachmentsForMessages(
     db: MessageShardDatabaseClient,
     messageIds: string[],
@@ -276,6 +290,64 @@ export class ShardedMessageRepository implements IMessageRepository {
       .where(inArray(attachmentModel.messageId, messageIds))
 
     return attachments as AttachmentModel[]
+  }
+
+  private groupAttachmentCountsByMessageId(
+    rows: { messageId: string; count: number }[],
+  ): Record<string, number> {
+    return rows.reduce(
+      (acc, row) => {
+        acc[row.messageId] = Number(row.count)
+        return acc
+      },
+      {} as Record<string, number>,
+    )
+  }
+
+  private async fetchAttachmentCounts(
+    shardClient: MessageShardDatabaseClient,
+    messages: { id: string; createdAt: Date }[],
+  ): Promise<Record<string, number>> {
+    const messageIds = messages.map((m) => m.id)
+    const messageCreatedAts = messages.map((m) => m.createdAt)
+    const rows = await this.queryAttachmentCountsForMessages(
+      shardClient,
+      messageIds,
+      messageCreatedAts,
+    )
+    return this.groupAttachmentCountsByMessageId(rows)
+  }
+
+  private async queryAttachmentCountsForMessages(
+    db: MessageShardDatabaseClient,
+    messageIds: string[],
+    messageCreatedAts?: Date[],
+  ): Promise<{ messageId: string; count: number }[]> {
+    if (messageIds.length === 0) {
+      return []
+    }
+
+    const countColumn = sql<number>`count(*)`.as("count")
+
+    if (messageCreatedAts && messageCreatedAts.length === messageIds.length) {
+      const perMessageConditions = messageIds.map((id, i) =>
+        and(
+          eq(attachmentModel.messageId, id),
+          eq(attachmentModel.messageCreatedAt, messageCreatedAts[i]),
+        ),
+      )
+      return await db
+        .select({ messageId: attachmentModel.messageId, count: countColumn })
+        .from(attachmentModel)
+        .where(or(...perMessageConditions))
+        .groupBy(attachmentModel.messageId)
+    }
+
+    return await db
+      .select({ messageId: attachmentModel.messageId, count: countColumn })
+      .from(attachmentModel)
+      .where(inArray(attachmentModel.messageId, messageIds))
+      .groupBy(attachmentModel.messageId)
   }
 
   create(message: CreateMessageInput): Promise<MessageModel> {
@@ -1688,17 +1760,27 @@ export class ShardedMessageRepository implements IMessageRepository {
                 return []
               }
 
-              let attachmentsByMessageId: Record<string, AttachmentModel[]> = {}
               if (options?.withAttachments) {
-                attachmentsByMessageId = await this.fetchAndGroupAttachments(
-                  shardClient,
-                  messages,
+                const attachmentsByMessageId =
+                  await this.fetchAndGroupAttachments(shardClient, messages)
+                return this.mapMessagesToWithAttachments(
+                  messages as MessageModel[],
+                  attachmentsByMessageId,
+                )
+              }
+
+              if (options?.attachmentCountOnly) {
+                const attachmentCountByMessageId =
+                  await this.fetchAttachmentCounts(shardClient, messages)
+                return this.mapMessagesToWithAttachmentCounts(
+                  messages as MessageModel[],
+                  attachmentCountByMessageId,
                 )
               }
 
               return this.mapMessagesToWithAttachments(
                 messages as MessageModel[],
-                attachmentsByMessageId,
+                {},
               )
             },
           )

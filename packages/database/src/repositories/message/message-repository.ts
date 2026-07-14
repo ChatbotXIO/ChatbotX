@@ -42,6 +42,7 @@ export interface CreateAttachmentInput {
 export type BulkCreateAttachmentInput = CreateAttachmentInput & { id: string }
 
 export interface MessageWithAttachments extends MessageModel {
+  attachmentCount?: number
   attachments: AttachmentModel[]
 }
 
@@ -70,6 +71,7 @@ export interface ListMessagesQuery {
 }
 
 export interface FindLastByConversationOptions {
+  attachmentCountOnly?: boolean
   limit?: number
   messageTypes?: ("incoming" | "outgoing" | "activity")[]
   requireCompleteResults?: boolean

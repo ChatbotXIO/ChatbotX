@@ -28,6 +28,7 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
+import { resolveLastMessagePreview } from "./queries/resolve-last-message-preview"
 import type { ListConversationItemResource } from "./schema/resource"
 
 type ConversationItemProps = {
@@ -77,10 +78,18 @@ export default function ConversationItem({
   const isActive = conversation.id === activeConversationId
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
+  const previewText = resolveLastMessagePreview(conversation.messages?.[0], t)
+  const isUnread = Boolean(
+    conversation.agentLastReadAt &&
+      conversation.contactLastReadAt &&
+      !isAfter(conversation.agentLastReadAt, conversation.contactLastReadAt),
+  )
 
   const contactAvatar = useMemo(
     () => (
-      <Avatar className="h-12 w-12">
+      <Avatar
+        className={cn("h-12 w-12", isUnread && "border-2 border-primary")}
+      >
         <AvatarImage
           alt={conversation.contact?.fullName ?? ""}
           className="object-cover"
@@ -91,7 +100,7 @@ export default function ConversationItem({
         </AvatarFallback>
       </Avatar>
     ),
-    [conversation.contact, avatarUrl],
+    [conversation.contact, avatarUrl, isUnread],
   )
 
   const { execute } = useAction(
@@ -184,21 +193,11 @@ export default function ConversationItem({
           </div>
           <div
             className={cn(
-              "w-full truncate text-left text-sm",
-              !(
-                conversation.agentLastReadAt && conversation.contactLastReadAt
-              ) ||
-                (conversation.agentLastReadAt &&
-                  conversation.contactLastReadAt &&
-                  isAfter(
-                    conversation.agentLastReadAt,
-                    conversation.contactLastReadAt,
-                  ))
-                ? "text-gray-500"
-                : "font-semibold",
+              "w-full truncate text-left text-xs",
+              isUnread ? "font-semibold" : "text-gray-500",
             )}
           >
-            {conversation.messages?.[0]?.text ?? " "}
+            {previewText}
           </div>
           <p className="text-right text-neutral-400 text-xs">
             <span>

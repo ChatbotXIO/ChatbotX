@@ -7,7 +7,7 @@ import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
 import { contactResource } from "@/features/contacts/schemas/resource"
-import { messageResource } from "@/features/messages/schema/resource"
+import { messageResourceWithRelations } from "@/features/messages/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
 
 export const conversationResource = createSelectSchema(conversationModel, {
@@ -20,7 +20,7 @@ export type ConversationResource = z.infer<typeof conversationResource>
 export const listConversationsItemResource = conversationResource.and(
   z.object({
     contactInboxes: z.array(contactInboxResource),
-    messages: z.array(messageResource),
+    messages: z.array(messageResourceWithRelations),
     contact: contactResource.nullable(),
     assignedUser: userResource.nullable(),
     assignedInboxTeam: inboxTeamResource.nullable(),
