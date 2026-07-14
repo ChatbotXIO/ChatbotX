@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "10c80c01-2b75-42ba-925f-816278a21fcc",
-  "prevIds": ["5a8e9567-a36a-48ac-b882-11979f8a37da"],
+  "id": "6f2f3aee-c992-4916-a0a5-d421f7ff2df9",
+  "prevIds": ["8960c8a4-bab8-49e2-a644-fcb55812958f"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -12395,6 +12395,19 @@
       "table": "IntegrationWebchat"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "identitySecret",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWebchat"
+    },
+    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -16501,45 +16514,6 @@
       "generated": null,
       "identity": null,
       "name": "developmentMode",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "true",
-      "generated": null,
-      "identity": null,
-      "name": "isActive",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "startTime",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "endTime",
       "entityType": "columns",
       "schema": "public",
       "table": "Workspace"

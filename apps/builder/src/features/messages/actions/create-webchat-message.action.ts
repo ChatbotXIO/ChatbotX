@@ -37,8 +37,15 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { headers } from "next/headers"
+import { getTranslations } from "next-intl/server"
 import { randomString } from "remeda"
+import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { logger } from "@/lib/log"
+import {
+  checkGuestRateLimit,
+  getGuestClientIp,
+} from "@/lib/rate-limit/guest-rate-limit"
 import { actionClient } from "@/lib/safe-action"
 import {
   type CreateWebchatMessageRequest,
@@ -49,13 +56,63 @@ export const createWebchatMessageAction = actionClient
   .inputSchema(createWebchatMessageRequest)
   .action(handleCreateWebchatMessage)
 
+async function getRequestHeaders() {
+  try {
+    return await headers()
+  } catch {
+    return new Headers()
+  }
+}
+
 export async function handleCreateWebchatMessage({
   parsedInput,
 }: {
   parsedInput: CreateWebchatMessageRequest
 }) {
+  const integrationWebchat = await findOrFail({
+    table: integrationWebchatModel,
+    where: {
+      workspaceId: parsedInput.workspaceId,
+      id: parsedInput.webchatId,
+    },
+    message: "Channel not found",
+  })
+
+  // Verify the access token even when no domains are restricted, so we can
+  // extract the verified external id claim. Domain enforcement still only
+  // rejects when domains are configured.
+  const { authorized, verifiedExternalId } = await verifyWebchatAccessToken({
+    token: parsedInput.accessToken,
+    workspaceId: parsedInput.workspaceId,
+    webchatId: parsedInput.webchatId,
+  })
+
+  if (integrationWebchat.authorizedDomains.length > 0 && !authorized) {
+    const t = await getTranslations("webchat.unauthorizedDomain")
+    throw new ChatbotXException(t("description"), "forbidden", 403)
+  }
+
+  const requestHeaders = await getRequestHeaders()
+  const rateLimit = await checkGuestRateLimit({
+    clientIp: getGuestClientIp(requestHeaders),
+    guestConversationId: parsedInput.guestConversationId,
+    webchatId: parsedInput.webchatId,
+  })
+  if (rateLimit.limited) {
+    const t = await getTranslations("webchat")
+    throw new ChatbotXException(
+      t("rateLimitExceeded"),
+      "rateLimitExceeded",
+      429,
+    )
+  }
+
   const { conversation, isNewContact, contact, contactInbox } =
-    await getConversationFromInput(parsedInput)
+    await getConversationFromInput(
+      parsedInput,
+      integrationWebchat,
+      verifiedExternalId,
+    )
 
   const { storageUrl } = await resolveTenantSettings({
     workspaceId: parsedInput.workspaceId,
@@ -274,16 +331,9 @@ export async function handleCreateWebchatMessage({
 
 async function getConversationFromInput(
   parsedInput: CreateWebchatMessageRequest,
+  integrationWebchat: typeof integrationWebchatModel.$inferSelect,
+  verifiedExternalId: string | null,
 ) {
-  const integrationWebchat = await findOrFail({
-    table: integrationWebchatModel,
-    where: {
-      workspaceId: parsedInput.workspaceId,
-      id: parsedInput.webchatId,
-    },
-    message: "Channel not found",
-  })
-
   const sourceId = parsedInput.guestConversationId
 
   const existingContactInbox = await contactInboxService.findLatestBySource({
@@ -308,6 +358,20 @@ async function getConversationFromInput(
     if (!contact) {
       throw new ChatbotXException("Contact not found")
     }
+
+    // Attach the verified external id to the already-resolved contact inbox
+    // when a new claim arrives. Scoped to this exact inbox (found by sourceId)
+    // — never merged across channels or other contacts.
+    if (
+      verifiedExternalId &&
+      existingContactInbox.verifiedExternalId !== verifiedExternalId
+    ) {
+      await db
+        .update(contactInboxModel)
+        .set({ verifiedExternalId })
+        .where(eq(contactInboxModel.id, existingContactInbox.id))
+    }
+
     return {
       conversation,
       contact,
@@ -369,6 +433,7 @@ async function getConversationFromInput(
           channel: "webchat",
           language: finalizedProfile.language,
           webchatParentUrl: parsedInput.parentUrl,
+          verifiedExternalId: verifiedExternalId ?? null,
         })
         .returning()
         .then((rows) => rows[0])

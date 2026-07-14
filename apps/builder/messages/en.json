@@ -2818,7 +2818,22 @@
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",
-    "title": "Web Chat"
+    "identitySecret": {
+      "configured": "Configured",
+      "description": "Sign your chat visitors' external IDs server-side with this secret so ChatbotX can trust their identity — never expose this secret in browser code.",
+      "done": "Done",
+      "generate": "Generate secret",
+      "generatedOnce": "Copy this secret now — it is shown only once and cannot be retrieved later.",
+      "notConfigured": "Not configured",
+      "regenerate": "Regenerate secret",
+      "title": "Identity verification secret"
+    },
+    "rateLimitExceeded": "Too many requests. Please try again in a moment.",
+    "title": "Web Chat",
+    "unauthorizedDomain": {
+      "description": "This website is not authorized to load this chat widget.",
+      "title": "Webchat unavailable"
+    }
   },
   "whatsapp": {
     "category": {

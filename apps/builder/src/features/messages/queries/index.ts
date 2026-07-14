@@ -1,6 +1,9 @@
 "use server"
 
-import { resolveTenantSettings } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  resolveTenantSettings,
+} from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db } from "@chatbotx.io/database/client"
@@ -64,18 +67,28 @@ export const listMessages = async (
       })
     : null
 
-  const contactInbox = conversation
-    ? await db.query.contactInboxModel.findFirst({
-        where: { contactId: conversation.contactId },
-        orderBy: { lastMessageAt: "desc" },
-      })
-    : null
+  let contactInbox: Awaited<
+    ReturnType<typeof contactInboxService.findByUncached>
+  > | null = null
+  if (conversation) {
+    contactInbox = input.contactInboxId
+      ? await contactInboxService.findByUncached({
+          where: {
+            contactId: conversation.contactId,
+            id: input.contactInboxId,
+          },
+        })
+      : await contactInboxService.findRecentByContactId({
+          contactId: conversation.contactId,
+        })
+  }
 
   const repository = await createMessageRepository()
   const cursor = decodeCursor(input.cursor)
 
   const result = await repository.listByConversation({
     workspaceId: input.workspaceId,
+    contactInboxId: input.contactInboxId,
     conversationId: input.conversationId,
     sinceTime: getSafeSinceTime(conversation?.createdAt),
     pagination: {

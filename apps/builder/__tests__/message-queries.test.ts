@@ -20,12 +20,17 @@ const mocks = vi.hoisted(() => {
     resolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
+    contactInboxService: {
+      findByUncached: vi.fn().mockResolvedValue(null),
+      findRecentByContactId: vi.fn().mockResolvedValue(null),
+    },
     uploader: { getPresignedDownload: vi.fn() },
   }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettings: mocks.resolveTenantSettings,
+  contactInboxService: mocks.contactInboxService,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

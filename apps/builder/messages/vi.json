@@ -2834,7 +2834,22 @@
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
-    "title": "Web Chat"
+    "identitySecret": {
+      "configured": "Đã cấu hình",
+      "description": "Ký ID bên ngoài của khách truy cập chat ở phía máy chủ bằng khóa bí mật này để ChatbotX có thể tin tưởng danh tính của họ — không bao giờ để lộ khóa bí mật này trong mã trình duyệt.",
+      "done": "Xong",
+      "generate": "Tạo khóa bí mật",
+      "generatedOnce": "Sao chép khóa bí mật ngay bây giờ — khóa chỉ hiển thị một lần và không thể lấy lại sau này.",
+      "notConfigured": "Chưa cấu hình",
+      "regenerate": "Tạo lại khóa bí mật",
+      "title": "Khóa bí mật xác minh danh tính"
+    },
+    "rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.",
+    "title": "Web Chat",
+    "unauthorizedDomain": {
+      "description": "Trang web này không được phép tải tiện ích chat này.",
+      "title": "Webchat không khả dụng"
+    }
   },
   "whatsapp": {
     "category": {

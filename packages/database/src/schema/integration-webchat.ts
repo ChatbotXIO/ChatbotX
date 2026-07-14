@@ -24,6 +24,7 @@ export const integrationWebchatModel = pgTable(
     name: text().notNull(),
     enable: boolean().default(true).notNull(),
     authorizedDomains: text().array().notNull().default(sql`[]`),
+    identitySecret: text(),
     conversationStarters: jsonb()
       .$type<WebchatConversationStarter>()
       .array()

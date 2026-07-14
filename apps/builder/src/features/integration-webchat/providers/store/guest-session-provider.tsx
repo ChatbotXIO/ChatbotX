@@ -1,11 +1,11 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { createContext, type ReactNode, useContext, useRef } from "react"
 import { useStore } from "zustand"
 import {
   createGuestSessionStore,
   type GuestSessionStore,
+  type WebchatClientConfig,
 } from "./guest-sesssion-store"
 
 export type GuestSessionStoreApi = ReturnType<typeof createGuestSessionStore>
@@ -16,16 +16,18 @@ export const GuestSessionStoreContext = createContext<
 
 export type GuestSessionStoreProviderProps = {
   children: ReactNode
-  config: IntegrationWebchatModel
+  config: WebchatClientConfig
+  accessToken?: string | null
 }
 
 export const GuestSessionStoreProvider = ({
   children,
   config,
+  accessToken = null,
 }: GuestSessionStoreProviderProps) => {
   const storeRef = useRef<GuestSessionStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createGuestSessionStore(config)
+    storeRef.current = createGuestSessionStore(config, accessToken)
   }
 
   return (

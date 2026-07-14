@@ -1,59 +1,188 @@
-import { db } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import { contactInboxService, conversationService } from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
+import { getTranslations } from "next-intl/server"
+import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
 import { listMessages } from "@/features/messages/queries"
 import { createWebchatMessageRequest } from "@/features/messages/schema/mutation"
 import { listGuestMessagesRequest } from "@/features/messages/schema/query"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
+import {
+  checkGuestRateLimit,
+  getGuestClientIp,
+} from "@/lib/rate-limit/guest-rate-limit"
+
+const corsHeaders = (origin: string | null, authorized: boolean) => {
+  const headers = new Headers({
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    Vary: "Origin",
+  })
+  // Bearer-token auth (not cookie-based), so no Access-Control-Allow-Credentials.
+  // Reflect the request origin only once the request is authorized.
+  if (authorized && origin) {
+    headers.set("Access-Control-Allow-Origin", origin)
+  }
+  return headers
+}
+
+const BEARER_TOKEN_SEPARATOR = /\s+/
+
+const getBearerToken = (req: NextRequest) => {
+  const authorization = req.headers.get("authorization")
+  const [scheme, token] = authorization?.split(BEARER_TOKEN_SEPARATOR, 2) ?? []
+  return scheme?.toLowerCase() === "bearer" ? token : null
+}
+
+const forbiddenResponse = async (headers: Headers) => {
+  const t = await getTranslations("webchat.unauthorizedDomain")
+  return NextResponse.json(
+    {
+      message: t("description"),
+      errors: [],
+    },
+    { status: 403, headers },
+  )
+}
+
+const rateLimitResponse = async (headers: Headers, retryAfter: number) => {
+  const t = await getTranslations("webchat")
+  headers.set("Retry-After", String(retryAfter))
+  return NextResponse.json(
+    { message: t("rateLimitExceeded"), errors: [] },
+    { status: 429, headers },
+  )
+}
+
+const emptyMessagesResponse = (headers: Headers) =>
+  NextResponse.json(
+    {
+      data: [],
+      nextCursor: null,
+      prevCursor: null,
+    },
+    { headers },
+  )
+
+export function OPTIONS(req: NextRequest) {
+  // Preflight cannot resolve the target webchat (no body/webchatId), so reflect
+  // the request Origin permissively here; real enforcement happens on GET/POST.
+  return new NextResponse(null, {
+    headers: corsHeaders(req.headers.get("origin"), true),
+    status: 204,
+  })
+}
 
 export async function GET(req: NextRequest) {
+  const requestOrigin = req.headers.get("origin")
   try {
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const data = listGuestMessagesRequest.parse(searchParams)
 
-    const contactInbox = await db.query.contactInboxModel.findFirst({
+    const rateLimit = await checkGuestRateLimit({
+      clientIp: getGuestClientIp(req.headers),
+      guestConversationId: data.guestConversationId,
+      webchatId: data.webchatId,
+    })
+    if (rateLimit.limited) {
+      return await rateLimitResponse(
+        corsHeaders(requestOrigin, false),
+        rateLimit.retryAfter,
+      )
+    }
+
+    const webchat = await findIntegrationWebchat({
+      id: data.webchatId,
+      workspaceId: data.workspaceId,
+    })
+    const authorized =
+      webchat.authorizedDomains.length === 0 ||
+      (
+        await verifyWebchatAccessToken({
+          token: data.accessToken ?? getBearerToken(req),
+          origin: data.parentOrigin,
+          workspaceId: data.workspaceId,
+          webchatId: data.webchatId,
+        })
+      ).authorized
+    const headers = corsHeaders(requestOrigin, authorized)
+    if (!authorized) {
+      return await forbiddenResponse(headers)
+    }
+
+    const contactInbox = await contactInboxService.findLatestBySource({
+      inboxId: webchat.inboxId,
+      sourceId: data.guestConversationId,
+    })
+
+    if (!contactInbox) {
+      return emptyMessagesResponse(headers)
+    }
+
+    const conversation = await conversationService.findBy({
       where: {
-        channel: channelTypes.enum.webchat,
-        sourceId: data.guestConversationId,
-      },
-      with: {
-        conversation: true,
+        workspaceId: data.workspaceId,
+        contactId: contactInbox.contactId,
       },
     })
 
-    if (!contactInbox?.conversation) {
-      return NextResponse.json({
-        data: [],
-        nextCursor: null,
-        prevCursor: null,
-      })
+    if (!conversation) {
+      return emptyMessagesResponse(headers)
     }
-
-    const conversation = contactInbox.conversation
 
     const result = await listMessages({
       ...data,
+      contactInboxId: contactInbox.id,
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
     })
 
-    return NextResponse.json(result)
+    return NextResponse.json(result, { headers })
   } catch (e) {
     return serverErrorHandler(e)
   }
 }
 
 export async function POST(req: NextRequest) {
+  const requestOrigin = req.headers.get("origin")
   try {
     const data = await req.json()
     const parsedInput = createWebchatMessageRequest.parse(data)
 
-    const message = await handleCreateWebchatMessage({ parsedInput })
-
-    return NextResponse.json({
-      data: message,
+    const webchat = await findIntegrationWebchat({
+      id: parsedInput.webchatId,
+      workspaceId: parsedInput.workspaceId,
     })
+    const authorized =
+      webchat.authorizedDomains.length === 0 ||
+      (
+        await verifyWebchatAccessToken({
+          token: parsedInput.accessToken ?? getBearerToken(req),
+          origin: parsedInput.parentOrigin,
+          workspaceId: parsedInput.workspaceId,
+          webchatId: parsedInput.webchatId,
+        })
+      ).authorized
+    const headers = corsHeaders(requestOrigin, authorized)
+    if (!authorized) {
+      return await forbiddenResponse(headers)
+    }
+
+    const message = await handleCreateWebchatMessage({
+      parsedInput: {
+        ...parsedInput,
+        accessToken:
+          parsedInput.accessToken ?? getBearerToken(req) ?? undefined,
+      },
+    })
+
+    return NextResponse.json(
+      {
+        data: message,
+      },
+      { headers },
+    )
   } catch (e) {
     return serverErrorHandler(e)
   }

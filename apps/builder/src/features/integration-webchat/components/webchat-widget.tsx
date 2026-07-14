@@ -1,21 +1,23 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card } from "@chatbotx.io/ui/components/ui/card"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { MessageCircleIcon, SendIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { getClientEmbeddingOrigin } from "../lib/authorized-domain"
 import {
   GuestSessionStoreProvider,
   useGuestSessionStore,
 } from "../providers/store/guest-session-provider"
+import type { WebchatClientConfig } from "../providers/store/guest-sesssion-store"
 import { WebchatMessageList } from "../webchat-message-list"
 import { WebchatRealtime } from "../webchat-realtime"
+import { WebchatWelcomeFlow } from "./webchat-welcome-flow"
 
 type WebchatWidgetProps = {
-  config: IntegrationWebchatModel
+  config: WebchatClientConfig
   workspaceId: string
   webchatId: string
   baseUrl: string
@@ -23,10 +25,16 @@ type WebchatWidgetProps = {
 
 const WebchatWidgetContent = () => {
   const t = useTranslations()
-  const { initGuestSession, guestConversationId, config } =
-    useGuestSessionStore((state) => state)
+  const {
+    initGuestSession,
+    guestConversationId,
+    isNewGuestSession,
+    accessToken,
+    config,
+  } = useGuestSessionStore((state) => state)
   const [message, setMessage] = useState("")
   const [isOpen, setIsOpen] = useState(false)
+  const parentOrigin = getClientEmbeddingOrigin()
 
   useEffect(() => {
     initGuestSession()
@@ -91,7 +99,19 @@ const WebchatWidgetContent = () => {
         <div className="flex-1 overflow-hidden">
           <WebchatMessageList />
           {guestConversationId && (
-            <WebchatRealtime guestConversationId={guestConversationId} />
+            <>
+              <WebchatWelcomeFlow
+                accessToken={accessToken}
+                guestConversationId={guestConversationId}
+                hasRef={false}
+                isNewGuestSession={isNewGuestSession}
+                parentOrigin={parentOrigin}
+                webchatId={config.id}
+                welcomeFlowId={config.welcomeFlowId}
+                workspaceId={config.workspaceId}
+              />
+              <WebchatRealtime guestConversationId={guestConversationId} />
+            </>
           )}
         </div>
 

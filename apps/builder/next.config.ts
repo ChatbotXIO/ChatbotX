@@ -88,7 +88,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Access-Control-Allow-Origin",
-            value: "*", // Set your origin
+            value: "*", // Static widget assets only; guest API CORS is dynamic.
           },
           {
             key: "Access-Control-Allow-Methods",

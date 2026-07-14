@@ -10,6 +10,7 @@ export const listMessagesRequest = z.object({
   perPage: z.coerce.number().optional().default(20),
   cursor: z.string().optional(),
   conversationId: zodBigintAsString().optional(),
+  contactInboxId: zodBigintAsString().optional(),
 })
 export type ListMessagesRequest = z.infer<typeof listMessagesRequest>
 
@@ -37,8 +38,12 @@ export const findMessageRequest = z.object({
 export type FindMessageRequest = z.infer<typeof findMessageRequest>
 
 export const listGuestMessagesRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  webchatId: zodBigintAsString(),
   perPage: z.coerce.number().optional().default(20),
   cursor: z.string().optional(),
   guestConversationId: zodBigintAsString(),
+  accessToken: z.string().optional(),
+  parentOrigin: z.string().optional(),
 })
 export type ListGuestMessagesRequest = z.infer<typeof listGuestMessagesRequest>
