@@ -38,7 +38,6 @@ export const env = createEnv({
       .optional()
       .default("http://localhost:9000/chatbotx/"),
     NEXT_PUBLIC_STORAGE_URL: z.url().optional(),
-    NEXT_PUBLIC_ENABLE_PANCAKE_CHAT: z.stringbool().optional().default(false),
     NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID: z.string().optional(),
     NEXT_PUBLIC_ALLOWED_DEV_ORIGINS: z
       .string()
@@ -61,8 +60,6 @@ export const env = createEnv({
       "http://localhost:9000/chatbotx/",
     NEXT_PUBLIC_EDITION: clientEnv("NEXT_PUBLIC_EDITION") || "community",
     NEXT_PUBLIC_STORAGE_URL: clientEnv("NEXT_PUBLIC_STORAGE_URL"),
-    NEXT_PUBLIC_ENABLE_PANCAKE_CHAT:
-      clientEnv("NEXT_PUBLIC_ENABLE_PANCAKE_CHAT") || "false",
     NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID: clientEnv(
       "NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID",
     ),

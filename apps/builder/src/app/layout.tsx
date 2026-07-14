@@ -3,12 +3,14 @@ import type { ReactNode } from "react"
 import "./globals.css"
 import "./themes.css"
 import { UiProvider } from "@chatbotx.io/ui"
+import Script from "next/script"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import { PublicEnvScript } from "@/components/public-env-script"
 import { env } from "@/env"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
+import { getDomainFromHeader } from "@/lib/domain"
 
 export async function generateMetadata(): Promise<Metadata> {
   const { name, faviconUrl } = await getTenantSettings()
@@ -39,13 +41,16 @@ type Props = {
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
   const tenantSettings = await getTenantSettings()
+  const domain = await getDomainFromHeader()
+  const isBuilderDomain =
+    domain === new URL(env.NEXT_PUBLIC_BUILDER_URL).hostname
   const pancakeChatPageId = env.NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <PublicEnvScript />
-        {env.NEXT_PUBLIC_ENABLE_PANCAKE_CHAT && pancakeChatPageId && (
-          <script
+        {isBuilderDomain && pancakeChatPageId && (
+          <Script
             src={`https://chat-plugin.pancake.vn/main/auto?page_id=${encodeURIComponent(pancakeChatPageId)}&hide_supplier=true`}
           />
         )}
