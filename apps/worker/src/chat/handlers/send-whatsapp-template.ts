@@ -281,6 +281,7 @@ export async function sendWhatsappTemplateMessage(
       conversationId: conversation.id,
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
+      inboxId: contactInbox.inboxId,
     },
     action: {
       flowId: "",

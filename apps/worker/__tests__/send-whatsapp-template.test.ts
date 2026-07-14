@@ -442,4 +442,22 @@ describe("processWhatsappTemplate", () => {
 
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
   })
+
+  test("template-not-found failure emits message:failed with inboxId in context", async () => {
+    mockValidateTemplate.mockResolvedValueOnce(null)
+
+    await expect(
+      sendWhatsappTemplateMessage(broadcastTemplateJobData),
+    ).rejects.toThrow("WhatsApp template not found")
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({
+        context: expect.objectContaining({
+          contactInboxId: "ci-1",
+          inboxId: "inbox-1",
+        }),
+      }),
+    )
+  })
 })
