@@ -69,6 +69,15 @@ import { addOrUpdateMoosendContact } from "./moosend-handler"
 import { sendEmail } from "./send-email"
 import { addSendGridContact } from "./sendgrid-handler"
 import { handleAISpeechToText } from "./speech-to-text"
+
+import {
+  clearSpreadsheetRow,
+  getSpreadsheetRandomRow,
+  getSpreadsheetRow,
+  sendSpreadsheetData,
+  updateSpreadsheetRow,
+} from "./spreadsheet-handler"
+
 import {
   stepArchiveConversation,
   stepAssignConversation,
@@ -432,11 +441,11 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.startAnotherNode]: startAnotherNode,
   [stepTypes.enum.startExternalNode]: startExternalNode,
   [stepTypes.enum.addNotes]: undefined,
-  [stepTypes.enum.spreadsheetGetRow]: undefined,
-  [stepTypes.enum.spreadsheetClearRow]: undefined,
-  [stepTypes.enum.spreadsheetGetRandomRow]: undefined,
-  [stepTypes.enum.spreadsheetSendData]: undefined,
-  [stepTypes.enum.spreadsheetUpdateRow]: undefined,
+  [stepTypes.enum.spreadsheetGetRow]: getSpreadsheetRow,
+  [stepTypes.enum.spreadsheetClearRow]: clearSpreadsheetRow,
+  [stepTypes.enum.spreadsheetGetRandomRow]: getSpreadsheetRandomRow,
+  [stepTypes.enum.spreadsheetSendData]: sendSpreadsheetData,
+  [stepTypes.enum.spreadsheetUpdateRow]: updateSpreadsheetRow,
   [stepTypes.enum.waitUserReply]: undefined,
   [stepTypes.enum.subscribeSequence]: addContactSequence,
   [stepTypes.enum.unsubscribeSequence]: removeContactSequence,
