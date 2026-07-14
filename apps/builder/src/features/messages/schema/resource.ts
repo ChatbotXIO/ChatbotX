@@ -19,6 +19,7 @@ export type MessageResource = z.infer<typeof messageResource>
 
 export const messageResourceWithRelations = messageResource.and(
   z.object({
+    attachmentCount: z.number().optional(),
     attachments: z.array(attachmentResource).optional(),
     user: userResource.optional(),
     contact: contactResource.optional(),

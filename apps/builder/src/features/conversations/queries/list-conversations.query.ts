@@ -87,9 +87,9 @@ export const listConversations = async (
       // messages but never set it, so bailing hid the last-message preview.
       // resolveLastMessageSinceTime falls back to a full-history scan instead.
       return messageRepository.findLastByConversation(c.id, {
+        attachmentCountOnly: true,
         limit: 1,
         sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
-        withAttachments: true,
         workspaceId,
       })
     }),
@@ -151,6 +151,7 @@ export const findConversation = async (
   const lastMessages = await messageRepository.findLastByConversation(
     conversation.id,
     {
+      attachmentCountOnly: true,
       messageTypes: ["incoming", "outgoing"],
       limit: 1,
       // Anchor on this conversation's own lastActivityAt — see the comment in
@@ -162,7 +163,6 @@ export const findConversation = async (
         conversation.lastActivityAt,
         endOfHour,
       ),
-      withAttachments: true,
       workspaceId: input.workspaceId,
     },
   )

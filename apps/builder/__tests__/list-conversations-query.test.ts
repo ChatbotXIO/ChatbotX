@@ -139,3 +139,79 @@ describe("listConversations / findConversation last-message sinceTime", () => {
     )
   })
 })
+
+describe("listConversations / findConversation attachment count", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.createMessageRepository.mockResolvedValue(mocks.repo)
+    mocks.repo.findLastByConversation.mockResolvedValue([])
+    mocks.getCurrentUserAndTargetWorkspace.mockResolvedValue(null)
+    mocks.buildConversationWhere.mockReturnValue({})
+  })
+
+  test("listConversations requests attachmentCountOnly instead of full attachment rows", async () => {
+    const conversation = {
+      id: "conv-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      contact: null,
+      assignedUser: null,
+      assignedInboxTeam: null,
+    }
+    mocks.findManyQuery.mockResolvedValue([conversation])
+
+    await listConversations({ workspaceId: "ws-1" })
+
+    expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({ attachmentCountOnly: true }),
+    )
+    expect(mocks.repo.findLastByConversation).not.toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({ withAttachments: true }),
+    )
+  })
+
+  test("findConversation requests attachmentCountOnly instead of full attachment rows", async () => {
+    const conversation = {
+      id: "conv-1",
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+    }
+    mocks.findWithFullRelations.mockResolvedValue(conversation)
+
+    await findConversation({ id: "conv-1", workspaceId: "ws-1" })
+
+    expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({ attachmentCountOnly: true }),
+    )
+    expect(mocks.repo.findLastByConversation).not.toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({ withAttachments: true }),
+    )
+  })
+
+  test("propagates attachmentCount from the repository into the response", async () => {
+    const conversation = {
+      id: "conv-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [],
+      contact: null,
+      assignedUser: null,
+      assignedInboxTeam: null,
+    }
+    mocks.findManyQuery.mockResolvedValue([conversation])
+    mocks.repo.findLastByConversation.mockResolvedValue([
+      { id: "msg-1", text: "", attachmentCount: 2, attachments: [] },
+    ])
+
+    const result = await listConversations({ workspaceId: "ws-1" })
+
+    expect(result.data[0]?.messages[0]?.attachmentCount).toBe(2)
+  })
+})
