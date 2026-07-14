@@ -1036,6 +1036,9 @@ importers:
 
   integrations/instagram:
     dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../../packages/business
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
@@ -1221,6 +1224,9 @@ importers:
 
   integrations/messenger:
     dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../../packages/business
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
@@ -1499,6 +1505,9 @@ importers:
 
   integrations/whatsapp:
     dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../../packages/business
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config

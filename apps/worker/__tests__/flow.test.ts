@@ -13,7 +13,12 @@ const integrationQueueAdd = vi.fn(async () => undefined)
 const chatQueueAdd = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: { sendFlow: "sendFlow" },
+  IntegrationJobAction: {
+    messageStatus: "messageStatus",
+    runFlowPostback: "runFlowPostback",
+    runFlowQuickReply: "runFlowQuickReply",
+    sendFlow: "sendFlow",
+  },
   integrationQueue: { add: integrationQueueAdd },
   ChatJobAction: { sendFlowMessage: "sendFlowMessage" },
   chatQueue: { add: chatQueueAdd },
@@ -52,9 +57,12 @@ vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
 const {
   executeMultipleSteps,
   MAX_NODE_EXECUTIONS,
+  runFlowPostback,
+  runFlowQuickReply,
   seekConnectedNode,
   runStepsAndQuickReplies,
 } = await import("../src/integration/handlers/flow")
+const { logger } = await import("../src/lib/logger")
 
 // --- helpers ---
 
@@ -115,6 +123,55 @@ function mockSpy(obj: unknown, name: string): Mock {
 }
 
 // --- tests ---
+
+describe("flow action decoding", () => {
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    vi.mocked(logger.warn).mockClear()
+  })
+
+  test("runFlowPostback skips undecodable action without enqueueing", async () => {
+    await expect(
+      runFlowPostback({
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: "foreign-postback",
+        ref: null,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: "foreign-postback",
+      },
+      "runFlowPostback: could not decode action payload, skipping",
+    )
+  })
+
+  test("runFlowQuickReply skips undecodable action without enqueueing", async () => {
+    await expect(
+      runFlowQuickReply({
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: "foreign-quick-reply",
+        ref: null,
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: "foreign-quick-reply",
+      },
+      "runFlowQuickReply: could not decode action payload, skipping",
+    )
+  })
+})
 
 describe("seekConnectedNode", () => {
   test("returns target node id when edge matches sourceHandle", () => {

@@ -66,6 +66,7 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+import { sanitizeFlowAction } from "./flow-action"
 
 type ContactInboxTracking = ContactInboxTrackingData
 
@@ -154,11 +155,21 @@ export const receiveMessage = async (
   const {
     message: incomingMessage,
     contact: incomingContact,
-    postbackAction,
-    quickReplyAction,
+    postbackAction: rawPostbackAction,
+    quickReplyAction: rawQuickReplyAction,
     ref,
     referralSource,
   } = parsedMessage
+  const postbackAction = sanitizeFlowAction(rawPostbackAction, {
+    kind: "postback",
+    integrationType,
+    integrationIdentifier,
+  })
+  const quickReplyAction = sanitizeFlowAction(rawQuickReplyAction, {
+    kind: "quickReply",
+    integrationType,
+    integrationIdentifier,
+  })
 
   const detected = await detectContactAndConversation({
     incomingContact,

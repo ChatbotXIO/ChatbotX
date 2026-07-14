@@ -33,6 +33,7 @@ import {
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException } from "../errors"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -512,6 +513,47 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
+  }
+
+  /**
+   * Contact-side companion to updateReadStatus. Shared by read-receipt worker
+   * paths so conversation and contact-inbox tracking stay in sync.
+   */
+  async markReadByContact(props: {
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    contactId: string
+    seenAt: Date
+  }): Promise<void> {
+    const { workspaceId, conversationId, contactInboxId, contactId, seenAt } =
+      props
+
+    const trackingInvalidation = await db.transaction(async (tx) => {
+      await tx
+        .update(conversationModel)
+        .set({ contactLastReadAt: seenAt })
+        .where(
+          and(
+            eq(conversationModel.id, conversationId),
+            eq(conversationModel.workspaceId, workspaceId),
+          ),
+        )
+
+      return await contactInboxService.updateTracking({
+        tx,
+        contactInboxId,
+        contactId,
+        workspaceId,
+        data: { contactLastReadAt: seenAt },
+      })
+    })
+
+    if (trackingInvalidation) {
+      await contactInboxService.invalidateTracking(trackingInvalidation)
+    }
+
+    await this.invalidate({ workspaceId, ids: [conversationId] })
   }
 
   async updateAIContextLastMessageId(props: {
