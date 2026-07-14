@@ -2449,6 +2449,7 @@
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
+    "sentAttachments": "Đã gửi {count} tệp đính kèm",
     "deleteComment": "Xóa bình luận",
     "deleteCommentConfirmation": "Bạn có chắc muốn xóa bình luận này? Các bình luận trả lời cũng sẽ bị xóa, cả trong hộp thư và trên Facebook. Hành động này không thể hoàn tác.",
     "deleteMessageSuccess": "Đã xóa tin nhắn",

@@ -77,6 +77,13 @@ export default function ConversationItem({
   const isActive = conversation.id === activeConversationId
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
+  const lastMessage = conversation.messages?.[0]
+  const attachmentCount = lastMessage?.attachments?.length ?? 0
+  const previewText =
+    lastMessage?.text ||
+    (attachmentCount > 0
+      ? t("messages.sentAttachments", { count: attachmentCount })
+      : " ")
 
   const contactAvatar = useMemo(
     () => (
@@ -184,7 +191,7 @@ export default function ConversationItem({
           </div>
           <div
             className={cn(
-              "w-full truncate text-left text-sm",
+              "w-full truncate text-left text-xs",
               !(
                 conversation.agentLastReadAt && conversation.contactLastReadAt
               ) ||
@@ -198,7 +205,7 @@ export default function ConversationItem({
                 : "font-semibold",
             )}
           >
-            {conversation.messages?.[0]?.text ?? " "}
+            {previewText}
           </div>
           <p className="text-right text-neutral-400 text-xs">
             <span>

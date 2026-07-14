@@ -89,6 +89,7 @@ export const listConversations = async (
       return messageRepository.findLastByConversation(c.id, {
         limit: 1,
         sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
+        withAttachments: true,
         workspaceId,
       })
     }),
@@ -161,6 +162,7 @@ export const findConversation = async (
         conversation.lastActivityAt,
         endOfHour,
       ),
+      withAttachments: true,
       workspaceId: input.workspaceId,
     },
   )
