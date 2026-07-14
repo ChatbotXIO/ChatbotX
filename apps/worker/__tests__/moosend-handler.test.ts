@@ -39,6 +39,11 @@ vi.mock("@chatbotx.io/redis", () => ({
   cacheConnections: {
     useExisting: vi.fn(async () => ({ eval: state.eval, set: state.set })),
   },
+  distributedLock: {
+    runExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<void> }) => await fn(),
+    ),
+  },
 }))
 
 vi.mock("../src/integration/handlers/contact-field-map", () => ({
@@ -59,11 +64,9 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: state.errorLog },
 }))
 
-const {
-  addOrUpdateMoosendContact,
-  buildMoosendContactLockKey,
-  MoosendLockError,
-} = await import("../src/integration/handlers/moosend-handler")
+const { addOrUpdateMoosendContact, buildMoosendContactLockKey } = await import(
+  "../src/integration/handlers/moosend-handler"
+)
 const { acquireMoosendSubscribePermit } = await import(
   "../src/integration/handlers/moosend-rate-limit"
 )
@@ -133,7 +136,7 @@ describe("addOrUpdateMoosendContact", () => {
   })
 
   test("does not retry provider failures and keeps logs secret/PII-safe", async () => {
-    state.runAction.mockRejectedValueOnce(new MoosendLockError())
+    state.runAction.mockRejectedValueOnce(new Error("provider failed"))
     await expect(
       addOrUpdateMoosendContact(createProps()),
     ).resolves.toMatchObject({ status: "error" })

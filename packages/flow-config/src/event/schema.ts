@@ -19,6 +19,7 @@ export const eventContextSchema = z.object({
   conversationId: z.string(),
   channel: z.string(),
   contactInboxId: z.string().optional(),
+  inboxId: z.string().optional(),
   sequenceStepId: z.string().optional(),
 })
 

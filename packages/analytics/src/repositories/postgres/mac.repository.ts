@@ -8,6 +8,7 @@ import {
   eq,
   gt,
   gte,
+  inArray,
   lte,
   sql,
 } from "@chatbotx.io/database/client"
@@ -15,6 +16,7 @@ import type { MacEventType } from "@chatbotx.io/database/partials"
 import {
   contactActiveHourlyModel,
   contactActiveMonthlyModel,
+  contactInboxModel,
   workspaceMacModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
@@ -170,6 +172,29 @@ export class MacRepository {
       .insert(contactActiveHourlyModel)
       .values(rows)
       .onConflictDoNothing()
+  }
+
+  /**
+   * Batch-resolve `ContactInbox.inboxId` for MAC events published before
+   * message-sent producers stamped `inboxId` in their event context.
+   */
+  async getInboxIdsByContactInboxIds(
+    contactInboxIds: string[],
+    client: DatabaseClient = db,
+  ): Promise<Map<string, string>> {
+    if (contactInboxIds.length === 0) {
+      return new Map()
+    }
+
+    const rows = await client
+      .select({
+        contactInboxId: contactInboxModel.id,
+        inboxId: contactInboxModel.inboxId,
+      })
+      .from(contactInboxModel)
+      .where(inArray(contactInboxModel.id, contactInboxIds))
+
+    return new Map(rows.map((row) => [row.contactInboxId, row.inboxId]))
   }
 
   async addWorkspaceMacCount(
