@@ -28,10 +28,7 @@ export function generateAuthUrl(props: GoogleSheetsConfig): string {
   return getClient(props).generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
-    scope: [
-      "https://www.googleapis.com/auth/drive.readonly",
-      "https://www.googleapis.com/auth/spreadsheets",
-    ],
+    scope: ["https://www.googleapis.com/auth/spreadsheets"],
     state: btoa(JSON.stringify(props.stateParams)),
   })
 }
