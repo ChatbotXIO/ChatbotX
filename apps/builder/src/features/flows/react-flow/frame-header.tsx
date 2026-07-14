@@ -9,11 +9,13 @@ import { FlowEditToolbar } from "./flow-edit-toolbar"
 export function FrameHeader({
   flow,
   canRevertToPublished,
+  hasPublishedVersion,
   cancelAutosave,
   markSaved,
 }: {
   flow: FlowResource
   canRevertToPublished: boolean
+  hasPublishedVersion: boolean
   cancelAutosave: (() => void) | null
   markSaved: ((nodes: Node[], edges: Edge[]) => void) | null
 }) {
@@ -38,6 +40,7 @@ export function FrameHeader({
         cancelAutosave={cancelAutosave}
         canRevertToPublished={canRevertToPublished}
         flow={flow}
+        hasPublishedVersion={hasPublishedVersion}
         markSaved={markSaved}
         workspaceId={flow.workspaceId}
       />

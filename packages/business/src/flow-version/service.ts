@@ -146,6 +146,81 @@ class FlowVersionService extends BaseService {
     }
   }
 
+  /**
+   * Loads the published start node for Messenger Ads JSON generation.
+   *
+   * Distinguishes the two failure modes the caller must report differently:
+   * `notPublished` (the flow has never been published) versus `noStartNode`
+   * (it is published but no node is resolvable as the start node — e.g. a stale
+   * `startNodeId` pointing at a deleted node). Collapsing both into one signal
+   * would tell an already-published user to "publish and try again", a loop
+   * that never fixes the real problem.
+   *
+   * Detecting *unpublished changes* is the client's job (it toasts before
+   * calling this). Cached under the versions tag, which publish/revert/restore
+   * already invalidate.
+   */
+  async getMessengerAdsStartNode({
+    flowId,
+    workspaceId,
+  }: {
+    flowId: string
+    workspaceId: string
+  }): Promise<
+    | {
+        status: "ok"
+        flowVersionId: string
+        startNode: { id: string; [x: string]: unknown }
+      }
+    | { status: "notPublished" }
+    | { status: "noStartNode" }
+  > {
+    return await withCache(
+      `flows:${flowId}:messenger-ads-start-node`,
+      async () => {
+        const publishedVersion = await db.query.flowVersionModel.findFirst({
+          where: { flowId, workspaceId, isDraft: false, isLatest: true },
+        })
+        if (!publishedVersion) {
+          return { status: "notPublished" as const }
+        }
+
+        // The authoritative start node is the one flagged `isStartNode` in the
+        // canvas — `startNodeId` is set at creation and is NOT re-synced when
+        // the start node is reassigned, so it can be stale or point to a deleted
+        // node. Fall back to the column only if no node carries the flag.
+        const isStartNode = (node: {
+          id: string
+          [x: string]: unknown
+        }): boolean => {
+          const data = node.data
+          return (
+            typeof data === "object" &&
+            data !== null &&
+            (data as { isStartNode?: unknown }).isStartNode === true
+          )
+        }
+
+        const startNode =
+          publishedVersion.nodes.find(isStartNode) ??
+          publishedVersion.nodes.find(
+            (node) => node.id === publishedVersion.startNodeId,
+          )
+
+        if (!startNode) {
+          return { status: "noStartNode" as const }
+        }
+
+        return {
+          status: "ok" as const,
+          flowVersionId: publishedVersion.id,
+          startNode,
+        }
+      },
+      { tags: [`flows:${flowId}:versions`] },
+    )
+  }
+
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
   }

@@ -82,6 +82,7 @@ export function ReactFlowFrame({
           (canRevertToPublished || draftDirtied) && hasPublishedVersion
         }
         flow={flow}
+        hasPublishedVersion={hasPublishedVersion}
         markSaved={markSaved}
       />
 
