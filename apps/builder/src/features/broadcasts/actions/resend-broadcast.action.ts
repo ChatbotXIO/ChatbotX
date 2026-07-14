@@ -38,6 +38,7 @@ export const resendBroadcast = async (ctx: {
         workspaceId: ctx.workspaceId,
         flowId: broadcast.flowId,
         integrationWhatsappId: broadcast.integrationWhatsappId,
+        integrationMessengerId: broadcast.integrationMessengerId,
         channel: broadcast.channel,
         subaction: broadcast.subaction,
         templateId: broadcast.templateId,

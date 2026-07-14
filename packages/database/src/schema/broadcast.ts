@@ -14,6 +14,7 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import { flowModel } from "./flow"
+import { integrationMessengerModel } from "./integration-messenger"
 import { integrationWhatsappModel } from "./integration-whatsapp"
 import { workspaceModel } from "./workspace"
 
@@ -43,6 +44,13 @@ export const broadcastModel = pgTable(
     }),
     integrationWhatsappId: bigintAsString().references(
       () => integrationWhatsappModel.id,
+      {
+        onDelete: "set null",
+        onUpdate: "cascade",
+      },
+    ),
+    integrationMessengerId: bigintAsString().references(
+      () => integrationMessengerModel.id,
       {
         onDelete: "set null",
         onUpdate: "cascade",

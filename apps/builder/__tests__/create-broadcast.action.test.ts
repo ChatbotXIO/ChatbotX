@@ -9,6 +9,8 @@ const {
   mockFlowFindFirst,
   mockMessengerTemplateFindFirst,
   mockWhatsappTemplateFindFirst,
+  mockIntegrationMessengerFindFirst,
+  mockIntegrationWhatsappFindFirst,
   mockReturnValidationErrors,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
@@ -28,6 +30,8 @@ const {
     mockFlowFindFirst: vi.fn(),
     mockMessengerTemplateFindFirst: vi.fn(),
     mockWhatsappTemplateFindFirst: vi.fn(),
+    mockIntegrationMessengerFindFirst: vi.fn(),
+    mockIntegrationWhatsappFindFirst: vi.fn(),
     mockReturnValidationErrors,
   }
 })
@@ -54,6 +58,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
       whatsappMessageTemplateModel: {
         findFirst: mockWhatsappTemplateFindFirst,
       },
+      integrationMessengerModel: {
+        findFirst: mockIntegrationMessengerFindFirst,
+      },
+      integrationWhatsappModel: {
+        findFirst: mockIntegrationWhatsappFindFirst,
+      },
     },
     insert: mockDbInsert,
   },
@@ -68,6 +78,11 @@ const { createBroadcastAction } = await import(
 )
 
 const WORKSPACE_ID = "ws-1"
+
+beforeEach(() => {
+  mockIntegrationMessengerFindFirst.mockResolvedValue({ id: "int-1" })
+  mockIntegrationWhatsappFindFirst.mockResolvedValue({ id: "wa-int-1" })
+})
 
 const baseInput = {
   channel: "whatsapp" as const,
@@ -256,9 +271,10 @@ describe("createBroadcastAction — happy path insert", () => {
     expect(result).toBe(mockBroadcast)
   })
 
-  test("strips integrationMessengerId from insert values", async () => {
+  test("persists integrationMessengerId so audience scoping matches the preview", async () => {
     const mockBroadcast = { id: "bc-5", name: "Broadcast" }
     mockInsertReturning.mockResolvedValue([mockBroadcast])
+    mockIntegrationMessengerFindFirst.mockResolvedValue({ id: "int-999" })
 
     await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: [WORKSPACE_ID],
@@ -273,7 +289,63 @@ describe("createBroadcastAction — happy path insert", () => {
       string,
       unknown
     >
-    expect(insertedValues).not.toHaveProperty("integrationMessengerId")
+    expect(insertedValues.integrationMessengerId).toBe("int-999")
+    expect(mockIntegrationMessengerFindFirst).toHaveBeenCalledWith({
+      where: { id: "int-999", workspaceId: WORKSPACE_ID },
+      columns: { id: true },
+    })
+  })
+
+  test("rejects a messenger integration from another workspace", async () => {
+    mockIntegrationMessengerFindFirst.mockResolvedValue(undefined)
+
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel: "messenger",
+        integrationMessengerId: "foreign-int",
+      },
+    })
+
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { integrationMessengerId: { _errors: string[] } },
+    ]
+    expect(errors.integrationMessengerId._errors).toContain(
+      "Integration not found",
+    )
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
+  })
+
+  test("rejects a whatsapp integration from another workspace", async () => {
+    mockIntegrationWhatsappFindFirst.mockResolvedValue(undefined)
+
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel: "whatsapp",
+        integrationWhatsappId: "foreign-wa-int",
+      },
+    })
+
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { integrationWhatsappId: { _errors: string[] } },
+    ]
+    expect(errors.integrationWhatsappId._errors).toContain(
+      "Integration not found",
+    )
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
   })
 
   test("merges templateData with buttons when templateData is provided", async () => {
