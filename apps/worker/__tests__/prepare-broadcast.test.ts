@@ -93,6 +93,7 @@ const baseBroadcast = () => ({
   id: BROADCAST_ID,
   workspaceId: WORKSPACE_ID,
   integrationWhatsappId: null as string | null,
+  integrationMessengerId: null as string | null,
   channel: "messenger" as string | null,
   status: "scheduled",
   subaction: null as string | null,
@@ -177,6 +178,48 @@ describe("prepareBroadcast", () => {
         channels: ["messenger"],
         integrationMessengerId: "messenger-int-1",
         subaction: "messengerTemplateMessage",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  test("forwards the persisted Messenger integration id for flow broadcasts without a template", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "messenger",
+      subaction: "messengerTemplateMessage",
+      integrationMessengerId: "messenger-int-1",
+      templateId: null,
+    })
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findFirstMessengerTemplate).not.toHaveBeenCalled()
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        channels: ["messenger"],
+        integrationMessengerId: "messenger-int-1",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  test("prefers the persisted Messenger integration id over template derivation", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "messenger",
+      subaction: "messengerTemplateMessage",
+      integrationMessengerId: "messenger-int-1",
+      templateId: "template-1",
+    })
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findFirstMessengerTemplate).not.toHaveBeenCalled()
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationMessengerId: "messenger-int-1",
       }),
       expect.any(Function),
     )

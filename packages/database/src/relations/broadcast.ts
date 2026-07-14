@@ -22,5 +22,9 @@ export const broadcastRelations = defineRelationsPart(schema, (r) => ({
       from: r.broadcastModel.integrationWhatsappId,
       to: r.integrationWhatsappModel.id,
     }),
+    integrationMessenger: r.one.integrationMessengerModel({
+      from: r.broadcastModel.integrationMessengerId,
+      to: r.integrationMessengerModel.id,
+    }),
   },
 }))

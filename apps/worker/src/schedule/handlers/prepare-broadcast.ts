@@ -32,9 +32,14 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
   const parsedChannel = channelTypes.safeParse(broadcast.channel)
   const parsedSubaction = broadcastSubactions.safeParse(broadcast.subaction)
-  let integrationMessengerId: string | null = null
+  // The audience must stay scoped to the page the broadcast was created for;
+  // rows created before the column existed fall back to the template's
+  // integration.
+  let integrationMessengerId: string | null =
+    broadcast.integrationMessengerId ?? null
 
   if (
+    !integrationMessengerId &&
     parsedSubaction.success &&
     parsedSubaction.data ===
       broadcastSubactions.enum.messengerTemplateMessage &&

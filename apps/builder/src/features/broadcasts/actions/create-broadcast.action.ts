@@ -18,6 +18,44 @@ export const createBroadcastAction = workspaceActionClient
 
     let broadcastName = "Broadcast"
 
+    // Never trust integration ids from the client: they scope the audience,
+    // so a foreign id would let a broadcast target another workspace's pages.
+    if (parsedInput.integrationMessengerId) {
+      const integration = await db.query.integrationMessengerModel.findFirst({
+        where: {
+          id: parsedInput.integrationMessengerId,
+          workspaceId,
+        },
+        columns: { id: true },
+      })
+      if (!integration) {
+        return returnValidationErrors(createBroadcastRequest, {
+          _errors: ["Validation Exception"],
+          integrationMessengerId: {
+            _errors: ["Integration not found"],
+          },
+        })
+      }
+    }
+
+    if (parsedInput.integrationWhatsappId) {
+      const integration = await db.query.integrationWhatsappModel.findFirst({
+        where: {
+          id: parsedInput.integrationWhatsappId,
+          workspaceId,
+        },
+        columns: { id: true },
+      })
+      if (!integration) {
+        return returnValidationErrors(createBroadcastRequest, {
+          _errors: ["Validation Exception"],
+          integrationWhatsappId: {
+            _errors: ["Integration not found"],
+          },
+        })
+      }
+    }
+
     // Validate flow if flowId is provided
     if (parsedInput.flowId) {
       const flow = await db.query.flowModel.findFirst({
@@ -79,13 +117,7 @@ export const createBroadcastAction = workspaceActionClient
       }
     }
 
-    // integrationMessengerId is a UI-only filter field; the Broadcast table
-    // has no such column, so strip it before insert.
-    const {
-      integrationMessengerId: _integrationMessengerId,
-      buttons,
-      ...insertValues
-    } = parsedInput
+    const { buttons, ...insertValues } = parsedInput
 
     const [broadcast] = await db
       .insert(broadcastModel)

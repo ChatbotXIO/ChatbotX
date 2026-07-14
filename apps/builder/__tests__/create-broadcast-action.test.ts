@@ -9,6 +9,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   flowFindFirst: vi.fn(),
+  integrationMessengerFindFirst: vi.fn(),
+  integrationWhatsappFindFirst: vi.fn(),
   insert: vi.fn(),
   values: vi.fn(),
   returning: vi.fn(),
@@ -40,6 +42,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
       whatsappMessageTemplateModel: {
         findFirst: vi.fn(),
       },
+      integrationMessengerModel: {
+        findFirst: mocks.integrationMessengerFindFirst,
+      },
+      integrationWhatsappModel: {
+        findFirst: mocks.integrationWhatsappFindFirst,
+      },
     },
     insert: (table: unknown) => {
       mocks.insert(table)
@@ -64,6 +72,10 @@ const runCreateBroadcastAction = createBroadcastAction as unknown as (
 
 beforeEach(() => {
   mocks.flowFindFirst.mockResolvedValue({ id: "flow-1", name: "Welcome" })
+  mocks.integrationMessengerFindFirst.mockResolvedValue({
+    id: "messenger-int-1",
+  })
+  mocks.integrationWhatsappFindFirst.mockResolvedValue({ id: "wa-int-1" })
   mocks.insert.mockClear()
   mocks.values.mockClear()
   mocks.returning.mockResolvedValue([{ id: "broadcast-1" }])
@@ -91,7 +103,7 @@ describe("createBroadcastAction", () => {
         schedulesType: broadcastScheduleTypes.enum.future,
         schedulesAt: "2099-01-01T00:00:00.000Z",
         contactFilter,
-        integrationMessengerId: "messenger-ui-only",
+        integrationMessengerId: "messenger-int-1",
         buttons: [{ id: "btn-1", label: "Start", flowId: "flow-1" }],
       },
     })
@@ -103,10 +115,31 @@ describe("createBroadcastAction", () => {
         name: "Welcome",
         status: "scheduled",
         contactFilter,
+        integrationMessengerId: "messenger-int-1",
       }),
     )
-    expect(mocks.values.mock.calls[0]?.[0]).not.toHaveProperty(
-      "integrationMessengerId",
-    )
+    expect(mocks.integrationMessengerFindFirst).toHaveBeenCalledWith({
+      where: { id: "messenger-int-1", workspaceId: "ws-1" },
+      columns: { id: true },
+    })
+  })
+
+  test("rejects a messenger integration that belongs to another workspace", async () => {
+    mocks.integrationMessengerFindFirst.mockResolvedValue(undefined)
+
+    await runCreateBroadcastAction({
+      bindArgsParsedInputs: ["ws-1"],
+      parsedInput: {
+        channel: channelTypes.enum.messenger,
+        flowId: "flow-1",
+        subaction: broadcastSubactions.enum.allContacts,
+        schedulesType: broadcastScheduleTypes.enum.future,
+        schedulesAt: "2099-01-01T00:00:00.000Z",
+        contactFilter: null,
+        integrationMessengerId: "foreign-int",
+      },
+    }).catch(() => undefined)
+
+    expect(mocks.values).not.toHaveBeenCalled()
   })
 })
