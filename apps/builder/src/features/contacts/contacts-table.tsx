@@ -20,7 +20,7 @@ import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   type ContactFilterCriteria,
@@ -129,6 +129,7 @@ export function ContactsTable({
   promises,
 }: ContactsTableProps) {
   const t = useTranslations()
+  const formatter = useFormatter()
   const searchParams = useSearchParams()
   const searchParamsKey = searchParams.toString()
   const [
@@ -239,7 +240,7 @@ export function ContactsTable({
     }),
     [keyword, isOptimisticContactFilterActive, optimisticContactFilter],
   )
-  const totalCountDisplay = tableTotalCount.toLocaleString()
+  const totalCountDisplay = formatter.number(tableTotalCount)
   const totalCountLabel = tableTotalCountCapped
     ? t("contacts.countCapped", { count: totalCountDisplay })
     : t("contacts.countExact", { count: totalCountDisplay })

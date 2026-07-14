@@ -24,7 +24,7 @@ import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon, TagIcon } from "lucide-react"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -105,6 +105,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
   onBulkTag,
 }: StatsContactsDialogProps) {
   const t = useTranslations()
+  const formatter = useFormatter()
   const scrollRootRef = useRef<HTMLDivElement>(null)
   const [contacts, setContacts] = useState<StatsContactRow[]>([])
   const [page, setPage] = useState(1)
@@ -216,7 +217,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
       <DialogContent className="flex max-h-screen flex-col sm:max-w-2xl">
         <DialogHeader className="mb-2">
           <DialogTitle>
-            {title} ({total.toLocaleString()})
+            {title} ({formatter.number(total)})
           </DialogTitle>
         </DialogHeader>
 
