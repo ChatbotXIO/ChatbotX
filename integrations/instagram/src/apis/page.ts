@@ -7,7 +7,7 @@ import { createId } from "@chatbotx.io/utils"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
 import { DEFAULT_API_VERSION } from "../constants"
-import { rescue } from "../exception"
+import { InstagramAPIException, rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
@@ -76,32 +76,50 @@ export const subscribePageToInstagramWebhook = (props: {
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/${props.igId}/subscribed_apps`
+  const subscribedFields = INSTAGRAM_SUBSCRIBE_FIELDS.join(",")
 
-  return rescue(endpoint, () =>
-    instagramBusinessClient.post(endpoint, {
-      headers: {
-        Authorization: `Bearer ${props.accessToken}`,
+  return rescue(endpoint, async () => {
+    const response = await instagramBusinessClient.post<{ success?: boolean }>(
+      endpoint,
+      {
+        headers: {
+          Authorization: `Bearer ${props.accessToken}`,
+        },
+        json: {
+          subscribed_fields: subscribedFields,
+        },
       },
-      json: {
-        subscribed_fields: INSTAGRAM_SUBSCRIBE_FIELDS.join(","),
-      },
-    }),
-  )
+    )
+    if (response.success !== true) {
+      throw new InstagramAPIException(
+        `Subscribe failed for Instagram page ${props.igId}`,
+      )
+    }
+  })
 }
 
 export const unsubscribePageFromInstagramWebhook = (props: {
-  auth: InstagramAuthValue
+  igId: string
+  appAccessToken: string
+  version?: string
 }): Promise<void> => {
-  const version = props.auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/${props.auth.metadata.pageId}/subscribed_apps`
+  const { version = DEFAULT_API_VERSION } = props
+  const endpoint = `${version}/${props.igId}/subscribed_apps`
 
-  return rescue(endpoint, () =>
-    instagramBusinessClient.delete(endpoint, {
+  return rescue(endpoint, async () => {
+    const response = await instagramBusinessClient.delete<{
+      success?: boolean
+    }>(endpoint, {
       headers: {
-        Authorization: `Bearer ${props.auth.tokens.accessToken}`,
+        Authorization: `Bearer ${props.appAccessToken}`,
       },
-    }),
-  )
+    })
+    if (response.success !== true) {
+      throw new InstagramAPIException(
+        `Unsubscribe failed for Instagram page ${props.igId}`,
+      )
+    }
+  })
 }
 
 export const sendInstagramMessage = (

@@ -40,6 +40,11 @@ type DecryptedCredential<T extends CredentialType> = {
   updatedAt: Date
 }
 
+export type MetaAppCredentialType = Extract<
+  CredentialType,
+  "messenger" | "instagram" | "instagramFacebook"
+>
+
 class PlatformCredentialService extends BaseService {
   // ─── User-scoped ─────────────────────────────────────────────────────────────
 
@@ -211,6 +216,22 @@ class PlatformCredentialService extends BaseService {
       logger.error({ props, err }, "Failed to decrypt platform credential")
       return
     }
+  }
+
+  async resolvePlatformAppAccessToken(
+    type: MetaAppCredentialType,
+    livemode = false,
+  ): Promise<string | undefined> {
+    const credential = await this.findDecryptedPlatform({
+      type,
+      livemode,
+    })
+
+    if (!credential) {
+      return
+    }
+
+    return `${credential.config.clientId}|${credential.config.clientSecret}`
   }
 
   async upsertPlatform<T extends CredentialType>(props: {

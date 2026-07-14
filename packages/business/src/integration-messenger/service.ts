@@ -1,4 +1,4 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import { inArray } from "drizzle-orm"
 
@@ -30,4 +30,28 @@ export async function findConnectedMessengerPageIds(
     .where(inArray(integrationMessengerModel.pageId, pageIds))
 
   return rows.map((row) => row.pageId)
+}
+
+/**
+ * Whether a Messenger integration still exists for a Facebook page under a
+ * specific Meta app (`clientId`). Cross-workspace by design: the page webhook
+ * subscription is global, so a surviving row must block a sibling channel from
+ * unsubscribing it.
+ */
+export async function messengerIntegrationExistsForPage(props: {
+  pageId: string
+  clientId: string
+}): Promise<boolean> {
+  const rows = await db
+    .select({ id: integrationMessengerModel.id })
+    .from(integrationMessengerModel)
+    .where(
+      and(
+        eq(integrationMessengerModel.pageId, props.pageId),
+        sql`${integrationMessengerModel.auth} ->> 'clientId' = ${props.clientId}`,
+      ),
+    )
+    .limit(1)
+
+  return rows.length > 0
 }

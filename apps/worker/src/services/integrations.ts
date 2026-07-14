@@ -30,6 +30,7 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { IntegrationNotFoundError } from "./orphaned-integration-cleanup"
 
 export const allIntegrations: Record<
   string,
@@ -131,9 +132,7 @@ export const integrationService = {
     )
 
     if (!result.rows[0]) {
-      throw new Error(
-        `Integration not found: ${integrationType} ${integrationIdentifier}`,
-      )
+      throw new IntegrationNotFoundError(integrationType, integrationIdentifier)
     }
 
     const workspace = await workspaceService.findById({
