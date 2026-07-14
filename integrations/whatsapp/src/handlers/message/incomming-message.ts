@@ -1,3 +1,4 @@
+import { deriveAdSourcePlatform } from "@chatbotx.io/business/referral"
 import { decodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   type Context,
@@ -67,7 +68,7 @@ const getWhatsappReferral = (
     adId: asString(referral.source_id),
     adTitle: asString(referral.headline),
     sourceUrl: asString(referral.source_url),
-    sourcePlatform: "whatsapp",
+    sourcePlatform: deriveAdSourcePlatform(asString(referral.source_url)),
     ctwaClid: asString(referral.ctwa_clid),
     photoUrl: asString(referral.image_url) ?? asString(referral.thumbnail_url),
     videoUrl: asString(referral.video_url),
