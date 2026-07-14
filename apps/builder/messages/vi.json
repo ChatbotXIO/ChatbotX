@@ -3479,6 +3479,10 @@
       "magicLink": {
         "title": "Email Magic Link Đăng Nhập",
         "description": "Gửi khi người dùng yêu cầu magic link để đăng nhập"
+      },
+      "accountCredentials": {
+        "title": "Email Thông Tin Đăng Nhập Tài Khoản Con",
+        "description": "Gửi khi reseller tạo một tài khoản con mới"
       }
     },
     "fields": {

@@ -94,6 +94,10 @@ beforeEach(() => {
     name: "Reseller Co",
     logoLightUrl: "https://reseller.test/logo.svg",
     appUrl: "https://app.reseller.test",
+    accountCredentialsEmailTemplate: {
+      subject: "Welcome to {{brandName}}",
+      body: "<mjml>custom credentials</mjml>",
+    },
   })
 })
 
@@ -155,6 +159,10 @@ describe("provisionResellerAccount", () => {
         initialPassword: "TempPass123456AB",
         brandName: "Reseller Co",
         signInUrl: "https://app.reseller.test/auth/sign-in",
+        customTemplate: {
+          subject: "Welcome to {{brandName}}",
+          body: "<mjml>custom credentials</mjml>",
+        },
       }),
       expect.objectContaining({
         host: "smtp.reseller.test",

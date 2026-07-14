@@ -32,6 +32,7 @@ export type TenantSettings = {
   signupEmailTemplate: EmailTemplate | null
   forgotPasswordEmailTemplate: EmailTemplate | null
   magicLinkEmailTemplate: EmailTemplate | null
+  accountCredentialsEmailTemplate: EmailTemplate | null
   helpItems: TenantHelpItemModel[]
 }
 
@@ -58,6 +59,7 @@ const buildDefaults = (helpItems: TenantHelpItemModel[]): TenantSettings => {
     signupEmailTemplate: null,
     forgotPasswordEmailTemplate: null,
     magicLinkEmailTemplate: null,
+    accountCredentialsEmailTemplate: null,
     helpItems,
   }
 }
@@ -122,6 +124,7 @@ const applyTenantSetting = (
     signupEmailTemplate: setting.signupEmailTemplate,
     forgotPasswordEmailTemplate: setting.forgotPasswordEmailTemplate,
     magicLinkEmailTemplate: setting.magicLinkEmailTemplate,
+    accountCredentialsEmailTemplate: setting.accountCredentialsEmailTemplate,
     helpItems,
   }
 }

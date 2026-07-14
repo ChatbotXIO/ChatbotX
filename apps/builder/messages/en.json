@@ -3455,6 +3455,10 @@
       "magicLink": {
         "title": "Magic Link Sign-in Email",
         "description": "Sent when a user requests a magic link to sign in"
+      },
+      "accountCredentials": {
+        "title": "Sub-account Credentials Email",
+        "description": "Sent when a reseller provisions a new sub-account"
       }
     },
     "fields": {

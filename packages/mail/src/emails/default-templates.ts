@@ -1,4 +1,8 @@
 import { buildSystemEmail } from "./base-template"
+import {
+  buildAccountCredentialsMjml,
+  DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
+} from "./sign-up-credentials"
 
 function buildDefaultMjml(subject: string, bodyMjml: string): string {
   return buildSystemEmail(
@@ -106,4 +110,17 @@ export const MAGIC_LINK_BODY_MJML = `<mj-section padding="0 0 16px 0">
 export const DEFAULT_MAGIC_LINK_TEMPLATE = buildDefaultMjml(
   DEFAULT_MAGIC_LINK_SUBJECT,
   MAGIC_LINK_BODY_MJML,
+)
+
+export const DEFAULT_ACCOUNT_CREDENTIALS_TEMPLATE = buildAccountCredentialsMjml(
+  {
+    brandName: "{{brandName}}",
+    brandLogoUrl: "{{brandLogoUrl}}",
+    brandUrl: "{{brandUrl}}",
+    subject: DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
+    userName: "{{userName}}",
+    loginEmail: "{{loginEmail}}",
+    initialPassword: "{{initialPassword}}",
+    signInUrl: "{{signInUrl}}",
+  },
 )
