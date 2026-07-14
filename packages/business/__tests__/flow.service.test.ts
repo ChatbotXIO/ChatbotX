@@ -141,10 +141,11 @@ describe("flowService.duplicate", () => {
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-02"),
     })
+    // Source id order: new flow id → draft version id → analytics session id.
     mockCreateId
       .mockReturnValueOnce("flow-copy-1")
-      .mockReturnValueOnce("analytics-1")
       .mockReturnValueOnce("draft-copy-1")
+      .mockReturnValueOnce("analytics-1")
 
     await expect(
       flowService.duplicate({ workspaceId: "ws-1", id: "flow-1" }),
@@ -159,7 +160,7 @@ describe("flowService.duplicate", () => {
       workspaceId: "ws-1",
       folderId: "folder-1",
       currentVersionId: null,
-      draftVersionId: null,
+      draftVersionId: "draft-copy-1",
     })
     expect(mockInsert).toHaveBeenNthCalledWith(2, flowAnalyticsSessionModel)
     expect(mockInsertValues).toHaveBeenNthCalledWith(2, {
