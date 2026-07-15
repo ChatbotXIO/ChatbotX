@@ -1,5 +1,5 @@
 import { contactInboxService } from "@chatbotx.io/business"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
@@ -51,6 +51,8 @@ export async function getUserData(
     if (isMessageStorageError(error)) {
       throw error
     }
+
+    await clearChallengeSafely(props.conversation.id)
 
     return { result: undefined, status: "error", errorMessage }
   }
@@ -118,17 +120,7 @@ async function handleSkipOrError(
       })
     }
 
-    // remove challenge from conversation attributes
-    await db
-      .update(conversationModel)
-      .set({
-        additionalAttributes: {
-          ...(props.conversation
-            .additionalAttributes as ConversationAttributes),
-          challenge: undefined,
-        },
-      })
-      .where(eq(conversationModel.id, props.conversation.id))
+    await clearChallenge(props.conversation.id)
 
     return { result: validUserData.userInput, status: "success" }
   }
@@ -143,6 +135,8 @@ async function handleSkipOrError(
         workspaceId: props.conversation.workspaceId,
         data: { lastInputFailure: skipResult.reason },
       })
+
+      await clearChallenge(props.conversation.id)
 
       return { result: undefined, status: "skip" }
     }
@@ -317,12 +311,44 @@ async function sendMessage(
   await waitForChatJobCompletion(job, { conversationId: conversation.id })
 }
 
+async function clearChallenge(conversationId: string): Promise<void> {
+  await db
+    .update(conversationModel)
+    .set({
+      additionalAttributes: sql`${conversationModel.additionalAttributes} - 'challenge'`,
+    })
+    .where(eq(conversationModel.id, conversationId))
+}
+
+async function clearChallengeSafely(conversationId: string): Promise<void> {
+  try {
+    await clearChallenge(conversationId)
+  } catch (error) {
+    logger.warn(
+      { err: error, conversationId },
+      "getUserData: failed to clear challenge after terminal error",
+    )
+  }
+}
+
+function toValidDate(value: unknown): Date | undefined {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? undefined : value
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? undefined : date
+  }
+}
+
 function checkSkipCondition(
   step: GetUserDataStepSchema,
   conversationVariables: Record<string, Variable>,
 ): { skip: true; reason: InputFailureReason } | { skip: false } {
   const lastAttemptAt =
-    (conversationVariables.challengeLastAttemptAt?.value as Date) ?? new Date()
+    toValidDate(conversationVariables.challengeLastAttemptAt?.value) ??
+    new Date()
   const attempts =
     (conversationVariables.challengeAttempts?.value as number) ?? 1
 
