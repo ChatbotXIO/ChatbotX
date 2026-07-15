@@ -156,9 +156,18 @@ const MESSENGER_MENU_ORDER = [
   "actions",
 ] as const
 
+const TIKTOK_MENU_ORDER = [
+  "sendText",
+  "sendImage",
+  "getUserData",
+  "typing",
+  "actions",
+] as const
+
 const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
   [channelTypes.enum.whatsapp]: WHATSAPP_MENU_ORDER,
   [channelTypes.enum.messenger]: MESSENGER_MENU_ORDER,
+  [channelTypes.enum.tiktok]: TIKTOK_MENU_ORDER,
 }
 
 export const sendMessageEditorMenus = (
