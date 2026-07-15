@@ -15,8 +15,9 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { MessengerDisconnect } from "./components/messenger-disconnect"
-import { MessengerRefreshPermissions } from "./components/messenger-refresh-permissions"
+import { MessengerReconnect } from "./components/messenger-reconnect"
 import type { listIntegrationMessengers } from "./queries"
 
 type MessengerManageProps = {
@@ -34,6 +35,7 @@ export function MessengerManage({
   const t = useTranslations()
 
   useChannelDuplicatedError("messenger")
+  useChannelReconnectResult()
   if (!publicConfig?.clientId) {
     return (
       <div className="flex flex-col gap-2">
@@ -72,7 +74,7 @@ export function MessengerManage({
               <TableRow key={integrationMessenger.id}>
                 <TableCell>{integrationMessenger.name}</TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
-                  <MessengerRefreshPermissions
+                  <MessengerReconnect
                     integrationMessenger={integrationMessenger}
                   />
                   <Button size="sm" variant="secondary">

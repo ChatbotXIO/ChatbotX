@@ -14,10 +14,11 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import type { listIntegrationInstagrams } from "../queries"
 import { AddInstagramDialog } from "./add-instagram-dialog"
 import { InstagramDisconnect } from "./instagram-disconnect"
-import { InstagramRefreshPermissions } from "./instagram-refresh-permissions"
+import { InstagramReconnect } from "./instagram-reconnect"
 
 type InstagramManageProps = {
   publicConfig: InstagramCredentialPublic | null
@@ -34,6 +35,7 @@ export function InstagramManage({
   const t = useTranslations()
 
   useChannelDuplicatedError("instagram")
+  useChannelReconnectResult()
 
   if (!publicConfig?.clientId) {
     return (
@@ -64,7 +66,7 @@ export function InstagramManage({
               <TableRow key={integrationInstagram.id}>
                 <TableCell>{integrationInstagram.name}</TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
-                  <InstagramRefreshPermissions
+                  <InstagramReconnect
                     integrationInstagram={integrationInstagram}
                   />
                   <Button size="sm" variant="secondary">

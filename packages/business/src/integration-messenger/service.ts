@@ -6,6 +6,36 @@ export function findMessengerIntegrationByInboxId(inboxId: string) {
   return findOrFail({ table: integrationMessengerModel, where: { inboxId } })
 }
 
+export function findMessengerIntegrationByIdForWorkspace(props: {
+  id: string
+  workspaceId: string
+}) {
+  return db.query.integrationMessengerModel.findFirst({
+    where: { id: props.id, workspaceId: props.workspaceId },
+  })
+}
+
+/**
+ * Replace the stored OAuth credentials after an OAuth reconnect. Scoped by
+ * workspace so a forged integration id can never touch another tenant's row.
+ */
+export async function updateMessengerIntegrationAuth(props: {
+  id: string
+  workspaceId: string
+  auth: Record<string, unknown>
+  name?: string
+}): Promise<void> {
+  await db
+    .update(integrationMessengerModel)
+    .set({ auth: props.auth, ...(props.name ? { name: props.name } : {}) })
+    .where(
+      and(
+        eq(integrationMessengerModel.id, props.id),
+        eq(integrationMessengerModel.workspaceId, props.workspaceId),
+      ),
+    )
+}
+
 export function findMessengerIntegrationsByWorkspaceId(workspaceId: string) {
   return db.query.integrationMessengerModel.findMany({
     where: { workspaceId },

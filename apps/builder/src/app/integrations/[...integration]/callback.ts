@@ -33,10 +33,16 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
+import {
+  reconnectInstagramFacebookHandler,
+  reconnectInstagramHandler,
+} from "@/features/integration-instagram/actions/reconnect-callback"
+import { reconnectMessengerHandler } from "@/features/integration-messenger/actions/reconnect-callback"
 import { connectTiktokHandler } from "@/features/integration-tiktok/actions/connect.action"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
 import {
   encryptAuth,
   FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
@@ -55,6 +61,10 @@ const stateValidationSchema = z.object({
   // registered with the Facebook app); the connect action sets this flag so
   // the Messenger branch dispatches to the Ads token-storage logic.
   flow: z.literal("facebookAds").optional(),
+  // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
+  // of this existing integration row (matched against its stored page/account
+  // identity) instead of running the connect/page-select flow.
+  reconnectIntegrationId: zodBigintAsString().optional(),
 })
 
 // Exchange the OAuth code for a long-lived Facebook Ads token and store it
@@ -120,6 +130,16 @@ export const handleCallback = async (
     return notFound()
   }
 
+  // A reconnect always targets an integration inside an existing workspace;
+  // without a workspaceId the create-workspace branch below would run.
+  if (stateParams.reconnectIntegrationId && !stateParams.workspaceId) {
+    logger.debug(
+      { url: url.toString() },
+      "reconnect state is missing workspaceId",
+    )
+    return notFound()
+  }
+
   // White-label relay: Facebook/TikTok OAuth always lands on the fixed broker
   // callback (the only registered redirect_uri). When the flow started on a
   // branded custom domain, bounce the callback back to that domain — where the
@@ -132,7 +152,18 @@ export const handleCallback = async (
 
   // Facebook returns ?error=access_denied when the user cancels
   if (url.searchParams.get("error")) {
-    return redirect(await sanitizeReferer(stateParams.referer))
+    const cancelReferer = await sanitizeReferer(stateParams.referer)
+    // A cancelled reconnect must still surface a toast on the settings page,
+    // like every other reconnect outcome.
+    if (stateParams.reconnectIntegrationId) {
+      return redirect(
+        buildReconnectRedirectUrl(cancelReferer, {
+          status: "error",
+          reason: "cancelled",
+        }),
+      )
+    }
+    return redirect(cancelReferer)
   }
 
   const userId = await getCurrentUserId()
@@ -200,6 +231,17 @@ export const handleCallback = async (
         return redirect(safeReferer)
       }
 
+      if (stateParams.reconnectIntegrationId) {
+        const result = await reconnectMessengerHandler({
+          credentialConfig: messengerCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          code,
+          callbackUrl,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
+      }
+
       const shortLivedToken = await exchangeMessengerCode(
         messengerCredential.config,
         code,
@@ -261,6 +303,17 @@ export const handleCallback = async (
         code,
         callbackUrl,
       )
+
+      if (stateParams.reconnectIntegrationId) {
+        const result = await reconnectInstagramHandler({
+          credentialConfig: instagramCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          userToken,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
+      }
+
       const token = await encryptAuth({
         userToken,
         workspaceId: workspace.id,
@@ -300,6 +353,17 @@ export const handleCallback = async (
         code,
         callbackUrl,
       )
+
+      if (stateParams.reconnectIntegrationId) {
+        const result = await reconnectInstagramFacebookHandler({
+          credentialConfig: instagramFacebookCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          userToken,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
+      }
+
       const token = await encryptAuth({
         userToken,
         workspaceId: workspace.id,
