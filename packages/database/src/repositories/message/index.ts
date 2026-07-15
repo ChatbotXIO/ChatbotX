@@ -29,13 +29,14 @@ export type {
 export * from "./message-repository.factory"
 
 export function getSafeSinceTime(
-  time: Date | number | undefined | null,
+  time: Date | string | number | undefined | null,
   bufferMs?: number,
 ): Date | undefined {
   if (!time) {
     return
   }
-  const ts = time instanceof Date ? time.getTime() : time
+  // Queue payloads and JSON snapshots can turn Date values into ISO strings.
+  const ts = time instanceof Date ? time.getTime() : new Date(time).getTime()
   if (!Number.isFinite(ts)) {
     return
   }

@@ -56,6 +56,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: vi.fn(),
   findOrFail: vi.fn(async () => findOrFailResult.current),
+  sql: vi.fn(() => "CLEAR_CHALLENGE_SQL"),
 }))
 
 // validateUserData reads the last message via the shard-aware repository, not
@@ -115,6 +116,8 @@ beforeEach(() => {
   chatQueueAdd.mockResolvedValue(undefined)
   waitForChatJobCompletion.mockResolvedValue(undefined)
   contactInboxUpdateTracking.mockClear()
+  vi.mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>).mockClear()
+  vi.mocked(dbUpdateBuilder.where as ReturnType<typeof vi.fn>).mockClear()
 })
 
 type StepOverride = Partial<GetUserDataStepSchema>
@@ -123,7 +126,7 @@ function makeProps(
   replyFormat: ReplyFormat,
   overrides: StepOverride = {},
   attempts = 1,
-  lastAttemptAt = new Date(),
+  lastAttemptAt: Date | string | number = new Date(),
 ): ExecuteStepProps<GetUserDataStepSchema> {
   return {
     conversation: {
@@ -192,12 +195,20 @@ function expectNoLastInputFailureUpdate() {
   expect(callsWithLastInputFailure).toHaveLength(0)
 }
 
+function challengeClearCalls() {
+  return vi
+    .mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>)
+    .mock.calls.filter(([setValue]) => {
+      const update = setValue as { additionalAttributes?: unknown }
+      return update.additionalAttributes === "CLEAR_CHALLENGE_SQL"
+    })
+}
+
 // --- tests ---
 
 describe("getUserData — validation logic", () => {
   beforeEach(() => {
     chatQueueAdd.mockClear()
-    vi.mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>).mockClear?.()
     lastMessage.current = null
   })
 
@@ -328,13 +339,13 @@ describe("getUserData — validation logic", () => {
     await expect(getUserData(makeProps(ReplyFormat.email))).rejects.toBe(
       repositoryError.current,
     )
+    expect(challengeClearCalls()).toHaveLength(0)
   })
 })
 
 describe("getUserData — attempt counter (Bug B fix)", () => {
   beforeEach(() => {
     chatQueueAdd.mockClear()
-    vi.mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>).mockClear()
     lastMessage.current = { text: "invalid-email", attachments: [] }
   })
 
@@ -395,13 +406,81 @@ describe("getUserData — auto-skip", () => {
     expect(result.status).toBe("skip")
     expectLastInputFailureUpdate("invalid_input_attempts")
   })
+
+  test("accepts JSON string timestamps when deciding timeout", async () => {
+    lastMessage.current = { text: "invalid", attachments: [] }
+    const result = await getUserData(
+      makeProps(
+        ReplyFormat.email,
+        {
+          autoSkip: true,
+          autoSkipFailAttempts: 3,
+          autoSkipTimeValue: 1,
+          autoSkipTimeUnit: "hours" as const,
+        },
+        1,
+        "2026-01-01T00:00:00.000Z",
+      ),
+    )
+
+    expect(result.status).toBe("skip")
+    expectLastInputFailureUpdate("timeout")
+  })
+})
+
+describe("getUserData — challenge lifecycle", () => {
+  test("clears challenge after successful input", async () => {
+    lastMessage.current = { text: "user@example.com", attachments: [] }
+
+    const result = await getUserData(makeProps(ReplyFormat.email))
+
+    expect(result.status).toBe("success")
+    expect(challengeClearCalls()).toHaveLength(1)
+  })
+
+  test("clears challenge after auto-skip", async () => {
+    lastMessage.current = { text: "invalid", attachments: [] }
+
+    const result = await getUserData(
+      makeProps(
+        ReplyFormat.email,
+        {
+          autoSkip: true,
+          autoSkipFailAttempts: 1,
+          autoSkipTimeValue: 24,
+          autoSkipTimeUnit: "hours" as const,
+        },
+        1,
+      ),
+    )
+
+    expect(result.status).toBe("skip")
+    expect(challengeClearCalls()).toHaveLength(1)
+  })
+
+  test("keeps challenge while retrying invalid input", async () => {
+    lastMessage.current = { text: "invalid", attachments: [] }
+
+    const result = await getUserData(makeProps(ReplyFormat.email))
+
+    expect(result.status).toBe("retry")
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("clears challenge after terminal non-storage errors", async () => {
+    repositoryError.current = new Error("repository failed")
+
+    const result = await getUserData(makeProps(ReplyFormat.email))
+
+    expect(result.status).toBe("error")
+    expect(challengeClearCalls()).toHaveLength(1)
+  })
 })
 
 describe("getUserData — first send (no challenge state)", () => {
   beforeEach(() => {
     chatQueueAdd.mockClear()
     waitForChatJobCompletion.mockClear()
-    vi.mocked(dbUpdateBuilder.where as ReturnType<typeof vi.fn>).mockClear()
   })
 
   test("sends message and returns wait when no challenge active", async () => {
@@ -410,6 +489,7 @@ describe("getUserData — first send (no challenge state)", () => {
     const result = await getUserData(props)
     expect(result.status).toBe("wait")
     expect(chatQueueAdd).toHaveBeenCalledOnce()
+    expect(challengeClearCalls()).toHaveLength(0)
   })
 
   test("writes challenge state before waiting for prompt delivery", async () => {
