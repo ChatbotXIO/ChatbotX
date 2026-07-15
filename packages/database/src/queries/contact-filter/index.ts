@@ -23,6 +23,7 @@ import {
   buildDateColumnWhere,
   buildExistingContactWhere,
   buildExistsBooleanWhere,
+  buildHasContactInfoWhere,
   buildLastCommentWhere,
   buildLatestContactInboxDateWhere,
   buildLatestContactInboxMinutesAgoWhere,
@@ -42,6 +43,11 @@ export {
   parseConversationAssigneeValues,
   UNASSIGNED_ASSIGNEE_VALUE,
 } from "./conversation-assignee"
+export {
+  EMAIL_PHONE_FILTER_FIELDS,
+  pruneContactFilterFields,
+  pruneEmailPhoneFilterConditions,
+} from "./permission"
 export { contactInboxInteractedWithin24hSQL } from "./predicates"
 export type {
   ContactFilterConditionInput,
@@ -345,6 +351,9 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
 
     case "existingContact":
       return buildExistingContactWhere(operator, value)
+
+    case "hasContactInfo":
+      return buildHasContactInfoWhere(operator, value)
 
     case "subscribedToBroadcast":
       return buildBooleanFromTimestamp("broadcastSubscribedAt", operator, value)

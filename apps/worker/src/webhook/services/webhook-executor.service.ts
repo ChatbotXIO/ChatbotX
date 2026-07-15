@@ -22,6 +22,7 @@ const EVENT_NAMES = {
   [triggerEventTypes.enum.tagApplied]: "tag_applied",
   [triggerEventTypes.enum.tagRemoved]: "tag_removed",
   [triggerEventTypes.enum.customFieldValueChanged]: "custom_field_changed",
+  [triggerEventTypes.enum.contactInfoUpdated]: "contact_info_updated",
   [triggerEventTypes.enum.conversationTransferredToHuman]:
     "conversation_transferred_to_human",
   [triggerEventTypes.enum.conversationTransferredToBot]:
@@ -114,6 +115,12 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.tagApplied]: buildTagPayload,
   [triggerEventTypes.enum.tagRemoved]: buildTagPayload,
   [triggerEventTypes.enum.customFieldValueChanged]: buildCustomFieldPayload,
+  [triggerEventTypes.enum.contactInfoUpdated]: (basePayload, data) => ({
+    ...basePayload,
+    info_type: data.infoType as string,
+    old_value: (data.oldValue as string) || null,
+    new_value: data.newValue as string,
+  }),
   [triggerEventTypes.enum.conversationTransferredToHuman]: (
     basePayload,
     data,

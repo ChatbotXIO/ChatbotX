@@ -2,8 +2,12 @@
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
+import { pruneEmailPhoneFilterConditions } from "@chatbotx.io/database/queries/contact-filter/permission"
 import { broadcastModel } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { contactFilterCriteriaSchema } from "@/features/contact-filter/schemas"
+import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const resendBroadcastAction = workspaceActionClient
@@ -30,6 +34,20 @@ export const resendBroadcast = async (ctx: {
   if (broadcast.status !== "sent") {
     throw new ChatbotXException("Broadcast is not sent")
   }
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(
+    ctx.workspaceId,
+  )
+  const persistedContactFilter = contactFilterCriteriaSchema.safeParse(
+    broadcast.contactFilter,
+  )
+  const contactFilter = pruneEmailPhoneFilterConditions(
+    persistedContactFilter.success ? persistedContactFilter.data : undefined,
+    userAndWorkspace
+      ? canViewContactEmailAndPhone(
+          userAndWorkspace.targetWorkspaceMember.permissions,
+        )
+      : false,
+  )
 
   const newBroadcast = await db.transaction(async (tx) => {
     const newBroadcast = await tx
@@ -46,7 +64,7 @@ export const resendBroadcast = async (ctx: {
         status: "scheduled",
         schedulesType: "now",
         schedulesAt: new Date(),
-        contactFilter: broadcast.contactFilter,
+        contactFilter,
         name: `${broadcast.name} (Resend)`,
         id: createId(),
       })

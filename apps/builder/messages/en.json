@@ -399,6 +399,7 @@
       "followUp": "Follow up",
       "isGuestUser": "Guest user",
       "existingContact": "Existing contact",
+      "hasContactInfo": "Phone and email",
       "currentChannel": "Channel",
       "inbox": "Inbox",
       "subjectToEuRules": "Subject to EU rules",
@@ -1849,6 +1850,9 @@
     "phone": {
       "label": "Phone"
     },
+    "phoneAndEmail": {
+      "label": "Phone and email"
+    },
     "timezoneName": {
       "label": "Timezone Name"
     },
@@ -3075,6 +3079,7 @@
       "tagRemoved": "Tag Removed",
       "dateTimeBasedTrigger": "DateTime Based Trigger",
       "customFieldValueChanged": "Custom Field Changed",
+      "contactInfoUpdated": "Phone or email updated",
       "conversationTransferredToHuman": "Conversation transferred to human",
       "conversationTransferredToBot": "Conversation transferred to bot",
       "newContact": "New Contact",

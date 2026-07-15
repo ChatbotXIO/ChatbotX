@@ -399,6 +399,7 @@
       "followUp": "Theo dõi",
       "isGuestUser": "Người dùng khách",
       "existingContact": "Liên hệ hiện có",
+      "hasContactInfo": "Số điện thoại và Email",
       "currentChannel": "Kênh",
       "inbox": "Hộp thư",
       "subjectToEuRules": "Thuộc quy định EU",
@@ -1864,6 +1865,9 @@
     "phone": {
       "label": "Điện thoại"
     },
+    "phoneAndEmail": {
+      "label": "Số điện thoại và Email"
+    },
     "timezoneName": {
       "label": "Tên múi giờ"
     },
@@ -3069,6 +3073,7 @@
       "tagRemoved": "Thẻ bị xóa",
       "dateTimeBasedTrigger": "Trigger dựa trên ngày giờ",
       "customFieldValueChanged": "Trường tùy chỉnh thay đổi",
+      "contactInfoUpdated": "Số điện thoại hoặc Email được cập nhật",
       "conversationTransferredToHuman": "Cuộc trò chuyện được chuyển cho người",
       "conversationTransferredToBot": "Cuộc trò chuyện được chuyển cho bot",
       "newContact": "Liên hệ mới",

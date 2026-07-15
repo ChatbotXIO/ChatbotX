@@ -1,10 +1,13 @@
 "use server"
 
 import { db } from "@chatbotx.io/database/client"
+import { pruneEmailPhoneFilterConditions } from "@chatbotx.io/database/queries/contact-filter/permission"
 import { broadcastModel } from "@chatbotx.io/database/schema"
 import { startOfMinute } from "date-fns"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBroadcastRequest } from "../schemas/action"
 export const createBroadcastAction = workspaceActionClient
@@ -17,6 +20,12 @@ export const createBroadcastAction = workspaceActionClient
     } = props
 
     let broadcastName = "Broadcast"
+    const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+    const canViewEmailAndPhone = userAndWorkspace
+      ? canViewContactEmailAndPhone(
+          userAndWorkspace.targetWorkspaceMember.permissions,
+        )
+      : false
 
     // Never trust integration ids from the client: they scope the audience,
     // so a foreign id would let a broadcast target another workspace's pages.
@@ -118,11 +127,16 @@ export const createBroadcastAction = workspaceActionClient
     }
 
     const { buttons, ...insertValues } = parsedInput
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      insertValues.contactFilter,
+      canViewEmailAndPhone,
+    )
 
     const [broadcast] = await db
       .insert(broadcastModel)
       .values({
         ...insertValues,
+        contactFilter,
         name: broadcastName,
         workspaceId,
         status: "scheduled",

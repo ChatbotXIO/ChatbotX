@@ -1,5 +1,7 @@
 // @vitest-environment node
-import { describe, expect, test, vi } from "vitest"
+
+import { beforeEach, describe, expect, test, vi } from "vitest"
+import type { ContactFilterCriteria } from "@/features/contact-filter/schemas"
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findManyQuery: vi.fn() },
@@ -32,6 +34,31 @@ vi.mock("@chatbotx.io/database/queries", () => ({
       .filter((value) => value.startsWith("u_"))
       .map((value) => value.slice(2)),
   })),
+  pruneEmailPhoneFilterConditions: (
+    contactFilter:
+      | { operator: "and" | "or"; conditions: unknown[] }
+      | undefined,
+    canViewEmailAndPhone: boolean,
+  ) =>
+    canViewEmailAndPhone || !contactFilter
+      ? contactFilter
+      : {
+          operator: contactFilter.operator,
+          conditions: contactFilter.conditions.filter((condition) => {
+            const field =
+              typeof condition === "object" && condition !== null
+                ? (condition as { field?: unknown }).field
+                : undefined
+            return ![
+              "email",
+              "phone",
+              "hasContactInfo",
+              "emailWasVerified",
+              "optedInForEmail",
+              "existingContact",
+            ].includes(String(field))
+          }),
+        },
   UNASSIGNED_ASSIGNEE_VALUE: "unassigned",
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -60,6 +87,10 @@ const baseInput = {
 }
 
 describe("buildConversationWhere channel filter", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   test("does not restrict by contactInboxes when channel is the omnichannel sentinel", () => {
     const where = buildConversationWhere(
       "1",
@@ -121,6 +152,26 @@ describe("buildConversationWhere channel filter", () => {
         includeEmailAndPhone: false,
       },
     )
+  })
+
+  test("prunes email/phone contact-filter conditions when emailAndPhone is denied", () => {
+    const contactFilter = {
+      operator: "and" as const,
+      conditions: [
+        { field: "email", operator: "eq", value: "ada@example.com" },
+        { field: "hasContactInfo", operator: "in", value: ["phone"] },
+        { field: "fullName", operator: "contains", value: "Ada" },
+      ],
+    } satisfies ContactFilterCriteria
+
+    buildConversationWhere("1", { ...baseInput, contactFilter }, null, {
+      includeEmailAndPhone: false,
+    })
+
+    expect(vi.mocked(applyContactFilter)).toHaveBeenCalledWith({
+      operator: "and",
+      conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
+    })
   })
 
   test("defaults to including email/phone when no scope is provided", () => {

@@ -23,10 +23,11 @@ import {
   UserLockIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactFilterDialog } from "../contact-filter"
+import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "../contact-filter/lib/restricted-fields"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
@@ -35,7 +36,11 @@ import { useContactAssigneeOptions } from "../users/provider/user-hook"
 // chosen channel ("omnichannel" → all channels).
 const EXCLUDED_FILTER_FIELDS = [contactFilterFields.enum.currentChannel]
 
-export function ConversationFilter() {
+export function ConversationFilter({
+  canViewEmailAndPhone = true,
+}: {
+  canViewEmailAndPhone?: boolean
+}) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { filters } = useChatStore((state) => state)
@@ -48,6 +53,13 @@ export function ConversationFilter() {
 
   const filterCount = filters.contactFilter?.conditions.length ?? 0
   const hasFilter = filterCount > 0
+  const excludedFilterFields = useMemo(
+    () =>
+      canViewEmailAndPhone
+        ? EXCLUDED_FILTER_FIELDS
+        : [...EXCLUDED_FILTER_FIELDS, ...EMAIL_PHONE_RESTRICTED_FILTER_FIELDS],
+    [canViewEmailAndPhone],
+  )
 
   const contactAssigneeOptions = useContactAssigneeOptions({
     includeAll: true,
@@ -122,7 +134,7 @@ export function ConversationFilter() {
 
           <ContactFilterDialog
             btnTitle={t("fields.contactFilter.moreOptions")}
-            excludeFields={EXCLUDED_FILTER_FIELDS}
+            excludeFields={excludedFilterFields}
             inboxChannel={watchedChannel}
             onSubmitted={(submitted) => {
               if (submitted.conditions.length > 0) {

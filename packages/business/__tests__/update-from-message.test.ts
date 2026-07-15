@@ -1,23 +1,35 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockFindFirstWorkspace, mockUpdate, mockSet, mockWhere } = vi.hoisted(
-  () => ({
-    mockFindFirstWorkspace: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockSet: vi.fn(),
-    mockWhere: vi.fn(),
-  }),
-)
+const {
+  mockFindFirstWorkspace,
+  mockFindFirstContact,
+  mockUpdate,
+  mockSet,
+  mockWhere,
+  mockEmitContactInfoUpdated,
+} = vi.hoisted(() => ({
+  mockFindFirstWorkspace: vi.fn(),
+  mockFindFirstContact: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockSet: vi.fn(),
+  mockWhere: vi.fn(),
+  mockEmitContactInfoUpdated: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     update: mockUpdate,
     query: {
       workspaceModel: { findFirst: mockFindFirstWorkspace },
+      contactModel: { findFirst: mockFindFirstContact },
     },
   },
   and: vi.fn((...args: unknown[]) => ({ __and: args })),
   eq: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitContactInfoUpdated: mockEmitContactInfoUpdated,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -34,6 +46,7 @@ import { updateContactFromMessage } from "../src/contact/update-from-message"
 beforeEach(() => {
   vi.clearAllMocks()
   mockFindFirstWorkspace.mockResolvedValue({ targetCountry: "VN" })
+  mockFindFirstContact.mockResolvedValue({ phoneNumber: null, email: null })
   mockSet.mockReturnValue({ where: mockWhere })
   mockWhere.mockResolvedValue(undefined)
   mockUpdate.mockReturnValue({ set: mockSet })
@@ -119,15 +132,63 @@ describe("updateContactFromMessage", () => {
     expect(mockSet).toHaveBeenCalledWith({ phoneNumber: "+84912345678" })
   })
 
-  test("overwrites unconditionally — no SELECT before UPDATE", async () => {
-    // No call to findFirst(contactModel) anywhere — only workspace lookup.
+  test("reads the contact row only on extraction hits — no-match path stays query-free", async () => {
+    await updateContactFromMessage({
+      contactId: "c1",
+      workspaceId: "w1",
+      text: "hello how are you today",
+    })
+    expect(mockFindFirstContact).not.toHaveBeenCalled()
+
     await updateContactFromMessage({
       contactId: "c1",
       workspaceId: "w1",
       text: "new number 0912345678",
     })
-    expect(mockFindFirstWorkspace).toHaveBeenCalledOnce()
+    expect(mockFindFirstContact).toHaveBeenCalledOnce()
     expect(mockSet).toHaveBeenCalledWith({ phoneNumber: "+84912345678" })
+  })
+
+  test("emits contactInfoUpdated with old and new values when the phone changed", async () => {
+    mockFindFirstContact.mockResolvedValueOnce({
+      phoneNumber: "+84900000000",
+      email: null,
+    })
+    await updateContactFromMessage({
+      contactId: "c1",
+      workspaceId: "w1",
+      text: "new number 0912345678",
+    })
+    expect(mockEmitContactInfoUpdated).toHaveBeenCalledExactlyOnceWith(
+      "w1",
+      "c1",
+      "phone",
+      "+84900000000",
+      "+84912345678",
+    )
+  })
+
+  test("does not emit when the extracted value matches the stored value", async () => {
+    mockFindFirstContact.mockResolvedValueOnce({
+      phoneNumber: "+84912345678",
+      email: null,
+    })
+    await updateContactFromMessage({
+      contactId: "c1",
+      workspaceId: "w1",
+      text: "same number 0912345678",
+    })
+    expect(mockEmitContactInfoUpdated).not.toHaveBeenCalled()
+  })
+
+  test("does not emit when the contact row no longer exists", async () => {
+    mockFindFirstContact.mockResolvedValueOnce(undefined)
+    await updateContactFromMessage({
+      contactId: "c1",
+      workspaceId: "w1",
+      text: "new number 0912345678",
+    })
+    expect(mockEmitContactInfoUpdated).not.toHaveBeenCalled()
   })
 
   test("channel-agnostic: same call shape works for any caller (no channel arg)", async () => {

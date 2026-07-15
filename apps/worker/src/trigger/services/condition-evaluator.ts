@@ -14,10 +14,15 @@ export class ConditionEvaluator {
     switch (type) {
       case triggerEventTypes.enum.tagApplied:
       case triggerEventTypes.enum.tagRemoved:
-        return this.evaluateTagCondition(
-          type,
+        return this.evaluateSourceIdMatch(
           sourceId,
           eventData.eventData.tagId as string,
+        )
+
+      case triggerEventTypes.enum.contactInfoUpdated:
+        return this.evaluateSourceIdMatch(
+          sourceId,
+          eventData.eventData.infoType as string,
         )
 
       case triggerEventTypes.enum.customFieldValueChanged:
@@ -58,15 +63,15 @@ export class ConditionEvaluator {
     }
   }
 
-  private evaluateTagCondition(
-    _conditionType: string,
-    expectedTagId: string | null,
-    actualTagId: string,
+  /** Conditions pinned to a source (tag id, contact info type, …) match only that exact source. */
+  private evaluateSourceIdMatch(
+    expectedSourceId: string | null,
+    actualSourceId: string,
   ): boolean {
-    if (!expectedTagId) {
+    if (!expectedSourceId) {
       return false
     }
-    return expectedTagId === actualTagId
+    return expectedSourceId === actualSourceId
   }
 
   private async evaluateCustomFieldCondition(

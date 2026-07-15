@@ -7,6 +7,7 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.tagApplied,
   triggerEventTypes.enum.tagRemoved,
   triggerEventTypes.enum.customFieldValueChanged,
+  triggerEventTypes.enum.contactInfoUpdated,
   triggerEventTypes.enum.conversationTransferredToHuman,
   triggerEventTypes.enum.conversationTransferredToBot,
   triggerEventTypes.enum.newContact,

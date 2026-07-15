@@ -1,3 +1,4 @@
+import type { ContactInfoType } from "@chatbotx.io/database/partials"
 import type { BaseEventEmitter } from "./base-emitter"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
@@ -113,6 +114,23 @@ export const emitCustomFieldChanged = async (
     contactId,
     customFieldId,
     customFieldName,
+    oldValue,
+    newValue,
+  )
+
+// Contact info events
+export const emitContactInfoUpdated = async (
+  workspaceId: string,
+  contactId: string,
+  infoType: ContactInfoType,
+  oldValue: string | null,
+  newValue: string,
+) =>
+  await emitToAllEmitters(
+    "contactInfoUpdated",
+    workspaceId,
+    contactId,
+    infoType,
     oldValue,
     newValue,
   )

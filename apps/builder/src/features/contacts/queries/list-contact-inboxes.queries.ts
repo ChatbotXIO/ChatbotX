@@ -18,6 +18,7 @@ export async function countContactInboxes(
     integrationWhatsappId: input.integrationWhatsappId,
     integrationMessengerId: input.integrationMessengerId,
     contactFilter: input.contactFilter,
+    canViewEmailAndPhone: accessScope?.canViewEmailAndPhone,
     subaction: input.subaction,
     restrictToAssignedUserId: accessScope?.restrictToAssignedUserId,
   })
@@ -37,6 +38,7 @@ export async function listAudienceInboxesPreview(
     integrationWhatsappId: input.integrationWhatsappId,
     integrationMessengerId: input.integrationMessengerId,
     contactFilter: input.contactFilter,
+    canViewEmailAndPhone: accessScope?.canViewEmailAndPhone,
     subaction: input.subaction,
     page: input.page ?? 1,
     perPage: input.perPage ?? 20,

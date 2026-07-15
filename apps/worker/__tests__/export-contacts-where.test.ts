@@ -29,6 +29,31 @@ const applyContactFilterSpy = vi.fn((criteria: unknown) => ({
 
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: (criteria: unknown) => applyContactFilterSpy(criteria),
+  pruneEmailPhoneFilterConditions: (
+    contactFilter:
+      | { operator: "and" | "or"; conditions: unknown[] }
+      | undefined,
+    canViewEmailAndPhone: boolean,
+  ) =>
+    canViewEmailAndPhone || !contactFilter
+      ? contactFilter
+      : {
+          operator: contactFilter.operator,
+          conditions: contactFilter.conditions.filter((condition) => {
+            const field =
+              typeof condition === "object" && condition !== null
+                ? (condition as { field?: unknown }).field
+                : undefined
+            return ![
+              "email",
+              "phone",
+              "hasContactInfo",
+              "emailWasVerified",
+              "optedInForEmail",
+              "existingContact",
+            ].includes(String(field))
+          }),
+        },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -65,7 +90,7 @@ const buildData = (
     workspaceId: "ws-1",
     fileId: "file-1",
     fields: ["sys:email"],
-    // The real producer always sets this; PII export fails closed when omitted.
+    // The real producer always sets this; email/phone export fails closed when omitted.
     canExportEmailAndPhone: true,
     outputPath: "exports/ws-1/contacts.csv",
     outputFormat: "csv",
@@ -157,7 +182,7 @@ describe("buildBaseWhere", () => {
       expect(or[3]).toEqual({ phoneNumber: { ilike: "%hello%" } })
     })
 
-    test("OR array omits email and phoneNumber when PII export is denied", () => {
+    test("OR array omits email and phoneNumber when email/phone export is denied", () => {
       // Arrange
       const data = buildData({
         filter: { keyword: "hello" },
@@ -174,7 +199,7 @@ describe("buildBaseWhere", () => {
       ])
     })
 
-    test("OR array omits email and phoneNumber when PII flag is omitted (fails closed)", () => {
+    test("OR array omits email and phoneNumber when the email/phone flag is omitted (fails closed)", () => {
       // Arrange
       const data = buildData({
         filter: { keyword: "hello" },
@@ -230,6 +255,30 @@ describe("buildBaseWhere", () => {
       // Assert
       expect(applyContactFilterSpy).toHaveBeenCalledOnce()
       expect(applyContactFilterSpy).toHaveBeenCalledWith(criteria)
+    })
+
+    test("email/phone contact-filter conditions are dropped when email/phone export is denied", () => {
+      // Arrange
+      const criteria = {
+        operator: "and" as const,
+        conditions: [
+          { field: "email", operator: "eq", value: "ada@example.com" },
+          { field: "fullName", operator: "contains", value: "Ada" },
+        ],
+      }
+      const data = buildData({
+        canExportEmailAndPhone: false,
+        filter: { contactFilter: criteria },
+      })
+
+      // Act
+      buildBaseWhere(data)
+
+      // Assert
+      expect(applyContactFilterSpy).toHaveBeenCalledWith({
+        operator: "and",
+        conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
+      })
     })
 
     test("result of applyContactFilter is merged into where", () => {
@@ -379,7 +428,7 @@ describe("buildBaseWhere", () => {
 })
 
 describe("stripContactPIIFields", () => {
-  test("removes email and phoneNumber fields when PII export is denied", () => {
+  test("removes email and phoneNumber fields when email/phone export is denied", () => {
     expect(
       stripContactPIIFields(
         ["sys:firstName", "sys:email", "sys:phoneNumber", "tag:t1"],
@@ -388,7 +437,7 @@ describe("stripContactPIIFields", () => {
     ).toEqual(["sys:firstName", "tag:t1"])
   })
 
-  test("preserves fields when PII export is allowed", () => {
+  test("preserves fields when email/phone export is allowed", () => {
     expect(
       stripContactPIIFields(["sys:email", "sys:phoneNumber"], true),
     ).toEqual(["sys:email", "sys:phoneNumber"])

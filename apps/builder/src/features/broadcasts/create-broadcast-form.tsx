@@ -129,10 +129,14 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
   ] as BroadcastConfig[]
 
 type CreateBroadcastFormProps = {
+  canViewEmailAndPhone?: boolean
   workspaceId: string
 }
 
-export function CreateBroadcastForm({ workspaceId }: CreateBroadcastFormProps) {
+export function CreateBroadcastForm({
+  canViewEmailAndPhone = true,
+  workspaceId,
+}: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -233,6 +237,7 @@ export function CreateBroadcastForm({ workspaceId }: CreateBroadcastFormProps) {
 
           {watchedChannel && watchedSubAction && (
             <CreateBroadcastChooseFlow
+              canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
               subaction={watchedSubAction}
             />
@@ -461,6 +466,7 @@ function BroadcastFlowTypeSelector({
 }
 
 type CreateBroadcastChooseFlowProps = {
+  canViewEmailAndPhone: boolean
   channel: ChannelType
   subaction: BroadcastSubaction
 }
@@ -610,10 +616,11 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const excludeFields = useMemo(
     () =>
       getBroadcastExcludedFilterFields({
+        canViewEmailAndPhone: props.canViewEmailAndPhone,
         channel: props.channel,
         subaction: props.subaction,
       }),
-    [props.channel, props.subaction],
+    [props.canViewEmailAndPhone, props.channel, props.subaction],
   )
 
   const handleCancel = useCallback(() => {

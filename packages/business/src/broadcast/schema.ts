@@ -10,6 +10,7 @@ export type BroadcastAudienceInput = {
   integrationWhatsappId?: string | null
   integrationMessengerId?: string | null
   contactFilter?: ContactFilterCriteriaInput | null
+  canViewEmailAndPhone?: boolean
   subaction?: BroadcastSubaction | null
   restrictToAssignedUserId?: string
 }

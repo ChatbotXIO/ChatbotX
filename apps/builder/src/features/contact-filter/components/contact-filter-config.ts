@@ -5,6 +5,10 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import {
   type ContactFilterField,
+  type ContactInfoFilterValue,
+  type ContactInfoType,
+  contactInfoFilterValues,
+  contactInfoTypes,
   contactSources,
   type FormFieldType,
   formFieldTypes,
@@ -19,6 +23,7 @@ import {
 } from "@/features/workspaces/schema/types"
 import {
   CONTACT_FILTER_FIELD_DEFINITIONS,
+  type ContactFilterFieldDefinition,
   type ContactFilterOptionSource,
   type ContactFilterSchemaKind,
 } from "../schemas"
@@ -41,6 +46,8 @@ export type FieldConfig = {
   formField: FormFieldType
   group: ContactFilterFieldGroup
   options?: SelectOption[]
+  /** Retired field: still rendered/validated, but omitted from the picker. */
+  hidden?: boolean
 }
 
 /** Minimal workspace custom field shape needed to build a per-field filter config. */
@@ -138,6 +145,35 @@ const getContactSourceOptions = (t: (key: string) => string): SelectOption[] =>
     value: source,
   }))
 
+const CONTACT_INFO_TYPE_LABEL_KEYS = {
+  phone: "fields.phone.label",
+  email: "fields.email.label",
+} as const satisfies Record<ContactInfoType, string>
+
+/** Atomic phone/email options for the `contactInfoUpdated` trigger source. */
+export const getContactInfoTypeOptions = (
+  t: (key: string) => string,
+): SelectOption[] =>
+  contactInfoTypes.options.map((infoType) => ({
+    label: t(CONTACT_INFO_TYPE_LABEL_KEYS[infoType]),
+    value: infoType,
+  }))
+
+const CONTACT_INFO_FILTER_LABEL_KEYS = {
+  phone: "fields.phone.label",
+  email: "fields.email.label",
+  phoneAndEmail: "fields.phoneAndEmail.label",
+} as const satisfies Record<ContactInfoFilterValue, string>
+
+/** Phone / Email / Phone+Email options for the `hasContactInfo` filter. */
+export const getContactInfoFilterOptions = (
+  t: (key: string) => string,
+): SelectOption[] =>
+  contactInfoFilterValues.options.map((value) => ({
+    label: t(CONTACT_INFO_FILTER_LABEL_KEYS[value]),
+    value,
+  }))
+
 const getLocaleOptions = (t: (key: string) => string): SelectOption[] => {
   const localeOptions = [...languageOptions]
   const existingValues = new Set(localeOptions.map((option) => option.value))
@@ -177,6 +213,8 @@ const resolveContactFilterOptions = (
   switch (optionSource) {
     case "none":
       return
+    case "contactInfoFilterValues":
+      return getContactInfoFilterOptions(ctx.t)
     case "languages":
       return getLocaleOptions(ctx.t)
     case "timezones":
@@ -348,10 +386,11 @@ export const getFieldConfigs = ({
   const channelOptions = getChannelMultiSelectOptions(t)
 
   const staticConfigs: FieldConfig[] = CONTACT_FILTER_FIELD_DEFINITIONS.map(
-    (def) => ({
+    (def: ContactFilterFieldDefinition) => ({
       name: def.field,
       formField: schemaKindToFormField(def.schemaKind),
       group: getContactFilterFieldGroup(def.field),
+      hidden: def.hidden,
       options: resolveContactFilterOptions(def.optionSource, {
         t,
         channelOptions,
@@ -390,12 +429,16 @@ export const getFieldOptions = (
     value: config.name,
   })
 
-  const contactInfoOptions = configs
+  // Retired fields stay valid + rendered for existing conditions but are never
+  // offered for new ones.
+  const pickableConfigs = configs.filter((config) => !config.hidden)
+
+  const contactInfoOptions = pickableConfigs
     .filter((config) => config.group === "contactInfo")
     .map(toOption)
 
   const groupOptions = (group: GroupedContactFilterFieldGroup) => {
-    const children = configs
+    const children = pickableConfigs
       .filter((config) => config.group === group)
       .map(toOption)
 

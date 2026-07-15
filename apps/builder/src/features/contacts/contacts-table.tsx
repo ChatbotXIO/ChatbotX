@@ -29,6 +29,7 @@ import {
   EMPTY_CONTACT_FILTER,
   useContactFilterQueryState,
 } from "@/features/contact-filter"
+import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "@/features/contact-filter/lib/restricted-fields"
 import { client } from "@/lib/orpc/orpc"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { getUserName } from "../users/schemas/resource"
@@ -118,12 +119,14 @@ function NameCell({
 }
 
 type ContactsTableProps = {
+  canViewEmailAndPhone?: boolean
   initialContactFilter?: ContactFilterCriteria
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
 
 export function ContactsTable({
+  canViewEmailAndPhone = true,
   initialContactFilter = EMPTY_CONTACT_FILTER,
   workspaceId,
   promises,
@@ -160,6 +163,11 @@ export function ContactsTable({
   )
   const isOptimisticContactFilterActive =
     optimisticContactFilter.conditions.length > 0
+  const excludedFilterFields = useMemo(
+    () =>
+      canViewEmailAndPhone ? [] : [...EMAIL_PHONE_RESTRICTED_FILTER_FIELDS],
+    [canViewEmailAndPhone],
+  )
 
   const keyword = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
@@ -442,6 +450,7 @@ export function ContactsTable({
     >
       {showContactFilterPanel && (
         <ContactListFilterPanel
+          excludeFields={excludedFilterFields}
           filter={optimisticContactFilter}
           onFilterChange={handleContactFilterChange}
         />

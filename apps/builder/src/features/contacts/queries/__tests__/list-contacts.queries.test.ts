@@ -29,6 +29,31 @@ vi.mock("@chatbotx.io/database/queries", () => ({
       ],
     }
   },
+  pruneEmailPhoneFilterConditions: (
+    contactFilter:
+      | { operator: "and" | "or"; conditions: unknown[] }
+      | undefined,
+    canViewEmailAndPhone: boolean,
+  ) =>
+    canViewEmailAndPhone || !contactFilter
+      ? contactFilter
+      : {
+          operator: contactFilter.operator,
+          conditions: contactFilter.conditions.filter((condition) => {
+            const field =
+              typeof condition === "object" && condition !== null
+                ? (condition as { field?: unknown }).field
+                : undefined
+            return ![
+              "email",
+              "phone",
+              "hasContactInfo",
+              "emailWasVerified",
+              "optedInForEmail",
+              "existingContact",
+            ].includes(String(field))
+          }),
+        },
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactModel: { createdAt: "createdAt", fullName: "fullName" },
@@ -81,7 +106,7 @@ describe("generateWhere", () => {
     expect(where.conversation).toEqual({ assignedUserId: "user-1" })
   })
 
-  test("drops email and phone keyword clauses when PII is denied", () => {
+  test("drops email and phone keyword clauses when emailAndPhone is denied", () => {
     const where = generateWhere(
       { ...baseInput, keyword: "Alice" },
       { canViewEmailAndPhone: false },
@@ -108,6 +133,27 @@ describe("generateWhere", () => {
     expect(where.conversation).toEqual({
       status: "open",
       assignedUserId: "user-1",
+    })
+  })
+
+  test("prunes email/phone contact-filter conditions when emailAndPhone is denied", () => {
+    const where = generateWhere(
+      {
+        ...baseInput,
+        contactFilter: {
+          operator: "and",
+          conditions: [
+            { field: "email", operator: "eq", value: "ada@example.com" },
+            { field: "fullName", operator: "contains", value: "Ada" },
+          ],
+        },
+      },
+      { canViewEmailAndPhone: false },
+    )
+
+    expect(where.__filter).toEqual({
+      operator: "and",
+      conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
     })
   })
 

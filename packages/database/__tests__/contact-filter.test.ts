@@ -8,6 +8,7 @@ import {
   buildContactWhere,
   buildSmartKeywordWhere,
   parseConversationAssigneeValues,
+  pruneEmailPhoneFilterConditions,
 } from "../src/queries/contact-filter"
 import { contactInboxModel, contactModel } from "../src/schema"
 import { escapeLikePattern, likeContains } from "../src/utils"
@@ -33,6 +34,54 @@ describe("LIKE pattern helpers", () => {
   test("escapes LIKE metacharacters and wraps contains patterns", () => {
     expect(escapeLikePattern("100%_ready\\")).toBe("100\\%\\_ready\\\\")
     expect(likeContains("100%_ready\\")).toBe("%100\\%\\_ready\\\\%")
+  })
+})
+
+describe("contact filter permission helpers", () => {
+  test("drops only email/phone contact-filter fields when email and phone are denied", () => {
+    const contactFilter = {
+      operator: "and" as const,
+      conditions: [
+        { field: "email", operator: "eq", value: "ada@example.com" },
+        { field: "phone", operator: "eq", value: "+84912345678" },
+        { field: "hasContactInfo", operator: "in", value: ["email"] },
+        { field: "emailWasVerified", operator: "eq", value: "true" },
+        { field: "optedInForEmail", operator: "eq", value: "true" },
+        { field: "existingContact", operator: "eq", value: "true" },
+        { field: "fullName", operator: "contains", value: "Ada" },
+      ],
+    }
+
+    expect(pruneEmailPhoneFilterConditions(contactFilter, false)).toEqual({
+      operator: "and",
+      conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
+    })
+  })
+
+  test("keeps all contact-filter fields when email and phone are allowed", () => {
+    const contactFilter = {
+      operator: "or" as const,
+      conditions: [
+        { field: "email", operator: "eq", value: "ada@example.com" },
+        { field: "fullName", operator: "contains", value: "Ada" },
+      ],
+    }
+
+    expect(pruneEmailPhoneFilterConditions(contactFilter, true)).toBe(
+      contactFilter,
+    )
+  })
+
+  test("normalizes an emptied filter back to AND", () => {
+    expect(
+      pruneEmailPhoneFilterConditions(
+        {
+          operator: "or",
+          conditions: [{ field: "email", operator: "eq", value: "a@b.co" }],
+        },
+        false,
+      ),
+    ).toEqual({ operator: "and", conditions: [] })
   })
 })
 
@@ -569,6 +618,123 @@ describe("applyContactFilter", () => {
     expect(negative.sql).toContain("NOT (")
     expect(negative.sql).toContain('"Contact"."email" IS NOT NULL')
     expect(negative.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+  })
+
+  test("renders hasContactInfo presence predicate for the selected info types", () => {
+    const phoneOnly = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "hasContactInfo",
+            operator: operatorTypes.enum.in,
+            value: ["phone"],
+          },
+        ],
+      }),
+    )
+    expect(phoneOnly.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+    expect(phoneOnly.sql).not.toContain('"Contact"."email"')
+
+    const phoneOrEmail = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "hasContactInfo",
+            operator: operatorTypes.enum.in,
+            value: ["phone", "email"],
+          },
+        ],
+      }),
+    )
+    expect(phoneOrEmail.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+    expect(phoneOrEmail.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(phoneOrEmail.sql).toContain(" OR ")
+  })
+
+  test("renders hasContactInfo phoneAndEmail as a phone AND email presence predicate", () => {
+    const hasBoth = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "hasContactInfo",
+            operator: operatorTypes.enum.in,
+            value: ["phoneAndEmail"],
+          },
+        ],
+      }),
+    )
+    expect(hasBoth.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+    expect(hasBoth.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(hasBoth.sql).toContain(" AND ")
+    expect(hasBoth.sql).not.toContain(" OR ")
+
+    const lacksBoth = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "hasContactInfo",
+            operator: operatorTypes.enum.notIn,
+            value: ["phoneAndEmail"],
+          },
+        ],
+      }),
+    )
+    expect(lacksBoth.sql).toContain("NOT (")
+    expect(lacksBoth.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+    expect(lacksBoth.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(lacksBoth.sql).toContain(" AND ")
+  })
+
+  test("renders NULL-safe negation for hasContactInfo notIn and isEmpty", () => {
+    const lacksEmail = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "hasContactInfo",
+            operator: operatorTypes.enum.notIn,
+            value: ["email"],
+          },
+        ],
+      }),
+    )
+    expect(lacksEmail.sql).toContain("NOT (")
+    expect(lacksEmail.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(lacksEmail.sql).not.toContain('"Contact"."phoneNumber"')
+
+    const lacksBoth = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "hasContactInfo",
+            operator: operatorTypes.enum.isEmpty,
+          },
+        ],
+      }),
+    )
+    expect(lacksBoth.sql).toContain("NOT (")
+    expect(lacksBoth.sql).toContain('"Contact"."email" IS NOT NULL')
+    expect(lacksBoth.sql).toContain('"Contact"."phoneNumber" IS NOT NULL')
+  })
+
+  test("ignores hasContactInfo conditions with unknown info types", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "hasContactInfo",
+          operator: operatorTypes.enum.in,
+          value: ["whatsapp"],
+        },
+      ],
+    })
+
+    expect(where).toEqual({})
   })
 
   test("renders continent country-code expansion and unknown sentinel", () => {

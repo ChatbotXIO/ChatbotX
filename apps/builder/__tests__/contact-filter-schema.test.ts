@@ -65,6 +65,54 @@ describe("staticFieldFilter", () => {
     ).toBe(true)
   })
 
+  test("accepts hasContactInfo presence operators and rejects the rest", () => {
+    expect(
+      staticFieldFilter("hasContactInfo").safeParse({
+        field: "hasContactInfo",
+        operator: operatorTypes.enum.in,
+        value: ["phone", "email"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter("hasContactInfo").safeParse({
+        field: "hasContactInfo",
+        operator: operatorTypes.enum.notIn,
+        value: ["email"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter("hasContactInfo").safeParse({
+        field: "hasContactInfo",
+        operator: operatorTypes.enum.in,
+        value: ["phoneAndEmail"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter("hasContactInfo").safeParse({
+        field: "hasContactInfo",
+        operator: operatorTypes.enum.isEmpty,
+      }).success,
+    ).toBe(true)
+
+    expect(
+      staticFieldFilter("hasContactInfo").safeParse({
+        field: "hasContactInfo",
+        operator: operatorTypes.enum.eq,
+        value: ["phone"],
+      }).success,
+    ).toBe(false)
+
+    expect(
+      staticFieldFilter("hasContactInfo").safeParse({
+        field: "hasContactInfo",
+        operator: operatorTypes.enum.in,
+      }).success,
+    ).toBe(false)
+  })
+
   test("rejects disabled operators and missing interval values", () => {
     expect(
       staticFieldFilter("tags").safeParse({

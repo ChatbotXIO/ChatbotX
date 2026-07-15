@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { EMPTY_CONTACT_FILTER } from "@/features/contact-filter"
 import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
+import { requireContactPermissionScope } from "@/features/contacts/permissions"
 import { listContactsRSC } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
@@ -25,6 +26,8 @@ export default async function ContactsPage(props: {
     return notFound()
   }
   await requireContactsAccess(workspaceId)
+  const contactPermissionScope =
+    await requireContactPermissionScope(workspaceId)
 
   const t = await getTranslations()
   const searchParams = await props.searchParams
@@ -55,6 +58,9 @@ export default async function ContactsPage(props: {
                 <InboxStoreProvider workspaceId={workspaceId}>
                   <SequenceStoreProvider workspaceId={workspaceId}>
                     <ContactsTable
+                      canViewEmailAndPhone={
+                        contactPermissionScope.canViewEmailAndPhone
+                      }
                       initialContactFilter={initialContactFilter}
                       promises={promises}
                       workspaceId={workspaceId}

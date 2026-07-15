@@ -4,8 +4,10 @@ import {
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
+import { getContactInfoTypeOptions } from "@/features/contact-filter/components/contact-filter-config"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { CustomFieldValueChanged } from "./custom-field-value-changed"
@@ -18,7 +20,12 @@ export const ConditionEditor = ({
   parentName: string
   type: TriggerEventType
 }) => {
+  const t = useTranslations()
   const tagOptions = useTagSelectOptions()
+  const contactInfoTypeOptions = useMemo(
+    () => getContactInfoTypeOptions(t),
+    [t],
+  )
   const sequences = useSequenceOptions()
   const sequenceOptions = useMemo(
     () =>
@@ -37,6 +44,13 @@ export const ConditionEditor = ({
         <SelectField name={`${parentName}.sourceId`} options={tagOptions} />
       )
     }
+    case triggerEventTypes.enum.contactInfoUpdated:
+      return (
+        <SelectField
+          name={`${parentName}.sourceId`}
+          options={contactInfoTypeOptions}
+        />
+      )
     case triggerEventTypes.enum.subscribedToSequence:
     case triggerEventTypes.enum.unsubscribedFromSequence:
       return (

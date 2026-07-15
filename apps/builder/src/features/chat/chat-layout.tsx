@@ -32,13 +32,18 @@ import { ChatRealtime } from "./chat-realtime"
 import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
+  canViewEmailAndPhone?: boolean
   workspaceId: string
   layout?: [number, number, number]
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
-  const { workspaceId, layout = [25, 50, 25] } = props
+  const {
+    canViewEmailAndPhone = true,
+    workspaceId,
+    layout = [25, 50, 25],
+  } = props
 
   const {
     conversations,
@@ -103,7 +108,10 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         maxSize={"30%"}
         minSize={"20%"}
       >
-        <ConversationList workspaceId={workspaceId} />
+        <ConversationList
+          canViewEmailAndPhone={canViewEmailAndPhone}
+          workspaceId={workspaceId}
+        />
       </ResizablePanel>
 
       <ResizableHandle withHandle />
