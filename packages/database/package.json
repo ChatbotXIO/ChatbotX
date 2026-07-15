@@ -51,6 +51,8 @@
     "./utils": "./src/utils.ts",
     "./partials": "./src/partials/index.ts",
     "./queries": "./src/queries/index.ts",
+    "./queries/contact-filter": "./src/queries/contact-filter/index.ts",
+    "./queries/contact-filter/permission": "./src/queries/contact-filter/permission.ts",
     "./repositories": "./src/repositories/index.ts"
   }
 }

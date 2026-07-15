@@ -1,5 +1,11 @@
 import { type AnyColumn, type SQL, sql } from "drizzle-orm"
-import { operatorTypes } from "../../partials"
+import {
+  type ContactInfoFilterValue,
+  type ContactInfoType,
+  contactInfoFilterValues,
+  contactInfoTypes,
+  operatorTypes,
+} from "../../partials"
 import { contactInboxModel, messageModel } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { contactInboxExists } from "./exists"
@@ -321,25 +327,111 @@ export function buildBooleanColumn(
   return {}
 }
 
+const CONTACT_INFO_COLUMN_NAMES = {
+  phone: "phoneNumber",
+  email: "email",
+} as const satisfies Record<ContactInfoType, string>
+
+/** `(column IS NOT NULL AND column <> '')` — NULL-safe both plain and negated. */
+const contactInfoPresenceSQL = (
+  table: RawTable,
+  infoType: ContactInfoType,
+): SQL => {
+  const column = table[CONTACT_INFO_COLUMN_NAMES[infoType]]
+  return sql`(${column} IS NOT NULL AND ${column} <> '')`
+}
+
+const orPredicatesSQL = (predicates: SQL[]): SQL =>
+  sql`(${sql.join(predicates, sql` OR `)})`
+
+const hasAnyContactInfoSQL = (
+  table: RawTable,
+  infoTypes: readonly ContactInfoType[],
+): SQL =>
+  orPredicatesSQL(
+    infoTypes.map((infoType) => contactInfoPresenceSQL(table, infoType)),
+  )
+
+/**
+ * Presence predicate for one `hasContactInfo` filter value. The `phoneAndEmail`
+ * composite requires BOTH columns; atomic values require just their own.
+ */
+const contactInfoFilterValueSQL = (
+  table: RawTable,
+  value: ContactInfoFilterValue,
+): SQL =>
+  value === contactInfoFilterValues.enum.phoneAndEmail
+    ? sql`(${contactInfoPresenceSQL(table, "phone")} AND ${contactInfoPresenceSQL(table, "email")})`
+    : contactInfoPresenceSQL(table, value)
+
+const matchesAnyContactInfoValueSQL = (
+  table: RawTable,
+  values: readonly ContactInfoFilterValue[],
+): SQL =>
+  orPredicatesSQL(
+    values.map((value) => contactInfoFilterValueSQL(table, value)),
+  )
+
+const parseContactInfoFilterValues = (
+  value: unknown,
+): ContactInfoFilterValue[] => {
+  const rawValues = Array.isArray(value) ? value : [value]
+  const parsed = contactInfoFilterValues.array().safeParse(rawValues)
+  return parsed.success ? [...new Set(parsed.data)] : []
+}
+
+export function buildHasContactInfoWhere(
+  operator: string,
+  value: unknown,
+): ContactWhere {
+  if (operator === operatorTypes.enum.isEmpty) {
+    return {
+      RAW: (table: RawTable): SQL =>
+        sql`NOT ${hasAnyContactInfoSQL(table, contactInfoTypes.options)}`,
+    }
+  }
+
+  const selectedValues = parseContactInfoFilterValues(value)
+  if (selectedValues.length === 0) {
+    return {}
+  }
+
+  if (operator === operatorTypes.enum.in) {
+    return {
+      RAW: (table: RawTable): SQL =>
+        matchesAnyContactInfoValueSQL(table, selectedValues),
+    }
+  }
+
+  if (operator === operatorTypes.enum.notIn) {
+    return {
+      RAW: (table: RawTable): SQL =>
+        sql`NOT ${matchesAnyContactInfoValueSQL(table, selectedValues)}`,
+    }
+  }
+
+  return {}
+}
+
 export function buildExistingContactWhere(
   operator: string,
   value: unknown,
 ): ContactWhere {
   const hasEmailOrPhone = (table: RawTable): SQL =>
-    sql`((${table.email} IS NOT NULL AND ${table.email} <> '') OR (${table.phoneNumber} IS NOT NULL AND ${table.phoneNumber} <> ''))`
+    hasAnyContactInfoSQL(table, contactInfoTypes.options)
 
   if (operator === operatorTypes.enum.eq) {
     return {
       RAW: (table: RawTable): SQL =>
         value === "true"
           ? hasEmailOrPhone(table)
-          : sql`NOT (${hasEmailOrPhone(table)})`,
+          : sql`NOT ${hasEmailOrPhone(table)}`,
     }
   }
 
   if (operator === operatorTypes.enum.isEmpty) {
     return {
-      RAW: (table: RawTable): SQL => sql`NOT (${hasEmailOrPhone(table)})`,
+      RAW: (table: RawTable): SQL => sql`NOT ${hasEmailOrPhone(table)}`,
     }
   }
 

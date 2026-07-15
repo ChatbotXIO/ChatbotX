@@ -6,6 +6,7 @@ import {
   formFieldTypes,
   operatorTypes,
 } from "@chatbotx.io/database/partials"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { describe, expect, test } from "vitest"
 import {
   convertCustomFieldTypeToConditionType,
@@ -184,10 +185,45 @@ describe("contact filter field config helpers", () => {
     expect(groupFor("unreplied")).toBe("analytics")
     expect(groupFor("unread")).toBe("analytics")
     expect(groupFor("existingContact")).toBe("contactInfo")
+    expect(groupFor("hasContactInfo")).toBe("contactInfo")
     expect(groupFor("phone")).toBe("sms")
     expect(groupFor("email")).toBe("email")
     expect(groupFor("emailWasVerified")).toBe("email")
     expect(groupFor("optedInForEmail")).toBe("email")
+  })
+
+  test("offers phone, email and phone+email as hasContactInfo options with presence operators only", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+    const infoOptions = configs.find(
+      (config) => config.name === "hasContactInfo",
+    )?.options
+
+    expect(infoOptions).toEqual([
+      { label: "fields.phone.label", value: "phone" },
+      { label: "fields.email.label", value: "email" },
+      { label: "fields.phoneAndEmail.label", value: "phoneAndEmail" },
+    ])
+
+    const infoConfig: FieldConfig = {
+      name: "hasContactInfo",
+      formField: formFieldTypes.enum.multiSelect,
+      group: "contactInfo",
+    }
+    const operators = getStaticFieldConditionOptions(
+      infoConfig,
+      conditionOptions,
+    )
+    expect(option(operators, operatorTypes.enum.in)?.disabled).toBeFalsy()
+    expect(option(operators, operatorTypes.enum.notIn)?.disabled).toBeFalsy()
+    expect(option(operators, operatorTypes.enum.isEmpty)?.disabled).toBeFalsy()
+    expect(option(operators, operatorTypes.enum.eq)?.disabled).toBe(true)
+    expect(option(operators, operatorTypes.enum.contains)?.disabled).toBe(true)
   })
 
   test("derives contact source options from the contact source taxonomy", () => {
@@ -386,6 +422,30 @@ describe("contact filter field config helpers", () => {
       { label: "Zulu", value: "tags" },
       { label: "Alpha", value: "lastSeen" },
     ])
+  })
+
+  test("hides existingContact from the picker but keeps its config for rendering", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    const existingContactConfig = configs.find(
+      (config) => config.name === "existingContact",
+    )
+    expect(existingContactConfig).toBeDefined()
+    expect(existingContactConfig?.hidden).toBe(true)
+
+    const collectValues = (options: SelectOption[]): string[] =>
+      options.flatMap((option) =>
+        option.children ? collectValues(option.children) : [option.value],
+      )
+    const pickerValues = collectValues(getFieldOptions(configs, t))
+    expect(pickerValues).not.toContain("existingContact")
+    expect(pickerValues).toContain("hasContactInfo")
   })
 
   test("converts custom field types and formats values for display", () => {

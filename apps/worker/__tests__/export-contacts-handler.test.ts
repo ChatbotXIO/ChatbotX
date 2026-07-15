@@ -40,6 +40,7 @@ vi.mock("@chatbotx.io/database/partials", async () =>
 
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: (criteria: unknown) => ({ __filter: criteria }),
+  pruneEmailPhoneFilterConditions: (criteria: unknown) => criteria,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

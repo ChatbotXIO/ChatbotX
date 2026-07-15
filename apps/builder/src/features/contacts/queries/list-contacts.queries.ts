@@ -7,6 +7,7 @@ import {
 import {
   applyContactFilter,
   buildSmartKeywordWhere,
+  pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
 import { contactModel } from "@chatbotx.io/database/schema"
 import {
@@ -234,13 +235,18 @@ export const generateWhere = (
     workspaceId: input.workspaceId,
   }
 
+  const contactFilter = pruneEmailPhoneFilterConditions(
+    input.contactFilter,
+    scope?.canViewEmailAndPhone !== false,
+  )
+
   const filters = [
     input.keyword
       ? buildSmartKeywordWhere(input.keyword, {
           includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
         })
       : undefined,
-    input.contactFilter ? applyContactFilter(input.contactFilter) : undefined,
+    contactFilter ? applyContactFilter(contactFilter) : undefined,
   ].filter((filter): filter is ContactWhere =>
     filter ? hasWhereParts(filter) : false,
   )

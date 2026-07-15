@@ -110,6 +110,7 @@ describe("contacts route guards", () => {
 
   test("allows assigned-only members to reach contacts and contacts import pages", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { id: "user-1" },
       targetWorkspaceMember: {
         permissions: {
           ...basePermissions,
@@ -139,6 +140,7 @@ describe("contacts route guards", () => {
 
   test("rejects members without full or assigned-only contact access on contacts routes", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      user: { id: "user-1" },
       targetWorkspaceMember: {
         permissions: basePermissions,
       },

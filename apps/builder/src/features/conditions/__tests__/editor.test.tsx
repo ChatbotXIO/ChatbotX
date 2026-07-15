@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
-import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { FormProvider, useForm } from "react-hook-form"
@@ -53,6 +56,10 @@ vi.mock("@/features/tags/provider/tag-hook", () => ({
   useTagSelectOptions: () => [],
 }))
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+}))
+
 vi.mock("../custom-field-value-changed", () => ({
   CustomFieldValueChanged: () => null,
 }))
@@ -88,9 +95,11 @@ const render = (ui: React.ReactElement) => {
 
 function TestConditionEditor({
   defaultSourceId = "sequence-2",
+  type = triggerEventTypes.enum.subscribedToSequence,
   onSubmit,
 }: {
   defaultSourceId?: string
+  type?: TriggerEventType
   onSubmit?: (values: { conditions: { sourceId: string }[] }) => void
 }) {
   const form = useForm({
@@ -102,10 +111,7 @@ function TestConditionEditor({
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit((values) => onSubmit?.(values))}>
-        <ConditionEditor
-          parentName="conditions.0"
-          type={triggerEventTypes.enum.subscribedToSequence}
-        />
+        <ConditionEditor parentName="conditions.0" type={type} />
         <button type="submit">Save</button>
       </form>
     </FormProvider>
@@ -158,5 +164,29 @@ describe("ConditionEditor", () => {
         ) as HTMLSelectElement
       ).value,
     ).toBe("sequence-1")
+  })
+
+  test("offers phone and email source options for contact info updated conditions", () => {
+    render(
+      <TestConditionEditor
+        defaultSourceId="phone"
+        type={triggerEventTypes.enum.contactInfoUpdated}
+      />,
+    )
+
+    const select = container.querySelector(
+      'select[name="conditions.0.sourceId"]',
+    )
+    expect(select).toBeInstanceOf(HTMLSelectElement)
+    expect(
+      Array.from(select?.querySelectorAll("option") ?? []).map((option) => ({
+        label: option.textContent,
+        value: option.getAttribute("value"),
+      })),
+    ).toEqual([
+      { label: "fields.phone.label", value: "phone" },
+      { label: "fields.email.label", value: "email" },
+    ])
+    expect((select as HTMLSelectElement).value).toBe("phone")
   })
 })

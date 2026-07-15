@@ -16,6 +16,7 @@ import {
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { defaultFn as addContactInfoUpdatedCondition } from "../conditions/schemas/contact-info-updated"
 import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/schemas/custom-field-value-changed"
 import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schemas/date-time-based-trigger"
 import {
@@ -85,6 +86,11 @@ export function AddCondition({
             label: t("trigger.conditions.newContact"),
             value: triggerEventTypes.enum.newContact,
             defaultFn: createDefaultFn(triggerEventTypes.enum.newContact),
+          },
+          {
+            label: t("trigger.conditions.contactInfoUpdated"),
+            value: triggerEventTypes.enum.contactInfoUpdated,
+            defaultFn: addContactInfoUpdatedCondition,
           },
           {
             label: t("trigger.conditions.contactUnsubscribedFormBroadcast"),

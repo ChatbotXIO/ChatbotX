@@ -1,3 +1,4 @@
+import { contactInfoUpdated } from "./contact-info-updated"
 import { customFieldValueChanged } from "./custom-field-value-changed"
 import { dateTimeBasedTrigger } from "./date-time-based-trigger"
 import {
@@ -21,6 +22,7 @@ export const allConditions = {
   tagApplied,
   tagRemoved,
   customFieldValueChanged,
+  contactInfoUpdated,
   dateTimeBasedTrigger,
   conversationTransferredToHuman,
   conversationTransferredToBot,

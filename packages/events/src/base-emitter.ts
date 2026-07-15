@@ -1,4 +1,5 @@
 import {
+  type ContactInfoType,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -97,6 +98,20 @@ export abstract class BaseEventEmitter {
         oldValue,
         newValue,
       },
+    })
+  }
+
+  async contactInfoUpdated(
+    workspaceId: string,
+    contactId: string,
+    infoType: ContactInfoType,
+    oldValue: string | null,
+    newValue: string,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.contactInfoUpdated, {
+      workspaceId,
+      contactId,
+      metadata: { sourceId: infoType, infoType, oldValue, newValue },
     })
   }
 

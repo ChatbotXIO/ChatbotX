@@ -4,6 +4,7 @@ import {
   applyContactFilter,
   buildSmartKeywordWhere,
   parseConversationAssigneeValues,
+  pruneEmailPhoneFilterConditions,
   UNASSIGNED_ASSIGNEE_VALUE,
 } from "@chatbotx.io/database/queries"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
@@ -162,8 +163,12 @@ export function buildConversationWhere(
   }
 
   // ── contactFilter (complex filter builder) ───────────────────────────────
-  if (input.contactFilter) {
-    const contactFilterWhere = applyContactFilter(input.contactFilter)
+  const contactFilter = pruneEmailPhoneFilterConditions(
+    input.contactFilter,
+    options.includeEmailAndPhone !== false,
+  )
+  if (contactFilter) {
+    const contactFilterWhere = applyContactFilter(contactFilter)
     if (Object.keys(contactFilterWhere).length > 0) {
       addContactWhere(where, contactFilterWhere)
     }

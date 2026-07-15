@@ -7,6 +7,7 @@ import {
   contactFilterFields,
   requiresRecentInteractionWindow,
 } from "@chatbotx.io/database/partials"
+import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "@/features/contact-filter/lib/restricted-fields"
 
 const CHANNEL_SCOPED_EXCLUDED_FIELDS = [
   contactFilterFields.enum.currentChannel,
@@ -33,22 +34,31 @@ const isTemplateMessageSubaction = (
 
 export const getBroadcastExcludedFilterFields = ({
   channel,
+  canViewEmailAndPhone = true,
   subaction,
 }: {
   channel?: ChannelType | null
+  canViewEmailAndPhone?: boolean
   subaction?: BroadcastSubaction | null
 } = {}): ContactFilterField[] => {
+  const permissionExcludedFields = canViewEmailAndPhone
+    ? []
+    : [...EMAIL_PHONE_RESTRICTED_FILTER_FIELDS]
+
   if (!channel || channel === channelTypes.enum.omnichannel) {
-    return []
+    return permissionExcludedFields
   }
 
   if (isTemplateMessageSubaction(subaction)) {
-    return [...TEMPLATE_MESSAGE_EXCLUDED_FIELDS]
+    return [...TEMPLATE_MESSAGE_EXCLUDED_FIELDS, ...permissionExcludedFields]
   }
 
   if (requiresRecentInteractionWindow(subaction)) {
-    return [...RECENT_INTERACTION_WINDOW_EXCLUDED_FIELDS]
+    return [
+      ...RECENT_INTERACTION_WINDOW_EXCLUDED_FIELDS,
+      ...permissionExcludedFields,
+    ]
   }
 
-  return [...CHANNEL_SCOPED_EXCLUDED_FIELDS]
+  return [...CHANNEL_SCOPED_EXCLUDED_FIELDS, ...permissionExcludedFields]
 }

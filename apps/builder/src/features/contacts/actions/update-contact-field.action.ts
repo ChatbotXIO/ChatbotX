@@ -4,6 +4,7 @@ import {
   type ContactAccessScope,
   contactInboxService,
   contactService,
+  emitContactInfoChangeEvents,
   normalizeLanguage,
   normalizeStoredTimezone,
 } from "@chatbotx.io/business"
@@ -49,7 +50,7 @@ export const updateContactFields = async (
   },
   parsedInput: UpdateContactFieldRequest,
 ) => {
-  await contactService.findByIdOrFail({
+  const existingContact = await contactService.findByIdOrFail({
     workspaceId: ctx.workspaceId,
     id: ctx.id,
     accessScope: ctx.accessScope,
@@ -118,6 +119,11 @@ export const updateContactFields = async (
           })
       }
     }
+  })
+
+  await emitContactInfoChangeEvents(ctx.workspaceId, ctx.id, existingContact, {
+    phoneNumber: contactFields.phoneNumber ?? existingContact.phoneNumber,
+    email: contactFields.email ?? existingContact.email,
   })
 }
 

@@ -269,6 +269,8 @@ class SystemFieldService extends BaseService {
     // Synchronous v1 is bounded to one contact-inbox; move to BullMQ if this
     // path needs to erase very large histories.
     await db.transaction(async (tx) => {
+      // Clearing phone/email intentionally does not emit contactInfoUpdated. If
+      // that semantic changes, emit after this transaction commits.
       await contactService.update(
         {
           workspaceId: context.payload.workspaceId,

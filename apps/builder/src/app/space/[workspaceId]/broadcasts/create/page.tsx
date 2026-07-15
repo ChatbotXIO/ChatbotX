@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
+import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { ContactStoreProvider } from "@/features/contacts/provider/contact-store-context"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
@@ -11,6 +12,7 @@ import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provid
 import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function CreateBroadcastPage({
   params,
@@ -21,6 +23,14 @@ export default async function CreateBroadcastPage({
   if (!workspaceId) {
     return notFound()
   }
+
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (!userAndWorkspace) {
+    return notFound()
+  }
+  const canViewEmailAndPhone = canViewContactEmailAndPhone(
+    userAndWorkspace.targetWorkspaceMember.permissions,
+  )
 
   const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
     workspaceId,
@@ -42,7 +52,10 @@ export default async function CreateBroadcastPage({
                       autoInitialize={false}
                       workspaceId={workspaceId}
                     >
-                      <CreateBroadcastForm workspaceId={workspaceId} />
+                      <CreateBroadcastForm
+                        canViewEmailAndPhone={canViewEmailAndPhone}
+                        workspaceId={workspaceId}
+                      />
                     </ContactStoreProvider>
                   </SequenceStoreProvider>
                 </UserStoreProvider>

@@ -1,7 +1,10 @@
 import type { PassThrough } from "node:stream"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { fileStatuses } from "@chatbotx.io/database/partials"
-import { applyContactFilter } from "@chatbotx.io/database/queries"
+import {
+  applyContactFilter,
+  pruneEmailPhoneFilterConditions,
+} from "@chatbotx.io/database/queries"
 import {
   type contactCustomFieldModel,
   fileModel,
@@ -146,8 +149,13 @@ export const buildBaseWhere = (data: ExportData): Record<string, unknown> => {
     ]
   }
 
-  if (data.filter.contactFilter) {
-    Object.assign(where, applyContactFilter(data.filter.contactFilter))
+  const contactFilter = pruneEmailPhoneFilterConditions(
+    data.filter.contactFilter,
+    data.canExportEmailAndPhone === true,
+  )
+
+  if (contactFilter) {
+    Object.assign(where, applyContactFilter(contactFilter))
   }
 
   addAssignedContactScope(where, data.restrictToAssignedUserId)

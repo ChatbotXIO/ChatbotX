@@ -20,6 +20,7 @@ export type ContactFilterSchemaKind =
  */
 export type ContactFilterOptionSource =
   | "none"
+  | "contactInfoFilterValues"
   | "languages"
   | "timezones"
   | "countries"
@@ -39,6 +40,12 @@ export type ContactFilterFieldDefinition = {
   field: ContactFilterField
   schemaKind: ContactFilterSchemaKind
   optionSource: ContactFilterOptionSource
+  /**
+   * Kept valid in the Zod schema and rendered for existing conditions, but
+   * hidden from the "add condition" picker. Use to retire a field from new use
+   * (e.g. superseded by another) without breaking saved filters/broadcasts.
+   */
+  hidden?: boolean
 }
 
 const conditionSchemaForDef = (def: ContactFilterFieldDefinition) =>
@@ -170,6 +177,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "none",
   },
   {
+    field: contactFilterFields.enum.hasContactInfo,
+    schemaKind: "multiSelect",
+    optionSource: "contactInfoFilterValues",
+  },
+  {
     field: contactFilterFields.enum.tags,
     schemaKind: "multiSelect",
     optionSource: "tags",
@@ -228,6 +240,9 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.existingContact,
     schemaKind: "boolean",
     optionSource: "none",
+    // Superseded by `hasContactInfo`; hidden from the picker but still valid so
+    // existing filters/broadcasts keep resolving.
+    hidden: true,
   },
   {
     field: contactFilterFields.enum.consecutiveAiFailures,

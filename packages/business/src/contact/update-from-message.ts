@@ -1,5 +1,6 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
+import { emitContactInfoChangeEvents } from "./contact-info-changes"
 import { extractContactInfo } from "./extract-contact"
 
 export type UpdateContactFromMessageProps = {
@@ -65,6 +66,14 @@ export const updateContactFromMessage = async (
   }
 
   if (Object.keys(updates).length > 0) {
+    // Read the current values only on extraction hits (rare relative to
+    // message volume) so `contactInfoUpdated` events carry the old value and
+    // fire only on real changes — the no-match fast path stays query-free.
+    const current = await db.query.contactModel.findFirst({
+      where: { id: contactId, workspaceId },
+      columns: { phoneNumber: true, email: true },
+    })
+
     // Tenant-scoped WHERE: contactId is globally unique today but defence in
     // depth — every multi-tenant write in this codebase pairs the row id with
     // the workspaceId so a stale/spoofed contactId can never bleed across
@@ -78,6 +87,13 @@ export const updateContactFromMessage = async (
           eq(contactModel.workspaceId, workspaceId),
         ),
       )
+
+    if (current) {
+      await emitContactInfoChangeEvents(workspaceId, contactId, current, {
+        phoneNumber: updates.phoneNumber ?? current.phoneNumber,
+        email: updates.email ?? current.email,
+      })
+    }
   }
 
   return extracted

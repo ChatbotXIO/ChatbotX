@@ -47,6 +47,17 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: MockChatbotXException,
 }))
 
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue({
+    targetWorkspaceMember: { permissions: ["emailAndPhone"] },
+  }),
+}))
+
+vi.mock("@chatbotx.io/database/queries/contact-filter/permission", () => ({
+  pruneEmailPhoneFilterConditions: (contactFilter: unknown) =>
+    contactFilter ?? undefined,
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mockDbTransaction,

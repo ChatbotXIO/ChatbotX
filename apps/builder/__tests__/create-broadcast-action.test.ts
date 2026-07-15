@@ -26,6 +26,17 @@ vi.mock("@/lib/safe-action", () => ({
   },
 }))
 
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue({
+    targetWorkspaceMember: { permissions: ["emailAndPhone"] },
+  }),
+}))
+
+vi.mock("@chatbotx.io/database/queries/contact-filter/permission", () => ({
+  pruneEmailPhoneFilterConditions: (contactFilter: unknown) =>
+    contactFilter ?? undefined,
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {},
 }))

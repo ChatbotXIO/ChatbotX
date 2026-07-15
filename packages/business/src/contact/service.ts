@@ -29,6 +29,7 @@ import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceService } from "../workspace/service"
+import { emitContactInfoChangeEvents } from "./contact-info-changes"
 
 const NUMERIC_RE = /^\d+$/
 
@@ -177,7 +178,8 @@ class ContactService extends BaseService {
     data: ContactWriteData,
     tx: DatabaseClient = db,
   ): Promise<ContactModel> {
-    await this.findByIdOrFail({
+    const ownsTransaction = tx === db
+    const existing = await this.findByIdOrFail({
       workspaceId: ctx.workspaceId,
       id: ctx.id,
       accessScope: ctx.accessScope,
@@ -189,6 +191,14 @@ class ContactService extends BaseService {
       .where(eq(contactModel.id, ctx.id))
       .returning()
     await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
+    if (ownsTransaction) {
+      await emitContactInfoChangeEvents(
+        ctx.workspaceId,
+        ctx.id,
+        existing,
+        updated,
+      )
+    }
     return updated
   }
 

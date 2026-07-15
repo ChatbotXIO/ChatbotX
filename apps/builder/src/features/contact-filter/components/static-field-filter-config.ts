@@ -90,6 +90,17 @@ const relationSetRule = {
   singleInput: "field",
 } as const satisfies StaticFieldRule
 
+const PRESENCE_SET_OPERATORS = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
+  operatorTypes.enum.isEmpty,
+] as const satisfies readonly OperatorType[]
+
+const presenceSetRule = {
+  enabledOperators: PRESENCE_SET_OPERATORS,
+  singleInput: "field",
+} as const satisfies StaticFieldRule
+
 const booleanRule = {
   enabledOperators: BOOLEAN_OPERATORS,
   singleInput: "boolean",
@@ -189,6 +200,7 @@ const staticFieldRules: Record<string, StaticFieldRule> = {
   lastComment: textFreeRule,
   phone: textFreeRule,
   email: textFreeRule,
+  hasContactInfo: presenceSetRule,
   lastUserInput: textFreeRule,
 
   contactCreatedAt: dateRule,

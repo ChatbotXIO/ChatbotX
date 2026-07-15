@@ -25,8 +25,10 @@ import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 
 export default function ConversationList({
+  canViewEmailAndPhone = true,
   workspaceId,
 }: {
+  canViewEmailAndPhone?: boolean
   workspaceId: string
 }) {
   const t = useTranslations()
@@ -143,7 +145,7 @@ export default function ConversationList({
           />
 
           <TagStoreProvider workspaceId={workspaceId}>
-            <ConversationFilter />
+            <ConversationFilter canViewEmailAndPhone={canViewEmailAndPhone} />
           </TagStoreProvider>
         </div>
 

@@ -17,6 +17,7 @@ import {
 import {
   buildContactInboxContactFilterSQL,
   contactInboxInteractedWithin24hSQL,
+  pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
 import {
   broadcastModel,
@@ -70,13 +71,18 @@ class BroadcastService extends BaseService {
     inboxIds: string[],
     input: BroadcastAudienceInput,
   ): SQL | undefined {
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      input.contactFilter,
+      input.canViewEmailAndPhone !== false,
+    )
+
     return and(
       inArray(contactInboxModel.inboxId, inboxIds),
-      input.contactFilter
+      contactFilter
         ? buildContactInboxContactFilterSQL({
             contactIdColumn: contactInboxModel.contactId,
             workspaceId: input.workspaceId,
-            contactFilter: input.contactFilter,
+            contactFilter,
           })
         : undefined,
       requiresRecentInteractionWindow(input.subaction)

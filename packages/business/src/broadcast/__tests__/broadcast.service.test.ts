@@ -151,6 +151,29 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/queries", () => ({
   buildContactInboxContactFilterSQL: mocks.buildContactInboxContactFilterSQL,
   contactInboxInteractedWithin24hSQL: mocks.contactInboxInteractedWithin24hSQL,
+  pruneEmailPhoneFilterConditions: (
+    contactFilter: { operator: "and" | "or"; conditions: unknown[] },
+    canViewEmailAndPhone: boolean,
+  ) =>
+    canViewEmailAndPhone
+      ? contactFilter
+      : {
+          operator: contactFilter.operator,
+          conditions: contactFilter.conditions.filter((condition) => {
+            const field =
+              typeof condition === "object" && condition !== null
+                ? (condition as { field?: unknown }).field
+                : undefined
+            return ![
+              "email",
+              "phone",
+              "hasContactInfo",
+              "emailWasVerified",
+              "optedInForEmail",
+              "existingContact",
+            ].includes(String(field))
+          }),
+        },
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -246,6 +269,34 @@ describe("broadcastService.countAudience", () => {
       contactIdColumn: "ContactInbox.contactId",
       workspaceId: "ws-1",
       contactFilter,
+    })
+  })
+
+  test("prunes email/phone contact filters when the audience caller lacks emailAndPhone permission", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.count.mockResolvedValue(1)
+    const restrictedFilter = {
+      operator: "and" as const,
+      conditions: [
+        { field: "email", operator: "eq", value: "ada@example.com" },
+        { field: "fullName", operator: "contains", value: "Ada" },
+      ],
+    }
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      canViewEmailAndPhone: false,
+      contactFilter: restrictedFilter,
+    })
+
+    expect(mocks.buildContactInboxContactFilterSQL).toHaveBeenCalledWith({
+      contactIdColumn: "ContactInbox.contactId",
+      workspaceId: "ws-1",
+      contactFilter: {
+        operator: "and",
+        conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
+      },
     })
   })
 

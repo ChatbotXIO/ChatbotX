@@ -44,6 +44,8 @@ export const BaseEditor = ({
         return t("trigger.conditions.conversationTransferredToBot")
       case triggerEventTypes.enum.newContact:
         return t("trigger.conditions.newContact")
+      case triggerEventTypes.enum.contactInfoUpdated:
+        return t("trigger.conditions.contactInfoUpdated")
       case triggerEventTypes.enum.contactUnsubscribedFormBroadcast:
         return t("trigger.conditions.contactUnsubscribedFormBroadcast")
       case triggerEventTypes.enum.archived:

@@ -116,6 +116,26 @@ export const fillableContactKeys = [
 ] as const
 export type FillableContactKey = (typeof fillableContactKeys)[number]
 
+/**
+ * The atomic contact-info kinds a contact can hold: exactly one is touched per
+ * change, so this is what the `contactInfoUpdated` trigger reports (which info
+ * type was updated).
+ */
+export const contactInfoTypes = z.enum(["phone", "email"])
+export type ContactInfoType = z.infer<typeof contactInfoTypes>
+
+/**
+ * Selectable values for the `hasContactInfo` filter. Extends the atomic
+ * {@link contactInfoTypes} with the `phoneAndEmail` composite so a contact can
+ * be required to have BOTH a phone and an email, not just either one.
+ */
+export const contactInfoFilterValues = z.enum([
+  "phone",
+  "email",
+  "phoneAndEmail",
+])
+export type ContactInfoFilterValue = z.infer<typeof contactInfoFilterValues>
+
 export const contactFilterFields = z.enum([
   "fullName",
   "country",
@@ -156,6 +176,7 @@ export const contactFilterFields = z.enum([
   "appliedJobs",
   "email",
   "phone",
+  "hasContactInfo",
   "tags",
   "completedWhatsAppFlows",
   "messengerList",

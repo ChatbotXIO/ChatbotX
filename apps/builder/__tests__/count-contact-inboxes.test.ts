@@ -60,6 +60,7 @@ describe("countContactInboxes", () => {
       integrationWhatsappId: "wa-1",
       integrationMessengerId: "messenger-1",
       contactFilter,
+      canViewEmailAndPhone: undefined,
       subaction: "messengerActiveContacts",
       restrictToAssignedUserId: undefined,
     })
@@ -83,6 +84,7 @@ describe("countContactInboxes", () => {
       integrationWhatsappId: undefined,
       integrationMessengerId: undefined,
       contactFilter: undefined,
+      canViewEmailAndPhone: false,
       subaction: undefined,
       restrictToAssignedUserId: "user-1",
     })
@@ -109,6 +111,7 @@ describe("countContactInboxes", () => {
       integrationWhatsappId: undefined,
       integrationMessengerId: undefined,
       contactFilter: undefined,
+      canViewEmailAndPhone: false,
       subaction: undefined,
       page: 2,
       perPage: 10,

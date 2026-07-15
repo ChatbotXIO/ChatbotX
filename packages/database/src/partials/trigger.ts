@@ -22,6 +22,7 @@ export const triggerEventTypes = z.enum([
   "tagApplied",
   "tagRemoved",
   "customFieldValueChanged",
+  "contactInfoUpdated",
   "dateTimeBasedTrigger",
   "conversationTransferredToHuman",
   "conversationTransferredToBot",

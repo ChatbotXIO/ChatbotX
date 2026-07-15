@@ -22,6 +22,12 @@ const SET_OPERATORS = [
   ...BASE_OPERATORS,
 ] as const satisfies readonly OperatorType[]
 
+const PRESENCE_SET_OPERATORS = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
+  operatorTypes.enum.isEmpty,
+] as const satisfies readonly OperatorType[]
+
 const BOOLEAN_OPERATORS = [
   operatorTypes.enum.eq,
   operatorTypes.enum.isEmpty,
@@ -102,6 +108,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   fullName: TEXT_FREE_OPERATORS,
   email: TEXT_FREE_OPERATORS,
   phone: TEXT_FREE_OPERATORS,
+  hasContactInfo: PRESENCE_SET_OPERATORS,
   timezone: BASE_OPERATORS,
 
   contactCreatedAt: DATE_OPERATORS,
