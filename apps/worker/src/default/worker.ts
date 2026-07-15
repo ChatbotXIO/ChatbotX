@@ -18,6 +18,9 @@ import { sendErrorLog } from "./handlers/send-error-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { handleSyncTag } from "./handlers/sync-tag"
 
+const isBlockedJob = async (data: unknown) =>
+  isBlockedWorkspace(await resolveWorkspaceId(data))
+
 const worker = new Worker(
   queueNames.enum.default,
   async (job: Job<DefaultJobData>) => {
@@ -31,7 +34,7 @@ const worker = new Worker(
         await sendErrorLog(job.data.data)
         return
       case DefaultJobAction.exportContacts:
-        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+        if (await isBlockedJob(job.data.data)) {
           return
         }
         await loopableExportContacts(job.data.data)
@@ -42,19 +45,19 @@ const worker = new Worker(
         })
         return
       case DefaultJobAction.runImport:
-        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+        if (await isBlockedJob(job.data.data)) {
           return
         }
         await runImport(job.data.data)
         return
       case DefaultJobAction.syncTag:
-        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+        if (await isBlockedJob(job.data.data)) {
           return
         }
         await handleSyncTag(job.data.data)
         return
       case DefaultJobAction.syncChannelLabels:
-        if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+        if (await isBlockedJob(job.data.data)) {
           return
         }
         await handleSyncChannelLabels(job.data.data)

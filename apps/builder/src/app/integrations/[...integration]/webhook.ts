@@ -65,7 +65,6 @@ export const handleWebhook = async (
         ReturnType<typeof platformCredentialService.findDecryptedPlatform>
       >
     | undefined
-  let domainOwnerId: string | undefined
 
   if (isCloud()) {
     const domain = req.headers.get("x-domain") ?? ""
@@ -103,8 +102,6 @@ export const handleWebhook = async (
           { status: 404, headers: { "Content-Type": "application/json" } },
         )
       }
-
-      domainOwnerId = tenant.ownerId
 
       // Tenant's own credential — no fallback to global platform
       credential = await platformCredentialService.findDecryptedForUser({
@@ -145,18 +142,6 @@ export const handleWebhook = async (
   ).toString()
 
   const settings = credential.config
-
-  const workspaceId = req.nextUrl.searchParams.get("workspaceId") ?? undefined
-  const workspaceOwnerId = workspaceId
-    ? (await workspaceService.find({ where: { id: workspaceId } }))?.ownerId
-    : domainOwnerId
-  if (await isBlockedOwner(workspaceOwnerId)) {
-    logger.info(
-      { ownerId: workspaceOwnerId, integrationType },
-      "webhook skipped: blocked owner",
-    )
-    return new Response("ok")
-  }
 
   try {
     const result = await integration.handleRequest({

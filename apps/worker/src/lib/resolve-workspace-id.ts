@@ -45,14 +45,6 @@ export async function resolveWorkspaceId(
   }
 
   const conversationId = asString(jobData.conversationId)
-  if (jobData.conversationId && typeof jobData.conversationId === "object") {
-    const objectWorkspaceId = asString(
-      (jobData.conversationId as { workspaceId?: unknown }).workspaceId,
-    )
-    if (objectWorkspaceId) {
-      return objectWorkspaceId
-    }
-  }
   if (conversationId) {
     const conversation = await conversationService.findBy({
       where: { id: conversationId },

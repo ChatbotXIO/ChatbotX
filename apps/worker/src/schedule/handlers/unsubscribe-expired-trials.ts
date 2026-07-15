@@ -19,6 +19,8 @@ export async function unsubscribeExpiredTrials(): Promise<void> {
       const cutoff = new Date(Date.now() - GRACE_DAYS * 24 * 60 * 60 * 1000)
 
       for (;;) {
+        // The short claim transaction releases row locks before teardown; the
+        // distributed lock serializes runs, while idempotency protects retries.
         const due = await db.transaction(async (tx) => {
           const rows = await tx.execute<{ userId: string }>(sql`
         SELECT "userId"
