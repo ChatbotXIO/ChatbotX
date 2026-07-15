@@ -536,6 +536,16 @@
       "tiktok": "This TikTok account is already connected to another workspace.",
       "whatsapp": "This WhatsApp number is already connected to another workspace.",
       "zalo": "This Zalo OA is already connected to another workspace."
+    },
+    "reconnect": {
+      "success": "Channel reconnected successfully.",
+      "errors": {
+        "notFound": "The channel to reconnect was not found.",
+        "pageNotFound": "The authorized Facebook account does not have access to this Page. Log in with the correct account and grant all requested permissions.",
+        "accountNotFound": "The authorized account does not match the connected account. Log in with the correct account.",
+        "cancelled": "Reconnect was cancelled. Please try again and grant the requested permissions.",
+        "failed": "Reconnect failed. Please try again."
+      }
     }
   },
   "workspace": {
@@ -2522,7 +2532,7 @@
     "selectInstagramAccount": "Select Instagram Account",
     "iceBreakers": "Ice Breakers",
     "iceBreakersDescription": "Ice breakers provide a way for users to start a conversation with your bot by showing a list of frequently asked questions.",
-    "refreshPermissions": "Refresh Permissions",
+    "reconnect": "Reconnect",
     "title": "Instagram"
   },
   "coexist": {
@@ -2563,7 +2573,6 @@
     "personas": "Personas",
     "personasDescription": "This setting allows you to set a different name and image for your bot",
     "defaultPersona": "Default Persona",
-    "refreshPermissions": "Refresh Permissions",
     "reconnect": "Reconnect",
     "reconnectDescription": "Always reconnect your bot if your Messenger bot is not responding, or if you are seem any permission error on the error log.",
     "selectFacebookPage": "Select Facebook Page",

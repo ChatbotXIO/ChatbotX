@@ -536,6 +536,16 @@
       "tiktok": "Tài khoản TikTok này đã được kết nối với một workspace khác.",
       "whatsapp": "Số WhatsApp này đã được kết nối với một workspace khác.",
       "zalo": "Zalo OA này đã được kết nối với một workspace khác."
+    },
+    "reconnect": {
+      "success": "Kết nối lại kênh thành công.",
+      "errors": {
+        "notFound": "Không tìm thấy kênh cần kết nối lại.",
+        "pageNotFound": "Tài khoản Facebook vừa uỷ quyền không có quyền truy cập Trang này. Hãy đăng nhập đúng tài khoản và cấp tất cả quyền được yêu cầu.",
+        "accountNotFound": "Tài khoản vừa uỷ quyền không khớp với tài khoản đã kết nối. Hãy đăng nhập đúng tài khoản.",
+        "cancelled": "Kết nối lại đã bị huỷ. Vui lòng thử lại và cấp các quyền được yêu cầu.",
+        "failed": "Kết nối lại thất bại. Vui lòng thử lại."
+      }
     }
   },
   "workspace": {
@@ -2537,7 +2547,7 @@
     "selectInstagramAccount": "Chọn tài khoản Instagram",
     "iceBreakers": "Câu hỏi gợi mở",
     "iceBreakersDescription": "Câu hỏi gợi mở cung cấp cách để người dùng bắt đầu trò chuyện với bot bằng danh sách câu hỏi thường gặp.",
-    "refreshPermissions": "Làm mới quyền",
+    "reconnect": "Kết nối lại",
     "title": "Instagram"
   },
   "coexist": {
@@ -2578,7 +2588,6 @@
     "personas": "Nhân cách",
     "personasDescription": "Thiết lập này cho phép bạn đặt tên và hình ảnh khác cho bot của mình",
     "defaultPersona": "Nhân cách mặc định",
-    "refreshPermissions": "Làm mới quyền truy cập",
     "reconnect": "Kết nối lại",
     "reconnectDescription": "Luôn kết nối lại bot của bạn nếu bot Messenger không phản hồi, hoặc nếu bạn thấy bất kỳ lỗi quyền nào trong nhật ký lỗi.",
     "selectFacebookPage": "Chọn trang Facebook",

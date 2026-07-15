@@ -7,9 +7,9 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
-import { refreshMessengerPermissionsAction } from "../actions/refresh-permissions.action"
+import { reconnectMessengerAction } from "../actions/reconnect.action"
 
-export function MessengerRefreshPermissions({
+export function MessengerReconnect({
   integrationMessenger,
 }: {
   integrationMessenger: IntegrationMessengerModel
@@ -17,20 +17,10 @@ export function MessengerRefreshPermissions({
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
+  // No onSuccess: the action ends in a redirect to the Facebook OAuth dialog.
   const { execute, isPending } = useAction(
-    refreshMessengerPermissionsAction.bind(
-      null,
-      workspaceId,
-      integrationMessenger.id,
-    ),
+    reconnectMessengerAction.bind(null, workspaceId, integrationMessenger.id),
     {
-      onSuccess: () => {
-        toast.success(
-          t("messages.refreshPermissionsSuccessfully", {
-            feature: t("fields.messenger.label"),
-          }),
-        )
-      },
       onError: ({ error }) => {
         if (error.serverError) {
           toast.error(error.serverError)
@@ -47,7 +37,7 @@ export function MessengerRefreshPermissions({
       variant="secondary"
     >
       {isPending && <Loader2Icon className="animate-spin" />}
-      {t("messenger.refreshPermissions")}
+      {t("messenger.reconnect")}
     </Button>
   )
 }

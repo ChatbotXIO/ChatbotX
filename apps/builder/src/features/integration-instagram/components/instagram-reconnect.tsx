@@ -7,9 +7,9 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
-import { refreshInstagramPermissionsAction } from "../actions/refresh-permissions.action"
+import { reconnectInstagramAction } from "../actions/reconnect.action"
 
-export function InstagramRefreshPermissions({
+export function InstagramReconnect({
   integrationInstagram,
 }: {
   integrationInstagram: IntegrationInstagramModel
@@ -17,16 +17,10 @@ export function InstagramRefreshPermissions({
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
+  // No onSuccess: the action ends in a redirect to the OAuth dialog.
   const { execute, isPending } = useAction(
-    refreshInstagramPermissionsAction.bind(
-      null,
-      workspaceId,
-      integrationInstagram.id,
-    ),
+    reconnectInstagramAction.bind(null, workspaceId, integrationInstagram.id),
     {
-      onSuccess: () => {
-        toast.success(t("instagram.refreshPermissions"))
-      },
       onError: ({ error }) => {
         if (error.serverError) {
           toast.error(error.serverError)
@@ -43,7 +37,7 @@ export function InstagramRefreshPermissions({
       variant="secondary"
     >
       {isPending && <Loader2Icon className="animate-spin" />}
-      {t("instagram.refreshPermissions")}
+      {t("instagram.reconnect")}
     </Button>
   )
 }
