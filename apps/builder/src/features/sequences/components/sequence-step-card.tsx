@@ -103,9 +103,9 @@ export function SequenceStepCard({
         <Card className="py-2 shadow-none">
           <CardContent>
             {/* Main row */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               {/* Column 1: Switch + Label + Flow Selector */}
-              <div className="flex min-w-[320px] flex-1 items-center gap-2">
+              <div className="order-1 flex min-w-55 flex-1 items-center gap-2">
                 <Switch
                   checked={isActive}
                   className="cursor-pointer"
@@ -135,21 +135,25 @@ export function SequenceStepCard({
               </div>
 
               {/* Column 2: Delay Selector */}
-              <DelaySelector
-                delayUnit={delayUnit}
-                delayValue={delayValue}
-                isSaving={isSaving}
-                onDelayUnitChange={handleDelayUnitChange}
-                onDelayValueChange={handleDelayValueChange}
-                onSpecificDateTimeChange={handleSpecificDateTimeChange}
-                specificDateTime={specificDateTime}
-              />
+              <div className="@6xl:order-2 order-3">
+                <DelaySelector
+                  delayUnit={delayUnit}
+                  delayValue={delayValue}
+                  isSaving={isSaving}
+                  onDelayUnitChange={handleDelayUnitChange}
+                  onDelayValueChange={handleDelayValueChange}
+                  onSpecificDateTimeChange={handleSpecificDateTimeChange}
+                  specificDateTime={specificDateTime}
+                />
+              </div>
 
               {/* Column 3: Stats */}
-              <SequenceStepStats sequenceId={sequenceId} stepId={step?.id} />
+              <div className="@6xl:order-3 order-4 @6xl:w-auto w-full min-w-0">
+                <SequenceStepStats sequenceId={sequenceId} stepId={step?.id} />
+              </div>
 
               {/* Column 4: Actions */}
-              <div className="flex items-center gap-1">
+              <div className="@6xl:order-4 order-2 @6xl:ml-0 ml-auto flex items-center gap-1">
                 <Button
                   className="h-8 w-8 hover:bg-muted hover:text-primary"
                   onClick={() =>
