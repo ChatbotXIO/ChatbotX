@@ -105,6 +105,21 @@ describe("sendMessageEditorMenus — template message consolidation", () => {
     expect(labels).not.toContain(messengerInbox.name)
   })
 
+  it("shows only the 5 allowed steps when channel is tiktok", () => {
+    const items = sendMessageEditorMenus(
+      t,
+      buildMenuData(channelTypes.enum.tiktok),
+    )
+
+    expect(items.map((item) => item.label)).toEqual([
+      "flows.actions.sendText",
+      "flows.actions.sendImage",
+      "flows.actions.getUserData",
+      "flows.actions.typing",
+      "flows.actions.actions",
+    ])
+  })
+
   it("shows only Messenger inboxes when channel is messenger", () => {
     const items = sendMessageEditorMenus(
       t,
