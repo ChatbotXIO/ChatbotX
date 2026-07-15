@@ -51,12 +51,18 @@ export function convertFacebookButtons({
   buttons,
   metadata,
   contactInboxId,
+  transformLabel,
 }: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
   contactInboxId?: string
+  /**
+   * Optionally rewrites each button's label before templating (used by the
+   * Messenger Ads JSON converter to apply Facebook's variable substitutions).
+   */
+  transformLabel?: (label: string) => string
 }): FacebookButton[] | undefined {
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
@@ -64,7 +70,9 @@ export function convertFacebookButtons({
       getButtonTemplate({
         flowId,
         flowVersionId,
-        button,
+        button: transformLabel
+          ? { ...button, label: transformLabel(button.label) }
+          : button,
         metadata,
         contactInboxId,
       }),

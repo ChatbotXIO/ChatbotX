@@ -34,6 +34,7 @@ import {
   HistoryIcon,
   LinkIcon,
   Loader2Icon,
+  MegaphoneIcon,
   RefreshCcwIcon,
   RotateCcwIcon,
   RotateCwIcon,
@@ -56,6 +57,7 @@ import {
 } from "../schemas/action"
 import AnalyticsFlow from "./components/analytics-flow"
 import { FlowVersionsDialog } from "./components/flow-versions-dialog"
+import { MessengerAdsJsonDialog } from "./components/messenger-ads-json-dialog"
 import { RenameFlowDialog } from "./components/rename-flow"
 import {
   isEditableTarget,
@@ -68,12 +70,14 @@ export function FlowEditToolbar({
   workspaceId,
   flow,
   canRevertToPublished,
+  hasPublishedVersion,
   cancelAutosave,
   markSaved,
 }: {
   workspaceId: string
   flow: FlowModel
   canRevertToPublished: boolean
+  hasPublishedVersion: boolean
   cancelAutosave: (() => void) | null
   markSaved: ((nodes: Node[], edges: Edge[]) => void) | null
 }) {
@@ -88,6 +92,7 @@ export function FlowEditToolbar({
     | "duplicate"
     | "getDraftLink"
     | "getPublishedLink"
+    | "getMessengerAdsJson"
     | "analytics"
     | "flowVersions"
     | "delete"
@@ -157,6 +162,12 @@ export function FlowEditToolbar({
     {
       onSuccess: () => {
         toast.success(t("messages.publishVersionSuccess"))
+        // Publishing makes the canvas the published version. Clear the dirty
+        // baseline and refresh server state so gates that depend on
+        // "published & clean" (the Messenger Ads JSON action, the revert
+        // button) update immediately instead of staying stale until reload.
+        markSaved?.(getNodes(), getEdges())
+        router.refresh()
       },
     },
   )
@@ -201,6 +212,17 @@ export function FlowEditToolbar({
       toast.error(t("messages.flowConfigIncomplete"))
     }
     setIsValidating(false)
+  }
+
+  const onClickGetMessengerAdsJson = () => {
+    // The ad JSON must reflect a fully published flow. Detect "never published"
+    // or "unpublished changes" client-side and surface it as a toast — no API
+    // call, and no dialog flashing open before an error popup replaces it.
+    if (!hasPublishedVersion || canRevertToPublished) {
+      toast.error(t("messages.messengerAdsNotPublished"))
+      return
+    }
+    setAction("getMessengerAdsJson")
   }
 
   return (
@@ -296,6 +318,10 @@ export function FlowEditToolbar({
               <LinkIcon />
               {t("actions.getPublishedLink")}
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={onClickGetMessengerAdsJson}>
+              <MegaphoneIcon />
+              {t("actions.getMessengerAdsJson")}
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -371,6 +397,13 @@ export function FlowEditToolbar({
           type: "flow",
           flowId: flow.id,
         }}
+      />
+
+      <MessengerAdsJsonDialog
+        flowId={flow.id}
+        onOpenChange={() => setAction(null)}
+        open={action === "getMessengerAdsJson"}
+        workspaceId={workspaceId}
       />
 
       <FlowVersionsDialog
