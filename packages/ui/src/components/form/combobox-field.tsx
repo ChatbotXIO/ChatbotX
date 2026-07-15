@@ -131,7 +131,9 @@ export function ComboboxField<T extends FieldValues>({
                 role="combobox"
                 variant="outline"
               >
-                {selectedLabel || placeholder || "Please select..."}
+                <span className="truncate">
+                  {selectedLabel || placeholder || "Please select..."}
+                </span>
                 <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>

@@ -79,7 +79,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
 
   return (
     <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <div className="mx- container py-1">
+      <div className="@container container mx-auto w-full">
         <Breadcrumb className="mb-4">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -105,10 +105,10 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
                 <div className="grid">
                   <div className="space-y-4 pl-4">
                     <div className="flex flex-col gap-6 rounded-xl py-2 text-card-foreground shadow-none">
-                      <div className="flex items-center gap-4 px-6 pl-4 text-muted-foreground text-xs">
-                        <div className="min-w-[320px] flex-1" />
-                        <div className="w-[280px]" />
-                        <div className="ml-2 flex w-[400px] items-center justify-between gap-4 text-xs">
+                      <div className="@6xl:flex hidden items-center gap-4 px-6 pl-4 text-muted-foreground text-xs">
+                        <div className="min-w-55 flex-1" />
+                        <div className="w-70" />
+                        <div className="ml-2 flex w-100 items-center justify-between gap-4 text-xs">
                           <span className="w-12 text-center">
                             {t("sequences.stats.sent")}
                           </span>
@@ -125,7 +125,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
                             {t("sequences.stats.failed")}
                           </span>
                         </div>
-                        <div className="w-[68px]" />
+                        <div className="w-17" />
                       </div>
                     </div>
                   </div>
