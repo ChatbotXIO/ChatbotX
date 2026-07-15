@@ -1,5 +1,33 @@
+import { isSmartResponseDelayOption } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { allCountryCodes, allLanguageCodes, allTimezoneCodes } from "./types"
+
+export const SMART_RESPONSE_DELAY_NONE_VALUE = "none"
+
+const smartResponseDelaySecondsSchema = z
+  .string()
+  .nullish()
+  .transform((value, ctx) => {
+    if (
+      value === SMART_RESPONSE_DELAY_NONE_VALUE ||
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return null
+    }
+
+    const delaySeconds = Number(value)
+    if (isSmartResponseDelayOption(delaySeconds)) {
+      return delaySeconds
+    }
+
+    ctx.addIssue({
+      code: "custom",
+      message: "Invalid smart response delay",
+    })
+    return z.NEVER
+  })
 
 export const updateWorkspaceBasicRequest = z.object({
   name: z.string().min(1).max(255),
@@ -15,6 +43,7 @@ export const updateWorkspaceAdvancedRequest = z.object({
   timezone: z.enum(allTimezoneCodes as [string, ...string[]]),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   developmentMode: z.boolean(),
+  smartResponseDelaySeconds: smartResponseDelaySecondsSchema,
 })
 export type UpdateWorkspaceAdvancedRequest = z.infer<
   typeof updateWorkspaceAdvancedRequest

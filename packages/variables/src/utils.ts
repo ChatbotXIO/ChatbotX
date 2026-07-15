@@ -35,6 +35,7 @@ import {
   getContactLastInputType,
 } from "./helpers/last-input"
 import { getChatHistory } from "./helpers/message"
+import { getQueuedMessages } from "./helpers/queued-messages"
 import { toPublicStorageUrl } from "./helpers/storage-url"
 import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
@@ -288,6 +289,8 @@ export const getSystemFieldValue = async (
       return await getChatHistory(contact.id, 50, true)
     case systemFieldTypes.enum.chat_history_details_large:
       return await getChatHistory(contact.id, 200, true)
+    case systemFieldTypes.enum.ai_queued_messages:
+      return await getQueuedMessages(context)
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id)
     case systemFieldTypes.enum.avatar:

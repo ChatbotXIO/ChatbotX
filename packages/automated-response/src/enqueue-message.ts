@@ -1,18 +1,28 @@
+import { workspaceService } from "@chatbotx.io/business"
 import { simpleQueue } from "@chatbotx.io/redis"
 import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
-import { env } from "./keys"
 import { logger } from "./lib/logger"
+import { resolveAutomatedResponseTiming } from "./smart-delay"
 
 export const enqueueMessage = async (props: {
   conversationId: string
   contactInboxId: string
   messageId: string
+  workspaceId: string
 }) => {
   const key = getKey(props)
+  let timing = resolveAutomatedResponseTiming(null)
+
+  try {
+    const workspace = await workspaceService.findById({ id: props.workspaceId })
+    timing = resolveAutomatedResponseTiming(workspace)
+  } catch (error) {
+    logger.warn(error, "Smart delay lookup failed; using default timing")
+  }
 
   try {
     await Promise.all([
@@ -29,17 +39,17 @@ export const enqueueMessage = async (props: {
         {
           deduplication: {
             id: key,
-            ttl: env.AUTOMATED_RESPONSE_TTL_SECONDS * 1000,
+            ttl: timing.ttlSeconds * 1000,
             extend: true,
             replace: true,
           },
-          delay: env.AUTOMATED_RESPONSE_DELAY_SECONDS * 1000,
+          delay: timing.delaySeconds * 1000,
         },
       ),
       simpleQueue.enqueue(
         key,
         props.messageId,
-        env.AUTOMATED_RESPONSE_TTL_SECONDS * 5000, // keep the key longger than process job
+        timing.ttlSeconds * 5000, // keep the key longer than process job
       ),
     ])
   } catch (error) {

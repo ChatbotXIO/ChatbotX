@@ -1,5 +1,6 @@
 "use client"
 
+import { SMART_RESPONSE_DELAY_OPTIONS } from "@chatbotx.io/database/partials"
 import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -21,7 +22,25 @@ import {
   allTimezoneOptions,
   UNKNOWN_COUNTRY,
 } from "./schema/types"
-import { updateWorkspaceAdvancedRequest } from "./schema/update-workspace-schema"
+import {
+  SMART_RESPONSE_DELAY_NONE_VALUE,
+  updateWorkspaceAdvancedRequest,
+} from "./schema/update-workspace-schema"
+
+const getSmartResponseDelayOptionLabel = (
+  delaySeconds: number,
+  t: ReturnType<typeof useTranslations>,
+) => {
+  if (delaySeconds < 60) {
+    return t("fields.smartResponseDelaySeconds.seconds", {
+      count: delaySeconds,
+    })
+  }
+
+  return t("fields.smartResponseDelaySeconds.minutes", {
+    count: delaySeconds / 60,
+  })
+}
 
 export function UpdateWorkspaceAdvancedForm({
   workspace,
@@ -58,6 +77,10 @@ export function UpdateWorkspaceAdvancedForm({
           timezone: workspace.timezone,
           brandColor: workspace.brandColor,
           developmentMode: workspace.developmentMode,
+          smartResponseDelaySeconds:
+            workspace.smartResponseDelaySeconds == null
+              ? SMART_RESPONSE_DELAY_NONE_VALUE
+              : String(workspace.smartResponseDelaySeconds),
         },
       },
       errorMapProps: {},
@@ -134,6 +157,26 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.developmentMode.label")}
             >
               <SwitchField className="mt-1.5" name="developmentMode" />
+            </SettingRow>
+
+            <SettingRow
+              description={t("fields.smartResponseDelaySeconds.description")}
+              label={t("fields.smartResponseDelaySeconds.label")}
+            >
+              <SelectField
+                name="smartResponseDelaySeconds"
+                options={[
+                  {
+                    value: SMART_RESPONSE_DELAY_NONE_VALUE,
+                    label: t("fields.smartResponseDelaySeconds.none"),
+                  },
+                  ...SMART_RESPONSE_DELAY_OPTIONS.map((delaySeconds) => ({
+                    value: String(delaySeconds),
+                    label: getSmartResponseDelayOptionLabel(delaySeconds, t),
+                  })),
+                ]}
+                placeholder={t("actions.pleaseSelect")}
+              />
             </SettingRow>
 
             <div className="mt-4 flex flex-start">

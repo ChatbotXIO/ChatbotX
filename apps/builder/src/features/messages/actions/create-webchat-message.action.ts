@@ -339,6 +339,7 @@ export async function handleCreateWebchatMessage({
           conversationId: conversation.id,
           contactInboxId: contactInbox.id,
           messageId: newMessage.id,
+          workspaceId: conversation.workspaceId,
         }),
       )
     }

@@ -1,4 +1,11 @@
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core"
 import {
   bigintAsString,
   ROOT_TENANT_ID,
@@ -19,6 +26,7 @@ export const workspaceModel = pgTable(
     timezone: text().notNull().default("UTC"),
     brandColor: text().notNull().default("#016DFF"),
     developmentMode: boolean().default(false).notNull(),
+    smartResponseDelaySeconds: integer(),
     isActive: boolean().notNull().default(true),
     startTime: text(),
     endTime: text(),

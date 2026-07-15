@@ -718,6 +718,9 @@
     "aiAgent": {
       "label": "AI Agent"
     },
+    "aiQueuedMessages": {
+      "label": "AI Queued Messages"
+    },
     "aiFile": {
       "label": "AI File"
     },
@@ -870,6 +873,13 @@
     "defaultReply": {
       "description": "It is the default response that your workspace will send to users when the workspace doesn't know how to respond to the user message.",
       "label": "Default Reply"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Waits for the contact to stop sending messages before replying. Each new message resets the timer, merges the burst into one AI reply, and also delays keyword automated responses.",
+      "label": "Smart Response Delay",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}",
+      "none": "None",
+      "seconds": "{count, plural, one {# second} other {# seconds}}"
     },
     "delayType": {
       "label": "Delay Type",

@@ -598,6 +598,7 @@ export async function runFlowPostback(
           conversationId: conversation.id,
           contactInboxId: contactInbox.id,
           messageId: data.messageId,
+          workspaceId: conversation.workspaceId,
         })
       }
       return
@@ -762,6 +763,7 @@ export async function runFlowQuickReply(
           conversationId: conversation.id,
           contactInboxId: contactInbox.id,
           messageId: data.messageId,
+          workspaceId: conversation.workspaceId,
         })
       }
       return

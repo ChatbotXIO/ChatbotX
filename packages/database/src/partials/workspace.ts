@@ -1,5 +1,17 @@
 import { z } from "zod"
 
+export const SMART_RESPONSE_DELAY_OPTIONS = [
+  3, 5, 10, 15, 20, 30, 45, 60, 120, 180,
+] as const
+export type SmartResponseDelayOption =
+  (typeof SMART_RESPONSE_DELAY_OPTIONS)[number]
+
+export const isSmartResponseDelayOption = (
+  value: unknown,
+): value is SmartResponseDelayOption =>
+  typeof value === "number" &&
+  (SMART_RESPONSE_DELAY_OPTIONS as readonly number[]).includes(value)
+
 export const workspaceMemberRoles = z.enum(["owner", "agent"])
 export type WorkspaceMemberRole = z.infer<typeof workspaceMemberRoles>
 
