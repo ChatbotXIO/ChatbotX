@@ -718,6 +718,9 @@
     "aiAgent": {
       "label": "AI Agent"
     },
+    "aiQueuedMessages": {
+      "label": "AI Queued Messages"
+    },
     "aiFile": {
       "label": "AI File"
     },
@@ -870,6 +873,13 @@
     "defaultReply": {
       "description": "It is the default response that your workspace will send to users when the workspace doesn't know how to respond to the user message.",
       "label": "Default Reply"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Set how long the bot waits before replying after the user’s last message. If the user sends another message, the timer resets and messages are queued into a single response.",
+      "label": "Bot reply delay",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}",
+      "none": "None",
+      "seconds": "{count, plural, one {# second} other {# seconds}}"
     },
     "delayType": {
       "label": "Delay Type",

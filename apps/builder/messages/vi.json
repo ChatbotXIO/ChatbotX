@@ -728,6 +728,9 @@
     "aiAgent": {
       "label": "AI Agent"
     },
+    "aiQueuedMessages": {
+      "label": "Tin nhắn chờ AI"
+    },
     "aiFile": {
       "label": "AI File"
     },
@@ -877,6 +880,13 @@
     "defaultReply": {
       "description": "Đây là phản hồi mặc định mà workspace của bạn sẽ gửi cho người dùng khi workspace không biết cách trả lời tin nhắn của người dùng.",
       "label": "Trả lời mặc định"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Đặt thời gian bot chờ trước khi trả lời sau khi người dùng gửi tin nhắn cuối cùng. Nếu người dùng gửi tin nhắn khác, bộ đếm sẽ được đặt lại và các tin nhắn được xếp hàng thành một phản hồi duy nhất.",
+      "label": "Trì hoãn phản hồi bot",
+      "minutes": "{count, plural, one {# phút} other {# phút}}",
+      "none": "Không",
+      "seconds": "{count, plural, one {# giây} other {# giây}}"
     },
     "delayType": {
       "label": "Loại trì hoãn",

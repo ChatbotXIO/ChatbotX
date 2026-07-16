@@ -1859,6 +1859,9 @@ importers:
       '@chatbotx.io/analytics':
         specifier: workspace:*
         version: link:../analytics
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../business
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database

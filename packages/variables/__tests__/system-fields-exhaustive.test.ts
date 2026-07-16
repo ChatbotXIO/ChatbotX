@@ -63,6 +63,10 @@ vi.mock("../src/helpers/message", () => ({
   getChatHistory: vi.fn().mockResolvedValue("history"),
 }))
 
+vi.mock("../src/helpers/queued-messages", () => ({
+  getQueuedMessages: vi.fn().mockResolvedValue("queued messages"),
+}))
+
 vi.mock("../src/helpers/last-input", () => ({
   getContactLastInput: vi.fn().mockResolvedValue("hello"),
   getContactLastInputType: vi.fn().mockResolvedValue("text"),

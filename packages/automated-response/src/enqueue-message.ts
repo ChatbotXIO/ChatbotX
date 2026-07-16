@@ -1,18 +1,59 @@
+import { aiAgentService, workspaceService } from "@chatbotx.io/business"
+import { isSmartResponseDelayOption } from "@chatbotx.io/database/partials"
 import { simpleQueue } from "@chatbotx.io/redis"
 import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
-import { env } from "./keys"
+import { matchesAnyKeywordRule } from "./keyword-match"
 import { logger } from "./lib/logger"
+import {
+  isSmartDelayEligible,
+  resolveAutomatedResponseTiming,
+} from "./smart-delay"
+import { automatedResponseService } from "./utils"
 
 export const enqueueMessage = async (props: {
   conversationId: string
   contactInboxId: string
   messageId: string
+  messageText?: string
+  workspaceId: string
 }) => {
   const key = getKey(props)
+  let timing = resolveAutomatedResponseTiming(null)
+
+  try {
+    const workspace = await workspaceService.findById({ id: props.workspaceId })
+    const workspaceDelay = workspace?.smartResponseDelaySeconds
+
+    if (isSmartResponseDelayOption(workspaceDelay)) {
+      const [keywordRules, aiAgent] = await Promise.all([
+        props.messageText
+          ? automatedResponseService.getAll(props.workspaceId)
+          : Promise.resolve([]),
+        aiAgentService.findDefault(props.workspaceId),
+      ])
+      const matchesKeyword = props.messageText
+        ? matchesAnyKeywordRule(props.messageText, keywordRules)
+        : false
+
+      timing = resolveAutomatedResponseTiming(
+        isSmartDelayEligible({
+          hasAiAgent: Boolean(aiAgent),
+          matchesKeyword,
+          workspaceDelay,
+        })
+          ? workspace
+          : null,
+      )
+    } else {
+      timing = resolveAutomatedResponseTiming(workspace)
+    }
+  } catch (error) {
+    logger.warn(error, "Smart delay lookup failed; using default timing")
+  }
 
   try {
     await Promise.all([
@@ -29,17 +70,17 @@ export const enqueueMessage = async (props: {
         {
           deduplication: {
             id: key,
-            ttl: env.AUTOMATED_RESPONSE_TTL_SECONDS * 1000,
+            ttl: timing.ttlSeconds * 1000,
             extend: true,
             replace: true,
           },
-          delay: env.AUTOMATED_RESPONSE_DELAY_SECONDS * 1000,
+          delay: timing.delaySeconds * 1000,
         },
       ),
       simpleQueue.enqueue(
         key,
         props.messageId,
-        env.AUTOMATED_RESPONSE_TTL_SECONDS * 5000, // keep the key longger than process job
+        timing.ttlSeconds * 5000, // keep the key longer than process job
       ),
     ])
   } catch (error) {

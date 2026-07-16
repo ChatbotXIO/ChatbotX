@@ -1,3 +1,4 @@
+import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   broadcastToWorkspaceParty,
   buildContext,
@@ -237,8 +238,8 @@ export const receiveMessage = async (
       createdMessage = newMessage
 
       if (postbackAction && isWorkspaceActive) {
-        await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
-          type: IntegrationJobAction.runFlowPostback,
+        await automatedResponseService.enqueueFlowAction({
+          kind: "postback",
           data: {
             conversationId: conversation,
             contactInboxId: contactInbox,
@@ -256,8 +257,8 @@ export const receiveMessage = async (
       }
 
       if (quickReplyAction && isWorkspaceActive) {
-        await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
-          type: IntegrationJobAction.runFlowQuickReply,
+        await automatedResponseService.enqueueFlowAction({
+          kind: "quickReply",
           data: {
             conversationId: conversation,
             contactInboxId: contactInbox,

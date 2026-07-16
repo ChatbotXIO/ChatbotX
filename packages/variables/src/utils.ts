@@ -35,6 +35,7 @@ import {
   getContactLastInputType,
 } from "./helpers/last-input"
 import { getChatHistory } from "./helpers/message"
+import { getQueuedMessages } from "./helpers/queued-messages"
 import { toPublicStorageUrl } from "./helpers/storage-url"
 import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
@@ -74,7 +75,7 @@ const capitalizeFirstLetter = (value: string | null): string | null => {
 }
 
 export const extractVariables = (text: string): string[] => {
-  const regex = /\{\{(\w+)\}\}/g
+  const regex = /\{\{([\w.]+)\}\}/g
   return [...new Set(Array.from(text.matchAll(regex), (match) => match[1]))]
 }
 
@@ -83,7 +84,7 @@ export const interpolate = (
   mapping: Record<string, string>,
 ): string =>
   text.replace(
-    /\{\{(\w+)\}\}/g,
+    /\{\{([\w.]+)\}\}/g,
     (match, variable) => mapping[variable] ?? match,
   )
 
@@ -288,6 +289,8 @@ export const getSystemFieldValue = async (
       return await getChatHistory(contact.id, 50, true)
     case systemFieldTypes.enum.chat_history_details_large:
       return await getChatHistory(contact.id, 200, true)
+    case systemFieldTypes.enum["ai.queued.messages"]:
+      return await getQueuedMessages(context)
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id)
     case systemFieldTypes.enum.avatar:

@@ -190,8 +190,8 @@ export async function handleCreateWebchatMessage({
   }
 
   if ("postback" in parsedInput && parsedInput.postback) {
-    await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
-      type: IntegrationJobAction.runFlowPostback,
+    await automatedResponseService.enqueueFlowAction({
+      kind: "postback",
       data: {
         conversationId: conversation,
         contactInboxId: contactInbox,
@@ -339,6 +339,8 @@ export async function handleCreateWebchatMessage({
           conversationId: conversation.id,
           contactInboxId: contactInbox.id,
           messageId: newMessage.id,
+          messageText: newMessage.text,
+          workspaceId: conversation.workspaceId,
         }),
       )
     }

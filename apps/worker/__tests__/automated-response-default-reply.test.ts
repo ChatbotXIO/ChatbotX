@@ -3,6 +3,7 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
+import { contactVariableService } from "@chatbotx.io/variables"
 import { type ModelMessage, streamText } from "ai"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { triggerDefaultReplyFlow } from "../src/integration/handlers/automated-response/default-reply"
@@ -224,6 +225,7 @@ beforeEach(() => {
   warnMock.mockClear()
   errorMock.mockClear()
   vi.mocked(streamText).mockClear()
+  vi.mocked(contactVariableService.replaceAll).mockClear()
 })
 
 // ---------------------------------------------------------------------------
@@ -331,6 +333,21 @@ describe("triggerDefaultReplyFlow", () => {
 // ---------------------------------------------------------------------------
 
 describe("replyByAI — default reply flow fallback", () => {
+  test("resolves queued-message variables in the AI agent prompt", async () => {
+    await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({
+        prompt: "Answer this burst:\n{{ai.queued.messages}}",
+      }),
+      defaultReplyFlowId: null,
+    })
+
+    expect(contactVariableService.replaceAll).toHaveBeenCalledWith({
+      text: "Answer this burst:\n{{ai.queued.messages}}",
+      variables: expect.anything(),
+    })
+  })
+
   test("triggers the default reply flow instead of the canned fallback text when configured and valid", async () => {
     findByFlowMock.mockResolvedValueOnce({
       id: "flow-1",

@@ -22,9 +22,15 @@ vi.mock("@chatbotx.io/variables", () => ({
     async (_contactId: string, value: unknown, _source: unknown) => value,
   ),
   extractVariables: vi.fn((text: string) => {
-    const matches = [...text.matchAll(/\{\{(\w+)\}\}/g)]
+    const matches = [...text.matchAll(/\{\{([\w.]+)\}\}/g)]
     return [...new Set(matches.map((match) => match[1]))]
   }),
+  interpolate: vi.fn((text: string, mapping: Record<string, string>) =>
+    text.replace(
+      /\{\{([\w.]+)\}\}/g,
+      (match, variable) => mapping[variable] ?? match,
+    ),
+  ),
   getSystemFieldValue: vi.fn(async () => null),
   contactVariableService: {
     getAll: vi.fn(async () => ({

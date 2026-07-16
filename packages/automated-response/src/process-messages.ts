@@ -19,6 +19,7 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
+import { keywordMatchesText } from "./keyword-match"
 import { logger } from "./lib/logger"
 import { automatedResponseService } from "./utils"
 
@@ -96,9 +97,7 @@ const replyByAutomatedResponse = async (props: {
     }
     const text = message.text.toLowerCase()
     for (const automatedResponse of allAutomatedResponses) {
-      const matched = (automatedResponse.keywords as string[])
-        .map((v) => v.toLowerCase())
-        .some((v) => text.includes(v))
+      const matched = keywordMatchesText(automatedResponse.keywords, text)
 
       if (!matched) {
         continue

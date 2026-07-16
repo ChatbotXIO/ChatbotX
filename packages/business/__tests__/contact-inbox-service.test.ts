@@ -395,4 +395,33 @@ describe("contactInboxService timestamp helpers", () => {
       cacheTags: ["contacts:contact-1:contact-inboxes"],
     })
   })
+
+  test("bulkUpdateTracking clamps timestamps with null-ignoring GREATEST/LEAST", async () => {
+    await contactInboxService.bulkUpdateTracking({
+      rows: [
+        {
+          contactInboxId: "contact-inbox-1",
+          contactId: "contact-1",
+          workspaceId: "workspace-1",
+          firstInteractionAt: new Date("2026-07-01T00:00:00.000Z"),
+          lastMessageAt: new Date("2026-07-02T00:00:00.000Z"),
+          lastIncomingMessageAt: null,
+        },
+      ],
+    })
+
+    const statement = (
+      mockDbExecute.mock.calls[0][0] as { strings: string[] }
+    ).strings.join(" ")
+
+    // Postgres GREATEST/LEAST ignore NULLs, so they keep the existing value
+    // when the incoming one is NULL and vice versa — same semantics the
+    // previous CASE expressions guarded by hand.
+    expect(statement).toContain('LEAST(t."firstInteractionAt", u.first_ts)')
+    expect(statement).toContain('GREATEST(t."lastMessageAt", u.message_ts)')
+    expect(statement).toContain(
+      'GREATEST(t."lastIncomingMessageAt", u.incoming_ts)',
+    )
+    expect(statement).not.toContain("CASE")
+  })
 })
