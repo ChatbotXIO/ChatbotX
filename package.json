@@ -16,16 +16,16 @@
     "check:unused": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.16",
+    "@biomejs/biome": "^2.5.4",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "dependency-cruiser": "^17.3.10",
-    "knip": "^6.25.0",
-    "lefthook": "^2.1.6",
-    "tsx": "^4.23.0",
-    "turbo": "^2.10.4",
+    "knip": "^6.27.0",
+    "lefthook": "^2.1.10",
+    "tsx": "^4.23.1",
+    "turbo": "^2.10.5",
     "typescript": "^5",
-    "ultracite": "7.8.3",
+    "ultracite": "7.9.4",
     "vitest": "^4.1.0",
     "zod": "^4.3.6"
   },
