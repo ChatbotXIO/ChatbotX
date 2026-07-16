@@ -8,7 +8,9 @@ vi.mock("../src/keys", () => ({
   },
 }))
 
-const { resolveAutomatedResponseTiming } = await import("../src/smart-delay")
+const { isSmartDelayEligible, resolveAutomatedResponseTiming } = await import(
+  "../src/smart-delay"
+)
 
 describe("resolveAutomatedResponseTiming", () => {
   test("uses v1 env timing when workspace is null or undefined", () => {
@@ -44,5 +46,47 @@ describe("resolveAutomatedResponseTiming", () => {
         ttlSeconds: 2,
       })
     }
+  })
+})
+
+describe("isSmartDelayEligible", () => {
+  test("allows smart delay only for configured AI responses without keyword matches", () => {
+    expect(
+      isSmartDelayEligible({
+        hasAiAgent: true,
+        matchesKeyword: false,
+        workspaceDelay: 30,
+      }),
+    ).toBe(true)
+  })
+
+  test("rejects when the workspace delay is not configured", () => {
+    expect(
+      isSmartDelayEligible({
+        hasAiAgent: true,
+        matchesKeyword: false,
+        workspaceDelay: null,
+      }),
+    ).toBe(false)
+  })
+
+  test("rejects keyword-matched messages", () => {
+    expect(
+      isSmartDelayEligible({
+        hasAiAgent: true,
+        matchesKeyword: true,
+        workspaceDelay: 30,
+      }),
+    ).toBe(false)
+  })
+
+  test("rejects workspaces without a default AI agent", () => {
+    expect(
+      isSmartDelayEligible({
+        hasAiAgent: false,
+        matchesKeyword: false,
+        workspaceDelay: 30,
+      }),
+    ).toBe(false)
   })
 })

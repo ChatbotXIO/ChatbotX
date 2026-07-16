@@ -20,7 +20,7 @@ import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import type { PaginatedResult } from "../types"
 
-const AI_AGENTS_LIST_CACHE_TTL_SECONDS = 5 * 60
+const AI_AGENT_CACHE_TTL_SECONDS = 5 * 60
 
 type FindByProps = {
   tx?: DatabaseClient
@@ -28,6 +28,7 @@ type FindByProps = {
     id: RelationsFieldFilter<string>
     workspaceId: RelationsFieldFilter<string>
     name: RelationsFieldFilter<string>
+    isDefault: RelationsFieldFilter<boolean>
   }>
 }
 
@@ -93,6 +94,10 @@ class AiAgentService extends BaseService {
     return `ai-agents:list:${key}`
   }
 
+  private getDefaultCacheKey(workspaceId: string): string {
+    return `ai-agents:default:${workspaceId}`
+  }
+
   async listAIAgents(
     input: ListAIAgentsRequest,
   ): Promise<PaginatedResult<AIAgentModel>> {
@@ -120,7 +125,7 @@ class AiAgentService extends BaseService {
         return { data, pageCount: Math.ceil(total / input.perPage) }
       },
       {
-        ttl: AI_AGENTS_LIST_CACHE_TTL_SECONDS,
+        ttl: AI_AGENT_CACHE_TTL_SECONDS,
         tags: [this.getWorkspaceCacheTag(input.workspaceId)],
       },
     )
@@ -129,6 +134,23 @@ class AiAgentService extends BaseService {
   async findBy(props: FindByProps): Promise<AIAgentModel | undefined> {
     const { tx = db, where } = props
     return await tx.query.aiAgentModel.findFirst({ where })
+  }
+
+  async findDefault(workspaceId: string): Promise<AIAgentModel | undefined> {
+    return await withCache(
+      this.getDefaultCacheKey(workspaceId),
+      () =>
+        this.findBy({
+          where: {
+            workspaceId,
+            isDefault: true,
+          },
+        }),
+      {
+        ttl: AI_AGENT_CACHE_TTL_SECONDS,
+        tags: [this.getWorkspaceCacheTag(workspaceId)],
+      },
+    )
   }
 
   async create(

@@ -415,6 +415,7 @@ describe("handleCreateWebchatMessage", () => {
       conversationId: "conv-1",
       contactInboxId: "ci-1",
       messageId: "msg-1",
+      messageText: "hello",
       workspaceId: "ws-1",
     })
   })

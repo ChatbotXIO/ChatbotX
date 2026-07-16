@@ -114,7 +114,7 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInput.label",
   },
   {
-    id: systemFieldTypes.enum.ai_queued_messages,
+    id: systemFieldTypes.enum["ai.queued.messages"],
     type: "shortText",
     labelKey: "fields.aiQueuedMessages.label",
   },

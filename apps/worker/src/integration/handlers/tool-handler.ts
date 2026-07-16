@@ -22,6 +22,7 @@ import {
   contactVariableService,
   extractVariables,
   getSystemFieldValue,
+  interpolate,
   resolveContactVariablesDeep,
 } from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
@@ -387,10 +388,7 @@ async function resolveJsonBodyVariables(
     }
   }
 
-  return jsonBody.replace(
-    /\{\{(\w+)\}\}/g,
-    (match, variable) => mapping[variable] ?? match,
-  )
+  return interpolate(jsonBody, mapping)
 }
 
 export async function externalRequest({

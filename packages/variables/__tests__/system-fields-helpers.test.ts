@@ -122,7 +122,7 @@ describe("getSystemFieldValue — helper-backed fields", () => {
     mocks.getQueuedMessages.mockResolvedValue("first\nsecond")
 
     await expect(
-      getSystemFieldValue(context, systemFieldTypes.enum.ai_queued_messages),
+      getSystemFieldValue(context, systemFieldTypes.enum["ai.queued.messages"]),
     ).resolves.toBe("first\nsecond")
 
     expect(mocks.getQueuedMessages).toHaveBeenCalledWith(context)
@@ -213,7 +213,7 @@ describe("getSystemFieldValue — helper-backed fields", () => {
   test("a null from any helper passes straight through", async () => {
     const nullable: [string, ReturnType<typeof vi.fn>][] = [
       [systemFieldTypes.enum.chat_history, mocks.getChatHistory],
-      [systemFieldTypes.enum.ai_queued_messages, mocks.getQueuedMessages],
+      [systemFieldTypes.enum["ai.queued.messages"], mocks.getQueuedMessages],
       [systemFieldTypes.enum.user_tags, mocks.listContactTagsString],
       [systemFieldTypes.enum.user_notes, mocks.listContactNotesString],
       [systemFieldTypes.enum.last_user_note, mocks.getLatestContactNoteString],

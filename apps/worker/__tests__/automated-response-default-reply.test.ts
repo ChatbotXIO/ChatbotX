@@ -337,13 +337,13 @@ describe("replyByAI — default reply flow fallback", () => {
     await replyByAI({
       ...baseProps,
       aiAgent: makeAIAgent({
-        prompt: "Answer this burst:\n{{ai_queued_messages}}",
+        prompt: "Answer this burst:\n{{ai.queued.messages}}",
       }),
       defaultReplyFlowId: null,
     })
 
     expect(contactVariableService.replaceAll).toHaveBeenCalledWith({
-      text: "Answer this burst:\n{{ai_queued_messages}}",
+      text: "Answer this burst:\n{{ai.queued.messages}}",
       variables: expect.anything(),
     })
   })

@@ -7,6 +7,19 @@ type AutomatedResponseTiming = {
   ttlSeconds: number
 }
 
+export type AutomatedResponseDelayEligibility = {
+  workspaceDelay: unknown
+  matchesKeyword: boolean
+  hasAiAgent: boolean
+}
+
+export const isSmartDelayEligible = (
+  input: AutomatedResponseDelayEligibility,
+): boolean =>
+  isSmartResponseDelayOption(input.workspaceDelay) &&
+  !input.matchesKeyword &&
+  input.hasAiAgent
+
 export const resolveAutomatedResponseTiming = (
   workspace:
     | Pick<WorkspaceModel, "smartResponseDelaySeconds">

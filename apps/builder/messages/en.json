@@ -875,8 +875,8 @@
       "label": "Default Reply"
     },
     "smartResponseDelaySeconds": {
-      "description": "Waits for the contact to stop sending messages before replying. Each new message resets the timer, merges the burst into one AI reply, and also delays keyword automated responses.",
-      "label": "Smart Response Delay",
+      "description": "Waits for the contact to stop sending messages before an AI reply. Each new message resets the timer and merges the burst into one AI response. Keyword automated responses still use the default timing.",
+      "label": "Bot reply delay",
       "minutes": "{count, plural, one {# minute} other {# minutes}}",
       "none": "None",
       "seconds": "{count, plural, one {# second} other {# seconds}}"

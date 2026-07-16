@@ -98,6 +98,7 @@ async function startIntegrationWorker() {
                   conversationId: conversation.id,
                   contactInboxId: message.contactInboxId,
                   messageId: message.id,
+                  messageText: message.text,
                   workspaceId: conversation.workspaceId,
                 })
               }

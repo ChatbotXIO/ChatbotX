@@ -20,7 +20,7 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.workspace_id,
   systemFieldTypes.enum.page_user_name,
   systemFieldTypes.enum.last_input,
-  systemFieldTypes.enum.ai_queued_messages,
+  systemFieldTypes.enum["ai.queued.messages"],
   systemFieldTypes.enum.current_time,
   systemFieldTypes.enum.last_seen,
   systemFieldTypes.enum.last_interaction,

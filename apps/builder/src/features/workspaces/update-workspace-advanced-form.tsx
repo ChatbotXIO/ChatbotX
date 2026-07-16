@@ -108,6 +108,26 @@ export function UpdateWorkspaceAdvancedForm({
             </SettingRow>
 
             <SettingRow
+              description={t("fields.smartResponseDelaySeconds.description")}
+              label={t("fields.smartResponseDelaySeconds.label")}
+            >
+              <SelectField
+                name="smartResponseDelaySeconds"
+                options={[
+                  {
+                    value: SMART_RESPONSE_DELAY_NONE_VALUE,
+                    label: t("fields.smartResponseDelaySeconds.none"),
+                  },
+                  ...SMART_RESPONSE_DELAY_OPTIONS.map((delaySeconds) => ({
+                    value: String(delaySeconds),
+                    label: getSmartResponseDelayOptionLabel(delaySeconds, t),
+                  })),
+                ]}
+                placeholder={t("actions.pleaseSelect")}
+              />
+            </SettingRow>
+
+            <SettingRow
               description={t("fields.targetCountry.description")}
               label={t("fields.targetCountry.label")}
             >
@@ -157,26 +177,6 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.developmentMode.label")}
             >
               <SwitchField className="mt-1.5" name="developmentMode" />
-            </SettingRow>
-
-            <SettingRow
-              description={t("fields.smartResponseDelaySeconds.description")}
-              label={t("fields.smartResponseDelaySeconds.label")}
-            >
-              <SelectField
-                name="smartResponseDelaySeconds"
-                options={[
-                  {
-                    value: SMART_RESPONSE_DELAY_NONE_VALUE,
-                    label: t("fields.smartResponseDelaySeconds.none"),
-                  },
-                  ...SMART_RESPONSE_DELAY_OPTIONS.map((delaySeconds) => ({
-                    value: String(delaySeconds),
-                    label: getSmartResponseDelayOptionLabel(delaySeconds, t),
-                  })),
-                ]}
-                placeholder={t("actions.pleaseSelect")}
-              />
             </SettingRow>
 
             <div className="mt-4 flex flex-start">

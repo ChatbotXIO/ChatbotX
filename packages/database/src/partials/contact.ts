@@ -64,7 +64,7 @@ export const systemFieldTypes = z.enum([
   "chat_history_large",
   "chat_history_details",
   "chat_history_details_large",
-  "ai_queued_messages",
+  "ai.queued.messages",
   "user_notes",
   "last_user_note",
   "webchat",

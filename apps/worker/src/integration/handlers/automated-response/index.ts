@@ -5,8 +5,7 @@ import {
 } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { workspaceService } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import { aiAgentService, workspaceService } from "@chatbotx.io/business"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import {
   aiAgentProviderModels,
@@ -116,12 +115,7 @@ export async function processAutomatedResponse(
   }
 
   try {
-    const aiAgent = await db.query.aiAgentModel.findFirst({
-      where: {
-        workspaceId: conversation.workspaceId,
-        isDefault: true,
-      },
-    })
+    const aiAgent = await aiAgentService.findDefault(conversation.workspaceId)
 
     if (!aiAgent) {
       const triggeredDefaultReplyFlow = await triggerDefaultReplyFlow({

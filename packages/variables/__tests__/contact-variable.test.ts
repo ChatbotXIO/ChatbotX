@@ -12,6 +12,7 @@ const {
   mockContactFindFirst,
   mockContactInboxFindFirst,
   mockFindLatestLastIncomingMessageAt,
+  mockListIncomingTextsByContactInbox,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
   mockContactCustomFieldFindMany: vi.fn(),
@@ -19,12 +20,16 @@ const {
   mockContactInboxFindFirst: vi.fn(),
   mockWorkspaceFind: vi.fn(),
   mockFindLatestLastIncomingMessageAt: vi.fn(),
+  mockListIncomingTextsByContactInbox: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     findLatestLastIncomingMessageAtByContactId:
       mockFindLatestLastIncomingMessageAt,
+  },
+  messageService: {
+    listIncomingTextsByContactInbox: mockListIncomingTextsByContactInbox,
   },
   resolveTenantSettings: vi.fn(),
   workspaceService: {
@@ -146,6 +151,15 @@ describe("contactVariableService.replaceAll", () => {
         ]),
       }),
     ).resolves.toBe("{{not_a_field}}  active")
+  })
+
+  test("supports dotted system variables and keeps unknown dotted placeholders literal", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{ai.queued.messages}} {{foo.bar}}",
+        variables: createVariables(),
+      }),
+    ).resolves.toBe(" {{foo.bar}}")
   })
 
   test("does not render custom field null values as string null", async () => {
