@@ -49,23 +49,21 @@
       if (config.brandColor) {
         url.searchParams.set("brandColor", config.brandColor)
       }
-
       url.searchParams.set("domain", window.location.hostname)
       const parentUrl = getParentPageUrl(config)
       if (parentUrl) {
         url.searchParams.set("parentUrl", parentUrl)
       }
+      url.searchParams.set("parentOrigin", window.location.origin)
 
       csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}" alt="Chat"></button>`
       csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}"></iframe></div>`
 
       appendHtml(document.body, csmChatWidget.floatButton)
-      appendHtml(document.body, csmChatWidget.floatHtml)
 
       const btn = document.querySelector(".ahc-btn")
-      const container = document.querySelector(".ahc-iframe-container")
 
-      if (!(btn && container)) {
+      if (!btn) {
         return
       }
 
@@ -73,7 +71,20 @@
         btn.style.backgroundColor = config.brandColor
       }
 
+      // The iframe (and therefore the guest session / contact-creation call
+      // inside it) is only created lazily on first open, not on script load.
+      // Otherwise every page view would spin up a webchat contact even if
+      // the visitor never notices or clicks the bubble.
+      let container = null
+
       btn.addEventListener("click", () => {
+        if (!container) {
+          appendHtml(document.body, csmChatWidget.floatHtml)
+          container = document.querySelector(".ahc-iframe-container")
+        }
+        if (!container) {
+          return
+        }
         const isOpen = container.classList.toggle("ahc-iframe-container--open")
         btn.classList.toggle("ahc-btn--open", isOpen)
       })
@@ -85,7 +96,7 @@
           return
         }
         if (event.data?.type === "ahc:hide") {
-          container.classList.remove("ahc-iframe-container--open")
+          container?.classList.remove("ahc-iframe-container--open")
           btn.classList.remove("ahc-btn--open")
         }
       })

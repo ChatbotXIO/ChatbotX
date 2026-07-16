@@ -2,7 +2,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-export function serverErrorHandler(error: unknown) {
+export function serverErrorHandler(error: unknown, headers?: Headers) {
   if (error instanceof z.ZodError) {
     const errors = error.issues.map((issue) => ({
       field: issue.path.join("."),
@@ -11,26 +11,26 @@ export function serverErrorHandler(error: unknown) {
 
     return NextResponse.json(
       { message: "Validation error", errors },
-      { status: 422 },
+      { status: 422, headers },
     )
   }
 
   if (error instanceof ChatbotXException) {
     return NextResponse.json(
       { message: error.message, errors: [] },
-      { status: error.httpStatusCode },
+      { status: error.httpStatusCode, headers },
     )
   }
 
   if (error instanceof Error) {
     return NextResponse.json(
       { message: error.message, errors: [] },
-      { status: 400 },
+      { status: 400, headers },
     )
   }
 
   return NextResponse.json(
     { message: "Unknown error", errors: [] },
-    { status: 500 },
+    { status: 500, headers },
   )
 }

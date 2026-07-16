@@ -290,6 +290,7 @@ describe("createContact", () => {
     expect(mockContactInboxFindLatestBySource).toHaveBeenCalledWith({
       inboxId: selectedInbox.id,
       sourceId: "15551234567",
+      workspaceId: "ws-1",
     })
     expect(insertedRows).toContainEqual(
       expect.objectContaining({
@@ -336,6 +337,7 @@ describe("createContact", () => {
     expect(mockContactInboxFindLatestBySource).toHaveBeenCalledWith({
       inboxId: selectedInbox.id,
       sourceId: "84901234567",
+      workspaceId: "ws-1",
     })
     expect(insertedRows).toContainEqual(
       expect.objectContaining({
@@ -404,6 +406,7 @@ describe("createContact", () => {
     expect(mockContactInboxFindLatestBySource).toHaveBeenCalledWith({
       inboxId: selectedInbox.id,
       sourceId: "ada@example.com",
+      workspaceId: "ws-1",
     })
     expect(insertedRows).toContainEqual(
       expect.objectContaining({
@@ -682,6 +685,7 @@ describe("createContact", () => {
     expect(mockContactInboxFindLatestBySource).toHaveBeenCalledWith({
       inboxId: "whatsapp-inbox-1",
       sourceId: "84901234567",
+      workspaceId: "ws-1",
     })
     expect(result).toMatchObject({
       phoneNumber: {

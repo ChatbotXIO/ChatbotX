@@ -179,6 +179,7 @@ export const createContact = async ({
     const existing = await contactInboxService.findLatestBySource({
       inboxId: inbox.id,
       sourceId,
+      workspaceId,
     })
     if (existing) {
       const dup = {

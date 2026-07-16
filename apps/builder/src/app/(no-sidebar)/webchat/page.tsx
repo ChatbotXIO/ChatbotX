@@ -1,9 +1,15 @@
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { SearchParams } from "next/dist/server/request/search-params"
+import { headers } from "next/headers"
 import { notFound } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import z from "zod"
+import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
+import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
+import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { GuestSessionStoreProvider } from "@/features/integration-webchat/providers/store/guest-session-provider"
+import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
 import { WebchatWrapper } from "@/features/integration-webchat/webchat-wrapper"
 
 type WebchatPageProps = {
@@ -20,6 +26,10 @@ export default async function WebchatPage(props: WebchatPageProps) {
       workspaceId: zodBigintAsString(),
       webchatId: zodBigintAsString(),
       ref: z.string().optional(),
+      domain: z.string().optional(),
+      parentOrigin: z.string().optional(),
+      guestConversationId: z.string().optional(),
+      accessToken: z.string().optional(),
     })
     .safeParse(searchParams)
   if (!data) {
@@ -37,9 +47,42 @@ export default async function WebchatPage(props: WebchatPageProps) {
     return notFound()
   }
 
+  const requestHeaders = await headers()
+  const embeddingOrigin = requestHeaders.get("referer")
+  if (!isOriginAuthorized(embeddingOrigin, targetWebchat.authorizedDomains)) {
+    const t = await getTranslations("webchat.unauthorizedDomain")
+
+    return (
+      <main className="flex h-screen w-screen items-center justify-center bg-background p-6 text-center">
+        <div className="max-w-sm space-y-2">
+          <h1 className="font-semibold text-lg">{t("title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("description")}</p>
+        </div>
+      </main>
+    )
+  }
+
+  // The access token is session-scoped (workspace/webchat/origin/exp) and
+  // not bound to a guestConversationId — see webchat-access-token.ts. So a
+  // returning visitor's persisted id is trusted as-is whenever the client
+  // presents one; only a brand-new visitor gets a freshly minted id.
+  const guestConversationId =
+    data.guestConversationId ??
+    createGuestConversationId(targetWebchat.workspaceId)
+
+  const accessToken = await createWebchatAccessToken({
+    origin: embeddingOrigin,
+    webchatId: targetWebchat.id,
+    workspaceId: targetWebchat.workspaceId,
+  })
+
   return (
-    <GuestSessionStoreProvider config={targetWebchat}>
-      <WebchatWrapper referral={data.ref} />
+    <GuestSessionStoreProvider
+      accessToken={accessToken}
+      config={toWebchatClientConfig(targetWebchat)}
+      serverGuestConversationId={guestConversationId}
+    >
+      <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
     </GuestSessionStoreProvider>
   )
 }

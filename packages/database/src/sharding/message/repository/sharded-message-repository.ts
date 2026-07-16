@@ -2075,7 +2075,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     limit: number,
     cursor?: PaginationCursor,
   ): Promise<PaginatedMessages> {
-    const { workspaceId, conversationId } = query
+    const { workspaceId, conversationId, contactInboxId } = query
     return this.shardManager.withShardClientForRead(
       shardInfo.shard,
       async (shardClient) => {
@@ -2083,6 +2083,10 @@ export class ShardedMessageRepository implements IMessageRepository {
 
         if (conversationId) {
           whereConditions.push(eq(messageModel.conversationId, conversationId))
+        }
+
+        if (contactInboxId) {
+          whereConditions.push(eq(messageModel.contactInboxId, contactInboxId))
         }
 
         if (cursor) {

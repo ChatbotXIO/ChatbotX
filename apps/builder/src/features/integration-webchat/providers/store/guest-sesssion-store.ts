@@ -1,5 +1,4 @@
 import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import ky from "ky"
@@ -9,14 +8,24 @@ import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schemas/resource"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
+import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
+import {
+  buildGuestStorageKey,
+  readLegacyGuestId,
+  safeStorageGet,
+  safeStorageSet,
+} from "./lib/guest-session"
+import type { WebchatClientConfig } from "./lib/webchat-client-config"
 
-export const GUEST_CONVERSATION_ID_KEY = "x-conversation-id" as const
+export { GUEST_CONVERSATION_ID_KEY } from "./lib/guest-session"
 
 export type GuestSessionState = {
   // default state
   guestConversationId: string | null
+  isNewGuestSession: boolean
+  accessToken: string | null
   user: UserResource | null
-  config: IntegrationWebchatModel
+  config: WebchatClientConfig
 
   // messages
   messages: MessageResource[]
@@ -28,7 +37,7 @@ export type GuestSessionState = {
 
 export type GuestSessionActions = {
   setGuestUser: (user: UserResource) => void
-  initGuestSession: () => void
+  initGuestSession: (serverGuestConversationId: string) => void
 
   // messages
   appendMessage: (message: Partial<MessageResource>) => MessageResource
@@ -46,10 +55,15 @@ export type GuestSessionActions = {
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
 
-export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
+export const createGuestSessionStore = (
+  props: WebchatClientConfig,
+  accessToken: string | null = null,
+) => {
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
+    isNewGuestSession: false,
+    accessToken,
     user: null,
     config: props,
 
@@ -61,18 +75,31 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
 
     isTyping: false,
 
-    initGuestSession: () => {
+    initGuestSession: (serverGuestConversationId: string) => {
       const { guestConversationId, config } = get()
       if (guestConversationId) {
         return
       }
 
-      let guestId = localStorage.getItem(GUEST_CONVERSATION_ID_KEY)
-      if (!guestId) {
-        guestId = `${config.workspaceId}:${createId()}`
-        localStorage.setItem(GUEST_CONVERSATION_ID_KEY, guestId)
+      const scopedKey = buildGuestStorageKey(config.workspaceId, config.id)
+      const scopedGuestId = safeStorageGet(scopedKey)
+      if (scopedGuestId) {
+        set({ guestConversationId: scopedGuestId, isNewGuestSession: false })
+        return
       }
-      set({ guestConversationId: guestId })
+
+      const legacyGuestId = readLegacyGuestId()
+      if (legacyGuestId) {
+        safeStorageSet(scopedKey, legacyGuestId)
+        set({ guestConversationId: legacyGuestId, isNewGuestSession: false })
+        return
+      }
+
+      safeStorageSet(scopedKey, serverGuestConversationId)
+      set({
+        guestConversationId: serverGuestConversationId,
+        isNewGuestSession: true,
+      })
     },
 
     setGuestUser: (user: UserResource) => {
@@ -85,6 +112,8 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
         hasNextMessagePage,
         nextCursorMessage,
         messages,
+        config,
+        accessToken,
       } = get()
 
       if (isLoadMoreMessage || !hasNextMessagePage) {
@@ -98,10 +127,23 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
           perPage: `${perPage}`,
           cursor: nextCursorMessage ?? "",
           guestConversationId,
+          workspaceId: config.workspaceId,
+          webchatId: config.id,
         })
+        const parentOrigin = getClientEmbeddingOrigin()
+        if (parentOrigin) {
+          params.set("parentOrigin", parentOrigin)
+        }
 
         const { data, nextCursor } = await ky
-          .get<ListMessagesResponse>(`/api/guest/messages?${params.toString()}`)
+          .get<ListMessagesResponse>(
+            `/api/guest/messages?${params.toString()}`,
+            {
+              headers: accessToken
+                ? { Authorization: `Bearer ${accessToken}` }
+                : undefined,
+            },
+          )
           .json()
 
         set({
@@ -148,7 +190,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     },
 
     sendPostback: async (button: MessageButtonTemplate) => {
-      const { appendMessage, config, guestConversationId } = get()
+      const { appendMessage, config, guestConversationId, accessToken } = get()
 
       const newMessage = appendMessage({
         text: button.label,
@@ -167,7 +209,12 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
               clientId: newMessage.clientId,
               webchatId: config.id,
               ...getWebchatProfileFields(),
+              accessToken: accessToken ?? undefined,
+              parentOrigin: getClientEmbeddingOrigin() ?? undefined,
             } as CreateWebchatMessageRequest,
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
           })
         }
       } catch (error) {

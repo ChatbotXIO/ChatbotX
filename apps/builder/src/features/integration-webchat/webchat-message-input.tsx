@@ -21,10 +21,18 @@ type WebchatMessageInputProps = {
   workspaceId: string
   webchatId: string
   referral?: string | undefined
+  parentOrigin?: string | null
+  accessToken?: string | null
 }
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
-  const { workspaceId, webchatId, referral = "" } = props
+  const {
+    workspaceId,
+    webchatId,
+    referral = "",
+    parentOrigin,
+    accessToken,
+  } = props
   const { sendMessage, guestConversationId, appendMessage } =
     useGuestSessionStore((state) => state)
 
@@ -38,8 +46,17 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       guestConversationId: guestConversationId ?? "",
       ref: referral,
       ...getWebchatProfileFields(),
+      accessToken: accessToken ?? undefined,
+      parentOrigin: parentOrigin ?? undefined,
     }),
-    [workspaceId, webchatId, guestConversationId, referral],
+    [
+      workspaceId,
+      webchatId,
+      guestConversationId,
+      referral,
+      parentOrigin,
+      accessToken,
+    ],
   )
 
   const {
@@ -168,6 +185,8 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
               <WebchatMessageMenu
+                accessToken={accessToken}
+                parentOrigin={parentOrigin}
                 webchatId={webchatId}
                 workspaceId={workspaceId}
               />

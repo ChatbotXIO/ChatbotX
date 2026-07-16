@@ -64,6 +64,7 @@ export interface PaginatedMessages {
 }
 
 export interface ListMessagesQuery {
+  contactInboxId?: string
   conversationId?: string
   pagination: Pagination
   sinceTime?: Date

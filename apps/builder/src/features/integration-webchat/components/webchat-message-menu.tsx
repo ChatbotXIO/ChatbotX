@@ -24,11 +24,15 @@ import { useGuestSessionStore } from "../providers/store/guest-session-provider"
 type WebchatMessageMenuProps = {
   workspaceId: string
   webchatId: string
+  parentOrigin?: string | null
+  accessToken?: string | null
 }
 
 export default function WebchatMessageMenu({
   workspaceId,
   webchatId,
+  parentOrigin,
+  accessToken,
 }: WebchatMessageMenuProps) {
   const { getMenus } = useGuestSessionStore((state) => state)
   const [menus, setMenus] = useState<WebchatPersistentMenu[]>([])
@@ -86,6 +90,8 @@ export default function WebchatMessageMenu({
                     webchatId,
                     guestConversationId: guestConversationId ?? "",
                     ...getWebchatProfileFields(),
+                    accessToken: accessToken ?? undefined,
+                    parentOrigin: parentOrigin ?? undefined,
                   })
                 }
               >

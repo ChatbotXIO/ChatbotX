@@ -1014,10 +1014,10 @@
       "placeholder": "smtp.example.com"
     },
     "hideHeader": {
-      "label": "Hiển thị tiêu đề"
+      "label": "Ẩn tiêu đề"
     },
     "hideMessageInput": {
-      "label": "Hiển thị ô nhập tin nhắn"
+      "label": "Ẩn ô nhập tin nhắn"
     },
     "inbox": {
       "label": "Hộp thư",
@@ -2834,7 +2834,12 @@
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
-    "title": "Web Chat"
+    "rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.",
+    "title": "Web Chat",
+    "unauthorizedDomain": {
+      "description": "Trang web này không được phép tải tiện ích chat này.",
+      "title": "Webchat không khả dụng"
+    }
   },
   "whatsapp": {
     "category": {
@@ -3503,6 +3508,11 @@
         "description": "Chèn CSS hoặc JavaScript tùy chỉnh vào mọi trang"
       }
     }
+  },
+  "platformChannels": {
+    "title": "Kênh được phép",
+    "description": "Chọn các loại kênh mà workspace trong tenant này có thể tạo.",
+    "hint": "Bỏ chọn tất cả kênh để cho phép mọi kênh."
   },
   "platformEmailTemplates": {
     "title": "Email Templates",

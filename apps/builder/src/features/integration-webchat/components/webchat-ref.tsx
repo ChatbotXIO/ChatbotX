@@ -9,12 +9,16 @@ type WebchatRefProps = {
   workspaceId: string
   webchatId: string
   guestConversationId: string
+  parentOrigin?: string | null
+  accessToken?: string | null
 }
 
 export default function WebchatRef({
   workspaceId,
   webchatId,
   guestConversationId,
+  parentOrigin,
+  accessToken,
 }: WebchatRefProps) {
   const searchParams = useSearchParams()
   const [initialized, setInitialized] = useState(false)
@@ -28,16 +32,16 @@ export default function WebchatRef({
 
     setInitialized(true)
     const ref = searchParams.get("ref")
-    if (ref) {
-      execute({
-        clientId: createId(),
-        workspaceId,
-        webchatId,
-        guestConversationId,
-        initRef: ref,
-        ...getWebchatProfileFields(),
-      })
-    }
+    execute({
+      clientId: createId(),
+      workspaceId,
+      webchatId,
+      guestConversationId,
+      ...(ref ? { initRef: ref } : { init: true }),
+      ...getWebchatProfileFields(),
+      accessToken: accessToken ?? undefined,
+      parentOrigin: parentOrigin ?? undefined,
+    })
   }, [
     searchParams,
     initialized,
@@ -45,6 +49,8 @@ export default function WebchatRef({
     workspaceId,
     webchatId,
     guestConversationId,
+    parentOrigin,
+    accessToken,
   ])
 
   return null

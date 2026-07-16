@@ -16,9 +16,12 @@ const {
   mockCreateNewContactWithMac,
   mockDbUpdate,
   mockEmit,
+  mockEmitContactCreated,
   mockFindOrFail,
   mockIntegrationQueueAdd,
   mockQuotaIncrement,
+  mockCheckGuestRateLimit,
+  mockVerifyWebchatAccessToken,
   mockRepositoryCreate,
   mockWorkspaceFind,
   tx,
@@ -72,9 +75,17 @@ const {
     ),
     mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
     mockEmit: vi.fn(),
+    mockEmitContactCreated: vi.fn().mockResolvedValue(undefined),
     mockFindOrFail: vi.fn(),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
+    mockCheckGuestRateLimit: vi
+      .fn()
+      .mockResolvedValue({ limited: false, retryAfter: 10 }),
+    mockVerifyWebchatAccessToken: vi.fn().mockResolvedValue({
+      authorized: true,
+      guestConversationId: "workspace-1:guest-1",
+    }),
     mockRepositoryCreate,
     mockWorkspaceFind: vi.fn().mockResolvedValue({ ownerId: "owner-1" }),
     tx,
@@ -121,6 +132,53 @@ vi.mock("@/lib/log", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
+vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
+  checkGuestRateLimit: mockCheckGuestRateLimit,
+  getGuestClientIp: vi.fn(() => "192.0.2.1"),
+}))
+
+vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
+  verifyWebchatAccessToken: mockVerifyWebchatAccessToken,
+}))
+
+const PROTOCOL_PREFIX_REGEX = /^https?:\/\//
+const HOST_DELIMITER_REGEX = /[/:?#]/
+
+vi.mock("@/features/integration-webchat/lib/authorized-domain", () => ({
+  isOriginAuthorized: (
+    origin: string | null | undefined,
+    authorizedDomains: string[],
+  ) => {
+    if (authorizedDomains.length === 0) {
+      return true
+    }
+    if (!origin) {
+      return false
+    }
+    const host = origin
+      .replace(PROTOCOL_PREFIX_REGEX, "")
+      .split(HOST_DELIMITER_REGEX)[0]
+    return authorizedDomains.some(
+      (domain) => host === domain || host?.endsWith(`.${domain}`),
+    )
+  },
+}))
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn((namespace?: string) => {
+    const messages: Record<string, string> = {
+      "webchat.rateLimitExceeded":
+        "Too many requests. Please try again in a moment.",
+      "webchat.unauthorizedDomain.description":
+        "This website is not authorized to load this chat widget.",
+    }
+
+    return Promise.resolve(
+      (key: string) => messages[namespace ? `${namespace}.${key}` : key] ?? key,
+    )
+  }),
+}))
+
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {
     code: string
@@ -165,6 +223,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,
+}))
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitContactCreated: mockEmitContactCreated,
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
@@ -231,7 +293,11 @@ const resetCommonMocks = () => {
   updateBuilder.set.mockReturnValue(updateBuilder)
   updateBuilder.where.mockResolvedValue(undefined)
   mockDbUpdate.mockReturnValue(updateBuilder)
-  mockFindOrFail.mockResolvedValue({ inboxId: "inbox-1" })
+  mockFindOrFail.mockResolvedValue({
+    inboxId: "inbox-1",
+    authorizedDomains: [],
+    persistentMenus: [],
+  })
   mockConversationFindBy.mockResolvedValue(conversation)
   mockContactFindById.mockResolvedValue(contact)
   mockContactUnblockIfBlocked.mockResolvedValue(null)
@@ -252,6 +318,10 @@ const resetCommonMocks = () => {
   insertBuilder.values.mockReturnValue(insertBuilder)
   insertBuilder.returning.mockReset()
   mockQuotaIncrement.mockResolvedValue(undefined)
+  mockCheckGuestRateLimit.mockResolvedValue({ limited: false, retryAfter: 10 })
+  mockVerifyWebchatAccessToken.mockResolvedValue({
+    authorized: true,
+  })
   mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
   mockCreateNewContactWithMac.mockImplementation(
     async (args: { create: (tx: unknown) => Promise<{ value: unknown }> }) => {
@@ -328,6 +398,119 @@ describe("handleCreateWebchatMessage", () => {
       contact,
     )
   })
+
+  test("rejects unauthorized webchat origins before resolving conversations", async () => {
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: ["example.com"],
+    })
+
+    await expect(
+      handleCreateWebchatMessage({
+        parsedInput: {
+          text: "hello",
+          workspaceId: "ws-1",
+          webchatId: "webchat-1",
+          guestConversationId: "guest-1",
+          parentOrigin: "https://attacker.test",
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: "forbidden",
+      httpStatusCode: 403,
+    })
+
+    expect(mockContactInboxFindLatest).not.toHaveBeenCalled()
+  })
+
+  test("rejects an invalid access token even when no authorizedDomains are configured", async () => {
+    // Bind-on-first-use: the token must always verify, regardless of
+    // whether the webchat has an authorizedDomains allowlist configured.
+    mockVerifyWebchatAccessToken.mockResolvedValue({
+      authorized: false,
+    })
+
+    await expect(
+      handleCreateWebchatMessage({
+        parsedInput: {
+          text: "hello",
+          workspaceId: "ws-1",
+          webchatId: "webchat-1",
+          guestConversationId: "guest-1",
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: "forbidden",
+      httpStatusCode: 403,
+    })
+
+    expect(mockContactInboxFindLatest).not.toHaveBeenCalled()
+  })
+})
+
+describe("handleCreateWebchatMessage — flowId", () => {
+  beforeEach(() => {
+    resetCommonMocks()
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+  })
+
+  test("rejects a flowId that is not configured as a persistent menu flow (flow injection / IDOR)", async () => {
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: [],
+      persistentMenus: [
+        { label: "Talk to sales", type: "flow", flowId: "flow-allowed" },
+      ],
+    })
+
+    await expect(
+      handleCreateWebchatMessage({
+        parsedInput: {
+          flowId: "flow-attacker",
+          workspaceId: "ws-1",
+          webchatId: "webchat-1",
+          guestConversationId: "guest-1",
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: "notFound",
+      httpStatusCode: 404,
+    })
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("enqueues a flowId that matches a configured persistent menu flow", async () => {
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: [],
+      persistentMenus: [
+        { label: "Talk to sales", type: "flow", flowId: "flow-allowed" },
+      ],
+    })
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        flowId: "flow-allowed",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        type: "sendFlow",
+        data: expect.objectContaining({
+          conversationId: expect.objectContaining({ id: "conv-1" }),
+          contactInboxId: expect.objectContaining({ id: "ci-1" }),
+          flowId: "flow-allowed",
+          origin: "channel",
+        }),
+      }),
+    )
+  })
 })
 
 describe("handleCreateWebchatMessage — MAC quota", () => {
@@ -380,6 +563,20 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
   })
 
+  test("does not requeue the welcome flow for a returning visitor", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: [],
+      welcomeFlowId: "flow-1",
+    })
+
+    await handleCreateWebchatMessage({ parsedInput: input })
+
+    expect(mockEmitContactCreated).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalled()
+  })
+
   test("gates a new contact through the atomic MAC chokepoint", async () => {
     mockContactInboxFindLatest.mockResolvedValue(undefined)
     seedNewContactInserts()
@@ -401,6 +598,61 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
       }),
     )
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("emits contact creation and queues the configured welcome flow for a new contact", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(undefined)
+    mockFindOrFail.mockResolvedValue({
+      inboxId: "inbox-1",
+      authorizedDomains: [],
+      welcomeFlowId: "flow-1",
+    })
+    seedNewContactInserts()
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        ...input,
+        init: true,
+      },
+    })
+
+    expect(mockEmitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-new",
+      undefined,
+      undefined,
+      undefined,
+    )
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        type: "sendFlow",
+        data: expect.objectContaining({
+          conversationId: expect.objectContaining({ id: "conv-new" }),
+          contactInboxId: expect.objectContaining({ id: "ci-new" }),
+          flowId: "flow-1",
+          origin: "channel",
+        }),
+      }),
+    )
+  })
+
+  test("does not queue a welcome flow when it is not configured", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(undefined)
+    seedNewContactInserts()
+
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        ...input,
+        init: true,
+      },
+    })
+
+    expect(mockEmitContactCreated).toHaveBeenCalledTimes(1)
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "sendFlow",
+      expect.anything(),
+    )
   })
 
   test("rejects and creates nothing when the MAC limit is reached", async () => {

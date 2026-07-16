@@ -109,13 +109,35 @@ class ContactInboxService extends BaseService {
    * reconnected and produced duplicate rows for the same `sourceId`, the live
    * one wins. Uncached: callers (e.g. the webchat message action) gate
    * new-contact creation on this read and must not see a stale miss.
+   *
+   * `workspaceId` is optional for callers that have already independently
+   * verified `inboxId` belongs to their workspace, but passing it applies the
+   * same defense-in-depth `workspaceScope` check used by the tracking
+   * mutations below — prefer always passing it when available.
    */
   async findLatestBySource(props: {
     tx?: DatabaseClient
     inboxId: string
     sourceId: string
+    workspaceId?: string
   }): Promise<ContactInboxModel | undefined> {
-    const { tx = db, inboxId, sourceId } = props
+    const { tx = db, inboxId, sourceId, workspaceId } = props
+    if (workspaceId) {
+      const rows = await tx
+        .select()
+        .from(contactInboxModel)
+        .where(
+          and(
+            eq(contactInboxModel.inboxId, inboxId),
+            eq(contactInboxModel.sourceId, sourceId),
+            this.workspaceScope(workspaceId),
+          ),
+        )
+        .orderBy(sql`${contactInboxModel.lastMessageAt} DESC NULLS LAST`)
+        .limit(1)
+      return rows[0]
+    }
+
     return await tx.query.contactInboxModel.findFirst({
       where: { inboxId, sourceId },
       orderBy: { lastMessageAt: "desc" },

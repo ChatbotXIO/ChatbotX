@@ -1007,10 +1007,10 @@
       "placeholder": "smtp.example.com"
     },
     "hideHeader": {
-      "label": "Show Header"
+      "label": "Hide Header"
     },
     "hideMessageInput": {
-      "label": "Show Message Input"
+      "label": "Hide Message Input"
     },
     "inbox": {
       "label": "Inbox",
@@ -2818,7 +2818,12 @@
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",
-    "title": "Web Chat"
+    "rateLimitExceeded": "Too many requests. Please try again in a moment.",
+    "title": "Web Chat",
+    "unauthorizedDomain": {
+      "description": "This website is not authorized to load this chat widget.",
+      "title": "Webchat unavailable"
+    }
   },
   "whatsapp": {
     "category": {
@@ -3479,6 +3484,11 @@
         "description": "Inject custom CSS or JavaScript into every page"
       }
     }
+  },
+  "platformChannels": {
+    "title": "Allowed Channels",
+    "description": "Choose which channel types workspaces in this tenant can create.",
+    "hint": "Leave every channel unchecked to allow all channels."
   },
   "platformEmailTemplates": {
     "title": "Email Templates",
