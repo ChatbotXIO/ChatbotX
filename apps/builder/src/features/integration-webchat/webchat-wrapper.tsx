@@ -20,15 +20,17 @@ export const WebchatWrapper = ({
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      <WebchatHeader />
+      {!config.hideHeader && <WebchatHeader />}
       <WebchatMessageList />
-      <WebchatMessageInput
-        accessToken={accessToken}
-        parentOrigin={parentOrigin}
-        referral={referral}
-        webchatId={config.id}
-        workspaceId={config.workspaceId}
-      />
+      {!config.hideMessageInput && (
+        <WebchatMessageInput
+          accessToken={accessToken}
+          parentOrigin={parentOrigin}
+          referral={referral}
+          webchatId={config.id}
+          workspaceId={config.workspaceId}
+        />
+      )}
       <WebchatRef
         accessToken={accessToken}
         guestConversationId={guestConversationId ?? ""}
