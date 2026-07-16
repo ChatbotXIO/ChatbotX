@@ -3,12 +3,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const findBy = vi.fn()
 const findFirst = vi.fn()
 const identify = vi.fn()
+const smartDelayFindById = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findBy },
 }))
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { query: { importModel: { findFirst } } },
+}))
+vi.mock("@chatbotx.io/business/smart-delay", () => ({
+  smartDelayService: { findById: smartDelayFindById },
 }))
 vi.mock("../src/services/integrations", () => ({
   integrationService: {
@@ -22,6 +26,7 @@ beforeEach(() => {
   findBy.mockReset()
   findFirst.mockReset()
   identify.mockReset()
+  smartDelayFindById.mockReset()
 })
 
 describe("resolveWorkspaceId", () => {
@@ -64,6 +69,16 @@ describe("resolveWorkspaceId", () => {
     await expect(resolveWorkspaceId({ importId: "import-1" })).resolves.toBe(
       "workspace-from-import",
     )
+  })
+
+  test("resolves a smart delay id", async () => {
+    smartDelayFindById.mockResolvedValue({
+      workspaceId: "workspace-from-smart-delay",
+    })
+
+    await expect(
+      resolveWorkspaceId({ smartDelayId: "smart-delay-1" }),
+    ).resolves.toBe("workspace-from-smart-delay")
   })
 
   test("fails open when no workspace identity is available", async () => {

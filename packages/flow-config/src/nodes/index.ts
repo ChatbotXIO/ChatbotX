@@ -2,6 +2,7 @@ import type { Node } from "@xyflow/react"
 import { z } from "zod"
 import { addNotesNodeSchema } from "./add-notes"
 import { type NodeType, nodeTypeSchema } from "./base"
+import { followUpNodeSchema } from "./follow-up"
 import { landingPageNodeSchema } from "./landing-page"
 import { performActionNodeSchema } from "./perform-action"
 import { sendMailNodeSchema } from "./send-mail"
@@ -16,6 +17,7 @@ export const flowVersionSchema = z.union([
   performActionNodeSchema,
   splitTrafficNodeSchema,
   waitNodeSchema,
+  followUpNodeSchema,
   addNotesNodeSchema,
   landingPageNodeSchema,
   sendMailNodeSchema,

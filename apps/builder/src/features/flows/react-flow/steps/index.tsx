@@ -31,6 +31,7 @@ import { enableMessengerComposerStep } from "./enable-messenger-composer"
 import { externalRequestStep } from "./external-request"
 import { facebookCustomAudienceStep } from "./facebook-custom-audience"
 import { followConversationStep } from "./follow-conversation"
+import { followUpStep } from "./follow-up"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
@@ -133,6 +134,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.startExternalNode]: sendExternalNodeStep,
   [stepTypes.enum.startAnotherNode]: startAnotherNodeStep,
   [stepTypes.enum.wait]: waitStep,
+  [stepTypes.enum.followUp]: followUpStep,
   [stepTypes.enum.performAction]: undefined,
   [stepTypes.enum.openWebsite]: openWebsiteStep,
   [stepTypes.enum.setCustomField]: setCustomFieldStep,

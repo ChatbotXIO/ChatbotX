@@ -30,6 +30,7 @@ import {
   runFlowPostback,
   runFlowQuickReply,
 } from "./handlers/flow"
+import { runFollowUpResume } from "./handlers/follow-up"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { handleMessageStatus } from "./handlers/message-status"
 import {
@@ -172,6 +173,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.runChallenge: {
             await runChallenge(job.data.data)
+            return
+          }
+          case IntegrationJobAction.resumeFollowUp: {
+            await runFollowUpResume(job.data.data)
             return
           }
           case IntegrationJobAction.messageStatus: {

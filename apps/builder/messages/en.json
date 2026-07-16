@@ -119,6 +119,7 @@
     "removeAssignee": "Remove Assignee",
     "sendMail": "Send Mail",
     "wait": "Wait",
+    "followUp": "Follow Up",
     "landingPage": "Landing Page",
     "generate": "Generate",
     "regenerate": "Regenerate",
@@ -2120,6 +2121,11 @@
       "specific": "Specific",
       "dynamic": "Dynamic",
       "selectTimePlaceholder": "Select a time"
+    },
+    "followUp": {
+      "durationLabel": "Duration",
+      "waitAndContinue": "Wait <value>{duration} {unit}</value> and continue",
+      "cancelOnReplyHint": "The follow-up won't be sent if the contact replies before the time expires."
     }
   },
   "folders": {

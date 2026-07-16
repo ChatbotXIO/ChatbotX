@@ -9,6 +9,7 @@ export const nodeTypeSchema = z.enum([
   "sendMail",
   "splitTraffic",
   "wait",
+  "followUp",
   "landingPage",
   "addNotes",
 ])

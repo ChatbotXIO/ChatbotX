@@ -4,6 +4,7 @@ import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import { createId, isNumericId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { contactCustomFieldValueService } from "./value-service"
 
 type SetValuesInput = {
   workspaceId: string
@@ -33,15 +34,7 @@ class ContactCustomFieldService extends BaseService {
     contactId: string
     customFieldId: string
   }): Promise<string | null> {
-    const row = await db.query.contactCustomFieldModel.findFirst({
-      where: {
-        contactId: input.contactId,
-        customFieldId: input.customFieldId,
-      },
-      columns: { value: true },
-    })
-
-    return row?.value ?? null
+    return await contactCustomFieldValueService.findValue(input)
   }
 
   async listWithDefinitions(input: {
