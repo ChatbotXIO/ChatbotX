@@ -15,7 +15,7 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import { distributedStore } from "@chatbotx.io/redis"
+import { invalidateCacheKeys } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
@@ -207,7 +207,7 @@ class AutomatedResponseService extends BaseService {
   }
 
   async invalidateCache(workspaceId: string): Promise<void> {
-    await distributedStore.delete(
+    await invalidateCacheKeys(
       `workspaces:${workspaceId}:automated-responses:all`,
     )
   }
