@@ -26,10 +26,14 @@ export const ScheduleJobData = {
   purgeWorkspaces: "purgeWorkspaces",
   refreshZaloTokens: "refreshZaloTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
+  teardownExpiredTrial: "teardownExpiredTrial",
 } as const
 
 export const broadcastSendJobId = (broadcastId: string) =>
   `broadcast-send-${broadcastId}`
+
+export const teardownExpiredTrialJobId = (userId: string) =>
+  `teardown-expired-trial-${userId}`
 
 export type ScheduleJobBroadcast = {
   type: typeof ScheduleJobData.sendBroadcast
@@ -129,7 +133,12 @@ export type ScheduleJobRefreshZaloTokens = {
 
 export type ScheduleJobUnsubscribeExpiredTrials = {
   type: typeof ScheduleJobData.unsubscribeExpiredTrials
-  data: Record<string, never>
+  data: { cursor?: string }
+}
+
+export type ScheduleJobTeardownExpiredTrial = {
+  type: typeof ScheduleJobData.teardownExpiredTrial
+  data: { userId: string }
 }
 
 export type ScheduleJobData =
@@ -152,6 +161,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeWorkspaces
   | ScheduleJobRefreshZaloTokens
   | ScheduleJobUnsubscribeExpiredTrials
+  | ScheduleJobTeardownExpiredTrial
 
 export const scheduleQueue =
   process.env.NEXT_PHASE === "phase-production-build"

@@ -1,0 +1,1 @@
+CREATE INDEX "UserQuota_due_expired_trial_idx" ON "UserQuota" ("userId") WHERE "channelsTornDownAt" IS NULL AND "planStatus" = 'trial';

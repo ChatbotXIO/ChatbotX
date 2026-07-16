@@ -382,6 +382,37 @@ class UserQuotaService extends BaseService {
     }
   }
 
+  async listDueExpiredTrials(params: {
+    cutoff: Date
+    cursor?: string
+    limit: number
+  }): Promise<{ userIds: string[]; nextCursor?: string }> {
+    const rows = await db.query.userQuotaModel.findMany({
+      where: {
+        planStatus: planStatuses.enum.trial,
+        periodEnd: { isNotNull: true, lte: params.cutoff },
+        channelsTornDownAt: { isNull: true },
+        ...(params.cursor ? { userId: { gt: params.cursor } } : {}),
+      },
+      columns: { userId: true },
+      orderBy: { userId: "asc" },
+      limit: params.limit,
+    })
+
+    return {
+      userIds: rows.map((row) => row.userId),
+      nextCursor:
+        rows.length === params.limit ? rows.at(-1)?.userId : undefined,
+    }
+  }
+
+  async markChannelsTornDown(userId: string): Promise<void> {
+    await db
+      .update(userQuotaModel)
+      .set({ channelsTornDownAt: new Date() })
+      .where(eq(userQuotaModel.userId, userId))
+  }
+
   /**
    * Tear down the white-label / enterprise entitlement flags on a reseller's
    * quota row when they downgrade to a non-white-label plan. Flips the flags

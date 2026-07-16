@@ -30,6 +30,7 @@ import { registerSchedules } from "./handlers/register-schedules"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { syncUserQuota } from "./handlers/sync-user-quota"
+import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
 async function startScheduleWorker() {
@@ -124,7 +125,11 @@ async function startScheduleWorker() {
           return
 
         case ScheduleJobData.unsubscribeExpiredTrials:
-          await unsubscribeExpiredTrials()
+          await unsubscribeExpiredTrials(job.data.data.cursor)
+          return
+
+        case ScheduleJobData.teardownExpiredTrial:
+          await teardownExpiredTrial(job.data.data.userId)
           return
 
         default:
