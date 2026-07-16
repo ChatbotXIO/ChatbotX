@@ -51,12 +51,32 @@ const buildResumeFollowUpJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
   },
 })
 
+const buildResumeWaitJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
+  name: IntegrationJobAction.resumeWait,
+  data: {
+    type: IntegrationJobAction.resumeWait,
+    data: { smartDelayId: row.id },
+  },
+})
+
 export const smartDelayResumeJobFactories: Record<
   SmartDelayType,
   (row: SmartDelayRow, extras?: SmartDelayResumeJobExtras) => SmartDelayJobSpec
 > = {
-  [smartDelayTypes.enum.waitNode]: buildSendFlowResumeJob,
+  [smartDelayTypes.enum.waitNode]: buildResumeWaitJob,
   [smartDelayTypes.enum.followUp]: buildResumeFollowUpJob,
+}
+
+const smartDelayPersistenceHandlers: Record<
+  SmartDelayType,
+  (row: SmartDelayRow) => Promise<SmartDelayRow>
+> = {
+  [smartDelayTypes.enum.waitNode]: async (data) => {
+    await smartDelayService.create({ data })
+    return data
+  },
+  [smartDelayTypes.enum.followUp]: async (data) =>
+    await smartDelayService.upsertFollowUp({ data }),
 }
 
 export async function scheduleSmartDelayResume(props: {
@@ -88,25 +108,34 @@ export async function scheduleSmartDelayResume(props: {
   }
 
   // Insert tracking record first so a crash during enqueue still has a recovery path via scanner.
-  await smartDelayService.create({ data: row })
+  const persistedRow = await smartDelayPersistenceHandlers[props.type](row)
 
-  const diffMs = props.triggerAt.getTime() - Date.now()
+  const diffMs = persistedRow.triggerAt.getTime() - Date.now()
   if (diffMs > ENQUEUE_DELAY_MS) {
     return
   }
 
   try {
-    const job = smartDelayResumeJobFactories[props.type](row, {
+    await smartDelayService.markScheduled({ id: persistedRow.id })
+
+    const job = smartDelayResumeJobFactories[persistedRow.type](persistedRow, {
       sendFrom: props.sendFrom,
     })
     await integrationQueue.add(job.name, job.data, {
       delay: Math.max(0, diffMs),
-      jobId: buildJobId(rowId),
+      jobId: buildJobId(persistedRow.id, persistedRow.triggerAt),
     })
-    await smartDelayService.markCompleted({ id: rowId })
   } catch (err) {
+    try {
+      await smartDelayService.resetToPending({ ids: [persistedRow.id] })
+    } catch (resetErr) {
+      logger.warn(
+        { err: resetErr, rowId: persistedRow.id },
+        "Failed to reset immediate smart delay after enqueue failure",
+      )
+    }
     logger.warn(
-      { err, rowId },
+      { err, rowId: persistedRow.id },
       "Failed to immediately enqueue smart delay; scanner will pick it up",
     )
   }

@@ -1,5 +1,13 @@
 import { createId } from "@chatbotx.io/utils"
-import { index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import {
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
 import {
   smartDelayStatuses,
   smartDelayTypes,
@@ -63,5 +71,10 @@ export const contactOnSmartDelayModel = pgTable(
       table.status,
       table.triggerAt,
     ),
+    uniqueIndex("ContactOnSmartDelay_followUp_active_key")
+      .on(table.workspaceId, table.contactInboxId, table.flowId, table.stepId)
+      .where(
+        sql`${table.status} IN ('pending', 'scheduled') AND ${table.type} = 'followUp'`,
+      ),
   ],
 )

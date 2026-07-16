@@ -4,7 +4,9 @@ import {
   db,
   eq,
   inArray,
+  lt,
   lte,
+  sql,
 } from "@chatbotx.io/database/client"
 import {
   type SmartDelayStatus,
@@ -22,6 +24,7 @@ export type SmartDelayRow = Omit<
   status: SmartDelayStatus
   type: SmartDelayType
 }
+export type SmartDelayInsert = typeof contactOnSmartDelayModel.$inferInsert
 
 const toSmartDelayRow = (
   row: typeof contactOnSmartDelayModel.$inferSelect,
@@ -34,10 +37,56 @@ const toSmartDelayRow = (
 class SmartDelayService extends BaseService {
   async create(props: {
     tx?: DatabaseClient
-    data: typeof contactOnSmartDelayModel.$inferInsert
+    data: SmartDelayInsert
   }): Promise<void> {
     const { tx = db, data } = props
     await tx.insert(contactOnSmartDelayModel).values(data)
+  }
+
+  async upsertFollowUp(props: {
+    tx?: DatabaseClient
+    data: SmartDelayInsert
+  }): Promise<SmartDelayRow> {
+    const { tx = db, data } = props
+    const now = new Date()
+    const [row] = await tx
+      .insert(contactOnSmartDelayModel)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [
+          contactOnSmartDelayModel.workspaceId,
+          contactOnSmartDelayModel.contactInboxId,
+          contactOnSmartDelayModel.flowId,
+          contactOnSmartDelayModel.stepId,
+        ],
+        targetWhere: sql`${contactOnSmartDelayModel.status} IN ('pending', 'scheduled') AND ${contactOnSmartDelayModel.type} = 'followUp'`,
+        set: {
+          conversationId: data.conversationId,
+          createdAt: now,
+          flowVersionId: data.flowVersionId,
+          nodeId: data.nodeId,
+          status: smartDelayStatuses.enum.pending,
+          triggerAt: data.triggerAt,
+        },
+      })
+      .returning()
+
+    if (!row) {
+      throw new Error("Failed to upsert follow-up smart delay")
+    }
+
+    return toSmartDelayRow(row)
+  }
+
+  async markScheduled(props: {
+    tx?: DatabaseClient
+    id: string
+  }): Promise<void> {
+    await this.markStatus({
+      tx: props.tx,
+      id: props.id,
+      status: smartDelayStatuses.enum.scheduled,
+    })
   }
 
   async markCompleted(props: {
@@ -80,7 +129,7 @@ class SmartDelayService extends BaseService {
     const { tx = db, windowUntil } = props
     const rows = await tx
       .update(contactOnSmartDelayModel)
-      .set({ status: smartDelayStatuses.enum.completed })
+      .set({ status: smartDelayStatuses.enum.scheduled })
       .where(
         and(
           eq(contactOnSmartDelayModel.status, smartDelayStatuses.enum.pending),
@@ -90,6 +139,51 @@ class SmartDelayService extends BaseService {
       .returning()
 
     return rows.map(toSmartDelayRow)
+  }
+
+  async claimForRun(props: {
+    tx?: DatabaseClient
+    id: string
+    to: "completed" | "canceled"
+  }): Promise<boolean> {
+    const { tx = db, id, to } = props
+    const rows = await tx
+      .update(contactOnSmartDelayModel)
+      .set({ status: smartDelayStatuses.enum[to] })
+      .where(
+        and(
+          eq(contactOnSmartDelayModel.id, id),
+          eq(
+            contactOnSmartDelayModel.status,
+            smartDelayStatuses.enum.scheduled,
+          ),
+        ),
+      )
+      .returning({ id: contactOnSmartDelayModel.id })
+
+    return rows.length > 0
+  }
+
+  async sweepStuckScheduled(props: {
+    tx?: DatabaseClient
+    olderThan: Date
+  }): Promise<number> {
+    const { tx = db, olderThan } = props
+    const rows = await tx
+      .update(contactOnSmartDelayModel)
+      .set({ status: smartDelayStatuses.enum.pending })
+      .where(
+        and(
+          eq(
+            contactOnSmartDelayModel.status,
+            smartDelayStatuses.enum.scheduled,
+          ),
+          lt(contactOnSmartDelayModel.triggerAt, olderThan),
+        ),
+      )
+      .returning({ id: contactOnSmartDelayModel.id })
+
+    return rows.length
   }
 
   async resetToPending(props: {

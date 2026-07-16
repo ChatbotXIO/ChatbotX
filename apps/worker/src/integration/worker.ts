@@ -41,6 +41,7 @@ import {
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
+import { runWaitResume } from "./handlers/wait-resume"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { closeChatQueueEvents } from "./utils/message"
 
@@ -173,6 +174,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.runChallenge: {
             await runChallenge(job.data.data)
+            return
+          }
+          case IntegrationJobAction.resumeWait: {
+            await runWaitResume(job.data.data)
             return
           }
           case IntegrationJobAction.resumeFollowUp: {

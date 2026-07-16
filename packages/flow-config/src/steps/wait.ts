@@ -138,7 +138,8 @@ export const delayTypeDurationDefaultFn = () => ({
   endTime: null,
 })
 
-export const buildJobId = (rowId: string) => `smart-delay-${rowId}`
+export const buildJobId = (rowId: string, triggerAt: Date) =>
+  `smart-delay-${rowId}-${triggerAt.getTime()}`
 
 export async function computeTriggerAt(
   step: WaitStepSchema,

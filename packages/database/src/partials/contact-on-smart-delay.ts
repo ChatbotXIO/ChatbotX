@@ -5,6 +5,7 @@ export type SmartDelayType = z.infer<typeof smartDelayTypes>
 
 export const smartDelayStatuses = z.enum([
   "pending",
+  "scheduled",
   "completed",
   "failed",
   "canceled",

@@ -1,6 +1,9 @@
 import { contactInboxService } from "@chatbotx.io/business/contact-inbox"
 import { smartDelayService } from "@chatbotx.io/business/smart-delay"
-import { smartDelayTypes } from "@chatbotx.io/database/partials"
+import {
+  smartDelayStatuses,
+  smartDelayTypes,
+} from "@chatbotx.io/database/partials"
 import {
   computeFollowUpTriggerAt,
   type FollowUpStepSchema,
@@ -60,7 +63,16 @@ export async function runFollowUpResume(
   data: IntegrationJobResumeFollowUp["data"],
 ): Promise<void> {
   const row = await smartDelayService.findById({ id: data.smartDelayId })
-  if (!row || row.type !== smartDelayTypes.enum.followUp || !row.nodeId) {
+  if (
+    !row ||
+    row.type !== smartDelayTypes.enum.followUp ||
+    row.status !== smartDelayStatuses.enum.scheduled ||
+    !row.nodeId
+  ) {
+    return
+  }
+
+  if (row.triggerAt.getTime() > Date.now()) {
     return
   }
 
@@ -71,11 +83,25 @@ export async function runFollowUpResume(
   })
 
   if (hasReplied) {
-    await smartDelayService.markCanceled({ id: row.id })
+    const canceled = await smartDelayService.claimForRun({
+      id: row.id,
+      to: smartDelayStatuses.enum.canceled,
+    })
+    if (!canceled) {
+      return
+    }
     logger.info(
       { smartDelayId: row.id, conversationId: row.conversationId },
       "Follow-up canceled: contact replied before the timer expired",
     )
+    return
+  }
+
+  const completed = await smartDelayService.claimForRun({
+    id: row.id,
+    to: smartDelayStatuses.enum.completed,
+  })
+  if (!completed) {
     return
   }
 

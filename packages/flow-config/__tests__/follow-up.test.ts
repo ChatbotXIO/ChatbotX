@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 import {
+  buildJobId,
   computeFollowUpTriggerAt,
   delayUnitToMs,
   followUpStepDefaultFn,
@@ -88,5 +89,11 @@ describe("follow up timing helpers", () => {
         endTime: null,
       }).success,
     ).toBe(true)
+  })
+
+  test("buildJobId includes triggerAt so rescheduled rows arm new wake-ups", () => {
+    expect(buildJobId("row-1", new Date("2026-07-16T00:01:00.000Z"))).toBe(
+      "smart-delay-row-1-1784160060000",
+    )
   })
 })

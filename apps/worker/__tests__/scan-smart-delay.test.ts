@@ -1,21 +1,24 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { integrationQueueAddBulk, loggerInfo, smartDelayService } = vi.hoisted(
-  () => ({
+const { integrationQueueAddBulk, loggerInfo, loggerWarn, smartDelayService } =
+  vi.hoisted(() => ({
     integrationQueueAddBulk: vi.fn(),
     loggerInfo: vi.fn(),
+    loggerWarn: vi.fn(),
     smartDelayService: {
+      claimForRun: vi.fn(),
       claimDueRows: vi.fn(),
       resetToPending: vi.fn(),
+      sweepStuckScheduled: vi.fn(),
     },
-  }),
-)
+  }))
 
 vi.mock("@chatbotx.io/business/smart-delay", () => ({ smartDelayService }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {
     resumeFollowUp: "resumeFollowUp",
+    resumeWait: "resumeWait",
     sendFlow: "sendFlow",
   },
   integrationQueue: {
@@ -28,7 +31,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: {
     error: vi.fn(),
     info: loggerInfo,
-    warn: vi.fn(),
+    warn: loggerWarn,
   },
 }))
 
@@ -48,7 +51,7 @@ const makeRow = (overrides: Record<string, unknown> = {}) => ({
   type: "waitNode",
   createdAt: new Date("2026-07-16T00:00:00.000Z"),
   triggerAt: new Date("2026-07-16T00:01:00.000Z"),
-  status: "completed",
+  status: "scheduled",
   ...overrides,
 })
 
@@ -57,6 +60,8 @@ describe("scanSmartDelay", () => {
     vi.clearAllMocks()
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-07-16T00:00:00.000Z"))
+    smartDelayService.sweepStuckScheduled.mockResolvedValue(0)
+    smartDelayService.claimForRun.mockResolvedValue(true)
     integrationQueueAddBulk.mockResolvedValue(undefined)
   })
 
@@ -64,10 +69,25 @@ describe("scanSmartDelay", () => {
     smartDelayService.claimDueRows.mockResolvedValueOnce([])
 
     await expect(scanSmartDelay()).resolves.toEqual({ scanned: 0, enqueued: 0 })
+    expect(smartDelayService.sweepStuckScheduled).toHaveBeenCalledWith({
+      olderThan: new Date("2026-07-15T23:50:00.000Z"),
+    })
     expect(integrationQueueAddBulk).not.toHaveBeenCalled()
   })
 
-  test("enqueues wait rows as sendFlow and follow-up rows as resumeFollowUp", async () => {
+  test("logs and resets stuck scheduled rows before claiming due rows", async () => {
+    smartDelayService.sweepStuckScheduled.mockResolvedValueOnce(3)
+    smartDelayService.claimDueRows.mockResolvedValueOnce([])
+
+    await expect(scanSmartDelay()).resolves.toEqual({ scanned: 0, enqueued: 0 })
+
+    expect(loggerWarn).toHaveBeenCalledWith(
+      { count: 3 },
+      "Reset stuck scheduled smart delay rows to pending",
+    )
+  })
+
+  test("enqueues wait rows as resumeWait and follow-up rows as resumeFollowUp", async () => {
     smartDelayService.claimDueRows.mockResolvedValueOnce([
       makeRow({ id: "wait-row", type: "waitNode" }),
       makeRow({ id: "follow-up-row", type: "followUp" }),
@@ -80,18 +100,12 @@ describe("scanSmartDelay", () => {
     })
     expect(integrationQueueAddBulk).toHaveBeenCalledWith([
       {
-        name: "sendFlow",
+        name: "resumeWait",
         data: {
-          type: "sendFlow",
-          data: {
-            conversationId: "conversation-1",
-            contactInboxId: "contact-inbox-1",
-            flowId: "flow-1",
-            flowVersionId: "flow-version-1",
-            nodeId: "next-node",
-          },
+          type: "resumeWait",
+          data: { smartDelayId: "wait-row" },
         },
-        opts: { jobId: "smart-delay-wait-row", delay: 60_000 },
+        opts: { jobId: "smart-delay-wait-row-1784160060000", delay: 60_000 },
       },
       {
         name: "resumeFollowUp",
@@ -99,7 +113,10 @@ describe("scanSmartDelay", () => {
           type: "resumeFollowUp",
           data: { smartDelayId: "follow-up-row" },
         },
-        opts: { jobId: "smart-delay-follow-up-row", delay: 60_000 },
+        opts: {
+          jobId: "smart-delay-follow-up-row-1784160060000",
+          delay: 60_000,
+        },
       },
     ])
   })
@@ -126,6 +143,10 @@ describe("scanSmartDelay", () => {
       { ids: ["terminal-row"] },
       "Smart delay rows without nodeId marked completed (terminal wait)",
     )
+    expect(smartDelayService.claimForRun).toHaveBeenCalledWith({
+      id: "terminal-row",
+      to: "completed",
+    })
     expect(integrationQueueAddBulk).not.toHaveBeenCalled()
   })
 })

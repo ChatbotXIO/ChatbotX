@@ -14,8 +14,9 @@ const {
   smartDelayService: {
     create: vi.fn(),
     findById: vi.fn(),
-    markCanceled: vi.fn(),
-    markCompleted: vi.fn(),
+    markScheduled: vi.fn(),
+    resetToPending: vi.fn(),
+    upsertFollowUp: vi.fn(),
   },
 }))
 
@@ -26,6 +27,7 @@ vi.mock("@chatbotx.io/business/smart-delay", () => ({ smartDelayService }))
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {
     resumeFollowUp: "resumeFollowUp",
+    resumeWait: "resumeWait",
     sendFlow: "sendFlow",
   },
   integrationQueue: {
@@ -81,13 +83,17 @@ describe("handleFollowUp", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-07-16T00:00:00.000Z"))
     integrationQueueAdd.mockResolvedValue(undefined)
+    smartDelayService.resetToPending.mockResolvedValue(undefined)
+    smartDelayService.upsertFollowUp.mockImplementation(
+      async ({ data }: { data: Record<string, unknown> }) => data,
+    )
   })
 
-  test("creates a follow-up smart-delay row and immediately enqueues resumeFollowUp for short delays", async () => {
+  test("upserts a follow-up smart-delay row and immediately enqueues resumeFollowUp for short delays", async () => {
     const result = await handleFollowUp(makeProps())
 
     expect(result).toEqual({ status: "wait", result: null })
-    expect(smartDelayService.create).toHaveBeenCalledWith({
+    expect(smartDelayService.upsertFollowUp).toHaveBeenCalledWith({
       data: expect.objectContaining({
         workspaceId: "workspace-1",
         flowId: "flow-1",
@@ -101,17 +107,22 @@ describe("handleFollowUp", () => {
         status: "pending",
       }),
     })
+    expect(smartDelayService.create).not.toHaveBeenCalled()
 
-    const rowId = smartDelayService.create.mock.calls[0][0].data.id
+    const rowId = smartDelayService.upsertFollowUp.mock.calls[0][0].data.id
+    const triggerAt = new Date("2026-07-16T00:01:00.000Z")
     expect(integrationQueueAdd).toHaveBeenCalledWith(
       "resumeFollowUp",
       {
         type: "resumeFollowUp",
         data: { smartDelayId: rowId },
       },
-      { delay: 60_000, jobId: `smart-delay-${rowId}` },
+      { delay: 60_000, jobId: `smart-delay-${rowId}-${triggerAt.getTime()}` },
     )
-    expect(smartDelayService.markCompleted).toHaveBeenCalledWith({ id: rowId })
+    expect(smartDelayService.markScheduled).toHaveBeenCalledWith({ id: rowId })
+    expect(
+      smartDelayService.markScheduled.mock.invocationCallOrder[0],
+    ).toBeLessThan(integrationQueueAdd.mock.invocationCallOrder[0])
   })
 
   test("keeps long-delay rows pending for the scanner", async () => {
@@ -127,9 +138,17 @@ describe("handleFollowUp", () => {
     )
 
     expect(result).toEqual({ status: "wait", result: null })
-    expect(smartDelayService.create).toHaveBeenCalledOnce()
+    expect(smartDelayService.upsertFollowUp).toHaveBeenCalledOnce()
     expect(integrationQueueAdd).not.toHaveBeenCalled()
-    expect(smartDelayService.markCompleted).not.toHaveBeenCalled()
+    expect(smartDelayService.markScheduled).not.toHaveBeenCalled()
+  })
+
+  test("scheduling the same follow-up twice reuses the upsert path", async () => {
+    await handleFollowUp(makeProps())
+    await handleFollowUp(makeProps())
+
+    expect(smartDelayService.upsertFollowUp).toHaveBeenCalledTimes(2)
+    expect(smartDelayService.create).not.toHaveBeenCalled()
   })
 
   test("skips without creating a row when no node is connected", async () => {
@@ -141,6 +160,7 @@ describe("handleFollowUp", () => {
 
     expect(result).toEqual({ status: "skip", result: null })
     expect(smartDelayService.create).not.toHaveBeenCalled()
+    expect(smartDelayService.upsertFollowUp).not.toHaveBeenCalled()
   })
 
   test("skips without creating a row when contactInbox is missing", async () => {
@@ -148,6 +168,7 @@ describe("handleFollowUp", () => {
 
     expect(result).toEqual({ status: "skip", result: null })
     expect(smartDelayService.create).not.toHaveBeenCalled()
+    expect(smartDelayService.upsertFollowUp).not.toHaveBeenCalled()
   })
 
   test("leaves the row pending when immediate enqueue fails", async () => {
@@ -156,8 +177,11 @@ describe("handleFollowUp", () => {
     const result = await handleFollowUp(makeProps())
 
     expect(result).toEqual({ status: "wait", result: null })
-    expect(smartDelayService.create).toHaveBeenCalledOnce()
-    expect(smartDelayService.markCompleted).not.toHaveBeenCalled()
+    expect(smartDelayService.upsertFollowUp).toHaveBeenCalledOnce()
+    expect(smartDelayService.markScheduled).toHaveBeenCalledOnce()
+    expect(smartDelayService.resetToPending).toHaveBeenCalledWith({
+      ids: [smartDelayService.upsertFollowUp.mock.calls[0][0].data.id],
+    })
     expect(loggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({ rowId: expect.any(String) }),
       "Failed to immediately enqueue smart delay; scanner will pick it up",
