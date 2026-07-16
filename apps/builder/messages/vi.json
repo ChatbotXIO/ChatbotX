@@ -882,7 +882,7 @@
       "label": "Trả lời mặc định"
     },
     "smartResponseDelaySeconds": {
-      "description": "Chờ liên hệ ngừng gửi tin nhắn trước khi AI phản hồi. Mỗi tin nhắn mới sẽ đặt lại bộ đếm và gộp cả cụm thành một phản hồi AI. Phản hồi tự động theo từ khóa vẫn dùng thời gian mặc định.",
+      "description": "Đặt thời gian bot chờ trước khi trả lời sau khi người dùng gửi tin nhắn cuối cùng. Nếu người dùng gửi tin nhắn khác, bộ đếm sẽ được đặt lại và các tin nhắn được xếp hàng thành một phản hồi duy nhất.",
       "label": "Trì hoãn phản hồi bot",
       "minutes": "{count, plural, one {# phút} other {# phút}}",
       "none": "Không",
