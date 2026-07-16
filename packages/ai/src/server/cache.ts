@@ -1,4 +1,4 @@
-import { distributedStore, withCache } from "@chatbotx.io/redis"
+import { invalidateCacheKeys, withCache } from "@chatbotx.io/redis"
 import { env } from "../keys"
 import { getAIIntegrationInDB } from "./factory"
 
@@ -29,14 +29,8 @@ export const invalidateAIIntegrationCache = (
   workspaceId: string,
   provider: string,
 ) =>
-  Promise.all([
-    distributedStore.delete(
-      getAIIntegrationCachedKey({ workspaceId, provider }),
-    ),
-    distributedStore.delete(
-      getAIIntegrationCachedKey({ workspaceId, provider, autoReply: true }),
-    ),
-    distributedStore.delete(
-      getAIIntegrationCachedKey({ workspaceId, provider, autoReply: false }),
-    ),
+  invalidateCacheKeys([
+    getAIIntegrationCachedKey({ workspaceId, provider }),
+    getAIIntegrationCachedKey({ workspaceId, provider, autoReply: true }),
+    getAIIntegrationCachedKey({ workspaceId, provider, autoReply: false }),
   ])

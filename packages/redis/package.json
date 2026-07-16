@@ -12,6 +12,7 @@
     "async-mutex": "^0.5.0",
     "ioredis": "5.10.1",
     "redlock-universal": "^0.8.4",
+    "superjson": "^2.2.6",
     "zod": "^4.3.6"
   },
   "devDependencies": {
