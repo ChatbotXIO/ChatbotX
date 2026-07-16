@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   boolean,
   index,
@@ -49,5 +50,8 @@ export const userQuotaModel = pgTable(
   },
   (table) => [
     index("UserQuota_channelsTornDownAt_idx").on(table.channelsTornDownAt),
+    index("UserQuota_due_expired_trial_idx")
+      .on(table.userId)
+      .where(sql`"channelsTornDownAt" IS NULL AND "planStatus" = 'trial'`),
   ],
 )

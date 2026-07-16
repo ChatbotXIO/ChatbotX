@@ -16,6 +16,7 @@ import {
   ScheduleJobData,
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
+import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 
 export const prepareBroadcast = async (broadcastId: string) => {
   const broadcast = await db.query.broadcastModel.findFirst({
@@ -27,6 +28,10 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
   if (!broadcast) {
     console.error("Broadcast not found or not scheduled", broadcastId)
+    return
+  }
+
+  if (await isBlockedWorkspace(broadcast.workspaceId)) {
     return
   }
 

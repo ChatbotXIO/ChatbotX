@@ -23,11 +23,17 @@ export const ScheduleJobData = {
   maintainMacPartitions: "maintainMacPartitions",
   scanCoexistRuns: "scanCoexistRuns",
   purgeCoexistStaging: "purgeCoexistStaging",
+  purgeWorkspaces: "purgeWorkspaces",
   refreshZaloTokens: "refreshZaloTokens",
+  unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
+  teardownExpiredTrial: "teardownExpiredTrial",
 } as const
 
 export const broadcastSendJobId = (broadcastId: string) =>
   `broadcast-send-${broadcastId}`
+
+export const teardownExpiredTrialJobId = (userId: string) =>
+  `teardown-expired-trial-${userId}`
 
 export type ScheduleJobBroadcast = {
   type: typeof ScheduleJobData.sendBroadcast
@@ -115,9 +121,24 @@ export type ScheduleJobPurgeCoexistStaging = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeWorkspaces = {
+  type: typeof ScheduleJobData.purgeWorkspaces
+  data: Record<string, never>
+}
+
 export type ScheduleJobRefreshZaloTokens = {
   type: typeof ScheduleJobData.refreshZaloTokens
   data: Record<string, never>
+}
+
+export type ScheduleJobUnsubscribeExpiredTrials = {
+  type: typeof ScheduleJobData.unsubscribeExpiredTrials
+  data: { cursor?: string }
+}
+
+export type ScheduleJobTeardownExpiredTrial = {
+  type: typeof ScheduleJobData.teardownExpiredTrial
+  data: { userId: string }
 }
 
 export type ScheduleJobData =
@@ -137,7 +158,10 @@ export type ScheduleJobData =
   | ScheduleJobMaintainMacPartitions
   | ScheduleJobScanCoexistRuns
   | ScheduleJobPurgeCoexistStaging
+  | ScheduleJobPurgeWorkspaces
   | ScheduleJobRefreshZaloTokens
+  | ScheduleJobUnsubscribeExpiredTrials
+  | ScheduleJobTeardownExpiredTrial
 
 export const scheduleQueue =
   process.env.NEXT_PHASE === "phase-production-build"

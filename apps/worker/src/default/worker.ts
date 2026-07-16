@@ -7,7 +7,9 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { runImport } from "./handlers/run-import"
@@ -15,6 +17,9 @@ import { sendAuditLog } from "./handlers/send-audit-log"
 import { sendErrorLog } from "./handlers/send-error-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { handleSyncTag } from "./handlers/sync-tag"
+
+const isBlockedJob = async (data: unknown) =>
+  isBlockedWorkspace(await resolveWorkspaceId(data))
 
 const worker = new Worker(
   queueNames.enum.default,
@@ -29,6 +34,9 @@ const worker = new Worker(
         await sendErrorLog(job.data.data)
         return
       case DefaultJobAction.exportContacts:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
         await loopableExportContacts(job.data.data)
         return
       case DefaultJobAction.bulkTagContacts:
@@ -37,12 +45,21 @@ const worker = new Worker(
         })
         return
       case DefaultJobAction.runImport:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
         await runImport(job.data.data)
         return
       case DefaultJobAction.syncTag:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
         await handleSyncTag(job.data.data)
         return
       case DefaultJobAction.syncChannelLabels:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
         await handleSyncChannelLabels(job.data.data)
         return
       default:

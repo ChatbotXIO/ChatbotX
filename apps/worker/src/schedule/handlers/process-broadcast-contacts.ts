@@ -19,6 +19,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
 
 const DEFAULT_BROADCAST_RATE_LIMIT = 500
@@ -219,6 +220,10 @@ export const processBroadcastContacts = async (broadcastId: string) => {
   })
 
   if (broadcasts.length === 0) {
+    return { processed: 0 }
+  }
+
+  if (await isBlockedWorkspace(broadcasts[0].workspaceId)) {
     return { processed: 0 }
   }
 

@@ -84,6 +84,7 @@ pnpm --filter @chatbotx.io/database make:migration <name>
 ### Database
 
 - Schema and migrations: **`packages/database`** (Drizzle). Use the **drizzle-database** skill in `.agents/skills/drizzle-database/SKILL.md` for migrations and query patterns.
+- **Migration safety:** Never run or apply `db:migrate` automatically. Generate and inspect migration SQL when needed, then wait for explicit user approval before applying it. This applies even when a plan lists `db:migrate` as a verification step.
 
 ### Workers & queues
 

@@ -2,6 +2,8 @@ import {
   customDomainService,
   platformCredentialService,
   tenantService,
+  userQuotaService,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
@@ -37,6 +39,8 @@ const logWebhookRequestBody = async (
     )
   }
 }
+const isBlockedOwner = async (ownerId: string | undefined) =>
+  ownerId ? (await userQuotaService.getAccessState(ownerId)).blocked : false
 
 export const handleWebhook = async (
   integrationType: string,
@@ -193,6 +197,17 @@ const handleTelegramWebhook = async (req: NextRequest) => {
     })
   }
 
+  const telegramWorkspace = await workspaceService.find({
+    where: { id: integrationTelegram.workspaceId },
+  })
+  if (await isBlockedOwner(telegramWorkspace?.ownerId)) {
+    logger.info(
+      { ownerId: telegramWorkspace?.ownerId, integrationType: "telegram" },
+      "webhook skipped: blocked owner",
+    )
+    return new Response("ok")
+  }
+
   const auth = integrationTelegram.auth as {
     secretText: string
     metadata?: { botId?: string; webhookSecretToken?: string }
@@ -266,6 +281,17 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       JSON.stringify({ message: "TikTok account not found" }),
       { status: 404, headers: { "Content-Type": "application/json" } },
     )
+  }
+
+  const tiktokWorkspace = await workspaceService.find({
+    where: { id: integrationTiktok.workspaceId },
+  })
+  if (await isBlockedOwner(tiktokWorkspace?.ownerId)) {
+    logger.info(
+      { ownerId: tiktokWorkspace?.ownerId, integrationType: "tiktok" },
+      "webhook skipped: blocked owner",
+    )
+    return new Response("ok")
   }
 
   if (eventType === "authorization.removed") {

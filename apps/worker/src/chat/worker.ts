@@ -10,7 +10,9 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
   changeMessageStateOnChannel,
@@ -34,6 +36,10 @@ async function startChatWorker() {
   const worker = new Worker(
     queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
+      if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+        return
+      }
+
       switch (job.data.type) {
         case ChatJobAction.sendChannelMessage:
           await sendMessageToChannel(job.data.data)

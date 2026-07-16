@@ -12,7 +12,9 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
@@ -52,6 +54,11 @@ async function startIntegrationWorker() {
   const worker = new Worker(
     queueNames.enum.integration,
     async (job: Job<IntegrationJobData>) => {
+      const workspaceId = await resolveWorkspaceId(job.data.data)
+      if (await isBlockedWorkspace(workspaceId)) {
+        return
+      }
+
       return await runIntegrationJobWithWebhookContext(job.data, async () => {
         switch (job.data.type) {
           case IntegrationJobAction.incomingMessage: {

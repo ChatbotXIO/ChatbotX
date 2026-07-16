@@ -221,15 +221,24 @@ For at least one enqueue path, prefer an integration test against real (or `iore
 
 ## Scheduled Jobs (Cron)
 
-The schedule worker (`src/schedule/worker.ts`) runs periodic tasks. Add cron-style scheduled work there or use BullMQ's repeatable jobs:
+Scheduled work follows four touchpoints:
 
-```typescript
-await myQueue.add(
-  "syncData",
-  { type: MyQueueJobAction.syncData, data: { source: "cron" } },
-  { repeat: { pattern: "0 */6 * * *" } }, // every 6 hours
-)
-```
+1. Add a `ScheduleJobData` const, its inferred type, and the union entry in
+   `packages/worker-config`.
+2. Register the cadence with `upsertJobScheduler` in `register-schedules.ts`.
+3. Import the handler and add its `case` in `schedule/worker.ts`.
+4. Implement the handler in `schedule/handlers/<name>.ts`.
+
+Handlers that mutate shared state must wrap their body in
+`distributedLock.runExclusive({ key, timeoutInSeconds, fn })`. The TTL must be
+shorter than the schedule cadence so concurrent worker replicas cannot overlap.
+
+Every workspace-scoped processor should resolve its workspace with
+`resolveWorkspaceId` and gate execution with `withBlockedOwnerGuard` (or the
+worker helper built on it). A blocked owner is a safe-return no-op: return
+without throwing so BullMQ acknowledges the job without retry/DLQ. Jobs that
+cannot be attributed to a workspace remain deliberately fail-open. System,
+quota, and tenancy lifecycle jobs are excluded from this gate.
 
 ## Kafka (Sequence Scheduler Pattern)
 

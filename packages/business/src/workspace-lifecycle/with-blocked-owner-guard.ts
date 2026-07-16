@@ -15,7 +15,10 @@ export async function withBlockedOwnerGuard<T>(
     return await fn()
   }
 
-  const workspace = await workspaceService.findById({ id: workspaceId })
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  if (!workspace) {
+    return await fn()
+  }
   const accessState = await userQuotaService.getAccessState(workspace.ownerId)
 
   if (accessState.blocked) {
