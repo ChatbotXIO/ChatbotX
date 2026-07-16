@@ -126,6 +126,12 @@ export const checkGuestRateLimit = async ({
   }
 }
 
+// Trusts the first `x-forwarded-for` hop as the client IP. This is only
+// correct behind a proxy that overwrites (not appends to) the header before
+// forwarding — otherwise a caller can set an arbitrary `X-Forwarded-For` to
+// rotate their rate-limit key (evasion) or pin a victim's IP (lockout).
+// Confirm the deployment's ingress/proxy strips inbound XFF before trusting
+// this for anything beyond best-effort abuse mitigation.
 export const getGuestClientIp = (headers: Headers) => {
   const forwardedFor = headers.get("x-forwarded-for")
   if (forwardedFor) {

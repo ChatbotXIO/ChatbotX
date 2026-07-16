@@ -98,10 +98,11 @@ export async function GET(req: NextRequest) {
       workspaceId: data.workspaceId,
     })
 
+    const bearerToken = getBearerToken(req)
     // Bind-on-first-use: always require a token bound to the presented
     // origin, then layer the optional domain allowlist on top.
     const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({
-      token: data.accessToken ?? getBearerToken(req),
+      token: data.accessToken ?? bearerToken,
       origin: data.parentOrigin,
       workspaceId: data.workspaceId,
       webchatId: data.webchatId,
@@ -145,7 +146,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(result, { headers })
   } catch (e) {
-    return serverErrorHandler(e)
+    return serverErrorHandler(e, corsHeaders(requestOrigin, false))
   }
 }
 
@@ -159,10 +160,11 @@ export async function POST(req: NextRequest) {
       id: parsedInput.webchatId,
       workspaceId: parsedInput.workspaceId,
     })
+    const bearerToken = getBearerToken(req)
     // Bind-on-first-use: always require a token bound to the presented
     // origin, then layer the optional domain allowlist on top.
     const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({
-      token: parsedInput.accessToken ?? getBearerToken(req),
+      token: parsedInput.accessToken ?? bearerToken,
       origin: parsedInput.parentOrigin,
       workspaceId: parsedInput.workspaceId,
       webchatId: parsedInput.webchatId,
@@ -179,8 +181,7 @@ export async function POST(req: NextRequest) {
     const message = await handleCreateWebchatMessage({
       parsedInput: {
         ...parsedInput,
-        accessToken:
-          parsedInput.accessToken ?? getBearerToken(req) ?? undefined,
+        accessToken: parsedInput.accessToken ?? bearerToken ?? undefined,
       },
     })
 
@@ -191,6 +192,6 @@ export async function POST(req: NextRequest) {
       { headers },
     )
   } catch (e) {
-    return serverErrorHandler(e)
+    return serverErrorHandler(e, corsHeaders(requestOrigin, false))
   }
 }

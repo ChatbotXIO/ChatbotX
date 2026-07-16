@@ -86,11 +86,24 @@ export const verifyWebchatAccessToken = async ({
     // for (captured from the referer at page-load time), and every caller
     // must present a matching host to use it — this holds regardless of
     // whether the webchat has an admin-configured authorizedDomains
-    // allowlist, so a leaked/replayed token can't be used from another site
-    // even when no allowlist has been set up. Compare normalized hosts
-    // (not raw strings) since mint-time (referer header, may include a
-    // path) and verify-time (window.location.origin, bare) values differ
-    // in shape even for the same site.
+    // allowlist. Compare normalized hosts (not raw strings) since mint-time
+    // (referer header, may include a path) and verify-time
+    // (window.location.origin, bare) values differ in shape even for the
+    // same site.
+    //
+    // Threat model: the `origin` passed in here at verify time is
+    // client-supplied (a request body/query field), not read from a
+    // server-trusted header, and the mint-time `referer` can itself be
+    // forged by a direct (non-browser) caller. So this check stops a
+    // *passive* leaked/replayed token from being reused from a genuinely
+    // different origin (that origin's real `window.location.origin` won't
+    // match the host baked into someone else's token) — it does NOT stop an
+    // *active* attacker who controls both the mint request's Referer and the
+    // verify request's origin field and can simply keep them consistent.
+    // The admin-configured authorizedDomains allowlist has the same
+    // limitation (also checked against the client-supplied origin). Treat
+    // both as defense-in-depth, not a substitute for origin verification
+    // from a trusted transport-layer signal.
     //
     // The token is session-scoped only (workspace/webchat/origin/exp) and
     // is not bound to a specific guestConversationId: the iframe embed has
