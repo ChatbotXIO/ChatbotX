@@ -572,10 +572,10 @@
     },
     "deletion": {
       "title": "Xóa workspace",
-      "description": "Xóa vĩnh viễn workspace này. Danh bạ và tất cả cài đặt sẽ bị xóa.",
+      "description": "Xóa vĩnh viễn workspace này. Toàn bộ danh bạ, cài đặt và dữ liệu sẽ bị xóa sau 24 giờ kể từ khi bạn xác nhận.",
       "schedule": "Xóa workspace",
       "confirmTitle": "Xóa workspace này?",
-      "confirmDescription": "Danh bạ và tất cả cài đặt sẽ bị xóa vĩnh viễn. Bạn có thể hoàn tác trước khi việc xóa hoàn tất.",
+      "confirmDescription": "Toàn bộ danh bạ, cài đặt và dữ liệu sẽ bị xóa vĩnh viễn sau 24 giờ kể từ khi bạn xác nhận. Bạn có thể hoàn tác bất cứ lúc nào trước thời điểm đó.",
       "pending": "Workspace này sẽ bị xóa {countdown} ({date}). Bạn có thể hoàn tác bất cứ lúc nào trước thời điểm đó.",
       "pendingFallback": "sớm",
       "undone": "Đã hủy lịch xóa workspace",
