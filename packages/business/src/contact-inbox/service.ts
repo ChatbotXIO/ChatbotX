@@ -381,29 +381,14 @@ class ContactInboxService extends BaseService {
       )`,
     )
 
+    // Postgres GREATEST/LEAST ignore NULL operands, so each column keeps its
+    // existing value when the incoming one is NULL and vice versa.
     await tx.execute(sql`
       UPDATE "ContactInbox" AS t
       SET
-        "firstInteractionAt" = CASE
-          WHEN t."firstInteractionAt" IS NULL OR t."firstInteractionAt" > u.first_ts
-            THEN u.first_ts
-          ELSE t."firstInteractionAt"
-        END,
-        "lastMessageAt" = CASE
-          WHEN t."lastMessageAt" IS NULL OR t."lastMessageAt" < u.message_ts
-            THEN u.message_ts
-          ELSE t."lastMessageAt"
-        END,
-        "lastIncomingMessageAt" = CASE
-          WHEN
-            u.incoming_ts IS NOT NULL
-            AND (
-              t."lastIncomingMessageAt" IS NULL
-              OR t."lastIncomingMessageAt" < u.incoming_ts
-            )
-            THEN u.incoming_ts
-          ELSE t."lastIncomingMessageAt"
-        END
+        "firstInteractionAt" = LEAST(t."firstInteractionAt", u.first_ts),
+        "lastMessageAt" = GREATEST(t."lastMessageAt", u.message_ts),
+        "lastIncomingMessageAt" = GREATEST(t."lastIncomingMessageAt", u.incoming_ts)
       FROM (VALUES ${sql.join(valueRows, sql`, `)})
         AS u(id, contact_id, workspace_id, message_ts, first_ts, incoming_ts)
       WHERE
