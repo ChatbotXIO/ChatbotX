@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { ExpiredBanner } from "@/components/expired-banner"
+import { WorkspaceDeletionPendingToast } from "@/components/workspace-deletion-pending-toast"
 import { isCloud } from "@/env"
 import { AccountRail } from "@/features/workspaces/components/account-rail"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
@@ -56,6 +57,7 @@ export default async function MainPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:py-16">
+      <WorkspaceDeletionPendingToast />
       <ExpiredBanner blocked={cloud && blocked} />
       <div className="flex flex-col gap-8 md:flex-row">
         <AccountRail
