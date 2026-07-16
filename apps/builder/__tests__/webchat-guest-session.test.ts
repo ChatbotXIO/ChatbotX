@@ -499,6 +499,7 @@ describe("webchat client config DTO", () => {
       workspaceId: "workspace-1",
       name: "Support",
       brandColor: "#007bff",
+      hideHeader: false,
       showLogo: true,
       hideMessageInput: false,
       welcomeFlowId: "flow-1",
@@ -521,6 +522,7 @@ describe("webchat client config DTO", () => {
     expect(dto).not.toHaveProperty("authorizedDomains")
     expect(Object.keys(dto).sort()).toEqual([
       "brandColor",
+      "hideHeader",
       "hideMessageInput",
       "id",
       "name",

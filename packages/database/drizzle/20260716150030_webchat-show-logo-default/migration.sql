@@ -1,0 +1,1 @@
+ALTER TABLE "IntegrationWebchat" ALTER COLUMN "showLogo" SET DEFAULT true;

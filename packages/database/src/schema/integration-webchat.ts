@@ -36,7 +36,7 @@ export const integrationWebchatModel = pgTable(
       .default(sql`[]`),
     brandColor: text().notNull(),
     hideHeader: boolean().default(false).notNull(),
-    showLogo: boolean().default(false).notNull(),
+    showLogo: boolean().default(true).notNull(),
     hideMessageInput: boolean().default(false).notNull(),
     customCss: text(),
     workspaceId: bigintAsString()

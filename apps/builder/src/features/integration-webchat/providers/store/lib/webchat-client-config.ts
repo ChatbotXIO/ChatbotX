@@ -13,6 +13,7 @@ export type WebchatClientConfig = Pick<
   | "workspaceId"
   | "name"
   | "brandColor"
+  | "hideHeader"
   | "showLogo"
   | "hideMessageInput"
   | "welcomeFlowId"
@@ -26,6 +27,7 @@ export const toWebchatClientConfig = (
   workspaceId: webchat.workspaceId,
   name: webchat.name,
   brandColor: webchat.brandColor,
+  hideHeader: webchat.hideHeader,
   showLogo: webchat.showLogo,
   hideMessageInput: webchat.hideMessageInput,
   welcomeFlowId: webchat.welcomeFlowId,
