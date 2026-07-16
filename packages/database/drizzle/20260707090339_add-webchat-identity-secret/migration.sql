@@ -1,1 +1,0 @@
-ALTER TABLE "IntegrationWebchat" ADD COLUMN "identitySecret" text;

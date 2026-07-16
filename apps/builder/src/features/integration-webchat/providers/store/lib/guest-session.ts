@@ -1,5 +1,3 @@
-import { createId } from "@chatbotx.io/utils"
-
 export const GUEST_CONVERSATION_ID_KEY = "x-conversation-id" as const
 export const LEGACY_GLOBAL_KEY = GUEST_CONVERSATION_ID_KEY
 
@@ -7,9 +5,6 @@ const memoryStorage = new Map<string, string>()
 
 export const buildGuestStorageKey = (workspaceId: string, webchatId: string) =>
   `${GUEST_CONVERSATION_ID_KEY}:${workspaceId}:${webchatId}`
-
-export const createGuestConversationId = (workspaceId: string) =>
-  `${workspaceId}:${createId()}`
 
 export const safeStorageGet = (key: string) => {
   try {

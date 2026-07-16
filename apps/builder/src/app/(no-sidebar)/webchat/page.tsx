@@ -1,15 +1,15 @@
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { hmacSha256Hex, timingSafeStringEqual } from "@chatbotx.io/utils/crypto"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import z from "zod"
 import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
+import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { GuestSessionStoreProvider } from "@/features/integration-webchat/providers/store/guest-session-provider"
-import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
+import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
 import { WebchatWrapper } from "@/features/integration-webchat/webchat-wrapper"
 
 type WebchatPageProps = {
@@ -28,8 +28,8 @@ export default async function WebchatPage(props: WebchatPageProps) {
       ref: z.string().optional(),
       domain: z.string().optional(),
       parentOrigin: z.string().optional(),
-      externalId: z.string().optional(),
-      externalHash: z.string().optional(),
+      guestConversationId: z.string().optional(),
+      accessToken: z.string().optional(),
     })
     .safeParse(searchParams)
   if (!data) {
@@ -62,34 +62,25 @@ export default async function WebchatPage(props: WebchatPageProps) {
     )
   }
 
-  // Optional customer-computed identity upgrade: the customer signs their chat
-  // visitor's external id server-side with the webchat's identitySecret. When
-  // a secret is configured and both externalId + externalHash verify, we vouch
-  // for the identity by baking it into the access token. If no secret is
-  // configured we ignore any supplied hash and treat the session as anonymous
-  // — an additive upgrade, never a new failure mode.
-  let verifiedExternalId: string | null = null
-  if (data.externalId && data.externalHash && targetWebchat.identitySecret) {
-    const expectedHash = await hmacSha256Hex(
-      targetWebchat.identitySecret,
-      data.externalId,
-    )
-    if (timingSafeStringEqual(data.externalHash, expectedHash)) {
-      verifiedExternalId = data.externalId
-    }
-  }
+  // The access token is session-scoped (workspace/webchat/origin/exp) and
+  // not bound to a guestConversationId — see webchat-access-token.ts. So a
+  // returning visitor's persisted id is trusted as-is whenever the client
+  // presents one; only a brand-new visitor gets a freshly minted id.
+  const guestConversationId =
+    data.guestConversationId ??
+    createGuestConversationId(targetWebchat.workspaceId)
 
   const accessToken = await createWebchatAccessToken({
     origin: embeddingOrigin,
     webchatId: targetWebchat.id,
     workspaceId: targetWebchat.workspaceId,
-    verifiedExternalId,
   })
 
   return (
     <GuestSessionStoreProvider
       accessToken={accessToken}
       config={toWebchatClientConfig(targetWebchat)}
+      serverGuestConversationId={guestConversationId}
     >
       <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
     </GuestSessionStoreProvider>

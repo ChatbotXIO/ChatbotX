@@ -49,13 +49,6 @@
       if (config.brandColor) {
         url.searchParams.set("brandColor", config.brandColor)
       }
-      if (config.externalId) {
-        url.searchParams.set("externalId", config.externalId)
-      }
-      if (config.externalHash) {
-        url.searchParams.set("externalHash", config.externalHash)
-      }
-
       url.searchParams.set("domain", window.location.hostname)
       const parentUrl = getParentPageUrl(config)
       if (parentUrl) {

@@ -2,8 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockDbExecute,
+  mockDbFindFirst,
   mockDbFindMany,
   mockDbReturning,
+  mockDbSelect,
+  mockDbSelectLimit,
   mockDbSet,
   mockDbUpdate,
   mockLoggerWarn,
@@ -20,10 +23,20 @@ const {
   mockDbSet.mockReturnValue(updateChain)
   mockDbWhere.mockReturnValue(updateChain)
   mockDbReturning.mockResolvedValue([{ id: "contact-inbox-1" }])
+
+  const mockDbSelectLimit = vi.fn().mockResolvedValue([])
+  const mockDbSelectOrderBy = vi.fn(() => ({ limit: mockDbSelectLimit }))
+  const mockDbSelectWhere = vi.fn(() => ({ orderBy: mockDbSelectOrderBy }))
+  const mockDbSelectFrom = vi.fn(() => ({ where: mockDbSelectWhere }))
+  const mockDbSelect = vi.fn(() => ({ from: mockDbSelectFrom }))
+
   return {
     mockDbExecute: vi.fn().mockResolvedValue(undefined),
+    mockDbFindFirst: vi.fn(),
     mockDbFindMany: vi.fn(),
     mockDbReturning,
+    mockDbSelect,
+    mockDbSelectLimit,
     mockDbSet,
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
     mockDbWhere,
@@ -44,9 +57,11 @@ const mockSql = Object.assign(
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     execute: mockDbExecute,
+    select: mockDbSelect,
     update: mockDbUpdate,
     query: {
       contactInboxModel: {
+        findFirst: mockDbFindFirst,
         findMany: mockDbFindMany,
       },
     },
@@ -65,7 +80,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     contactId: "contactId",
     firstInteractionAt: "firstInteractionAt",
     id: "id",
+    inboxId: "inboxId",
+    lastMessageAt: "lastMessageAt",
     referral: "referral",
+    sourceId: "sourceId",
   },
 }))
 
@@ -155,6 +173,48 @@ describe("contactInboxService timestamp helpers", () => {
       limit: 1,
     })
     expect(mockDbFindMany).not.toHaveBeenCalled()
+  })
+
+  test("findLatestBySource queries by inboxId + sourceId only when workspaceId is omitted", async () => {
+    mockDbFindFirst.mockResolvedValue({ id: "contact-inbox-1" })
+
+    const result = await contactInboxService.findLatestBySource({
+      inboxId: "inbox-1",
+      sourceId: "guest-1",
+    })
+
+    expect(result).toEqual({ id: "contact-inbox-1" })
+    expect(mockDbFindFirst).toHaveBeenCalledWith({
+      where: { inboxId: "inbox-1", sourceId: "guest-1" },
+      orderBy: { lastMessageAt: "desc" },
+    })
+    expect(mockDbSelect).not.toHaveBeenCalled()
+  })
+
+  test("findLatestBySource applies workspace scoping when workspaceId is provided", async () => {
+    mockDbSelectLimit.mockResolvedValue([{ id: "contact-inbox-1" }])
+
+    const result = await contactInboxService.findLatestBySource({
+      inboxId: "inbox-1",
+      sourceId: "guest-1",
+      workspaceId: "workspace-1",
+    })
+
+    expect(result).toEqual({ id: "contact-inbox-1" })
+    expect(mockDbSelect).toHaveBeenCalled()
+    expect(mockDbFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("findLatestBySource returns undefined when workspace-scoped query matches no row", async () => {
+    mockDbSelectLimit.mockResolvedValue([])
+
+    const result = await contactInboxService.findLatestBySource({
+      inboxId: "inbox-1",
+      sourceId: "guest-1",
+      workspaceId: "workspace-mismatch",
+    })
+
+    expect(result).toBeUndefined()
   })
 
   test("findRecentByContactId does not mutate cached contact inbox order", async () => {

@@ -1014,10 +1014,10 @@
       "placeholder": "smtp.example.com"
     },
     "hideHeader": {
-      "label": "Hiển thị tiêu đề"
+      "label": "Ẩn tiêu đề"
     },
     "hideMessageInput": {
-      "label": "Hiển thị ô nhập tin nhắn"
+      "label": "Ẩn ô nhập tin nhắn"
     },
     "inbox": {
       "label": "Hộp thư",
@@ -2834,16 +2834,6 @@
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
-    "identitySecret": {
-      "configured": "Đã cấu hình",
-      "description": "Ký ID bên ngoài của khách truy cập chat ở phía máy chủ bằng khóa bí mật này để ChatbotX có thể tin tưởng danh tính của họ — không bao giờ để lộ khóa bí mật này trong mã trình duyệt.",
-      "done": "Xong",
-      "generate": "Tạo khóa bí mật",
-      "generatedOnce": "Sao chép khóa bí mật ngay bây giờ — khóa chỉ hiển thị một lần và không thể lấy lại sau này.",
-      "notConfigured": "Chưa cấu hình",
-      "regenerate": "Tạo lại khóa bí mật",
-      "title": "Khóa bí mật xác minh danh tính"
-    },
     "rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.",
     "title": "Web Chat",
     "unauthorizedDomain": {
@@ -3518,6 +3508,11 @@
         "description": "Chèn CSS hoặc JavaScript tùy chỉnh vào mọi trang"
       }
     }
+  },
+  "platformChannels": {
+    "title": "Kênh được phép",
+    "description": "Chọn các loại kênh mà workspace trong tenant này có thể tạo.",
+    "hint": "Bỏ chọn tất cả kênh để cho phép mọi kênh."
   },
   "platformEmailTemplates": {
     "title": "Email Templates",

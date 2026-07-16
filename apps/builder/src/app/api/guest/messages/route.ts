@@ -1,6 +1,7 @@
 import { contactInboxService, conversationService } from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
+import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
@@ -96,16 +97,19 @@ export async function GET(req: NextRequest) {
       id: data.webchatId,
       workspaceId: data.workspaceId,
     })
+
+    // Bind-on-first-use: always require a token bound to the presented
+    // origin, then layer the optional domain allowlist on top.
+    const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({
+      token: data.accessToken ?? getBearerToken(req),
+      origin: data.parentOrigin,
+      workspaceId: data.workspaceId,
+      webchatId: data.webchatId,
+    })
     const authorized =
-      webchat.authorizedDomains.length === 0 ||
-      (
-        await verifyWebchatAccessToken({
-          token: data.accessToken ?? getBearerToken(req),
-          origin: data.parentOrigin,
-          workspaceId: data.workspaceId,
-          webchatId: data.webchatId,
-        })
-      ).authorized
+      tokenAuthorized &&
+      (webchat.authorizedDomains.length === 0 ||
+        isOriginAuthorized(data.parentOrigin, webchat.authorizedDomains))
     const headers = corsHeaders(requestOrigin, authorized)
     if (!authorized) {
       return await forbiddenResponse(headers)
@@ -114,6 +118,7 @@ export async function GET(req: NextRequest) {
     const contactInbox = await contactInboxService.findLatestBySource({
       inboxId: webchat.inboxId,
       sourceId: data.guestConversationId,
+      workspaceId: data.workspaceId,
     })
 
     if (!contactInbox) {
@@ -154,16 +159,18 @@ export async function POST(req: NextRequest) {
       id: parsedInput.webchatId,
       workspaceId: parsedInput.workspaceId,
     })
+    // Bind-on-first-use: always require a token bound to the presented
+    // origin, then layer the optional domain allowlist on top.
+    const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({
+      token: parsedInput.accessToken ?? getBearerToken(req),
+      origin: parsedInput.parentOrigin,
+      workspaceId: parsedInput.workspaceId,
+      webchatId: parsedInput.webchatId,
+    })
     const authorized =
-      webchat.authorizedDomains.length === 0 ||
-      (
-        await verifyWebchatAccessToken({
-          token: parsedInput.accessToken ?? getBearerToken(req),
-          origin: parsedInput.parentOrigin,
-          workspaceId: parsedInput.workspaceId,
-          webchatId: parsedInput.webchatId,
-        })
-      ).authorized
+      tokenAuthorized &&
+      (webchat.authorizedDomains.length === 0 ||
+        isOriginAuthorized(parsedInput.parentOrigin, webchat.authorizedDomains))
     const headers = corsHeaders(requestOrigin, authorized)
     if (!authorized) {
       return await forbiddenResponse(headers)

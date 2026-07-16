@@ -1007,10 +1007,10 @@
       "placeholder": "smtp.example.com"
     },
     "hideHeader": {
-      "label": "Show Header"
+      "label": "Hide Header"
     },
     "hideMessageInput": {
-      "label": "Show Message Input"
+      "label": "Hide Message Input"
     },
     "inbox": {
       "label": "Inbox",
@@ -2818,16 +2818,6 @@
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",
-    "identitySecret": {
-      "configured": "Configured",
-      "description": "Sign your chat visitors' external IDs server-side with this secret so ChatbotX can trust their identity — never expose this secret in browser code.",
-      "done": "Done",
-      "generate": "Generate secret",
-      "generatedOnce": "Copy this secret now — it is shown only once and cannot be retrieved later.",
-      "notConfigured": "Not configured",
-      "regenerate": "Regenerate secret",
-      "title": "Identity verification secret"
-    },
     "rateLimitExceeded": "Too many requests. Please try again in a moment.",
     "title": "Web Chat",
     "unauthorizedDomain": {
@@ -3494,6 +3484,11 @@
         "description": "Inject custom CSS or JavaScript into every page"
       }
     }
+  },
+  "platformChannels": {
+    "title": "Allowed Channels",
+    "description": "Choose which channel types workspaces in this tenant can create.",
+    "hint": "Leave every channel unchecked to allow all channels."
   },
   "platformEmailTemplates": {
     "title": "Email Templates",

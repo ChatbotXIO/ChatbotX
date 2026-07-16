@@ -1,29 +1,25 @@
 // @vitest-environment node
 
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import { hmacSha256Hex, timingSafeStringEqual } from "@chatbotx.io/utils/crypto"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { shouldTriggerWelcomeFlow } from "@/features/integration-webchat/components/webchat-welcome-flow"
 import {
   getParentOriginFromUrl,
   isOriginAuthorized,
 } from "@/features/integration-webchat/lib/authorized-domain"
+import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import {
   createWebchatAccessToken,
   verifyWebchatAccessToken,
 } from "@/features/integration-webchat/lib/webchat-access-token"
-import {
-  createGuestSessionStore,
-  toWebchatClientConfig,
-} from "@/features/integration-webchat/providers/store/guest-sesssion-store"
+import { createGuestSessionStore } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
 import {
   buildGuestStorageKey,
-  createGuestConversationId,
   GUEST_CONVERSATION_ID_KEY,
   readLegacyGuestId,
   safeStorageGet,
   safeStorageSet,
 } from "@/features/integration-webchat/providers/store/lib/guest-session"
+import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
 import { checkGuestRateLimit } from "@/lib/rate-limit/guest-rate-limit"
 
 vi.mock("@/features/messages/actions/create-webchat-message.action", () => ({
@@ -57,6 +53,9 @@ const createWebchatConfig = (
     ...overrides,
   }) as IntegrationWebchatModel
 
+const GUEST_ID_UUID_PATTERN =
+  /^workspace-1:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 describe("webchat guest session helpers", () => {
   beforeEach(() => {
     vi.unstubAllGlobals()
@@ -69,10 +68,17 @@ describe("webchat guest session helpers", () => {
     )
   })
 
-  test("creates a guest conversation id scoped to the workspace", () => {
-    expect(createGuestConversationId("workspace-1")).toBe(
-      "workspace-1:generated-id",
-    )
+  test("creates a guest conversation id scoped to the workspace with an unguessable suffix", () => {
+    // Must be a cryptographically random id, not a sequential/enumerable one
+    // (e.g. the Snowflake createId()) — the webchat access token no longer
+    // binds to this id, so a guessable id would let anyone mint a valid
+    // token for a stranger's conversation. See guest-conversation-id.ts.
+    const first = createGuestConversationId("workspace-1")
+    const second = createGuestConversationId("workspace-1")
+
+    expect(first).toMatch(GUEST_ID_UUID_PATTERN)
+    expect(second).toMatch(GUEST_ID_UUID_PATTERN)
+    expect(first).not.toBe(second)
   })
 
   test("falls back to memory storage when localStorage is blocked", () => {
@@ -112,14 +118,14 @@ describe("webchat guest session store", () => {
 
     const store = createGuestSessionStore(createWebchatConfig())
 
-    store.getState().initGuestSession()
+    store.getState().initGuestSession("workspace-1:server-guest")
 
     const state = store.getState()
     const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
-    expect(state.guestConversationId).toBe("workspace-1:generated-id")
+    expect(state.guestConversationId).toBe("workspace-1:server-guest")
     expect(state.isNewGuestSession).toBe(true)
     expect(localStorageMock.items.get(scopedKey)).toBe(
-      "workspace-1:generated-id",
+      "workspace-1:server-guest",
     )
   })
 
@@ -132,7 +138,7 @@ describe("webchat guest session store", () => {
 
     const store = createGuestSessionStore(createWebchatConfig())
 
-    store.getState().initGuestSession()
+    store.getState().initGuestSession("workspace-1:server-guest")
 
     const state = store.getState()
     expect(state.guestConversationId).toBe("workspace-1:existing-guest")
@@ -147,7 +153,7 @@ describe("webchat guest session store", () => {
 
     const store = createGuestSessionStore(createWebchatConfig())
 
-    store.getState().initGuestSession()
+    store.getState().initGuestSession("workspace-1:server-guest")
 
     const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
     const state = store.getState()
@@ -169,8 +175,8 @@ describe("webchat guest session store", () => {
       createWebchatConfig({ id: "webchat-2" }),
     )
 
-    firstStore.getState().initGuestSession()
-    secondStore.getState().initGuestSession()
+    firstStore.getState().initGuestSession("workspace-1:server-guest-1")
+    secondStore.getState().initGuestSession("workspace-1:server-guest-2")
 
     expect(
       localStorageMock.items.has(
@@ -182,46 +188,6 @@ describe("webchat guest session store", () => {
         buildGuestStorageKey("workspace-1", "webchat-2"),
       ),
     ).toBe(true)
-  })
-})
-
-describe("webchat welcome flow trigger", () => {
-  test("fires only for a new guest session with a welcome flow and no ref", () => {
-    expect(
-      shouldTriggerWelcomeFlow({
-        guestConversationId: "guest-1",
-        hasRef: false,
-        isNewGuestSession: true,
-        welcomeFlowId: "flow-1",
-      }),
-    ).toBe(true)
-
-    expect(
-      shouldTriggerWelcomeFlow({
-        guestConversationId: "guest-1",
-        hasRef: false,
-        isNewGuestSession: false,
-        welcomeFlowId: "flow-1",
-      }),
-    ).toBe(false)
-
-    expect(
-      shouldTriggerWelcomeFlow({
-        guestConversationId: "guest-1",
-        hasRef: true,
-        isNewGuestSession: true,
-        welcomeFlowId: "flow-1",
-      }),
-    ).toBe(false)
-
-    expect(
-      shouldTriggerWelcomeFlow({
-        guestConversationId: "guest-1",
-        hasRef: false,
-        isNewGuestSession: true,
-        welcomeFlowId: null,
-      }),
-    ).toBe(false)
   })
 })
 
@@ -326,6 +292,59 @@ describe("webchat guest rate limit", () => {
 
     expect(result.limited).toBe(true)
   })
+
+  test("resets on a fixed window boundary instead of sliding forward on every hit", async () => {
+    const store = createMemoryRateLimitStore()
+    const windowStartMs = 1_700_000_000_000
+    let result = { limited: false, retryAfter: 0 }
+
+    // Exhaust the limit within the first window.
+    for (let index = 0; index < 61; index += 1) {
+      result = await checkGuestRateLimit({
+        clientIp: "192.0.2.5",
+        store,
+        webchatId: "webchat-fixed-window",
+        now: windowStartMs + index * 100,
+      })
+    }
+    expect(result.limited).toBe(true)
+
+    // A request in the next 10s window should not still be blocked, even
+    // though the previous window was fully exhausted moments before —
+    // proving the window is fixed/bucketed, not a sliding TTL.
+    result = await checkGuestRateLimit({
+      clientIp: "192.0.2.5",
+      store,
+      webchatId: "webchat-fixed-window",
+      now: windowStartMs + 10_000,
+    })
+    expect(result.limited).toBe(false)
+  })
+
+  test("keeps counting within the same window even near its boundary", async () => {
+    const store = createMemoryRateLimitStore()
+    const windowStartMs = 1_700_000_000_000
+
+    for (let index = 0; index < 61; index += 1) {
+      // Stay inside the same 10s window (right up to but not crossing 9999ms
+      // in) to prove a steady stream within one window is still capped.
+      await checkGuestRateLimit({
+        clientIp: "192.0.2.6",
+        store,
+        webchatId: "webchat-fixed-window-2",
+        now: windowStartMs + Math.min(index * 100, 9999),
+      })
+    }
+
+    const result = await checkGuestRateLimit({
+      clientIp: "192.0.2.6",
+      store,
+      webchatId: "webchat-fixed-window-2",
+      now: windowStartMs + 9999,
+    })
+
+    expect(result.limited).toBe(true)
+  })
 })
 
 describe("webchat access token", () => {
@@ -339,25 +358,12 @@ describe("webchat access token", () => {
     process.env.BETTER_AUTH_SECRET = "test-better-auth-secret"
   })
 
-  test("round-trips an anonymous session with a null verified external id", async () => {
+  test("authorizes a token minted for the same workspace/webchat/origin", async () => {
     const token = await createWebchatAccessToken(baseInput)
 
     const result = await verifyWebchatAccessToken({ ...baseInput, token })
 
     expect(result.authorized).toBe(true)
-    expect(result.verifiedExternalId).toBeNull()
-  })
-
-  test("round-trips a verified external id in the signed payload", async () => {
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      verifiedExternalId: "external-42",
-    })
-
-    const result = await verifyWebchatAccessToken({ ...baseInput, token })
-
-    expect(result.authorized).toBe(true)
-    expect(result.verifiedExternalId).toBe("external-42")
   })
 
   test("rejects a missing token", async () => {
@@ -367,7 +373,6 @@ describe("webchat access token", () => {
     })
 
     expect(result.authorized).toBe(false)
-    expect(result.verifiedExternalId).toBeNull()
   })
 
   test("rejects a token whose workspace does not match", async () => {
@@ -380,14 +385,10 @@ describe("webchat access token", () => {
     })
 
     expect(result.authorized).toBe(false)
-    expect(result.verifiedExternalId).toBeNull()
   })
 
   test("rejects a tampered signature and does not leak the external id", async () => {
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      verifiedExternalId: "external-42",
-    })
+    const token = await createWebchatAccessToken(baseInput)
     const [payload] = token.split(".")
 
     const result = await verifyWebchatAccessToken({
@@ -396,76 +397,98 @@ describe("webchat access token", () => {
     })
 
     expect(result.authorized).toBe(false)
-    expect(result.verifiedExternalId).toBeNull()
-  })
-})
-
-describe("webchat identity verification", () => {
-  const identitySecret = "identity-secret-abc"
-  const externalId = "customer-external-99"
-
-  const verifyIdentity = async ({
-    secret,
-    suppliedExternalId,
-    suppliedHash,
-  }: {
-    secret: string | null
-    suppliedExternalId?: string
-    suppliedHash?: string
-  }) => {
-    if (suppliedExternalId && suppliedHash && secret) {
-      const expected = await hmacSha256Hex(secret, suppliedExternalId)
-      return timingSafeStringEqual(suppliedHash, expected)
-        ? suppliedExternalId
-        : null
-    }
-    return null
-  }
-
-  test("accepts a correctly signed external hash", async () => {
-    const hash = await hmacSha256Hex(identitySecret, externalId)
-
-    const result = await verifyIdentity({
-      secret: identitySecret,
-      suppliedExternalId: externalId,
-      suppliedHash: hash,
-    })
-
-    expect(result).toBe(externalId)
   })
 
-  test("treats a tampered hash as anonymous rather than erroring", async () => {
-    const result = await verifyIdentity({
-      secret: identitySecret,
-      suppliedExternalId: externalId,
-      suppliedHash: "not-the-real-hash",
+  test("rejects a token presented from a different origin (bind-on-first-use)", async () => {
+    const token = await createWebchatAccessToken(baseInput)
+
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      origin: "https://attacker.test",
+      token,
     })
 
-    expect(result).toBeNull()
+    expect(result.authorized).toBe(false)
   })
 
-  test("ignores a supplied hash when no identity secret is configured", async () => {
-    const hash = await hmacSha256Hex(identitySecret, externalId)
+  test("returning visitor: a freshly minted token stays valid even though the client presents a different persisted guestConversationId", async () => {
+    // Regression for CRITICAL-1: the iframe can't round-trip the client's
+    // persisted guestConversationId back to the server (it lives in the
+    // iframe's own localStorage), so every page load mints a brand-new
+    // token. The token must not be bound to any particular id — only to
+    // workspace/webchat/origin — or a legitimate returning visitor would be
+    // rejected on their second load.
+    const freshToken = await createWebchatAccessToken(baseInput)
 
-    const result = await verifyIdentity({
-      secret: null,
-      suppliedExternalId: externalId,
-      suppliedHash: hash,
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      token: freshToken,
     })
 
-    expect(result).toBeNull()
+    expect(result.authorized).toBe(true)
   })
 
-  test("rotating the secret invalidates a previously valid hash", async () => {
-    const oldHash = await hmacSha256Hex(identitySecret, externalId)
-
-    const result = await verifyIdentity({
-      secret: "identity-secret-rotated",
-      suppliedExternalId: externalId,
-      suppliedHash: oldHash,
+  test("matches a bare origin against a referer-shaped origin used at mint time", async () => {
+    // Mint-time origin comes from the `referer` header (may include a path);
+    // verify-time origin comes from `window.location.origin` (bare). Both
+    // should normalize to the same host.
+    const token = await createWebchatAccessToken({
+      ...baseInput,
+      origin: "https://example.com/pricing?ref=ad",
     })
 
-    expect(result).toBeNull()
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      origin: "https://example.com",
+      token,
+    })
+
+    expect(result.authorized).toBe(true)
+  })
+
+  test("matches a subdomain-consistent origin the same way on mint and verify", async () => {
+    const token = await createWebchatAccessToken({
+      ...baseInput,
+      origin: "https://widget.example.com",
+    })
+
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      origin: "https://widget.example.com/some/path",
+      token,
+    })
+
+    expect(result.authorized).toBe(true)
+  })
+
+  test("treats a null origin at mint and verify as consistent (direct, non-embedded access)", async () => {
+    const token = await createWebchatAccessToken({
+      ...baseInput,
+      origin: null,
+    })
+
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      origin: null,
+      token,
+    })
+
+    expect(result.authorized).toBe(true)
+  })
+
+  test("rejects when minted with no origin but presented with one", async () => {
+    const token = await createWebchatAccessToken({
+      ...baseInput,
+      origin: null,
+    })
+
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      origin: "https://example.com",
+      token,
+    })
+
+    expect(result.authorized).toBe(false)
   })
 })
 
@@ -480,7 +503,10 @@ describe("webchat client config DTO", () => {
       hideMessageInput: false,
       welcomeFlowId: "flow-1",
       persistentMenus: [],
-      // server-only fields that must never reach the browser
+      // server-only fields that must never reach the browser. identitySecret
+      // is no longer a real column (dropped alongside the customer-HMAC
+      // identity model) — kept here as a regression guard in case it is ever
+      // reintroduced.
       identitySecret: "super-secret-hmac-key",
       auth: { token: "channel-auth-blob" },
       authorizedDomains: ["example.com"],

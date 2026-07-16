@@ -22,7 +22,6 @@ export function WebchatMessageList() {
     loadMoreMessages,
     nextCursorMessage,
     isLoadMoreMessage,
-    initGuestSession,
     guestConversationId,
     sendPostback,
     isTyping,
@@ -39,13 +38,12 @@ export function WebchatMessageList() {
   const [page, setPage] = useState(1)
 
   useEffect(() => {
-    initGuestSession()
     setPage(1)
 
     if (guestConversationId) {
       loadMoreMessages(guestConversationId, MESSAGE_LIST_PER_PAGE)
     }
-  }, [loadMoreMessages, initGuestSession, guestConversationId])
+  }, [loadMoreMessages, guestConversationId])
 
   // Load more items when reaching the end of the list
   const loadMoreItems = () => {

@@ -1,8 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
 import WebchatRef from "./components/webchat-ref"
-import { WebchatWelcomeFlow } from "./components/webchat-welcome-flow"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 import { WebchatHeader } from "./webchat-header"
 import { WebchatMessageInput } from "./webchat-message-input"
@@ -16,17 +14,9 @@ export const WebchatWrapper = ({
   referral?: string
   parentOrigin?: string | null
 }) => {
-  const {
-    initGuestSession,
-    guestConversationId,
-    isNewGuestSession,
-    accessToken,
-    config,
-  } = useGuestSessionStore((state) => state)
-
-  useEffect(() => {
-    initGuestSession()
-  }, [initGuestSession])
+  const { guestConversationId, accessToken, config } = useGuestSessionStore(
+    (state) => state,
+  )
 
   return (
     <div className="flex h-screen w-screen flex-col">
@@ -44,16 +34,6 @@ export const WebchatWrapper = ({
         guestConversationId={guestConversationId ?? ""}
         parentOrigin={parentOrigin}
         webchatId={config.id}
-        workspaceId={config.workspaceId}
-      />
-      <WebchatWelcomeFlow
-        accessToken={accessToken}
-        guestConversationId={guestConversationId}
-        hasRef={Boolean(referral)}
-        isNewGuestSession={isNewGuestSession}
-        parentOrigin={parentOrigin}
-        webchatId={config.id}
-        welcomeFlowId={config.welcomeFlowId}
         workspaceId={config.workspaceId}
       />
       {!!guestConversationId && (

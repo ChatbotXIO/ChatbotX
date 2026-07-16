@@ -27,6 +27,7 @@ import {
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
+import { emitContactCreated } from "@chatbotx.io/events"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
@@ -40,6 +41,7 @@ import {
 import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import { randomString } from "remeda"
+import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { logger } from "@/lib/log"
 import {
@@ -78,16 +80,30 @@ export async function handleCreateWebchatMessage({
     message: "Channel not found",
   })
 
-  // Verify the access token even when no domains are restricted, so we can
-  // extract the verified external id claim. Domain enforcement still only
-  // rejects when domains are configured.
-  const { authorized, verifiedExternalId } = await verifyWebchatAccessToken({
+  // Bind-on-first-use: always require a token whose signed origin claim
+  // matches the origin the caller is presenting now, regardless of whether
+  // authorizedDomains is configured. This closes the "no auth at all when no
+  // allowlist is set" gap while still layering the (optional) domain
+  // allowlist check on top when the workspace has configured one.
+  const { authorized } = await verifyWebchatAccessToken({
     token: parsedInput.accessToken,
     workspaceId: parsedInput.workspaceId,
     webchatId: parsedInput.webchatId,
+    origin: parsedInput.parentOrigin,
   })
 
-  if (integrationWebchat.authorizedDomains.length > 0 && !authorized) {
+  if (!authorized) {
+    const t = await getTranslations("webchat.unauthorizedDomain")
+    throw new ChatbotXException(t("description"), "forbidden", 403)
+  }
+
+  if (
+    integrationWebchat.authorizedDomains.length > 0 &&
+    !isOriginAuthorized(
+      parsedInput.parentOrigin,
+      integrationWebchat.authorizedDomains,
+    )
+  ) {
     const t = await getTranslations("webchat.unauthorizedDomain")
     throw new ChatbotXException(t("description"), "forbidden", 403)
   }
@@ -108,18 +124,41 @@ export async function handleCreateWebchatMessage({
   }
 
   const { conversation, isNewContact, contact, contactInbox } =
-    await getConversationFromInput(
-      parsedInput,
-      integrationWebchat,
-      verifiedExternalId,
-    )
+    await getConversationFromInput(parsedInput, integrationWebchat)
+
+  if (
+    "init" in parsedInput &&
+    parsedInput.init &&
+    isNewContact &&
+    integrationWebchat.welcomeFlowId
+  ) {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation,
+        contactInboxId: contactInbox,
+        flowId: integrationWebchat.welcomeFlowId,
+        origin: "channel",
+      },
+    })
+  }
 
   const { storageUrl } = await resolveTenantSettings({
     workspaceId: parsedInput.workspaceId,
   })
 
-  // Process flow if exists
+  // Process flow if exists. Only a flowId that is actually configured as one
+  // of this webchat's persistent-menu "flow" entries may be triggered here —
+  // otherwise a guest holding a valid access token could enqueue an
+  // arbitrary flowId for this workspace (flow injection / IDOR).
   if ("flowId" in parsedInput) {
+    const isConfiguredFlow = integrationWebchat.persistentMenus.some(
+      (menu) => menu.type === "flow" && menu.flowId === parsedInput.flowId,
+    )
+    if (!isConfiguredFlow) {
+      throw new ChatbotXException("Flow not found", "notFound", 404)
+    }
+
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
@@ -129,6 +168,10 @@ export async function handleCreateWebchatMessage({
         origin: "channel",
       },
     })
+    return null
+  }
+
+  if ("init" in parsedInput) {
     return null
   }
 
@@ -332,13 +375,13 @@ export async function handleCreateWebchatMessage({
 async function getConversationFromInput(
   parsedInput: CreateWebchatMessageRequest,
   integrationWebchat: typeof integrationWebchatModel.$inferSelect,
-  verifiedExternalId: string | null,
 ) {
   const sourceId = parsedInput.guestConversationId
 
   const existingContactInbox = await contactInboxService.findLatestBySource({
     inboxId: integrationWebchat.inboxId,
     sourceId,
+    workspaceId: parsedInput.workspaceId,
   })
 
   if (existingContactInbox) {
@@ -357,19 +400,6 @@ async function getConversationFromInput(
     }
     if (!contact) {
       throw new ChatbotXException("Contact not found")
-    }
-
-    // Attach the verified external id to the already-resolved contact inbox
-    // when a new claim arrives. Scoped to this exact inbox (found by sourceId)
-    // — never merged across channels or other contacts.
-    if (
-      verifiedExternalId &&
-      existingContactInbox.verifiedExternalId !== verifiedExternalId
-    ) {
-      await db
-        .update(contactInboxModel)
-        .set({ verifiedExternalId })
-        .where(eq(contactInboxModel.id, existingContactInbox.id))
     }
 
     return {
@@ -433,7 +463,6 @@ async function getConversationFromInput(
           channel: "webchat",
           language: finalizedProfile.language,
           webchatParentUrl: parsedInput.parentUrl,
-          verifiedExternalId: verifiedExternalId ?? null,
         })
         .returning()
         .then((rows) => rows[0])
@@ -466,6 +495,14 @@ async function getConversationFromInput(
   if (!result.ok) {
     throw new ChatbotXException("Contact limit reached", "quotaExceeded", 422)
   }
+
+  await emitContactCreated(
+    parsedInput.workspaceId,
+    result.value.contact.id,
+    result.value.contact.firstName || undefined,
+    result.value.contact.phoneNumber || undefined,
+    result.value.contact.email || undefined,
+  )
 
   return {
     conversation: result.value.conversation,

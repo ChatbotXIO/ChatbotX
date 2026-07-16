@@ -1,39 +1,5 @@
 import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
-
-/**
- * Client-safe subset of the webchat config. The full `IntegrationWebchatModel`
- * row carries secrets (`identitySecret`, `auth`) that must never cross the
- * server → client boundary, so the guest widget only ever receives these
- * allow-listed, non-sensitive fields. Build this DTO server-side and pass it
- * (never the raw row) into the guest session store.
- */
-export type WebchatClientConfig = Pick<
-  IntegrationWebchatModel,
-  | "id"
-  | "workspaceId"
-  | "name"
-  | "brandColor"
-  | "showLogo"
-  | "hideMessageInput"
-  | "welcomeFlowId"
-  | "persistentMenus"
->
-
-export const toWebchatClientConfig = (
-  webchat: IntegrationWebchatModel,
-): WebchatClientConfig => ({
-  id: webchat.id,
-  workspaceId: webchat.workspaceId,
-  name: webchat.name,
-  brandColor: webchat.brandColor,
-  showLogo: webchat.showLogo,
-  hideMessageInput: webchat.hideMessageInput,
-  welcomeFlowId: webchat.welcomeFlowId,
-  persistentMenus: webchat.persistentMenus,
-})
-
 import { createId } from "@chatbotx.io/utils"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
@@ -45,11 +11,11 @@ import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
 import {
   buildGuestStorageKey,
-  createGuestConversationId,
   readLegacyGuestId,
   safeStorageGet,
   safeStorageSet,
 } from "./lib/guest-session"
+import type { WebchatClientConfig } from "./lib/webchat-client-config"
 
 export { GUEST_CONVERSATION_ID_KEY } from "./lib/guest-session"
 
@@ -71,7 +37,7 @@ export type GuestSessionState = {
 
 export type GuestSessionActions = {
   setGuestUser: (user: UserResource) => void
-  initGuestSession: () => void
+  initGuestSession: (serverGuestConversationId: string) => void
 
   // messages
   appendMessage: (message: Partial<MessageResource>) => MessageResource
@@ -109,7 +75,7 @@ export const createGuestSessionStore = (
 
     isTyping: false,
 
-    initGuestSession: () => {
+    initGuestSession: (serverGuestConversationId: string) => {
       const { guestConversationId, config } = get()
       if (guestConversationId) {
         return
@@ -129,9 +95,11 @@ export const createGuestSessionStore = (
         return
       }
 
-      const newGuestId = createGuestConversationId(config.workspaceId)
-      safeStorageSet(scopedKey, newGuestId)
-      set({ guestConversationId: newGuestId, isNewGuestSession: true })
+      safeStorageSet(scopedKey, serverGuestConversationId)
+      set({
+        guestConversationId: serverGuestConversationId,
+        isNewGuestSession: true,
+      })
     },
 
     setGuestUser: (user: UserResource) => {

@@ -37,7 +37,6 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import { updateWebchatRequest } from "../schema/mutation"
 import AuthorizedDomainField from "./authorized-domain-field"
-import IdentitySecretField from "./identity-secret-field"
 import PersistentMenuField from "./persistent-menu-field"
 
 type UpdateWebchatFormProps = {
@@ -155,14 +154,6 @@ export function UpdateWebchatForm({
         <Separator />
 
         <AuthorizedDomainField />
-
-        <Separator />
-
-        <IdentitySecretField
-          hasSecret={Boolean(integrationWebchat?.identitySecret)}
-          webchatId={integrationWebchat?.id ?? ""}
-          workspaceId={workspaceId}
-        />
 
         <Separator />
 

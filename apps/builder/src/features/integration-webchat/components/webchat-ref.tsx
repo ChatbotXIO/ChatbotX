@@ -32,18 +32,16 @@ export default function WebchatRef({
 
     setInitialized(true)
     const ref = searchParams.get("ref")
-    if (ref) {
-      execute({
-        clientId: createId(),
-        workspaceId,
-        webchatId,
-        guestConversationId,
-        initRef: ref,
-        ...getWebchatProfileFields(),
-        accessToken: accessToken ?? undefined,
-        parentOrigin: parentOrigin ?? undefined,
-      })
-    }
+    execute({
+      clientId: createId(),
+      workspaceId,
+      webchatId,
+      guestConversationId,
+      ...(ref ? { initRef: ref } : { init: true }),
+      ...getWebchatProfileFields(),
+      accessToken: accessToken ?? undefined,
+      parentOrigin: parentOrigin ?? undefined,
+    })
   }, [
     searchParams,
     initialized,

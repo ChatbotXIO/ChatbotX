@@ -16,6 +16,7 @@ type GuestRateLimitInput = {
   clientIp: string
   guestConversationId?: string | null
   store?: RateLimitStore
+  now?: number
 }
 
 type GuestRateLimitResult = {
@@ -25,6 +26,20 @@ type GuestRateLimitResult = {
 
 const buildRateLimitKey = (...parts: string[]) =>
   ["guest-rate-limit", ...parts].join(":")
+
+// Fixed-window bucketing: fold the current window index into the key itself
+// instead of relying on `incrementCounter`'s per-hit TTL refresh (which would
+// produce a sliding window that a steady sender could keep alive
+// indefinitely). Each window gets its own key that naturally expires once —
+// no key ever has its TTL extended past one window's worth of time.
+const buildWindowSuffix = (now: number, windowSeconds: number) =>
+  String(Math.floor(now / (windowSeconds * 1000)))
+
+const secondsUntilNextWindow = (now: number, windowSeconds: number) => {
+  const windowMs = windowSeconds * 1000
+  const elapsed = now % windowMs
+  return Math.ceil((windowMs - elapsed) / 1000)
+}
 
 const incrementMemoryWindowCounter = (key: string, windowSeconds: number) => {
   const now = Date.now()
@@ -60,16 +75,19 @@ export const checkGuestRateLimit = async ({
   clientIp,
   guestConversationId,
   store = distributedStore,
+  now = Date.now(),
 }: GuestRateLimitInput): Promise<GuestRateLimitResult> => {
-  const ipKey = buildRateLimitKey("ip", webchatId, clientIp)
+  const windowSuffix = buildWindowSuffix(now, WINDOW_SECONDS)
+  const retryAfter = secondsUntilNextWindow(now, WINDOW_SECONDS)
+  const ipKey = buildRateLimitKey("ip", webchatId, clientIp, windowSuffix)
   const sessionKey = guestConversationId
-    ? buildRateLimitKey("session", webchatId, guestConversationId)
+    ? buildRateLimitKey("session", webchatId, guestConversationId, windowSuffix)
     : null
 
   try {
     const ipCount = await incrementWindowCounter(store, ipKey, WINDOW_SECONDS)
     if (ipCount > IP_LIMIT) {
-      return { limited: true, retryAfter: WINDOW_SECONDS }
+      return { limited: true, retryAfter }
     }
 
     if (sessionKey) {
@@ -79,11 +97,11 @@ export const checkGuestRateLimit = async ({
         WINDOW_SECONDS,
       )
       if (sessionCount > SESSION_LIMIT) {
-        return { limited: true, retryAfter: WINDOW_SECONDS }
+        return { limited: true, retryAfter }
       }
     }
 
-    return { limited: false, retryAfter: WINDOW_SECONDS }
+    return { limited: false, retryAfter }
   } catch (error) {
     logger.warn(
       { err: error, webchatId, clientIp },
@@ -91,7 +109,7 @@ export const checkGuestRateLimit = async ({
     )
     const ipCount = incrementMemoryWindowCounter(ipKey, WINDOW_SECONDS)
     if (ipCount > IP_LIMIT) {
-      return { limited: true, retryAfter: WINDOW_SECONDS }
+      return { limited: true, retryAfter }
     }
 
     if (sessionKey) {
@@ -100,11 +118,11 @@ export const checkGuestRateLimit = async ({
         WINDOW_SECONDS,
       )
       if (sessionCount > SESSION_LIMIT) {
-        return { limited: true, retryAfter: WINDOW_SECONDS }
+        return { limited: true, retryAfter }
       }
     }
 
-    return { limited: false, retryAfter: WINDOW_SECONDS }
+    return { limited: false, retryAfter }
   }
 }
 

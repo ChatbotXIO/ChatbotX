@@ -62,6 +62,9 @@ export const createWebchatMessageRequest = z
       initRef: z.string(),
     }),
     z.object({
+      init: z.literal(true),
+    }),
+    z.object({
       files: z
         .array(
           z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
