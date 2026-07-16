@@ -95,6 +95,31 @@ export function resolveTrialEndsAt(
     : null
 }
 
+/**
+ * Shared blocked-state derivation for the cloud trial-expiry UX. Mirrors the
+ * server-side access gate but stays pure so server components and client
+ * affordances can derive the same boolean from plan fields already in hand.
+ */
+export function isBlockedFromPlan(
+  planStatus: string | null,
+  trialEndsAt: string | null,
+): boolean {
+  if (planStatus === EXPIRED_STATUS) {
+    return true
+  }
+
+  if (planStatus !== TRIAL_STATUS || !trialEndsAt) {
+    return false
+  }
+
+  const trialEnd = new Date(trialEndsAt).getTime()
+  if (Number.isNaN(trialEnd)) {
+    return false
+  }
+
+  return trialEnd <= Date.now()
+}
+
 /** Keys the usage labels translate, narrowed so any `t` covering them fits. */
 type UsageLabelKey =
   | "billing.usage.contacts"
@@ -128,6 +153,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
  * via the single `planStatuses` source so the two sides can never drift.
  */
 const TRIAL_STATUS = planStatuses.enum.trial
+const EXPIRED_STATUS = planStatuses.enum.expired
 /** At or below this many days remaining the banner escalates to a warning. */
 const URGENT_THRESHOLD_DAYS = 3
 

@@ -291,7 +291,11 @@
     "trialExpired": {
       "title": "Bản dùng thử của bạn đã kết thúc",
       "description": "Đăng ký một gói để tiếp tục sử dụng workspace của bạn.",
-      "cta": "Xem các gói"
+      "cta": "Xem các gói",
+      "bannerTitle": "Bản dùng thử đã kết thúc",
+      "bannerDescription": "Tạo tài nguyên mới đã bị vô hiệu hóa. Bạn vẫn có thể ngắt kết nối các kênh và lên lịch xóa workspace.",
+      "bannerCta": "Nâng cấp",
+      "createDisabled": "Tạo {feature} mới đã bị vô hiệu hóa. Hãy nâng cấp để tiếp tục."
     }
   },
   "broadcasts": {
@@ -565,6 +569,19 @@
       "deactivated": "Đã tắt workspace",
       "activeHours": "Hoạt động từ {startTime} đến {endTime} giờ",
       "permissionRequired": "Chỉ super admin mới có thể thay đổi khung giờ hoạt động của workspace"
+    },
+    "deletion": {
+      "title": "Xóa workspace",
+      "description": "Xóa vĩnh viễn workspace này. Danh bạ và tất cả cài đặt sẽ bị xóa.",
+      "schedule": "Xóa workspace",
+      "confirmTitle": "Xóa workspace này?",
+      "confirmDescription": "Danh bạ và tất cả cài đặt sẽ bị xóa vĩnh viễn. Bạn có thể hoàn tác trước khi việc xóa hoàn tất.",
+      "pending": "Workspace này sẽ bị xóa {countdown} ({date}). Bạn có thể hoàn tác bất cứ lúc nào trước thời điểm đó.",
+      "pendingFallback": "sớm",
+      "undone": "Đã hủy lịch xóa workspace",
+      "bannerTitle": "Đã lên lịch xóa workspace",
+      "bannerDescription": "Workspace này đã được lên lịch xóa. Hãy hoàn tác lịch xóa bên dưới để tiếp tục sử dụng workspace.",
+      "pendingBlockedToast": "Workspace này đã được lên lịch xóa. Hãy liên hệ quản trị viên workspace để khôi phục quyền truy cập."
     }
   },
   "workspaces": {

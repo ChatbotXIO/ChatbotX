@@ -15,12 +15,14 @@ import InboxNewCard from "./inbox-new-card"
 type InboxCardListProps = {
   workspaceId: string
   allowAddNew?: boolean
+  blocked?: boolean
   inboxes: ListInboxesResponse["data"]
 }
 
 export function InboxCardList({
   workspaceId,
   allowAddNew = true,
+  blocked = false,
   inboxes,
 }: InboxCardListProps) {
   return (
@@ -29,7 +31,9 @@ export function InboxCardList({
         <BaseInboxCard inbox={inbox} key={inbox.id} />
       ))}
 
-      {allowAddNew && <InboxNewCard workspaceId={workspaceId} />}
+      {allowAddNew && (
+        <InboxNewCard blocked={blocked} workspaceId={workspaceId} />
+      )}
     </div>
   )
 }

@@ -240,6 +240,31 @@ without throwing so BullMQ acknowledges the job without retry/DLQ. Jobs that
 cannot be attributed to a workspace remain deliberately fail-open. System,
 quota, and tenancy lifecycle jobs are excluded from this gate.
 
+### Adding a schedule handler
+
+Use this four-edit flow, shown by the `purgeWorkspaces` handler:
+
+1. Add the `ScheduleJobData` key, payload type, and union member in
+   `packages/worker-config/src/queues/schedule/index.ts`.
+2. Add `handlers/purge-workspaces.ts` (or the new handler name).
+3. Add the corresponding `case` in `src/schedule/worker.ts`.
+4. Register it with `upsertJobScheduler` in `handlers/register-schedules.ts`.
+
+### Blocked-owner guard
+
+Every new workspace-scoped worker or consumer must wrap its processor with
+`withBlockedOwnerGuard`. A blocked owner must use a bare `return`, never throw:
+throwing would retry or dead-letter a job that is intentionally skipped, while
+the bare return is also HTTP-200-safe because a webhook has already returned
+before its job runs. `resolveWorkspaceId` uses a direct workspace fast path,
+then nested workspace data and integration identifiers, with payload fallbacks
+such as `conversationId` and `importId`.
+
+The guard excludes system/quota/tenancy work: `sendAuditLog`, `sendErrorLog`,
+and schedule cron jobs, except the two broadcast handlers that operate on
+workspace-owned broadcast work. Observability jobs stay unguarded so blocked
+jobs can still report failures.
+
 ## Kafka (Sequence Scheduler Pattern)
 
 For high-throughput scenarios, the project uses Kafka:

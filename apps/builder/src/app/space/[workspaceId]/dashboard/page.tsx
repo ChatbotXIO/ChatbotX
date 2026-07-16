@@ -1,11 +1,13 @@
 import { BaseDashboard } from "@chatbotx.io/analytics-nextjs/components/base-dashboard"
-import { workspaceService } from "@chatbotx.io/business"
+import { userQuotaService, workspaceService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
+import { isCloud } from "@/env"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { isBlockedFromPlan, resolveTrialEndsAt } from "@/lib/quota-metrics"
 
 export default async function Dashboard({
   params,
@@ -31,13 +33,19 @@ export default async function Dashboard({
   }
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const cloud = isCloud()
 
-  const [inboxesResult, workspace] = await Promise.all([
+  const [inboxesResult, workspace, quota] = await Promise.all([
     listInboxes({ workspaceId, includes: ["integration"] }),
     workspaceService.find({ where: { id: workspaceId } }),
+    cloud ? userQuotaService.getForUser(userAndWorkspace.user.id) : null,
   ])
 
   const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")
+  const blocked = isBlockedFromPlan(
+    quota?.planStatus ?? null,
+    resolveTrialEndsAt(quota),
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,6 +54,7 @@ export default async function Dashboard({
           userAndWorkspace.targetWorkspaceMember.permissions,
           "superAdmin",
         )}
+        blocked={cloud && blocked}
         inboxes={inboxes}
         workspaceId={workspaceId}
       />

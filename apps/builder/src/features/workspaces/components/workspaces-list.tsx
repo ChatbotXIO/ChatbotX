@@ -28,6 +28,7 @@ type WorkspacesListProps = {
   workspaces: WorkspaceResource[]
   workspacesLimit?: number | null
   isAtLimit?: boolean
+  blocked?: boolean
   ownerWorkspaceIds?: string[]
   superAdminWorkspaceIds?: string[]
 }
@@ -177,6 +178,7 @@ const WorkspacesList = async ({
   workspaces,
   workspacesLimit,
   isAtLimit = false,
+  blocked = false,
   ownerWorkspaceIds = [],
   superAdminWorkspaceIds = [],
 }: WorkspacesListProps) => {
@@ -230,8 +232,14 @@ const WorkspacesList = async ({
           {showCreateCard && (
             <li className="list-none">
               <CreateWorkspaceCard
-                disabled={isAtLimit}
-                disabledReason={t("billing.limitReached.workspaces")}
+                disabled={isAtLimit || blocked}
+                disabledReason={
+                  blocked
+                    ? t("billing.trialExpired.createDisabled", {
+                        feature: t("fields.workspace.label"),
+                      })
+                    : t("billing.limitReached.workspaces")
+                }
                 label={createLabel}
               />
             </li>

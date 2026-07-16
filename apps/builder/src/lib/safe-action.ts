@@ -100,6 +100,17 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
 
 export const workspaceActionClient = workspaceActionClientAllowExpired.use(
   async ({ ctx, next }) => {
+    // Server-side deletion gate: a workspace pending deletion must block every
+    // mutation regardless of trial status, so this runs before the trial check
+    // below. Mirrors the RSC-side redirect in enforceWorkspaceNotScheduledForDeletion.
+    if (ctx.workspace.scheduledDeletionAt) {
+      throw new ChatbotXException(
+        "Workspace deletion scheduled",
+        "workspaceScheduledDeletion",
+        403,
+      )
+    }
+
     // Server-side trial gate: the RSC banner shows a blocked user read/delete
     // mode, but a stale session could still POST a create/change action
     // directly. Re-check the entitlement here so the paywall holds. Cloud-only;

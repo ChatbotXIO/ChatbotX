@@ -1,479 +1,67 @@
----
-applyTo: "**"
----
+# ChatbotX Repository Instructions
 
-# Project Context
-Ultracite enforces strict type safety, accessibility standards, and consistent code quality for JavaScript/TypeScript projects using Biome's lightning-fast formatter and linter.
+These instructions apply repository-wide. Read the relevant detailed rule in `.agents/rules/` and skill in `.agents/skills/` before making specialized changes.
 
-## Key Principles
-- Zero configuration required
-- Subsecond performance
-- Maximum type safety
-- AI-friendly code generation
+## Project context
 
-## Before Writing Code
-1. Analyze existing patterns in the codebase
-2. Consider edge cases and error scenarios
-3. Follow the rules below strictly
-4. Validate accessibility requirements
+- ChatbotX is a pnpm workspace + Turborepo monorepo.
+- The builder is Next.js 16 with React 19; persistence uses Drizzle ORM and PostgreSQL; workers use BullMQ and Redis.
+- Application and integration code must follow the service/repository boundaries described in `.agents/rules/data-access.md`.
 
-## Rules
+## Required workflow
 
-### Accessibility (a11y)
-- Don't use `accessKey` attribute on any HTML element.
-- Don't set `aria-hidden="true"` on focusable elements.
-- Don't add ARIA roles, states, and properties to elements that don't support them.
-- Don't use distracting elements like `<marquee>` or `<blink>`.
-- Only use the `scope` prop on `<th>` elements.
-- Don't assign non-interactive ARIA roles to interactive HTML elements.
-- Make sure label elements have text content and are associated with an input.
-- Don't assign interactive ARIA roles to non-interactive HTML elements.
-- Don't assign `tabIndex` to non-interactive HTML elements.
-- Don't use positive integers for `tabIndex` property.
-- Don't include "image", "picture", or "photo" in img alt prop.
-- Don't use explicit role property that's the same as the implicit/default role.
-- Make static elements with click handlers use a valid role attribute.
-- Always include a `title` element for SVG elements.
-- Give all elements requiring alt text meaningful information for screen readers.
-- Make sure anchors have content that's accessible to screen readers.
-- Assign `tabIndex` to non-interactive HTML elements with `aria-activedescendant`.
-- Include all required ARIA attributes for elements with ARIA roles.
-- Make sure ARIA properties are valid for the element's supported roles.
-- Always include a `type` attribute for button elements.
-- Make elements with interactive roles and handlers focusable.
-- Give heading elements content that's accessible to screen readers (not hidden with `aria-hidden`).
-- Always include a `lang` attribute on the html element.
-- Always include a `title` attribute for iframe elements.
-- Accompany `onClick` with at least one of: `onKeyUp`, `onKeyDown`, or `onKeyPress`.
-- Accompany `onMouseOver`/`onMouseOut` with `onFocus`/`onBlur`.
-- Include caption tracks for audio and video elements.
-- Use semantic elements instead of role attributes in JSX.
-- Make sure all anchors are valid and navigable.
-- Ensure all ARIA properties (`aria-*`) are valid.
-- Use valid, non-abstract ARIA roles for elements with ARIA roles.
-- Use valid ARIA state and property values.
-- Use valid values for the `autocomplete` attribute on input elements.
-- Use correct ISO language/country codes for the `lang` attribute.
+- Inspect nearby code and an existing analogous feature before changing architecture or behavior.
+- Use `pnpm lint` after changes. Use `pnpm fix` for formatting fixes.
+- Run the relevant workspace `check-types` and tests before reporting completion.
+- Do not commit secrets, and stage specific files only.
 
-### Code Complexity and Quality
-- Don't use consecutive spaces in regular expression literals.
-- Don't use the `arguments` object.
-- Don't use primitive type aliases or misleading types.
-- Don't use the comma operator.
-- Don't use empty type parameters in type aliases and interfaces.
-- Don't write functions that exceed a given Cognitive Complexity score.
-- Don't nest describe() blocks too deeply in test files.
-- Don't use unnecessary boolean casts.
-- Don't use unnecessary callbacks with flatMap.
-- Use for...of statements instead of Array.forEach.
-- Don't create classes that only have static members (like a static namespace).
-- Don't use this and super in static contexts.
-- Don't use unnecessary catch clauses.
-- Don't use unnecessary constructors.
-- Don't use unnecessary continue statements.
-- Don't export empty modules that don't change anything.
-- Don't use unnecessary escape sequences in regular expression literals.
-- Don't use unnecessary fragments.
-- Don't use unnecessary labels.
-- Don't use unnecessary nested block statements.
-- Don't rename imports, exports, and destructured assignments to the same name.
-- Don't use unnecessary string or template literal concatenation.
-- Don't use String.raw in template literals when there are no escape sequences.
-- Don't use useless case statements in switch statements.
-- Don't use ternary operators when simpler alternatives exist.
-- Don't use useless `this` aliasing.
-- Don't use any or unknown as type constraints.
-- Don't initialize variables to undefined.
-- Don't use the void operators (they're not familiar).
-- Use arrow functions instead of function expressions.
-- Use Date.now() to get milliseconds since the Unix Epoch.
-- Use .flatMap() instead of map().flat() when possible.
-- Use literal property access instead of computed property access.
-- Don't use parseInt() or Number.parseInt() when binary, octal, or hexadecimal literals work.
-- Use concise optional chaining instead of chained logical expressions.
-- Use regular expression literals instead of the RegExp constructor when possible.
-- Don't use number literal object member names that aren't base 10 or use underscore separators.
-- Remove redundant terms from logical expressions.
-- Use while loops instead of for loops when you don't need initializer and update expressions.
-- Don't pass children as props.
-- Don't reassign const variables.
-- Don't use constant expressions in conditions.
-- Don't use `Math.min` and `Math.max` to clamp values when the result is constant.
-- Don't return a value from a constructor.
-- Don't use empty character classes in regular expression literals.
-- Don't use empty destructuring patterns.
-- Don't call global object properties as functions.
-- Don't declare functions and vars that are accessible outside their block.
-- Make sure builtins are correctly instantiated.
-- Don't use super() incorrectly inside classes. Also check that super() is called in classes that extend other constructors.
-- Don't use variables and function parameters before they're declared.
-- Don't use 8 and 9 escape sequences in string literals.
-- Don't use literal numbers that lose precision.
+## Critical project invariants
 
-### React and JSX Best Practices
-- Don't use the return value of React.render.
-- Make sure all dependencies are correctly specified in React hooks.
-- Make sure all React hooks are called from the top level of component functions.
-- Don't forget key props in iterators and collection literals.
-- Don't destructure props inside JSX components in Solid projects.
-- Don't define React components inside other components.
-- Don't use event handlers on non-interactive elements.
-- Don't assign to React component props.
-- Don't use both `children` and `dangerouslySetInnerHTML` props on the same element.
-- Don't use dangerous JSX props.
-- Don't use Array index in keys.
-- Don't insert comments as text nodes.
-- Don't assign JSX properties multiple times.
-- Don't add extra closing tags for components without children.
-- Use `<>...</>` instead of `<Fragment>...</Fragment>`.
-- Watch out for possible "wrong" semicolons inside JSX elements.
+<!-- BEGIN GENERATED: SHARED-INVARIANTS -->
+1. **Triple-d middleware names** — The actual function names in code are `workspaceAuthorizedMidddleware` and `workspaceTokenAuthMidddleware` (three `d`s, not two). This is a known typo preserved for backward compat. Always use these exact names.
 
-### Correctness and Safety
-- Don't assign a value to itself.
-- Don't return a value from a setter.
-- Don't compare expressions that modify string case with non-compliant values.
-- Don't use lexical declarations in switch clauses.
-- Don't use variables that haven't been declared in the document.
-- Don't write unreachable code.
-- Make sure super() is called exactly once on every code path in a class constructor before this is accessed if the class has a superclass.
-- Don't use control flow statements in finally blocks.
-- Don't use optional chaining where undefined values aren't allowed.
-- Don't have unused function parameters.
-- Don't have unused imports.
-- Don't have unused labels.
-- Don't have unused private class members.
-- Don't have unused variables.
-- Make sure void (self-closing) elements don't have children.
-- Don't return a value from a function with the return type 'void'
-- Use isNaN() when checking for NaN.
-- Make sure "for" loop update clauses move the counter in the right direction.
-- Make sure typeof expressions are compared to valid values.
-- Make sure generator functions contain yield.
-- Don't use await inside loops.
-- Don't use bitwise operators.
-- Don't use expressions where the operation doesn't change the value.
-- Make sure Promise-like statements are handled appropriately.
-- Don't use __dirname and __filename in the global scope.
-- Prevent import cycles.
-- Don't use configured elements.
-- Don't hardcode sensitive data like API keys and tokens.
-- Don't let variable declarations shadow variables from outer scopes.
-- Don't use the TypeScript directive @ts-ignore.
-- Prevent duplicate polyfills from Polyfill.io.
-- Don't use useless backreferences in regular expressions that always match empty strings.
-- Don't use unnecessary escapes in string literals.
-- Don't use useless undefined.
-- Make sure getters and setters for the same property are next to each other in class and object definitions.
-- Make sure object literals are declared consistently (defaults to explicit definitions).
-- Use static Response methods instead of new Response() constructor when possible.
-- Make sure switch-case statements are exhaustive.
-- Make sure the `preconnect` attribute is used when using Google Fonts.
-- Use `Array#{indexOf,lastIndexOf}()` instead of `Array#{findIndex,findLastIndex}()` when looking for the index of an item.
-- Make sure iterable callbacks return consistent values.
-- Use `with { type: "json" }` for JSON module imports.
-- Use numeric separators in numeric literals.
-- Use object spread instead of `Object.assign()` when constructing new objects.
-- Always use the radix argument when using `parseInt()`.
-- Make sure JSDoc comment lines start with a single asterisk, except for the first one.
-- Include a description parameter for `Symbol()`.
-- Don't use spread (`...`) syntax on accumulators.
-- Don't use the `delete` operator.
-- Don't access namespace imports dynamically.
-- Don't use namespace imports.
-- Declare regex literals at the top level.
-- Don't use `target="_blank"` without `rel="noopener"`.
+2. **`relations/index.ts` needs TWO edits** — When adding a new table, you must both `import` the new relations file AND spread it inside the `relations` object. Missing one breaks Drizzle's relational queries silently.
 
-### TypeScript Best Practices
-- Don't use TypeScript enums.
-- Don't export imported variables.
-- Don't add type annotations to variables, parameters, and class properties that are initialized with literal expressions.
-- Don't use TypeScript namespaces.
-- Don't use non-null assertions with the `!` postfix operator.
-- Don't use parameter properties in class constructors.
-- Don't use user-defined types.
-- Use `as const` instead of literal types and type annotations.
-- Use either `T[]` or `Array<T>` consistently.
-- Initialize each enum member value explicitly.
-- Use `export type` for types.
-- Use `import type` for types.
-- Make sure all enum members are literal values.
-- Don't use TypeScript const enum.
-- Don't declare empty interfaces.
-- Don't let variables evolve into any type through reassignments.
-- Don't use the any type.
-- Don't misuse the non-null assertion operator (!) in TypeScript files.
-- Don't use implicit any type on variable declarations.
-- Don't merge interfaces and classes unsafely.
-- Don't use overload signatures that aren't next to each other.
-- Use the namespace keyword instead of the module keyword to declare TypeScript namespaces.
+3. **`ChannelType` cascade** — Adding a value to `channelTypes` in `packages/database/src/partials/channel.ts` causes compile errors in every `Record<ChannelType, ...>` across the codebase. Grep for `Record<ChannelType` and fix all hits.
 
-### Style and Consistency
-- Don't use global `eval()`.
-- Don't use callbacks in asynchronous tests and hooks.
-- Don't use negation in `if` statements that have `else` clauses.
-- Don't use nested ternary expressions.
-- Don't reassign function parameters.
-- This rule lets you specify global variable names you don't want to use in your application.
-- Don't use specified modules when loaded by import or require.
-- Don't use constants whose value is the upper-case version of their name.
-- Use `String.slice()` instead of `String.substr()` and `String.substring()`.
-- Don't use template literals if you don't need interpolation or special-character handling.
-- Don't use `else` blocks when the `if` block breaks early.
-- Don't use yoda expressions.
-- Don't use Array constructors.
-- Use `at()` instead of integer index access.
-- Follow curly brace conventions.
-- Use `else if` instead of nested `if` statements in `else` clauses.
-- Use single `if` statements instead of nested `if` clauses.
-- Use `new` for all builtins except `String`, `Number`, and `Boolean`.
-- Use consistent accessibility modifiers on class properties and methods.
-- Use `const` declarations for variables that are only assigned once.
-- Put default function parameters and optional function parameters last.
-- Include a `default` clause in switch statements.
-- Use the `**` operator instead of `Math.pow`.
-- Use `for-of` loops when you need the index to extract an item from the iterated array.
-- Use `node:assert/strict` over `node:assert`.
-- Use the `node:` protocol for Node.js builtin modules.
-- Use Number properties instead of global ones.
-- Use assignment operator shorthand where possible.
-- Use function types instead of object types with call signatures.
-- Use template literals over string concatenation.
-- Use `new` when throwing an error.
-- Don't throw non-Error values.
-- Use `String.trimStart()` and `String.trimEnd()` over `String.trimLeft()` and `String.trimRight()`.
-- Use standard constants instead of approximated literals.
-- Don't assign values in expressions.
-- Don't use async functions as Promise executors.
-- Don't reassign exceptions in catch clauses.
-- Don't reassign class members.
-- Don't compare against -0.
-- Don't use labeled statements that aren't loops.
-- Don't use void type outside of generic or return types.
-- Don't use console.
-- Don't use control characters and escape sequences that match control characters in regular expression literals.
-- Don't use debugger.
-- Don't assign directly to document.cookie.
-- Use `===` and `!==`.
-- Don't use duplicate case labels.
-- Don't use duplicate class members.
-- Don't use duplicate conditions in if-else-if chains.
-- Don't use two keys with the same name inside objects.
-- Don't use duplicate function parameter names.
-- Don't have duplicate hooks in describe blocks.
-- Don't use empty block statements and static blocks.
-- Don't let switch clauses fall through.
-- Don't reassign function declarations.
-- Don't allow assignments to native objects and read-only global variables.
-- Use Number.isFinite instead of global isFinite.
-- Use Number.isNaN instead of global isNaN.
-- Don't assign to imported bindings.
-- Don't use irregular whitespace characters.
-- Don't use labels that share a name with a variable.
-- Don't use characters made with multiple code points in character class syntax.
-- Make sure to use new and constructor properly.
-- Don't use shorthand assign when the variable appears on both sides.
-- Don't use octal escape sequences in string literals.
-- Don't use Object.prototype builtins directly.
-- Don't redeclare variables, functions, classes, and types in the same scope.
-- Don't have redundant "use strict".
-- Don't compare things where both sides are exactly the same.
-- Don't let identifiers shadow restricted names.
-- Don't use sparse arrays (arrays with holes).
-- Don't use template literal placeholder syntax in regular strings.
-- Don't use the then property.
-- Don't use unsafe negation.
-- Don't use var.
-- Don't use with statements in non-strict contexts.
-- Make sure async functions actually use await.
-- Make sure default clauses in switch statements come last.
-- Make sure to pass a message value when creating a built-in error.
-- Make sure get methods always return a value.
-- Use a recommended display strategy with Google Fonts.
-- Make sure for-in loops include an if statement.
-- Use Array.isArray() instead of instanceof Array.
-- Make sure to use the digits argument with Number#toFixed().
-- Make sure to use the "use strict" directive in script files.
+4. **`.bind()` with `bindArgsSchemas`** — Server actions that use `bindArgsSchemas` (e.g. for `workspaceId`) must be called with `.bind(null, workspaceId)` when passed to `useHookFormAction` or `useAction`. Without this, TypeScript throws a "too few arguments" error.
 
-### Next.js Specific Rules
-- Don't use `<img>` elements in Next.js projects.
-- Don't use `<head>` elements in Next.js projects.
-- Don't import next/document outside of pages/_document.jsx in Next.js projects.
-- Don't use the next/head module in pages/_document.js on Next.js projects.
+5. **New workspace packages** — After creating a new package, run `CI=true pnpm install --no-frozen-lockfile` to link it. Without `CI=true` the command hangs waiting for TTY input.
 
-### Testing Best Practices
-- Don't use export or module.exports in test files.
-- Don't use focused tests.
-- Make sure the assertion function, like expect, is placed inside an it() function call.
-- Don't use disabled tests.
+6. **`execute()` on no-input actions** — Delete actions use `bindArgsSchemas` only (no `.inputSchema()`). Call `execute()` with no arguments, not `execute({})`.
 
-## Common Tasks
-- `npx ultracite init` - Initialize Ultracite in your project
-- `npx ultracite format` - Format and fix code automatically
-- `npx ultracite lint` - Check for issues without fixing
+7. **i18n is mandatory** — All user-facing strings must use `useTranslations()`. Never hardcode labels, placeholders, or button text. Check `apps/builder/messages/en.json` → `fields.*` before creating new translation keys.
 
-## Example: Error Handling
-```typescript
-// ✅ Good: Comprehensive error handling
-try {
-  const result = await fetchData();
-  return { success: true, data: result };
-} catch (error) {
-  console.error('API call failed:', error);
-  return { success: false, error: error.message };
-}
+8. **`docs/tech-stack.md` is authoritative** — If you see references to Prisma anywhere in older docs, those are stale. This project uses Drizzle ORM exclusively.
 
-// ❌ Bad: Swallowing errors
-try {
-  return await fetchData();
-} catch (e) {
-  console.log(e);
-}
+9. **No direct `db` in app layer** — Code in `apps/` and `integrations/` must NOT import `db` from `@chatbotx.io/database/client`. All database access goes through a service (`packages/business/`) or repository (`packages/database/src/repositories/`). Existing direct imports are legacy exceptions. See `.agents/rules/data-access.md`.
+
+10. **White-label tenancy** — `User`/`Workspace` carry a `tenantId` that defaults to `ROOT_TENANT_ID` (`"1"`, the platform). `User` email is unique *per tenant* (`User_email_tenant_key`), never globally. Derive a new workspace's tenant via `workspaceService.resolveTenantForOwner` (owner-derived, never host-derived) — don't set `tenantId` from request input. Never accept or return `tenantId` from client input in auth: the tenant-scoped adapter stamps it from `getTenantId()`. See `docs/tenancy.md`.
+
+11. **Cloud signup stamps a bootstrap quota row.** On the cloud edition, `onUserCreated` synchronously writes a conservative `UserQuota` trial row (`ensureBootstrapPlan`) before enqueuing `publishEntitlements`. Don't assume a new cloud user has *no* quota row during the worker-sync gap, and don't treat the OSS layer as read-only for plan identity at signup. The private `quota-worker` remains the authority and re-anchors the row on its run.
+
+12. **Quota is single-source: the owner's `UserQuota` row IS the pool.** There is no separate `TenantQuotaUsage` table. For a reseller, the owner's `UserQuota.*Used` columns hold the aggregated usage across their entire tenant (owner's own resources carry the reseller `tenantId` so they are included automatically). Sub-accounts each have their own `UserQuota` row; enforcement gates both the sub-account's own row and the owner's pool row. Root-tenant users have only their own row — no pool. Never add a separate counter table for tenant-level usage; update `UserQuotaService` instead. See `docs/tenancy.md#quota-enforcement`.
+
+13. **Preserve client method binding when passing callbacks** — Do not pass instance methods as bare references to helpers (for example `get: facebookGraphClient.get`). JavaScript loses the receiver binding, and clients may crash at runtime when the method uses `this`. Use an arrow wrapper or explicit bind, e.g. `get: (endpoint, options) => facebookGraphClient.get(endpoint, options)`.
+
+14. **Trial-expired workspaces are read/delete-only, not redirected.** The persistent banner explains the state; use `workspaceActionClientAllowExpired` for delete, disconnect, cancel, and other actions that must remain available after expiry. `Workspace.scheduledDeletionAt` is the soft-delete convention: the hourly `purgeWorkspaces` cron disconnects integrations first, then hard-deletes after the 24-hour grace window.
+
+15. **Workspace-scoped workers must use `withBlockedOwnerGuard`.** A blocked owner is a safe no-op with a bare `return`, so the job does not retry or dead-letter and webhook requests remain HTTP-200-safe. Excluded system/quota/tenancy jobs are `sendAuditLog`, `sendErrorLog`, and all schedule cron jobs except the two broadcast handlers. The trial+7d `unsubscribeExpiredTrials` teardown is one-shot via `UserQuota.channelsTornDownAt`.
+<!-- END GENERATED: SHARED-INVARIANTS -->
+
+## Rule index
+
+- Data access: `.agents/rules/data-access.md`
+- Git and pull requests: `.agents/rules/git.md`
+- Static imports: `.agents/rules/no-dynamic-import.md`
+- Feature, API, database, integration, worker, and testing workflows: `.agents/skills/`
+
+## Common commands
+
+```bash
+pnpm lint
+pnpm --filter builder check-types
+pnpm --filter @chatbotx.io/database check-types
+pnpm --filter worker test
+pnpm build
 ```
-
-# Ultracite Code Standards
-
-This project uses **Ultracite**, a zero-config Biome preset that enforces strict code quality standards through automated formatting and linting.
-
-## Quick Reference
-
-- **Format code**: `npx ultracite fix`
-- **Check for issues**: `npx ultracite check`
-- **Diagnose setup**: `npx ultracite doctor`
-
-Biome (the underlying engine) provides extremely fast Rust-based linting and formatting. Most issues are automatically fixable.
-
----
-
-## Core Principles
-
-Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
-
-### Type Safety & Explicitness
-
-- Use explicit types for function parameters and return values when they enhance clarity
-- Prefer `unknown` over `any` when the type is genuinely unknown
-- Use const assertions (`as const`) for immutable values and literal types
-- Leverage TypeScript's type narrowing instead of type assertions
-- Use meaningful variable names instead of magic numbers - extract constants with descriptive names
-
-### Modern JavaScript/TypeScript
-
-- Use arrow functions for callbacks and short functions
-- Prefer `for...of` loops over `.forEach()` and indexed `for` loops
-- Use optional chaining (`?.`) and nullish coalescing (`??`) for safer property access
-- Prefer template literals over string concatenation
-- Use destructuring for object and array assignments
-- Use `const` by default, `let` only when reassignment is needed, never `var`
-
-### Async & Promises
-
-- Always `await` promises in async functions - don't forget to use the return value
-- Use `async/await` syntax instead of promise chains for better readability
-- Handle errors appropriately in async code with try-catch blocks
-- Don't use async functions as Promise executors
-
-### React & JSX
-
-- Use function components over class components
-- Call hooks at the top level only, never conditionally
-- Specify all dependencies in hook dependency arrays correctly
-- Use the `key` prop for elements in iterables (prefer unique IDs over array indices)
-- Nest children between opening and closing tags instead of passing as props
-- Don't define components inside other components
-- Use semantic HTML and ARIA attributes for accessibility:
-  - Provide meaningful alt text for images
-  - Use proper heading hierarchy
-  - Add labels for form inputs
-  - Include keyboard event handlers alongside mouse events
-  - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
-
-### Error Handling & Debugging
-
-- Remove `console.log`, `debugger`, and `alert` statements from production code
-- Throw `Error` objects with descriptive messages, not strings or other values
-- Use `try-catch` blocks meaningfully - don't catch errors just to rethrow them
-- Prefer early returns over nested conditionals for error cases
-
-### Code Organization
-
-- Keep functions focused and under reasonable cognitive complexity limits
-- Extract complex conditions into well-named boolean variables
-- Use early returns to reduce nesting
-- Prefer simple conditionals over nested ternary operators
-- Group related code together and separate concerns
-
-### Security
-
-- Add `rel="noopener"` when using `target="_blank"` on links
-- Avoid `dangerouslySetInnerHTML` unless absolutely necessary
-- Don't use `eval()` or assign directly to `document.cookie`
-- Validate and sanitize user input
-
-### Performance
-
-- Avoid spread syntax in accumulators within loops
-- Use top-level regex literals instead of creating them in loops
-- Prefer specific imports over namespace imports
-- Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
-
-### Framework-Specific Guidance
-
-**Next.js:**
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
-
-**React 19+:**
-- Use ref as a prop instead of `React.forwardRef`
-
-**Solid/Svelte/Vue/Qwik:**
-- Use `class` and `for` attributes (not `className` or `htmlFor`)
-
----
-
-## Testing
-
-- Write assertions inside `it()` or `test()` blocks
-- Avoid done callbacks in async tests - use async/await instead
-- Don't use `.only` or `.skip` in committed code
-- Keep test suites reasonably flat - avoid excessive `describe` nesting
-
-## When Biome Can't Help
-
-Biome's linter will catch most issues automatically. Focus your attention on:
-
-1. **Business logic correctness** - Biome can't validate your algorithms
-2. **Meaningful naming** - Use descriptive names for functions, variables, and types
-3. **Architecture decisions** - Component structure, data flow, and API design
-4. **Edge cases** - Handle boundary conditions and error states
-5. **User experience** - Accessibility, performance, and usability considerations
-6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
-
----
-
-Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix` before committing to ensure compliance.
-
----
-
-# Git Conventions
-
-See **`.agents/rules/git.md`** for the full canonical rules (commit format, branch naming, staging, PRs, changelog).
-
----
-
-# ChatbotX Project Invariants
-
-> The standards above are generic. These are the project-specific landmines that the linter does NOT catch. Canonical source: `AGENTS.md` (read it for detail). If this drifts from `AGENTS.md`, `AGENTS.md` wins.
-
-- **Stack:** pnpm + Turborepo, Drizzle ORM + PostgreSQL (pgvector), Redis + BullMQ, Next.js 16 builder. **Drizzle only — never Prisma.**
-- **Triple-d middleware names** — use `workspaceAuthorizedMidddleware` / `workspaceTokenAuthMidddleware` (three `d`s, preserved typo).
-- **`relations/index.ts` needs TWO edits** when adding a table — `import` the relations file AND spread it into the `relations` object.
-- **`ChannelType` cascade** — adding a `channelTypes` value breaks every `Record<ChannelType, …>`; grep and fix all hits.
-- **`.bind()` with `bindArgsSchemas`** — call `.bind(null, workspaceId)` when wiring such actions to `useHookFormAction`/`useAction`.
-- **`execute()` on no-input actions** — call `execute()` with no arguments, not `execute({})`.
-- **i18n is mandatory** — no hardcoded user-facing strings; use `useTranslations()`; check `apps/builder/messages/en.json` → `fields.*` first.
-- **No direct `db` in `apps/` or `integrations/`** — go through a service (`@chatbotx.io/business`) or repository (`@chatbotx.io/database/repositories`). See `.agents/rules/data-access.md`.
-- **No dynamic `import()`** — it breaks the tsdown build. See `.agents/rules/no-dynamic-import.md`.
-- **New workspace package** — run `CI=true pnpm install --no-frozen-lockfile` to link it.
-- **Cloud signup stamps a bootstrap quota row.** On the cloud edition, `onUserCreated` synchronously writes a conservative `UserQuota` trial row (`ensureBootstrapPlan`) before enqueuing `publishEntitlements`. Don't assume a new cloud user has *no* quota row during the worker-sync gap, and don't treat the OSS layer as read-only for plan identity at signup. The private `quota-worker` remains the authority and re-anchors the row on its run.

@@ -210,6 +210,16 @@ import { myModel } from "@chatbotx.io/database/schema"
 const item = await findOrFail({ table: myModel, where: { id } })
 ```
 
+## Soft-delete convention
+
+`Workspace.scheduledDeletionAt` is the repository's soft-delete convention:
+use a nullable timestamp with an index. Scheduling sets it to `now + 24h`,
+cancellation clears it, and the workspace row remains live during the grace
+window. The hourly purge cron then hard-deletes due rows, allowing the normal
+foreign-key cascade to remove children. `UserQuota.channelsTornDownAt` is the
+sibling marker for one-shot trial-expiry channel teardown; it is not a second
+soft-delete state.
+
 ## Transactions
 
 **Rule:** Use `db.transaction()` whenever an action performs 2 or more write operations (INSERT, UPDATE, DELETE) so all succeed or fail together.
