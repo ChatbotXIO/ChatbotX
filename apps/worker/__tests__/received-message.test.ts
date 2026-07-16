@@ -20,6 +20,7 @@ const {
   mockUpdateContactFromMessage,
   mockContactUnblockIfBlocked,
   mockConversationFindOrCreate,
+  mockAutomatedResponseEnqueueFlowAction,
   mockIntegrationQueueAdd,
   mockDbSet,
   mockDbTransaction,
@@ -71,6 +72,9 @@ const {
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactUpdate: vi.fn().mockResolvedValue({}),
     mockConversationFindOrCreate: vi.fn(),
+    mockAutomatedResponseEnqueueFlowAction: vi
+      .fn()
+      .mockResolvedValue(undefined),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
     mockDbTransaction,
@@ -91,6 +95,12 @@ const {
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+}))
+
+vi.mock("@chatbotx.io/automated-response", () => ({
+  automatedResponseService: {
+    enqueueFlowAction: mockAutomatedResponseEnqueueFlowAction,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -591,13 +601,10 @@ describe("receiveMessage — message repository branch", () => {
     const result = await receiveMessage(baseProps)
 
     expect(result.postbackAction).toBe(postbackAction)
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
-      "runFlowPostback",
-      expect.objectContaining({
-        type: "runFlowPostback",
-        data: expect.objectContaining({ action: postbackAction }),
-      }),
-    )
+    expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
+      kind: "postback",
+      data: expect.objectContaining({ action: postbackAction }),
+    })
   })
 
   test("drops garbage quick reply action and returns it as null", async () => {
@@ -637,13 +644,10 @@ describe("receiveMessage — message repository branch", () => {
     const result = await receiveMessage(baseProps)
 
     expect(result.quickReplyAction).toBe(quickReplyAction)
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
-      "runFlowQuickReply",
-      expect.objectContaining({
-        type: "runFlowQuickReply",
-        data: expect.objectContaining({ action: quickReplyAction }),
-      }),
-    )
+    expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
+      kind: "quickReply",
+      data: expect.objectContaining({ action: quickReplyAction }),
+    })
   })
 
   test("throws for unsupported integration type", async () => {
