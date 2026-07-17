@@ -102,6 +102,9 @@ vi.mock("@chatbotx.io/business", () => ({
     findExistingSourceIds: (...args: unknown[]) =>
       findExistingSourceIds(...args),
   },
+  messageCleanupService: {
+    cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 const getObjectStream = vi.fn()

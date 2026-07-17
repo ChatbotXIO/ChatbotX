@@ -1,4 +1,4 @@
-import { tagSyncService } from "@chatbotx.io/business"
+import { contactService, tagSyncService } from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
 import { and, db, eq, inArray, isNull } from "@chatbotx.io/database/client"
 import {
@@ -6,7 +6,6 @@ import {
   contactModel,
   contactNoteModel,
   contactsToTagsModel,
-  conversationModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
@@ -304,24 +303,17 @@ export async function detachTagsByNames(
 export async function deleteContact({
   conversation,
 }: ExecuteStepProps<DeleteContactStepSchema>) {
-  const contactInboxes = await db.query.contactInboxModel.findMany({
-    where: {
-      contactId: conversation.contactId,
-    },
-  })
   const occurredAt = new Date()
 
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(conversationModel)
-      .where(eq(conversationModel.id, conversation.id))
-
-    await tx
-      .delete(contactModel)
-      .where(eq(contactModel.id, conversation.contactId))
+  // Delete through the service so this path shares the tombstone bookkeeping
+  // (MessageCleanup) and cache invalidation with the builder bulk delete —
+  // Message/Attachment no longer cascade from Contact.
+  const [deletedContact] = await contactService.delete({
+    workspaceId: conversation.workspaceId,
+    ids: [conversation.contactId],
   })
 
-  for (const contactInbox of contactInboxes) {
+  for (const contactInbox of deletedContact?.contactInboxes ?? []) {
     if (contactInbox.sourceId) {
       emit("analytics:dashboard", {
         eventType: "contact:deleted",

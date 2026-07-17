@@ -1,4 +1,8 @@
-import { contactInboxService, workspaceService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  messageCleanupService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db, inArray } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
@@ -196,6 +200,16 @@ const insertContactBatch = async (
     const survivors = accepted.filter(({ contactId }) =>
       insertedContactIds.has(contactId),
     )
+
+    // Re-created contacts keep their history: cancel any pending message
+    // cleanup recorded when contacts with these inbox identities were deleted.
+    await messageCleanupService.cancelByInboxSource({
+      inboxId: ctx.row.inboxId,
+      sourceIds: survivors.flatMap(({ row }) =>
+        row.externalId ? [row.externalId] : [],
+      ),
+      tx,
+    })
 
     // Prune the orphan Contact rows whose link lost the conflict so we never
     // leave a contact without a channel row (cascades clean up any partial

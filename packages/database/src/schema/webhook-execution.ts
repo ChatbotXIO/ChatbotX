@@ -41,5 +41,9 @@ export const webhookExecutionModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    index("WebhookExecution_contactId_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast(),
+    ),
   ],
 )

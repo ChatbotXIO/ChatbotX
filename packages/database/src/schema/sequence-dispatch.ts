@@ -133,5 +133,6 @@ export const sequenceDispatchModel = pgTable(
     index("SequenceDispatch_terminal_updatedAt_idx")
       .on(table.updatedAt)
       .where(sql`"status" in ('completed', 'failed', 'canceled')`),
+    index("SequenceDispatch_contactId_idx").on(table.contactId),
   ],
 )

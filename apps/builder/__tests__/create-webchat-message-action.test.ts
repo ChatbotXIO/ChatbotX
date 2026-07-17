@@ -133,6 +133,9 @@ vi.mock("@chatbotx.io/business", () => ({
     .fn()
     .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
   workspaceService: { find: mockWorkspaceFind },
+  messageCleanupService: {
+    cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("@/lib/log", () => ({

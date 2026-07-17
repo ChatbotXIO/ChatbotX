@@ -1,4 +1,4 @@
-import { pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { contactModel } from "./contact"
 import { fbCommentAutomationModel } from "./fb-comment-automation"
@@ -25,5 +25,6 @@ export const fbCommentAutomationReplyModel = pgTable(
       t.contactId,
       t.postId,
     ),
+    index("FBCommentAutomationReply_contactId_idx").on(t.contactId),
   ],
 )

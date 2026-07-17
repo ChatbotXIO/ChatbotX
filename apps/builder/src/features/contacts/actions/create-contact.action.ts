@@ -3,6 +3,7 @@
 import {
   contactInboxService,
   contactService,
+  messageCleanupService,
   quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -225,6 +226,14 @@ export const createContact = async ({
       if (!contactInbox) {
         throw new ChatbotXException("Contact inbox not found")
       }
+
+      // A re-created contact keeps its history: cancel any pending message
+      // cleanup recorded when a contact with this inbox identity was deleted.
+      await messageCleanupService.cancelByInboxSource({
+        inboxId: inbox.id,
+        sourceIds: [contactInbox.sourceId],
+        tx,
+      })
 
       await tx.insert(conversationModel).values({
         workspaceId,

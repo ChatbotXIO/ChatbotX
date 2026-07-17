@@ -5,6 +5,7 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  messageCleanupService,
   quotaEnforcementService,
   resolveTenantSettings,
   workspaceService,
@@ -471,6 +472,14 @@ async function getConversationFromInput(
       if (!contactInbox) {
         throw new ChatbotXException("Contact inbox not found")
       }
+
+      // A re-created contact keeps its history: cancel any pending message
+      // cleanup recorded when a contact with this inbox identity was deleted.
+      await messageCleanupService.cancelByInboxSource({
+        inboxId: integrationWebchat.inboxId,
+        sourceIds: [contactInbox.sourceId],
+        tx,
+      })
 
       const conversation = await tx
         .insert(conversationModel)

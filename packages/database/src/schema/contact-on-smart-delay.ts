@@ -71,6 +71,10 @@ export const contactOnSmartDelayModel = pgTable(
       table.status,
       table.triggerAt,
     ),
+    index("ContactOnSmartDelay_conversationId_idx").using(
+      "btree",
+      table.conversationId,
+    ),
     uniqueIndex("ContactOnSmartDelay_followUp_active_key")
       .on(table.workspaceId, table.contactInboxId, table.flowId, table.stepId)
       .where(
