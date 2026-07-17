@@ -1776,6 +1776,48 @@ describe("applyContactFilter — contactInbox relation fields", () => {
       }),
     ).toEqual({})
   })
+
+  test("renders last user input filters against the latest inbound ContactInbox row", () => {
+    const inputQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastUserInput",
+            operator: operatorTypes.enum.contains,
+            value: "invoice",
+          },
+        ],
+      }),
+    )
+
+    expect(inputQuery.sql).toContain('SELECT "ContactInbox"."lastUserInput"')
+    expect(inputQuery.sql).toContain(
+      '"ContactInbox"."lastIncomingMessageAt" IS NOT NULL',
+    )
+    expect(inputQuery.sql).toContain(
+      'ORDER BY "ContactInbox"."lastIncomingMessageAt" DESC',
+    )
+    expect(inputQuery.sql).toContain('"latestInteraction"."latest"::text ILIKE')
+    expect(inputQuery.params).toContain("%invoice%")
+
+    const typeQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "lastUserInputType",
+            operator: operatorTypes.enum.eq,
+            value: "image",
+          },
+        ],
+      }),
+    )
+
+    expect(typeQuery.sql).toContain('SELECT "ContactInbox"."lastUserInputType"')
+    expect(typeQuery.sql).toContain('"latestInteraction"."latest"::text ILIKE')
+    expect(typeQuery.params).toContain("image")
+  })
 })
 
 describe("applyContactFilter — tags relation", () => {

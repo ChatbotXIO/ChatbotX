@@ -496,7 +496,17 @@
       "archived": "Đã lưu trữ",
       "blocked": "Đã chặn",
       "noAdminReply": "Không có phản hồi quản trị viên",
-      "contactCreatedAt": "Ngày tạo liên hệ"
+      "contactCreatedAt": "Ngày tạo liên hệ",
+      "lastUserInputTypes": {
+        "text": "Văn bản",
+        "location": "Vị trí",
+        "refLink": "Liên kết ref",
+        "image": "Hình ảnh",
+        "video": "Video",
+        "audio": "Âm thanh",
+        "gif": "GIF",
+        "file": "Tệp"
+      }
     },
     "fieldGroups": {
       "opportunity": "Cơ hội",
@@ -1990,6 +2000,7 @@
       "callApi": "Yêu cầu bên ngoài",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
+      "condition": "Điều kiện",
       "contactActions": "Hành động liên hệ",
       "countCharacters": "Đếm ký tự",
       "deleteContact": "Xóa liên hệ",
@@ -2068,6 +2079,12 @@
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
       "addVariation": "Biến thể mới"
+    },
+    "condition": {
+      "addCase": "Kiểm tra điều kiện mới",
+      "caseSummary": "Trường hợp {index} · {count} điều kiện",
+      "caseTitle": "Trường hợp {index}",
+      "otherwise": "Người dùng không khớp các điều kiện này"
     },
     "whatsappOptionList": {
       "buttonLabel": "Nhãn nút",

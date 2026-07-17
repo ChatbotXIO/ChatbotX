@@ -42,6 +42,8 @@ export type ContactInboxTrackingData = Partial<
     | "lastInputFailure"
     | "lastErrorLog"
     | "lastBtnTitle"
+    | "lastUserInput"
+    | "lastUserInputType"
     | "webchatParentUrl"
   >
 > & { referral?: ContactInboxReferral | null }
@@ -309,6 +311,9 @@ class ContactInboxService extends BaseService {
     const { tx = db, contactInboxId, contactId, data, workspaceId } = props
     const {
       firstInteractionAt: explicitFirstInteractionAt,
+      lastIncomingMessageAt: explicitLastIncomingMessageAt,
+      lastUserInput,
+      lastUserInputType,
       referral,
       ...nextData
     } = data
@@ -318,6 +323,22 @@ class ContactInboxService extends BaseService {
       Object.assign(updateData, {
         firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${explicitFirstInteractionAt} THEN ${explicitFirstInteractionAt} ELSE ${contactInboxModel.firstInteractionAt} END`,
       })
+    }
+    if (explicitLastIncomingMessageAt) {
+      const isLatestIncomingMessage = sql`${contactInboxModel.lastIncomingMessageAt} IS NULL OR ${explicitLastIncomingMessageAt} >= ${contactInboxModel.lastIncomingMessageAt}`
+      Object.assign(updateData, {
+        lastIncomingMessageAt: sql`GREATEST(${contactInboxModel.lastIncomingMessageAt}, ${explicitLastIncomingMessageAt})`,
+      })
+      if (Object.hasOwn(data, "lastUserInput")) {
+        Object.assign(updateData, {
+          lastUserInput: sql`CASE WHEN ${isLatestIncomingMessage} THEN ${lastUserInput} ELSE ${contactInboxModel.lastUserInput} END`,
+        })
+      }
+      if (Object.hasOwn(data, "lastUserInputType")) {
+        Object.assign(updateData, {
+          lastUserInputType: sql`CASE WHEN ${isLatestIncomingMessage} THEN ${lastUserInputType} ELSE ${contactInboxModel.lastUserInputType} END`,
+        })
+      }
     }
     if (referral) {
       const nextReferral = compactReferral(referral)

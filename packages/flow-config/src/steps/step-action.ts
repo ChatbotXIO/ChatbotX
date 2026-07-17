@@ -35,7 +35,7 @@ export const stepTypes = z.enum([
   "setCustomField",
   "clearCustomField",
   "cancelContactInput",
-  "filterContact",
+  "condition",
 
   // Inbox Operations (I_)
   "disableBot",
@@ -138,4 +138,5 @@ export const hiddenActionsStepTypes = [
   stepTypes.enum.email,
   stepTypes.enum.splitTraffic,
   stepTypes.enum.wait,
+  stepTypes.enum.condition,
 ]

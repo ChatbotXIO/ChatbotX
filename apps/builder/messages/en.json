@@ -496,7 +496,17 @@
       "archived": "Archived",
       "blocked": "Blocked",
       "noAdminReply": "No admin reply",
-      "contactCreatedAt": "Contact created at"
+      "contactCreatedAt": "Contact created at",
+      "lastUserInputTypes": {
+        "text": "Text",
+        "location": "Location",
+        "refLink": "Ref link",
+        "image": "Image",
+        "video": "Video",
+        "audio": "Audio",
+        "gif": "GIF",
+        "file": "File"
+      }
     },
     "fieldGroups": {
       "opportunity": "Opportunity",
@@ -1975,6 +1985,7 @@
       "callApi": "External API Request",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
+      "condition": "Condition",
       "contactActions": "Contact Actions",
       "countCharacters": "Count Characters",
       "deleteContact": "Delete Contact",
@@ -2053,6 +2064,12 @@
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
       "addVariation": "New Variation"
+    },
+    "condition": {
+      "addCase": "Check New Condition",
+      "caseSummary": "Case {index} · {count} conditions",
+      "caseTitle": "Case {index}",
+      "otherwise": "The user doesn't match these conditions"
     },
     "whatsappOptionList": {
       "buttonLabel": "Button Label",

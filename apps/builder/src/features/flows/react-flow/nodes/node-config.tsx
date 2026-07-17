@@ -1,4 +1,5 @@
 import { nodeTypeSchema } from "@chatbotx.io/flow-config"
+import conditionNodeConfig from "./condition"
 import followUpNodeConfig from "./follow-up"
 import performActionNodeConfig from "./perform-action"
 import sendMailNodeConfig from "./send-mail"
@@ -11,7 +12,7 @@ export const allNodesConfig = {
   [nodeTypeSchema.enum.sendMessage]: sendMessageNodeConfig,
   [nodeTypeSchema.enum.startFlow]: startFlowNodeConfig,
   [nodeTypeSchema.enum.performAction]: performActionNodeConfig,
-  [nodeTypeSchema.enum.condition]: undefined,
+  [nodeTypeSchema.enum.condition]: conditionNodeConfig,
   [nodeTypeSchema.enum.sendMail]: sendMailNodeConfig,
   [nodeTypeSchema.enum.splitTraffic]: splitTrafficNodeConfig,
   [nodeTypeSchema.enum.wait]: waitNodeConfig,

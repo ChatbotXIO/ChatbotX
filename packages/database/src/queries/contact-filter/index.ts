@@ -28,6 +28,7 @@ import {
   buildLatestContactInboxDateWhere,
   buildLatestContactInboxMinutesAgoWhere,
   buildLatestContactInboxNumberWhere,
+  buildLatestContactInboxTextWhere,
   buildMinutesAgoWhere,
   contactInboxInteractedWithin24hSQL as buildRecentInteractionPredicate,
 } from "./predicates"
@@ -332,6 +333,20 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
     case "lastInteractionMinutesAgo":
       return buildLatestContactInboxMinutesAgoWhere(
         contactInboxModel.lastIncomingMessageAt,
+        operator,
+        value,
+      )
+
+    case "lastUserInput":
+      return buildLatestContactInboxTextWhere(
+        contactInboxModel.lastUserInput,
+        operator,
+        value,
+      )
+
+    case "lastUserInputType":
+      return buildLatestContactInboxTextWhere(
+        contactInboxModel.lastUserInputType,
         operator,
         value,
       )

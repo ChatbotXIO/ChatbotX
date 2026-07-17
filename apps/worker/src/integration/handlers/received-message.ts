@@ -11,6 +11,7 @@ import {
   updateContactFromMessage,
   workspaceService,
 } from "@chatbotx.io/business"
+import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
 import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -135,7 +136,7 @@ export const receiveMessage = async (
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   const isWorkspaceActive = workspaceService.isActiveNow(workspace)
 
-  await resolveTenantSettings({
+  const { storageUrl } = await resolveTenantSettings({
     workspaceId: inbox.workspaceId,
   })
   const ctx = await buildContext({
@@ -231,6 +232,7 @@ export const receiveMessage = async (
         contactInbox,
         conversation,
         incomingMessage,
+        storageUrl,
         ...systemFieldUpdates,
       })
 
@@ -361,6 +363,7 @@ const saveAndBroadcastMessage = async (props: {
   contactInboxTracking?: ContactInboxTracking
   contactLocation?: ContactLocation | null
   createdAt?: Date
+  storageUrl: string
 }): Promise<{ message: MessageModel; isNew: boolean }> => {
   const {
     inbox,
@@ -370,6 +373,7 @@ const saveAndBroadcastMessage = async (props: {
     contactInboxTracking,
     contactLocation,
     createdAt,
+    storageUrl,
   } = props
   const repository = await createMessageRepository()
 
@@ -428,6 +432,7 @@ const saveAndBroadcastMessage = async (props: {
       conversation,
       incomingMessage,
       message: newMessage,
+      storageUrl,
       contactInboxTracking,
       contactLocation,
     })
@@ -463,6 +468,7 @@ const persistNewMessageSideEffects = async (props: {
   conversation: ConversationModel
   incomingMessage: IncomingMessage
   message: MessageModel
+  storageUrl: string
   contactInboxTracking?: ContactInboxTracking
   contactLocation?: ContactLocation | null
 }): Promise<void> => {
@@ -472,6 +478,7 @@ const persistNewMessageSideEffects = async (props: {
     conversation,
     incomingMessage,
     message,
+    storageUrl,
     contactInboxTracking,
     contactLocation,
   } = props
@@ -483,7 +490,7 @@ const persistNewMessageSideEffects = async (props: {
       contactId: contactInbox.contactId,
       workspaceId: inbox.workspaceId,
       data: {
-        ...getMessageActivityTracking({ incomingMessage, message }),
+        ...getMessageActivityTracking({ incomingMessage, message, storageUrl }),
         ...contactInboxTracking,
       },
     })
@@ -512,8 +519,9 @@ const persistNewMessageSideEffects = async (props: {
 const getMessageActivityTracking = (props: {
   incomingMessage: IncomingMessage
   message: MessageModel
+  storageUrl: string
 }): ContactInboxTracking => {
-  const { incomingMessage, message } = props
+  const { incomingMessage, message, storageUrl } = props
   const tracking: ContactInboxTracking = {
     firstInteractionAt: message.createdAt,
     lastMessageAt: message.createdAt,
@@ -529,6 +537,15 @@ const getMessageActivityTracking = (props: {
     (incomingMessage.type ?? "message") === "message"
   ) {
     tracking.lastIncomingMessageAt = message.createdAt
+    Object.assign(
+      tracking,
+      resolveLastUserInputTracking({
+        contentType: incomingMessage.contentType,
+        text: incomingMessage.text,
+        attachments: incomingMessage.attachments,
+        storageUrl,
+      }),
+    )
   }
 
   return tracking
@@ -626,11 +643,16 @@ export const receiveComment = async (
     contentAttributes: { postId: commentData.postId },
   }
 
+  const { storageUrl } = await resolveTenantSettings({
+    workspaceId: inbox.workspaceId,
+  })
+
   await saveAndBroadcastMessage({
     inbox,
     contactInbox,
     conversation,
     incomingMessage,
+    storageUrl,
   })
 
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })

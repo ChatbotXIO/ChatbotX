@@ -67,7 +67,9 @@ const {
     mockBroadcast: vi.fn(),
     mockEmit: vi.fn().mockResolvedValue(undefined),
     mockBuildContext: vi.fn().mockResolvedValue({ workspaceId: "ws-1" }),
-    mockresolveTenantSettings: vi.fn().mockResolvedValue({}),
+    mockresolveTenantSettings: vi
+      .fn()
+      .mockResolvedValue({ storageUrl: "https://files.example.test" }),
     mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactUpdate: vi.fn().mockResolvedValue({}),
@@ -381,7 +383,9 @@ describe("receiveMessage — message repository branch", () => {
     } as never)
 
     mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
-    mockresolveTenantSettings.mockResolvedValue({})
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
     mockCreateMessageRepository.mockResolvedValue({
       createOrUpdate: mockCreateOrUpdate,
       createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
@@ -481,6 +485,8 @@ describe("receiveMessage — message repository branch", () => {
         firstInteractionAt: fakeCreatedMessage.createdAt,
         lastMessageAt: fakeCreatedMessage.createdAt,
         lastIncomingMessageAt: fakeCreatedMessage.createdAt,
+        lastUserInput: "hello",
+        lastUserInputType: "text",
       },
     })
     expect(mockDbSet).toHaveBeenCalledWith({
@@ -675,7 +681,9 @@ describe("receiveMessage — new contact MAC gate", () => {
       integrationRow: fakeIntegrationRow,
     } as never)
     mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
-    mockresolveTenantSettings.mockResolvedValue({})
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
       contact: { sourceId: "psid-123", firstName: "Test" },
@@ -1083,6 +1091,8 @@ describe("receiveMessage — new contact MAC gate", () => {
         firstInteractionAt: fakeCreatedMessage.createdAt,
         lastMessageAt: fakeCreatedMessage.createdAt,
         lastIncomingMessageAt: fakeCreatedMessage.createdAt,
+        lastUserInput: null,
+        lastUserInputType: "location",
         referral: {
           ref: "launch",
           adTitle: "Launch ad",

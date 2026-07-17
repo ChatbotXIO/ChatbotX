@@ -248,6 +248,35 @@ export function buildLatestContactInboxMinutesAgoWhere(
   )
 }
 
+export function buildLatestContactInboxTextWhere(
+  column: AnyColumn,
+  operator: string,
+  value: unknown,
+): ContactWhere {
+  const latestValue = sql.raw('"latestInteraction"."latest"')
+  const comparison = buildTextValueComparison(operator, value, latestValue)
+  if (!comparison) {
+    return {}
+  }
+
+  return {
+    RAW: (table: RawTable): SQL => sql`EXISTS (
+      SELECT 1
+      FROM (
+        SELECT (
+          SELECT ${column}
+          FROM ${contactInboxModel}
+          WHERE ${contactInboxModel.contactId} = ${table.id}
+            AND ${contactInboxModel.lastIncomingMessageAt} IS NOT NULL
+          ORDER BY ${contactInboxModel.lastIncomingMessageAt} DESC
+          LIMIT 1
+        ) AS "latest"
+      ) AS "latestInteraction"
+      WHERE ${comparison}
+    )`,
+  }
+}
+
 export function buildMinutesAgoWhere(
   columnName: string,
   operator: string,
@@ -705,6 +734,39 @@ function buildMinutesAgoComparison(
     default:
       return
   }
+}
+
+function buildTextValueComparison(
+  operator: string,
+  value: unknown,
+  latestValue: SQL,
+): SQL | undefined {
+  const textExpression = sql`${latestValue}::text`
+
+  if (operator === operatorTypes.enum.isEmpty) {
+    return sql`(${latestValue} IS NULL OR ${textExpression} = '')`
+  }
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    return sql`(${latestValue} IS NOT NULL AND ${textExpression} <> '')`
+  }
+
+  if (typeof value !== "string" || value === "") {
+    return
+  }
+
+  if (operator === operatorTypes.enum.eq) {
+    return sql`${textExpression} ILIKE ${escapeLikePattern(value)}`
+  }
+  if (operator === operatorTypes.enum.ne) {
+    return sql`(${textExpression} NOT ILIKE ${escapeLikePattern(value)} OR ${latestValue} IS NULL)`
+  }
+
+  return buildTextSearchComparison(
+    operator,
+    value,
+    textExpression,
+    sql`${latestValue} IS NULL OR ${textExpression} = ''`,
+  )
 }
 
 function canBuildMinutesAgoComparison(
