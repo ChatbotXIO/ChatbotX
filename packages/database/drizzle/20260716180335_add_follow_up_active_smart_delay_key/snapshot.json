@@ -19589,7 +19589,7 @@
         }
       ],
       "isUnique": true,
-      "where": "\"status\" IN ('pending', 'scheduled') AND \"type\" = 'followUp'",
+      "where": "\"status\" NOT IN ('completed', 'failed', 'canceled') AND \"type\" = 'followUp'",
       "with": "",
       "method": "btree",
       "concurrently": false,

@@ -74,7 +74,11 @@ export const contactOnSmartDelayModel = pgTable(
     uniqueIndex("ContactOnSmartDelay_followUp_active_key")
       .on(table.workspaceId, table.contactInboxId, table.flowId, table.stepId)
       .where(
-        sql`${table.status} IN ('pending', 'scheduled') AND ${table.type} = 'followUp'`,
+        // "active = not terminal" instead of IN ('pending', 'scheduled'):
+        // the predicate must not reference 'scheduled' because the migration
+        // runner applies all pending migrations in one transaction, and
+        // Postgres forbids using an enum value added in that same transaction.
+        sql`${table.status} NOT IN ('completed', 'failed', 'canceled') AND ${table.type} = 'followUp'`,
       ),
   ],
 )

@@ -242,6 +242,15 @@
     "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day",
     "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day"
   },
+  "flowAnalytics": {
+    "stats": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "seen": "Seen",
+      "clicked": "Clicked",
+      "waiting": "Waiting"
+    }
+  },
   "autoAssignConversation": {
     "rule": {
       "allTime": "Equal conversation distribution (All time)",

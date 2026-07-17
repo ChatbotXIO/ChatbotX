@@ -1,9 +1,11 @@
 import {
   and,
+  count,
   type DatabaseClient,
   db,
   eq,
   inArray,
+  isNotNull,
   lt,
   lte,
   sql,
@@ -25,6 +27,11 @@ export type SmartDelayRow = Omit<
   type: SmartDelayType
 }
 export type SmartDelayInsert = typeof contactOnSmartDelayModel.$inferInsert
+export type SmartDelayStepCountRow = {
+  stepId: string
+  status: SmartDelayStatus
+  total: number
+}
 
 const toSmartDelayRow = (
   row: typeof contactOnSmartDelayModel.$inferSelect,
@@ -59,7 +66,7 @@ class SmartDelayService extends BaseService {
           contactOnSmartDelayModel.flowId,
           contactOnSmartDelayModel.stepId,
         ],
-        targetWhere: sql`${contactOnSmartDelayModel.status} IN ('pending', 'scheduled') AND ${contactOnSmartDelayModel.type} = 'followUp'`,
+        targetWhere: sql`${contactOnSmartDelayModel.status} NOT IN ('completed', 'failed', 'canceled') AND ${contactOnSmartDelayModel.type} = 'followUp'`,
         set: {
           conversationId: data.conversationId,
           createdAt: now,
@@ -120,6 +127,41 @@ class SmartDelayService extends BaseService {
       where: { id },
     })
     return row ? toSmartDelayRow(row) : null
+  }
+
+  async countByFlowStep(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    flowId: string
+  }): Promise<SmartDelayStepCountRow[]> {
+    const { tx = db, workspaceId, flowId } = props
+    const rows = await tx
+      .select({
+        stepId: contactOnSmartDelayModel.stepId,
+        status: contactOnSmartDelayModel.status,
+        total: count(),
+      })
+      .from(contactOnSmartDelayModel)
+      .where(
+        and(
+          eq(contactOnSmartDelayModel.workspaceId, workspaceId),
+          eq(contactOnSmartDelayModel.flowId, flowId),
+          isNotNull(contactOnSmartDelayModel.stepId),
+        ),
+      )
+      .groupBy(contactOnSmartDelayModel.stepId, contactOnSmartDelayModel.status)
+
+    return rows.flatMap((row) =>
+      row.stepId
+        ? [
+            {
+              stepId: row.stepId,
+              status: smartDelayStatuses.parse(row.status),
+              total: Number(row.total),
+            },
+          ]
+        : [],
+    )
   }
 
   async claimDueRows(props: {

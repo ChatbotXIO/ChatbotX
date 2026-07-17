@@ -7,4 +7,4 @@ WHERE "type" = 'followUp' AND "status" = 'pending'
     ORDER BY "workspaceId", "contactInboxId", "flowId", "stepId", "createdAt" DESC
   );
 --> statement-breakpoint
-CREATE UNIQUE INDEX "ContactOnSmartDelay_followUp_active_key" ON "ContactOnSmartDelay" ("workspaceId","contactInboxId","flowId","stepId") WHERE "status" IN ('pending', 'scheduled') AND "type" = 'followUp';
+CREATE UNIQUE INDEX "ContactOnSmartDelay_followUp_active_key" ON "ContactOnSmartDelay" ("workspaceId","contactInboxId","flowId","stepId") WHERE "status" NOT IN ('completed', 'failed', 'canceled') AND "type" = 'followUp';

@@ -1,16 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockCount,
   mockDbFindFirst,
+  mockDbFrom,
+  mockDbGroupBy,
   mockDbInsert,
   mockDbOnConflictDoUpdate,
   mockDbReturning,
+  mockDbSelect,
   mockDbSet,
   mockDbUpdate,
   mockDbValues,
+  mockDbSelectWhere,
   mockDbWhere,
   mockEq,
   mockInArray,
+  mockIsNotNull,
   mockLt,
   mockLte,
   mockSql,
@@ -32,21 +38,35 @@ const {
   }
   updateChain.set.mockReturnValue(updateChain)
   updateChain.where.mockReturnValue(updateChain)
+  const selectChain = {
+    from: vi.fn(),
+    groupBy: vi.fn(),
+    where: vi.fn(),
+  }
+  selectChain.from.mockReturnValue(selectChain)
+  selectChain.where.mockReturnValue(selectChain)
+  selectChain.groupBy.mockResolvedValue([])
 
   return {
+    mockCount: vi.fn(() => "count()"),
     mockDbFindFirst: vi.fn(),
+    mockDbFrom: selectChain.from,
+    mockDbGroupBy: selectChain.groupBy,
     mockDbInsert,
     mockDbOnConflictDoUpdate: insertChain.onConflictDoUpdate,
     mockDbReturning,
+    mockDbSelect: vi.fn(() => selectChain),
     mockDbSet: updateChain.set,
     mockDbUpdate: vi.fn(() => updateChain),
     mockDbValues: insertChain.values,
+    mockDbSelectWhere: selectChain.where,
     mockDbWhere: updateChain.where,
     mockEq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
     mockInArray: vi.fn((field: unknown, values: unknown[]) => ({
       field,
       values,
     })),
+    mockIsNotNull: vi.fn((field: unknown) => ({ field, isNotNull: true })),
     mockLt: vi.fn((field: unknown, value: unknown) => ({ field, value })),
     mockLte: vi.fn((field: unknown, value: unknown) => ({ field, value })),
     mockSql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
@@ -58,8 +78,10 @@ const {
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn((...conditions: unknown[]) => ({ conditions })),
+  count: mockCount,
   db: {
     insert: mockDbInsert,
+    select: mockDbSelect,
     update: mockDbUpdate,
     query: {
       contactOnSmartDelayModel: {
@@ -69,6 +91,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: mockEq,
   inArray: mockInArray,
+  isNotNull: mockIsNotNull,
   lt: mockLt,
   lte: mockLte,
   sql: mockSql,
@@ -100,6 +123,7 @@ describe("smartDelayService", () => {
       returning: mockDbReturning,
     })
     mockDbOnConflictDoUpdate.mockReturnValue({ returning: mockDbReturning })
+    mockDbGroupBy.mockResolvedValue([])
   })
 
   test("create inserts a smart-delay row", async () => {
@@ -150,6 +174,41 @@ describe("smartDelayService", () => {
     await expect(
       smartDelayService.findById({ id: "missing-row" }),
     ).resolves.toBeNull()
+  })
+
+  test("countByFlowStep returns grouped status counts by step", async () => {
+    mockDbGroupBy.mockResolvedValueOnce([
+      { stepId: "step-1", status: "pending", total: 2 },
+      { stepId: "step-1", status: "scheduled", total: 3 },
+      { stepId: "step-2", status: "completed", total: 4 },
+      { stepId: null, status: "completed", total: 99 },
+    ])
+
+    await expect(
+      smartDelayService.countByFlowStep({
+        workspaceId: "workspace-1",
+        flowId: "flow-1",
+      }),
+    ).resolves.toEqual([
+      { stepId: "step-1", status: "pending", total: 2 },
+      { stepId: "step-1", status: "scheduled", total: 3 },
+      { stepId: "step-2", status: "completed", total: 4 },
+    ])
+
+    expect(mockDbSelect).toHaveBeenCalledWith({
+      stepId: expect.anything(),
+      status: expect.anything(),
+      total: "count()",
+    })
+    expect(mockDbFrom).toHaveBeenCalledOnce()
+    expect(mockEq).toHaveBeenCalledWith(expect.anything(), "workspace-1")
+    expect(mockEq).toHaveBeenCalledWith(expect.anything(), "flow-1")
+    expect(mockIsNotNull).toHaveBeenCalledWith(expect.anything())
+    expect(mockDbSelectWhere).toHaveBeenCalledOnce()
+    expect(mockDbGroupBy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+    )
   })
 
   test("markCompleted and markCanceled update the row status", async () => {

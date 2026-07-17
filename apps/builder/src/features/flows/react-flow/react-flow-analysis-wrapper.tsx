@@ -14,6 +14,7 @@ import {
 } from "@xyflow/react"
 import { useMemo } from "react"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
+import type { SmartDelayNodeStats } from "../analytics/smart-delay-node-stats"
 import { analyticsNodeTypes, edgeTypes } from "./node-types-config"
 import FocusButton from "./panel-buttons/focus-button"
 import ZoomInButton from "./panel-buttons/zoom-in-button"
@@ -22,11 +23,13 @@ import "./react-flow-wrapper.css"
 
 type ReactFlowAnalyticsWrapperProps = {
   flowVersion: FlowVersionResource
+  smartDelayStats: Record<string, SmartDelayNodeStats>
   stats: FlowNodeStatsResponse
 }
 
 export function ReactFlowAnalyticsWrapper({
   flowVersion,
+  smartDelayStats,
   stats,
 }: ReactFlowAnalyticsWrapperProps) {
   const nodesWithStats = useMemo(
@@ -36,9 +39,10 @@ export function ReactFlowAnalyticsWrapper({
         data: {
           ...node.data,
           analytics: stats[node.id] ?? null,
+          smartDelay: smartDelayStats[node.id] ?? null,
         },
       })),
-    [flowVersion.nodes, stats],
+    [flowVersion.nodes, smartDelayStats, stats],
   )
 
   const [nodes] = useNodesState(nodesWithStats)

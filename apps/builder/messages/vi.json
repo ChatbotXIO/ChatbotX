@@ -242,6 +242,15 @@
     "sessionsThroughTheRef": "Phiên qua Ref \"{ref}\" mỗi ngày",
     "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày"
   },
+  "flowAnalytics": {
+    "stats": {
+      "sent": "Đã gửi",
+      "delivered": "Đã giao",
+      "seen": "Đã xem",
+      "clicked": "Đã nhấp",
+      "waiting": "Đang chờ"
+    }
+  },
   "autoAssignConversation": {
     "rule": {
       "allTime": "Phân bổ cuộc trò chuyện đều (Tất cả thời gian)",
