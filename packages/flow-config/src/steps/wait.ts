@@ -19,6 +19,7 @@ export const waitStepDelayUnits = z.enum([
   "hours",
   "days",
 ])
+export type WaitStepDelayUnit = z.infer<typeof waitStepDelayUnits>
 
 export const waitStepDateTypes = z.enum(["specific", "dynamic"])
 
@@ -27,6 +28,15 @@ export const waitStepOffsetOperators = z.enum(["add", "subtract"])
 const MAX_DELAY = 999_999
 
 export const ENQUEUE_DELAY_MS = 5 * 60 * 1000
+
+const UNIT_MS: Record<WaitStepDelayUnit, number> = {
+  [waitStepDelayUnits.enum.seconds]: 1000,
+  [waitStepDelayUnits.enum.minutes]: 60_000,
+  [waitStepDelayUnits.enum.hours]: 3_600_000,
+  [waitStepDelayUnits.enum.days]: 86_400_000,
+}
+
+export const delayUnitToMs = (unit: WaitStepDelayUnit): number => UNIT_MS[unit]
 
 export const waitStepSchema = z
   .object({
@@ -128,7 +138,8 @@ export const delayTypeDurationDefaultFn = () => ({
   endTime: null,
 })
 
-export const buildJobId = (rowId: string) => `smart-delay-${rowId}`
+export const buildJobId = (rowId: string, triggerAt: Date) =>
+  `smart-delay-${rowId}-${triggerAt.getTime()}`
 
 export async function computeTriggerAt(
   step: WaitStepSchema,
@@ -136,14 +147,6 @@ export async function computeTriggerAt(
     customFieldId: string,
   ) => Promise<string | null | undefined>,
 ): Promise<Date | null> {
-  const UNIT_MS: Record<string, number> = {
-    [waitStepDelayUnits.enum.seconds]: 1000,
-    [waitStepDelayUnits.enum.minutes]: 60_000,
-    [waitStepDelayUnits.enum.hours]: 3_600_000,
-    [waitStepDelayUnits.enum.days]: 86_400_000,
-  }
-  const toMs = (unit: string): number | null => UNIT_MS[unit] ?? null
-
   const timeToSeconds = (time: string) => {
     const [h = 0, m = 0, s = 0] = time.split(":").map(Number)
     return h * 3600 + m * 60 + s
@@ -165,10 +168,7 @@ export async function computeTriggerAt(
     d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()
 
   if (step.delayType === waitStepDelayTypes.enum.duration) {
-    const unitMs = toMs(step.unit)
-    if (unitMs === null) {
-      return null
-    }
+    const unitMs = delayUnitToMs(step.unit)
     const base = addMilliseconds(Date.now(), step.duration * unitMs)
 
     if (!(step.interval && step.startTime && step.endTime)) {
@@ -196,10 +196,7 @@ export async function computeTriggerAt(
   }
 
   if (step.delayType === waitStepDelayTypes.enum.random) {
-    const unitMs = toMs(step.unit)
-    if (unitMs === null) {
-      return null
-    }
+    const unitMs = delayUnitToMs(step.unit)
     const rand = Math.floor(
       Math.random() * (step.max - step.min + 1) + step.min,
     )
@@ -240,10 +237,7 @@ export async function computeTriggerAt(
         step.offsetUnit &&
         step.offsetOperator
       ) {
-        const offsetMs = toMs(step.offsetUnit)
-        if (offsetMs === null) {
-          return null
-        }
+        const offsetMs = delayUnitToMs(step.offsetUnit)
         const sign =
           step.offsetOperator === waitStepOffsetOperators.enum.add ? 1 : -1
         triggerAt = addMilliseconds(

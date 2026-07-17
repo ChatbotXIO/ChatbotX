@@ -22,6 +22,7 @@ export const stepTypes = z.enum([
   "waitUserReply",
   "setDebounce",
   "wait",
+  "followUp",
   "getUserData",
   "typing",
 

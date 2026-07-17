@@ -6,6 +6,7 @@ const {
   mockDbFindMany,
   mockDbReturning,
   mockDbSelect,
+  mockDbSelectJoinLimit,
   mockDbSelectLimit,
   mockDbSet,
   mockDbUpdate,
@@ -25,9 +26,15 @@ const {
   mockDbReturning.mockResolvedValue([{ id: "contact-inbox-1" }])
 
   const mockDbSelectLimit = vi.fn().mockResolvedValue([])
+  const mockDbSelectJoinLimit = vi.fn().mockResolvedValue([])
+  const mockDbSelectJoinWhere = vi.fn(() => ({ limit: mockDbSelectJoinLimit }))
+  const mockDbSelectInnerJoin = vi.fn(() => ({ where: mockDbSelectJoinWhere }))
   const mockDbSelectOrderBy = vi.fn(() => ({ limit: mockDbSelectLimit }))
   const mockDbSelectWhere = vi.fn(() => ({ orderBy: mockDbSelectOrderBy }))
-  const mockDbSelectFrom = vi.fn(() => ({ where: mockDbSelectWhere }))
+  const mockDbSelectFrom = vi.fn(() => ({
+    innerJoin: mockDbSelectInnerJoin,
+    where: mockDbSelectWhere,
+  }))
   const mockDbSelect = vi.fn(() => ({ from: mockDbSelectFrom }))
 
   return {
@@ -36,6 +43,7 @@ const {
     mockDbFindMany: vi.fn(),
     mockDbReturning,
     mockDbSelect,
+    mockDbSelectJoinLimit,
     mockDbSelectLimit,
     mockDbSet,
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
@@ -68,6 +76,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: vi.fn((...conditions: unknown[]) => ({ conditions })),
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  gt: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   sql: mockSql,
 }))
 
@@ -81,6 +90,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     firstInteractionAt: "firstInteractionAt",
     id: "id",
     inboxId: "inboxId",
+    lastIncomingMessageAt: "lastIncomingMessageAt",
     lastMessageAt: "lastMessageAt",
     referral: "referral",
     sourceId: "sourceId",
@@ -173,6 +183,34 @@ describe("contactInboxService timestamp helpers", () => {
       limit: 1,
     })
     expect(mockDbFindMany).not.toHaveBeenCalled()
+  })
+
+  test("hasIncomingMessageSince returns true when an inbox has a newer incoming message in the workspace", async () => {
+    mockDbSelectJoinLimit.mockResolvedValueOnce([{ id: "contact-inbox-1" }])
+    const since = new Date("2026-07-16T00:00:00.000Z")
+
+    await expect(
+      contactInboxService.hasIncomingMessageSince({
+        workspaceId: "workspace-1",
+        contactInboxId: "contact-inbox-1",
+        since,
+      }),
+    ).resolves.toBe(true)
+
+    expect(mockDbSelect).toHaveBeenCalledWith({ id: "id" })
+    expect(mockDbSelectJoinLimit).toHaveBeenCalledWith(1)
+  })
+
+  test("hasIncomingMessageSince returns false when no matching newer incoming message exists", async () => {
+    mockDbSelectJoinLimit.mockResolvedValueOnce([])
+
+    await expect(
+      contactInboxService.hasIncomingMessageSince({
+        workspaceId: "workspace-2",
+        contactInboxId: "contact-inbox-1",
+        since: new Date("2026-07-16T00:00:00.000Z"),
+      }),
+    ).resolves.toBe(false)
   })
 
   test("findLatestBySource queries by inboxId + sourceId only when workspaceId is omitted", async () => {

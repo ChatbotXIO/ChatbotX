@@ -1,13 +1,4 @@
-import {
-  addNotesNodeSchema,
-  edgeSchema,
-  flowVersionSchema,
-  performActionNodeSchema,
-  sendMailNodeSchema,
-  sendMessageNodeSchema,
-  splitTrafficNodeSchema,
-  waitNodeSchema,
-} from "@chatbotx.io/flow-config"
+import { edgeSchema, flowVersionSchema } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -38,27 +29,9 @@ export const publishFlowSchema = z.object({
 })
 export type PublishFlowSchema = z.infer<typeof publishFlowSchema>
 
-export const updateFlowVersionSchema = z.object({
-  nodes: z.array(
-    z.discriminatedUnion("type", [
-      sendMessageNodeSchema,
-      addNotesNodeSchema,
-      splitTrafficNodeSchema,
-      performActionNodeSchema,
-      sendMailNodeSchema,
-      waitNodeSchema,
-    ]),
-  ),
-  edges: z.array(
-    z.object({
-      id: z.string(),
-      source: z.string(),
-      sourceHandle: z.string(),
-      target: z.string(),
-      targetHandle: z.string(),
-    }),
-  ),
-})
+// Reuse the package-level node union so client-side publish validation can
+// never drift from the server-side `publishFlowSchema` when node types are added.
+export const updateFlowVersionSchema = publishFlowSchema
 export type UpdateFlowVersionSchema = z.infer<typeof updateFlowVersionSchema>
 
 export const selectFlowSchema = z.object({

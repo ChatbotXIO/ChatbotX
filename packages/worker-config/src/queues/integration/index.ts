@@ -28,6 +28,8 @@ export const IntegrationJobAction = {
   agentMarkAsRead: "agentMarkAsRead",
   contactMarkAsRead: "contactMarkAsRead",
   runChallenge: "runChallenge",
+  resumeWait: "resumeWait",
+  resumeFollowUp: "resumeFollowUp",
   blockContact: "blockContact",
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
@@ -211,6 +213,16 @@ export type IntegrationJobRunChallenge = {
   }
 }
 
+export type IntegrationJobResumeFollowUp = {
+  type: typeof IntegrationJobAction.resumeFollowUp
+  data: { smartDelayId: string }
+}
+
+export type IntegrationJobResumeWait = {
+  type: typeof IntegrationJobAction.resumeWait
+  data: { smartDelayId: string }
+}
+
 export type IntegrationJobCreateMessage = {
   type: typeof IntegrationJobAction.createMessage
   data: {
@@ -365,6 +377,8 @@ export type IntegrationJobData =
   | IntegrationJobContactMarkAsRead
   | IntegrationJobRunRef
   | IntegrationJobRunChallenge
+  | IntegrationJobResumeWait
+  | IntegrationJobResumeFollowUp
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow

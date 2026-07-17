@@ -74,18 +74,32 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   getSafeSinceTime: vi.fn(() => new Date(0)),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactCustomFieldModel: {},
-  conversationModel: {},
-  customFieldModel: {},
-}))
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
+  return {
+    ...actual,
+    contactCustomFieldModel: {},
+    conversationModel: {},
+    customFieldModel: {},
+  }
+})
 
-vi.mock("@chatbotx.io/database/partials", () => ({}))
+vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/partials")>()
+  return { ...actual }
+})
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitCustomFieldChanged: vi.fn(),
+}))
 
 const chatQueueAdd = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/worker-config", () => ({
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
   chatQueue: { add: chatQueueAdd },
+  getRedisConnection: vi.fn(() => ({})),
 }))
 
 const waitForChatJobCompletion = vi.fn(async () => undefined)

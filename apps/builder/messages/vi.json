@@ -119,6 +119,7 @@
     "removeAssignee": "Xóa người được gán",
     "sendMail": "Gửi thư",
     "wait": "Chờ",
+    "followUp": "Follow Up",
     "landingPage": "Trang đích",
     "generate": "Tạo",
     "regenerate": "Tạo lại",
@@ -240,6 +241,19 @@
     },
     "sessionsThroughTheRef": "Phiên qua Ref \"{ref}\" mỗi ngày",
     "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày"
+  },
+  "flowAnalytics": {
+    "nodes": {
+      "start": "Bắt đầu",
+      "notFound": "Không tìm thấy node"
+    },
+    "stats": {
+      "sent": "Đã gửi",
+      "delivered": "Đã giao",
+      "seen": "Đã xem",
+      "clicked": "Đã nhấp",
+      "waiting": "Đang chờ"
+    }
   },
   "autoAssignConversation": {
     "rule": {
@@ -2135,6 +2149,11 @@
       "specific": "Cụ thể",
       "dynamic": "Tùy chỉnh",
       "selectTimePlaceholder": "Chọn thời gian"
+    },
+    "followUp": {
+      "durationLabel": "Thời lượng",
+      "waitAndContinue": "Chờ <value>{duration} {unit}</value> rồi tiếp tục",
+      "cancelOnReplyHint": "Follow-up sẽ không được gửi nếu khách hàng trả lời trước khi hết thời gian chờ."
     }
   },
   "folders": {

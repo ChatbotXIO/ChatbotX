@@ -1,4 +1,5 @@
 import { conversationService } from "@chatbotx.io/business"
+import { smartDelayService } from "@chatbotx.io/business/smart-delay"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { integrationService } from "../services/integrations"
@@ -8,12 +9,18 @@ type JobData = {
   conversation?: { workspaceId?: unknown } | null
   conversationId?: unknown
   importId?: unknown
+  smartDelayId?: unknown
   integrationType?: unknown
   integrationIdentifier?: unknown
 }
 
 const asString = (value: unknown): string | undefined =>
   typeof value === "string" && value.length > 0 ? value : undefined
+
+const nestedWorkspaceId = (value: unknown): string | undefined =>
+  value && typeof value === "object" && "workspaceId" in value
+    ? asString(value.workspaceId)
+    : undefined
 
 export async function resolveWorkspaceId(
   data: unknown,
@@ -24,7 +31,9 @@ export async function resolveWorkspaceId(
 
   const jobData = data as JobData
   const directWorkspaceId =
-    asString(jobData.workspaceId) ?? asString(jobData.conversation?.workspaceId)
+    asString(jobData.workspaceId) ??
+    asString(jobData.conversation?.workspaceId) ??
+    nestedWorkspaceId(jobData.conversationId)
   if (directWorkspaceId) {
     return directWorkspaceId
   }
@@ -50,6 +59,12 @@ export async function resolveWorkspaceId(
       where: { id: conversationId },
     })
     return conversation?.workspaceId
+  }
+
+  const smartDelayId = asString(jobData.smartDelayId)
+  if (smartDelayId) {
+    const row = await smartDelayService.findById({ id: smartDelayId })
+    return row?.workspaceId
   }
 
   // AI embedding/file jobs intentionally remain fail-open: their payloads do

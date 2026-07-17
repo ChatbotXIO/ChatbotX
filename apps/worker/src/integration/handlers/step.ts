@@ -1,15 +1,9 @@
-import { db, eq } from "@chatbotx.io/database/client"
-import {
-  smartDelayStatuses,
-  smartDelayTypes,
-} from "@chatbotx.io/database/partials"
-import { contactOnSmartDelayModel } from "@chatbotx.io/database/schema"
+import { contactCustomFieldValueService } from "@chatbotx.io/business/contact-custom-field-value"
+import { smartDelayTypes } from "@chatbotx.io/database/partials"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
-  buildJobId,
   computeTriggerAt,
   type EdgeSchema,
-  ENQUEUE_DELAY_MS,
   type SplitTrafficStepSchema,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
@@ -18,7 +12,6 @@ import {
   stepTypes,
   type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
   type ChatJobSendFlowStep,
@@ -51,6 +44,7 @@ import { handleAIEditImage } from "./edit-image"
 import { handleAIExtractData } from "./extract-data/index"
 import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
 import { type ExecuteStepProps, seekConnectedNode } from "./flow-utils"
+import { handleFollowUp } from "./follow-up"
 import { handleAIGenerateImage } from "./generate-image"
 import { handleAIGenerateText } from "./generate-text"
 import { handleAIGenerateTextAgent } from "./generate-text-agent"
@@ -68,6 +62,7 @@ import {
 import { addOrUpdateMoosendContact } from "./moosend-handler"
 import { sendEmail } from "./send-email"
 import { addSendGridContact } from "./sendgrid-handler"
+import { scheduleSmartDelayResume } from "./smart-delay"
 import { handleAISpeechToText } from "./speech-to-text"
 
 import {
@@ -199,16 +194,10 @@ async function handleWait({
 
   const triggerAt = await computeTriggerAt(step, async (customFieldId) => {
     try {
-      const customField = await db.query.contactCustomFieldModel.findFirst({
-        where: {
-          contactId: contactInbox.contactId,
-          customFieldId,
-        },
-        columns: {
-          value: true,
-        },
+      return await contactCustomFieldValueService.findValue({
+        contactId: contactInbox.contactId,
+        customFieldId,
       })
-      return customField?.value ?? null
     } catch (err) {
       logger.error(
         { err, customFieldId },
@@ -227,58 +216,23 @@ async function handleWait({
   }
 
   const connectedNodeId = seekConnectedNode(flowVersion, targetId)
-  const diffMs = triggerAt.getTime() - Date.now()
 
   if (!connectedNodeId) {
     return { status: "skip", result: null }
   }
 
-  const rowId = createId()
-  const data: typeof contactOnSmartDelayModel.$inferInsert = {
-    id: rowId,
+  await scheduleSmartDelayResume({
+    type: smartDelayTypes.enum.waitNode,
+    triggerAt,
     workspaceId: conversation.workspaceId,
     flowId: flowVersion.flowId,
     flowVersionId: useLatestFlowVersion ? null : flowVersion.id,
-    contactInboxId,
     conversationId: conversation.id,
-    nodeId: connectedNodeId,
+    contactInboxId,
+    connectedNodeId,
     stepId: step.id,
-    type: smartDelayTypes.enum.waitNode,
-    triggerAt,
-    status: smartDelayStatuses.enum.pending,
-  }
-
-  // Insert tracking record first so a crash during enqueue still has a recovery path via scanner
-  await db.insert(contactOnSmartDelayModel).values(data)
-
-  if (diffMs <= ENQUEUE_DELAY_MS) {
-    try {
-      await integrationQueue.add(
-        IntegrationJobAction.sendFlow,
-        {
-          type: IntegrationJobAction.sendFlow,
-          data: {
-            conversationId: conversation.id,
-            flowId: flowVersion.flowId,
-            flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
-            nodeId: connectedNodeId,
-            contactInboxId,
-            sendFrom,
-          },
-        },
-        { delay: Math.max(0, diffMs), jobId: buildJobId(rowId) },
-      )
-      await db
-        .update(contactOnSmartDelayModel)
-        .set({ status: smartDelayStatuses.enum.completed })
-        .where(eq(contactOnSmartDelayModel.id, rowId))
-    } catch (err) {
-      logger.warn(
-        { err, rowId },
-        "Failed to immediately enqueue smart delay; scanner will pick it up",
-      )
-    }
-  }
+    sendFrom,
+  })
 
   return { status: "wait", result: null }
 }
@@ -432,6 +386,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.unfollowConversation]: stepUnfollowConversation,
   [stepTypes.enum.getUserData]: getUserData,
   [stepTypes.enum.wait]: handleWait,
+  [stepTypes.enum.followUp]: handleFollowUp,
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
   [stepTypes.enum.filterContact]: undefined,

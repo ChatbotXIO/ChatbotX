@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  gt,
   sql,
 } from "@chatbotx.io/database/client"
 import type { ContactInboxReferral } from "@chatbotx.io/database/schema"
@@ -509,6 +510,29 @@ class ContactInboxService extends BaseService {
     })
 
     return contactInboxes[0]?.lastIncomingMessageAt ?? null
+  }
+
+  async hasIncomingMessageSince(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    contactInboxId: string
+    since: Date
+  }): Promise<boolean> {
+    const { tx = db, workspaceId, contactInboxId, since } = props
+    const rows = await tx
+      .select({ id: contactInboxModel.id })
+      .from(contactInboxModel)
+      .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
+      .where(
+        and(
+          eq(contactInboxModel.id, contactInboxId),
+          eq(contactModel.workspaceId, workspaceId),
+          gt(contactInboxModel.lastIncomingMessageAt, since),
+        ),
+      )
+      .limit(1)
+    const row = rows[0]
+    return row !== undefined
   }
 
   async invalidateTracking(

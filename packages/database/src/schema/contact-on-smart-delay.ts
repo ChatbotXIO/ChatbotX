@@ -1,5 +1,13 @@
 import { createId } from "@chatbotx.io/utils"
-import { index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import {
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
 import {
   smartDelayStatuses,
   smartDelayTypes,
@@ -63,5 +71,14 @@ export const contactOnSmartDelayModel = pgTable(
       table.status,
       table.triggerAt,
     ),
+    uniqueIndex("ContactOnSmartDelay_followUp_active_key")
+      .on(table.workspaceId, table.contactInboxId, table.flowId, table.stepId)
+      .where(
+        // "active = not terminal" instead of IN ('pending', 'scheduled'):
+        // the predicate must not reference 'scheduled' because the migration
+        // runner applies all pending migrations in one transaction, and
+        // Postgres forbids using an enum value added in that same transaction.
+        sql`${table.status} NOT IN ('completed', 'failed', 'canceled') AND ${table.type} = 'followUp'`,
+      ),
   ],
 )
