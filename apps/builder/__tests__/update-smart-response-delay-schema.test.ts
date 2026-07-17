@@ -1,22 +1,12 @@
 import { describe, expect, test } from "vitest"
 import {
   SMART_RESPONSE_DELAY_NONE_VALUE,
-  updateWorkspaceAdvancedRequest,
+  updateSmartResponseDelayRequest,
 } from "../src/features/workspaces/schema/update-workspace-schema"
 
-const baseInput = {
-  defaultReply: "",
-  targetCountry: "VN",
-  language: "vi",
-  timezone: "Asia/Ho_Chi_Minh",
-  brandColor: "#123abc",
-  developmentMode: false,
-}
-
-describe("updateWorkspaceAdvancedRequest.smartResponseDelaySeconds", () => {
+describe("updateSmartResponseDelayRequest.smartResponseDelaySeconds", () => {
   test("transforms a valid delay string into a number", () => {
-    const result = updateWorkspaceAdvancedRequest.parse({
-      ...baseInput,
+    const result = updateSmartResponseDelayRequest.parse({
       smartResponseDelaySeconds: "3",
     })
 
@@ -24,8 +14,7 @@ describe("updateWorkspaceAdvancedRequest.smartResponseDelaySeconds", () => {
   })
 
   test("transforms the none value into null", () => {
-    const result = updateWorkspaceAdvancedRequest.parse({
-      ...baseInput,
+    const result = updateSmartResponseDelayRequest.parse({
       smartResponseDelaySeconds: SMART_RESPONSE_DELAY_NONE_VALUE,
     })
 
@@ -33,30 +22,27 @@ describe("updateWorkspaceAdvancedRequest.smartResponseDelaySeconds", () => {
   })
 
   test("accepts its own output when parsed twice (client resolver then server inputSchema)", () => {
-    const clientParsed = updateWorkspaceAdvancedRequest.parse({
-      ...baseInput,
+    const clientParsed = updateSmartResponseDelayRequest.parse({
       smartResponseDelaySeconds: "3",
     })
 
-    const serverParsed = updateWorkspaceAdvancedRequest.parse(clientParsed)
+    const serverParsed = updateSmartResponseDelayRequest.parse(clientParsed)
 
     expect(serverParsed.smartResponseDelaySeconds).toBe(3)
   })
 
   test("accepts null when parsed twice", () => {
-    const clientParsed = updateWorkspaceAdvancedRequest.parse({
-      ...baseInput,
+    const clientParsed = updateSmartResponseDelayRequest.parse({
       smartResponseDelaySeconds: SMART_RESPONSE_DELAY_NONE_VALUE,
     })
 
-    const serverParsed = updateWorkspaceAdvancedRequest.parse(clientParsed)
+    const serverParsed = updateSmartResponseDelayRequest.parse(clientParsed)
 
     expect(serverParsed.smartResponseDelaySeconds).toBeNull()
   })
 
   test("rejects a delay outside the allowed options", () => {
-    const result = updateWorkspaceAdvancedRequest.safeParse({
-      ...baseInput,
+    const result = updateSmartResponseDelayRequest.safeParse({
       smartResponseDelaySeconds: "7",
     })
 
@@ -64,8 +50,7 @@ describe("updateWorkspaceAdvancedRequest.smartResponseDelaySeconds", () => {
   })
 
   test("rejects a numeric delay outside the allowed options", () => {
-    const result = updateWorkspaceAdvancedRequest.safeParse({
-      ...baseInput,
+    const result = updateSmartResponseDelayRequest.safeParse({
       smartResponseDelaySeconds: 7,
     })
 
