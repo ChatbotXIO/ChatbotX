@@ -19,9 +19,6 @@ import {
   senderTypes,
 } from "../partials"
 import { bigintAsString, timestampConfig } from "../partials/shared"
-import { contactInboxModel } from "./contact-inbox"
-import { conversationModel } from "./conversation"
-import { workspaceModel } from "./workspace"
 
 export type RichButtonPayloadEntry = {
   executionId: string
@@ -60,24 +57,14 @@ export const messageModel = pgTable(
       .$defaultFn(() => createId()),
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
     updatedAt: timestamp(timestampConfig).defaultNow().notNull(),
-    conversationId: bigintAsString()
-      .notNull()
-      .references(() => conversationModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
-    contactInboxId: bigintAsString()
-      .notNull()
-      .references(() => contactInboxModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
-    workspaceId: bigintAsString()
-      .notNull()
-      .references(() => workspaceModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    // No FKs to Conversation/ContactInbox/Workspace — Message is a compressed
+    // TimescaleDB hypertable, and cascade DML into compressed chunks fails with
+    // "tuple decompression limit exceeded". Orphaned rows from contact deletes
+    // are tracked in MessageCleanup; matches the shard schema (see
+    // src/sharding/scripts/init-message-shard.sql).
+    conversationId: bigintAsString().notNull(),
+    contactInboxId: bigintAsString().notNull(),
+    workspaceId: bigintAsString().notNull(),
     text: text(),
     contentAttributes: jsonb().$type<{
       richResponse?: RichResponseContentAttributes

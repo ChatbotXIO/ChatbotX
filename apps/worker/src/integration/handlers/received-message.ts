@@ -6,6 +6,7 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  messageCleanupService,
   quotaEnforcementService,
   resolveTenantSettings,
   updateContactFromMessage,
@@ -916,6 +917,14 @@ const detectContactAndConversation = async (props: {
       if (!contactInbox) {
         throw new Error("Contact inbox not found")
       }
+
+      // A re-created contact keeps its history: cancel any pending message
+      // cleanup recorded when a contact with this inbox identity was deleted.
+      await messageCleanupService.cancelByInboxSource({
+        inboxId: inbox.id,
+        sourceIds: [contactInbox.sourceId],
+        tx,
+      })
 
       const conversation = await conversationService.findOrCreate({
         workspaceId: inbox.workspaceId,

@@ -1,5 +1,4 @@
 import {
-  and,
   type DatabaseClient,
   db,
   eq,
@@ -31,12 +30,18 @@ import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { getContactInboxSinceTime } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceService } from "../workspace/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
 
 const NUMERIC_RE = /^\d+$/
+
+// One DELETE per chunk keeps each statement's lock scope and cascade work
+// bounded (mirrors CONTACT_CHUNK_SIZE in tag/service.ts).
+const CONTACT_DELETE_CHUNK_SIZE = 50
 
 type ContactWriteData = Partial<
   Pick<
@@ -304,14 +309,55 @@ class ContactService extends BaseService {
       return []
     }
 
-    await db.delete(contactModel).where(
-      and(
+    // Fetched directly (not via the `conversation` "one" relation) because a
+    // contact can own multiple Conversation rows.
+    const conversations = await db
+      .select({
+        id: conversationModel.id,
+        contactId: conversationModel.contactId,
+      })
+      .from(conversationModel)
+      .where(
         inArray(
-          contactModel.id,
+          conversationModel.contactId,
           contacts.map((c) => c.id),
         ),
-      ),
-    )
+      )
+    const conversationIdsByContact = new Map<string, string[]>()
+    for (const conversation of conversations) {
+      const list = conversationIdsByContact.get(conversation.contactId) ?? []
+      list.push(conversation.id)
+      conversationIdsByContact.set(conversation.contactId, list)
+    }
+
+    // Message/Attachment no longer cascade from Contact (compressed TimescaleDB
+    // hypertables), so each chunk atomically records tombstones in
+    // MessageCleanup before deleting the contacts. Chunks are deliberately NOT
+    // wrapped in one outer transaction: each chunk stays bounded, and a
+    // mid-batch failure leaves every committed chunk with its tombstones.
+    for (let i = 0; i < contacts.length; i += CONTACT_DELETE_CHUNK_SIZE) {
+      const chunk = contacts.slice(i, i + CONTACT_DELETE_CHUNK_SIZE)
+      const entries = chunk.flatMap((contact) =>
+        contact.contactInboxes.map((contactInbox) => ({
+          contactId: contact.id,
+          contactInboxId: contactInbox.id,
+          inboxId: contactInbox.inboxId,
+          sourceId: contactInbox.sourceId,
+          conversationIds: conversationIdsByContact.get(contact.id) ?? [],
+          sinceTime: getContactInboxSinceTime(contactInbox),
+        })),
+      )
+
+      await db.transaction(async (tx) => {
+        await messageCleanupService.record({ workspaceId, entries, tx })
+        await tx.delete(contactModel).where(
+          inArray(
+            contactModel.id,
+            chunk.map((c) => c.id),
+          ),
+        )
+      })
+    }
 
     await this.invalidate({
       workspaceId,
@@ -451,6 +497,8 @@ class ContactService extends BaseService {
           throw new ChatbotXException("Contact inbox not found")
         }
 
+        // No cancelByInboxSource here: this path mints a fresh random sourceId,
+        // so it can never collide with a MessageCleanup tombstone.
         await tx.insert(conversationModel).values({
           workspaceId,
           contactId: newContact.id,

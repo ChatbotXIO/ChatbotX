@@ -26,6 +26,9 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     find: mockWorkspaceFind,
   },
+  messageCleanupService: {
+    cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

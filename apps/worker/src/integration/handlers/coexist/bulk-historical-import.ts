@@ -1,6 +1,9 @@
 // biome-ignore-all lint/suspicious/noBitwiseOperators: bit-packing 63-bit snowflake IDs
 
-import { contactInboxService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  messageCleanupService,
+} from "@chatbotx.io/business"
 import { db, inArray, sql } from "@chatbotx.io/database/client"
 import { contactSources } from "@chatbotx.io/database/partials"
 import type {
@@ -542,6 +545,14 @@ export const bulkImportContacts = async (props: {
             .where(inArray(contactModel.id, orphanIds))
         }
       }
+
+      // Re-created contacts keep their history: cancel any pending message
+      // cleanup recorded when contacts with these inbox identities were deleted.
+      await messageCleanupService.cancelByInboxSource({
+        inboxId: inbox.id,
+        sourceIds: insertedInboxes.map((r) => r.sourceId),
+        tx,
+      })
 
       const trulyNew = acceptedNew.length - racedSourceIds.length
       importedContacts = trulyNew

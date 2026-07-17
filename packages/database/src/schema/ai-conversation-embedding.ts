@@ -60,5 +60,9 @@ export const aiConversationEmbeddingModel = pgTable(
       "hnsw",
       table.embedding.op("vector_cosine_ops"),
     ),
+    index("AIConversationEmbedding_conversationId_idx").using(
+      "btree",
+      table.conversationId.asc().nullsLast(),
+    ),
   ],
 )

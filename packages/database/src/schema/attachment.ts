@@ -11,8 +11,6 @@ import {
 import type { FileType } from "../partials"
 import { fileTypes } from "../partials"
 import { bigintAsString, timestampConfig } from "../partials/shared"
-import { conversationModel } from "./conversation"
-import { workspaceModel } from "./workspace"
 
 export const fileType = pgEnum(
   "fileType",
@@ -27,18 +25,13 @@ export const attachmentModel = pgTable(
       .$defaultFn(() => createId()),
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
     updatedAt: timestamp(timestampConfig).defaultNow().notNull(),
-    workspaceId: bigintAsString()
-      .notNull()
-      .references(() => workspaceModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
-    conversationId: bigintAsString()
-      .notNull()
-      .references(() => conversationModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    // No FKs to Workspace/Conversation — Attachment is a compressed TimescaleDB
+    // hypertable, and cascade DML into compressed chunks fails with "tuple
+    // decompression limit exceeded". Orphaned rows from contact deletes are
+    // tracked in MessageCleanup; matches the shard schema (see
+    // src/sharding/scripts/init-message-shard.sql).
+    workspaceId: bigintAsString().notNull(),
+    conversationId: bigintAsString().notNull(),
     messageId: bigintAsString().notNull(),
     // Partition key of the parent Message row — required for chunk-scoped lookups.
     // No FK to Message because FK references to TimescaleDB hypertables are unsupported.

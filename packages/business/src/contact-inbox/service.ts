@@ -17,6 +17,12 @@ import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
 
+// Lower bound for message lookups/deletions scoped to a contact-inbox: the
+// first moment the inbox could have received a message.
+export const getContactInboxSinceTime = (
+  contactInbox: Pick<ContactInboxModel, "firstInteractionAt" | "createdAt">,
+): Date => contactInbox.firstInteractionAt ?? contactInbox.createdAt
+
 export type ContactInboxWithAnalytics = Pick<
   ContactInboxModel,
   "id" | "contactId" | "sourceId" | "channel"

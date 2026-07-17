@@ -22,7 +22,10 @@ import { normalizeGender } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { contactService } from "../contact/service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
-import { contactInboxService } from "../contact-inbox/service"
+import {
+  contactInboxService,
+  getContactInboxSinceTime,
+} from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
@@ -118,14 +121,6 @@ const payloadMatchesParams = (
   payload.workspaceId === params.workspaceId &&
   payload.sourceId === params.sourceId &&
   payload.integrationId === params.integrationId
-
-const getContactInboxSinceTime = (contactInbox: ContactInboxModel): Date => {
-  if (contactInbox.firstInteractionAt) {
-    return contactInbox.firstInteractionAt
-  }
-
-  return contactInbox.createdAt
-}
 
 class SystemFieldService extends BaseService {
   async create(props: {

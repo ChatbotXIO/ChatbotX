@@ -3,13 +3,15 @@
 import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import {
-  type BulkUpdateIdsRequest,
-  bulkUpdateIdsRequest,
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
+import {
+  type DeleteContactRequest,
+  deleteContactRequest,
+} from "../schemas/contact-delete"
 
 export const deleteContact = async (ctx: {
   workspaceId: string
@@ -43,14 +45,14 @@ export const deleteContact = async (ctx: {
 
 export const deleteContactAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
-  .inputSchema(bulkUpdateIdsRequest)
+  .inputSchema(deleteContactRequest)
   .action(
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
+      parsedInput: DeleteContactRequest
     }) => {
       const accessScope = await requireContactPermissionScope(workspaceId)
       await deleteContact({ workspaceId, ids: parsedInput.ids, accessScope })
