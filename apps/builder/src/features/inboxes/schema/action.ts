@@ -13,14 +13,32 @@ export const publishInboxesRequest = listInboxesRequest.omit({
 })
 export type PublishInboxesRequest = z.infer<typeof publishInboxesRequest>
 
+export const publicInboxResource = inboxResource.pick({
+  id: true,
+  name: true,
+  channel: true,
+  status: true,
+})
+
+export const publicListInboxResponse = z.object({
+  data: z.array(publicInboxResource),
+  pageCount: z.number(),
+})
+export type PublicListInboxResponse = z.infer<typeof publicListInboxResponse>
+
 export const publicListInboxesResponse = z.object({
   data: z.array(
-    inboxResource.pick({
-      id: true,
-      name: true,
-      channel: true,
-      status: true,
-    }),
+    inboxResource
+      .pick({
+        name: true,
+        channel: true,
+        status: true,
+      })
+      .extend({
+        // The public API exposes sourceId as id, which is not always numeric
+        // (e.g. TikTok uses the account username)
+        id: z.string(),
+      }),
   ),
   pageCount: z.number(),
 })
