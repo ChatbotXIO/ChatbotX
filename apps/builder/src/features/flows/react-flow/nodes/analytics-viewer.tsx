@@ -179,7 +179,7 @@ export const NodeAnalyticsViewer = memo((props: NodeAnalyticsViewerProps) => {
       <div className="absolute min-h-6 w-full -translate-y-full transform">
         {data.isStartNode && (
           <div className="inline-flex items-center gap-1 rounded-xl border bg-destructive px-1.5 py-0.5 text-sm text-white">
-            Start
+            {t("flowAnalytics.nodes.start")}
           </div>
         )}
       </div>
@@ -243,7 +243,7 @@ export const NodeAnalyticsViewer = memo((props: NodeAnalyticsViewerProps) => {
       </Card>
     </>
   ) : (
-    <div>Node not found</div>
+    <div>{t("flowAnalytics.nodes.notFound")}</div>
   )
 })
 

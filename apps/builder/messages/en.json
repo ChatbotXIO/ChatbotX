@@ -243,6 +243,10 @@
     "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day"
   },
   "flowAnalytics": {
+    "nodes": {
+      "start": "Start",
+      "notFound": "Node not found"
+    },
     "stats": {
       "sent": "Sent",
       "delivered": "Delivered",

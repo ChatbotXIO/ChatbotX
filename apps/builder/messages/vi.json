@@ -243,6 +243,10 @@
     "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày"
   },
   "flowAnalytics": {
+    "nodes": {
+      "start": "Bắt đầu",
+      "notFound": "Không tìm thấy node"
+    },
     "stats": {
       "sent": "Đã gửi",
       "delivered": "Đã giao",
