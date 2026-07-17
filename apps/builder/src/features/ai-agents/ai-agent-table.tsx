@@ -1,6 +1,6 @@
 "use client"
 
-import type { AIAgentModel } from "@chatbotx.io/database/types"
+import type { AIAgentModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import {
@@ -18,6 +18,7 @@ import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
 import type { listAIAgents } from "@/features/ai-agents/queries"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
 import type { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
+import { BotReplyDelayDialog } from "./components/bot-reply-delay-dialog"
 import { ChangeDefault } from "./components/change-default"
 import { CreateAIAgentDialog } from "./create-ai-agent"
 import {
@@ -31,12 +32,14 @@ type AIAgentsTableProps = {
     [
       Awaited<ReturnType<typeof listAIAgents>>,
       Awaited<ReturnType<typeof listIntegrationOpenaiCompatible>>,
+      WorkspaceModel,
     ]
   >
 }
 
 export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
-  const [{ data, pageCount }, openaiCompatibleIntegrations] = use(promises)
+  const [{ data, pageCount }, openaiCompatibleIntegrations, workspace] =
+    use(promises)
 
   const t = useTranslations()
   const router = useRouter()
@@ -115,6 +118,16 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
             router.refresh()
           }}
           open={rowAction?.variant === "toggleDefault"}
+        />
+
+        <BotReplyDelayDialog
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={rowAction?.variant === "botReplyDelay"}
+          smartResponseDelaySeconds={workspace.smartResponseDelaySeconds}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>

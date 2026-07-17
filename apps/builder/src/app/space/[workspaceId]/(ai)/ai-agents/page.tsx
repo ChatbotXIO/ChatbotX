@@ -1,3 +1,4 @@
+import { workspaceService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -27,6 +28,7 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
       ...listAIAgentsRequest.parse(searchParams),
     }),
     listIntegrationOpenaiCompatible({ workspaceId }),
+    workspaceService.findById({ id: workspaceId }),
   ])
 
   return (

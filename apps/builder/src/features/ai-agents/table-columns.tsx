@@ -36,6 +36,7 @@ export type AIAgentDataTableRowAction<TData> = {
     | "resend"
     | "enable"
     | "toggleDefault"
+    | "botReplyDelay"
 }
 
 type GetAIAgentsColumnsProps = {
@@ -120,6 +121,12 @@ export function getAIAgentsColumns({
               {row.original.isDefault
                 ? t("actions.unsetDefaultAgent")
                 : t("actions.setAsDefaultAgent")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "botReplyDelay" })}
+            >
+              <PencilIcon className="mr-2" />
+              {t("fields.smartResponseDelaySeconds.label")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "update" })}

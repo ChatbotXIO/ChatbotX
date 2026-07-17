@@ -7,8 +7,10 @@ import {
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
+  type UpdateSmartResponseDelayRequest,
   type UpdateWorkspaceAdvancedRequest,
   type UpdateWorkspaceBasicRequest,
+  updateSmartResponseDelayRequest,
   updateWorkspaceAdvancedRequest,
   updateWorkspaceBasicRequest,
 } from "../schema/update-workspace-schema"
@@ -38,6 +40,21 @@ export const updateWorkspaceAdvancedAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateWorkspaceAdvancedRequest
+    }) => {
+      await workspaceService.update({ id: workspaceId, data: parsedInput })
+    },
+  )
+
+export const updateSmartResponseDelayAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
+  .inputSchema(updateSmartResponseDelayRequest)
+  .action(
+    async ({
+      bindArgsParsedInputs: [workspaceId],
+      parsedInput,
+    }: {
+      bindArgsParsedInputs: WorkspaceIdRequestParams
+      parsedInput: UpdateSmartResponseDelayRequest
     }) => {
       await workspaceService.update({ id: workspaceId, data: parsedInput })
     },
