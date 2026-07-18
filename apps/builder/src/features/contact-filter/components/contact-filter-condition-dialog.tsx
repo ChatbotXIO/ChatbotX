@@ -217,6 +217,7 @@ const FilterValueInput = ({
     return (
       <PlainTextEditorField
         formItemClassName="w-full"
+        inline
         label={label}
         name={name}
         placeholder={placeholder}

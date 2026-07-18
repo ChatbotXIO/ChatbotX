@@ -73,6 +73,7 @@ const DATE_OPERATORS = [
 
 const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   locale: BASE_OPERATORS,
+  language: SET_OPERATORS,
   country: BASE_OPERATORS,
   continent: BASE_OPERATORS,
   gender: BASE_OPERATORS,
@@ -112,6 +113,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
 
   fullName: TEXT_FREE_OPERATORS,
+  lastComment: TEXT_FREE_OPERATORS,
   email: TEXT_FREE_OPERATORS,
   phone: TEXT_FREE_OPERATORS,
   hasContactInfo: PRESENCE_SET_OPERATORS,

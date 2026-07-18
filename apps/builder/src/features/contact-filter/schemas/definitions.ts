@@ -63,6 +63,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "languages",
   },
   {
+    field: contactFilterFields.enum.language,
+    schemaKind: "multiSelect",
+    optionSource: "languages",
+  },
+  {
     field: contactFilterFields.enum.fullName,
     schemaKind: "text",
     optionSource: "none",
@@ -169,6 +174,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   },
   {
     field: contactFilterFields.enum.lastUserInput,
+    schemaKind: "text",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastComment,
     schemaKind: "text",
     optionSource: "none",
   },

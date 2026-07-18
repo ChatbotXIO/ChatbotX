@@ -3,15 +3,8 @@ import type { MentionOptions } from "@tiptap/extension-mention"
 import { ReactRenderer } from "@tiptap/react"
 import tippy from "tippy.js"
 import type { PromptVariableListRef } from "./definition"
+import { getFilteredMentions } from "./filter-mentions"
 import VariableList from "./variable-list"
-
-const getFilteredMentions = (
-  query: string,
-  listOfPromptVariables: SelectOption[],
-) =>
-  listOfPromptVariables.filter((item) =>
-    item.label.toLowerCase().includes(query.toLowerCase()),
-  )
 
 const suggestion = ({
   listOfPromptVariables,

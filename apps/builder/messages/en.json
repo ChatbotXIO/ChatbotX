@@ -396,7 +396,7 @@
   "condition": {
     "yes": "Yes",
     "no": "No",
-    "valuePlaceholder": "Type it...",
+    "valuePlaceholder": "...",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
     "operator": {
