@@ -1,6 +1,11 @@
 "use client"
 
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import Link from "next/link"
 
 type AppTabProps = {
@@ -19,14 +24,17 @@ export function AppTab({ tabs }: AppTabProps) {
       <CardContent className="flex items-center gap-8 px-8">
         {tabs.map((tab) =>
           tab.disabled ? (
-            <span
-              aria-disabled="true"
-              className="cursor-not-allowed border-transparent border-b-2 py-6 font-medium text-gray-400 text-sm opacity-60 dark:text-gray-500"
-              key={tab.href}
-              title={tab.disabledTooltip}
-            >
-              {tab.label}
-            </span>
+            <Tooltip key={tab.href}>
+              <TooltipTrigger asChild>
+                <span
+                  aria-disabled="true"
+                  className="cursor-not-allowed border-transparent border-b-2 py-6 font-medium text-gray-400 text-sm opacity-60 dark:text-gray-500"
+                >
+                  {tab.label}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{tab.disabledTooltip}</TooltipContent>
+            </Tooltip>
           ) : (
             <Link
               className={`border-b-2 py-6 text-sm ${tab.isActive ? "border-neutral-700 dark:border-white dark:text-gray-50" : "border-transparent font-medium text-gray-800 dark:text-gray-400"}`}

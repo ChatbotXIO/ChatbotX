@@ -1,23 +1,10 @@
 "use client"
 
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export function RefreshOnNavigation() {
-  const pathname = usePathname()
   const router = useRouter()
-  const isInitialRender = useRef(true)
-
-  useEffect(() => {
-    if (isInitialRender.current) {
-      isInitialRender.current = false
-      return
-    }
-
-    if (pathname) {
-      router.refresh()
-    }
-  }, [pathname, router])
 
   useEffect(() => {
     const handleVisibilityChange = () => {

@@ -85,6 +85,13 @@ export async function GET(req: NextRequest) {
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const data = listGuestMessagesRequest.parse(searchParams)
 
+    const workspace = await workspaceService.find({
+      where: { id: data.workspaceId },
+    })
+    if (workspace?.scheduledDeletionAt) {
+      return await forbiddenResponse(corsHeaders(requestOrigin, false))
+    }
+
     const rateLimit = await checkGuestRateLimit({
       clientIp: getGuestClientIp(req.headers),
       guestConversationId: data.guestConversationId,
@@ -101,13 +108,6 @@ export async function GET(req: NextRequest) {
       id: data.webchatId,
       workspaceId: data.workspaceId,
     })
-
-    const workspace = await workspaceService.find({
-      where: { id: data.workspaceId },
-    })
-    if (workspace?.scheduledDeletionAt) {
-      return await forbiddenResponse(corsHeaders(requestOrigin, false))
-    }
 
     const bearerToken = getBearerToken(req)
     // Bind-on-first-use: always require a token bound to the presented
