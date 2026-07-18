@@ -59,6 +59,7 @@ import { getUserData } from "./get-user-data"
 import { syncKlaviyoProfile } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { addMailerLiteSubscriber } from "./mailer-lite-handler"
+import { updateMessengerContactData } from "./messenger-contact-data"
 import {
   disableMessengerComposer,
   enableMessengerComposer,
@@ -461,4 +462,5 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposer,
   [stepTypes.enum.disableMessengerComposer]: disableMessengerComposer,
   [stepTypes.enum.setMessengerPersona]: setMessengerPersona,
+  [stepTypes.enum.updateMessengerContactData]: updateMessengerContactData,
 }

@@ -2006,6 +2006,7 @@
       "enableMessengerComposer": "Bật ô nhập tin nhắn Messenger",
       "disableMessengerComposer": "Tắt ô nhập tin nhắn Messenger",
       "setMessengerPersona": "Thiết lập cá nhân hoá (Personas)",
+      "updateMessengerContactData": "Cập nhật dữ liệu liên hệ",
       "sendAudio": "Gửi âm thanh",
       "sendCard": "Gửi thẻ",
       "sendExternalFlow": "Gửi luồng bên ngoài",
