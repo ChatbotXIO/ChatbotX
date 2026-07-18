@@ -161,4 +161,75 @@ describe("handleCondition", () => {
       data: expect.objectContaining({ nodeId: "otherwise-target" }),
     })
   })
+
+  test("routes to otherwise when filter evaluation throws", async () => {
+    matchesContactFilter.mockRejectedValue(new Error("filter failed"))
+
+    await handleCondition(
+      makeProps(makeStep(), [
+        { sourceHandle: "otherwise-handle", target: "otherwise-target" },
+      ] as EdgeSchema[]),
+    )
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: expect.objectContaining({ nodeId: "otherwise-target" }),
+    })
+  })
+
+  test("does not enqueue when the matched handle has no connected edge", async () => {
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition(makeProps(makeStep(), []))
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("passes variable-resolved case values to contact filter matching", async () => {
+    const step = makeStep()
+    const resolvedCases = step.cases.map((conditionCase) =>
+      conditionCase.id === "first-case"
+        ? {
+            ...conditionCase,
+            conditions: [
+              {
+                field: "fullName",
+                operator: "eq",
+                value: "Ada Lovelace",
+              },
+            ],
+          }
+        : conditionCase,
+    )
+    resolveContactVariablesDeep.mockResolvedValueOnce(resolvedCases)
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition(
+      makeProps(step, [{ sourceHandle: "first-case", target: "first-target" }]),
+    )
+
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      step.cases,
+      { contactInbox, conversation },
+    )
+    expect(matchesContactFilter).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      contactFilter: {
+        operator: "and",
+        conditions: [
+          {
+            field: "fullName",
+            operator: "eq",
+            value: "Ada Lovelace",
+          },
+        ],
+      },
+    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: expect.objectContaining({ nodeId: "first-target" }),
+    })
+  })
 })

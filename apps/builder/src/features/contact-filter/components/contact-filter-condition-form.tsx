@@ -19,12 +19,14 @@ type ContactFilterConditionFormProps = {
   onAdd: (data: ContactFilterCondition) => void
   configs: FieldConfig[]
   conditionOptions: ConditionOption[]
+  enableVariables?: boolean
 }
 
 export const ContactFilterConditionForm = ({
   onAdd,
   configs,
   conditionOptions,
+  enableVariables = false,
 }: ContactFilterConditionFormProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -59,6 +61,7 @@ export const ContactFilterConditionForm = ({
       <ContactFilterConditionDialog
         conditionOptions={conditionOptions}
         configs={configs}
+        enableVariables={enableVariables}
         initialDraft={getInitialDraft()}
         key={String(open)}
         onOpenChange={setOpen}

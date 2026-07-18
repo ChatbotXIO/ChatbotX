@@ -2,11 +2,13 @@
 
 import {
   type FormFieldType,
-  formFieldTypes,
   operatorTypes,
 } from "@chatbotx.io/database/partials"
+import {
+  isValidDateTimeFilterValue,
+  valueContainsVariablePlaceholder,
+} from "@chatbotx.io/database/queries/contact-filter/value-format"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
-import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import {
@@ -23,8 +25,9 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { useTranslations } from "next-intl"
-import { useCallback, useMemo } from "react"
+import { type ReactNode, useCallback, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
+import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import {
   type ContactFilterCondition,
   singleContactFilterConditionSchema,
@@ -49,6 +52,11 @@ import {
   getStaticFieldValueInputConfig,
   staticFieldOperatorRequiresArrayValue,
 } from "./static-field-filter-config"
+import {
+  DATETIME_VALUE_INPUT_KINDS,
+  resolveValueInputKind,
+  type ValueInputKind,
+} from "./value-input-kind"
 
 const OPERATORS_WITHOUT_VALUE: string[] = [
   operatorTypes.enum.isEmpty,
@@ -146,124 +154,201 @@ type ContactFilterValueFieldsProps = {
   valueType: FormFieldType | null
   valueOptions: SelectOption[]
   customFieldInput?: CustomFieldValueInputConfig
+  enableVariables: boolean
+}
+
+type FreeTextInputKind = "text" | "number" | "datetime"
+
+type FilterValueInputProps = {
+  name: string
+  kind: FreeTextInputKind
+  enableVariables: boolean
+  label?: string
+}
+
+type ValueRenderContext = {
+  enableVariables: boolean
+  valueOptions: SelectOption[]
+}
+
+const FILTER_VALUE_INPUT_CONFIG = {
+  text: {
+    placeholderKey: "condition.valuePlaceholder",
+    type: undefined,
+  },
+  number: {
+    placeholderKey: "condition.valuePlaceholder",
+    type: "number",
+  },
+  datetime: {
+    placeholderKey: "condition.datetimePlaceholder",
+    type: undefined,
+  },
+} as const satisfies Record<
+  FreeTextInputKind,
+  { placeholderKey: string; type: "number" | undefined }
+>
+
+const BooleanValueField = () => {
+  const t = useTranslations()
+
+  return (
+    <SelectField
+      name="value"
+      options={[
+        { label: t("condition.yes"), value: "true" },
+        { label: t("condition.no"), value: "false" },
+      ]}
+    />
+  )
+}
+
+const FilterValueInput = ({
+  name,
+  kind,
+  enableVariables,
+  label,
+}: FilterValueInputProps) => {
+  const t = useTranslations()
+  const inputConfig = FILTER_VALUE_INPUT_CONFIG[kind]
+  const placeholder = t(inputConfig.placeholderKey)
+
+  if (enableVariables) {
+    return (
+      <PlainTextEditorField
+        formItemClassName="w-full"
+        label={label}
+        name={name}
+        placeholder={placeholder}
+        showEmojiPicker={false}
+      />
+    )
+  }
+
+  return (
+    <InputField
+      label={label}
+      name={name}
+      placeholder={placeholder}
+      type={inputConfig.type}
+    />
+  )
+}
+
+const IntervalValueInput = ({
+  kind,
+  enableVariables,
+}: {
+  kind: "number" | "datetime"
+  enableVariables: boolean
+}) => {
+  const t = useTranslations()
+
+  return (
+    <div className="flex flex-col gap-2">
+      <FilterValueInput
+        enableVariables={enableVariables}
+        kind={kind}
+        label={t("fields.from.label")}
+        name="value.0"
+      />
+      <FilterValueInput
+        enableVariables={enableVariables}
+        kind={kind}
+        label={t("fields.to.label")}
+        name="value.1"
+      />
+    </div>
+  )
+}
+
+const VALUE_INPUT_RENDERERS = {
+  none: () => null,
+  text: ({ enableVariables }) => (
+    <FilterValueInput
+      enableVariables={enableVariables}
+      kind="text"
+      name="value"
+    />
+  ),
+  number: ({ enableVariables }) => (
+    <FilterValueInput
+      enableVariables={enableVariables}
+      kind="number"
+      name="value"
+    />
+  ),
+  datetime: ({ enableVariables }) => (
+    <FilterValueInput
+      enableVariables={enableVariables}
+      kind="datetime"
+      name="value"
+    />
+  ),
+  boolean: () => <BooleanValueField />,
+  select: ({ valueOptions }) => (
+    <SelectField name="value" options={valueOptions} />
+  ),
+  multiSelect: ({ valueOptions }) => (
+    <MultiSelectField name="value" options={valueOptions} />
+  ),
+  numberInterval: ({ enableVariables }) => (
+    <IntervalValueInput enableVariables={enableVariables} kind="number" />
+  ),
+  datetimeInterval: ({ enableVariables }) => (
+    <IntervalValueInput enableVariables={enableVariables} kind="datetime" />
+  ),
+} as const satisfies Record<
+  ValueInputKind,
+  (ctx: ValueRenderContext) => ReactNode
+>
+
+export const isValidDateTimeConditionValue = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.every(isValidDateTimeConditionValue)
+  }
+  return (
+    typeof value === "string" &&
+    (valueContainsVariablePlaceholder(value) ||
+      isValidDateTimeFilterValue(value))
+  )
+}
+
+const parseSaveableCondition = ({
+  draft,
+  config,
+  valueInputKind,
+}: {
+  draft: ContactFilterConditionFormDraft
+  config: FieldConfig | undefined
+  valueInputKind: ValueInputKind
+}): ContactFilterCondition | null => {
+  const parsed = singleContactFilterConditionSchema.safeParse(
+    buildConditionDraft(draft, config),
+  )
+  if (!parsed.success) {
+    return null
+  }
+
+  if (
+    DATETIME_VALUE_INPUT_KINDS.has(valueInputKind) &&
+    !isValidDateTimeConditionValue(draft.value)
+  ) {
+    return null
+  }
+
+  return parsed.data
 }
 
 const ContactFilterValueFields = ({
   valueType,
   valueOptions,
   customFieldInput,
+  enableVariables,
 }: ContactFilterValueFieldsProps) => {
-  const t = useTranslations()
+  const kind = resolveValueInputKind(customFieldInput, valueType)
 
-  if (customFieldInput?.kind === "none") {
-    return <div> </div>
-  }
-
-  if (customFieldInput?.kind === "text") {
-    return <InputField name="value" />
-  }
-
-  if (customFieldInput?.kind === "number") {
-    return <InputField name="value" type="number" />
-  }
-
-  if (customFieldInput?.kind === "datetime") {
-    return (
-      <DateTimePickerField
-        dateTimeFormat="yyyy-MM-dd HH:mm"
-        granularity="minute"
-        name="value"
-        required
-      />
-    )
-  }
-
-  if (customFieldInput?.kind === "boolean") {
-    return (
-      <SelectField
-        name="value"
-        options={[
-          { label: t("condition.yes"), value: "true" },
-          { label: t("condition.no"), value: "false" },
-        ]}
-      />
-    )
-  }
-
-  if (customFieldInput?.kind === "numberInterval") {
-    return (
-      <div className="flex flex-col gap-2">
-        <InputField
-          label={t("fields.from.label")}
-          name="value.0"
-          type="number"
-        />
-        <InputField label={t("fields.to.label")} name="value.1" type="number" />
-      </div>
-    )
-  }
-
-  if (customFieldInput?.kind === "datetimeInterval") {
-    return (
-      <div className="flex flex-col gap-2">
-        <DateTimePickerField
-          dateTimeFormat="yyyy-MM-dd HH:mm"
-          granularity="minute"
-          label={t("fields.from.label")}
-          name="value.0"
-          required
-        />
-        <DateTimePickerField
-          dateTimeFormat="yyyy-MM-dd HH:mm"
-          granularity="minute"
-          label={t("fields.to.label")}
-          name="value.1"
-          required
-        />
-      </div>
-    )
-  }
-
-  if (valueType === formFieldTypes.enum.text) {
-    return <InputField name="value" />
-  }
-
-  if (valueType === formFieldTypes.enum.number) {
-    return <InputField name="value" type="number" />
-  }
-
-  if (valueType === formFieldTypes.enum.select) {
-    return <SelectField name="value" options={valueOptions} />
-  }
-
-  if (valueType === formFieldTypes.enum.multiSelect) {
-    return <MultiSelectField name="value" options={valueOptions} />
-  }
-
-  if (valueType === formFieldTypes.enum.boolean) {
-    return (
-      <SelectField
-        name="value"
-        options={[
-          { label: t("condition.yes"), value: "true" },
-          { label: t("condition.no"), value: "false" },
-        ]}
-      />
-    )
-  }
-
-  if (valueType === formFieldTypes.enum.datetime) {
-    return (
-      <DateTimePickerField
-        dateTimeFormat="yyyy-MM-dd HH:mm"
-        granularity="minute"
-        name="value"
-        required
-      />
-    )
-  }
-
-  return <div> </div>
+  return VALUE_INPUT_RENDERERS[kind]({ enableVariables, valueOptions })
 }
 
 type ContactFilterConditionDialogProps = {
@@ -274,6 +359,7 @@ type ContactFilterConditionDialogProps = {
   onSubmit: (data: ContactFilterCondition) => void
   configs: FieldConfig[]
   conditionOptions: ConditionOption[]
+  enableVariables?: boolean
 }
 
 export const ContactFilterConditionDialog = ({
@@ -284,6 +370,7 @@ export const ContactFilterConditionDialog = ({
   onSubmit,
   configs,
   conditionOptions,
+  enableVariables = false,
 }: ContactFilterConditionDialogProps) => {
   const t = useTranslations()
   const form = useForm<ContactFilterConditionFormDraft>({
@@ -334,6 +421,11 @@ export const ContactFilterConditionDialog = ({
     () => getStaticFieldValueInputConfig(activeConfig, watchOperator),
     [activeConfig, watchOperator],
   )
+  const valueInputKind = useMemo(
+    () =>
+      resolveValueInputKind(customFieldInput ?? staticFieldInput, valueType),
+    [customFieldInput, staticFieldInput, valueType],
+  )
 
   const canSaveCondition = useMemo(() => {
     if (!(watchField && watchOperator)) {
@@ -346,10 +438,14 @@ export const ContactFilterConditionDialog = ({
       value: watchValue ?? "",
     } satisfies ContactFilterConditionFormDraft
 
-    return singleContactFilterConditionSchema.safeParse(
-      buildConditionDraft(draft, activeConfig),
-    ).success
-  }, [watchField, watchOperator, watchValue, activeConfig])
+    return (
+      parseSaveableCondition({
+        draft,
+        config: activeConfig,
+        valueInputKind,
+      }) !== null
+    )
+  }, [watchField, watchOperator, watchValue, activeConfig, valueInputKind])
 
   const triggerFieldChange = useCallback(
     (nextField: string) => {
@@ -406,14 +502,16 @@ export const ContactFilterConditionDialog = ({
   }, [onOpenChange])
 
   const submitCondition = handleSubmit(() => {
-    const parsed = singleContactFilterConditionSchema.safeParse(
-      buildConditionDraft(getValues(), activeConfig),
-    )
-    if (!parsed.success) {
+    const parsed = parseSaveableCondition({
+      draft: getValues(),
+      config: activeConfig,
+      valueInputKind,
+    })
+    if (!parsed) {
       return
     }
 
-    onSubmit(parsed.data)
+    onSubmit(parsed)
     onOpenChange(false)
   })
 
@@ -455,6 +553,7 @@ export const ContactFilterConditionDialog = ({
               <div className="overflow-hidden truncate">
                 <ContactFilterValueFields
                   customFieldInput={customFieldInput ?? staticFieldInput}
+                  enableVariables={enableVariables}
                   valueOptions={valueOptions}
                   valueType={valueType}
                 />
@@ -492,6 +591,7 @@ type ContactFilterConditionEditDialogProps = {
   onClose: () => void
   configs: FieldConfig[]
   conditionOptions: ConditionOption[]
+  enableVariables?: boolean
 }
 
 export const ContactFilterConditionEditDialog = ({
@@ -500,6 +600,7 @@ export const ContactFilterConditionEditDialog = ({
   onClose,
   configs,
   conditionOptions,
+  enableVariables = false,
 }: ContactFilterConditionEditDialogProps) => {
   const t = useTranslations()
 
@@ -507,6 +608,7 @@ export const ContactFilterConditionEditDialog = ({
     <ContactFilterConditionDialog
       conditionOptions={conditionOptions}
       configs={configs}
+      enableVariables={enableVariables}
       initialDraft={buildDraftFromCondition(condition)}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {

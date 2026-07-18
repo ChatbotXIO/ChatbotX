@@ -13,6 +13,7 @@ import {
 import {
   buildContactWhere,
   type ContactFilterCriteriaInput,
+  contactFilterHasPredicate,
 } from "@chatbotx.io/database/queries"
 import {
   contactInboxModel,
@@ -141,6 +142,13 @@ class ContactService extends BaseService {
     contactFilter: ContactFilterCriteriaInput
   }): Promise<boolean> {
     const { workspaceId, contactId, contactFilter } = props
+    if (
+      contactFilter.conditions.length > 0 &&
+      !contactFilterHasPredicate(contactFilter)
+    ) {
+      return false
+    }
+
     const where = buildContactWhere({ workspaceId, contactFilter })
     const match = await db.query.contactModel.findFirst({
       columns: { id: true },

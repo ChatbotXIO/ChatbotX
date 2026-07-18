@@ -396,6 +396,9 @@
   "condition": {
     "yes": "Có",
     "no": "Không",
+    "valuePlaceholder": "Nhập giá trị...",
+    "datetimePlaceholder": "YYYY-MM-DD HH:mm",
+    "datetimeInvalid": "Nhập ngày dạng YYYY-MM-DD HH:mm hoặc một biến",
     "operator": {
       "and": "Tất cả điều kiện",
       "or": "Bất kỳ điều kiện nào"

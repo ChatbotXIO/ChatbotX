@@ -7,9 +7,11 @@ import {
   buildContactInboxContactFilterSQL,
   buildContactWhere,
   buildSmartKeywordWhere,
+  contactFilterHasPredicate,
   parseConversationAssigneeValues,
   pruneEmailPhoneFilterConditions,
 } from "../src/queries/contact-filter"
+import { isValidDateTimeFilterValue } from "../src/queries/contact-filter/value-format"
 import { contactInboxModel, contactModel } from "../src/schema"
 import { escapeLikePattern, likeContains } from "../src/utils"
 
@@ -34,6 +36,26 @@ describe("LIKE pattern helpers", () => {
   test("escapes LIKE metacharacters and wraps contains patterns", () => {
     expect(escapeLikePattern("100%_ready\\")).toBe("100\\%\\_ready\\\\")
     expect(likeContains("100%_ready\\")).toBe("%100\\%\\_ready\\\\%")
+  })
+})
+
+describe("contact filter value-format helpers", () => {
+  test.each([
+    "2026-05-19",
+    "2026-05-19 10:30",
+    "2026-05-19T10:30:00Z",
+    "2026-05-19T10:30:00+07:00",
+  ])("accepts valid datetime value %s", (value) => {
+    expect(isValidDateTimeFilterValue(value)).toBe(true)
+  })
+
+  test.each([
+    "",
+    "junk",
+    "2026-13-40",
+    "2026-05-19 25:99",
+  ])("rejects invalid datetime value %s", (value) => {
+    expect(isValidDateTimeFilterValue(value)).toBe(false)
   })
 })
 
@@ -86,6 +108,33 @@ describe("contact filter permission helpers", () => {
 })
 
 describe("applyContactFilter", () => {
+  test("reports whether a non-empty filter compiles to an effective predicate", () => {
+    const unknownOnlyFilter = {
+      operator: "and" as const,
+      conditions: [
+        {
+          field: "unknownField",
+          operator: operatorTypes.enum.eq,
+          value: "x",
+        },
+      ],
+    }
+    const validFilter = {
+      operator: "and" as const,
+      conditions: [
+        {
+          field: "fullName",
+          operator: operatorTypes.enum.contains,
+          value: "Ada",
+        },
+      ],
+    }
+
+    expect(applyContactFilter(unknownOnlyFilter)).toEqual({})
+    expect(contactFilterHasPredicate(unknownOnlyFilter)).toBe(false)
+    expect(contactFilterHasPredicate(validFilter)).toBe(true)
+  })
+
   test("maps inbox filters to an EXISTS ContactInbox.inboxId subquery", () => {
     const where = applyContactFilter({
       operator: "and",
@@ -1253,6 +1302,44 @@ describe("applyContactFilter", () => {
     expect(query.sql.toLowerCase()).toContain('"contact"."fullname" ilike')
     expect(query.params).toEqual(["ws-1", "%Ada%"])
   })
+
+  test("preserves empty audience filters as TRUE", () => {
+    const query = new PgDialect().sqlToQuery(
+      buildContactInboxContactFilterSQL({
+        contactIdColumn: contactInboxModel.contactId,
+        workspaceId: "ws-1",
+        contactFilter: {
+          operator: "and",
+          conditions: [],
+        },
+      }),
+    )
+
+    expect(query.sql).toBe("TRUE")
+    expect(query.params).toEqual([])
+  })
+
+  test("turns all-unknown audience filters into FALSE", () => {
+    const query = new PgDialect().sqlToQuery(
+      buildContactInboxContactFilterSQL({
+        contactIdColumn: contactInboxModel.contactId,
+        workspaceId: "ws-1",
+        contactFilter: {
+          operator: "and",
+          conditions: [
+            {
+              field: "deletedCustomField",
+              operator: operatorTypes.enum.eq,
+              value: "x",
+            },
+          ],
+        },
+      }),
+    )
+
+    expect(query.sql).toBe("FALSE")
+    expect(query.params).toEqual([])
+  })
 })
 
 // ── Full field × operator coverage ─────────────────────────────────────────────
@@ -2359,13 +2446,24 @@ describe("applyContactFilter — unsupported operator fallbacks (dropped → {})
     ).toEqual({})
   })
 
-  test("passes the raw value through for an unrecognized column operator", () => {
+  test("drops an unrecognized column operator", () => {
     expect(
       applyContactFilter({
         operator: "and",
         conditions: [{ field: "fullName", operator: "weirdOp", value: "x" }],
       }),
-    ).toEqual({ AND: [{ fullName: "x" }] })
+    ).toEqual({})
+  })
+
+  test("keeps known column operators unchanged", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "country", operator: operatorTypes.enum.eq, value: "VN" },
+        ],
+      }),
+    ).toEqual({ AND: [{ country: "VN" }] })
   })
 })
 

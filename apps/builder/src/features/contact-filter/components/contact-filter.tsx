@@ -17,6 +17,7 @@ type ContactFilterProps = {
   parentName: string
   excludeFields?: ContactFilterField[]
   inboxChannel?: string
+  enableVariables?: boolean
 }
 
 const EMPTY_EXCLUDE_FIELDS: ContactFilterField[] = []
@@ -25,6 +26,7 @@ export const ContactFilter = ({
   parentName,
   excludeFields = EMPTY_EXCLUDE_FIELDS,
   inboxChannel,
+  enableVariables = false,
 }: ContactFilterProps) => {
   const t = useTranslations()
   const { control, getValues } = useFormContext()
@@ -99,6 +101,7 @@ export const ContactFilter = ({
       <ContactFilterConditionForm
         conditionOptions={conditionOptions}
         configs={filteredConfigs}
+        enableVariables={enableVariables}
         onAdd={handleAdd}
       />
 
@@ -107,6 +110,7 @@ export const ContactFilter = ({
           condition={editingCondition}
           conditionOptions={conditionOptions}
           configs={filteredConfigs}
+          enableVariables={enableVariables}
           key={editingIndex}
           onClose={() => setEditingIndex(null)}
           onSubmit={(data) => {
