@@ -1655,6 +1655,16 @@
     "lastInput": {
       "label": "Dữ liệu nhập cuối"
     },
+    "lastUserInputTypes": {
+      "text": "Văn bản",
+      "location": "Vị trí",
+      "refLink": "Liên kết giới thiệu",
+      "image": "Hình ảnh",
+      "video": "Video",
+      "audio": "Âm thanh",
+      "gif": "GIF",
+      "file": "Tệp"
+    },
     "lastMonth": {
       "label": "Tháng trước"
     },
@@ -2082,7 +2092,6 @@
     },
     "condition": {
       "addCase": "Kiểm tra điều kiện mới",
-      "caseSummary": "Trường hợp {index} · {count} điều kiện",
       "caseTitle": "Trường hợp {index}",
       "otherwise": "Người dùng không khớp các điều kiện này"
     },

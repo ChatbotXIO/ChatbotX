@@ -1095,6 +1095,16 @@
     "lastInput": {
       "label": "Last Input"
     },
+    "lastUserInputTypes": {
+      "text": "Text",
+      "location": "Location",
+      "refLink": "Ref link",
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio",
+      "gif": "GIF",
+      "file": "File"
+    },
     "lastMonth": {
       "label": "Last month"
     },
@@ -2067,7 +2077,6 @@
     },
     "condition": {
       "addCase": "Check New Condition",
-      "caseSummary": "Case {index} · {count} conditions",
       "caseTitle": "Case {index}",
       "otherwise": "The user doesn't match these conditions"
     },

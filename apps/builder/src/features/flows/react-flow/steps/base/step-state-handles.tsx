@@ -12,7 +12,7 @@ type StepStateHandlesProps = {
 
 type StateHandleProps = {
   stateId: string
-  label: string
+  label?: string
   borderClass: string
   fillClass: string
 }
