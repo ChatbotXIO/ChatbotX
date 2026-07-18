@@ -1,3 +1,4 @@
+import { workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { SearchParams } from "next/dist/server/request/search-params"
@@ -5,18 +6,34 @@ import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import z from "zod"
-import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
+import {
+  getHostFromOrigin,
+  isOriginAuthorized,
+} from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { GuestSessionStoreProvider } from "@/features/integration-webchat/providers/store/guest-session-provider"
 import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
 import { WebchatWrapper } from "@/features/integration-webchat/webchat-wrapper"
+import { getDomainFromHeader } from "@/lib/domain"
 
 type WebchatPageProps = {
   searchParams: Promise<SearchParams>
 }
 
 export const dynamic = "force-dynamic"
+
+function isFirstPartyRequest(
+  refererOrigin: string | null,
+  appHost: string,
+): boolean {
+  if (!refererOrigin) {
+    return true
+  }
+
+  const refererHost = getHostFromOrigin(refererOrigin)
+  return !!refererHost && !!appHost && refererHost === appHost.toLowerCase()
+}
 
 export default async function WebchatPage(props: WebchatPageProps) {
   const searchParams = await props.searchParams
@@ -47,9 +64,33 @@ export default async function WebchatPage(props: WebchatPageProps) {
     return notFound()
   }
 
+  const workspace = await workspaceService.find({
+    where: { id: data.workspaceId },
+  })
+  if (workspace?.scheduledDeletionAt) {
+    const t = await getTranslations("webchat")
+
+    return (
+      <main className="flex h-screen w-screen items-center justify-center bg-background p-6 text-center">
+        <div className="max-w-sm space-y-2">
+          <p className="text-muted-foreground text-sm">
+            {t("chatUnavailable")}
+          </p>
+        </div>
+      </main>
+    )
+  }
+
   const requestHeaders = await headers()
   const embeddingOrigin = requestHeaders.get("referer")
-  if (!isOriginAuthorized(embeddingOrigin, targetWebchat.authorizedDomains)) {
+  const appHost = await getDomainFromHeader()
+  const isDirectOpen = isFirstPartyRequest(embeddingOrigin, appHost)
+  if (
+    !(
+      isDirectOpen ||
+      isOriginAuthorized(embeddingOrigin, targetWebchat.authorizedDomains)
+    )
+  ) {
     const t = await getTranslations("webchat.unauthorizedDomain")
 
     return (
