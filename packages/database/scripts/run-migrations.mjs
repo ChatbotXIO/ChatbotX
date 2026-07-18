@@ -6,14 +6,19 @@
  */
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { sql } from "drizzle-orm"
 import { readMigrationFiles } from "drizzle-orm/migrator"
+import { getMigrationsToRun } from "drizzle-orm/migrator.utils"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
+import { upgradeIfNeeded } from "drizzle-orm/up-migrations/pg"
 import { Pool } from "pg"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const migrationsFolder = join(__dirname, "..", "drizzle")
 const migrationLockName = "chatbotx:database:migrations"
+const useSequentialMigrations =
+  process.env.DATABASE_MIGRATIONS_SEQUENTIAL === "true"
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) {
@@ -25,6 +30,61 @@ const pool = new Pool({
   connectionString: databaseUrl,
   max: 1,
 })
+
+const runMigrationsSequentially = async (db) => {
+  const migrationsTable = "__drizzle_migrations"
+  const migrationsSchema = "drizzle"
+
+  await db.execute(
+    sql`CREATE SCHEMA IF NOT EXISTS ${sql.identifier(migrationsSchema)}`,
+  )
+
+  const localMigrations = readMigrationFiles({ migrationsFolder })
+  const { newDb } = await upgradeIfNeeded(
+    migrationsSchema,
+    migrationsTable,
+    db,
+    localMigrations,
+  )
+
+  if (newDb) {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} (
+        id SERIAL PRIMARY KEY,
+        hash text NOT NULL,
+        created_at bigint,
+        name text,
+        applied_at timestamp with time zone DEFAULT now()
+      )
+    `)
+  }
+
+  const dbMigrations = await db.session.all(
+    sql`select id, hash, created_at, name from ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)}`,
+  )
+  const migrationsToRun = getMigrationsToRun({
+    localMigrations,
+    dbMigrations,
+  })
+
+  for (const migration of migrationsToRun) {
+    await db.transaction(async (tx) => {
+      for (const stmt of migration.sql) {
+        if (stmt.trim()) {
+          await tx.execute(sql.raw(stmt))
+        }
+      }
+
+      await tx.execute(sql`
+        insert into ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)}
+          ("hash", "created_at", "name")
+        values(${migration.hash}, ${migration.folderMillis}, ${migration.name ?? null})
+      `)
+    })
+
+    console.log(`Applied migration: ${migration.name}`)
+  }
+}
 
 const reconcileRenamedMigrations = async (client) => {
   const migrationTableResult = await client.query(
@@ -91,7 +151,11 @@ try {
 
   await reconcileRenamedMigrations(client)
   const db = drizzle({ client })
-  await migrate(db, { migrationsFolder })
+  if (useSequentialMigrations) {
+    await runMigrationsSequentially(db)
+  } else {
+    await migrate(db, { migrationsFolder })
+  }
   console.log("Database migrations applied successfully.")
 } catch (error) {
   console.error("Database migration failed:", error)
