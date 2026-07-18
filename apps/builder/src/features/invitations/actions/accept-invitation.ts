@@ -12,6 +12,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { isCommunity } from "@/env"
 import { getSuperAdminPermissions } from "@/features/workspace-members/helpers"
@@ -55,6 +56,14 @@ export const acceptInvitationAction = authActionClient
     const workspace = await workspaceService.find({
       where: { id: invitation.workspaceId },
     })
+    if (workspace?.scheduledDeletionAt) {
+      const t = await getTranslations("invitation")
+      throw new ChatbotXException(
+        t("workspaceUnavailable"),
+        "workspaceScheduledDeletion",
+        403,
+      )
+    }
     if (workspace) {
       const consumed = await quotaEnforcementService.tryConsume({
         userId: workspace.ownerId,

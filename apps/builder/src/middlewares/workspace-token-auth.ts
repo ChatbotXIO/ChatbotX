@@ -21,6 +21,12 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
 
+    if (workspace.scheduledDeletionAt) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Workspace deletion scheduled",
+      })
+    }
+
     // Adds session and user to the context
     return await next({
       context: {

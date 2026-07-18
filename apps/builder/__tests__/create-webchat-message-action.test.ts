@@ -364,6 +364,29 @@ describe("handleCreateWebchatMessage", () => {
     })
   })
 
+  test("rejects messages when the workspace is scheduled for deletion", async () => {
+    mockWorkspaceFind.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+      scheduledDeletionAt: new Date(),
+    })
+
+    await expect(
+      handleCreateWebchatMessage({
+        parsedInput: {
+          text: "hello",
+          workspaceId: "ws-1",
+          webchatId: "webchat-1",
+          guestConversationId: "guest-1",
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: "workspaceScheduledDeletion",
+    })
+
+    expect(mockVerifyWebchatAccessToken).not.toHaveBeenCalled()
+  })
+
   test("updates webchat contact inbox message, incoming message, and read timestamps", async () => {
     await handleCreateWebchatMessage({
       parsedInput: {

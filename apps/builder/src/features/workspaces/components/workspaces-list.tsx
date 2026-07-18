@@ -120,6 +120,7 @@ const WorkspaceCard = ({
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
   const href = `/space/${workspace.id}`
+  const isScheduledForDeletion = Boolean(workspace.scheduledDeletionAt)
   const activeHours =
     workspace.isActive && workspace.startTime && workspace.endTime
       ? t("workspace.schedule.activeHours", {
@@ -143,6 +144,7 @@ const WorkspaceCard = ({
             isActive: workspace.isActive,
             startTime: workspace.startTime,
             endTime: workspace.endTime,
+            scheduledDeletionAt: workspace.scheduledDeletionAt,
           }}
         />
         <Link
@@ -164,6 +166,11 @@ const WorkspaceCard = ({
             {activeHours ? (
               <div className="line-clamp-1 text-center text-muted-foreground text-xs">
                 {activeHours}
+              </div>
+            ) : null}
+            {isScheduledForDeletion ? (
+              <div className="line-clamp-1 text-center text-destructive text-xs">
+                {t("workspace.deletion.badge")}
               </div>
             ) : null}
           </div>

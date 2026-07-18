@@ -1,11 +1,6 @@
 "use client"
 
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
@@ -25,10 +20,12 @@ export function WorkspaceStatusSwitch({
     isActive: boolean
     startTime: string | null
     endTime: string | null
+    scheduledDeletionAt?: Date | string | null
   }
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const scheduledForDeletion = Boolean(workspace.scheduledDeletionAt)
   const [isActive, setIsActive] = useState(workspace.isActive)
   const [schedule, setSchedule] = useState<Schedule>({
     startTime: workspace.startTime,
@@ -68,32 +65,19 @@ export function WorkspaceStatusSwitch({
     }
   }
 
-  const switchElement = (
-    <Switch
-      checked={isActive}
-      className="absolute top-3 left-3 z-10"
-      disabled={!canManageStatus}
-      onCheckedChange={canManageStatus ? handleCheckedChange : undefined}
-      onClick={(e) => e.stopPropagation()}
-    />
-  )
-
   return (
     <>
-      {canManageStatus ? (
-        switchElement
-      ) : (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="absolute top-3 left-3 z-10 inline-flex">
-              {switchElement}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {t("workspace.schedule.permissionRequired")}
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <Switch
+        checked={isActive}
+        className="absolute top-3 left-3 z-10"
+        disabled={!canManageStatus || scheduledForDeletion}
+        onCheckedChange={
+          canManageStatus && !scheduledForDeletion
+            ? handleCheckedChange
+            : undefined
+        }
+        onClick={(e) => e.stopPropagation()}
+      />
 
       <WorkspaceScheduleDialog
         onOpenChange={setShowScheduleDialog}

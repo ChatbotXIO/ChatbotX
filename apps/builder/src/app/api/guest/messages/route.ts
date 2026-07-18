@@ -1,4 +1,8 @@
-import { contactInboxService, conversationService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  conversationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
 import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
@@ -97,6 +101,13 @@ export async function GET(req: NextRequest) {
       id: data.webchatId,
       workspaceId: data.workspaceId,
     })
+
+    const workspace = await workspaceService.find({
+      where: { id: data.workspaceId },
+    })
+    if (workspace?.scheduledDeletionAt) {
+      return await forbiddenResponse(corsHeaders(requestOrigin, false))
+    }
 
     const bearerToken = getBearerToken(req)
     // Bind-on-first-use: always require a token bound to the presented

@@ -43,7 +43,21 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
+  ChatbotXException: class ChatbotXException extends Error {
+    code: string
+    httpStatusCode: number
+    constructor(message: string, code = "systemError", httpStatusCode = 400) {
+      super(message)
+      this.code = code
+      this.httpStatusCode = httpStatusCode
+    }
+  },
+}))
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn(() =>
+    Promise.resolve(() => "This workspace is no longer available"),
+  ),
 }))
 
 const invalidateCacheByTags = vi.fn()
@@ -177,6 +191,24 @@ describe("acceptInvitationAction", () => {
       "Team member limit reached for this workspace plan",
     )
     expect(dbInsertValues).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("throws and does not insert when the workspace is scheduled for deletion", async () => {
+    workspaceServiceFind.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+      scheduledDeletionAt: new Date(),
+    })
+
+    const error = await invoke().catch((caught) => caught)
+
+    expect(error).toMatchObject({
+      code: "workspaceScheduledDeletion",
+      message: "This workspace is no longer available",
+    })
+    expect(dbInsertValues).not.toHaveBeenCalled()
+    expect(tryConsume).not.toHaveBeenCalled()
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
   })
 })

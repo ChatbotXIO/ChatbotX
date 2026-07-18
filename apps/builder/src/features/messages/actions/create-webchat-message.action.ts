@@ -80,6 +80,18 @@ export async function handleCreateWebchatMessage({
     message: "Channel not found",
   })
 
+  const workspace = await workspaceService.find({
+    where: { id: parsedInput.workspaceId },
+  })
+  if (workspace?.scheduledDeletionAt) {
+    const t = await getTranslations("webchat")
+    throw new ChatbotXException(
+      t("workspaceUnavailable"),
+      "workspaceScheduledDeletion",
+      403,
+    )
+  }
+
   // Bind-on-first-use: always require a token whose signed origin claim
   // matches the origin the caller is presenting now, regardless of whether
   // authorizedDomains is configured. This closes the "no auth at all when no
