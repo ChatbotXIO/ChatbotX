@@ -8,7 +8,6 @@ import type {
   MessengerPersona,
 } from "@chatbotx.io/database/partials"
 import { findUserPersistentMenuById } from "@chatbotx.io/database/repositories"
-import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type {
   DisableMessengerComposerStepSchema,
   EnableMessengerComposerStepSchema,
@@ -23,60 +22,11 @@ import type { FacebookButton } from "@chatbotx.io/integration-messenger/schema"
 import type { UserCustomSettings } from "@chatbotx.io/sdk"
 import { env } from "../../env"
 import { logger } from "../../lib/logger"
-import { resolveIntegrationContextFromContactInbox } from "../../services/integrations"
 import type { ExecuteStepProps } from "./flow-utils"
-
-type ResolvedIntegrationContext = Awaited<
-  ReturnType<typeof resolveIntegrationContextFromContactInbox>
->
-
-type ResolvedMessengerUserContext = ResolvedIntegrationContext & {
-  psid: string
-  contactInbox: ContactInboxModel
-}
-
-/**
- * Resolve the Messenger contact-inbox (PSID) for the conversation and the
- * integration context needed to call the Facebook APIs. Returns `null` when the
- * contact has no Messenger inbox or the inbox has no source PSID.
- */
-async function resolveMessengerUserContext(
-  props: Pick<ExecuteStepProps<unknown>, "conversation" | "contactInbox">,
-): Promise<ResolvedMessengerUserContext | null> {
-  const { conversation, contactInbox: baseContactInbox } = props
-
-  const contactInbox =
-    baseContactInbox?.channel === "messenger"
-      ? baseContactInbox
-      : await contactInboxService
-          .listByContactId({ contactId: conversation.contactId })
-          .then(
-            (inboxes) =>
-              inboxes
-                .filter((i) => i.channel === "messenger")
-                .sort(
-                  (a, b) =>
-                    new Date(b.lastMessageAt ?? 0).getTime() -
-                    new Date(a.lastMessageAt ?? 0).getTime(),
-                )[0],
-          )
-
-  if (!contactInbox) {
-    return null
-  }
-
-  const psid = contactInbox.sourceId
-  if (!psid) {
-    return null
-  }
-
-  const resolved = await resolveIntegrationContextFromContactInbox({
-    workspaceId: conversation.workspaceId,
-    contactInbox,
-  })
-
-  return { ...resolved, psid, contactInbox }
-}
+import {
+  type ResolvedMessengerUserContext,
+  resolveMessengerUserContext,
+} from "./messenger-context"
 
 /**
  * Build the workspace's page-level persistent menu as Facebook call-to-actions,

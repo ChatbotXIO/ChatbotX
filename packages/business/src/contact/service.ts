@@ -46,6 +46,7 @@ type ContactWriteData = Partial<
     | "blockedAt"
     | "emailOptIn"
     | "timezone"
+    | "locale"
     | "avatar"
     | "location"
   >

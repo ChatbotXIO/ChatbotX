@@ -2005,6 +2005,7 @@
       "enableMessengerComposer": "Enable Messenger Composer",
       "disableMessengerComposer": "Disable Messenger Composer",
       "setMessengerPersona": "Set Persona",
+      "updateMessengerContactData": "Update Contact Data",
       "sendAudio": "Send Audio",
       "sendCard": "Send Card",
       "sendExternalFlow": "Start External Flow",

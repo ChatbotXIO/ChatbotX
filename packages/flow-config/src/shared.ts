@@ -56,6 +56,7 @@ import { unassignConversationStepSchema } from "./steps/unassign-conversation"
 import { unfollowConversationStepSchema } from "./steps/unfollow-conversation"
 import { unsubscribeBroadcastStepSchema } from "./steps/unsubscribe-broadcast"
 import { unsubscribeSequenceStepSchema } from "./steps/unsubscribe-sequence"
+import { updateMessengerContactDataStepSchema } from "./steps/update-messenger-contact-data"
 
 const inboxSteps = [
   enableBotStepSchema,
@@ -135,6 +136,7 @@ const messengerSteps = [
   enableMessengerComposerStepSchema,
   disableMessengerComposerStepSchema,
   setMessengerPersonaStepSchema,
+  updateMessengerContactDataStepSchema,
 ]
 
 const googleSheetStep = [

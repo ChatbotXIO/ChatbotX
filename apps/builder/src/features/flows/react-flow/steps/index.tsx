@@ -76,6 +76,7 @@ import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
 import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
 import { unsubscribeSequenceStep } from "./unsubscribe-sequence"
+import { updateMessengerContactDataStep } from "./update-messenger-contact-data"
 import { waitStep } from "./wait"
 import whatsappFlowStep from "./whatsapp-flow"
 import whatsappOptionListStep from "./whatsapp-option-list"
@@ -172,6 +173,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposerStep,
   [stepTypes.enum.disableMessengerComposer]: disableMessengerComposerStep,
   [stepTypes.enum.setMessengerPersona]: setMessengerPersonaStep,
+  [stepTypes.enum.updateMessengerContactData]: updateMessengerContactDataStep,
 }
 
 export const DynamicStepEditor = memo(
