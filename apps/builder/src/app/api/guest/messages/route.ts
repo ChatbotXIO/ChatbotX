@@ -1,4 +1,8 @@
-import { contactInboxService, conversationService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  conversationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
 import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
@@ -80,6 +84,13 @@ export async function GET(req: NextRequest) {
   try {
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const data = listGuestMessagesRequest.parse(searchParams)
+
+    const workspace = await workspaceService.find({
+      where: { id: data.workspaceId },
+    })
+    if (workspace?.scheduledDeletionAt) {
+      return await forbiddenResponse(corsHeaders(requestOrigin, false))
+    }
 
     const rateLimit = await checkGuestRateLimit({
       clientIp: getGuestClientIp(req.headers),

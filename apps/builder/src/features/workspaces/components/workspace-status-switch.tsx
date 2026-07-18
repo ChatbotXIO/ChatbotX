@@ -25,10 +25,12 @@ export function WorkspaceStatusSwitch({
     isActive: boolean
     startTime: string | null
     endTime: string | null
+    scheduledDeletionAt?: Date | string | null
   }
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const scheduledForDeletion = Boolean(workspace.scheduledDeletionAt)
   const [isActive, setIsActive] = useState(workspace.isActive)
   const [schedule, setSchedule] = useState<Schedule>({
     startTime: workspace.startTime,
@@ -72,26 +74,30 @@ export function WorkspaceStatusSwitch({
     <Switch
       checked={isActive}
       className="absolute top-3 left-3 z-10"
-      disabled={!canManageStatus}
-      onCheckedChange={canManageStatus ? handleCheckedChange : undefined}
+      disabled={!canManageStatus || scheduledForDeletion}
+      onCheckedChange={
+        canManageStatus && !scheduledForDeletion
+          ? handleCheckedChange
+          : undefined
+      }
       onClick={(e) => e.stopPropagation()}
     />
   )
 
+  const disabledTooltip = scheduledForDeletion
+    ? t("workspace.deletion.navDisabledTooltip")
+    : t("workspace.schedule.permissionRequired")
+
   return (
     <>
-      {canManageStatus ? (
+      {canManageStatus && !scheduledForDeletion ? (
         switchElement
       ) : (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="absolute top-3 left-3 z-10 inline-flex">
-              {switchElement}
-            </span>
+            <span className="absolute z-10 inline-flex">{switchElement}</span>
           </TooltipTrigger>
-          <TooltipContent>
-            {t("workspace.schedule.permissionRequired")}
-          </TooltipContent>
+          <TooltipContent>{disabledTooltip}</TooltipContent>
         </Tooltip>
       )}
 

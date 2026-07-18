@@ -595,7 +595,9 @@
       "undone": "Đã hủy lịch xóa workspace",
       "bannerTitle": "Đã lên lịch xóa workspace",
       "bannerDescription": "Workspace này đã được lên lịch xóa. Hãy hoàn tác lịch xóa bên dưới để tiếp tục sử dụng workspace.",
-      "pendingBlockedToast": "Workspace này đã được lên lịch xóa. Hãy liên hệ quản trị viên workspace để khôi phục quyền truy cập."
+      "pendingBlockedToast": "Workspace này đã được lên lịch xóa. Hãy liên hệ quản trị viên workspace để khôi phục quyền truy cập.",
+      "navDisabledTooltip": "Không khả dụng khi workspace đã được lên lịch xóa",
+      "badge": "Đã lên lịch xóa"
     }
   },
   "workspaces": {
@@ -2866,6 +2868,7 @@
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
     "rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.",
     "title": "Web Chat",
+    "workspaceUnavailable": "Không gian làm việc này không còn khả dụng.",
     "unauthorizedDomain": {
       "description": "Trang web này không được phép tải tiện ích chat này.",
       "title": "Webchat không khả dụng"
@@ -3122,7 +3125,9 @@
   },
   "invitation": {
     "chatbotInvitationDescription1": "Tham gia {chatbotName}",
-    "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName}."
+    "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName}.",
+    "invalidInvitation": "Lời mời này không hợp lệ hoặc đã hết hạn.",
+    "workspaceUnavailable": "Không gian làm việc này không còn khả dụng."
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"

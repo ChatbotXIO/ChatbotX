@@ -52,6 +52,12 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       throw new ORPCError("UNAUTHORIZED")
     }
 
+    if (workspaceMember.workspace.scheduledDeletionAt) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Workspace deletion scheduled",
+      })
+    }
+
     return next({
       context: {
         workspace: workspaceMember.workspace,

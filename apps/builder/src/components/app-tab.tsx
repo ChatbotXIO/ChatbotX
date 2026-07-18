@@ -1,6 +1,11 @@
 "use client"
 
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import Link from "next/link"
 
 type AppTabProps = {
@@ -8,6 +13,8 @@ type AppTabProps = {
     label: string
     href: string
     isActive: boolean
+    disabled?: boolean
+    disabledTooltip?: string
   }[]
 }
 
@@ -15,15 +22,29 @@ export function AppTab({ tabs }: AppTabProps) {
   return (
     <Card className="py-0">
       <CardContent className="flex items-center gap-8 px-8">
-        {tabs.map((tab) => (
-          <Link
-            className={`border-b-2 py-6 text-sm ${tab.isActive ? "border-neutral-700 dark:border-white dark:text-gray-50" : "border-transparent font-medium text-gray-800 dark:text-gray-400"}`}
-            href={tab.href}
-            key={tab.href}
-          >
-            {tab.label}
-          </Link>
-        ))}
+        {tabs.map((tab) =>
+          tab.disabled ? (
+            <Tooltip key={tab.href}>
+              <TooltipTrigger asChild>
+                <span
+                  aria-disabled="true"
+                  className="cursor-not-allowed border-transparent border-b-2 py-6 font-medium text-gray-400 text-sm opacity-60 dark:text-gray-500"
+                >
+                  {tab.label}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{tab.disabledTooltip}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link
+              className={`border-b-2 py-6 text-sm ${tab.isActive ? "border-neutral-700 dark:border-white dark:text-gray-50" : "border-transparent font-medium text-gray-800 dark:text-gray-400"}`}
+              href={tab.href}
+              key={tab.href}
+            >
+              {tab.label}
+            </Link>
+          ),
+        )}
       </CardContent>
     </Card>
   )

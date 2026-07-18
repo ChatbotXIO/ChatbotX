@@ -8,6 +8,7 @@ import {
   type WorkspacePermissionKey,
 } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
 
 export async function requireWorkspacePermission(
   workspaceId: string,
@@ -23,6 +24,16 @@ export async function requireWorkspacePermission(
 
   if (!canAccess) {
     notFound()
+  }
+
+  if (userAndWorkspace) {
+    await enforceWorkspaceNotScheduledForDeletionFromRequest(
+      userAndWorkspace.targetWorkspace,
+      hasWorkspacePermission(
+        userAndWorkspace.targetWorkspaceMember.permissions,
+        "superAdmin",
+      ),
+    )
   }
 }
 

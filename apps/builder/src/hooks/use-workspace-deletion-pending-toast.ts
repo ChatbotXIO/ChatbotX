@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
-import { WORKSPACE_DELETION_PENDING_PARAM } from "@/lib/workspace/require-not-scheduled-for-deletion"
+import { WORKSPACE_DELETION_PENDING_PARAM } from "@/lib/workspace/deletion-pending-param"
 
 export function useWorkspaceDeletionPendingToast() {
   const t = useTranslations("workspace.deletion")

@@ -5,7 +5,13 @@ import { useMemo } from "react"
 import { AppTab } from "@/components/app-tab"
 import { useWorkspaceId } from "@/hooks/routing"
 
-export function SettingsTab() {
+const GENERAL_TAB_VALUE = "general"
+
+export function SettingsTab({
+  scheduledForDeletion = false,
+}: {
+  scheduledForDeletion?: boolean
+}) {
   const t = useTranslations()
   const pathname = usePathname()
 
@@ -52,6 +58,10 @@ export function SettingsTab() {
         label: tab.label,
         href: `/space/${workspaceId}/settings/${tab.value}`,
         isActive: activeTab === tab.value,
+        disabled: scheduledForDeletion && tab.value !== GENERAL_TAB_VALUE,
+        disabledTooltip: scheduledForDeletion
+          ? t("workspace.deletion.navDisabledTooltip")
+          : undefined,
       }))}
     />
   )

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
-
-export const WORKSPACE_DELETION_PENDING_PARAM = "workspaceDeletionPending"
+import { getOriginUrlFromHeader } from "@/lib/domain"
+import { WORKSPACE_DELETION_PENDING_PARAM } from "./deletion-pending-param"
 
 export function enforceWorkspaceNotScheduledForDeletion(
   workspace: { id: string; scheduledDeletionAt: Date | string | null },
@@ -21,4 +21,17 @@ export function enforceWorkspaceNotScheduledForDeletion(
   }
 
   redirect(settingsGeneralPath)
+}
+
+export async function enforceWorkspaceNotScheduledForDeletionFromRequest(
+  workspace: { id: string; scheduledDeletionAt: Date | string | null },
+  canManageDeletion: boolean,
+): Promise<void> {
+  const originUrl = await getOriginUrlFromHeader()
+  const pathname = originUrl ? new URL(originUrl).pathname : ""
+  enforceWorkspaceNotScheduledForDeletion(
+    workspace,
+    pathname,
+    canManageDeletion,
+  )
 }

@@ -26,6 +26,7 @@ import {
   conversationModel,
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
@@ -71,6 +72,18 @@ export async function handleCreateWebchatMessage({
 }: {
   parsedInput: CreateWebchatMessageRequest
 }) {
+  const workspace = await workspaceService.find({
+    where: { id: parsedInput.workspaceId },
+  })
+  if (workspace?.scheduledDeletionAt) {
+    const t = await getTranslations("webchat")
+    throw new ChatbotXException(
+      t("workspaceUnavailable"),
+      "workspaceScheduledDeletion",
+      403,
+    )
+  }
+
   const integrationWebchat = await findOrFail({
     table: integrationWebchatModel,
     where: {
@@ -124,7 +137,7 @@ export async function handleCreateWebchatMessage({
   }
 
   const { conversation, isNewContact, contact, contactInbox } =
-    await getConversationFromInput(parsedInput, integrationWebchat)
+    await getConversationFromInput(parsedInput, integrationWebchat, workspace)
 
   if (
     "init" in parsedInput &&
@@ -377,6 +390,7 @@ export async function handleCreateWebchatMessage({
 async function getConversationFromInput(
   parsedInput: CreateWebchatMessageRequest,
   integrationWebchat: typeof integrationWebchatModel.$inferSelect,
+  workspace: WorkspaceModel | undefined,
 ) {
   const sourceId = parsedInput.guestConversationId
 
@@ -420,9 +434,7 @@ async function getConversationFromInput(
   // `ContactActiveMonthly` presence row written inside the same transaction so
   // the later `message:received` event dedups instead of double-counting. The
   // info-only `contacts` metric is recorded inside `createNewContactWithMac`.
-  const ws = await workspaceService.find({
-    where: { id: parsedInput.workspaceId },
-  })
+  const ws = workspace
   if (!ws) {
     throw new ChatbotXException("Workspace not found", "notFound", 404)
   }

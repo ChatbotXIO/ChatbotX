@@ -595,7 +595,9 @@
       "undone": "Workspace deletion has been canceled",
       "bannerTitle": "Workspace deletion scheduled",
       "bannerDescription": "This workspace is scheduled for deletion. Undo the deletion below to continue using it.",
-      "pendingBlockedToast": "This workspace is scheduled for deletion. Contact a workspace admin to restore access."
+      "pendingBlockedToast": "This workspace is scheduled for deletion. Contact a workspace admin to restore access.",
+      "navDisabledTooltip": "Unavailable while workspace deletion is scheduled",
+      "badge": "Deletion scheduled"
     }
   },
   "workspaces": {
@@ -2850,6 +2852,7 @@
     "description": "Let your customers get instant automated responses from your business directly from your website",
     "rateLimitExceeded": "Too many requests. Please try again in a moment.",
     "title": "Web Chat",
+    "workspaceUnavailable": "This workspace is no longer available.",
     "unauthorizedDomain": {
       "description": "This website is not authorized to load this chat widget.",
       "title": "Webchat unavailable"
@@ -3106,7 +3109,9 @@
   },
   "invitation": {
     "chatbotInvitationDescription1": "Join {chatbotName}",
-    "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName}."
+    "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName}.",
+    "invalidInvitation": "This invitation is invalid or has expired.",
+    "workspaceUnavailable": "This workspace is no longer available."
   },
   "inboxTeams": {
     "title": "Inbox Teams"

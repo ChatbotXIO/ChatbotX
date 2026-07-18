@@ -1,9 +1,11 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { ReactNode } from "react"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
+import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
 
 export type WorkspaceNoSidebarLayoutProps = {
   params: Promise<{ workspaceId: string }>
@@ -29,6 +31,14 @@ export default async function WorkspaceNoSidebarLayout({
   }
 
   enforcePasswordCurrent(result.user)
+
+  await enforceWorkspaceNotScheduledForDeletionFromRequest(
+    result.targetWorkspace,
+    hasWorkspacePermission(
+      result.targetWorkspaceMember.permissions,
+      "superAdmin",
+    ),
+  )
 
   return children
 }
