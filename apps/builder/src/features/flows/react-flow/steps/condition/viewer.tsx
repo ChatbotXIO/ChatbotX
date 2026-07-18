@@ -1,9 +1,8 @@
 "use client"
 
 import type { ConditionStepSchema } from "@chatbotx.io/flow-config"
-import { Position } from "@xyflow/react"
 import { useTranslations } from "next-intl"
-import { BaseHandle } from "@/components/base-handle"
+import { StateHandle } from "../base/step-state-handles"
 
 type ConditionStepViewerProps = {
   data: ConditionStepSchema
@@ -13,38 +12,30 @@ const ConditionStepViewer = ({ data }: ConditionStepViewerProps) => {
   const t = useTranslations()
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col items-end gap-2">
       {data.cases.map((conditionCase, index) => (
-        <div
-          className="relative flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm"
+        <StateHandle
+          borderClass="border-green-500"
+          fillClass="bg-green-500"
           key={conditionCase.id}
-        >
-          <span className="font-medium">
-            {t("flows.condition.caseSummary", {
-              index: index + 1,
-              count: conditionCase.conditions.length,
-            })}
-          </span>
-          <BaseHandle
-            className="border-green-500!"
-            id={conditionCase.id}
-            onConnectedClassName="bg-green-500!"
-            position={Position.Right}
-            type="source"
-          />
-        </div>
+          label={
+            conditionCase.conditions.length > 0
+              ? t("flows.condition.caseSummary", {
+                  index: index + 1,
+                  count: conditionCase.conditions.length,
+                })
+              : ""
+          }
+          stateId={conditionCase.id}
+        />
       ))}
 
-      <div className="relative flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-destructive text-sm">
-        <span className="font-medium">{t("flows.condition.otherwise")}</span>
-        <BaseHandle
-          className="border-red-500!"
-          id={data.otherwiseId}
-          onConnectedClassName="bg-red-500!"
-          position={Position.Right}
-          type="source"
-        />
-      </div>
+      <StateHandle
+        borderClass="border-red-500"
+        fillClass="bg-red-500"
+        label={t("flows.condition.otherwise")}
+        stateId={data.otherwiseId}
+      />
     </div>
   )
 }
