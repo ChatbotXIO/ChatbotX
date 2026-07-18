@@ -2865,6 +2865,7 @@
     "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}"
   },
   "webchat": {
+    "chatUnavailable": "Cuộc trò chuyện này hiện không khả dụng.",
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
     "rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.",
     "title": "Web Chat",

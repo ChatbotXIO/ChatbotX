@@ -1,16 +1,16 @@
-import type { Metadata } from "next"
-import type { ReactNode } from "react"
-import "./globals.css"
-import "./themes.css"
 import { UiProvider } from "@chatbotx.io/ui"
-import Script from "next/script"
+import type { Metadata } from "next"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
+import type { ReactNode } from "react"
 import { PublicEnvScript } from "@/components/public-env-script"
+import { SupportChatScript } from "@/components/support-chat-script"
 import { env } from "@/env"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getDomainFromHeader } from "@/lib/domain"
+import "./globals.css"
+import "./themes.css"
 
 export async function generateMetadata(): Promise<Metadata> {
   const { name, faviconUrl } = await getTenantSettings()
@@ -50,9 +50,7 @@ export default async function RootLayout({ children }: Props) {
       <head>
         <PublicEnvScript />
         {isBuilderDomain && pancakeChatPageId && (
-          <Script
-            src={`https://chat-plugin.pancake.vn/main/auto?page_id=${encodeURIComponent(pancakeChatPageId)}&hide_supplier=true`}
-          />
+          <SupportChatScript pageId={pancakeChatPageId} />
         )}
       </head>
       <body
