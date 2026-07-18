@@ -1,1 +1,1 @@
-ALTER TYPE "ContactOnSmartDelayStatus" ADD VALUE 'scheduled' BEFORE 'completed';
+ALTER TYPE "ContactOnSmartDelayStatus" ADD VALUE IF NOT EXISTS 'scheduled' BEFORE 'completed';
