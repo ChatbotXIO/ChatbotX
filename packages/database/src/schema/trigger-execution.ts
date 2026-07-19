@@ -42,5 +42,9 @@ export const triggerExecutionModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    index("TriggerExecution_contactId_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast(),
+    ),
   ],
 )

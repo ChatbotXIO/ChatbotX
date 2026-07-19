@@ -144,6 +144,7 @@ export type InboxWithIntegrations = InboxModel & {
 
 export type ContactOnSmartDelayModel =
   typeof schema.contactOnSmartDelayModel.$inferSelect
+export type MessageCleanupModel = typeof schema.messageCleanupModel.$inferSelect
 export type AnalyticsContactEventModel =
   typeof schema.analyticsContactEventModel.$inferSelect
 export type AnalyticsBotMessageEventModel =

@@ -165,6 +165,9 @@ vi.mock("@chatbotx.io/business", () => ({
     isLimitReached: vi.fn().mockResolvedValue(false),
     increment: vi.fn().mockResolvedValue(undefined),
   },
+  messageCleanupService: {
+    cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

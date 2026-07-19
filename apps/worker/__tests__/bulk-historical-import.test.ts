@@ -109,6 +109,9 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     bulkUpdateTracking: mockBulkUpdateTracking,
   },
+  messageCleanupService: {
+    cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({ emit: mockEmit }))

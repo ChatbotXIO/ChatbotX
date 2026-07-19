@@ -47,6 +47,10 @@ vi.mock("../src/contact-custom-field/service", () => ({
 
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: { findByUncached: mocks.contactInboxFindByUncached },
+  getContactInboxSinceTime: (contactInbox: {
+    firstInteractionAt: Date | null
+    createdAt: Date
+  }) => contactInbox.firstInteractionAt ?? contactInbox.createdAt,
 }))
 
 vi.mock("../src/conversation/service", () => ({

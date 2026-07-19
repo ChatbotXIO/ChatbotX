@@ -70,5 +70,9 @@ export const aiConversationSourceModel = pgTable(
       "btree",
       table.messageId.asc().nullsLast(),
     ),
+    index("AIConversationSource_conversationId_idx").using(
+      "btree",
+      table.conversationId.asc().nullsLast(),
+    ),
   ],
 )
