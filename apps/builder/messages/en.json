@@ -87,6 +87,7 @@
     "getDraftLink": "Get Draft Link",
     "getPublishedLink": "Get Published Link",
     "getMessengerAdsJson": "Get JSON for Messenger Ads",
+    "getMessengerAdPayload": "Get payload for Messenger Ad",
     "ok": "OK",
     "analytics": "Analytics",
     "deleteAnalytics": "Delete Analytics",

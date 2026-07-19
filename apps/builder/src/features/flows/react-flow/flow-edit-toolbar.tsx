@@ -57,6 +57,7 @@ import {
 } from "../schemas/action"
 import AnalyticsFlow from "./components/analytics-flow"
 import { FlowVersionsDialog } from "./components/flow-versions-dialog"
+import { MessengerAdPayloadDialog } from "./components/messenger-ad-payload-dialog"
 import { MessengerAdsJsonDialog } from "./components/messenger-ads-json-dialog"
 import { RenameFlowDialog } from "./components/rename-flow"
 import {
@@ -93,6 +94,7 @@ export function FlowEditToolbar({
     | "getDraftLink"
     | "getPublishedLink"
     | "getMessengerAdsJson"
+    | "getMessengerAdPayload"
     | "analytics"
     | "flowVersions"
     | "delete"
@@ -322,6 +324,12 @@ export function FlowEditToolbar({
               <MegaphoneIcon />
               {t("actions.getMessengerAdsJson")}
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setAction("getMessengerAdPayload")}
+            >
+              <MegaphoneIcon />
+              {t("actions.getMessengerAdPayload")}
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -404,6 +412,12 @@ export function FlowEditToolbar({
         onOpenChange={() => setAction(null)}
         open={action === "getMessengerAdsJson"}
         workspaceId={workspaceId}
+      />
+
+      <MessengerAdPayloadDialog
+        flowId={flow.id}
+        onOpenChange={() => setAction(null)}
+        open={action === "getMessengerAdPayload"}
       />
 
       <FlowVersionsDialog

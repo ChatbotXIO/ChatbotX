@@ -5,12 +5,15 @@ import type {
   EdgeSchema,
   FlowNode,
 } from "@chatbotx.io/flow-config"
+import { SdkException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 
 // --- mocks ---
 
 const integrationQueueAdd = vi.fn(async () => undefined)
 const chatQueueAdd = vi.fn(async () => undefined)
+const detectConversationAndContactInbox = vi.fn()
+const detectFlowVersion = vi.fn()
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {
@@ -39,6 +42,10 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
 })
 vi.mock("../src/lib/logger", () => ({
   logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn() },
+}))
+vi.mock("../src/lib/db", () => ({
+  detectConversationAndContactInbox,
+  detectFlowVersion,
 }))
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn(async () => undefined),
@@ -128,6 +135,11 @@ describe("flow action decoding", () => {
   beforeEach(() => {
     integrationQueueAdd.mockClear()
     vi.mocked(logger.warn).mockClear()
+    detectConversationAndContactInbox.mockReset()
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: makeContactInbox(),
+    })
   })
 
   test("runFlowPostback skips undecodable action without enqueueing", async () => {
@@ -169,6 +181,152 @@ describe("flow action decoding", () => {
         action: "foreign-quick-reply",
       },
       "runFlowQuickReply: could not decode action payload, skipping",
+    )
+  })
+})
+
+describe("flow action channel gating (bare flow ID)", () => {
+  // 17-digit numeric snowflake ID, the bare payload a Messenger ad carries.
+  const BARE_FLOW_ID = "11612473309626368"
+
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+    vi.mocked(logger.warn).mockClear()
+    detectConversationAndContactInbox.mockReset()
+    detectFlowVersion.mockReset()
+  })
+
+  function mockChannel(channel: string) {
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: { ...makeContactInbox(), channel },
+    })
+  }
+
+  // A start node wired to a next node, so a successful bare-ID run is observable
+  // as a sendFlow enqueue for the next node.
+  function mockStartNodeFlow() {
+    const startNode: FlowNode = {
+      id: "start-node",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Start", isStartNode: true, details: { steps: [] } },
+    }
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "start-node",
+        sourceHandle: "start-node",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    detectFlowVersion.mockResolvedValue({
+      flowVersion: makeFlowVersion([startNode, nextNode], edges),
+      useLatestFlowVersion: true,
+    })
+  }
+
+  test("messenger bare flow ID postback runs the flow start node", async () => {
+    mockChannel("messenger")
+    mockStartNodeFlow()
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: BARE_FLOW_ID,
+      ref: null,
+    } as never)
+
+    expect(integrationQueueAdd).toHaveBeenCalled()
+    const [action, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(action).toBe("sendFlow")
+    expect(job.data.nodeId).toBe("node-2")
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      expect.anything(),
+      "runFlowPostback: could not decode action payload, skipping",
+    )
+  })
+
+  test("non-messenger bare flow ID postback is rejected, never reaching the flow", async () => {
+    mockChannel("webchat")
+    mockStartNodeFlow()
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: BARE_FLOW_ID,
+      ref: null,
+    } as never)
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(detectFlowVersion).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: BARE_FLOW_ID,
+      },
+      "runFlowPostback: could not decode action payload, skipping",
+    )
+  })
+
+  test("non-messenger bare flow ID quick reply is rejected", async () => {
+    mockChannel("webchat")
+    mockStartNodeFlow()
+
+    await runFlowQuickReply({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: BARE_FLOW_ID,
+      ref: null,
+    } as never)
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(detectFlowVersion).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: BARE_FLOW_ID,
+      },
+      "runFlowQuickReply: could not decode action payload, skipping",
+    )
+  })
+
+  test("messenger bare flow ID for a missing flow is a graceful skip, not a throw", async () => {
+    mockChannel("messenger")
+    detectFlowVersion.mockRejectedValue(
+      new SdkException("FlowVersion not found"),
+    )
+
+    await expect(
+      runFlowPostback({
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: BARE_FLOW_ID,
+        ref: null,
+      } as never),
+    ).resolves.toBeUndefined()
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: BARE_FLOW_ID,
+      },
+      "runFlowPostback: bare flow ID could not be resolved, skipping",
     )
   })
 })
