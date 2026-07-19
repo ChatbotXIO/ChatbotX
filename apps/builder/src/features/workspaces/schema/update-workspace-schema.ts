@@ -45,10 +45,18 @@ export const updateWorkspaceAdvancedRequest = z.object({
   timezone: z.enum(allTimezoneCodes as [string, ...string[]]),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   developmentMode: z.boolean(),
-  smartResponseDelaySeconds: smartResponseDelaySecondsSchema,
 })
 export type UpdateWorkspaceAdvancedRequest = z.infer<
   typeof updateWorkspaceAdvancedRequest
+>
+
+// Edited from the AI Agents list (per-agent dialog) but stored on the
+// workspace: the delay is shared by every agent in the workspace.
+export const updateSmartResponseDelayRequest = z.object({
+  smartResponseDelaySeconds: smartResponseDelaySecondsSchema,
+})
+export type UpdateSmartResponseDelayRequest = z.infer<
+  typeof updateSmartResponseDelayRequest
 >
 
 const timeFormat = z
