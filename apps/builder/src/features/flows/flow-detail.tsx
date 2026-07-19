@@ -2,6 +2,7 @@
 
 import { ReactFlowProvider } from "@xyflow/react"
 import { PlatformCredentialsStoreProvider } from "@/features/platform-credentials/provider/platform-credentials-store-context"
+import { QuestionnaireStoreProvider } from "@/features/questionnaires/provider/questionnaire-store-context"
 import { AIAgentStoreProvider } from "../ai-agents/provider/ai-agent-store-context"
 import { AIToolsStoreProvider } from "../ai-tools/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
@@ -47,28 +48,32 @@ export function FlowDetail({
           <WhatsappFlowStoreProvider workspaceId={flow.workspaceId}>
             <InboxStoreProvider workspaceId={flow.workspaceId}>
               <FlowStoreProvider workspaceId={flow.workspaceId}>
-                <TagStoreProvider workspaceId={flow.workspaceId}>
-                  <EmailTopicStoreProvider workspaceId={flow.workspaceId}>
-                    <UserStoreProvider workspaceId={flow.workspaceId}>
-                      <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
-                        <AIToolsStoreProvider workspaceId={flow.workspaceId}>
-                          <PlatformCredentialsStoreProvider>
-                            <AIAgentStoreProvider
-                              workspaceId={flow.workspaceId}
-                            >
-                              <ReactFlowFrame
-                                canRevertToPublished={canRevertToPublished}
-                                flow={flow}
-                                flowVersion={flowVersion}
-                                hasPublishedVersion={hasPublishedVersion}
-                              />
-                            </AIAgentStoreProvider>
-                          </PlatformCredentialsStoreProvider>
-                        </AIToolsStoreProvider>
-                      </CustomFieldStoreProvider>
-                    </UserStoreProvider>
-                  </EmailTopicStoreProvider>
-                </TagStoreProvider>
+                <QuestionnaireStoreProvider workspaceId={flow.workspaceId}>
+                  <TagStoreProvider workspaceId={flow.workspaceId}>
+                    <EmailTopicStoreProvider workspaceId={flow.workspaceId}>
+                      <UserStoreProvider workspaceId={flow.workspaceId}>
+                        <CustomFieldStoreProvider
+                          workspaceId={flow.workspaceId}
+                        >
+                          <AIToolsStoreProvider workspaceId={flow.workspaceId}>
+                            <PlatformCredentialsStoreProvider>
+                              <AIAgentStoreProvider
+                                workspaceId={flow.workspaceId}
+                              >
+                                <ReactFlowFrame
+                                  canRevertToPublished={canRevertToPublished}
+                                  flow={flow}
+                                  flowVersion={flowVersion}
+                                  hasPublishedVersion={hasPublishedVersion}
+                                />
+                              </AIAgentStoreProvider>
+                            </PlatformCredentialsStoreProvider>
+                          </AIToolsStoreProvider>
+                        </CustomFieldStoreProvider>
+                      </UserStoreProvider>
+                    </EmailTopicStoreProvider>
+                  </TagStoreProvider>
+                </QuestionnaireStoreProvider>
               </FlowStoreProvider>
             </InboxStoreProvider>
           </WhatsappFlowStoreProvider>

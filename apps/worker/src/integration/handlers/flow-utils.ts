@@ -35,6 +35,8 @@ export type ExecuteMultipleStepsProps = {
   quickReplies?: ButtonStepProps[]
   sendFrom?: "inbox"
   nodeVisits?: NodeVisits
+  triggerMessageId?: string
+  triggerMessageCreatedAt?: Date
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {

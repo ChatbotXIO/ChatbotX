@@ -12,6 +12,7 @@ import {
   CalculatorIcon,
   CircleCheckIcon,
   CircleEllipsisIcon,
+  ClipboardListIcon,
   CloudDownloadIcon,
   CodeIcon,
   CogIcon,
@@ -522,6 +523,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         stepType: stepTypes.enum.startExternalNode,
       },
     ],
+  },
+  {
+    label: t("flows.actions.questionnaires"),
+    icon: ClipboardListIcon,
+    stepType: stepTypes.enum.questionnaires,
   },
   {
     label: t("flows.actions.tools"),

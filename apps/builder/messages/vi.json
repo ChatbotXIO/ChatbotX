@@ -34,6 +34,7 @@
     "connect": "Kết nối",
     "continue": "Tiếp tục",
     "create": "Tạo",
+    "loading": "Đang tải...",
     "createFeature": "Tạo {feature}",
     "delete": "Xóa",
     "deleteContact": "Xóa liên hệ",
@@ -116,6 +117,8 @@
     "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
     "clickToEdit": "Nhấp để chỉnh sửa",
     "move": "Di chuyển",
+    "moveUp": "Di chuyển lên",
+    "moveDown": "Di chuyển xuống",
     "removeAssignee": "Xóa người được gán",
     "sendMail": "Gửi thư",
     "wait": "Chờ",
@@ -2013,6 +2016,7 @@
       "blockContact": "Chặn liên hệ",
       "broadcastActions": "Hành động phát sóng",
       "callApi": "Yêu cầu bên ngoài",
+      "questionnaires": "Bảng câu hỏi",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
       "condition": "Điều kiện",
@@ -3405,7 +3409,57 @@
   },
   "questionnaires": {
     "title": "Bảng câu hỏi",
-    "description": "Tạo và quản lý bảng câu hỏi cho các liên hệ của bạn."
+    "description": "Tạo và quản lý bảng câu hỏi cho các liên hệ của bạn.",
+    "singular": "Bảng câu hỏi",
+    "submission": "Bài nộp",
+    "addNew": "Thêm mới",
+    "applicants": "Ứng viên",
+    "generalSettings": "Cài đặt chung",
+    "triggerFlow": "Kích hoạt luồng khi hoàn thành bảng câu hỏi",
+    "enableScore": "Tính điểm cho từng câu trả lời.",
+    "enableRetryMessages": "Tùy chỉnh tin nhắn thử lại khi trả lời sai.",
+    "enableCustomFieldMapping": "Lưu dữ liệu vào trường tùy chỉnh.",
+    "question": "Câu hỏi",
+    "activeQuestion": "Bật",
+    "questionImage": "Hình ảnh câu hỏi",
+    "questionImageHint": "Hình ảnh tùy chọn được gửi kèm câu hỏi này.",
+    "responseType": "Kiểu trả lời",
+    "points": "Điểm",
+    "retryMessage": "Tin nhắn thử lại nếu câu trả lời không hợp lệ",
+    "defaultRetryMessage": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
+    "customField": "Lưu câu trả lời vào trường tùy chỉnh hoặc trường hệ thống",
+    "options": "Tùy chọn",
+    "mode": "Chế độ",
+    "completed": "Hoàn thành",
+    "completionRate": "Tỷ lệ hoàn thành",
+    "date": "Ngày",
+    "inbox": "Inbox",
+    "unknownContact": "Liên hệ không xác định",
+    "noAnswers": "Chưa có câu trả lời",
+    "responseTypes": {
+      "text": "Văn bản",
+      "number": "Số",
+      "email": "Email",
+      "phone": "Điện thoại",
+      "multipleChoice": "Trắc nghiệm"
+    },
+    "flowModes": {
+      "start": "Bắt đầu bảng câu hỏi",
+      "end": "Kết thúc bảng câu hỏi",
+      "deleteApplicant": "Xóa ứng viên"
+    },
+    "dialogDescriptions": {
+      "create": "Đặt tên bảng câu hỏi trước khi thêm câu hỏi.",
+      "rename": "Cập nhật tên bảng câu hỏi hiển thị trong danh sách và luồng.",
+      "flowStep": "Chọn cách bước luồng này tương tác với bảng câu hỏi."
+    },
+    "status": {
+      "inProgress": "Đang thực hiện",
+      "completed": "Hoàn thành",
+      "cancelled": "Đã hủy",
+      "failed": "Thất bại",
+      "timeout": "Hết hạn"
+    }
   },
   "facebookCommentAutomation": {
     "title": "Tự động hóa bình luận Facebook",

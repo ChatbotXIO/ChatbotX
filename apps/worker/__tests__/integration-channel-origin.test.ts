@@ -21,6 +21,31 @@ describe("isChannelOriginatedJob", () => {
     expect(isChannelOriginatedJob(jobData)).toBe(true)
   })
 
+  test("keeps questionnaire challenge replies in webhook context", () => {
+    const jobData = {
+      type: IntegrationJobAction.runChallenge,
+      data: {
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        messageId: "message-1",
+        messageCreatedAt: new Date("2026-01-02T00:00:00Z"),
+        challenge: {
+          type: "step",
+          data: {
+            flowId: "flow-1",
+            flowVersionId: "flow-version-1",
+            nodeId: "node-1",
+            stepId: "step-1",
+            attempts: 0,
+            lastAttemptAt: new Date("2026-01-02T00:00:00Z"),
+          },
+        },
+      },
+    } satisfies IntegrationJobData
+
+    expect(isChannelOriginatedJob(jobData)).toBe(true)
+  })
+
   test("allows sendFlow only when origin is channel", () => {
     const channelFlowJob = {
       type: IntegrationJobAction.sendFlow,

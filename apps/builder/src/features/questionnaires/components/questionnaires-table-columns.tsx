@@ -1,0 +1,133 @@
+"use client"
+
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
+import type { ColumnDef } from "@tanstack/react-table"
+import {
+  CopyPlusIcon,
+  EllipsisVerticalIcon,
+  ListChecksIcon,
+  TextIcon,
+  Trash2Icon,
+} from "lucide-react"
+import Link from "next/link"
+import type { useTranslations } from "next-intl"
+import type { Dispatch, SetStateAction } from "react"
+import type { QuestionnaireListItem } from "../schemas/resource"
+
+type Props = {
+  t: ReturnType<typeof useTranslations>
+  setRowAction: Dispatch<
+    SetStateAction<DataTableRowAction<QuestionnaireListItem> | null>
+  >
+}
+
+export function getQuestionnaireColumns({
+  t,
+  setRowAction,
+}: Props): ColumnDef<QuestionnaireListItem>[] {
+  return [
+    {
+      id: "name",
+      accessorKey: "name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
+      ),
+      cell: ({ row }) => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              className="inline-block max-w-[320px] truncate font-medium"
+              href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/edit`}
+            >
+              {row.original.name}
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>{row.original.name}</TooltipContent>
+        </Tooltip>
+      ),
+      meta: {
+        label: t("fields.name.label"),
+        placeholder: t("fields.name.searchPlaceholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
+      enableSorting: true,
+    },
+    {
+      id: "applicantsCount",
+      accessorKey: "applicantsCount",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("questionnaires.applicants")}
+        />
+      ),
+      cell: ({ row }) => row.original.applicantsCount,
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t("actions.actions")} />
+      ),
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label={t("actions.openMenu")}
+              className="size-8 p-0"
+              variant="ghost"
+            >
+              <EllipsisVerticalIcon className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/applicants`}
+              >
+                <ListChecksIcon />
+                {t("questionnaires.applicants")}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "rename" })}
+            >
+              <TextIcon />
+              {t("actions.rename")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "duplicate" })}
+            >
+              <CopyPlusIcon />
+              {t("actions.duplicate")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "delete" })}
+              variant="destructive"
+            >
+              <Trash2Icon />
+              {t("actions.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      size: 90,
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ]
+}

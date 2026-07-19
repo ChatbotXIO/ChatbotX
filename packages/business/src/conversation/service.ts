@@ -4,7 +4,9 @@ import {
   db,
   eq,
   inArray,
+  sql,
 } from "@chatbotx.io/database/client"
+import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
@@ -124,6 +126,33 @@ class ConversationService extends BaseService {
         sourceId: { isNull: true },
       },
     })
+  }
+
+  async updateChallenge(props: {
+    workspaceId: string
+    conversationId: string
+    challenge: ConversationAttributes["challenge"] | undefined
+  }): Promise<void> {
+    const additionalAttributes =
+      props.challenge === undefined
+        ? sql`${conversationModel.additionalAttributes} - 'challenge'`
+        : sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(props.challenge)}::jsonb, true)`
+
+    const [row] = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, props.conversationId),
+          eq(conversationModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ id: conversationModel.id })
+    if (!row) {
+      throw notFoundException("Conversation not found")
+    }
   }
 
   async findByContactWithInboxes(props: {

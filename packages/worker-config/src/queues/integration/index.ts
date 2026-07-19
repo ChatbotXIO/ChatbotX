@@ -199,6 +199,7 @@ export type IntegrationJobRunChallenge = {
     conversationId: string | ConversationModel
     contactInboxId: string | ContactInboxModel
     messageId?: string
+    messageCreatedAt?: Date
     challenge: {
       type: "step"
       data: {

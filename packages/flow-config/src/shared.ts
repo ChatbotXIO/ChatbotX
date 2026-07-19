@@ -36,6 +36,7 @@ import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { moosendCreateContactSchema } from "./steps/moosend-create-contact"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
+import { questionnairesStepSchema } from "./steps/questionnaires"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
 import { sendGridAddContactSchema } from "./steps/sendgrid-add-contact"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
@@ -78,6 +79,7 @@ const contactSteps = [
   setCustomFieldStepSchema,
   clearCustomFieldStepSchema,
   deleteContactStepSchema,
+  questionnairesStepSchema,
 ]
 
 const broadcastSteps = [

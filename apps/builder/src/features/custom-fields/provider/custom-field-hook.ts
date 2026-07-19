@@ -164,6 +164,7 @@ export const useCustomFieldSelectOptions = (
     prefix?: string
     customFieldValueKey?: "name"
     channels?: ChannelType[]
+    reservedFieldIds?: SystemFieldType[]
   } = {},
 ): SelectOption[] => {
   const {
@@ -172,6 +173,7 @@ export const useCustomFieldSelectOptions = (
     prefix,
     customFieldValueKey,
     channels,
+    reservedFieldIds,
   } = props
   const t = useTranslations()
 
@@ -206,7 +208,9 @@ export const useCustomFieldSelectOptions = (
       ? reservedCustomFieldOptions
           .filter(
             (field) =>
-              matchesType(field.type) &&
+              (reservedFieldIds
+                ? reservedFieldIds.includes(field.id)
+                : matchesType(field.type)) &&
               (!(field.channels && channels) ||
                 field.channels.some((channel) => channels.includes(channel))),
           )
@@ -227,6 +231,7 @@ export const useCustomFieldSelectOptions = (
     customFieldTypes,
     customFieldValueKey,
     channels,
+    reservedFieldIds,
     includeReserved,
     rawCustomFields,
     prefix,

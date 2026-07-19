@@ -49,6 +49,7 @@ export * from "./net"
 export * from "./platform"
 export * from "./platform-credential"
 export * from "./qr-code"
+export * from "./questionnaire"
 export * from "./quota-enforcement"
 // Shared quota key builders + the fail-closed live-counter parser, so the
 // reconcile workers read/write the same Redis keys the services use (single

@@ -161,6 +161,13 @@ export type ProductVariantOptionModel =
   typeof schema.productVariantOptionModel.$inferSelect
 export type ProductVariantModel = typeof schema.productVariantModel.$inferSelect
 export type ProductAddonModel = typeof schema.productAddonModel.$inferSelect
+export type QuestionnaireModel = typeof schema.questionnaireModel.$inferSelect
+export type QuestionnaireQuestionModel =
+  typeof schema.questionnaireQuestionModel.$inferSelect
+export type QuestionnaireSubmissionModel =
+  typeof schema.questionnaireSubmissionModel.$inferSelect
+export type QuestionnaireAnswerModel =
+  typeof schema.questionnaireAnswerModel.$inferSelect
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
 export type ContactActiveHourlyModel =
   typeof schema.contactActiveHourlyModel.$inferSelect

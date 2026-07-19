@@ -8,6 +8,7 @@ const CHANNEL_ORIGINATED_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.incomingComment,
   IntegrationJobAction.runFlowPostback,
   IntegrationJobAction.runFlowQuickReply,
+  IntegrationJobAction.runChallenge,
   IntegrationJobAction.runRef,
   IntegrationJobAction.processAutomatedResonse,
   IntegrationJobAction.channelLabelChange,
