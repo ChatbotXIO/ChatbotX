@@ -10,15 +10,12 @@ import { contactInboxModel, messageModel } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { contactInboxExists } from "./exists"
 import type { ContactWhere, RawTable, RelationExists } from "./types"
+import {
+  isValidDateTimeFilterValue,
+  NUMERIC_VALUE_PATTERN,
+} from "./value-format"
 
-const NUMERIC_VALUE_PATTERN = /^-?\d+(\.\d+)?$/
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/
-const DATETIME_VALUE_PATTERN =
-  "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])([T ]([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d(\\.\\d{1,6})?)?(Z|[+-]([01]\\d|2[0-3]):?[0-5]\\d)?)?$"
-const DATETIME_VALUE_RE = new RegExp(DATETIME_VALUE_PATTERN)
-
-const isValidDateTimeFilterValue = (value: string): boolean =>
-  DATETIME_VALUE_RE.test(value) && !Number.isNaN(Date.parse(value))
 
 const COLUMN_NEGATION_OPERATORS = new Set<string>([
   operatorTypes.enum.ne,
@@ -124,7 +121,12 @@ export function buildColumnWhere(
     return {}
   }
 
-  const condition = { [columnName]: applyOperator(operator, value) }
+  const operatorValue = applyOperator(operator, value)
+  if (operatorValue === undefined) {
+    return {}
+  }
+
+  const condition = { [columnName]: operatorValue }
   return COLUMN_NEGATION_OPERATORS.has(operator)
     ? { OR: [condition, { [columnName]: { isNull: true } }] }
     : condition
@@ -246,6 +248,35 @@ export function buildLatestContactInboxMinutesAgoWhere(
     value,
     buildMinutesAgoComparison,
   )
+}
+
+export function buildLatestContactInboxTextWhere(
+  column: AnyColumn,
+  operator: string,
+  value: unknown,
+): ContactWhere {
+  const latestValue = sql.raw('"latestInteraction"."latest"')
+  const comparison = buildTextValueComparison(operator, value, latestValue)
+  if (!comparison) {
+    return {}
+  }
+
+  return {
+    RAW: (table: RawTable): SQL => sql`EXISTS (
+      SELECT 1
+      FROM (
+        SELECT (
+          SELECT ${column}
+          FROM ${contactInboxModel}
+          WHERE ${contactInboxModel.contactId} = ${table.id}
+            AND ${contactInboxModel.lastIncomingMessageAt} IS NOT NULL
+          ORDER BY ${contactInboxModel.lastIncomingMessageAt} DESC
+          LIMIT 1
+        ) AS "latest"
+      ) AS "latestInteraction"
+      WHERE ${comparison}
+    )`,
+  }
 }
 
 export function buildMinutesAgoWhere(
@@ -707,6 +738,39 @@ function buildMinutesAgoComparison(
   }
 }
 
+function buildTextValueComparison(
+  operator: string,
+  value: unknown,
+  latestValue: SQL,
+): SQL | undefined {
+  const textExpression = sql`${latestValue}::text`
+
+  if (operator === operatorTypes.enum.isEmpty) {
+    return sql`(${latestValue} IS NULL OR ${textExpression} = '')`
+  }
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    return sql`(${latestValue} IS NOT NULL AND ${textExpression} <> '')`
+  }
+
+  if (typeof value !== "string" || value === "") {
+    return
+  }
+
+  if (operator === operatorTypes.enum.eq) {
+    return sql`${textExpression} ILIKE ${escapeLikePattern(value)}`
+  }
+  if (operator === operatorTypes.enum.ne) {
+    return sql`(${textExpression} NOT ILIKE ${escapeLikePattern(value)} OR ${latestValue} IS NULL)`
+  }
+
+  return buildTextSearchComparison(
+    operator,
+    value,
+    textExpression,
+    sql`${latestValue} IS NULL OR ${textExpression} = ''`,
+  )
+}
+
 function canBuildMinutesAgoComparison(
   operator: string,
   value: unknown,
@@ -863,6 +927,6 @@ function applyOperator(operator: string, value: unknown): unknown {
     case operatorTypes.enum.gte:
       return { gte: value }
     default:
-      return value
+      return
   }
 }

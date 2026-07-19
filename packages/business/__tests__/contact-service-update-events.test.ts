@@ -13,12 +13,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: {},
-  contactModel: { id: "Contact.id" },
-  conversationModel: {},
-  inboxModel: {},
-}))
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
+  return actual
+})
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn(),

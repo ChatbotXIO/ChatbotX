@@ -26,6 +26,7 @@ export type ContactFilterOptionSource =
   | "countries"
   | "continents"
   | "gender"
+  | "lastUserInputTypes"
   | "contactSources"
   | "channels"
   | "inboxes"
@@ -58,6 +59,11 @@ const conditionSchemaForDef = (def: ContactFilterFieldDefinition) =>
 export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   {
     field: contactFilterFields.enum.locale,
+    schemaKind: "multiSelect",
+    optionSource: "languages",
+  },
+  {
+    field: contactFilterFields.enum.language,
     schemaKind: "multiSelect",
     optionSource: "languages",
   },
@@ -165,6 +171,21 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.lastInteractionMinutesAgo,
     schemaKind: "number",
     optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastUserInput,
+    schemaKind: "text",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastComment,
+    schemaKind: "text",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastUserInputType,
+    schemaKind: "select",
+    optionSource: "lastUserInputTypes",
   },
   {
     field: contactFilterFields.enum.email,

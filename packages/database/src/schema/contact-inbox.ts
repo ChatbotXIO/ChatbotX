@@ -2,11 +2,13 @@ import {
   index,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
+import { lastUserInputTypes } from "../partials/message"
 import {
   bigintAsString,
   sharedColumns,
@@ -31,6 +33,11 @@ export type ContactInboxReferral = {
   flowId?: string | null
   raw?: Record<string, unknown>
 }
+
+export const lastUserInputTypeEnum = pgEnum(
+  "lastUserInputType",
+  lastUserInputTypes.options as [string, ...string[]],
+)
 
 export const contactInboxModel = pgTable(
   "ContactInbox",
@@ -69,6 +76,8 @@ export const contactInboxModel = pgTable(
     lastInputFailure: text(),
     lastErrorLog: text(),
     lastBtnTitle: text(),
+    lastUserInput: text(),
+    lastUserInputType: lastUserInputTypeEnum(),
     webchatParentUrl: text(),
   },
   (table) => [

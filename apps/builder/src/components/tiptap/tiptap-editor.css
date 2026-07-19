@@ -63,6 +63,25 @@
   white-space: pre-wrap;
 }
 
+/* Single-line variant for compact inputs (e.g. filter value fields). */
+/* Vertical centering via line-height (not flex) keeps the ProseMirror caret stable. */
+.tiptap.tiptap-plain-text-inline {
+  min-height: 2.25rem;
+  padding-right: 2.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+.tiptap.tiptap-plain-text-inline p {
+  margin: 0;
+  line-height: 1.625rem;
+}
+
+.tiptap.tiptap-plain-text-inline::-webkit-scrollbar {
+  height: 0;
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   float: left;
   height: 0;

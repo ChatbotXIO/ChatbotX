@@ -2,6 +2,7 @@ import type { Node } from "@xyflow/react"
 import { z } from "zod"
 import { addNotesNodeSchema } from "./add-notes"
 import { type NodeType, nodeTypeSchema } from "./base"
+import { conditionNodeSchema } from "./condition"
 import { followUpNodeSchema } from "./follow-up"
 import { landingPageNodeSchema } from "./landing-page"
 import { performActionNodeSchema } from "./perform-action"
@@ -15,6 +16,7 @@ export const flowVersionSchema = z.union([
   sendMessageNodeSchema,
   startFlowNodeSchema,
   performActionNodeSchema,
+  conditionNodeSchema,
   splitTrafficNodeSchema,
   waitNodeSchema,
   followUpNodeSchema,
@@ -37,4 +39,5 @@ export type FlowNode = Node<FlowVersionSchema["data"]>
 
 export const disabledContinueNodeTypes = [
   nodeTypeSchema.enum.splitTraffic,
+  nodeTypeSchema.enum.condition,
 ] as NodeType[]

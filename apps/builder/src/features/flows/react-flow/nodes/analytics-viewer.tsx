@@ -2,6 +2,7 @@
 
 import type { NodeResponse } from "@chatbotx.io/analytics/schemas"
 import {
+  disabledContinueNodeTypes,
   type FlowNode,
   type NodeType,
   nodeTypeSchema,
@@ -234,10 +235,12 @@ export const NodeAnalyticsViewer = memo((props: NodeAnalyticsViewerProps) => {
                 />
               ))}
 
-            <div className="relative w-full text-right">
-              <span className="mr-4">{t("actions.continue")}</span>
-              <BaseHandle id={id} position={Position.Right} type="source" />
-            </div>
+            {!disabledContinueNodeTypes.includes(type) && (
+              <div className="relative w-full text-right">
+                <span className="mr-4">{t("actions.continue")}</span>
+                <BaseHandle id={id} position={Position.Right} type="source" />
+              </div>
+            )}
           </CardContent>
         </FlowAnalyticsStoreProvider>
       </Card>

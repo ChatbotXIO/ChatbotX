@@ -177,6 +177,7 @@ describe("contact filter field config helpers", () => {
 
     expect(groupFor("fullName")).toBe("contactInfo")
     expect(groupFor("locale")).toBe("contactInfo")
+    expect(groupFor("language")).toBe("contactInfo")
     expect(groupFor("timezone")).toBe("contactInfo")
     expect(groupFor("tags")).toBe("analytics")
     expect(groupFor("lastSeen")).toBe("analytics")
@@ -190,6 +191,37 @@ describe("contact filter field config helpers", () => {
     expect(groupFor("email")).toBe("email")
     expect(groupFor("emailWasVerified")).toBe("email")
     expect(groupFor("optedInForEmail")).toBe("email")
+    expect(groupFor("lastComment")).toBe("facebookInstagramComment")
+  })
+
+  test("exposes backend-supported language and last comment filters", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    expect(configs).toContainEqual(
+      expect.objectContaining({
+        name: "language",
+        formField: formFieldTypes.enum.multiSelect,
+        group: "contactInfo",
+      }),
+    )
+    expect(
+      configs
+        .find((config) => config.name === "language")
+        ?.options?.map((option) => option.value),
+    ).toContain("vi_VN")
+    expect(configs).toContainEqual(
+      expect.objectContaining({
+        name: "lastComment",
+        formField: formFieldTypes.enum.text,
+        group: "facebookInstagramComment",
+      }),
+    )
   })
 
   test("offers phone, email and phone+email as hasContactInfo options with presence operators only", () => {

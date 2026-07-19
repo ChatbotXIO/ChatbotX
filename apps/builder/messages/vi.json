@@ -396,6 +396,9 @@
   "condition": {
     "yes": "Có",
     "no": "Không",
+    "valuePlaceholder": "...",
+    "datetimePlaceholder": "YYYY-MM-DD HH:mm",
+    "datetimeInvalid": "Nhập ngày dạng YYYY-MM-DD HH:mm hoặc một biến",
     "operator": {
       "and": "Tất cả điều kiện",
       "or": "Bất kỳ điều kiện nào"
@@ -496,7 +499,17 @@
       "archived": "Đã lưu trữ",
       "blocked": "Đã chặn",
       "noAdminReply": "Không có phản hồi quản trị viên",
-      "contactCreatedAt": "Ngày tạo liên hệ"
+      "contactCreatedAt": "Ngày tạo liên hệ",
+      "lastUserInputTypes": {
+        "text": "Văn bản",
+        "location": "Vị trí",
+        "refLink": "Liên kết ref",
+        "image": "Hình ảnh",
+        "video": "Video",
+        "audio": "Âm thanh",
+        "gif": "GIF",
+        "file": "Tệp"
+      }
     },
     "fieldGroups": {
       "opportunity": "Cơ hội",
@@ -1647,6 +1660,16 @@
     "lastInput": {
       "label": "Dữ liệu nhập cuối"
     },
+    "lastUserInputTypes": {
+      "text": "Văn bản",
+      "location": "Vị trí",
+      "refLink": "Liên kết giới thiệu",
+      "image": "Hình ảnh",
+      "video": "Video",
+      "audio": "Âm thanh",
+      "gif": "GIF",
+      "file": "Tệp"
+    },
     "lastMonth": {
       "label": "Tháng trước"
     },
@@ -1992,6 +2015,7 @@
       "callApi": "Yêu cầu bên ngoài",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
+      "condition": "Điều kiện",
       "contactActions": "Hành động liên hệ",
       "countCharacters": "Đếm ký tự",
       "deleteContact": "Xóa liên hệ",
@@ -2071,6 +2095,11 @@
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
       "addVariation": "Biến thể mới"
+    },
+    "condition": {
+      "addCase": "Kiểm tra điều kiện mới",
+      "caseTitle": "Trường hợp {index}",
+      "otherwise": "Người dùng không khớp các điều kiện này"
     },
     "whatsappOptionList": {
       "buttonLabel": "Nhãn nút",

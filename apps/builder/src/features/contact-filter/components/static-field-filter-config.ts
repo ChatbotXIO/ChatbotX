@@ -134,6 +134,7 @@ const dateRule = {
 
 const staticFieldRules: Record<string, StaticFieldRule> = {
   locale: dropdownRule,
+  language: relationSetRule,
   country: dropdownRule,
   continent: dropdownRule,
   gender: dropdownRule,

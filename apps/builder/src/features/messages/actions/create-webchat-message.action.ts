@@ -9,6 +9,7 @@ import {
   resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
+import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
 import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
@@ -275,6 +276,12 @@ export async function handleCreateWebchatMessage({
         contactLastReadAt: now,
         lastMessageAt: message.createdAt,
         lastIncomingMessageAt: message.createdAt,
+        ...resolveLastUserInputTracking({
+          contentType: message.contentType,
+          text: message.text,
+          attachments: message.attachments,
+          storageUrl,
+        }),
         ...(parsedInput.parentUrl && {
           webchatParentUrl: parsedInput.parentUrl,
         }),

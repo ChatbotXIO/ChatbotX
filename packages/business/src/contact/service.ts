@@ -11,6 +11,11 @@ import {
   channelTypes,
 } from "@chatbotx.io/database/partials"
 import {
+  buildContactWhere,
+  type ContactFilterCriteriaInput,
+  contactFilterHasPredicate,
+} from "@chatbotx.io/database/queries"
+import {
   contactInboxModel,
   contactModel,
   conversationModel,
@@ -130,6 +135,28 @@ class ContactService extends BaseService {
       throw notFoundException("Contact not found")
     }
     return contact
+  }
+
+  async matchesContactFilter(props: {
+    workspaceId: string
+    contactId: string
+    contactFilter: ContactFilterCriteriaInput
+  }): Promise<boolean> {
+    const { workspaceId, contactId, contactFilter } = props
+    if (
+      contactFilter.conditions.length > 0 &&
+      !contactFilterHasPredicate(contactFilter)
+    ) {
+      return false
+    }
+
+    const where = buildContactWhere({ workspaceId, contactFilter })
+    const match = await db.query.contactModel.findFirst({
+      columns: { id: true },
+      where: { ...where, id: contactId },
+    })
+
+    return Boolean(match)
   }
 
   // ─── Reads (NO cache — write-path only) ─────────────────────────────────

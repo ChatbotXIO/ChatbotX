@@ -73,6 +73,7 @@ const DATE_OPERATORS = [
 
 const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   locale: BASE_OPERATORS,
+  language: SET_OPERATORS,
   country: BASE_OPERATORS,
   continent: BASE_OPERATORS,
   gender: BASE_OPERATORS,
@@ -92,6 +93,12 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   lastSeenMinutesAgo: NUMBER_OPERATORS,
   lastInteractionMinutesAgo: NUMBER_OPERATORS,
   consecutiveAiFailures: NUMBER_OPERATORS,
+  lastUserInputType: [
+    operatorTypes.enum.eq,
+    operatorTypes.enum.ne,
+    operatorTypes.enum.isNotEmpty,
+    operatorTypes.enum.isEmpty,
+  ],
 
   subscribedToBroadcast: BOOLEAN_OPERATORS,
   interactedInLast24h: BOOLEAN_OPERATORS,
@@ -106,9 +113,11 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
 
   fullName: TEXT_FREE_OPERATORS,
+  lastComment: TEXT_FREE_OPERATORS,
   email: TEXT_FREE_OPERATORS,
   phone: TEXT_FREE_OPERATORS,
   hasContactInfo: PRESENCE_SET_OPERATORS,
+  lastUserInput: TEXT_FREE_OPERATORS,
   timezone: BASE_OPERATORS,
 
   contactCreatedAt: DATE_OPERATORS,

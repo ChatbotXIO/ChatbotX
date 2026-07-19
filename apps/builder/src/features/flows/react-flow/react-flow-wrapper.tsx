@@ -73,6 +73,7 @@ const viewerNodeTypes = {
   [nodeTypeSchema.enum.followUp]: NodeViewer,
   [nodeTypeSchema.enum.startFlow]: NodeViewer,
   [nodeTypeSchema.enum.splitTraffic]: NodeViewer,
+  [nodeTypeSchema.enum.condition]: NodeViewer,
 }
 
 const edgeTypes = {

@@ -92,6 +92,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     inboxId: "inboxId",
     lastIncomingMessageAt: "lastIncomingMessageAt",
     lastMessageAt: "lastMessageAt",
+    lastUserInput: "lastUserInput",
+    lastUserInputType: "lastUserInputType",
     referral: "referral",
     sourceId: "sourceId",
   },
@@ -382,6 +384,26 @@ describe("contactInboxService timestamp helpers", () => {
 
     expect(result).toBeNull()
     expect(mockDbUpdate).not.toHaveBeenCalled()
+  })
+
+  test("updateTracking guards last user input with the incoming timestamp", async () => {
+    const incomingAt = new Date("2026-07-09T07:43:30.676Z")
+
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: {
+        lastIncomingMessageAt: incomingAt,
+        lastUserInput: "hello",
+        lastUserInputType: "text",
+      },
+    })
+
+    const update = mockDbSet.mock.calls[0][0] as Record<string, unknown>
+    expect(update).toHaveProperty("lastIncomingMessageAt")
+    expect(update).toHaveProperty("lastUserInput")
+    expect(update).toHaveProperty("lastUserInputType")
   })
 
   test("updateTracking logs and returns null when workspace scope matches no row", async () => {

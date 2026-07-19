@@ -28,6 +28,7 @@ import {
   buildLatestContactInboxDateWhere,
   buildLatestContactInboxMinutesAgoWhere,
   buildLatestContactInboxNumberWhere,
+  buildLatestContactInboxTextWhere,
   buildMinutesAgoWhere,
   contactInboxInteractedWithin24hSQL as buildRecentInteractionPredicate,
 } from "./predicates"
@@ -54,9 +55,19 @@ export type {
   ContactFilterCriteriaInput,
   ContactWhereInput,
 } from "./types"
+export {
+  DATETIME_VALUE_PATTERN,
+  isValidDateTimeFilterValue,
+  NUMERIC_VALUE_PATTERN,
+  valueContainsVariablePlaceholder,
+} from "./value-format"
 
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
+
+export const contactFilterHasPredicate = (
+  criteria: FilterCriteriaInput,
+): boolean => hasWhereParts(applyContactFilter(criteria))
 
 const conversationExists = joinTableExists(
   conversationModel,
@@ -238,6 +249,10 @@ export const buildContactInboxContactFilterSQL = ({
     return sql`TRUE`
   }
 
+  if (!contactFilterHasPredicate(contactFilter)) {
+    return sql`FALSE`
+  }
+
   const contactWhere = buildContactWhere({
     workspaceId,
     contactFilter,
@@ -247,7 +262,7 @@ export const buildContactInboxContactFilterSQL = ({
     contactWhere as never,
   )
   if (!contactWhereSQL) {
-    return sql`TRUE`
+    return sql`FALSE`
   }
 
   return sql`${contactIdColumn} IN (SELECT ${contactModel.id} FROM ${contactModel} WHERE ${contactWhereSQL})`
@@ -332,6 +347,20 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
     case "lastInteractionMinutesAgo":
       return buildLatestContactInboxMinutesAgoWhere(
         contactInboxModel.lastIncomingMessageAt,
+        operator,
+        value,
+      )
+
+    case "lastUserInput":
+      return buildLatestContactInboxTextWhere(
+        contactInboxModel.lastUserInput,
+        operator,
+        value,
+      )
+
+    case "lastUserInputType":
+      return buildLatestContactInboxTextWhere(
+        contactInboxModel.lastUserInputType,
         operator,
         value,
       )

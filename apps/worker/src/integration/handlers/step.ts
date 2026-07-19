@@ -23,6 +23,7 @@ import { logger } from "../../lib/logger"
 import { waitForChatJobCompletion } from "../utils/message"
 import { syncActiveCampaignContact } from "./active-campaign-handler"
 import { handleAIAnalyzeImage } from "./analyze-image"
+import { handleCondition } from "./condition"
 import {
   addContactNotes,
   addContactSequence,
@@ -390,7 +391,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.followUp]: handleFollowUp,
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
-  [stepTypes.enum.filterContact]: undefined,
+  [stepTypes.enum.condition]: handleCondition,
   [stepTypes.enum.subscribeBroadcast]: subscribeBroadcast,
   [stepTypes.enum.unsubscribeBroadcast]: unsubscribeBroadcast,
   [stepTypes.enum.splitTraffic]: splitTraffic,

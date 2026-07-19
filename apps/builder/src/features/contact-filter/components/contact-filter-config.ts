@@ -12,6 +12,7 @@ import {
   contactSources,
   type FormFieldType,
   formFieldTypes,
+  lastUserInputTypes,
   type OperatorType,
   operatorTypes,
 } from "@chatbotx.io/database/partials"
@@ -229,6 +230,11 @@ const resolveContactFilterOptions = (
         { label: ctx.t("fields.gender.female"), value: "female" },
         { label: ctx.t("fields.gender.unknown"), value: "unknown" },
       ]
+    case "lastUserInputTypes":
+      return lastUserInputTypes.options.map((type) => ({
+        label: ctx.t(`fields.lastUserInputTypes.${type}`),
+        value: type,
+      }))
     case "contactSources":
       return getContactSourceOptions(ctx.t)
     case "channels":

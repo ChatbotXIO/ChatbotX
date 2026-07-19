@@ -23,6 +23,8 @@ export type PlainTextEditorFieldProps = {
   showEmojiPicker?: boolean
   channels?: ChannelType[]
   description?: string
+  /** Single-line layout with the variable picker inline (e.g. filter value inputs). */
+  inline?: boolean
 }
 
 export const PlainTextEditorField = ({
@@ -34,6 +36,7 @@ export const PlainTextEditorField = ({
   placeholder,
   channels,
   showEmojiPicker = true,
+  inline = false,
 }: PlainTextEditorFieldProps) => {
   const { control, getValues } = useFormContext()
 
@@ -64,6 +67,7 @@ export const PlainTextEditorField = ({
             <PlainTextTiptapEditor
               channels={channels}
               initValue={initValue}
+              inline={inline}
               onChange={field.onChange}
               placeholder={placeholder}
               showEmojiPicker={showEmojiPicker}

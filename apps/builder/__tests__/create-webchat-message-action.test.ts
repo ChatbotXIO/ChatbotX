@@ -409,6 +409,8 @@ describe("handleCreateWebchatMessage", () => {
         contactLastReadAt: messageInput.createdAt,
         lastMessageAt: messageInput.createdAt,
         lastIncomingMessageAt: messageInput.createdAt,
+        lastUserInput: "hello",
+        lastUserInputType: "text",
       },
     })
   })
