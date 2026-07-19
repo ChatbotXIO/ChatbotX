@@ -183,15 +183,16 @@ class TagService extends BaseService {
       return
     }
 
-    await tx
+    const newlyAttached = await tx
       .insert(contactsToTagsModel)
       .values(tags.map((tag) => ({ contactId, tagId: tag.id })))
       .onConflictDoNothing({
         target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
       })
+      .returning({ tagId: contactsToTagsModel.tagId })
 
-    for (const tag of tags) {
-      emitTagApplied(workspaceId, contactId, tag.id) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
+    for (const pair of newlyAttached) {
+      emitTagApplied(workspaceId, contactId, pair.tagId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
   }
@@ -353,7 +354,7 @@ class TagService extends BaseService {
       where: { id: contactId, workspaceId },
     })
 
-    await tx
+    const removed = await tx
       .delete(contactsToTagsModel)
       .where(
         and(
@@ -361,9 +362,10 @@ class TagService extends BaseService {
           inArray(contactsToTagsModel.tagId, tagIds),
         ),
       )
+      .returning({ tagId: contactsToTagsModel.tagId })
 
-    for (const tagId of tagIds) {
-      emitTagRemoved(workspaceId, contactId, tagId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
+    for (const pair of removed) {
+      emitTagRemoved(workspaceId, contactId, pair.tagId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
   }

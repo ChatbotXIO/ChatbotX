@@ -78,44 +78,61 @@ class ContactCustomFieldService extends BaseService {
       where: { contactId, customFieldId: { in: customFieldIds } },
     })
 
-    await tx.transaction(async (innerTx) => {
-      const matchedFields = customFields.flatMap((customField) => {
-        const field = fields.find((f) => f.customFieldId === customField.id)
-        return field ? [{ customField, field }] : []
-      })
+    const changedFields = customFields.flatMap((customField) => {
+      const field = fields.find((f) => f.customFieldId === customField.id)
+      if (!field) {
+        return []
+      }
+      const existing = existingValues.find(
+        (value) => value.customFieldId === customField.id,
+      )
+      if (existing?.value === field.value) {
+        return []
+      }
+      return [
+        { customField, field, existing, oldValue: existing?.value ?? null },
+      ]
+    })
 
+    if (changedFields.length === 0) {
+      return
+    }
+
+    await tx.transaction(async (innerTx) => {
       await Promise.all(
-        matchedFields.map(({ customField, field }) => {
-          const existing = existingValues.find(
-            (v) => v.customFieldId === customField.id,
-          )
+        changedFields.map(({ customField, field, existing }) => {
           if (existing) {
             return innerTx
               .update(contactCustomFieldModel)
               .set({ value: field.value })
               .where(eq(contactCustomFieldModel.id, existing.id))
           }
-          return innerTx.insert(contactCustomFieldModel).values({
-            id: createId(),
-            contactId,
-            customFieldId: customField.id,
-            value: field.value,
-          })
+          return innerTx
+            .insert(contactCustomFieldModel)
+            .values({
+              id: createId(),
+              contactId,
+              customFieldId: customField.id,
+              value: field.value,
+            })
+            .onConflictDoUpdate({
+              target: [
+                contactCustomFieldModel.contactId,
+                contactCustomFieldModel.customFieldId,
+              ],
+              set: { value: field.value },
+            })
         }),
       )
     })
 
-    for (const customField of customFields) {
-      const field = fields.find((f) => f.customFieldId === customField.id)
-      if (!field) {
-        continue
-      }
+    for (const { customField, field, oldValue } of changedFields) {
       emitCustomFieldChanged(
         workspaceId,
         contactId,
         customField.id,
         customField.name,
-        null,
+        oldValue,
         field.value,
         // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
       ).catch(() => {})

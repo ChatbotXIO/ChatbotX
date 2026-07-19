@@ -1,7 +1,11 @@
 "use server"
 
-import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import {
+  type ContactAccessScope,
+  contactCustomFieldService,
+  contactService,
+} from "@chatbotx.io/business"
+import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   customFieldModel,
@@ -37,6 +41,38 @@ export const addContactCustomFieldAction = workspaceActionClient
     })
   })
 
+const computeUpdatedFieldValue = ({
+  currentValue,
+  operation,
+  operationValue,
+}: {
+  currentValue: string
+  operation: FieldOperationType
+  operationValue: string
+}): string | null => {
+  switch (operation) {
+    case FieldOperationType.append:
+      return currentValue + operationValue
+    case FieldOperationType.prepend:
+      return operationValue + currentValue
+    case FieldOperationType.increase:
+    case FieldOperationType.decrease: {
+      const currentNumber = Number(currentValue)
+      const operationNumber = Number(operationValue)
+      if (Number.isNaN(currentNumber) || Number.isNaN(operationNumber)) {
+        return null
+      }
+      const updatedNumber =
+        operation === FieldOperationType.increase
+          ? currentNumber + operationNumber
+          : currentNumber - operationNumber
+      return String(updatedNumber)
+    }
+    default:
+      return operationValue
+  }
+}
+
 export const addContactCustomFields = async ({
   bindArgsParsedInputs: [workspaceId],
   parsedInput,
@@ -64,39 +100,42 @@ export const addContactCustomFields = async ({
     message: "Custom field not found",
   })
 
+  const changes: Array<{
+    contactId: string
+    oldValue: string | null
+    newValue: string
+  }> = []
+
   await db.transaction(async (tx) => {
     await Promise.all(
       contacts.map(async (contact) => {
-        const contactCustomField =
-          await tx.query.contactCustomFieldModel.findFirst({
-            where: {
-              contactId: contact.id,
-              customFieldId: customField.id,
-            },
-          })
+        const [contactCustomField] = await tx
+          .select()
+          .from(contactCustomFieldModel)
+          .where(
+            and(
+              eq(contactCustomFieldModel.contactId, contact.id),
+              eq(contactCustomFieldModel.customFieldId, customField.id),
+            ),
+          )
+          .for("update")
 
         if (contactCustomField) {
-          let value = ""
-          switch (parsedInput.operation) {
-            case FieldOperationType.append:
-              value = contactCustomField.value + String(parsedInput.value)
-              break
-            case FieldOperationType.prepend:
-              value = String(parsedInput.value) + contactCustomField.value
-              break
-            case FieldOperationType.increase:
-              value = String(
-                Number(contactCustomField.value) + Number(parsedInput.value),
-              )
-              break
-            case FieldOperationType.decrease:
-              value = String(
-                Number(contactCustomField.value) - Number(parsedInput.value),
-              )
-              break
-            default:
-              value = parsedInput.value as string
+          const value = computeUpdatedFieldValue({
+            currentValue: contactCustomField.value,
+            operation: parsedInput.operation,
+            operationValue: parsedInput.value,
+          })
+
+          if (value === null || value === contactCustomField.value) {
+            return
           }
+
+          changes.push({
+            contactId: contact.id,
+            oldValue: contactCustomField.value,
+            newValue: value,
+          })
 
           return tx
             .update(contactCustomFieldModel)
@@ -106,24 +145,39 @@ export const addContactCustomFields = async ({
             .where(eq(contactCustomFieldModel.id, contactCustomField.id))
         }
 
-        return tx.insert(contactCustomFieldModel).values({
+        changes.push({
           contactId: contact.id,
-          customFieldId: customField.id,
-          value: parsedInput.value as string,
-          id: createId(),
+          oldValue: null,
+          newValue: parsedInput.value,
         })
+
+        return tx
+          .insert(contactCustomFieldModel)
+          .values({
+            contactId: contact.id,
+            customFieldId: customField.id,
+            value: parsedInput.value,
+            id: createId(),
+          })
+          .onConflictDoUpdate({
+            target: [
+              contactCustomFieldModel.contactId,
+              contactCustomFieldModel.customFieldId,
+            ],
+            set: { value: parsedInput.value },
+          })
       }),
     )
   })
 
-  for (const contact of contacts) {
+  for (const change of changes) {
     await emitCustomFieldChanged(
       workspaceId,
-      contact.id,
+      change.contactId,
       customField.id,
       customField.name,
-      null,
-      parsedInput.value,
+      change.oldValue,
+      change.newValue,
     )
   }
 }
@@ -170,6 +224,10 @@ export const setContactCustomFieldValue = async ({
     },
   })
 
+  if (contactCustomField?.value === value) {
+    return
+  }
+
   if (contactCustomField) {
     await db
       .update(contactCustomFieldModel)
@@ -178,12 +236,21 @@ export const setContactCustomFieldValue = async ({
       })
       .where(eq(contactCustomFieldModel.id, contactCustomField.id))
   } else {
-    await db.insert(contactCustomFieldModel).values({
-      contactId,
-      customFieldId,
-      value,
-      id: createId(),
-    })
+    await db
+      .insert(contactCustomFieldModel)
+      .values({
+        contactId,
+        customFieldId,
+        value,
+        id: createId(),
+      })
+      .onConflictDoUpdate({
+        target: [
+          contactCustomFieldModel.contactId,
+          contactCustomFieldModel.customFieldId,
+        ],
+        set: { value },
+      })
   }
 
   await emitCustomFieldChanged(
@@ -191,7 +258,7 @@ export const setContactCustomFieldValue = async ({
     contactId,
     customField.id,
     customField.name,
-    null,
+    contactCustomField?.value ?? null,
     value,
   )
 }
@@ -213,62 +280,5 @@ export const setContactCustomFieldValues = async ({
     accessScope,
   })
 
-  const customFieldIds = fields.map((f) => f.customFieldId)
-
-  const customFields = await db.query.customFieldModel.findMany({
-    where: { workspaceId, id: { in: customFieldIds } },
-    columns: { id: true, name: true },
-  })
-
-  if (customFields.length === 0) {
-    return
-  }
-
-  const existingValues = await db.query.contactCustomFieldModel.findMany({
-    where: { contactId, customFieldId: { in: customFieldIds } },
-  })
-
-  await db.transaction(async (tx) => {
-    const matchedFields = customFields.flatMap((customField) => {
-      const field = fields.find((f) => f.customFieldId === customField.id)
-      return field ? [{ customField, field }] : []
-    })
-
-    await Promise.all(
-      matchedFields.map(({ customField, field }) => {
-        const existing = existingValues.find(
-          (v) => v.customFieldId === customField.id,
-        )
-
-        if (existing) {
-          return tx
-            .update(contactCustomFieldModel)
-            .set({ value: field.value })
-            .where(eq(contactCustomFieldModel.id, existing.id))
-        }
-
-        return tx.insert(contactCustomFieldModel).values({
-          id: createId(),
-          contactId,
-          customFieldId: customField.id,
-          value: field.value,
-        })
-      }),
-    )
-  })
-
-  for (const customField of customFields) {
-    const field = fields.find((f) => f.customFieldId === customField.id)
-    if (!field) {
-      continue
-    }
-    emitCustomFieldChanged(
-      workspaceId,
-      contactId,
-      customField.id,
-      customField.name,
-      null,
-      field.value,
-    )
-  }
+  await contactCustomFieldService.setValues({ workspaceId, contactId, fields })
 }
