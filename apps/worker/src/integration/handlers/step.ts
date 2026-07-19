@@ -62,6 +62,7 @@ import {
   setMessengerUserPersistentMenu,
 } from "./messenger-user-menu"
 import { addOrUpdateMoosendContact } from "./moosend-handler"
+import { questionnaires } from "./questionnaires"
 import { sendEmail } from "./send-email"
 import { addSendGridContact } from "./sendgrid-handler"
 import { scheduleSmartDelayResume } from "./smart-delay"
@@ -391,6 +392,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.followUp]: handleFollowUp,
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
+  [stepTypes.enum.questionnaires]: questionnaires,
   [stepTypes.enum.condition]: handleCondition,
   [stepTypes.enum.subscribeBroadcast]: subscribeBroadcast,
   [stepTypes.enum.unsubscribeBroadcast]: unsubscribeBroadcast,

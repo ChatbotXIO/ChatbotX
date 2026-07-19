@@ -34,6 +34,7 @@
     "connect": "Connect",
     "continue": "Continue",
     "create": "Create",
+    "loading": "Loading...",
     "createFeature": "Create {feature}",
     "delete": "Delete",
     "deleteContact": "Delete Contact",
@@ -117,6 +118,8 @@
     "unsetDefaultAgent": "Unset Default",
     "clickToEdit": "Click to edit",
     "move": "Move",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
     "removeAssignee": "Remove Assignee",
     "sendMail": "Send Mail",
     "wait": "Wait",
@@ -1999,6 +2002,7 @@
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
       "callApi": "External API Request",
+      "questionnaires": "Questionnaires",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "condition": "Condition",
@@ -3386,7 +3390,57 @@
   },
   "questionnaires": {
     "title": "Questionnaires",
-    "description": "Create and manage questionnaires for your contacts."
+    "description": "Create and manage questionnaires for your contacts.",
+    "singular": "Questionnaire",
+    "submission": "Submission",
+    "addNew": "Add New",
+    "applicants": "Applicants",
+    "generalSettings": "General settings",
+    "triggerFlow": "Trigger the flow by completing the questionnaire",
+    "enableScore": "Give points for each question answered.",
+    "enableRetryMessages": "Customize retry messages in case of reply failure.",
+    "enableCustomFieldMapping": "Save data to custom fields.",
+    "question": "Question",
+    "activeQuestion": "Active",
+    "questionImage": "Question image",
+    "questionImageHint": "Optional image sent with this question.",
+    "responseType": "Response Type",
+    "points": "Points",
+    "retryMessage": "Retry message if the reply is invalid",
+    "defaultRetryMessage": "What you've entered is not a valid text. Please try again",
+    "customField": "Save response to a custom or system field",
+    "options": "Options",
+    "mode": "Mode",
+    "completed": "Completed",
+    "completionRate": "Completion rate",
+    "date": "Date",
+    "inbox": "Inbox",
+    "unknownContact": "Unknown contact",
+    "noAnswers": "No answers",
+    "responseTypes": {
+      "text": "Text",
+      "number": "Number",
+      "email": "Email",
+      "phone": "Phone",
+      "multipleChoice": "Multiple choice"
+    },
+    "flowModes": {
+      "start": "Start questionnaire",
+      "end": "End questionnaire",
+      "deleteApplicant": "Delete applicant"
+    },
+    "dialogDescriptions": {
+      "create": "Name the questionnaire before adding questions.",
+      "rename": "Update the questionnaire name shown in lists and flows.",
+      "flowStep": "Choose how this flow step interacts with a questionnaire."
+    },
+    "status": {
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "timeout": "Timeout"
+    }
   },
   "facebookCommentAutomation": {
     "title": "Facebook Comment Automation",

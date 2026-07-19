@@ -105,6 +105,8 @@ type ExecuteStepsAndQuickRepliesProps = {
   metadata?: MetadataPayload
   sendFrom?: "inbox"
   nodeVisits?: NodeVisits
+  triggerMessageId?: string
+  triggerMessageCreatedAt?: Date
 }
 
 type FlowActionTarget =

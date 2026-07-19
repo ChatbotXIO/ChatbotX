@@ -72,6 +72,7 @@ const TOOLS_CONFIG = [
     labelKey: "questionnaires.title",
     descriptionKey: "questionnaires.description",
     icon: CircleQuestionMarkIcon,
+    getLink: (id: string) => `/space/${id}/questionnaires`,
   },
   {
     id: "ecommerce",

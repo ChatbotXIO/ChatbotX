@@ -1,6 +1,5 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { conversationService } from "@chatbotx.io/business"
-import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   defaultWorkerOptions,
@@ -43,6 +42,7 @@ import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { runWaitResume } from "./handlers/wait-resume"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
+import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
 
 async function startIntegrationWorker() {
@@ -75,35 +75,42 @@ async function startIntegrationWorker() {
               postbackAction || quickReplyAction
             )
 
-            // Check for active challenge (getUserData waiting for input)
-            if (
-              isNotPostbackOrQuickReply &&
-              message.text &&
-              message.senderType === "contact" &&
-              (await conversationService.ensureActive(conversation))
-            ) {
-              const additionalAttributes =
-                conversation.additionalAttributes as ConversationAttributes
+            const routing = await resolveIncomingTextRouting({
+              conversation,
+              isEligibleIncomingText: Boolean(
+                isNotPostbackOrQuickReply &&
+                  message.text &&
+                  message.senderType === "contact",
+              ),
+              isConversationActive: (conversation) =>
+                conversationService.ensureActive(conversation),
+            })
 
-              if (additionalAttributes?.challenge) {
-                await integrationQueue.add(IntegrationJobAction.runChallenge, {
+            if (routing.type === "challenge") {
+              await integrationQueue.add(
+                IntegrationJobAction.runChallenge,
+                {
                   type: IntegrationJobAction.runChallenge,
                   data: {
-                    conversationId: conversation,
+                    conversationId: routing.conversation.id,
                     contactInboxId: message.contactInboxId,
                     messageId: message.id,
-                    challenge: additionalAttributes.challenge,
+                    messageCreatedAt: message.createdAt,
+                    challenge: routing.challenge,
                   },
-                })
-              } else {
-                await automatedResponseService.enqueue({
-                  conversationId: conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  messageText: message.text,
-                  workspaceId: conversation.workspaceId,
-                })
-              }
+                },
+                {
+                  jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
+                },
+              )
+            } else if (routing.type === "automatedResponse") {
+              await automatedResponseService.enqueue({
+                conversationId: routing.conversation.id,
+                contactInboxId: message.contactInboxId,
+                messageId: message.id,
+                messageText: message.text ?? "",
+                workspaceId: routing.conversation.workspaceId,
+              })
             } else if (isNotPostbackOrQuickReply) {
               // Track no response for messages without content or not from contact
               // (postback/quickReply are tracked in their own handlers)

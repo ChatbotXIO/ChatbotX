@@ -46,6 +46,7 @@ import { moosendCreateContactStep } from "./moosend-create-contact"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
+import { questionnairesStep } from "./questionnaires"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCarouselStep } from "./send-carousel"
@@ -147,6 +148,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.subscribeSequence]: subscribeSequenceStep,
   [stepTypes.enum.unsubscribeSequence]: unsubscribeSequenceStep,
   [stepTypes.enum.chooseChannel]: chooseChannelStep,
+  [stepTypes.enum.questionnaires]: questionnairesStep,
   [stepTypes.enum.condition]: conditionStep,
   [stepTypes.enum.addNotes]: addNotesStep,
   [stepTypes.enum.waitUserReply]: undefined,

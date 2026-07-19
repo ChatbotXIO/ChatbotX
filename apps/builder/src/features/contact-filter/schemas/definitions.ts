@@ -243,6 +243,21 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "reflinks",
   },
   {
+    field: contactFilterFields.enum.questionnaireStarted,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.questionnaireInProgress,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.questionnaireFinished,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
     field: contactFilterFields.enum.conversationAssigned,
     schemaKind: "multiSelect",
     optionSource: "assignees",

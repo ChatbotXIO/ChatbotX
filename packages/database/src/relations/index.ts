@@ -86,6 +86,7 @@ import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
 import { productRelations } from "./product"
+import { questionnaireRelations } from "./questionnaire"
 import { reflinkRelations } from "./reflink"
 import { savedReplyRelations } from "./save-reply"
 import { sequenceRelations } from "./sequence"
@@ -214,6 +215,7 @@ export const relations = {
   ...analyticsSequenceEventRelations,
   ...analyticsFlowNodeEventRelations,
   ...productRelations,
+  ...questionnaireRelations,
   ...coexistSyncRunRelations,
   ...userPersistentMenuRelations,
 }

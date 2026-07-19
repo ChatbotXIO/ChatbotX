@@ -9,7 +9,13 @@ import {
 import { runStepsAndQuickReplies } from "./flow"
 
 export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
-  const { conversationId, contactInboxId, challenge, messageId } = data
+  const {
+    conversationId,
+    contactInboxId,
+    challenge,
+    messageId,
+    messageCreatedAt,
+  } = data
 
   if (challenge.type !== "step") {
     return
@@ -70,6 +76,8 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
       ctx: {
         variables,
       },
+      triggerMessageId: messageId,
+      triggerMessageCreatedAt: messageCreatedAt,
     })
 
     if (messageId) {
