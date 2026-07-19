@@ -87,6 +87,7 @@
     "getDraftLink": "Lấy liên kết bản nháp",
     "getPublishedLink": "Lấy liên kết đã xuất bản",
     "getMessengerAdsJson": "Lấy JSON cho Quảng cáo Messenger",
+    "getMessengerAdPayload": "Lấy payload cho Quảng cáo Messenger",
     "ok": "OK",
     "analytics": "Phân tích",
     "deleteAnalytics": "Xóa phân tích",

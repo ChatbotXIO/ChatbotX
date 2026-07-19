@@ -51,8 +51,27 @@ export const encodeButtonPayload = (props: ButtonPayload): string => {
   return parts.join(":")
 }
 
-export const decodeButtonPayload = (payload: string): ButtonPayload | null => {
+// Numeric snowflake ID (createId in @chatbotx.io/utils): every ID generated
+// since the 2004 epoch is at least 13 digits. Length alone is not enough — a
+// 19-digit string can exceed the signed bigint the flow ID column holds — so
+// also cap the value at the bigint maximum.
+const BARE_FLOW_ID_REGEX = /^\d{13,19}$/
+const MAX_SIGNED_BIGINT = 9223372036854775807n
+
+export const decodeButtonPayload = (
+  payload: string,
+  options?: { allowBareFlowId?: boolean },
+): ButtonPayload | null => {
   try {
+    // Bare numeric flow ID (Messenger ad payloads) — opt-in only, so every
+    // other call site keeps rejecting plain numbers.
+    if (
+      options?.allowBareFlowId &&
+      BARE_FLOW_ID_REGEX.test(payload) &&
+      BigInt(payload) <= MAX_SIGNED_BIGINT
+    ) {
+      return buttonPayloadSchema.parse({ f: payload })
+    }
     if (payload.includes(":")) {
       const [f, fv, b, br, ss, cid] = payload.split(":")
       return buttonPayloadSchema.parse({

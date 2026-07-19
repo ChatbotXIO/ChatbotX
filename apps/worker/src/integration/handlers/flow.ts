@@ -559,7 +559,19 @@ async function tryRunRichButtonFallback(props: {
 export async function runFlowPostback(
   data: IntegrationJobSendFlowPostback["data"],
 ) {
-  const parsedAction = decodeButtonPayload(data.action)
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId: data.conversationId,
+      contactInboxId: data.contactInboxId,
+    })
+
+  // Bare flow IDs (Messenger ad payloads) are only honored for Messenger
+  // conversations. The channel is read from the persisted contactInbox, not
+  // from the enqueuer, so no other channel (e.g. webchat) can trigger an
+  // arbitrary flow by posting a bare numeric ID.
+  const parsedAction = decodeButtonPayload(data.action, {
+    allowBareFlowId: contactInbox.channel === "messenger",
+  })
   if (!parsedAction) {
     logger.warn(
       createFlowActionWarningContext(data),
@@ -569,6 +581,25 @@ export async function runFlowPostback(
   }
 
   if (!parsedAction.buttonId) {
+    // A bare flow-ID payload (Messenger ad) can point at a since-deleted or
+    // unpublished flow. Resolve it first so a missing flow is a graceful skip
+    // rather than a thrown job that retries and dead-letters to no effect.
+    try {
+      await detectFlowVersion({
+        flowId: parsedAction.flowId,
+        flowVersionId: parsedAction.flowVersionId,
+        workspaceId: conversation.workspaceId,
+      })
+    } catch (error) {
+      if (error instanceof SdkException) {
+        logger.warn(
+          createFlowActionWarningContext(data),
+          "runFlowPostback: bare flow ID could not be resolved, skipping",
+        )
+        return
+      }
+      throw error
+    }
     await runFlowNode({
       conversationId: data.conversationId,
       contactInboxId: data.contactInboxId,
@@ -577,12 +608,6 @@ export async function runFlowPostback(
     })
     return
   }
-
-  const { conversation, contactInbox } =
-    await detectConversationAndContactInbox({
-      conversationId: data.conversationId,
-      contactInboxId: data.contactInboxId,
-    })
 
   if (parsedAction.buttonId) {
     const richButtonResult = await tryRunRichButtonFallback({
@@ -734,7 +759,19 @@ export async function runFlowPostback(
 export async function runFlowQuickReply(
   data: IntegrationJobSendFlowQuickReply["data"],
 ) {
-  const parsedAction = decodeButtonPayload(data.action)
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId: data.conversationId,
+      contactInboxId: data.contactInboxId,
+    })
+
+  // Bare flow IDs (Messenger ad payloads) are only honored for Messenger
+  // conversations. The channel is read from the persisted contactInbox, not
+  // from the enqueuer, so no other channel (e.g. webchat) can trigger an
+  // arbitrary flow by posting a bare numeric ID.
+  const parsedAction = decodeButtonPayload(data.action, {
+    allowBareFlowId: contactInbox.channel === "messenger",
+  })
   if (!parsedAction) {
     logger.warn(
       createFlowActionWarningContext(data),
@@ -743,11 +780,34 @@ export async function runFlowQuickReply(
     return
   }
 
-  const { conversation, contactInbox } =
-    await detectConversationAndContactInbox({
+  if (!parsedAction.buttonId) {
+    // A bare flow-ID payload (Messenger ad) can point at a since-deleted or
+    // unpublished flow. Resolve it first so a missing flow is a graceful skip
+    // rather than a thrown job that retries and dead-letters to no effect.
+    try {
+      await detectFlowVersion({
+        flowId: parsedAction.flowId,
+        flowVersionId: parsedAction.flowVersionId,
+        workspaceId: conversation.workspaceId,
+      })
+    } catch (error) {
+      if (error instanceof SdkException) {
+        logger.warn(
+          createFlowActionWarningContext(data),
+          "runFlowQuickReply: bare flow ID could not be resolved, skipping",
+        )
+        return
+      }
+      throw error
+    }
+    await runFlowNode({
       conversationId: data.conversationId,
       contactInboxId: data.contactInboxId,
+      flowId: parsedAction.flowId,
+      flowVersionId: parsedAction.flowVersionId,
     })
+    return
+  }
 
   if (parsedAction.buttonId) {
     const richButtonResult = await tryRunRichButtonFallback({

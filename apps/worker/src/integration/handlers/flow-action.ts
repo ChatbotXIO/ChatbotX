@@ -22,7 +22,10 @@ export const sanitizeFlowAction = (
     return null
   }
 
-  if (decodeButtonPayload(raw) !== null) {
+  // Messenger ads let users paste a bare flow ID as the postback/quick-reply
+  // payload, so only Messenger may treat plain numbers as flow actions.
+  const allowBareFlowId = context.integrationType === "messenger"
+  if (decodeButtonPayload(raw, { allowBareFlowId }) !== null) {
     return raw
   }
 
