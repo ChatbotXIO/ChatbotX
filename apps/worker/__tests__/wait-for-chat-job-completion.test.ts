@@ -1,7 +1,10 @@
+import { findOrFail } from "@chatbotx.io/database/client"
+import { chatQueue } from "@chatbotx.io/worker-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
   queueEvents: vi.fn(function QueueEvents() {
     return { close: vi.fn() }
   }),
@@ -26,10 +29,10 @@ vi.mock("bullmq", () => ({
   QueueEvents: mocks.queueEvents,
 }))
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: mocks.loggerError },
+  logger: { error: mocks.loggerError, warn: mocks.loggerWarn },
 }))
 
-const { waitForChatJobCompletion } = await import(
+const { waitForChatJobCompletion, sendMessageAndWait } = await import(
   "../src/integration/utils/message"
 )
 
@@ -38,12 +41,16 @@ describe("waitForChatJobCompletion", () => {
     vi.clearAllMocks()
   })
 
-  test("awaits job.waitUntilFinished for a job-like value", async () => {
+  test("awaits job.waitUntilFinished with a bounded timeout", async () => {
     const job = { waitUntilFinished: vi.fn(async () => "done") }
 
     await waitForChatJobCompletion(job as never)
 
     expect(job.waitUntilFinished).toHaveBeenCalledOnce()
+    // Second arg is the TTL that bounds the wait — the fix that stops a stalled
+    // chat worker from leaking a QueueEvents listener + closures until OOM.
+    const [, ttl] = job.waitUntilFinished.mock.calls[0]
+    expect(ttl).toBeGreaterThan(0)
     expect(mocks.queueEvents).toHaveBeenCalledOnce()
   })
 
@@ -55,7 +62,7 @@ describe("waitForChatJobCompletion", () => {
     expect(mocks.queueEvents).not.toHaveBeenCalled()
   })
 
-  test("swallows and logs a failed send", async () => {
+  test("swallows and logs a failed or timed-out wait", async () => {
     const err = new Error("send failed")
     const job = { waitUntilFinished: vi.fn(async () => Promise.reject(err)) }
     const context = { conversationId: "conv-1", stepId: "step-1" }
@@ -67,7 +74,39 @@ describe("waitForChatJobCompletion", () => {
     expect(mocks.loggerError).toHaveBeenCalledOnce()
     expect(mocks.loggerError).toHaveBeenCalledWith(
       { ...context, err },
-      "Flow message chat job failed; continuing flow",
+      "Chat job did not complete in time or failed; continuing flow",
     )
+  })
+})
+
+describe("sendMessageAndWait", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(findOrFail).mockResolvedValue({ id: "conv-1" } as never)
+  })
+
+  test("does not throw when the chat job wait rejects (avoids job retry / double send)", async () => {
+    const err = new Error("wait timed out")
+    vi.mocked(chatQueue.add).mockResolvedValue({
+      waitUntilFinished: vi.fn(async () => Promise.reject(err)),
+    } as never)
+
+    await expect(sendMessageAndWait("conv-1", "hello")).resolves.toBeUndefined()
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { conversationId: "conv-1", err },
+      "Chat job did not complete in time or failed; continuing flow",
+    )
+  })
+
+  test("awaits the enqueued job with a bounded timeout", async () => {
+    const waitUntilFinished = vi.fn(async () => "done")
+    vi.mocked(chatQueue.add).mockResolvedValue({ waitUntilFinished } as never)
+
+    await sendMessageAndWait("conv-1", "hello")
+
+    expect(waitUntilFinished).toHaveBeenCalledOnce()
+    const [, ttl] = waitUntilFinished.mock.calls[0]
+    expect(ttl).toBeGreaterThan(0)
   })
 })

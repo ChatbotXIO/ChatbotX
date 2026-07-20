@@ -361,6 +361,105 @@ export class ShardedMessageRepository implements IMessageRepository {
     })
   }
 
+  /**
+   * Idempotent insert used by the create-or-update paths. Mirrors {@link create}
+   * but tolerates a concurrent/duplicate write: the Messenger echo webhook (and
+   * its retries) can deliver the same message twice, and the dedup unique index
+   * `Message_source_dedup_idx` (contactInboxId, sourceId, createdAt) would
+   * otherwise make the second INSERT throw. On conflict this returns `null`
+   * instead of throwing so the caller can re-fetch the existing row.
+   */
+  private insertIgnoringConflict(
+    message: CreateMessageInput,
+  ): Promise<MessageModel | null> {
+    return withShardRetry(async () => {
+      const db = await this.shardManager.getShardForWrite(message.workspaceId)
+      const [result] = await db
+        .insert(messageModel)
+        .values(message as typeof messageModel.$inferInsert)
+        .onConflictDoNothing({
+          target: [
+            messageModel.contactInboxId,
+            messageModel.sourceId,
+            messageModel.createdAt,
+          ],
+        })
+        .returning()
+      return (result as MessageModel) ?? null
+    })
+  }
+
+  /**
+   * Log a message-save failure with the underlying Postgres cause surfaced.
+   * Drizzle wraps the driver error ("Failed query: insert into Message ...") and
+   * hides the real reason in `error.cause`; extracting `code`/`constraint`/
+   * `detail` here distinguishes a unique-violation (23505, handled by the dedup
+   * safety net) from a TimescaleDB decompression failure (needs a config fix).
+   */
+  private logSaveFailure(
+    action: string,
+    message: CreateMessageInput,
+    error: unknown,
+  ): void {
+    const rawCause =
+      error instanceof Error && error.cause instanceof Error
+        ? (error.cause as Error & {
+            code?: unknown
+            constraint?: unknown
+            detail?: unknown
+            table?: unknown
+          })
+        : undefined
+    const cause = rawCause
+      ? {
+          message: rawCause.message,
+          code: rawCause.code,
+          constraint: rawCause.constraint,
+          detail: rawCause.detail,
+          table: rawCause.table,
+        }
+      : undefined
+    logger.error(
+      {
+        err: error,
+        cause,
+        action,
+        conversationId: message.conversationId,
+        sourceId: message.sourceId,
+        workspaceId: message.workspaceId,
+      },
+      `Failed to save incoming message via ${action}`,
+    )
+  }
+
+  /**
+   * Read the row a dedup conflict proved exists directly from the write shard
+   * (primary). findBySourceId reads replicas, which can still lag right after a
+   * concurrent insert; the write shard is authoritative. Scoped to the same
+   * (contactInboxId, sourceId, createdAt) the unique index rejected — createdAt
+   * is always set on the conflict path (a conflict on that key requires it).
+   */
+  private async findOnWriteShardBySource(
+    message: CreateMessageInput,
+  ): Promise<MessageModel | null> {
+    if (!(message.sourceId && message.createdAt)) {
+      return null
+    }
+    const db = await this.shardManager.getShardForWrite(message.workspaceId)
+    const [row] = await db
+      .select()
+      .from(messageModel)
+      .where(
+        and(
+          eq(messageModel.contactInboxId, message.contactInboxId),
+          eq(messageModel.sourceId, message.sourceId),
+          eq(messageModel.createdAt, message.createdAt),
+        ),
+      )
+      .limit(1)
+    return (row as MessageModel) ?? null
+  }
+
   async bulkCreate(
     messages: CreateMessageInput[],
   ): Promise<{ id: string; sourceId: string | null }[]> {
@@ -929,8 +1028,55 @@ export class ShardedMessageRepository implements IMessageRepository {
         if (existing) {
           return { message: existing, isNew: false }
         }
-        const created = await this.create(message)
-        return { message: created, isNew: true }
+
+        // Only a genuine DB error (e.g. TimescaleDB decompression, connection
+        // loss) should throw here; a dedup conflict is a normal, expected
+        // outcome handled below — not an error.
+        let created: MessageModel | null
+        try {
+          created = await this.insertIgnoringConflict(message)
+        } catch (error) {
+          this.logSaveFailure("createOrUpdate", message, error)
+          throw error
+        }
+        if (created) {
+          return { message: created, isNew: true }
+        }
+
+        // Conflict: the dedup index already holds this message (echo redelivery,
+        // or read-replica lag on the guard read above). Idempotent no-op — log
+        // at info and return the existing row instead of throwing. Try a replica
+        // read first; if it still lags, read the write shard (primary), which is
+        // guaranteed to see the row the conflict proved exists.
+        const raced =
+          (await this.findBySourceId(
+            message.sourceId as string,
+            message.conversationId,
+            message.workspaceId,
+            message.createdAt,
+          )) ?? (await this.findOnWriteShardBySource(message))
+        logger.info(
+          {
+            conversationId: message.conversationId,
+            sourceId: message.sourceId,
+            workspaceId: message.workspaceId,
+          },
+          "Duplicate message skipped (dedup conflict)",
+        )
+        if (raced) {
+          return { message: raced, isNew: false }
+        }
+        // Unreachable in practice (the primary must see a committed conflicting
+        // row). Non-throwing best-effort so the flow still advances in order.
+        logger.warn(
+          {
+            conversationId: message.conversationId,
+            sourceId: message.sourceId,
+            workspaceId: message.workspaceId,
+          },
+          "Dedup conflict but row unreadable even on the write shard",
+        )
+        return { message: message as unknown as MessageModel, isNew: false }
       }
 
       return this.executeWithLock(lockKey, doCreateOrUpdate)
@@ -946,9 +1092,20 @@ export class ShardedMessageRepository implements IMessageRepository {
       "messageId" | "messageCreatedAt"
     >[],
   ): Promise<MessageWithAttachments> {
-    return withShardRetry(() =>
-      this.createWithAttachmentsInternal(message, attachments),
-    )
+    return withShardRetry(async () => {
+      // Plain create path: no ignoreConflict, so a real duplicate throws rather
+      // than returning null. A null here would be unexpected.
+      const created = await this.createWithAttachmentsInternal(
+        message,
+        attachments,
+      )
+      if (!created) {
+        throw new MessageShardUnavailableError(
+          "createWithAttachments: insert returned no row",
+        )
+      }
+      return created
+    })
   }
 
   private async createWithAttachmentsInternal(
@@ -957,14 +1114,38 @@ export class ShardedMessageRepository implements IMessageRepository {
       CreateAttachmentInput,
       "messageId" | "messageCreatedAt"
     >[],
-  ): Promise<MessageWithAttachments> {
+    options?: { ignoreConflict?: boolean },
+  ): Promise<MessageWithAttachments | null> {
     const db = await this.shardManager.getShardForWrite(message.workspaceId)
 
     return db.transaction(async (tx) => {
-      const [newMessage] = await tx
-        .insert(messageModel)
-        .values(message as typeof messageModel.$inferInsert)
-        .returning()
+      // When ignoreConflict is set (create-or-update path), a duplicate row must
+      // not throw — the dedup index rejects it and we return null so the caller
+      // re-fetches. Without it (plain create path), a duplicate throws as before.
+      const rows = options?.ignoreConflict
+        ? await tx
+            .insert(messageModel)
+            .values(message as typeof messageModel.$inferInsert)
+            .onConflictDoNothing({
+              target: [
+                messageModel.contactInboxId,
+                messageModel.sourceId,
+                messageModel.createdAt,
+              ],
+            })
+            .returning()
+        : await tx
+            .insert(messageModel)
+            .values(message as typeof messageModel.$inferInsert)
+            .returning()
+      const [newMessage] = rows
+
+      if (!newMessage) {
+        // Conflict under ignoreConflict: an equivalent message already exists.
+        // Skip attachment inserts (they would reference a nonexistent message id)
+        // and signal the conflict to the caller.
+        return null
+      }
 
       let messageAttachments: AttachmentModel[] = []
 
@@ -1000,38 +1181,113 @@ export class ShardedMessageRepository implements IMessageRepository {
         message.sourceId,
       )
 
-      const doCreateOrUpdate = async (): Promise<{
+      const buildExistingResult = async (
+        existing: MessageModel,
+      ): Promise<{ result: MessageWithAttachments; isNew: false }> => {
+        const existingWithAttachments = await this.findById({
+          id: existing.id,
+          createdAt: existing.createdAt,
+          workspaceId: message.workspaceId,
+        })
+        return {
+          result: existingWithAttachments ?? { ...existing, attachments: [] },
+          isNew: false,
+        }
+      }
+
+      const resolveExisting = async (): Promise<{
         result: MessageWithAttachments
         isNew: boolean
-      }> => {
+      } | null> => {
         const existing = await this.findBySourceId(
           message.sourceId as string,
           message.conversationId,
           message.workspaceId,
           message.createdAt,
         )
+        return existing ? await buildExistingResult(existing) : null
+      }
+
+      const doCreateOrUpdate = async (): Promise<{
+        result: MessageWithAttachments
+        isNew: boolean
+      }> => {
+        const existing = await resolveExisting()
         if (existing) {
-          const existingWithAttachments = await this.findById({
-            id: existing.id,
-            createdAt: existing.createdAt,
-            workspaceId: message.workspaceId,
-          })
-          return {
-            result: existingWithAttachments ?? { ...existing, attachments: [] },
-            isNew: false,
-          }
+          return existing
         }
-        const created = await withShardRetry(() =>
-          this.createWithAttachmentsInternal(message, attachments),
+
+        // Only a genuine DB error should throw; a dedup conflict is expected and
+        // handled below as an idempotent no-op.
+        let created: MessageWithAttachments | null
+        try {
+          created = await withShardRetry(() =>
+            this.createWithAttachmentsInternal(message, attachments, {
+              ignoreConflict: true,
+            }),
+          )
+        } catch (error) {
+          this.logSaveFailure("createOrUpdateWithAttachments", message, error)
+          throw error
+        }
+        if (created) {
+          return { result: created, isNew: true }
+        }
+
+        // Conflict: idempotent no-op. Re-read via replica, then the write shard
+        // (primary) which is guaranteed to see the conflicting row.
+        const racedBase =
+          (await this.findBySourceId(
+            message.sourceId as string,
+            message.conversationId,
+            message.workspaceId,
+            message.createdAt,
+          )) ?? (await this.findOnWriteShardBySource(message))
+        logger.info(
+          {
+            conversationId: message.conversationId,
+            sourceId: message.sourceId,
+            workspaceId: message.workspaceId,
+          },
+          "Duplicate message skipped (dedup conflict)",
         )
-        return { result: created, isNew: true }
+        if (racedBase) {
+          return await buildExistingResult(racedBase)
+        }
+        // Unreachable in practice. Non-throwing best-effort.
+        logger.warn(
+          {
+            conversationId: message.conversationId,
+            sourceId: message.sourceId,
+            workspaceId: message.workspaceId,
+          },
+          "Dedup conflict but row unreadable even on the write shard",
+        )
+        return {
+          result: {
+            ...(message as unknown as MessageModel),
+            attachments: [],
+          } as MessageWithAttachments,
+          isNew: false,
+        }
       }
 
       return this.executeWithLock(lockKey, doCreateOrUpdate)
     }
-    const created = await withShardRetry(() =>
-      this.createWithAttachmentsInternal(message, attachments),
-    )
+    // No sourceId to dedup on: plain create path, no ignoreConflict, so a real
+    // duplicate throws rather than returning null.
+    const created = await withShardRetry(async () => {
+      const result = await this.createWithAttachmentsInternal(
+        message,
+        attachments,
+      )
+      if (!result) {
+        throw new MessageShardUnavailableError(
+          "createOrUpdateWithAttachments: insert returned no row",
+        )
+      }
+      return result
+    })
     return { result: created, isNew: true }
   }
 

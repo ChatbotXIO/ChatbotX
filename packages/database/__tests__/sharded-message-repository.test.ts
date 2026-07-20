@@ -1306,3 +1306,171 @@ describe("ShardedMessageRepository.findAIContextMessages", () => {
     )
   })
 })
+
+// ---------------------------------------------------------------------------
+// createOrUpdate / createOrUpdateWithAttachments — idempotent echo save
+//
+// Regression: the Messenger echo webhook (and its retries) delivers the same
+// outgoing message twice. The dedup unique index Message_source_dedup_idx
+// (contactInboxId, sourceId, createdAt) made the second bare INSERT throw
+// ("Failed query: insert into Message ..."). The create-or-update paths now use
+// ON CONFLICT DO NOTHING and re-fetch the existing row instead of throwing.
+// ---------------------------------------------------------------------------
+
+const passthroughLock = {
+  runExclusive: ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+}
+
+const existingRow = {
+  id: "existing-1",
+  conversationId: "conv-1",
+  contactInboxId: "ci-1",
+  workspaceId: "ws-1",
+  sourceId: "src-1",
+  createdAt: new Date("2026-01-01T00:00:00Z"),
+}
+
+function makeInsertShardDb(
+  returningRows: unknown[],
+  writeShardRows: unknown[] = [],
+) {
+  const chain = {
+    values: vi.fn().mockReturnThis(),
+    onConflictDoNothing: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue(returningRows),
+  }
+  const insert = vi.fn().mockReturnValue(chain)
+  // findOnWriteShardBySource: db.select().from().where().limit()
+  const selectChain = {
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue(writeShardRows),
+  }
+  const select = vi.fn().mockReturnValue(selectChain)
+  return { insert, chain, select, selectChain }
+}
+
+describe("ShardedMessageRepository.createOrUpdate — idempotent echo save", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("inserts a new message and returns isNew=true", async () => {
+    const insertedRow = { ...existingRow, id: "new-1" }
+    const shardDb = makeInsertShardDb([insertedRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdate(makeMessage())
+
+    expect(result.isNew).toBe(true)
+    expect(result.message).toEqual(insertedRow)
+    expect(shardDb.chain.onConflictDoNothing).toHaveBeenCalledTimes(1)
+  })
+
+  test("duplicate echo (insert conflict) returns the existing row, isNew=false, without throwing", async () => {
+    const shardDb = makeInsertShardDb([]) // ON CONFLICT DO NOTHING → no row back
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    const findSpy = vi
+      .spyOn(repo, "findBySourceId")
+      .mockResolvedValueOnce(null) // guard read misses (replica lag)
+      .mockResolvedValueOnce(existingRow as never) // re-fetch after conflict finds it
+
+    const result = await repo.createOrUpdate(makeMessage())
+
+    expect(result.isNew).toBe(false)
+    expect(result.message).toEqual(existingRow)
+    expect(shardDb.insert).toHaveBeenCalledTimes(1)
+    expect(findSpy).toHaveBeenCalledTimes(2)
+  })
+
+  test("conflict where the replica lags is resolved from the write shard (primary)", async () => {
+    // insert conflict → replica read (findBySourceId) misses → primary read wins.
+    const shardDb = makeInsertShardDb([], [existingRow])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null) // replica lags
+
+    const result = await repo.createOrUpdate(makeMessage())
+
+    expect(result.isNew).toBe(false)
+    expect(result.message).toEqual(existingRow) // real row, not fabricated
+    expect(shardDb.select).toHaveBeenCalledTimes(1)
+  })
+
+  test("conflict unreadable even on the write shard logs info and returns isNew=false without throwing", async () => {
+    const shardDb = makeInsertShardDb([], []) // both replica and primary miss
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockResolvedValue(null)
+
+    const result = await repo.createOrUpdate(makeMessage())
+
+    expect(result.isNew).toBe(false)
+    // Last-resort best-effort input content (id from makeMessage) — never throws.
+    expect(result.message.id).toBe("msg-1")
+  })
+})
+
+describe("ShardedMessageRepository.createOrUpdateWithAttachments — idempotent echo save", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("duplicate echo with attachments returns existing row, isNew=false, without throwing", async () => {
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([]), // conflict → no row
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    const existingWithAttachments = { ...existingRow, attachments: [] }
+    vi.spyOn(repo, "findBySourceId")
+      .mockResolvedValueOnce(null) // guard read misses
+      .mockResolvedValueOnce(existingRow as never) // re-fetch finds it
+    vi.spyOn(repo, "findById").mockResolvedValue(
+      existingWithAttachments as never,
+    )
+
+    const result = await repo.createOrUpdateWithAttachments(makeMessage(), [])
+
+    expect(result.isNew).toBe(false)
+    expect(result.result).toEqual(existingWithAttachments)
+    expect(txChain.onConflictDoNothing).toHaveBeenCalledTimes(1)
+    expect(shardDb.transaction).toHaveBeenCalledTimes(1)
+  })
+})

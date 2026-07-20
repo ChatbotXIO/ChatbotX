@@ -10,6 +10,7 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
@@ -244,6 +245,9 @@ async function startIntegrationWorker() {
     {
       connection: getRedisConnection(),
       ...defaultWorkerOptions,
+      // Override the shared default (5). I/O-bound webhook handling tolerates
+      // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
+      concurrency: env.INTEGRATION_WORKER_CONCURRENCY,
       // Coexist historical sync chunks are bounded to ~4 min via self-continuation
       // (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
       // 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
