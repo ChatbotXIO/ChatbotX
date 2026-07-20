@@ -37,7 +37,14 @@ import { shouldSuppressRetryableChannelError } from "../utils/retry"
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
 ) {
-  const { conversation, contactInbox, message, metadata, sendFrom } = data
+  const {
+    conversation,
+    contactInbox,
+    message,
+    quickReplies,
+    metadata,
+    sendFrom,
+  } = data
 
   try {
     const { integration, ctx } =
@@ -76,6 +83,7 @@ export async function sendMessageToChannel(
           sourceConversationId: conversation.sourceId,
         },
         message: handlerMessage,
+        quickReplies: isComment ? undefined : quickReplies,
         metadata,
         sendFrom,
       },

@@ -39,6 +39,7 @@ import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
 import { buildMessengerTemplateSendRequest } from "./send-messenger-template"
+import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
@@ -51,13 +52,19 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message, sendFrom },
+      data: { contact, message, quickReplies, sendFrom },
     } = props
 
     const messageIds: string[] = []
     try {
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
-      for (const facebookMessage of convertMessageToFacebookMessage(message)) {
+      const facebookMessages = [...convertMessageToFacebookMessage(message)]
+      const lastMessage = facebookMessages.at(-1)
+      if (lastMessage && quickReplies && quickReplies.length > 0) {
+        lastMessage.quick_replies =
+          convertCanonicalFacebookQuickReplies(quickReplies)
+      }
+      for (const facebookMessage of facebookMessages) {
         const payload = buildMessagePayload({
           contact,
           message: facebookMessage,

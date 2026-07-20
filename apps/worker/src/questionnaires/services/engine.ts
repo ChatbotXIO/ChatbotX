@@ -9,7 +9,12 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type { QuestionnaireQuestionModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
-import type { QuestionnairesStepSchema } from "@chatbotx.io/flow-config"
+import {
+  BUTTON_LABEL_MAX,
+  MAX_QUICK_REPLIES,
+  type QuestionnairesStepSchema,
+} from "@chatbotx.io/flow-config"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
   chatQueue,
@@ -32,6 +37,48 @@ const questionText = (question: QuestionnaireQuestionModel): string => {
   return `${question.title}\n${options
     .map((option, index) => `${index + 1}. ${option.label}`)
     .join("\n")}`
+}
+
+// Channels whose plain chat message pipeline can render native tappable
+// quick-reply buttons (see ChatJobSendChatMessage.quickReplies). Other
+// channels (WhatsApp, Zalo, TikTok, ...) keep the numbered-text fallback.
+// ContactInboxModel.channel is a plain text column (not the ChannelType
+// pgEnum), so this is checked against the raw string value.
+const QUICK_REPLY_CHANNELS = new Set([
+  "messenger",
+  "instagram",
+  "telegram",
+  "webchat",
+])
+
+// Answer matching (questionnaireSubmissionService) accepts either the
+// option id or its label, so using the id as the tap payload works
+// uniformly: Meta channels echo the button title back as text, Telegram
+// echoes the callback payload itself.
+const questionQuickReplies = (
+  question: QuestionnaireQuestionModel,
+  channel: string,
+): MessageButtonTemplate[] | undefined => {
+  if (
+    question.type !== "multipleChoice" ||
+    !QUICK_REPLY_CHANNELS.has(channel)
+  ) {
+    return
+  }
+  const options = question.config?.options ?? []
+  if (
+    options.length === 0 ||
+    options.length > MAX_QUICK_REPLIES ||
+    options.some((option) => option.label.length > BUTTON_LABEL_MAX)
+  ) {
+    return
+  }
+  return options.map((option) => ({
+    id: option.id,
+    label: option.label,
+    buttonType: "postback" as const,
+    postback: option.id,
+  }))
 }
 
 const QUESTIONNAIRE_MESSAGE_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000
@@ -95,13 +142,20 @@ async function sendQuestion(
   },
 ) {
   const sentAt = data.sentAt ?? new Date()
+  const quickReplies = questionQuickReplies(
+    data.question,
+    props.contactInbox.channel,
+  )
   const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
       contactInbox: props.contactInbox,
       conversation: props.conversation,
-      text: data.text?.trim() || questionText(data.question),
+      text:
+        data.text?.trim() ||
+        (quickReplies ? data.question.title : questionText(data.question)),
       url: data.question.image?.url,
+      quickReplies,
     },
   })
   await waitForChatJobCompletion(job, { conversationId: props.conversation.id })

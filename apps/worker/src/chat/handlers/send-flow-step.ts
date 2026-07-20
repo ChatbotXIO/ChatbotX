@@ -589,6 +589,7 @@ export const sendChatMessage = async (
     contactInbox: targetContactInbox,
     text,
     url,
+    quickReplies,
     trackingContext,
     metadata,
   } = props
@@ -660,6 +661,15 @@ export const sendChatMessage = async (
       text: messageText,
       contentAttributes: {
         metadata,
+        ...(quickReplies && quickReplies.length > 0
+          ? {
+              type: "template" as const,
+              payload: {
+                templateType: "button" as const,
+                buttons: quickReplies,
+              },
+            }
+          : {}),
       },
       createdAt: new Date(),
     }
@@ -707,6 +717,7 @@ export const sendChatMessage = async (
         conversation,
         contactInbox,
         message,
+        quickReplies,
         metadata,
       }),
     ]

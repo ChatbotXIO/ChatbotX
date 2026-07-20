@@ -42,7 +42,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message },
+      data: { contact, message, quickReplies },
     } = props
 
     const messageIds: string[] = []
@@ -53,6 +53,13 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           const messageId = await sendTelegramMessage(ctx.auth, {
             chat_id: contact.sourceId,
             text: message.text,
+            reply_markup:
+              quickReplies && quickReplies.length > 0
+                ? buildInlineKeyboardFromButtons(
+                    quickReplies.map(buildCanonicalInlineButton),
+                    MAX_INLINE_BUTTONS_PER_ROW,
+                  )
+                : undefined,
           })
           messageIds.push(String(messageId))
         }
