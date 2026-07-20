@@ -9,7 +9,15 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { QueueEvents } from "bullmq"
+import { env } from "../../env"
 import { logger } from "../../lib/logger"
+
+// Bound every chat-job wait. A stalled or backlogged chat worker used to leave
+// job.waitUntilFinished() pending forever, and each pending wait keeps a
+// QueueEvents listener plus its captured closures alive — the slow leak that
+// OOM-crashed the integration worker. Validated + capped below the integration
+// worker lockDuration in env.ts.
+const CHAT_JOB_WAIT_TIMEOUT_MS = env.CHAT_JOB_WAIT_TIMEOUT_MS
 
 let chatQueueEvents: QueueEvents | null = null
 
@@ -79,12 +87,15 @@ export function sendMessageWithRender(
 }
 
 /**
- * Block until an enqueued chat job processor reaches a terminal state.
- * This preserves step ordering; channel delivery failures may already be handled
- * inside the chat worker and may not surface here. Propagated failures are
- * logged with context and swallowed so the flow still advances in order.
+ * Await a chat job's terminal state, bounded by CHAT_JOB_WAIT_TIMEOUT_MS.
+ *
+ * The chat message is already enqueued; this wait only preserves step ordering,
+ * so a timeout or a job failure is logged and swallowed — never rethrown. If it
+ * threw, the integration job would fail, BullMQ would retry it, and the message
+ * could be sent twice. Bounding the wait also releases the QueueEvents listener
+ * and its captured closures instead of leaking them when the chat worker stalls.
  */
-export async function waitForChatJobCompletion(
+async function awaitChatJob(
   job: Awaited<ReturnType<typeof chatQueue.add>>,
   context?: Record<string, unknown>,
 ): Promise<void> {
@@ -93,13 +104,26 @@ export async function waitForChatJobCompletion(
   }
 
   try {
-    await job.waitUntilFinished(getChatQueueEvents())
+    await job.waitUntilFinished(getChatQueueEvents(), CHAT_JOB_WAIT_TIMEOUT_MS)
   } catch (err) {
+    // A stalled chat worker surfaces here as a burst of these timeouts — the
+    // real backlog signal. Swallowed so the flow still advances in order.
     logger.error(
       { ...context, err },
-      "Flow message chat job failed; continuing flow",
+      "Chat job did not complete in time or failed; continuing flow",
     )
   }
+}
+
+/**
+ * Block until an enqueued chat job reaches a terminal state, to preserve step
+ * ordering. Bounded and non-throwing — see {@link awaitChatJob}.
+ */
+export async function waitForChatJobCompletion(
+  job: Awaited<ReturnType<typeof chatQueue.add>>,
+  context?: Record<string, unknown>,
+): Promise<void> {
+  await awaitChatJob(job, context)
 }
 
 export async function sendMessageAndWait(
@@ -115,9 +139,7 @@ export async function sendMessageAndWait(
     options,
   )
 
-  if (typeof job === "object" && "waitUntilFinished" in job) {
-    await job.waitUntilFinished(getChatQueueEvents())
-  }
+  await awaitChatJob(job, { conversationId })
 }
 
 export const normalizeEpochTimestamp = (value: unknown): Date | null => {
