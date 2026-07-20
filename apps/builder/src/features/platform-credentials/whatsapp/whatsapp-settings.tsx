@@ -27,12 +27,15 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
+import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
+import { deleteWhatsappSettingsAction } from "./delete-whatsapp-settings.action"
 import { updateWhatsappSettingsAction } from "./update-whatsapp-settings.action"
 
 export function WhatsappSettings({
@@ -243,10 +246,17 @@ export function EditWhatsappSettingsForm({
       },
     )
 
-  const isConfigured = publicConfig !== null
-  const keepCurrentHint = isConfigured
-    ? t("messages.leaveEmptyToKeepSecret")
-    : undefined
+  const { execute: executeDelete, isPending: isDeleting } = useAction(
+    deleteWhatsappSettingsAction.bind(null, scope),
+    {
+      onSuccess: () => {
+        toast.success(t("messages.deletedSuccess", { feature: "WhatsApp" }))
+        onClose?.()
+      },
+      onError: ({ error }) =>
+        error.serverError && toast.error(error.serverError),
+    },
+  )
 
   return (
     <Form {...form}>
@@ -254,10 +264,9 @@ export function EditWhatsappSettingsForm({
         <InputField label={t("fields.appId.label")} name="clientId" required />
 
         <InputField
-          description={keepCurrentHint}
           label={t("fields.appSecret.label")}
           name="clientSecret"
-          required={!isConfigured}
+          required
           type="password"
         />
 
@@ -286,10 +295,9 @@ export function EditWhatsappSettingsForm({
         />
 
         <InputField
-          description={keepCurrentHint}
           label={t("fields.systemUserToken.label")}
           name="systemUserToken"
-          required={!isConfigured}
+          required
           type="password"
         />
 
@@ -301,26 +309,40 @@ export function EditWhatsappSettingsForm({
           required
         />
 
-        <div className="flex justify-end gap-2">
-          <Button
-            onClick={() => {
-              resetFormAndAction()
-              onClose?.()
-            }}
-            type="button"
-            variant="outline"
-          >
-            {t("actions.cancel")}
-          </Button>
-          <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
-            type="submit"
-          >
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="size-4 animate-spin" />
-            )}
-            {t("actions.save")}
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          {publicConfig !== null && (
+            <DeleteCredentialDialog
+              disabled={form.formState.isSubmitting}
+              feature="WhatsApp"
+              isDeleting={isDeleting}
+              onConfirm={() => executeDelete()}
+            />
+          )}
+          <div className="ml-auto flex gap-2">
+            <Button
+              onClick={() => {
+                resetFormAndAction()
+                onClose?.()
+              }}
+              type="button"
+              variant="outline"
+            >
+              {t("actions.cancel")}
+            </Button>
+            <Button
+              disabled={
+                !form.formState.isValid ||
+                form.formState.isSubmitting ||
+                isDeleting
+              }
+              type="submit"
+            >
+              {form.formState.isSubmitting && (
+                <Loader2Icon className="size-4 animate-spin" />
+              )}
+              {t("actions.save")}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

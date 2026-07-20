@@ -14,24 +14,11 @@ export const updateInstagramFacebookSettingAction = authActionClient
   .inputSchema(instagramFacebookCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
     const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
-    const existing = await platformCredentialService.findDecrypted({
-      userId: scopedUserId,
-      type: "instagramFacebook",
-    })
-
-    const clientSecret =
-      parsedInput.clientSecret || existing?.config.clientSecret
-    if (!clientSecret) {
-      throw new Error(
-        "App Secret is required to configure Instagram via Facebook.",
-      )
-    }
-
     const config: InstagramFacebookCredential = {
       clientId: parsedInput.clientId,
       version: parsedInput.version,
       verifyToken: parsedInput.verifyToken,
-      clientSecret,
+      clientSecret: parsedInput.clientSecret,
     }
 
     await platformCredentialService.upsert({

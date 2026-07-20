@@ -260,6 +260,24 @@ class PlatformCredentialService extends BaseService {
     await this.invalidateCacheTags(`cred:p:${type}`)
   }
 
+  async removePlatform(props: {
+    type: CredentialType
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { type, livemode = false, tx = db } = props
+    await tx
+      .delete(platformCredentialModel)
+      .where(
+        and(
+          isNull(platformCredentialModel.userId),
+          eq(platformCredentialModel.type, type),
+          eq(platformCredentialModel.livemode, livemode),
+        ),
+      )
+    await this.invalidateCacheTags(`cred:p:${type}`)
+  }
+
   // ─── Scoped helpers (userId=undefined → platform-scoped) ────────────────────
 
   find<T extends CredentialType>(props: {
@@ -297,6 +315,18 @@ class PlatformCredentialService extends BaseService {
       return this.upsertForUser({ ...props, userId: props.userId })
     }
     return this.upsertPlatform(props)
+  }
+
+  remove(props: {
+    userId: string | undefined
+    type: CredentialType
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<void> {
+    if (props.userId !== undefined) {
+      return this.removeForUser({ ...props, userId: props.userId })
+    }
+    return this.removePlatform(props)
   }
 
   // ─── Resolver: user → platform fallback ─────────────────────────────────────

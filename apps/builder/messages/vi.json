@@ -2507,15 +2507,7 @@
     "title": "Cài đặt Nền tảng",
     "errors": {
       "giphyApiKeyRequired": "API Key là bắt buộc để cấu hình GIPHY.",
-      "giphyApiKeyInvalid": "API key GIPHY không hợp lệ",
-      "googleClientSecretRequired": "Client Secret là bắt buộc để cấu hình Google.",
-      "googleVerifyTokenRequired": "Verify Token là bắt buộc để cấu hình Google.",
-      "messengerAppSecretRequired": "App Secret là bắt buộc để cấu hình Messenger.",
-      "zaloAppSecretRequired": "App Secret là bắt buộc để cấu hình Zalo.",
-      "stripeSecretKeyRequired": "Secret Key là bắt buộc để cấu hình Stripe.",
-      "whatsappAppSecretRequired": "App Secret là bắt buộc để cấu hình WhatsApp.",
-      "whatsappSystemUserTokenRequired": "System User Token là bắt buộc để cấu hình WhatsApp.",
-      "tiktokAppSecretRequired": "App Secret là bắt buộc để cấu hình TikTok."
+      "giphyApiKeyInvalid": "API key GIPHY không hợp lệ"
     }
   },
   "home": {

@@ -7,7 +7,6 @@ import {
   stripeCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { getTranslations } from "next-intl/server"
 
 import { isCloud } from "@/env"
 import { authActionClient } from "@/lib/safe-action"
@@ -23,22 +22,10 @@ export const updateStripeSettingsAction = authActionClient
       parsedInput: StripeCredentialUpdate
     }) => {
       const scopedUserId = isCloud() ? ctx.user.id : undefined
-      const existing = await platformCredentialService.findDecrypted({
-        userId: scopedUserId,
-        type: "stripe",
-      })
-
-      const t = await getTranslations()
-
-      const secretKey = parsedInput.secretKey || existing?.config.secretKey
-      if (!secretKey) {
-        throw new Error(t("platformSettings.errors.stripeSecretKeyRequired"))
-      }
-
       const config: StripeCredential = {
         publishableKey: parsedInput.publishableKey,
         verifyToken: parsedInput.verifyToken,
-        secretKey,
+        secretKey: parsedInput.secretKey,
       }
 
       await platformCredentialService.upsert({

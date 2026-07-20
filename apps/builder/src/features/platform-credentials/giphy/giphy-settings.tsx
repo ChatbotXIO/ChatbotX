@@ -25,10 +25,13 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { CredentialFallbackNote } from "../credential-fallback-note"
+import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
+import { deleteGiphySettingsAction } from "./delete-giphy-settings.action"
 import { updateGiphySettingsAction } from "./update-giphy-settings.action"
 
 export function GiphySettings({
@@ -110,6 +113,17 @@ export function EditGiphySettingsForm({
 }) {
   const t = useTranslations()
   const scope = useCredentialScope()
+  const { execute: executeDelete, isPending: isDeleting } = useAction(
+    deleteGiphySettingsAction.bind(null, scope),
+    {
+      onSuccess: () => {
+        toast.success(t("messages.deletedSuccess", { feature: "GIPHY" }))
+        onClose?.()
+      },
+      onError: ({ error }) =>
+        error.serverError && toast.error(error.serverError),
+    },
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -148,26 +162,40 @@ export function EditGiphySettingsForm({
           type="password"
         />
 
-        <div className="flex justify-end gap-2">
-          <Button
-            onClick={() => {
-              resetFormAndAction()
-              onClose?.()
-            }}
-            type="button"
-            variant="outline"
-          >
-            {t("actions.cancel")}
-          </Button>
-          <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
-            type="submit"
-          >
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="size-4 animate-spin" />
-            )}
-            {t("actions.save")}
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          {isConfigured && (
+            <DeleteCredentialDialog
+              disabled={form.formState.isSubmitting}
+              feature="GIPHY"
+              isDeleting={isDeleting}
+              onConfirm={() => executeDelete()}
+            />
+          )}
+          <div className="ml-auto flex gap-2">
+            <Button
+              onClick={() => {
+                resetFormAndAction()
+                onClose?.()
+              }}
+              type="button"
+              variant="outline"
+            >
+              {t("actions.cancel")}
+            </Button>
+            <Button
+              disabled={
+                !form.formState.isValid ||
+                form.formState.isSubmitting ||
+                isDeleting
+              }
+              type="submit"
+            >
+              {form.formState.isSubmitting && (
+                <Loader2Icon className="size-4 animate-spin" />
+              )}
+              {t("actions.save")}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
