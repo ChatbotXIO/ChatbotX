@@ -8,11 +8,16 @@ import {
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram"
 import {
+  getFacebookUser,
   getUserInstagramAccounts,
   subscribePageToInstagramWebhook as subscribeFacebookPageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram-facebook"
 import { AuthType } from "@chatbotx.io/sdk"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
+import {
+  buildIntegrationUserInfo,
+  lookupIntegrationUserInfo,
+} from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
 
 /**
@@ -58,6 +63,18 @@ export async function reconnectInstagramHandler(props: {
       },
     }
 
+    // Direct Instagram login authenticates as the account itself, so the
+    // account IS the user. Best-effort — a failed build leaves `userInfo`
+    // untouched.
+    const userInfo = await buildIntegrationUserInfo({
+      workspaceId: props.workspaceId,
+      userId: account.userId,
+      userName: account.name,
+      userAccessToken: props.userToken,
+      avatarUrl: account.profile_picture_url,
+      existingAvatar: integrationInstagram.userInfo?.avatar,
+    })
+
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
     // still holds the stale token.
@@ -67,6 +84,7 @@ export async function reconnectInstagramHandler(props: {
       auth,
       name: account.name,
       username: account.username,
+      ...(userInfo ? { userInfo } : {}),
     })
 
     await subscribePageToInstagramWebhook({
@@ -115,6 +133,15 @@ export async function reconnectInstagramFacebookHandler(props: {
       return { status: "error", reason: "accountNotFound" }
     }
 
+    // Best-effort: a failed lookup only leaves `userInfo` untouched.
+    const userInfo = await lookupIntegrationUserInfo({
+      workspaceId: props.workspaceId,
+      userAccessToken: props.userToken,
+      existingAvatar: integrationInstagram.userInfo?.avatar,
+      fetchUser: () =>
+        getFacebookUser(props.userToken, props.credentialConfig.version),
+    })
+
     const auth: InstagramAuthValue = {
       authType: AuthType.oauth2,
       clientId: props.credentialConfig.clientId,
@@ -141,6 +168,7 @@ export async function reconnectInstagramFacebookHandler(props: {
       name: account.name,
       username: account.username,
       pageId: account.pageId,
+      ...(userInfo ? { userInfo } : {}),
     })
 
     await subscribeFacebookPageToInstagramWebhook({

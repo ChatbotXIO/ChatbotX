@@ -1,4 +1,5 @@
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
+import { cookies } from "next/headers"
 
 export const FB_MESSENGER_PENDING_AUTH_COOKIE = "fb_messenger_pending_auth"
 export const FB_INSTAGRAM_PENDING_AUTH_COOKIE = "fb_instagram_pending_auth"
@@ -8,6 +9,11 @@ export const FB_PENDING_AUTH_MAX_AGE = 600 // seconds — 10 minutes
 
 export type FacebookAuthCallback = {
   userToken: string
+  /** Graph identity of the authorizing user; absent when the lookup failed. */
+  userId?: string
+  userName?: string
+  /** Provider-hosted profile picture URL (not yet uploaded to storage). */
+  userAvatarUrl?: string
   workspaceId: string
   referer: string
   version: string
@@ -34,4 +40,12 @@ export async function decryptAuth<T extends { expiresAt: number }>(
   } catch {
     return null
   }
+}
+
+/** Read and decrypt the pending-auth cookie for a channel; null if missing, expired, or tampered. */
+export async function readPendingAuth(
+  cookieName: string,
+): Promise<FacebookAuthCallback | null> {
+  const token = (await cookies()).get(cookieName)?.value
+  return token ? decryptAuth<FacebookAuthCallback>(token) : null
 }

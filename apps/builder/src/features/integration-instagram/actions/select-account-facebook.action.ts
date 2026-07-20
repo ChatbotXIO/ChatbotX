@@ -5,6 +5,7 @@ import {
   connectChannelIntegration,
   platformCredentialService,
   resolveTenantSettings,
+  updateInstagramIntegrationUserInfo,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -25,7 +26,11 @@ import {
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
-import { FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE } from "@/lib/facebook-pending-auth"
+import {
+  FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
+  readPendingAuth,
+} from "@/lib/facebook-pending-auth"
+import { persistIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import {
@@ -63,6 +68,18 @@ export const selectFacebookAccountAction = authActionClient
           throw new ChatbotXException("Instagram App settings not found")
         }
         const instagramSettings = instagramCredential.config
+
+        // The OAuth callback stored the user token in the pending-auth cookie.
+        // Best-effort: an expired/missing cookie only leaves
+        // `auth.tokens.userAccessToken`/`userId` unset.
+        const pendingAuth = await readPendingAuth(
+          FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
+        )
+        if (!pendingAuth) {
+          logger.warn(
+            "Instagram pending-auth cookie missing; connecting without user access token",
+          )
+        }
 
         // DB work only — no external API calls inside the transaction so a
         // rolled-back commit doesn't leave orphaned Facebook webhook subscriptions.
@@ -145,6 +162,22 @@ export const selectFacebookAccountAction = authActionClient
           pageId: parsedInput.pageId,
           accessToken: parsedInput.pageAccessToken,
           version: parsedInput.version ?? instagramSettings.version,
+        })
+
+        // Best-effort: the connection is already live, so a failed user-info
+        // write must never fail the action.
+        await persistIntegrationUserInfo({
+          workspaceId: workspaceId as string,
+          userId: pendingAuth?.userId,
+          userName: pendingAuth?.userName,
+          userAccessToken: pendingAuth?.userToken,
+          avatarUrl: pendingAuth?.userAvatarUrl,
+          persist: (userInfo) =>
+            updateInstagramIntegrationUserInfo({
+              id: integrationRow.id,
+              workspaceId: workspaceId as string,
+              userInfo,
+            }),
         })
 
         const brandingCtx = await buildContext({

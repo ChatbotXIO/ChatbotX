@@ -40,6 +40,7 @@ export function InstagramAccounts({
           igUsername: account.username,
           pageId: account.id,
           accessToken: account.accessToken,
+          profilePictureUrl: account.profile_picture_url,
         },
       },
       actionProps: {
@@ -72,6 +73,7 @@ export function InstagramAccounts({
           <InputField name="igName" type="hidden" />
           <InputField name="igUsername" type="hidden" />
           <InputField name="pageId" type="hidden" />
+          <InputField name="profilePictureUrl" type="hidden" />
         </div>
 
         <div className="flex items-center gap-3 rounded-lg border p-4">

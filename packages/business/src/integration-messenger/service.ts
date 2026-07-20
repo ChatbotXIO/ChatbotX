@@ -1,4 +1,5 @@
 import { and, db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import { inArray } from "drizzle-orm"
 
@@ -24,10 +25,36 @@ export async function updateMessengerIntegrationAuth(props: {
   workspaceId: string
   auth: Record<string, unknown>
   name?: string
+  userInfo?: IntegrationUserInfo
 }): Promise<void> {
   await db
     .update(integrationMessengerModel)
-    .set({ auth: props.auth, ...(props.name ? { name: props.name } : {}) })
+    .set({
+      auth: props.auth,
+      ...(props.name ? { name: props.name } : {}),
+      ...(props.userInfo ? { userInfo: props.userInfo } : {}),
+    })
+    .where(
+      and(
+        eq(integrationMessengerModel.id, props.id),
+        eq(integrationMessengerModel.workspaceId, props.workspaceId),
+      ),
+    )
+}
+
+/**
+ * Store the authorizing user's identity after a connect. Separate from the
+ * insert because the avatar upload is an external call that must stay outside
+ * the connect transaction.
+ */
+export async function updateMessengerIntegrationUserInfo(props: {
+  id: string
+  workspaceId: string
+  userInfo: IntegrationUserInfo
+}): Promise<void> {
+  await db
+    .update(integrationMessengerModel)
+    .set({ userInfo: props.userInfo })
     .where(
       and(
         eq(integrationMessengerModel.id, props.id),

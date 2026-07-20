@@ -5,6 +5,7 @@ import {
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   exchangeCodeForToken,
+  getFacebookUser,
   getUserPages,
 } from "@chatbotx.io/integration-messenger"
 import {
@@ -13,6 +14,7 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
+import { lookupIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
 
 /**
@@ -71,6 +73,15 @@ export async function reconnectMessengerHandler(props: {
       page.access_token,
     )
 
+    // Best-effort: a failed lookup only leaves `userInfo` untouched.
+    const userInfo = await lookupIntegrationUserInfo({
+      workspaceId: props.workspaceId,
+      userAccessToken: userToken,
+      existingAvatar: integrationMessenger.userInfo?.avatar,
+      fetchUser: () =>
+        getFacebookUser(userToken, props.credentialConfig.version),
+    })
+
     const auth: MessengerAuthValue = {
       authType: AuthType.oauth2,
       clientId: props.credentialConfig.clientId,
@@ -94,6 +105,7 @@ export async function reconnectMessengerHandler(props: {
       workspaceId: props.workspaceId,
       auth,
       name: page.name,
+      ...(userInfo ? { userInfo } : {}),
     })
 
     await subscribePageToAppWebhook({
