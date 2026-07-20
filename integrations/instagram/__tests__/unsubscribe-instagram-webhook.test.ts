@@ -4,7 +4,7 @@ import { unsubscribePageFromInstagramWebhook } from "../src/apis/page"
 import { DEFAULT_API_VERSION, INSTAGRAM_API_URL } from "../src/constants"
 
 describe("unsubscribePageFromInstagramWebhook", () => {
-  test("DELETEs the ig subscribed_apps endpoint with the app token in the header", async () => {
+  test("DELETEs the ig subscribed_apps endpoint with the user access token in the header", async () => {
     let captured: Request | null = null
     server.use(
       http.delete(
@@ -18,7 +18,7 @@ describe("unsubscribePageFromInstagramWebhook", () => {
 
     await unsubscribePageFromInstagramWebhook({
       igId: "ig-1",
-      appAccessToken: "client-id|client-secret",
+      accessToken: "ig-user-access-token",
       version: DEFAULT_API_VERSION,
     })
 
@@ -27,7 +27,7 @@ describe("unsubscribePageFromInstagramWebhook", () => {
     expect(url.pathname).toBe(`/${DEFAULT_API_VERSION}/ig-1/subscribed_apps`)
     expect(url.search).toBe("")
     expect((captured as Request).headers.get("authorization")).toBe(
-      "Bearer client-id|client-secret",
+      "Bearer ig-user-access-token",
     )
   })
 
@@ -42,7 +42,7 @@ describe("unsubscribePageFromInstagramWebhook", () => {
     await expect(
       unsubscribePageFromInstagramWebhook({
         igId: "ig-2",
-        appAccessToken: "client-id|client-secret",
+        accessToken: "ig-user-access-token",
         version: DEFAULT_API_VERSION,
       }),
     ).rejects.toThrow()
