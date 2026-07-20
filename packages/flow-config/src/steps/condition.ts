@@ -16,6 +16,12 @@ export const conditionCaseSchema = z.object({
   id: zodBigintAsString(),
   operator: z.enum(["and", "or"]),
   conditions: z.array(conditionFilterConditionSchema).min(1),
+  /**
+   * IANA timezone captured from the editor's browser when the flow was saved,
+   * used to interpret naive date/datetime condition values at runtime (the
+   * worker has no browser context). Backend defaults to UTC when absent.
+   */
+  timezone: z.string().max(64).optional(),
 })
 export type ConditionCaseSchema = z.infer<typeof conditionCaseSchema>
 

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { pruneExcludedConditions } from "../lib/prune-conditions"
+import { getBrowserTimezone } from "../lib/timezone"
 import type { ContactFilterCondition } from "../schemas"
 import { ContactFilterConditionEditDialog } from "./contact-filter-condition-dialog"
 import { ContactFilterConditionForm } from "./contact-filter-condition-form"
@@ -29,11 +30,22 @@ export const ContactFilter = ({
   enableVariables = false,
 }: ContactFilterProps) => {
   const t = useTranslations()
-  const { control, getValues } = useFormContext()
+  const { control, getValues, setValue } = useFormContext()
   const { fields, append, remove, replace, update } = useFieldArray({
     control,
     name: `${parentName}.conditions`,
   })
+
+  // Stamp the browser timezone onto the criteria so the backend interprets
+  // naive date/datetime values in the user's local zone. Only set it when
+  // absent, so re-opening an existing filter preserves its saved timezone.
+  useEffect(() => {
+    if (!getValues(`${parentName}.timezone`)) {
+      setValue(`${parentName}.timezone`, getBrowserTimezone(), {
+        shouldDirty: false,
+      })
+    }
+  }, [parentName, getValues, setValue])
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const { configs, conditionOptions, operatorLabelByValue } =

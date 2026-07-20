@@ -35,6 +35,7 @@ import {
   contactInboxInteractedWithin24hSQL as buildRecentInteractionPredicate,
 } from "./predicates"
 import { buildRelationSetWhere } from "./relation-sets"
+import { resolveFilterTimezone } from "./timezone"
 import type {
   ContactWhere,
   ContactFilterConditionInput as FilterConditionInput,
@@ -52,6 +53,13 @@ export {
   pruneEmailPhoneFilterConditions,
 } from "./permission"
 export { contactInboxInteractedWithin24hSQL } from "./predicates"
+export {
+  DEFAULT_FILTER_TIMEZONE,
+  filterValueToUtcDayEndIso,
+  filterValueToUtcDayStartIso,
+  filterValueToUtcIso,
+  resolveFilterTimezone,
+} from "./timezone"
 export type {
   ContactFilterConditionInput,
   ContactFilterCriteriaInput,
@@ -283,8 +291,9 @@ export function applyContactFilter(
     return {}
   }
 
+  const timezone = resolveFilterTimezone(criteria.timezone)
   const conditionWheres = conditions
-    .map(buildConditionWhere)
+    .map((condition) => buildConditionWhere(condition, timezone))
     .filter((w): w is ContactWhere => Object.keys(w).length > 0)
 
   if (conditionWheres.length === 0) {
@@ -298,7 +307,10 @@ export function applyContactFilter(
   return { AND: conditionWheres }
 }
 
-function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
+function buildConditionWhere(
+  condition: FilterConditionInput,
+  timezone: string,
+): ContactWhere {
   const { field, operator, value } = condition
 
   switch (field) {
@@ -326,13 +338,13 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
       return buildColumnWhere(field, operator, value)
 
     case "contactCreatedAt":
-      return buildDateColumnWhere("createdAt", operator, value)
+      return buildDateColumnWhere("createdAt", operator, value, timezone)
 
     case "contactCreatedDateMinutesAgo":
       return buildMinutesAgoWhere("createdAt", operator, value)
 
     case "lastSeen":
-      return buildDateColumnWhere("lastReadAt", operator, value)
+      return buildDateColumnWhere("lastReadAt", operator, value, timezone)
 
     case "lastSeenMinutesAgo":
       return buildMinutesAgoWhere("lastReadAt", operator, value)
@@ -342,6 +354,7 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
         contactInboxModel.lastOutboundMessageAt,
         operator,
         value,
+        timezone,
       )
 
     case "lastInteraction":
@@ -349,6 +362,7 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
         contactInboxModel.lastIncomingMessageAt,
         operator,
         value,
+        timezone,
       )
 
     case "lastInteractionMinutesAgo":

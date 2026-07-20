@@ -9,6 +9,11 @@ import {
 import { contactInboxModel, messageModel } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { contactInboxExists } from "./exists"
+import {
+  filterValueToUtcDayEndIso,
+  filterValueToUtcDayStartIso,
+  filterValueToUtcIso,
+} from "./timezone"
 import type { ContactWhere, RawTable, RelationExists } from "./types"
 import {
   isValidDateTimeFilterValue,
@@ -136,6 +141,7 @@ export function buildDateColumnWhere(
   columnName: string,
   operator: string,
   value: unknown,
+  timezone: string,
 ): ContactWhere {
   if (operator === operatorTypes.enum.isEmpty) {
     return { [columnName]: { isNull: true } }
@@ -154,10 +160,12 @@ export function buildDateColumnWhere(
       return {}
     }
 
+    const startUtc = filterValueToUtcIso(intervalValue[0], timezone)
+    const endUtc = filterValueToUtcIso(intervalValue[1], timezone)
     return buildRawColumnWhere(columnName, (column) =>
       operator === operatorTypes.enum.isBetween
-        ? sql`(${column} >= ${intervalValue[0]}::timestamptz AND ${column} <= ${intervalValue[1]}::timestamptz)`
-        : sql`(${column} < ${intervalValue[0]}::timestamptz OR ${column} > ${intervalValue[1]}::timestamptz OR ${column} IS NULL)`,
+        ? sql`(${column} >= ${startUtc}::timestamptz AND ${column} <= ${endUtc}::timestamptz)`
+        : sql`(${column} < ${startUtc}::timestamptz OR ${column} > ${endUtc}::timestamptz OR ${column} IS NULL)`,
     )
   }
 
@@ -169,42 +177,40 @@ export function buildDateColumnWhere(
     return {}
   }
 
-  if (operator === operatorTypes.enum.eq) {
-    return buildRawColumnWhere(columnName, (column) => {
-      const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
-      const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
-      return sql`(${column} >= ${dayStart} AND ${column} < ${dayEnd})`
-    })
+  if (
+    operator === operatorTypes.enum.eq ||
+    operator === operatorTypes.enum.ne
+  ) {
+    const dayStart = filterValueToUtcDayStartIso(value, timezone)
+    const dayEnd = filterValueToUtcDayEndIso(value, timezone)
+    return buildRawColumnWhere(columnName, (column) =>
+      operator === operatorTypes.enum.eq
+        ? sql`(${column} >= ${dayStart}::timestamptz AND ${column} < ${dayEnd}::timestamptz)`
+        : sql`(${column} < ${dayStart}::timestamptz OR ${column} >= ${dayEnd}::timestamptz OR ${column} IS NULL)`,
+    )
   }
 
-  if (operator === operatorTypes.enum.ne) {
-    return buildRawColumnWhere(columnName, (column) => {
-      const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
-      const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
-      return sql`(${column} < ${dayStart} OR ${column} >= ${dayEnd} OR ${column} IS NULL)`
-    })
-  }
-
+  const instant = filterValueToUtcIso(value, timezone)
   switch (operator) {
     case operatorTypes.enum.gt:
       return buildRawColumnWhere(
         columnName,
-        (column) => sql`${column} > ${value}::timestamptz`,
+        (column) => sql`${column} > ${instant}::timestamptz`,
       )
     case operatorTypes.enum.gte:
       return buildRawColumnWhere(
         columnName,
-        (column) => sql`${column} >= ${value}::timestamptz`,
+        (column) => sql`${column} >= ${instant}::timestamptz`,
       )
     case operatorTypes.enum.lt:
       return buildRawColumnWhere(
         columnName,
-        (column) => sql`${column} < ${value}::timestamptz`,
+        (column) => sql`${column} < ${instant}::timestamptz`,
       )
     case operatorTypes.enum.lte:
       return buildRawColumnWhere(
         columnName,
-        (column) => sql`${column} <= ${value}::timestamptz`,
+        (column) => sql`${column} <= ${instant}::timestamptz`,
       )
     default:
       return {}
@@ -215,12 +221,14 @@ export function buildLatestContactInboxDateWhere(
   column: AnyColumn,
   operator: string,
   value: unknown,
+  timezone: string,
 ): ContactWhere {
   return buildLatestContactInboxAggregateWhere(
     column,
     operator,
     value,
-    buildDatetimeAggregateComparison,
+    (op, val, latest) =>
+      buildDatetimeAggregateComparison(op, val, latest, timezone),
   )
 }
 
@@ -535,6 +543,7 @@ function buildDatetimeAggregateComparison(
   operator: string,
   value: unknown,
   latestValue: SQL,
+  timezone: string,
 ): SQL | undefined {
   if (operator === operatorTypes.enum.isEmpty) {
     return sql`${latestValue} IS NULL`
@@ -553,9 +562,11 @@ function buildDatetimeAggregateComparison(
       return
     }
 
+    const startUtc = filterValueToUtcIso(intervalValue[0], timezone)
+    const endUtc = filterValueToUtcIso(intervalValue[1], timezone)
     return operator === operatorTypes.enum.isBetween
-      ? sql`(${latestValue} >= ${intervalValue[0]}::timestamptz AND ${latestValue} <= ${intervalValue[1]}::timestamptz)`
-      : sql`(${latestValue} < ${intervalValue[0]}::timestamptz OR ${latestValue} > ${intervalValue[1]}::timestamptz OR ${latestValue} IS NULL)`
+      ? sql`(${latestValue} >= ${startUtc}::timestamptz AND ${latestValue} <= ${endUtc}::timestamptz)`
+      : sql`(${latestValue} < ${startUtc}::timestamptz OR ${latestValue} > ${endUtc}::timestamptz OR ${latestValue} IS NULL)`
   }
 
   if (
@@ -570,22 +581,23 @@ function buildDatetimeAggregateComparison(
     operator === operatorTypes.enum.eq ||
     operator === operatorTypes.enum.ne
   ) {
-    const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
-    const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
+    const dayStart = filterValueToUtcDayStartIso(value, timezone)
+    const dayEnd = filterValueToUtcDayEndIso(value, timezone)
     return operator === operatorTypes.enum.eq
-      ? sql`(${latestValue} >= ${dayStart} AND ${latestValue} < ${dayEnd})`
-      : sql`(${latestValue} < ${dayStart} OR ${latestValue} >= ${dayEnd} OR ${latestValue} IS NULL)`
+      ? sql`(${latestValue} >= ${dayStart}::timestamptz AND ${latestValue} < ${dayEnd}::timestamptz)`
+      : sql`(${latestValue} < ${dayStart}::timestamptz OR ${latestValue} >= ${dayEnd}::timestamptz OR ${latestValue} IS NULL)`
   }
 
+  const instant = filterValueToUtcIso(value, timezone)
   switch (operator) {
     case operatorTypes.enum.gt:
-      return sql`${latestValue} > ${value}::timestamptz`
+      return sql`${latestValue} > ${instant}::timestamptz`
     case operatorTypes.enum.gte:
-      return sql`${latestValue} >= ${value}::timestamptz`
+      return sql`${latestValue} >= ${instant}::timestamptz`
     case operatorTypes.enum.lt:
-      return sql`${latestValue} < ${value}::timestamptz`
+      return sql`${latestValue} < ${instant}::timestamptz`
     case operatorTypes.enum.lte:
-      return sql`${latestValue} <= ${value}::timestamptz`
+      return sql`${latestValue} <= ${instant}::timestamptz`
     default:
       return
   }

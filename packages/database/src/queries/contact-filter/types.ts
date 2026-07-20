@@ -19,6 +19,12 @@ export type ContactFilterConditionInput = {
 export type ContactFilterCriteriaInput = {
   operator: "and" | "or"
   conditions: unknown[]
+  /**
+   * IANA timezone used to interpret naive date/datetime condition values (the
+   * browser's local zone, captured at build/save time). Defaults to UTC when
+   * absent or unrecognized. See {@link ./timezone.resolveFilterTimezone}.
+   */
+  timezone?: string
 }
 
 export type ContactWhere = Record<string, unknown>
