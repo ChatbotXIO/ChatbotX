@@ -100,7 +100,7 @@ export const subscribePageToInstagramWebhook = (props: {
 
 export const unsubscribePageFromInstagramWebhook = (props: {
   igId: string
-  appAccessToken: string
+  accessToken: string
   version?: string
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
@@ -111,7 +111,7 @@ export const unsubscribePageFromInstagramWebhook = (props: {
       success?: boolean
     }>(endpoint, {
       headers: {
-        Authorization: `Bearer ${props.appAccessToken}`,
+        Authorization: `Bearer ${props.accessToken}`,
       },
     })
     if (response.success !== true) {

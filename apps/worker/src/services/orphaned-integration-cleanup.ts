@@ -62,7 +62,10 @@ const ORPHAN_CLEANUP_STRATEGIES: Partial<
   [integrationTypes.enum.instagram]: {
     credentialType: integrationTypes.enum.instagram,
     unsubscribe: ({ identifier, appAccessToken }) =>
-      unsubscribePageFromInstagramWebhook({ igId: identifier, appAccessToken }),
+      unsubscribePageFromInstagramWebhook({
+        igId: identifier,
+        accessToken: appAccessToken,
+      }),
   },
 }
 

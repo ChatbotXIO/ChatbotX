@@ -52,7 +52,7 @@ const config: IntegrationDefinition<
   disconnect: async (auth: InstagramAuthValue): Promise<void> => {
     await unsubscribePageFromInstagramWebhook({
       igId: auth.metadata.igId,
-      appAccessToken: `${auth.clientId}|${auth.clientSecret}`,
+      accessToken: auth.tokens.accessToken,
       version: auth.metadata.version,
     })
   },
