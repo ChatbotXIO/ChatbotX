@@ -101,7 +101,7 @@ export const metaReferralToContactSource = (
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
 ): Promise<{
-  message: MessageModel | null
+  message: (MessageModel & { attachments: unknown[] }) | null
   conversation: ConversationModel
   postbackAction: string | null
   quickReplyAction: string | null
@@ -225,7 +225,7 @@ export const receiveMessage = async (
     }
   }
 
-  let createdMessage: MessageModel | null = null
+  let createdMessage: (MessageModel & { attachments: unknown[] }) | null = null
   if (incomingMessage) {
     const { message: newMessage, isNew: isNewMessage } =
       await saveAndBroadcastMessage({
@@ -365,7 +365,10 @@ const saveAndBroadcastMessage = async (props: {
   contactLocation?: ContactLocation | null
   createdAt?: Date
   storageUrl: string
-}): Promise<{ message: MessageModel; isNew: boolean }> => {
+}): Promise<{
+  message: MessageModel & { attachments: unknown[] }
+  isNew: boolean
+}> => {
   const {
     inbox,
     contactInbox,

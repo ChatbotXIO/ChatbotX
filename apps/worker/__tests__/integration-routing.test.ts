@@ -10,50 +10,65 @@ const conversation = {
   additionalAttributes: {},
 }
 
+const challengeConversation = {
+  ...conversation,
+  additionalAttributes: {
+    challenge: { type: "step", data: { stepId: "step-1" } },
+  },
+}
+
 describe("resolveIncomingTextRouting", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   test("does not route pending challenges when bot automation is inactive", async () => {
-    const inactiveConversation = {
-      ...conversation,
-      additionalAttributes: {
-        challenge: { type: "step", data: { stepId: "step-1" } },
-      },
-    }
     const isConversationActive = vi.fn(async () => false)
 
     await expect(
       resolveIncomingTextRouting({
-        conversation: inactiveConversation as never,
-        isEligibleIncomingText: true,
+        conversation: challengeConversation as never,
+        hasActionableInput: true,
+        hasText: true,
         isConversationActive,
       }),
     ).resolves.toEqual({ type: "none" })
 
-    expect(isConversationActive).toHaveBeenCalledWith(inactiveConversation)
+    expect(isConversationActive).toHaveBeenCalledWith(challengeConversation)
   })
 
   test("routes pending challenges after bot automation is confirmed active", async () => {
-    const activeConversation = {
-      ...conversation,
-      additionalAttributes: {
-        challenge: { type: "step", data: { stepId: "step-1" } },
-      },
-    }
     const isConversationActive = vi.fn(async () => true)
 
     await expect(
       resolveIncomingTextRouting({
-        conversation: activeConversation as never,
-        isEligibleIncomingText: true,
+        conversation: challengeConversation as never,
+        hasActionableInput: true,
+        hasText: true,
         isConversationActive,
       }),
     ).resolves.toEqual({
       type: "challenge",
-      conversation: activeConversation,
-      challenge: activeConversation.additionalAttributes.challenge,
+      conversation: challengeConversation,
+      challenge: challengeConversation.additionalAttributes.challenge,
+    })
+  })
+
+  test("routes an attachment-only reply to a pending challenge", async () => {
+    const isConversationActive = vi.fn(async () => true)
+
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: challengeConversation as never,
+        // An uploaded image/file/voice carries actionable input but no text.
+        hasActionableInput: true,
+        hasText: false,
+        isConversationActive,
+      }),
+    ).resolves.toEqual({
+      type: "challenge",
+      conversation: challengeConversation,
+      challenge: challengeConversation.additionalAttributes.challenge,
     })
   })
 
@@ -63,7 +78,8 @@ describe("resolveIncomingTextRouting", () => {
     await expect(
       resolveIncomingTextRouting({
         conversation: conversation as never,
-        isEligibleIncomingText: true,
+        hasActionableInput: true,
+        hasText: true,
         isConversationActive,
       }),
     ).resolves.toEqual({
@@ -72,13 +88,29 @@ describe("resolveIncomingTextRouting", () => {
     })
   })
 
-  test("skips ineligible incoming text without checking bot automation", async () => {
+  test("does not route attachment-only messages to automated response without a challenge", async () => {
+    const isConversationActive = vi.fn(async () => true)
+
+    // No challenge is pending, so an attachment with no text has nothing to
+    // drive: automated (AI) replies stay text-only.
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: conversation as never,
+        hasActionableInput: true,
+        hasText: false,
+        isConversationActive,
+      }),
+    ).resolves.toEqual({ type: "none" })
+  })
+
+  test("skips messages with no actionable input without checking bot automation", async () => {
     const isConversationActive = vi.fn(async () => true)
 
     await expect(
       resolveIncomingTextRouting({
         conversation: conversation as never,
-        isEligibleIncomingText: false,
+        hasActionableInput: false,
+        hasText: false,
         isConversationActive,
       }),
     ).resolves.toEqual({ type: "none" })

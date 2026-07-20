@@ -1,5 +1,6 @@
 "use client"
 
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import {
   type GetUserDataStepSchema,
   getUserDataStepSchema,
@@ -36,6 +37,16 @@ type GetUserDataStepFormProps = {
   onCancel?: () => void
 }
 
+function resolveOutputFieldTypes(
+  replyFormat: string,
+): CustomFieldType[] | undefined {
+  if (replyFormat === ReplyFormat.anyInput) {
+    return ["shortText"]
+  }
+
+  return
+}
+
 const GetUserDataStepForm = ({
   parentName,
   onSuccess,
@@ -68,6 +79,8 @@ const GetUserDataStepForm = ({
   )
 
   const autoSkip = useWatch({ name: "autoSkip", control: form.control })
+  const replyFormat = useWatch({ name: "replyFormat", control: form.control })
+  const outputFieldTypes = resolveOutputFieldTypes(replyFormat)
 
   const handleCancel = () => {
     form.reset()
@@ -100,6 +113,7 @@ const GetUserDataStepForm = ({
         />
 
         <CustomFieldField
+          customFieldTypes={outputFieldTypes}
           emptyText={t("actions.noRecordFound")}
           label={t("fields.outputCustomField.label")}
           name="outputFieldId"

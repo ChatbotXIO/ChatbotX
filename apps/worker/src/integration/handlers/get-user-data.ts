@@ -1,24 +1,27 @@
-import { contactInboxService } from "@chatbotx.io/business"
-import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import {
+  contactCustomFieldService,
+  contactInboxService,
+  resolveTenantSettings,
+} from "@chatbotx.io/business"
+import {
+  type ReplyValidationResult,
+  validateReplyInput,
+} from "@chatbotx.io/business/get-user-data"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
+import { db, eq, sql } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
-import {
-  contactCustomFieldModel,
-  conversationModel,
-  customFieldModel,
-} from "@chatbotx.io/database/schema"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import {
   type GetUserDataStepSchema,
   type InputFailureReason,
   inputFailureReasons,
-  ReplyFormat,
 } from "@chatbotx.io/flow-config"
 import { IntegrationException, type Variable } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
 import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { add, isBefore } from "date-fns"
@@ -26,14 +29,6 @@ import { logger } from "../../lib/logger"
 import { waitForChatJobCompletion } from "../utils/message"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
-
-export type GetUserDataResult = {
-  userInput?: string
-  errorMessage?: string
-}
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const phoneRegex = /^\+?(\d[\d-. ]+)?(\([\d-. ]+\))?[\d-. ]+\d$/
 
 export async function getUserData(
   props: ExecuteStepProps<GetUserDataStepSchema>,
@@ -82,7 +77,7 @@ async function handleSkipOrError(
   }
 
   // if user data is valid, save to custom field if configured
-  if (validUserData.userInput) {
+  if (validUserData.ok) {
     await contactInboxService.updateTracking({
       contactInboxId: props.contactInbox.id,
       contactId: props.contactInbox.contactId,
@@ -91,33 +86,12 @@ async function handleSkipOrError(
     })
 
     if (step.outputFieldId) {
-      await findOrFail({
-        table: customFieldModel,
-        where: {
-          id: step.outputFieldId,
-          workspaceId: props.conversation.workspaceId,
-        },
-        message: "Field not found",
-      })
-
-      await db.transaction(async (tx) => {
-        await tx
-          .insert(contactCustomFieldModel)
-          .values({
-            id: createId(),
-            contactId: props.conversation.contactId,
-            customFieldId: step.outputFieldId,
-            value: validUserData.userInput ?? "",
-          })
-          .onConflictDoUpdate({
-            target: [
-              contactCustomFieldModel.contactId,
-              contactCustomFieldModel.customFieldId,
-            ],
-            set: {
-              value: validUserData.userInput,
-            },
-          })
+      const value = await resolveOutputValue(props, validUserData)
+      await contactCustomFieldService.setValueByKey({
+        workspaceId: props.conversation.workspaceId,
+        contactId: props.conversation.contactId,
+        keyword: step.outputFieldId,
+        value,
       })
     }
 
@@ -163,7 +137,7 @@ async function handleSkipOrError(
 
 async function validateUserData(
   props: ExecuteStepProps<GetUserDataStepSchema>,
-): Promise<GetUserDataResult> {
+): Promise<ReplyValidationResult> {
   const messageRepository = await createMessageRepository()
   const lastMessages = await messageRepository.findLastByConversation(
     props.conversation.id,
@@ -189,65 +163,30 @@ async function validateUserData(
 
   if (!lastUserMessage) {
     return {
+      ok: false,
       errorMessage: `getUserData: unable to find last message of conversation ${props.conversation.id}`,
     }
   }
 
-  if (lastUserMessage.attachments.length > 0) {
-    if (
-      props.step.replyFormat === ReplyFormat.image &&
-      lastUserMessage.attachments[0].fileType === "image"
-    ) {
-      return { userInput: lastUserMessage.attachments[0].originPath }
-    }
-    if (props.step.replyFormat === ReplyFormat.file) {
-      return { userInput: lastUserMessage.attachments[0].originPath }
-    }
-    return { errorMessage: "getUserData: invalid user data" }
+  return validateReplyInput(props.step.replyFormat, lastUserMessage)
+}
+
+// Attachments validate to a bare storage key; turn it into a public URL (with
+// the tenant's storage domain) so the stored value is usable downstream. Text
+// and location values are stored verbatim.
+async function resolveOutputValue(
+  props: ExecuteStepProps<GetUserDataStepSchema>,
+  result: Extract<ReplyValidationResult, { ok: true }>,
+): Promise<string> {
+  if (result.kind !== "attachment") {
+    return result.userInput
   }
 
-  if (lastUserMessage.text) {
-    switch (props.step.replyFormat) {
-      case ReplyFormat.number: {
-        if (!Number.isNaN(Number.parseFloat(lastUserMessage.text))) {
-          return { userInput: lastUserMessage.text }
-        }
-        return { errorMessage: "getUserData: invalid number" }
-      }
-      case ReplyFormat.email: {
-        if (emailPattern.test(lastUserMessage.text)) {
-          return { userInput: lastUserMessage.text }
-        }
-        return { errorMessage: "getUserData: invalid email address" }
-      }
-      case ReplyFormat.phone: {
-        if (phoneRegex.test(lastUserMessage.text)) {
-          return { userInput: lastUserMessage.text }
-        }
-        return { errorMessage: "getUserData: invalid phone number" }
-      }
-      case ReplyFormat.link: {
-        try {
-          new URL(lastUserMessage.text)
-          return { userInput: lastUserMessage.text }
-        } catch {
-          return { errorMessage: "getUserData: invalid link" }
-        }
-      }
-      case ReplyFormat.date:
-      case ReplyFormat.datetime: {
-        const dateObj = new Date(lastUserMessage.text)
-        if (Number.isNaN(dateObj.getTime())) {
-          return { errorMessage: "getUserData: invalid date" }
-        }
-        return { userInput: dateObj.toISOString() }
-      }
-      default:
-        return { userInput: lastUserMessage.text }
-    }
-  }
+  const { storageUrl } = await resolveTenantSettings({
+    workspaceId: props.conversation.workspaceId,
+  })
 
-  return { errorMessage: "getUserData: invalid user data" }
+  return getPublicFileUrl(result.userInput, storageUrl)
 }
 
 async function sendMessage(

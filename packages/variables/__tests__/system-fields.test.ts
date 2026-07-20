@@ -612,6 +612,12 @@ describe("getSystemFieldValue", () => {
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: passthroughInbox }),
+        systemFieldTypes.enum.user_id,
+      ),
+    ).resolves.toBe("source-1")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: passthroughInbox }),
         systemFieldTypes.enum.user_external_id,
       ),
     ).resolves.toBe("source-1")
@@ -631,6 +637,7 @@ describe("getSystemFieldValue", () => {
 
   test("contact inbox passthrough fields return null without a contact inbox", async () => {
     for (const key of [
+      systemFieldTypes.enum.user_id,
       systemFieldTypes.enum.user_external_id,
       systemFieldTypes.enum.webchat_parent_url,
       systemFieldTypes.enum.last_error_log,
@@ -1222,7 +1229,6 @@ describe("getSystemFieldValue — contact profile columns", () => {
       [systemFieldTypes.enum.user_country, "VN"],
       [systemFieldTypes.enum.user_state, "Ho Chi Minh"],
       [systemFieldTypes.enum.user_city, "Thu Duc"],
-      [systemFieldTypes.enum.user_id, "contact-1"],
       // timezone follows the ChatRace signed-offset shape; timezone_name maps to IANA.
       [systemFieldTypes.enum.timezone, "+7"],
     ]

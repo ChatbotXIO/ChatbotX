@@ -1,4 +1,7 @@
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  CustomFieldType,
+} from "@chatbotx.io/database/partials"
 import {
   ComboboxField,
   type ComboboxFieldProps,
@@ -10,16 +13,18 @@ type CustomFieldFieldProps = Omit<
   ComboboxFieldProps<FieldValues>,
   "options"
 > & {
-  includeReserved?: boolean
   channels?: ChannelType[]
+  customFieldTypes?: CustomFieldType[]
+  includeReserved?: boolean
 }
 
 export default function CustomFieldField(props: CustomFieldFieldProps) {
-  const { includeReserved, channels, ...rest } = props
+  const { channels, customFieldTypes, includeReserved, ...rest } = props
 
   const customFieldOptions = useCustomFieldSelectOptions({
-    includeReserved,
     channels,
+    customFieldTypes,
+    includeReserved,
   })
 
   return <ComboboxField {...rest} options={customFieldOptions} />

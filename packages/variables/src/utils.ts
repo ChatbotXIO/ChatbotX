@@ -241,7 +241,7 @@ export const getSystemFieldValue = async (
         contactInbox?.language ?? languageFromLocale(contact.locale) ?? null
       )
     case systemFieldTypes.enum.user_id:
-      return contact.id
+      return contactInbox?.sourceId ?? null
     case systemFieldTypes.enum.subscribed_date:
       return formatDate(contactInbox?.createdAt, timezone)
     case systemFieldTypes.enum.last_seen:
