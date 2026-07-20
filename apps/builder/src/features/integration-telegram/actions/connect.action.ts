@@ -27,16 +27,18 @@ export const connectTelegramAction = authActionClient
   .inputSchema(connectTelegramRequest)
   .action(
     async ({
-      parsedInput: { botToken, workspaceId },
+      parsedInput,
       ctx,
     }: {
       parsedInput: ConnectTelegramRequest
       ctx: { user: UserModel }
     }) => {
       try {
+        let workspaceId = parsedInput.workspaceId
+
         // Validate bot token and fetch bot info from Telegram
         const botData = await integrations.telegram.runAction("connect", {
-          botToken,
+          botToken: parsedInput.botToken,
         })
 
         // Resolve ownerId before the transaction to avoid an extra read inside it
@@ -58,7 +60,7 @@ export const connectTelegramAction = authActionClient
         return await db.transaction(async (tx) => {
           const auth: TelegramAuthValue = {
             authType: "secretText",
-            secretText: botToken,
+            secretText: parsedInput.botToken,
           }
 
           if (!workspaceId) {
@@ -101,7 +103,7 @@ export const connectTelegramAction = authActionClient
             `/integrations/telegram/webhook?botId=${botData.id}`,
           )
           await integrations.telegram.runAction("registerWebhook", {
-            botToken,
+            botToken: parsedInput.botToken,
             webhookUrl,
           })
 
@@ -109,9 +111,9 @@ export const connectTelegramAction = authActionClient
         })
       } catch (error) {
         if (error instanceof ChatbotXException) {
-          if (error.code === "channelDuplicated" && workspaceId) {
+          if (error.code === "channelDuplicated" && parsedInput.workspaceId) {
             redirect(
-              `/space/${workspaceId}/settings/channels?channel=telegram&error=duplicated`,
+              `/space/${parsedInput.workspaceId}/settings/channels?channel=telegram&error=duplicated`,
             )
           }
           throw error
