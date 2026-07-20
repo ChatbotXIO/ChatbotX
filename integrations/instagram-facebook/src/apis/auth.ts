@@ -85,6 +85,37 @@ export function exchangeCodeForToken(
   })
 }
 
+export type FacebookUser = {
+  id: string
+  name: string
+  avatarUrl?: string
+}
+
+export function getFacebookUser(
+  userAccessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<FacebookUser> {
+  const endpoint = `${version}/me`
+
+  return rescue(endpoint, async () => {
+    const res: {
+      id: string
+      name: string
+      picture?: { data?: { url?: string } }
+    } = await instagramGraphClient.get(endpoint, {
+      searchParams: {
+        fields: "id,name,picture.width(200).height(200)",
+        access_token: userAccessToken,
+      },
+    })
+    return {
+      id: res.id,
+      name: res.name,
+      avatarUrl: res.picture?.data?.url,
+    }
+  })
+}
+
 export async function getUserInstagramAccounts(
   userAccessToken: string,
   version: string = DEFAULT_API_VERSION,

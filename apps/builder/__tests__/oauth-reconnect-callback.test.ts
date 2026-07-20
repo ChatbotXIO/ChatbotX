@@ -14,6 +14,7 @@ const {
   mockUpsertFacebookAds,
   mockExchangeMessengerCode,
   mockGetUserPages,
+  mockGetMessengerFacebookUser,
   mockExchangeMessengerLongLivedToken,
   mockSubscribePageToAppWebhook,
   mockExchangeInstagramCode,
@@ -21,6 +22,7 @@ const {
   mockSubscribeInstagramWebhook,
   mockExchangeInstagramFacebookCode,
   mockGetUserInstagramAccounts,
+  mockGetInstagramFacebookUser,
   mockSubscribeInstagramFacebookWebhook,
   mockExchangeFacebookAdsCode,
   mockExchangeFacebookAdsLongLivedToken,
@@ -43,6 +45,7 @@ const {
   mockUpsertFacebookAds: vi.fn(),
   mockExchangeMessengerCode: vi.fn(),
   mockGetUserPages: vi.fn(),
+  mockGetMessengerFacebookUser: vi.fn(),
   mockExchangeMessengerLongLivedToken: vi.fn(),
   mockSubscribePageToAppWebhook: vi.fn(),
   mockExchangeInstagramCode: vi.fn(),
@@ -50,6 +53,7 @@ const {
   mockSubscribeInstagramWebhook: vi.fn(),
   mockExchangeInstagramFacebookCode: vi.fn(),
   mockGetUserInstagramAccounts: vi.fn(),
+  mockGetInstagramFacebookUser: vi.fn(),
   mockSubscribeInstagramFacebookWebhook: vi.fn(),
   mockExchangeFacebookAdsCode: vi.fn(),
   mockExchangeFacebookAdsLongLivedToken: vi.fn(),
@@ -101,12 +105,14 @@ vi.mock("@chatbotx.io/integration-instagram", () => ({
 
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   exchangeCodeForToken: mockExchangeInstagramFacebookCode,
+  getFacebookUser: mockGetInstagramFacebookUser,
   getUserInstagramAccounts: mockGetUserInstagramAccounts,
   subscribePageToInstagramWebhook: mockSubscribeInstagramFacebookWebhook,
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   exchangeCodeForToken: mockExchangeMessengerCode,
+  getFacebookUser: mockGetMessengerFacebookUser,
   getUserPages: mockGetUserPages,
 }))
 
@@ -183,6 +189,7 @@ vi.mock("@/lib/facebook-pending-auth", () => ({
 
 vi.mock("@/lib/oauth-broker", () => ({
   buildBrokerCallbackUrl: (path: string) => `https://broker.example.com${path}`,
+  getBrokerOrigin: () => "https://broker.example.com",
 }))
 
 vi.mock("@/lib/oauth-referer", () => ({
@@ -212,6 +219,16 @@ describe("handleCallback OAuth reconnect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockGetMessengerFacebookUser.mockResolvedValue({
+      id: "fb-user-1",
+      name: "FB User",
+      avatarUrl: "https://fb.example/avatar.jpg",
+    })
+    mockGetInstagramFacebookUser.mockResolvedValue({
+      id: "fb-user-1",
+      name: "FB User",
+      avatarUrl: "https://fb.example/avatar.jpg",
+    })
     mockFindWorkspaceById.mockResolvedValue({ id: "1", ownerId: "owner-1" })
     mockIsMember.mockResolvedValue(true)
     mockResolveForOwner.mockResolvedValue({
@@ -354,6 +371,14 @@ describe("handleCallback OAuth reconnect", () => {
     )
 
     expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
+    expect(mockEncryptAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userToken: "long-token",
+        userId: "fb-user-1",
+        userName: "FB User",
+        userAvatarUrl: "https://fb.example/avatar.jpg",
+      }),
+    )
     expect(mockCookieSet).toHaveBeenCalledWith(
       "messenger-pending-auth",
       "encrypted-token",

@@ -16,8 +16,15 @@ import {
   type FacebookAdsAuthValue,
 } from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
-import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
-import { exchangeCodeForToken as exchangeMessengerCode } from "@chatbotx.io/integration-messenger"
+import {
+  exchangeCodeForToken as exchangeInstagramFacebookCode,
+  getFacebookUser as getInstagramFacebookUser,
+} from "@chatbotx.io/integration-instagram-facebook"
+import {
+  exchangeCodeForToken as exchangeMessengerCode,
+  type FacebookUser,
+  getFacebookUser as getMessengerFacebookUser,
+} from "@chatbotx.io/integration-messenger"
 import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import {
   AuthType,
@@ -100,6 +107,19 @@ const storeFacebookAdsConnection = async (args: {
     auth: facebookAdsAuth,
     tokenExpiresAt,
   })
+}
+
+// Best-effort: the connect flow works without the user identity, so a failed
+// lookup only leaves `userInfo` unset on the integration row.
+const lookupFacebookUser = async (
+  fetchUser: () => Promise<FacebookUser>,
+): Promise<FacebookUser | undefined> => {
+  try {
+    return await fetchUser()
+  } catch (error) {
+    logger.warn({ err: error }, "Failed to fetch Facebook user profile")
+    return
+  }
 }
 
 export const handleCallback = async (
@@ -261,8 +281,14 @@ export const handleCallback = async (
         )
         return shortLivedToken
       })
+      const fbUser = await lookupFacebookUser(() =>
+        getMessengerFacebookUser(userToken, messengerCredential.config.version),
+      )
       const token = await encryptAuth({
         userToken,
+        userId: fbUser?.id,
+        userName: fbUser?.name,
+        userAvatarUrl: fbUser?.avatarUrl,
         workspaceId: workspace.id,
         referer: safeReferer,
         version: messengerCredential.config.version,
@@ -353,7 +379,6 @@ export const handleCallback = async (
         code,
         callbackUrl,
       )
-
       if (stateParams.reconnectIntegrationId) {
         const result = await reconnectInstagramFacebookHandler({
           credentialConfig: instagramFacebookCredential.config,
@@ -364,8 +389,18 @@ export const handleCallback = async (
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
+      const fbUser = await lookupFacebookUser(() =>
+        getInstagramFacebookUser(
+          userToken,
+          instagramFacebookCredential.config.version,
+        ),
+      )
+
       const token = await encryptAuth({
         userToken,
+        userId: fbUser?.id,
+        userName: fbUser?.name,
+        userAvatarUrl: fbUser?.avatarUrl,
         workspaceId: workspace.id,
         referer: safeReferer,
         version: instagramFacebookCredential.config.version,

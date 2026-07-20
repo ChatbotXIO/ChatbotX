@@ -8,6 +8,7 @@ export const selectAccountRequest = z.object({
   igUsername: z.string(),
   pageId: z.string(),
   accessToken: z.string(),
+  profilePictureUrl: z.string().optional(),
 })
 export type SelectAccountRequest = z.infer<typeof selectAccountRequest>
 

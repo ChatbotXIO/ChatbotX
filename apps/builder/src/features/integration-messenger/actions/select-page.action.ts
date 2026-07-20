@@ -6,6 +6,7 @@ import {
   platformCredentialService,
   resolveTenantSettings,
   tagSyncService,
+  updateMessengerIntegrationUserInfo,
   userQuotaService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -29,6 +30,11 @@ import {
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
+import {
+  FB_MESSENGER_PENDING_AUTH_COOKIE,
+  readPendingAuth,
+} from "@/lib/facebook-pending-auth"
+import { persistIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schema/action"
@@ -74,6 +80,18 @@ export const selectPageAction = authActionClient
         const messengerSettings = messengerCredential.config
 
         let integrationId = ""
+
+        // The OAuth callback stored the (long-lived) user token in the
+        // pending-auth cookie. Best-effort: an expired/missing cookie only
+        // leaves `auth.tokens.userAccessToken`/`userId` unset.
+        const pendingAuth = await readPendingAuth(
+          FB_MESSENGER_PENDING_AUTH_COOKIE,
+        )
+        if (!pendingAuth) {
+          logger.warn(
+            "Messenger pending-auth cookie missing; connecting without user access token",
+          )
+        }
 
         const { brandingCtx } = await db.transaction(async (tx) => {
           const longLivedToken = await exchangeLongLivedToken(
@@ -182,6 +200,23 @@ export const selectPageAction = authActionClient
         if (!integrationId) {
           throw new ChatbotXException("Failed to create integration")
         }
+
+        // Best-effort: the connection is already live, so a failed user-info
+        // write must never fail the action (the outer catch would report a
+        // bogus connect failure).
+        await persistIntegrationUserInfo({
+          workspaceId: workspaceId as string,
+          userId: pendingAuth?.userId,
+          userName: pendingAuth?.userName,
+          userAccessToken: pendingAuth?.userToken,
+          avatarUrl: pendingAuth?.userAvatarUrl,
+          persist: (userInfo) =>
+            updateMessengerIntegrationUserInfo({
+              id: integrationId,
+              workspaceId: workspaceId as string,
+              userInfo,
+            }),
+        })
 
         // Import any labels already on the page into local tags + mappings.
         if (connectedIntegrationId) {

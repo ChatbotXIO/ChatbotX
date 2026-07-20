@@ -8,6 +8,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
+import type { IntegrationUserInfo } from "../partials/integration"
 import type {
   MessengerConversationStarter,
   MessengerPersistentMenu,
@@ -27,6 +28,7 @@ export const integrationMessengerModel = pgTable(
   {
     ...sharedColumns,
     auth: jsonb().notNull(),
+    userInfo: jsonb().$type<IntegrationUserInfo>(),
     pageId: text().notNull(),
     name: text().notNull(),
     conversationStarters: jsonb()

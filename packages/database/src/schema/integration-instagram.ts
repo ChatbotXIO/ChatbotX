@@ -3,6 +3,7 @@ import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import type {
   InstagramConversationStarter,
   InstagramPersistentMenu,
+  IntegrationUserInfo,
 } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { flowModel } from "./flow"
@@ -14,6 +15,7 @@ export const integrationInstagramModel = pgTable(
   {
     ...sharedColumns,
     auth: jsonb().notNull(),
+    userInfo: jsonb().$type<IntegrationUserInfo>(),
     igId: text().notNull(),
     pageId: text().notNull(),
     name: text().notNull(),

@@ -1,4 +1,5 @@
 import { and, db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 
 export function findInstagramIntegrationByInboxId(inboxId: string) {
@@ -27,6 +28,7 @@ export async function updateInstagramIntegrationAuth(props: {
   name?: string
   username?: string
   pageId?: string
+  userInfo?: IntegrationUserInfo
 }): Promise<void> {
   await db
     .update(integrationInstagramModel)
@@ -35,7 +37,29 @@ export async function updateInstagramIntegrationAuth(props: {
       ...(props.name ? { name: props.name } : {}),
       ...(props.username ? { username: props.username } : {}),
       ...(props.pageId ? { pageId: props.pageId } : {}),
+      ...(props.userInfo ? { userInfo: props.userInfo } : {}),
     })
+    .where(
+      and(
+        eq(integrationInstagramModel.id, props.id),
+        eq(integrationInstagramModel.workspaceId, props.workspaceId),
+      ),
+    )
+}
+
+/**
+ * Store the authorizing user's identity after a connect. Separate from the
+ * insert because the avatar upload is an external call that must stay outside
+ * the connect transaction.
+ */
+export async function updateInstagramIntegrationUserInfo(props: {
+  id: string
+  workspaceId: string
+  userInfo: IntegrationUserInfo
+}): Promise<void> {
+  await db
+    .update(integrationInstagramModel)
+    .set({ userInfo: props.userInfo })
     .where(
       and(
         eq(integrationInstagramModel.id, props.id),
