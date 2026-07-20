@@ -82,6 +82,7 @@ export type MessageHandlers<
       data: {
         contact: OutgoingContact
         message: OutgoingMessage
+        quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
         sendFrom?: "inbox"
       }

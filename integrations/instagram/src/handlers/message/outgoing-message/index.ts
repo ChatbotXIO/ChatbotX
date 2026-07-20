@@ -35,6 +35,7 @@ import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
+import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
@@ -100,15 +101,19 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message, sendFrom },
+      data: { contact, message, quickReplies, sendFrom },
     } = props
 
     const policy = resolveInstagramMessagingPolicy({ contact, sendFrom })
     const messageIds: string[] = []
     try {
-      for (const instagramMessage of convertMessageToInstagramMessage(
-        message,
-      )) {
+      const instagramMessages = [...convertMessageToInstagramMessage(message)]
+      const lastMessage = instagramMessages.at(-1)
+      if (lastMessage && quickReplies && quickReplies.length > 0) {
+        lastMessage.quick_replies =
+          convertCanonicalInstagramQuickReplies(quickReplies)
+      }
+      for (const instagramMessage of instagramMessages) {
         const payload = buildMessagePayload(contact, instagramMessage, policy)
         const response = await sendInstagramMessage(ctx.auth, payload)
         if (response.message_id) {

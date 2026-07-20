@@ -21,6 +21,7 @@ import type {
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
 } from "@chatbotx.io/flow-config"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -55,6 +56,7 @@ export type ChatJobSendChannelMessage = {
       clientId?: string | undefined
       parentCreatedAt?: Date | null
     }
+    quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     sendFrom?: "inbox"
   }
@@ -97,6 +99,7 @@ export type ChatJobSendChatMessage = {
     text?: string
     url?: string
     storagePath?: string
+    quickReplies?: MessageButtonTemplate[]
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
   }
