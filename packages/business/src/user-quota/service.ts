@@ -55,9 +55,11 @@ const BOOTSTRAP_TRIAL_FALLBACK = {
   channelsLimit: 0,
   teamMembersLimit: 0,
   contactsLimit: 0,
+  botMessagesLimit: 0,
 } as const
 
 interface DefaultPlanSnapshot {
+  botMessagesLimit: number | null
   channelsLimit: number | null
   contactsLimit: number | null
   macLimit: number | null
@@ -73,6 +75,7 @@ interface DefaultPlanSnapshot {
 type BootstrapPlanSnapshot = Pick<
   DefaultPlanSnapshot,
   | "channelsLimit"
+  | "botMessagesLimit"
   | "contactsLimit"
   | "macLimit"
   | "planName"
@@ -107,6 +110,7 @@ class UserQuotaService extends BaseService {
       teamMembers: userQuotaModel.teamMembersUsed,
       contacts: userQuotaModel.contactsUsed,
       mac: userQuotaModel.macUsed,
+      botMessages: userQuotaModel.botMessagesUsed,
     },
     getUsed: (quota, metric) => this.getUsedValue(quota, metric),
     fetchRow: (userId) =>
@@ -133,6 +137,8 @@ class UserQuotaService extends BaseService {
         return quota.teamMembersUsed
       case "mac":
         return quota.macUsed
+      case "botMessages":
+        return quota.botMessagesUsed
       default:
         return 0
     }
@@ -229,6 +235,7 @@ class UserQuotaService extends BaseService {
         channelsLimit: snapshot.channelsLimit,
         teamMembersLimit: snapshot.teamMembersLimit,
         macLimit: snapshot.macLimit,
+        botMessagesLimit: snapshot.botMessagesLimit,
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
@@ -311,6 +318,8 @@ class UserQuotaService extends BaseService {
       teamMembersUsed: 0,
       macLimit: null,
       macUsed: 0,
+      botMessagesLimit: null,
+      botMessagesUsed: 0,
       whiteLabel: false,
       ssoSaml: false,
       saasMode: false,
@@ -328,6 +337,7 @@ class UserQuotaService extends BaseService {
       contactsLimit: base.contactsLimit ?? snapshot.contactsLimit,
       workspacesLimit: base.workspacesLimit ?? snapshot.workspacesLimit,
       channelsLimit: base.channelsLimit ?? snapshot.channelsLimit,
+      botMessagesLimit: base.botMessagesLimit ?? snapshot.botMessagesLimit,
       teamMembersLimit: base.teamMembersLimit ?? snapshot.teamMembersLimit,
       // Monthly-active-contacts cap (`Plan.limits.monthlyActiveContacts`) maps to
       // `macLimit`, NOT `contactsLimit`; without this the free-tier overlay would
@@ -730,6 +740,11 @@ class UserQuotaService extends BaseService {
         return { limit: quota.contactsLimit, used: quota.contactsUsed }
       case "mac":
         return { limit: quota.macLimit, used: quota.macUsed }
+      case "botMessages":
+        return {
+          limit: quota.botMessagesLimit,
+          used: quota.botMessagesUsed,
+        }
       default:
         return { limit: null, used: 0 }
     }
