@@ -6,7 +6,6 @@ import {
   tiktokCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import { subscribeWebhook } from "@chatbotx.io/integration-tiktok"
-import { getTranslations } from "next-intl/server"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
 import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
@@ -16,26 +15,13 @@ export const updateTiktokSettingAction = authActionClient
   .inputSchema(tiktokCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
     const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
-    const existing = await platformCredentialService.findDecrypted({
-      userId: scopedUserId,
-      type: "tiktok",
-    })
-
-    const t = await getTranslations()
-
-    const clientSecret =
-      parsedInput.clientSecret || existing?.config.clientSecret
-    if (!clientSecret) {
-      throw new Error(t("platformSettings.errors.tiktokAppSecretRequired"))
-    }
-
     const config: TiktokCredential = {
       clientId: parsedInput.clientId,
-      clientSecret,
+      clientSecret: parsedInput.clientSecret,
     }
 
     await subscribeWebhook(
-      { clientId: config.clientId, clientSecret },
+      { clientId: config.clientId, clientSecret: config.clientSecret },
       buildBrokerCallbackUrl("/integrations/tiktok/webhook"),
     )
 

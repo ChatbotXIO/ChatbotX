@@ -239,38 +239,38 @@ export type CredentialPublicByType = {
   tiktok: TiktokCredentialPublic
 }
 
-// ─── Update schemas (secrets optional — empty means "keep current") ─────────
+// ─── Update schemas (credential fields required except deliberate optionals) ─
 
 export const whatsappCredentialUpdateSchema = z.object({
-  clientId: z.string().trim(),
-  version: z.string().trim(),
-  configId: z.string().trim(),
-  systemUserId: z.string().trim(),
+  clientId: z.string().trim().min(1),
+  version: z.string().trim().min(1),
+  configId: z.string().trim().min(1),
+  systemUserId: z.string().trim().min(1),
   businessId: z.string().trim().optional(),
-  businessName: z.string().trim(),
-  verifyToken: z.string().trim(),
-  clientSecret: z.string().trim().optional(),
-  systemUserToken: z.string().trim().optional(),
+  businessName: z.string().trim().min(1),
+  verifyToken: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
+  systemUserToken: z.string().trim().min(1),
 })
 export type WhatsappCredentialUpdate = z.infer<
   typeof whatsappCredentialUpdateSchema
 >
 
 export const messengerCredentialUpdateSchema = z.object({
-  clientId: z.string().trim(),
-  version: z.string().trim(),
-  verifyToken: z.string().trim(),
-  clientSecret: z.string().trim().optional(),
+  clientId: z.string().trim().min(1),
+  version: z.string().trim().min(1),
+  verifyToken: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
 })
 export type MessengerCredentialUpdate = z.infer<
   typeof messengerCredentialUpdateSchema
 >
 
 export const instagramCredentialUpdateSchema = z.object({
-  clientId: z.string().trim(),
-  version: z.string().trim(),
-  verifyToken: z.string().trim(),
-  clientSecret: z.string().trim().optional(),
+  clientId: z.string().trim().min(1),
+  version: z.string().trim().min(1),
+  verifyToken: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
 })
 export type InstagramCredentialUpdate = z.infer<
   typeof instagramCredentialUpdateSchema
@@ -281,19 +281,19 @@ export const instagramFacebookCredentialUpdateSchema =
 export type InstagramFacebookCredentialUpdate = InstagramCredentialUpdate
 
 export const googleCredentialUpdateSchema = z.object({
-  clientId: z.string().trim(),
-  clientSecret: z.string().trim().optional(),
-  verifyToken: z.string().trim().optional(),
+  clientId: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
+  verifyToken: z.string().trim().min(1),
 })
 export type GoogleCredentialUpdate = z.infer<
   typeof googleCredentialUpdateSchema
 >
 
 export const zaloCredentialUpdateSchema = z.object({
-  clientId: z.string().trim(),
-  version: z.string().trim(),
-  verifyToken: z.string().trim(),
-  clientSecret: z.string().trim().optional(),
+  clientId: z.string().trim().min(1),
+  version: z.string().trim().min(1),
+  verifyToken: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
 })
 export type ZaloCredentialUpdate = z.infer<typeof zaloCredentialUpdateSchema>
 
@@ -303,9 +303,9 @@ export const giphyCredentialUpdateSchema = z.object({
 export type GiphyCredentialUpdate = z.infer<typeof giphyCredentialUpdateSchema>
 
 export const stripeCredentialUpdateSchema = z.object({
-  publishableKey: z.string().trim(),
-  verifyToken: z.string().trim(),
-  secretKey: z.string().trim().optional(),
+  publishableKey: z.string().trim().min(1),
+  verifyToken: z.string().trim().min(1),
+  secretKey: z.string().trim().min(1),
 })
 export type StripeCredentialUpdate = z.infer<
   typeof stripeCredentialUpdateSchema
@@ -316,14 +316,14 @@ export const smtpCredentialUpdateSchema = z.object({
   port: z.coerce.number().int().positive(),
   username: z.string().trim().min(1),
   password: z.string().trim().optional(),
-  fromEmail: z.string().trim().email(),
+  fromEmail: z.string().trim().min(1).email(),
   fromName: z.string().trim().optional(),
 })
 export type SmtpCredentialUpdate = z.infer<typeof smtpCredentialUpdateSchema>
 
 export const tiktokCredentialUpdateSchema = z.object({
-  clientId: z.string().trim(),
-  clientSecret: z.string().trim().optional(),
+  clientId: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
 })
 export type TiktokCredentialUpdate = z.infer<
   typeof tiktokCredentialUpdateSchema
