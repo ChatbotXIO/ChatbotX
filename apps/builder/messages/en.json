@@ -1547,7 +1547,8 @@
       "link": "Link",
       "date": "Date",
       "datetime": "Datetime",
-      "location": "Location"
+      "location": "Location",
+      "anyInput": "Any Input"
     },
     "workspaceMember": {
       "label": "Workspace Member"

@@ -1520,7 +1520,8 @@
       "link": "Liên kết",
       "date": "Ngày",
       "datetime": "Ngày giờ",
-      "location": "Vị trí"
+      "location": "Vị trí",
+      "anyInput": "Mọi định dạng"
     },
     "workspaceMember": {
       "label": "Thành viên workspace"

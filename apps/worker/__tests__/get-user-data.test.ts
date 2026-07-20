@@ -1,4 +1,5 @@
 import { MessageShardUnavailableError } from "@chatbotx.io/database/errors"
+import type { ContentType, FileType } from "@chatbotx.io/database/partials"
 import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
 import type { GetUserDataStepSchema } from "@chatbotx.io/flow-config"
 import { ReplyFormat } from "@chatbotx.io/flow-config"
@@ -11,30 +12,40 @@ const dbUpdateBuilder: Record<string, unknown> = {}
 dbUpdateBuilder.set = vi.fn(() => dbUpdateBuilder)
 dbUpdateBuilder.where = vi.fn(() => dbUpdateBuilder)
 
-const dbInsertBuilder: Record<string, unknown> = {}
-dbInsertBuilder.values = vi.fn(() => dbInsertBuilder)
-dbInsertBuilder.onConflictDoUpdate = vi.fn(async () => undefined)
-
-const dbTransactionFn = vi.fn(async (cb: (tx: unknown) => Promise<void>) => {
-  await cb({
-    insert: vi.fn(() => dbInsertBuilder),
-    update: vi.fn(() => dbUpdateBuilder),
-  })
-})
-
 const lastMessage: {
   current: {
     text?: string | null
-    attachments: { fileType: string; originPath: string }[]
+    contentType: ContentType
+    contentAttributes?: Record<string, unknown> | null
+    attachments: { fileType: FileType; originPath: string }[]
   } | null
 } = { current: null }
 const repositoryError: { current: Error | null } = { current: null }
 
-const findOrFailResult: { current: unknown } = { current: { id: "field-1" } }
 const contactInboxUpdateTracking = vi.fn(async () => undefined)
+const contactCustomFieldSetValueByKey = vi.fn(async () => undefined)
+const resolveTenantSettings = vi.fn(async () => ({
+  storageUrl: "https://cdn.example.com/",
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactCustomFieldService: {
+    setValueByKey: contactCustomFieldSetValueByKey,
+  },
   contactInboxService: { updateTracking: contactInboxUpdateTracking },
+  resolveTenantSettings,
+}))
+
+// Attachment values are stored as a public URL; mirror getPublicFileUrl's join
+// without loading the real module.
+vi.mock("@chatbotx.io/business/utils", () => ({
+  getPublicFileUrl: (path: string, base: string) => {
+    let key = path
+    if (key.startsWith("/")) {
+      key = key.slice(1)
+    }
+    return `${base}${key}`
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -51,11 +62,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     },
     update: vi.fn(() => dbUpdateBuilder),
-    insert: vi.fn(() => dbInsertBuilder),
-    transaction: dbTransactionFn,
   },
   eq: vi.fn(),
-  findOrFail: vi.fn(async () => findOrFailResult.current),
   sql: vi.fn(() => "CLEAR_CHALLENGE_SQL"),
 }))
 
@@ -79,9 +87,7 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/database/schema")>()
   return {
     ...actual,
-    contactCustomFieldModel: {},
     conversationModel: {},
-    customFieldModel: {},
   }
 })
 
@@ -130,6 +136,7 @@ beforeEach(() => {
   chatQueueAdd.mockResolvedValue(undefined)
   waitForChatJobCompletion.mockResolvedValue(undefined)
   contactInboxUpdateTracking.mockClear()
+  contactCustomFieldSetValueByKey.mockClear()
   vi.mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>).mockClear()
   vi.mocked(dbUpdateBuilder.where as ReturnType<typeof vi.fn>).mockClear()
 })
@@ -172,6 +179,9 @@ function makeProps(
       stepType: "getUserData" as const,
       message: "Please enter your email",
       replyFormat,
+      outputFieldId: "field-1",
+      retryMessage: "Please try again",
+      skipButtonLabel: "Skip",
       autoSkip: false,
       autoSkipTimeUnit: "hours" as const,
       autoSkipTimeValue: 1,
@@ -187,6 +197,18 @@ function makeProps(
       },
     },
   } as ExecuteStepProps<GetUserDataStepSchema>
+}
+
+function makeIncomingMessage(
+  overrides: Partial<NonNullable<(typeof lastMessage)["current"]>> = {},
+): NonNullable<(typeof lastMessage)["current"]> {
+  return {
+    text: null,
+    contentType: "text",
+    contentAttributes: null,
+    attachments: [],
+    ...overrides,
+  }
 }
 
 function expectLastInputFailureUpdate(
@@ -209,6 +231,15 @@ function expectNoLastInputFailureUpdate() {
   expect(callsWithLastInputFailure).toHaveLength(0)
 }
 
+function expectCustomFieldWrite(value: string) {
+  expect(contactCustomFieldSetValueByKey).toHaveBeenCalledWith({
+    workspaceId: "ws-1",
+    contactId: "contact-1",
+    keyword: "field-1",
+    value,
+  })
+}
+
 function challengeClearCalls() {
   return vi
     .mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>)
@@ -227,7 +258,7 @@ describe("getUserData — validation logic", () => {
   })
 
   test("anchors the message lookup on conversation.lastActivityAt, not contactInbox", async () => {
-    lastMessage.current = { text: "user@example.com", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
     const props = makeProps(ReplyFormat.email)
 
     await getUserData(props)
@@ -240,14 +271,15 @@ describe("getUserData — validation logic", () => {
 
   describe("email format", () => {
     test("valid email → returns success", async () => {
-      lastMessage.current = { text: "user@example.com", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
       const result = await getUserData(makeProps(ReplyFormat.email))
       expect(result.status).toBe("success")
       expectLastInputFailureUpdate(null)
+      expectCustomFieldWrite("user@example.com")
     })
 
     test("invalid email → returns retry", async () => {
-      lastMessage.current = { text: "not-an-email", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "not-an-email" })
       const result = await getUserData(makeProps(ReplyFormat.email))
       expect(result.status).toBe("retry")
       expectNoLastInputFailureUpdate()
@@ -256,19 +288,19 @@ describe("getUserData — validation logic", () => {
 
   describe("number format", () => {
     test("valid number → returns success", async () => {
-      lastMessage.current = { text: "42", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "42" })
       const result = await getUserData(makeProps(ReplyFormat.number))
       expect(result.status).toBe("success")
     })
 
     test("decimal number → returns success", async () => {
-      lastMessage.current = { text: "3.14", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "3.14" })
       const result = await getUserData(makeProps(ReplyFormat.number))
       expect(result.status).toBe("success")
     })
 
     test("non-numeric text → returns retry", async () => {
-      lastMessage.current = { text: "hello", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "hello" })
       const result = await getUserData(makeProps(ReplyFormat.number))
       expect(result.status).toBe("retry")
     })
@@ -276,13 +308,13 @@ describe("getUserData — validation logic", () => {
 
   describe("phone format", () => {
     test("valid phone → returns success", async () => {
-      lastMessage.current = { text: "+1-555-123-4567", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "+1-555-123-4567" })
       const result = await getUserData(makeProps(ReplyFormat.phone))
       expect(result.status).toBe("success")
     })
 
     test("invalid phone → returns retry", async () => {
-      lastMessage.current = { text: "not-a-phone", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "not-a-phone" })
       const result = await getUserData(makeProps(ReplyFormat.phone))
       expect(result.status).toBe("retry")
     })
@@ -290,13 +322,13 @@ describe("getUserData — validation logic", () => {
 
   describe("link format", () => {
     test("valid URL → returns success", async () => {
-      lastMessage.current = { text: "https://example.com", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "https://example.com" })
       const result = await getUserData(makeProps(ReplyFormat.link))
       expect(result.status).toBe("success")
     })
 
     test("invalid URL → returns retry", async () => {
-      lastMessage.current = { text: "not-a-url", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "not-a-url" })
       const result = await getUserData(makeProps(ReplyFormat.link))
       expect(result.status).toBe("retry")
     })
@@ -304,7 +336,7 @@ describe("getUserData — validation logic", () => {
 
   describe("default (free text) format", () => {
     test("any text → returns success", async () => {
-      lastMessage.current = { text: "anything goes", attachments: [] }
+      lastMessage.current = makeIncomingMessage({ text: "anything goes" })
       const result = await getUserData(makeProps(ReplyFormat.text))
       expect(result.status).toBe("success")
     })
@@ -312,30 +344,86 @@ describe("getUserData — validation logic", () => {
 
   describe("attachment formats", () => {
     test("image attachment with image format → returns success", async () => {
-      lastMessage.current = {
+      lastMessage.current = makeIncomingMessage({
         text: null,
         attachments: [{ fileType: "image", originPath: "/img.jpg" }],
-      }
+      })
       const result = await getUserData(makeProps(ReplyFormat.image))
       expect(result.status).toBe("success")
+      expectCustomFieldWrite("https://cdn.example.com/img.jpg")
     })
 
     test("file attachment with file format → returns success", async () => {
-      lastMessage.current = {
+      lastMessage.current = makeIncomingMessage({
         text: null,
-        attachments: [{ fileType: "pdf", originPath: "/doc.pdf" }],
-      }
+        attachments: [{ fileType: "file", originPath: "/doc.pdf" }],
+      })
       const result = await getUserData(makeProps(ReplyFormat.file))
       expect(result.status).toBe("success")
     })
 
-    test("image attachment but wrong format → returns retry", async () => {
-      lastMessage.current = {
-        text: null,
+    test("attachment with text-based format → returns retry even with text", async () => {
+      lastMessage.current = makeIncomingMessage({
+        text: "user@example.com",
         attachments: [{ fileType: "image", originPath: "/img.jpg" }],
-      }
+      })
       const result = await getUserData(makeProps(ReplyFormat.email))
       expect(result.status).toBe("retry")
+    })
+
+    test("non-image attachment with image format → returns retry even with text", async () => {
+      lastMessage.current = makeIncomingMessage({
+        text: "caption should not override unsupported attachment",
+        attachments: [{ fileType: "video", originPath: "/video.mp4" }],
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.image))
+
+      expect(result.status).toBe("retry")
+    })
+  })
+
+  describe("any input format", () => {
+    test("video attachment → returns success", async () => {
+      lastMessage.current = makeIncomingMessage({
+        attachments: [{ fileType: "video", originPath: "/video.mp4" }],
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.anyInput))
+
+      expect(result.status).toBe("success")
+      // The uploaded attachment is stored as a public URL, not the bare key.
+      expectCustomFieldWrite("https://cdn.example.com/video.mp4")
+    })
+
+    test("location message → returns success", async () => {
+      lastMessage.current = makeIncomingMessage({
+        contentType: "location",
+        contentAttributes: { latitude: 10.5, longitude: 106.75 },
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.anyInput))
+
+      expect(result.status).toBe("success")
+      expectCustomFieldWrite("10.5,106.75")
+    })
+
+    test("plain text → returns success", async () => {
+      lastMessage.current = makeIncomingMessage({ text: "hello bot" })
+
+      const result = await getUserData(makeProps(ReplyFormat.anyInput))
+
+      expect(result.status).toBe("success")
+      expectCustomFieldWrite("hello bot")
+    })
+
+    test("empty input → returns retry", async () => {
+      lastMessage.current = makeIncomingMessage()
+
+      const result = await getUserData(makeProps(ReplyFormat.anyInput))
+
+      expect(result.status).toBe("retry")
+      expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
     })
   })
 
@@ -360,7 +448,7 @@ describe("getUserData — validation logic", () => {
 describe("getUserData — attempt counter (Bug B fix)", () => {
   beforeEach(() => {
     chatQueueAdd.mockClear()
-    lastMessage.current = { text: "invalid-email", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "invalid-email" })
   })
 
   function getUpdatedAttempts(): number {
@@ -384,7 +472,7 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
 
 describe("getUserData — auto-skip", () => {
   test("records timeout when skipping after auto-skip time elapses", async () => {
-    lastMessage.current = { text: "invalid", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
     const result = await getUserData(
       makeProps(
         ReplyFormat.email,
@@ -404,7 +492,7 @@ describe("getUserData — auto-skip", () => {
   })
 
   test("skips after exceeding max attempts", async () => {
-    lastMessage.current = { text: "invalid", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
     const result = await getUserData(
       makeProps(
         ReplyFormat.email,
@@ -422,7 +510,7 @@ describe("getUserData — auto-skip", () => {
   })
 
   test("accepts JSON string timestamps when deciding timeout", async () => {
-    lastMessage.current = { text: "invalid", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
     const result = await getUserData(
       makeProps(
         ReplyFormat.email,
@@ -444,7 +532,7 @@ describe("getUserData — auto-skip", () => {
 
 describe("getUserData — challenge lifecycle", () => {
   test("clears challenge after successful input", async () => {
-    lastMessage.current = { text: "user@example.com", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
 
     const result = await getUserData(makeProps(ReplyFormat.email))
 
@@ -453,7 +541,7 @@ describe("getUserData — challenge lifecycle", () => {
   })
 
   test("clears challenge after auto-skip", async () => {
-    lastMessage.current = { text: "invalid", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
 
     const result = await getUserData(
       makeProps(
@@ -473,7 +561,7 @@ describe("getUserData — challenge lifecycle", () => {
   })
 
   test("keeps challenge while retrying invalid input", async () => {
-    lastMessage.current = { text: "invalid", attachments: [] }
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
 
     const result = await getUserData(makeProps(ReplyFormat.email))
 

@@ -12,10 +12,14 @@ type IncomingRoutingDecision =
 
 export async function resolveIncomingTextRouting(props: {
   conversation: ConversationModel
-  isEligibleIncomingText: boolean
+  // A pending challenge (e.g. Get User Data) accepts any actionable reply —
+  // text, an uploaded attachment, or a shared location.
+  hasActionableInput: boolean
+  // Automated (AI) responses stay text-driven only.
+  hasText: boolean
   isConversationActive: (conversation: ConversationModel) => Promise<boolean>
 }): Promise<IncomingRoutingDecision> {
-  if (!props.isEligibleIncomingText) {
+  if (!props.hasActionableInput) {
     return { type: "none" }
   }
 
@@ -29,6 +33,10 @@ export async function resolveIncomingTextRouting(props: {
   )?.challenge
   if (challenge) {
     return { type: "challenge", conversation, challenge }
+  }
+
+  if (!props.hasText) {
+    return { type: "none" }
   }
 
   return { type: "automatedResponse", conversation }

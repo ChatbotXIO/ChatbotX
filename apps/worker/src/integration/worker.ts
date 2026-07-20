@@ -75,13 +75,20 @@ async function startIntegrationWorker() {
               postbackAction || quickReplyAction
             )
 
+            // An image/file message has contentType "text" — only its
+            // `attachments` array distinguishes it; a shared location has
+            // contentType "location".
+            const isFromContact =
+              isNotPostbackOrQuickReply && message.senderType === "contact"
+            const hasAttachment = message.attachments.length > 0
+            const isLocation = message.contentType === "location"
+
             const routing = await resolveIncomingTextRouting({
               conversation,
-              isEligibleIncomingText: Boolean(
-                isNotPostbackOrQuickReply &&
-                  message.text &&
-                  message.senderType === "contact",
+              hasActionableInput: Boolean(
+                isFromContact && (message.text || hasAttachment || isLocation),
               ),
+              hasText: Boolean(isFromContact && message.text),
               isConversationActive: (conversation) =>
                 conversationService.ensureActive(conversation),
             })

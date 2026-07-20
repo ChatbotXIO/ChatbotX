@@ -20,6 +20,7 @@ export const ReplyFormat = {
   location: "RF08",
   date: "RF09",
   datetime: "RF10",
+  anyInput: "RF11",
 } as const
 export type ReplyFormat = (typeof ReplyFormat)[keyof typeof ReplyFormat]
 
