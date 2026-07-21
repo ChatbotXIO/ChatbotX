@@ -15,6 +15,7 @@ export const broadcastSubactions = z.enum([
   "whatsappWithin24Hours",
   "instagramActiveContacts",
   "telegramAllContacts",
+  "tiktokActiveContacts",
 ])
 export type BroadcastSubaction = z.infer<typeof broadcastSubactions>
 
@@ -33,6 +34,7 @@ export const broadcastSubactionAudienceRules: Record<
   whatsappWithin24Hours: { requiresRecentInteractionWindow: true },
   instagramActiveContacts: { requiresRecentInteractionWindow: true },
   telegramAllContacts: { requiresRecentInteractionWindow: false },
+  tiktokActiveContacts: { requiresRecentInteractionWindow: true },
 }
 
 export const requiresRecentInteractionWindow = (
@@ -87,6 +89,12 @@ export const broadcastChannelCapabilities: readonly BroadcastChannelCapability[]
       channel: "telegram",
       subactions: ["telegramAllContacts"],
       defaultSubaction: "telegramAllContacts",
+      supportsTemplateBroadcast: false,
+    },
+    {
+      channel: "tiktok",
+      subactions: ["tiktokActiveContacts"],
+      defaultSubaction: "tiktokActiveContacts",
       supportsTemplateBroadcast: false,
     },
   ]
