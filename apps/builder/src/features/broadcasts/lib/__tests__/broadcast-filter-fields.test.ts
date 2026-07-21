@@ -67,6 +67,18 @@ describe("getBroadcastExcludedFilterFields", () => {
     ])
   })
 
+  test("excludes current channel and interacted-in-last-24h for TikTok active-contact broadcasts", () => {
+    expect(
+      getBroadcastExcludedFilterFields({
+        channel: channelTypes.enum.tiktok,
+        subaction: broadcastSubactions.enum.tiktokActiveContacts,
+      }),
+    ).toEqual([
+      contactFilterFields.enum.currentChannel,
+      contactFilterFields.enum.interactedInLast24h,
+    ])
+  })
+
   test("keeps inbox for Telegram all-contact broadcasts", () => {
     expect(
       getBroadcastExcludedFilterFields({
