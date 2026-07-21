@@ -91,7 +91,7 @@ export function WorkspaceSwitcher({
                   activeWorkspace?.id === workspace.id &&
                     "bg-sidebar-accent text-sidebar-accent-foreground",
                 )}
-                key={workspace.name}
+                key={workspace.id}
                 onClick={() => setActiveWorkspace(workspace)}
               >
                 <Link href={`/space/${workspace.id}`}>

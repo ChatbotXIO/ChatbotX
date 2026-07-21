@@ -60,6 +60,7 @@ import {
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
+import { createWorkspaceForNewOauthState } from "@/lib/oauth-workspace"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
@@ -193,12 +194,9 @@ export const handleCallback = async (
 
   const workspace = stateParams.workspaceId
     ? await workspaceService.findById({ id: stateParams.workspaceId })
-    : await workspaceService.create({
-        data: {
-          name: "New Workspace",
-          ownerId: userId,
-        },
-        createdBy: userId,
+    : await createWorkspaceForNewOauthState({
+        state: url.searchParams.get("state") ?? "",
+        userId,
       })
 
   if (
