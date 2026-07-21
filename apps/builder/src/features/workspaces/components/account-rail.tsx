@@ -110,7 +110,7 @@ export const AccountRail = async ({
                 {t("actions.admin")}
               </Link>
             )}
-            {isPlatformAdmin && (
+            {cloud && isPlatformAdmin && (
               <Link
                 className="flex items-center gap-2 px-2 py-1.5"
                 href="/manage"
