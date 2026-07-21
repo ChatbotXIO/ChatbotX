@@ -389,7 +389,7 @@
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
-      "description": "Có thể chứa khuyến mãi và chỉ được gửi cho người dùng đã nhắn tin cho bot của bạn trong vòng 24 giờ qua. TikTok chỉ hỗ trợ văn bản và hình ảnh; luồng dài có thể bị cắt bớt do giới hạn 10 tin nhắn của TikTok."
+      "description": "Có thể chứa khuyến mãi và chỉ được gửi cho người dùng đã nhắn tin cho bot của bạn trong vòng 24 giờ qua. Broadcast TikTok chỉ hỗ trợ văn bản và hình ảnh."
     },
     "flowType": {
       "flow": {

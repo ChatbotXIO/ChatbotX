@@ -389,7 +389,7 @@
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
-      "description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h. TikTok supports text and images only; long flows may be truncated by TikTok's 10-message limit."
+      "description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h. TikTok broadcasts support text and images only."
     },
     "flowType": {
       "flow": {
