@@ -14,20 +14,21 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { deleteQuestionnairesAction } from "../actions/delete-questionnaires.action"
-import type { QuestionnaireListItem } from "../schemas/resource"
+import { deleteQuestionnaireSubmissionsAction } from "../actions/delete-questionnaire-submissions.action"
 
 type Props = {
   workspaceId: string
-  questionnaires: QuestionnaireListItem[]
+  questionnaireId: string
+  submissionIds: string[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
 }
 
-export function DeleteQuestionnairesDialog({
+export function DeleteApplicantSubmissionsDialog({
   workspaceId,
-  questionnaires,
+  questionnaireId,
+  submissionIds,
   open,
   onOpenChange,
   onSuccess,
@@ -35,12 +36,12 @@ export function DeleteQuestionnairesDialog({
   const t = useTranslations()
   const router = useRouter()
   const { execute, isPending } = useAction(
-    deleteQuestionnairesAction.bind(null, workspaceId),
+    deleteQuestionnaireSubmissionsAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(
           t("messages.deletedSuccess", {
-            feature: t("questionnaires.singular"),
+            feature: t("questionnaires.submission"),
           }),
         )
         onOpenChange(false)
@@ -60,12 +61,12 @@ export function DeleteQuestionnairesDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
-              feature: t("questionnaires.singular"),
+              feature: t("questionnaires.submission"),
             })}
           </DialogTitle>
           <DialogDescription>
             {t("messages.deleteConfirmation", {
-              feature: t("questionnaires.singular"),
+              feature: t("questionnaires.submission"),
             })}
           </DialogDescription>
         </DialogHeader>
@@ -74,10 +75,8 @@ export function DeleteQuestionnairesDialog({
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={isPending || questionnaires.length === 0}
-            onClick={() =>
-              execute({ ids: questionnaires.map((item) => item.id) })
-            }
+            disabled={isPending || submissionIds.length === 0}
+            onClick={() => execute({ questionnaireId, submissionIds })}
             variant="destructive"
           >
             {isPending ? (

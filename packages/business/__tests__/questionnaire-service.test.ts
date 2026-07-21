@@ -271,6 +271,61 @@ describe("questionnaireService", () => {
     )
   })
 
+  test("update allows custom fields whose types differ from the question type", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "123", type: "shortText" },
+    ])
+
+    await questionnaireService.update({
+      workspaceId: "workspace-1",
+      id: "questionnaire-1",
+      triggerFlowId: null,
+      enableScore: false,
+      enableRetryMessages: false,
+      enableCustomFieldMapping: true,
+      questions: [
+        {
+          title: "Score",
+          type: "number",
+          active: true,
+          image: null,
+          customFieldId: "123",
+        },
+      ],
+    })
+
+    expect(mocks.insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFieldId: "123",
+        systemFieldKey: null,
+      }),
+    )
+  })
+
+  test("update rejects missing custom fields", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([])
+
+    await expect(
+      questionnaireService.update({
+        workspaceId: "workspace-1",
+        id: "questionnaire-1",
+        triggerFlowId: null,
+        enableScore: false,
+        enableRetryMessages: false,
+        enableCustomFieldMapping: true,
+        questions: [
+          {
+            title: "Score",
+            type: "number",
+            active: true,
+            image: null,
+            customFieldId: "123",
+          },
+        ],
+      }),
+    ).rejects.toThrow("Custom field does not exist in the workspace")
+  })
+
   test("deleteMany soft-deletes questionnaires instead of deleting rows", async () => {
     await questionnaireService.deleteMany({
       workspaceId: "workspace-1",
@@ -299,7 +354,8 @@ describe("questionnaireService", () => {
             type: "number",
             active: true,
             image: null,
-            customFieldId: "email",
+            customFieldId: null,
+            systemFieldKey: "email",
           },
         ],
       }),
@@ -394,6 +450,62 @@ describe("questionnaireSubmissionService", () => {
 
     expect(mocks.insertBuilder.values).not.toHaveBeenCalled()
     expect(mocks.updateBuilder.set).not.toHaveBeenCalled()
+  })
+
+  test("startOrResume restarts a cancelled applicant from the first question", async () => {
+    const firstQuestion = { id: "question-1", title: "Question 1" }
+    const existingSubmission = {
+      id: "submission-1",
+      questionnaireId: "questionnaire-1",
+      contactId: "contact-1",
+      conversationId: "conversation-old",
+      status: "cancelled",
+      currentQuestionId: null,
+    }
+    const restartedSubmission = {
+      ...existingSubmission,
+      conversationId: "conversation-new",
+      status: "inProgress",
+      currentQuestionId: "question-1",
+    }
+    mocks.tx.query.questionnaireModel.findFirst.mockResolvedValue({
+      id: "questionnaire-1",
+      workspaceId: "workspace-1",
+      enableScore: true,
+      questions: [firstQuestion],
+    })
+    mocks.tx.query.questionnaireSubmissionModel.findFirst.mockResolvedValueOnce(
+      existingSubmission,
+    )
+    mocks.updateBuilder.returning.mockResolvedValueOnce([restartedSubmission])
+
+    await expect(
+      questionnaireSubmissionService.startOrResume({
+        workspaceId: "workspace-1",
+        questionnaireId: "questionnaire-1",
+        contactId: "contact-1",
+        conversationId: "conversation-new",
+      }),
+    ).resolves.toMatchObject({
+      status: "wait",
+      submission: restartedSubmission,
+      question: firstQuestion,
+    })
+
+    expect(mocks.tx.delete).toHaveBeenCalled()
+    expect(mocks.deleteBuilder.where).toHaveBeenCalled()
+    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({
+      conversationId: "conversation-new",
+      status: "inProgress",
+      totalPoints: 0,
+      currentQuestionId: "question-1",
+      currentQuestionSentAt: expect.any(Date),
+      lastAnsweredMessageId: null,
+      startedAt: expect.any(Date),
+      completedAt: null,
+      cancelledAt: null,
+    })
+    expect(mocks.insertBuilder.values).not.toHaveBeenCalled()
   })
 
   test("startOrResume reassigns active same-questionnaire submission to current conversation", async () => {
@@ -676,6 +788,122 @@ describe("questionnaireSubmissionService", () => {
       retryMessage: "Too long",
       reason: "too_long",
     })
+  })
+
+  test("answerCurrent advances to the next question after max invalid attempts", async () => {
+    const currentQuestion = {
+      id: "question-1",
+      questionnaireId: "questionnaire-1",
+      type: "email",
+      title: "Email",
+      retryMessage: "Invalid email",
+      customField: null,
+    }
+    const nextQuestion = {
+      id: "question-2",
+      questionnaireId: "questionnaire-1",
+      type: "text",
+      title: "Name",
+      customField: null,
+    }
+    mocks.tx.query.questionnaireSubmissionModel.findFirst.mockResolvedValue({
+      id: "submission-1",
+      currentQuestionId: "question-1",
+    })
+    mocks.tx.query.questionnaireModel.findFirst.mockResolvedValue({
+      id: "questionnaire-1",
+      enableScore: false,
+      enableCustomFieldMapping: false,
+      triggerFlowId: "flow-1",
+    })
+    mocks.tx.query.questionnaireQuestionModel.findFirst.mockResolvedValue(
+      currentQuestion,
+    )
+    mocks.tx.query.questionnaireQuestionModel.findMany.mockResolvedValue([
+      currentQuestion,
+      nextQuestion,
+    ])
+
+    await expect(
+      questionnaireSubmissionService.answerCurrent({
+        workspaceId: "workspace-1",
+        questionnaireId: "questionnaire-1",
+        contactId: "contact-1",
+        conversationId: "conversation-1",
+        rawText: "not-an-email",
+        attempts: 2,
+        triggerMessageId: "message-1",
+      }),
+    ).resolves.toMatchObject({
+      status: "wait",
+      submissionId: "submission-1",
+      question: nextQuestion,
+      sentAt: expect.any(Date),
+    })
+
+    expect(mocks.updateBuilder.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentQuestionId: "question-2",
+        currentQuestionSentAt: expect.any(Date),
+        lastAnsweredMessageId: "message-1",
+      }),
+    )
+    expect(mocks.updateBuilder.set).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "cancelled" }),
+    )
+  })
+
+  test("answerCurrent completes the submission when max invalid attempts happen on the last question", async () => {
+    const currentQuestion = {
+      id: "question-1",
+      questionnaireId: "questionnaire-1",
+      type: "email",
+      title: "Email",
+      retryMessage: "Invalid email",
+      customField: null,
+    }
+    mocks.tx.query.questionnaireSubmissionModel.findFirst.mockResolvedValue({
+      id: "submission-1",
+      currentQuestionId: "question-1",
+    })
+    mocks.tx.query.questionnaireModel.findFirst.mockResolvedValue({
+      id: "questionnaire-1",
+      enableScore: false,
+      enableCustomFieldMapping: false,
+      triggerFlowId: "flow-1",
+    })
+    mocks.tx.query.questionnaireQuestionModel.findFirst.mockResolvedValue(
+      currentQuestion,
+    )
+    mocks.tx.query.questionnaireQuestionModel.findMany.mockResolvedValue([
+      currentQuestion,
+    ])
+
+    await expect(
+      questionnaireSubmissionService.answerCurrent({
+        workspaceId: "workspace-1",
+        questionnaireId: "questionnaire-1",
+        contactId: "contact-1",
+        conversationId: "conversation-1",
+        rawText: "not-an-email",
+        attempts: 2,
+        triggerMessageId: "message-1",
+      }),
+    ).resolves.toEqual({
+      status: "completed",
+      submissionId: "submission-1",
+      triggerFlowId: "flow-1",
+    })
+
+    expect(mocks.updateBuilder.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "completed",
+        completedAt: expect.any(Date),
+        currentQuestionId: null,
+        currentQuestionSentAt: null,
+        lastAnsweredMessageId: "message-1",
+      }),
+    )
   })
 })
 

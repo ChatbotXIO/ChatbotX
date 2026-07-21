@@ -14,7 +14,10 @@ import {
   MAX_QUICK_REPLIES,
   type QuestionnairesStepSchema,
 } from "@chatbotx.io/flow-config"
-import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
+import {
+  MESSENGER_NATIVE_QUICK_REPLY,
+  type MessageButtonTemplate,
+} from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
   chatQueue,
@@ -81,6 +84,40 @@ const questionQuickReplies = (
   }))
 }
 
+// Messenger's Send API can render its native "share your email / phone"
+// quick reply (content_type "user_email" / "user_phone_number"), which
+// Facebook fills from the contact's own account at tap time — we never need
+// to already know the value. Restricted to Messenger only: it's the only
+// channel that supports these native content types. The button carries a
+// reserved MESSENGER_NATIVE_QUICK_REPLY payload; the messenger channel's
+// quick reply converter recognizes it and swaps in the native content_type
+// instead of rendering it as a literal text button.
+const NATIVE_SUGGESTABLE_QUESTION_TYPES = new Set(["email", "phone"])
+
+function nativeContactQuickReply(
+  question: QuestionnaireQuestionModel,
+  channel: string,
+): MessageButtonTemplate[] | undefined {
+  if (
+    channel !== "messenger" ||
+    !NATIVE_SUGGESTABLE_QUESTION_TYPES.has(question.type)
+  ) {
+    return
+  }
+  const payload =
+    question.type === "email"
+      ? MESSENGER_NATIVE_QUICK_REPLY.USER_EMAIL
+      : MESSENGER_NATIVE_QUICK_REPLY.USER_PHONE_NUMBER
+  return [
+    {
+      id: payload,
+      label: question.title,
+      buttonType: "postback",
+      postback: payload,
+    },
+  ]
+}
+
 const QUESTIONNAIRE_MESSAGE_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000
 
 async function startTriggerFlow(
@@ -142,10 +179,9 @@ async function sendQuestion(
   },
 ) {
   const sentAt = data.sentAt ?? new Date()
-  const quickReplies = questionQuickReplies(
-    data.question,
-    props.contactInbox.channel,
-  )
+  const quickReplies =
+    questionQuickReplies(data.question, props.contactInbox.channel) ??
+    nativeContactQuickReply(data.question, props.contactInbox.channel)
   const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
@@ -156,6 +192,7 @@ async function sendQuestion(
         (quickReplies ? data.question.title : questionText(data.question)),
       url: data.question.image?.url,
       quickReplies,
+      metadata: props.metadata,
     },
   })
   await waitForChatJobCompletion(job, { conversationId: props.conversation.id })
@@ -322,15 +359,6 @@ export async function runQuestionnaireEngine(
         attempts: result.attempts,
       })
       return { status: "retry", result: null }
-    }
-
-    if (result.status === "cancelled") {
-      await conversationService.updateChallenge({
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-        challenge: undefined,
-      })
-      return { status: "success", result: null }
     }
 
     if (result.status === "completed") {

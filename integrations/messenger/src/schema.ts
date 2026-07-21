@@ -252,7 +252,7 @@ export const incomingWebhookEventSchema = z.object({
 export type IncomingWebhookEvent = z.infer<typeof incomingWebhookEventSchema>
 
 export const facebookQuickReplySchema = z.object({
-  content_type: z.enum(["text", "location", "user_phone_number"]),
+  content_type: z.enum(["text", "location", "user_phone_number", "user_email"]),
   title: z.string().optional(),
   payload: z.string().optional(),
   image_url: z.url().optional(),

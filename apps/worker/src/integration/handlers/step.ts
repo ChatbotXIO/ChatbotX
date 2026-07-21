@@ -133,6 +133,7 @@ async function splitTraffic({
   useLatestFlowVersion,
   sendFrom,
   nodeVisits,
+  metadata,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -165,6 +166,7 @@ async function splitTraffic({
         nodeId: connectedEdge.target,
         sendFrom,
         nodeVisits,
+        metadata,
         origin: webhookChannelOrigin(),
       },
     })
