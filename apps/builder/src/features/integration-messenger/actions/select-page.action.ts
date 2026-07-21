@@ -21,7 +21,7 @@ import {
   exchangeLongLivedToken,
   subscribePageToAppWebhook,
 } from "@chatbotx.io/integration-messenger/apis/page"
-import { AuthType } from "@chatbotx.io/sdk"
+import { AuthType, SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { isCloud } from "@/env"
@@ -238,6 +238,10 @@ export const selectPageAction = authActionClient
               `/space/${parsedInput.workspaceId}/settings/channels?channel=messenger&error=duplicated`,
             )
           }
+          throw error
+        }
+        if (error instanceof SdkException) {
+          logger.error({ err: error }, "Failed to connect Facebook page")
           throw error
         }
         if (isDatabaseError(error) && error.cause.code === "23505") {
