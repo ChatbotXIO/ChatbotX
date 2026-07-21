@@ -189,15 +189,24 @@ export const selectFacebookAccountAction = authActionClient
           },
         })
 
-        await integrationInstagramFacebook.runChannelHandler(
-          "bot",
-          "addBranding",
-          {
-            ctx: brandingCtx,
-            title: BRANDING_TITLE,
-            url: getBrandingUrl("instagram", appUrl),
-          },
-        )
+        // Best-effort: the connection is already live, so a failed branding
+        // write must never fail the action.
+        try {
+          await integrationInstagramFacebook.runChannelHandler(
+            "bot",
+            "addBranding",
+            {
+              ctx: brandingCtx,
+              title: BRANDING_TITLE,
+              url: getBrandingUrl("instagram", appUrl),
+            },
+          )
+        } catch (error) {
+          logger.warn(
+            { err: error },
+            "Failed to add branding to Instagram persistent menu",
+          )
+        }
 
         // Invalidate the pending-auth cookie now that the account is connected.
         const cookieStore = await cookies()

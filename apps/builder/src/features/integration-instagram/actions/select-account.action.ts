@@ -150,11 +150,25 @@ export const selectAccountAction = authActionClient
               },
             })
 
-            await integrationInstagram.runChannelHandler("bot", "addBranding", {
-              ctx: brandingCtx,
-              title: BRANDING_TITLE,
-              url: getBrandingUrl("instagram", appUrl),
-            })
+            // Best-effort: the connection is already live, so a failed
+            // branding write must never roll back the transaction or fail
+            // the action.
+            try {
+              await integrationInstagram.runChannelHandler(
+                "bot",
+                "addBranding",
+                {
+                  ctx: brandingCtx,
+                  title: BRANDING_TITLE,
+                  url: getBrandingUrl("instagram", appUrl),
+                },
+              )
+            } catch (error) {
+              logger.warn(
+                { err: error },
+                "Failed to add branding to Instagram persistent menu",
+              )
+            }
 
             return { brandingCtx, integrationId: integrationRow.id }
           },

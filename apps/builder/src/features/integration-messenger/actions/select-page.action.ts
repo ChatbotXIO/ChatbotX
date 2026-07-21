@@ -182,11 +182,21 @@ export const selectPageAction = authActionClient
             integration: { ...integrationRow, auth },
           })
 
-          await integrationMessenger.runChannelHandler("bot", "addBranding", {
-            ctx: brandingCtx,
-            title: BRANDING_TITLE,
-            url: getBrandingUrl("messenger", appUrl),
-          })
+          // Best-effort: the connection is already live, so a failed
+          // branding write must never roll back the transaction or fail
+          // the action.
+          try {
+            await integrationMessenger.runChannelHandler("bot", "addBranding", {
+              ctx: brandingCtx,
+              title: BRANDING_TITLE,
+              url: getBrandingUrl("messenger", appUrl),
+            })
+          } catch (error) {
+            logger.warn(
+              { err: error },
+              "Failed to add branding to Messenger persistent menu",
+            )
+          }
 
           return { brandingCtx }
         })
