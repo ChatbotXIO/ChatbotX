@@ -76,6 +76,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
       messenger: "messenger",
       instagram: "instagram",
       telegram: "telegram",
+      tiktok: "tiktok",
     },
   },
 }))
@@ -234,6 +235,7 @@ describe("processBroadcastContacts", () => {
     test.each([
       "instagram",
       "telegram",
+      "tiktok",
     ] as const)("enqueues %s flow broadcasts through the integration queue only", async (channel) => {
       findManyBroadcast.mockResolvedValue([
         makeBroadcast({ flowId: "flow-1", channel }),
