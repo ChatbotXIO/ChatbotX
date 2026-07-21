@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findFirstBroadcast = vi.fn()
 const findFirstMessengerTemplate = vi.fn()
-const findManyConversation = vi.fn()
+const findDMByContactIds = vi.fn()
 const forEachAudienceChunk = vi.fn()
 const scheduleAddSpy = vi.fn()
+const loggerInfoSpy = vi.fn()
+const loggerWarnSpy = vi.fn()
 
 type UpdateCall = {
   table: unknown
@@ -26,6 +28,9 @@ vi.mock("@chatbotx.io/business", () => ({
   broadcastService: {
     forEachAudienceChunk: (...args: unknown[]) => forEachAudienceChunk(...args),
   },
+  conversationService: {
+    findDMByContactIds: (...args: unknown[]) => findDMByContactIds(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/partials", async () =>
@@ -45,9 +50,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
       messengerMessageTemplateModel: {
         findFirst: (...args: unknown[]) => findFirstMessengerTemplate(...args),
-      },
-      conversationModel: {
-        findMany: (...args: unknown[]) => findManyConversation(...args),
       },
     },
     update: (table: unknown) => ({
@@ -71,6 +73,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
     }),
   },
   eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
+}))
+
+vi.mock("../src/lib/logger", () => ({
+  logger: {
+    info: (...args: unknown[]) => loggerInfoSpy(...args),
+    warn: (...args: unknown[]) => loggerWarnSpy(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -110,9 +119,11 @@ beforeEach(() => {
   insertCalls.length = 0
   findFirstBroadcast.mockResolvedValue(undefined)
   findFirstMessengerTemplate.mockResolvedValue(undefined)
-  findManyConversation.mockResolvedValue([])
+  findDMByContactIds.mockResolvedValue([])
   forEachAudienceChunk.mockResolvedValue(undefined)
   scheduleAddSpy.mockReset()
+  loggerInfoSpy.mockReset()
+  loggerWarnSpy.mockReset()
   onConflictSpy.mockReset()
 })
 
@@ -251,9 +262,9 @@ describe("prepareBroadcast", () => {
     })
   })
 
-  test("inserts recipients, marks sending, and enqueues sendBroadcast when contacts are found", async () => {
+  test("inserts recipients with DM conversations, skips missing conversations, and enqueues sendBroadcast", async () => {
     findFirstBroadcast.mockResolvedValue(baseBroadcast())
-    findManyConversation.mockResolvedValue([
+    findDMByContactIds.mockResolvedValue([
       { id: "conv-1", contactId: "contact-1" },
     ])
     forEachAudienceChunk.mockImplementation(
@@ -272,11 +283,9 @@ describe("prepareBroadcast", () => {
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(findManyConversation).toHaveBeenCalledWith({
-      where: {
-        contactId: { in: ["contact-1", "contact-2"] },
-        workspaceId: WORKSPACE_ID,
-      },
+    expect(findDMByContactIds).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1", "contact-2"],
     })
     expect(insertCalls).toHaveLength(1)
     expect(onConflictSpy).toHaveBeenCalledTimes(1)
@@ -287,17 +296,15 @@ describe("prepareBroadcast", () => {
         contactInboxId: "ci-1",
         conversationId: "conv-1",
       },
-      {
-        broadcastId: BROADCAST_ID,
-        contactId: "contact-2",
-        contactInboxId: "ci-2",
-        conversationId: "",
-      },
     ])
+    expect(loggerInfoSpy).toHaveBeenCalledWith(
+      { broadcastId: BROADCAST_ID, skippedCount: 1 },
+      "Skipped broadcast contacts without a DM conversation",
+    )
     expect(updateCalls).toHaveLength(1)
     expect(updateCalls[0].values).toMatchObject({
       status: "sending",
-      contactCount: 2,
+      contactCount: 1,
     })
     expect(scheduleAddSpy).toHaveBeenCalledWith(
       "sendBroadcast",
@@ -311,6 +318,35 @@ describe("prepareBroadcast", () => {
         removeOnComplete: true,
         removeOnFail: true,
       },
+    )
+  })
+
+  test("does not insert or enqueue when all audience contacts lack a DM conversation", async () => {
+    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    findDMByContactIds.mockResolvedValue([])
+    forEachAudienceChunk.mockImplementation(
+      async (
+        _input: unknown,
+        onChunk: (
+          rows: Array<{ id: string; contactId: string }>,
+        ) => Promise<unknown>,
+      ) => {
+        await onChunk([{ id: "ci-1", contactId: "contact-1" }])
+      },
+    )
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(insertCalls).toHaveLength(0)
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].values).toMatchObject({
+      status: "sent",
+      contactCount: 0,
+    })
+    expect(scheduleAddSpy).not.toHaveBeenCalled()
+    expect(loggerInfoSpy).toHaveBeenCalledWith(
+      { broadcastId: BROADCAST_ID, skippedCount: 1 },
+      "Skipped broadcast contacts without a DM conversation",
     )
   })
 

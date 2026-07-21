@@ -110,7 +110,7 @@ describe("createBroadcastAction", () => {
       parsedInput: {
         channel: channelTypes.enum.messenger,
         flowId: "flow-1",
-        subaction: broadcastSubactions.enum.allContacts,
+        subaction: broadcastSubactions.enum.messengerActiveContacts,
         schedulesType: broadcastScheduleTypes.enum.future,
         schedulesAt: "2099-01-01T00:00:00.000Z",
         contactFilter,
@@ -143,7 +143,7 @@ describe("createBroadcastAction", () => {
       parsedInput: {
         channel: channelTypes.enum.messenger,
         flowId: "flow-1",
-        subaction: broadcastSubactions.enum.allContacts,
+        subaction: broadcastSubactions.enum.messengerActiveContacts,
         schedulesType: broadcastScheduleTypes.enum.future,
         schedulesAt: "2099-01-01T00:00:00.000Z",
         contactFilter: null,

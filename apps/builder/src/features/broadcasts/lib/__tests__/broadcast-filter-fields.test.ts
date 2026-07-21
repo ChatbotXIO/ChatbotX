@@ -55,6 +55,27 @@ describe("getBroadcastExcludedFilterFields", () => {
     ])
   })
 
+  test("excludes current channel and interacted-in-last-24h for Instagram active-contact broadcasts", () => {
+    expect(
+      getBroadcastExcludedFilterFields({
+        channel: channelTypes.enum.instagram,
+        subaction: broadcastSubactions.enum.instagramActiveContacts,
+      }),
+    ).toEqual([
+      contactFilterFields.enum.currentChannel,
+      contactFilterFields.enum.interactedInLast24h,
+    ])
+  })
+
+  test("keeps inbox for Telegram all-contact broadcasts", () => {
+    expect(
+      getBroadcastExcludedFilterFields({
+        channel: channelTypes.enum.telegram,
+        subaction: broadcastSubactions.enum.telegramAllContacts,
+      }),
+    ).toEqual([contactFilterFields.enum.currentChannel])
+  })
+
   test("keeps inbox for all-contact broadcasts", () => {
     expect(
       getBroadcastExcludedFilterFields({

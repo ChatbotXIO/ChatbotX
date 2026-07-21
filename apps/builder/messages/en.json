@@ -379,6 +379,14 @@
       "title": "Active contacts within 24 hours",
       "description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h."
     },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h."
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "Use this message type if you want to send a broadcast to your Telegram contacts."
+    },
     "flowType": {
       "flow": {
         "title": "Flow",

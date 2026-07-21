@@ -128,6 +128,26 @@ class ConversationService extends BaseService {
     })
   }
 
+  async findDMByContactIds(props: {
+    workspaceId: string
+    contactIds: string[]
+    tx?: DatabaseClient
+  }): Promise<ConversationModel[]> {
+    const { tx = db, workspaceId, contactIds } = props
+    const uniqueContactIds = Array.from(new Set(contactIds))
+    if (uniqueContactIds.length === 0) {
+      return []
+    }
+
+    return await tx.query.conversationModel.findMany({
+      where: {
+        workspaceId,
+        contactId: { in: uniqueContactIds },
+        sourceId: { isNull: true },
+      },
+    })
+  }
+
   async updateChallenge(props: {
     workspaceId: string
     conversationId: string

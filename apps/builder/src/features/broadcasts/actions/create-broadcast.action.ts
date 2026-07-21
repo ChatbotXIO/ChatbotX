@@ -1,6 +1,7 @@
 "use server"
 
 import { db } from "@chatbotx.io/database/client"
+import { findBroadcastChannelCapability } from "@chatbotx.io/database/partials"
 import { pruneEmailPhoneFilterConditions } from "@chatbotx.io/database/queries/contact-filter/permission"
 import { broadcastModel } from "@chatbotx.io/database/schema"
 import { startOfMinute } from "date-fns"
@@ -10,6 +11,7 @@ import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBroadcastRequest } from "../schemas/action"
+
 export const createBroadcastAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createBroadcastRequest)
@@ -26,6 +28,43 @@ export const createBroadcastAction = workspaceActionClient
           userAndWorkspace.targetWorkspaceMember.permissions,
         )
       : false
+
+    const capability = findBroadcastChannelCapability(parsedInput.channel)
+    if (!capability) {
+      return returnValidationErrors(createBroadcastRequest, {
+        _errors: ["Validation Exception"],
+        channel: {
+          _errors: ["Unsupported broadcast channel"],
+        },
+      })
+    }
+
+    if (!capability.subactions.includes(parsedInput.subaction)) {
+      return returnValidationErrors(createBroadcastRequest, {
+        _errors: ["Validation Exception"],
+        subaction: {
+          _errors: ["Unsupported broadcast subaction"],
+        },
+      })
+    }
+
+    if (!(parsedInput.flowId || parsedInput.templateId)) {
+      return returnValidationErrors(createBroadcastRequest, {
+        _errors: ["Validation Exception"],
+        flowId: {
+          _errors: ["Either flow or template must be selected"],
+        },
+      })
+    }
+
+    if (parsedInput.templateId && !capability.supportsTemplateBroadcast) {
+      return returnValidationErrors(createBroadcastRequest, {
+        _errors: ["Validation Exception"],
+        templateId: {
+          _errors: ["Template broadcasts are not supported for this channel"],
+        },
+      })
+    }
 
     // Never trust integration ids from the client: they scope the audience,
     // so a foreign id would let a broadcast target another workspace's pages.
