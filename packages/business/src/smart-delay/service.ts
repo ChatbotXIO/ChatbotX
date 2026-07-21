@@ -165,18 +165,36 @@ class SmartDelayService extends BaseService {
     )
   }
 
+  // Claims one bounded batch: this table can grow by hundreds of thousands of
+  // rows per minute, so the claim must never load the whole backlog at once.
+  // FOR UPDATE SKIP LOCKED lets concurrent scanner runs split the backlog
+  // instead of double-claiming the same rows.
   async claimDueRows(props: {
     tx?: DatabaseClient
     windowUntil: Date
+    limit: number
   }): Promise<SmartDelayRow[]> {
-    const { tx = db, windowUntil } = props
+    const { tx = db, windowUntil, limit } = props
+    const dueRowIds = tx
+      .select({ id: contactOnSmartDelayModel.id })
+      .from(contactOnSmartDelayModel)
+      .where(
+        and(
+          eq(contactOnSmartDelayModel.status, smartDelayStatuses.enum.pending),
+          lte(contactOnSmartDelayModel.triggerAt, windowUntil),
+        ),
+      )
+      .orderBy(contactOnSmartDelayModel.triggerAt)
+      .limit(limit)
+      .for("update", { skipLocked: true })
+
     const rows = await tx
       .update(contactOnSmartDelayModel)
       .set({ status: smartDelayStatuses.enum.scheduled })
       .where(
         and(
           eq(contactOnSmartDelayModel.status, smartDelayStatuses.enum.pending),
-          lte(contactOnSmartDelayModel.triggerAt, windowUntil),
+          inArray(contactOnSmartDelayModel.id, dueRowIds),
         ),
       )
       .returning()
@@ -207,14 +225,22 @@ class SmartDelayService extends BaseService {
     return rows.length > 0
   }
 
-  async sweepStuckScheduled(props: {
+  // Recovery input for the scanner sweeper: scheduled rows whose wake-up never
+  // ran (lost or stuck BullMQ job). Returns triggerAt too so the caller can
+  // rebuild the deterministic jobId and remove the stale job BEFORE the row is
+  // reset to pending — otherwise the re-add is dropped as a BullMQ duplicate.
+  async listStuckScheduled(props: {
     tx?: DatabaseClient
     olderThan: Date
-  }): Promise<number> {
-    const { tx = db, olderThan } = props
-    const rows = await tx
-      .update(contactOnSmartDelayModel)
-      .set({ status: smartDelayStatuses.enum.pending })
+    limit: number
+  }): Promise<Pick<SmartDelayRow, "id" | "triggerAt">[]> {
+    const { tx = db, olderThan, limit } = props
+    return await tx
+      .select({
+        id: contactOnSmartDelayModel.id,
+        triggerAt: contactOnSmartDelayModel.triggerAt,
+      })
+      .from(contactOnSmartDelayModel)
       .where(
         and(
           eq(
@@ -224,24 +250,44 @@ class SmartDelayService extends BaseService {
           lt(contactOnSmartDelayModel.triggerAt, olderThan),
         ),
       )
-      .returning({ id: contactOnSmartDelayModel.id })
-
-    return rows.length
+      .orderBy(contactOnSmartDelayModel.triggerAt)
+      .limit(limit)
   }
 
+  // CAS: only rows still 'scheduled' go back to pending. A concurrent resume
+  // may complete/cancel a row between the caller's read and this write — an
+  // unguarded reset would resurrect it and re-run its side effects.
+  // `triggerAtBefore` (sweep path) additionally skips rows that were
+  // rescheduled to a fresh future triggerAt in that same window.
+  // Returns how many rows were actually reset.
   async resetToPending(props: {
     tx?: DatabaseClient
     ids: string[]
-  }): Promise<void> {
-    const { tx = db, ids } = props
+    triggerAtBefore?: Date
+  }): Promise<number> {
+    const { tx = db, ids, triggerAtBefore } = props
     if (ids.length === 0) {
-      return
+      return 0
     }
 
-    await tx
+    const rows = await tx
       .update(contactOnSmartDelayModel)
       .set({ status: smartDelayStatuses.enum.pending })
-      .where(inArray(contactOnSmartDelayModel.id, ids))
+      .where(
+        and(
+          inArray(contactOnSmartDelayModel.id, ids),
+          eq(
+            contactOnSmartDelayModel.status,
+            smartDelayStatuses.enum.scheduled,
+          ),
+          triggerAtBefore
+            ? lt(contactOnSmartDelayModel.triggerAt, triggerAtBefore)
+            : undefined,
+        ),
+      )
+      .returning({ id: contactOnSmartDelayModel.id })
+
+    return rows.length
   }
 
   private async markStatus(props: {
