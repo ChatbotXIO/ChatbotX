@@ -17,7 +17,7 @@ import {
   integration as integrationInstagramFacebook,
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram-facebook"
-import { AuthType } from "@chatbotx.io/sdk"
+import { AuthType, SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils/id"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
@@ -219,6 +219,10 @@ export const selectFacebookAccountAction = authActionClient
               `/space/${parsedInput.workspaceId}/settings/channels?channel=instagram&error=duplicated`,
             )
           }
+          throw error
+        }
+        if (error instanceof SdkException) {
+          logger.error({ err: error }, "Failed to connect Facebook page")
           throw error
         }
         if (isDatabaseError(error) && error.cause.code === "23505") {
