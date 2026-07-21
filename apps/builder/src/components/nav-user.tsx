@@ -157,7 +157,7 @@ export function NavUser({
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {isPlatformAdmin && (
+                  {isCloud() && isPlatformAdmin && (
                     <DropdownMenuItem asChild>
                       <Link href="/manage">
                         <Settings2 className="h-4 w-4" />
