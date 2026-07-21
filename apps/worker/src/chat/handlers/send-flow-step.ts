@@ -515,16 +515,6 @@ export async function sendFlowStep({
       channelResult as { messageIds?: string[] } | undefined
     )?.messageIds?.[0]
 
-    console.log({
-      ...eventLogData,
-      action: {
-        flowId,
-        flowVersionId,
-        messageId: message.id,
-        sourceId: providerMessageId,
-      },
-      occurredAt: new Date(),
-    })
     await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,
       action: {
