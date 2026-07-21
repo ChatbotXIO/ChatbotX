@@ -191,6 +191,21 @@ describe("InboxService.resolveBroadcastInboxIds", () => {
     })
   })
 
+  test("filters inboxes by TikTok channel", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "inbox-tiktok" }])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["tiktok"],
+    })
+
+    expect(result).toEqual(["inbox-tiktok"])
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: { workspaceId: "ws-1", channel: "tiktok" },
+      columns: { id: true },
+    })
+  })
+
   test("filters inboxes by multiple specific channels", async () => {
     mocks.inboxFindMany.mockResolvedValue([
       { id: "inbox-1" },

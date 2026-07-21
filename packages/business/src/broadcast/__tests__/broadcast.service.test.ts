@@ -286,6 +286,20 @@ describe("broadcastService.countAudience", () => {
     expect(where.__and).toContainEqual({ RAW: "recent-interaction" })
   })
 
+  test("includes the 24h predicate for TikTok active contacts", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
+    mocks.count.mockResolvedValue(5)
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["tiktok"],
+      subaction: "tiktokActiveContacts",
+    })
+
+    const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
+    expect(where.__and).toContainEqual({ RAW: "recent-interaction" })
+  })
+
   test("prunes email/phone contact filters when the audience caller lacks emailAndPhone permission", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.count.mockResolvedValue(1)

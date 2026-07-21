@@ -456,7 +456,7 @@ describe("contact filter field config helpers", () => {
     ])
   })
 
-  test("hides existingContact from the picker but keeps its config for rendering", () => {
+  test("hides retired fields from the picker but keeps their configs for rendering", () => {
     const configs = getFieldConfigs({
       t,
       tagOptions: [],
@@ -470,6 +470,9 @@ describe("contact filter field config helpers", () => {
     )
     expect(existingContactConfig).toBeDefined()
     expect(existingContactConfig?.hidden).toBe(true)
+    const localeConfig = configs.find((config) => config.name === "locale")
+    expect(localeConfig).toBeDefined()
+    expect(localeConfig?.hidden).toBe(true)
 
     const collectValues = (options: SelectOption[]): string[] =>
       options.flatMap((option) =>
@@ -477,7 +480,9 @@ describe("contact filter field config helpers", () => {
       )
     const pickerValues = collectValues(getFieldOptions(configs, t))
     expect(pickerValues).not.toContain("existingContact")
+    expect(pickerValues).not.toContain("locale")
     expect(pickerValues).toContain("hasContactInfo")
+    expect(pickerValues).toContain("language")
   })
 
   test("converts custom field types and formats values for display", () => {

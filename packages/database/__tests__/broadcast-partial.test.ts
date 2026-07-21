@@ -24,6 +24,11 @@ describe("requiresRecentInteractionWindow", () => {
         broadcastSubactions.enum.instagramActiveContacts,
       ),
     ).toBe(true)
+    expect(
+      requiresRecentInteractionWindow(
+        broadcastSubactions.enum.tiktokActiveContacts,
+      ),
+    ).toBe(true)
   })
 
   test("does not require the 24h messaging window for templates, all contacts, Telegram, or unset subactions", () => {
@@ -63,7 +68,7 @@ describe("broadcastChannelCapabilities", () => {
     }
   })
 
-  test("finds Instagram and Telegram capabilities and excludes non-broadcast channels", () => {
+  test("finds Instagram, Telegram, and TikTok capabilities and excludes non-broadcast channels", () => {
     expect(findBroadcastChannelCapability("instagram")).toMatchObject({
       channel: "instagram",
       defaultSubaction: broadcastSubactions.enum.instagramActiveContacts,
@@ -71,6 +76,10 @@ describe("broadcastChannelCapabilities", () => {
     expect(findBroadcastChannelCapability("telegram")).toMatchObject({
       channel: "telegram",
       defaultSubaction: broadcastSubactions.enum.telegramAllContacts,
+    })
+    expect(findBroadcastChannelCapability("tiktok")).toMatchObject({
+      channel: "tiktok",
+      defaultSubaction: broadcastSubactions.enum.tiktokActiveContacts,
     })
     expect(findBroadcastChannelCapability("webchat")).toBeUndefined()
   })
@@ -87,6 +96,9 @@ describe("broadcastChannelCapabilities", () => {
     ).toBe(false)
     expect(
       findBroadcastChannelCapability("telegram")?.supportsTemplateBroadcast,
+    ).toBe(false)
+    expect(
+      findBroadcastChannelCapability("tiktok")?.supportsTemplateBroadcast,
     ).toBe(false)
   })
 })

@@ -420,6 +420,10 @@ describe("createBroadcastAction — happy path insert", () => {
       channel: "telegram" as const,
       subaction: "telegramAllContacts" as const,
     },
+    {
+      channel: "tiktok" as const,
+      subaction: "tiktokActiveContacts" as const,
+    },
   ])("accepts $channel flow broadcasts", async ({ channel, subaction }) => {
     const mockBroadcast = { id: `bc-${channel}` }
     mockInsertReturning.mockResolvedValue([mockBroadcast])
@@ -446,15 +450,15 @@ describe("createBroadcastAction — happy path insert", () => {
     )
   })
 
-  test("rejects non-broadcastable channels such as TikTok", async () => {
+  test("rejects non-broadcastable channels such as Webchat", async () => {
     const result = await (
       createBroadcastAction as (props: unknown) => Promise<unknown>
     )({
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: {
         ...baseInput,
-        channel: "tiktok",
-        subaction: "telegramAllContacts",
+        channel: "webchat",
+        subaction: "allContacts",
         flowId: "flow-1",
       },
     })
@@ -465,6 +469,31 @@ describe("createBroadcastAction — happy path insert", () => {
       { channel: { _errors: string[] } },
     ]
     expect(errors.channel._errors).toContain("Unsupported broadcast channel")
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
+  })
+
+  test("rejects template broadcasts for TikTok", async () => {
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel: "tiktok",
+        subaction: "tiktokActiveContacts",
+        templateId: "template-1",
+      },
+    })
+
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { templateId: { _errors: string[] } },
+    ]
+    expect(errors.templateId._errors).toContain(
+      "Template broadcasts are not supported for this channel",
+    )
     expect(mockInsertValues).not.toHaveBeenCalled()
     expect(result).toMatchObject({ __validationError: expect.anything() })
   })

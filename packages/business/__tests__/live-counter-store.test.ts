@@ -23,6 +23,7 @@ const METRIC_ORDER = [
   "teamMembers",
   "contacts",
   "mac",
+  "botMessages",
 ] as const
 
 const redisClient = {
@@ -55,6 +56,7 @@ const dbRow = {
   teamMembersUsed: 30,
   contactsUsed: 40,
   macUsed: 50,
+  botMessagesUsed: 60,
 }
 
 beforeEach(() => {
@@ -65,7 +67,7 @@ beforeEach(() => {
 
 describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
   test("returns parsed live values in one HMGET without touching the DB", async () => {
-    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", "5"])
+    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", "5", "6"])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
@@ -75,6 +77,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       teamMembers: 3,
       contacts: 4,
       mac: 5,
+      botMessages: 6,
     })
     expect(redisClient.hmget).toHaveBeenCalledTimes(1)
     expect(redisClient.hmget).toHaveBeenCalledWith(
@@ -88,7 +91,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
 
   test("cold-seeds a missing field from a single DB fetch", async () => {
     // mac field absent (cold start); the rest are live.
-    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", null])
+    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", null, "6"])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
@@ -99,6 +102,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       teamMembers: 3,
       contacts: 4,
       mac: 50,
+      botMessages: 6,
     })
     // One row fetch shared across all missing fields, and the field is seeded.
     expect(findFirstQuota).toHaveBeenCalledTimes(1)
@@ -111,7 +115,14 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
 
   test("fails closed on a corrupt field by using the DB value", async () => {
     // contacts is non-numeric → must not coerce to NaN.
-    redisClient.hmget.mockResolvedValue(["1", "2", "3", "not-a-number", "5"])
+    redisClient.hmget.mockResolvedValue([
+      "1",
+      "2",
+      "3",
+      "not-a-number",
+      "5",
+      "6",
+    ])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
@@ -131,6 +142,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       teamMembers: 30,
       contacts: 40,
       mac: 50,
+      botMessages: 60,
     })
     expect(findFirstQuota).toHaveBeenCalledTimes(1)
   })

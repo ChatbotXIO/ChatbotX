@@ -61,6 +61,9 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.locale,
     schemaKind: "multiSelect",
     optionSource: "languages",
+    // Superseded by inbox-level `language`; hidden from the picker but still
+    // valid so existing saved filters keep resolving.
+    hidden: true,
   },
   {
     field: contactFilterFields.enum.language,
