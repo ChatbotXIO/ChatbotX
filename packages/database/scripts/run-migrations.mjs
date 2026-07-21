@@ -18,7 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const migrationsFolder = join(__dirname, "..", "drizzle")
 const migrationLockName = "chatbotx:database:migrations"
 const useSequentialMigrations =
-  process.env.DATABASE_MIGRATIONS_SEQUENTIAL === "true"
+  process.env.DATABASE_MIGRATIONS_SEQUENTIAL !== "false"
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) {
