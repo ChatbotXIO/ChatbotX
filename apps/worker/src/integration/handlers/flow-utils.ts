@@ -13,10 +13,14 @@ import type {
 import type { Variables } from "@chatbotx.io/sdk"
 import {
   type BotResponseTrackingContext,
+  ChatJobAction,
+  type ChatJobSendFlowStep,
+  chatQueue,
   IntegrationJobAction,
   integrationQueue,
   type NodeVisits,
 } from "@chatbotx.io/worker-config"
+import { waitForChatJobCompletion } from "../utils/message"
 
 export type ExecuteMultipleStepsProps = {
   conversation: ConversationModel
@@ -92,4 +96,22 @@ export async function sendFlow(
       },
     })
   }
+}
+
+/**
+ * Enqueue a flow-step chat job and wait for completion to preserve the current
+ * node's step ordering while using the analytics-aware flow send path.
+ */
+export async function enqueueFlowStepMessage(
+  data: ChatJobSendFlowStep["data"],
+): Promise<void> {
+  const job = await chatQueue.add(ChatJobAction.sendFlowMessage, {
+    type: ChatJobAction.sendFlowMessage,
+    data,
+  })
+
+  await waitForChatJobCompletion(job, {
+    conversationId: data.conversationId,
+    stepId: data.step.id,
+  })
 }

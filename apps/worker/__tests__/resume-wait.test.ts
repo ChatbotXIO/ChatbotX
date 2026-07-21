@@ -36,6 +36,7 @@ const waitRow = {
   conversationId: "conversation-1",
   nodeId: "next-node",
   stepId: "step-1",
+  metadata: null,
   type: "waitNode",
   createdAt: new Date("2026-07-16T00:00:00.000Z"),
   triggerAt: new Date("2026-07-16T00:01:00.000Z"),
@@ -65,6 +66,29 @@ describe("runWaitResume", () => {
       flowVersionId: "flow-version-1",
       nodeId: "next-node",
     })
+  })
+
+  test("preserves broadcast metadata when resuming the connected node", async () => {
+    smartDelayService.findById.mockResolvedValueOnce({
+      ...waitRow,
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "contact-inbox-1",
+      },
+    })
+
+    await runWaitResume({ smartDelayId: "smart-delay-1" })
+
+    expect(runFlowNode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          type: "broadcast",
+          broadcastId: "broadcast-1",
+          contactInboxId: "contact-inbox-1",
+        },
+      }),
+    )
   })
 
   test("does not run when another worker already claimed the row", async () => {

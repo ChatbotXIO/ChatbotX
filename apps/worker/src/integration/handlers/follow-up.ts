@@ -28,6 +28,7 @@ export async function handleFollowUp({
   targetId,
   step,
   useLatestFlowVersion,
+  metadata,
   sendFrom,
 }: ExecuteStepProps<FollowUpStepSchema>): Promise<FollowUpStepResult> {
   if (!(targetId && step)) {
@@ -53,6 +54,7 @@ export async function handleFollowUp({
     contactInboxId: contactInbox.id,
     connectedNodeId,
     stepId: step.id,
+    metadata,
     sendFrom,
   })
 

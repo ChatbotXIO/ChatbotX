@@ -62,7 +62,7 @@ describe("handleOrphanedIntegration", () => {
 
     expect(mocks.unsubscribeInstagram).toHaveBeenCalledWith({
       igId: "ig-1",
-      appAccessToken: "app-token",
+      accessToken: "app-token",
     })
   })
 

@@ -448,6 +448,83 @@ describe("sendFlowStep", () => {
     )
   })
 
+  test("uses the job contactInboxId instead of falling back to the latest inbox", async () => {
+    const broadcastContactInbox = {
+      ...fakeContactInbox,
+      id: "ci-broadcast",
+      sourceId: "src-ci-broadcast",
+    } as unknown as typeof fakeContactInbox
+    mockFindContactInbox.mockResolvedValueOnce(broadcastContactInbox)
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-broadcast",
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "ci-broadcast",
+      },
+    })
+
+    expect(mockFindContactInbox).toHaveBeenCalledWith({
+      where: {
+        id: "ci-broadcast",
+        contactId: "contact-1",
+      },
+    })
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInboxId: "ci-broadcast",
+        contentAttributes: expect.objectContaining({
+          metadata: expect.objectContaining({
+            type: "broadcast",
+            contactInboxId: "ci-broadcast",
+          }),
+        }),
+      }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInbox: expect.objectContaining({ id: "ci-broadcast" }),
+        messageId: "msg-created",
+      }),
+    )
+  })
+
+  test("emits message:sent for a 24h broadcast flow step with message and provider ids", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "ci-1",
+      },
+    })
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:sent",
+      expect.objectContaining({
+        context: expect.objectContaining({
+          contactInboxId: "ci-1",
+          contactId: "contact-1",
+          workspaceId: "ws-1",
+        }),
+        action: expect.objectContaining({
+          flowId: "flow-1",
+          flowVersionId: "fv-1",
+          messageId: "msg-created",
+          sourceId: "provider-1",
+        }),
+        metadata: expect.objectContaining({
+          type: "broadcast",
+          broadcastId: "broadcast-1",
+          contactInboxId: "ci-1",
+        }),
+      }),
+    )
+  })
+
   test("persists and forwards rich response metadata to channel sender", async () => {
     const richResponse = {
       executionId: "exec-1",

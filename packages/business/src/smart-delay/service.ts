@@ -71,6 +71,7 @@ class SmartDelayService extends BaseService {
           conversationId: data.conversationId,
           createdAt: now,
           flowVersionId: data.flowVersionId,
+          metadata: data.metadata,
           nodeId: data.nodeId,
           status: smartDelayStatuses.enum.pending,
           triggerAt: data.triggerAt,
