@@ -86,6 +86,32 @@ const isBlankTextCarrierStep = (step: SendFlowStepData) => {
   return false
 }
 
+const findTargetContactInbox = ({
+  contactId,
+  contactInboxId,
+}: {
+  contactId: string
+  contactInboxId?: string
+}) => {
+  if (contactInboxId) {
+    return db.query.contactInboxModel.findFirst({
+      where: {
+        id: contactInboxId,
+        contactId,
+      },
+    })
+  }
+
+  return db.query.contactInboxModel.findFirst({
+    where: {
+      contactId,
+    },
+    orderBy: {
+      lastMessageAt: "desc",
+    },
+  })
+}
+
 export const convertButtonsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
@@ -155,6 +181,7 @@ const convertCardsToTemplate = (props: {
 
 export async function sendFlowStep({
   conversationId,
+  contactInboxId,
   flowId,
   flowVersionId,
   step,
@@ -172,14 +199,9 @@ export async function sendFlowStep({
     return
   }
 
-  // Temporary use the last contact inbox for the conversation
-  const targetContactInbox = await db.query.contactInboxModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-    },
-    orderBy: {
-      lastMessageAt: "desc",
-    },
+  const targetContactInbox = await findTargetContactInbox({
+    contactId: conversation.contactId,
+    contactInboxId,
   })
   if (!targetContactInbox) {
     return
@@ -451,24 +473,26 @@ export async function sendFlowStep({
       }),
     ])
 
+    const channelSend = sendFlowStepToChannel({
+      conversation,
+      contactInbox: targetContactInbox,
+      flowId,
+      flowVersionId,
+      step: resolvedStep as SendFlowStepData,
+      metadata,
+      richResponse,
+      quickReplies: canonicalQuickReplies,
+      messageId: message?.id,
+      messageCreatedAt: message?.createdAt,
+      sendFrom,
+    })
+
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
-      sendFlowStepToChannel({
-        conversation,
-        contactInbox: targetContactInbox,
-        flowId,
-        flowVersionId,
-        step: resolvedStep as SendFlowStepData,
-        metadata,
-        richResponse,
-        quickReplies: canonicalQuickReplies,
-        messageId: message?.id,
-        messageCreatedAt: message?.createdAt,
-        sendFrom,
-      }),
+      channelSend,
     ]
 
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
@@ -486,10 +510,29 @@ export async function sendFlowStep({
       )
     }
 
-    await Promise.all(promises)
+    const [, channelResult] = await Promise.all(promises)
+    const providerMessageId = (
+      channelResult as { messageIds?: string[] } | undefined
+    )?.messageIds?.[0]
+
+    console.log({
+      ...eventLogData,
+      action: {
+        flowId,
+        flowVersionId,
+        messageId: message.id,
+        sourceId: providerMessageId,
+      },
+      occurredAt: new Date(),
+    })
     await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,
-      action: { messageId: "", flowId },
+      action: {
+        flowId,
+        flowVersionId,
+        messageId: message.id,
+        sourceId: providerMessageId,
+      },
       occurredAt: new Date(),
     })
 
@@ -511,7 +554,6 @@ export async function sendFlowStep({
         },
       },
     })
-
     if (trackingContext) {
       await emit("analytics:dashboard", {
         eventType: "message:bot_received",

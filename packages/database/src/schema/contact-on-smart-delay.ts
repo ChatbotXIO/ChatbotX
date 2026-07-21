@@ -2,6 +2,7 @@ import { createId } from "@chatbotx.io/utils"
 import { sql } from "drizzle-orm"
 import {
   index,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -49,6 +50,7 @@ export const contactOnSmartDelayModel = pgTable(
       }),
     nodeId: text(),
     stepId: text(),
+    metadata: jsonb().$type<Record<string, unknown> | null>(),
     type: contactOnSmartDelayType().notNull(),
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
     triggerAt: timestamp(timestampConfig).notNull(),

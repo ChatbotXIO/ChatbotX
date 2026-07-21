@@ -8,10 +8,6 @@ import type { ExecuteStepProps } from "../src/integration/handlers/flow"
 
 // --- mocks ---
 
-const dbUpdateBuilder: Record<string, unknown> = {}
-dbUpdateBuilder.set = vi.fn(() => dbUpdateBuilder)
-dbUpdateBuilder.where = vi.fn(() => dbUpdateBuilder)
-
 const lastMessage: {
   current: {
     text?: string | null
@@ -24,6 +20,7 @@ const repositoryError: { current: Error | null } = { current: null }
 
 const contactInboxUpdateTracking = vi.fn(async () => undefined)
 const contactCustomFieldSetValueByKey = vi.fn(async () => undefined)
+const conversationUpdateChallenge = vi.fn(async () => undefined)
 const resolveTenantSettings = vi.fn(async () => ({
   storageUrl: "https://cdn.example.com/",
 }))
@@ -33,6 +30,7 @@ vi.mock("@chatbotx.io/business", () => ({
     setValueByKey: contactCustomFieldSetValueByKey,
   },
   contactInboxService: { updateTracking: contactInboxUpdateTracking },
+  conversationService: { updateChallenge: conversationUpdateChallenge },
   resolveTenantSettings,
 }))
 
@@ -46,25 +44,6 @@ vi.mock("@chatbotx.io/business/utils", () => ({
     }
     return `${base}${key}`
   },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      messageModel: {
-        findFirst: vi.fn(async () => lastMessage.current),
-      },
-      contactCustomFieldModel: {
-        findFirst: vi.fn(async () => null),
-      },
-      contactInboxModel: {
-        findFirst: vi.fn(async () => null),
-      },
-    },
-    update: vi.fn(() => dbUpdateBuilder),
-  },
-  eq: vi.fn(),
-  sql: vi.fn(() => "CLEAR_CHALLENGE_SQL"),
 }))
 
 // validateUserData reads the last message via the shard-aware repository, not
@@ -82,15 +61,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   getSafeSinceTime: vi.fn(() => new Date(0)),
 }))
 
-vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
-  return {
-    ...actual,
-    conversationModel: {},
-  }
-})
-
 vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@chatbotx.io/database/partials")>()
@@ -101,11 +71,20 @@ vi.mock("@chatbotx.io/events", () => ({
   emitCustomFieldChanged: vi.fn(),
 }))
 
-const chatQueueAdd = vi.fn(async () => undefined)
+const chatQueueAdd = vi.fn(async () => ({ id: "job-1" }))
 vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: { sendChatMessage: "sendChatMessage" },
+  ChatJobAction: {
+    sendChatMessage: "sendChatMessage",
+    sendFlowMessage: "sendFlowMessage",
+  },
   chatQueue: { add: chatQueueAdd },
+  IntegrationJobAction: { sendFlow: "sendFlow" },
+  integrationQueue: { add: vi.fn() },
   getRedisConnection: vi.fn(() => ({})),
+}))
+
+vi.mock("@chatbotx.io/events/context", () => ({
+  webhookChannelOrigin: vi.fn(() => undefined),
 }))
 
 const waitForChatJobCompletion = vi.fn(async () => undefined)
@@ -133,12 +112,12 @@ const { getUserData } = await import(
 
 beforeEach(() => {
   repositoryError.current = null
-  chatQueueAdd.mockResolvedValue(undefined)
+  chatQueueAdd.mockResolvedValue({ id: "job-1" })
   waitForChatJobCompletion.mockResolvedValue(undefined)
   contactInboxUpdateTracking.mockClear()
   contactCustomFieldSetValueByKey.mockClear()
-  vi.mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>).mockClear()
-  vi.mocked(dbUpdateBuilder.where as ReturnType<typeof vi.fn>).mockClear()
+  conversationUpdateChallenge.mockClear()
+  conversationUpdateChallenge.mockResolvedValue(undefined)
 })
 
 type StepOverride = Partial<GetUserDataStepSchema>
@@ -172,6 +151,11 @@ function makeProps(
       edges: [],
     },
     useLatestFlowVersion: false,
+    metadata: {
+      type: "broadcast",
+      broadcastId: "bc-1",
+      contactInboxId: "ci-1",
+    },
     targetId: "node-1",
     targetNodeId: "node-1",
     step: {
@@ -241,12 +225,15 @@ function expectCustomFieldWrite(value: string) {
 }
 
 function challengeClearCalls() {
-  return vi
-    .mocked(dbUpdateBuilder.set as ReturnType<typeof vi.fn>)
-    .mock.calls.filter(([setValue]) => {
-      const update = setValue as { additionalAttributes?: unknown }
-      return update.additionalAttributes === "CLEAR_CHALLENGE_SQL"
-    })
+  return conversationUpdateChallenge.mock.calls.filter(
+    ([update]) => update.challenge === undefined,
+  )
+}
+
+function challengeSetCalls() {
+  return conversationUpdateChallenge.mock.calls.filter(
+    ([update]) => update.challenge !== undefined,
+  )
 }
 
 // --- tests ---
@@ -452,11 +439,9 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
   })
 
   function getUpdatedAttempts(): number {
-    const setMock = dbUpdateBuilder.set as ReturnType<typeof vi.fn>
-    const setArg = vi.mocked(setMock).mock.calls[0]?.[0] as {
-      additionalAttributes: { challenge: { data: { attempts: number } } }
-    }
-    return setArg.additionalAttributes.challenge.data.attempts
+    const update = challengeSetCalls()[0]?.[0]
+    expect(update?.challenge).toBeDefined()
+    return update?.challenge?.data.attempts ?? 0
   }
 
   test("increments attempts from 1 to 2 on first retry", async () => {
@@ -467,6 +452,38 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
   test("increments attempts from 2 to 3 on second retry", async () => {
     await getUserData(makeProps(ReplyFormat.email, {}, 2))
     expect(getUpdatedAttempts()).toBe(3)
+  })
+
+  test("re-prompts with retryMessage through the flow message path", async () => {
+    await getUserData(
+      makeProps(
+        ReplyFormat.email,
+        { retryMessage: "Please re-enter your email" },
+        1,
+      ),
+    )
+
+    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
+      type: "sendFlowMessage",
+      data: expect.objectContaining({
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        metadata: {
+          type: "broadcast",
+          broadcastId: "bc-1",
+          contactInboxId: "ci-1",
+        },
+        step: expect.objectContaining({
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "Please re-enter your email",
+          buttons: [],
+        }),
+      }),
+    })
   })
 })
 
@@ -577,6 +594,18 @@ describe("getUserData — challenge lifecycle", () => {
     expect(result.status).toBe("error")
     expect(challengeClearCalls()).toHaveLength(1)
   })
+
+  test("clears challenge after first prompt enqueue failure", async () => {
+    chatQueueAdd.mockRejectedValueOnce(new Error("queue down"))
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("error")
+    expect(challengeSetCalls()).toHaveLength(1)
+    expect(challengeClearCalls()).toHaveLength(1)
+  })
 })
 
 describe("getUserData — first send (no challenge state)", () => {
@@ -586,26 +615,95 @@ describe("getUserData — first send (no challenge state)", () => {
   })
 
   test("sends message and returns wait when no challenge active", async () => {
-    const props = makeProps(ReplyFormat.email)
+    const props = makeProps(ReplyFormat.email, {
+      message: "Please enter your email, {{contact.name}}",
+    })
     props.ctx = { variables: { conversation: {} } }
     const result = await getUserData(props)
     expect(result.status).toBe("wait")
-    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
+      type: "sendFlowMessage",
+      data: {
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "Please enter your email, {{contact.name}}",
+          buttons: [],
+        },
+        metadata: {
+          type: "broadcast",
+          broadcastId: "bc-1",
+          contactInboxId: "ci-1",
+        },
+      },
+    })
     expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("writes challenge state through the business layer before the first prompt", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    expect(conversationUpdateChallenge).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      challenge: {
+        type: "step",
+        data: {
+          flowId: "flow-1",
+          flowVersionId: "fv-1",
+          nodeId: "node-1",
+          stepId: "step-1",
+          attempts: 1,
+          lastAttemptAt: expect.any(Date),
+        },
+      },
+    })
+  })
+
+  test("uses the latest flow version marker in both challenge and job", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.useLatestFlowVersion = true
+
+    await getUserData(props)
+
+    const [, job] = chatQueueAdd.mock.calls[0]
+    expect(job.data.flowVersionId).toBeUndefined()
+    expect(
+      challengeSetCalls()[0]?.[0].challenge?.data.flowVersionId,
+    ).toBeUndefined()
+  })
+
+  test("still uses sendFlowMessage when there is no broadcast metadata", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.metadata = undefined
+
+    await getUserData(props)
+
+    const [action, job] = chatQueueAdd.mock.calls[0]
+    expect(action).toBe("sendFlowMessage")
+    expect(job.data.metadata).toBeUndefined()
   })
 
   test("writes challenge state before waiting for prompt delivery", async () => {
     const order: string[] = []
     const fakeJob = { waitUntilFinished: vi.fn() }
+    conversationUpdateChallenge.mockImplementationOnce(() => {
+      order.push("state")
+      return Promise.resolve()
+    })
     chatQueueAdd.mockImplementationOnce(() => {
       order.push("enqueue")
       return Promise.resolve(fakeJob)
-    })
-    vi.mocked(
-      dbUpdateBuilder.where as ReturnType<typeof vi.fn>,
-    ).mockImplementationOnce(() => {
-      order.push("state")
-      return dbUpdateBuilder
     })
     waitForChatJobCompletion.mockImplementationOnce(() => {
       order.push("wait")
@@ -617,9 +715,10 @@ describe("getUserData — first send (no challenge state)", () => {
     const result = await getUserData(props)
 
     expect(result.status).toBe("wait")
-    expect(order).toEqual(["enqueue", "state", "wait"])
+    expect(order).toEqual(["state", "enqueue", "wait"])
     expect(waitForChatJobCompletion).toHaveBeenCalledWith(fakeJob, {
       conversationId: "conv-1",
+      stepId: "step-1",
     })
   })
 

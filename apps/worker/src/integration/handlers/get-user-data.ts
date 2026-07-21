@@ -1,6 +1,7 @@
 import {
   contactCustomFieldService,
   contactInboxService,
+  conversationService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import {
@@ -8,26 +9,23 @@ import {
   validateReplyInput,
 } from "@chatbotx.io/business/get-user-data"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq, sql } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
-import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
-import { conversationModel } from "@chatbotx.io/database/schema"
 import {
   type GetUserDataStepSchema,
   type InputFailureReason,
   inputFailureReasons,
+  type SendTextStepSchema,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import { IntegrationException, type Variable } from "@chatbotx.io/sdk"
-import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
-import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { add, isBefore } from "date-fns"
 import { logger } from "../../lib/logger"
-import { waitForChatJobCompletion } from "../utils/message"
 import type { ExecuteStepProps } from "./flow"
+import { enqueueFlowStepMessage } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 export async function getUserData(
@@ -48,7 +46,10 @@ export async function getUserData(
       throw error
     }
 
-    await clearChallengeSafely(props.conversation.id)
+    await clearChallengeSafely({
+      workspaceId: props.conversation.workspaceId,
+      conversationId: props.conversation.id,
+    })
 
     return { result: undefined, status: "error", errorMessage }
   }
@@ -95,7 +96,10 @@ async function handleSkipOrError(
       })
     }
 
-    await clearChallenge(props.conversation.id)
+    await clearChallenge({
+      workspaceId: props.conversation.workspaceId,
+      conversationId: props.conversation.id,
+    })
 
     return { result: validUserData.userInput, status: "success" }
   }
@@ -111,7 +115,10 @@ async function handleSkipOrError(
         data: { lastInputFailure: skipResult.reason },
       })
 
-      await clearChallenge(props.conversation.id)
+      await clearChallenge({
+        workspaceId: props.conversation.workspaceId,
+        conversationId: props.conversation.id,
+      })
 
       return { result: undefined, status: "skip" }
     }
@@ -194,87 +201,70 @@ async function sendMessage(
   text: string,
   attempts = 1,
 ) {
-  const {
-    conversation,
-    contactInbox: targetContactInbox,
-    flowVersion,
-    step,
-  } = props
-
-  const contactInbox =
-    targetContactInbox ??
-    (await db.query.contactInboxModel.findFirst({
-      where: {
-        contactId: conversation.contactId,
-      },
-      orderBy: {
-        lastMessageAt: "desc",
-      },
-    }))
-  if (!contactInbox) {
+  const { conversation, contactInbox, flowVersion, step } = props
+  const nodeId = props.targetId
+  if (!nodeId) {
     throw new IntegrationException(
-      `getUserData: contact inbox not found for conversation ${conversation.id}`,
+      `getUserData: missing target node for conversation ${conversation.id}`,
     )
   }
 
-  const resolvedText = await resolveContactVariablesDeep(
-    conversation.contactId,
-    text,
-    {
-      contactInbox,
-      conversation,
-    },
-  )
+  const flowVersionId = props.useLatestFlowVersion ? undefined : flowVersion.id
 
-  const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
-    type: ChatJobAction.sendChatMessage,
-    data: {
-      contactInbox,
-      conversation,
-      text: resolvedText,
+  await conversationService.updateChallenge({
+    workspaceId: conversation.workspaceId,
+    conversationId: conversation.id,
+    challenge: {
+      type: "step",
+      data: {
+        flowId: flowVersion.flowId,
+        flowVersionId,
+        nodeId,
+        stepId: step.id,
+        attempts,
+        lastAttemptAt: new Date(),
+      },
     },
   })
 
-  await db
-    .update(conversationModel)
-    .set({
-      additionalAttributes: {
-        ...(conversation.additionalAttributes as ConversationAttributes),
-        challenge: {
-          type: "step",
-          data: {
-            flowId: flowVersion.flowId,
-            flowVersionId: props.useLatestFlowVersion
-              ? undefined
-              : flowVersion.id,
-            nodeId: props.targetId,
-            stepId: step.id,
-            attempts,
-            lastAttemptAt: new Date(),
-          },
-        },
-      } as ConversationAttributes,
-    })
-    .where(eq(conversationModel.id, conversation.id))
+  const promptStep: SendTextStepSchema = {
+    id: step.id,
+    nodeId,
+    stepType: stepTypes.enum.sendText,
+    text,
+    buttons: [],
+  }
 
-  await waitForChatJobCompletion(job, { conversationId: conversation.id })
+  await enqueueFlowStepMessage({
+    conversationId: conversation.id,
+    contactInboxId: contactInbox.id,
+    flowId: flowVersion.flowId,
+    flowVersionId,
+    step: promptStep,
+    metadata: props.metadata,
+  })
 }
 
-async function clearChallenge(conversationId: string): Promise<void> {
-  await db
-    .update(conversationModel)
-    .set({
-      additionalAttributes: sql`${conversationModel.additionalAttributes} - 'challenge'`,
-    })
-    .where(eq(conversationModel.id, conversationId))
+async function clearChallenge(props: {
+  workspaceId: string
+  conversationId: string
+}): Promise<void> {
+  await conversationService.updateChallenge({
+    workspaceId: props.workspaceId,
+    conversationId: props.conversationId,
+    challenge: undefined,
+  })
 }
 
-async function clearChallengeSafely(conversationId: string): Promise<void> {
+async function clearChallengeSafely(props: {
+  workspaceId: string
+  conversationId: string
+}): Promise<void> {
   try {
-    await clearChallenge(conversationId)
+    await clearChallenge(props)
   } catch (error) {
     logger.warn(
-      { err: error, conversationId },
+      { err: error, conversationId: props.conversationId },
       "getUserData: failed to clear challenge after terminal error",
     )
   }

@@ -13,14 +13,11 @@ import {
   type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
-  ChatJobAction,
   type ChatJobSendFlowStep,
-  chatQueue,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
-import { waitForChatJobCompletion } from "../utils/message"
 import { syncActiveCampaignContact } from "./active-campaign-handler"
 import { handleAIAnalyzeImage } from "./analyze-image"
 import { handleCondition } from "./condition"
@@ -44,7 +41,11 @@ import { subscribeDripSubscriber } from "./drip-handler"
 import { handleAIEditImage } from "./edit-image"
 import { handleAIExtractData } from "./extract-data/index"
 import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
-import { type ExecuteStepProps, seekConnectedNode } from "./flow-utils"
+import {
+  type ExecuteStepProps,
+  enqueueFlowStepMessage,
+  seekConnectedNode,
+} from "./flow-utils"
 import { handleFollowUp } from "./follow-up"
 import { handleAIGenerateImage } from "./generate-image"
 import { handleAIGenerateText } from "./generate-text"
@@ -110,22 +111,16 @@ export async function sendFlowMessage(
     quickReplies,
     sendFrom,
   } = props
-  const job = await chatQueue.add(ChatJobAction.sendFlowMessage, {
-    type: ChatJobAction.sendFlowMessage,
-    data: {
-      conversationId: conversation.id,
-      flowId: flowVersion.flowId,
-      flowVersionId: flowVersion.id,
-      step,
-      trackingContext,
-      metadata,
-      quickReplies,
-      sendFrom,
-    },
-  })
-  await waitForChatJobCompletion(job, {
+  await enqueueFlowStepMessage({
     conversationId: conversation.id,
-    stepId: step.id,
+    contactInboxId: props.contactInbox.id,
+    flowId: flowVersion.flowId,
+    flowVersionId: flowVersion.id,
+    step,
+    trackingContext,
+    metadata,
+    quickReplies,
+    sendFrom,
   })
 }
 
@@ -183,6 +178,7 @@ async function handleWait({
   targetId,
   step,
   useLatestFlowVersion,
+  metadata,
   sendFrom,
 }: ExecuteStepProps<WaitStepSchema>): Promise<ExecuteStepResult> {
   if (!(targetId && step)) {
@@ -234,6 +230,7 @@ async function handleWait({
     contactInboxId,
     connectedNodeId,
     stepId: step.id,
+    metadata,
     sendFrom,
   })
 

@@ -47,6 +47,7 @@ const followUpRow = {
   conversationId: "conversation-1",
   nodeId: "next-node",
   stepId: "step-1",
+  metadata: null,
   type: "followUp",
   createdAt: new Date("2026-07-16T00:00:00.000Z"),
   triggerAt: new Date("2026-07-16T00:01:00.000Z"),
@@ -97,6 +98,30 @@ describe("runFollowUpResume", () => {
     expect(smartDelayService.claimForRun).toHaveBeenCalledWith({
       id: "smart-delay-1",
       to: "completed",
+    })
+  })
+
+  test("preserves broadcast metadata when continuing the flow", async () => {
+    smartDelayService.findById.mockResolvedValueOnce({
+      ...followUpRow,
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "contact-inbox-1",
+      },
+    })
+
+    await runFollowUpResume({ smartDelayId: "smart-delay-1" })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: expect.objectContaining({
+        metadata: {
+          type: "broadcast",
+          broadcastId: "broadcast-1",
+          contactInboxId: "contact-inbox-1",
+        },
+      }),
     })
   })
 

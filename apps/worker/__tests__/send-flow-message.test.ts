@@ -57,6 +57,7 @@ const { sendFlowMessage } = await import("../src/integration/handlers/step")
 const makeProps = () =>
   ({
     conversation: { id: "conv-1" },
+    contactInbox: { id: "ci-1" },
     flowVersion: { id: "fv-1", flowId: "flow-1" },
     step: {
       id: "step-1",
@@ -84,6 +85,7 @@ describe("sendFlowMessage", () => {
       type: "sendFlowMessage",
       data: {
         conversationId: "conv-1",
+        contactInboxId: "ci-1",
         flowId: "flow-1",
         flowVersionId: "fv-1",
         step: {

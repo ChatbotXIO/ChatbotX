@@ -7,7 +7,12 @@ import {
   smartDelayStatuses,
   smartDelayTypes,
 } from "@chatbotx.io/database/partials"
-import { buildJobId, ENQUEUE_DELAY_MS } from "@chatbotx.io/flow-config"
+import {
+  buildJobId,
+  ENQUEUE_DELAY_MS,
+  type MetadataPayload,
+  metadataSchema,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -22,26 +27,43 @@ type SmartDelayJobSpec = {
 }
 
 type SmartDelayResumeJobExtras = {
+  metadata?: MetadataPayload
   sendFrom?: "inbox"
+}
+
+const parseResumeMetadata = (
+  value: Record<string, unknown> | null,
+): MetadataPayload | undefined => {
+  if (!value) {
+    return
+  }
+
+  const parsed = metadataSchema.safeParse(value)
+  return parsed.success ? parsed.data : undefined
 }
 
 export const buildSendFlowResumeJob = (
   row: SmartDelayRow,
   extras?: SmartDelayResumeJobExtras,
-): SmartDelayJobSpec => ({
-  name: IntegrationJobAction.sendFlow,
-  data: {
-    type: IntegrationJobAction.sendFlow,
+): SmartDelayJobSpec => {
+  const metadata = extras?.metadata ?? parseResumeMetadata(row.metadata)
+
+  return {
+    name: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: row.conversationId,
-      contactInboxId: row.contactInboxId,
-      flowId: row.flowId,
-      flowVersionId: row.flowVersionId ?? undefined,
-      nodeId: row.nodeId ?? undefined,
-      ...(extras?.sendFrom ? { sendFrom: extras.sendFrom } : {}),
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: row.conversationId,
+        contactInboxId: row.contactInboxId,
+        flowId: row.flowId,
+        flowVersionId: row.flowVersionId ?? undefined,
+        nodeId: row.nodeId ?? undefined,
+        ...(metadata ? { metadata } : {}),
+        ...(extras?.sendFrom ? { sendFrom: extras.sendFrom } : {}),
+      },
     },
-  },
-})
+  }
+}
 
 const buildResumeFollowUpJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeFollowUp,
@@ -89,6 +111,7 @@ export async function scheduleSmartDelayResume(props: {
   contactInboxId: string
   connectedNodeId: string
   stepId: string
+  metadata?: MetadataPayload
   sendFrom?: "inbox"
 }): Promise<void> {
   const rowId = createId()
@@ -101,6 +124,7 @@ export async function scheduleSmartDelayResume(props: {
     conversationId: props.conversationId,
     nodeId: props.connectedNodeId,
     stepId: props.stepId,
+    metadata: props.metadata ?? null,
     type: props.type,
     createdAt: new Date(),
     triggerAt: props.triggerAt,
@@ -119,6 +143,7 @@ export async function scheduleSmartDelayResume(props: {
     await smartDelayService.markScheduled({ id: persistedRow.id })
 
     const job = smartDelayResumeJobFactories[persistedRow.type](persistedRow, {
+      metadata: props.metadata,
       sendFrom: props.sendFrom,
     })
     await integrationQueue.add(job.name, job.data, {
