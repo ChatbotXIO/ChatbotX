@@ -17,6 +17,12 @@ import { Pool } from "pg"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const migrationsFolder = join(__dirname, "..", "drizzle")
 const migrationLockName = "chatbotx:database:migrations"
+
+// Drizzle's default migrator runs all pending migrations in one transaction.
+// PostgreSQL does not allow a newly created enum to be used before that
+// transaction commits, so migrations must run one at a time by default.
+// Set DATABASE_MIGRATIONS_SEQUENTIAL=false only when this constraint is not
+// relevant to the pending migrations.
 const useSequentialMigrations =
   process.env.DATABASE_MIGRATIONS_SEQUENTIAL !== "false"
 
