@@ -387,6 +387,10 @@
       "title": "Telegram",
       "description": "Use this message type if you want to send a broadcast to your Telegram contacts."
     },
+    "tiktokActiveContacts": {
+      "title": "TikTok",
+      "description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h. TikTok supports text and images only; long flows may be truncated by TikTok's 10-message limit."
+    },
     "flowType": {
       "flow": {
         "title": "Flow",
