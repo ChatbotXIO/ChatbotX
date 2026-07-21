@@ -3,6 +3,7 @@ import { planStatuses } from "@chatbotx.io/database/partials"
 export type QuotaMetricKey =
   | "contacts"
   | "mac"
+  | "botMessages"
   | "workspaces"
   | "channels"
   | "teamMembers"
@@ -16,6 +17,7 @@ export interface QuotaMetric {
 const DISPLAY_KEYS: QuotaMetricKey[] = [
   "mac",
   "contacts",
+  "botMessages",
   "workspaces",
   "channels",
   "teamMembers",
@@ -124,6 +126,7 @@ export function isBlockedFromPlan(
 type UsageLabelKey =
   | "billing.usage.contacts"
   | "billing.usage.mac"
+  | "billing.usage.botMessages"
   | "billing.usage.workspaces"
   | "billing.usage.channels"
   | "billing.usage.teamMembers"
@@ -140,6 +143,7 @@ export function buildUsageLabels(
   return {
     contacts: t("billing.usage.contacts"),
     mac: t("billing.usage.mac"),
+    botMessages: t("billing.usage.botMessages"),
     workspaces: t("billing.usage.workspaces"),
     channels: t("billing.usage.channels"),
     teamMembers: t("billing.usage.teamMembers"),

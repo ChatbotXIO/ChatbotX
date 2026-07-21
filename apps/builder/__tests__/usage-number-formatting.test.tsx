@@ -11,6 +11,7 @@ import type { QuotaMetricKey } from "@/lib/quota-metrics"
 const LABELS: Record<QuotaMetricKey, string> = {
   contacts: "Contacts",
   mac: "Monthly active contacts",
+  botMessages: "Bot messages",
   workspaces: "Workspaces",
   channels: "Channels",
   teamMembers: "Team members",

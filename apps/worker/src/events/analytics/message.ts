@@ -1,5 +1,5 @@
+import { messageAnalyticsService } from "@chatbotx.io/analytics"
 import {
-  messageAnalyticsService,
   quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -20,29 +20,34 @@ export async function handleBotMessageSent(
 ): Promise<void> {
   await messageAnalyticsService.recordEvents(payloads, "message_bot_sent")
 
-  try {
-    const countsByWorkspace = new Map<string, number>()
-    for (const payload of payloads) {
-      countsByWorkspace.set(
-        payload.workspaceId,
-        (countsByWorkspace.get(payload.workspaceId) ?? 0) + 1,
-      )
-    }
+  const countsByWorkspace = new Map<string, number>()
+  for (const payload of payloads) {
+    countsByWorkspace.set(
+      payload.workspaceId,
+      (countsByWorkspace.get(payload.workspaceId) ?? 0) + 1,
+    )
+  }
 
-    await Promise.all(
-      [...countsByWorkspace].map(async ([workspaceId, count]) => {
+  // Best-effort accounting: `botMessagesUsed` has no reconcile backstop (unlike
+  // mac/contacts/etc., which `reconcileOwnerPoolUsage` recomputes from source
+  // tables), so a failure here is dropped permanently, not just delayed. Each
+  // workspace is isolated so one failing lookup/increment doesn't cost every
+  // other workspace in the batch its count too.
+  await Promise.all(
+    [...countsByWorkspace].map(async ([workspaceId, count]) => {
+      try {
         const workspace = await workspaceService.findById({ id: workspaceId })
         await quotaEnforcementService.incrementBy({
           userId: workspace.ownerId,
           metric: "botMessages",
           count,
         })
-      }),
-    )
-  } catch (err) {
-    logger.error(
-      { err, count: payloads.length },
-      "[analytics] bot message quota increment failed",
-    )
-  }
+      } catch (err) {
+        logger.error(
+          { err, workspaceId, count },
+          "[analytics] bot message quota increment failed",
+        )
+      }
+    }),
+  )
 }

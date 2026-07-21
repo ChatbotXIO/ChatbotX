@@ -64,4 +64,25 @@ describe("handleBotMessageSent quota accounting", () => {
     )
     expect(mocks.recordEvents).toHaveBeenCalledOnce()
   })
+
+  it("isolates a failing workspace so others still get incremented", async () => {
+    mocks.findById.mockImplementation(({ id }: { id: string }) => {
+      if (id === "workspace-1") {
+        return Promise.reject(new Error("workspace not found"))
+      }
+      return Promise.resolve({ ownerId: `owner-${id}` })
+    })
+
+    await expect(
+      handleBotMessageSent([payload("workspace-1"), payload("workspace-2")]),
+    ).resolves.toBe(undefined)
+
+    expect(mocks.incrementBy).toHaveBeenCalledOnce()
+    expect(mocks.incrementBy).toHaveBeenCalledWith({
+      userId: "owner-workspace-2",
+      metric: "botMessages",
+      count: 1,
+    })
+    expect(mocks.recordEvents).toHaveBeenCalledOnce()
+  })
 })
