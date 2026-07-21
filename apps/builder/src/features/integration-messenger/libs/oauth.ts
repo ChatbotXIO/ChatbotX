@@ -1,6 +1,6 @@
 import type { MessengerCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-messenger"
-import { getOriginUrlFromHeader } from "@/lib/domain"
+import { getOriginFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 
 export async function generateMessengerRedirectUri(
@@ -12,7 +12,7 @@ export async function generateMessengerRedirectUri(
   // always send Facebook to the fixed broker callback and recover the originating
   // branded domain from `referer` (the callback relays back to it).
   const redirectUrl = buildBrokerCallbackUrl("/integrations/messenger/callback")
-  const baseUrl = await getOriginUrlFromHeader()
+  const baseUrl = await getOriginFromHeader()
   const referer = workspaceId
     ? new URL(`/space/${workspaceId}`, baseUrl).toString()
     : baseUrl
