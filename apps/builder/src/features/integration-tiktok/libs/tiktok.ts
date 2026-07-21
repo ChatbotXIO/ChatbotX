@@ -1,6 +1,6 @@
 import type { TiktokCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-tiktok"
-import { getOriginUrlFromHeader } from "@/lib/domain"
+import { getOriginFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 
 export async function generateTiktokRedirectUri(
@@ -12,7 +12,7 @@ export async function generateTiktokRedirectUri(
   // always send TikTok to the fixed broker callback and recover the originating
   // branded domain from `referer` (the callback relays back to it).
   const redirectUrl = buildBrokerCallbackUrl("/integrations/tiktok/callback")
-  const baseUrl = await getOriginUrlFromHeader()
+  const baseUrl = await getOriginFromHeader()
   const referer = workspaceId
     ? new URL(`/space/${workspaceId}`, baseUrl).toString()
     : baseUrl

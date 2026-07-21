@@ -1,6 +1,6 @@
 import type { InstagramCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-instagram-facebook"
-import { getOriginUrlFromHeader } from "@/lib/domain"
+import { getOriginFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 
 export async function generateInstagramFacebookRedirectUri(
@@ -10,7 +10,7 @@ export async function generateInstagramFacebookRedirectUri(
   const redirectUrl = buildBrokerCallbackUrl(
     "/integrations/instagram-facebook/callback",
   )
-  const baseUrl = await getOriginUrlFromHeader()
+  const baseUrl = await getOriginFromHeader()
   const referer = workspaceId
     ? new URL(`/space/${workspaceId}/dashboard`, baseUrl).toString()
     : baseUrl

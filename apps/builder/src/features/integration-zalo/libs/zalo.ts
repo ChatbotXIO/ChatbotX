@@ -1,13 +1,13 @@
 import type { ZaloCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-zalo"
-import { getOriginUrlFromHeader } from "@/lib/domain"
+import { getOriginFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 
 export async function generateZaloRedirectUri(
   publicConfig: ZaloCredentialPublic,
   workspaceId?: string | null,
 ) {
-  const baseUrl = await getOriginUrlFromHeader()
+  const baseUrl = await getOriginFromHeader()
 
   // The OAuth redirect_uri must be registered in the Zalo app. A white-label
   // custom domain (the live request host) is not registered there, so send Zalo
