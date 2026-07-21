@@ -2,8 +2,8 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useFormatter } from "next-intl"
 import { quotaUsageState } from "@/lib/quota-metrics"
 
-const SIZE = 44
-const STROKE = 4
+const SIZE = 32
+const STROKE = 3
 const RADIUS = (SIZE - STROKE) / 2
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 

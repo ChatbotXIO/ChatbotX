@@ -286,6 +286,7 @@
     "usage": {
       "contacts": "Liên hệ",
       "mac": "Liên hệ hoạt động hằng tháng",
+      "botMessages": "Tin nhắn bot",
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
       "teamMembers": "Thành viên nhóm"
@@ -295,7 +296,8 @@
       "channels": "Bạn đã đạt giới hạn kênh. Nâng cấp gói để kết nối thêm.",
       "teamMembers": "Bạn đã đạt giới hạn thành viên nhóm. Nâng cấp gói để mời thêm.",
       "contacts": "Bạn đã đạt giới hạn liên hệ. Nâng cấp gói để thêm liên hệ.",
-      "mac": "Bạn đã đạt giới hạn liên hệ hoạt động hằng tháng. Nâng cấp gói để tiếp cận thêm."
+      "mac": "Bạn đã đạt giới hạn liên hệ hoạt động hằng tháng. Nâng cấp gói để tiếp cận thêm.",
+      "botMessages": "Bạn đã đạt giới hạn tin nhắn bot. Nâng cấp gói để gửi thêm."
     },
     "pastDue": {
       "message": "Thanh toán gần nhất của bạn không thành công. Cập nhật phương thức thanh toán để tiếp tục sử dụng workspace."

@@ -15,6 +15,7 @@ export type QuotaMetric =
   | "teamMembers"
   | "contacts"
   | "mac"
+  | "botMessages"
 
 const CACHE_TTL = 60 // seconds
 
