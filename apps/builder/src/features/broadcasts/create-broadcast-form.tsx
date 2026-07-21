@@ -4,10 +4,11 @@ import {
   type BroadcastFlowType,
   type BroadcastScheduleType,
   type BroadcastSubaction,
+  broadcastChannelCapabilities,
   broadcastFlowTypes,
   broadcastSubactions,
   type ChannelType,
-  channelTypes,
+  findBroadcastChannelCapability,
 } from "@chatbotx.io/database/partials"
 import {
   extractMessengerFlowButtons,
@@ -70,63 +71,21 @@ type BroadcastConfig = {
 }
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) =>
-  [
-    {
-      value: channelTypes.enum.omnichannel,
-      description:
-        "Send a flow to all contacts. You can send messages or executes actions.",
-      subactions: [
-        {
-          value: broadcastSubactions.enum.allContacts,
-          name: t("broadcasts.allContacts.title"),
-          description: t("broadcasts.allContacts.description"),
-        },
-      ],
-    },
-    {
-      value: "messenger",
+  broadcastChannelCapabilities.map((capability) => {
+    const subactions = capability.subactions.map((subaction) => ({
+      value: subaction,
+      name: t(`broadcasts.${subaction}.title`),
+      description: t(`broadcasts.${subaction}.description`),
+    }))
+
+    return {
+      value: capability.channel,
+      // Channel-level copy is not rendered (the channel step shows only the icon);
+      // per-subaction title/description drive every visible label.
       description: "",
-      subactions: [
-        {
-          value: broadcastSubactions.enum.messengerTemplateMessage,
-          name: t("broadcasts.messengerTemplateMessage.title"),
-          description: t("broadcasts.messengerTemplateMessage.description"),
-        },
-        {
-          value: broadcastSubactions.enum.messengerActiveContacts,
-          name: t("broadcasts.messengerActiveContacts.title"),
-          description: t("broadcasts.messengerActiveContacts.description"),
-        },
-      ],
-    },
-    {
-      value: "whatsapp",
-      description: "",
-      subactions: [
-        {
-          value: broadcastSubactions.enum.whatsappTemplateMessage,
-          name: t("broadcasts.whatsappTemplateMessage.title"),
-          description: t("broadcasts.whatsappTemplateMessage.description"),
-        },
-        {
-          value: broadcastSubactions.enum.whatsappWithin24Hours,
-          name: t("broadcasts.whatsappWithin24Hours.title"),
-          description: t("broadcasts.whatsappWithin24Hours.description"),
-        },
-      ],
-    },
-    {
-      value: "zalo",
-      description: "",
-      subactions: [
-        {
-          value: broadcastSubactions.enum.allContacts,
-          name: t("broadcasts.allContacts.title"),
-          description: t("broadcasts.allContacts.description"),
-        },
-      ],
-    },
-  ] as BroadcastConfig[]
+      subactions,
+    }
+  }) satisfies BroadcastConfig[]
 
 type CreateBroadcastFormProps = {
   canViewEmailAndPhone?: boolean
@@ -261,14 +220,12 @@ function CreateBroadcastChooseChannel() {
   const handleChooseChannel = useCallback(
     (channel: ChannelType) => {
       setValue("channel", channel)
-      if (
-        channel === channelTypes.enum.messenger ||
-        channel === channelTypes.enum.whatsapp
-      ) {
-        setValue("subaction", null)
-      } else {
-        setValue("subaction", broadcastSubactions.enum.allContacts)
-      }
+      const capability = findBroadcastChannelCapability(channel)
+      const mustPickSubaction = (capability?.subactions.length ?? 0) > 1
+      setValue(
+        "subaction",
+        mustPickSubaction ? null : (capability?.defaultSubaction ?? null),
+      )
     },
     [setValue],
   )
@@ -507,9 +464,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     description: string
   }>({
     value: broadcastSubactions.enum.allContacts,
-    name: "Omnichannel",
-    description:
-      "Send a flow to all contacts. You can send messages or executes actions.",
+    name: "",
+    description: "",
   })
 
   const { control, setValue, formState } = useFormContext()

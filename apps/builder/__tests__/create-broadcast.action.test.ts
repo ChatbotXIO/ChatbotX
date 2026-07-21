@@ -97,7 +97,7 @@ beforeEach(() => {
 
 const baseInput = {
   channel: "whatsapp" as const,
-  subaction: "flow" as const,
+  subaction: "whatsappWithin24Hours" as const,
   schedulesType: "now" as const,
   schedulesAt: null,
   contactFilter: null,
@@ -164,6 +164,7 @@ describe("createBroadcastAction — messenger template validation", () => {
       parsedInput: {
         ...baseInput,
         channel: "messenger",
+        subaction: "messengerTemplateMessage",
         templateId: "tpl-1",
         integrationMessengerId: "int-1",
       },
@@ -189,6 +190,7 @@ describe("createBroadcastAction — messenger template validation", () => {
       parsedInput: {
         ...baseInput,
         channel: "messenger",
+        subaction: "messengerTemplateMessage",
         templateId: "tpl-1",
         integrationMessengerId: "int-1",
       },
@@ -217,6 +219,7 @@ describe("createBroadcastAction — whatsapp template validation", () => {
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: {
         ...baseInput,
+        subaction: "whatsappTemplateMessage",
         channel: "whatsapp",
         templateId: "tpl-2",
         integrationWhatsappId: "wa-int-1",
@@ -242,6 +245,7 @@ describe("createBroadcastAction — whatsapp template validation", () => {
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: {
         ...baseInput,
+        subaction: "whatsappTemplateMessage",
         channel: "whatsapp",
         templateId: "tpl-2",
         integrationWhatsappId: "wa-int-1",
@@ -260,6 +264,7 @@ describe("createBroadcastAction — happy path insert", () => {
     vi.clearAllMocks()
     mockInsertValues.mockReturnValue({ returning: mockInsertReturning })
     mockDbInsert.mockReturnValue({ values: mockInsertValues })
+    mockFlowFindFirst.mockResolvedValue({ id: "flow-1", name: "Flow Name" })
   })
 
   test("inserts with status 'scheduled' and returns the broadcast", async () => {
@@ -270,7 +275,7 @@ describe("createBroadcastAction — happy path insert", () => {
       createBroadcastAction as (props: unknown) => Promise<unknown>
     )({
       bindArgsParsedInputs: [WORKSPACE_ID],
-      parsedInput: { ...baseInput, flowId: undefined, templateId: undefined },
+      parsedInput: { ...baseInput, flowId: "flow-1" },
     })
 
     const insertedValues = mockInsertValues.mock.calls[0]?.[0] as {
@@ -292,6 +297,8 @@ describe("createBroadcastAction — happy path insert", () => {
       parsedInput: {
         ...baseInput,
         channel: "messenger",
+        subaction: "messengerActiveContacts",
+        flowId: "flow-1",
         integrationMessengerId: "int-999",
       },
     })
@@ -317,6 +324,8 @@ describe("createBroadcastAction — happy path insert", () => {
       parsedInput: {
         ...baseInput,
         channel: "messenger",
+        subaction: "messengerActiveContacts",
+        flowId: "flow-1",
         integrationMessengerId: "foreign-int",
       },
     })
@@ -342,6 +351,7 @@ describe("createBroadcastAction — happy path insert", () => {
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: {
         ...baseInput,
+        flowId: "flow-1",
         channel: "whatsapp",
         integrationWhatsappId: "foreign-wa-int",
       },
@@ -370,6 +380,7 @@ describe("createBroadcastAction — happy path insert", () => {
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: {
         ...baseInput,
+        flowId: "flow-1",
         templateData,
         buttons,
       },
@@ -391,13 +402,121 @@ describe("createBroadcastAction — happy path insert", () => {
 
     await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: [WORKSPACE_ID],
-      parsedInput: { ...baseInput },
+      parsedInput: { ...baseInput, flowId: "flow-1" },
     })
 
     const insertedValues = mockInsertValues.mock.calls[0]?.[0] as {
       templateData: null
     }
     expect(insertedValues.templateData).toBeNull()
+  })
+
+  test.each([
+    {
+      channel: "instagram" as const,
+      subaction: "instagramActiveContacts" as const,
+    },
+    {
+      channel: "telegram" as const,
+      subaction: "telegramAllContacts" as const,
+    },
+  ])("accepts $channel flow broadcasts", async ({ channel, subaction }) => {
+    const mockBroadcast = { id: `bc-${channel}` }
+    mockInsertReturning.mockResolvedValue([mockBroadcast])
+
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel,
+        subaction,
+        flowId: "flow-1",
+      },
+    })
+
+    expect(result).toBe(mockBroadcast)
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel,
+        subaction,
+        flowId: "flow-1",
+      }),
+    )
+  })
+
+  test("rejects non-broadcastable channels such as TikTok", async () => {
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel: "tiktok",
+        subaction: "telegramAllContacts",
+        flowId: "flow-1",
+      },
+    })
+
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { channel: { _errors: string[] } },
+    ]
+    expect(errors.channel._errors).toContain("Unsupported broadcast channel")
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
+  })
+
+  test("rejects template broadcasts for Telegram", async () => {
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel: "telegram",
+        subaction: "telegramAllContacts",
+        templateId: "template-1",
+      },
+    })
+
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { templateId: { _errors: string[] } },
+    ]
+    expect(errors.templateId._errors).toContain(
+      "Template broadcasts are not supported for this channel",
+    )
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
+  })
+
+  test("rejects template broadcasts for Instagram", async () => {
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        channel: "instagram",
+        subaction: "instagramActiveContacts",
+        templateId: "template-1",
+      },
+    })
+
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { templateId: { _errors: string[] } },
+    ]
+    expect(errors.templateId._errors).toContain(
+      "Template broadcasts are not supported for this channel",
+    )
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
   })
 
   test("schedulesAt is set to startOfMinute of the provided date string", async () => {
@@ -408,7 +527,7 @@ describe("createBroadcastAction — happy path insert", () => {
 
     await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: [WORKSPACE_ID],
-      parsedInput: { ...baseInput, schedulesAt },
+      parsedInput: { ...baseInput, flowId: "flow-1", schedulesAt },
     })
 
     const insertedValues = mockInsertValues.mock.calls[0]?.[0] as {
@@ -419,18 +538,26 @@ describe("createBroadcastAction — happy path insert", () => {
     expect(insertedValues.schedulesAt.getMinutes()).toBe(34)
   })
 
-  test("uses default name 'Broadcast' when no flowId or templateId", async () => {
+  test("rejects when neither flowId nor templateId is provided", async () => {
     const mockBroadcast = { id: "bc-9" }
     mockInsertReturning.mockResolvedValue([mockBroadcast])
 
-    await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: { ...baseInput },
     })
 
-    const insertedValues = mockInsertValues.mock.calls[0]?.[0] as {
-      name: string
-    }
-    expect(insertedValues.name).toBe("Broadcast")
+    expect(mockReturnValidationErrors).toHaveBeenCalledOnce()
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { flowId: { _errors: string[] } },
+    ]
+    expect(errors.flowId._errors).toContain(
+      "Either flow or template must be selected",
+    )
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ __validationError: expect.anything() })
   })
 })

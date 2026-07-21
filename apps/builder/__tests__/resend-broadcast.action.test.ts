@@ -93,7 +93,7 @@ const baseBroadcast = {
   flowId: "flow-1",
   integrationWhatsappId: "wa-1",
   integrationMessengerId: "msg-1",
-  subaction: "flow" as const,
+  subaction: "whatsappWithin24Hours" as const,
   templateId: null,
   templateData: null,
   schedulesType: "now" as const,

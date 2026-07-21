@@ -161,6 +161,36 @@ describe("InboxService.resolveBroadcastInboxIds", () => {
     })
   })
 
+  test("filters inboxes by Instagram channel", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "inbox-instagram" }])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["instagram"],
+    })
+
+    expect(result).toEqual(["inbox-instagram"])
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: { workspaceId: "ws-1", channel: "instagram" },
+      columns: { id: true },
+    })
+  })
+
+  test("filters inboxes by Telegram channel", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "inbox-telegram" }])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["telegram"],
+    })
+
+    expect(result).toEqual(["inbox-telegram"])
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: { workspaceId: "ws-1", channel: "telegram" },
+      columns: { id: true },
+    })
+  })
+
   test("filters inboxes by multiple specific channels", async () => {
     mocks.inboxFindMany.mockResolvedValue([
       { id: "inbox-1" },

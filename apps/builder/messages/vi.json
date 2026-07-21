@@ -379,6 +379,14 @@
       "title": "Liên hệ hoạt động trong 24 giờ",
       "description": "Có thể chứa khuyến mãi và sẽ chỉ được gửi cho người dùng đã nhắn tin cho bot của bạn trong vòng 24 giờ qua."
     },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "Có thể chứa khuyến mãi và sẽ chỉ được gửi cho người dùng đã nhắn tin cho bot của bạn trong vòng 24 giờ qua."
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "Dùng loại tin nhắn này nếu bạn muốn gửi broadcast đến các liên hệ Telegram của mình."
+    },
     "flowType": {
       "flow": {
         "title": "Luồng",

@@ -1,4 +1,4 @@
-import { broadcastService } from "@chatbotx.io/business"
+import { broadcastService, conversationService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
@@ -17,6 +17,7 @@ import {
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
 import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
+import { logger } from "../../lib/logger"
 
 export const prepareBroadcast = async (broadcastId: string) => {
   const broadcast = await db.query.broadcastModel.findFirst({
@@ -27,7 +28,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
   })
 
   if (!broadcast) {
-    console.error("Broadcast not found or not scheduled", broadcastId)
+    logger.warn({ broadcastId }, "Broadcast not found or not scheduled")
     return
   }
 
@@ -74,19 +75,11 @@ export const prepareBroadcast = async (broadcastId: string) => {
       subaction: parsedSubaction.success ? parsedSubaction.data : undefined,
     },
     async (contactInboxes): Promise<boolean | undefined> => {
-      hasContactOnBroadcast = true
-
-      const conversations = await db.query.conversationModel.findMany({
-        where: {
-          contactId: {
-            in: Array.from(
-              new Set(
-                contactInboxes.map((contactInbox) => contactInbox.contactId),
-              ),
-            ),
-          },
-          workspaceId: broadcast.workspaceId,
-        },
+      const conversations = await conversationService.findDMByContactIds({
+        workspaceId: broadcast.workspaceId,
+        contactIds: contactInboxes.map(
+          (contactInbox) => contactInbox.contactId,
+        ),
       })
 
       const conversationMap = new Map(
@@ -96,20 +89,42 @@ export const prepareBroadcast = async (broadcastId: string) => {
         ]),
       )
 
-      await db
-        .insert(contactsOnBroadcastsModel)
-        .values(
-          contactInboxes.map((contactInbox) => ({
+      const recipients = contactInboxes.flatMap((contactInbox) => {
+        const conversation = conversationMap.get(contactInbox.contactId)
+        if (!conversation) {
+          return []
+        }
+
+        return [
+          {
             broadcastId,
             contactId: contactInbox.contactId,
             contactInboxId: contactInbox.id,
-            conversationId:
-              conversationMap.get(contactInbox.contactId)?.id || "",
-          })),
+            conversationId: conversation.id,
+          },
+        ]
+      })
+      const skippedCount = contactInboxes.length - recipients.length
+
+      if (skippedCount > 0) {
+        logger.info(
+          { broadcastId, skippedCount },
+          "Skipped broadcast contacts without a DM conversation",
         )
+      }
+
+      if (recipients.length === 0) {
+        return
+      }
+
+      hasContactOnBroadcast = true
+
+      await db
+        .insert(contactsOnBroadcastsModel)
+        .values(recipients)
         .onConflictDoNothing()
 
-      contactCount += contactInboxes.length
+      contactCount += recipients.length
 
       return
     },
