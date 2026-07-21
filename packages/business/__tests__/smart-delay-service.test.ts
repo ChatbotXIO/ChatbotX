@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockCount,
   mockDbFindFirst,
+  mockDbFor,
   mockDbFrom,
   mockDbGroupBy,
   mockDbInsert,
+  mockDbLimit,
+  mockDbOrderBy,
   mockDbOnConflictDoUpdate,
   mockDbReturning,
   mockDbSelect,
@@ -39,11 +42,17 @@ const {
   updateChain.set.mockReturnValue(updateChain)
   updateChain.where.mockReturnValue(updateChain)
   const selectChain = {
+    for: vi.fn(),
     from: vi.fn(),
     groupBy: vi.fn(),
+    limit: vi.fn(),
+    orderBy: vi.fn(),
     where: vi.fn(),
   }
+  selectChain.for.mockReturnValue(selectChain)
   selectChain.from.mockReturnValue(selectChain)
+  selectChain.limit.mockReturnValue(selectChain)
+  selectChain.orderBy.mockReturnValue(selectChain)
   selectChain.where.mockReturnValue(selectChain)
   selectChain.groupBy.mockResolvedValue([])
 
@@ -51,8 +60,11 @@ const {
     mockCount: vi.fn(() => "count()"),
     mockDbFindFirst: vi.fn(),
     mockDbFrom: selectChain.from,
+    mockDbFor: selectChain.for,
     mockDbGroupBy: selectChain.groupBy,
     mockDbInsert,
+    mockDbLimit: selectChain.limit,
+    mockDbOrderBy: selectChain.orderBy,
     mockDbOnConflictDoUpdate: insertChain.onConflictDoUpdate,
     mockDbReturning,
     mockDbSelect: vi.fn(() => selectChain),
@@ -220,18 +232,23 @@ describe("smartDelayService", () => {
     expect(mockDbWhere).toHaveBeenCalledTimes(2)
   })
 
-  test("claimDueRows claims pending rows up to the window", async () => {
+  test("claimDueRows claims a bounded, lock-skipping batch up to the window", async () => {
     mockDbReturning.mockResolvedValueOnce([
       { ...smartDelayRow, status: "scheduled" },
     ])
     const windowUntil = new Date("2026-07-16T00:05:00.000Z")
 
     await expect(
-      smartDelayService.claimDueRows({ windowUntil }),
+      smartDelayService.claimDueRows({ windowUntil, limit: 500 }),
     ).resolves.toEqual([{ ...smartDelayRow, status: "scheduled" }])
 
     expect(mockDbSet).toHaveBeenCalledWith({ status: "scheduled" })
     expect(mockLte).toHaveBeenCalledWith(expect.anything(), windowUntil)
+    // Batch bound + SKIP LOCKED: concurrent scanners split the backlog
+    // instead of double-claiming or loading everything into memory.
+    expect(mockDbLimit).toHaveBeenCalledWith(500)
+    expect(mockDbFor).toHaveBeenCalledWith("update", { skipLocked: true })
+    expect(mockInArray).toHaveBeenCalledOnce()
     expect(mockDbReturning).toHaveBeenCalledOnce()
   })
 
@@ -251,30 +268,54 @@ describe("smartDelayService", () => {
     ).resolves.toBe(false)
   })
 
-  test("sweepStuckScheduled resets overdue scheduled rows", async () => {
-    mockDbReturning.mockResolvedValueOnce([{ id: "row-1" }, { id: "row-2" }])
+  test("listStuckScheduled returns a bounded batch of overdue scheduled rows", async () => {
     const olderThan = new Date("2026-07-16T00:10:00.000Z")
+    const stuckRows = [
+      { id: "row-1", triggerAt: new Date("2026-07-16T00:00:00.000Z") },
+      { id: "row-2", triggerAt: new Date("2026-07-16T00:01:00.000Z") },
+    ]
+    mockDbLimit.mockResolvedValueOnce(stuckRows)
 
     await expect(
-      smartDelayService.sweepStuckScheduled({ olderThan }),
-    ).resolves.toBe(2)
+      smartDelayService.listStuckScheduled({ olderThan, limit: 500 }),
+    ).resolves.toEqual(stuckRows)
 
-    expect(mockDbSet).toHaveBeenCalledWith({ status: "pending" })
+    expect(mockDbSelect).toHaveBeenCalledWith({
+      id: expect.anything(),
+      triggerAt: expect.anything(),
+    })
+    expect(mockEq).toHaveBeenCalledWith(expect.anything(), "scheduled")
     expect(mockLt).toHaveBeenCalledWith(expect.anything(), olderThan)
+    expect(mockDbOrderBy).toHaveBeenCalledOnce()
+    expect(mockDbLimit).toHaveBeenCalledWith(500)
   })
 
-  test("resetToPending updates only the provided ids", async () => {
-    await smartDelayService.resetToPending({ ids: ["row-1", "row-2"] })
+  test("resetToPending only resets rows still scheduled and reports the real count", async () => {
+    // CAS: a concurrent resume completed "row-2" between read and write — the
+    // guarded UPDATE must not resurrect it, and the count reflects that.
+    mockDbReturning.mockResolvedValueOnce([{ id: "row-1" }])
+
+    const triggerAtBefore = new Date("2026-07-16T00:05:00.000Z")
+    await expect(
+      smartDelayService.resetToPending({
+        ids: ["row-1", "row-2"],
+        triggerAtBefore,
+      }),
+    ).resolves.toBe(1)
 
     expect(mockDbSet).toHaveBeenCalledWith({ status: "pending" })
     expect(mockInArray).toHaveBeenCalledWith(expect.anything(), [
       "row-1",
       "row-2",
     ])
+    expect(mockEq).toHaveBeenCalledWith(expect.anything(), "scheduled")
+    // Rescheduled rows with a fresh future triggerAt are excluded.
+    expect(mockLt).toHaveBeenCalledWith(expect.anything(), triggerAtBefore)
+    expect(mockDbReturning).toHaveBeenCalledOnce()
   })
 
   test("resetToPending skips empty batches", async () => {
-    await smartDelayService.resetToPending({ ids: [] })
+    await expect(smartDelayService.resetToPending({ ids: [] })).resolves.toBe(0)
 
     expect(mockDbUpdate).not.toHaveBeenCalled()
   })

@@ -49,4 +49,5 @@ export const fakeQueue = {
   add: () => Promise.resolve(""),
   addBulk: () => Promise.resolve(""),
   getJob: () => Promise.resolve(undefined),
+  remove: () => Promise.resolve(0),
 }
