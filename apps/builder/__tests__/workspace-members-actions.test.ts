@@ -13,6 +13,7 @@ const {
   mockInvalidateCacheByTags,
   mockIsCommunity,
   mockQuotaHasReachedLimit,
+  mockQuotaRelease,
   mockUpdateSet,
   mockWorkspaceFindById,
 } = vi.hoisted(() => {
@@ -37,6 +38,7 @@ const {
     mockInvalidateCacheByTags: vi.fn(),
     mockIsCommunity: vi.fn(),
     mockQuotaHasReachedLimit: vi.fn(),
+    mockQuotaRelease: vi.fn(),
     mockUpdateSet,
     mockUpdateWhere,
     mockWorkspaceFindById: vi.fn(),
@@ -48,7 +50,10 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (fn: unknown) => fn
-  return { workspaceActionClient: chain }
+  return {
+    workspaceActionClient: chain,
+    workspaceActionClientAllowExpired: chain,
+  }
 })
 
 vi.mock("@/env", () => ({
@@ -59,11 +64,14 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: mockGetCurrentUserAndTargetWorkspace,
 }))
 
+vi.mock("@/lib/log", () => ({ logger: { error: vi.fn() } }))
+
 vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberCacheTag: (userId: string) =>
     `users:${userId}:workspace-members`,
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
+    release: mockQuotaRelease,
   },
   workspaceService: {
     findById: mockWorkspaceFindById,
@@ -179,6 +187,7 @@ function getInsertedValues() {
 function mockCurrentMember(permissions = fullPermissions) {
   mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
     user: { id: "user-1" },
+    targetWorkspace: { id: WORKSPACE_ID, ownerId: "owner-1" },
     targetWorkspaceMember: { permissions },
   })
 }
@@ -269,6 +278,10 @@ describe("updateWorkspaceMemberAction", () => {
       workspaceId: WORKSPACE_ID,
     })
     mockCurrentMember()
+    mockWorkspaceFindById.mockResolvedValue({
+      id: WORKSPACE_ID,
+      ownerId: "owner-1",
+    })
     mockIsCommunity.mockReturnValue(false)
   })
 
@@ -376,5 +389,16 @@ describe("deleteWorkspaceMemberAction", () => {
     expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
       `users:${MEMBER_USER_ID}:workspace-members`,
     ])
+  })
+
+  test("releases the workspace owner's team-member seat after deletion", async () => {
+    await (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+      deleteActionCtx(),
+    )
+
+    expect(mockQuotaRelease).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "teamMembers",
+    })
   })
 })

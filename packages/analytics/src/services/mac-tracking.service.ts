@@ -51,6 +51,8 @@ const BLOOM_FILTER_HOUR_BUFFER_SECONDS = 120
 const BLOOM_FILTER_CAPACITY = 1_000_000
 const HOURLY_BLOOM_FILTER_CAPACITY = 100_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
+const USER_QUOTA_LIVE_KEY_PREFIX = "user-quota-live:"
+const MAC_LIVE_FIELD = "mac"
 
 type QuotaContext = {
   userId: string
@@ -759,10 +761,25 @@ export class MacTrackingService {
     userId: string,
     count: number,
   ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
     try {
       const client = await cacheConnections.useExisting()
-      const key = `user-quota-live:${userId}`
-      await client.hincrby(key, "mac", count)
+      const key = `${USER_QUOTA_LIVE_KEY_PREFIX}${userId}`
+
+      // Cold-seed BEFORE incrementing, using `hsetnx` so a concurrent seed can
+      // never clobber a concurrent increment: whichever of them writes the
+      // field first wins, and the other's `hsetnx` becomes a no-op.
+      if ((await client.hget(key, MAC_LIVE_FIELD)) === null) {
+        const quota = await db.query.userQuotaModel.findFirst({
+          where: { userId },
+          columns: { macUsed: true },
+        })
+        await client.hsetnx(key, MAC_LIVE_FIELD, String(quota?.macUsed ?? 0))
+      }
+
+      await client.hincrby(key, MAC_LIVE_FIELD, count)
     } catch (err) {
       logger.warn(
         { err, userId, count },

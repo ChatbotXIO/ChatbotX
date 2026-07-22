@@ -1,4 +1,4 @@
-import { db, type PgTable, sql } from "@chatbotx.io/database/client"
+import { db, eq, type PgTable, sql } from "@chatbotx.io/database/client"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
 import type { PgColumn } from "drizzle-orm/pg-core"
 import { logger } from "../logger"
@@ -248,6 +248,34 @@ export class LiveCounterStore<TRow> {
     }
   }
 
+  /**
+   * Decrement the live counter, cold-seeding it from the DB first and flooring
+   * the result at zero. Redis is best-effort; the scheduled reconcile remains
+   * the durable backstop when it is unavailable.
+   */
+  async decrementBy(
+    id: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+    try {
+      const client = await cacheConnections.useExisting()
+      await this.getLiveCount(id, metric)
+      const next = await client.hincrby(this.liveKey(id), metric, -count)
+      if (next < 0) {
+        await client.hset(this.liveKey(id), metric, "0")
+      }
+    } catch (err) {
+      logger.warn(
+        { err },
+        `${this.config.label}: Redis decrement failed for ${metric}, counter will reconcile on next sync`,
+      )
+    }
+  }
+
   /** Persist a +1 usage increment to the DB row. {@link upsertMetricBy} by 1. */
   async upsertMetric(id: string, metric: QuotaMetric): Promise<void> {
     await this.upsertMetricBy(id, metric, 1)
@@ -296,6 +324,33 @@ export class LiveCounterStore<TRow> {
   }
 
   /**
+   * Persist a `-count` usage release without creating a missing quota row.
+   * The DB floor prevents stale or racing releases from producing negatives.
+   */
+  async releaseMetricBy(
+    id: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+    const column = this.config.usedColumns[metric]
+    if (!column) {
+      throw new Error(`Unhandled quota metric: ${String(metric)}`)
+    }
+    const usedKey = usedColumnKey(metric)
+
+    await db
+      .update(this.config.table)
+      .set({
+        [usedKey]: sql`GREATEST(0, ${column} - ${count})`,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      } as never)
+      .where(eq(this.config.idColumn, id))
+  }
+
+  /**
    * Write-through a `+count` consumption to BOTH stores so every reader agrees:
    * the authoritative DB `${metric}Used` column AND the Redis live counter, then
    * busts the row cache. This is the single place that keeps the two stores in
@@ -316,6 +371,16 @@ export class LiveCounterStore<TRow> {
     }
     await this.incrementBy(id, metric, count)
     await this.upsertMetricBy(id, metric, count)
+    await this.invalidate(id)
+  }
+
+  /** Write-through a `-count` release to Redis and the durable quota row. */
+  async release(id: string, metric: QuotaMetric, count = 1): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+    await this.decrementBy(id, metric, count)
+    await this.releaseMetricBy(id, metric, count)
     await this.invalidate(id)
   }
 }

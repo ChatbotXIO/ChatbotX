@@ -52,6 +52,7 @@ const userQuotaService = {
   getRemainingSlots: vi.fn(async () => null as number | null),
   increment: vi.fn(async () => undefined),
   incrementBy: vi.fn(async () => undefined),
+  releaseBy: vi.fn(async () => undefined),
   getForUser: vi.fn(async () => null as unknown),
   getLiveUsage: vi.fn(async () => zeroLiveUsage()),
   metricValues: vi.fn(() => ({ limit: null as number | null, used: 0 })),
@@ -250,6 +251,44 @@ describe("quotaEnforcementService.increment", () => {
     expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
       RESELLER,
       "contacts",
+      1,
+    )
+  })
+})
+
+describe("quotaEnforcementService.release", () => {
+  test("releases both the sub-account and owner pool rows", async () => {
+    asCustomer()
+
+    await quotaEnforcementService.release({
+      userId: CUSTOMER,
+      metric: "teamMembers",
+    })
+
+    expect(userQuotaService.releaseBy).toHaveBeenCalledWith(
+      RESELLER,
+      "teamMembers",
+      1,
+    )
+    expect(userQuotaService.releaseBy).toHaveBeenCalledWith(
+      CUSTOMER,
+      "teamMembers",
+      1,
+    )
+  })
+
+  test("releases only the owner pool row for a reseller", async () => {
+    asReseller()
+
+    await quotaEnforcementService.release({
+      userId: RESELLER,
+      metric: "teamMembers",
+    })
+
+    expect(userQuotaService.releaseBy).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.releaseBy).toHaveBeenCalledWith(
+      RESELLER,
+      "teamMembers",
       1,
     )
   })

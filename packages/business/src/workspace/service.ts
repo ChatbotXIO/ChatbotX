@@ -318,12 +318,31 @@ class WorkspaceService extends BaseService {
   }): Promise<WorkspaceModel> {
     const { data, tx = db } = props
 
+    // Both consumes below run against `db`, not `tx`: if a caller wraps
+    // `create` in its own transaction that later rolls back (e.g. a channel
+    // connect action), these seats are not released with it. The scheduled
+    // reconcile is the backstop that re-grounds counts in that case.
     const consumed = await quotaEnforcementService.tryConsume({
       userId: props.createdBy,
       metric: "workspaces",
     })
     if (!consumed.ok) {
       throw new ChatbotXException("Workspace limit reached for this plan")
+    }
+
+    const teamMembersConsumed = await quotaEnforcementService.tryConsume({
+      userId: props.createdBy,
+      metric: "teamMembers",
+    })
+    if (!teamMembersConsumed.ok) {
+      // Give back the workspaces seat consumed above so a teamMembers-limit
+      // rejection doesn't permanently strand it on a workspace that is never
+      // created.
+      await quotaEnforcementService.release({
+        userId: props.createdBy,
+        metric: "workspaces",
+      })
+      throw new ChatbotXException("Team member limit reached for this plan")
     }
 
     const tenantId =

@@ -211,6 +211,20 @@ class QuotaEnforcementService {
     await this.incrementByForCtx(ctx, args.userId, args.metric, args.count)
   }
 
+  /** Release one unit at every quota level previously consumed for the actor. */
+  async release(args: { userId: string; metric: QuotaMetric }): Promise<void> {
+    await this.releaseBy({ ...args, count: 1 })
+  }
+
+  async releaseBy(args: {
+    userId: string
+    metric: QuotaMetric
+    count: number
+  }): Promise<void> {
+    const ctx = await this.resolveContext(args.userId)
+    await this.releaseByForCtx(ctx, args.userId, args.metric, args.count)
+  }
+
   /** {@link incrementBy} body for an already-resolved context (no extra DB read). */
   private async incrementByForCtx(
     ctx: QuotaContext,
@@ -232,6 +246,29 @@ class QuotaEnforcementService {
     await userQuotaService.incrementBy(ownerId, metric, count)
     if (userId !== ownerId) {
       await userQuotaService.incrementBy(userId, metric, count)
+    }
+  }
+
+  /** {@link releaseBy} body for an already-resolved context. */
+  private async releaseByForCtx(
+    ctx: QuotaContext,
+    userId: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+
+    if (!this.isPooled(ctx)) {
+      await userQuotaService.releaseBy(userId, metric, count)
+      return
+    }
+
+    const { ownerId } = ctx
+    await userQuotaService.releaseBy(ownerId, metric, count)
+    if (userId !== ownerId) {
+      await userQuotaService.releaseBy(userId, metric, count)
     }
   }
 
