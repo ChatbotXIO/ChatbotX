@@ -65,11 +65,11 @@ export const acceptInvitationAction = authActionClient
       )
     }
     if (workspace) {
-      const consumed = await quotaEnforcementService.tryConsume({
+      const atLimit = await quotaEnforcementService.hasReachedLimit({
         userId: workspace.ownerId,
         metric: "teamMembers",
       })
-      if (!consumed.ok) {
+      if (atLimit) {
         throw new ChatbotXException(
           "Team member limit reached for this workspace plan",
         )

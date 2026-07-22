@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  quotaEnforcementService,
-  workspaceMemberCacheTag,
-} from "@chatbotx.io/business"
+import { workspaceMemberCacheTag } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
@@ -11,7 +8,6 @@ import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { logger } from "@/lib/log"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
@@ -50,18 +46,6 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     }
 
     await db.delete(workspaceMemberModel).where(eq(workspaceMemberModel.id, id))
-
-    try {
-      await quotaEnforcementService.release({
-        userId: currentUserAndTargetChatbot.targetWorkspace.ownerId,
-        metric: "teamMembers",
-      })
-    } catch (err) {
-      logger.error(
-        { err, workspaceId, workspaceMemberId: id },
-        "Failed to release team-member quota after removal",
-      )
-    }
 
     // The removed member's cached `listByUserId` result still lists this
     // workspace; bust it so their access is revoked immediately.

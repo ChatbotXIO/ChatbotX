@@ -31,11 +31,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceMemberModel: {},
 }))
 
-const tryConsume = vi.fn()
+const hasReachedLimit = vi.fn()
 const workspaceServiceFind = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
-    tryConsume: (...args: unknown[]) => tryConsume(...args),
+    hasReachedLimit: (...args: unknown[]) => hasReachedLimit(...args),
   },
   workspaceService: {
     find: (...args: unknown[]) => workspaceServiceFind(...args),
@@ -115,7 +115,7 @@ describe("acceptInvitationAction", () => {
     getSuperAdminPermissions.mockReturnValue({ superAdmin: true })
     workspaceMemberFindFirst.mockResolvedValue(undefined)
     workspaceServiceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
-    tryConsume.mockResolvedValue({ ok: true })
+    hasReachedLimit.mockResolvedValue(false)
     findOrFail.mockResolvedValue({
       code: "abc123",
       workspaceId: "ws-1",
@@ -185,13 +185,17 @@ describe("acceptInvitationAction", () => {
   })
 
   test("throws and does not insert or invalidate cache when team member quota is exceeded", async () => {
-    tryConsume.mockResolvedValue({ ok: false, level: "user" })
+    hasReachedLimit.mockResolvedValue(true)
 
     await expect(invoke()).rejects.toThrow(
       "Team member limit reached for this workspace plan",
     )
     expect(dbInsertValues).not.toHaveBeenCalled()
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(hasReachedLimit).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "teamMembers",
+    })
   })
 
   test("throws and does not insert when the workspace is scheduled for deletion", async () => {
@@ -208,7 +212,7 @@ describe("acceptInvitationAction", () => {
       message: "This workspace is no longer available",
     })
     expect(dbInsertValues).not.toHaveBeenCalled()
-    expect(tryConsume).not.toHaveBeenCalled()
+    expect(hasReachedLimit).not.toHaveBeenCalled()
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
   })
 })

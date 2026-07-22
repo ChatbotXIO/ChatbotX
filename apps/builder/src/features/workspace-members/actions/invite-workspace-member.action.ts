@@ -24,9 +24,8 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(inviteWorkspaceMemberRequest)
   .action(async ({ ctx, parsedInput, bindArgsParsedInputs: [workspaceId] }) => {
-    // Read-only gate: the team-member quota is consumed when the invitation
-    // is accepted (accept-invitation.ts), so block issuing a new invitation
-    // once the workspace owner is already at the limit (own or reseller pool).
+    // Read-only gate: team-member usage is reconcile-counted after acceptance,
+    // so block issuing an invitation once the owner is already at the limit.
     const workspace = await workspaceService.findById({ id: workspaceId })
     const currentUserAndTargetChatbot =
       await getCurrentUserAndTargetWorkspace(workspaceId)
