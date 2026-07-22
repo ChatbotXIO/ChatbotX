@@ -2052,6 +2052,9 @@ importers:
       '@chatbotx.io/integration-google-calendar':
         specifier: workspace:*
         version: link:../../integrations/google-calendar
+      '@chatbotx.io/javascript-sandbox':
+        specifier: workspace:*
+        version: link:../javascript-sandbox
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
@@ -2396,6 +2399,28 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.6(@types/node@24.13.1)(jiti@2.7.0)(jsdom@25.0.1)(lightningcss@1.32.0)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(tsx@4.23.0)(yaml@2.9.0)
+
+  packages/javascript-sandbox:
+    dependencies:
+      isolated-vm:
+        specifier: ^7.0.0
+        version: 7.0.0
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/kafka:
     dependencies:
@@ -8590,6 +8615,10 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  isolated-vm@7.0.0:
+    resolution: {integrity: sha512-TXlJp9kiSf4AEpkCgB4VIf2M+6MRW3SEzlZUXFmQ6QcRypOnENRvK6RoZuQt/dlLOnqyFGUoZELUfH4ucsG4iw==}
+    engines: {node: '>=26.0.0'}
+
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
     engines: {node: '>=8'}
@@ -9390,6 +9419,10 @@ packages:
 
   node-gyp-build-optional-packages@5.2.2:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
+    hasBin: true
+
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
 
   node-int64@0.4.0:
@@ -16473,6 +16506,10 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  isolated-vm@7.0.0:
+    dependencies:
+      node-gyp-build: 4.8.4
+
   istanbul-lib-coverage@3.2.2: {}
 
   istanbul-lib-report@3.0.1:
@@ -17640,6 +17677,8 @@ snapshots:
     dependencies:
       detect-libc: 2.1.2
     optional: true
+
+  node-gyp-build@4.8.4: {}
 
   node-int64@0.4.0: {}
 

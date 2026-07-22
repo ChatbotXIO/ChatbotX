@@ -76,6 +76,7 @@ export const stepTypes = z.enum([
   "countCharacters",
   "performAction",
   "callApi",
+  "executeJavascript",
   "splitTraffic",
   "make",
   "triggerN8n",

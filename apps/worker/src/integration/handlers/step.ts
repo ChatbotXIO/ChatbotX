@@ -101,6 +101,7 @@ import {
   formatDate,
   generateCode,
   getDataFromJSON,
+  handleExecuteJavascript,
 } from "./tool-handler"
 import { handleTriggerN8nStep } from "./trigger-n8n-handler"
 
@@ -371,6 +372,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.callApi]: externalRequest,
   [stepTypes.enum.make]: handleMakeStep,
   [stepTypes.enum.triggerN8n]: handleTriggerN8nStep,
+  [stepTypes.enum.executeJavascript]: handleExecuteJavascript,
   [stepTypes.enum.cancelContactInput]: undefined,
   [stepTypes.enum.clearCustomField]: clearContactCustomField,
   [stepTypes.enum.countCharacters]: countCharacters,

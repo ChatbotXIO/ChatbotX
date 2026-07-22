@@ -574,6 +574,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: GlobeIcon,
         stepType: stepTypes.enum.callApi,
       },
+      {
+        label: t("flows.actions.executeJavascript"),
+        icon: CodeIcon,
+        stepType: stepTypes.enum.executeJavascript,
+      },
     ],
   },
   {

@@ -4,6 +4,7 @@ import {
   externalRequestService,
 } from "@chatbotx.io/business"
 import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
+import { javascriptExecutionService } from "@chatbotx.io/business/javascript-execution"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import {
   type SystemFieldType,
@@ -12,6 +13,7 @@ import {
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import {
   type CountCharactersStepSchema,
+  type ExecuteJavascriptStepSchema,
   type ExternalRequestStepSchema,
   type FormatDateStepSchema,
   FormatTimezone,
@@ -33,6 +35,7 @@ import {
 import { faker } from "@faker-js/faker"
 import { formatInTimeZone } from "date-fns-tz"
 import { getProperty } from "dot-prop"
+import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
@@ -323,6 +326,48 @@ export async function externalRequest({
       status: "error",
       errorMessage:
         error instanceof Error ? error.message : "External request failed",
+      result: null,
+    }
+  }
+}
+
+export async function handleExecuteJavascript({
+  contactInbox,
+  conversation,
+  step,
+}: ExecuteStepProps<ExecuteJavascriptStepSchema>): Promise<ExecuteStepResult> {
+  try {
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+      conversation,
+    })
+    const input: Record<string, unknown> = Object.fromEntries(
+      [...variables.customFieldsMap.entries()].map(([name, field]) => [
+        name,
+        field.value,
+      ]),
+    )
+
+    for (const systemField of systemFieldTypes.options) {
+      input[systemField] = await getSystemFieldValue(variables, systemField)
+    }
+
+    await javascriptExecutionService.executeAndMap({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      code: step.code,
+      input,
+      mapping: step.mapping,
+    })
+
+    return { status: "success", result: null }
+  } catch (error) {
+    logger.error({ err: error }, "[handleExecuteJavascript] failed")
+    return {
+      status: "error",
+      errorMessage:
+        error instanceof Error ? error.message : "JavaScript execution failed",
       result: null,
     }
   }
