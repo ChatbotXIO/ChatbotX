@@ -137,24 +137,12 @@ describe("ConversationService.findDMByContactIds", () => {
     })
   })
 
-  test("collapses to the most recently active conversation per contact for TikTok", async () => {
-    mocks.conversationFindMany.mockResolvedValue([
-      {
-        id: "1",
-        contactId: "contact-1",
-        lastActivityAt: new Date("2026-01-01T00:00:00Z"),
-      },
-      {
-        id: "2",
-        contactId: "contact-1",
-        lastActivityAt: new Date("2026-02-01T00:00:00Z"),
-      },
-      {
-        id: "3",
-        contactId: "contact-2",
-        lastActivityAt: new Date("2026-01-15T00:00:00Z"),
-      },
-    ])
+  test("returns TikTok conversations as-is without post-processing", async () => {
+    const rows = [
+      { id: "1", contactId: "contact-1" },
+      { id: "2", contactId: "contact-2" },
+    ]
+    mocks.conversationFindMany.mockResolvedValue(rows)
 
     const result = await conversationService.findDMByContactIds({
       workspaceId: WORKSPACE_ID,
@@ -162,35 +150,7 @@ describe("ConversationService.findDMByContactIds", () => {
       channel: "tiktok",
     })
 
-    expect(result).toEqual([
-      {
-        id: "2",
-        contactId: "contact-1",
-        lastActivityAt: new Date("2026-02-01T00:00:00Z"),
-      },
-      {
-        id: "3",
-        contactId: "contact-2",
-        lastActivityAt: new Date("2026-01-15T00:00:00Z"),
-      },
-    ])
-  })
-
-  test("breaks ties by the newest conversation id when activity is equal for TikTok", async () => {
-    mocks.conversationFindMany.mockResolvedValue([
-      { id: "9", contactId: "contact-1", lastActivityAt: null },
-      { id: "10", contactId: "contact-1", lastActivityAt: null },
-    ])
-
-    const result = await conversationService.findDMByContactIds({
-      workspaceId: WORKSPACE_ID,
-      contactIds: ["contact-1"],
-      channel: "tiktok",
-    })
-
-    expect(result).toEqual([
-      { id: "10", contactId: "contact-1", lastActivityAt: null },
-    ])
+    expect(result).toEqual(rows)
   })
 
   test("uses the provided transaction client instead of the default db", async () => {

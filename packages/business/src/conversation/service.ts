@@ -100,39 +100,6 @@ export type ConversationWithContactInboxes = ConversationModel & {
   contactInboxes: ContactInboxModel[]
 }
 
-const conversationRecency = (conversation: ConversationModel): number =>
-  conversation.lastActivityAt?.getTime() ?? 0
-
-const isMoreRecent = (
-  candidate: ConversationModel,
-  current: ConversationModel,
-): boolean => {
-  const candidateRecency = conversationRecency(candidate)
-  const currentRecency = conversationRecency(current)
-  if (candidateRecency !== currentRecency) {
-    return candidateRecency > currentRecency
-  }
-  // Tie-break on the conversation id so the pick is fully deterministic. Ids are
-  // numeric strings, so compare as BigInt rather than lexicographically.
-  return BigInt(candidate.id) > BigInt(current.id)
-}
-
-// Collapse conversations to at most one per contact, preferring the most
-// recently active row. Used for channels resolved by a non-null sourceId, which
-// — unlike the null-sourceId DM path — have no per-contact unique index.
-const collapseToMostRecentPerContact = (
-  conversations: ConversationModel[],
-): ConversationModel[] => {
-  const latestByContact = new Map<string, ConversationModel>()
-  for (const conversation of conversations) {
-    const current = latestByContact.get(conversation.contactId)
-    if (!current || isMoreRecent(conversation, current)) {
-      latestByContact.set(conversation.contactId, conversation)
-    }
-  }
-  return Array.from(latestByContact.values())
-}
-
 class ConversationService extends BaseService {
   protected readonly cachePrefix: string = "conversations"
 
@@ -190,13 +157,10 @@ class ConversationService extends BaseService {
       },
     })
 
-    // The null-sourceId DM path is unique per contact
-    // (Conversation_contactId_dm_key), so it needs no post-processing. The
-    // non-null path has no such guarantee and can return several rows per
-    // contact, so collapse deterministically to one conversation each.
-    return usesSourceId
-      ? collapseToMostRecentPerContact(conversations)
-      : conversations
+    // Both DM paths return at most one conversation per contact: the null-sourceId
+    // path via the Conversation_contactId_dm_key unique index, and TikTok's
+    // non-null path because a TikTok contact has a single conversation.
+    return conversations
   }
 
   async updateChallenge(props: {
