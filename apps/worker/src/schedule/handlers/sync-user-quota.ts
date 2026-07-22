@@ -6,7 +6,7 @@ import {
   USER_QUOTA_LABEL,
   userQuotaService,
 } from "@chatbotx.io/business"
-import { and, count, db, eq, ne, sql } from "@chatbotx.io/database/client"
+import { count, db, eq, sql } from "@chatbotx.io/database/client"
 import {
   contactModel,
   inboxModel,
@@ -116,12 +116,7 @@ export const reconcileUser = async (userId: string): Promise<void> => {
           workspaceModel,
           eq(workspaceMemberModel.workspaceId, workspaceModel.id),
         )
-        .where(
-          and(
-            eq(workspaceModel.ownerId, userId),
-            ne(workspaceMemberModel.role, "owner"),
-          ),
-        ),
+        .where(eq(workspaceModel.ownerId, userId)),
 
       db
         .select({ count: count() })

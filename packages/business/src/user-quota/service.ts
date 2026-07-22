@@ -5,7 +5,6 @@ import {
   eq,
   gt,
   lte,
-  ne,
   sql,
   sum,
 } from "@chatbotx.io/database/client"
@@ -566,6 +565,18 @@ class UserQuotaService extends BaseService {
     await this.store.consume(userId, metric, 1)
   }
 
+  async release(userId: string, metric: QuotaMetric): Promise<void> {
+    await this.releaseBy(userId, metric, 1)
+  }
+
+  async releaseBy(
+    userId: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    await this.store.release(userId, metric, count)
+  }
+
   async tryIncrement(userId: string, metric: QuotaMetric): Promise<boolean> {
     if (!(await this.hasCapacity(userId, metric))) {
       return false
@@ -616,12 +627,7 @@ class UserQuotaService extends BaseService {
           workspaceModel,
           eq(workspaceMemberModel.workspaceId, workspaceModel.id),
         )
-        .where(
-          and(
-            eq(workspaceModel.tenantId, tenantId),
-            ne(workspaceMemberModel.role, "owner"),
-          ),
-        ),
+        .where(eq(workspaceModel.tenantId, tenantId)),
 
       db
         .select({ count: count() })

@@ -12,17 +12,27 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const onConflictDoUpdate = vi.fn(async () => undefined)
 const values = vi.fn(() => ({ onConflictDoUpdate }))
 const insert = vi.fn(() => ({ values }))
+const whereUpdate = vi.fn(async () => undefined)
+const setUpdate = vi.fn(() => ({ where: whereUpdate }))
+const update = vi.fn(() => ({ set: setUpdate }))
 const findFirstQuota = vi.fn(async () => null as unknown)
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: { query: { userQuotaModel: { findFirst: findFirstQuota } }, insert },
+  db: {
+    query: { userQuotaModel: { findFirst: findFirstQuota } },
+    insert,
+    update,
+  },
   and: vi.fn(),
   count: vi.fn(),
   eq: vi.fn(),
   gt: vi.fn(),
   lte: vi.fn(),
   ne: vi.fn(),
-  sql: Object.assign(vi.fn(), { raw: vi.fn() }),
+  sql: Object.assign(
+    vi.fn(() => ({ sql: true })),
+    { raw: vi.fn() },
+  ),
   sum: vi.fn(),
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -111,6 +121,37 @@ describe("userQuotaService write-through", () => {
     await userQuotaService.incrementBy(USER, "contacts", 0)
 
     expect(redisClient.hincrby).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  test("release floors Redis and the durable counter at zero without inserting", async () => {
+    redisClient.hincrby.mockResolvedValueOnce(-2)
+
+    await userQuotaService.releaseBy(USER, "teamMembers", 3)
+
+    expect(redisClient.hincrby).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "teamMembers",
+      -3,
+    )
+    expect(redisClient.hset).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "teamMembers",
+      "0",
+    )
+    expect(update).toHaveBeenCalledTimes(1)
+    expect(setUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ updatedAt: expect.anything() }),
+    )
+    expect(insert).not.toHaveBeenCalled()
+    expect(distributedStore.delete).toHaveBeenCalledWith(`user-quota:${USER}`)
+  })
+
+  test("release with a non-positive count is a no-op", async () => {
+    await userQuotaService.releaseBy(USER, "teamMembers", 0)
+
+    expect(redisClient.hincrby).not.toHaveBeenCalled()
+    expect(update).not.toHaveBeenCalled()
     expect(insert).not.toHaveBeenCalled()
   })
 })
