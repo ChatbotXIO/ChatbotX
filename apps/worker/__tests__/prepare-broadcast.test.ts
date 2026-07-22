@@ -286,6 +286,7 @@ describe("prepareBroadcast", () => {
     expect(findDMByContactIds).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1", "contact-2"],
+      channel: "messenger",
     })
     expect(insertCalls).toHaveLength(1)
     expect(onConflictSpy).toHaveBeenCalledTimes(1)
@@ -319,6 +320,34 @@ describe("prepareBroadcast", () => {
         removeOnFail: true,
       },
     )
+  })
+
+  test("passes the broadcast channel to the DM conversation lookup so TikTok resolves by sourceId", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "tiktok",
+    })
+    findDMByContactIds.mockResolvedValue([
+      { id: "conv-tt", contactId: "contact-1" },
+    ])
+    forEachAudienceChunk.mockImplementation(
+      async (
+        _input: unknown,
+        onChunk: (
+          rows: Array<{ id: string; contactId: string }>,
+        ) => Promise<unknown>,
+      ) => {
+        await onChunk([{ id: "ci-1", contactId: "contact-1" }])
+      },
+    )
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findDMByContactIds).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1"],
+      channel: "tiktok",
+    })
   })
 
   test("does not insert or enqueue when all audience contacts lack a DM conversation", async () => {

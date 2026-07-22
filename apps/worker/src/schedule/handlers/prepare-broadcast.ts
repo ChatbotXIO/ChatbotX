@@ -80,6 +80,9 @@ export const prepareBroadcast = async (broadcastId: string) => {
         contactIds: contactInboxes.map(
           (contactInbox) => contactInbox.contactId,
         ),
+        // TikTok resolves its DM by a non-null sourceId; every other channel
+        // keeps the sourceId IS NULL convention.
+        channel: parsedChannel.success ? parsedChannel.data : undefined,
       })
 
       const conversationMap = new Map(
