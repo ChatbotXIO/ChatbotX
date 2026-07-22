@@ -6,7 +6,11 @@ import {
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
-import type { ConversationAttributes } from "@chatbotx.io/database/partials"
+import {
+  type ChannelType,
+  type ConversationAttributes,
+  dmConversationUsesSourceId,
+} from "@chatbotx.io/database/partials"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
@@ -96,6 +100,39 @@ export type ConversationWithContactInboxes = ConversationModel & {
   contactInboxes: ContactInboxModel[]
 }
 
+const conversationRecency = (conversation: ConversationModel): number =>
+  conversation.lastActivityAt?.getTime() ?? 0
+
+const isMoreRecent = (
+  candidate: ConversationModel,
+  current: ConversationModel,
+): boolean => {
+  const candidateRecency = conversationRecency(candidate)
+  const currentRecency = conversationRecency(current)
+  if (candidateRecency !== currentRecency) {
+    return candidateRecency > currentRecency
+  }
+  // Tie-break on the conversation id so the pick is fully deterministic. Ids are
+  // numeric strings, so compare as BigInt rather than lexicographically.
+  return BigInt(candidate.id) > BigInt(current.id)
+}
+
+// Collapse conversations to at most one per contact, preferring the most
+// recently active row. Used for channels resolved by a non-null sourceId, which
+// — unlike the null-sourceId DM path — have no per-contact unique index.
+const collapseToMostRecentPerContact = (
+  conversations: ConversationModel[],
+): ConversationModel[] => {
+  const latestByContact = new Map<string, ConversationModel>()
+  for (const conversation of conversations) {
+    const current = latestByContact.get(conversation.contactId)
+    if (!current || isMoreRecent(conversation, current)) {
+      latestByContact.set(conversation.contactId, conversation)
+    }
+  }
+  return Array.from(latestByContact.values())
+}
+
 class ConversationService extends BaseService {
   protected readonly cachePrefix: string = "conversations"
 
@@ -131,21 +168,35 @@ class ConversationService extends BaseService {
   async findDMByContactIds(props: {
     workspaceId: string
     contactIds: string[]
+    channel?: ChannelType | null
     tx?: DatabaseClient
   }): Promise<ConversationModel[]> {
-    const { tx = db, workspaceId, contactIds } = props
+    const { tx = db, workspaceId, contactIds, channel } = props
     const uniqueContactIds = Array.from(new Set(contactIds))
     if (uniqueContactIds.length === 0) {
       return []
     }
 
-    return await tx.query.conversationModel.findMany({
+    // Most channels store the DM conversation with a null sourceId. TikTok is
+    // the outlier: its DM is keyed by the channel's conversation_id held in
+    // sourceId, so it must be resolved with sourceId IS NOT NULL.
+    const usesSourceId = dmConversationUsesSourceId(channel)
+
+    const conversations = await tx.query.conversationModel.findMany({
       where: {
         workspaceId,
         contactId: { in: uniqueContactIds },
-        sourceId: { isNull: true },
+        sourceId: usesSourceId ? { isNotNull: true } : { isNull: true },
       },
     })
+
+    // The null-sourceId DM path is unique per contact
+    // (Conversation_contactId_dm_key), so it needs no post-processing. The
+    // non-null path has no such guarantee and can return several rows per
+    // contact, so collapse deterministically to one conversation each.
+    return usesSourceId
+      ? collapseToMostRecentPerContact(conversations)
+      : conversations
   }
 
   async updateChallenge(props: {

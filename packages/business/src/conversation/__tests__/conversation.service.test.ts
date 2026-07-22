@@ -101,6 +101,98 @@ describe("ConversationService.findDMByContactIds", () => {
     expect(mocks.conversationFindMany).not.toHaveBeenCalled()
   })
 
+  test("queries non-null sourceId conversations for TikTok, whose DM is keyed by conversation_id", async () => {
+    mocks.conversationFindMany.mockResolvedValue([])
+
+    await conversationService.findDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1"],
+      channel: "tiktok",
+    })
+
+    expect(mocks.conversationFindMany).toHaveBeenCalledWith({
+      where: {
+        workspaceId: WORKSPACE_ID,
+        contactId: { in: ["contact-1"] },
+        sourceId: { isNotNull: true },
+      },
+    })
+  })
+
+  test("keeps the null sourceId DM filter for non-TikTok channels", async () => {
+    mocks.conversationFindMany.mockResolvedValue([])
+
+    await conversationService.findDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1"],
+      channel: "telegram",
+    })
+
+    expect(mocks.conversationFindMany).toHaveBeenCalledWith({
+      where: {
+        workspaceId: WORKSPACE_ID,
+        contactId: { in: ["contact-1"] },
+        sourceId: { isNull: true },
+      },
+    })
+  })
+
+  test("collapses to the most recently active conversation per contact for TikTok", async () => {
+    mocks.conversationFindMany.mockResolvedValue([
+      {
+        id: "1",
+        contactId: "contact-1",
+        lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      },
+      {
+        id: "2",
+        contactId: "contact-1",
+        lastActivityAt: new Date("2026-02-01T00:00:00Z"),
+      },
+      {
+        id: "3",
+        contactId: "contact-2",
+        lastActivityAt: new Date("2026-01-15T00:00:00Z"),
+      },
+    ])
+
+    const result = await conversationService.findDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1", "contact-2"],
+      channel: "tiktok",
+    })
+
+    expect(result).toEqual([
+      {
+        id: "2",
+        contactId: "contact-1",
+        lastActivityAt: new Date("2026-02-01T00:00:00Z"),
+      },
+      {
+        id: "3",
+        contactId: "contact-2",
+        lastActivityAt: new Date("2026-01-15T00:00:00Z"),
+      },
+    ])
+  })
+
+  test("breaks ties by the newest conversation id when activity is equal for TikTok", async () => {
+    mocks.conversationFindMany.mockResolvedValue([
+      { id: "9", contactId: "contact-1", lastActivityAt: null },
+      { id: "10", contactId: "contact-1", lastActivityAt: null },
+    ])
+
+    const result = await conversationService.findDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1"],
+      channel: "tiktok",
+    })
+
+    expect(result).toEqual([
+      { id: "10", contactId: "contact-1", lastActivityAt: null },
+    ])
+  })
+
   test("uses the provided transaction client instead of the default db", async () => {
     const txFindMany = vi.fn().mockResolvedValue([{ id: "conv-tx" }])
     const tx = {
