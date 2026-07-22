@@ -13,7 +13,6 @@ const {
   mockInvalidateCacheByTags,
   mockIsCommunity,
   mockQuotaHasReachedLimit,
-  mockQuotaRelease,
   mockUpdateSet,
   mockWorkspaceFindById,
 } = vi.hoisted(() => {
@@ -38,7 +37,6 @@ const {
     mockInvalidateCacheByTags: vi.fn(),
     mockIsCommunity: vi.fn(),
     mockQuotaHasReachedLimit: vi.fn(),
-    mockQuotaRelease: vi.fn(),
     mockUpdateSet,
     mockUpdateWhere,
     mockWorkspaceFindById: vi.fn(),
@@ -64,14 +62,11 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: mockGetCurrentUserAndTargetWorkspace,
 }))
 
-vi.mock("@/lib/log", () => ({ logger: { error: vi.fn() } }))
-
 vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberCacheTag: (userId: string) =>
     `users:${userId}:workspace-members`,
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
-    release: mockQuotaRelease,
   },
   workspaceService: {
     findById: mockWorkspaceFindById,
@@ -391,14 +386,14 @@ describe("deleteWorkspaceMemberAction", () => {
     ])
   })
 
-  test("releases the workspace owner's team-member seat after deletion", async () => {
+  test("deletes the member without mutating team-member quota", async () => {
     await (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
       deleteActionCtx(),
     )
 
-    expect(mockQuotaRelease).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "teamMembers",
-    })
+    expect(mockDbDelete).toHaveBeenCalledOnce()
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      `users:${MEMBER_USER_ID}:workspace-members`,
+    ])
   })
 })

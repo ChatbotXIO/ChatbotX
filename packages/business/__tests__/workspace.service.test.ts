@@ -186,17 +186,14 @@ describe("WorkspaceService.create — MAC pre-provisioning", () => {
 })
 
 describe("WorkspaceService.create — happy path", () => {
-  test("consumes an owner team-member seat before creating the owner member", async () => {
+  test("consumes only a workspace seat and creates the owner member", async () => {
     const result = await workspaceService.create(createInput())
 
     expect(result).toEqual({ id: "ws-1", organizationId: "org-1" })
-    expect(quotaEnforcementService.tryConsume).toHaveBeenNthCalledWith(1, {
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledOnce()
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledWith({
       userId: "user-1",
       metric: "workspaces",
-    })
-    expect(quotaEnforcementService.tryConsume).toHaveBeenNthCalledWith(2, {
-      userId: "user-1",
-      metric: "teamMembers",
     })
     expect(workspaceMemberService.create).toHaveBeenCalledTimes(1)
     const memberArg = workspaceMemberService.create.mock.calls[0][0]
@@ -204,32 +201,16 @@ describe("WorkspaceService.create — happy path", () => {
     expect(memberArg.data.role).toBe("owner")
   })
 
-  test("blocks before inserting when the owner team-member seat is at its limit", async () => {
-    quotaEnforcementService.tryConsume
-      .mockResolvedValueOnce({ ok: true })
-      .mockResolvedValueOnce({ ok: false, level: "user" })
+  test("does not consume a team-member seat for additional workspaces", async () => {
+    await workspaceService.create(createInput())
+    await workspaceService.create(createInput())
 
-    await expect(workspaceService.create(createInput())).rejects.toThrow(
-      "Team member limit reached for this plan",
-    )
-
-    expect(insert).not.toHaveBeenCalled()
-    expect(workspaceMemberService.create).not.toHaveBeenCalled()
-  })
-
-  test("releases the already-consumed workspaces seat when the team-member seat is at its limit", async () => {
-    quotaEnforcementService.tryConsume
-      .mockResolvedValueOnce({ ok: true })
-      .mockResolvedValueOnce({ ok: false, level: "user" })
-
-    await expect(workspaceService.create(createInput())).rejects.toThrow(
-      "Team member limit reached for this plan",
-    )
-
-    expect(quotaEnforcementService.release).toHaveBeenCalledWith({
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledTimes(2)
+    expect(quotaEnforcementService.tryConsume).toHaveBeenNthCalledWith(2, {
       userId: "user-1",
       metric: "workspaces",
     })
+    expect(quotaEnforcementService.release).not.toHaveBeenCalled()
   })
 })
 

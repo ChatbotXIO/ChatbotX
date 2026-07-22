@@ -1,6 +1,7 @@
 import {
   and,
   count,
+  countDistinct,
   db,
   eq,
   gt,
@@ -483,6 +484,58 @@ class UserQuotaService extends BaseService {
     return limit !== null && liveCount >= limit
   }
 
+  /**
+   * Current distinct humans across an owner's workspaces or a reseller's
+   * tenant. `teamMembers` is intentionally read from its source tables: its
+   * counter is only a reconcile snapshot and can be stale between syncs.
+   */
+  private async countDistinctTeamMembers(
+    scope: { ownerId: string } | { tenantId: string },
+  ): Promise<number> {
+    const where =
+      "ownerId" in scope
+        ? eq(workspaceModel.ownerId, scope.ownerId)
+        : eq(workspaceModel.tenantId, scope.tenantId)
+    const rows = await db
+      .select({ count: countDistinct(workspaceMemberModel.userId) })
+      .from(workspaceMemberModel)
+      .innerJoin(
+        workspaceModel,
+        eq(workspaceMemberModel.workspaceId, workspaceModel.id),
+      )
+      .where(where)
+    return rows[0]?.count ?? 0
+  }
+
+  /** Source-of-truth team-member count for the per-owner reconcile. */
+  countDistinctTeamMembersForOwner(ownerId: string): Promise<number> {
+    return this.countDistinctTeamMembers({ ownerId })
+  }
+
+  /** Source-of-truth team-member count for a reseller tenant pool. */
+  countDistinctTeamMembersForTenant(tenantId: string): Promise<number> {
+    return this.countDistinctTeamMembers({ tenantId })
+  }
+
+  /**
+   * Live at-limit check for `teamMembers`; the quota row still supplies the
+   * plan limit while the distinct member count comes directly from the DB.
+   */
+  async isTeamMemberLimitReached(
+    scope: { ownerId: string } | { tenantId: string },
+    limitUserId: string,
+  ): Promise<boolean> {
+    const [quota, realCount] = await Promise.all([
+      this.getForUser(limitUserId),
+      this.countDistinctTeamMembers(scope),
+    ])
+    if (!quota) {
+      return false
+    }
+    const { limit } = this.readMetricValues(quota, "teamMembers")
+    return limit !== null && realCount >= limit
+  }
+
   async getRemainingSlots(
     userId: string,
     metric: QuotaMetric,
@@ -590,8 +643,9 @@ class UserQuotaService extends BaseService {
    * counts aggregated across EVERY workspace under their tenant — the owner's row
    * is the pool (owner's own resources carry the reseller tenantId too, so the
    * tenant aggregate already includes them; no separate own-count is added). The
-   * recomputed `COUNT(*)` is authoritative (already reflects deletions) and is
+   * recomputed counts are authoritative (already reflect deletions) and are
    * assigned directly so freeing pooled resources frees pooled quota.
+   * `teamMembers` is `COUNT(DISTINCT userId)`; all other metrics are `COUNT(*)`.
    *
    * `mac` is summed from the `WorkspaceMac` rollup for the CURRENT period only,
    * so it resets naturally at period rollover (mirroring the contacts recount).
@@ -606,7 +660,7 @@ class UserQuotaService extends BaseService {
 
     const [
       [contactsResult],
-      [teamMembersResult],
+      teamMembersUsed,
       [workspacesResult],
       [channelsResult],
       [macResult],
@@ -620,14 +674,7 @@ class UserQuotaService extends BaseService {
         )
         .where(eq(workspaceModel.tenantId, tenantId)),
 
-      db
-        .select({ count: count() })
-        .from(workspaceMemberModel)
-        .innerJoin(
-          workspaceModel,
-          eq(workspaceMemberModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.tenantId, tenantId)),
+      this.countDistinctTeamMembers({ tenantId }),
 
       db
         .select({ count: count() })
@@ -660,7 +707,6 @@ class UserQuotaService extends BaseService {
     ])
 
     const contactsUsed = contactsResult?.count ?? 0
-    const teamMembersUsed = teamMembersResult?.count ?? 0
     const workspacesUsed = workspacesResult?.count ?? 0
     const channelsUsed = channelsResult?.count ?? 0
     // `sum()` returns a numeric string (or null when no rows match).

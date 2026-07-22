@@ -407,20 +407,27 @@ class QuotaEnforcementService {
     metric: QuotaMetric,
   ): Promise<boolean> {
     const pooled = this.isPooled(ctx)
+    const atLimit = (
+      limitUserId: string,
+      scope: { ownerId: string } | { tenantId: string },
+    ) =>
+      metric === "teamMembers"
+        ? userQuotaService.isTeamMemberLimitReached(scope, limitUserId)
+        : userQuotaService.isLimitReached(limitUserId, metric)
 
     if (pooled && userId === ctx.ownerId) {
       // Reseller acting directly: only the pool (owner row) governs.
-      return userQuotaService.isLimitReached(ctx.ownerId, metric)
+      return atLimit(ctx.ownerId, { tenantId: ctx.tenantId })
     }
 
-    const userFull = await userQuotaService.isLimitReached(userId, metric)
+    const userFull = await atLimit(userId, { ownerId: userId })
     if (!pooled) {
       return userFull
     }
     if (userFull) {
       return true
     }
-    return userQuotaService.isLimitReached(ctx.ownerId as string, metric)
+    return atLimit(ctx.ownerId as string, { tenantId: ctx.tenantId })
   }
 
   /** Tighter of the user and pool remaining slots (`null` = unlimited). */
@@ -465,36 +472,37 @@ class QuotaEnforcementService {
     const ctx = await this.resolveContext(userId)
 
     if (this.isPooled(ctx) && userId === ctx.ownerId) {
-      // Reseller acting directly: the owner's `UserQuota` row IS the pool. `used`
-      // from its live counters (near-real-time), `limit` from the same row —
-      // both from one write-through source, so they cannot disagree.
-      const [liveUsed, ownerQuota] = await Promise.all([
+      // Reseller acting directly: the owner's `UserQuota` row IS the pool. The
+      // `teamMembers` usage is live from its source tables; other metrics use
+      // their near-real-time counters, while all limits come from the owner row.
+      const [liveUsed, ownerQuota, teamMembersUsed] = await Promise.all([
         userQuotaService.getLiveUsage(ctx.ownerId),
         userQuotaService.getForUser(ctx.ownerId),
+        userQuotaService.countDistinctTeamMembersForTenant(ctx.tenantId),
       ])
       return Object.fromEntries(
         ALL_METRICS.map((metric) => [
           metric,
           {
-            used: liveUsed[metric],
+            used: metric === "teamMembers" ? teamMembersUsed : liveUsed[metric],
             limit: userQuotaService.metricValues(ownerQuota, metric).limit,
           },
         ]),
       ) as QuotaUsageSummary
     }
 
-    // `used` from the live per-user counters (near-real-time), `limit` from the
-    // cached quota row — the value the user sees now matches what enforcement
-    // counts, with no wait for the next `sync-user-quota` pass.
-    const [liveUsed, quota] = await Promise.all([
+    // `teamMembers` is read live from its source tables; the other `used` values
+    // come from near-real-time counters. Limits come from the cached quota row.
+    const [liveUsed, quota, teamMembersUsed] = await Promise.all([
       userQuotaService.getLiveUsage(userId),
       userQuotaService.getForUser(userId),
+      userQuotaService.countDistinctTeamMembersForOwner(userId),
     ])
     return Object.fromEntries(
       ALL_METRICS.map((metric) => [
         metric,
         {
-          used: liveUsed[metric],
+          used: metric === "teamMembers" ? teamMembersUsed : liveUsed[metric],
           limit: userQuotaService.metricValues(quota, metric).limit,
         },
       ]),
