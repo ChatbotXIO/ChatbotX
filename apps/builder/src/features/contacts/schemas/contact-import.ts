@@ -7,6 +7,7 @@ export const importContactsRequest = z
     fileId: zodBigintAsString(),
     channel: channelTypes,
     inboxId: zodBigintAsString(),
+    timezone: z.string().trim().min(1).max(255).optional(),
     countryCode: z.preprocess(
       (val) => (val === "" ? undefined : val),
       countryCodeSchema.optional(),

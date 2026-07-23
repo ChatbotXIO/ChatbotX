@@ -461,7 +461,7 @@ function buildConditionWhere(
       return buildConversationAssignedWhere(operator, value)
 
     case "customField":
-      return buildCustomFieldWhere(condition)
+      return buildCustomFieldWhere({ ...condition, timezone })
 
     case "archived":
       return buildExistsBooleanWhere(

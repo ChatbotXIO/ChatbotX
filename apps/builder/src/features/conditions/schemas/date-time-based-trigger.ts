@@ -16,6 +16,13 @@ export const dateTimeBasedTrigger = z
       timeValue: z.coerce.number().min(1).optional(),
       timeType: z.enum(["minutes", "hours", "days"]).optional(),
       at: z.string().optional(),
+      /**
+       * IANA timezone captured from the editor's browser when the condition was
+       * saved, used to resolve the target custom field's day boundaries and
+       * hour-of-day at runtime (the worker has no browser context). The
+       * evaluator falls back to the workspace timezone, then UTC, when absent.
+       */
+      timezone: z.string().max(64).optional(),
     }),
   })
   .superRefine((data, ctx) => {

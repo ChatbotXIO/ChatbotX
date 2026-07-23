@@ -1,10 +1,9 @@
 import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import { resolveFilterTimezone } from "@chatbotx.io/utils/datetime"
 import type { ConditionEvaluationContext } from "../types"
 import { parseDateTimeValue } from "../utils/datetime-calculator"
-
-const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
 export class ConditionEvaluator {
   async evaluate(context: ConditionEvaluationContext): Promise<boolean> {
@@ -117,8 +116,25 @@ export class ConditionEvaluator {
       actualValue,
       expectedValue,
       customField?.type,
-      workspace.timezone || "UTC",
+      this.extractConditionTimezone(expectedValue) ||
+        workspace.timezone ||
+        "UTC",
     )
+  }
+
+  /**
+   * Timezone the editor captured on the condition's stored value (e.g.
+   * `{ text, timezone }` for a date/datetime comparison). Absent on legacy
+   * conditions, in which case callers fall back to the workspace zone.
+   */
+  private extractConditionTimezone(value: unknown): string | undefined {
+    if (typeof value === "object" && value !== null) {
+      const timezone = (value as Record<string, unknown>).timezone
+      if (typeof timezone === "string" && timezone.length > 0) {
+        return timezone
+      }
+    }
+    return
   }
 
   private evaluateOperator(
@@ -362,6 +378,7 @@ export class ConditionEvaluator {
       timeValue?: number
       timeType?: string
       at?: string
+      timezone?: string
     }
 
     const { triggerType, timeValue, timeType, at } = config
@@ -370,25 +387,22 @@ export class ConditionEvaluator {
       return false
     }
 
-    const timezone = workspace?.timezone || "UTC"
+    // Per-condition zone captured in the editor wins; legacy conditions with
+    // none fall back to the workspace zone, then UTC. Guarded so a corrupt or
+    // crafted zone degrades to UTC instead of throwing a RangeError.
+    const timezone = resolveFilterTimezone(
+      config.timezone || workspace?.timezone,
+    )
 
-    const isDateOnly = DATE_ONLY_REGEX.test(customFieldValue.trim())
-    let targetDate: Date
-
-    if (isDateOnly) {
-      const dateTimeStr = `${customFieldValue} 23:59:59.999`
-      targetDate = new Date(
-        new Date(dateTimeStr).toLocaleString("en-US", {
-          timeZone: timezone,
-        }),
-      )
-    } else {
-      targetDate = new Date(
-        new Date(customFieldValue).toLocaleString("en-US", {
-          timeZone: timezone,
-        }),
-      )
-    }
+    // `datetime` values are persisted as a UTC instant; `date` values as an
+    // offset-preserved start-of-day (e.g. `...+07:00`). Both parse to the correct
+    // absolute instant, so we resolve the stored moment into the condition's zone
+    // directly; a bare "YYYY-MM-DD" no longer reaches here.
+    const targetDate = new Date(
+      new Date(customFieldValue).toLocaleString("en-US", {
+        timeZone: timezone,
+      }),
+    )
 
     const now = new Date(
       new Date().toLocaleString("en-US", { timeZone: timezone }),

@@ -235,7 +235,14 @@ describe("buildSelectedFields", () => {
       const result = await buildSelectedFields(["cus:c1"], WORKSPACE_ID)
 
       // Assert
-      expect(result).toEqual([{ type: "custom", value: "c1", header: "Plan" }])
+      expect(result).toEqual([
+        {
+          type: "custom",
+          value: "c1",
+          header: "Plan",
+          customFieldType: "shortText",
+        },
+      ])
     })
 
     test("queries customFieldModel.findMany with the correct workspaceId", async () => {
@@ -262,7 +269,12 @@ describe("buildSelectedFields", () => {
 
       // Assert
       expect(result).toEqual([
-        { type: "custom", value: "missingId", header: "missingId" },
+        {
+          type: "custom",
+          value: "missingId",
+          header: "missingId",
+          customFieldType: "shortText",
+        },
       ])
     })
 
@@ -302,6 +314,7 @@ describe("buildSelectedFields", () => {
         type: "custom",
         value: "c1",
         header: "Plan",
+        customFieldType: "shortText",
       })
     })
 

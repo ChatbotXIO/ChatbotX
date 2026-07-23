@@ -2,6 +2,7 @@
 
 import {
   type ContactAccessScope,
+  contactCustomFieldService,
   contactInboxService,
   contactService,
   emitContactInfoChangeEvents,
@@ -14,7 +15,6 @@ import {
   fillableContactKeys,
   genderTypes,
 } from "@chatbotx.io/database/partials"
-import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import type { ContactModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { listCustomFields } from "@/features/custom-fields/queries"
@@ -28,6 +28,7 @@ import {
 } from "../schemas/action"
 
 const contactInboxIdField = "contactInboxId"
+const clientTimezoneField = "clientTimezone"
 
 export const updateContactFieldAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -70,10 +71,15 @@ export const updateContactFields = async (
   const contactFields: Partial<ContactModel> = {}
   const customFields: Record<string, string> = {}
   const contactInboxId = parsedInput[contactInboxIdField]
+  const clientTimezone = parsedInput[clientTimezoneField]
   const language = normalizeLanguage(parsedInput.language)
 
   for (const [key, value] of Object.entries(parsedInput)) {
-    if (key === contactInboxIdField || key === "language") {
+    if (
+      key === contactInboxIdField ||
+      key === "language" ||
+      key === clientTimezoneField
+    ) {
       continue
     }
 
@@ -100,24 +106,20 @@ export const updateContactFields = async (
     }
 
     if (Object.keys(customFields).length > 0) {
-      for (const [key, value] of Object.entries(customFields)) {
-        await tx
-          .insert(contactCustomFieldModel)
-          .values({
-            contactId: ctx.id,
-            customFieldId: key,
-            value,
-          })
-          .onConflictDoUpdate({
-            target: [
-              contactCustomFieldModel.contactId,
-              contactCustomFieldModel.customFieldId,
-            ],
-            set: {
+      await contactCustomFieldService.setValues(
+        {
+          workspaceId: ctx.workspaceId,
+          contactId: ctx.id,
+          fields: Object.entries(customFields).map(
+            ([customFieldId, value]) => ({
+              customFieldId,
               value,
-            },
-          })
-      }
+            }),
+          ),
+          sourceTimezone: clientTimezone,
+        },
+        tx,
+      )
     }
   })
 

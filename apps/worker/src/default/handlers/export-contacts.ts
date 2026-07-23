@@ -1,6 +1,10 @@
 import type { PassThrough } from "node:stream"
+import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { and, db, eq } from "@chatbotx.io/database/client"
-import { fileStatuses } from "@chatbotx.io/database/partials"
+import {
+  type CustomFieldType,
+  fileStatuses,
+} from "@chatbotx.io/database/partials"
 import {
   applyContactFilter,
   pruneEmailPhoneFilterConditions,
@@ -11,6 +15,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import { chunkById } from "@chatbotx.io/database/utils"
 import { createUpload } from "@chatbotx.io/filesystem/node-upload"
+import { formatCustomFieldValueInTimeZone } from "@chatbotx.io/utils/datetime"
 import {
   type JobExportContacts,
   loopableItemsCount,
@@ -45,7 +50,12 @@ const headerNames: Record<string, string> = {
 
 export type SelectedField =
   | { type: "contact"; value: string; header: string }
-  | { type: "custom"; value: string; header: string }
+  | {
+      type: "custom"
+      value: string
+      header: string
+      customFieldType?: CustomFieldType
+    }
   | { type: "tag"; value: string; header: string }
 
 type ContactRow = {
@@ -77,7 +87,11 @@ export const escapeCsvValue = (value: string): string => {
 }
 
 /** Renders one selected field of one contact into a CSV cell. */
-const renderCell = (contact: ContactRow, field: SelectedField): string => {
+const renderCell = (
+  contact: ContactRow,
+  field: SelectedField,
+  timezone: string,
+): string => {
   if (field.type === "contact") {
     // The Contact Id column is not stored on the Contact row — it comes from the
     // contact's first (earliest) inbox connection's platform-native sourceId.
@@ -99,7 +113,15 @@ const renderCell = (contact: ContactRow, field: SelectedField): string => {
     const customField = contact.contactCustomFields?.find(
       (cf) => cf.customFieldId === field.value,
     )
-    return customField?.value ? escapeCsvValue(customField.value) : '""'
+    return customField?.value
+      ? escapeCsvValue(
+          formatCustomFieldValueInTimeZone(
+            field.customFieldType ?? "shortText",
+            customField.value,
+            timezone,
+          ),
+        )
+      : '""'
   }
 
   const hasTag = contact.tags?.some((tag) => tag.id === field.value)
@@ -110,9 +132,12 @@ const renderCell = (contact: ContactRow, field: SelectedField): string => {
 export const buildCsvChunk = (
   contacts: ContactRow[],
   selectedFields: SelectedField[],
+  timezone = "UTC",
 ): string => {
   const lines = contacts.map((contact) =>
-    selectedFields.map((field) => renderCell(contact, field)).join(","),
+    selectedFields
+      .map((field) => renderCell(contact, field, timezone))
+      .join(","),
   )
   return lines.length > 0 ? `${lines.join("\n")}\n` : ""
 }
@@ -221,6 +246,30 @@ const loadNameMap = async (
   return Object.fromEntries(rows.map((row) => [row.id, row.name]))
 }
 
+const loadCustomFieldMap = async (
+  ids: string[],
+  workspaceId: string,
+): Promise<Record<string, { name: string; type: CustomFieldType }>> => {
+  if (ids.length === 0) {
+    return {}
+  }
+
+  const rows = await db.query.customFieldModel.findMany({
+    where: { id: { in: ids }, workspaceId },
+    columns: { id: true, name: true, type: true },
+  })
+
+  return Object.fromEntries(
+    rows.map((row) => [
+      row.id,
+      {
+        name: row.name,
+        type: row.type,
+      },
+    ]),
+  )
+}
+
 /**
  * Resolves the raw field keys into {@link SelectedField}s with display headers,
  * looking up tag and custom-field names from the database.
@@ -234,7 +283,7 @@ export const buildSelectedFields = async (
   const idsOfType = (type: RawField["type"]): string[] =>
     rawFields.filter((field) => field.type === type).map((field) => field.value)
 
-  const [tagNameById, customFieldNameById] = await Promise.all([
+  const [tagNameById, customFieldById] = await Promise.all([
     loadNameMap(idsOfType("tag"), (ids) =>
       db.query.tagModel.findMany({
         where: {
@@ -244,11 +293,7 @@ export const buildSelectedFields = async (
         },
       }),
     ),
-    loadNameMap(idsOfType("custom"), (ids) =>
-      db.query.customFieldModel.findMany({
-        where: { id: { in: ids }, workspaceId },
-      }),
-    ),
+    loadCustomFieldMap(idsOfType("custom"), workspaceId),
   ])
 
   return rawFields.map((field) => {
@@ -260,10 +305,12 @@ export const buildSelectedFields = async (
       }
     }
     if (field.type === "custom") {
+      const customField = customFieldById[field.value]
       return {
         type: "custom",
         value: field.value,
-        header: customFieldNameById[field.value] ?? field.value,
+        header: customField?.name ?? field.value,
+        customFieldType: customField?.type ?? "shortText",
       }
     }
     return {
@@ -343,6 +390,12 @@ export const loopableExportContacts = async (data: ExportData) => {
     stripContactPIIFields(fields, data.canExportEmailAndPhone === true),
     workspaceId,
   )
+  const workspace = await db.query.workspaceModel.findFirst({
+    where: { id: workspaceId },
+    columns: { timezone: true },
+  })
+  const workspaceTimezone =
+    normalizeStoredTimezone(workspace?.timezone) ?? "UTC"
   const baseWhere = buildBaseWhere(data)
 
   const { stream, done } = createUpload(outputPath, {
@@ -361,7 +414,7 @@ export const loopableExportContacts = async (data: ExportData) => {
     await chunkById((lastId) => fetchContactPage(baseWhere, lastId), {
       chunkSize: loopableItemsCount,
       callback: async (page): Promise<boolean | undefined> => {
-        const chunk = buildCsvChunk(page, selectedFields)
+        const chunk = buildCsvChunk(page, selectedFields, workspaceTimezone)
         await writeToStream(stream, chunk)
         totalBytes += Buffer.byteLength(chunk)
         totalRecords += page.length

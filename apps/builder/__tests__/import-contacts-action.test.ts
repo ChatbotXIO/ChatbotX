@@ -55,6 +55,7 @@ describe("importContactsRequest schema", () => {
       lastName: "last",
       contactId: "external_id",
       tagId: "55",
+      timezone: "Asia/Ho_Chi_Minh",
       fieldMapping: [
         { column: "company", customFieldId: "1" },
         { column: "role", customFieldId: "2" },
@@ -63,6 +64,7 @@ describe("importContactsRequest schema", () => {
 
     expect(parsed.fieldMapping).toHaveLength(2)
     expect(parsed.tagId).toBe("55")
+    expect(parsed.timezone).toBe("Asia/Ho_Chi_Minh")
   })
 
   test("drops fieldMapping entries missing column or customFieldId", () => {

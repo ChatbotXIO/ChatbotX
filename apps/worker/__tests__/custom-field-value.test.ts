@@ -9,6 +9,7 @@ describe("validateCustomFieldValue", () => {
         "long body",
       )
     })
+
     it("drops empty", () => {
       expect(validateCustomFieldValue("shortText", "")).toBeNull()
     })
@@ -20,6 +21,7 @@ describe("validateCustomFieldValue", () => {
         "foo@bar.com",
       )
     })
+
     it("drops invalid", () => {
       expect(validateCustomFieldValue("email", "not-an-email")).toBeNull()
     })
@@ -31,6 +33,7 @@ describe("validateCustomFieldValue", () => {
         "+15551234567",
       )
     })
+
     it("drops invalid", () => {
       expect(validateCustomFieldValue("phoneNumber", "abc")).toBeNull()
       expect(validateCustomFieldValue("phoneNumber", "123")).toBeNull()
@@ -43,9 +46,10 @@ describe("validateCustomFieldValue", () => {
       ["-42.5", "-42.5"],
       ["0", "0"],
       ["1.5e2", "150"],
-    ])("accepts %s → %s", (raw, normalized) => {
+    ])("accepts %s -> %s", (raw, normalized) => {
       expect(validateCustomFieldValue("number", raw)).toBe(normalized)
     })
+
     it.each([
       ["abc"],
       ["12abc"],
@@ -66,36 +70,64 @@ describe("validateCustomFieldValue", () => {
       ["false", "false"],
       ["FALSE", "false"],
       ["0", "false"],
-    ])("normalizes %s → %s", (raw, normalized) => {
+    ])("normalizes %s -> %s", (raw, normalized) => {
       expect(validateCustomFieldValue("boolean", raw)).toBe(normalized)
     })
+
     it.each([["yes"], ["no"], ["t"], ["'=true"], [""]])("drops %s", (raw) => {
       expect(validateCustomFieldValue("boolean", raw)).toBeNull()
     })
   })
 
   describe("date", () => {
-    it("accepts YYYY-MM-DD", () => {
-      expect(validateCustomFieldValue("date", "2026-05-19")).toBe("2026-05-19")
+    it("normalizes YYYY-MM-DD offset-preserved using the supplied timezone", () => {
+      expect(
+        validateCustomFieldValue("date", "2026-07-22", "Asia/Ho_Chi_Minh"),
+      ).toBe("2026-07-22T00:00:00+07:00")
     })
+
+    it("uses only the date part when time or offset is present", () => {
+      expect(
+        validateCustomFieldValue(
+          "date",
+          "2026-05-19T10:00:00Z",
+          "Asia/Ho_Chi_Minh",
+        ),
+      ).toBe("2026-05-19T00:00:00+07:00")
+    })
+
     it.each([
       ["05/19/2026"],
-      ["2026-05-19T10:00:00Z"],
       ["'=2026-05-19"],
       ["2026-13-01"],
     ])("drops %s", (raw) => {
-      expect(validateCustomFieldValue("date", raw)).toBeNull()
+      expect(
+        validateCustomFieldValue("date", raw, "Asia/Ho_Chi_Minh"),
+      ).toBeNull()
     })
   })
 
   describe("datetime", () => {
-    it("normalizes to ISO", () => {
-      const result = validateCustomFieldValue(
-        "datetime",
-        "2026-05-19T10:00:00Z",
-      )
-      expect(result).toBe("2026-05-19T10:00:00.000Z")
+    it("normalizes naive values using the supplied timezone", () => {
+      expect(
+        validateCustomFieldValue(
+          "datetime",
+          "2026-07-22 15:30",
+          "Asia/Ho_Chi_Minh",
+        ),
+      ).toBe("2026-07-22T08:30:00.000Z")
     })
+
+    it("passes through offset-bearing values", () => {
+      expect(
+        validateCustomFieldValue(
+          "datetime",
+          "2026-07-22T15:30:00+07:00",
+          "America/New_York",
+        ),
+      ).toBe("2026-07-22T08:30:00.000Z")
+    })
+
     it.each([
       ["2026-05-19"],
       ["not-a-date"],

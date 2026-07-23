@@ -415,6 +415,7 @@
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
     "operator": {

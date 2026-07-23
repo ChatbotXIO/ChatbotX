@@ -6,6 +6,8 @@ export type ContactFilterConditionInput = {
   value?: unknown
   /** Present for dynamic custom-field conditions (`field === "customField"`). */
   customFieldId?: string
+  /** Precise custom-field type (`date` | `datetime`) driving temporal semantics. */
+  customFieldType?: string
   /** Form/value-input type of the custom field, used to cast the text value. */
   valueType?: string
 }

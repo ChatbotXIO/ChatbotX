@@ -1096,15 +1096,18 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBeNull()
   })
 
-  test("subscribed_date formats the context contact inbox createdAt", async () => {
+  test("subscribed_date formats the context contact inbox createdAt in the contact timezone", async () => {
     await expect(
       getSystemFieldValue(
         createContext({
+          contact: { ...contact, timezone: "Asia/Ho_Chi_Minh" } as ContactModel,
           contactInbox: {
             ...contactInbox,
             createdAt: new Date("2026-01-01T23:30:00.000Z"),
           } as ContactInboxModel,
-          workspace: { ...workspace, timezone: "Asia/Ho_Chi_Minh" },
+          // Contact timezone wins over the workspace timezone, rolling the
+          // calendar date forward to the next day.
+          workspace: { ...workspace, timezone: "UTC" },
         }),
         systemFieldTypes.enum.subscribed_date,
       ),
@@ -1120,16 +1123,19 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBeNull()
   })
 
-  test("last_seen formats using the workspace timezone before contact timezone", async () => {
+  test("last_seen formats using the contact timezone before the workspace timezone", async () => {
     await expect(
       getSystemFieldValue(
         createContext({
-          contact: { ...contact, timezone: "UTC" } as ContactModel,
+          contact: {
+            ...contact,
+            timezone: "Asia/Ho_Chi_Minh",
+          } as ContactModel,
           contactInbox: {
             ...contactInbox,
             contactLastReadAt: new Date("2026-01-01T23:30:00.000Z"),
           } as ContactInboxModel,
-          workspace: { ...workspace, timezone: "Asia/Ho_Chi_Minh" },
+          workspace: { ...workspace, timezone: "UTC" },
         }),
         systemFieldTypes.enum.last_seen,
       ),

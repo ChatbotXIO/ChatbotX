@@ -9,6 +9,8 @@ const findManyContactInbox = vi.fn()
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
 const insertValues = vi.fn()
+const setCustomFieldValues = vi.fn()
+const insertNormalizedCustomFieldValues = vi.fn()
 const transactionFn = vi.fn()
 const deleteWhere = vi.fn()
 // `drop` = number of ContactInbox rows the simulated INSERT ... ON CONFLICT DO
@@ -101,6 +103,12 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     findExistingSourceIds: (...args: unknown[]) =>
       findExistingSourceIds(...args),
+  },
+  contactCustomFieldService: {
+    setValues: (...args: unknown[]) => setCustomFieldValues(...args),
+    insertNormalizedValuesForNewContacts: (...args: unknown[]) =>
+      insertNormalizedCustomFieldValues(...args),
+    deleteByCustomFieldId: vi.fn().mockResolvedValue(undefined),
   },
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
@@ -197,6 +205,8 @@ beforeEach(() => {
   updateSet.mockReset()
   updateWhere.mockReset()
   insertValues.mockReset()
+  setCustomFieldValues.mockReset()
+  insertNormalizedCustomFieldValues.mockReset()
   transactionFn.mockReset()
   deleteWhere.mockReset()
   conflict.drop = 0
@@ -383,12 +393,11 @@ describe("contacts import pipeline", () => {
       failedCount: 0,
     })
 
-    const insertedCustomField = insertValues.mock.calls.find(
-      (call) =>
-        Array.isArray(call[0]) &&
-        call[0].some((v: Record<string, unknown>) => v.customFieldId === "1"),
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entries: [{ contactId: expect.any(String), fields: [] }],
+      }),
     )
-    expect(insertedCustomField).toBeUndefined()
   })
 
   test("keeps valid custom field value", async () => {
@@ -408,16 +417,17 @@ describe("contacts import pipeline", () => {
       }),
     )
 
-    const insertedCustomField = insertValues.mock.calls.find(
-      (call) =>
-        Array.isArray(call[0]) &&
-        call[0].some((v: Record<string, unknown>) => v.customFieldId === "1"),
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        entries: [
+          {
+            contactId: expect.any(String),
+            fields: [{ customFieldId: "1", value: "42" }],
+          },
+        ],
+      }),
     )
-    expect(insertedCustomField).toBeDefined()
-    expect(insertedCustomField?.[0][0]).toMatchObject({
-      customFieldId: "1",
-      value: "42",
-    })
   })
 
   test("fails when format is unsupported", async () => {

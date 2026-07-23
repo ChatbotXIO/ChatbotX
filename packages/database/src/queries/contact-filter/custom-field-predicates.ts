@@ -1,17 +1,28 @@
+import {
+  datePartOf,
+  filterValueToUtcDayEndIso,
+  filterValueToUtcDayStartIso,
+  filterValueToUtcIso,
+  hasTimeComponent,
+} from "@chatbotx.io/utils/datetime"
 import { type SQL, sql } from "drizzle-orm"
-import { type OperatorType, operatorTypes } from "../../partials"
+import {
+  customFieldTypes,
+  type OperatorType,
+  operatorTypes,
+} from "../../partials"
 import { contactCustomFieldModel } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { existsWhere } from "./exists"
 import type { ContactWhere } from "./types"
 import {
-  DATETIME_VALUE_PATTERN,
   isValidDateTimeFilterValue,
   NUMERIC_VALUE_PATTERN,
 } from "./value-format"
 
 type CustomFieldComparison = { predicate: SQL; negate: boolean }
 type IntervalValue = [string, string]
+const DATE_PART_LENGTH = 10
 
 const NEGATION_TO_POSITIVE: Partial<Record<OperatorType, OperatorType>> = {
   [operatorTypes.enum.ne]: operatorTypes.enum.eq,
@@ -24,7 +35,9 @@ export function buildCustomFieldWhere(condition: {
   customFieldId?: string
   operator: string
   value?: unknown
+  customFieldType?: string
   valueType?: string
+  timezone: string
 }): ContactWhere {
   if (!condition.customFieldId) {
     return {}
@@ -32,7 +45,9 @@ export function buildCustomFieldWhere(condition: {
   const comparison = buildCustomFieldComparison(
     condition.operator,
     condition.value,
+    condition.customFieldType,
     condition.valueType,
+    condition.timezone,
   )
   if (!comparison) {
     return {}
@@ -48,14 +63,18 @@ export function buildCustomFieldWhere(condition: {
 function buildCustomFieldComparison(
   operator: string,
   value: unknown,
+  customFieldType: string | undefined,
   valueType: string | undefined,
+  timezone: string,
 ): CustomFieldComparison | undefined {
   const positiveOperator = NEGATION_TO_POSITIVE[operator as OperatorType]
   const negate = positiveOperator !== undefined
   const predicate = buildCustomFieldPositivePredicate(
     positiveOperator ?? operator,
     value,
+    customFieldType,
     valueType,
+    timezone,
   )
   return predicate ? { predicate, negate } : undefined
 }
@@ -63,7 +82,9 @@ function buildCustomFieldComparison(
 function buildCustomFieldPositivePredicate(
   operator: string,
   value: unknown,
+  customFieldType: string | undefined,
   valueType: string | undefined,
+  timezone: string,
 ): SQL | undefined {
   if (operator === operatorTypes.enum.isNotEmpty) {
     const column = contactCustomFieldModel.value
@@ -75,7 +96,13 @@ function buildCustomFieldPositivePredicate(
     return buildNumberCustomFieldPredicate(operator, value, intervalValue)
   }
   if (valueType === "datetime") {
-    return buildDatetimeCustomFieldPredicate(operator, value, intervalValue)
+    return buildDatetimeCustomFieldPredicate(
+      operator,
+      value,
+      customFieldType,
+      intervalValue,
+      timezone,
+    )
   }
   return buildTextCustomFieldPredicate(operator, value)
 }
@@ -153,10 +180,15 @@ function buildNumberCustomFieldPredicate(
 function buildDatetimeCustomFieldPredicate(
   operator: string,
   value: unknown,
+  customFieldType: string | undefined,
   intervalValue: IntervalValue | undefined,
+  timezone: string,
 ): SQL | undefined {
   const column = contactCustomFieldModel.value
-  const guard = sql`(${column} IS NOT NULL AND ${column} <> '' AND ${column} ~ ${DATETIME_VALUE_PATTERN})`
+  // pg_input_is_valid (PG16+) rejects exactly the values ::timestamptz would
+  // throw on, so a corrupt or legacy-garbage stored value degrades to NULL
+  // instead of crashing the whole filter query.
+  const guard = sql`(${column} IS NOT NULL AND ${column} <> '' AND pg_input_is_valid(${column}, 'timestamptz'))`
   const ts = sql`CASE WHEN ${guard} THEN NULLIF(${column}, '')::timestamptz END`
 
   if (operator === operatorTypes.enum.isBetween) {
@@ -169,7 +201,9 @@ function buildDatetimeCustomFieldPredicate(
     ) {
       return
     }
-    return sql`(${guard} AND ${ts} >= ${intervalValue[0]}::timestamptz AND ${ts} <= ${intervalValue[1]}::timestamptz)`
+    const startUtc = filterValueToUtcIso(intervalValue[0], timezone)
+    const endUtc = filterValueToUtcIso(intervalValue[1], timezone)
+    return sql`(${guard} AND ${ts} >= ${startUtc}::timestamptz AND ${ts} <= ${endUtc}::timestamptz)`
   }
 
   if (
@@ -180,23 +214,52 @@ function buildDatetimeCustomFieldPredicate(
     return
   }
 
-  const dayStart = sql`date_trunc('day', ${value}::timestamptz)`
-  const dayEnd = sql`${dayStart} + INTERVAL '1 day'`
+  const instant = filterValueToUtcIso(value, timezone)
 
   switch (operator) {
     case operatorTypes.enum.eq:
-      return sql`(${guard} AND ${ts} >= ${dayStart} AND ${ts} < ${dayEnd})`
+      return buildTemporalEqPredicate({
+        column,
+        guard,
+        customFieldType,
+        timezone,
+        ts,
+        value,
+      })
     case operatorTypes.enum.gt:
-      return sql`(${guard} AND ${ts} > ${value}::timestamptz)`
+      return sql`(${guard} AND ${ts} > ${instant}::timestamptz)`
     case operatorTypes.enum.gte:
-      return sql`(${guard} AND ${ts} >= ${value}::timestamptz)`
+      return sql`(${guard} AND ${ts} >= ${instant}::timestamptz)`
     case operatorTypes.enum.lt:
-      return sql`(${guard} AND ${ts} < ${value}::timestamptz)`
+      return sql`(${guard} AND ${ts} < ${instant}::timestamptz)`
     case operatorTypes.enum.lte:
-      return sql`(${guard} AND ${ts} <= ${value}::timestamptz)`
+      return sql`(${guard} AND ${ts} <= ${instant}::timestamptz)`
     default:
       return
   }
+}
+
+function buildTemporalEqPredicate(input: {
+  column: typeof contactCustomFieldModel.value
+  customFieldType: string | undefined
+  guard: SQL
+  timezone: string
+  ts: SQL
+  value: string
+}): SQL {
+  const { column, customFieldType, guard, timezone, ts, value } = input
+
+  if (customFieldType === customFieldTypes.enum.date) {
+    if (!hasTimeComponent(value)) {
+      return sql`(${column} IS NOT NULL AND ${column} <> '' AND left(${column}, ${DATE_PART_LENGTH}) = ${datePartOf(value)})`
+    }
+
+    return sql`(${guard} AND ${ts} = ${filterValueToUtcIso(value, timezone)}::timestamptz)`
+  }
+
+  const dayStart = filterValueToUtcDayStartIso(value, timezone)
+  const dayEnd = filterValueToUtcDayEndIso(value, timezone)
+  return sql`(${guard} AND ${ts} >= ${dayStart}::timestamptz AND ${ts} < ${dayEnd}::timestamptz)`
 }
 
 function buildTextCustomFieldPredicate(

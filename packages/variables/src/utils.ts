@@ -13,6 +13,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
+import { formatCustomFieldValueInTimeZone } from "@chatbotx.io/utils/datetime"
 import { formatInTimeZone } from "date-fns-tz"
 import {
   getAssignedTeamName,
@@ -106,7 +107,7 @@ const getTimezone = ({
 }: ContactVariableContext): string | null =>
   workspace?.timezone ?? normalizeStoredTimezone(contact.timezone)
 
-const getContactTimezone = ({
+export const getContactTimezone = ({
   contact,
   workspace,
 }: ContactVariableContext): string | null =>
@@ -133,6 +134,12 @@ const formatDateTime = (
 
   return safeFormatInTimeZone(date, timezone, DATE_TIME_PATTERN)
 }
+
+export const renderCustomFieldValue = (
+  type: string,
+  value: string | null | undefined,
+  timezone: string | null | undefined,
+): string => formatCustomFieldValueInTimeZone(type, value, timezone ?? "UTC")
 
 const getWorkspaceLogo = ({
   workspace,
@@ -208,6 +215,11 @@ export const getSystemFieldValue = async (
 ): Promise<string | null> => {
   const { contact, contactInbox, workspace } = context
   const timezone = getTimezone(context)
+  // Timestamps tied to a specific contact (when they subscribed, were last seen)
+  // read in the contact's own timezone, falling back to the workspace timezone
+  // (then UTC). `timezone` above stays workspace-first for workspace-scoped
+  // values like current_time. See getContactTimezone.
+  const contactTimezone = getContactTimezone(context)
 
   switch (key) {
     case systemFieldTypes.enum.email:
@@ -243,9 +255,9 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.user_id:
       return contactInbox?.sourceId ?? null
     case systemFieldTypes.enum.subscribed_date:
-      return formatDate(contactInbox?.createdAt, timezone)
+      return formatDate(contactInbox?.createdAt, contactTimezone)
     case systemFieldTypes.enum.last_seen:
-      return formatDateTime(contactInbox?.contactLastReadAt, timezone)
+      return formatDateTime(contactInbox?.contactLastReadAt, contactTimezone)
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:

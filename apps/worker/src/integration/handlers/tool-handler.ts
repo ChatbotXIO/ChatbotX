@@ -1,23 +1,27 @@
-import { externalRequestService } from "@chatbotx.io/business"
+import {
+  contactCustomFieldService,
+  externalRequestService,
+} from "@chatbotx.io/business"
+import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import {
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  contactCustomFieldModel,
-  customFieldModel,
-} from "@chatbotx.io/database/schema"
-import { emitCustomFieldChanged } from "@chatbotx.io/events"
+import { customFieldModel } from "@chatbotx.io/database/schema"
 import {
   type CountCharactersStepSchema,
   type ExternalRequestStepSchema,
   type FormatDateStepSchema,
+  FormatTimezone,
   type GenerateCodeStepSchema,
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
+import {
+  isTemporalCustomFieldType,
+  resolveFilterTimezone,
+} from "@chatbotx.io/utils/datetime"
 import {
   contactVariableService,
   extractVariables,
@@ -26,7 +30,7 @@ import {
   resolveContactVariablesDeep,
 } from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
-import { format } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 import { getProperty } from "dot-prop"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
@@ -58,46 +62,11 @@ export async function countCharacters({
 
   const value = `${`${targetContactCustomField.value}`.length}`
 
-  // Get existing value and custom field name
-  const existing = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      customFieldId: step.outputFieldId,
-    },
-    columns: { value: true },
+  await contactCustomFieldService.setValues({
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    fields: [{ customFieldId: step.outputFieldId, value }],
   })
-
-  const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.outputFieldId },
-    columns: { name: true },
-  })
-
-  await db
-    .insert(contactCustomFieldModel)
-    .values({
-      id: createId(),
-      value,
-      contactId: conversation.contactId,
-      customFieldId: step.outputFieldId,
-    })
-    .onConflictDoUpdate({
-      target: [
-        contactCustomFieldModel.contactId,
-        contactCustomFieldModel.customFieldId,
-      ],
-      set: {
-        value,
-      },
-    })
-
-  await emitCustomFieldChanged(
-    conversation.workspaceId,
-    conversation.contactId,
-    step.outputFieldId,
-    customField?.name || step.outputFieldId,
-    existing?.value || null,
-    value,
-  )
 }
 
 export async function formatDate({
@@ -115,48 +84,47 @@ export async function formatDate({
     return
   }
 
-  const newValue = format(new Date(inputContactCustomField.value), step.format)
-
-  // Get existing value and custom field name
-  const existing = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      customFieldId: step.outputFieldId,
-    },
-    columns: { value: true },
+  const outputCustomField = await db.query.customFieldModel.findFirst({
+    where: { id: step.outputFieldId, workspaceId: conversation.workspaceId },
+    columns: { type: true },
   })
+  if (!outputCustomField || isTemporalCustomFieldType(outputCustomField.type)) {
+    return
+  }
 
-  const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.outputFieldId },
-    columns: { name: true },
-  })
-
-  await db
-    .insert(contactCustomFieldModel)
-    .values({
-      id: createId(),
-      value: newValue,
-      contactId: conversation.contactId,
-      customFieldId: step.outputFieldId,
-    })
-    .onConflictDoUpdate({
-      target: [
-        contactCustomFieldModel.contactId,
-        contactCustomFieldModel.customFieldId,
-      ],
-      set: {
-        value: newValue,
+  const [contact, workspace] = await Promise.all([
+    db.query.contactModel.findFirst({
+      where: {
+        id: conversation.contactId,
+        workspaceId: conversation.workspaceId,
       },
-    })
+      columns: { timezone: true },
+    }),
+    db.query.workspaceModel.findFirst({
+      where: { id: conversation.workspaceId },
+      columns: { timezone: true },
+    }),
+  ])
 
-  await emitCustomFieldChanged(
-    conversation.workspaceId,
-    conversation.contactId,
-    step.outputFieldId,
-    customField?.name || step.outputFieldId,
-    existing?.value || null,
-    newValue,
+  const sourceTimezone =
+    step.timezone === FormatTimezone.workspace
+      ? resolveFilterTimezone(normalizeStoredTimezone(workspace?.timezone))
+      : resolveFilterTimezone(
+          normalizeStoredTimezone(contact?.timezone) ??
+            normalizeStoredTimezone(workspace?.timezone),
+        )
+
+  const newValue = formatInTimeZone(
+    inputContactCustomField.value,
+    sourceTimezone,
+    step.format,
   )
+
+  await contactCustomFieldService.setValues({
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    fields: [{ customFieldId: step.outputFieldId, value: newValue }],
+  })
 }
 
 export async function generateCode({
@@ -184,46 +152,11 @@ export async function generateCode({
   }
 
   if (value) {
-    // Get existing value and custom field name
-    const existing = await db.query.contactCustomFieldModel.findFirst({
-      where: {
-        contactId: conversation.contactId,
-        customFieldId: step.outputFieldId,
-      },
-      columns: { value: true },
+    await contactCustomFieldService.setValues({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      fields: [{ customFieldId: step.outputFieldId, value }],
     })
-
-    const customField = await db.query.customFieldModel.findFirst({
-      where: { id: step.outputFieldId },
-      columns: { name: true },
-    })
-
-    await db
-      .insert(contactCustomFieldModel)
-      .values({
-        id: createId(),
-        value,
-        contactId: conversation.contactId,
-        customFieldId: step.outputFieldId,
-      })
-      .onConflictDoUpdate({
-        target: [
-          contactCustomFieldModel.contactId,
-          contactCustomFieldModel.customFieldId,
-        ],
-        set: {
-          value,
-        },
-      })
-
-    await emitCustomFieldChanged(
-      conversation.workspaceId,
-      conversation.contactId,
-      step.outputFieldId,
-      customField?.name || step.outputFieldId,
-      existing?.value || null,
-      value,
-    )
   }
 }
 
@@ -268,82 +201,32 @@ export async function getDataFromJSON({
     },
     columns: {
       id: true,
-      name: true,
     },
   })
   const validCustomFieldIds = validCustomFields.map((v) => v.id)
-  const customFieldMap = new Map(validCustomFields.map((f) => [f.id, f.name]))
 
-  const updatedFields = await db.transaction(async (tx) => {
-    const updated: Array<{
-      customFieldId: string
-      customFieldName: string
-      oldValue: string | null
-      newValue: string
-    }> = []
-
-    // Batch-fetch existing values to avoid N+1 queries
-    const existingFields = await tx.query.contactCustomFieldModel.findMany({
-      where: {
-        contactId: conversation.contactId,
-        customFieldId: { in: validCustomFieldIds },
-      },
-      columns: { customFieldId: true, value: true },
-    })
-    const existingMap = new Map(
-      existingFields.map((f) => [f.customFieldId, f.value]),
-    )
-
-    for (const data of mapping) {
-      if (validCustomFieldIds.includes(data.outputFieldId)) {
-        const value = getProperty(dataJSON, data.jsonPath)
-
-        if (value !== undefined && value !== null) {
-          const encodedValue =
-            typeof value === "string" ? value : JSON.stringify(value)
-          const oldValue = existingMap.get(data.outputFieldId) ?? null
-
-          await tx
-            .insert(contactCustomFieldModel)
-            .values({
-              id: createId(),
-              value: encodedValue,
-              contactId: conversation.contactId,
-              customFieldId: data.outputFieldId,
-            })
-            .onConflictDoUpdate({
-              target: [
-                contactCustomFieldModel.contactId,
-                contactCustomFieldModel.customFieldId,
-              ],
-              set: {
-                value: encodedValue,
-              },
-            })
-
-          updated.push({
-            customFieldId: data.outputFieldId,
-            customFieldName:
-              customFieldMap.get(data.outputFieldId) || data.outputFieldId,
-            oldValue,
-            newValue: encodedValue,
-          })
-        }
-      }
+  // setValues already batches existence lookup, normalization, persistence, and
+  // change events into a single transaction — build the field list from the
+  // mapping and hand the whole batch over in one call.
+  const fields = mapping.flatMap((data) => {
+    if (!validCustomFieldIds.includes(data.outputFieldId)) {
+      return []
     }
-
-    return updated
+    const value = getProperty(dataJSON, data.jsonPath)
+    if (value === undefined || value === null) {
+      return []
+    }
+    const encodedValue =
+      typeof value === "string" ? value : JSON.stringify(value)
+    return [{ customFieldId: data.outputFieldId, value: encodedValue }]
   })
 
-  for (const field of updatedFields) {
-    await emitCustomFieldChanged(
-      conversation.workspaceId,
-      conversation.contactId,
-      field.customFieldId,
-      field.customFieldName,
-      field.oldValue,
-      field.newValue,
-    )
+  if (fields.length > 0) {
+    await contactCustomFieldService.setValues({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      fields,
+    })
   }
 
   return { status: "success", result: null }

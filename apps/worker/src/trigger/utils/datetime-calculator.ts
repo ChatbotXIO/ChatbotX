@@ -1,4 +1,5 @@
 import type { DateTimeTriggerType } from "@chatbotx.io/database/partials"
+import { resolveFilterTimezone } from "@chatbotx.io/utils/datetime"
 import { addDays, addHours, subDays, subHours } from "date-fns"
 
 export type DateTimeOperator = "before" | "after" | "atTheDayOf"
@@ -9,6 +10,8 @@ export interface DateTimeCondition {
   customFieldId: string
   timeType?: DateTimeUnit
   timeValue?: number
+  /** IANA zone captured at save time; falls back to the workspace zone when absent. */
+  timezone?: string
   triggerType: DateTimeOperator
 }
 
@@ -17,6 +20,7 @@ export type DateTimeTriggerValue = {
   at: string
   timeValue: number
   timeType: "hours" | "days" | "minutes"
+  timezone?: string
 }
 
 export function calculateTargetDateTime(
@@ -60,8 +64,13 @@ export function matchesDateTimeCondition(
   params: { startOfMinute: number },
   timezone = "UTC",
 ): boolean {
+  // Guard the stored zone: a corrupt/crafted value degrades to UTC instead of
+  // throwing a RangeError that would crash the whole shared sweep tick.
+  const safeTimezone = resolveFilterTimezone(timezone)
   const nowUTC = new Date(params.startOfMinute)
-  const now = new Date(nowUTC.toLocaleString("en-US", { timeZone: timezone }))
+  const now = new Date(
+    nowUTC.toLocaleString("en-US", { timeZone: safeTimezone }),
+  )
 
   switch (condition.triggerType) {
     case "before":
@@ -135,19 +144,22 @@ export function parseDateTimeValue(
 
   if (typeof value === "string") {
     const dateString = value.trim()
+    // Guard the stored zone: a corrupt/crafted value degrades to UTC instead of
+    // throwing a RangeError that would crash the whole shared sweep tick.
+    const safeTimezone = resolveFilterTimezone(timezone)
 
     if (DATE_ONLY_REGEX.test(dateString)) {
       const dateTimeStr = `${dateString} 00:00:00`
       return new Date(
         new Date(dateTimeStr).toLocaleString("en-US", {
-          timeZone: timezone,
+          timeZone: safeTimezone,
         }),
       )
     }
 
     return new Date(
       new Date(dateString).toLocaleString("en-US", {
-        timeZone: timezone,
+        timeZone: safeTimezone,
       }),
     )
   }

@@ -58,6 +58,7 @@ export const contactImportService = {
     const importId = createId()
     const meta: ContactImportMeta = {
       channel: input.channel,
+      timezone: input.timezone,
       countryCode: input.countryCode,
       columnMap: {
         contactId: input.contactId,

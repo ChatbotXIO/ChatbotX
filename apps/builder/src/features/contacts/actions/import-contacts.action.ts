@@ -82,6 +82,7 @@ export const importContactsAction = workspaceActionClient
 
       const meta: ContactImportMeta = {
         channel: parsedInput.channel,
+        timezone: parsedInput.timezone,
         countryCode: parsedInput.countryCode,
         columnMap: {
           contactId: parsedInput.contactId,
