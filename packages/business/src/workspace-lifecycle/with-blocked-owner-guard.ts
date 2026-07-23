@@ -1,6 +1,29 @@
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { logger } from "../logger"
-import { userQuotaService } from "../user-quota/service"
+import { type AccessState, userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
+import { isWorkspaceScheduledForDeletion } from "./predicates"
+
+type WorkspaceFreezeReason = "ownerBlocked" | "scheduledForDeletion"
+
+type WorkspaceFreezeContext = {
+  accessState: AccessState
+  workspace: WorkspaceModel
+}
+
+const FREEZE_CHECKS: ReadonlyArray<{
+  isFrozen: (context: WorkspaceFreezeContext) => boolean
+  reason: WorkspaceFreezeReason
+}> = [
+  {
+    reason: "scheduledForDeletion",
+    isFrozen: ({ workspace }) => isWorkspaceScheduledForDeletion(workspace),
+  },
+  {
+    reason: "ownerBlocked",
+    isFrozen: ({ accessState }) => accessState.blocked,
+  },
+]
 
 /**
  * No-op workspace work for owners whose cloud entitlement has expired.
@@ -20,11 +43,18 @@ export async function withBlockedOwnerGuard<T>(
     return await fn()
   }
   const accessState = await userQuotaService.getAccessState(workspace.ownerId)
+  const freezeCheck = FREEZE_CHECKS.find((check) =>
+    check.isFrozen({ accessState, workspace }),
+  )
 
-  if (accessState.blocked) {
+  if (freezeCheck) {
     logger.info(
-      { workspaceId, ownerId: workspace.ownerId },
-      "Skipping workspace job for blocked owner",
+      {
+        freezeReason: freezeCheck.reason,
+        ownerId: workspace.ownerId,
+        workspaceId,
+      },
+      "Skipping workspace job for frozen workspace",
     )
     return
   }

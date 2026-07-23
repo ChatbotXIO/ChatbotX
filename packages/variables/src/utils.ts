@@ -5,6 +5,7 @@ import {
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
+import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import {
   type ContactSource,
   contactSources,
@@ -326,9 +327,18 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.ig_business_follow_user:
     case systemFieldTypes.enum.timezone_name:
     case systemFieldTypes.enum.fb_chat_link:
-    case systemFieldTypes.enum.me:
     case systemFieldTypes.enum.user_code:
     case systemFieldTypes.enum.webchat:
+      return await getIntegrationField(
+        contact,
+        key,
+        contactInbox,
+        context.conversation?.id,
+      )
+    case systemFieldTypes.enum.me:
+      if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
+        return null
+      }
       return await getIntegrationField(
         contact,
         key,

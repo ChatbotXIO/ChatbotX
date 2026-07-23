@@ -1,6 +1,7 @@
 import {
   isPlatformAdmin,
   isSuperAdmin,
+  isWorkspaceScheduledForDeletion,
   userQuotaService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -103,7 +104,7 @@ export const workspaceActionClient = workspaceActionClientAllowExpired.use(
     // Server-side deletion gate: a workspace pending deletion must block every
     // mutation regardless of trial status, so this runs before the trial check
     // below. Mirrors the RSC-side redirect in enforceWorkspaceNotScheduledForDeletion.
-    if (ctx.workspace.scheduledDeletionAt) {
+    if (isWorkspaceScheduledForDeletion(ctx.workspace)) {
       throw new ChatbotXException(
         "Workspace deletion scheduled",
         "workspaceScheduledDeletion",

@@ -1,4 +1,7 @@
-import { workspaceMemberService } from "@chatbotx.io/business"
+import {
+  isWorkspaceScheduledForDeletion,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { base } from "./context"
@@ -52,7 +55,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    if (workspaceMember.workspace.scheduledDeletionAt) {
+    if (isWorkspaceScheduledForDeletion(workspaceMember.workspace)) {
       throw new ORPCError("FORBIDDEN", {
         message: "Workspace deletion scheduled",
       })

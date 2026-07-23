@@ -37,6 +37,7 @@ async function resolveElements({
   flowId,
   unsubscribeUrl,
   token,
+  workspaceId,
 }: {
   appUrl: string
   rawElements: PageElementSchema[]
@@ -45,6 +46,7 @@ async function resolveElements({
   flowId: string | undefined
   unsubscribeUrl: string
   token?: string
+  workspaceId: string
 }): Promise<MailElementSchema[]> {
   const resolved: MailElementSchema[] = []
 
@@ -90,7 +92,7 @@ async function resolveElements({
           // Seal the destination into an authenticated token so the click
           // route cannot be abused as an open redirect (the raw URL is never
           // trusted from the query string). base64url is URL-safe.
-          const signedUrl = await signEmailClickUrl(url)
+          const signedUrl = await signEmailClickUrl(url, workspaceId)
           url = `${appUrl}/email-topic/click?r=${token}&u=${signedUrl}`
         }
 
@@ -203,6 +205,7 @@ export async function sendEmail({
     flowId: flowVersion.flowId,
     unsubscribeUrl,
     token,
+    workspaceId: conversation.workspaceId,
   })
 
   const props: DynamicEmailProps = {

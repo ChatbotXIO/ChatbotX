@@ -15,7 +15,8 @@
     "./errors": "./src/errors.ts",
     "./referral": "./src/referral/index.ts",
     "./system-field": "./src/system-field/index.ts",
-    "./utils": "./src/utils.ts"
+    "./utils": "./src/utils.ts",
+    "./workspace-lifecycle/predicates": "./src/workspace-lifecycle/predicates.ts"
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",

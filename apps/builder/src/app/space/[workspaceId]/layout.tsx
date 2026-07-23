@@ -1,6 +1,7 @@
 import {
   isPlatformAdmin,
   isSuperAdmin,
+  isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
   userQuotaService,
   workspaceMemberService,
@@ -94,8 +95,8 @@ export default async function WorkspaceLayout({
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
-  const scheduledForDeletion = Boolean(
-    targetWorkspaceMember.workspace.scheduledDeletionAt,
+  const scheduledForDeletion = isWorkspaceScheduledForDeletion(
+    targetWorkspaceMember.workspace,
   )
 
   return (

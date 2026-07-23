@@ -26,6 +26,10 @@ import {
   whatsappCoexistStagingModel,
 } from "@chatbotx.io/database/schema"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
+import {
+  cancelPendingDispatchesForWorkspace,
+  removeDispatchesFromSchedule,
+} from "@chatbotx.io/sequence-scheduler"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -43,6 +47,10 @@ import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
 import { logger } from "../logger"
 import { userQuotaService } from "../user-quota/service"
+import {
+  cancelInFlightBroadcastsForWorkspace,
+  completeActiveSequenceEnrollmentsForWorkspace,
+} from "./campaign-cleanup"
 
 type WorkspaceTeardownIntegration = {
   disconnect(auth: unknown): Promise<void>
@@ -51,6 +59,11 @@ type WorkspaceTeardownIntegration = {
 
 type DisconnectService = {
   disconnect(workspaceId: string): Promise<void>
+}
+
+type DispatchToRemove = {
+  bucket: number
+  id: string
 }
 
 export type WorkspaceTeardownIntegrations = Record<
@@ -157,6 +170,39 @@ class WorkspaceLifecycleService extends BaseService {
         )
       }
     })
+  }
+
+  async cancelInFlightCampaigns(
+    workspaceId: string,
+  ): Promise<DispatchToRemove[]> {
+    const dispatchesToRemove = await db.transaction(async (tx) => {
+      await cancelInFlightBroadcastsForWorkspace({
+        tx,
+        workspaceId,
+      })
+
+      await completeActiveSequenceEnrollmentsForWorkspace({
+        tx,
+        workspaceId,
+      })
+
+      return await cancelPendingDispatchesForWorkspace({
+        client: tx,
+        removeFromSchedule: false,
+        workspaceId,
+      })
+    })
+
+    try {
+      await removeDispatchesFromSchedule(dispatchesToRemove)
+    } catch (err) {
+      logger.warn(
+        { err, dispatchCount: dispatchesToRemove.length, workspaceId },
+        "workspace-teardown: failed to remove dispatches from schedule",
+      )
+    }
+
+    return dispatchesToRemove
   }
 
   /**

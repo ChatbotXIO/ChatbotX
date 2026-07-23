@@ -41,6 +41,15 @@ import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
 
+type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
+
+const BROADCAST_STATUS_VARIANTS: Partial<
+  Record<string, BroadcastStatusBadgeVariant>
+> = {
+  cancelled: "secondary",
+  scheduled: "outline",
+}
+
 type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
 }
@@ -114,16 +123,15 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
             title={t("fields.status.label")}
           />
         ),
-        cell: ({ row }) =>
-          row.original.status === "scheduled" ? (
-            <Badge variant="outline">
-              {t(`broadcasts.status.${row.original.status}`)}
-            </Badge>
-          ) : (
-            <Badge variant="default">
-              {t(`broadcasts.status.${row.original.status}`)}
-            </Badge>
-          ),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              BROADCAST_STATUS_VARIANTS[row.original.status] ?? "default"
+            }
+          >
+            {t(`broadcasts.status.${row.original.status}`)}
+          </Badge>
+        ),
         enableSorting: false,
         enableHiding: false,
         meta: {

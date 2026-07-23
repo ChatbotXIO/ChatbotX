@@ -9,6 +9,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { interpolate } from "@chatbotx.io/variables"
 import { type NextRequest, NextResponse } from "next/server"
+import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export const GET = async (
   request: NextRequest,
@@ -16,6 +17,13 @@ export const GET = async (
 ) => {
   const { workspaceId, name: nameParam } = await context.params
   const name = decodeURIComponent(nameParam)
+  const { servable } = await loadServableWorkspace(workspaceId)
+  if (!servable) {
+    return NextResponse.json(
+      { code: "workspaceScheduledDeletion" },
+      { status: 410 },
+    )
+  }
 
   const row = await db.query.magicLinkModel.findFirst({
     where: {

@@ -14,6 +14,33 @@ import { createHash } from "crypto"
 
 type DrizzleClient = typeof db | Transaction
 type ScheduledDispatch = { id: string; bucket: number }
+type PendingDispatch = {
+  bucket: number
+  contactId: string
+  id: string
+  sequenceId: string
+  stepId: string
+}
+
+type PendingDispatchWhere = {
+  enrollmentId?: string
+  status: "pending"
+  workspaceId: string
+}
+
+type CancelPendingDispatchesOptions = {
+  client?: DrizzleClient
+  removeFromSchedule?: boolean
+  where: PendingDispatchWhere
+}
+
+const pendingDispatchColumns = {
+  id: true,
+  bucket: true,
+  sequenceId: true,
+  contactId: true,
+  stepId: true,
+} as const
 
 export function calculateBucket(
   workspaceId: string,
@@ -112,36 +139,20 @@ export interface CancelPendingDispatchesParams {
   removeFromSchedule?: boolean
   workspaceId: string
 }
-export async function cancelPendingDispatches(
-  params: CancelPendingDispatchesParams,
+async function cancelPendingDispatchesByWhere(
+  options: CancelPendingDispatchesOptions,
 ): Promise<ScheduledDispatch[]> {
-  const {
-    enrollmentId,
-    workspaceId,
-    client = db,
-    removeFromSchedule = true,
-  } = params
-
-  const pendingDispatches = await client.query.sequenceDispatchModel.findMany({
-    where: {
-      enrollmentId,
-      workspaceId,
-      status: "pending",
-    },
-    columns: {
-      id: true,
-      bucket: true,
-      sequenceId: true,
-      contactId: true,
-      stepId: true,
-    },
-  })
+  const { client = db, removeFromSchedule = true, where } = options
+  const pendingDispatches = (await client.query.sequenceDispatchModel.findMany({
+    where,
+    columns: pendingDispatchColumns,
+  })) as PendingDispatch[]
 
   if (pendingDispatches.length === 0) {
     return []
   }
 
-  const dispatchIds = pendingDispatches.map((d) => d.id)
+  const dispatchIds = pendingDispatches.map((dispatch) => dispatch.id)
   await client
     .update(sequenceDispatchModel)
     .set({
@@ -151,7 +162,7 @@ export async function cancelPendingDispatches(
     .where(
       and(
         inArray(sequenceDispatchModel.id, dispatchIds),
-        eq(sequenceDispatchModel.workspaceId, workspaceId),
+        eq(sequenceDispatchModel.workspaceId, where.workspaceId),
         eq(sequenceDispatchModel.status, "pending"),
       ),
     )
@@ -160,10 +171,39 @@ export async function cancelPendingDispatches(
     await removeDispatchesFromSchedule(pendingDispatches)
   }
 
-  return pendingDispatches.map((d) => ({
-    id: d.id,
-    bucket: d.bucket,
+  return pendingDispatches.map((dispatch) => ({
+    id: dispatch.id,
+    bucket: dispatch.bucket,
   }))
+}
+
+export async function cancelPendingDispatches(
+  params: CancelPendingDispatchesParams,
+): Promise<ScheduledDispatch[]> {
+  return await cancelPendingDispatchesByWhere({
+    client: params.client,
+    removeFromSchedule: params.removeFromSchedule,
+    where: {
+      enrollmentId: params.enrollmentId,
+      status: "pending",
+      workspaceId: params.workspaceId,
+    },
+  })
+}
+
+export async function cancelPendingDispatchesForWorkspace(params: {
+  client?: DatabaseClient | Transaction
+  removeFromSchedule?: boolean
+  workspaceId: string
+}): Promise<ScheduledDispatch[]> {
+  return await cancelPendingDispatchesByWhere({
+    client: params.client,
+    removeFromSchedule: params.removeFromSchedule,
+    where: {
+      status: "pending",
+      workspaceId: params.workspaceId,
+    },
+  })
 }
 
 export async function removeDispatchesFromSchedule(
