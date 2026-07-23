@@ -2,7 +2,7 @@ import {
   contactCustomFieldService,
   externalRequestService,
 } from "@chatbotx.io/business"
-import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
+import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import {
   type SystemFieldType,
@@ -20,7 +20,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   isTemporalCustomFieldType,
-  resolveFilterTimezone,
+  SourceTimezoneStrategy,
 } from "@chatbotx.io/utils/datetime"
 import {
   contactVariableService,
@@ -69,6 +69,14 @@ export async function countCharacters({
   })
 }
 
+const FORMAT_DATE_TIMEZONE_STRATEGIES = {
+  [FormatTimezone.contact]: SourceTimezoneStrategy.ContactThenWorkspace,
+  [FormatTimezone.workspace]: SourceTimezoneStrategy.Workspace,
+} as const satisfies Record<
+  FormatDateStepSchema["timezone"],
+  SourceTimezoneStrategy
+>
+
 export async function formatDate({
   conversation,
   step,
@@ -92,31 +100,15 @@ export async function formatDate({
     return
   }
 
-  const [contact, workspace] = await Promise.all([
-    db.query.contactModel.findFirst({
-      where: {
-        id: conversation.contactId,
-        workspaceId: conversation.workspaceId,
-      },
-      columns: { timezone: true },
-    }),
-    db.query.workspaceModel.findFirst({
-      where: { id: conversation.workspaceId },
-      columns: { timezone: true },
-    }),
-  ])
-
-  const sourceTimezone =
-    step.timezone === FormatTimezone.workspace
-      ? resolveFilterTimezone(normalizeStoredTimezone(workspace?.timezone))
-      : resolveFilterTimezone(
-          normalizeStoredTimezone(contact?.timezone) ??
-            normalizeStoredTimezone(workspace?.timezone),
-        )
+  const resolveSourceTimezone = createSourceTimezoneResolver({
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    strategy: FORMAT_DATE_TIMEZONE_STRATEGIES[step.timezone],
+  })
 
   const newValue = formatInTimeZone(
     inputContactCustomField.value,
-    sourceTimezone,
+    await resolveSourceTimezone(),
     step.format,
   )
 

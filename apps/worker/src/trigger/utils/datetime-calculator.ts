@@ -1,5 +1,8 @@
 import type { DateTimeTriggerType } from "@chatbotx.io/database/partials"
-import { resolveFilterTimezone } from "@chatbotx.io/utils/datetime"
+import {
+  isRealCalendarDate,
+  toZonedWallClock,
+} from "@chatbotx.io/utils/datetime"
 import { addDays, addHours, subDays, subHours } from "date-fns"
 
 export type DateTimeOperator = "before" | "after" | "atTheDayOf"
@@ -64,13 +67,7 @@ export function matchesDateTimeCondition(
   params: { startOfMinute: number },
   timezone = "UTC",
 ): boolean {
-  // Guard the stored zone: a corrupt/crafted value degrades to UTC instead of
-  // throwing a RangeError that would crash the whole shared sweep tick.
-  const safeTimezone = resolveFilterTimezone(timezone)
-  const nowUTC = new Date(params.startOfMinute)
-  const now = new Date(
-    nowUTC.toLocaleString("en-US", { timeZone: safeTimezone }),
-  )
+  const now = toZonedWallClock(params.startOfMinute, timezone)
 
   switch (condition.triggerType) {
     case "before":
@@ -128,8 +125,6 @@ export function matchesDateTimeCondition(
   }
 }
 
-const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
-
 export function parseDateTimeValue(
   value: unknown,
   timezone = "UTC",
@@ -144,24 +139,13 @@ export function parseDateTimeValue(
 
   if (typeof value === "string") {
     const dateString = value.trim()
-    // Guard the stored zone: a corrupt/crafted value degrades to UTC instead of
-    // throwing a RangeError that would crash the whole shared sweep tick.
-    const safeTimezone = resolveFilterTimezone(timezone)
+    // A bare calendar day carries no clock, so read it as midnight rather than
+    // letting `new Date` treat it as a UTC instant.
+    const instant = isRealCalendarDate(dateString)
+      ? new Date(`${dateString} 00:00:00`)
+      : new Date(dateString)
 
-    if (DATE_ONLY_REGEX.test(dateString)) {
-      const dateTimeStr = `${dateString} 00:00:00`
-      return new Date(
-        new Date(dateTimeStr).toLocaleString("en-US", {
-          timeZone: safeTimezone,
-        }),
-      )
-    }
-
-    return new Date(
-      new Date(dateString).toLocaleString("en-US", {
-        timeZone: safeTimezone,
-      }),
-    )
+    return toZonedWallClock(instant, timezone)
   }
 
   if (typeof value === "number") {

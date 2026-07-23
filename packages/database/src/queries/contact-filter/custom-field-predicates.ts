@@ -1,4 +1,5 @@
 import {
+  DATE_PART_LENGTH,
   datePartOf,
   filterValueToUtcDayEndIso,
   filterValueToUtcDayStartIso,
@@ -22,7 +23,6 @@ import {
 
 type CustomFieldComparison = { predicate: SQL; negate: boolean }
 type IntervalValue = [string, string]
-const DATE_PART_LENGTH = 10
 
 const NEGATION_TO_POSITIVE: Partial<Record<OperatorType, OperatorType>> = {
   [operatorTypes.enum.ne]: operatorTypes.enum.eq,

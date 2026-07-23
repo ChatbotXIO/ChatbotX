@@ -13,8 +13,13 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
-import { formatCustomFieldValueInTimeZone } from "@chatbotx.io/utils/datetime"
-import { formatInTimeZone } from "date-fns-tz"
+import {
+  DATE_FORMAT,
+  DATE_TIME_FORMAT,
+  DEFAULT_FILTER_TIMEZONE,
+  formatCustomFieldValueInTimeZone,
+  formatWithFallback,
+} from "@chatbotx.io/utils/datetime"
 import {
   getAssignedTeamName,
   resolveAssigneeEmail,
@@ -42,8 +47,6 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const DATE_PATTERN = "yyyy-MM-dd"
-const DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss"
 
 const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.inboundMessage]: "Inbound Message",
@@ -89,18 +92,6 @@ export const interpolate = (
     (match, variable) => mapping[variable] ?? match,
   )
 
-const safeFormatInTimeZone = (
-  date: Date | string,
-  timezone: string | null | undefined,
-  pattern: string,
-): string => {
-  try {
-    return formatInTimeZone(date, timezone ?? "UTC", pattern)
-  } catch {
-    return formatInTimeZone(date, "UTC", pattern)
-  }
-}
-
 const getTimezone = ({
   contact,
   workspace,
@@ -111,7 +102,9 @@ export const getContactTimezone = ({
   contact,
   workspace,
 }: ContactVariableContext): string | null =>
-  normalizeStoredTimezone(contact.timezone) ?? workspace?.timezone ?? "UTC"
+  normalizeStoredTimezone(contact.timezone) ??
+  workspace?.timezone ??
+  DEFAULT_FILTER_TIMEZONE
 
 const formatDate = (
   date: Date | string | null | undefined,
@@ -121,7 +114,7 @@ const formatDate = (
     return null
   }
 
-  return safeFormatInTimeZone(date, timezone, DATE_PATTERN)
+  return formatWithFallback(date, timezone, DATE_FORMAT)
 }
 
 const formatDateTime = (
@@ -132,14 +125,19 @@ const formatDateTime = (
     return null
   }
 
-  return safeFormatInTimeZone(date, timezone, DATE_TIME_PATTERN)
+  return formatWithFallback(date, timezone, DATE_TIME_FORMAT)
 }
 
 export const renderCustomFieldValue = (
   type: string,
   value: string | null | undefined,
   timezone: string | null | undefined,
-): string => formatCustomFieldValueInTimeZone(type, value, timezone ?? "UTC")
+): string =>
+  formatCustomFieldValueInTimeZone(
+    type,
+    value,
+    timezone ?? DEFAULT_FILTER_TIMEZONE,
+  )
 
 const getWorkspaceLogo = ({
   workspace,
@@ -288,10 +286,10 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.assigned_admin_id:
       return await resolveAssigneeId(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.current_user_time:
-      return safeFormatInTimeZone(
+      return formatWithFallback(
         new Date(),
         getContactTimezone(context),
-        DATE_TIME_PATTERN,
+        DATE_TIME_FORMAT,
       )
     case systemFieldTypes.enum.chat_history:
       return await getChatHistory(contact.id, 50)
@@ -308,7 +306,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.avatar:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.current_time:
-      return safeFormatInTimeZone(new Date(), timezone, DATE_TIME_PATTERN)
+      return formatWithFallback(new Date(), timezone, DATE_TIME_FORMAT)
     case systemFieldTypes.enum.workspace_name:
     case systemFieldTypes.enum.account_name:
       return workspace?.name ?? null

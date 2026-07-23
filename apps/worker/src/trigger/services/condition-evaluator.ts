@@ -1,7 +1,7 @@
 import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
-import { resolveFilterTimezone } from "@chatbotx.io/utils/datetime"
+import { toZonedWallClock } from "@chatbotx.io/utils/datetime"
 import type { ConditionEvaluationContext } from "../types"
 import { parseDateTimeValue } from "../utils/datetime-calculator"
 
@@ -388,25 +388,15 @@ export class ConditionEvaluator {
     }
 
     // Per-condition zone captured in the editor wins; legacy conditions with
-    // none fall back to the workspace zone, then UTC. Guarded so a corrupt or
-    // crafted zone degrades to UTC instead of throwing a RangeError.
-    const timezone = resolveFilterTimezone(
-      config.timezone || workspace?.timezone,
-    )
+    // none fall back to the workspace zone, then UTC.
+    const timezone = config.timezone || workspace?.timezone
 
     // `datetime` values are persisted as a UTC instant; `date` values as an
     // offset-preserved start-of-day (e.g. `...+07:00`). Both parse to the correct
     // absolute instant, so we resolve the stored moment into the condition's zone
     // directly; a bare "YYYY-MM-DD" no longer reaches here.
-    const targetDate = new Date(
-      new Date(customFieldValue).toLocaleString("en-US", {
-        timeZone: timezone,
-      }),
-    )
-
-    const now = new Date(
-      new Date().toLocaleString("en-US", { timeZone: timezone }),
-    )
+    const targetDate = toZonedWallClock(new Date(customFieldValue), timezone)
+    const now = toZonedWallClock(new Date(), timezone)
 
     if (triggerType === "before") {
       if (!(timeValue && timeType)) {
