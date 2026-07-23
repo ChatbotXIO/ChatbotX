@@ -3476,6 +3476,11 @@
     "replies": "Phản hồi",
     "activated": "Đã kích hoạt tự động hóa",
     "deactivated": "Đã tắt tự động hóa",
+    "platform": "Nền tảng",
+    "platformType": {
+      "messenger": "Facebook",
+      "instagram": "Instagram"
+    },
     "trackCommentsOn": "Theo dõi bình luận trên",
     "trackCommentsOnDescription": "Áp dụng tự động hóa cho tất cả bài viết trên trang, hoặc chỉ các bài viết cụ thể bạn chọn.",
     "privateReply": "Trả lời riêng tư (inbox)",
@@ -3545,6 +3550,7 @@
       "replyOncePerUserPerPostDescription": "Mỗi người dùng chỉ nhận tối đa một phản hồi tự động cho mỗi bài viết.",
       "likeUserComment": "Thích bình luận của người dùng",
       "likeUserCommentDescription": "Tự động thả like vào bình luận của người comment.",
+      "likeUserCommentNotSupportedOnInstagram": "Instagram không hỗ trợ thích bình luận.",
       "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận bài khác",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Tiếp tục phản hồi với những người đã comment ở các bài viết khác của bạn.",
       "ignoreCommentReplies": "Không trả lời các reply bình luận",

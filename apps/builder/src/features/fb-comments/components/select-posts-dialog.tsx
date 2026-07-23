@@ -22,7 +22,10 @@ import { CheckIcon, X } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { type KeyboardEvent, useEffect, useRef, useState } from "react"
-import type { FacebookPost } from "../provider/fb-comment-posts-store"
+import {
+  type FacebookPost,
+  splitInstagramMediaPosts,
+} from "../provider/fb-comment-posts-store"
 import { useFbCommentPostsStore } from "../provider/fb-comment-posts-store-context"
 
 const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4"]
@@ -185,11 +188,13 @@ export function SelectPostsDialog({
   onOpenChange,
   value,
   onChange,
+  platform = "messenger",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  platform?: "messenger" | "instagram"
 }) {
   const t = useTranslations()
 
@@ -197,6 +202,8 @@ export function SelectPostsDialog({
   const publishedPosts = useFbCommentPostsStore((s) => s.publishedPosts)
   const adsPosts = useFbCommentPostsStore((s) => s.adsPosts)
   const reelsPosts = useFbCommentPostsStore((s) => s.reelsPosts)
+  const instagramPosts = useFbCommentPostsStore((s) => s.instagramPosts)
+  const instagramMedia = splitInstagramMediaPosts(instagramPosts)
 
   const [selectedIds, setSelectedIds] = useState<string[]>(value)
 
@@ -226,60 +233,104 @@ export function SelectPostsDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="published">
-          <TabsList className="w-full">
-            <TabsTrigger className="flex-1" value="published">
-              {t("facebookCommentAutomation.postType.published")}
-            </TabsTrigger>
-            <TabsTrigger className="flex-1" value="ads">
-              {t("facebookCommentAutomation.postType.ads")}
-            </TabsTrigger>
-            <TabsTrigger className="flex-1" value="reels">
-              {t("facebookCommentAutomation.postType.reels")}
-            </TabsTrigger>
-            <TabsTrigger className="flex-1" value="postId">
-              {t("facebookCommentAutomation.postIdTab")}
-            </TabsTrigger>
-          </TabsList>
+        {platform === "instagram" ? (
+          <Tabs defaultValue="published">
+            <TabsList className="w-full">
+              <TabsTrigger className="flex-1" value="published">
+                {t("facebookCommentAutomation.postType.published")}
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="reels">
+                {t("facebookCommentAutomation.postType.reels")}
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="postId">
+                {t("facebookCommentAutomation.postIdTab")}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent className="mt-3" value="published">
-            <PostGrid
-              emptyText={t("facebookCommentAutomation.noPostsFound")}
-              loading={loading}
-              onToggle={toggleId}
-              posts={publishedPosts}
-              selectedIds={selectedIds}
-            />
-          </TabsContent>
+            <TabsContent className="mt-3" value="published">
+              <PostGrid
+                emptyText={t("facebookCommentAutomation.noPostsFound")}
+                loading={loading}
+                onToggle={toggleId}
+                posts={instagramMedia.published}
+                selectedIds={selectedIds}
+              />
+            </TabsContent>
 
-          <TabsContent className="mt-3" value="ads">
-            <PostGrid
-              emptyText={t("facebookCommentAutomation.noPostsFound")}
-              loading={loading}
-              onToggle={toggleId}
-              posts={adsPosts}
-              selectedIds={selectedIds}
-            />
-          </TabsContent>
+            <TabsContent className="mt-3" value="reels">
+              <PostGrid
+                emptyText={t("facebookCommentAutomation.noPostsFound")}
+                loading={loading}
+                onToggle={toggleId}
+                posts={instagramMedia.reels}
+                selectedIds={selectedIds}
+              />
+            </TabsContent>
 
-          <TabsContent className="mt-3" value="reels">
-            <PostGrid
-              emptyText={t("facebookCommentAutomation.noPostsFound")}
-              loading={loading}
-              onToggle={toggleId}
-              posts={reelsPosts}
-              selectedIds={selectedIds}
-            />
-          </TabsContent>
+            <TabsContent className="mt-3" value="postId">
+              <PostIdTagInput
+                onChange={setSelectedIds}
+                placeholder={t("facebookCommentAutomation.postIdPlaceholder")}
+                value={selectedIds}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <Tabs defaultValue="published">
+            <TabsList className="w-full">
+              <TabsTrigger className="flex-1" value="published">
+                {t("facebookCommentAutomation.postType.published")}
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="ads">
+                {t("facebookCommentAutomation.postType.ads")}
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="reels">
+                {t("facebookCommentAutomation.postType.reels")}
+              </TabsTrigger>
+              <TabsTrigger className="flex-1" value="postId">
+                {t("facebookCommentAutomation.postIdTab")}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent className="mt-3" value="postId">
-            <PostIdTagInput
-              onChange={setSelectedIds}
-              placeholder={t("facebookCommentAutomation.postIdPlaceholder")}
-              value={selectedIds}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent className="mt-3" value="published">
+              <PostGrid
+                emptyText={t("facebookCommentAutomation.noPostsFound")}
+                loading={loading}
+                onToggle={toggleId}
+                posts={publishedPosts}
+                selectedIds={selectedIds}
+              />
+            </TabsContent>
+
+            <TabsContent className="mt-3" value="ads">
+              <PostGrid
+                emptyText={t("facebookCommentAutomation.noPostsFound")}
+                loading={loading}
+                onToggle={toggleId}
+                posts={adsPosts}
+                selectedIds={selectedIds}
+              />
+            </TabsContent>
+
+            <TabsContent className="mt-3" value="reels">
+              <PostGrid
+                emptyText={t("facebookCommentAutomation.noPostsFound")}
+                loading={loading}
+                onToggle={toggleId}
+                posts={reelsPosts}
+                selectedIds={selectedIds}
+              />
+            </TabsContent>
+
+            <TabsContent className="mt-3" value="postId">
+              <PostIdTagInput
+                onChange={setSelectedIds}
+                placeholder={t("facebookCommentAutomation.postIdPlaceholder")}
+                value={selectedIds}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
 
         <DialogFooter>
           <Button

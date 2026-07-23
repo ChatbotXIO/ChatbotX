@@ -9,6 +9,11 @@ import { logger } from "../lib/logger"
 const INSTAGRAM_OAUTH_AUTHORIZE_URL =
   "https://www.instagram.com/oauth/authorize"
 
+// Meta's Graph API renamed the Creator account_type value from "CREATOR" to
+// "MEDIA_CREATOR" — accept both so existing and newly connected Creator
+// accounts are not rejected as unsupported.
+const VALID_ACCOUNT_TYPES = ["BUSINESS", "CREATOR", "MEDIA_CREATOR"] as const
+
 export type InstagramAccount = {
   id: string
   name: string
@@ -115,10 +120,14 @@ export async function getInstagramAccount(
       }),
     )
 
-    if (res.account_type !== "BUSINESS" && res.account_type !== "CREATOR") {
+    if (
+      !VALID_ACCOUNT_TYPES.includes(
+        res.account_type as (typeof VALID_ACCOUNT_TYPES)[number],
+      )
+    ) {
       logger.warn(
         { account_type: res.account_type },
-        "Instagram account is not a Business or Creator account",
+        `Instagram account is not one of the supported account types: ${VALID_ACCOUNT_TYPES.join(", ")}`,
       )
       return null
     }

@@ -15,6 +15,7 @@ import { createFbComment } from "../actions/create-fb-comment.action"
 import { deleteFbComment } from "../actions/delete-fb-comment.action"
 import { updateFbComment } from "../actions/update-fb-comment.action"
 import { listFbComments } from "../queries"
+import { listInstagramAutomationMedia } from "../queries/instagram-posts"
 import {
   createFbCommentRequest,
   listFbCommentsRequest,
@@ -145,4 +146,32 @@ export const fbCommentsPrivateAPI = {
 
       return { posts }
     }),
+
+  instagramPostsAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/fb-comments/instagram-posts",
+      summary: "List Instagram posts for FB Comment Automation",
+      tags: ["FB Comments"],
+    })
+    .input(withWorkspaceIdSchema)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(
+      z.object({
+        posts: z.array(
+          z.object({
+            id: z.string(),
+            message: z.string().optional(),
+            full_picture: z.string().optional(),
+            created_time: z.string(),
+            permalink_url: z.string().optional(),
+            media_product_type: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .handler(
+      async ({ input }) =>
+        await listInstagramAutomationMedia(input.workspaceId),
+    ),
 }

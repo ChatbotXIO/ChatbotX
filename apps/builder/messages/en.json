@@ -3456,6 +3456,11 @@
     "replies": "Replies",
     "activated": "Automation activated",
     "deactivated": "Automation deactivated",
+    "platform": "Platform",
+    "platformType": {
+      "messenger": "Facebook",
+      "instagram": "Instagram"
+    },
     "trackCommentsOn": "Track comments on",
     "trackCommentsOnDescription": "Apply this automation to all posts on your Page, or narrow it to specific posts you select.",
     "privateReply": "Private reply (inbox)",
@@ -3525,6 +3530,7 @@
       "replyOncePerUserPerPostDescription": "Each user will receive at most one automated reply per post.",
       "likeUserComment": "Like the user comment",
       "likeUserCommentDescription": "Automatically react with a like to the commenter's comment.",
+      "likeUserCommentNotSupportedOnInstagram": "Liking comments is not supported on Instagram.",
       "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other posts",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue replying to users who have already commented on your other posts.",
       "ignoreCommentReplies": "Don't reply to replies to comments",

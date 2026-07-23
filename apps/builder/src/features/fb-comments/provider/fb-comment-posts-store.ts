@@ -7,7 +7,17 @@ export type FacebookPost = {
   full_picture?: string
   created_time: string
   permalink_url?: string
+  media_product_type?: string
 }
+
+export const splitInstagramMediaPosts = (posts: FacebookPost[]) => ({
+  published: posts.filter(
+    (post) => post.media_product_type?.toUpperCase() !== "REELS",
+  ),
+  reels: posts.filter(
+    (post) => post.media_product_type?.toUpperCase() === "REELS",
+  ),
+})
 
 export type FbCommentPostsState = {
   loading: boolean
@@ -18,6 +28,7 @@ export type FbCommentPostsState = {
   publishedPosts: FacebookPost[]
   adsPosts: FacebookPost[]
   reelsPosts: FacebookPost[]
+  instagramPosts: FacebookPost[]
 }
 
 export type FbCommentPostsActions = {
@@ -25,6 +36,7 @@ export type FbCommentPostsActions = {
   fetchPublishedPosts: () => Promise<void>
   fetchAdsPosts: () => Promise<void>
   fetchReelsPosts: () => Promise<void>
+  fetchInstagramPosts: () => Promise<void>
 }
 
 export type FbCommentPostsStore = FbCommentPostsState & FbCommentPostsActions
@@ -36,6 +48,15 @@ const fetchPosts = async (
   const { posts } = await client.fbCommentsAPI.facebookPostsAPI({
     workspaceId,
     type,
+  })
+  return posts
+}
+
+const fetchInstagramMedia = async (
+  workspaceId: string,
+): Promise<FacebookPost[]> => {
+  const { posts } = await client.fbCommentsAPI.instagramPostsAPI({
+    workspaceId,
   })
   return posts
 }
@@ -52,6 +73,7 @@ export const createFbCommentPostsStore = (
     publishedPosts: [],
     adsPosts: [],
     reelsPosts: [],
+    instagramPosts: [],
     ...props,
 
     initialize: async () => {
@@ -63,12 +85,14 @@ export const createFbCommentPostsStore = (
       set({ loading: true, error: null })
       try {
         const { workspaceId } = get()
-        const [publishedPosts, adsPosts, reelsPosts] = await Promise.all([
-          fetchPosts(workspaceId, "published"),
-          fetchPosts(workspaceId, "ads"),
-          fetchPosts(workspaceId, "reels"),
-        ])
-        set({ publishedPosts, adsPosts, reelsPosts })
+        const [publishedPosts, adsPosts, reelsPosts, instagramPosts] =
+          await Promise.all([
+            fetchPosts(workspaceId, "published"),
+            fetchPosts(workspaceId, "ads"),
+            fetchPosts(workspaceId, "reels"),
+            fetchInstagramMedia(workspaceId),
+          ])
+        set({ publishedPosts, adsPosts, reelsPosts, instagramPosts })
       } catch (error: unknown) {
         set({
           error:
@@ -129,6 +153,24 @@ export const createFbCommentPostsStore = (
             error instanceof Error
               ? error.message
               : "Failed to fetch reels posts",
+        })
+      } finally {
+        set({ loading: false })
+      }
+    },
+
+    fetchInstagramPosts: async () => {
+      const { workspaceId } = get()
+      set({ loading: true, error: null })
+      try {
+        const instagramPosts = await fetchInstagramMedia(workspaceId)
+        set({ instagramPosts })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch Instagram posts",
         })
       } finally {
         set({ loading: false })

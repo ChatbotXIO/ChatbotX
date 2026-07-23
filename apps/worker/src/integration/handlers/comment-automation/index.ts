@@ -19,6 +19,10 @@ import type {
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
+  type InstagramAuthValue,
+  sendPrivateReply as sendInstagramLoginPrivateReply,
+} from "@chatbotx.io/integration-instagram"
+import {
   type MessengerAuthValue,
   sendPrivateReply,
 } from "@chatbotx.io/integration-messenger"
@@ -302,7 +306,7 @@ async function executePublicReply(
 async function executePrivateReply(
   privateReply: FBCommentReply,
   ctx: {
-    auth: MessengerAuthValue
+    auth: MessengerAuthValue | InstagramAuthValue
     integrationType: string
     integrationIdentifier: string
     commentId: string
@@ -320,9 +324,20 @@ async function executePrivateReply(
 
   if (privateReply.type === "text" && privateReply.value) {
     if (ctx.channelType === "messenger") {
-      await sendPrivateReply(ctx.auth, ctx.commentId, privateReply.value)
+      await sendPrivateReply(
+        ctx.auth as MessengerAuthValue,
+        ctx.commentId,
+        privateReply.value,
+      )
+    } else if (ctx.channelType === "instagram") {
+      // Instagram Login sends the private DM through the me/messages endpoint,
+      // addressing the commenter by comment id.
+      await sendInstagramLoginPrivateReply(
+        ctx.auth as InstagramAuthValue,
+        ctx.commentId,
+        privateReply.value,
+      )
     }
-    // Instagram private DM text reply: out of scope MVP (no private_replies API)
     return
   }
 

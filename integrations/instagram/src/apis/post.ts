@@ -12,6 +12,51 @@ export type InstagramMediaDetails = {
   permalink?: string
 }
 
+export type InstagramMediaListItem = {
+  id: string
+  caption?: string
+  media_type?: string
+  media_product_type?: string
+  media_url?: string
+  thumbnail_url?: string
+  timestamp: string
+  permalink?: string
+}
+
+type InstagramPaginatedResponse<T> = {
+  data: T[]
+}
+
+/**
+ * Lists the authenticated Instagram account's own media. On graph.instagram.com
+ * (Instagram Login) the account is addressed via the `me` alias — matching
+ * sendInstagramMessage — so this uses `me/media`. Only the first page is
+ * returned, mirroring the Messenger `listPublishedPosts` behaviour.
+ */
+export const listInstagramMedia = (props: {
+  auth: InstagramAuthValue
+}): Promise<InstagramMediaListItem[]> => {
+  const { auth } = props
+  const version = auth.metadata.version ?? DEFAULT_API_VERSION
+  const endpoint = `${version}/me/media`
+
+  return rescue(endpoint, async () => {
+    const res = await instagramBusinessClient.get<
+      InstagramPaginatedResponse<InstagramMediaListItem>
+    >(endpoint, {
+      headers: {
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+      searchParams: {
+        fields:
+          "id,caption,media_product_type,media_type,media_url,thumbnail_url,timestamp,permalink",
+        limit: "100",
+      },
+    })
+    return res.data
+  })
+}
+
 export const getPostDetails = (props: {
   ctx: Pick<Context<InstagramAuthValue>, "auth">
   input: { postId: string }

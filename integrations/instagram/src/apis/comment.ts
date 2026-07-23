@@ -56,3 +56,34 @@ export const hideComment = (
     }),
   )
 }
+
+/**
+ * Sends a private DM reply to the author of a comment. On graph.instagram.com
+ * (Instagram Login), messages are sent through the `me/messages` endpoint —
+ * matching sendInstagramMessage — using the comment id as the recipient reference.
+ */
+export const sendPrivateReply = (
+  auth: InstagramAuthValue,
+  commentId: string,
+  message: string,
+): Promise<{ message_id?: string; recipient_id: string }> => {
+  const version = auth.metadata.version ?? DEFAULT_API_VERSION
+  const endpoint = `${version}/me/messages`
+
+  return rescue(endpoint, () =>
+    instagramBusinessClient.post<{
+      message_id?: string
+      recipient_id: string
+    }>(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+      json: {
+        recipient: { comment_id: commentId },
+        message: { text: message },
+      },
+      retry: 0,
+    }),
+  )
+}

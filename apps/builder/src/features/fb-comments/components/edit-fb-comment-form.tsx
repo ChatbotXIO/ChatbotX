@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { type Resolver, useForm } from "react-hook-form"
+import { type Resolver, type UseFormReturn, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { updateFbCommentAction } from "../actions/update-fb-comment.action"
 import {
@@ -32,6 +32,7 @@ export function EditFbCommentForm({
     mode: "onChange",
     defaultValues: {
       name: initialData.name,
+      type: initialData.type as CreateFbCommentRequest["type"],
       folderId: initialData.folderId ?? undefined,
       post: initialData.post,
       privateReply: initialData.privateReply,
@@ -65,10 +66,15 @@ export function EditFbCommentForm({
 
   const handleSubmit = form.handleSubmit((data) => execute(data))
 
+  // The `.default()` on the platform field makes the resolver's input and output
+  // types diverge, so RHF's transformed-values generic no longer lines up with
+  // the form prop; the runtime values are correct, so the cast is safe.
+  const typedForm = form as unknown as UseFormReturn<CreateFbCommentRequest>
+
   return (
     <Form {...form}>
       <FbCommentForm
-        form={form}
+        form={typedForm}
         isSubmitting={isPending}
         onCancel={() => router.push(`/space/${workspaceId}/fb-comments`)}
         onSubmit={handleSubmit}

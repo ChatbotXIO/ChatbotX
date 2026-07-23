@@ -16,6 +16,7 @@ import { FbCommentForm } from "./fb-comment-form"
 
 const defaultValues = {
   name: "",
+  type: "messenger" as const,
   folderId: undefined,
   post: { type: "all" as const, value: [] },
   privateReply: { type: "text" as const, value: "" },
