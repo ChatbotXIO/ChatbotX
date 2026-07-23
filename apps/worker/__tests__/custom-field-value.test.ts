@@ -96,10 +96,32 @@ describe("validateCustomFieldValue", () => {
       ).toBe("2026-05-19T00:00:00+07:00")
     })
 
+    it("preserves strict date behavior for offset-bearing values crossing timezone days", () => {
+      expect(
+        validateCustomFieldValue(
+          "date",
+          "2026-05-19T23:30:00-04:00",
+          "Asia/Ho_Chi_Minh",
+        ),
+      ).toBe("2026-05-19T00:00:00+07:00")
+    })
+
     it.each([
-      ["05/19/2026"],
+      ["23/07/2026", "2026-07-23T00:00:00+07:00"],
+      ["07/23/2026", "2026-07-23T00:00:00+07:00"],
+      ["23 tháng 7 năm 2026", "2026-07-23T00:00:00+07:00"],
+      ["Jul 23, 2026", "2026-07-23T00:00:00+07:00"],
+      ["1700000000", "2023-11-15T00:00:00+07:00"],
+    ])("normalizes import date %s -> %s", (raw, normalized) => {
+      expect(validateCustomFieldValue("date", raw, "Asia/Ho_Chi_Minh")).toBe(
+        normalized,
+      )
+    })
+
+    it.each([
       ["'=2026-05-19"],
       ["2026-13-01"],
+      ["45497"],
     ])("drops %s", (raw) => {
       expect(
         validateCustomFieldValue("date", raw, "Asia/Ho_Chi_Minh"),
@@ -128,10 +150,32 @@ describe("validateCustomFieldValue", () => {
       ).toBe("2026-07-22T08:30:00.000Z")
     })
 
+    it("preserves strict datetime behavior for fractional ISO values", () => {
+      expect(
+        validateCustomFieldValue(
+          "datetime",
+          "2026-07-23T09:30:00.123",
+          "Asia/Ho_Chi_Minh",
+        ),
+      ).toBe("2026-07-23T02:30:00.123Z")
+    })
+
     it.each([
-      ["2026-05-19"],
+      ["23/07/2026 09:30", "2026-07-23T02:30:00.000Z"],
+      ["07/23/2026 09:30", "2026-07-23T02:30:00.000Z"],
+      ["ngày 23 tháng 7 năm 2026 lúc 09:30:45", "2026-07-23T02:30:45.000Z"],
+      ["Jul 23, 2026 9:30 AM", "2026-07-23T02:30:00.000Z"],
+      ["1721800800", "2024-07-24T06:00:00.000Z"],
+    ])("normalizes import datetime %s -> %s", (raw, normalized) => {
+      expect(
+        validateCustomFieldValue("datetime", raw, "Asia/Ho_Chi_Minh"),
+      ).toBe(normalized)
+    })
+
+    it.each([
       ["not-a-date"],
       ["'=2026-05-19T10:00:00Z"],
+      ["2026"],
     ])("drops %s", (raw) => {
       expect(validateCustomFieldValue("datetime", raw)).toBeNull()
     })

@@ -1,6 +1,10 @@
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { EMAIL_RE, NON_DIGIT_RE, PHONE_RE } from "@chatbotx.io/imports/parsers"
-import { normalizeTemporalCustomFieldValue } from "@chatbotx.io/utils/datetime"
+import {
+  type TemporalCustomFieldType,
+  TemporalInputParsing,
+} from "@chatbotx.io/utils/datetime"
+import { normalizeTemporalValueForStorage } from "@chatbotx.io/utils/temporal-input"
 
 const BOOL_RE = /^(true|false|1|0)$/i
 const NUMERIC_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/
@@ -38,12 +42,22 @@ const normalizePhone = (value: string): string | null => {
   return digits.length > 0 ? digits : null
 }
 
+// A spreadsheet exported to CSV keeps whatever the author typed, so imports
+// accept the same loose shapes the spreadsheet step does.
+const normalizeTemporalImportValue =
+  (type: TemporalCustomFieldType): CustomFieldValueNormalizer =>
+  (raw, timezone) =>
+    normalizeTemporalValueForStorage({
+      type,
+      value: raw,
+      timezone,
+      parsing: TemporalInputParsing.Lenient,
+    })
+
 const customFieldValueNormalizers = {
   boolean: normalizeBoolean,
-  date: (raw, timezone) =>
-    normalizeTemporalCustomFieldValue("date", raw, timezone),
-  datetime: (raw, timezone) =>
-    normalizeTemporalCustomFieldValue("datetime", raw, timezone),
+  date: normalizeTemporalImportValue("date"),
+  datetime: normalizeTemporalImportValue("datetime"),
   email: normalizeEmail,
   longText: (raw) => raw,
   number: normalizeNumber,

@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   updateWhere: vi.fn(async () => undefined),
   emitCustomFieldChanged: vi.fn(async () => undefined),
   invalidateCacheByTags: vi.fn(async () => undefined),
+  loggerWarn: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => {
@@ -57,6 +58,15 @@ vi.mock("@chatbotx.io/events", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: mocks.invalidateCacheByTags,
+}))
+
+vi.mock("@chatbotx.io/logger", () => ({
+  getChildLogger: () => ({
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: mocks.loggerWarn,
+  }),
 }))
 
 const { contactCustomFieldService } = await import(
@@ -261,5 +271,121 @@ describe("contactCustomFieldService.setValues — write/emit contract", () => {
 
     expect(mocks.insertValues).not.toHaveBeenCalled()
     expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactCustomFieldService.setValues — lenient spreadsheet parsing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.contactCustomFieldFindMany.mockResolvedValue([])
+    mocks.contactFindFirst.mockResolvedValue({ timezone: "Asia/Tokyo" })
+    mocks.workspaceFindFirst.mockResolvedValue({ timezone: "Asia/Ho_Chi_Minh" })
+  })
+
+  test("parses a DMY datetime cell and stores it as the workspace-anchored UTC instant", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-dt", name: "booking_at", type: "datetime" },
+    ])
+
+    await contactCustomFieldService.setValues({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-dt", value: "23/07/2026 09:30" }],
+      temporalInputParsing: "lenient",
+      sourceTimezoneStrategy: "workspace",
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFieldId: "cf-dt",
+        value: "2026-07-23T02:30:00.000Z",
+      }),
+    )
+    expect(mocks.contactFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("stores canonical sheet datetimes as workspace-local even when the contact has another timezone", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-dt", name: "booking_at", type: "datetime" },
+    ])
+    mocks.contactFindFirst.mockRejectedValue(
+      new Error("contact lookup must be skipped"),
+    )
+
+    await contactCustomFieldService.setValues({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-dt", value: "2026-07-23 09:30" }],
+      temporalInputParsing: "lenient",
+      sourceTimezoneStrategy: "workspace",
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFieldId: "cf-dt",
+        value: "2026-07-23T02:30:00.000Z",
+      }),
+    )
+    expect(mocks.contactFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("parses a unix timestamp cell into a datetime UTC instant", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-dt", name: "booking_at", type: "datetime" },
+    ])
+
+    await contactCustomFieldService.setValues({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-dt", value: "1721800800" }],
+      temporalInputParsing: "lenient",
+      sourceTimezoneStrategy: "workspace",
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "2024-07-24T06:00:00.000Z" }),
+    )
+  })
+
+  test("warns and skips an unparseable cell under lenient parsing", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-dt", name: "booking_at", type: "datetime" },
+    ])
+
+    await contactCustomFieldService.setValues({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-dt", value: "definitely not a date" }],
+      temporalInputParsing: "lenient",
+      sourceTimezoneStrategy: "workspace",
+    })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+    expect(mocks.loggerWarn).toHaveBeenCalledTimes(1)
+
+    const [logContext] = mocks.loggerWarn.mock.calls[0]
+    expect(logContext).toMatchObject({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      customFieldId: "cf-dt",
+      type: "datetime",
+    })
+    expect(JSON.stringify(logContext)).not.toContain("definitely not a date")
+  })
+
+  test("strict default does not warn when skipping an un-normalizable value", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-d", name: "birthday", type: "date" },
+    ])
+
+    await contactCustomFieldService.setValues({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-d", value: "2026-02-30" }],
+    })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+    expect(mocks.loggerWarn).not.toHaveBeenCalled()
   })
 })

@@ -200,3 +200,176 @@ describe("contact custom field normalization", () => {
     expect(resolveSourceTimezone).toHaveBeenCalledTimes(1)
   })
 })
+
+describe("lenient temporal parsing and workspace strategy", () => {
+  test("lenient mode parses a DMY datetime and anchors it to the source zone", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "datetime",
+        value: "23/07/2026 09:30",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2026-07-23T02:30:00.000Z")
+  })
+
+  test("lenient mode parses a DMY date offset-preserved in the source zone", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "date",
+        value: "23/07/2026",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2026-07-23T00:00:00+07:00")
+  })
+
+  test("lenient mode keeps the authored calendar day of an offset-bearing date", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    // The instant falls on 05-20 in UTC+7, but the cell says the 19th and the
+    // strict normalizer already understands it — so the authored day wins.
+    // The CSV import path asserts the same value; the two must not diverge.
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "date",
+        value: "2026-05-19T23:30:00-04:00",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2026-05-19T00:00:00+07:00")
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "date",
+        value: "2026-05-19T20:00:00Z",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2026-05-19T00:00:00+07:00")
+  })
+
+  test("lenient mode still re-anchors a date the strict normalizer rejects", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    // A unix timestamp names an instant with no authored day to preserve, so it
+    // is projected into the source zone: 2023-11-14T22:13:20Z is already the
+    // 15th in UTC+7.
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "date",
+        value: "1700000000",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2023-11-15T00:00:00+07:00")
+  })
+
+  test("lenient mode parses a unix timestamp into a datetime UTC instant", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "datetime",
+        value: "1721800800",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2024-07-24T06:00:00.000Z")
+  })
+
+  test("lenient mode remains a strict superset for canonical fractional datetimes", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "datetime",
+        value: "2026-07-23T09:30:00.123",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBe("2026-07-23T02:30:00.123Z")
+  })
+
+  test("strict mode by default still rejects a non-ISO value", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "datetime",
+        value: "23/07/2026 09:30",
+        resolveSourceTimezone: resolver,
+      }),
+    ).resolves.toBeNull()
+  })
+
+  test("lenient mode returns null for genuinely unparseable input", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+
+    await expect(
+      normalizeCustomFieldValueForStorage({
+        type: "datetime",
+        value: "not-a-date-at-all",
+        resolveSourceTimezone: resolver,
+        temporalInputParsing: "lenient",
+      }),
+    ).resolves.toBeNull()
+  })
+
+  test("lenient mode gives a time-only cell today's date in the source zone", async () => {
+    const resolver = async () => "Asia/Ho_Chi_Minh"
+    // Server clock still says 2026-07-22, the workspace is already on 07-23.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-07-22T18:00:00Z"))
+
+    try {
+      await expect(
+        normalizeCustomFieldValueForStorage({
+          type: "datetime",
+          value: "09:30",
+          resolveSourceTimezone: resolver,
+          temporalInputParsing: "lenient",
+        }),
+      ).resolves.toBe("2026-07-23T02:30:00.000Z")
+
+      await expect(
+        normalizeCustomFieldValueForStorage({
+          type: "date",
+          value: "09:30",
+          resolveSourceTimezone: resolver,
+          temporalInputParsing: "lenient",
+        }),
+      ).resolves.toBe("2026-07-23T00:00:00+07:00")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("workspace strategy resolves the workspace zone without a contact query", async () => {
+    const contactFindFirst = vi.fn()
+    const workspaceFindFirst = vi
+      .fn()
+      .mockResolvedValue({ timezone: "Asia/Ho_Chi_Minh" })
+    const tx = {
+      query: {
+        contactModel: { findFirst: contactFindFirst },
+        workspaceModel: { findFirst: workspaceFindFirst },
+      },
+    } as unknown as DatabaseClient
+
+    const resolver = createSourceTimezoneResolver({
+      workspaceId: "1",
+      contactId: "2",
+      strategy: "workspace",
+      tx,
+    })
+
+    await expect(resolver()).resolves.toBe("Asia/Ho_Chi_Minh")
+    expect(contactFindFirst).not.toHaveBeenCalled()
+    expect(workspaceFindFirst).toHaveBeenCalledTimes(1)
+  })
+})

@@ -430,6 +430,49 @@ describe("contacts import pipeline", () => {
     )
   })
 
+  test("normalizes imported date and datetime custom fields from loose formats", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findManyCustomFields.mockResolvedValue([
+      { id: "1", type: "date" },
+      { id: "2", type: "datetime" },
+    ])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,birthday,appointment",
+        "ext-1,+15551234567,23 tháng 7 năm 2026,23/07/2026 09:30",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          timezone: "Asia/Ho_Chi_Minh",
+          columnMap: { contactId: "external_id", phoneNumber: "phone" },
+          fieldMapping: [
+            { customFieldId: "1", column: "birthday" },
+            { customFieldId: "2", column: "appointment" },
+          ],
+        },
+      }),
+    )
+
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        entries: [
+          {
+            contactId: expect.any(String),
+            fields: [
+              { customFieldId: "1", value: "2026-07-23T00:00:00+07:00" },
+              { customFieldId: "2", value: "2026-07-23T02:30:00.000Z" },
+            ],
+          },
+        ],
+      }),
+    )
+  })
+
   test("fails when format is unsupported", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     getObjectStream.mockResolvedValue(streamOf(["external_id,phone"]))

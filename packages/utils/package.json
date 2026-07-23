@@ -22,6 +22,7 @@
     "./crypto": "./src/crypto.ts",
     "./datetime": "./src/datetime.ts",
     "./id": "./src/id.ts",
+    "./temporal-input": "./src/temporal-input/index.ts",
     "./zod": "./src/zod.ts"
   },
   "scripts": {

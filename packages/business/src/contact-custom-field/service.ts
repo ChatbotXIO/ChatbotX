@@ -8,8 +8,13 @@ import {
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import { createId, isNumericId } from "@chatbotx.io/utils"
+import {
+  type SourceTimezoneStrategy,
+  TemporalInputParsing,
+} from "@chatbotx.io/utils/datetime"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { logger } from "../logger"
 import {
   createSourceTimezoneResolver,
   normalizeCustomFieldValueForStorage,
@@ -22,6 +27,16 @@ type SetValuesInput = {
   fields: Array<{ customFieldId: string; value: string }>
   /** Browser zone captured at form submit; anchors naive `date` values. */
   sourceTimezone?: string
+  /**
+   * Strict (default): accept only canonical ISO temporal input. Lenient: run
+   * the multi-format parser first (spreadsheet/import-style sources).
+   */
+  temporalInputParsing?: TemporalInputParsing
+  /**
+   * Which zone anchors naive temporal values. Defaults to contact -> workspace;
+   * the spreadsheet step uses `workspace` to skip the contact lookup.
+   */
+  sourceTimezoneStrategy?: SourceTimezoneStrategy
 }
 
 type DeleteByKeyInput = {
@@ -102,7 +117,14 @@ class ContactCustomFieldService extends BaseService {
     input: SetValuesInput,
     tx: DatabaseClient = db,
   ): Promise<void> {
-    const { workspaceId, contactId, fields, sourceTimezone } = input
+    const {
+      workspaceId,
+      contactId,
+      fields,
+      sourceTimezone,
+      temporalInputParsing,
+      sourceTimezoneStrategy,
+    } = input
     const customFieldIds = fields.map((f) => f.customFieldId)
     const fieldById = new Map(
       fields.map((field) => [field.customFieldId, field] as const),
@@ -128,6 +150,7 @@ class ContactCustomFieldService extends BaseService {
       const resolveSourceTimezone = createSourceTimezoneResolver({
         workspaceId,
         contactId,
+        strategy: sourceTimezoneStrategy,
         tx: client,
       })
 
@@ -143,9 +166,21 @@ class ContactCustomFieldService extends BaseService {
             value: field.value,
             resolveSourceTimezone,
             explicitTimezone: sourceTimezone,
+            temporalInputParsing,
           })
           // Un-normalizable temporal value: skip rather than persist garbage.
           if (normalizedValue === null) {
+            if (temporalInputParsing === TemporalInputParsing.Lenient) {
+              logger.warn(
+                {
+                  workspaceId,
+                  contactId,
+                  customFieldId: customField.id,
+                  type: customField.type,
+                },
+                "Skipped unparseable temporal custom-field value from a lenient source",
+              )
+            }
             return null
           }
           const existing = existingById.get(customField.id)

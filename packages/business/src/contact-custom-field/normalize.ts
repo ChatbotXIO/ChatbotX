@@ -4,10 +4,12 @@ import {
   DEFAULT_FILTER_TIMEZONE,
   hasExplicitOffset,
   isTemporalCustomFieldType,
-  normalizeTemporalCustomFieldValue,
   resolveFilterTimezone,
+  SourceTimezoneStrategy,
   type TemporalCustomFieldType,
+  TemporalInputParsing,
 } from "@chatbotx.io/utils/datetime"
+import { normalizeTemporalValueForStorage } from "@chatbotx.io/utils/temporal-input"
 import { normalizeStoredTimezone } from "../contact-locale"
 
 export type SourceTimezoneResolver = () => Promise<string>
@@ -30,9 +32,19 @@ const TEMPORAL_HONORS_EXPLICIT_TIMEZONE = {
 const resolveSourceTimezone = async (input: {
   workspaceId: string
   contactId: string
+  strategy: SourceTimezoneStrategy
   tx?: DatabaseClient
 }): Promise<string> => {
   const query = input.tx ?? db
+
+  if (input.strategy === SourceTimezoneStrategy.Workspace) {
+    const workspace = await query.query.workspaceModel.findFirst({
+      where: { id: input.workspaceId },
+      columns: { timezone: true },
+    })
+    return resolveFilterTimezone(normalizeStoredTimezone(workspace?.timezone))
+  }
+
   const [contact, workspace] = await Promise.all([
     query.query.contactModel.findFirst({
       where: { id: input.contactId, workspaceId: input.workspaceId },
@@ -53,12 +65,19 @@ const resolveSourceTimezone = async (input: {
 export const createSourceTimezoneResolver = (input: {
   workspaceId: string
   contactId: string
+  strategy?: SourceTimezoneStrategy
   tx?: DatabaseClient
 }): SourceTimezoneResolver => {
   let sourceTimezonePromise: Promise<string> | undefined
+  const strategy = input.strategy ?? SourceTimezoneStrategy.ContactThenWorkspace
 
   return async () => {
-    sourceTimezonePromise ??= resolveSourceTimezone(input)
+    sourceTimezonePromise ??= resolveSourceTimezone({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      strategy,
+      tx: input.tx,
+    })
     return await sourceTimezonePromise
   }
 }
@@ -66,11 +85,13 @@ export const createSourceTimezoneResolver = (input: {
 /**
  * Source zone whose offset anchors a temporal value at write time.
  *
- * - Value carries its own zone already (offset-preserved `date`, `Z` datetime)
- *   → no source zone needed, so we skip the resolver and use UTC.
+ * - Offset-bearing `datetime` carries its own zone already, so no source zone
+ *   is needed and we use UTC.
+ * - `date` always needs a source zone: it stores the calendar day as start of
+ *   day in the chosen source zone, including lenient unix/offset inputs.
  * - Type honors the submitter's browser zone (`date`) and one was captured
- *   → that explicit zone wins outright, no contact/workspace DB lookup.
- * - Otherwise → fall back to the memoized contact → workspace → UTC resolver.
+ *   -> that explicit zone wins outright, no contact/workspace DB lookup.
+ * - Otherwise -> fall back to the memoized contact -> workspace -> UTC resolver.
  */
 const resolveTemporalSourceTimezone = async (input: {
   type: TemporalCustomFieldType
@@ -104,8 +125,19 @@ export const normalizeCustomFieldValueForStorage = async (input: {
    * resolving via the stored contact/workspace zones.
    */
   explicitTimezone?: string | null
+  /**
+   * Strict (default): accept only canonical ISO. Lenient: run the loose
+   * multi-format parser first. Non-temporal types ignore it.
+   */
+  temporalInputParsing?: TemporalInputParsing
 }): Promise<string | null> => {
-  const { type, value, resolveSourceTimezone, explicitTimezone } = input
+  const {
+    type,
+    value,
+    resolveSourceTimezone,
+    explicitTimezone,
+    temporalInputParsing = TemporalInputParsing.Strict,
+  } = input
 
   if (value.length === 0 || !isTemporalCustomFieldType(type)) {
     return value
@@ -117,8 +149,11 @@ export const normalizeCustomFieldValueForStorage = async (input: {
     explicitTimezone,
     resolveSourceTimezone,
   })
-  // Return null (not the raw value) when the temporal value can't be
-  // normalized: falling back to the un-normalized string would persist garbage
-  // into a column the rest of the system reads as UTC ISO. The caller skips it.
-  return normalizeTemporalCustomFieldValue(type, value, sourceTimezone)
+
+  return normalizeTemporalValueForStorage({
+    type,
+    value,
+    timezone: sourceTimezone,
+    parsing: temporalInputParsing,
+  })
 }

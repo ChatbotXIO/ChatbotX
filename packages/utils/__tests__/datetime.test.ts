@@ -13,6 +13,8 @@ import {
   resolveFilterTimezone,
   resolveTemporalCustomFieldFormValue,
   resolveTemporalCustomFieldSaveFormat,
+  SourceTimezoneStrategy,
+  TemporalInputParsing,
   toZonedDayStartIso,
 } from "../src/datetime"
 
@@ -188,5 +190,19 @@ describe("legacy backfill migration oracle", () => {
     [NY, "2026-03-08", "2026-03-08T00:00:00-05:00"], // spring-forward day, 00:00 still EST
   ])("date backfill (start of day): %s %s -> %s", (tz, value, expected) => {
     expect(toZonedDayStartIso(value, tz)).toBe(expected)
+  })
+})
+
+describe("temporal write-path enums", () => {
+  test("parsing-mode values are stable", () => {
+    expect(TemporalInputParsing.Strict).toBe("strict")
+    expect(TemporalInputParsing.Lenient).toBe("lenient")
+  })
+
+  test("source-timezone strategy values are stable", () => {
+    expect(SourceTimezoneStrategy.ContactThenWorkspace).toBe(
+      "contactThenWorkspace",
+    )
+    expect(SourceTimezoneStrategy.Workspace).toBe("workspace")
   })
 })

@@ -18,6 +18,10 @@ import {
   type GoogleSheetsAuthValue,
   integration as integrationGooglesheets,
 } from "@chatbotx.io/integration-google-sheets"
+import {
+  SourceTimezoneStrategy,
+  TemporalInputParsing,
+} from "@chatbotx.io/utils/datetime"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
@@ -395,6 +399,10 @@ const updateContactCustomFields = async ({
     workspaceId: conversation.workspaceId,
     contactId: conversation.contactId,
     fields,
+    // Sheet cells arrive as locale display strings or unix numbers, not ISO.
+    // Anchor naive values to the workspace clock and skip the contact lookup.
+    temporalInputParsing: TemporalInputParsing.Lenient,
+    sourceTimezoneStrategy: SourceTimezoneStrategy.Workspace,
   })
 }
 

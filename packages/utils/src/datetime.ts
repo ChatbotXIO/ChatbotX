@@ -1,17 +1,43 @@
 import { addDays, format, parseISO } from "date-fns"
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz"
 
 export const DEFAULT_FILTER_TIMEZONE = "UTC"
 export const temporalCustomFieldTypes = ["date", "datetime"] as const
 export type TemporalCustomFieldType = (typeof temporalCustomFieldTypes)[number]
 
+/**
+ * How a write path parses raw temporal input before normalization.
+ * - Strict: accept only canonical ISO (today's behavior; UI forms and APIs).
+ * - Lenient: run the loose multi-format parser first (spreadsheet/import).
+ */
+export const TemporalInputParsing = {
+  Strict: "strict",
+  Lenient: "lenient",
+} as const
+export type TemporalInputParsing =
+  (typeof TemporalInputParsing)[keyof typeof TemporalInputParsing]
+
+/**
+ * Which zone anchors a naive temporal value at write time.
+ * - ContactThenWorkspace: contact zone, falling back to workspace (default).
+ * - Workspace: workspace zone only; skips the contact lookup.
+ */
+export const SourceTimezoneStrategy = {
+  ContactThenWorkspace: "contactThenWorkspace",
+  Workspace: "workspace",
+} as const
+export type SourceTimezoneStrategy =
+  (typeof SourceTimezoneStrategy)[keyof typeof SourceTimezoneStrategy]
+
 const OFFSET_SUFFIX_PATTERN = /(?:Z|[+-]\d{2}:?\d{2})$/
 const CALENDAR_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 const TIME_COMPONENT_PATTERN = /\d{2}:\d{2}/
-const DATE_PART_LENGTH = 10
-const DATE_FORMAT = "yyyy-MM-dd"
-const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 const ZONED_ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ssXXX"
+
+/** Length of the `yyyy-MM-dd` prefix every stored temporal value starts with. */
+export const DATE_PART_LENGTH = 10
+export const DATE_FORMAT = "yyyy-MM-dd"
+export const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
 export const hasExplicitOffset = (value: string): boolean =>
   OFFSET_SUFFIX_PATTERN.test(value)
@@ -99,7 +125,13 @@ const temporalCustomFieldNormalizationHandlers = {
   (value: string, timezone: string) => string | null
 >
 
-const formatWithFallback = (
+/**
+ * `formatInTimeZone` that never throws. Every surface that renders a stored
+ * temporal value — exports, variable interpolation, the contact detail panel —
+ * shares this so a single bad row degrades one cell instead of failing the
+ * whole render around it.
+ */
+export const formatWithFallback = (
   date: Date | string,
   timezone: string | null | undefined,
   pattern: string,
@@ -166,6 +198,25 @@ export function filterValueToUtcDayEndIso(
 ): string {
   const nextDay = format(addDays(parseISO(datePartOf(value)), 1), DATE_FORMAT)
   return fromZonedTime(`${nextDay}T00:00:00`, timezone).toISOString()
+}
+
+/**
+ * The same instant re-expressed as a wall clock in `timezone`: the returned
+ * Date's *local* getters (`getHours`, `getDate`, …) read as the time there.
+ *
+ * Use it only to compare calendar/clock components — the returned Date no
+ * longer names the original instant, so never store or serialize it. An
+ * unusable zone degrades to UTC and an unparseable input is passed through as
+ * an Invalid Date, so this never throws inside a shared sweep tick.
+ */
+export function toZonedWallClock(
+  date: Date | string | number,
+  timezone: string | null | undefined,
+): Date {
+  const instant = date instanceof Date ? date : new Date(date)
+  return Number.isNaN(instant.getTime())
+    ? instant
+    : toZonedTime(instant, resolveFilterTimezone(timezone))
 }
 
 export function toZonedDayStartIso(value: string, timezone: string): string {
