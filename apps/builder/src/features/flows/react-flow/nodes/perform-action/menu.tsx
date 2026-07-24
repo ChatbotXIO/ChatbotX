@@ -2,6 +2,7 @@ import { stepTypes } from "@chatbotx.io/flow-config"
 import {
   SiClaude,
   SiGooglegemini,
+  SiMake,
   SiMessenger,
 } from "@icons-pack/react-simple-icons"
 import {
@@ -39,6 +40,7 @@ import {
   TagIcon,
   UserIcon,
   UserRoundXIcon,
+  WebhookIcon,
   ZapIcon,
 } from "lucide-react"
 import { OpenAIIcon } from "@/icons/openai"
@@ -595,6 +597,18 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.updateMessengerContactData"),
         icon: CloudDownloadIcon,
         stepType: stepTypes.enum.updateMessengerContactData,
+      },
+    ],
+  },
+  {
+    label: t("flows.actions.triggers"),
+    icon: WebhookIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.actions.make"),
+        icon: SiMake,
+        stepType: stepTypes.enum.make,
       },
     ],
   },

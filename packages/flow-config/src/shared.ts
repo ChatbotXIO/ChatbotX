@@ -32,6 +32,7 @@ import { getResponseAddContactSchema } from "./steps/get-response-add-contact"
 import { klaviyoSyncProfileSchema } from "./steps/klaviyo-sync-profile"
 import { mailchimpAddMemberSchema } from "./steps/mailchimp-add-member"
 import { mailerLiteAddSubscriberSchema } from "./steps/mailer-lite-add-subscriber"
+import { makeStepSchema } from "./steps/make"
 import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { moosendCreateContactSchema } from "./steps/moosend-create-contact"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
@@ -100,6 +101,8 @@ const toolSteps = [
   externalRequestStepSchema,
 ]
 
+const triggerSteps = [makeStepSchema]
+
 const emailSteps = [
   markEmailVerifiedStepSchema,
   optInEmailStepSchema,
@@ -160,4 +163,5 @@ export const actionSteps = [
   ...aiSteps,
   ...googleSheetStep,
   ...messengerSteps,
+  ...triggerSteps,
 ]

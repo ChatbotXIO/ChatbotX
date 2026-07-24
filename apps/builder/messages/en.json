@@ -1971,6 +1971,15 @@
     },
     "webchatParentUrl": {
       "label": "Webchat Parent URL"
+    },
+    "make": {
+      "inviteUrl": "Invite Link",
+      "inviteUrlHint": "The invite link for your published Make custom app (e.g. https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Events",
+      "placeholder": "Type an event name and press Enter",
+      "description": "Add one or more event names. When Make attaches a webhook for one of these events, data is sent to it when this step runs."
     }
   },
   "flows": {
@@ -2017,6 +2026,8 @@
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
       "callApi": "External API Request",
+      "make": "Make",
+      "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
@@ -2501,6 +2512,15 @@
     "errors": {
       "invalidApiKey": "Invalid API Key. Please check your SendGrid API Key and try again.",
       "missingScopes": "This API key must have Marketing read access. Please ensure your SendGrid API key includes Marketing permissions."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios.",
+      "notConfigured": "No Make invite link found. Please add one in Platform Settings.",
+      "noWorkspaceToken": "No Developer Access Token found for this workspace. Generate one in the Workspace token section above, then click Connect again."
     }
   },
   "integrations": {

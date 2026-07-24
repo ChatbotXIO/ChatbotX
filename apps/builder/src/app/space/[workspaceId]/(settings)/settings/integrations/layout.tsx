@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
-import { SiFacebook } from "@icons-pack/react-simple-icons"
+import { SiFacebook, SiMake } from "@icons-pack/react-simple-icons"
 import { BotIcon, CodeIcon, MailIcon, TableIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
@@ -30,6 +30,7 @@ type SettingIntegrationLayoutProps = {
   drip?: ReactNode
   sendGrid?: ReactNode
   klaviyo?: ReactNode
+  make?: ReactNode
 }
 
 export default function SettingIntegrationLayout({
@@ -50,6 +51,7 @@ export default function SettingIntegrationLayout({
   drip,
   sendGrid,
   klaviyo,
+  make,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
 
@@ -98,6 +100,11 @@ export default function SettingIntegrationLayout({
       keyName: t("facebookAds.title"),
       icon: SiFacebook,
       content: facebookAds,
+    },
+    {
+      keyName: t("make.title"),
+      icon: SiMake,
+      content: make,
     },
     {
       keyName: t("activeCampaign.title"),
