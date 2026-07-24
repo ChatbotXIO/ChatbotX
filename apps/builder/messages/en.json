@@ -415,6 +415,7 @@
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
     "operator": {
@@ -2191,6 +2192,9 @@
       "durationLabel": "Duration",
       "waitAndContinue": "Wait <value>{duration} {unit}</value> and continue",
       "cancelOnReplyHint": "The follow-up won't be sent if the contact replies before the time expires."
+    },
+    "setCustomField": {
+      "temporalHint": "Leave it empty to save the current date/time."
     }
   },
   "folders": {

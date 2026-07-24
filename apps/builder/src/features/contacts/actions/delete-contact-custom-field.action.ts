@@ -1,8 +1,10 @@
 "use server"
 
-import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
+import {
+  type ContactAccessScope,
+  contactCustomFieldService,
+  contactService,
+} from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -56,13 +58,9 @@ export const deleteContactCustomFields = async ({
     return
   }
 
-  await db.delete(contactCustomFieldModel).where(
-    and(
-      inArray(
-        contactCustomFieldModel.contactId,
-        contacts.map((c) => c.id),
-      ),
-      eq(contactCustomFieldModel.customFieldId, customFieldId),
-    ),
-  )
+  await contactCustomFieldService.deleteByCustomFieldId({
+    workspaceId,
+    contactIds: contacts.map((contact) => contact.id),
+    customFieldId,
+  })
 }

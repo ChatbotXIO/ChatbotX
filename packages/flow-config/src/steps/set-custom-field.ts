@@ -18,6 +18,13 @@ export const setCustomFieldStepSchema = z.object({
   inputFieldId: z.string().trim().min(1),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
+  /**
+   * IANA timezone captured from the editor's browser when the flow was saved,
+   * used to anchor a naive date/datetime `value` at runtime (the worker has no
+   * browser context) and to render "now" when `value` is left blank. Backend
+   * falls back to the contact/workspace zone when absent.
+   */
+  timezone: z.string().max(64).optional(),
 })
 
 export type SetCustomFieldStepSchema = z.infer<typeof setCustomFieldStepSchema>

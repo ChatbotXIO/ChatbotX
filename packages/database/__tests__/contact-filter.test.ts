@@ -45,6 +45,7 @@ describe("contact filter value-format helpers", () => {
     "2026-05-19 10:30",
     "2026-05-19T10:30:00Z",
     "2026-05-19T10:30:00+07:00",
+    "2024-02-29", // real leap day
   ])("accepts valid datetime value %s", (value) => {
     expect(isValidDateTimeFilterValue(value)).toBe(true)
   })
@@ -54,6 +55,11 @@ describe("contact filter value-format helpers", () => {
     "junk",
     "2026-13-40",
     "2026-05-19 25:99",
+    // Regex-valid but not a real calendar date: day <= 31 passes the pattern,
+    // yet the ::timestamptz cast downstream would throw on these.
+    "2026-02-30",
+    "2026-02-29", // 2026 is not a leap year
+    "2026-04-31", // April has 30 days
   ])("rejects invalid datetime value %s", (value) => {
     expect(isValidDateTimeFilterValue(value)).toBe(false)
   })
@@ -104,6 +110,49 @@ describe("contact filter permission helpers", () => {
         false,
       ),
     ).toEqual({ operator: "and", conditions: [] })
+  })
+
+  test("preserves the filter timezone while pruning email/phone fields", () => {
+    const contactFilter = {
+      operator: "and" as const,
+      timezone: "Asia/Ho_Chi_Minh",
+      conditions: [
+        { field: "email", operator: "eq", value: "ada@example.com" },
+        {
+          field: "customField",
+          operator: "isBetween",
+          value: ["2026-07-01", "2026-07-31"],
+        },
+      ],
+    }
+
+    // The date-range WHERE resolves against `timezone`; pruning PII conditions
+    // must not silently drop it, else the range shifts to UTC for restricted
+    // users only. See permission.ts.
+    expect(pruneEmailPhoneFilterConditions(contactFilter, false)).toEqual({
+      operator: "and",
+      timezone: "Asia/Ho_Chi_Minh",
+      conditions: [
+        {
+          field: "customField",
+          operator: "isBetween",
+          value: ["2026-07-01", "2026-07-31"],
+        },
+      ],
+    })
+  })
+
+  test("preserves the filter timezone even when every condition is pruned", () => {
+    expect(
+      pruneEmailPhoneFilterConditions(
+        {
+          operator: "or",
+          timezone: "America/New_York",
+          conditions: [{ field: "email", operator: "eq", value: "a@b.co" }],
+        },
+        false,
+      ),
+    ).toEqual({ operator: "and", timezone: "America/New_York", conditions: [] })
   })
 })
 
@@ -931,8 +980,14 @@ describe("applyContactFilter", () => {
     )
 
     expect(query.sql).toContain('MAX("ContactInbox"."lastOutboundMessageAt")')
-    expect(query.sql).toContain("date_trunc('day'")
-    expect(query.sql).toContain("INTERVAL '1 day'")
+    expect(query.sql).not.toContain("date_trunc")
+    // Second-precision eq -> a one-second window, matching the column path.
+    expect(query.params).toEqual(
+      expect.arrayContaining([
+        "2026-05-19T10:00:00.000Z",
+        "2026-05-19T10:00:01.000Z",
+      ]),
+    )
   })
 
   test("maps minutes-ago comparison directions to timestamp boundaries", () => {
@@ -965,9 +1020,11 @@ describe("applyContactFilter", () => {
         ],
       }),
     )
-    expect(lessThan.sql).toContain(
-      '"Contact"."lastReadAt" > NOW() - make_interval',
-    )
+    // lastSeen resolves to the latest read time across the contact's inboxes
+    // (MAX(ContactInbox.contactLastReadAt)), not the dead Contact.lastReadAt.
+    expect(lessThan.sql).toContain('MAX("ContactInbox"."contactLastReadAt")')
+    expect(lessThan.sql).toContain("NOW() - make_interval")
+    expect(lessThan.sql).not.toContain('"Contact"."lastReadAt"')
     expect(lessThan.params).toEqual([15])
   })
 
@@ -1066,7 +1123,7 @@ describe("applyContactFilter", () => {
     })
   })
 
-  test("renders static date equality as a day range", () => {
+  test("renders static datetime equality at the typed precision", () => {
     const where = applyContactFilter({
       operator: "and",
       conditions: [
@@ -1080,9 +1137,36 @@ describe("applyContactFilter", () => {
 
     const query = renderContactWhere(where)
 
+    // A second-precision value matches its own one-second window [t, t+1s),
+    // not the whole day — same convention as datetime custom fields.
     expect(query.sql).toContain('"Contact"."createdAt" >=')
-    expect(query.sql).toContain("date_trunc('day'")
-    expect(query.sql).toContain("INTERVAL '1 day'")
+    expect(query.sql).toContain('"Contact"."createdAt" <')
+    expect(query.sql).not.toContain("date_trunc")
+    expect(query.params).toEqual([
+      "2026-05-19T10:00:00.000Z",
+      "2026-05-19T10:00:01.000Z",
+    ])
+  })
+
+  test("renders a static date-only equality as a full-day range", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "contactCreatedAt",
+          operator: operatorTypes.enum.eq,
+          value: "2026-05-19",
+        },
+      ],
+    })
+
+    const query = renderContactWhere(where)
+
+    // No time typed -> day precision -> the whole [00:00, next-00:00) day.
+    expect(query.params).toEqual([
+      "2026-05-19T00:00:00.000Z",
+      "2026-05-20T00:00:00.000Z",
+    ])
   })
 
   test("renders static date intervals with supported SQL", () => {
@@ -1099,14 +1183,41 @@ describe("applyContactFilter", () => {
 
     const query = renderContactWhere(where)
 
-    expect(query.sql).toContain('"Contact"."lastReadAt" >=')
-    expect(query.sql).toContain('"Contact"."lastReadAt" <=')
+    // lastSeen aggregates over the contact's inboxes; half-open [loStart, hiEnd):
+    // the To bound extends to the end of the typed precision unit (23:59:59 ->
+    // +1s), so the upper comparison is `<`, never the inclusive `<=` that
+    // silently dropped the final second.
+    expect(query.sql).toContain('MAX("ContactInbox"."contactLastReadAt")')
+    expect(query.sql).not.toContain('"Contact"."lastReadAt"')
+    expect(query.sql).not.toContain("<=")
     expect(query.sql).toContain("::timestamptz")
     expect(query.params).toEqual([
-      "2026-05-01T00:00:00Z",
-      "2026-05-31T23:59:59Z",
+      "2026-05-01T00:00:00.000Z",
+      "2026-06-01T00:00:00.000Z",
     ])
-    expect(query.sql).not.toContain('"Contact"."lastReadAt" IS NULL')
+  })
+
+  test("extends an isBetween To bound to the end of the typed precision unit", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [
+          {
+            field: "lastSeen",
+            operator: operatorTypes.enum.isBetween,
+            value: ["2026-07-01 09:00", "2026-07-01 09:00"],
+          },
+        ],
+      }),
+    )
+
+    // From == To at minute precision spans the whole 09:00 minute:
+    // [09:00:00 +07, 09:01:00 +07) === [02:00:00Z, 02:01:00Z).
+    expect(query.params).toEqual([
+      "2026-07-01T02:00:00.000Z",
+      "2026-07-01T02:01:00.000Z",
+    ])
   })
 
   test("renders static date notBetween with supported SQL", () => {
@@ -1123,9 +1234,11 @@ describe("applyContactFilter", () => {
 
     const query = renderContactWhere(where)
 
-    expect(query.sql).toContain('"Contact"."lastReadAt" <')
-    expect(query.sql).toContain('"Contact"."lastReadAt" >')
-    expect(query.sql).toContain('"Contact"."lastReadAt" IS NULL')
+    // Null-safe negation over the aggregate: before loStart, at/after hiEnd, or
+    // no read time at all (NULL). NULL rows must survive notBetween.
+    expect(query.sql).toContain('MAX("ContactInbox"."contactLastReadAt")')
+    expect(query.sql).not.toContain('"Contact"."lastReadAt"')
+    expect(query.sql).toContain("IS NULL")
     expect(query.sql).toContain("::timestamptz")
   })
 
@@ -1144,16 +1257,235 @@ describe("applyContactFilter", () => {
     expect(where).toEqual({})
   })
 
-  test("guards datetime custom-field casts and compares equality by day", () => {
+  test("interprets a naive date equality in the supplied timezone (UTC+7)", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [
+          {
+            field: "contactCreatedAt",
+            operator: operatorTypes.enum.eq,
+            value: "2026-07-20",
+          },
+        ],
+      }),
+    )
+
+    // 2026-07-20 00:00 +07 === 2026-07-19T17:00Z; next day 00:00 +07 === 2026-07-20T17:00Z
+    expect(query.sql).not.toContain("date_trunc")
+    expect(query.params).toEqual([
+      "2026-07-19T17:00:00.000Z",
+      "2026-07-20T17:00:00.000Z",
+    ])
+  })
+
+  test("interprets a naive datetime gt in the supplied timezone (UTC+7)", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [
+          {
+            field: "lastSeen",
+            operator: operatorTypes.enum.gt,
+            value: "2026-07-20 14:30",
+          },
+        ],
+      }),
+    )
+
+    // gt means "strictly after the whole typed unit", so it pins to the END of
+    // the 14:30 minute: 2026-07-20 14:31 +07 === 2026-07-20T07:31Z.
+    expect(query.sql).toContain('MAX("ContactInbox"."contactLastReadAt")')
+    expect(query.sql).not.toContain('"Contact"."lastReadAt"')
+    expect(query.params).toEqual(["2026-07-20T07:31:00.000Z"])
+  })
+
+  test("interprets a naive datetime range in the supplied timezone (UTC+7)", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [
+          {
+            field: "lastInteraction",
+            operator: operatorTypes.enum.isBetween,
+            value: ["2026-07-01 00:00", "2026-07-31 23:59"],
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('MAX("ContactInbox"."lastIncomingMessageAt")')
+    // The To bound "2026-07-31 23:59" extends to the end of that minute
+    // (23:59 -> +1min -> next-day 00:00 +07 === 2026-07-31T17:00Z).
+    expect(query.params).toEqual(
+      expect.arrayContaining([
+        "2026-06-30T17:00:00.000Z",
+        "2026-07-31T17:00:00.000Z",
+      ]),
+    )
+  })
+
+  test("defaults date filters to UTC when no timezone is supplied", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "contactCreatedAt",
+            operator: operatorTypes.enum.eq,
+            value: "2026-07-20",
+          },
+        ],
+      }),
+    )
+
+    expect(query.params).toEqual([
+      "2026-07-20T00:00:00.000Z",
+      "2026-07-21T00:00:00.000Z",
+    ])
+  })
+
+  test("uses an explicit offset in the value over the supplied timezone", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [
+          {
+            field: "lastSeen",
+            operator: operatorTypes.enum.gt,
+            value: "2026-07-20T14:30:00+00:00",
+          },
+        ],
+      }),
+    )
+
+    // explicit +00:00 offset is honored, not re-interpreted in +07; gt pins to
+    // the end of the typed second (14:30:00 -> +1s -> 14:30:01Z).
+    expect(query.params).toEqual(["2026-07-20T14:30:01.000Z"])
+  })
+
+  test("falls back to UTC for an unrecognized timezone", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Not/AZone",
+        conditions: [
+          {
+            field: "contactCreatedAt",
+            operator: operatorTypes.enum.eq,
+            value: "2026-07-20",
+          },
+        ],
+      }),
+    )
+
+    expect(query.params).toEqual([
+      "2026-07-20T00:00:00.000Z",
+      "2026-07-21T00:00:00.000Z",
+    ])
+  })
+
+  test("applies the criteria timezone to custom-field dates", () => {
     const where = applyContactFilter({
       operator: "and",
+      timezone: "Asia/Ho_Chi_Minh",
       conditions: [
         {
           field: "customField",
           customFieldId: "cf-1",
           valueType: "datetime",
           operator: operatorTypes.enum.eq,
-          value: "2026-05-19T10:00:00Z",
+          value: "2026-07-20",
+        },
+      ],
+    })
+
+    const query = renderFirstRawCondition(where)
+
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.sql).not.toContain("date_trunc('day'")
+    expect(query.params).toContain("2026-07-19T17:00:00.000Z")
+    expect(query.params).toContain("2026-07-20T17:00:00.000Z")
+  })
+
+  test("compares a custom-field date with time by wall clock, ignoring the criteria timezone", () => {
+    // A DATE field filters exactly what the user typed. "2026-07-20 09:30" has
+    // no offset, so the VN criteria timezone must NOT shift it: match the 09:30
+    // minute window in wall clock (::timestamp), not 02:30Z.
+    const where = applyContactFilter({
+      operator: "and",
+      timezone: "Asia/Ho_Chi_Minh",
+      conditions: [
+        {
+          field: "customField",
+          customFieldId: "cf-1",
+          valueType: "datetime",
+          customFieldType: "date",
+          operator: operatorTypes.enum.eq,
+          value: "2026-07-20 09:30",
+        },
+      ],
+    })
+
+    const query = renderFirstRawCondition(where)
+
+    expect(query.sql).toContain("::timestamp")
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.sql).not.toContain("left(")
+    expect(query.params).toContain("2026-07-20T09:30:00")
+    expect(query.params).toContain("2026-07-20T09:31:00")
+    expect(query.params).not.toContain("2026-07-20T02:30:00.000Z")
+  })
+
+  test.each([
+    {
+      name: "day precision when only a date is typed",
+      timezone: "UTC",
+      value: "2026-05-19",
+      start: "2026-05-19T00:00:00.000Z",
+      end: "2026-05-20T00:00:00.000Z",
+    },
+    {
+      name: "minute precision when a time is typed",
+      timezone: "UTC",
+      value: "2026-05-19 10:00",
+      start: "2026-05-19T10:00:00.000Z",
+      end: "2026-05-19T10:01:00.000Z",
+    },
+    {
+      name: "second precision when seconds are typed",
+      timezone: "UTC",
+      value: "2026-05-19T10:00:30Z",
+      start: "2026-05-19T10:00:30.000Z",
+      end: "2026-05-19T10:00:31.000Z",
+    },
+    {
+      name: "minute precision anchored to the criteria timezone",
+      timezone: "Asia/Ho_Chi_Minh",
+      value: "2026-05-19 10:00",
+      start: "2026-05-19T03:00:00.000Z",
+      end: "2026-05-19T03:01:00.000Z",
+    },
+  ])("guards a datetime custom-field cast and matches equality by the typed precision window: $name", ({
+    timezone,
+    value,
+    start,
+    end,
+  }) => {
+    const where = applyContactFilter({
+      operator: "and",
+      timezone,
+      conditions: [
+        {
+          field: "customField",
+          customFieldId: "cf-1",
+          valueType: "datetime",
+          operator: operatorTypes.enum.eq,
+          value,
         },
       ],
     })
@@ -1163,8 +1495,10 @@ describe("applyContactFilter", () => {
     expect(query.sql).toContain("CASE WHEN")
     expect(query.sql).toContain("NULLIF")
     expect(query.sql).toContain("::timestamptz")
-    expect(query.sql).toContain("date_trunc('day'")
-    expect(query.sql).toContain("INTERVAL '1 day'")
+    expect(query.sql).not.toContain("date_trunc('day'")
+    expect(query.sql).not.toContain("INTERVAL '1 day'")
+    expect(query.params).toContain(start)
+    expect(query.params).toContain(end)
   })
 
   test("renders numeric custom-field ranges with numeric guard", () => {
@@ -1210,7 +1544,7 @@ describe("applyContactFilter", () => {
     expect(query.sql).toContain("CASE WHEN")
     expect(query.sql).toContain("::timestamptz")
     expect(query.sql).toContain(">=")
-    expect(query.sql).toContain("<=")
+    expect(query.sql).toContain("<")
   })
 
   test("ignores datetime custom-field conditions with invalid input", () => {
@@ -1594,7 +1928,6 @@ describe("applyContactFilter — boolean-from-timestamp columns", () => {
 describe("applyContactFilter — date columns", () => {
   test.each([
     ["contactCreatedAt", "createdAt"],
-    ["lastSeen", "lastReadAt"],
   ])("maps %s isEmpty/isNotEmpty to %s null-checks", (field, column) => {
     expect(firstAnd(field, operatorTypes.enum.isEmpty)).toEqual({
       [column]: { isNull: true },
@@ -1604,23 +1937,55 @@ describe("applyContactFilter — date columns", () => {
     })
   })
 
-  test("renders ne as an outside-the-day range", () => {
+  test("maps lastSeen isEmpty/isNotEmpty to a ContactInbox aggregate null-check", () => {
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "lastSeen", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('MAX("ContactInbox"."contactLastReadAt")')
+    expect(empty.sql).toContain("IS NULL")
+    expect(empty.sql).not.toContain('"Contact"."lastReadAt"')
+
+    const notEmpty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "lastSeen", operator: operatorTypes.enum.isNotEmpty },
+        ],
+      }),
+    )
+    expect(notEmpty.sql).toContain('MAX("ContactInbox"."contactLastReadAt")')
+    expect(notEmpty.sql).toContain("IS NOT NULL")
+    expect(notEmpty.sql).not.toContain('"Contact"."lastReadAt"')
+  })
+
+  test("renders ne as an outside-the-precision-window range", () => {
     const query = renderContactWhere(
       applyContactFilter({
         operator: "and",
         conditions: [
           {
-            field: "lastSeen",
+            field: "contactCreatedAt",
             operator: operatorTypes.enum.ne,
             value: "2026-05-19T10:00:00Z",
           },
         ],
       }),
     )
-    expect(query.sql).toContain('"Contact"."lastReadAt" <')
-    expect(query.sql).toContain('"Contact"."lastReadAt" >=')
-    expect(query.sql).toContain('"Contact"."lastReadAt" IS NULL')
-    expect(query.sql).toContain("date_trunc('day'")
+    // Null-safe negation of the one-second window: before start, at/after end,
+    // or NULL. NULL rows must survive `ne`, which raw SQL `<>` would drop.
+    expect(query.sql).toContain('"Contact"."createdAt" <')
+    expect(query.sql).toContain('"Contact"."createdAt" >=')
+    expect(query.sql).toContain('"Contact"."createdAt" IS NULL')
+    expect(query.sql).not.toContain("date_trunc")
+    expect(query.params).toEqual([
+      "2026-05-19T10:00:00.000Z",
+      "2026-05-19T10:00:01.000Z",
+    ])
   })
 
   test.each([
@@ -1797,7 +2162,12 @@ describe("applyContactFilter — contactInbox relation fields", () => {
       'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
     )
     expect(eq.sql).toContain('"latestInteraction"."latest" >=')
-    expect(eq.sql).toContain("date_trunc('day'")
+    expect(eq.sql).not.toContain("date_trunc")
+    // Aggregate path mirrors the column path: second-precision one-second window.
+    expect(eq.params).toEqual([
+      "2026-05-19T10:00:00.000Z",
+      "2026-05-19T10:00:01.000Z",
+    ])
 
     const ne = renderContactWhere(
       applyContactFilter({
@@ -2072,21 +2442,35 @@ describe("applyContactFilter — conversation relation fields", () => {
 })
 
 describe("applyContactFilter — custom fields", () => {
-  const customField = (valueType: string, operator: string, value?: unknown) =>
-    applyContactFilter({
+  const customField = (
+    valueType: string,
+    operator: string,
+    value?: unknown,
+    customFieldType = valueType === "datetime" ? "datetime" : undefined,
+  ) => {
+    const condition =
+      value === undefined
+        ? {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType,
+            customFieldType,
+            operator,
+          }
+        : {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType,
+            customFieldType,
+            operator,
+            value,
+          }
+
+    return applyContactFilter({
       operator: "and",
-      conditions: [
-        value === undefined
-          ? { field: "customField", customFieldId: "cf-1", valueType, operator }
-          : {
-              field: "customField",
-              customFieldId: "cf-1",
-              valueType,
-              operator,
-              value,
-            },
-      ],
+      conditions: [condition],
     })
+  }
 
   test.each([
     {
@@ -2108,10 +2492,11 @@ describe("applyContactFilter — custom fields", () => {
     {
       valueType: "datetime",
       operator: operatorTypes.enum.ne,
+      // Second precision + explicit Z offset -> a 1-second instant window.
       value: "2026-05-19T10:00:00Z",
       contains: [">=", "<"],
       absent: [" IS NOT TRUE OR ", " OR "],
-      params: ["2026-05-19T10:00:00Z"],
+      params: ["cf-1", "2026-05-19T10:00:00.000Z", "2026-05-19T10:00:01.000Z"],
     },
     {
       valueType: "text",
@@ -2141,9 +2526,10 @@ describe("applyContactFilter — custom fields", () => {
       valueType: "datetime",
       operator: operatorTypes.enum.notBetween,
       value: ["2026-01-01T00:00:00Z", "2026-12-31T00:00:00Z"],
-      contains: [">=", "<="],
+      contains: [">=", "<"],
       absent: [" OR "],
-      params: ["2026-01-01T00:00:00Z", "2026-12-31T00:00:00Z"],
+      // Upper bound extends to the end of the typed second (00:00:00 -> 00:00:01).
+      params: ["2026-01-01T00:00:00.000Z", "2026-12-31T00:00:01.000Z"],
     },
     {
       valueType: "text",
@@ -2233,6 +2619,158 @@ describe("applyContactFilter — custom fields", () => {
     expect(
       customField("datetime", operatorTypes.enum.ne, "not-a-date"),
     ).toEqual({})
+  })
+
+  test("renders date custom-field equality as a day-only comparison", () => {
+    const query = renderFirstRawCondition(
+      customField("datetime", operatorTypes.enum.eq, "2026-07-22", "date"),
+    )
+
+    expect(query.sql).toContain("left(")
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.params).toContain("2026-07-22")
+  })
+
+  test("resolves legacy temporal custom-field filters without saved customFieldType", () => {
+    const query = renderFirstRawCondition(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "datetime",
+            operator: operatorTypes.enum.eq,
+            value: "2026-07-22 09:30",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('FROM "CustomField"')
+    expect(query.sql).toContain('"CustomField"."type" =')
+    expect(query.sql).toContain("::timestamp")
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("date")
+    expect(query.params).toContain("2026-07-22T09:30:00")
+  })
+
+  test("renders date custom-field equality with time as a naive wall-clock minute window", () => {
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.eq,
+        "2026-07-22 09:30",
+        "date",
+      ),
+    )
+
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.sql).toContain("::timestamp")
+    expect(query.sql).not.toContain("left(")
+    expect(query.params).toContain("2026-07-22T09:30:00")
+    expect(query.params).toContain("2026-07-22T09:31:00")
+  })
+
+  test("compares a date custom field with an explicit offset by an instant window", () => {
+    // The user typed a timezone, so we honor it: +07:00 09:30:00 -> 02:30:00Z,
+    // and the typed seconds narrow the match to that one-second window.
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.eq,
+        "2026-07-22T09:30:00+07:00",
+        "date",
+      ),
+    )
+
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("2026-07-22T02:30:00.000Z")
+    expect(query.params).toContain("2026-07-22T02:30:01.000Z")
+  })
+
+  test.each([
+    [operatorTypes.enum.gt, "2026-07-23T00:00:00.000Z"],
+    [operatorTypes.enum.gte, "2026-07-22T00:00:00.000Z"],
+    [operatorTypes.enum.lt, "2026-07-22T00:00:00.000Z"],
+    [operatorTypes.enum.lte, "2026-07-23T00:00:00.000Z"],
+  ])("compares a date-only custom field %s by a naive day window", (operator, boundary) => {
+    const query = renderFirstRawCondition(
+      customField("datetime", operator, "2026-07-22", "date"),
+    )
+
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.sql).toContain("::timestamp")
+    expect(query.params).toContain(boundary)
+  })
+
+  test("renders date custom-field inequality as NOT EXISTS over a day comparison", () => {
+    const query = renderFirstRawCondition(
+      customField("datetime", operatorTypes.enum.ne, "2026-07-22", "date"),
+    )
+
+    expect(query.sql).toContain("NOT EXISTS (")
+    expect(query.sql).toContain("left(")
+    expect(query.params).toContain("2026-07-22")
+  })
+
+  test("compares a date custom-field range by naive wall clock", () => {
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.isBetween,
+        ["2026-01-01", "2026-12-31"],
+        "date",
+      ),
+    )
+
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.params).toContain("2026-01-01T00:00:00")
+    // Upper bound extends to the end of the typed day (through all of 12-31).
+    expect(query.params).toContain("2027-01-01T00:00:00")
+  })
+
+  test("compares a date custom-field range by instant when both bounds carry an offset", () => {
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.isBetween,
+        ["2026-01-01T00:00:00+07:00", "2026-12-31T00:00:00+07:00"],
+        "date",
+      ),
+    )
+
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("2025-12-31T17:00:00.000Z")
+    expect(query.params).toContain("2026-12-30T17:00:01.000Z")
+  })
+
+  test("extends a datetime range upper bound to the end of the typed minute", () => {
+    // From=To "12:12" must span the whole 12:12 minute, not just the instant
+    // 12:12:00 — so a stored 12:12:12 falls inside the range. The upper bound is
+    // the half-open END of the typed unit (12:13:00), never its start.
+    const query = renderFirstRawCondition(
+      applyContactFilter({
+        operator: "and",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [
+          {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "datetime",
+            customFieldType: "datetime",
+            operator: operatorTypes.enum.isBetween,
+            value: ["2026-07-02 12:12", "2026-07-02 12:12"],
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain(">=")
+    expect(query.sql).toContain("<")
+    expect(query.sql).not.toContain("<=")
+    expect(query.params).toContain("2026-07-02T05:12:00.000Z")
+    expect(query.params).toContain("2026-07-02T05:13:00.000Z")
   })
 
   test.each([
@@ -2528,6 +3066,30 @@ describe("applyContactFilter — custom field remaining branches", () => {
     ])
     expect(sql).toContain("CASE WHEN")
     expect(sql).toContain("::timestamptz")
+  })
+  test("renders datetime isBetween with timezone-aware range bounds", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      timezone: "Asia/Ho_Chi_Minh",
+      conditions: [
+        {
+          field: "customField",
+          customFieldId: "cf-1",
+          valueType: "datetime",
+          operator: operatorTypes.enum.isBetween,
+          value: ["2026-05-01 00:00", "2026-05-31 23:59"],
+        },
+      ],
+    })
+
+    const query = renderFirstRawCondition(where)
+
+    expect(query.sql).toContain("CASE WHEN")
+    expect(query.sql).toContain(">=")
+    expect(query.sql).toContain("<")
+    expect(query.params).toContain("2026-04-30T17:00:00.000Z")
+    // Upper bound extends to the end of the typed minute (23:59 -> next 00:00).
+    expect(query.params).toContain("2026-05-31T17:00:00.000Z")
   })
   test("renders datetime ne as a guarded outside-the-day range", () => {
     const sql = cfSql("datetime", operatorTypes.enum.ne, "2026-05-19T10:00:00Z")

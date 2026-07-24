@@ -1,17 +1,13 @@
+import { contactCustomFieldService } from "@chatbotx.io/business"
 import { db, sql } from "@chatbotx.io/database/client"
-import {
-  contactCustomFieldModel,
-  whatsappFlowModel,
-} from "@chatbotx.io/database/schema"
+import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
-import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import {
   type FlowNode,
   stepTypes,
   type WhatsappFlowFieldMapping,
   type WhatsappFlowStepSchema,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 
 type AnyStep = { stepType: string; buttons?: Array<{ id: string }> }
@@ -140,70 +136,22 @@ const applyFieldMappings = async (props: {
     return
   }
 
-  await Promise.all(
-    validMappings.map((mapping) =>
-      upsertContactCustomField({
-        workspaceId: props.workspaceId,
-        contactId: props.contactId,
-        mapping,
-        rawValue: props.flowResponse[mapping.paramKey],
-      }),
-    ),
-  )
-}
+  const fields = validMappings.flatMap((mapping) => {
+    const value = serializeFlowValue(props.flowResponse[mapping.paramKey])
+    return value === null
+      ? []
+      : [{ customFieldId: mapping.customFieldId, value }]
+  })
 
-const upsertContactCustomField = async (props: {
-  workspaceId: string
-  contactId: string
-  mapping: WhatsappFlowFieldMapping & { customFieldId: string }
-  rawValue: unknown
-}) => {
-  const value = serializeFlowValue(props.rawValue)
-  if (value === null) {
+  if (fields.length === 0) {
     return
   }
 
-  const existing = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: props.contactId,
-      customFieldId: props.mapping.customFieldId,
-    },
-    columns: { value: true },
+  await contactCustomFieldService.setValues({
+    workspaceId: props.workspaceId,
+    contactId: props.contactId,
+    fields,
   })
-  const oldValue = existing?.value ?? null
-
-  await db
-    .insert(contactCustomFieldModel)
-    .values({
-      id: createId(),
-      contactId: props.contactId,
-      customFieldId: props.mapping.customFieldId,
-      value,
-    })
-    .onConflictDoUpdate({
-      target: [
-        contactCustomFieldModel.contactId,
-        contactCustomFieldModel.customFieldId,
-      ],
-      set: { value },
-    })
-
-  const fieldName = props.mapping.paramLabel ?? props.mapping.paramKey
-  try {
-    await emitCustomFieldChanged(
-      props.workspaceId,
-      props.contactId,
-      props.mapping.customFieldId,
-      fieldName,
-      oldValue,
-      value,
-    )
-  } catch (err) {
-    logger.warn(
-      { err },
-      "[whatsapp-flow-response] Failed to emit customFieldChanged",
-    )
-  }
 }
 
 const serializeFlowValue = (raw: unknown): string | null => {

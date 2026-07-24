@@ -415,6 +415,7 @@
     "yes": "Có",
     "no": "Không",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Nhập ngày dạng YYYY-MM-DD HH:mm hoặc một biến",
     "operator": {
@@ -2206,6 +2207,9 @@
       "durationLabel": "Thời lượng",
       "waitAndContinue": "Chờ <value>{duration} {unit}</value> rồi tiếp tục",
       "cancelOnReplyHint": "Follow-up sẽ không được gửi nếu khách hàng trả lời trước khi hết thời gian chờ."
+    },
+    "setCustomField": {
+      "temporalHint": "Để trống để lưu ngày/giờ hiện tại."
     }
   },
   "folders": {

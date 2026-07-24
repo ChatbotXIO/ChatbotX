@@ -65,6 +65,14 @@ const datetimeCustomFieldConfig: FieldConfig = {
   group: "customFields",
 }
 
+const dateCustomFieldConfig: FieldConfig = {
+  name: "customField:cf-birthday",
+  customFieldId: "cf-birthday",
+  customFieldType: "date",
+  formField: formFieldTypes.enum.datetime,
+  group: "customFields",
+}
+
 const booleanCustomFieldConfig: FieldConfig = {
   name: "customField:cf-bool",
   customFieldId: "cf-bool",
@@ -280,6 +288,21 @@ describe("round-trip editing", () => {
     }
 
     expect(roundTripCondition(condition, numberCustomFieldConfig)).toEqual(
+      condition,
+    )
+  })
+
+  test("keeps a custom date equality condition unchanged", () => {
+    const condition: ContactFilterCondition = {
+      field: "customField",
+      customFieldId: "cf-birthday",
+      customFieldType: "date",
+      valueType: formFieldTypes.enum.datetime,
+      operator: operatorTypes.enum.eq,
+      value: "2026-07-22",
+    }
+
+    expect(roundTripCondition(condition, dateCustomFieldConfig)).toEqual(
       condition,
     )
   })

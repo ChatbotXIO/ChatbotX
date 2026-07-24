@@ -1,4 +1,5 @@
 import {
+  contactCustomFieldService,
   contactInboxService,
   messageCleanupService,
   workspaceService,
@@ -11,7 +12,6 @@ import {
   contactSources,
 } from "@chatbotx.io/database/partials"
 import {
-  contactCustomFieldModel,
   contactInboxModel,
   contactModel,
   contactsToTagsModel,
@@ -111,7 +111,11 @@ const processContactRow = (
       return []
     }
 
-    const normalized = validateCustomFieldValue(type, field.value)
+    const normalized = validateCustomFieldValue(
+      type,
+      field.value,
+      meta.timezone,
+    )
     if (normalized === null) {
       return []
     }
@@ -237,17 +241,14 @@ const insertContactBatch = async (
       })),
     )
 
-    const customFieldValues = survivors.flatMap(({ contactId, row }) =>
-      row.customFields.map((field) => ({
-        id: createId(),
+    await contactCustomFieldService.insertNormalizedValuesForNewContacts({
+      workspaceId: ctx.row.workspaceId,
+      entries: survivors.map(({ contactId, row }) => ({
         contactId,
-        customFieldId: field.customFieldId,
-        value: field.value,
+        fields: row.customFields,
       })),
-    )
-    if (customFieldValues.length) {
-      await tx.insert(contactCustomFieldModel).values(customFieldValues)
-    }
+      tx,
+    })
 
     if (ctx.meta.tagId) {
       const tagId = ctx.meta.tagId

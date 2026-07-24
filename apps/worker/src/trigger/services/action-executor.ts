@@ -1,10 +1,11 @@
-import { conversationService, tagSyncService } from "@chatbotx.io/business"
+import {
+  contactCustomFieldService,
+  conversationService,
+  tagSyncService,
+} from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { triggerActions } from "@chatbotx.io/database/partials"
-import {
-  contactCustomFieldModel,
-  contactsToTagsModel,
-} from "@chatbotx.io/database/schema"
+import { contactsToTagsModel } from "@chatbotx.io/database/schema"
 import {
   errorStateDefaultFn,
   FieldOperationType,
@@ -133,35 +134,22 @@ export class ActionExecutor {
           FieldOperationType.set
 
         if (operation === FieldOperationType.set) {
-          await db
-            .insert(contactCustomFieldModel)
-            .values({
-              contactId: conversation.contactId,
-              customFieldId,
-              value,
-              id: createId(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                contactCustomFieldModel.contactId,
-                contactCustomFieldModel.customFieldId,
-              ],
-              set: { value },
-            })
+          await contactCustomFieldService.setValues({
+            workspaceId,
+            contactId: conversation.contactId,
+            fields: [{ customFieldId, value }],
+          })
         }
         break
       }
 
       case triggerActions.enum.clearCustomField: {
         const customFieldId = action.customFieldId as string
-        await db
-          .delete(contactCustomFieldModel)
-          .where(
-            and(
-              eq(contactCustomFieldModel.contactId, conversation.contactId),
-              eq(contactCustomFieldModel.customFieldId, customFieldId),
-            ),
-          )
+        await contactCustomFieldService.deleteByCustomFieldId({
+          workspaceId,
+          contactIds: [conversation.contactId],
+          customFieldId,
+        })
         break
       }
 

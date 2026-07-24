@@ -51,6 +51,7 @@ vi.mock("@chatbotx.io/database/queries", () => ({
     canViewEmailAndPhone || !contactFilter
       ? contactFilter
       : {
+          ...contactFilter,
           operator: contactFilter.operator,
           conditions: contactFilter.conditions.filter((condition) => {
             const field =

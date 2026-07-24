@@ -39,6 +39,7 @@ import {
   useInboxOptionsByChannel,
 } from "@/features/inboxes/provider/inbox-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 
 export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
@@ -46,6 +47,7 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
   const [fileId, setFileId] = useState("")
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [timezone, setTimezone] = useState("")
   const hasFile = fileId !== ""
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -83,6 +85,7 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
         defaultValues: {
           fileId: "",
           inboxId: "",
+          timezone: undefined,
           countryCode: undefined,
           fieldMapping: [{ column: "", customFieldId: "" }],
         },
@@ -94,6 +97,18 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
   useEffect(() => {
     form.setValue("fileId", fileId, { shouldValidate: true })
   }, [fileId, form.setValue])
+
+  useEffect(() => {
+    setTimezone(getBrowserTimezone())
+  }, [])
+
+  useEffect(() => {
+    if (timezone) {
+      form.setValue("timezone", timezone, {
+        shouldValidate: true,
+      })
+    }
+  }, [timezone, form.setValue])
 
   return (
     <>

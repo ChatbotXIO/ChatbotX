@@ -162,11 +162,13 @@ describe("getSocialAuthForTenant", () => {
 
     expect(first).toBe(second)
     expect(mockCreateAuth).toHaveBeenCalledTimes(1)
-    expect(mockCreateAuth).toHaveBeenCalledWith({
-      socialCredentials: {
-        google: { clientId: "platform-client", clientSecret: "secret" },
-      },
-    })
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        socialCredentials: {
+          google: { clientId: "platform-client", clientSecret: "secret" },
+        },
+      }),
+    )
   })
 
   test("keeps separate caches per provider for the same clientId", async () => {
@@ -190,8 +192,10 @@ describe("getSocialAuthForTenant", () => {
     const b = await getSocialAuthForTenant(ROOT_TENANT_ID, "google")
 
     expect(a).toBe(b)
-    expect(mockCreateAuth).toHaveBeenCalledWith({
-      socialCredentials: { google: null },
-    })
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        socialCredentials: { google: null },
+      }),
+    )
   })
 })

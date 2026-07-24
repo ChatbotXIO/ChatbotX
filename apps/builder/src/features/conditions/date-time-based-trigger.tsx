@@ -5,7 +5,9 @@ import {
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
+import { useEffect } from "react"
 import { useFormContext } from "react-hook-form"
+import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 
 export const DateTimeBasedTrigger = ({
@@ -33,6 +35,16 @@ export const DateTimeBasedTrigger = ({
   }))
 
   const form = useFormContext()
+
+  // Stamp the editor's timezone so the worker can resolve the target field's
+  // day boundaries / hour-of-day at runtime. Guarded on absence so re-opening a
+  // saved condition preserves the zone it was created in.
+  useEffect(() => {
+    if (!form.getValues(`${parentName}.value.timezone`)) {
+      form.setValue(`${parentName}.value.timezone`, getBrowserTimezone())
+    }
+  }, [form, parentName])
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
