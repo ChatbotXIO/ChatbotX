@@ -34,6 +34,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import { enrollContactInSequence } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
+import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -45,6 +46,13 @@ export async function setContactCustomField({
     contactId: conversation.contactId,
     keyword: step.inputFieldId,
     value: step.value,
+    // The editor captured its browser zone at save time; anchor naive
+    // date/datetime values to it (worker has no browser context). Lenient
+    // parsing accepts flexible user input (unix ts, "23/07/2026", ...), and a
+    // blank value stamps "now" in that zone.
+    sourceTimezoneOverride: step.timezone,
+    temporalInputParsing: TemporalInputParsing.Lenient,
+    fillEmptyTemporalWithNow: true,
   })
 }
 

@@ -1352,7 +1352,10 @@ describe("applyContactFilter", () => {
     expect(query.params).toContain("2026-07-20T17:00:00.000Z")
   })
 
-  test("applies the criteria timezone to custom-field date equality with time", () => {
+  test("compares a custom-field date with time by wall clock, ignoring the criteria timezone", () => {
+    // A DATE field filters exactly what the user typed. "2026-07-20 09:30" has
+    // no offset, so the VN criteria timezone must NOT shift it: compare 09:30
+    // wall clock (::timestamp), not 02:30Z.
     const where = applyContactFilter({
       operator: "and",
       timezone: "Asia/Ho_Chi_Minh",
@@ -1370,9 +1373,10 @@ describe("applyContactFilter", () => {
 
     const query = renderFirstRawCondition(where)
 
-    expect(query.sql).toContain("::timestamptz")
+    expect(query.sql).not.toContain("::timestamptz")
     expect(query.sql).not.toContain("left(")
-    expect(query.params).toContain("2026-07-20T02:30:00.000Z")
+    expect(query.params).toContain("2026-07-20T09:30")
+    expect(query.params).not.toContain("2026-07-20T02:30:00.000Z")
   })
 
   test("guards datetime custom-field casts and compares equality by day", () => {
@@ -2317,29 +2321,31 @@ describe("applyContactFilter — custom fields", () => {
     valueType: string,
     operator: string,
     value?: unknown,
-    customFieldType?: string,
-  ) =>
-    applyContactFilter({
+    customFieldType = valueType === "datetime" ? "datetime" : undefined,
+  ) => {
+    const condition =
+      value === undefined
+        ? {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType,
+            customFieldType,
+            operator,
+          }
+        : {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType,
+            customFieldType,
+            operator,
+            value,
+          }
+
+    return applyContactFilter({
       operator: "and",
-      conditions: [
-        value === undefined
-          ? {
-              field: "customField",
-              customFieldId: "cf-1",
-              valueType,
-              customFieldType,
-              operator,
-            }
-          : {
-              field: "customField",
-              customFieldId: "cf-1",
-              valueType,
-              customFieldType,
-              operator,
-              value,
-            },
-      ],
+      conditions: [condition],
     })
+  }
 
   test.each([
     {
@@ -2498,7 +2504,31 @@ describe("applyContactFilter — custom fields", () => {
     expect(query.params).toContain("2026-07-22")
   })
 
-  test("renders date custom-field equality with time as an exact instant", () => {
+  test("resolves legacy temporal custom-field filters without saved customFieldType", () => {
+    const query = renderFirstRawCondition(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "datetime",
+            operator: operatorTypes.enum.eq,
+            value: "2026-07-22 09:30",
+          },
+        ],
+      }),
+    )
+
+    expect(query.sql).toContain('FROM "CustomField"')
+    expect(query.sql).toContain('"CustomField"."type" =')
+    expect(query.sql).toContain("::timestamp")
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("date")
+    expect(query.params).toContain("2026-07-22T09:30")
+  })
+
+  test("renders date custom-field equality with time as a naive wall clock", () => {
     const query = renderFirstRawCondition(
       customField(
         "datetime",
@@ -2508,9 +2538,80 @@ describe("applyContactFilter — custom fields", () => {
       ),
     )
 
-    expect(query.sql).toContain("::timestamptz")
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.sql).toContain("::timestamp")
     expect(query.sql).not.toContain("left(")
-    expect(query.params).toContain("2026-07-22T09:30:00.000Z")
+    expect(query.params).toContain("2026-07-22T09:30")
+  })
+
+  test("compares a date custom field with an explicit offset by instant", () => {
+    // The user typed a timezone, so we honor it: +07:00 09:30 -> 02:30Z.
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.eq,
+        "2026-07-22T09:30:00+07:00",
+        "date",
+      ),
+    )
+
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("2026-07-22T02:30:00.000Z")
+  })
+
+  test.each([
+    [operatorTypes.enum.gt, "2026-07-23T00:00:00.000Z"],
+    [operatorTypes.enum.gte, "2026-07-22T00:00:00.000Z"],
+    [operatorTypes.enum.lt, "2026-07-22T00:00:00.000Z"],
+    [operatorTypes.enum.lte, "2026-07-23T00:00:00.000Z"],
+  ])("compares a date-only custom field %s by a naive day window", (operator, boundary) => {
+    const query = renderFirstRawCondition(
+      customField("datetime", operator, "2026-07-22", "date"),
+    )
+
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.sql).toContain("::timestamp")
+    expect(query.params).toContain(boundary)
+  })
+
+  test("renders date custom-field inequality as NOT EXISTS over a day comparison", () => {
+    const query = renderFirstRawCondition(
+      customField("datetime", operatorTypes.enum.ne, "2026-07-22", "date"),
+    )
+
+    expect(query.sql).toContain("NOT EXISTS (")
+    expect(query.sql).toContain("left(")
+    expect(query.params).toContain("2026-07-22")
+  })
+
+  test("compares a date custom-field range by naive wall clock", () => {
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.isBetween,
+        ["2026-01-01", "2026-12-31"],
+        "date",
+      ),
+    )
+
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.params).toContain("2026-01-01T00:00:00")
+    expect(query.params).toContain("2026-12-31T00:00:00")
+  })
+
+  test("compares a date custom-field range by instant when both bounds carry an offset", () => {
+    const query = renderFirstRawCondition(
+      customField(
+        "datetime",
+        operatorTypes.enum.isBetween,
+        ["2026-01-01T00:00:00+07:00", "2026-12-31T00:00:00+07:00"],
+        "date",
+      ),
+    )
+
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("2025-12-31T17:00:00.000Z")
+    expect(query.params).toContain("2026-12-30T17:00:00.000Z")
   })
 
   test.each([

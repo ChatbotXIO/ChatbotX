@@ -9,6 +9,13 @@ export const conditionFilterConditionSchema = z.object({
     .union([z.string(), z.array(z.string()), z.tuple([z.string(), z.string()])])
     .optional(),
   customFieldId: zodBigintAsString().optional(),
+  /**
+   * Precise custom-field type (`date` | `datetime`). Kept alongside `valueType`
+   * so the runtime filter compares a date field by wall clock rather than the
+   * zone-aware datetime path. Without it here, zod strips the key on save and
+   * date conditions are silently mis-evaluated.
+   */
+  customFieldType: z.string().optional(),
   valueType: z.string().optional(),
 })
 

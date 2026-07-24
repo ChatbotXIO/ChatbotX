@@ -1,6 +1,7 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import {
+  currentTemporalLiteral,
   DEFAULT_FILTER_TIMEZONE,
   hasExplicitOffset,
   isTemporalCustomFieldType,
@@ -66,8 +67,23 @@ export const createSourceTimezoneResolver = (input: {
   workspaceId: string
   contactId: string
   strategy?: SourceTimezoneStrategy
+  /**
+   * An explicit source zone (e.g. a flow step's captured editor browser zone)
+   * that anchors EVERY temporal type outright, short-circuiting the
+   * contact/workspace DB lookup. Unlike `normalizeCustomFieldValueForStorage`'s
+   * `explicitTimezone` — which only `date` honors — this drives the resolver
+   * itself, so a naive `datetime` (which always consults the resolver) also
+   * anchors here. Ignored when blank/unrecognized.
+   */
+  explicitSourceTimezone?: string | null
   tx?: DatabaseClient
 }): SourceTimezoneResolver => {
+  const override = normalizeStoredTimezone(input.explicitSourceTimezone)
+  if (override) {
+    const overrideZone = resolveFilterTimezone(override)
+    return () => Promise.resolve(overrideZone)
+  }
+
   let sourceTimezonePromise: Promise<string> | undefined
   const strategy = input.strategy ?? SourceTimezoneStrategy.ContactThenWorkspace
 
@@ -130,6 +146,13 @@ export const normalizeCustomFieldValueForStorage = async (input: {
    * multi-format parser first. Non-temporal types ignore it.
    */
   temporalInputParsing?: TemporalInputParsing
+  /**
+   * When a temporal `value` is blank, stamp the current date/datetime in the
+   * resolved source zone instead of storing an empty string. Used by the flow
+   * "set custom field" step so an empty date/datetime records "now". Non-empty
+   * values and non-temporal types are unaffected.
+   */
+  fillEmptyTemporalWithNow?: boolean
 }): Promise<string | null> => {
   const {
     type,
@@ -137,9 +160,15 @@ export const normalizeCustomFieldValueForStorage = async (input: {
     resolveSourceTimezone,
     explicitTimezone,
     temporalInputParsing = TemporalInputParsing.Strict,
+    fillEmptyTemporalWithNow = false,
   } = input
 
-  if (value.length === 0 || !isTemporalCustomFieldType(type)) {
+  if (!isTemporalCustomFieldType(type)) {
+    return value
+  }
+
+  const isEmpty = value.length === 0
+  if (isEmpty && !fillEmptyTemporalWithNow) {
     return value
   }
 
@@ -150,10 +179,20 @@ export const normalizeCustomFieldValueForStorage = async (input: {
     resolveSourceTimezone,
   })
 
-  return normalizeTemporalValueForStorage({
-    type,
-    value,
-    timezone: sourceTimezone,
-    parsing: temporalInputParsing,
-  })
+  // A blank value becomes the canonical "now" literal in the resolved zone,
+  // which is already canonical ISO, so it normalizes under Strict regardless of
+  // the caller's parsing mode.
+  return isEmpty
+    ? normalizeTemporalValueForStorage({
+        type,
+        value: currentTemporalLiteral(type, sourceTimezone),
+        timezone: sourceTimezone,
+        parsing: TemporalInputParsing.Strict,
+      })
+    : normalizeTemporalValueForStorage({
+        type,
+        value,
+        timezone: sourceTimezone,
+        parsing: temporalInputParsing,
+      })
 }

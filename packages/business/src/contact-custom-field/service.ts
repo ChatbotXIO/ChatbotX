@@ -37,6 +37,19 @@ type SetValuesInput = {
    * the spreadsheet step uses `workspace` to skip the contact lookup.
    */
   sourceTimezoneStrategy?: SourceTimezoneStrategy
+  /**
+   * An explicit source zone that anchors EVERY temporal type (both `date` and
+   * naive `datetime`), short-circuiting the contact/workspace lookup. The flow
+   * "set custom field" step passes its captured editor browser zone here so
+   * both types resolve against the flow author's zone. Overrides the strategy.
+   */
+  sourceTimezoneOverride?: string
+  /**
+   * When a temporal value is blank, stamp the current date/datetime in the
+   * resolved source zone instead of persisting an empty string. Used by the
+   * flow "set custom field" step so an empty date/datetime records "now".
+   */
+  fillEmptyTemporalWithNow?: boolean
 }
 
 type DeleteByKeyInput = {
@@ -63,6 +76,15 @@ type InsertNormalizedValuesForNewContactsInput = {
 
 type SetValueByKeyInput = DeleteByKeyInput & {
   value: string
+  /**
+   * Explicit source zone anchoring naive `date`/`datetime` values (e.g. a flow
+   * step's captured editor browser zone). Forwarded to `setValues`.
+   */
+  sourceTimezoneOverride?: string
+  /** Strict (default) or Lenient multi-format parsing for temporal input. */
+  temporalInputParsing?: TemporalInputParsing
+  /** Blank temporal value -> stamp "now" in the resolved source zone. */
+  fillEmptyTemporalWithNow?: boolean
 }
 
 // Cache tags for contact-scoped invalidation. Building the full set in one call
@@ -124,6 +146,8 @@ class ContactCustomFieldService extends BaseService {
       sourceTimezone,
       temporalInputParsing,
       sourceTimezoneStrategy,
+      sourceTimezoneOverride,
+      fillEmptyTemporalWithNow,
     } = input
     const customFieldIds = fields.map((f) => f.customFieldId)
     const fieldById = new Map(
@@ -151,6 +175,7 @@ class ContactCustomFieldService extends BaseService {
         workspaceId,
         contactId,
         strategy: sourceTimezoneStrategy,
+        explicitSourceTimezone: sourceTimezoneOverride,
         tx: client,
       })
 
@@ -167,6 +192,7 @@ class ContactCustomFieldService extends BaseService {
             resolveSourceTimezone,
             explicitTimezone: sourceTimezone,
             temporalInputParsing,
+            fillEmptyTemporalWithNow,
           })
           // Un-normalizable temporal value: skip rather than persist garbage.
           if (normalizedValue === null) {
@@ -312,7 +338,15 @@ class ContactCustomFieldService extends BaseService {
   }
 
   async setValueByKey(input: SetValueByKeyInput): Promise<void> {
-    const { workspaceId, contactId, keyword, value } = input
+    const {
+      workspaceId,
+      contactId,
+      keyword,
+      value,
+      sourceTimezoneOverride,
+      temporalInputParsing,
+      fillEmptyTemporalWithNow,
+    } = input
 
     let customField: { id: string } | undefined
 
@@ -338,6 +372,9 @@ class ContactCustomFieldService extends BaseService {
       workspaceId,
       contactId,
       fields: [{ customFieldId: customField.id, value }],
+      sourceTimezoneOverride,
+      temporalInputParsing,
+      fillEmptyTemporalWithNow,
     })
   }
 

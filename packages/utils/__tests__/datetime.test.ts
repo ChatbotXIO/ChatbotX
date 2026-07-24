@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  currentTemporalLiteral,
   DEFAULT_FILTER_TIMEZONE,
   datePartOf,
   filterValueToUtcDayEndIso,
@@ -15,6 +16,7 @@ import {
   resolveTemporalCustomFieldSaveFormat,
   SourceTimezoneStrategy,
   TemporalInputParsing,
+  toNaiveWallClockLiteral,
   toZonedDayStartIso,
 } from "../src/datetime"
 
@@ -148,6 +150,20 @@ describe("datetime utilities", () => {
     expect(hasTimeComponent("2026-07-22 09:30")).toBe(true)
   })
 
+  test("strips any offset to a naive wall-clock literal", () => {
+    // Date custom-field filters compare wall clock to wall clock; the offset a
+    // stored value carries (or a user typed) must be dropped so no zone shift
+    // leaks into the comparison.
+    expect(toNaiveWallClockLiteral("2026-07-20")).toBe("2026-07-20T00:00:00")
+    expect(toNaiveWallClockLiteral("2026-07-20 09:30")).toBe("2026-07-20T09:30")
+    expect(toNaiveWallClockLiteral("2026-07-20T09:30:00+07:00")).toBe(
+      "2026-07-20T09:30:00",
+    )
+    expect(toNaiveWallClockLiteral("2026-07-20T09:30:00.000Z")).toBe(
+      "2026-07-20T09:30:00.000",
+    )
+  })
+
   test("resolves temporal picker serialization by type", () => {
     expect(resolveTemporalCustomFieldSaveFormat("date")).toBe("formatted")
     expect(resolveTemporalCustomFieldSaveFormat("datetime")).toBe("iso")
@@ -204,5 +220,38 @@ describe("temporal write-path enums", () => {
       "contactThenWorkspace",
     )
     expect(SourceTimezoneStrategy.Workspace).toBe("workspace")
+  })
+})
+
+describe("currentTemporalLiteral", () => {
+  const VN = "Asia/Ho_Chi_Minh" // UTC+7, no DST
+  const NY = "America/New_York" // UTC-4 in July (EDT)
+  // A fixed instant late enough in UTC that VN has already rolled to the next
+  // calendar day — this is what makes the cross-midnight case meaningful.
+  const NOW = new Date("2026-07-22T18:30:00Z")
+
+  test("renders a date as today's calendar day in the given zone", () => {
+    expect(currentTemporalLiteral("date", NY, NOW)).toBe("2026-07-22")
+  })
+
+  test("renders a datetime as the wall clock in the given zone", () => {
+    expect(currentTemporalLiteral("datetime", NY, NOW)).toBe(
+      "2026-07-22 14:30:00",
+    )
+  })
+
+  test("crosses midnight into the next day for an ahead-of-UTC zone", () => {
+    // 18:30Z is already 01:30 on the 23rd in UTC+7.
+    expect(currentTemporalLiteral("date", VN, NOW)).toBe("2026-07-23")
+    expect(currentTemporalLiteral("datetime", VN, NOW)).toBe(
+      "2026-07-23 01:30:00",
+    )
+  })
+
+  test("falls back to UTC for a blank or unrecognized zone", () => {
+    expect(currentTemporalLiteral("date", undefined, NOW)).toBe("2026-07-22")
+    expect(currentTemporalLiteral("datetime", "not-a-zone", NOW)).toBe(
+      "2026-07-22 18:30:00",
+    )
   })
 })

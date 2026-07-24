@@ -2207,6 +2207,9 @@
       "durationLabel": "Thời lượng",
       "waitAndContinue": "Chờ <value>{duration} {unit}</value> rồi tiếp tục",
       "cancelOnReplyHint": "Follow-up sẽ không được gửi nếu khách hàng trả lời trước khi hết thời gian chờ."
+    },
+    "setCustomField": {
+      "temporalHint": "Với trường ngày và ngày giờ, giá trị được hiểu theo múi giờ của bạn ({timezone}). Để trống để lưu ngày/giờ hiện tại."
     }
   },
   "folders": {

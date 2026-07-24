@@ -50,6 +50,19 @@ export const datePartOf = (value: string): string =>
 export const hasTimeComponent = (value: string): boolean =>
   TIME_COMPONENT_PATTERN.test(value.slice(DATE_PART_LENGTH))
 
+/**
+ * A temporal value's wall-clock literal with any timezone offset stripped, in a
+ * form Postgres reads back with `::timestamp`. Date custom-field filters compare
+ * wall clock to wall clock and must ignore a zone the user did not type:
+ *   "2026-07-20"                -> "2026-07-20T00:00:00"
+ *   "2026-07-20 09:30"          -> "2026-07-20T09:30"
+ *   "2026-07-20T09:30:00+07:00" -> "2026-07-20T09:30:00"
+ */
+export const toNaiveWallClockLiteral = (value: string): string => {
+  const local = toLocalIso(value.replace(OFFSET_SUFFIX_PATTERN, ""))
+  return hasTimeComponent(local) ? local : `${datePartOf(local)}T00:00:00`
+}
+
 const normalizeExplicitOffsetValue = (value: string): string | null => {
   const parsed = new Date(value)
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
@@ -223,6 +236,34 @@ export function toZonedDayStartIso(value: string, timezone: string): string {
   const safeTimezone = resolveFilterTimezone(timezone)
   const dayStart = fromZonedTime(`${datePartOf(value)}T00:00:00`, safeTimezone)
   return formatInTimeZone(dayStart, safeTimezone, ZONED_ISO_FORMAT)
+}
+
+/** The naive literal each temporal type uses to represent "now". */
+const TEMPORAL_NOW_LITERAL_FORMATS = {
+  date: DATE_FORMAT,
+  datetime: DATE_TIME_FORMAT,
+} as const satisfies Record<TemporalCustomFieldType, string>
+
+/**
+ * The current moment rendered as the naive literal a given temporal type would
+ * store: a `date` becomes today's calendar day in `timezone` (`yyyy-MM-dd`), a
+ * `datetime` becomes the wall clock there (`yyyy-MM-dd HH:mm:ss`). Feed the
+ * result back through the normalization handlers to reach the stored form.
+ *
+ * Used when a flow "set custom field" step leaves the value blank and should
+ * stamp the current moment in the author's zone, so the empty->now path yields
+ * storage byte-identical to a user typing that same literal.
+ */
+export function currentTemporalLiteral(
+  type: TemporalCustomFieldType,
+  timezone: string | null | undefined,
+  now: Date = new Date(),
+): string {
+  return formatInTimeZone(
+    now,
+    resolveFilterTimezone(timezone),
+    TEMPORAL_NOW_LITERAL_FORMATS[type],
+  )
 }
 
 export const isTemporalCustomFieldType = (
