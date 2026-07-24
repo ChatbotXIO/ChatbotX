@@ -1,5 +1,8 @@
 import { db } from "@chatbotx.io/database/client"
-import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import {
+  type OperatorType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { toZonedWallClock } from "@chatbotx.io/utils/datetime"
 import type { ConditionEvaluationContext } from "../types"
@@ -27,7 +30,7 @@ export class ConditionEvaluator {
       case triggerEventTypes.enum.customFieldValueChanged:
         return await this.evaluateCustomFieldCondition(
           sourceId,
-          operator,
+          operator as OperatorType | null,
           value,
           eventData.eventData,
           contactId,
@@ -75,7 +78,7 @@ export class ConditionEvaluator {
 
   private async evaluateCustomFieldCondition(
     customFieldId: string | null,
-    operator: string | null,
+    operator: OperatorType | null,
     expectedValue: unknown,
     metadata: Record<string, unknown>,
     contactId: string,
@@ -146,7 +149,7 @@ export class ConditionEvaluator {
    * `default: return false` and silently drop a matching condition. Legacy
    * values pass through unchanged, keeping any old stored conditions working.
    */
-  private normalizeOperator(operator: string): string {
+  private normalizeOperator(operator: OperatorType): string {
     const aliases: Record<string, string> = {
       eq: "is",
       ne: "isNot",
@@ -160,7 +163,7 @@ export class ConditionEvaluator {
   }
 
   private evaluateOperator(
-    operator: string,
+    operator: OperatorType,
     actualValue: unknown,
     expectedValue: unknown,
     customFieldType?: string,
