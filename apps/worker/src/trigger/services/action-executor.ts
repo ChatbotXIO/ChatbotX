@@ -6,6 +6,7 @@ import {
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { triggerActions } from "@chatbotx.io/database/partials"
 import { contactsToTagsModel } from "@chatbotx.io/database/schema"
+import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   errorStateDefaultFn,
   FieldOperationType,
@@ -176,6 +177,7 @@ export class ActionExecutor {
             conversationId: conversation,
             contactInboxId: recentContactInbox,
             flowId,
+            origin: webhookChannelOrigin(),
           },
         })
         break

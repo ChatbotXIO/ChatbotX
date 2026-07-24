@@ -19,6 +19,7 @@ export type TriggerEvent = {
   eventData: Record<string, unknown>
   timestamp: Date
   source?: string
+  channelOriginated?: boolean
 }
 
 export type TriggerJobExecute = {
