@@ -56,7 +56,20 @@ const handleWebhookEvent = async (
       throw new MessengerWebhookException("Invalid webhook signature")
     }
 
-    const webhookData = incomingWebhookEventSchema.parse(JSON.parse(body))
+    const parsedWebhook = incomingWebhookEventSchema.safeParse(JSON.parse(body))
+    if (!parsedWebhook.success) {
+      logger.warn(
+        {
+          issues: parsedWebhook.error.issues.map(({ code, path }) => ({
+            code,
+            path,
+          })),
+        },
+        "messenger webhook payload unrecognized — skipping",
+      )
+      return
+    }
+    const webhookData = parsedWebhook.data
     if (webhookData.object !== "page") {
       throw new MessengerWebhookException(
         `Unsupported webhook object type: ${webhookData.object}`,
