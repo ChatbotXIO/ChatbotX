@@ -68,7 +68,7 @@ const resolveContactSourceId = ({
     return parsedInput.email ?? ""
   }
   if (channel === channelTypes.enum.webchat) {
-    return `${randomString()}${createId()}`
+    return `${randomString(10)}${createId()}`
   }
   return parsedInput.contactId ?? ""
 }
