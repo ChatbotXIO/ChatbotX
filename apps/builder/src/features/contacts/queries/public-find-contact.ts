@@ -101,7 +101,7 @@ export const publicListContactsByCustomField = async (
     where.phoneNumber = value
   } else {
     where.contactCustomFields = {
-      id: customFieldId,
+      customFieldId,
       value,
     }
   }

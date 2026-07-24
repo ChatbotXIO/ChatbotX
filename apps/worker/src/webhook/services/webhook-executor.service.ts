@@ -1,4 +1,8 @@
-import { assertPublicUrl } from "@chatbotx.io/business"
+import {
+  assertPublicUrl,
+  contactCustomFieldService,
+  contactService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type { MatchableEventType } from "@chatbotx.io/events"
@@ -16,6 +20,7 @@ type WebhookPayload = Record<string, unknown>
 type PayloadBuilder = (
   basePayload: WebhookPayloadBase,
   data: Record<string, unknown>,
+  workspaceId: string,
 ) => Promise<WebhookPayload> | WebhookPayload
 
 const EVENT_NAMES = {
@@ -98,16 +103,31 @@ function buildReferralPayload(
   }
 }
 
-function buildNewContactPayload(
+async function buildNewContactPayload(
   basePayload: WebhookPayloadBase,
   data: Record<string, unknown>,
-): WebhookPayload {
+  workspaceId: string,
+): Promise<WebhookPayload> {
+  const contact = await contactService.findById({
+    workspaceId,
+    id: basePayload.contact_id,
+  })
+  const customFields = contact
+    ? await contactCustomFieldService.listWithDefinitions({
+        contactId: contact.id,
+      })
+    : []
+
   return {
     ...basePayload,
-    name: data.name as string,
-    phone: data.phone as string,
-    email: data.email as string,
-    custom_fields: (data.customFields as Record<string, unknown>) || {},
+    name: contact?.fullName || (data.name as string) || null,
+    first_name: contact?.firstName || null,
+    last_name: contact?.lastName || null,
+    phone: contact?.phoneNumber || (data.phone as string) || null,
+    email: contact?.email || (data.email as string) || null,
+    custom_fields: Object.fromEntries(
+      customFields.map((field) => [field.name, field.value]),
+    ),
   }
 }
 
@@ -206,6 +226,7 @@ export class WebhookExecutor {
     return await PAYLOAD_BUILDERS[eventData.eventType](
       basePayload,
       eventData.eventData,
+      eventData.workspaceId,
     )
   }
 
