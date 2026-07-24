@@ -231,3 +231,99 @@ describe("ConditionEvaluator dateTimeBasedTrigger date-type anchor", () => {
     ).resolves.toBe(true)
   })
 })
+
+describe("ConditionEvaluator customFieldValueChanged operator vocabulary", () => {
+  const evaluator = new ConditionEvaluator()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // The trigger editor persists operators from the `operatorTypes` enum
+  // (`eq`, `ne`, `isEmpty`, …) — the same vocabulary the contact filter uses.
+  // These tests pin that the worker evaluator understands that vocabulary
+  // instead of the legacy `is`/`isNot`/`hasAnyValue` spelling it once assumed.
+  const buildCustomFieldContext = (
+    operator: string,
+    value: unknown,
+    fieldType: string,
+    newValue: unknown,
+  ): ConditionEvaluationContext => {
+    customFieldFindFirst.mockResolvedValue({ type: fieldType })
+    return buildContext(
+      {
+        type: triggerEventTypes.enum.customFieldValueChanged,
+        sourceId: "cf-1",
+        operator,
+        value,
+      },
+      { customFieldId: "cf-1", newValue },
+    )
+  }
+
+  test("eq matches when the new value equals the expected text", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext("eq", { text: "vip" }, "shortText", "vip"),
+      ),
+    ).resolves.toBe(true)
+  })
+
+  test("eq does not match when the new value differs", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext("eq", { text: "vip" }, "shortText", "regular"),
+      ),
+    ).resolves.toBe(false)
+  })
+
+  test("ne matches when the new value differs from the expected text", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext("ne", { text: "vip" }, "shortText", "regular"),
+      ),
+    ).resolves.toBe(true)
+  })
+
+  test("isNotEmpty matches when the field has a value", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext("isNotEmpty", null, "shortText", "vip"),
+      ),
+    ).resolves.toBe(true)
+  })
+
+  test("isEmpty matches when the field has no value", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext("isEmpty", null, "shortText", ""),
+      ),
+    ).resolves.toBe(true)
+  })
+
+  test("notContains matches when the value omits the substring", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext(
+          "notContains",
+          { text: "xyz" },
+          "shortText",
+          "abcdef",
+        ),
+      ),
+    ).resolves.toBe(true)
+  })
+
+  test("eq still matches a date custom field on the same instant", async () => {
+    await expect(
+      evaluator.evaluate(
+        buildCustomFieldContext(
+          "eq",
+          { text: "2026-07-11T00:00:00+07:00", timezone: "Asia/Ho_Chi_Minh" },
+          "date",
+          "2026-07-11T00:00:00+07:00",
+        ),
+      ),
+    ).resolves.toBe(true)
+  })
+})

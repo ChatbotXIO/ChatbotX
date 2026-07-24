@@ -137,6 +137,28 @@ export class ConditionEvaluator {
     return
   }
 
+  /**
+   * The trigger editor persists operators from the `operatorTypes` enum
+   * (`eq`, `ne`, `isEmpty`, …) — the shared contact-filter vocabulary — while
+   * this evaluator was originally written against a legacy `is`/`isNot`/
+   * `hasAnyValue` spelling. Map the stored vocabulary onto the internal one at
+   * this single boundary so unrecognized names can no longer fall through to
+   * `default: return false` and silently drop a matching condition. Legacy
+   * values pass through unchanged, keeping any old stored conditions working.
+   */
+  private normalizeOperator(operator: string): string {
+    const aliases: Record<string, string> = {
+      eq: "is",
+      ne: "isNot",
+      isEmpty: "hasNoValue",
+      isNotEmpty: "hasAnyValue",
+      notContains: "doesNotContain",
+      isBetween: "interval",
+      notBetween: "notInterval",
+    }
+    return aliases[operator] ?? operator
+  }
+
   private evaluateOperator(
     operator: string,
     actualValue: unknown,
@@ -144,11 +166,13 @@ export class ConditionEvaluator {
     customFieldType?: string,
     timezone?: string,
   ): boolean {
-    if (operator === "hasAnyValue") {
+    const normalizedOperator = this.normalizeOperator(operator)
+
+    if (normalizedOperator === "hasAnyValue") {
       return actualValue != null && actualValue !== ""
     }
 
-    if (operator === "hasNoValue") {
+    if (normalizedOperator === "hasNoValue") {
       return (
         actualValue == null || actualValue === "" || actualValue === undefined
       )
@@ -158,9 +182,12 @@ export class ConditionEvaluator {
     const isDateField =
       customFieldType === "date" || customFieldType === "datetime"
 
-    if (operator === "interval" || operator === "notInterval") {
+    if (
+      normalizedOperator === "interval" ||
+      normalizedOperator === "notInterval"
+    ) {
       return this.evaluateIntervalOperator(
-        operator,
+        normalizedOperator,
         actualValue,
         expected,
         isDateField,
@@ -170,14 +197,18 @@ export class ConditionEvaluator {
 
     if (isDateField) {
       return this.evaluateDateOperator(
-        operator,
+        normalizedOperator,
         actualValue,
         expected,
         timezone || "UTC",
       )
     }
 
-    return this.evaluateStandardOperator(operator, actualValue, expected)
+    return this.evaluateStandardOperator(
+      normalizedOperator,
+      actualValue,
+      expected,
+    )
   }
 
   private extractExpectedValue(expectedValue: unknown): unknown {
