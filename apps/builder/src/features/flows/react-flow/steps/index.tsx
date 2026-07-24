@@ -41,6 +41,7 @@ import { getUserDataStep } from "./get-user-data"
 import { klaviyoSyncProfileStep } from "./klaviyo-sync-profile"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { mailerLiteAddSubscriberStep } from "./mailer-lite-add-subscriber"
+import { makeStep } from "./make"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { moosendCreateContactStep } from "./moosend-create-contact"
 import { openWebsiteStep } from "./open-website"
@@ -104,6 +105,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.notifyAgent]: undefined,
   [stepTypes.enum.deleteContact]: deleteContactStep,
   [stepTypes.enum.callApi]: externalRequestStep,
+  [stepTypes.enum.make]: makeStep,
   [stepTypes.enum.disableBot]: disableBotStep,
   [stepTypes.enum.enableBot]: enableBotStep,
   [stepTypes.enum.assignConversation]: assignConversationStep,

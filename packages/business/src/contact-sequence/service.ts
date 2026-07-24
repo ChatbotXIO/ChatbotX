@@ -59,7 +59,41 @@ type UpdateContactSequencesParams = {
   workspaceId: string
 }
 
+type ContactSequenceEnrollment = {
+  id: string
+  sequenceId: string
+  sequenceName: string
+  status: string | null
+  currentStep: number
+  enrolledAt: Date
+  completedAt: Date | null
+}
+
 class ContactSequenceService extends BaseService {
+  async listByContactId(props: {
+    tx?: DrizzleClient
+    contactId: string
+  }): Promise<ContactSequenceEnrollment[]> {
+    const { tx = db, contactId } = props
+    const enrollments = await tx.query.contactsOnSequenceModel.findMany({
+      where: { contactId },
+      with: {
+        sequence: { columns: { name: true } },
+      },
+      orderBy: { enrolledAt: "desc" },
+    })
+
+    return enrollments.map((enrollment) => ({
+      id: enrollment.id,
+      sequenceId: enrollment.sequenceId,
+      sequenceName: enrollment.sequence.name,
+      status: enrollment.status,
+      currentStep: enrollment.currentStep,
+      enrolledAt: enrollment.enrolledAt,
+      completedAt: enrollment.completedAt,
+    }))
+  }
+
   async removeContactSequencesForContacts(
     params: RemoveContactSequencesForContactsParams,
   ): Promise<DispatchToRemove[]> {

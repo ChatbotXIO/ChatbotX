@@ -55,6 +55,7 @@ import { getUserData } from "./get-user-data"
 import { syncKlaviyoProfile } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { addMailerLiteSubscriber } from "./mailer-lite-handler"
+import { handleMakeStep } from "./make-handler"
 import { updateMessengerContactData } from "./messenger-contact-data"
 import {
   disableMessengerComposer,
@@ -334,6 +335,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.autoAssignConversation]: stepAutoAssignConversation,
   [stepTypes.enum.blockContact]: stepBlockContact,
   [stepTypes.enum.callApi]: externalRequest,
+  [stepTypes.enum.make]: handleMakeStep,
   [stepTypes.enum.cancelContactInput]: undefined,
   [stepTypes.enum.clearCustomField]: clearContactCustomField,
   [stepTypes.enum.countCharacters]: countCharacters,
