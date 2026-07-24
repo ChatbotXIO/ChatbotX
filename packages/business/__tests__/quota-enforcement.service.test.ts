@@ -39,6 +39,8 @@ const zeroLiveUsage = () => ({
   teamMembers: 0,
   contacts: 0,
   mac: 0,
+  botMessages: 0,
+  monthlyBotMessages: 0,
 })
 
 // Both quota levels now live on `UserQuota`: the pool is the tenant owner's row,
@@ -559,5 +561,16 @@ describe("quotaEnforcementService.hasReachedLimit", () => {
       { tenantId: TENANT },
       RESELLER,
     )
+  })
+})
+
+describe("quotaEnforcementService.getAtLimitMap", () => {
+  test("includes both lifetime and monthly bot message metrics", async () => {
+    asRootUser()
+
+    const limits = await quotaEnforcementService.getAtLimitMap(ROOT_USER)
+
+    expect(limits).toHaveProperty("botMessages", false)
+    expect(limits).toHaveProperty("monthlyBotMessages", false)
   })
 })

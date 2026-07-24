@@ -296,8 +296,7 @@
       "channels": "You've reached your channel limit. Upgrade your plan to connect more.",
       "teamMembers": "You've reached your team member limit. Upgrade your plan to invite more.",
       "contacts": "You've reached your contact limit. Upgrade your plan to add more.",
-      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more.",
-      "botMessages": "You've reached your bot message limit. Upgrade your plan to send more."
+      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more."
     },
     "pastDue": {
       "message": "Your last payment failed. Update your payment method to keep your workspace active."

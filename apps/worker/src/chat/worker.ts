@@ -11,6 +11,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
@@ -24,6 +25,24 @@ import {
 import { sendMessengerTemplateMessage } from "./handlers/send-messenger-template"
 import { sendWhatsappTemplateMessage } from "./handlers/send-whatsapp-template"
 
+const botSendActions = new Set<ChatJobData["type"]>([
+  ChatJobAction.sendFlowMessage,
+  ChatJobAction.sendChatMessage,
+  ChatJobAction.sendWhatsappTemplateMessage,
+  ChatJobAction.sendMessengerTemplateMessage,
+])
+
+function isBotSendJob(data: ChatJobData): boolean {
+  if (botSendActions.has(data.type)) {
+    return true
+  }
+
+  return (
+    data.type === ChatJobAction.sendChannelMessage &&
+    data.data.message.senderType === "bot"
+  )
+}
+
 async function startChatWorker() {
   try {
     await ensureBootstrapped()
@@ -36,7 +55,19 @@ async function startChatWorker() {
   const worker = new Worker(
     queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
-      if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+      const workspaceId = await resolveWorkspaceId(job.data.data)
+      if (await isBlockedWorkspace(workspaceId)) {
+        return
+      }
+
+      if (
+        isBotSendJob(job.data) &&
+        (await isBotMessageQuotaReached(workspaceId))
+      ) {
+        logger.info(
+          { jobId: job.id, workspaceId },
+          "Skipping bot send — quota reached",
+        )
         return
       }
 
