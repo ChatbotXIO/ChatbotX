@@ -42,6 +42,11 @@ export async function handleBotMessageSent(
           metric: "botMessages",
           count,
         })
+        await quotaEnforcementService.incrementBy({
+          userId: workspace.ownerId,
+          metric: "monthlyBotMessages",
+          count,
+        })
       } catch (err) {
         logger.error(
           { err, workspaceId, count },
