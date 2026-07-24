@@ -34,6 +34,8 @@ export const userQuotaModel = pgTable(
     macUsed: integer().notNull().default(0),
     botMessagesLimit: integer(),
     botMessagesUsed: integer().notNull().default(0),
+    monthlyBotMessagesLimit: integer(),
+    monthlyBotMessagesUsed: integer().notNull().default(0),
     whiteLabel: boolean().notNull().default(false),
     ssoSaml: boolean().notNull().default(false),
     saasMode: boolean().notNull().default(false),
