@@ -83,6 +83,11 @@ const questionQuickReplies = (
 
 const QUESTIONNAIRE_MESSAGE_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000
 
+// Known gap: does not forward `props.commentAnchor` — moot in practice today
+// since a questionnaire always waits for the user's answer between
+// questions, which already drops the anchor before completion (same
+// wait-boundary semantics as `handleWait`/`handleFollowUp`). Revisit if a
+// questionnaire step is ever made to complete without any wait.
 async function startTriggerFlow(
   props: ExecuteStepProps<QuestionnairesStepSchema>,
   flowId: string | null | undefined,

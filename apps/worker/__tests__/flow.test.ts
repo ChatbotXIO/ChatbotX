@@ -354,6 +354,27 @@ describe("seekConnectedNode", () => {
   })
 })
 
+describe("MESSAGE_PRODUCING_STEP_TYPES", () => {
+  test("matches exactly the step types mapped to sendFlowMessage in flowStepHandlers", async () => {
+    const { MESSAGE_PRODUCING_STEP_TYPES } = await import(
+      "../src/integration/handlers/flow-utils"
+    )
+    const { flowStepHandlers, sendFlowMessage } = await import(
+      "../src/integration/handlers/step"
+    )
+
+    const actualMessageProducingTypes = new Set(
+      Object.entries(flowStepHandlers)
+        .filter(([, handler]) => handler === sendFlowMessage)
+        .map(([stepType]) => stepType),
+    )
+
+    expect(new Set(MESSAGE_PRODUCING_STEP_TYPES)).toEqual(
+      actualMessageProducingTypes,
+    )
+  })
+})
+
 describe("executeMultipleSteps — void handler normalization", () => {
   beforeEach(() => integrationQueueAdd.mockClear())
 
@@ -1099,6 +1120,210 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
       { data: { nodeId: string } },
     ]
     expect(job.data.nodeId).toBe("node-2")
+  })
+})
+
+describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+  })
+
+  const commentAnchor = { commentId: "comment-1" }
+
+  test("forwards commentAnchor into the first message-producing step, and drops it from the next-step re-dispatch", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+      commentAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, chatJob] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(chatJob.data.commentAnchor).toEqual(commentAnchor)
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(nextJob.data.commentAnchor).toBeUndefined()
+  })
+
+  test("forwards commentAnchor through a non-message step to the next-step re-dispatch", async () => {
+    const step1 = { ...makeStep("landingPage"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+      commentAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      {
+        data: { startFromStepId: string; commentAnchor?: typeof commentAnchor }
+      },
+    ]
+    expect(nextJob.data.startFromStepId).toBe("step-2")
+    expect(nextJob.data.commentAnchor).toEqual(commentAnchor)
+  })
+
+  test("consumes commentAnchor when resuming at the message step via startFromStepId", async () => {
+    const step1 = { ...makeStep("landingPage"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      startFromStepId: "step-2",
+      triggerNextNode: false,
+      commentAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, chatJob] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(chatJob.data.commentAnchor).toEqual(commentAnchor)
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("does not forward commentAnchor to the next-node dispatch once a message step consumed it", async () => {
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: "node-1",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    const flowVersion = makeFlowVersion([nextNode], edges)
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const props = {
+      ...makeBaseProps(flowVersion),
+      details: { steps: [step1] },
+      triggerNextNode: true,
+      commentAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, chatJob] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(chatJob.data.commentAnchor).toEqual(commentAnchor)
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextNodeJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(nextNodeJob.data.nodeId).toBe("node-2")
+    expect(nextNodeJob.data.commentAnchor).toBeUndefined()
+  })
+
+  test("forwards commentAnchor to the next-node dispatch when no step consumed it", async () => {
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: "node-1",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    const flowVersion = makeFlowVersion([nextNode], edges)
+    const step1 = { ...makeStep("landingPage"), id: "step-1" }
+    const props = {
+      ...makeBaseProps(flowVersion),
+      details: { steps: [step1] },
+      triggerNextNode: true,
+      commentAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextNodeJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(nextNodeJob.data.nodeId).toBe("node-2")
+    expect(nextNodeJob.data.commentAnchor).toEqual(commentAnchor)
+  })
+
+  test("branch routing (step states) does not carry commentAnchor once the branching step consumed it", async () => {
+    const stateId = "state-success"
+    const step = {
+      ...makeStep("sendText", [{ id: stateId, stateType: "success" as const }]),
+      id: "step-1",
+    }
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "node-next",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const props = {
+      ...makeBaseProps(flowVersion),
+      steps: [step],
+      commentAnchor,
+    }
+
+    await executeMultipleSteps(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, chatJob] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(chatJob.data.commentAnchor).toEqual(commentAnchor)
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, branchJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; commentAnchor?: typeof commentAnchor } },
+    ]
+    expect(branchJob.data.nodeId).toBe("node-next")
+    expect(branchJob.data.commentAnchor).toBeUndefined()
   })
 })
 

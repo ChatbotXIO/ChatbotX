@@ -56,3 +56,14 @@ export type ReceivedMessageResult = {
   referral?: MessageReferral | null
   buttonTitle?: string | null
 }
+
+/**
+ * Present only for a flow run triggered by a Messenger comment-automation
+ * private reply. Carries the triggering comment's id so the first outgoing
+ * message of the run can use Facebook's comment_id-anchored Send API
+ * (bypasses the normal messaging-window rule) instead of the standard
+ * PSID-based send, which Facebook rejects for users who only commented and
+ * never messaged the Page. Forwarded across every re-enqueued sendFlow job
+ * until consumed by the first message-producing step, then dropped.
+ */
+export type CommentAnchor = { commentId: string }
