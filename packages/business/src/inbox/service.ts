@@ -19,7 +19,9 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { workspaceUsageService } from "../workspace-usage/service"
 import type { ListInboxesRequest, ListInboxesResponse } from "./schema"
 
 type InboxWhere = Partial<{ id: string; workspaceId: string }>
@@ -196,6 +198,15 @@ class InboxService extends BaseService {
       .insert(inboxModel)
       .values({ id: data.id ?? createId(), ...data })
       .returning()
+
+    await workspaceUsageService
+      .increment(data.workspaceId, "channels")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId: data.workspaceId },
+          "workspace usage channel increment failed",
+        )
+      })
 
     return { inbox, wasCreated: true }
   }

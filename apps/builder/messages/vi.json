@@ -289,7 +289,8 @@
       "botMessages": "Tin nhắn bot",
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
-      "teamMembers": "Thành viên nhóm"
+      "teamMembers": "Thành viên nhóm",
+      "thisWorkspace": "{workspace} trong không gian làm việc này"
     },
     "limitReached": {
       "workspaces": "Bạn đã đạt giới hạn không gian làm việc. Nâng cấp gói để tạo thêm.",

@@ -1,9 +1,11 @@
-import { macTrackingService } from "@chatbotx.io/analytics"
+import { macAnalyticsService, macTrackingService } from "@chatbotx.io/analytics"
 import { db, type Transaction } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
+import { logger } from "../logger"
 import { type QuotaMetric, userQuotaService } from "../user-quota/service"
+import { workspaceUsageService } from "../workspace-usage/service"
 
 const ALL_METRICS: readonly QuotaMetric[] = [
   "workspaces",
@@ -25,6 +27,17 @@ export type QuotaUsageSummary = Record<
   QuotaMetric,
   { used: number; limit: number | null }
 >
+
+export type WorkspaceQuotaUsageSummary = Omit<
+  Record<QuotaMetric, { used: number; limit: number | null }>,
+  "workspaces"
+> & {
+  [Metric in Exclude<QuotaMetric, "workspaces">]: {
+    workspaceUsed: number
+    used: number
+    limit: number | null
+  }
+}
 
 type QuotaContext = {
   tenantId: string
@@ -370,6 +383,16 @@ class QuotaEnforcementService {
         // can forget to bump `contacts` (callers previously did this by hand,
         // and the bulk-import path forgot it entirely).
         await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
+        // The workspace row is a display-only breakdown. Never let a failure
+        // here affect the authoritative UserQuota increment above.
+        await workspaceUsageService
+          .increment(workspaceId, "contacts")
+          .catch((err) => {
+            logger.warn(
+              { err, workspaceId },
+              "workspace usage contact increment failed",
+            )
+          })
 
         return { ok: true, value }
       },
@@ -508,6 +531,44 @@ class QuotaEnforcementService {
         },
       ]),
     ) as QuotaUsageSummary
+  }
+
+  /**
+   * Adds this workspace's display-only contribution to the unchanged,
+   * enforcement-authoritative account summary. WorkspaceUsage is never read by
+   * a limit or consumption path.
+   */
+  async getWorkspaceUsageSummary(args: {
+    userId: string
+    workspaceId: string
+  }): Promise<WorkspaceQuotaUsageSummary> {
+    const [summary, workspaceUsage, macUsed] = await Promise.all([
+      this.getUsageSummary(args.userId),
+      workspaceUsageService.getUsage(args.workspaceId),
+      macAnalyticsService.getActiveContactCountByWorkspaceId({
+        workspaceId: args.workspaceId,
+      }),
+    ])
+
+    return {
+      contacts: {
+        ...summary.contacts,
+        workspaceUsed: workspaceUsage.contactsUsed,
+      },
+      channels: {
+        ...summary.channels,
+        workspaceUsed: workspaceUsage.channelsUsed,
+      },
+      teamMembers: {
+        ...summary.teamMembers,
+        workspaceUsed: workspaceUsage.teamMembersUsed,
+      },
+      botMessages: {
+        ...summary.botMessages,
+        workspaceUsed: workspaceUsage.botMessagesUsed,
+      },
+      mac: { ...summary.mac, workspaceUsed: macUsed },
+    }
   }
 
   /**

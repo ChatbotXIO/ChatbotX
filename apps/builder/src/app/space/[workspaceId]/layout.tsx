@@ -26,7 +26,7 @@ import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 import {
-  buildQuotaMetrics,
+  buildWorkspaceQuotaMetrics,
   isBlockedFromPlan,
   resolveTrialEndsAt,
 } from "@/lib/quota-metrics"
@@ -62,7 +62,12 @@ export default async function WorkspaceLayout({
       getTenantSettings(),
       isPlatformAdmin(user),
       cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
-      cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
+      cloud
+        ? quotaEnforcementService.getWorkspaceUsageSummary({
+            userId: user.id,
+            workspaceId,
+          })
+        : null,
     ])
   const targetWorkspaceMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
@@ -90,7 +95,7 @@ export default async function WorkspaceLayout({
     planName: quota?.planName ?? null,
     planStatus: quota?.planStatus ?? null,
     trialEndsAt,
-    metrics: buildQuotaMetrics(usage),
+    metrics: buildWorkspaceQuotaMetrics(usage),
   }
 
   const cookieStore = await cookies()

@@ -12,6 +12,8 @@ export interface QuotaMetric {
   key: QuotaMetricKey
   limit: number
   used: number
+  /** Display-only contribution of the currently viewed workspace. */
+  workspaceUsed?: number
 }
 
 const DISPLAY_KEYS: QuotaMetricKey[] = [
@@ -24,7 +26,10 @@ const DISPLAY_KEYS: QuotaMetricKey[] = [
 ]
 
 type UsageSummary = Partial<
-  Record<QuotaMetricKey, { used: number; limit: number | null }>
+  Record<
+    QuotaMetricKey,
+    { used: number; limit: number | null; workspaceUsed?: number }
+  >
 >
 
 /**
@@ -80,6 +85,19 @@ export function buildQuotaMetrics(summary: UsageSummary | null): QuotaMetric[] {
     return entry && typeof entry.limit === "number"
       ? [{ key, used: entry.used, limit: entry.limit }]
       : []
+  })
+}
+
+/**
+ * Builds workspace-context metrics while leaving the account-wide workspace
+ * seat count untouched. The ring/bar fill remains based on `used / limit`.
+ */
+export function buildWorkspaceQuotaMetrics(
+  summary: UsageSummary | null,
+): QuotaMetric[] {
+  return buildQuotaMetrics(summary).map((metric) => {
+    const workspaceUsed = summary?.[metric.key]?.workspaceUsed
+    return workspaceUsed === undefined ? metric : { ...metric, workspaceUsed }
   })
 }
 

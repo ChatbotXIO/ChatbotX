@@ -65,6 +65,7 @@ export function NavUsage({
           label={usageLabels[primary.key]}
           limit={primary.limit}
           used={primary.used}
+          workspaceUsed={primary.workspaceUsed}
         />
       )}
 

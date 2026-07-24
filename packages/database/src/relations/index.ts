@@ -42,6 +42,7 @@ import { customDomainRelations } from "./enterprise/custom-domain"
 import { tenantRelations } from "./enterprise/tenant"
 import { tenantHelpItemRelations } from "./enterprise/tenant-help-item"
 import { userQuotaRelations } from "./enterprise/user-quota"
+import { workspaceUsageRelations } from "./enterprise/workspace-usage"
 import { errorLogRelations } from "./error-log"
 import { externalWebhookRelations } from "./external-webhook"
 import { fbCommentAutomationRelations } from "./fb-comment-automation"
@@ -133,6 +134,7 @@ export const relations = {
   ...tenantHelpItemRelations,
   ...platformCredentialRelations,
   ...userQuotaRelations,
+  ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
   ...broadcastRelations,

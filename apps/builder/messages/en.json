@@ -289,7 +289,8 @@
       "botMessages": "Bot messages",
       "workspaces": "Workspaces",
       "channels": "Channels",
-      "teamMembers": "Team members"
+      "teamMembers": "Team members",
+      "thisWorkspace": "{workspace} in this workspace"
     },
     "limitReached": {
       "workspaces": "You've reached your workspace limit. Upgrade your plan to create more.",

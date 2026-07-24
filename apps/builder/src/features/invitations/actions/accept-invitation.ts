@@ -3,14 +3,12 @@
 import {
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
+  workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  invitationModel,
-  workspaceMemberModel,
-} from "@chatbotx.io/database/schema"
+import { invitationModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
@@ -84,22 +82,24 @@ export const acceptInvitationAction = authActionClient
       ? getSuperAdminPermissions()
       : invitation.permissions
 
-    await db.insert(workspaceMemberModel).values({
-      id: createId(),
-      workspaceId: invitation.workspaceId,
-      userId: ctx.user.id,
-      role: "agent",
-      permissions,
-      notificationTypes: {
-        notifyAdmin: true,
-        newMessageToHuman: true,
-        newOrder: true,
-      },
-      notificationChannels: {
-        messenger: true,
-        email: true,
-        telegram: true,
-        browser: true,
+    await workspaceMemberService.create({
+      data: {
+        id: createId(),
+        workspaceId: invitation.workspaceId,
+        userId: ctx.user.id,
+        role: "agent",
+        permissions,
+        notificationTypes: {
+          notifyAdmin: true,
+          newMessageToHuman: true,
+          newOrder: true,
+        },
+        notificationChannels: {
+          messenger: true,
+          email: true,
+          telegram: true,
+          browser: true,
+        },
       },
     })
 

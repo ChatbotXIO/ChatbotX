@@ -1,5 +1,5 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { useFormatter } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { quotaUsageState } from "@/lib/quota-metrics"
 
 const SIZE = 32
@@ -18,14 +18,17 @@ export function UsageRing({
   used,
   limit,
   label,
+  workspaceUsed,
   className,
 }: {
   used: number
   limit: number
   label: string
+  workspaceUsed?: number
   className?: string
 }) {
   const formatter = useFormatter()
+  const t = useTranslations("billing.usage")
   const { pct, isOverLimit } = quotaUsageState(used, limit)
   const dashOffset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE
 
@@ -73,6 +76,11 @@ export function UsageRing({
         >
           {formatter.number(used)} / {formatter.number(limit)}
         </span>
+        {workspaceUsed !== undefined && (
+          <span className="text-muted-foreground text-xs">
+            {t("thisWorkspace", { workspace: formatter.number(workspaceUsed) })}
+          </span>
+        )}
       </div>
     </div>
   )
