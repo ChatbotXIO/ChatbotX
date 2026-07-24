@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import enMessages from "../messages/en.json"
 import viMessages from "../messages/vi.json"
@@ -227,31 +229,27 @@ describe("setCoexistWhatsappAPI", () => {
 })
 
 // ---- H11: workspace membership enforcement --------------------------------
-// workspaceActionClient checks that bindArgsClientInputs[0] is a valid
-// workspaceId that belongs to the authenticated user. The test harness here
-// verifies the contract via the action client source:
-// - workspaceActionClient throws "Workspace not found" when the workspace is
-//   absent from the authenticated user's membership list.
-// NOTE: We cannot fully simulate the action pipeline without a live DB, so
-// this test asserts the source-level guarantee: workspaceActionClient is
-// imported from "@/lib/safe-action" and is distinct from authActionClient.
+// workspaceActionClientAllowExpired still validates workspace membership, but
+// keeps disconnect available for expired workspaces. This guard is source-level
+// on purpose: importing the server action pulls in integration side effects that
+// are unrelated to the coexist API assertions above.
 describe("disconnectWhatsappAction — workspace membership guard (H11)", () => {
-  test("action uses workspaceActionClient, not authActionClient", async () => {
-    // Dynamic import after mocks are set up.
-    const actionModule = await import(
-      "@/features/integration-whatsapp/actions/disconnect.action"
+  test("action uses workspaceActionClientAllowExpired, not authActionClient", () => {
+    const actionSource = readFileSync(
+      resolve(
+        import.meta.dirname,
+        "../src/features/integration-whatsapp/actions/disconnect.action.ts",
+      ),
+      "utf8",
     )
-    const safeActionModule = await import("@/lib/safe-action")
 
-    // The action must be defined.
-    expect(actionModule.disconnectWhatsappAction).toBeDefined()
-
-    // workspaceActionClient exists and is not the same object as authActionClient,
-    // confirming the correct client is exported.
-    expect(safeActionModule.workspaceActionClient).toBeDefined()
-    expect(safeActionModule.workspaceActionClient).not.toBe(
-      safeActionModule.authActionClient,
+    expect(actionSource).toContain(
+      'import { workspaceActionClientAllowExpired } from "@/lib/safe-action"',
     )
+    expect(actionSource).toContain(
+      "export const disconnectWhatsappAction = workspaceActionClientAllowExpired",
+    )
+    expect(actionSource).not.toContain("authActionClient")
   })
 })
 

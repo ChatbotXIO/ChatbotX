@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 //   VN wall-clock "2026-07-22 15:30" (+7)  ->  "2026-07-22T08:30:00.000Z"
 
 const mocks = vi.hoisted(() => ({
+  customFieldFindFirst: vi.fn(),
   customFieldFindMany: vi.fn(),
   contactCustomFieldFindMany: vi.fn(),
   contactFindFirst: vi.fn(),
@@ -27,7 +28,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/client", () => {
   const dbMock = {
     query: {
-      customFieldModel: { findMany: mocks.customFieldFindMany },
+      customFieldModel: {
+        findFirst: mocks.customFieldFindFirst,
+        findMany: mocks.customFieldFindMany,
+      },
       contactCustomFieldModel: { findMany: mocks.contactCustomFieldFindMany },
       contactModel: { findFirst: mocks.contactFindFirst },
       workspaceModel: { findFirst: mocks.workspaceFindFirst },
@@ -387,5 +391,41 @@ describe("contactCustomFieldService.setValues — lenient spreadsheet parsing", 
 
     expect(mocks.insertValues).not.toHaveBeenCalled()
     expect(mocks.loggerWarn).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactCustomFieldService.setValueByKey — temporal forwarding", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.contactCustomFieldFindMany.mockResolvedValue([])
+    mocks.customFieldFindFirst.mockResolvedValue({ id: "cf-dt" })
+    mocks.customFieldFindMany.mockResolvedValue([DATETIME_FIELD])
+    mocks.contactFindFirst.mockRejectedValue(
+      new Error("timezone override should skip contact lookup"),
+    )
+    mocks.workspaceFindFirst.mockRejectedValue(
+      new Error("timezone override should skip workspace lookup"),
+    )
+  })
+
+  test("forwards lenient parsing and source timezone override into the setValues funnel", async () => {
+    await contactCustomFieldService.setValueByKey({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      keyword: "cf-dt",
+      value: "23/07/2026 09:30",
+      sourceTimezoneOverride: "Asia/Ho_Chi_Minh",
+      temporalInputParsing: "lenient",
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: "contact-1",
+        customFieldId: "cf-dt",
+        value: "2026-07-23T02:30:00.000Z",
+      }),
+    )
+    expect(mocks.contactFindFirst).not.toHaveBeenCalled()
+    expect(mocks.workspaceFindFirst).not.toHaveBeenCalled()
   })
 })

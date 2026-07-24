@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest"
 import { conditionFilterConditionSchema } from "../src/steps/condition"
+import {
+  FieldOperationType,
+  setCustomFieldStepSchema,
+} from "../src/steps/set-custom-field"
 
 // The condition node stores the precise custom-field type (`date` | `datetime`)
 // so the runtime filter can pick wall-clock vs zone-aware comparison. Zod strips
@@ -28,5 +32,20 @@ describe("conditionFilterConditionSchema", () => {
     })
 
     expect(parsed.customFieldType).toBeUndefined()
+  })
+})
+
+describe("setCustomFieldStepSchema", () => {
+  test("preserves the editor timezone so worker temporal writes keep their source zone", () => {
+    const parsed = setCustomFieldStepSchema.parse({
+      id: "1",
+      stepType: "setCustomField",
+      inputFieldId: "cf-birthday",
+      operation: FieldOperationType.set,
+      value: "23/07/2026 09:30",
+      timezone: "Asia/Ho_Chi_Minh",
+    })
+
+    expect(parsed.timezone).toBe("Asia/Ho_Chi_Minh")
   })
 })
