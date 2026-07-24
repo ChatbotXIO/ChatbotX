@@ -1,7 +1,17 @@
-import { addDays, format, parseISO } from "date-fns"
+import { addDays, addMinutes, addSeconds, format, parseISO } from "date-fns"
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz"
 
+// ===========================================================================
+// Constants & vocabulary
+// ===========================================================================
+
 export const DEFAULT_FILTER_TIMEZONE = "UTC"
+
+/** Length of the `yyyy-MM-dd` prefix every stored temporal value starts with. */
+export const DATE_PART_LENGTH = 10
+export const DATE_FORMAT = "yyyy-MM-dd"
+export const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
+
 export const temporalCustomFieldTypes = ["date", "datetime"] as const
 export type TemporalCustomFieldType = (typeof temporalCustomFieldTypes)[number]
 
@@ -29,18 +39,25 @@ export const SourceTimezoneStrategy = {
 export type SourceTimezoneStrategy =
   (typeof SourceTimezoneStrategy)[keyof typeof SourceTimezoneStrategy]
 
+// Private patterns & format strings shared by the helpers below.
 const OFFSET_SUFFIX_PATTERN = /(?:Z|[+-]\d{2}:?\d{2})$/
 const CALENDAR_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 const TIME_COMPONENT_PATTERN = /\d{2}:\d{2}/
+const SECOND_COMPONENT_PATTERN = /\d{2}:\d{2}:\d{2}/
+const FULL_TIME_LITERAL_PATTERN = /T\d{2}:\d{2}:\d{2}$/
+const FRACTIONAL_SECONDS_PATTERN = /\.\d+$/
 const ZONED_ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ssXXX"
+const NAIVE_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss"
 
-/** Length of the `yyyy-MM-dd` prefix every stored temporal value starts with. */
-export const DATE_PART_LENGTH = 10
-export const DATE_FORMAT = "yyyy-MM-dd"
-export const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
+// ===========================================================================
+// Reading a temporal string (pure inspection, no timezone)
+// ===========================================================================
 
 export const hasExplicitOffset = (value: string): boolean =>
   OFFSET_SUFFIX_PATTERN.test(value)
+
+const offsetSuffixOf = (value: string): string =>
+  OFFSET_SUFFIX_PATTERN.exec(value)?.[0] ?? ""
 
 const toLocalIso = (value: string): string => value.replace(" ", "T")
 
@@ -62,20 +79,6 @@ export const toNaiveWallClockLiteral = (value: string): string => {
   const local = toLocalIso(value.replace(OFFSET_SUFFIX_PATTERN, ""))
   return hasTimeComponent(local) ? local : `${datePartOf(local)}T00:00:00`
 }
-
-const normalizeExplicitOffsetValue = (value: string): string | null => {
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
-}
-
-const normalizeValueWithExplicitOffset = (
-  value: string,
-  timezone: string,
-  convert: (normalizedValue: string, normalizedTimezone: string) => string,
-): string =>
-  hasExplicitOffset(value)
-    ? new Date(value).toISOString()
-    : convert(value, timezone)
 
 /**
  * True only for real calendar dates. Unlike `Date.parse`, which leniently rolls
@@ -103,6 +106,205 @@ const isValidDatetimeValue = (value: string): boolean =>
   (value.includes("T") || value.includes(" ")) &&
   isRealCalendarDate(datePartOf(value)) &&
   !Number.isNaN(Date.parse(toLocalIso(value)))
+
+// ===========================================================================
+// Timezone resolution & safe formatting
+// ===========================================================================
+
+export function resolveFilterTimezone(
+  timezone: string | null | undefined,
+): string {
+  if (!timezone) {
+    return DEFAULT_FILTER_TIMEZONE
+  }
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone })
+    return timezone
+  } catch {
+    return DEFAULT_FILTER_TIMEZONE
+  }
+}
+
+/**
+ * `formatInTimeZone` that never throws. Every surface that renders a stored
+ * temporal value — exports, variable interpolation, the contact detail panel —
+ * shares this so a single bad row degrades one cell instead of failing the
+ * whole render around it.
+ */
+export const formatWithFallback = (
+  date: Date | string,
+  timezone: string | null | undefined,
+  pattern: string,
+): string => {
+  try {
+    return formatInTimeZone(date, timezone ?? DEFAULT_FILTER_TIMEZONE, pattern)
+  } catch {
+    // An unresolvable timezone falls back to UTC; a corrupt stored value (e.g.
+    // legacy garbage the migration skipped) would still throw, so degrade to
+    // the raw string rather than crash the export/variable render around it.
+    try {
+      return formatInTimeZone(date, DEFAULT_FILTER_TIMEZONE, pattern)
+    } catch {
+      return typeof date === "string" ? date : ""
+    }
+  }
+}
+
+// ===========================================================================
+// Value → UTC instant & day boundaries
+// ===========================================================================
+
+const normalizeValueWithExplicitOffset = (
+  value: string,
+  timezone: string,
+  convert: (normalizedValue: string, normalizedTimezone: string) => string,
+): string =>
+  hasExplicitOffset(value)
+    ? new Date(value).toISOString()
+    : convert(value, timezone)
+
+export function filterValueToUtcIso(value: string, timezone: string): string {
+  return normalizeValueWithExplicitOffset(
+    value,
+    timezone,
+    (normalizedValue, normalizedTimezone) =>
+      fromZonedTime(
+        toLocalIso(normalizedValue),
+        normalizedTimezone,
+      ).toISOString(),
+  )
+}
+
+export function filterValueToUtcDayStartIso(
+  value: string,
+  timezone: string,
+): string {
+  return fromZonedTime(`${datePartOf(value)}T00:00:00`, timezone).toISOString()
+}
+
+export function filterValueToUtcDayEndIso(
+  value: string,
+  timezone: string,
+): string {
+  const nextDay = format(addDays(parseISO(datePartOf(value)), 1), DATE_FORMAT)
+  return fromZonedTime(`${nextDay}T00:00:00`, timezone).toISOString()
+}
+
+export function toZonedDayStartIso(value: string, timezone: string): string {
+  const safeTimezone = resolveFilterTimezone(timezone)
+  const dayStart = fromZonedTime(`${datePartOf(value)}T00:00:00`, safeTimezone)
+  return formatInTimeZone(dayStart, safeTimezone, ZONED_ISO_FORMAT)
+}
+
+/**
+ * The same instant re-expressed as a wall clock in `timezone`: the returned
+ * Date's *local* getters (`getHours`, `getDate`, …) read as the time there.
+ *
+ * Use it only to compare calendar/clock components — the returned Date no
+ * longer names the original instant, so never store or serialize it. An
+ * unusable zone degrades to UTC and an unparseable input is passed through as
+ * an Invalid Date, so this never throws inside a shared sweep tick.
+ */
+export function toZonedWallClock(
+  date: Date | string | number,
+  timezone: string | null | undefined,
+): Date {
+  const instant = date instanceof Date ? date : new Date(date)
+  return Number.isNaN(instant.getTime())
+    ? instant
+    : toZonedTime(instant, resolveFilterTimezone(timezone))
+}
+
+// ===========================================================================
+// Precision windows (granularity-aware equality)
+// ===========================================================================
+
+/** The granularity a temporal filter value was typed at. */
+export type TemporalPrecision = "day" | "minute" | "second"
+
+/**
+ * The precision the user actually typed, read off the value's own digits:
+ *   "2026-07-22"          -> "day"     (no time part)
+ *   "2026-07-22 09:30"    -> "minute"
+ *   "2026-07-22 09:30:45" -> "second"
+ * Equality then matches a window exactly one unit of this size, so a filter is
+ * as precise as its input and no more — never the whole day when a time is typed.
+ */
+export const detectTemporalPrecision = (value: string): TemporalPrecision => {
+  const timePart = value
+    .replace(OFFSET_SUFFIX_PATTERN, "")
+    .slice(DATE_PART_LENGTH)
+  if (SECOND_COMPONENT_PATTERN.test(timePart)) {
+    return "second"
+  }
+  if (TIME_COMPONENT_PATTERN.test(timePart)) {
+    return "minute"
+  }
+  return "day"
+}
+
+/** The floored wall-clock literal, padded to a full `HH:mm:ss` and offset-free. */
+const flooredNaiveLiteral = (value: string): string => {
+  const naive = toNaiveWallClockLiteral(value).replace(
+    FRACTIONAL_SECONDS_PATTERN,
+    "",
+  )
+  return FULL_TIME_LITERAL_PATTERN.test(naive) ? naive : `${naive}:00`
+}
+
+const PRECISION_UNIT_ADDERS = {
+  day: (date: Date) => addDays(date, 1),
+  minute: (date: Date) => addMinutes(date, 1),
+  second: (date: Date) => addSeconds(date, 1),
+} as const satisfies Record<TemporalPrecision, (date: Date) => Date>
+
+/**
+ * The half-open wall-clock window `[start, end)` one typed value covers at its
+ * own precision, as naive literals Postgres reads back with `::timestamp`:
+ *   "2026-07-22 09:30" -> { start: "2026-07-22T09:30:00", end: "2026-07-22T09:31:00" }
+ * The end is derived by adding one unit in UTC (which has no DST) and reading
+ * the wall clock back, so the arithmetic never depends on the host timezone.
+ */
+export function temporalWallClockWindow(value: string): {
+  start: string
+  end: string
+} {
+  const start = flooredNaiveLiteral(value)
+  const addUnit = PRECISION_UNIT_ADDERS[detectTemporalPrecision(value)]
+  const end = formatInTimeZone(
+    addUnit(fromZonedTime(start, DEFAULT_FILTER_TIMEZONE)),
+    DEFAULT_FILTER_TIMEZONE,
+    NAIVE_DATETIME_FORMAT,
+  )
+  return { start, end }
+}
+
+/**
+ * The same precision window as an instant range `[startIso, endIso)` in UTC. A
+ * naive value is anchored to `timezone`; a value carrying its own offset keeps
+ * it. DST-safe: each naive edge is anchored independently, like the day-end
+ * helper above.
+ */
+export function filterValueToUtcInstantWindow(
+  value: string,
+  timezone: string,
+): { startIso: string; endIso: string } {
+  const { start, end } = temporalWallClockWindow(value)
+  const toInstant = hasExplicitOffset(value)
+    ? (naive: string) =>
+        new Date(`${naive}${offsetSuffixOf(value)}`).toISOString()
+    : (naive: string) => fromZonedTime(naive, timezone).toISOString()
+  return { startIso: toInstant(start), endIso: toInstant(end) }
+}
+
+// ===========================================================================
+// Custom-field values — normalize, format, save
+// ===========================================================================
+
+const normalizeExplicitOffsetValue = (value: string): string | null => {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
+}
 
 const normalizeValidatedTemporalValue = (input: {
   value: string
@@ -138,31 +340,6 @@ const temporalCustomFieldNormalizationHandlers = {
   (value: string, timezone: string) => string | null
 >
 
-/**
- * `formatInTimeZone` that never throws. Every surface that renders a stored
- * temporal value — exports, variable interpolation, the contact detail panel —
- * shares this so a single bad row degrades one cell instead of failing the
- * whole render around it.
- */
-export const formatWithFallback = (
-  date: Date | string,
-  timezone: string | null | undefined,
-  pattern: string,
-): string => {
-  try {
-    return formatInTimeZone(date, timezone ?? DEFAULT_FILTER_TIMEZONE, pattern)
-  } catch {
-    // An unresolvable timezone falls back to UTC; a corrupt stored value (e.g.
-    // legacy garbage the migration skipped) would still throw, so degrade to
-    // the raw string rather than crash the export/variable render around it.
-    try {
-      return formatInTimeZone(date, DEFAULT_FILTER_TIMEZONE, pattern)
-    } catch {
-      return typeof date === "string" ? date : ""
-    }
-  }
-}
-
 const temporalCustomFieldFormattingHandlers = {
   date: (value: string) => datePartOf(value),
   datetime: (value: string, timezone: string) =>
@@ -172,70 +349,65 @@ const temporalCustomFieldFormattingHandlers = {
   (value: string, timezone: string) => string
 >
 
-export function resolveFilterTimezone(
-  timezone: string | null | undefined,
-): string {
-  if (!timezone) {
-    return DEFAULT_FILTER_TIMEZONE
-  }
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone })
-    return timezone
-  } catch {
-    return DEFAULT_FILTER_TIMEZONE
-  }
-}
+export const isTemporalCustomFieldType = (
+  type: string,
+): type is TemporalCustomFieldType =>
+  type in temporalCustomFieldFormattingHandlers
 
-export function filterValueToUtcIso(value: string, timezone: string): string {
-  return normalizeValueWithExplicitOffset(
+export function normalizeTemporalCustomFieldValue(
+  type: string,
+  value: string | null | undefined,
+  timezone: string | null | undefined,
+): string | null {
+  if (!(value && isTemporalCustomFieldType(type))) {
+    return null
+  }
+
+  return temporalCustomFieldNormalizationHandlers[type](
     value,
-    timezone,
-    (normalizedValue, normalizedTimezone) =>
-      fromZonedTime(
-        toLocalIso(normalizedValue),
-        normalizedTimezone,
-      ).toISOString(),
+    resolveFilterTimezone(timezone),
   )
 }
 
-export function filterValueToUtcDayStartIso(
-  value: string,
+export function formatCustomFieldValueInTimeZone(
+  type: string,
+  value: string | null | undefined,
   timezone: string,
 ): string {
-  return fromZonedTime(`${datePartOf(value)}T00:00:00`, timezone).toISOString()
+  if (!value) {
+    return ""
+  }
+
+  if (!isTemporalCustomFieldType(type)) {
+    return value
+  }
+
+  return temporalCustomFieldFormattingHandlers[type](value, timezone)
 }
 
-export function filterValueToUtcDayEndIso(
+export function resolveTemporalCustomFieldFormValue(
+  type: string,
   value: string,
-  timezone: string,
 ): string {
-  const nextDay = format(addDays(parseISO(datePartOf(value)), 1), DATE_FORMAT)
-  return fromZonedTime(`${nextDay}T00:00:00`, timezone).toISOString()
+  return type === "date" ? datePartOf(value) : value
 }
 
-/**
- * The same instant re-expressed as a wall clock in `timezone`: the returned
- * Date's *local* getters (`getHours`, `getDate`, …) read as the time there.
- *
- * Use it only to compare calendar/clock components — the returned Date no
- * longer names the original instant, so never store or serialize it. An
- * unusable zone degrades to UTC and an unparseable input is passed through as
- * an Invalid Date, so this never throws inside a shared sweep tick.
- */
-export function toZonedWallClock(
-  date: Date | string | number,
-  timezone: string | null | undefined,
-): Date {
-  const instant = date instanceof Date ? date : new Date(date)
-  return Number.isNaN(instant.getTime())
-    ? instant
-    : toZonedTime(instant, resolveFilterTimezone(timezone))
-}
+export type TemporalCustomFieldSaveFormat = "formatted" | "iso"
 
-export function toZonedDayStartIso(value: string, timezone: string): string {
-  const safeTimezone = resolveFilterTimezone(timezone)
-  const dayStart = fromZonedTime(`${datePartOf(value)}T00:00:00`, safeTimezone)
-  return formatInTimeZone(dayStart, safeTimezone, ZONED_ISO_FORMAT)
+const TEMPORAL_CUSTOM_FIELD_SAVE_FORMATS = {
+  date: "formatted",
+  datetime: "iso",
+} as const satisfies Record<
+  TemporalCustomFieldType,
+  TemporalCustomFieldSaveFormat
+>
+
+export function resolveTemporalCustomFieldSaveFormat(
+  type: string,
+): TemporalCustomFieldSaveFormat {
+  return isTemporalCustomFieldType(type)
+    ? TEMPORAL_CUSTOM_FIELD_SAVE_FORMATS[type]
+    : "formatted"
 }
 
 /** The naive literal each temporal type uses to represent "now". */
@@ -264,65 +436,4 @@ export function currentTemporalLiteral(
     resolveFilterTimezone(timezone),
     TEMPORAL_NOW_LITERAL_FORMATS[type],
   )
-}
-
-export const isTemporalCustomFieldType = (
-  type: string,
-): type is TemporalCustomFieldType =>
-  type in temporalCustomFieldFormattingHandlers
-
-export function normalizeTemporalCustomFieldValue(
-  type: string,
-  value: string | null | undefined,
-  timezone: string | null | undefined,
-): string | null {
-  if (!(value && isTemporalCustomFieldType(type))) {
-    return null
-  }
-
-  return temporalCustomFieldNormalizationHandlers[type](
-    value,
-    resolveFilterTimezone(timezone),
-  )
-}
-
-export type TemporalCustomFieldSaveFormat = "formatted" | "iso"
-
-const TEMPORAL_CUSTOM_FIELD_SAVE_FORMATS = {
-  date: "formatted",
-  datetime: "iso",
-} as const satisfies Record<
-  TemporalCustomFieldType,
-  TemporalCustomFieldSaveFormat
->
-
-export function resolveTemporalCustomFieldSaveFormat(
-  type: string,
-): TemporalCustomFieldSaveFormat {
-  return isTemporalCustomFieldType(type)
-    ? TEMPORAL_CUSTOM_FIELD_SAVE_FORMATS[type]
-    : "formatted"
-}
-
-export function resolveTemporalCustomFieldFormValue(
-  type: string,
-  value: string,
-): string {
-  return type === "date" ? datePartOf(value) : value
-}
-
-export function formatCustomFieldValueInTimeZone(
-  type: string,
-  value: string | null | undefined,
-  timezone: string,
-): string {
-  if (!value) {
-    return ""
-  }
-
-  if (!isTemporalCustomFieldType(type)) {
-    return value
-  }
-
-  return temporalCustomFieldFormattingHandlers[type](value, timezone)
 }

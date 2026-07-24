@@ -4,10 +4,10 @@ import {
   datePartOf,
   filterValueToUtcDayEndIso,
   filterValueToUtcDayStartIso,
-  filterValueToUtcIso,
+  filterValueToUtcInstantWindow,
   hasExplicitOffset,
   hasTimeComponent,
-  toNaiveWallClockLiteral,
+  temporalWallClockWindow,
 } from "@chatbotx.io/utils/datetime"
 import { type SQL, sql } from "drizzle-orm"
 import {
@@ -207,25 +207,39 @@ function temporalOperand(iso: string, cast: TemporalCast): SQL {
     : sql`${iso}::timestamptz`
 }
 
-function buildTemporalPointComparison(
+/**
+ * Compares the stored value against a half-open precision window `[start, end)`.
+ * Every operator is derived from the same window so they stay mutually
+ * consistent — "Is" means inside the window, and the ordered operators pin to
+ * whichever edge keeps `eq ⊂ gte`, `eq ⊂ lte`, and `gt`/`eq`/`lt` disjoint:
+ *   eq  -> start <= v < end   (the whole typed unit, e.g. that exact minute)
+ *   gte -> v >= start         (at or after the unit begins)
+ *   gt  -> v >= end           (strictly after the whole unit)
+ *   lt  -> v <  start         (strictly before the whole unit)
+ *   lte -> v <  end           (at or before the whole unit ends)
+ * `ne` is not handled here; the caller inverts `eq` via the outer negate flag.
+ */
+function buildTemporalWindowComparison(
   operator: string,
   guard: SQL,
-  operandIso: string,
+  startIso: string,
+  endIso: string,
   cast: TemporalCast,
 ): SQL | undefined {
   const stored = guardedTemporal(guard, cast)
-  const operand = temporalOperand(operandIso, cast)
+  const start = temporalOperand(startIso, cast)
+  const end = temporalOperand(endIso, cast)
   switch (operator) {
     case operatorTypes.enum.eq:
-      return sql`(${guard} AND ${stored} = ${operand})`
+      return sql`(${guard} AND ${stored} >= ${start} AND ${stored} < ${end})`
     case operatorTypes.enum.gt:
-      return sql`(${guard} AND ${stored} > ${operand})`
+      return sql`(${guard} AND ${stored} >= ${end})`
     case operatorTypes.enum.gte:
-      return sql`(${guard} AND ${stored} >= ${operand})`
+      return sql`(${guard} AND ${stored} >= ${start})`
     case operatorTypes.enum.lt:
-      return sql`(${guard} AND ${stored} < ${operand})`
+      return sql`(${guard} AND ${stored} < ${start})`
     case operatorTypes.enum.lte:
-      return sql`(${guard} AND ${stored} <= ${operand})`
+      return sql`(${guard} AND ${stored} < ${end})`
     default:
       return
   }
@@ -255,28 +269,14 @@ function buildDatetimeCustomFieldPredicate(
     )
   }
 
-  const isDateField = customFieldType === customFieldTypes.enum.date
-
-  if (operator === operatorTypes.enum.isBetween) {
-    return buildTemporalRangePredicate(
-      intervalValue,
-      isDateField,
-      timezone,
-      guard,
-    )
-  }
-
-  if (
-    typeof value !== "string" ||
-    value === "" ||
-    !isValidDateTimeFilterValue(value)
-  ) {
-    return
-  }
-
-  return isDateField
-    ? buildDateFieldPredicate(operator, value, timezone, guard)
-    : buildDatetimeInstantPredicate(operator, value, timezone, guard)
+  return buildTemporalBranchPredicate({
+    guard,
+    intervalValue,
+    isDateField: customFieldType === customFieldTypes.enum.date,
+    operator,
+    timezone,
+    value,
+  })
 }
 
 function buildLegacyTemporalCustomFieldPredicate(
@@ -287,7 +287,7 @@ function buildLegacyTemporalCustomFieldPredicate(
   timezone: string,
   guard: SQL,
 ): SQL | undefined {
-  const datePredicate = buildLegacyTemporalBranchPredicate({
+  const datePredicate = buildTemporalBranchPredicate({
     guard,
     intervalValue,
     isDateField: true,
@@ -295,7 +295,7 @@ function buildLegacyTemporalCustomFieldPredicate(
     timezone,
     value,
   })
-  const datetimePredicate = buildLegacyTemporalBranchPredicate({
+  const datetimePredicate = buildTemporalBranchPredicate({
     guard,
     intervalValue,
     isDateField: false,
@@ -318,7 +318,7 @@ function buildLegacyTemporalCustomFieldPredicate(
   return sql`((${isDateField} AND ${datePredicate}) OR (NOT ${isDateField} AND ${datetimePredicate}))`
 }
 
-function buildLegacyTemporalBranchPredicate(input: {
+function buildTemporalBranchPredicate(input: {
   guard: SQL
   intervalValue: IntervalValue | undefined
   isDateField: boolean
@@ -351,9 +351,10 @@ function buildLegacyTemporalBranchPredicate(input: {
 }
 
 /**
- * DATETIME field: always zone-aware. Equality matches the whole calendar day in
- * the criteria zone; ordered comparisons match the exact instant. A naive value
- * is anchored to `timezone`; a value with its own offset keeps it.
+ * DATETIME field: always zone-aware. The match precision follows the typed
+ * precision — a date matches the whole day, `09:30` the whole minute, `09:30:45`
+ * the whole second — all as a window in the criteria zone. A naive value is
+ * anchored to `timezone`; a value with its own offset keeps it.
  */
 function buildDatetimeInstantPredicate(
   operator: string,
@@ -361,28 +362,24 @@ function buildDatetimeInstantPredicate(
   timezone: string,
   guard: SQL,
 ): SQL | undefined {
-  if (operator === operatorTypes.enum.eq) {
-    const ts = guardedTemporal(guard, "timestamptz")
-    const dayStart = filterValueToUtcDayStartIso(value, timezone)
-    const dayEnd = filterValueToUtcDayEndIso(value, timezone)
-    return sql`(${guard} AND ${ts} >= ${dayStart}::timestamptz AND ${ts} < ${dayEnd}::timestamptz)`
-  }
-
-  return buildTemporalPointComparison(
+  const { startIso, endIso } = filterValueToUtcInstantWindow(value, timezone)
+  return buildTemporalWindowComparison(
     operator,
     guard,
-    filterValueToUtcIso(value, timezone),
+    startIso,
+    endIso,
     "timestamptz",
   )
 }
 
 /**
- * DATE field: compared by wall clock, ignoring the criteria/browser zone. An
+ * DATE field: compared by wall clock, ignoring the criteria/browser zone. Like
+ * the datetime field, the match precision follows the typed precision, but an
  * explicit offset in the typed value is the ONLY trigger for zone-aware
- * (instant) comparison — "họ nhập timezone thì mình mới query timezone".
- *   - value with offset      -> exact instant (::timestamptz)
- *   - value with a time part  -> exact wall clock (::timestamp), no shift
- *   - date only               -> naive [00:00, next-00:00) day window
+ * (instant) comparison — the user must type an offset before we compare by zone.
+ *   - value with offset      -> instant window (::timestamptz), offset honored
+ *   - value with a time part -> wall-clock window (::timestamp), no shift
+ *   - date only              -> naive [00:00, next-00:00) day window
  */
 function buildDateFieldPredicate(
   operator: string,
@@ -391,21 +388,25 @@ function buildDateFieldPredicate(
   guard: SQL,
 ): SQL | undefined {
   if (hasExplicitOffset(value)) {
-    // The value carries its own offset, so filterValueToUtcIso ignores
-    // `timezone` and honors that offset.
-    return buildTemporalPointComparison(
+    // The value carries its own offset, so the window is anchored by that
+    // offset rather than by `timezone`.
+    const { startIso, endIso } = filterValueToUtcInstantWindow(value, timezone)
+    return buildTemporalWindowComparison(
       operator,
       guard,
-      filterValueToUtcIso(value, timezone),
+      startIso,
+      endIso,
       "timestamptz",
     )
   }
 
   if (hasTimeComponent(value)) {
-    return buildTemporalPointComparison(
+    const { start, end } = temporalWallClockWindow(value)
+    return buildTemporalWindowComparison(
       operator,
       guard,
-      toNaiveWallClockLiteral(value),
+      start,
+      end,
       "timestamp",
     )
   }
@@ -449,6 +450,13 @@ function buildNaiveDateOnlyPredicate(
  * Range comparison for both temporal field types. A datetime field is always
  * instant-based; a date field stays naive unless BOTH bounds carry an explicit
  * offset, so a range means exactly the wall-clock values the user typed.
+ *
+ * Each bound follows the precision the user typed, matching every other temporal
+ * operator in this file: the lower bound floors to the START of its unit and the
+ * upper bound extends to the END of its own, then the whole range is a half-open
+ * `[loStart, hiEnd)`. So "From 12:12 To 12:12" spans the entire 12:12 minute
+ * (`[12:12:00, 12:13:00)`) — a stored 12:12:12 is inside it — instead of pinning
+ * the top to the bare instant 12:12:00 and dropping the rest of the minute.
  */
 function buildTemporalRangePredicate(
   intervalValue: IntervalValue | undefined,
@@ -470,13 +478,13 @@ function buildTemporalRangePredicate(
     !isDateField || (hasExplicitOffset(lo) && hasExplicitOffset(hi))
   const cast: TemporalCast = instant ? "timestamptz" : "timestamp"
   const stored = guardedTemporal(guard, cast)
-  const loIso = instant
-    ? filterValueToUtcIso(lo, timezone)
-    : toNaiveWallClockLiteral(lo)
-  const hiIso = instant
-    ? filterValueToUtcIso(hi, timezone)
-    : toNaiveWallClockLiteral(hi)
-  return sql`(${guard} AND ${stored} >= ${temporalOperand(loIso, cast)} AND ${stored} <= ${temporalOperand(hiIso, cast)})`
+  const loStart = instant
+    ? filterValueToUtcInstantWindow(lo, timezone).startIso
+    : temporalWallClockWindow(lo).start
+  const hiEnd = instant
+    ? filterValueToUtcInstantWindow(hi, timezone).endIso
+    : temporalWallClockWindow(hi).end
+  return sql`(${guard} AND ${stored} >= ${temporalOperand(loStart, cast)} AND ${stored} < ${temporalOperand(hiEnd, cast)})`
 }
 
 function buildTextCustomFieldPredicate(

@@ -52,6 +52,24 @@ type SetValuesInput = {
   fillEmptyTemporalWithNow?: boolean
 }
 
+/**
+ * A single persisted custom-field change awaiting its post-commit side effects.
+ * `setValuesInTransaction` returns these so a caller that owns an outer
+ * transaction can emit the trigger/webhook events only AFTER it commits.
+ */
+export type PendingContactCustomFieldChange = {
+  customFieldId: string
+  customFieldName: string
+  oldValue: string | null
+  newValue: string
+}
+
+type EmitCustomFieldChangesInput = {
+  workspaceId: string
+  contactId: string
+  changes: PendingContactCustomFieldChange[]
+}
+
 type DeleteByKeyInput = {
   workspaceId: string
   contactId: string
@@ -135,10 +153,15 @@ class ContactCustomFieldService extends BaseService {
     }))
   }
 
-  async setValues(
+  /**
+   * Persists the changed field values against `client` and returns the changes
+   * as pending side effects. This is write-only: it never emits events or
+   * invalidates caches, so it is safe to run inside a caller's transaction.
+   */
+  private async writeValues(
     input: SetValuesInput,
-    tx: DatabaseClient = db,
-  ): Promise<void> {
+    client: DatabaseClient,
+  ): Promise<PendingContactCustomFieldChange[]> {
     const {
       workspaceId,
       contactId,
@@ -154,127 +177,179 @@ class ContactCustomFieldService extends BaseService {
       fields.map((field) => [field.customFieldId, field] as const),
     )
 
-    const run = async (client: DatabaseClient) => {
-      const customFields = await client.query.customFieldModel.findMany({
-        where: { workspaceId, id: { in: customFieldIds } },
-        columns: { id: true, name: true, type: true },
-      })
+    const customFields = await client.query.customFieldModel.findMany({
+      where: { workspaceId, id: { in: customFieldIds } },
+      columns: { id: true, name: true, type: true },
+    })
 
-      if (customFields.length === 0) {
-        return []
-      }
-
-      const existingValues =
-        await client.query.contactCustomFieldModel.findMany({
-          where: { contactId, customFieldId: { in: customFieldIds } },
-        })
-      const existingById = new Map(
-        existingValues.map((value) => [value.customFieldId, value] as const),
-      )
-      const resolveSourceTimezone = createSourceTimezoneResolver({
-        workspaceId,
-        contactId,
-        strategy: sourceTimezoneStrategy,
-        explicitSourceTimezone: sourceTimezoneOverride,
-        tx: client,
-      })
-
-      const changedFields = await Promise.all(
-        customFields.map(async (customField) => {
-          const field = fieldById.get(customField.id)
-          if (!field) {
-            return null
-          }
-
-          const normalizedValue = await normalizeCustomFieldValueForStorage({
-            type: customField.type,
-            value: field.value,
-            resolveSourceTimezone,
-            explicitTimezone: sourceTimezone,
-            temporalInputParsing,
-            fillEmptyTemporalWithNow,
-          })
-          // Un-normalizable temporal value: skip rather than persist garbage.
-          if (normalizedValue === null) {
-            if (temporalInputParsing === TemporalInputParsing.Lenient) {
-              logger.warn(
-                {
-                  workspaceId,
-                  contactId,
-                  customFieldId: customField.id,
-                  type: customField.type,
-                },
-                "Skipped unparseable temporal custom-field value from a lenient source",
-              )
-            }
-            return null
-          }
-          const existing = existingById.get(customField.id)
-          if (existing?.value === normalizedValue) {
-            return null
-          }
-
-          return {
-            customField,
-            existing,
-            oldValue: existing?.value ?? null,
-            value: normalizedValue,
-          }
-        }),
-      )
-
-      const valuesToPersist = changedFields.filter(
-        (field) => field !== null,
-      ) as NonNullable<(typeof changedFields)[number]>[]
-
-      if (valuesToPersist.length === 0) {
-        return []
-      }
-
-      await Promise.all(
-        valuesToPersist.map(({ customField, value, existing }) => {
-          if (existing) {
-            return client
-              .update(contactCustomFieldModel)
-              .set({ value })
-              .where(eq(contactCustomFieldModel.id, existing.id))
-          }
-          return client
-            .insert(contactCustomFieldModel)
-            .values({
-              id: createId(),
-              contactId,
-              customFieldId: customField.id,
-              value,
-            })
-            .onConflictDoUpdate({
-              target: [
-                contactCustomFieldModel.contactId,
-                contactCustomFieldModel.customFieldId,
-              ],
-              set: { value },
-            })
-        }),
-      )
-
-      return valuesToPersist
+    if (customFields.length === 0) {
+      return []
     }
 
-    const valuesToPersist =
-      tx === db
-        ? await tx.transaction(async (innerTx) => run(innerTx))
-        : await run(tx)
+    const existingValues = await client.query.contactCustomFieldModel.findMany({
+      where: { contactId, customFieldId: { in: customFieldIds } },
+    })
+    const existingById = new Map(
+      existingValues.map((value) => [value.customFieldId, value] as const),
+    )
+    const resolveSourceTimezone = createSourceTimezoneResolver({
+      workspaceId,
+      contactId,
+      strategy: sourceTimezoneStrategy,
+      explicitSourceTimezone: sourceTimezoneOverride,
+      tx: client,
+    })
 
-    for (const { customField, oldValue, value } of valuesToPersist) {
+    const changedFields = await Promise.all(
+      customFields.map(async (customField) => {
+        const field = fieldById.get(customField.id)
+        if (!field) {
+          return null
+        }
+
+        const normalizedValue = await normalizeCustomFieldValueForStorage({
+          type: customField.type,
+          value: field.value,
+          resolveSourceTimezone,
+          explicitTimezone: sourceTimezone,
+          temporalInputParsing,
+          fillEmptyTemporalWithNow,
+        })
+        // Un-normalizable temporal value: skip rather than persist garbage.
+        if (normalizedValue === null) {
+          if (temporalInputParsing === TemporalInputParsing.Lenient) {
+            logger.warn(
+              {
+                workspaceId,
+                contactId,
+                customFieldId: customField.id,
+                type: customField.type,
+              },
+              "Skipped unparseable temporal custom-field value from a lenient source",
+            )
+          }
+          return null
+        }
+        const existing = existingById.get(customField.id)
+        if (existing?.value === normalizedValue) {
+          return null
+        }
+
+        return {
+          customField,
+          existing,
+          oldValue: existing?.value ?? null,
+          value: normalizedValue,
+        }
+      }),
+    )
+
+    const valuesToPersist = changedFields.filter(
+      (field) => field !== null,
+    ) as NonNullable<(typeof changedFields)[number]>[]
+
+    if (valuesToPersist.length === 0) {
+      return []
+    }
+
+    await Promise.all(
+      valuesToPersist.map(({ customField, value, existing }) => {
+        if (existing) {
+          return client
+            .update(contactCustomFieldModel)
+            .set({ value })
+            .where(eq(contactCustomFieldModel.id, existing.id))
+        }
+        return client
+          .insert(contactCustomFieldModel)
+          .values({
+            id: createId(),
+            contactId,
+            customFieldId: customField.id,
+            value,
+          })
+          .onConflictDoUpdate({
+            target: [
+              contactCustomFieldModel.contactId,
+              contactCustomFieldModel.customFieldId,
+            ],
+            set: { value },
+          })
+      }),
+    )
+
+    return valuesToPersist.map(({ customField, oldValue, value }) => ({
+      customFieldId: customField.id,
+      customFieldName: customField.name,
+      oldValue,
+      newValue: value,
+    }))
+  }
+
+  async setValues(
+    input: SetValuesInput,
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    // No caller transaction: own one so the reads and writes are consistent.
+    // A caller-supplied `tx` writes inside their transaction and — like the
+    // legacy behavior — emits before it commits; callers that need commit-safe
+    // ordering use setValuesInTransaction + emitCustomFieldChanges instead.
+    const changes =
+      tx === db
+        ? await tx.transaction((innerTx) => this.writeValues(input, innerTx))
+        : await this.writeValues(input, tx)
+
+    await this.emitCustomFieldChanges({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      changes,
+    })
+  }
+
+  /**
+   * Write-only variant for callers that own an outer transaction. Persists the
+   * values inside `tx` and returns the pending changes; the caller MUST call
+   * `emitCustomFieldChanges` once the transaction commits. Emitting inside the
+   * transaction would let the trigger worker (which re-reads the value) observe
+   * uncommitted or rolled-back data.
+   */
+  async setValuesInTransaction(
+    input: SetValuesInput,
+    tx: DatabaseClient,
+  ): Promise<PendingContactCustomFieldChange[]> {
+    return await this.writeValues(input, tx)
+  }
+
+  /**
+   * Emits one customFieldChanged event per change, then invalidates the contact
+   * cache once. Cache invalidation is unconditional (cheap and idempotent) so a
+   * no-op write still refreshes any stale cache. Emission is fire-and-forget:
+   * a failed enqueue is logged, not thrown, so it never blocks the caller.
+   */
+  async emitCustomFieldChanges(
+    input: EmitCustomFieldChangesInput,
+  ): Promise<void> {
+    const { workspaceId, contactId, changes } = input
+
+    for (const change of changes) {
       emitCustomFieldChanged(
         workspaceId,
         contactId,
-        customField.id,
-        customField.name,
-        oldValue,
-        value,
-        // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
-      ).catch(() => {})
+        change.customFieldId,
+        change.customFieldName,
+        change.oldValue,
+        change.newValue,
+      ).catch((error: unknown) => {
+        logger.warn(
+          {
+            err: error,
+            workspaceId,
+            contactId,
+            customFieldId: change.customFieldId,
+          },
+          "Failed to emit customFieldChanged event",
+        )
+      })
     }
 
     await this.invalidate({ workspaceId, contactId })
@@ -428,8 +503,12 @@ class ContactCustomFieldService extends BaseService {
       customField.name,
       oldValue,
       null,
-      // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
-    ).catch(() => {})
+    ).catch((error: unknown) => {
+      logger.warn(
+        { err: error, workspaceId, contactId, customFieldId: customField.id },
+        "Failed to emit customFieldChanged event",
+      )
+    })
   }
 
   async invalidate(props: {

@@ -97,9 +97,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
               <InputField label={t("fields.value.label")} name="value" />
               {isTemporalField ? (
                 <p className="text-muted-foreground text-xs">
-                  {t("flows.setCustomField.temporalHint", {
-                    timezone: getBrowserTimezone(),
-                  })}
+                  {t("flows.setCustomField.temporalHint")}
                 </p>
               ) : null}
             </div>

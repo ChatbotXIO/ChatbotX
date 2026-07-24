@@ -423,10 +423,13 @@ export class ConditionEvaluator {
     const timezone = config.timezone || workspace?.timezone
 
     // `datetime` values are persisted as a UTC instant; `date` values as an
-    // offset-preserved start-of-day (e.g. `...+07:00`). Both parse to the correct
-    // absolute instant, so we resolve the stored moment into the condition's zone
-    // directly; a bare "YYYY-MM-DD" no longer reaches here.
-    const targetDate = toZonedWallClock(new Date(customFieldValue), timezone)
+    // offset-preserved start-of-day (e.g. `...+07:00`). `parseDateTimeValue`
+    // resolves either into the condition's zone as a wall-clock moment, and also
+    // guards a bare "YYYY-MM-DD" (read as local midnight) and unparseable values.
+    const targetDate = parseDateTimeValue(customFieldValue, timezone)
+    if (!targetDate) {
+      return false
+    }
     const now = toZonedWallClock(new Date(), timezone)
 
     if (triggerType === "before") {

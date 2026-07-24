@@ -9,11 +9,7 @@ import {
 import { contactInboxModel, messageModel } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { contactInboxExists } from "./exists"
-import {
-  filterValueToUtcDayEndIso,
-  filterValueToUtcDayStartIso,
-  filterValueToUtcIso,
-} from "./timezone"
+import { filterValueToUtcInstantWindow } from "./timezone"
 import type { ContactWhere, RawTable, RelationExists } from "./types"
 import {
   isValidDateTimeFilterValue,
@@ -137,6 +133,82 @@ export function buildColumnWhere(
     : condition
 }
 
+/**
+ * The precision-aware operator mapping shared by every built-in `timestamptz`
+ * date field (real columns and MAX() aggregates alike), matching the datetime
+ * custom-field convention in `custom-field-predicates.ts`. Each typed value
+ * resolves to a half-open UTC window `[start, end)` whose width follows the
+ * typed precision (day / minute / second), and every operator is derived from
+ * that one window so they stay mutually consistent:
+ *   eq  -> start <= v < end        (the whole typed unit)
+ *   ne  -> v < start OR v >= end OR v IS NULL   (null-safe negation of eq)
+ *   gt  -> v >= end                (strictly after the whole unit)
+ *   gte -> v >= start              (at or after the unit begins)
+ *   lt  -> v <  start              (strictly before the whole unit)
+ *   lte -> v <  end                (at or before the whole unit ends)
+ *   isBetween    -> loStart <= v < hiEnd
+ *   notBetween   -> v < loStart OR v >= hiEnd OR v IS NULL
+ * Returns a render closure over the comparison target (a column or an aggregate
+ * SQL expression), or `undefined` when the value/operator is unusable so the
+ * caller can drop the condition instead of emitting a false predicate.
+ */
+function resolveTimestamptzComparison(
+  operator: string,
+  value: unknown,
+  timezone: string,
+): ((target: SQL | AnyColumn) => SQL) | undefined {
+  if (
+    operator === operatorTypes.enum.isBetween ||
+    operator === operatorTypes.enum.notBetween
+  ) {
+    const intervalValue = getDateIntervalValue(value)
+    if (!intervalValue) {
+      return
+    }
+    const loStart = filterValueToUtcInstantWindow(
+      intervalValue[0],
+      timezone,
+    ).startIso
+    const hiEnd = filterValueToUtcInstantWindow(
+      intervalValue[1],
+      timezone,
+    ).endIso
+    return operator === operatorTypes.enum.isBetween
+      ? (target) =>
+          sql`(${target} >= ${loStart}::timestamptz AND ${target} < ${hiEnd}::timestamptz)`
+      : (target) =>
+          sql`(${target} < ${loStart}::timestamptz OR ${target} >= ${hiEnd}::timestamptz OR ${target} IS NULL)`
+  }
+
+  if (
+    typeof value !== "string" ||
+    value === "" ||
+    !isValidDateTimeFilterValue(value)
+  ) {
+    return
+  }
+
+  const { startIso, endIso } = filterValueToUtcInstantWindow(value, timezone)
+  switch (operator) {
+    case operatorTypes.enum.eq:
+      return (target) =>
+        sql`(${target} >= ${startIso}::timestamptz AND ${target} < ${endIso}::timestamptz)`
+    case operatorTypes.enum.ne:
+      return (target) =>
+        sql`(${target} < ${startIso}::timestamptz OR ${target} >= ${endIso}::timestamptz OR ${target} IS NULL)`
+    case operatorTypes.enum.gt:
+      return (target) => sql`${target} >= ${endIso}::timestamptz`
+    case operatorTypes.enum.gte:
+      return (target) => sql`${target} >= ${startIso}::timestamptz`
+    case operatorTypes.enum.lt:
+      return (target) => sql`${target} < ${startIso}::timestamptz`
+    case operatorTypes.enum.lte:
+      return (target) => sql`${target} < ${endIso}::timestamptz`
+    default:
+      return
+  }
+}
+
 export function buildDateColumnWhere(
   columnName: string,
   operator: string,
@@ -150,71 +222,8 @@ export function buildDateColumnWhere(
     return { [columnName]: { isNotNull: true } }
   }
 
-  const intervalValue = getDateIntervalValue(value)
-
-  if (
-    operator === operatorTypes.enum.isBetween ||
-    operator === operatorTypes.enum.notBetween
-  ) {
-    if (!intervalValue) {
-      return {}
-    }
-
-    const startUtc = filterValueToUtcIso(intervalValue[0], timezone)
-    const endUtc = filterValueToUtcIso(intervalValue[1], timezone)
-    return buildRawColumnWhere(columnName, (column) =>
-      operator === operatorTypes.enum.isBetween
-        ? sql`(${column} >= ${startUtc}::timestamptz AND ${column} <= ${endUtc}::timestamptz)`
-        : sql`(${column} < ${startUtc}::timestamptz OR ${column} > ${endUtc}::timestamptz OR ${column} IS NULL)`,
-    )
-  }
-
-  if (
-    typeof value !== "string" ||
-    value === "" ||
-    !isValidDateTimeFilterValue(value)
-  ) {
-    return {}
-  }
-
-  if (
-    operator === operatorTypes.enum.eq ||
-    operator === operatorTypes.enum.ne
-  ) {
-    const dayStart = filterValueToUtcDayStartIso(value, timezone)
-    const dayEnd = filterValueToUtcDayEndIso(value, timezone)
-    return buildRawColumnWhere(columnName, (column) =>
-      operator === operatorTypes.enum.eq
-        ? sql`(${column} >= ${dayStart}::timestamptz AND ${column} < ${dayEnd}::timestamptz)`
-        : sql`(${column} < ${dayStart}::timestamptz OR ${column} >= ${dayEnd}::timestamptz OR ${column} IS NULL)`,
-    )
-  }
-
-  const instant = filterValueToUtcIso(value, timezone)
-  switch (operator) {
-    case operatorTypes.enum.gt:
-      return buildRawColumnWhere(
-        columnName,
-        (column) => sql`${column} > ${instant}::timestamptz`,
-      )
-    case operatorTypes.enum.gte:
-      return buildRawColumnWhere(
-        columnName,
-        (column) => sql`${column} >= ${instant}::timestamptz`,
-      )
-    case operatorTypes.enum.lt:
-      return buildRawColumnWhere(
-        columnName,
-        (column) => sql`${column} < ${instant}::timestamptz`,
-      )
-    case operatorTypes.enum.lte:
-      return buildRawColumnWhere(
-        columnName,
-        (column) => sql`${column} <= ${instant}::timestamptz`,
-      )
-    default:
-      return {}
-  }
+  const render = resolveTimestamptzComparison(operator, value, timezone)
+  return render ? buildRawColumnWhere(columnName, render) : {}
 }
 
 export function buildLatestContactInboxDateWhere(
@@ -552,55 +561,9 @@ function buildDatetimeAggregateComparison(
     return sql`${latestValue} IS NOT NULL`
   }
 
-  const intervalValue = getDateIntervalValue(value)
-
-  if (
-    operator === operatorTypes.enum.isBetween ||
-    operator === operatorTypes.enum.notBetween
-  ) {
-    if (!intervalValue) {
-      return
-    }
-
-    const startUtc = filterValueToUtcIso(intervalValue[0], timezone)
-    const endUtc = filterValueToUtcIso(intervalValue[1], timezone)
-    return operator === operatorTypes.enum.isBetween
-      ? sql`(${latestValue} >= ${startUtc}::timestamptz AND ${latestValue} <= ${endUtc}::timestamptz)`
-      : sql`(${latestValue} < ${startUtc}::timestamptz OR ${latestValue} > ${endUtc}::timestamptz OR ${latestValue} IS NULL)`
-  }
-
-  if (
-    typeof value !== "string" ||
-    value === "" ||
-    !isValidDateTimeFilterValue(value)
-  ) {
-    return
-  }
-
-  if (
-    operator === operatorTypes.enum.eq ||
-    operator === operatorTypes.enum.ne
-  ) {
-    const dayStart = filterValueToUtcDayStartIso(value, timezone)
-    const dayEnd = filterValueToUtcDayEndIso(value, timezone)
-    return operator === operatorTypes.enum.eq
-      ? sql`(${latestValue} >= ${dayStart}::timestamptz AND ${latestValue} < ${dayEnd}::timestamptz)`
-      : sql`(${latestValue} < ${dayStart}::timestamptz OR ${latestValue} >= ${dayEnd}::timestamptz OR ${latestValue} IS NULL)`
-  }
-
-  const instant = filterValueToUtcIso(value, timezone)
-  switch (operator) {
-    case operatorTypes.enum.gt:
-      return sql`${latestValue} > ${instant}::timestamptz`
-    case operatorTypes.enum.gte:
-      return sql`${latestValue} >= ${instant}::timestamptz`
-    case operatorTypes.enum.lt:
-      return sql`${latestValue} < ${instant}::timestamptz`
-    case operatorTypes.enum.lte:
-      return sql`${latestValue} <= ${instant}::timestamptz`
-    default:
-      return
-  }
+  // Same precision-aware window mapping as the real-column path; the only
+  // difference is that the comparison target is the MAX() aggregate expression.
+  return resolveTimestamptzComparison(operator, value, timezone)?.(latestValue)
 }
 
 function buildNumberAggregateComparison(

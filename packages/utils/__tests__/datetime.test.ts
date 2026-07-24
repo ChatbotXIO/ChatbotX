@@ -3,8 +3,10 @@ import {
   currentTemporalLiteral,
   DEFAULT_FILTER_TIMEZONE,
   datePartOf,
+  detectTemporalPrecision,
   filterValueToUtcDayEndIso,
   filterValueToUtcDayStartIso,
+  filterValueToUtcInstantWindow,
   filterValueToUtcIso,
   formatCustomFieldValueInTimeZone,
   hasExplicitOffset,
@@ -16,6 +18,7 @@ import {
   resolveTemporalCustomFieldSaveFormat,
   SourceTimezoneStrategy,
   TemporalInputParsing,
+  temporalWallClockWindow,
   toNaiveWallClockLiteral,
   toZonedDayStartIso,
 } from "../src/datetime"
@@ -120,6 +123,69 @@ describe("datetime utilities", () => {
     expect(filterValueToUtcDayEndIso("2026-01-01", NY)).toBe(
       "2026-01-02T05:00:00.000Z",
     )
+  })
+
+  test.each([
+    ["2026-07-22", "day"],
+    ["2026-07-22 09:30", "minute"],
+    ["2026-07-22T09:30Z", "minute"],
+    ["2026-07-22 09:30:45", "second"],
+    ["2026-07-22T09:30:45+07:00", "second"],
+  ])("detects the typed precision of %s as %s", (value, precision) => {
+    expect(detectTemporalPrecision(value)).toBe(precision)
+  })
+
+  test.each([
+    // Precision follows what the user typed; the window spans exactly one unit.
+    ["2026-07-22", "2026-07-22T00:00:00", "2026-07-23T00:00:00"],
+    ["2026-07-22 09:30", "2026-07-22T09:30:00", "2026-07-22T09:31:00"],
+    ["2026-07-22 09:30:45", "2026-07-22T09:30:45", "2026-07-22T09:30:46"],
+    // Rollovers stay correct at unit boundaries.
+    ["2026-07-22 23:59", "2026-07-22T23:59:00", "2026-07-23T00:00:00"],
+    ["2026-07-22 09:59:59", "2026-07-22T09:59:59", "2026-07-22T10:00:00"],
+  ])("builds a naive wall-clock window for %s", (value, start, end) => {
+    expect(temporalWallClockWindow(value)).toEqual({ start, end })
+  })
+
+  test("floors sub-precision digits out of the wall-clock window", () => {
+    // A fractional second is floored to the whole second it falls in.
+    expect(temporalWallClockWindow("2026-07-22T09:30:45.750Z")).toEqual({
+      start: "2026-07-22T09:30:45",
+      end: "2026-07-22T09:30:46",
+    })
+  })
+
+  test("anchors an instant window to the criteria timezone", () => {
+    // 09:30 VN (UTC+7) is 02:30Z; the minute window ends one minute later.
+    expect(filterValueToUtcInstantWindow("2026-07-22 09:30", VN)).toEqual({
+      startIso: "2026-07-22T02:30:00.000Z",
+      endIso: "2026-07-22T02:31:00.000Z",
+    })
+  })
+
+  test("spans the full day in an instant window for a date-only value", () => {
+    expect(filterValueToUtcInstantWindow("2026-07-22", VN)).toEqual({
+      startIso: "2026-07-21T17:00:00.000Z",
+      endIso: "2026-07-22T17:00:00.000Z",
+    })
+  })
+
+  test("honors an explicit offset over the criteria timezone in an instant window", () => {
+    // The user typed +07:00, so NY is ignored: 09:30+07:00 is 02:30Z.
+    expect(
+      filterValueToUtcInstantWindow("2026-07-22T09:30:00+07:00", NY),
+    ).toEqual({
+      startIso: "2026-07-22T02:30:00.000Z",
+      endIso: "2026-07-22T02:30:01.000Z",
+    })
+  })
+
+  test("keeps an instant day window DST-safe across a fall-back boundary", () => {
+    // Nov 1 2026 is a US DST fall-back day; the day still ends at local midnight.
+    expect(filterValueToUtcInstantWindow("2026-11-01", NY)).toEqual({
+      startIso: "2026-11-01T04:00:00.000Z",
+      endIso: "2026-11-02T05:00:00.000Z",
+    })
   })
 
   test("formats temporal custom-field values in a target timezone", () => {

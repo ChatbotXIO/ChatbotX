@@ -76,6 +76,7 @@ vi.mock("@chatbotx.io/logger", () => ({
 const { contactCustomFieldService } = await import(
   "../src/contact-custom-field/service"
 )
+const { db } = await import("@chatbotx.io/database/client")
 
 const DATETIME_FIELD = { id: "cf-dt", name: "booking_at", type: "datetime" }
 
@@ -427,5 +428,161 @@ describe("contactCustomFieldService.setValueByKey — temporal forwarding", () =
     )
     expect(mocks.contactFindFirst).not.toHaveBeenCalled()
     expect(mocks.workspaceFindFirst).not.toHaveBeenCalled()
+  })
+})
+
+// setValuesInTransaction is the write-only half of the funnel: callers that own
+// an outer transaction persist inside it, then emit AFTER commit. It must never
+// emit or invalidate on its own — doing so pre-commit lets the trigger worker
+// (which re-reads the value from the DB) observe uncommitted or rolled-back data.
+describe("contactCustomFieldService.setValuesInTransaction — write-only, defers side effects", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.contactCustomFieldFindMany.mockResolvedValue([])
+    mocks.contactFindFirst.mockResolvedValue({ timezone: "Asia/Ho_Chi_Minh" })
+    mocks.workspaceFindFirst.mockResolvedValue({ timezone: "UTC" })
+  })
+
+  test("persists the value but emits no event and invalidates no cache", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([DATETIME_FIELD])
+
+    const changes = await contactCustomFieldService.setValuesInTransaction(
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        fields: [{ customFieldId: "cf-dt", value: "2026-07-22 15:30" }],
+      },
+      db,
+    )
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "2026-07-22T08:30:00.000Z" }),
+    )
+    // Side effects are the caller's job, run AFTER the outer transaction commits.
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+    expect(mocks.invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(changes).toEqual([
+      {
+        customFieldId: "cf-dt",
+        customFieldName: "booking_at",
+        oldValue: null,
+        newValue: "2026-07-22T08:30:00.000Z",
+      },
+    ])
+  })
+
+  test("returns an empty change list when nothing changed", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([DATETIME_FIELD])
+    mocks.contactCustomFieldFindMany.mockResolvedValue([
+      {
+        id: "v1",
+        contactId: "contact-1",
+        customFieldId: "cf-dt",
+        value: "2026-07-22T08:30:00.000Z",
+      },
+    ])
+
+    const changes = await contactCustomFieldService.setValuesInTransaction(
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        fields: [{ customFieldId: "cf-dt", value: "2026-07-22 15:30" }],
+      },
+      db,
+    )
+
+    expect(changes).toEqual([])
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+})
+
+// emitCustomFieldChanges is the post-commit fan-out: one trigger/webhook event
+// per changed field, then a single cache invalidation. Callers invoke it once the
+// outer transaction has committed so downstream consumers read durable data.
+describe("contactCustomFieldService.emitCustomFieldChanges — post-commit fan-out", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("emits one event per change and invalidates the cache once", async () => {
+    await contactCustomFieldService.emitCustomFieldChanges({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      changes: [
+        {
+          customFieldId: "cf-dt",
+          customFieldName: "booking_at",
+          oldValue: "2020-01-01T00:00:00.000Z",
+          newValue: "2026-07-22T08:30:00.000Z",
+        },
+        {
+          customFieldId: "cf-d",
+          customFieldName: "birthday",
+          oldValue: null,
+          newValue: "2026-07-22T00:00:00+07:00",
+        },
+      ],
+    })
+
+    expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(2)
+    expect(mocks.emitCustomFieldChanged).toHaveBeenNthCalledWith(
+      1,
+      "ws-1",
+      "contact-1",
+      "cf-dt",
+      "booking_at",
+      "2020-01-01T00:00:00.000Z",
+      "2026-07-22T08:30:00.000Z",
+    )
+    expect(mocks.emitCustomFieldChanged).toHaveBeenNthCalledWith(
+      2,
+      "ws-1",
+      "contact-1",
+      "cf-d",
+      "birthday",
+      null,
+      "2026-07-22T00:00:00+07:00",
+    )
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalledOnce()
+  })
+
+  test("still invalidates the cache once when there are no changes", async () => {
+    await contactCustomFieldService.emitCustomFieldChanges({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      changes: [],
+    })
+
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalledOnce()
+  })
+
+  test("logs a warning when an emit rejects but still invalidates and does not throw", async () => {
+    mocks.emitCustomFieldChanged.mockRejectedValueOnce(new Error("queue down"))
+
+    await contactCustomFieldService.emitCustomFieldChanges({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      changes: [
+        {
+          customFieldId: "cf-dt",
+          customFieldName: "booking_at",
+          oldValue: null,
+          newValue: "2026-07-22T08:30:00.000Z",
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(mocks.loggerWarn).toHaveBeenCalledTimes(1)
+    })
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalledOnce()
+    const [logContext] = mocks.loggerWarn.mock.calls[0]
+    expect(logContext).toMatchObject({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      customFieldId: "cf-dt",
+    })
   })
 })

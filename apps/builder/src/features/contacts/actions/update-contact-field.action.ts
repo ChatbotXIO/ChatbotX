@@ -90,7 +90,9 @@ export const updateContactFields = async (
     }
   }
 
-  await db.transaction(async (tx) => {
+  const hasCustomFields = Object.keys(customFields).length > 0
+
+  const customFieldChanges = await db.transaction(async (tx) => {
     if (Object.keys(contactFields).length > 0) {
       await contactService.update(ctx, contactFields, tx)
     }
@@ -105,28 +107,39 @@ export const updateContactFields = async (
       })
     }
 
-    if (Object.keys(customFields).length > 0) {
-      await contactCustomFieldService.setValues(
-        {
-          workspaceId: ctx.workspaceId,
-          contactId: ctx.id,
-          fields: Object.entries(customFields).map(
-            ([customFieldId, value]) => ({
-              customFieldId,
-              value,
-            }),
-          ),
-          sourceTimezone: clientTimezone,
-        },
-        tx,
-      )
+    if (!hasCustomFields) {
+      return []
     }
+
+    return await contactCustomFieldService.setValuesInTransaction(
+      {
+        workspaceId: ctx.workspaceId,
+        contactId: ctx.id,
+        fields: Object.entries(customFields).map(([customFieldId, value]) => ({
+          customFieldId,
+          value,
+        })),
+        sourceTimezone: clientTimezone,
+      },
+      tx,
+    )
   })
 
   await emitContactInfoChangeEvents(ctx.workspaceId, ctx.id, existingContact, {
     phoneNumber: contactFields.phoneNumber ?? existingContact.phoneNumber,
     email: contactFields.email ?? existingContact.email,
   })
+
+  // Emit custom-field change events only after the transaction commits: the
+  // trigger worker re-reads the value from the DB, so a mid-transaction emit
+  // could surface uncommitted or rolled-back data.
+  if (hasCustomFields) {
+    await contactCustomFieldService.emitCustomFieldChanges({
+      workspaceId: ctx.workspaceId,
+      contactId: ctx.id,
+      changes: customFieldChanges,
+    })
+  }
 }
 
 const assignContactFieldValue = (

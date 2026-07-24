@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  customFieldService: { findBy: mocks.customFieldFindFirst },
   contactCustomFieldService: { setValues: mocks.setValues },
   externalRequestService: {},
 }))

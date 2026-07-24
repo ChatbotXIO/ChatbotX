@@ -344,10 +344,19 @@ function buildConditionWhere(
       return buildMinutesAgoWhere("createdAt", operator, value)
 
     case "lastSeen":
-      return buildDateColumnWhere("lastReadAt", operator, value, timezone)
+      return buildLatestContactInboxDateWhere(
+        contactInboxModel.contactLastReadAt,
+        operator,
+        value,
+        timezone,
+      )
 
     case "lastSeenMinutesAgo":
-      return buildMinutesAgoWhere("lastReadAt", operator, value)
+      return buildLatestContactInboxMinutesAgoWhere(
+        contactInboxModel.contactLastReadAt,
+        operator,
+        value,
+      )
 
     case "lastSent":
       return buildLatestContactInboxDateWhere(

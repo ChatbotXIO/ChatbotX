@@ -103,7 +103,11 @@ export const addContactCustomFields = async ({
     newValue: string
   }> = []
 
-  await db.transaction(async (tx) => {
+  // Persist inside the transaction, collecting the pending change per contact so
+  // their events can be emitted only after commit. The trigger worker re-reads
+  // the value from the DB, so a mid-transaction emit could observe uncommitted
+  // or rolled-back data.
+  const persistedByContact = await db.transaction(async (tx) => {
     for (const contact of contacts) {
       const [contactCustomField] = await tx
         .select({
@@ -137,9 +141,10 @@ export const addContactCustomFields = async ({
       })
     }
 
-    await Promise.all(
-      changes.map((change) =>
-        contactCustomFieldService.setValues(
+    return await Promise.all(
+      changes.map(async (change) => ({
+        contactId: change.contactId,
+        changes: await contactCustomFieldService.setValuesInTransaction(
           {
             workspaceId,
             contactId: change.contactId,
@@ -148,9 +153,19 @@ export const addContactCustomFields = async ({
           },
           tx,
         ),
-      ),
+      })),
     )
   })
+
+  await Promise.all(
+    persistedByContact.map((contact) =>
+      contactCustomFieldService.emitCustomFieldChanges({
+        workspaceId,
+        contactId: contact.contactId,
+        changes: contact.changes,
+      }),
+    ),
+  )
 }
 
 export const setContactCustomFieldValue = async ({

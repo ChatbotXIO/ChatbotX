@@ -49,6 +49,10 @@ vi.mock("@chatbotx.io/database/queries", () => ({
   pruneEmailPhoneFilterConditions: (criteria: unknown) => criteria,
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  workspaceService: { find: vi.fn(async () => ({ timezone: "UTC" })) },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {},
   fileModel: { id: "File.id", workspaceId: "File.workspaceId" },

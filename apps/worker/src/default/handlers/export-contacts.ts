@@ -1,4 +1,5 @@
 import type { PassThrough } from "node:stream"
+import { workspaceService } from "@chatbotx.io/business"
 import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import {
@@ -390,9 +391,8 @@ export const loopableExportContacts = async (data: ExportData) => {
     stripContactPIIFields(fields, data.canExportEmailAndPhone === true),
     workspaceId,
   )
-  const workspace = await db.query.workspaceModel.findFirst({
+  const workspace = await workspaceService.find({
     where: { id: workspaceId },
-    columns: { timezone: true },
   })
   const workspaceTimezone =
     normalizeStoredTimezone(workspace?.timezone) ?? "UTC"

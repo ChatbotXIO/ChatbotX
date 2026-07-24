@@ -2194,7 +2194,7 @@
       "cancelOnReplyHint": "The follow-up won't be sent if the contact replies before the time expires."
     },
     "setCustomField": {
-      "temporalHint": "For date and date-time fields, the value is read in your timezone ({timezone}). Leave it empty to save the current date/time."
+      "temporalHint": "Leave it empty to save the current date/time."
     }
   },
   "folders": {

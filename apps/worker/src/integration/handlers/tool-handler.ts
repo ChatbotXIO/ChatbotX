@@ -1,5 +1,6 @@
 import {
   contactCustomFieldService,
+  customFieldService,
   externalRequestService,
 } from "@chatbotx.io/business"
 import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
@@ -92,9 +93,8 @@ export async function formatDate({
     return
   }
 
-  const outputCustomField = await db.query.customFieldModel.findFirst({
+  const outputCustomField = await customFieldService.findBy({
     where: { id: step.outputFieldId, workspaceId: conversation.workspaceId },
-    columns: { type: true },
   })
   if (!outputCustomField || isTemporalCustomFieldType(outputCustomField.type)) {
     return

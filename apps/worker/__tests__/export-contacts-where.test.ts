@@ -56,6 +56,10 @@ vi.mock("@chatbotx.io/database/queries", () => ({
         },
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  workspaceService: { find: vi.fn(async () => ({ timezone: "UTC" })) },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {},
   fileModel: { id: "File.id", workspaceId: "File.workspaceId" },
