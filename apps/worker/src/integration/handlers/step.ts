@@ -110,6 +110,7 @@ export async function sendFlowMessage(
     metadata,
     quickReplies,
     sendFrom,
+    commentAnchor,
   } = props
   await enqueueFlowStepMessage({
     conversationId: conversation.id,
@@ -121,6 +122,7 @@ export async function sendFlowMessage(
     metadata,
     quickReplies,
     sendFrom,
+    commentAnchor,
   })
 }
 
@@ -133,6 +135,7 @@ async function splitTraffic({
   useLatestFlowVersion,
   sendFrom,
   nodeVisits,
+  commentAnchor,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -165,12 +168,20 @@ async function splitTraffic({
         nodeId: connectedEdge.target,
         sendFrom,
         nodeVisits,
+        commentAnchor,
         origin: webhookChannelOrigin(),
       },
     })
   }
 }
 
+// Known gap: `commentAnchor` (comment-triggered private-reply flows, see
+// `flow-utils.ts`) is not threaded into `scheduleSmartDelayResume` —
+// `ContactOnSmartDelay` has no column for it, and the resumed `sendFlow` job
+// is rebuilt from that DB row alone (`buildSendFlowResumeJob`). A private
+// reply flow with a "wait" step before its first message step loses the
+// anchor and falls back to the normal (messaging-window-gated) send once the
+// delay elapses. Fixing this needs a schema change; out of scope for now.
 async function handleWait({
   conversation,
   flowVersion,
@@ -251,6 +262,7 @@ async function startAnotherNode(
       metadata: props.metadata,
       sendFrom: props.sendFrom,
       nodeVisits: props.nodeVisits,
+      commentAnchor: props.commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })
@@ -263,6 +275,7 @@ async function startExternalFlow({
   metadata,
   sendFrom,
   nodeVisits,
+  commentAnchor,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -273,6 +286,7 @@ async function startExternalFlow({
       metadata,
       sendFrom,
       nodeVisits,
+      commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })
@@ -285,6 +299,7 @@ async function startExternalNode({
   metadata,
   sendFrom,
   nodeVisits,
+  commentAnchor,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -296,6 +311,7 @@ async function startExternalNode({
       metadata,
       sendFrom,
       nodeVisits,
+      commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })

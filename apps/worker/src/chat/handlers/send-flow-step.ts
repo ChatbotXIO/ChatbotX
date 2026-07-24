@@ -190,6 +190,7 @@ export async function sendFlowStep({
   richResponse,
   quickReplies,
   sendFrom,
+  commentAnchor,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
@@ -485,6 +486,13 @@ export async function sendFlowStep({
       messageId: message?.id,
       messageCreatedAt: message?.createdAt,
       sendFrom,
+      // Comment-anchored private replies are Messenger-only (no Instagram
+      // private_replies equivalent) — defensive re-check in case a resolved
+      // contactInboxId ever points at a different channel than the job intended.
+      commentAnchor:
+        targetContactInbox.channel === channelTypes.enum.messenger
+          ? commentAnchor
+          : undefined,
     })
 
     const promises: Promise<unknown>[] = [

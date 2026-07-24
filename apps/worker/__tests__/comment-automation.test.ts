@@ -446,6 +446,47 @@ describe("processCommentAutomation AIAgent reply", () => {
   })
 })
 
+describe("processCommentAutomation flow private reply", () => {
+  test("messenger: enqueues a sendFlow job carrying commentAnchor with the triggering commentId", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        type: "sendFlow",
+        data: expect.objectContaining({
+          flowId: "flow-1",
+          commentAnchor: { commentId: COMMENT_ID },
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("instagram: enqueues sendFlow without a commentAnchor (no private_replies API)", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      integrationType: "instagram",
+    } as any)
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.not.objectContaining({ commentAnchor: expect.anything() }),
+      }),
+      expect.anything(),
+    )
+  })
+})
+
 describe("processCommentAIReply", () => {
   beforeEach(() => {
     mockAiAgentFindBy.mockResolvedValue({ id: "agent-1", prompt: "hi" })

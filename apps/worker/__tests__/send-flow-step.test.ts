@@ -708,6 +708,36 @@ describe("sendFlowStep", () => {
     expect(mockProcessMessengerTemplate).toHaveBeenCalled()
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
   })
+
+  test("forwards commentAnchor to sendFlowStepToChannel when the resolved contactInbox is messenger", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      commentAnchor: { commentId: "comment-1" },
+    })
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commentAnchor: { commentId: "comment-1" },
+      }),
+    )
+  })
+
+  test("suppresses commentAnchor when the resolved contactInbox is not messenger", async () => {
+    const instagramContactInbox = {
+      ...fakeContactInbox,
+      channel: "instagram",
+    } as unknown as typeof fakeContactInbox
+    mockFindContactInbox.mockResolvedValue(instagramContactInbox)
+
+    await sendFlowStep({
+      ...baseParams,
+      commentAnchor: { commentId: "comment-1" },
+    })
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({ commentAnchor: undefined }),
+    )
+  })
 })
 
 describe("sendChatMessage", () => {

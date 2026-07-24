@@ -336,6 +336,9 @@ async function executePrivateReply(
           contactInboxId: ctx.contactInboxId,
           flowId: privateReply.value,
           origin: webhookChannelOrigin(),
+          ...(ctx.channelType === "messenger"
+            ? { commentAnchor: { commentId: ctx.commentId } }
+            : {}),
         },
       },
       { delay: ctx.delay },

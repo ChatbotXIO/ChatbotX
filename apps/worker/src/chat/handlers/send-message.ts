@@ -14,6 +14,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
+  type CommentAnchor,
   type MessageButtonTemplate,
   parseSdkError,
   type SendFlowStepData,
@@ -394,6 +395,7 @@ export async function sendFlowStepToChannel({
   messageId,
   messageCreatedAt,
   sendFrom,
+  commentAnchor,
 }: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -406,6 +408,7 @@ export async function sendFlowStepToChannel({
   messageId?: string
   messageCreatedAt?: Date
   sendFrom?: "inbox"
+  commentAnchor?: CommentAnchor
 }): Promise<{ messageIds: string[] }> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
@@ -450,6 +453,7 @@ export async function sendFlowStepToChannel({
         metadata,
         richResponse,
         sendFrom,
+        commentAnchor,
       },
     },
   )

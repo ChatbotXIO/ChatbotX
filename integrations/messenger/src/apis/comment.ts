@@ -3,7 +3,13 @@ import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
-import type { MessengerAuthValue } from "../schema"
+import {
+  type FacebookMessage,
+  type FacebookMessageAttachmentPayload,
+  type FacebookSendMessageResponse,
+  MESSENGER_MESSAGE_METADATA,
+  type MessengerAuthValue,
+} from "../schema"
 import { getMessageAttachmentEntity } from "./attachment"
 
 export const sendComment = (
@@ -105,32 +111,50 @@ export const likeComment = (
   )
 }
 
-export const sendPrivateReply = (
+/**
+ * Sends a private reply anchored to a comment (Facebook's comment_id-anchored
+ * Send API, which bypasses the normal messaging-window requirement) with an
+ * arbitrary message payload (text, image, attachment, quick replies, …) —
+ * used by flow-based private replies to deliver the *first* outgoing message
+ * of the run. `FacebookSendMessageRequest["recipient"]` has no `comment_id`
+ * variant, so this posts a raw payload rather than reusing `sendPageMessage`.
+ *
+ * Stamps `message.metadata` like every other Messenger send path so the
+ * message_echo webhook (`handlers/webhook.ts`) recognizes and skips our own
+ * echo instead of re-ingesting it as an incoming message.
+ */
+export const sendPrivateReplyMessage = (
   auth: MessengerAuthValue,
   commentId: string,
-  message: string,
-): Promise<{ message_id: string; recipient_id: string }> => {
+  message: FacebookMessage | FacebookMessageAttachmentPayload,
+  personaId?: string,
+): Promise<FacebookSendMessageResponse> => {
   const { version = DEFAULT_API_VERSION } = auth
   const pageId = auth.metadata.pageId
   const endpoint = `${version}/${pageId}/messages`
 
   return rescue(endpoint, () =>
-    facebookGraphClient.post<{ message_id: string; recipient_id: string }>(
-      endpoint,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.tokens.accessToken}`,
-        },
-        json: {
-          recipient: { comment_id: commentId },
-          message: { text: message },
-        },
-        retry: 0,
+    facebookGraphClient.post<FacebookSendMessageResponse>(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
-    ),
+      json: {
+        recipient: { comment_id: commentId },
+        message: { ...message, metadata: MESSENGER_MESSAGE_METADATA },
+        persona_id: personaId,
+      },
+      retry: 0,
+    }),
   )
 }
+
+export const sendPrivateReply = (
+  auth: MessengerAuthValue,
+  commentId: string,
+  message: string,
+): Promise<FacebookSendMessageResponse> =>
+  sendPrivateReplyMessage(auth, commentId, { text: message })
 
 /**
  * Fetches the attachment type of a comment (e.g. "photo", "video_inline",
