@@ -54,7 +54,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
       ctx,
       data: {
         contact,
-        commentAnchor: { commentId: "comment-1" },
+        commentAnchor: { commentId: "comment-1", replyChannel: "private" },
         step: {
           id: "step-1",
           nodeId: "node-1",
@@ -74,6 +74,27 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
     )
     expect(mockSendPageMessage).not.toHaveBeenCalled()
     expect(result).toEqual({ messageIds: ["m_anchored-1"] })
+  })
+
+  test("uses the normal Send API when commentAnchor.replyChannel is public (defense-in-depth: public replies are never routed here)", async () => {
+    const result = await sendFlowStep({
+      ctx,
+      data: {
+        contact,
+        commentAnchor: { commentId: "comment-1", replyChannel: "public" },
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "public reply via flow",
+          buttons: [],
+        },
+      },
+    } as never)
+
+    expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(result).toEqual({ messageIds: ["m_normal-1"] })
   })
 
   test("uses the normal Send API when commentAnchor is absent (regression guard)", async () => {
@@ -106,7 +127,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
       ctx,
       data: {
         contact,
-        commentAnchor: { commentId: "comment-1" },
+        commentAnchor: { commentId: "comment-1", replyChannel: "private" },
         step: {
           id: "step-1",
           nodeId: "node-1",

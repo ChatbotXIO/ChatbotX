@@ -37,7 +37,7 @@ import { shouldSuppressRetryableChannelError } from "../utils/retry"
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
-) {
+): Promise<{ messageIds: string[] }> {
   const {
     conversation,
     contactInbox,
@@ -168,6 +168,8 @@ export async function sendMessageToChannel(
         logger.warn(error, "Auto-unblock on successful send failed")
       }
     }
+
+    return { messageIds: result.messageIds }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
@@ -187,7 +189,7 @@ export async function sendMessageToChannel(
       metadata,
     })
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
-      return
+      return { messageIds: [] }
     }
     throw error
   }
