@@ -7,6 +7,7 @@ import {
   desc,
   eq,
   ilike,
+  inArray,
   isUniqueViolationError,
   sql,
   sum,
@@ -236,6 +237,7 @@ class QuestionnaireSubmissionService extends BaseService {
       if (questionnaire.questions.length === 0) {
         return { status: "skip" as const, reason: "questionnaire_empty" }
       }
+      const firstQuestion = questionnaire.questions[0]
 
       const existingForQuestionnaire =
         await tx.query.questionnaireSubmissionModel.findFirst({
@@ -246,6 +248,50 @@ class QuestionnaireSubmissionService extends BaseService {
           },
         })
       if (existingForQuestionnaire) {
+        if (existingForQuestionnaire.status === "cancelled") {
+          const sentAt = new Date()
+          await tx
+            .delete(questionnaireAnswerModel)
+            .where(
+              eq(
+                questionnaireAnswerModel.submissionId,
+                existingForQuestionnaire.id,
+              ),
+            )
+
+          const [restartedSubmission] = await tx
+            .update(questionnaireSubmissionModel)
+            .set({
+              conversationId: input.conversationId ?? null,
+              status: "inProgress",
+              totalPoints: questionnaire.enableScore ? 0 : null,
+              currentQuestionId: firstQuestion.id,
+              currentQuestionSentAt: sentAt,
+              lastAnsweredMessageId: null,
+              startedAt: sentAt,
+              completedAt: null,
+              cancelledAt: null,
+            })
+            .where(
+              and(
+                eq(
+                  questionnaireSubmissionModel.id,
+                  existingForQuestionnaire.id,
+                ),
+                eq(questionnaireSubmissionModel.workspaceId, input.workspaceId),
+                eq(questionnaireSubmissionModel.status, "cancelled"),
+              ),
+            )
+            .returning()
+
+          return {
+            status: "wait" as const,
+            questionnaire,
+            submission: restartedSubmission,
+            question: firstQuestion,
+          }
+        }
+
         if (existingForQuestionnaire.status !== "inProgress") {
           return {
             status: "skip" as const,
@@ -320,7 +366,6 @@ class QuestionnaireSubmissionService extends BaseService {
       }
 
       const submissionId = createId()
-      const firstQuestion = questionnaire.questions[0]
       let submission: typeof questionnaireSubmissionModel.$inferSelect
       try {
         ;[submission] = await tx
@@ -461,15 +506,52 @@ class QuestionnaireSubmissionService extends BaseService {
       if (!parsed.valid) {
         const nextAttempts = input.attempts + 1
         if (nextAttempts >= MAX_INVALID_ATTEMPTS) {
-          await this.cancel(
-            {
-              workspaceId: input.workspaceId,
+          const questions = await tx.query.questionnaireQuestionModel.findMany({
+            where: {
               questionnaireId: input.questionnaireId,
-              contactId: input.contactId,
+              active: true,
+              deletedAt: { isNull: true },
             },
-            tx,
+            orderBy: { orderNo: "asc" },
+          })
+          const currentIndex = questions.findIndex(
+            (item) => item.id === question.id,
           )
-          return { status: "cancelled" as const }
+          const nextQuestion = questions[currentIndex + 1]
+
+          if (!nextQuestion) {
+            await tx
+              .update(questionnaireSubmissionModel)
+              .set({
+                status: "completed",
+                completedAt: new Date(),
+                currentQuestionId: null,
+                currentQuestionSentAt: null,
+                lastAnsweredMessageId: input.triggerMessageId ?? null,
+              })
+              .where(eq(questionnaireSubmissionModel.id, submission.id))
+            return {
+              status: "completed" as const,
+              submissionId: submission.id,
+              triggerFlowId: questionnaire.triggerFlowId,
+            }
+          }
+
+          const sentAt = new Date()
+          await tx
+            .update(questionnaireSubmissionModel)
+            .set({
+              currentQuestionId: nextQuestion.id,
+              currentQuestionSentAt: sentAt,
+              lastAnsweredMessageId: input.triggerMessageId ?? null,
+            })
+            .where(eq(questionnaireSubmissionModel.id, submission.id))
+          return {
+            status: "wait" as const,
+            submissionId: submission.id,
+            question: nextQuestion,
+            sentAt,
+          }
         }
         return {
           status: "retry" as const,
@@ -665,6 +747,28 @@ class QuestionnaireSubmissionService extends BaseService {
             input.questionnaireId,
           ),
           eq(questionnaireSubmissionModel.id, input.submissionId),
+        ),
+      )
+  }
+
+  async deleteSubmissions(input: {
+    workspaceId: string
+    questionnaireId: string
+    submissionIds: string[]
+  }) {
+    if (input.submissionIds.length === 0) {
+      return
+    }
+    await db
+      .delete(questionnaireSubmissionModel)
+      .where(
+        and(
+          eq(questionnaireSubmissionModel.workspaceId, input.workspaceId),
+          eq(
+            questionnaireSubmissionModel.questionnaireId,
+            input.questionnaireId,
+          ),
+          inArray(questionnaireSubmissionModel.id, input.submissionIds),
         ),
       )
   }

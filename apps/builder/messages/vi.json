@@ -3459,7 +3459,13 @@
     "responseType": "Kiểu trả lời",
     "points": "Điểm",
     "retryMessage": "Tin nhắn thử lại nếu câu trả lời không hợp lệ",
-    "defaultRetryMessage": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
+    "defaultRetryMessages": {
+      "text": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
+      "number": "Nội dung bạn đã nhập không phải là số hợp lệ. Vui lòng thử lại",
+      "email": "Nội dung bạn đã nhập không phải là email hợp lệ. Vui lòng thử lại",
+      "phone": "Nội dung bạn đã nhập không phải là số điện thoại hợp lệ. Vui lòng thử lại",
+      "multipleChoice": "Nội dung bạn đã nhập không phải là lựa chọn hợp lệ. Vui lòng thử lại"
+    },
     "customField": "Lưu câu trả lời vào trường tùy chỉnh hoặc trường hệ thống",
     "options": "Tùy chọn",
     "mode": "Chế độ",
