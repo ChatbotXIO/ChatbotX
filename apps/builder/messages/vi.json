@@ -1991,6 +1991,11 @@
     "make": {
       "inviteUrl": "Link mời",
       "inviteUrlHint": "Link mời của Make custom app đã publish (ví dụ: https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Sự kiện",
+      "placeholder": "Nhập tên sự kiện rồi nhấn Enter",
+      "description": "Thêm một hoặc nhiều tên sự kiện. Khi Make gắn webhook cho một trong các sự kiện này, dữ liệu sẽ được gửi đến đó khi step này chạy."
     }
   },
   "flows": {
@@ -2037,6 +2042,8 @@
       "blockContact": "Chặn liên hệ",
       "broadcastActions": "Hành động phát sóng",
       "callApi": "Yêu cầu bên ngoài",
+      "make": "Make",
+      "triggers": "Trigger",
       "questionnaires": "Bảng câu hỏi",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
