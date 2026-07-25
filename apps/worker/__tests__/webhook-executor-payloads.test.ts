@@ -3,13 +3,18 @@ import type { MatchableEventType } from "@chatbotx.io/events"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { WebhookWithConditions } from "../src/webhook/types"
 
-const { assertPublicUrl, tagFindFirst } = vi.hoisted(() => ({
-  assertPublicUrl: vi.fn().mockResolvedValue(undefined),
-  tagFindFirst: vi.fn(),
-}))
+const { assertPublicUrl, contactFindById, listCustomFields, tagFindFirst } =
+  vi.hoisted(() => ({
+    assertPublicUrl: vi.fn().mockResolvedValue(undefined),
+    contactFindById: vi.fn(),
+    listCustomFields: vi.fn(),
+    tagFindFirst: vi.fn(),
+  }))
 
 vi.mock("@chatbotx.io/business", () => ({
   assertPublicUrl,
+  contactCustomFieldService: { listWithDefinitions: listCustomFields },
+  contactService: { findById: contactFindById },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -97,16 +102,21 @@ const payloadCases = [
     },
   },
   {
+    // The contact row is committed before `emitContactCreated` fires, so the
+    // stored record — not the event metadata — is the source of truth here.
+    // `customFields` is never populated by any emitter; only the database read
+    // can fill `custom_fields`.
     eventType: triggerEventTypes.enum.newContact,
     metadata: {
       name: "Ada",
-      phone: "+15551234567",
-      email: "ada@example.com",
-      customFields: { plan: "Pro" },
+      phone: "+15550000000",
+      email: "stale@example.com",
     },
     expectedPayload: {
       ...basePayload("new_contact"),
-      name: "Ada",
+      name: "Ada Lovelace",
+      first_name: "Ada",
+      last_name: "Lovelace",
       phone: "+15551234567",
       email: "ada@example.com",
       custom_fields: { plan: "Pro" },
@@ -211,6 +221,15 @@ describe("WebhookExecutor payloads", () => {
     vi.clearAllMocks()
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }))
     tagFindFirst.mockResolvedValue({ name: "VIP" })
+    contactFindById.mockResolvedValue({
+      id: "contact-1",
+      fullName: "Ada Lovelace",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      phoneNumber: "+15551234567",
+      email: "ada@example.com",
+    })
+    listCustomFields.mockResolvedValue([{ name: "plan", value: "Pro" }])
     vi.stubGlobal("fetch", fetchMock)
   })
 
@@ -234,5 +253,36 @@ describe("WebhookExecutor payloads", () => {
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(JSON.parse(String(init.body))).toEqual(expectedPayload)
+  })
+
+  // A contact deleted between the event and the delivery attempt must still
+  // produce a well-formed payload: the subscriber's parser would break on
+  // missing keys, so every field falls back to the metadata or to null.
+  test("falls back to event metadata when the contact no longer exists", async () => {
+    contactFindById.mockResolvedValue(undefined)
+    const executor = new WebhookExecutor()
+
+    await executor.execute({
+      webhook,
+      eventData: {
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+        eventType: triggerEventTypes.enum.newContact,
+        eventData: { name: "Ada", phone: "+15550000000" },
+        timestamp,
+      },
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toEqual({
+      ...basePayload("new_contact"),
+      name: "Ada",
+      first_name: null,
+      last_name: null,
+      phone: "+15550000000",
+      email: null,
+      custom_fields: {},
+    })
+    expect(listCustomFields).not.toHaveBeenCalled()
   })
 })

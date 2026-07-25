@@ -26,10 +26,14 @@ import {
   whatsappCoexistStagingModel,
 } from "@chatbotx.io/database/schema"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
+// Subpath, not the barrel: the barrel re-exports `dispatch-manager`, whose
+// bucket hashing imports Node's `crypto`. This module ends up in the builder's
+// Edge bundle (instrumentation → oRPC → workspace token auth → workspace
+// service), where a Node built-in is a hard compile error.
 import {
   cancelPendingDispatchesForWorkspace,
   removeDispatchesFromSchedule,
-} from "@chatbotx.io/sequence-scheduler"
+} from "@chatbotx.io/sequence-scheduler/dispatch-cancel"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -51,6 +55,7 @@ import {
   cancelInFlightBroadcastsForWorkspace,
   completeActiveSequenceEnrollmentsForWorkspace,
 } from "./campaign-cleanup"
+import { cancelSmartDelaysForWorkspace } from "./smart-delay-cleanup"
 
 type WorkspaceTeardownIntegration = {
   disconnect(auth: unknown): Promise<void>
@@ -172,26 +177,40 @@ class WorkspaceLifecycleService extends BaseService {
     })
   }
 
-  async cancelInFlightCampaigns(
-    workspaceId: string,
-  ): Promise<DispatchToRemove[]> {
-    const dispatchesToRemove = await db.transaction(async (tx) => {
-      await cancelInFlightBroadcastsForWorkspace({
-        tx,
-        workspaceId,
-      })
+  /**
+   * Disarms everything a workspace has scheduled to fire on its own: in-flight
+   * broadcasts, active sequence enrollments and their queued dispatches, plus
+   * pending/scheduled smart delays (wait steps and follow-ups).
+   *
+   * Called when deletion is scheduled and when the owner's entitlement is torn
+   * down. The runtime guards (`withBlockedOwnerGuard`) would no-op these jobs
+   * anyway, but they would keep waking for the whole grace window — and the
+   * smart-delay scanner would churn them through claim → drop → reset every
+   * tick. Cancelling the rows is what makes the freeze quiet as well as safe.
+   *
+   * Each source is independent and best-effort: a Redis failure on one must not
+   * leave the others armed.
+   */
+  async freezeWorkspaceRuntime(workspaceId: string): Promise<void> {
+    const dispatchesToRemove: DispatchToRemove[] = await db.transaction(
+      async (tx) => {
+        await cancelInFlightBroadcastsForWorkspace({
+          tx,
+          workspaceId,
+        })
 
-      await completeActiveSequenceEnrollmentsForWorkspace({
-        tx,
-        workspaceId,
-      })
+        await completeActiveSequenceEnrollmentsForWorkspace({
+          tx,
+          workspaceId,
+        })
 
-      return await cancelPendingDispatchesForWorkspace({
-        client: tx,
-        removeFromSchedule: false,
-        workspaceId,
-      })
-    })
+        return await cancelPendingDispatchesForWorkspace({
+          client: tx,
+          removeFromSchedule: false,
+          workspaceId,
+        })
+      },
+    )
 
     try {
       await removeDispatchesFromSchedule(dispatchesToRemove)
@@ -202,7 +221,20 @@ class WorkspaceLifecycleService extends BaseService {
       )
     }
 
-    return dispatchesToRemove
+    try {
+      const canceledSmartDelays = await cancelSmartDelaysForWorkspace({
+        workspaceId,
+      })
+      logger.info(
+        { canceledSmartDelays, workspaceId },
+        "workspace-freeze: canceled smart delays",
+      )
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId },
+        "workspace-freeze: failed to cancel smart delays",
+      )
+    }
   }
 
   /**

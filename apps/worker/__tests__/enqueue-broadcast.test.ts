@@ -106,6 +106,27 @@ describe("enqueueBroadcast", () => {
       expect(job.opts.jobId).toBe("schedule-prepare-broadcast-broadcast-1")
     })
 
+    test("clears the dedup jobId on completion and on failure so a terminal job cannot wedge the broadcast forever", async () => {
+      findManyBroadcast.mockResolvedValue(makeBroadcasts(1))
+
+      await enqueueBroadcast()
+
+      const [jobs] = addBulkSpy.mock.calls[0] as [
+        Array<{
+          opts: {
+            jobId: string
+            removeOnComplete?: boolean | number
+            removeOnFail?: boolean | number
+          }
+        }>,
+      ]
+      // A deterministic jobId is a Redis dedup key that survives any terminal
+      // state. Left behind after a failure it silently swallows every later
+      // addBulk for the same broadcast.
+      expect(jobs[0].opts.removeOnComplete).toBe(true)
+      expect(jobs[0].opts.removeOnFail).toBe(true)
+    })
+
     test("queries broadcastModel with status 'scheduled' and schedulesAt lte startTime", async () => {
       findManyBroadcast.mockResolvedValue(makeBroadcasts(1))
 

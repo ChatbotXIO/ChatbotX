@@ -235,7 +235,7 @@ describe("cancelPendingDispatches", () => {
   })
 
   test("returns empty array and skips update when no pending dispatches exist", async () => {
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
     findManyMock.mockResolvedValue([])
 
     const result = await cancelPendingDispatches({
@@ -249,7 +249,7 @@ describe("cancelPendingDispatches", () => {
   })
 
   test("cancels pending dispatches, calls removeFromSchedule for each, and returns id+bucket", async () => {
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
     const pendingDispatches = [
       {
         id: "d-1",
@@ -284,7 +284,7 @@ describe("cancelPendingDispatches", () => {
   })
 
   test("calls useExisting to obtain the redis client before scheduling removal", async () => {
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
     findManyMock.mockResolvedValue([
       {
         id: "d-1",
@@ -304,7 +304,7 @@ describe("cancelPendingDispatches", () => {
   })
 
   test("uses provided client instead of default db for the query", async () => {
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
     const customFindManyMock = vi.fn().mockResolvedValue([])
     const customClient = {
       query: {
@@ -327,7 +327,7 @@ describe("cancelPendingDispatches", () => {
 
   test("cancels all pending dispatches for a workspace without enrollmentId", async () => {
     const { cancelPendingDispatchesForWorkspace } = await import(
-      "../src/dispatch-manager"
+      "../src/dispatch-cancel"
     )
     findManyMock.mockResolvedValue([
       {

@@ -5,14 +5,17 @@ const { mockWorkspaceFind } = vi.hoisted(() => ({
   mockWorkspaceFind: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
-  isWorkspaceScheduledForDeletion: (workspace: {
-    scheduledDeletionAt?: Date | string | null
-  }) => workspace.scheduledDeletionAt != null,
-  workspaceService: {
-    find: mockWorkspaceFind,
-  },
-}))
+vi.mock("@chatbotx.io/business", async () => {
+  const predicates = await import(
+    "@chatbotx.io/business/workspace-lifecycle/predicates"
+  )
+  return {
+    ...predicates,
+    workspaceService: {
+      find: mockWorkspaceFind,
+    },
+  }
+})
 
 const { loadServableWorkspace } = await import(
   "../src/lib/workspace/load-servable-workspace"
@@ -43,6 +46,15 @@ describe("loadServableWorkspace", () => {
     await expect(loadServableWorkspace("workspace-1")).resolves.toEqual({
       servable: true,
       workspace,
+    })
+  })
+
+  test("returns servable false when the workspace no longer exists", async () => {
+    mockWorkspaceFind.mockResolvedValue(undefined)
+
+    await expect(loadServableWorkspace("workspace-1")).resolves.toEqual({
+      servable: false,
+      workspace: undefined,
     })
   })
 })

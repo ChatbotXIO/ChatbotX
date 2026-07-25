@@ -5,7 +5,7 @@ import { beforeEach, expect, test, vi } from "vitest"
 const mockGetCurrentUserAndTargetWorkspace = vi.fn()
 const mockHasWorkspacePermission = vi.fn()
 const mockScheduleDeletion = vi.fn()
-const mockCancelInFlightCampaigns = vi.fn()
+const mockFreezeWorkspaceRuntime = vi.fn()
 const mockRedirect = vi.fn(() => {
   throw new Error("redirect")
 })
@@ -33,7 +33,7 @@ vi.mock("@/lib/auth/permission-routes", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceLifecycleService: {
-    cancelInFlightCampaigns: mockCancelInFlightCampaigns,
+    freezeWorkspaceRuntime: mockFreezeWorkspaceRuntime,
   },
   workspaceService: {
     scheduleDeletion: mockScheduleDeletion,
@@ -53,10 +53,10 @@ beforeEach(() => {
   })
   mockHasWorkspacePermission.mockReturnValue(true)
   mockScheduleDeletion.mockResolvedValue(undefined)
-  mockCancelInFlightCampaigns.mockResolvedValue([])
+  mockFreezeWorkspaceRuntime.mockResolvedValue(undefined)
 })
 
-test("schedules deletion then cancels in-flight campaigns before redirecting", async () => {
+test("schedules deletion then freezes the workspace runtime before redirecting", async () => {
   await expect(
     (scheduleWorkspaceDeletionAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["workspace-1"],
@@ -64,6 +64,6 @@ test("schedules deletion then cancels in-flight campaigns before redirecting", a
   ).rejects.toThrow("redirect")
 
   expect(mockScheduleDeletion).toHaveBeenCalledWith({ id: "workspace-1" })
-  expect(mockCancelInFlightCampaigns).toHaveBeenCalledWith("workspace-1")
+  expect(mockFreezeWorkspaceRuntime).toHaveBeenCalledWith("workspace-1")
   expect(mockRedirect).toHaveBeenCalledWith("/")
 })

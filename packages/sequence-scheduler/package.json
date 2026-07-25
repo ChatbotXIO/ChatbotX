@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./dispatch-cancel": "./src/dispatch-cancel.ts"
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",

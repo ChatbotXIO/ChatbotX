@@ -214,7 +214,7 @@ class WorkspaceService extends BaseService {
       }
 
       for (const workspace of claimed.rows) {
-        await workspaceLifecycleService.cancelInFlightCampaigns(workspace.id)
+        await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
 
         await workspaceLifecycleService
           .disconnectWorkspaceIntegrations(workspace.id)

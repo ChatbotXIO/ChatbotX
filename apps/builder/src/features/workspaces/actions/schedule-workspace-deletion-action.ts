@@ -42,7 +42,7 @@ export const scheduleWorkspaceDeletionAction = workspaceActionClientAllowExpired
         id: workspaceId,
       })
 
-      await workspaceLifecycleService.cancelInFlightCampaigns(workspaceId)
+      await workspaceLifecycleService.freezeWorkspaceRuntime(workspaceId)
 
       redirect("/")
     },
