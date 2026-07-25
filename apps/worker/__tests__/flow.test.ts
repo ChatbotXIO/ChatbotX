@@ -1129,7 +1129,10 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     chatQueueAdd.mockClear()
   })
 
-  const commentAnchor = { commentId: "comment-1" }
+  const commentAnchor = {
+    commentId: "comment-1",
+    replyChannel: "private" as const,
+  }
 
   test("forwards commentAnchor into the first message-producing step, and drops it from the next-step re-dispatch", async () => {
     const step1 = { ...makeStep("sendText"), id: "step-1" }

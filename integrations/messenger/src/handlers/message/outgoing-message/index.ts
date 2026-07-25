@@ -123,12 +123,19 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       }
 
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
-      // Consumed by the first Facebook message yielded below, if a comment
-      // anchor is present — a single flow step can yield more than one
-      // Facebook message (e.g. text + attachments), so only the very first
-      // send uses the comment_id-anchored API; the rest use the normal path
-      // (the private reply already opened a standard messaging window).
-      let anchorCommentId = commentAnchor?.commentId
+      // Consumed by the first Facebook message yielded below, if a private
+      // comment anchor is present — a single flow step can yield more than
+      // one Facebook message (e.g. text + attachments), so only the very
+      // first send uses the comment_id-anchored API; the rest use the normal
+      // path (the private reply already opened a standard messaging window).
+      // A "public" anchor is never honored here — it's delivered via the
+      // comment channel's sendComment, not this message channel's
+      // sendFlowStep (see send-flow-step.ts). This check is defense-in-depth
+      // against a public anchor ever reaching this handler by mistake.
+      let anchorCommentId =
+        commentAnchor?.replyChannel === "private"
+          ? commentAnchor.commentId
+          : undefined
       for await (const facebookMessage of convertFlowStepToFacebookMessage(
         props,
       )) {

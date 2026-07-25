@@ -175,13 +175,14 @@ async function splitTraffic({
   }
 }
 
-// Known gap: `commentAnchor` (comment-triggered private-reply flows, see
-// `flow-utils.ts`) is not threaded into `scheduleSmartDelayResume` —
+// Known gap: `commentAnchor` (comment-triggered public/private-reply flows,
+// see `flow-utils.ts`) is not threaded into `scheduleSmartDelayResume` —
 // `ContactOnSmartDelay` has no column for it, and the resumed `sendFlow` job
-// is rebuilt from that DB row alone (`buildSendFlowResumeJob`). A private
-// reply flow with a "wait" step before its first message step loses the
-// anchor and falls back to the normal (messaging-window-gated) send once the
-// delay elapses. Fixing this needs a schema change; out of scope for now.
+// is rebuilt from that DB row alone (`buildSendFlowResumeJob`). A public or
+// private reply flow with a "wait" step before its first message step loses
+// the anchor: private falls back to the normal (messaging-window-gated) DM
+// send, public falls back to a normal flow DM instead of a comment reply.
+// Fixing this needs a schema change; out of scope for now.
 async function handleWait({
   conversation,
   flowVersion,

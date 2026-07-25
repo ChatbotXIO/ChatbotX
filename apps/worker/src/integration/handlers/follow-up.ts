@@ -22,10 +22,10 @@ type FollowUpStepResult = {
 }
 
 // Known gap: like `handleWait` in step.ts, `commentAnchor` is not threaded
-// into `scheduleSmartDelayResume` — a comment-triggered private-reply flow
-// with a followUp step before its first message step loses the anchor across
-// the delay. Fixing this needs a `ContactOnSmartDelay` schema change; out of
-// scope for now.
+// into `scheduleSmartDelayResume` — a comment-triggered public/private-reply
+// flow with a followUp step before its first message step loses the anchor
+// across the delay. Fixing this needs a `ContactOnSmartDelay` schema change;
+// out of scope for now.
 export async function handleFollowUp({
   conversation,
   flowVersion,

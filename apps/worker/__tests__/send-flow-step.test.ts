@@ -18,6 +18,7 @@ const {
   mockResolveContactVariables,
   mockUploadFileFromUrl,
   mockSendFlowStepToChannel,
+  mockSendMessageToChannel,
   mockProcessWhatsappTemplate,
   mockProcessMessengerTemplate,
   mockDbSet,
@@ -107,6 +108,9 @@ const {
     mockSendFlowStepToChannel: vi
       .fn()
       .mockResolvedValue({ messageIds: ["provider-1"] }),
+    mockSendMessageToChannel: vi
+      .fn()
+      .mockResolvedValue({ messageIds: ["provider-comment-1"] }),
     mockProcessWhatsappTemplate: vi
       .fn()
       .mockResolvedValue({ messageId: "msg-wa" }),
@@ -236,7 +240,7 @@ vi.mock("../src/lib/logger", () => ({
 
 vi.mock("../src/chat/handlers/send-message", () => ({
   sendFlowStepToChannel: mockSendFlowStepToChannel,
-  sendMessageToChannel: vi.fn().mockResolvedValue(undefined),
+  sendMessageToChannel: mockSendMessageToChannel,
 }))
 
 vi.mock("../src/chat/handlers/send-messenger-template", () => ({
@@ -361,6 +365,9 @@ describe("sendFlowStep", () => {
       fileName: "image.jpg",
     })
     mockSendFlowStepToChannel.mockResolvedValue({ messageIds: ["provider-1"] })
+    mockSendMessageToChannel.mockResolvedValue({
+      messageIds: ["provider-comment-1"],
+    })
     mockEmit.mockResolvedValue(undefined)
   })
 
@@ -709,20 +716,21 @@ describe("sendFlowStep", () => {
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
   })
 
-  test("forwards commentAnchor to sendFlowStepToChannel when the resolved contactInbox is messenger", async () => {
+  test("forwards a private commentAnchor to sendFlowStepToChannel when the resolved contactInbox is messenger", async () => {
     await sendFlowStep({
       ...baseParams,
-      commentAnchor: { commentId: "comment-1" },
+      commentAnchor: { commentId: "comment-1", replyChannel: "private" },
     })
 
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.objectContaining({
-        commentAnchor: { commentId: "comment-1" },
+        commentAnchor: { commentId: "comment-1", replyChannel: "private" },
       }),
     )
+    expect(mockSendMessageToChannel).not.toHaveBeenCalled()
   })
 
-  test("suppresses commentAnchor when the resolved contactInbox is not messenger", async () => {
+  test("suppresses a private commentAnchor when the resolved contactInbox is not messenger", async () => {
     const instagramContactInbox = {
       ...fakeContactInbox,
       channel: "instagram",
@@ -731,12 +739,55 @@ describe("sendFlowStep", () => {
 
     await sendFlowStep({
       ...baseParams,
-      commentAnchor: { commentId: "comment-1" },
+      commentAnchor: { commentId: "comment-1", replyChannel: "private" },
     })
 
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.objectContaining({ commentAnchor: undefined }),
     )
+    expect(mockSendMessageToChannel).not.toHaveBeenCalled()
+  })
+
+  test("routes to sendMessageToChannel with a type:comment message when commentAnchor.replyChannel is public", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      commentAnchor: { commentId: "comment-1", replyChannel: "public" },
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "comment",
+        contentAttributes: expect.objectContaining({
+          replyToCommentId: "comment-1",
+        }),
+      }),
+    )
+    expect(mockSendMessageToChannel).toHaveBeenCalledOnce()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
+  test("routes to sendMessageToChannel for a public commentAnchor even when the contactInbox is instagram", async () => {
+    const instagramContactInbox = {
+      ...fakeContactInbox,
+      channel: "instagram",
+    } as unknown as typeof fakeContactInbox
+    mockFindContactInbox.mockResolvedValue(instagramContactInbox)
+
+    await sendFlowStep({
+      ...baseParams,
+      commentAnchor: { commentId: "comment-1", replyChannel: "public" },
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "comment",
+        contentAttributes: expect.objectContaining({
+          replyToCommentId: "comment-1",
+        }),
+      }),
+    )
+    expect(mockSendMessageToChannel).toHaveBeenCalledOnce()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
 })
 
