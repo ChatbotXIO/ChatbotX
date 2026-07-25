@@ -1987,6 +1987,10 @@
     },
     "webchatParentUrl": {
       "label": "URL cha của Webchat"
+    },
+    "make": {
+      "inviteUrl": "Link mời",
+      "inviteUrlHint": "Link mời của Make custom app đã publish (ví dụ: https://eu2.make.com/app/invite/...)."
     }
   },
   "flows": {
@@ -2517,6 +2521,15 @@
     "errors": {
       "invalidApiKey": "API Key không hợp lệ. Vui lòng kiểm tra lại API Key SendGrid và thử lại.",
       "missingScopes": "API key này phải có quyền đọc Marketing. Vui lòng đảm bảo API key SendGrid của bạn bao gồm quyền Marketing."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make. Developer Access Token của workspace sẽ được tự động sao chép vào clipboard khi bạn bấm Connect — dán vào lúc tạo connection trong Make.",
+      "notConfigured": "Chưa tìm thấy link mời Make. Vui lòng thêm trong Cài đặt Nền tảng.",
+      "noWorkspaceToken": "Workspace này chưa có Developer Access Token. Hãy tạo token ở mục Workspace token phía trên rồi bấm Connect lại."
     }
   },
   "integrations": {
