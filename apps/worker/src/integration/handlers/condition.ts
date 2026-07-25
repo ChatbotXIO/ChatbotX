@@ -22,6 +22,7 @@ export async function handleCondition(
     nodeVisits,
     metadata,
     trackingContext,
+    commentAnchor,
   } = props
 
   const resolveMatchedHandleId = async (): Promise<string> => {
@@ -43,6 +44,9 @@ export async function handleCondition(
           contactFilter: {
             operator: conditionCase.operator,
             conditions: conditionCase.conditions,
+            // Timezone captured in the editor's browser at save time; the worker
+            // has no browser context, so naive date values are interpreted here.
+            timezone: conditionCase.timezone,
           },
         })
         if (isMatched) {
@@ -77,6 +81,7 @@ export async function handleCondition(
       trackingContext,
       sendFrom,
       nodeVisits,
+      commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })

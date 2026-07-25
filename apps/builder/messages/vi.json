@@ -323,7 +323,8 @@
     "status": {
       "scheduled": "Đã lên lịch",
       "sent": "Đã gửi",
-      "sending": "Đang gửi"
+      "sending": "Đang gửi",
+      "cancelled": "Đã huỷ"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -415,6 +416,7 @@
     "yes": "Có",
     "no": "Không",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Nhập ngày dạng YYYY-MM-DD HH:mm hoặc một biến",
     "operator": {
@@ -1986,6 +1988,15 @@
     },
     "webchatParentUrl": {
       "label": "URL cha của Webchat"
+    },
+    "make": {
+      "inviteUrl": "Link mời",
+      "inviteUrlHint": "Link mời của Make custom app đã publish (ví dụ: https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Sự kiện",
+      "placeholder": "Nhập tên sự kiện rồi nhấn Enter",
+      "description": "Thêm một hoặc nhiều tên sự kiện. Khi Make gắn webhook cho một trong các sự kiện này, dữ liệu sẽ được gửi đến đó khi step này chạy."
     }
   },
   "flows": {
@@ -2032,6 +2043,8 @@
       "blockContact": "Chặn liên hệ",
       "broadcastActions": "Hành động phát sóng",
       "callApi": "Yêu cầu bên ngoài",
+      "make": "Make",
+      "triggers": "Trigger",
       "questionnaires": "Bảng câu hỏi",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
@@ -2206,6 +2219,9 @@
       "durationLabel": "Thời lượng",
       "waitAndContinue": "Chờ <value>{duration} {unit}</value> rồi tiếp tục",
       "cancelOnReplyHint": "Follow-up sẽ không được gửi nếu khách hàng trả lời trước khi hết thời gian chờ."
+    },
+    "setCustomField": {
+      "temporalHint": "Để trống để lưu ngày/giờ hiện tại."
     }
   },
   "folders": {
@@ -2513,6 +2529,15 @@
     "errors": {
       "invalidApiKey": "API Key không hợp lệ. Vui lòng kiểm tra lại API Key SendGrid và thử lại.",
       "missingScopes": "API key này phải có quyền đọc Marketing. Vui lòng đảm bảo API key SendGrid của bạn bao gồm quyền Marketing."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make. Developer Access Token của workspace sẽ được tự động sao chép vào clipboard khi bạn bấm Connect — dán vào lúc tạo connection trong Make.",
+      "notConfigured": "Chưa tìm thấy link mời Make. Vui lòng thêm trong Cài đặt Nền tảng.",
+      "noWorkspaceToken": "Workspace này chưa có Developer Access Token. Hãy tạo token ở mục Workspace token phía trên rồi bấm Connect lại."
     }
   },
   "integrations": {
@@ -3434,7 +3459,6 @@
     "responseType": "Kiểu trả lời",
     "points": "Điểm",
     "retryMessage": "Tin nhắn thử lại nếu câu trả lời không hợp lệ",
-    "defaultRetryMessage": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
     "defaultRetryMessages": {
       "text": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
       "number": "Nội dung bạn đã nhập không phải là số hợp lệ. Vui lòng thử lại",
@@ -3706,7 +3730,9 @@
     "title": "Bạn đã hủy đăng ký.",
     "description": "Bạn sẽ không còn nhận email từ người gửi này nữa.",
     "invalidTitle": "Liên kết hủy đăng ký không hợp lệ.",
-    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn."
+    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+    "unavailableTitle": "Không thể hủy đăng ký.",
+    "unavailableDescription": "Không gian làm việc này không còn khả dụng."
   },
   "extensionsMe": {
     "actions": {

@@ -60,9 +60,9 @@ describe("TagsInputField", () => {
       dropdownButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
 
-    expect(container.textContent).toContain("alpha")
-    expect(container.textContent).toContain("beta")
-    expect(container.textContent).toContain("gamma")
+    expect(document.body.textContent).toContain("alpha")
+    expect(document.body.textContent).toContain("beta")
+    expect(document.body.textContent).toContain("gamma")
   })
 
   test("disables suggestions that are already selected", () => {
@@ -80,7 +80,7 @@ describe("TagsInputField", () => {
     })
 
     const suggestionButtons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>("button.w-full"),
+      document.body.querySelectorAll<HTMLButtonElement>("button.w-full"),
     )
     const selectedSuggestion = suggestionButtons.find((button) =>
       button.textContent?.includes("alpha"),

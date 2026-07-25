@@ -214,6 +214,8 @@ class WorkspaceService extends BaseService {
       }
 
       for (const workspace of claimed.rows) {
+        await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
+
         await workspaceLifecycleService
           .disconnectWorkspaceIntegrations(workspace.id)
           .catch((err) => {
@@ -318,6 +320,10 @@ class WorkspaceService extends BaseService {
   }): Promise<WorkspaceModel> {
     const { data, tx = db } = props
 
+    // This consume runs against `db`, not `tx`: if a caller wraps `create` in
+    // its own transaction that later rolls back (e.g. a channel connect action),
+    // the workspace seat is not released with it. Scheduled reconcile is the
+    // backstop that re-grounds counts in that case.
     const consumed = await quotaEnforcementService.tryConsume({
       userId: props.createdBy,
       metric: "workspaces",

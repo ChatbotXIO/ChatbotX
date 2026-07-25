@@ -30,12 +30,6 @@ vi.mock("../src/integration/handlers/flow", () => ({
 
 const { runChallenge } = await import("../src/integration/handlers/challenge")
 
-const broadcastMetadata = {
-  type: "broadcast" as const,
-  broadcastId: "broadcast-1",
-  contactInboxId: "contact-inbox-1",
-}
-
 function makeChallenge(
   overrides: Partial<IntegrationJobRunChallenge["data"]> = {},
 ): IntegrationJobRunChallenge["data"] {
@@ -95,33 +89,11 @@ describe("runChallenge", () => {
     })
   })
 
-  test("forwards challenge metadata into the resumed flow", async () => {
-    await expect(
-      runChallenge(
-        makeChallenge({
-          challenge: {
-            type: "step",
-            data: { metadata: broadcastMetadata },
-          },
-        }),
-      ),
-    ).resolves.toBeUndefined()
-
-    expect(mocks.runStepsAndQuickReplies).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: broadcastMetadata,
-        startFromStepId: "step-1",
-        triggerMessageId: undefined,
-      }),
-    )
-  })
-
-  test("accepts legacy challenges without metadata", async () => {
+  test("resumes challenge from the stored step", async () => {
     await expect(runChallenge(makeChallenge())).resolves.toBeUndefined()
 
     expect(mocks.runStepsAndQuickReplies).toHaveBeenCalledWith(
       expect.objectContaining({
-        metadata: undefined,
         startFromStepId: "step-1",
       }),
     )

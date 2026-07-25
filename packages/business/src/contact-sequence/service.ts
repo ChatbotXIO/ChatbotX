@@ -60,6 +60,25 @@ type UpdateContactSequencesParams = {
 }
 
 class ContactSequenceService extends BaseService {
+  async listByContactId(props: {
+    workspaceId: string
+    contactId: string
+    tx?: DrizzleClient
+  }): Promise<{ sequenceId: string; sequenceName: string }[]> {
+    const { workspaceId, contactId, tx = db } = props
+
+    const enrollments = await tx.query.contactsOnSequenceModel.findMany({
+      where: { workspaceId, contactId },
+      columns: { sequenceId: true },
+      with: { sequence: { columns: { name: true } } },
+    })
+
+    return enrollments.map((enrollment) => ({
+      sequenceId: enrollment.sequenceId,
+      sequenceName: enrollment.sequence.name,
+    }))
+  }
+
   async removeContactSequencesForContacts(
     params: RemoveContactSequencesForContactsParams,
   ): Promise<DispatchToRemove[]> {

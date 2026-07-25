@@ -10,9 +10,7 @@ import {
   contactCustomFieldModel,
   customFieldModel,
 } from "@chatbotx.io/database/schema"
-import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -102,84 +100,72 @@ export const addContactCustomFields = async ({
 
   const changes: Array<{
     contactId: string
-    oldValue: string | null
     newValue: string
   }> = []
 
-  await db.transaction(async (tx) => {
-    await Promise.all(
-      contacts.map(async (contact) => {
-        const [contactCustomField] = await tx
-          .select()
-          .from(contactCustomFieldModel)
-          .where(
-            and(
-              eq(contactCustomFieldModel.contactId, contact.id),
-              eq(contactCustomFieldModel.customFieldId, customField.id),
-            ),
-          )
-          .for("update")
+  // Persist inside the transaction, collecting the pending change per contact so
+  // their events can be emitted only after commit. The trigger worker re-reads
+  // the value from the DB, so a mid-transaction emit could observe uncommitted
+  // or rolled-back data.
+  const persistedByContact = await db.transaction(async (tx) => {
+    for (const contact of contacts) {
+      const [contactCustomField] = await tx
+        .select({
+          value: contactCustomFieldModel.value,
+        })
+        .from(contactCustomFieldModel)
+        .where(
+          and(
+            eq(contactCustomFieldModel.contactId, contact.id),
+            eq(contactCustomFieldModel.customFieldId, customField.id),
+          ),
+        )
+        .for("update")
+        .limit(1)
 
-        if (contactCustomField) {
-          const value = computeUpdatedFieldValue({
+      const value = contactCustomField
+        ? computeUpdatedFieldValue({
             currentValue: contactCustomField.value,
             operation: parsedInput.operation,
             operationValue: parsedInput.value,
           })
+        : parsedInput.value
 
-          if (value === null || value === contactCustomField.value) {
-            return
-          }
+      if (value === null || value === contactCustomField?.value) {
+        continue
+      }
 
-          changes.push({
-            contactId: contact.id,
-            oldValue: contactCustomField.value,
-            newValue: value,
-          })
+      changes.push({
+        contactId: contact.id,
+        newValue: value,
+      })
+    }
 
-          return tx
-            .update(contactCustomFieldModel)
-            .set({
-              value,
-            })
-            .where(eq(contactCustomFieldModel.id, contactCustomField.id))
-        }
-
-        changes.push({
-          contactId: contact.id,
-          oldValue: null,
-          newValue: parsedInput.value,
-        })
-
-        return tx
-          .insert(contactCustomFieldModel)
-          .values({
-            contactId: contact.id,
-            customFieldId: customField.id,
-            value: parsedInput.value,
-            id: createId(),
-          })
-          .onConflictDoUpdate({
-            target: [
-              contactCustomFieldModel.contactId,
-              contactCustomFieldModel.customFieldId,
-            ],
-            set: { value: parsedInput.value },
-          })
-      }),
+    return await Promise.all(
+      changes.map(async (change) => ({
+        contactId: change.contactId,
+        changes: await contactCustomFieldService.setValuesInTransaction(
+          {
+            workspaceId,
+            contactId: change.contactId,
+            fields: [{ customFieldId: customField.id, value: change.newValue }],
+            sourceTimezone: parsedInput.clientTimezone,
+          },
+          tx,
+        ),
+      })),
     )
   })
 
-  for (const change of changes) {
-    await emitCustomFieldChanged(
-      workspaceId,
-      change.contactId,
-      customField.id,
-      customField.name,
-      change.oldValue,
-      change.newValue,
-    )
-  }
+  await Promise.all(
+    persistedByContact.map((contact) =>
+      contactCustomFieldService.emitCustomFieldChanges({
+        workspaceId,
+        contactId: contact.contactId,
+        changes: contact.changes,
+      }),
+    ),
+  )
 }
 
 export const setContactCustomFieldValue = async ({
@@ -217,50 +203,11 @@ export const setContactCustomFieldValue = async ({
     throw new Error("Custom field not found")
   }
 
-  const contactCustomField = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId,
-      customFieldId,
-    },
-  })
-
-  if (contactCustomField?.value === value) {
-    return
-  }
-
-  if (contactCustomField) {
-    await db
-      .update(contactCustomFieldModel)
-      .set({
-        value,
-      })
-      .where(eq(contactCustomFieldModel.id, contactCustomField.id))
-  } else {
-    await db
-      .insert(contactCustomFieldModel)
-      .values({
-        contactId,
-        customFieldId,
-        value,
-        id: createId(),
-      })
-      .onConflictDoUpdate({
-        target: [
-          contactCustomFieldModel.contactId,
-          contactCustomFieldModel.customFieldId,
-        ],
-        set: { value },
-      })
-  }
-
-  await emitCustomFieldChanged(
+  await contactCustomFieldService.setValues({
     workspaceId,
     contactId,
-    customField.id,
-    customField.name,
-    contactCustomField?.value ?? null,
-    value,
-  )
+    fields: [{ customFieldId: customField.id, value }],
+  })
 }
 
 export const setContactCustomFieldValues = async ({

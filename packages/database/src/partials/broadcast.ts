@@ -4,7 +4,12 @@ import type { ChannelType } from "./channel"
 export const broadcastScheduleTypes = z.enum(["now", "future"])
 export type BroadcastScheduleType = z.infer<typeof broadcastScheduleTypes>
 
-export const broadcastStatuses = z.enum(["scheduled", "sent", "sending"])
+export const broadcastStatuses = z.enum([
+  "scheduled",
+  "sent",
+  "sending",
+  "cancelled",
+])
 export type BroadcastStatus = z.infer<typeof broadcastStatuses>
 
 export const broadcastSubactions = z.enum([

@@ -6,7 +6,11 @@ import {
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
-import type { ConversationAttributes } from "@chatbotx.io/database/partials"
+import {
+  type ChannelType,
+  type ConversationAttributes,
+  dmConversationUsesSourceId,
+} from "@chatbotx.io/database/partials"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
@@ -131,21 +135,32 @@ class ConversationService extends BaseService {
   async findDMByContactIds(props: {
     workspaceId: string
     contactIds: string[]
+    channel?: ChannelType | null
     tx?: DatabaseClient
   }): Promise<ConversationModel[]> {
-    const { tx = db, workspaceId, contactIds } = props
+    const { tx = db, workspaceId, contactIds, channel } = props
     const uniqueContactIds = Array.from(new Set(contactIds))
     if (uniqueContactIds.length === 0) {
       return []
     }
 
-    return await tx.query.conversationModel.findMany({
+    // Most channels store the DM conversation with a null sourceId. TikTok is
+    // the outlier: its DM is keyed by the channel's conversation_id held in
+    // sourceId, so it must be resolved with sourceId IS NOT NULL.
+    const usesSourceId = dmConversationUsesSourceId(channel)
+
+    const conversations = await tx.query.conversationModel.findMany({
       where: {
         workspaceId,
         contactId: { in: uniqueContactIds },
-        sourceId: { isNull: true },
+        sourceId: usesSourceId ? { isNotNull: true } : { isNull: true },
       },
     })
+
+    // Both DM paths return at most one conversation per contact: the null-sourceId
+    // path via the Conversation_contactId_dm_key unique index, and TikTok's
+    // non-null path because a TikTok contact has a single conversation.
+    return conversations
   }
 
   async updateChallenge(props: {

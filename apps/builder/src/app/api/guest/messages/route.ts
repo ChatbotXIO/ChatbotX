@@ -1,6 +1,7 @@
 import {
   contactInboxService,
   conversationService,
+  isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
     const workspace = await workspaceService.find({
       where: { id: data.workspaceId },
     })
-    if (workspace?.scheduledDeletionAt) {
+    if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
       return await forbiddenResponse(corsHeaders(requestOrigin, false))
     }
 

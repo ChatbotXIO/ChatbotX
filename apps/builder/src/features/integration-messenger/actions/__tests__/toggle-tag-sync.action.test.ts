@@ -76,10 +76,18 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// 6. Mock @chatbotx.io/business (isPlatformAdmin used by safe-action)
+// 6. Mock @chatbotx.io/business (symbols used by safe-action)
+//
+// This factory mock enumerates exports, so it must cover everything
+// `workspaceActionClient` reaches — not just what this action calls directly.
+// A missing symbol becomes `undefined`, the middleware throws a TypeError, and
+// next-safe-action swallows it into a generic `serverError`, which reads like an
+// unrelated failure. `isWorkspaceScheduledForDeletion` is the deletion gate in
+// `lib/safe-action.ts`; `false` = an active workspace, this action's precondition.
 // ---------------------------------------------------------------------------
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(async () => false),
+  isWorkspaceScheduledForDeletion: vi.fn(() => false),
 }))
 
 // ---------------------------------------------------------------------------

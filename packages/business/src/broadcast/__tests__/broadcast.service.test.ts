@@ -146,6 +146,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   gt: (left: unknown, right: unknown) => ({ __gt: [left, right] }),
   inArray: (left: unknown, right: unknown) => ({ __inArray: [left, right] }),
   isNull: (value: unknown) => ({ __isNull: value }),
+  isNotNull: (value: unknown) => ({ __isNotNull: value }),
 }))
 
 vi.mock("@chatbotx.io/database/queries", () => ({
@@ -418,6 +419,29 @@ describe("broadcastService.countAudience", () => {
       }),
     )
   })
+
+  test("counts non-null sourceId DM conversations for a restricted TikTok scope", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
+    mocks.selectRows = [{ count: 3 }]
+
+    const total = await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["tiktok"],
+      subaction: "tiktokActiveContacts",
+      restrictToAssignedUserId: "user-1",
+    })
+
+    expect(total).toBe(3)
+    expect(mocks.selectInnerJoin).toHaveBeenCalledWith([
+      expect.anything(),
+      {
+        __and: [
+          { __eq: ["Conversation.contactId", "ContactInbox.contactId"] },
+          { __isNotNull: "Conversation.sourceId" },
+        ],
+      },
+    ])
+  })
 })
 
 describe("broadcastService.listAudiencePreview", () => {
@@ -487,6 +511,27 @@ describe("broadcastService.listAudiencePreview", () => {
     })
     expect(mocks.selectLimit).toHaveBeenCalledWith(10)
     expect(mocks.selectOffset).toHaveBeenCalledWith(20)
+  })
+
+  test("joins the non-null sourceId DM conversation for a TikTok preview", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
+    mocks.selectRows = []
+
+    await broadcastService.listAudiencePreview({
+      workspaceId: "ws-1",
+      channels: ["tiktok"],
+      subaction: "tiktokActiveContacts",
+    })
+
+    expect(mocks.selectLeftJoin).toHaveBeenCalledWith([
+      expect.anything(),
+      {
+        __and: [
+          { __eq: ["Conversation.contactId", "ContactInbox.contactId"] },
+          { __isNotNull: "Conversation.sourceId" },
+        ],
+      },
+    ])
   })
 
   test("caps preview page size at fifty rows", async () => {

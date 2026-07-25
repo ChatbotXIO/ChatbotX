@@ -47,6 +47,12 @@ vi.mock("@chatbotx.io/analytics-nextjs/components/base-dashboard", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  isWorkspaceScheduledForDeletion: (
+    workspace:
+      | { scheduledDeletionAt?: Date | string | null }
+      | null
+      | undefined,
+  ) => Boolean(workspace?.scheduledDeletionAt),
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),
   },

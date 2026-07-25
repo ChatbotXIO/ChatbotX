@@ -34,7 +34,11 @@ export function pruneContactFilterFields(
     return typeof field !== "string" || !excludedFieldSet.has(field)
   })
 
+  // Spread the original so boundary-only fields (notably `timezone`, which the
+  // date-range WHERE resolves against) survive pruning — listing fields by hand
+  // silently drops any not enumerated here.
   return {
+    ...contactFilter,
     operator: conditions.length > 0 ? contactFilter.operator : "and",
     conditions,
   }

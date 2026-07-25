@@ -26,6 +26,12 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  isWorkspaceScheduledForDeletion: (
+    workspace:
+      | { scheduledDeletionAt?: Date | string | null }
+      | null
+      | undefined,
+  ) => Boolean(workspace?.scheduledDeletionAt),
   workspaceService: { find: mockWorkspaceFind },
 }))
 

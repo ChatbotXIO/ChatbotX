@@ -120,6 +120,11 @@ function nativeContactQuickReply(
 
 const QUESTIONNAIRE_MESSAGE_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000
 
+// Known gap: does not forward `props.commentAnchor` — moot in practice today
+// since a questionnaire always waits for the user's answer between
+// questions, which already drops the anchor before completion (same
+// wait-boundary semantics as `handleWait`/`handleFollowUp`). Revisit if a
+// questionnaire step is ever made to complete without any wait.
 async function startTriggerFlow(
   props: ExecuteStepProps<QuestionnairesStepSchema>,
   flowId: string | null | undefined,
@@ -192,7 +197,6 @@ async function sendQuestion(
         (quickReplies ? data.question.title : questionText(data.question)),
       url: data.question.image?.url,
       quickReplies,
-      metadata: props.metadata,
     },
   })
   await waitForChatJobCompletion(job, { conversationId: props.conversation.id })

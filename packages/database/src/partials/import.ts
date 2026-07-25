@@ -47,6 +47,7 @@ export const countryCodeSchema = z
 export const contactImportMetaSchema = z.object({
   channel: channelTypes,
   countryCode: countryCodeSchema.optional(),
+  timezone: z.string().trim().min(1).max(255).optional(),
   columnMap: contactImportColumnMapSchema,
   fieldMapping: contactImportFieldMappingSchema.optional(),
   tagId: bigintAsStringSchema.optional(),

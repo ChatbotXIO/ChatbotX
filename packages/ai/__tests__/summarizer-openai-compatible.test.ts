@@ -29,6 +29,10 @@ vi.mock("../src/server/openai-compatible", () => ({
     mocks.createOpenaiCompatibleModelInstance,
 }))
 
+const { summarizeConversation } = await import(
+  "../src/server/services/summarizer"
+)
+
 describe("summarizeConversation OpenAI Compatible fallback", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -51,10 +55,6 @@ describe("summarizeConversation OpenAI Compatible fallback", () => {
     )
     mocks.createOpenaiCompatibleModelInstance.mockReturnValue("nim-model")
     mocks.generateText.mockResolvedValue({ text: " Conversation summary " })
-
-    const { summarizeConversation } = await import(
-      "../src/server/services/summarizer"
-    )
 
     const result = await summarizeConversation({
       workspaceId: "workspace-1",
@@ -87,10 +87,6 @@ describe("summarizeConversation OpenAI Compatible fallback", () => {
     mocks.getOpenaiCompatibleIntegrationInDB.mockResolvedValue(integration)
     mocks.createOpenaiCompatibleModelInstance.mockReturnValue("agent-nim-model")
     mocks.generateText.mockResolvedValue({ text: " Agent summary " })
-
-    const { summarizeConversation } = await import(
-      "../src/server/services/summarizer"
-    )
 
     const result = await summarizeConversation({
       workspaceId: "workspace-1",

@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react"
-import type { FocusEvent } from "react"
+import type { FocusEvent, Ref } from "react"
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { NumericFormat, type NumericFormatProps } from "react-number-format"
 import { useComposedRefs } from "../../lib/compose-refs"
@@ -7,7 +7,10 @@ import { Button } from "./button"
 import { Input } from "./input"
 
 export interface NumberInputProps
-  extends Omit<NumericFormatProps, "value" | "onValueChange"> {
+  extends Omit<
+    NumericFormatProps,
+    "value" | "onValueChange" | "getInputRef"
+  > {
   stepper?: number
   thousandSeparator?: string
   placeholder?: string
@@ -20,6 +23,7 @@ export interface NumberInputProps
   onValueChange?: (value: number | undefined) => void
   fixedDecimalScale?: boolean
   decimalScale?: number
+  getInputRef?: ((el: HTMLInputElement | null) => void) | Ref<HTMLInputElement>
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
@@ -49,9 +53,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         inputRef.current = node
 
         if (typeof getInputRef === "function") {
-          if (node) {
-            getInputRef(node)
-          }
+          getInputRef(node)
           return
         }
 

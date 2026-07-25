@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const { mockCountDistinct } = vi.hoisted(() => ({
+  mockCountDistinct: vi.fn((column: unknown) => ({ countDistinct: column })),
+}))
+
 // ---------------------------------------------------------------------------
 // Regression: the Redis→DB reconcile must write the *current* authoritative
-// COUNT(*) for contacts/teamMembers/workspaces/channels — not a high-water max —
+// COUNT(*) for contacts/workspaces/channels and COUNT(DISTINCT userId) for
+// teamMembers — not a high-water max —
 // so deleting any of them frees quota slots. See reconcileUser.
 //
 // vi.mock factories are hoisted; per-test state flows through the shared
@@ -51,6 +56,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: vi.fn((...a: unknown[]) => ({ and: a })),
   count: vi.fn(() => ({ count: true })),
+  countDistinct: mockCountDistinct,
   eq: vi.fn((a: unknown, b: unknown) => ({ eq: [a, b] })),
   ne: vi.fn((a: unknown, b: unknown) => ({ ne: [a, b] })),
   sql: (strings: TemplateStringsArray, ...vals: unknown[]) => ({
@@ -76,6 +82,9 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: {
     invalidate: vi.fn(async () => undefined),
     reconcileOwnerPoolUsage: vi.fn(async () => undefined),
+    countDistinctTeamMembersForOwner: vi.fn(
+      async () => state.countResults.shift() ?? 0,
+    ),
   },
   // Non-reseller users: `findByOwner` returns nothing, so reconcileUser keeps
   // the per-user self-count path these tests exercise.
@@ -96,7 +105,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     channelsUsed: "userQuota.channelsUsed",
     macUsed: "userQuota.macUsed",
   },
-  workspaceMemberModel: { workspaceId: "wm.workspaceId", role: "wm.role" },
+  workspaceMemberModel: {
+    workspaceId: "wm.workspaceId",
+    userId: "wm.userId",
+    role: "wm.role",
+  },
   workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
 }))
 
@@ -136,7 +149,10 @@ const { tenantService, userQuotaService } = (await import(
     findByOwner: ReturnType<typeof vi.fn>
     listActiveOwnerIds: ReturnType<typeof vi.fn>
   }
-  userQuotaService: { reconcileOwnerPoolUsage: ReturnType<typeof vi.fn> }
+  userQuotaService: {
+    reconcileOwnerPoolUsage: ReturnType<typeof vi.fn>
+    countDistinctTeamMembersForOwner: ReturnType<typeof vi.fn>
+  }
 }
 
 describe("reconcileUser — contacts/teamMembers reflect the current count", () => {
@@ -152,7 +168,7 @@ describe("reconcileUser — contacts/teamMembers reflect the current count", () 
   })
 
   test("writes the recomputed count even when LOWER than the stored value (deletions free slots)", async () => {
-    // Source-of-truth COUNT(*) after deletions:
+    // Source-of-truth counts after deletions. Team members are distinct humans:
     // [contacts, teamMembers, workspaces, channels].
     state.countResults = [3, 1, 2, 4]
     // DB previously stored a higher (high-water) value.
@@ -186,6 +202,19 @@ describe("reconcileUser — contacts/teamMembers reflect the current count", () 
       "channels",
       "4",
     ])
+  })
+
+  test("counts a human shared across workspaces once", async () => {
+    // Two workspaces with the owner and one shared teammate produce four
+    // membership rows but only two distinct people.
+    state.countResults = [0, 2, 2, 0]
+
+    await reconcileUser("user-1")
+
+    expect(
+      userQuotaService.countDistinctTeamMembersForOwner,
+    ).toHaveBeenCalledWith("user-1")
+    expect(state.capturedSets[0].teamMembersUsed).toBe(2)
   })
 
   test("writes increases too (count grew since last sync)", async () => {

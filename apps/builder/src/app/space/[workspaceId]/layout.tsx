@@ -1,6 +1,7 @@
 import {
   isPlatformAdmin,
   isSuperAdmin,
+  isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
   userQuotaService,
   workspaceMemberService,
@@ -18,6 +19,7 @@ import { ExpiredBanner } from "@/components/expired-banner"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { RefreshOnNavigation } from "@/components/refresh-on-navigation"
 import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
+import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { isCloud } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -94,8 +96,8 @@ export default async function WorkspaceLayout({
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
-  const scheduledForDeletion = Boolean(
-    targetWorkspaceMember.workspace.scheduledDeletionAt,
+  const scheduledForDeletion = isWorkspaceScheduledForDeletion(
+    targetWorkspaceMember.workspace,
   )
 
   return (
@@ -111,8 +113,14 @@ export default async function WorkspaceLayout({
       />
       <SidebarInset>
         <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+          <WorkspaceDeletionTabSync
+            scheduledForDeletion={scheduledForDeletion}
+            workspaceId={workspaceId}
+          />
           <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
-          {!scheduledForDeletion && <RefreshOnNavigation />}
+          {!scheduledForDeletion && (
+            <RefreshOnNavigation workspaceId={workspaceId} />
+          )}
           <ExpiredBanner blocked={cloud && blocked} />
           {children}
         </main>

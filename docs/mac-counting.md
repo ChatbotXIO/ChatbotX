@@ -2,7 +2,8 @@
 
 This document explains the business logic behind `contactActiveMonthlyModel` (the
 `ContactActiveMonthly` table) and how MAC is counted, gated, and reconciled across
-the codebase. Read-only investigation — no behavior described here has been changed.
+the codebase. Read-only investigation, with the MAC live-counter cold-seed behavior
+corrected as noted below.
 
 ## Table shape
 
@@ -134,9 +135,12 @@ All three call `quotaEnforcementService.createNewContactWithMac`
      `(workspaceId, periodStart, contactInboxId)` primary key) → if any rows were
      newly inserted, `addWorkspaceMacCount` bumps `WorkspaceMac.macCount` by the
      count of new inserts.
-   - After commit: `incrementCaches` bumps the workspace MAC Redis cache and does a
-     raw `HINCRBY` on `user-quota-live:<userId>` field `mac` for the owning user(s) —
-     a **live counter only**, not written back to `UserQuota.macUsed` synchronously
+   - After commit: `incrementCaches` bumps the workspace MAC Redis cache and
+     increments `user-quota-live:<userId>` field `mac` for the owning user(s). The
+     live field is cold-seeded from `UserQuota.macUsed` with `hsetnx` before the
+     `HINCRBY`, so a cold or evicted Redis field cannot make the live counter — and
+     therefore the new-contact hard gate — start below the durable base. This is a
+     **live counter only**, not written back to `UserQuota.macUsed` synchronously
      (reconciled later by the worker cron).
 
 **Why no double-count across paths:** the `ContactActiveMonthly` insert done at
@@ -289,8 +293,9 @@ contact-creation time (Path A) is what makes the subsequent `message:received` e
   with the outbound path acting as a supplementary trigger only for those specific
   outbound flows.
 - `UserQuota.macUsed` (the durable billing number) is not written synchronously on
-  every event — it's driven by a Redis `HINCRBY` live counter that the
-  `sync-user-quota` cron job periodically reconciles against the
+  every event — it's driven by a Redis `HINCRBY` live counter, cold-seeded from
+  `macUsed`, that the `sync-user-quota` cron job periodically reconciles against the
   `ContactActiveMonthly` ledger (`countActiveContactsForOwner`) for resetting plans;
   cumulative/lifetime plans behave differently (never reset, cumulative count across
-  all periods).
+  all periods). The cold seed prevents under-counting when Redis is cold; the cron
+  reconcile remains the durable self-heal.

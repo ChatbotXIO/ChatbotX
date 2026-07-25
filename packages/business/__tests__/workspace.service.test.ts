@@ -53,6 +53,7 @@ vi.mock("../src/user-quota/service", () => ({ userQuotaService }))
 
 const quotaEnforcementService = {
   tryConsume: vi.fn(async () => ({ ok: true })),
+  release: vi.fn(async () => undefined),
 }
 vi.mock("../src/quota-enforcement/service", () => ({ quotaEnforcementService }))
 
@@ -96,6 +97,7 @@ beforeEach(() => {
   findFirstUser.mockReset().mockResolvedValue({ tenantId: "1" })
   tenantService.findByOwner.mockReset().mockResolvedValue(undefined)
   quotaEnforcementService.tryConsume.mockReset().mockResolvedValue({ ok: true })
+  quotaEnforcementService.release.mockReset().mockResolvedValue(undefined)
   userQuotaService.getForUser.mockReset().mockResolvedValue(null)
   workspaceMemberService.create.mockClear()
   workspaceMemberService.listUserIdsByWorkspaceId
@@ -184,14 +186,31 @@ describe("WorkspaceService.create — MAC pre-provisioning", () => {
 })
 
 describe("WorkspaceService.create — happy path", () => {
-  test("returns the newly inserted workspace and creates the owner member", async () => {
+  test("consumes only a workspace seat and creates the owner member", async () => {
     const result = await workspaceService.create(createInput())
 
     expect(result).toEqual({ id: "ws-1", organizationId: "org-1" })
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledOnce()
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledWith({
+      userId: "user-1",
+      metric: "workspaces",
+    })
     expect(workspaceMemberService.create).toHaveBeenCalledTimes(1)
     const memberArg = workspaceMemberService.create.mock.calls[0][0]
     expect(memberArg.data.workspaceId).toBe("ws-1")
     expect(memberArg.data.role).toBe("owner")
+  })
+
+  test("does not consume a team-member seat for additional workspaces", async () => {
+    await workspaceService.create(createInput())
+    await workspaceService.create(createInput())
+
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledTimes(2)
+    expect(quotaEnforcementService.tryConsume).toHaveBeenNthCalledWith(2, {
+      userId: "user-1",
+      metric: "workspaces",
+    })
+    expect(quotaEnforcementService.release).not.toHaveBeenCalled()
   })
 })
 

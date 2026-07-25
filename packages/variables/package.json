@@ -15,6 +15,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/business": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "date-fns-tz": "^3.2.0",
     "zod": "^4.3.6"
   },

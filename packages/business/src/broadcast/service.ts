@@ -7,11 +7,13 @@ import {
   eq,
   gt,
   inArray,
+  isNotNull,
   isNull,
   type SQL,
 } from "@chatbotx.io/database/client"
 import {
   type ChannelType,
+  dmConversationUsesSourceId,
   requiresRecentInteractionWindow,
 } from "@chatbotx.io/database/partials"
 import {
@@ -100,10 +102,27 @@ class BroadcastService extends BaseService {
     })
   }
 
-  private buildDmConversationJoin(): SQL | undefined {
+  // A broadcast's audience is scoped to a single channel. TikTok stores its DM
+  // conversation with a non-null `sourceId` (the channel `conversation_id`);
+  // every other channel keeps the `sourceId IS NULL` DM convention. Keeping this
+  // decision in one predicate mirrors `findDMByContactIds` on the delivery side,
+  // so the count/preview and the actual send agree on which conversation is the DM.
+  private audienceUsesSourceIdDmConversation(
+    input: BroadcastAudienceInput,
+  ): boolean {
+    return (input.channels ?? []).some((channel) =>
+      dmConversationUsesSourceId(channel),
+    )
+  }
+
+  private buildDmConversationJoin(
+    input: BroadcastAudienceInput,
+  ): SQL | undefined {
     return and(
       eq(conversationModel.contactId, contactInboxModel.contactId),
-      isNull(conversationModel.sourceId),
+      this.audienceUsesSourceIdDmConversation(input)
+        ? isNotNull(conversationModel.sourceId)
+        : isNull(conversationModel.sourceId),
     )
   }
 
@@ -128,7 +147,7 @@ class BroadcastService extends BaseService {
       const [result] = await db
         .select({ count: count() })
         .from(contactInboxModel)
-        .innerJoin(conversationModel, this.buildDmConversationJoin())
+        .innerJoin(conversationModel, this.buildDmConversationJoin(input))
         .where(
           and(
             this.buildAudienceWhere(inboxIds, input),
@@ -176,7 +195,7 @@ class BroadcastService extends BaseService {
       })
       .from(contactInboxModel)
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
-      .leftJoin(conversationModel, this.buildDmConversationJoin())
+      .leftJoin(conversationModel, this.buildDmConversationJoin(input))
       .where(
         and(
           this.buildAudienceWhere(inboxIds, input),

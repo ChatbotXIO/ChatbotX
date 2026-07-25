@@ -31,6 +31,15 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
 
+type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
+
+const BROADCAST_STATUS_VARIANTS: Partial<
+  Record<string, BroadcastStatusBadgeVariant>
+> = {
+  cancelled: "secondary",
+  scheduled: "outline",
+}
+
 type BroadcastDetailDialogProps = {
   broadcast: BroadcastResourceWithRelations | null
   open: boolean
@@ -147,7 +156,7 @@ export function BroadcastDetailDialog({
               value={
                 <Badge
                   variant={
-                    broadcast.status === "scheduled" ? "outline" : "default"
+                    BROADCAST_STATUS_VARIANTS[broadcast.status] ?? "default"
                   }
                 >
                   {t(`broadcasts.status.${broadcast.status}`)}

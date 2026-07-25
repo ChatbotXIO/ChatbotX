@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 
 const dbQueryIntegrationFindFirst = vi.fn()
 const dbQueryContactCustomFieldFindFirst = vi.fn()
+const setCustomFieldValues = vi.fn(async () => undefined)
 
 const dbUpdateWhere = vi.fn(async () => undefined)
 const dbUpdateSet = vi.fn(() => ({ where: dbUpdateWhere }))
@@ -50,6 +51,15 @@ vi.mock("../src/lib/logger", () => ({
 const emitCustomFieldChanged = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/events", () => ({
   emitCustomFieldChanged,
+}))
+
+// The handler now delegates custom-field writes to the business service (which
+// owns normalization + change events). Mock the whole barrel so its real schema
+// graph isn't pulled into this test's partial schema mock.
+vi.mock("@chatbotx.io/business", () => ({
+  contactCustomFieldService: {
+    setValues: (...args: unknown[]) => setCustomFieldValues(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -237,11 +247,10 @@ describe("applyWhatsappFlowResponseSideEffects", () => {
       flowResponse: { name: "Alice" },
     })
 
-    expect(dbInsert).not.toHaveBeenCalled()
-    expect(emitCustomFieldChanged).not.toHaveBeenCalled()
+    expect(setCustomFieldValues).not.toHaveBeenCalled()
   })
 
-  test("upserts custom field and emits event for valid mapping", async () => {
+  test("delegates a valid mapping to the custom-field service", async () => {
     const step = makeWhatsappFlowStep("btn-1")
     step.flow.fieldMappings = [
       { paramKey: "email", paramLabel: "Email", customFieldId: "cf-1" },
@@ -255,17 +264,17 @@ describe("applyWhatsappFlowResponseSideEffects", () => {
       flowResponse: { email: "user@example.com" },
     })
 
-    expect(dbInsert).toHaveBeenCalledOnce()
-    expect(emitCustomFieldChanged).toHaveBeenCalledOnce()
-    const args = (emitCustomFieldChanged as Mock).mock.calls[0]
-    expect(args[0]).toBe("ws-1")
-    expect(args[1]).toBe("contact-1")
-    expect(args[2]).toBe("cf-1")
-    expect(args[3]).toBe("Email")
-    expect(args[5]).toBe("user@example.com")
+    // The service owns normalization + change events; the handler only forwards
+    // the (customFieldId, serialized value) pairs under the right scope.
+    expect(setCustomFieldValues).toHaveBeenCalledOnce()
+    expect(setCustomFieldValues.mock.calls[0][0]).toEqual({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-1", value: "user@example.com" }],
+    })
   })
 
-  test("uses paramKey as field name when paramLabel is missing", async () => {
+  test("serializes the response value before forwarding it to the service", async () => {
     const step = makeWhatsappFlowStep("btn-1")
     step.flow.fieldMappings = [
       { paramKey: "phone_number", customFieldId: "cf-2" },
@@ -279,12 +288,17 @@ describe("applyWhatsappFlowResponseSideEffects", () => {
       flowResponse: { phone_number: "0901234567" },
     })
 
-    expect(emitCustomFieldChanged).toHaveBeenCalledOnce()
-    const args = (emitCustomFieldChanged as Mock).mock.calls[0]
-    expect(args[3]).toBe("phone_number")
+    expect(setCustomFieldValues).toHaveBeenCalledOnce()
+    const input = setCustomFieldValues.mock.calls[0][0] as {
+      fields: Array<{ customFieldId: string; value: string }>
+    }
+    expect(input.fields[0]).toEqual({
+      customFieldId: "cf-2",
+      value: "0901234567",
+    })
   })
 
-  test("skips upsert when response value is null/undefined for the key", async () => {
+  test("skips the service call when the response value is null/undefined", async () => {
     const step = makeWhatsappFlowStep("btn-1")
     step.flow.fieldMappings = [
       { paramKey: "missing_key", paramLabel: "Missing", customFieldId: "cf-3" },
@@ -298,8 +312,7 @@ describe("applyWhatsappFlowResponseSideEffects", () => {
       flowResponse: {},
     })
 
-    expect(dbInsert).not.toHaveBeenCalled()
-    expect(emitCustomFieldChanged).not.toHaveBeenCalled()
+    expect(setCustomFieldValues).not.toHaveBeenCalled()
   })
 
   test("logs warning when integrationWhatsapp not found for completedCount increment", async () => {

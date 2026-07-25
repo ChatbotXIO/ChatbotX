@@ -7,6 +7,7 @@ const forEachAudienceChunk = vi.fn()
 const scheduleAddSpy = vi.fn()
 const loggerInfoSpy = vi.fn()
 const loggerWarnSpy = vi.fn()
+const blockedWorkspaceIds = new Set<string>()
 
 type UpdateCall = {
   table: unknown
@@ -22,9 +23,9 @@ const onConflictSpy = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   withBlockedOwnerGuard: async (
-    _workspaceId: unknown,
+    workspaceId: unknown,
     fn: () => Promise<unknown>,
-  ) => fn(),
+  ) => (blockedWorkspaceIds.has(String(workspaceId)) ? undefined : fn()),
   broadcastService: {
     forEachAudienceChunk: (...args: unknown[]) => forEachAudienceChunk(...args),
   },
@@ -125,11 +126,24 @@ beforeEach(() => {
   loggerInfoSpy.mockReset()
   loggerWarnSpy.mockReset()
   onConflictSpy.mockReset()
+  blockedWorkspaceIds.clear()
 })
 
 describe("prepareBroadcast", () => {
   test("returns without db writes or queue enqueues when the broadcast is missing", async () => {
     findFirstBroadcast.mockResolvedValue(undefined)
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(updateCalls).toHaveLength(0)
+    expect(insertCalls).toHaveLength(0)
+    expect(forEachAudienceChunk).not.toHaveBeenCalled()
+    expect(scheduleAddSpy).not.toHaveBeenCalled()
+  })
+
+  test("returns without db writes or queue enqueues when the workspace is frozen", async () => {
+    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    blockedWorkspaceIds.add(WORKSPACE_ID)
 
     await prepareBroadcast(BROADCAST_ID)
 
@@ -286,6 +300,7 @@ describe("prepareBroadcast", () => {
     expect(findDMByContactIds).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1", "contact-2"],
+      channel: "messenger",
     })
     expect(insertCalls).toHaveLength(1)
     expect(onConflictSpy).toHaveBeenCalledTimes(1)
@@ -319,6 +334,34 @@ describe("prepareBroadcast", () => {
         removeOnFail: true,
       },
     )
+  })
+
+  test("passes the broadcast channel to the DM conversation lookup so TikTok resolves by sourceId", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "tiktok",
+    })
+    findDMByContactIds.mockResolvedValue([
+      { id: "conv-tt", contactId: "contact-1" },
+    ])
+    forEachAudienceChunk.mockImplementation(
+      async (
+        _input: unknown,
+        onChunk: (
+          rows: Array<{ id: string; contactId: string }>,
+        ) => Promise<unknown>,
+      ) => {
+        await onChunk([{ id: "ci-1", contactId: "contact-1" }])
+      },
+    )
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findDMByContactIds).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1"],
+      channel: "tiktok",
+    })
   })
 
   test("does not insert or enqueue when all audience contacts lack a DM conversation", async () => {

@@ -59,7 +59,7 @@ beforeEach(() => {
 describe("cancelPendingDispatches", () => {
   test("SELECT filters enrollmentId + workspaceId + status=pending", async () => {
     findManySpy.mockResolvedValue([])
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
 
     await cancelPendingDispatches({
       enrollmentId: "e1",
@@ -77,7 +77,7 @@ describe("cancelPendingDispatches", () => {
 
   test("empty result skips UPDATE and Redis", async () => {
     findManySpy.mockResolvedValue([])
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
 
     const res = await cancelPendingDispatches({
       enrollmentId: "e1",
@@ -95,7 +95,7 @@ describe("cancelPendingDispatches", () => {
       { id: "d1", bucket: 1 },
       { id: "d2", bucket: 2 },
     ])
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
 
     await cancelPendingDispatches({
       enrollmentId: "e1",
@@ -113,7 +113,7 @@ describe("cancelPendingDispatches", () => {
       { id: "d1", bucket: 1 },
       { id: "d2", bucket: 2 },
     ])
-    const { cancelPendingDispatches } = await import("../src/dispatch-manager")
+    const { cancelPendingDispatches } = await import("../src/dispatch-cancel")
 
     const res = await cancelPendingDispatches({
       enrollmentId: "e1",
@@ -132,7 +132,7 @@ describe("cancelPendingDispatches", () => {
 
   test("removeDispatchesFromSchedule removes each dispatch from Redis", async () => {
     const { removeDispatchesFromSchedule } = await import(
-      "../src/dispatch-manager"
+      "../src/dispatch-cancel"
     )
 
     await removeDispatchesFromSchedule([
@@ -150,7 +150,7 @@ describe("cancelPendingDispatches", () => {
       .mockRejectedValueOnce(new Error("redis down"))
       .mockResolvedValueOnce(undefined)
     const { removeDispatchesFromSchedule } = await import(
-      "../src/dispatch-manager"
+      "../src/dispatch-cancel"
     )
 
     await expect(
@@ -170,7 +170,7 @@ describe("cancelPendingDispatches", () => {
       .mockRejectedValueOnce(new Error("redis down"))
       .mockResolvedValueOnce(undefined)
     const { removeDispatchesFromSchedule } = await import(
-      "../src/dispatch-manager"
+      "../src/dispatch-cancel"
     )
 
     await expect(

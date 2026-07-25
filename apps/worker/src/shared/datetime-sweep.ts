@@ -98,17 +98,15 @@ export function findMatchingDateTimeCondition(
   params: { startOfMinute: number },
 ): DateTimeCondition | undefined {
   for (const condition of entity.conditions) {
+    // Per-condition zone captured in the editor wins; legacy conditions with
+    // none fall back to the workspace zone carried on the entity.
+    const timezone = condition.timezone || entity.timezone
     const customFieldValue = customFieldValues.get(condition.customFieldId)
-    const datetimeValue = parseDateTimeValue(customFieldValue, entity.timezone)
+    const datetimeValue = parseDateTimeValue(customFieldValue, timezone)
 
     if (
       datetimeValue &&
-      matchesDateTimeCondition(
-        datetimeValue,
-        condition,
-        params,
-        entity.timezone,
-      )
+      matchesDateTimeCondition(datetimeValue, condition, params, timezone)
     ) {
       return condition
     }
@@ -121,18 +119,16 @@ export function allDateTimeConditionsMatch(
   params: { startOfMinute: number },
 ): boolean {
   for (const condition of entity.conditions) {
+    // Per-condition zone captured in the editor wins; legacy conditions with
+    // none fall back to the workspace zone carried on the entity.
+    const timezone = condition.timezone || entity.timezone
     const customFieldValue = customFieldValues.get(condition.customFieldId)
-    const datetimeValue = parseDateTimeValue(customFieldValue, entity.timezone)
+    const datetimeValue = parseDateTimeValue(customFieldValue, timezone)
 
     if (
       !(
         datetimeValue &&
-        matchesDateTimeCondition(
-          datetimeValue,
-          condition,
-          params,
-          entity.timezone,
-        )
+        matchesDateTimeCondition(datetimeValue, condition, params, timezone)
       )
     ) {
       return false

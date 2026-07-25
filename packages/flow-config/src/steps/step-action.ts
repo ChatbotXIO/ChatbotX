@@ -74,6 +74,7 @@ export const stepTypes = z.enum([
   "performAction",
   "callApi",
   "splitTraffic",
+  "make",
 
   // Flow Operations (F_)
   "startAnotherNode",

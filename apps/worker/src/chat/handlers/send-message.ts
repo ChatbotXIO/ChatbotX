@@ -14,6 +14,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
+  type CommentAnchor,
   type MessageButtonTemplate,
   parseSdkError,
   type SendFlowStepData,
@@ -36,7 +37,7 @@ import { shouldSuppressRetryableChannelError } from "../utils/retry"
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
-) {
+): Promise<{ messageIds: string[] }> {
   const {
     conversation,
     contactInbox,
@@ -167,6 +168,8 @@ export async function sendMessageToChannel(
         logger.warn(error, "Auto-unblock on successful send failed")
       }
     }
+
+    return { messageIds: result.messageIds }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
@@ -186,7 +189,7 @@ export async function sendMessageToChannel(
       metadata,
     })
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
-      return
+      return { messageIds: [] }
     }
     throw error
   }
@@ -394,6 +397,7 @@ export async function sendFlowStepToChannel({
   messageId,
   messageCreatedAt,
   sendFrom,
+  commentAnchor,
 }: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -406,6 +410,7 @@ export async function sendFlowStepToChannel({
   messageId?: string
   messageCreatedAt?: Date
   sendFrom?: "inbox"
+  commentAnchor?: CommentAnchor
 }): Promise<{ messageIds: string[] }> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
@@ -450,6 +455,7 @@ export async function sendFlowStepToChannel({
         metadata,
         richResponse,
         sendFrom,
+        commentAnchor,
       },
     },
   )

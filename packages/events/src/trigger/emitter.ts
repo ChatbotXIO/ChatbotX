@@ -2,6 +2,7 @@ import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { triggerQueue } from "@chatbotx.io/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
 import { EMITTED_EVENT_TYPE_SET } from "../event-type-registry"
+import { webhookChannelOrigin } from "../webhook/context"
 import { hasActiveTriggers } from "./cache"
 import { isWorkerContext } from "./context"
 
@@ -39,6 +40,7 @@ class TriggerEventEmitterImpl extends BaseEventEmitter {
           eventType,
           eventData: data.metadata || {},
           timestamp: new Date(),
+          channelOriginated: webhookChannelOrigin() === "channel",
         },
       },
       {

@@ -3,7 +3,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import type { OutgoingMessage } from "@chatbotx.io/sdk"
+import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -125,6 +125,8 @@ export type IntegrationJobRunFlowNode = {
     metadata?: MetadataPayload
     sendFrom?: "inbox"
     origin?: "channel"
+    /** See {@link CommentAnchor}. */
+    commentAnchor?: CommentAnchor
   }
 }
 

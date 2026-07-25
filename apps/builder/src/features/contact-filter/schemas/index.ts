@@ -61,6 +61,12 @@ export const singleContactFilterConditionSchema = z.union([
 export const contactFilterCriteriaSchema = z.object({
   operator: z.enum(["and", "or"]),
   conditions: z.array(singleContactFilterConditionSchema),
+  /**
+   * IANA timezone (the browser's local zone, captured at build/save time) used
+   * to interpret naive date/datetime condition values. The backend defaults to
+   * UTC when this is absent or unrecognized.
+   */
+  timezone: z.string().max(64).optional(),
 })
 
 export type ContactFilterCriteria = z.infer<typeof contactFilterCriteriaSchema>

@@ -39,6 +39,8 @@ const zeroLiveUsage = () => ({
   teamMembers: 0,
   contacts: 0,
   mac: 0,
+  botMessages: 0,
+  monthlyBotMessages: 0,
 })
 
 // Both quota levels now live on `UserQuota`: the pool is the tenant owner's row,
@@ -49,9 +51,13 @@ const userQuotaService = {
   hasCapacity: vi.fn(async () => true),
   consume: vi.fn(async () => undefined),
   isLimitReached: vi.fn(async () => false),
+  isTeamMemberLimitReached: vi.fn(async () => false),
+  countDistinctTeamMembersForOwner: vi.fn(async () => 0),
+  countDistinctTeamMembersForTenant: vi.fn(async () => 0),
   getRemainingSlots: vi.fn(async () => null as number | null),
   increment: vi.fn(async () => undefined),
   incrementBy: vi.fn(async () => undefined),
+  releaseBy: vi.fn(async () => undefined),
   getForUser: vi.fn(async () => null as unknown),
   getLiveUsage: vi.fn(async () => zeroLiveUsage()),
   metricValues: vi.fn(() => ({ limit: null as number | null, used: 0 })),
@@ -255,6 +261,44 @@ describe("quotaEnforcementService.increment", () => {
   })
 })
 
+describe("quotaEnforcementService.release", () => {
+  test("releases both the sub-account and owner pool rows", async () => {
+    asCustomer()
+
+    await quotaEnforcementService.release({
+      userId: CUSTOMER,
+      metric: "teamMembers",
+    })
+
+    expect(userQuotaService.releaseBy).toHaveBeenCalledWith(
+      RESELLER,
+      "teamMembers",
+      1,
+    )
+    expect(userQuotaService.releaseBy).toHaveBeenCalledWith(
+      CUSTOMER,
+      "teamMembers",
+      1,
+    )
+  })
+
+  test("releases only the owner pool row for a reseller", async () => {
+    asReseller()
+
+    await quotaEnforcementService.release({
+      userId: RESELLER,
+      metric: "teamMembers",
+    })
+
+    expect(userQuotaService.releaseBy).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.releaseBy).toHaveBeenCalledWith(
+      RESELLER,
+      "teamMembers",
+      1,
+    )
+  })
+})
+
 describe("quotaEnforcementService.createNewContactWithMac", () => {
   const created = {
     value: { contactId: "c-1" },
@@ -417,7 +461,11 @@ describe("quotaEnforcementService.getUsageSummary", () => {
     const summary = await quotaEnforcementService.getUsageSummary(ROOT_USER)
 
     expect(summary.workspaces).toEqual({ used: 3, limit: 10 })
+    expect(summary.teamMembers).toEqual({ used: 0, limit: 10 })
     expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(ROOT_USER)
+    expect(
+      userQuotaService.countDistinctTeamMembersForOwner,
+    ).toHaveBeenCalledWith(ROOT_USER)
   })
 
   test("reseller reports the live pooled usage against their plan limit", async () => {
@@ -433,8 +481,12 @@ describe("quotaEnforcementService.getUsageSummary", () => {
     const summary = await quotaEnforcementService.getUsageSummary(RESELLER)
 
     expect(summary.workspaces).toEqual({ used: 8, limit: 10 })
+    expect(summary.teamMembers).toEqual({ used: 0, limit: 10 })
     expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(RESELLER)
     expect(userQuotaService.getForUser).toHaveBeenCalledWith(RESELLER)
+    expect(
+      userQuotaService.countDistinctTeamMembersForTenant,
+    ).toHaveBeenCalledWith(TENANT)
   })
 
   test("sub-account reports its own live allocation, not the pool", async () => {
@@ -449,5 +501,76 @@ describe("quotaEnforcementService.getUsageSummary", () => {
 
     expect(summary.workspaces).toEqual({ used: 2, limit: 5 })
     expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(CUSTOMER)
+  })
+})
+
+describe("quotaEnforcementService.hasReachedLimit", () => {
+  test("reads the current owner-scoped distinct count for team members", async () => {
+    asRootUser()
+    userQuotaService.isTeamMemberLimitReached.mockResolvedValue(true)
+
+    await expect(
+      quotaEnforcementService.hasReachedLimit({
+        userId: ROOT_USER,
+        metric: "teamMembers",
+      }),
+    ).resolves.toBe(true)
+
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenCalledWith(
+      { ownerId: ROOT_USER },
+      ROOT_USER,
+    )
+    expect(userQuotaService.isLimitReached).not.toHaveBeenCalled()
+  })
+
+  test("keeps non-team-member metrics on the live-counter path", async () => {
+    asRootUser()
+
+    await quotaEnforcementService.hasReachedLimit({
+      userId: ROOT_USER,
+      metric: "workspaces",
+    })
+
+    expect(userQuotaService.isLimitReached).toHaveBeenCalledWith(
+      ROOT_USER,
+      "workspaces",
+    )
+    expect(userQuotaService.isTeamMemberLimitReached).not.toHaveBeenCalled()
+  })
+
+  test("checks both the sub-account owner scope and reseller tenant pool", async () => {
+    asCustomer()
+    userQuotaService.isTeamMemberLimitReached.mockImplementation(
+      async (_scope: unknown, limitUserId: string) => limitUserId === RESELLER,
+    )
+
+    await expect(
+      quotaEnforcementService.hasReachedLimit({
+        userId: CUSTOMER,
+        metric: "teamMembers",
+      }),
+    ).resolves.toBe(true)
+
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenNthCalledWith(
+      1,
+      { ownerId: CUSTOMER },
+      CUSTOMER,
+    )
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenNthCalledWith(
+      2,
+      { tenantId: TENANT },
+      RESELLER,
+    )
+  })
+})
+
+describe("quotaEnforcementService.getAtLimitMap", () => {
+  test("includes both lifetime and monthly bot message metrics", async () => {
+    asRootUser()
+
+    const limits = await quotaEnforcementService.getAtLimitMap(ROOT_USER)
+
+    expect(limits).toHaveProperty("botMessages", false)
+    expect(limits).toHaveProperty("monthlyBotMessages", false)
   })
 })

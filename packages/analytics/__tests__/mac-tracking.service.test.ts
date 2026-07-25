@@ -26,7 +26,19 @@ const distributedStore = {
 const bloomFilter = {
   addMany: vi.fn(async (_k: string, items: string[]) => items.map(() => true)),
 }
-vi.mock("@chatbotx.io/redis", () => ({ distributedStore, bloomFilter }))
+const cacheClient = {
+  hget: vi.fn(async () => null as string | null),
+  hsetnx: vi.fn(async () => 1),
+  hincrby: vi.fn(async () => 1),
+}
+const cacheConnections = {
+  useExisting: vi.fn(async () => cacheClient),
+}
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedStore,
+  bloomFilter,
+  cacheConnections,
+}))
 
 const selectRows: { current: unknown[] } = { current: [] }
 const selectBuilder: Record<string, unknown> = {}
@@ -37,6 +49,11 @@ selectBuilder.orderBy = vi.fn(() => selectBuilder)
 selectBuilder.limit = vi.fn(async () => selectRows.current)
 const db = {
   select: vi.fn(() => selectBuilder),
+  query: {
+    userQuotaModel: {
+      findFirst: vi.fn(async () => ({ macUsed: 0 })),
+    },
+  },
   transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({})),
 }
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -68,6 +85,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   userQuotaModel: {
     userId: "userId",
     periodStart: "periodStart",
+    macUsed: "macUsed",
   },
 }))
 
@@ -132,6 +150,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.useRealTimers()
   selectRows.current = []
+  cacheConnections.useExisting.mockResolvedValue(cacheClient)
+  cacheClient.hget.mockResolvedValue(null)
+  cacheClient.hsetnx.mockResolvedValue(1)
+  cacheClient.hincrby.mockResolvedValue(1)
+  db.query.userQuotaModel.findFirst.mockResolvedValue({ macUsed: 0 })
   distributedStore.getAll.mockResolvedValue({})
   bloomFilter.addMany.mockImplementation(async (_k, items) =>
     items.map(() => true),
@@ -755,5 +778,83 @@ describe("MacTrackingService.incrementWorkspaceMacCache", () => {
   test("is a no-op for non-positive deltas", async () => {
     await newService().incrementWorkspaceMacCache(WORKSPACE_ID, 0)
     expect(distributedStore.incrementCounter).not.toHaveBeenCalled()
+  })
+})
+
+describe("MacTrackingService user quota MAC live counter", () => {
+  const incrementUserQuotaMac = (count: number) =>
+    (
+      newService() as unknown as {
+        incrementUserQuotaMac: (userId: string, count: number) => Promise<void>
+      }
+    ).incrementUserQuotaMac("user-1", count)
+
+  test("cold field seeds from DB via hsetnx before incrementing", async () => {
+    cacheClient.hget.mockResolvedValueOnce(null)
+    db.query.userQuotaModel.findFirst.mockResolvedValue({ macUsed: 5 })
+
+    await incrementUserQuotaMac(2)
+
+    expect(db.query.userQuotaModel.findFirst).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      columns: { macUsed: true },
+    })
+    expect(cacheClient.hsetnx).toHaveBeenCalledWith(
+      "user-quota-live:user-1",
+      "mac",
+      "5",
+    )
+    expect(cacheClient.hincrby).toHaveBeenCalledWith(
+      "user-quota-live:user-1",
+      "mac",
+      2,
+    )
+  })
+
+  test("warm field does not re-seed", async () => {
+    cacheClient.hget.mockResolvedValueOnce("7")
+
+    await incrementUserQuotaMac(2)
+
+    expect(cacheClient.hsetnx).not.toHaveBeenCalled()
+    expect(db.query.userQuotaModel.findFirst).not.toHaveBeenCalled()
+    expect(cacheClient.hincrby).toHaveBeenCalledTimes(1)
+    expect(cacheClient.hincrby).toHaveBeenCalledWith(
+      "user-quota-live:user-1",
+      "mac",
+      2,
+    )
+  })
+
+  test("a concurrent seed racer never clobbers the increment (hsetnx no-op)", async () => {
+    cacheClient.hget.mockResolvedValueOnce(null)
+    db.query.userQuotaModel.findFirst.mockResolvedValue({ macUsed: 5 })
+    // A racing call already seeded the field between our hget and hsetnx;
+    // hsetnx is a real no-op in that case, so we just assert we still call it
+    // (safe to call regardless) and proceed to increment.
+    cacheClient.hsetnx.mockResolvedValueOnce(0)
+
+    await incrementUserQuotaMac(2)
+
+    expect(cacheClient.hsetnx).toHaveBeenCalledWith(
+      "user-quota-live:user-1",
+      "mac",
+      "5",
+    )
+    expect(cacheClient.hincrby).toHaveBeenCalledWith(
+      "user-quota-live:user-1",
+      "mac",
+      2,
+    )
+  })
+
+  test("swallows Redis errors", async () => {
+    cacheConnections.useExisting.mockRejectedValue(new Error("Redis down"))
+
+    await expect(incrementUserQuotaMac(2)).resolves.toBeUndefined()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", count: 2 }),
+      "[MacTrackingService] user quota mac increment failed",
+    )
   })
 })

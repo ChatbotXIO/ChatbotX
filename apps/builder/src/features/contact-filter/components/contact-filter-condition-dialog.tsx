@@ -157,7 +157,7 @@ type ContactFilterValueFieldsProps = {
   enableVariables: boolean
 }
 
-type FreeTextInputKind = "text" | "number" | "datetime"
+type FreeTextInputKind = "text" | "number" | "date" | "datetime"
 
 type FilterValueInputProps = {
   name: string
@@ -179,6 +179,10 @@ const FILTER_VALUE_INPUT_CONFIG = {
   number: {
     placeholderKey: "condition.valuePlaceholder",
     type: "number",
+  },
+  date: {
+    placeholderKey: "condition.datePlaceholder",
+    type: undefined,
   },
   datetime: {
     placeholderKey: "condition.datetimePlaceholder",
@@ -276,6 +280,13 @@ const VALUE_INPUT_RENDERERS = {
     <FilterValueInput
       enableVariables={enableVariables}
       kind="number"
+      name="value"
+    />
+  ),
+  date: ({ enableVariables }) => (
+    <FilterValueInput
+      enableVariables={enableVariables}
+      kind="date"
       name="value"
     />
   ),

@@ -33,13 +33,14 @@ vi.mock("@chatbotx.io/redis", () => ({
   withCache: mocks.withCache,
 }))
 
+const { messageService } = await import("../src/message/service")
+
 describe("messageService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   test("listLastMessages reads through the message repository and returns chronological order", async () => {
-    const { messageService } = await import("../src/message/service")
     const newer = { id: "msg-2", createdAt: new Date("2026-01-02") }
     const older = { id: "msg-1", createdAt: new Date("2026-01-01") }
     const sinceTime = new Date("2025-01-01")
@@ -66,7 +67,6 @@ describe("messageService", () => {
   })
 
   test("findLatestIncomingMessage reads the newest incoming message through the repository", async () => {
-    const { messageService } = await import("../src/message/service")
     const message = { id: "msg-1" }
     const sinceTime = new Date("2025-01-01")
     mocks.repo.findLastByConversation.mockResolvedValue([message])
@@ -87,7 +87,6 @@ describe("messageService", () => {
   })
 
   test("findLatestIncomingMessageWithAttachments requests attachments from the repository", async () => {
-    const { messageService } = await import("../src/message/service")
     const message = {
       id: "msg-1",
       attachments: [{ id: "attachment-1", fileType: "image" }],
@@ -114,7 +113,6 @@ describe("messageService", () => {
   })
 
   test("findById reads one message through the repository", async () => {
-    const { messageService } = await import("../src/message/service")
     const message = {
       id: "msg-1",
       createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -137,7 +135,6 @@ describe("messageService", () => {
   })
 
   test("listIncomingTextsByContactInbox delegates to the repository", async () => {
-    const { messageService } = await import("../src/message/service")
     const sinceTime = new Date("2025-01-01")
     mocks.repo.listIncomingTextsByContactInbox.mockResolvedValue([
       "newest",
@@ -161,7 +158,6 @@ describe("messageService", () => {
   })
 
   test("hardDeleteAllByContactInbox delegates to the repository", async () => {
-    const { messageService } = await import("../src/message/service")
     const sinceTime = new Date("2025-01-01")
     mocks.repo.hardDeleteAllByContactInbox.mockResolvedValue({
       attachmentPaths: ["origin.jpg", "thumb.jpg"],

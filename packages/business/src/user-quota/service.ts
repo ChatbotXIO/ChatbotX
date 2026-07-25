@@ -1,11 +1,11 @@
 import {
   and,
   count,
+  countDistinct,
   db,
   eq,
   gt,
   lte,
-  ne,
   sql,
   sum,
 } from "@chatbotx.io/database/client"
@@ -56,6 +56,7 @@ const BOOTSTRAP_TRIAL_FALLBACK = {
   teamMembersLimit: 0,
   contactsLimit: 0,
   botMessagesLimit: 0,
+  monthlyBotMessagesLimit: 0,
 } as const
 
 interface DefaultPlanSnapshot {
@@ -63,6 +64,7 @@ interface DefaultPlanSnapshot {
   channelsLimit: number | null
   contactsLimit: number | null
   macLimit: number | null
+  monthlyBotMessagesLimit: number | null
   planName: string
   saasMode: boolean
   ssoSaml: boolean
@@ -76,6 +78,7 @@ type BootstrapPlanSnapshot = Pick<
   DefaultPlanSnapshot,
   | "channelsLimit"
   | "botMessagesLimit"
+  | "monthlyBotMessagesLimit"
   | "contactsLimit"
   | "macLimit"
   | "planName"
@@ -111,6 +114,7 @@ class UserQuotaService extends BaseService {
       contacts: userQuotaModel.contactsUsed,
       mac: userQuotaModel.macUsed,
       botMessages: userQuotaModel.botMessagesUsed,
+      monthlyBotMessages: userQuotaModel.monthlyBotMessagesUsed,
     },
     getUsed: (quota, metric) => this.getUsedValue(quota, metric),
     fetchRow: (userId) =>
@@ -139,6 +143,8 @@ class UserQuotaService extends BaseService {
         return quota.macUsed
       case "botMessages":
         return quota.botMessagesUsed
+      case "monthlyBotMessages":
+        return quota.monthlyBotMessagesUsed
       default:
         return 0
     }
@@ -236,6 +242,9 @@ class UserQuotaService extends BaseService {
         teamMembersLimit: snapshot.teamMembersLimit,
         macLimit: snapshot.macLimit,
         botMessagesLimit: snapshot.botMessagesLimit,
+        // Additive cross-repo field: an older snapshot omits it, which is
+        // deliberately unlimited (fail-open), never an implicit zero cap.
+        monthlyBotMessagesLimit: snapshot.monthlyBotMessagesLimit ?? null,
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
@@ -320,6 +329,8 @@ class UserQuotaService extends BaseService {
       macUsed: 0,
       botMessagesLimit: null,
       botMessagesUsed: 0,
+      monthlyBotMessagesLimit: null,
+      monthlyBotMessagesUsed: 0,
       whiteLabel: false,
       ssoSaml: false,
       saasMode: false,
@@ -338,6 +349,10 @@ class UserQuotaService extends BaseService {
       workspacesLimit: base.workspacesLimit ?? snapshot.workspacesLimit,
       channelsLimit: base.channelsLimit ?? snapshot.channelsLimit,
       botMessagesLimit: base.botMessagesLimit ?? snapshot.botMessagesLimit,
+      monthlyBotMessagesLimit:
+        base.monthlyBotMessagesLimit ??
+        snapshot.monthlyBotMessagesLimit ??
+        null,
       teamMembersLimit: base.teamMembersLimit ?? snapshot.teamMembersLimit,
       // Monthly-active-contacts cap (`Plan.limits.monthlyActiveContacts`) maps to
       // `macLimit`, NOT `contactsLimit`; without this the free-tier overlay would
@@ -484,6 +499,58 @@ class UserQuotaService extends BaseService {
     return limit !== null && liveCount >= limit
   }
 
+  /**
+   * Current distinct humans across an owner's workspaces or a reseller's
+   * tenant. `teamMembers` is intentionally read from its source tables: its
+   * counter is only a reconcile snapshot and can be stale between syncs.
+   */
+  private async countDistinctTeamMembers(
+    scope: { ownerId: string } | { tenantId: string },
+  ): Promise<number> {
+    const where =
+      "ownerId" in scope
+        ? eq(workspaceModel.ownerId, scope.ownerId)
+        : eq(workspaceModel.tenantId, scope.tenantId)
+    const rows = await db
+      .select({ count: countDistinct(workspaceMemberModel.userId) })
+      .from(workspaceMemberModel)
+      .innerJoin(
+        workspaceModel,
+        eq(workspaceMemberModel.workspaceId, workspaceModel.id),
+      )
+      .where(where)
+    return rows[0]?.count ?? 0
+  }
+
+  /** Source-of-truth team-member count for the per-owner reconcile. */
+  countDistinctTeamMembersForOwner(ownerId: string): Promise<number> {
+    return this.countDistinctTeamMembers({ ownerId })
+  }
+
+  /** Source-of-truth team-member count for a reseller tenant pool. */
+  countDistinctTeamMembersForTenant(tenantId: string): Promise<number> {
+    return this.countDistinctTeamMembers({ tenantId })
+  }
+
+  /**
+   * Live at-limit check for `teamMembers`; the quota row still supplies the
+   * plan limit while the distinct member count comes directly from the DB.
+   */
+  async isTeamMemberLimitReached(
+    scope: { ownerId: string } | { tenantId: string },
+    limitUserId: string,
+  ): Promise<boolean> {
+    const [quota, realCount] = await Promise.all([
+      this.getForUser(limitUserId),
+      this.countDistinctTeamMembers(scope),
+    ])
+    if (!quota) {
+      return false
+    }
+    const { limit } = this.readMetricValues(quota, "teamMembers")
+    return limit !== null && realCount >= limit
+  }
+
   async getRemainingSlots(
     userId: string,
     metric: QuotaMetric,
@@ -566,6 +633,18 @@ class UserQuotaService extends BaseService {
     await this.store.consume(userId, metric, 1)
   }
 
+  async release(userId: string, metric: QuotaMetric): Promise<void> {
+    await this.releaseBy(userId, metric, 1)
+  }
+
+  async releaseBy(
+    userId: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    await this.store.release(userId, metric, count)
+  }
+
   async tryIncrement(userId: string, metric: QuotaMetric): Promise<boolean> {
     if (!(await this.hasCapacity(userId, metric))) {
       return false
@@ -579,8 +658,9 @@ class UserQuotaService extends BaseService {
    * counts aggregated across EVERY workspace under their tenant — the owner's row
    * is the pool (owner's own resources carry the reseller tenantId too, so the
    * tenant aggregate already includes them; no separate own-count is added). The
-   * recomputed `COUNT(*)` is authoritative (already reflects deletions) and is
+   * recomputed counts are authoritative (already reflect deletions) and are
    * assigned directly so freeing pooled resources frees pooled quota.
+   * `teamMembers` is `COUNT(DISTINCT userId)`; all other metrics are `COUNT(*)`.
    *
    * `mac` is summed from the `WorkspaceMac` rollup for the CURRENT period only,
    * so it resets naturally at period rollover (mirroring the contacts recount).
@@ -595,7 +675,7 @@ class UserQuotaService extends BaseService {
 
     const [
       [contactsResult],
-      [teamMembersResult],
+      teamMembersUsed,
       [workspacesResult],
       [channelsResult],
       [macResult],
@@ -609,19 +689,7 @@ class UserQuotaService extends BaseService {
         )
         .where(eq(workspaceModel.tenantId, tenantId)),
 
-      db
-        .select({ count: count() })
-        .from(workspaceMemberModel)
-        .innerJoin(
-          workspaceModel,
-          eq(workspaceMemberModel.workspaceId, workspaceModel.id),
-        )
-        .where(
-          and(
-            eq(workspaceModel.tenantId, tenantId),
-            ne(workspaceMemberModel.role, "owner"),
-          ),
-        ),
+      this.countDistinctTeamMembers({ tenantId }),
 
       db
         .select({ count: count() })
@@ -654,7 +722,6 @@ class UserQuotaService extends BaseService {
     ])
 
     const contactsUsed = contactsResult?.count ?? 0
-    const teamMembersUsed = teamMembersResult?.count ?? 0
     const workspacesUsed = workspacesResult?.count ?? 0
     const channelsUsed = channelsResult?.count ?? 0
     // `sum()` returns a numeric string (or null when no rows match).
@@ -744,6 +811,11 @@ class UserQuotaService extends BaseService {
         return {
           limit: quota.botMessagesLimit,
           used: quota.botMessagesUsed,
+        }
+      case "monthlyBotMessages":
+        return {
+          limit: quota.monthlyBotMessagesLimit,
+          used: quota.monthlyBotMessagesUsed,
         }
       default:
         return { limit: null, used: 0 }

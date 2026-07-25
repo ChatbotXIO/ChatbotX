@@ -54,7 +54,12 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
         )
     }
   },
-  disconnect: (_auth: ZaloAuthValue): Promise<void> => Promise.resolve(),
+  disconnect: async (_auth: ZaloAuthValue): Promise<void> => {
+    // Zalo OA webhooks are configured per-app in the Zalo Developer Console —
+    // there is no per-connection API to unsubscribe, so nothing to call here.
+    // Per-workspace teardown removes the local Zalo integration row, after
+    // which inbound events for that OA no longer resolve to a workspace.
+  },
   refreshAuth: async ({ auth }) => {
     if (!auth.tokens.refreshToken) {
       throw new AuthException("Zalo refresh token not available")

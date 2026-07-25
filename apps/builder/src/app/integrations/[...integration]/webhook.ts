@@ -1,6 +1,7 @@
 import {
   customDomainService,
   platformCredentialService,
+  resolveWorkspaceFreezeReason,
   tenantService,
   userQuotaService,
   workspaceService,
@@ -39,8 +40,22 @@ const logWebhookRequestBody = async (
     )
   }
 }
-const isBlockedOwner = async (ownerId: string | undefined) =>
-  ownerId ? (await userQuotaService.getAccessState(ownerId)).blocked : false
+/**
+ * Per-bot/per-account channels (telegram, tiktok) reach their integration
+ * handler before any queue consumer runs, so they need the freeze verdict
+ * in-request. Delegating to the shared resolver keeps them aligned with the
+ * worker-side guard instead of re-implementing a weaker owner-only check.
+ */
+const resolveWebhookFreezeReason = async (
+  workspaceId: string,
+): Promise<ReturnType<typeof resolveWorkspaceFreezeReason>> => {
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  const accessState = workspace
+    ? await userQuotaService.getAccessState(workspace.ownerId)
+    : null
+
+  return resolveWorkspaceFreezeReason({ accessState, workspace })
+}
 
 export const handleWebhook = async (
   integrationType: string,
@@ -197,14 +212,19 @@ const handleTelegramWebhook = async (req: NextRequest) => {
     })
   }
 
-  const telegramWorkspace = await workspaceService.find({
-    where: { id: integrationTelegram.workspaceId },
-  })
-  if (await isBlockedOwner(telegramWorkspace?.ownerId)) {
+  const telegramFreezeReason = await resolveWebhookFreezeReason(
+    integrationTelegram.workspaceId,
+  )
+  if (telegramFreezeReason) {
     logger.info(
-      { ownerId: telegramWorkspace?.ownerId, integrationType: "telegram" },
-      "webhook skipped: blocked owner",
+      {
+        freezeReason: telegramFreezeReason,
+        integrationType: "telegram",
+        workspaceId: integrationTelegram.workspaceId,
+      },
+      "webhook skipped: frozen workspace",
     )
+    // 200 so Telegram does not retry or disable the webhook while frozen.
     return new Response("ok")
   }
 
@@ -283,14 +303,19 @@ const handleTiktokWebhook = async (req: NextRequest) => {
     )
   }
 
-  const tiktokWorkspace = await workspaceService.find({
-    where: { id: integrationTiktok.workspaceId },
-  })
-  if (await isBlockedOwner(tiktokWorkspace?.ownerId)) {
+  const tiktokFreezeReason = await resolveWebhookFreezeReason(
+    integrationTiktok.workspaceId,
+  )
+  if (tiktokFreezeReason) {
     logger.info(
-      { ownerId: tiktokWorkspace?.ownerId, integrationType: "tiktok" },
-      "webhook skipped: blocked owner",
+      {
+        freezeReason: tiktokFreezeReason,
+        integrationType: "tiktok",
+        workspaceId: integrationTiktok.workspaceId,
+      },
+      "webhook skipped: frozen workspace",
     )
+    // 200 so TikTok does not retry or revoke the subscription while frozen.
     return new Response("ok")
   }
 

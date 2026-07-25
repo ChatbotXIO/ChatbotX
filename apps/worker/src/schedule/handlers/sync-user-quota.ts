@@ -6,12 +6,11 @@ import {
   USER_QUOTA_LABEL,
   userQuotaService,
 } from "@chatbotx.io/business"
-import { and, count, db, eq, ne, sql } from "@chatbotx.io/database/client"
+import { count, db, eq, sql } from "@chatbotx.io/database/client"
 import {
   contactModel,
   inboxModel,
   userQuotaModel,
-  workspaceMemberModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
 import { cacheConnections } from "@chatbotx.io/redis"
@@ -96,7 +95,7 @@ export const reconcileUser = async (userId: string): Promise<void> => {
 
     const [
       [contactsResult],
-      [teamMembersResult],
+      teamMembersUsed,
       [workspacesResult],
       [channelsResult],
     ] = await Promise.all([
@@ -109,19 +108,7 @@ export const reconcileUser = async (userId: string): Promise<void> => {
         )
         .where(eq(workspaceModel.ownerId, userId)),
 
-      db
-        .select({ count: count() })
-        .from(workspaceMemberModel)
-        .innerJoin(
-          workspaceModel,
-          eq(workspaceMemberModel.workspaceId, workspaceModel.id),
-        )
-        .where(
-          and(
-            eq(workspaceModel.ownerId, userId),
-            ne(workspaceMemberModel.role, "owner"),
-          ),
-        ),
+      userQuotaService.countDistinctTeamMembersForOwner(userId),
 
       db
         .select({ count: count() })
@@ -139,7 +126,6 @@ export const reconcileUser = async (userId: string): Promise<void> => {
     ])
 
     const contactsUsed = contactsResult?.count ?? 0
-    const teamMembersUsed = teamMembersResult?.count ?? 0
     const workspacesUsed = workspacesResult?.count ?? 0
     const channelsUsed = channelsResult?.count ?? 0
 

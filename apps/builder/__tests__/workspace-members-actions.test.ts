@@ -48,7 +48,10 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (fn: unknown) => fn
-  return { workspaceActionClient: chain }
+  return {
+    workspaceActionClient: chain,
+    workspaceActionClientAllowExpired: chain,
+  }
 })
 
 vi.mock("@/env", () => ({
@@ -179,6 +182,7 @@ function getInsertedValues() {
 function mockCurrentMember(permissions = fullPermissions) {
   mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
     user: { id: "user-1" },
+    targetWorkspace: { id: WORKSPACE_ID, ownerId: "owner-1" },
     targetWorkspaceMember: { permissions },
   })
 }
@@ -269,6 +273,10 @@ describe("updateWorkspaceMemberAction", () => {
       workspaceId: WORKSPACE_ID,
     })
     mockCurrentMember()
+    mockWorkspaceFindById.mockResolvedValue({
+      id: WORKSPACE_ID,
+      ownerId: "owner-1",
+    })
     mockIsCommunity.mockReturnValue(false)
   })
 
@@ -373,6 +381,17 @@ describe("deleteWorkspaceMemberAction", () => {
     )
 
     expect(mockDbDelete).toHaveBeenCalled()
+    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
+      `users:${MEMBER_USER_ID}:workspace-members`,
+    ])
+  })
+
+  test("deletes the member without mutating team-member quota", async () => {
+    await (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+      deleteActionCtx(),
+    )
+
+    expect(mockDbDelete).toHaveBeenCalledOnce()
     expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
       `users:${MEMBER_USER_ID}:workspace-members`,
     ])

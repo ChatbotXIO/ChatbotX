@@ -40,6 +40,9 @@ const worker = new Worker(
         await loopableExportContacts(job.data.data)
         return
       case DefaultJobAction.bulkTagContacts:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
         await handleBulkTagContacts(job.data.data, {
           attemptsMade: job.attemptsMade,
         })

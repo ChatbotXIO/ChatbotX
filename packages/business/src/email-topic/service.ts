@@ -38,6 +38,19 @@ type UpdateEmailTopicData = {
 }
 
 class EmailTopicService {
+  async findAnalyticsWorkspaceIdByToken(props: {
+    token: string
+    tx?: DatabaseClient
+  }): Promise<string | undefined> {
+    const { token, tx = db } = props
+    const row = await tx.query.analyticsEmailTopicModel.findFirst({
+      columns: { workspaceId: true },
+      where: { token },
+    })
+
+    return row?.workspaceId
+  }
+
   async list(
     input: ListEmailTopicsInput,
   ): Promise<PaginatedResult<EmailTopicModel>> {

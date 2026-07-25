@@ -24,7 +24,12 @@ import {
   type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { initVariables, SdkException, type Variables } from "@chatbotx.io/sdk"
+import {
+  type CommentAnchor,
+  initVariables,
+  SdkException,
+  type Variables,
+} from "@chatbotx.io/sdk"
 import {
   type BotResponseTrackingContext,
   IntegrationJobAction,
@@ -39,7 +44,11 @@ import {
   detectFlowVersion,
 } from "../../lib/db"
 import { logger } from "../../lib/logger"
-import { type ExecuteMultipleStepsProps, seekConnectedNode } from "./flow-utils"
+import {
+  type ExecuteMultipleStepsProps,
+  MESSAGE_PRODUCING_STEP_TYPES,
+  seekConnectedNode,
+} from "./flow-utils"
 import { executeRichActions } from "./rich-response/action-executor"
 import { richButtonPayloadSchema } from "./rich-response/button-payload"
 import {
@@ -107,6 +116,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   nodeVisits?: NodeVisits
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
+  commentAnchor?: CommentAnchor
 }
 
 type FlowActionTarget =
@@ -132,7 +142,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
     return
   }
 
-  const { trackingContext, metadata, sendFrom } = props
+  const { trackingContext, metadata, sendFrom, commentAnchor } = props
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId: props.conversationId,
@@ -177,6 +187,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       metadata,
       sendFrom,
       nodeVisits: props.nodeVisits,
+      commentAnchor,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -275,12 +286,20 @@ export async function runStepsAndQuickReplies(
     (targetType === "button" || targetType === "quickReply") &&
     details.beforeStep?.stepType === stepTypes.enum.startAnotherNode
 
+  // Tracks whether the comment-anchored private-reply send is still available
+  // to be claimed by the first message-producing step. Forwarded across every
+  // re-enqueued sendFlow job below until a step consumes it (see
+  // `executeMultipleStepsGenerator`'s `MESSAGE_PRODUCING_STEP_TYPES` check).
+  let remainingAnchor = props.commentAnchor
+
   if (details.beforeStep && !props.startFromStepId && !skipBeforeStep) {
-    await executeMultipleSteps({
+    const beforeResult = await executeMultipleSteps({
       ...props,
       nodeVisits,
+      commentAnchor: remainingAnchor,
       steps: [details.beforeStep],
     })
+    remainingAnchor = beforeResult?.commentAnchor
   }
 
   // run steps — one per BullMQ job, re-dispatching for subsequent steps
@@ -304,10 +323,12 @@ export async function runStepsAndQuickReplies(
     const result = await executeMultipleSteps({
       ...props,
       nodeVisits,
+      commentAnchor: remainingAnchor,
       quickReplies:
         quickReplyCarrier?.id === currentStep.id ? quickReplies : undefined,
       steps: [currentStep],
     })
+    remainingAnchor = result?.commentAnchor
 
     if (result?.status === "wait" || result?.status === "retry") {
       return result
@@ -335,6 +356,7 @@ export async function runStepsAndQuickReplies(
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
           nodeVisits,
+          commentAnchor: remainingAnchor,
           origin: webhookChannelOrigin(),
         },
       })
@@ -378,6 +400,7 @@ export async function runStepsAndQuickReplies(
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
         nodeVisits,
+        commentAnchor: remainingAnchor,
         origin: webhookChannelOrigin(),
       },
     })
@@ -386,7 +409,12 @@ export async function runStepsAndQuickReplies(
 
 export async function executeMultipleSteps(props: ExecuteMultipleStepsProps) {
   const gen = executeMultipleStepsGenerator(props)
-  let lastResult: (ExecuteStepResult & { branched: boolean }) | undefined
+  let lastResult:
+    | (ExecuteStepResult & {
+        branched: boolean
+        commentAnchor?: CommentAnchor
+      })
+    | undefined
 
   for await (const result of gen) {
     logger.debug({ result }, "execute multiple steps result")
@@ -401,7 +429,10 @@ export async function executeMultipleSteps(props: ExecuteMultipleStepsProps) {
 async function* executeMultipleStepsGenerator(
   props: ExecuteMultipleStepsProps,
 ) {
-  const { steps, ...rest } = props
+  const { steps, commentAnchor, ...rest } = props
+  // Consumed by the first message-producing step in this run (however many
+  // jobs/nodes it takes to reach one) — see MESSAGE_PRODUCING_STEP_TYPES.
+  let anchorAvailable = commentAnchor
 
   for (const step of steps) {
     // `nodeId` is overloaded: startAnotherNode/startExternalNode store their own jump
@@ -414,8 +445,17 @@ async function* executeMultipleStepsGenerator(
       nodeId: step.nodeId ?? props.targetNodeId ?? "",
     }
 
+    const isMessageProducingStep = MESSAGE_PRODUCING_STEP_TYPES.has(
+      step.stepType as StepType,
+    )
+    const stepAnchor = isMessageProducingStep ? anchorAvailable : undefined
+    if (isMessageProducingStep) {
+      anchorAvailable = undefined
+    }
+
     const rawResult = await flowStepHandlers[step.stepType as StepType]?.({
       ...rest,
+      commentAnchor: stepAnchor,
       step: stepWithNodeId,
     })
 
@@ -452,6 +492,7 @@ async function* executeMultipleStepsGenerator(
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
               nodeVisits: props.nodeVisits,
+              commentAnchor: anchorAvailable,
               origin: webhookChannelOrigin(),
             },
           })
@@ -460,7 +501,7 @@ async function* executeMultipleStepsGenerator(
       }
     }
 
-    yield { ...result, branched }
+    yield { ...result, branched, commentAnchor: anchorAvailable }
   }
 }
 
