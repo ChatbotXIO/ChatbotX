@@ -322,7 +322,8 @@
     "status": {
       "scheduled": "Scheduled",
       "sent": "Sent",
-      "sending": "Sending"
+      "sending": "Sending",
+      "cancelled": "Cancelled"
     },
     "stats": {
       "sent": "Sent",
@@ -3698,7 +3699,9 @@
     "title": "You have been unsubscribed.",
     "description": "You will no longer receive emails from this sender.",
     "invalidTitle": "Invalid unsubscribe link.",
-    "invalidDescription": "This link is invalid or has expired."
+    "invalidDescription": "This link is invalid or has expired.",
+    "unavailableTitle": "Unsubscribe unavailable.",
+    "unavailableDescription": "This workspace is no longer available."
   },
   "extensionsMe": {
     "actions": {

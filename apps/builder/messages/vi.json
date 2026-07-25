@@ -323,7 +323,8 @@
     "status": {
       "scheduled": "Đã lên lịch",
       "sent": "Đã gửi",
-      "sending": "Đang gửi"
+      "sending": "Đang gửi",
+      "cancelled": "Đã huỷ"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -3723,7 +3724,9 @@
     "title": "Bạn đã hủy đăng ký.",
     "description": "Bạn sẽ không còn nhận email từ người gửi này nữa.",
     "invalidTitle": "Liên kết hủy đăng ký không hợp lệ.",
-    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn."
+    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+    "unavailableTitle": "Không thể hủy đăng ký.",
+    "unavailableDescription": "Không gian làm việc này không còn khả dụng."
   },
   "extensionsMe": {
     "actions": {

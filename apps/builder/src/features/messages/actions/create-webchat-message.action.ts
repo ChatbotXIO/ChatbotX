@@ -5,6 +5,7 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  isWorkspaceScheduledForDeletion,
   messageCleanupService,
   quotaEnforcementService,
   resolveTenantSettings,
@@ -80,7 +81,7 @@ export async function handleCreateWebchatMessage({
   const workspace = await workspaceService.find({
     where: { id: parsedInput.workspaceId },
   })
-  if (workspace?.scheduledDeletionAt) {
+  if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     const t = await getTranslations("webchat")
     throw new ChatbotXException(
       t("workspaceUnavailable"),

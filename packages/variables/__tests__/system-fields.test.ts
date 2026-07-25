@@ -920,6 +920,24 @@ describe("getSystemFieldValue", () => {
     })
   })
 
+  test("me returns null without creating a link when workspace is scheduled for deletion", async () => {
+    const scheduledWorkspace = {
+      ...workspace,
+      scheduledDeletionAt: new Date("2026-07-23T00:00:00.000Z"),
+    } as WorkspaceModel
+
+    const value = await getSystemFieldValue(
+      createContext({ workspace: scheduledWorkspace }),
+      systemFieldTypes.enum.me,
+    )
+
+    expect(value).toBeNull()
+    expect(mockFindWithIntegrationsById).not.toHaveBeenCalled()
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
+    expect(mockSystemFieldCreate).not.toHaveBeenCalled()
+    expect(mockSignMeLink).not.toHaveBeenCalled()
+  })
+
   test("location and flow step fields resolve from persisted contact state", async () => {
     mockFindDMByContact.mockResolvedValue({
       lastStep: "step-1",

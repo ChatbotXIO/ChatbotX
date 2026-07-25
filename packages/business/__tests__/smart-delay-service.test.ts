@@ -319,4 +319,30 @@ describe("smartDelayService", () => {
 
     expect(mockDbUpdate).not.toHaveBeenCalled()
   })
+
+  test("cancelActiveForWorkspace cancels a bounded batch of the workspace's live rows", async () => {
+    const canceled = [
+      { id: "row-1", triggerAt: new Date("2026-07-16T00:01:00.000Z") },
+      { id: "row-2", triggerAt: new Date("2026-07-16T00:02:00.000Z") },
+    ]
+    mockDbReturning.mockResolvedValueOnce(canceled)
+
+    await expect(
+      smartDelayService.cancelActiveForWorkspace({
+        limit: 500,
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toEqual(canceled)
+
+    expect(mockDbSet).toHaveBeenCalledWith({ status: "canceled" })
+    expect(mockEq).toHaveBeenCalledWith(expect.anything(), "workspace-1")
+    // Only rows that can still fire — completed/failed/canceled are left alone.
+    expect(mockInArray).toHaveBeenCalledWith(expect.anything(), [
+      "pending",
+      "scheduled",
+    ])
+    // Bounded claim so a workspace with a huge backlog cannot lock the table.
+    expect(mockDbLimit).toHaveBeenCalledWith(500)
+    expect(mockDbFor).toHaveBeenCalledWith("update", { skipLocked: true })
+  })
 })

@@ -40,6 +40,16 @@ import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-co
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
+import { getEstimatedContactsDisplayState } from "./utils/estimated-contacts-display"
+
+type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
+
+const BROADCAST_STATUS_VARIANTS: Partial<
+  Record<string, BroadcastStatusBadgeVariant>
+> = {
+  cancelled: "secondary",
+  scheduled: "outline",
+}
 
 type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
@@ -114,16 +124,15 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
             title={t("fields.status.label")}
           />
         ),
-        cell: ({ row }) =>
-          row.original.status === "scheduled" ? (
-            <Badge variant="outline">
-              {t(`broadcasts.status.${row.original.status}`)}
-            </Badge>
-          ) : (
-            <Badge variant="default">
-              {t(`broadcasts.status.${row.original.status}`)}
-            </Badge>
-          ),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              BROADCAST_STATUS_VARIANTS[row.original.status] ?? "default"
+            }
+          >
+            {t(`broadcasts.status.${row.original.status}`)}
+          </Badge>
+        ),
         enableSorting: false,
         enableHiding: false,
         meta: {
@@ -139,8 +148,17 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => {
-          if (row.original.contactCount === null) {
+          const displayState = getEstimatedContactsDisplayState({
+            contactCount: row.original.contactCount,
+            status: row.original.status,
+          })
+
+          if (displayState === "loading") {
             return <Loader2Icon className="h-4 w-4 animate-spin" />
+          }
+
+          if (displayState === "empty") {
+            return <span className="text-muted-foreground">-</span>
           }
 
           return <div>{row.original.contactCount}</div>

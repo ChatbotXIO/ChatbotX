@@ -1,3 +1,4 @@
+import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business"
 import {
   Avatar,
   AvatarFallback,
@@ -120,7 +121,7 @@ const WorkspaceCard = ({
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
   const href = `/space/${workspace.id}`
-  const isScheduledForDeletion = Boolean(workspace.scheduledDeletionAt)
+  const isScheduledForDeletion = isWorkspaceScheduledForDeletion(workspace)
   const activeHours =
     workspace.isActive && workspace.startTime && workspace.endTime
       ? t("workspace.schedule.activeHours", {

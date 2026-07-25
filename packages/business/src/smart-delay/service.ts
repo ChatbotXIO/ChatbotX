@@ -290,6 +290,52 @@ class SmartDelayService extends BaseService {
     return rows.length
   }
 
+  /**
+   * Cancels one bounded batch of a workspace's still-firable rows (freeze /
+   * teardown path) and returns `id` + `triggerAt` so the caller can rebuild the
+   * deterministic jobId and drop the matching delayed BullMQ job.
+   *
+   * Cancelling the ROW is what actually stops the work: removing only the job
+   * leaves the row `scheduled`, and the scanner's stuck-row sweeper would reset
+   * it to `pending` and re-enqueue it on the next tick. `resetToPending` uses a
+   * `status = 'scheduled'` CAS, so a `canceled` row can never be resurrected.
+   *
+   * Bounded + SKIP LOCKED for the same reason as `claimDueRows`: this table can
+   * hold hundreds of thousands of rows per workspace, and a concurrent scanner
+   * run must not be blocked by the teardown.
+   */
+  async cancelActiveForWorkspace(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    limit: number
+  }): Promise<Pick<SmartDelayRow, "id" | "triggerAt">[]> {
+    const { tx = db, workspaceId, limit } = props
+    const activeRowIds = tx
+      .select({ id: contactOnSmartDelayModel.id })
+      .from(contactOnSmartDelayModel)
+      .where(
+        and(
+          eq(contactOnSmartDelayModel.workspaceId, workspaceId),
+          inArray(contactOnSmartDelayModel.status, [
+            smartDelayStatuses.enum.pending,
+            smartDelayStatuses.enum.scheduled,
+          ]),
+        ),
+      )
+      .orderBy(contactOnSmartDelayModel.triggerAt)
+      .limit(limit)
+      .for("update", { skipLocked: true })
+
+    return await tx
+      .update(contactOnSmartDelayModel)
+      .set({ status: smartDelayStatuses.enum.canceled })
+      .where(inArray(contactOnSmartDelayModel.id, activeRowIds))
+      .returning({
+        id: contactOnSmartDelayModel.id,
+        triggerAt: contactOnSmartDelayModel.triggerAt,
+      })
+  }
+
   private async markStatus(props: {
     tx?: DatabaseClient
     id: string

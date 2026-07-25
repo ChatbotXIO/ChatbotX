@@ -1,5 +1,6 @@
 "use client"
 
+import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
   Tooltip,
@@ -30,7 +31,7 @@ export function WorkspaceStatusSwitch({
 }) {
   const t = useTranslations()
   const router = useRouter()
-  const scheduledForDeletion = Boolean(workspace.scheduledDeletionAt)
+  const scheduledForDeletion = isWorkspaceScheduledForDeletion(workspace)
   const [isActive, setIsActive] = useState(workspace.isActive)
   const [schedule, setSchedule] = useState<Schedule>({
     startTime: workspace.startTime,

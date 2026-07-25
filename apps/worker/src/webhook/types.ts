@@ -18,3 +18,9 @@ export type WebhookEventData = {
 export type MatchableWebhookEventData = WebhookEventData & {
   eventType: MatchableEventType
 }
+
+/**
+ * Outbound request body. One payload is built per event and shared by every
+ * webhook matched for it, so treat it as read-only once built.
+ */
+export type WebhookPayload = Record<string, unknown>
