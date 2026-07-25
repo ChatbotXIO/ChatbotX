@@ -61,10 +61,10 @@ const BOOTSTRAP_TRIAL_FALLBACK = {
 
 interface DefaultPlanSnapshot {
   botMessagesLimit: number | null
-  monthlyBotMessagesLimit: number | null
   channelsLimit: number | null
   contactsLimit: number | null
   macLimit: number | null
+  monthlyBotMessagesLimit: number | null
   planName: string
   saasMode: boolean
   ssoSaml: boolean

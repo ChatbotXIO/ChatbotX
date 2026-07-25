@@ -69,15 +69,7 @@ beforeEach(() => {
 
 describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
   test("returns parsed live values in one HMGET without touching the DB", async () => {
-    redisClient.hmget.mockResolvedValue([
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-    ])
+    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", "5", "6", "7"])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
@@ -102,15 +94,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
 
   test("cold-seeds a missing field from a single DB fetch", async () => {
     // mac field absent (cold start); the rest are live.
-    redisClient.hmget.mockResolvedValue([
-      "1",
-      "2",
-      "3",
-      "4",
-      null,
-      "6",
-      "7",
-    ])
+    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", null, "6", "7"])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
