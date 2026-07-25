@@ -290,8 +290,7 @@
       "monthlyBotMessages": "Bot messages (monthly)",
       "workspaces": "Workspaces",
       "channels": "Channels",
-      "teamMembers": "Team members",
-      "thisWorkspace": "{workspace} in this workspace"
+      "teamMembers": "Team members"
     },
     "limitReached": {
       "workspaces": "You've reached your workspace limit. Upgrade your plan to create more.",
@@ -321,7 +320,8 @@
     "macLimitReached": {
       "bannerTitle": "Monthly active contact limit reached",
       "bannerDescription": "Sending and receiving messages is paused until you upgrade your plan.",
-      "bannerCta": "Upgrade"
+      "bannerCta": "Upgrade",
+      "createDisabled": "Creating new {feature} is disabled until you upgrade your plan."
     }
   },
   "broadcasts": {

@@ -70,6 +70,7 @@ export const disconnectInstagram = async (ctx: {
     await inboxService.disconnect({
       inboxId: integrationInstagram.inboxId,
       ownerId: workspace.ownerId,
+      workspaceId: ctx.workspaceId,
       tx,
     })
   })

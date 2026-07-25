@@ -63,6 +63,7 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
       await inboxService.disconnect({
         inboxId: integrationZalo.inboxId,
         ownerId: workspace.ownerId,
+        workspaceId,
         tx,
       })
     })

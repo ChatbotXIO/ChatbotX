@@ -33,6 +33,7 @@ export const disconnectTiktokAction = workspaceActionClientAllowExpired
         await inboxService.disconnect({
           inboxId: integrationTiktok.inboxId,
           ownerId: workspace.ownerId,
+          workspaceId,
           tx,
         })
       })

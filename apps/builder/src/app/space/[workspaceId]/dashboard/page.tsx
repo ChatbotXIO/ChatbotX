@@ -49,12 +49,12 @@ export default async function Dashboard({
   ])
 
   const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")
-  const blocked =
-    resolveBlockReason(
-      quota?.planStatus ?? null,
-      resolveTrialEndsAt(quota),
-      atLimit?.mac ?? false,
-    ) !== null
+  const blockReason = resolveBlockReason(
+    quota?.planStatus ?? null,
+    resolveTrialEndsAt(quota),
+    atLimit?.mac ?? false,
+  )
+  const blocked = blockReason !== null
 
   return (
     <div className="flex flex-col gap-4">
@@ -65,6 +65,7 @@ export default async function Dashboard({
         )}
         blocked={cloud && blocked}
         inboxes={inboxes}
+        reason={cloud ? blockReason : null}
         workspaceId={workspaceId}
       />
 

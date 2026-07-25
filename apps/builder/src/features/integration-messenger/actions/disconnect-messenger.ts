@@ -106,6 +106,7 @@ export const disconnectMessenger = async (ctx: {
     await inboxService.disconnect({
       inboxId: integrationMessenger.inboxId,
       ownerId: workspace.ownerId,
+      workspaceId: ctx.workspaceId,
       tx,
     })
   })

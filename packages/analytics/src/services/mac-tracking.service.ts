@@ -530,7 +530,10 @@ export class MacTrackingService {
       cached =
         (await distributedStore.getAll<QuotaContextCacheValue>(cacheKeys)) || {}
     } catch (error) {
-      logger.error(error, "[MacTrackingService] quota context cache get failed")
+      logger.error(
+        { err: error },
+        "[MacTrackingService] quota context cache get failed",
+      )
       cached = {}
     }
 
@@ -604,7 +607,7 @@ export class MacTrackingService {
         await distributedStore.putMany(cacheEntries)
       } catch (error) {
         logger.error(
-          error,
+          { err: error },
           "[MacTrackingService] quota context cache set failed",
         )
       }
@@ -638,7 +641,10 @@ export class MacTrackingService {
 
       return eventsWithContactInbox.filter((_, index) => results[index])
     } catch (error) {
-      logger.error(error, "[MacTrackingService] bloom filter dedup failed")
+      logger.error(
+        { err: error },
+        "[MacTrackingService] bloom filter dedup failed",
+      )
       return events
     }
   }
@@ -727,7 +733,7 @@ export class MacTrackingService {
       }
       return workspaceTotals
     } catch (error) {
-      logger.error(error, "[MacTrackingService] monthly path failed")
+      logger.error({ err: error }, "[MacTrackingService] monthly path failed")
       return new Map()
     }
   }
@@ -786,7 +792,10 @@ export class MacTrackingService {
     try {
       await Promise.all(ops)
     } catch (error) {
-      logger.error(error, "[MacTrackingService] INCRBY cache update failed")
+      logger.error(
+        { err: error },
+        "[MacTrackingService] INCRBY cache update failed",
+      )
     }
   }
   private async incrementUserQuotaMac(

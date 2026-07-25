@@ -30,6 +30,8 @@ type WorkspacesListProps = {
   workspacesLimit?: number | null
   isAtLimit?: boolean
   blocked?: boolean
+  /** Why creation is blocked; picks the create-card copy. Defaults to the plan/trial message. */
+  reason?: "status" | "mac" | null
   ownerWorkspaceIds?: string[]
   superAdminWorkspaceIds?: string[]
 }
@@ -187,6 +189,7 @@ const WorkspacesList = async ({
   workspacesLimit,
   isAtLimit = false,
   blocked = false,
+  reason,
   ownerWorkspaceIds = [],
   superAdminWorkspaceIds = [],
 }: WorkspacesListProps) => {
@@ -243,9 +246,12 @@ const WorkspacesList = async ({
                 disabled={isAtLimit || blocked}
                 disabledReason={
                   blocked
-                    ? t("billing.trialExpired.createDisabled", {
-                        feature: t("fields.workspace.label"),
-                      })
+                    ? t(
+                        reason === "mac"
+                          ? "billing.macLimitReached.createDisabled"
+                          : "billing.trialExpired.createDisabled",
+                        { feature: t("fields.workspace.label") },
+                      )
                     : t("billing.limitReached.workspaces")
                 }
                 label={createLabel}

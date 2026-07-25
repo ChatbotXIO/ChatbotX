@@ -51,9 +51,17 @@ export const connectTelegramAction = authActionClient
         }
 
         if (!workspaceId && isCloud()) {
-          const { blocked } = await userQuotaService.getAccessState(ctx.user.id)
+          const { blocked, reason } = await userQuotaService.getAccessState(
+            ctx.user.id,
+          )
           if (blocked) {
-            throw new ChatbotXException("Trial expired", "trialExpired", 403)
+            throw reason === "mac"
+              ? new ChatbotXException(
+                  "Monthly active contact limit reached",
+                  "macLimitReached",
+                  403,
+                )
+              : new ChatbotXException("Trial expired", "trialExpired", 403)
           }
         }
 

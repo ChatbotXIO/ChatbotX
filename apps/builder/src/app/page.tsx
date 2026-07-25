@@ -79,6 +79,7 @@ export default async function MainPage() {
           blocked={cloud && blocked}
           isAtLimit={atLimit?.workspaces ?? false}
           ownerWorkspaceIds={ownerWorkspaceIds}
+          reason={blockReason}
           superAdminWorkspaceIds={superAdminWorkspaceIds}
           user={userInfo}
           workspaces={allWorkspaces}

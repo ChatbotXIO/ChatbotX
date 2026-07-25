@@ -290,8 +290,7 @@
       "monthlyBotMessages": "Tin nhắn bot (hàng tháng)",
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
-      "teamMembers": "Thành viên nhóm",
-      "thisWorkspace": "{workspace} trong không gian làm việc này"
+      "teamMembers": "Thành viên nhóm"
     },
     "limitReached": {
       "workspaces": "Bạn đã đạt giới hạn không gian làm việc. Nâng cấp gói để tạo thêm.",
@@ -322,7 +321,8 @@
     "macLimitReached": {
       "bannerTitle": "Đã đạt giới hạn liên hệ hoạt động hằng tháng",
       "bannerDescription": "Gửi và nhận tin nhắn đã tạm dừng cho đến khi bạn nâng cấp gói.",
-      "bannerCta": "Nâng cấp"
+      "bannerCta": "Nâng cấp",
+      "createDisabled": "Tạo {feature} mới đã bị vô hiệu hóa cho đến khi bạn nâng cấp gói."
     }
   },
   "broadcasts": {

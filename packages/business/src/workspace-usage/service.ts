@@ -18,18 +18,16 @@ class WorkspaceUsageService {
     table: workspaceUsageModel,
     idColumn: workspaceUsageModel.workspaceId,
     idKey: "workspaceId",
-    // The shared store has the broader quota metric union. `workspaces` and
-    // `monthlyBotMessages` are deliberately never called here; they are
-    // mapped only to satisfy that closed configuration shape and are not
-    // persisted by this service.
+    // The shared store has the broader quota metric union; `WorkspaceUsage`
+    // only tracks the metrics below. `usedColumns` is a partial map so
+    // `getLiveCounts` never cold-seeds a Redis field for an unmapped metric
+    // from an unrelated column.
     usedColumns: {
       contacts: workspaceUsageModel.contactsUsed,
       channels: workspaceUsageModel.channelsUsed,
       teamMembers: workspaceUsageModel.teamMembersUsed,
       botMessages: workspaceUsageModel.botMessagesUsed,
       mac: workspaceUsageModel.macUsed,
-      workspaces: workspaceUsageModel.contactsUsed,
-      monthlyBotMessages: workspaceUsageModel.contactsUsed,
     },
     getUsed: (row, metric) => {
       if (!row) {

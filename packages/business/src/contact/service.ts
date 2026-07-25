@@ -38,6 +38,7 @@ import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
+import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
 
 const NUMERIC_RE = /^\d+$/
@@ -419,12 +420,31 @@ class ContactService extends BaseService {
         metric: "contacts",
         count: contacts.length,
       })
+      // Display-only breakdown, mirroring the `contacts`/`mac` release above.
+      // Never let a failure here affect the authoritative counters.
+      await workspaceUsageService
+        .decrement(workspaceId, "contacts", contacts.length)
+        .catch((usageErr) => {
+          logger.warn(
+            { err: usageErr, workspaceId },
+            "contact delete: workspace usage contacts decrement failed",
+          )
+        })
+
       if (macActiveContactCount > 0) {
         await quotaEnforcementService.releaseBy({
           userId: workspace.ownerId,
           metric: "mac",
           count: macActiveContactCount,
         })
+        await workspaceUsageService
+          .decrement(workspaceId, "mac", macActiveContactCount)
+          .catch((usageErr) => {
+            logger.warn(
+              { err: usageErr, workspaceId },
+              "contact delete: workspace usage mac decrement failed",
+            )
+          })
       }
     } catch (err) {
       logger.warn({ err, workspaceId }, "contact delete: quota release failed")

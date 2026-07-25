@@ -56,19 +56,26 @@ export default async function WorkspaceLayout({
   const cloud = isCloud()
 
   // Check if user is a member of the workspace
-  const [allWorkspaceMembers, { storageUrl }, platformAdmin, quota, usage] =
-    await Promise.all([
-      workspaceMemberService.listByUserId({ userId: user.id }),
-      getTenantSettings(),
-      isPlatformAdmin(user),
-      cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
-      cloud
-        ? quotaEnforcementService.getWorkspaceUsageSummary({
-            userId: user.id,
-            workspaceId,
-          })
-        : null,
-    ])
+  const [
+    allWorkspaceMembers,
+    { storageUrl },
+    platformAdmin,
+    quota,
+    usage,
+    atLimit,
+  ] = await Promise.all([
+    workspaceMemberService.listByUserId({ userId: user.id }),
+    getTenantSettings(),
+    isPlatformAdmin(user),
+    cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
+    cloud
+      ? quotaEnforcementService.getWorkspaceUsageSummary({
+          userId: user.id,
+          workspaceId,
+        })
+      : null,
+    cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
+  ])
   const targetWorkspaceMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
   )
@@ -89,14 +96,10 @@ export default async function WorkspaceLayout({
   }))
 
   const trialEndsAt = resolveTrialEndsAt(quota)
-  const macAtLimit =
-    usage !== null &&
-    usage.mac.limit !== null &&
-    usage.mac.used >= usage.mac.limit
   const blockReason = resolveBlockReason(
     quota?.planStatus ?? null,
     trialEndsAt,
-    macAtLimit,
+    atLimit?.mac ?? false,
   )
   const blocked = blockReason !== null
 

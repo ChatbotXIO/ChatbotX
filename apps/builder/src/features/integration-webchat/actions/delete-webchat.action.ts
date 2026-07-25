@@ -34,6 +34,7 @@ export const deleteWebchatAction = workspaceActionClient
         await inboxService.disconnect({
           inboxId: integrationWebchat.inboxId,
           ownerId: workspace.ownerId,
+          workspaceId,
           tx,
         })
       })

@@ -38,11 +38,23 @@ vi.mock("../../quota-enforcement/service", () => ({
   },
 }))
 
+vi.mock("../../workspace-usage/service", () => ({
+  workspaceUsageService: {
+    increment: vi.fn(async () => undefined),
+    decrement: vi.fn(async () => undefined),
+  },
+}))
+
 const { inboxService } = await import("../service")
 const { quotaEnforcementService } = (await import(
   "../../quota-enforcement/service"
 )) as unknown as {
   quotaEnforcementService: { release: ReturnType<typeof vi.fn> }
+}
+const { workspaceUsageService } = (await import(
+  "../../workspace-usage/service"
+)) as unknown as {
+  workspaceUsageService: { decrement: ReturnType<typeof vi.fn> }
 }
 
 beforeEach(() => {
@@ -53,6 +65,8 @@ beforeEach(() => {
   mocks.count.mockReset()
   quotaEnforcementService.release.mockReset()
   quotaEnforcementService.release.mockResolvedValue(undefined)
+  workspaceUsageService.decrement.mockReset()
+  workspaceUsageService.decrement.mockResolvedValue(undefined)
 
   mocks.inboxUpdate.mockReturnValue({
     set: mocks.inboxUpdateSet.mockReturnValue({
@@ -63,7 +77,11 @@ beforeEach(() => {
 
 describe("InboxService.disconnect", () => {
   test("disconnects only the requested inbox", async () => {
-    await inboxService.disconnect({ inboxId: "inbox-1", ownerId: "owner-1" })
+    await inboxService.disconnect({
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+    })
 
     expect(mocks.inboxUpdate).toHaveBeenCalledTimes(1)
     expect(mocks.inboxUpdateSet).toHaveBeenCalledWith({
@@ -83,6 +101,7 @@ describe("InboxService.disconnect", () => {
     await inboxService.disconnect({
       inboxId: "inbox-2",
       ownerId: "owner-1",
+      workspaceId: "workspace-1",
       tx: tx as never,
     })
 
@@ -94,7 +113,11 @@ describe("InboxService.disconnect", () => {
   })
 
   test("releases the channels quota for the owner", async () => {
-    await inboxService.disconnect({ inboxId: "inbox-1", ownerId: "owner-1" })
+    await inboxService.disconnect({
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+    })
 
     expect(quotaEnforcementService.release).toHaveBeenCalledWith({
       userId: "owner-1",
@@ -108,7 +131,38 @@ describe("InboxService.disconnect", () => {
     )
 
     await expect(
-      inboxService.disconnect({ inboxId: "inbox-1", ownerId: "owner-1" }),
+      inboxService.disconnect({
+        inboxId: "inbox-1",
+        ownerId: "owner-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("decrements the workspace usage channels count", async () => {
+    await inboxService.disconnect({
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+    })
+
+    expect(workspaceUsageService.decrement).toHaveBeenCalledWith(
+      "workspace-1",
+      "channels",
+    )
+  })
+
+  test("does not throw when the workspace usage decrement fails", async () => {
+    workspaceUsageService.decrement.mockRejectedValueOnce(
+      new Error("redis down"),
+    )
+
+    await expect(
+      inboxService.disconnect({
+        inboxId: "inbox-1",
+        ownerId: "owner-1",
+        workspaceId: "workspace-1",
+      }),
     ).resolves.toBeUndefined()
   })
 })

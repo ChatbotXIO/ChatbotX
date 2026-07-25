@@ -615,6 +615,13 @@ class QuotaEnforcementService {
         ...summary.botMessages,
         workspaceUsed: workspaceUsage.botMessagesUsed,
       },
+      // Reads straight from the `WorkspaceMac` ledger rather than
+      // `workspaceUsage.macUsed`, even though both are grounded from the same
+      // source by the scheduled reconcile: this DB read is always fresh, while
+      // `workspaceUsage.macUsed` is a Redis-cached mirror that only advances
+      // when every MAC write-through succeeds. `macUsed` still gets written
+      // (mirrors `contactsUsed`'s pattern) for callers that want the counter
+      // shape without an extra `@chatbotx.io/analytics` round-trip.
       mac: { ...summary.mac, workspaceUsed: macUsed },
       // The monthly account total intentionally reuses the lifetime
       // per-workspace bot-message count as its display-only contribution.

@@ -156,6 +156,7 @@ export async function deleteSmtp(workspaceId: string, id: string) {
     await inboxService.disconnect({
       inboxId: integration.inboxId,
       ownerId: workspace.ownerId,
+      workspaceId,
       tx,
     })
   })

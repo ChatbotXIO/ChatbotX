@@ -81,6 +81,7 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
         await inboxService.disconnect({
           inboxId: integrationWhatsapp.inboxId,
           ownerId: workspace.ownerId,
+          workspaceId,
           tx,
         })
       })

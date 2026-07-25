@@ -56,8 +56,14 @@ export interface LiveCounterConfig<TRow> {
   label: string
   /** The table the counters live on (insert/upsert target). */
   table: PgTable
-  /** metric → its `${metric}Used` Drizzle column, for the SET `+ 1` expression. */
-  usedColumns: Record<QuotaMetric, PgColumn>
+  /**
+   * metric → its `${metric}Used` Drizzle column, for the SET `+ 1` expression.
+   * Partial: a caller whose table only tracks a subset of metrics simply omits
+   * the rest, instead of aliasing them onto an unrelated column to satisfy an
+   * exhaustive shape (that aliasing previously made `getLiveCounts` cold-seed
+   * Redis fields from the wrong column — see `WorkspaceUsageService`).
+   */
+  usedColumns: Partial<Record<QuotaMetric, PgColumn>>
 }
 
 /**

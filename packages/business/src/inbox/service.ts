@@ -214,6 +214,7 @@ class InboxService extends BaseService {
   async disconnect(props: {
     inboxId: string
     ownerId: string
+    workspaceId: string
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
@@ -231,6 +232,17 @@ class InboxService extends BaseService {
         logger.warn(
           { err, inboxId: props.inboxId, ownerId: props.ownerId },
           "inbox disconnect: channel quota release failed",
+        )
+      })
+
+    // Display-only breakdown, mirroring the `contacts` release. Never let a
+    // failure here affect the authoritative counter released above.
+    await workspaceUsageService
+      .decrement(props.workspaceId, "channels")
+      .catch((err) => {
+        logger.warn(
+          { err, inboxId: props.inboxId, workspaceId: props.workspaceId },
+          "inbox disconnect: workspace usage channel decrement failed",
         )
       })
   }
