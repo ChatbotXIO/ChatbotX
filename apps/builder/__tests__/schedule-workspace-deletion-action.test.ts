@@ -65,5 +65,7 @@ test("schedules deletion then freezes the workspace runtime before redirecting",
 
   expect(mockScheduleDeletion).toHaveBeenCalledWith({ id: "workspace-1" })
   expect(mockFreezeWorkspaceRuntime).toHaveBeenCalledWith("workspace-1")
-  expect(mockRedirect).toHaveBeenCalledWith("/")
+  expect(mockRedirect).toHaveBeenCalledWith(
+    "/space/workspace-1/settings/general",
+  )
 })

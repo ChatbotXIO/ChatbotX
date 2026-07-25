@@ -37,12 +37,29 @@ vi.mock("../src/lib/logger", () => ({
 const { WebhookExecutor } = await import(
   "../src/webhook/services/webhook-executor.service"
 )
+const { buildWebhookPayload } = await import(
+  "../src/webhook/services/webhook-payload.builder"
+)
 
 const timestamp = new Date("2026-07-11T10:00:00.000Z")
 const webhook = {
   id: "webhook-1",
   url: "https://example.com/webhook",
 } as WebhookWithConditions
+
+type TagQuery = { where: { id: string; workspaceId?: string } }
+
+// Tag ids are globally unique, so an id-only lookup resolves a row from any
+// workspace. These rows let the mock mimic SQL semantics — a `where` without
+// `workspaceId` matches across workspaces — instead of hiding the difference.
+const tagRows = [
+  { id: "tag-1", workspaceId: "workspace-1", name: "VIP" },
+  {
+    id: "tag-foreign",
+    workspaceId: "workspace-2",
+    name: "Other workspace tag",
+  },
+]
 
 type PayloadCase = {
   eventType: MatchableEventType
@@ -240,19 +257,50 @@ describe("WebhookExecutor payloads", () => {
   }) => {
     const executor = new WebhookExecutor()
 
-    await executor.execute({
-      webhook,
-      eventData: {
-        workspaceId: "workspace-1",
-        contactId: "contact-1",
-        eventType,
-        eventData: metadata,
-        timestamp,
-      },
+    const payload = await buildWebhookPayload({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      eventType,
+      eventData: metadata,
+      timestamp,
     })
+    await executor.execute({ webhook, payload })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(JSON.parse(String(init.body))).toEqual(expectedPayload)
+  })
+
+  // The tag id arrives as event metadata, so it must never be trusted to belong
+  // to the workspace the webhook is registered under. An id-only lookup would
+  // put another tenant's tag name in this workspace's outbound payload.
+  test("does not leak a tag that belongs to another workspace", async () => {
+    tagFindFirst.mockImplementation((query: TagQuery) =>
+      Promise.resolve(
+        tagRows.find(
+          (row) =>
+            row.id === query.where.id &&
+            (query.where.workspaceId === undefined ||
+              row.workspaceId === query.where.workspaceId),
+        ),
+      ),
+    )
+
+    const payload = await buildWebhookPayload({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      eventType: triggerEventTypes.enum.tagApplied,
+      eventData: { tagId: "tag-foreign" },
+      timestamp,
+    })
+
+    // Asserted on the raw payload, so `timestamp` is still a Date here — the
+    // other cases assert the serialized request body instead.
+    expect(payload).toEqual({
+      event: "tag_applied",
+      contact_id: "contact-1",
+      timestamp,
+      tag: "",
+    })
   })
 
   // A contact deleted between the event and the delivery attempt must still
@@ -262,16 +310,14 @@ describe("WebhookExecutor payloads", () => {
     contactFindById.mockResolvedValue(undefined)
     const executor = new WebhookExecutor()
 
-    await executor.execute({
-      webhook,
-      eventData: {
-        workspaceId: "workspace-1",
-        contactId: "contact-1",
-        eventType: triggerEventTypes.enum.newContact,
-        eventData: { name: "Ada", phone: "+15550000000" },
-        timestamp,
-      },
+    const payload = await buildWebhookPayload({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      eventType: triggerEventTypes.enum.newContact,
+      eventData: { name: "Ada", phone: "+15550000000" },
+      timestamp,
     })
+    await executor.execute({ webhook, payload })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(JSON.parse(String(init.body))).toEqual({

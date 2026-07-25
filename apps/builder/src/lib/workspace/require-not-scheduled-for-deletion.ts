@@ -2,14 +2,7 @@ import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business"
 import { redirect } from "next/navigation"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { WORKSPACE_DELETION_PENDING_PARAM } from "./deletion-pending-param"
-
-/**
- * The one page a workspace stays reachable on during the deletion grace
- * window. Shared so the redirect target and the exemption check can never
- * drift apart — a mismatch between those two IS a redirect loop.
- */
-export const workspaceSettingsGeneralPath = (workspaceId: string): string =>
-  `/space/${workspaceId}/settings/general`
+import { workspaceSettingsGeneralPath } from "./settings-paths"
 
 const safePathname = (originUrl: string): string => {
   if (!originUrl) {

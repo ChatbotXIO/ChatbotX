@@ -40,6 +40,7 @@ import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-co
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
+import { getEstimatedContactsDisplayState } from "./utils/estimated-contacts-display"
 
 type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
 
@@ -147,8 +148,17 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => {
-          if (row.original.contactCount === null) {
+          const displayState = getEstimatedContactsDisplayState({
+            contactCount: row.original.contactCount,
+            status: row.original.status,
+          })
+
+          if (displayState === "loading") {
             return <Loader2Icon className="h-4 w-4 animate-spin" />
+          }
+
+          if (displayState === "empty") {
+            return <span className="text-muted-foreground">-</span>
           }
 
           return <div>{row.original.contactCount}</div>

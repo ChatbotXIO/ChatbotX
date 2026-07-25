@@ -127,3 +127,17 @@ export const workspaceActionClient = workspaceActionClientAllowExpired.use(
     return next({ ctx })
   },
 )
+
+// Settings/general remains editable during the deletion grace window so admins
+// can correct workspace metadata before undoing or before the purge deadline.
+export const workspaceActionClientAllowScheduledDeletion =
+  workspaceActionClientAllowExpired.use(async ({ ctx, next }) => {
+    if (isCloud()) {
+      const { blocked } = await userQuotaService.getAccessState(ctx.user.id)
+      if (blocked) {
+        throw new ChatbotXException("Trial expired", "trialExpired", 403)
+      }
+    }
+
+    return next({ ctx })
+  })

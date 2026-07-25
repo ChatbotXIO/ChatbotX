@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { workspaceSettingsGeneralPath } from "@/lib/workspace/require-not-scheduled-for-deletion"
+import { workspaceSettingsGeneralPath } from "@/lib/workspace/settings-paths"
 
 type SettingPageProps = {
   params: Promise<{ workspaceId: string }>
