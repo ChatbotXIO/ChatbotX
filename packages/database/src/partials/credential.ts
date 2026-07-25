@@ -12,6 +12,7 @@ export const credentialTypes = z.enum([
   "smtp",
   "paddle",
   "tiktok",
+  "make",
 ])
 export type CredentialType = z.infer<typeof credentialTypes>
 
@@ -183,6 +184,16 @@ export type TiktokCredentialPublic = z.infer<
   typeof tiktokCredentialPublicSchema
 >
 
+export const makeCredentialSchema = z.object({
+  inviteUrl: z.string().url(),
+})
+export type MakeCredential = z.infer<typeof makeCredentialSchema>
+
+export const makeCredentialPublicSchema = makeCredentialSchema.pick({
+  inviteUrl: true,
+})
+export type MakeCredentialPublic = z.infer<typeof makeCredentialPublicSchema>
+
 export const credentialSchemas = {
   whatsapp: whatsappCredentialSchema,
   messenger: messengerCredentialSchema,
@@ -195,6 +206,7 @@ export const credentialSchemas = {
   smtp: smtpCredentialSchema,
   paddle: paddleCredentialSchema,
   tiktok: tiktokCredentialSchema,
+  make: makeCredentialSchema,
 } as const
 
 export const credentialPublicSchemas = {
@@ -209,6 +221,7 @@ export const credentialPublicSchemas = {
   smtp: smtpCredentialPublicSchema,
   paddle: paddleCredentialPublicSchema,
   tiktok: tiktokCredentialPublicSchema,
+  make: makeCredentialPublicSchema,
 } as const
 
 export type CredentialByType = {
@@ -223,6 +236,7 @@ export type CredentialByType = {
   smtp: SmtpCredential
   paddle: PaddleCredential
   tiktok: TiktokCredential
+  make: MakeCredential
 }
 
 export type CredentialPublicByType = {
@@ -237,6 +251,7 @@ export type CredentialPublicByType = {
   smtp: SmtpCredentialPublic
   paddle: PaddleCredentialPublic
   tiktok: TiktokCredentialPublic
+  make: MakeCredentialPublic
 }
 
 // ─── Update schemas (credential fields required except deliberate optionals) ─
@@ -328,6 +343,11 @@ export const tiktokCredentialUpdateSchema = z.object({
 export type TiktokCredentialUpdate = z.infer<
   typeof tiktokCredentialUpdateSchema
 >
+
+export const makeCredentialUpdateSchema = z.object({
+  inviteUrl: z.string().trim().min(1).url(),
+})
+export type MakeCredentialUpdate = z.infer<typeof makeCredentialUpdateSchema>
 
 // ─── Encrypted blob shape stored in Credential.value ─────────────────────────
 
