@@ -117,6 +117,8 @@ export type TriggerExecutionModel =
   typeof schema.triggerExecutionModel.$inferSelect
 export type WebhookExecutionModel =
   typeof schema.webhookExecutionModel.$inferSelect
+export type ExternalWebhookModel =
+  typeof schema.externalWebhookModel.$inferSelect
 export type ContactInboxModel = typeof schema.contactInboxModel.$inferSelect
 export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect

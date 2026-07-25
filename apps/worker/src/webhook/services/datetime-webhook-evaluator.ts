@@ -72,6 +72,7 @@ async function fetchWebhookChunk(
         timeValue: triggerValue.timeValue,
         timeType: triggerValue.timeType,
         at: triggerValue.at,
+        timezone: triggerValue.timezone,
         customFieldId: condition.sourceId,
       })
     }

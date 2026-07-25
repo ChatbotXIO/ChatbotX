@@ -1,11 +1,18 @@
+import { isCloud } from "../keys"
 import { logger } from "../logger"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
+import { resolveWorkspaceFreezeReason } from "./predicates"
 
 /**
- * No-op workspace work for owners whose cloud entitlement has expired.
+ * No-op workspace work for frozen workspaces (owner entitlement expired,
+ * deletion scheduled, or the workspace row already purged).
+ *
  * Jobs without a workspace identity remain fail-open because they cannot be
- * safely attributed to a tenant here.
+ * safely attributed to a tenant here. Once an id IS present the guard is
+ * fail-CLOSED: a vanished workspace row means the purge cron already ran, so
+ * leftover delayed jobs (smart-delay resumes, wait/follow-up wake-ups) must not
+ * execute against a tenant that no longer exists.
  */
 export async function withBlockedOwnerGuard<T>(
   workspaceId: string | undefined,
@@ -16,15 +23,30 @@ export async function withBlockedOwnerGuard<T>(
   }
 
   const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  if (!workspace) {
-    return await fn()
-  }
-  const accessState = await userQuotaService.getAccessState(workspace.ownerId)
 
-  if (accessState.blocked) {
+  // Resolved in two passes on purpose. The Workspace row ALONE decides
+  // `missingWorkspace` and `scheduledForDeletion`, so those verdicts never
+  // depend on — and can never be broken by — an owner quota read. Only
+  // `ownerBlocked` needs entitlements, and only the cloud edition can produce
+  // it, so self-hosted installs skip the lookup entirely.
+  const rowReason = resolveWorkspaceFreezeReason({ workspace })
+  const ownerReason =
+    rowReason || !isCloud() || !workspace
+      ? null
+      : resolveWorkspaceFreezeReason({
+          accessState: await userQuotaService.getAccessState(workspace.ownerId),
+          workspace,
+        })
+  const freezeReason = rowReason ?? ownerReason
+
+  if (freezeReason) {
     logger.info(
-      { workspaceId, ownerId: workspace.ownerId },
-      "Skipping workspace job for blocked owner",
+      {
+        freezeReason,
+        ownerId: workspace?.ownerId,
+        workspaceId,
+      },
+      "Skipping workspace job for frozen workspace",
     )
     return
   }

@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const findManyContacts = vi.fn()
 const findManyTags = vi.fn()
 const findManyCustomFields = vi.fn()
+const findFirstWorkspace = vi.fn()
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
 
@@ -20,6 +21,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
       customFieldModel: {
         findMany: (...args: unknown[]) => findManyCustomFields(...args),
+      },
+      // The handler reads the workspace timezone to format date/datetime custom
+      // fields for CSV export.
+      workspaceModel: {
+        findFirst: (...args: unknown[]) => findFirstWorkspace(...args),
       },
     },
     update: () => ({
@@ -41,6 +47,10 @@ vi.mock("@chatbotx.io/database/partials", async () =>
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: (criteria: unknown) => ({ __filter: criteria }),
   pruneEmailPhoneFilterConditions: (criteria: unknown) => criteria,
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  workspaceService: { find: vi.fn(async () => ({ timezone: "UTC" })) },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -123,6 +133,8 @@ beforeEach(() => {
   findManyTags.mockResolvedValue([])
   findManyCustomFields.mockReset()
   findManyCustomFields.mockResolvedValue([])
+  findFirstWorkspace.mockReset()
+  findFirstWorkspace.mockResolvedValue({ timezone: "UTC" })
   updateSet.mockReset()
   updateWhere.mockReset()
   createUpload.mockClear()

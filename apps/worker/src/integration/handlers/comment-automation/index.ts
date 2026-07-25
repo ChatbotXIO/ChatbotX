@@ -266,6 +266,7 @@ async function executePublicReply(
           contactInboxId: ctx.contactInboxId,
           flowId: publicReply.value,
           origin: webhookChannelOrigin(),
+          commentAnchor: { commentId: ctx.commentId, replyChannel: "public" },
         },
       },
       { delay: ctx.delay },
@@ -336,6 +337,14 @@ async function executePrivateReply(
           contactInboxId: ctx.contactInboxId,
           flowId: privateReply.value,
           origin: webhookChannelOrigin(),
+          ...(ctx.channelType === "messenger"
+            ? {
+                commentAnchor: {
+                  commentId: ctx.commentId,
+                  replyChannel: "private" as const,
+                },
+              }
+            : {}),
         },
       },
       { delay: ctx.delay },

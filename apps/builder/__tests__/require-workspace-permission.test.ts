@@ -19,6 +19,12 @@ vi.mock("next/navigation", () => ({
   notFound: mockNotFound,
 }))
 
+vi.mock("@/lib/workspace/require-not-scheduled-for-deletion", () => ({
+  enforceWorkspaceNotScheduledForDeletionFromRequest: vi.fn(
+    async () => undefined,
+  ),
+}))
+
 const { requireContactsAccess, resolveGuardedWorkspaceId } = await import(
   "../src/lib/auth/require-workspace-permission"
 )

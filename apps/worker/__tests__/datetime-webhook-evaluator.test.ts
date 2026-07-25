@@ -61,8 +61,20 @@ const contactCustomFieldRow = (params: {
   contact: { workspaceId: params.workspaceId ?? "workspace-1" },
 })
 
+type DateTimeWebhookCondition = {
+  sourceId: string
+  type: (typeof triggerEventTypes.enum)["dateTimeBasedTrigger"]
+  value: {
+    at?: string
+    timeType?: string
+    timeValue?: number
+    timezone?: string
+    triggerType: string
+  }
+}
+
 function mockDateTimeWebhook(
-  conditions = [
+  conditions: DateTimeWebhookCondition[] = [
     {
       type: triggerEventTypes.enum.dateTimeBasedTrigger,
       sourceId: "field-1",
@@ -74,6 +86,7 @@ function mockDateTimeWebhook(
       },
     },
   ],
+  workspaceTimezone = "UTC",
 ) {
   listActiveDateTimeWebhooks.mockResolvedValueOnce({
     nextCursor: undefined,
@@ -81,7 +94,7 @@ function mockDateTimeWebhook(
       {
         id: "webhook-1",
         workspaceId: "workspace-1",
-        workspace: { timezone: "UTC" },
+        workspace: { timezone: workspaceTimezone },
         conditions,
       },
     ],
@@ -320,6 +333,85 @@ describe("evaluateDateTimeWebhooks", () => {
       cursor: { customFieldId: "field-1", id: "ccf-1" },
       limit: 1000,
     })
+  })
+
+  test("resolves the datetime condition in its captured timezone over the workspace zone", async () => {
+    // Workspace is UTC, but the condition was saved in Asia/Ho_Chi_Minh (+7).
+    // 14:00 UTC is 21:00 in +7, so `at: "21"` only matches when the condition's
+    // own zone is honored; a UTC resolution would land on hour 14 and skip it.
+    mockDateTimeWebhook([
+      {
+        type: triggerEventTypes.enum.dateTimeBasedTrigger,
+        sourceId: "field-1",
+        value: {
+          triggerType: "atTheDayOf",
+          at: "21",
+          timeValue: 0,
+          timeType: "minutes",
+          timezone: "Asia/Ho_Chi_Minh",
+        },
+      },
+    ])
+    listContactCustomFieldsForDateTimeSweep.mockResolvedValueOnce({
+      rows: [
+        contactCustomFieldRow({
+          contactId: "contact-1",
+          customFieldId: "field-1",
+          value: "2026-07-11T02:00:00.000Z",
+        }),
+      ],
+      nextCursor: undefined,
+    })
+    listExecutedWebhookPairs.mockResolvedValueOnce(new Set())
+
+    const results = await evaluateDateTimeWebhooks({
+      startOfMinute: Date.parse("2026-07-11T14:00:00.000Z"),
+    })
+
+    expect(results).toEqual([
+      { webhookId: "webhook-1", contactId: "contact-1", matched: true },
+    ])
+    expect(webhookQueueAdd).toHaveBeenCalledTimes(1)
+  })
+
+  test("falls back to the workspace timezone for legacy conditions with no captured zone", async () => {
+    // No zone stored on the condition (pre-capture), so hour-of-day resolves in
+    // the workspace zone (+7): 14:00 UTC is 21:00 there, matching `at: "21"`.
+    mockDateTimeWebhook(
+      [
+        {
+          type: triggerEventTypes.enum.dateTimeBasedTrigger,
+          sourceId: "field-1",
+          value: {
+            triggerType: "atTheDayOf",
+            at: "21",
+            timeValue: 0,
+            timeType: "minutes",
+          },
+        },
+      ],
+      "Asia/Ho_Chi_Minh",
+    )
+    listContactCustomFieldsForDateTimeSweep.mockResolvedValueOnce({
+      rows: [
+        contactCustomFieldRow({
+          contactId: "contact-1",
+          customFieldId: "field-1",
+          value: "2026-07-11T02:00:00.000Z",
+        }),
+      ],
+      nextCursor: undefined,
+    })
+    listExecutedWebhookPairs.mockResolvedValueOnce(new Set())
+
+    const results = await evaluateDateTimeWebhooks({
+      startOfMinute: Date.parse("2026-07-11T14:00:00.000Z"),
+    })
+
+    expect(results).toEqual([
+      { webhookId: "webhook-1", contactId: "contact-1", matched: true },
+    ])
+    expect(webhookQueueAdd).toHaveBeenCalledTimes(1)
   })
 })
 

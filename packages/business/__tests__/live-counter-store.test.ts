@@ -24,6 +24,7 @@ const METRIC_ORDER = [
   "contacts",
   "mac",
   "botMessages",
+  "monthlyBotMessages",
 ] as const
 
 const redisClient = {
@@ -57,6 +58,7 @@ const dbRow = {
   contactsUsed: 40,
   macUsed: 50,
   botMessagesUsed: 60,
+  monthlyBotMessagesUsed: 70,
 }
 
 beforeEach(() => {
@@ -67,7 +69,7 @@ beforeEach(() => {
 
 describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
   test("returns parsed live values in one HMGET without touching the DB", async () => {
-    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", "5", "6"])
+    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", "5", "6", "7"])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
@@ -78,6 +80,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       contacts: 4,
       mac: 5,
       botMessages: 6,
+      monthlyBotMessages: 7,
     })
     expect(redisClient.hmget).toHaveBeenCalledTimes(1)
     expect(redisClient.hmget).toHaveBeenCalledWith(
@@ -91,7 +94,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
 
   test("cold-seeds a missing field from a single DB fetch", async () => {
     // mac field absent (cold start); the rest are live.
-    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", null, "6"])
+    redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", null, "6", "7"])
 
     const usage = await userQuotaService.getLiveUsage(USER)
 
@@ -103,6 +106,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       contacts: 4,
       mac: 50,
       botMessages: 6,
+      monthlyBotMessages: 7,
     })
     // One row fetch shared across all missing fields, and the field is seeded.
     expect(findFirstQuota).toHaveBeenCalledTimes(1)
@@ -122,6 +126,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       "not-a-number",
       "5",
       "6",
+      "7",
     ])
 
     const usage = await userQuotaService.getLiveUsage(USER)
@@ -143,6 +148,7 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       contacts: 40,
       mac: 50,
       botMessages: 60,
+      monthlyBotMessages: 70,
     })
     expect(findFirstQuota).toHaveBeenCalledTimes(1)
   })

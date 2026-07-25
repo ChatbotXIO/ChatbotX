@@ -28,6 +28,7 @@ export function DatePickerField<T extends FieldValues>(
     descriptionType = "inline",
     formItemClassName,
     dateTimeFormat = "yyyy-MM-dd",
+    saveFormat = "formatted",
     ...rest
   } = props
 
@@ -46,6 +47,10 @@ export function DatePickerField<T extends FieldValues>(
             return
           }
           try {
+            if (saveFormat === "iso") {
+              const parsed = new Date(field.value as string)
+              return Number.isNaN(parsed.getTime()) ? undefined : parsed
+            }
             return parse(field.value as string, dateTimeFormat, new Date())
           } catch {
             return
@@ -53,10 +58,15 @@ export function DatePickerField<T extends FieldValues>(
         }
 
         const handleChange = (value: Date | undefined) => {
+          if (!value) {
+            field.onChange(undefined as T[FieldPath<T>])
+            return
+          }
+
           field.onChange(
-            (value
-              ? format(value, dateTimeFormat)
-              : undefined) as T[FieldPath<T>],
+            (saveFormat === "iso"
+              ? value.toISOString()
+              : format(value, dateTimeFormat)) as T[FieldPath<T>],
           )
         }
 

@@ -93,6 +93,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
 
             <CustomFieldSelect
               allowCreate={true}
+              customFieldTypes={["shortText", "longText"]}
               label={t("fields.outputCustomField.label")}
               name="outputFieldId"
               required

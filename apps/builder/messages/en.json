@@ -296,8 +296,7 @@
       "channels": "You've reached your channel limit. Upgrade your plan to connect more.",
       "teamMembers": "You've reached your team member limit. Upgrade your plan to invite more.",
       "contacts": "You've reached your contact limit. Upgrade your plan to add more.",
-      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more.",
-      "botMessages": "You've reached your bot message limit. Upgrade your plan to send more."
+      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more."
     },
     "pastDue": {
       "message": "Your last payment failed. Update your payment method to keep your workspace active."
@@ -323,7 +322,8 @@
     "status": {
       "scheduled": "Scheduled",
       "sent": "Sent",
-      "sending": "Sending"
+      "sending": "Sending",
+      "cancelled": "Cancelled"
     },
     "stats": {
       "sent": "Sent",
@@ -415,6 +415,7 @@
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
     "operator": {
@@ -1971,6 +1972,15 @@
     },
     "webchatParentUrl": {
       "label": "Webchat Parent URL"
+    },
+    "make": {
+      "inviteUrl": "Invite Link",
+      "inviteUrlHint": "The invite link for your published Make custom app (e.g. https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Events",
+      "placeholder": "Type an event name and press Enter",
+      "description": "Add one or more event names. When Make attaches a webhook for one of these events, data is sent to it when this step runs."
     }
   },
   "flows": {
@@ -2017,6 +2027,8 @@
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
       "callApi": "External API Request",
+      "make": "Make",
+      "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
@@ -2191,6 +2203,9 @@
       "durationLabel": "Duration",
       "waitAndContinue": "Wait <value>{duration} {unit}</value> and continue",
       "cancelOnReplyHint": "The follow-up won't be sent if the contact replies before the time expires."
+    },
+    "setCustomField": {
+      "temporalHint": "Leave it empty to save the current date/time."
     }
   },
   "folders": {
@@ -2498,6 +2513,15 @@
     "errors": {
       "invalidApiKey": "Invalid API Key. Please check your SendGrid API Key and try again.",
       "missingScopes": "This API key must have Marketing read access. Please ensure your SendGrid API key includes Marketing permissions."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios. Your workspace's Developer Access Token is copied to your clipboard when you click Connect — paste it when creating the connection in Make.",
+      "notConfigured": "No Make invite link found. Please add one in Platform Settings.",
+      "noWorkspaceToken": "No Developer Access Token found for this workspace. Generate one in the Workspace token section above, then click Connect again."
     }
   },
   "integrations": {
@@ -3414,7 +3438,13 @@
     "responseType": "Response Type",
     "points": "Points",
     "retryMessage": "Retry message if the reply is invalid",
-    "defaultRetryMessage": "What you've entered is not a valid text. Please try again",
+    "defaultRetryMessages": {
+      "text": "What you've entered is not a valid text. Please try again",
+      "number": "What you've entered is not a valid number. Please try again",
+      "email": "What you've entered is not a valid email. Please try again",
+      "phone": "What you've entered is not a valid phone number. Please try again",
+      "multipleChoice": "What you've entered is not a valid option. Please try again"
+    },
     "customField": "Save response to a custom or system field",
     "options": "Options",
     "mode": "Mode",
@@ -3688,7 +3718,9 @@
     "title": "You have been unsubscribed.",
     "description": "You will no longer receive emails from this sender.",
     "invalidTitle": "Invalid unsubscribe link.",
-    "invalidDescription": "This link is invalid or has expired."
+    "invalidDescription": "This link is invalid or has expired.",
+    "unavailableTitle": "Unsubscribe unavailable.",
+    "unavailableDescription": "This workspace is no longer available."
   },
   "extensionsMe": {
     "actions": {

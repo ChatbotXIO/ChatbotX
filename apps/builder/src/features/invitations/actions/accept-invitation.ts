@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -56,7 +57,7 @@ export const acceptInvitationAction = authActionClient
     const workspace = await workspaceService.find({
       where: { id: invitation.workspaceId },
     })
-    if (workspace?.scheduledDeletionAt) {
+    if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
       const t = await getTranslations("invitation")
       throw new ChatbotXException(
         t("workspaceUnavailable"),

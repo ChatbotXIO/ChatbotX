@@ -37,7 +37,7 @@ const TEST_DEFAULTS: Readonly<Record<string, string>> = {
   NEXT_PUBLIC_BUILDER_URL: "http://localhost:3123",
 
   // Realtime
-  REALTIME_BROADCAST_SECRET: "test-broadcast-secret",
+  REALTIME_BROADCAST_SECRET: "test-broadcast-secret-32-bytes-ok",
 
   // SMTP
   SMTP_SERVER: "smtp://test:test@127.0.0.1:1",

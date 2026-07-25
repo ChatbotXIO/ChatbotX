@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
-import { SiFacebook } from "@icons-pack/react-simple-icons"
+import { SiFacebook, SiMake } from "@icons-pack/react-simple-icons"
 import { BotIcon, CodeIcon, MailIcon, TableIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
@@ -22,6 +22,7 @@ type SettingIntegrationLayoutProps = {
   openaiCompatible?: ReactNode
   googleSheets?: ReactNode
   facebookAds?: ReactNode
+  make?: ReactNode
   activeCampaign?: ReactNode
   getResponse?: ReactNode
   mailchimp?: ReactNode
@@ -42,6 +43,7 @@ export default function SettingIntegrationLayout({
   openaiCompatible,
   googleSheets,
   facebookAds,
+  make,
   activeCampaign,
   getResponse,
   mailchimp,
@@ -98,6 +100,11 @@ export default function SettingIntegrationLayout({
       keyName: t("facebookAds.title"),
       icon: SiFacebook,
       content: facebookAds,
+    },
+    {
+      keyName: t("make.title"),
+      icon: SiMake,
+      content: make,
     },
     {
       keyName: t("activeCampaign.title"),

@@ -14,7 +14,9 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
     workspaceId: string,
     sourceId?: string,
   ): Promise<boolean> {
-    if (!isWebhookContext()) {
+    const inWebhookContext = isWebhookContext()
+
+    if (!inWebhookContext) {
       logger.debug(
         { eventType, workspaceId, sourceId },
         "Skipping webhook event outside channel-originated context",

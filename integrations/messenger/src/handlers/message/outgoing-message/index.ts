@@ -21,6 +21,7 @@ import {
   type OutgoingMessage,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { sendPrivateReplyMessage } from "../../../apis/comment"
 import { sendPageMessage } from "../../../apis/message"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
@@ -97,13 +98,16 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
   async (props: SendFlowStepProps<MessengerAuthValue>) => {
     const {
       ctx,
-      data: { contact, sendFrom, step },
+      data: { contact, sendFrom, step, commentAnchor },
     } = props
     const messageIds: string[] = []
     try {
       // Messenger utility templates must be sent as a complete Send API request
       // using message.template (name/language/components) — they cannot go through
       // the generic buildMessagePayload spread, which is for plain messages.
+      // Known gap: a comment-anchored private reply whose first flow step is a
+      // Messenger template is not covered — it falls back to the normal
+      // (messaging-window-gated) send below, same as before this fix.
       if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
         const payload = buildMessengerTemplateSendRequest(
           props as SendFlowStepProps<
@@ -119,21 +123,43 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       }
 
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
+      // Consumed by the first Facebook message yielded below, if a private
+      // comment anchor is present — a single flow step can yield more than
+      // one Facebook message (e.g. text + attachments), so only the very
+      // first send uses the comment_id-anchored API; the rest use the normal
+      // path (the private reply already opened a standard messaging window).
+      // A "public" anchor is never honored here — it's delivered via the
+      // comment channel's sendComment, not this message channel's
+      // sendFlowStep (see send-flow-step.ts). This check is defense-in-depth
+      // against a public anchor ever reaching this handler by mistake.
+      let anchorCommentId =
+        commentAnchor?.replyChannel === "private"
+          ? commentAnchor.commentId
+          : undefined
       for await (const facebookMessage of convertFlowStepToFacebookMessage(
         props,
       )) {
-        const response = await sendPageMessage(
-          ctx.auth,
-          buildMessagePayload({
-            contact,
-            message: facebookMessage,
-            ...policy,
-            personaId: resolveMessengerPersonaId(
-              ctx.integrationDetail as MessengerIntegrationDetail,
-              contact,
-            ),
-          }),
+        const personaId = resolveMessengerPersonaId(
+          ctx.integrationDetail as MessengerIntegrationDetail,
+          contact,
         )
+        const response = anchorCommentId
+          ? await sendPrivateReplyMessage(
+              ctx.auth,
+              anchorCommentId,
+              facebookMessage,
+              personaId,
+            )
+          : await sendPageMessage(
+              ctx.auth,
+              buildMessagePayload({
+                contact,
+                message: facebookMessage,
+                ...policy,
+                personaId,
+              }),
+            )
+        anchorCommentId = undefined
         if (response.message_id) {
           messageIds.push(response.message_id)
         }

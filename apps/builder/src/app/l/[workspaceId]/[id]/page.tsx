@@ -9,6 +9,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import { InboxListLandingPage } from "@/features/inboxes/components/landing-inbox-list"
 import { maxPerPage } from "@/lib/shared-request"
+import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export default async function LandingPage({
   params,
@@ -20,6 +21,11 @@ export default async function LandingPage({
   const id = getIdFromParams(resolvedParams, "id")
 
   if (!(workspaceId && id)) {
+    return notFound()
+  }
+
+  const { servable } = await loadServableWorkspace(workspaceId)
+  if (!servable) {
     return notFound()
   }
 

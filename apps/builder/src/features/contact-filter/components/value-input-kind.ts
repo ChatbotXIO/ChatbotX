@@ -39,6 +39,7 @@ export const resolveValueInputKind = (
 }
 
 export const DATETIME_VALUE_INPUT_KINDS = new Set<ValueInputKind>([
+  "date",
   "datetime",
   "datetimeInterval",
 ])

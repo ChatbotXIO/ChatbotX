@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const buildMeExport = vi.fn()
+const loadServableWorkspace = vi.fn()
 
 vi.mock("@chatbotx.io/business/system-field", () => ({
   systemFieldService: {
@@ -9,11 +10,16 @@ vi.mock("@chatbotx.io/business/system-field", () => ({
   },
 }))
 
+vi.mock("@/lib/workspace/load-servable-workspace", () => ({
+  loadServableWorkspace,
+}))
+
 const { GET } = await import("../src/app/extensions/me/download/route")
 
 describe("me extension download route", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    loadServableWorkspace.mockResolvedValue({ servable: true })
   })
 
   test("returns export JSON with an attachment filename", async () => {
@@ -83,5 +89,18 @@ describe("me extension download route", () => {
       ),
     )
     expect(invalid.status).toBe(404)
+  })
+
+  test("returns 410 without building export when the workspace is scheduled for deletion", async () => {
+    loadServableWorkspace.mockResolvedValue({ servable: false })
+
+    const res = await GET(
+      new Request(
+        "http://localhost/extensions/me/download?w=workspace-1&u=source-1&ib=integration-1&id=form-1&hash=hash-1",
+      ),
+    )
+
+    expect(res.status).toBe(410)
+    expect(buildMeExport).not.toHaveBeenCalled()
   })
 })

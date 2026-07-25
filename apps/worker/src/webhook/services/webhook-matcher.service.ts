@@ -15,6 +15,7 @@ import type {
   WebhookWithConditions,
 } from "../types"
 import { WebhookExecutor } from "./webhook-executor.service"
+import { buildWebhookPayload } from "./webhook-payload.builder"
 
 const SCANNER_VERIFIED_EVENT_TYPE_SET: ReadonlySet<string> = new Set(
   SCANNER_VERIFIED_EVENT_TYPES,
@@ -84,23 +85,29 @@ export class WebhookMatcherService {
       return
     }
 
-    await Promise.allSettled(
-      filteredWebhooks.map(async (webhook) => {
-        const isMatch = await this.evaluateWebhookConditions(
-          webhook,
-          matchableEventData,
-          workspace,
-        )
-        if (!isMatch) {
-          return
-        }
+    const matchedWebhooks = await this.selectMatchingWebhooks(
+      filteredWebhooks,
+      matchableEventData,
+      workspace,
+    )
 
+    if (matchedWebhooks.length === 0) {
+      return
+    }
+
+    // Built once for the whole fan-out, and deliberately before the first
+    // delivery. A failure here is allowed to fail the job so the queue retries
+    // the event: nothing has been sent yet, so the retry cannot duplicate a
+    // delivery. Swallowing it instead would drop every webhook at once.
+    const payload = await buildWebhookPayload(matchableEventData)
+
+    await Promise.allSettled(
+      matchedWebhooks.map(async (webhook) => {
         try {
-          await this.webhookExecutor.execute({
-            webhook,
-            eventData: matchableEventData,
-          })
+          await this.webhookExecutor.execute({ webhook, payload })
         } catch (error) {
+          // Past this point deliveries are in flight, so one bad endpoint must
+          // not fail the job and trigger a retry that re-sends the others.
           logger.error(
             error,
             `Failed to execute webhook ${webhook.id} for workspace ${workspaceId}`,
@@ -108,6 +115,41 @@ export class WebhookMatcherService {
         }
       }),
     )
+  }
+
+  /**
+   * Evaluates every candidate concurrently and keeps the matches. A webhook
+   * whose conditions cannot be evaluated is skipped and logged rather than
+   * thrown: the matched webhooks are delivered after this step, so failing the
+   * job here would re-send them on the queue retry.
+   */
+  private async selectMatchingWebhooks(
+    webhooks: WebhookWithConditions[],
+    eventData: MatchableWebhookEventData,
+    workspace: WorkspaceModel,
+  ): Promise<WebhookWithConditions[]> {
+    const evaluated = await Promise.all(
+      webhooks.map(async (webhook) => {
+        try {
+          const isMatch = await this.evaluateWebhookConditions(
+            webhook,
+            eventData,
+            workspace,
+          )
+
+          return isMatch ? [webhook] : []
+        } catch (error) {
+          logger.error(
+            error,
+            `Failed to evaluate conditions for webhook ${webhook.id} in workspace ${eventData.workspaceId}`,
+          )
+
+          return []
+        }
+      }),
+    )
+
+    return evaluated.flat()
   }
 
   private async evaluateWebhookConditions(

@@ -56,6 +56,7 @@ const BOOTSTRAP_TRIAL_FALLBACK = {
   teamMembersLimit: 0,
   contactsLimit: 0,
   botMessagesLimit: 0,
+  monthlyBotMessagesLimit: 0,
 } as const
 
 interface DefaultPlanSnapshot {
@@ -63,6 +64,7 @@ interface DefaultPlanSnapshot {
   channelsLimit: number | null
   contactsLimit: number | null
   macLimit: number | null
+  monthlyBotMessagesLimit: number | null
   planName: string
   saasMode: boolean
   ssoSaml: boolean
@@ -76,6 +78,7 @@ type BootstrapPlanSnapshot = Pick<
   DefaultPlanSnapshot,
   | "channelsLimit"
   | "botMessagesLimit"
+  | "monthlyBotMessagesLimit"
   | "contactsLimit"
   | "macLimit"
   | "planName"
@@ -111,6 +114,7 @@ class UserQuotaService extends BaseService {
       contacts: userQuotaModel.contactsUsed,
       mac: userQuotaModel.macUsed,
       botMessages: userQuotaModel.botMessagesUsed,
+      monthlyBotMessages: userQuotaModel.monthlyBotMessagesUsed,
     },
     getUsed: (quota, metric) => this.getUsedValue(quota, metric),
     fetchRow: (userId) =>
@@ -139,6 +143,8 @@ class UserQuotaService extends BaseService {
         return quota.macUsed
       case "botMessages":
         return quota.botMessagesUsed
+      case "monthlyBotMessages":
+        return quota.monthlyBotMessagesUsed
       default:
         return 0
     }
@@ -236,6 +242,9 @@ class UserQuotaService extends BaseService {
         teamMembersLimit: snapshot.teamMembersLimit,
         macLimit: snapshot.macLimit,
         botMessagesLimit: snapshot.botMessagesLimit,
+        // Additive cross-repo field: an older snapshot omits it, which is
+        // deliberately unlimited (fail-open), never an implicit zero cap.
+        monthlyBotMessagesLimit: snapshot.monthlyBotMessagesLimit ?? null,
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
@@ -320,6 +329,8 @@ class UserQuotaService extends BaseService {
       macUsed: 0,
       botMessagesLimit: null,
       botMessagesUsed: 0,
+      monthlyBotMessagesLimit: null,
+      monthlyBotMessagesUsed: 0,
       whiteLabel: false,
       ssoSaml: false,
       saasMode: false,
@@ -338,6 +349,10 @@ class UserQuotaService extends BaseService {
       workspacesLimit: base.workspacesLimit ?? snapshot.workspacesLimit,
       channelsLimit: base.channelsLimit ?? snapshot.channelsLimit,
       botMessagesLimit: base.botMessagesLimit ?? snapshot.botMessagesLimit,
+      monthlyBotMessagesLimit:
+        base.monthlyBotMessagesLimit ??
+        snapshot.monthlyBotMessagesLimit ??
+        null,
       teamMembersLimit: base.teamMembersLimit ?? snapshot.teamMembersLimit,
       // Monthly-active-contacts cap (`Plan.limits.monthlyActiveContacts`) maps to
       // `macLimit`, NOT `contactsLimit`; without this the free-tier overlay would
@@ -796,6 +811,11 @@ class UserQuotaService extends BaseService {
         return {
           limit: quota.botMessagesLimit,
           used: quota.botMessagesUsed,
+        }
+      case "monthlyBotMessages":
+        return {
+          limit: quota.monthlyBotMessagesLimit,
+          used: quota.monthlyBotMessagesUsed,
         }
       default:
         return { limit: null, used: 0 }

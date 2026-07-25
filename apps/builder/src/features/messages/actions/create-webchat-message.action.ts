@@ -5,6 +5,7 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  isWorkspaceScheduledForDeletion,
   messageCleanupService,
   quotaEnforcementService,
   resolveTenantSettings,
@@ -31,6 +32,7 @@ import {
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
+import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
@@ -74,10 +76,12 @@ export async function handleCreateWebchatMessage({
 }: {
   parsedInput: CreateWebchatMessageRequest
 }) {
+  setWebhookExecutionContext({ source: "webhook" })
+
   const workspace = await workspaceService.find({
     where: { id: parsedInput.workspaceId },
   })
-  if (workspace?.scheduledDeletionAt) {
+  if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     const t = await getTranslations("webchat")
     throw new ChatbotXException(
       t("workspaceUnavailable"),
