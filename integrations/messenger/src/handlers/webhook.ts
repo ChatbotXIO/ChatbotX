@@ -8,6 +8,7 @@ import {
   MESSENGER_MESSAGE_METADATA,
   type MessengerConfig,
   messengerFeedCommentValueSchema,
+  messengerLeadgenValueSchema,
 } from "../schema"
 
 const verifyWebhookSignature = async (
@@ -139,6 +140,35 @@ const handleWebhookEvent = async (
             },
           })
         }
+      }
+      return
+    }
+
+    const leadgenChanges =
+      entry.changes?.filter((c: { field: string }) => c.field === "leadgen") ??
+      []
+    if (leadgenChanges.length > 0) {
+      for (const leadgenChange of leadgenChanges) {
+        const parsed = messengerLeadgenValueSchema.safeParse(
+          leadgenChange.value,
+        )
+        if (!parsed.success) {
+          logger.warn(
+            { issues: parsed.error.issues, value: leadgenChange.value },
+            "Unrecognized leadgen webhook payload",
+          )
+          continue
+        }
+        const value = parsed.data
+        await queue?.add("processLeadgen", {
+          type: "processLeadgen",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier: entry.id,
+            leadgenId: value.leadgen_id,
+            formId: value.form_id,
+          },
+        })
       }
       return
     }

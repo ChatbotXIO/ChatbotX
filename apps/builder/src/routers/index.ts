@@ -12,6 +12,7 @@ import { conversationsAPI } from "@/features/conversations/api"
 import { customFieldsAPI } from "@/features/custom-fields/api"
 import { emailTopicsAPI } from "@/features/email-topics/api"
 import { errorLogsAPI } from "@/features/error-logs/api"
+import { facebookLeadAdsAPI } from "@/features/facebook-lead-ad-automation/api"
 import { fbCommentsAPI } from "@/features/fb-comments/api"
 import { flowsAPI } from "@/features/flows/api"
 import { foldersAPI } from "@/features/folders/api"
@@ -82,6 +83,7 @@ export const router = {
   messengerMessageTemplateAPIs,
   savedRepliesAPI,
   fbCommentsAPI,
+  facebookLeadAdsAPI,
   sequencesAPI,
   aiFilesAPI,
   inboxesAPI,

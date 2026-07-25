@@ -33,6 +33,7 @@ const TOOLS_CONFIG = [
     labelKey: "facebookLeadAdsAutomation.title",
     descriptionKey: "facebookLeadAdsAutomation.description",
     icon: SiFacebook,
+    getLink: (id: string) => `/space/${id}/fb-lead-ads`,
   },
   {
     id: "reflinks",

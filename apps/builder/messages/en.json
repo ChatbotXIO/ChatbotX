@@ -3553,7 +3553,20 @@
   },
   "facebookLeadAdsAutomation": {
     "title": "Facebook Lead Ads Automation",
-    "description": "Automate Facebook lead ads for your contacts."
+    "description": "Automate Facebook lead ads for your contacts.",
+    "create": "Create New",
+    "leads": "Leads",
+    "facebookPage": "Facebook Page",
+    "leadForm": "Lead Form",
+    "allForms": "All forms",
+    "allFormsNote": "Leads from every form on this page will be captured. Standard fields (email, phone, name, gender) are saved to matching contact fields automatically.",
+    "leadData": "Lead Data",
+    "whatFlow": "What flow is triggered",
+    "none": "None",
+    "addNewPage": "Add New",
+    "noEligiblePages": "No eligible pages. Use \"Add New\" to grant lead access.",
+    "duplicateError": "An automation already exists for this page and form.",
+    "subscribeError": "Could not subscribe this page to Facebook lead notifications, so the automation was not created. Reconnect the page with \"Add New\" and try again."
   },
   "ecommerce": {
     "title": "Ecommerce",
