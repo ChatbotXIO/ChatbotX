@@ -21,13 +21,13 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
+import { USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { isCloud } from "../keys"
 import { logger } from "../logger"
 import {
   LiveCounterStore,
   type QuotaMetric,
-  USER_QUOTA_LABEL,
 } from "../quota-shared/live-counter-store"
 
 export type { QuotaMetric } from "../quota-shared/live-counter-store"
@@ -92,10 +92,14 @@ type BootstrapPlanSnapshot = Pick<
  * field the gate needs; the rest drive the "trial ended / X days left" UI.
  *  - status mirrors UserQuota.planStatus (active|past_due|trial|expired).
  *  - a user with no quota row at all (pure OSS install) is never blocked.
+ *  - `reason` discriminates WHY `blocked` is true, so the UI can show the
+ *    right paywall copy ("plan inactive" vs "monthly active contact limit
+ *    reached") instead of a single generic message. `null` when not blocked.
  */
 export interface AccessState {
   blocked: boolean
   planName: string | null
+  reason: "status" | "mac" | null
   status: string | null
   trialEndsAt: Date | null
 }
@@ -371,32 +375,72 @@ class UserQuotaService extends BaseService {
 
   /**
    * Whether the user may access the app, based on the entitlement snapshot.
-   * Blocked only when a self-managed trial has expired or was consumed:
-   *   - planStatus === "expired"  (trial consumed / churned)
-   *   - planStatus === "trial" and periodEnd has passed
-   * Everything else (active, past_due, no row) is allowed.
+   * Allow-list: only `active` and a non-expired `trial` may send/receive.
+   * `past_due`, `expired`, an expired `trial`, and any unrecognized status are
+   * blocked (`reason: "status"`). On top of the status check, this async
+   * variant also OR-in the **live** MAC count (`reason: "mac"`) — the live
+   * Redis counter is authoritative and can be ahead of the DB `macUsed`
+   * column (see {@link getAccessStateFromQuota} for the pure/DB-only variant).
    */
   async getAccessState(userId: string): Promise<AccessState> {
     const quota = await this.getForUser(userId)
-    return this.getAccessStateFromQuota(quota)
+    const state = this.getAccessStateFromQuota(quota)
+    if (state.blocked) {
+      return state
+    }
+
+    const macLimitReached = await this.isLimitReached(userId, "mac")
+    if (macLimitReached) {
+      return { ...state, blocked: true, reason: "mac" }
+    }
+
+    return state
   }
 
   /**
    * Pure derivation of {@link AccessState} from an already-fetched quota row.
    * Use this when the caller has already loaded the quota (e.g. an RSC that also
    * renders usage bars) to avoid a redundant `getForUser` round-trip.
+   *
+   * Allow-list: only `active` and a non-expired `trial` are allowed; every
+   * other status (`past_due`, `expired`, expired `trial`, unknown) is blocked
+   * with `reason: "status"`. A user with no quota row at all (pure OSS
+   * install / pre-bootstrap) is never blocked.
+   *
+   * Also blocks when the DB `macUsed` column has already reached `macLimit`
+   * (`reason: "mac"`) — a conservative fallback for synchronous/RSC callers
+   * that only have this row; it can lag the live Redis count, which
+   * {@link getAccessState} checks authoritatively.
    */
   getAccessStateFromQuota(quota: UserQuotaModel | null): AccessState {
     if (!quota) {
-      return { blocked: false, status: null, planName: null, trialEndsAt: null }
+      return {
+        blocked: false,
+        status: null,
+        planName: null,
+        trialEndsAt: null,
+        reason: null,
+      }
     }
 
     const trialExpired =
       quota.planStatus === planStatuses.enum.trial &&
       quota.periodEnd !== null &&
       new Date(quota.periodEnd).getTime() <= Date.now()
-    const blocked =
-      quota.planStatus === planStatuses.enum.expired || trialExpired
+    const trialActive =
+      quota.planStatus === planStatuses.enum.trial && !trialExpired
+    const statusAllowed =
+      quota.planStatus === planStatuses.enum.active || trialActive
+    const macLimitReached =
+      quota.macLimit !== null && quota.macUsed >= quota.macLimit
+
+    const blocked = !statusAllowed || macLimitReached
+    let reason: AccessState["reason"] = null
+    if (!statusAllowed) {
+      reason = "status"
+    } else if (macLimitReached) {
+      reason = "mac"
+    }
 
     return {
       blocked,
@@ -404,6 +448,7 @@ class UserQuotaService extends BaseService {
       planName: quota.planName,
       trialEndsAt:
         quota.planStatus === planStatuses.enum.trial ? quota.periodEnd : null,
+      reason,
     }
   }
 

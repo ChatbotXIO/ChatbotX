@@ -213,6 +213,7 @@ class InboxService extends BaseService {
 
   async disconnect(props: {
     inboxId: string
+    ownerId: string
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
@@ -221,6 +222,17 @@ class InboxService extends BaseService {
       .update(inboxModel)
       .set({ status: inboxStatuses.enum.disconnected })
       .where(eq(inboxModel.id, props.inboxId))
+
+    // Best-effort: never block/roll back the disconnect if release fails, the
+    // nightly reconcile self-heals.
+    await quotaEnforcementService
+      .release({ userId: props.ownerId, metric: "channels" })
+      .catch((err) => {
+        logger.warn(
+          { err, inboxId: props.inboxId, ownerId: props.ownerId },
+          "inbox disconnect: channel quota release failed",
+        )
+      })
   }
 
   async isConnected(props: {

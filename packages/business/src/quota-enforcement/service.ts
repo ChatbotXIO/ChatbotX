@@ -376,6 +376,16 @@ class QuotaEnforcementService {
         }
         if (counted) {
           await macTrackingService.incrementWorkspaceMacCache(workspaceId, 1)
+          // Display-only breakdown, mirroring the `contacts` pattern below.
+          // Never let a failure here affect the authoritative MAC counters above.
+          await workspaceUsageService
+            .increment(workspaceId, "mac")
+            .catch((err) => {
+              logger.warn(
+                { err, workspaceId },
+                "workspace usage mac increment failed",
+              )
+            })
         }
         // Info-only total-contacts counter: every brand-new contact counts,
         // independent of the MAC period/limit. Recorded HERE so the single
@@ -397,6 +407,44 @@ class QuotaEnforcementService {
         return { ok: true, value }
       },
     })
+  }
+
+  /**
+   * Create a brand-new contact WITHOUT consuming MAC.
+   *
+   * For contacts created passively (manual UI add, public-API upsert) where no
+   * inbound/outbound activity has occurred yet. Unlike
+   * {@link createNewContactWithMac} this applies NO MAC gate, writes NO
+   * `ContactActiveMonthly` presence row (which the authoritative MAC reconcile
+   * would otherwise re-sum), and does NOT increment `mac`. It only bumps the
+   * info-only `contacts` metric (user+pool) plus the display-only
+   * per-workspace breakdown. `contacts` is never gated, so there is no
+   * remaining-slots check and no distributed lock.
+   */
+  async createContactWithoutMac<T>(args: {
+    /** Workspace owner whose plan the `contacts` count rolls up to. */
+    ownerId: string
+    workspaceId: string
+    create: (tx: Transaction) => Promise<T>
+  }): Promise<T> {
+    const { ownerId, workspaceId, create } = args
+
+    const value = await db.transaction(async (tx) => create(tx))
+
+    const ctx = await this.resolveContext(ownerId)
+    await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
+    // Display-only breakdown; never let its failure affect the counter above
+    // (mirrors createNewContactWithMac's own workspaceUsageService call).
+    await workspaceUsageService
+      .increment(workspaceId, "contacts")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage contact increment failed",
+        )
+      })
+
+    return value
   }
 
   /** {@link macExhaustedLevel} for an already-resolved context. */
@@ -568,6 +616,12 @@ class QuotaEnforcementService {
         workspaceUsed: workspaceUsage.botMessagesUsed,
       },
       mac: { ...summary.mac, workspaceUsed: macUsed },
+      // The monthly account total intentionally reuses the lifetime
+      // per-workspace bot-message count as its display-only contribution.
+      monthlyBotMessages: {
+        ...summary.monthlyBotMessages,
+        workspaceUsed: workspaceUsage.botMessagesUsed,
+      },
     }
   }
 

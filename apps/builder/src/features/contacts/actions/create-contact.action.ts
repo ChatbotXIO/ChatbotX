@@ -202,62 +202,49 @@ export const createContact = async ({
   } = parsedInput
   const contactData = { ...rest, phoneNumber: normalizedPhone }
 
-  const result = await quotaEnforcementService.createNewContactWithMac({
-    ownerId: workspace.ownerId,
-    workspaceId,
-    create: async (tx) => {
-      const contact = await contactService.insert({
-        workspaceId,
-        data: contactData,
-        tx,
-      })
-
-      const [contactInbox] = await tx
-        .insert(contactInboxModel)
-        .values({
-          originalContactId: contact.id,
-          contactId: contact.id,
-          inboxId: inbox.id,
-          channel: inboxChannel,
-          source: contactSources.enum.direct,
-          sourceId,
+  const { contact, contactInbox } =
+    await quotaEnforcementService.createContactWithoutMac({
+      ownerId: workspace.ownerId,
+      workspaceId,
+      create: async (tx) => {
+        const contact = await contactService.insert({
+          workspaceId,
+          data: contactData,
+          tx,
         })
-        .returning()
-      if (!contactInbox) {
-        throw new ChatbotXException("Contact inbox not found")
-      }
 
-      // A re-created contact keeps its history: cancel any pending message
-      // cleanup recorded when a contact with this inbox identity was deleted.
-      await messageCleanupService.cancelByInboxSource({
-        inboxId: inbox.id,
-        sourceIds: [contactInbox.sourceId],
-        tx,
-      })
+        const [contactInbox] = await tx
+          .insert(contactInboxModel)
+          .values({
+            originalContactId: contact.id,
+            contactId: contact.id,
+            inboxId: inbox.id,
+            channel: inboxChannel,
+            source: contactSources.enum.direct,
+            sourceId,
+          })
+          .returning()
+        if (!contactInbox) {
+          throw new ChatbotXException("Contact inbox not found")
+        }
 
-      await tx.insert(conversationModel).values({
-        workspaceId,
-        contactId: contact.id,
-        id: createId(),
-      })
+        // A re-created contact keeps its history: cancel any pending message
+        // cleanup recorded when a contact with this inbox identity was deleted.
+        await messageCleanupService.cancelByInboxSource({
+          inboxId: inbox.id,
+          sourceIds: [contactInbox.sourceId],
+          tx,
+        })
 
-      return {
-        value: { contact, contactInbox },
-        contactId: contact.id,
-        contactInboxId: contactInbox.id,
-        inboxId: inbox.id,
-      }
-    },
-  })
+        await tx.insert(conversationModel).values({
+          workspaceId,
+          contactId: contact.id,
+          id: createId(),
+        })
 
-  if (!result.ok) {
-    return returnValidationErrors(createContactRequest, {
-      _errors: ["Validation Exception"],
-      phoneNumber: { _errors: ["Contact limit reached"] },
+        return { contact, contactInbox }
+      },
     })
-  }
-
-  const { contact, contactInbox } = result.value
 
   await emitContactCreated(
     workspaceId,

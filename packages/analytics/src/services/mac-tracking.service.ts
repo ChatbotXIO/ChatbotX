@@ -9,6 +9,7 @@ import {
   cacheConnections,
   distributedStore,
 } from "@chatbotx.io/redis"
+import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../lib/logger"
 import {
   anchoredPeriod,
@@ -51,7 +52,6 @@ const BLOOM_FILTER_HOUR_BUFFER_SECONDS = 120
 const BLOOM_FILTER_CAPACITY = 1_000_000
 const HOURLY_BLOOM_FILTER_CAPACITY = 100_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
-const USER_QUOTA_LIVE_KEY_PREFIX = "user-quota-live:"
 const MAC_LIVE_FIELD = "mac"
 
 type QuotaContext = {
@@ -163,10 +163,18 @@ export class MacTrackingService {
     return resolved
   }
 
-  async trackMessageOut(payloads: MacMessageOutPayload[]): Promise<void> {
+  /**
+   * Returns the per-workspace MAC count actually persisted this call (post
+   * dedup), so callers outside this package (the worker's message listener)
+   * can mirror the delta onto `WorkspaceUsage.macUsed` without duplicating
+   * the dedup/period-anchoring logic that lives in {@link track}.
+   */
+  async trackMessageOut(
+    payloads: MacMessageOutPayload[],
+  ): Promise<Map<string, number>> {
     const resolved = await this.resolveOutPayloads(payloads)
     if (resolved.length === 0) {
-      return
+      return new Map()
     }
 
     const events: MacInputEvent[] = resolved.map(
@@ -180,12 +188,15 @@ export class MacTrackingService {
         sourceId: payload.action.sourceId ?? payload.action.messageId,
       }),
     )
-    await this.track(events)
+    return await this.track(events)
   }
 
-  async trackMessageIn(payloads: MacMessageInPayload[]): Promise<void> {
+  /** See {@link trackMessageOut} for the return value's purpose. */
+  async trackMessageIn(
+    payloads: MacMessageInPayload[],
+  ): Promise<Map<string, number>> {
     if (payloads.length === 0) {
-      return
+      return new Map()
     }
 
     const events: MacInputEvent[] = []
@@ -200,7 +211,7 @@ export class MacTrackingService {
         sourceId: payload.sourceId ?? undefined,
       })
     }
-    await this.track(events)
+    return await this.track(events)
   }
 
   async trackMessageOutHourly(payloads: MacMessageOutPayload[]): Promise<void> {
@@ -404,14 +415,21 @@ export class MacTrackingService {
     }
   }
 
-  async track(events: MacInputEvent[]): Promise<void> {
+  /**
+   * Returns the per-workspace count of monthly presence rows actually
+   * inserted this call (post dedup), keyed by `workspaceId`. Callers outside
+   * this service (the worker's message listener) use this to mirror the
+   * delta onto `WorkspaceUsage.macUsed` without re-deriving dedup/period
+   * logic that lives here.
+   */
+  async track(events: MacInputEvent[]): Promise<Map<string, number>> {
     if (events.length === 0) {
-      return
+      return new Map()
     }
 
     const deduped = await this.filterDuplicateSources(events)
     if (deduped.length === 0) {
-      return
+      return new Map()
     }
 
     const workspaceIds = Array.from(new Set(deduped.map((e) => e.workspaceId)))
@@ -462,15 +480,15 @@ export class MacTrackingService {
 
     const draftRows = Array.from(draftByKey.values())
     if (draftRows.length === 0) {
-      return
+      return new Map()
     }
 
     const rows = await this.resolveMacIds(draftRows)
     if (rows.length === 0) {
-      return
+      return new Map()
     }
 
-    await this.persistMonthlyRollup(rows, contextByWorkspace)
+    return await this.persistMonthlyRollup(rows, contextByWorkspace)
   }
 
   private async resolveMacIds(drafts: DraftRow[]): Promise<PreparedRow[]> {
@@ -670,7 +688,7 @@ export class MacTrackingService {
   private async persistMonthlyRollup(
     rows: PreparedRow[],
     contextByWorkspace: Map<string, QuotaContext>,
-  ): Promise<void> {
+  ): Promise<Map<string, number>> {
     const workspaceIdByMacId = new Map<string, string>()
     for (const row of rows) {
       workspaceIdByMacId.set(row.workspaceMacId, row.workspaceId)
@@ -695,8 +713,22 @@ export class MacTrackingService {
       })
 
       await this.incrementCaches(deltas, workspaceIdByMacId, contextByWorkspace)
+
+      const workspaceTotals = new Map<string, number>()
+      for (const delta of deltas) {
+        const workspaceId = workspaceIdByMacId.get(delta.workspaceMacId)
+        if (!workspaceId || delta.count === 0) {
+          continue
+        }
+        workspaceTotals.set(
+          workspaceId,
+          (workspaceTotals.get(workspaceId) ?? 0) + delta.count,
+        )
+      }
+      return workspaceTotals
     } catch (error) {
       logger.error(error, "[MacTrackingService] monthly path failed")
+      return new Map()
     }
   }
 
@@ -766,7 +798,7 @@ export class MacTrackingService {
     }
     try {
       const client = await cacheConnections.useExisting()
-      const key = `${USER_QUOTA_LIVE_KEY_PREFIX}${userId}`
+      const key = liveKeyFor(USER_QUOTA_LABEL, userId)
 
       // Cold-seed BEFORE incrementing, using `hsetnx` so a concurrent seed can
       // never clobber a concurrent increment: whichever of them writes the

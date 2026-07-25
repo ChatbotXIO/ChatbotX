@@ -8,6 +8,7 @@ export type WorkspaceUsageMetric =
   | "channels"
   | "teamMembers"
   | "botMessages"
+  | "mac"
 
 const WORKSPACE_USAGE_LABEL = "workspace-usage"
 
@@ -17,17 +18,18 @@ class WorkspaceUsageService {
     table: workspaceUsageModel,
     idColumn: workspaceUsageModel.workspaceId,
     idKey: "workspaceId",
-    // The shared store has the broader quota metric union. `mac` and
-    // `workspaces` are deliberately never called here; they are mapped only to
-    // satisfy that closed configuration shape and are not persisted by this
-    // service.
+    // The shared store has the broader quota metric union. `workspaces` and
+    // `monthlyBotMessages` are deliberately never called here; they are
+    // mapped only to satisfy that closed configuration shape and are not
+    // persisted by this service.
     usedColumns: {
       contacts: workspaceUsageModel.contactsUsed,
       channels: workspaceUsageModel.channelsUsed,
       teamMembers: workspaceUsageModel.teamMembersUsed,
       botMessages: workspaceUsageModel.botMessagesUsed,
-      mac: workspaceUsageModel.contactsUsed,
+      mac: workspaceUsageModel.macUsed,
       workspaces: workspaceUsageModel.contactsUsed,
+      monthlyBotMessages: workspaceUsageModel.contactsUsed,
     },
     getUsed: (row, metric) => {
       if (!row) {
@@ -42,6 +44,8 @@ class WorkspaceUsageService {
           return row.teamMembersUsed
         case "botMessages":
           return row.botMessagesUsed
+        case "mac":
+          return row.macUsed
         default:
           return 0
       }
@@ -73,6 +77,7 @@ class WorkspaceUsageService {
     channelsUsed: number
     teamMembersUsed: number
     botMessagesUsed: number
+    macUsed: number
   }> {
     const counts = await this.store.getLiveCounts(workspaceId)
     return {
@@ -80,6 +85,7 @@ class WorkspaceUsageService {
       channelsUsed: counts.channels,
       teamMembersUsed: counts.teamMembers,
       botMessagesUsed: counts.botMessages,
+      macUsed: counts.mac,
     }
   }
 

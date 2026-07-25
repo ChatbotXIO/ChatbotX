@@ -1,6 +1,7 @@
 import {
   inboxService,
   instagramIntegrationExistsForPage,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -21,14 +22,17 @@ export const disconnectMessenger = async (ctx: {
   workspaceId: string
   id: string
 }) => {
-  const integrationMessenger = await findOrFail({
-    table: integrationMessengerModel,
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "Integration Messenger not found",
-  })
+  const [integrationMessenger, workspace] = await Promise.all([
+    findOrFail({
+      table: integrationMessengerModel,
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+      },
+      message: "Integration Messenger not found",
+    }),
+    workspaceService.findById({ id: ctx.workspaceId }),
+  ])
 
   const authValue = integrationMessenger.auth as MessengerAuthValue
 
@@ -99,6 +103,10 @@ export const disconnectMessenger = async (ctx: {
       .delete(integrationMessengerModel)
       .where(eq(integrationMessengerModel.id, integrationMessenger.id))
 
-    await inboxService.disconnect({ inboxId: integrationMessenger.inboxId, tx })
+    await inboxService.disconnect({
+      inboxId: integrationMessenger.inboxId,
+      ownerId: workspace.ownerId,
+      tx,
+    })
   })
 }

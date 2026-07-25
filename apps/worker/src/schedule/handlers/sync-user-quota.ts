@@ -1,9 +1,7 @@
 import { macRepository } from "@chatbotx.io/analytics"
 import {
-  liveKeyFor,
   parseLiveCount,
   tenantService,
-  USER_QUOTA_LABEL,
   userQuotaService,
   WORKSPACE_USAGE_LABEL,
   workspaceUsageService,
@@ -18,6 +16,7 @@ import {
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import { cacheConnections } from "@chatbotx.io/redis"
+import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 
 // Derived from the shared key builder so the reconcile walks exactly the keys
@@ -93,7 +92,7 @@ export const reconcileWorkspaceUsage = async (
   client: CacheClient,
 ): Promise<void> => {
   try {
-    const [workspaces, contactCounts, channelCounts, memberCounts] =
+    const [workspaces, contactCounts, channelCounts, memberCounts, macCounts] =
       await Promise.all([
         db.select({ id: workspaceModel.id }).from(workspaceModel),
         db
@@ -111,6 +110,7 @@ export const reconcileWorkspaceUsage = async (
           })
           .from(workspaceMemberModel)
           .groupBy(workspaceMemberModel.workspaceId),
+        macRepository.getActiveContactCountsByWorkspaceIds(),
       ])
 
     const contactsByWorkspace = new Map(
@@ -131,6 +131,7 @@ export const reconcileWorkspaceUsage = async (
           const contactsUsed = contactsByWorkspace.get(workspaceId) ?? 0
           const channelsUsed = channelsByWorkspace.get(workspaceId) ?? 0
           const teamMembersUsed = membersByWorkspace.get(workspaceId) ?? 0
+          const macUsed = macCounts.get(workspaceId) ?? 0
 
           await db
             .insert(workspaceUsageModel)
@@ -139,6 +140,7 @@ export const reconcileWorkspaceUsage = async (
               contactsUsed,
               channelsUsed,
               teamMembersUsed,
+              macUsed,
               syncedAt: new Date(),
             })
             .onConflictDoUpdate({
@@ -147,6 +149,7 @@ export const reconcileWorkspaceUsage = async (
                 contactsUsed,
                 channelsUsed,
                 teamMembersUsed,
+                macUsed,
                 syncedAt: new Date(),
                 updatedAt: sql`CURRENT_TIMESTAMP`,
               },
@@ -160,6 +163,8 @@ export const reconcileWorkspaceUsage = async (
             String(channelsUsed),
             "teamMembers",
             String(teamMembersUsed),
+            "mac",
+            String(macUsed),
           )
           await workspaceUsageService.invalidate(workspaceId)
         }),

@@ -15,7 +15,7 @@ import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
 import {
   buildQuotaMetrics,
-  isBlockedFromPlan,
+  resolveBlockReason,
   resolveTrialEndsAt,
 } from "@/lib/quota-metrics"
 
@@ -51,14 +51,19 @@ export default async function MainPage() {
     .map((member) => member.workspace.id)
 
   const trialEndsAt = resolveTrialEndsAt(quota)
-  const blocked = isBlockedFromPlan(quota?.planStatus ?? null, trialEndsAt)
+  const blockReason = resolveBlockReason(
+    quota?.planStatus ?? null,
+    trialEndsAt,
+    atLimit?.mac ?? false,
+  )
+  const blocked = blockReason !== null
 
   const userInfo = { name: user.name, email: user.email, image: user.image }
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:py-16">
       <WorkspaceDeletionPendingToast />
-      <ExpiredBanner blocked={cloud && blocked} />
+      <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
       <div className="flex flex-col gap-8 md:flex-row">
         <AccountRail
           isPlatformAdmin={platformAdmin}

@@ -55,6 +55,15 @@ export class MacAnalyticsService {
     return macRepository.countActiveContactsByWorkspace(input)
   }
 
+  /** Which of `contactInboxIds` are MAC-active for `periodStart`. */
+  getActiveContactInboxIds(input: {
+    workspaceId: string
+    periodStart: Date
+    contactInboxIds: string[]
+  }): Promise<Set<string>> {
+    return macRepository.getActiveContactInboxIds(input)
+  }
+
   reconcilePeriod(input: ReconcilePeriodInput): Promise<void> {
     return db.transaction((tx) => macRepository.reconcilePeriod(input, tx))
   }

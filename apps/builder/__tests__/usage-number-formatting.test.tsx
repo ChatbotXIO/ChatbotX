@@ -12,6 +12,7 @@ const LABELS: Record<QuotaMetricKey, string> = {
   contacts: "Contacts",
   mac: "Monthly active contacts",
   botMessages: "Bot messages",
+  monthlyBotMessages: "Monthly bot messages",
   workspaces: "Workspaces",
   channels: "Channels",
   teamMembers: "Team members",
@@ -29,24 +30,28 @@ const renderWithLocale = (locale: string, node: ReactNode) =>
   )
 
 describe("usage number formatting", () => {
-  test("UsageRing formats numbers with the vi app locale", () => {
+  test("UsageRing renders its label without exposing numeric usage values", () => {
     const html = renderWithLocale(
       "vi",
-      <UsageRing label="MAC" limit={10_000} used={1234} />,
+      <UsageRing label="MAC" limit={10_000} used={1234} workspaceUsed={456} />,
     )
 
-    expect(html).toContain("1.234")
-    expect(html).toContain("10.000")
+    expect(html).toContain("MAC")
+    expect(html).not.toContain("456 / 1.234 / 10.000")
+    expect(html).not.toContain("1.234")
+    expect(html).not.toContain("10.000")
   })
 
-  test("UsageRing formats numbers with the en app locale", () => {
+  test("UsageRing renders nested workspace and user fill widths", () => {
     const html = renderWithLocale(
       "en",
-      <UsageRing label="MAC" limit={10_000} used={1234} />,
+      <UsageRing label="MAC" limit={100} used={60} workspaceUsed={25} />,
     )
 
-    expect(html).toContain("1,234")
-    expect(html).toContain("10,000")
+    expect(html).toContain("bg-amber-500")
+    expect(html).toContain("bg-emerald-500")
+    expect(html).toContain('style="width:60%"')
+    expect(html).toContain('style="width:25%"')
   })
 
   test("UsageBars formats numbers with the app locale", () => {

@@ -1,5 +1,6 @@
 import { db, eq, type PgTable, sql } from "@chatbotx.io/database/client"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
+import { cacheKeyFor, liveKeyFor } from "@chatbotx.io/utils"
 import type { PgColumn } from "drizzle-orm/pg-core"
 import { logger } from "../logger"
 
@@ -41,16 +42,6 @@ export function parseLiveCount(value: string | null): number | null {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : null
 }
-
-/** Redis live-counter hash key for a scope id, namespaced by `label`. */
-export const liveKeyFor = (label: string, id: string): string =>
-  `${label}-live:${id}`
-
-/** Redis row-cache key for a scope id, namespaced by `label`. */
-export const cacheKeyFor = (label: string, id: string): string =>
-  `${label}:${id}`
-
-export const USER_QUOTA_LABEL = "user-quota"
 
 export interface LiveCounterConfig<TRow> {
   /** Fetch the row for an id from the DB (cold-start seed + reconcile source). */

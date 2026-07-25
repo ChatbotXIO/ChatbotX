@@ -25,6 +25,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceModel: {},
+  workspaceUsageModel: { workspaceId: "workspaceId-column" },
   ROOT_TENANT_ID: "1",
 }))
 

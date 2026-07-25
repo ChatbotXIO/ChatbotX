@@ -20,5 +20,6 @@ export const workspaceUsageModel = pgTable("WorkspaceUsage", {
   channelsUsed: integer().notNull().default(0),
   teamMembersUsed: integer().notNull().default(0),
   botMessagesUsed: integer().notNull().default(0),
+  macUsed: integer().notNull().default(0),
   syncedAt: timestamp(timestampConfig).notNull().defaultNow(),
 })

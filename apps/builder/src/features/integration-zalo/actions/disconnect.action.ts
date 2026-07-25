@@ -1,6 +1,6 @@
 "use server"
 
-import { inboxService } from "@chatbotx.io/business"
+import { inboxService, workspaceService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -22,14 +22,17 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
     const {
       bindArgsParsedInputs: [workspaceId, id],
     } = props
-    const integrationZalo = await findOrFail({
-      table: integrationZaloModel,
-      where: {
-        workspaceId,
-        id,
-      },
-      message: "Integration Zalo OA not found",
-    })
+    const [integrationZalo, workspace] = await Promise.all([
+      findOrFail({
+        table: integrationZaloModel,
+        where: {
+          workspaceId,
+          id,
+        },
+        message: "Integration Zalo OA not found",
+      }),
+      workspaceService.findById({ id: workspaceId }),
+    ])
 
     try {
       await integrations.zalo.disconnect(integrationZalo.auth as ZaloAuthValue)
@@ -57,6 +60,10 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
       await tx
         .delete(integrationZaloModel)
         .where(eq(integrationZaloModel.id, integrationZalo.id))
-      await inboxService.disconnect({ inboxId: integrationZalo.inboxId, tx })
+      await inboxService.disconnect({
+        inboxId: integrationZalo.inboxId,
+        ownerId: workspace.ownerId,
+        tx,
+      })
     })
   })

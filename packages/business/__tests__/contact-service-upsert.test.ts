@@ -73,21 +73,25 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   }
 })
 
+const createContactWithoutMac = vi.fn(
+  async (args: {
+    create: (tx: {
+      insert: () => ReturnType<typeof makeInsert>
+    }) => Promise<unknown>
+  }) => args.create({ insert: makeInsert }),
+)
 vi.mock("../src/quota-enforcement/service", () => ({
   quotaEnforcementService: {
-    createNewContactWithMac: vi.fn(
-      async (args: {
-        create: (tx: {
-          insert: () => ReturnType<typeof makeInsert>
-        }) => Promise<{
-          value: unknown
-        }>
-      }) => ({
-        ok: true,
-        ...(await args.create({ insert: makeInsert })),
-      }),
-    ),
+    createContactWithoutMac,
   },
+}))
+
+vi.mock("@chatbotx.io/analytics", () => ({
+  macAnalyticsService: {},
+}))
+
+vi.mock("../src/user-quota/service", () => ({
+  userQuotaService: {},
 }))
 
 vi.mock("../src/workspace/service", () => ({
@@ -121,6 +125,19 @@ describe("contactService.upsertByIdentifier", () => {
         channel: "webchat",
         source: "api",
       }),
+    )
+  })
+
+  test("creates the contact via the no-MAC path, never the MAC-gated one", async () => {
+    await contactService.upsertByIdentifier({
+      workspaceId: "ws-1",
+      identifier: "email:ada@example.com",
+      source: contactSources.enum.api,
+      data: { firstName: "Ada" },
+    })
+
+    expect(createContactWithoutMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
     )
   })
 })

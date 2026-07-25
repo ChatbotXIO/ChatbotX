@@ -1,6 +1,6 @@
 "use server"
 
-import { inboxService } from "@chatbotx.io/business"
+import { inboxService, workspaceService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import {
   coexistSyncRunModel,
@@ -24,14 +24,17 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
     }: {
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp = await findOrFail({
-        table: integrationWhatsappModel,
-        where: {
-          workspaceId,
-          id,
-        },
-        message: "Integration Whatsapp not found",
-      })
+      const [integrationWhatsapp, workspace] = await Promise.all([
+        findOrFail({
+          table: integrationWhatsappModel,
+          where: {
+            workspaceId,
+            id,
+          },
+          message: "Integration Whatsapp not found",
+        }),
+        workspaceService.findById({ id: workspaceId }),
+      ])
 
       try {
         await integrations.whatsapp.disconnect(
@@ -77,6 +80,7 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
 
         await inboxService.disconnect({
           inboxId: integrationWhatsapp.inboxId,
+          ownerId: workspace.ownerId,
           tx,
         })
       })

@@ -27,7 +27,7 @@ import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 import {
   buildWorkspaceQuotaMetrics,
-  isBlockedFromPlan,
+  resolveBlockReason,
   resolveTrialEndsAt,
 } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
@@ -89,7 +89,16 @@ export default async function WorkspaceLayout({
   }))
 
   const trialEndsAt = resolveTrialEndsAt(quota)
-  const blocked = isBlockedFromPlan(quota?.planStatus ?? null, trialEndsAt)
+  const macAtLimit =
+    usage !== null &&
+    usage.mac.limit !== null &&
+    usage.mac.used >= usage.mac.limit
+  const blockReason = resolveBlockReason(
+    quota?.planStatus ?? null,
+    trialEndsAt,
+    macAtLimit,
+  )
+  const blocked = blockReason !== null
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -126,7 +135,7 @@ export default async function WorkspaceLayout({
           {!scheduledForDeletion && (
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}
-          <ExpiredBanner blocked={cloud && blocked} />
+          <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
           {children}
         </main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />

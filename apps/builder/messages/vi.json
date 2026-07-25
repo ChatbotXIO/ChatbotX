@@ -287,6 +287,7 @@
       "contacts": "Liên hệ",
       "mac": "Liên hệ hoạt động hằng tháng",
       "botMessages": "Tin nhắn bot",
+      "monthlyBotMessages": "Tin nhắn bot (hàng tháng)",
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
       "teamMembers": "Thành viên nhóm",
@@ -317,6 +318,11 @@
       "bannerDescription": "Tạo tài nguyên mới đã bị vô hiệu hóa. Bạn vẫn có thể ngắt kết nối các kênh và lên lịch xóa workspace.",
       "bannerCta": "Nâng cấp",
       "createDisabled": "Tạo {feature} mới đã bị vô hiệu hóa. Hãy nâng cấp để tiếp tục."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Đã đạt giới hạn liên hệ hoạt động hằng tháng",
+      "bannerDescription": "Gửi và nhận tin nhắn đã tạm dừng cho đến khi bạn nâng cấp gói.",
+      "bannerCta": "Nâng cấp"
     }
   },
   "broadcasts": {
