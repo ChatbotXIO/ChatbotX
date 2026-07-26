@@ -85,8 +85,7 @@ export const webhookHandler = async (
     appSecret: props.config.clientSecret as string,
     webhookVerifyToken: props.config.verifyToken as string,
     v: version as string,
-    // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-    secure: false as any,
+    secure: true,
   })
 
   if (props.req.method === "GET") {

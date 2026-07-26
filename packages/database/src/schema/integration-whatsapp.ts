@@ -1,7 +1,30 @@
-import { boolean, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import {
+  boolean,
+  check,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
+import { whatsappRegistrationStatuses } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
+
+export type IntegrationWhatsappRegistrationError = {
+  code: string | number
+  subCode: string | number | null
+  message: string
+  type?: string
+  at: string
+}
+
+export const whatsappRegistrationStatus = pgEnum(
+  "whatsappRegistrationStatus",
+  whatsappRegistrationStatuses.options as [string, ...string[]],
+)
 
 export const integrationWhatsappModel = pgTable(
   "IntegrationWhatsapp",
@@ -17,6 +40,10 @@ export const integrationWhatsappModel = pgTable(
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),
     historyDeclined: boolean().notNull().default(false),
+    registrationStatus: whatsappRegistrationStatus()
+      .notNull()
+      .default("pending_verification"),
+    registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -34,6 +61,11 @@ export const integrationWhatsappModel = pgTable(
     uniqueIndex("IntegrationWhatsapp_inboxId_key").using(
       "btree",
       table.inboxId.asc().nullsLast(),
+    ),
+    check(
+      "IntegrationWhatsapp_registrationStatus_error_consistent",
+      sql`("registrationStatus" <> 'failed' OR "registrationError" IS NOT NULL)
+      AND ("registrationStatus" <> 'registered' OR "registrationError" IS NULL)`,
     ),
   ],
 )

@@ -3,6 +3,7 @@
 import {
   buildContext,
   connectChannelIntegration,
+  integrationWhatsappService,
   platformCredentialService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -44,6 +45,7 @@ import {
   isCoexistOnboardingIntent,
   WHATSAPP_OAUTH_CALLBACK_PATH,
 } from "../libs/embedded-signup"
+import { toRegistrationOutcome } from "../libs/registration-outcome"
 import {
   type ConnectWhatsappResult,
   type ConnectWhatsappSchema,
@@ -254,6 +256,7 @@ async function persistIntegration(params: {
           displayPhoneNumber,
           isCoexist,
           platformType,
+          registrationStatus: "pending_verification",
         })
         .onConflictDoUpdate({
           target: [integrationWhatsappModel.inboxId],
@@ -464,17 +467,6 @@ export const connectWhatsappAction = authActionClient
           }
         }
 
-        // Register the phone number on Cloud API via /register.
-        // NOTE: we intentionally call this for coexist numbers too. Skipping it
-        // leaves the number "not verified" on Cloud API and outbound sends fail
-        // (verified empirically: phone-not-verified error disappears after /register).
-        // RISK: Meta docs warn /register may push a fresh 2FA PIN for numbers still
-        // active on the WhatsApp Business App. Validate on a real coexist number that
-        // this does not lock the user out before wide rollout.
-        if (!isCoexist) {
-          await registerPhoneNumber({ auth })
-        }
-
         const { workspaceId, integrationRow } = await db.transaction((tx) =>
           persistIntegration({
             tx,
@@ -490,6 +482,19 @@ export const connectWhatsappAction = authActionClient
             platformType,
           }),
         )
+
+        if (!isCoexist) {
+          const registrationResult = await registerPhoneNumber({
+            auth,
+            phoneNumberId: phoneNumber.id,
+          })
+          const outcome = toRegistrationOutcome(registrationResult)
+          await integrationWhatsappService.recordRegistrationOutcome({
+            id: integrationRow.id,
+            workspaceId,
+            outcome,
+          })
+        }
 
         const whatsappCtx = await buildContext({
           workspaceId,

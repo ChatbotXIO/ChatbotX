@@ -30,6 +30,7 @@ export const normalizeWhatsappDisplayPhoneNumber = (phone: string): string => {
 export type WhatsappPhoneNumber = {
   verified_name: string
   code_verification_status: string
+  name_status?: string
   display_phone_number: string
   quality_rating: string
   platform_type: string
