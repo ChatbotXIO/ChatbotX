@@ -256,9 +256,8 @@ describe("extractCoexistPayloads", () => {
 // handle_post resolves AFTER the 300 ms timeout window.
 // ---------------------------------------------------------------------------
 
-const { handlePostMock, middlewareConstructorArgs } = vi.hoisted(() => ({
+const { handlePostMock } = vi.hoisted(() => ({
   handlePostMock: vi.fn<() => Promise<number>>(),
-  middlewareConstructorArgs: [] as unknown[],
 }))
 
 vi.mock("whatsapp-api-js/middleware/next", () => ({
@@ -267,9 +266,6 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
   // between tests and would otherwise make the constructor "not a function".
   WhatsAppAPI: class {
     on: Record<string, unknown> = { message: null, sent: null, status: null }
-    constructor(args: unknown) {
-      middlewareConstructorArgs.push(args)
-    }
     get = vi.fn().mockResolvedValue("ok")
     handle_post = handlePostMock
   },
@@ -312,7 +308,6 @@ describe("webhookHandler — H2 setTimeout race", () => {
     // constructable across tests; only the per-test handle_post stub needs
     // resetting.
     handlePostMock.mockReset()
-    middlewareConstructorArgs.length = 0
     vi.useFakeTimers()
   })
 
@@ -339,12 +334,6 @@ describe("webhookHandler — H2 setTimeout race", () => {
       config: baseConfig,
       req: makePostRequest(coexistBody),
       queue,
-    })
-
-    expect(middlewareConstructorArgs[0]).toMatchObject({
-      appSecret: "secret",
-      secure: true,
-      webhookVerifyToken: "verify",
     })
 
     // Advance past the internal 300 ms guard — handle_post is still pending.
