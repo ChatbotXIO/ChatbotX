@@ -23,20 +23,21 @@ import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { useCallback, useEffect, useState, useTransition } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
-import { getBrokerOrigin } from "@/lib/oauth-broker"
 import { connectWhatsappAction } from "../actions/connect.action"
+import { useEmbeddedSignupAutoConnect } from "../hooks/use-embedded-signup-auto-connect"
+import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
+import { FORM_FIELDS } from "../libs/form-fields"
 import {
-  buildFacebookOAuthDialogUrl,
-  WA_OAUTH_RESULT,
-  type WhatsappOAuthRelayResult,
-} from "../libs/embedded-signup"
-import { connectWhatsappSchema, type ManualOnboardingResult } from "../schemas"
+  type ConnectWhatsappSchema,
+  connectWhatsappSchema,
+  type ManualOnboardingResult,
+} from "../schemas"
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
 // Constants
@@ -44,18 +45,13 @@ const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
 const MAX_CARD_WIDTH = "max-w-md"
 const CARD_MARGIN = "mx-auto mt-40"
 
-// Form field names
-const FORM_FIELDS = {
-  WABA_ID: "wabaId",
-  ACCESS_TOKEN: "accessToken",
-  CONNECT_EXISTING: "connectExisting",
-  TRANSFER_PHONE_NUMBER: "transferPhoneNumber",
-  MANUAL_CONNECT: "manualConnect",
-  MARKETING_MESSAGE_LITE: "marketingMessageLite",
-  PHONE_NUMBER_ID: "phoneNumberId",
-  BUSINESS_ID: "businessId",
-  CODE: "code",
-} as const
+/**
+ * Grace period between the embedded signup returning an OAuth `code` and the
+ * connect submitting itself. There is nothing left for the user to fill in at
+ * that point, so the delay exists only to make the handoff legible instead of
+ * flashing straight past it.
+ */
+const AUTO_CONNECT_DELAY_SECONDS = 3
 
 type FormVisibility = {
   connectExisting: boolean
@@ -118,7 +114,7 @@ export default function WhatsappCreate({
   } | null>(null)
 
   // Form setup
-  const { form, handleSubmitWithAction } = useHookFormAction(
+  const { action, form, handleSubmitWithAction } = useHookFormAction(
     connectWhatsappAction,
     zodResolver(connectWhatsappSchema),
     {
@@ -230,6 +226,8 @@ export default function WhatsappCreate({
                 <ManualConnectSection watchManualConnect={watchManualConnect} />
               ) : (
                 <SdkConnectSection
+                  hasFailed={action.hasErrored}
+                  onAutoSubmit={handleSubmitWithAction}
                   settings={settings}
                   visibility={visibility}
                   watchManualConnect={watchManualConnect}
@@ -247,6 +245,10 @@ type SdkConnectSectionProps = {
   visibility: FormVisibility
   watchManualConnect: boolean
   settings: WhatsappCredentialPublic
+  /** Submits the connect form without an event, once the countdown elapses. */
+  onAutoSubmit: () => void
+  /** A failed connect hands the flow back to the user for a fresh signup. */
+  hasFailed: boolean
 }
 
 const LAUNCH_BUTTON_CLASS =
@@ -259,57 +261,27 @@ function SdkConnectSection({
   visibility,
   watchManualConnect,
   settings,
+  onAutoSubmit,
+  hasFailed,
 }: SdkConnectSectionProps) {
   const t = useTranslations()
-  const { setValue, formState, trigger } = useFormContext()
-
-  const finalSubmitRef = useRef<HTMLButtonElement>(null)
-  const watchCode = useWatch({ name: FORM_FIELDS.CODE })
-  const watchConnectExisting = useWatch({ name: FORM_FIELDS.CONNECT_EXISTING })
+  const { control } = useFormContext<ConnectWhatsappSchema>()
+  const watchConnectExisting = useWatch({
+    control,
+    name: FORM_FIELDS.CONNECT_EXISTING,
+  })
   const watchTransferPhoneNumber = useWatch({
+    control,
     name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
   })
 
-  // Submit once we have the OAuth code. The WABA / phone / business ids are not
-  // in the OAuth redirect — they are derived server-side from the token in
-  // connectWhatsappAction.
-  const submitWithCode = useCallback(
-    async (code: string) => {
-      setValue(FORM_FIELDS.CODE, code)
-      try {
-        const valid = await trigger()
-        if (valid) {
-          finalSubmitRef.current?.click()
-        }
-      } catch {
-        toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-      }
-    },
-    [setValue, trigger, t],
-  )
-
-  // The Facebook OAuth dialog redirects the code to the broker callback, which
-  // relays it back to this tab via postMessage. Trust only the broker origin —
-  // a payload from any other origin is ignored.
-  useEffect(() => {
-    const brokerOrigin = getBrokerOrigin()
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== brokerOrigin) {
-        return
-      }
-      const data = event.data as WhatsappOAuthRelayResult | undefined
-      if (data?.type !== WA_OAUTH_RESULT) {
-        return
-      }
-      if (data.status === "success" && data.code) {
-        submitWithCode(data.code)
-      } else {
-        toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-      }
-    }
-    window.addEventListener("message", handleMessage)
-    return () => window.removeEventListener("message", handleMessage)
-  }, [submitWithCode, t])
+  const { isConnecting, secondsLeft } = useEmbeddedSignupAutoConnect({
+    delaySeconds: AUTO_CONNECT_DELAY_SECONDS,
+    hasFailed,
+    onSubmit: onAutoSubmit,
+    onRelayError: () =>
+      toast.error(t("messages.connectFailed", { feature: "Whatsapp" })),
+  })
 
   const openFacebookDialog = useCallback(() => {
     const url = buildFacebookOAuthDialogUrl({
@@ -317,8 +289,8 @@ function SdkConnectSection({
       clientId: settings.clientId,
       configId: settings.configId,
       version: settings.version,
-      connectExisting: Boolean(watchConnectExisting),
-      transferPhoneNumber: Boolean(watchTransferPhoneNumber),
+      connectExisting: watchConnectExisting,
+      transferPhoneNumber: watchTransferPhoneNumber,
       locale: document.documentElement.lang || undefined,
     })
     // Open a real tab (not a popup window) — popups get blocked, and a tab keeps
@@ -329,10 +301,15 @@ function SdkConnectSection({
     }
   }, [settings, watchConnectExisting, watchTransferPhoneNumber, t])
 
-  const showLaunch = !(watchManualConnect || watchCode)
-
+  // Once Meta hands back a code the card keeps every option on screen, showing the
+  // choices the user made, but freezes all of them: the server re-derives the
+  // embedded-signup featureType from these same fields, so flipping one during the
+  // countdown would desync it from the dialog the user actually completed.
+  // A disabled fieldset does that natively — a control inside one is `:disabled` per
+  // spec, so the existing `disabled:` styles dim it and any field added here later is
+  // covered without revisiting this line.
   return (
-    <>
+    <fieldset className="space-y-4" disabled={isConnecting}>
       {visibility.connectExisting && (
         <SwitchField
           formItemClassName={SWITCH_FIELD_CLASS}
@@ -356,34 +333,52 @@ function SdkConnectSection({
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {showLaunch && (
-          <Button
-            className={LAUNCH_BUTTON_CLASS}
-            onClick={openFacebookDialog}
-            type="button"
-          >
-            {t("actions.continue")}
-          </Button>
-        )}
-
-        {watchCode && (
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              disabled={formState.isSubmitting}
-              ref={finalSubmitRef}
-              size="sm"
-              type="submit"
-              variant="secondary"
-            >
-              {formState.isSubmitting && (
-                <Loader2Icon className="animate-spin" />
-              )}
-              {t("actions.continue")}
-            </Button>
-          </div>
+        {!watchManualConnect && (
+          <EmbeddedSignupButton
+            isConnecting={isConnecting}
+            onLaunch={openFacebookDialog}
+            secondsLeft={secondsLeft}
+          />
         )}
       </div>
-    </>
+    </fieldset>
+  )
+}
+
+type EmbeddedSignupButtonProps = {
+  /** The countdown is running, or the connect is already in flight. */
+  isConnecting: boolean
+  secondsLeft: number
+  onLaunch: () => void
+}
+
+/**
+ * The card's only action. It launches the Meta dialog, then becomes a frozen status
+ * control once a code comes back, so the user can read why the form is waiting
+ * instead of being able to start a second signup over the first.
+ */
+function EmbeddedSignupButton({
+  isConnecting,
+  onLaunch,
+  secondsLeft,
+}: EmbeddedSignupButtonProps) {
+  const t = useTranslations()
+
+  if (isConnecting) {
+    return (
+      <Button disabled size="sm" type="submit" variant="secondary">
+        <Loader2Icon className="animate-spin" />
+        {secondsLeft > 0
+          ? t("whatsapp.autoConnect.countdown", { seconds: secondsLeft })
+          : t("whatsapp.autoConnect.inProgress")}
+      </Button>
+    )
+  }
+
+  return (
+    <Button className={LAUNCH_BUTTON_CLASS} onClick={onLaunch} type="button">
+      {t("actions.continue")}
+    </Button>
   )
 }
 

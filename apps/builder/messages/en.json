@@ -2946,6 +2946,10 @@
       "description": "These are special keywords that tell the WhatsApp bot what to do",
       "label": "Commands"
     },
+    "autoConnect": {
+      "countdown": "Connecting in {seconds}s…",
+      "inProgress": "Connecting…"
+    },
     "connectExisting": "Connect an existing WhatsApp Business Account",
     "embeddedSignupDone": "Signup complete — you can close this tab.",
     "embeddedSignupPopupBlocked": "Please allow pop-ups for this site, then try again.",

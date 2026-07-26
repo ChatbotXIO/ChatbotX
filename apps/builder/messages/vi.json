@@ -2963,6 +2963,10 @@
       "description": "Đây là những từ khóa đặc biệt cho bot WhatsApp biết phải làm gì",
       "label": "Lệnh"
     },
+    "autoConnect": {
+      "countdown": "Đang kết nối sau {seconds}s…",
+      "inProgress": "Đang kết nối…"
+    },
     "connectExisting": "Kết nối tài khoản WhatsApp Business hiện có",
     "embeddedSignupDone": "Đã hoàn tất đăng ký — bạn có thể đóng tab này.",
     "embeddedSignupPopupBlocked": "Vui lòng cho phép cửa sổ bật lên cho trang này rồi thử lại.",
