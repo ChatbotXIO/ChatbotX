@@ -2964,7 +2964,6 @@
       "label": "Lệnh"
     },
     "autoConnect": {
-      "countdown": "Đang kết nối sau {seconds}s…",
       "inProgress": "Đang kết nối…"
     },
     "connectExisting": "Kết nối tài khoản WhatsApp Business hiện có",

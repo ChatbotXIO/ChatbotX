@@ -45,14 +45,6 @@ const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
 const MAX_CARD_WIDTH = "max-w-md"
 const CARD_MARGIN = "mx-auto mt-40"
 
-/**
- * Grace period between the embedded signup returning an OAuth `code` and the
- * connect submitting itself. There is nothing left for the user to fill in at
- * that point, so the delay exists only to make the handoff legible instead of
- * flashing straight past it.
- */
-const AUTO_CONNECT_DELAY_SECONDS = 3
-
 type FormVisibility = {
   connectExisting: boolean
   transferPhoneNumber: boolean
@@ -245,7 +237,7 @@ type SdkConnectSectionProps = {
   visibility: FormVisibility
   watchManualConnect: boolean
   settings: WhatsappCredentialPublic
-  /** Submits the connect form without an event, once the countdown elapses. */
+  /** Submits the connect form without an event, once Meta returns a code. */
   onAutoSubmit: () => void
   /** A failed connect hands the flow back to the user for a fresh signup. */
   hasFailed: boolean
@@ -275,8 +267,7 @@ function SdkConnectSection({
     name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
   })
 
-  const { isConnecting, secondsLeft } = useEmbeddedSignupAutoConnect({
-    delaySeconds: AUTO_CONNECT_DELAY_SECONDS,
+  const { isConnecting } = useEmbeddedSignupAutoConnect({
     hasFailed,
     onSubmit: onAutoSubmit,
     onRelayError: () =>
@@ -303,8 +294,8 @@ function SdkConnectSection({
 
   // Once Meta hands back a code the card keeps every option on screen, showing the
   // choices the user made, but freezes all of them: the server re-derives the
-  // embedded-signup featureType from these same fields, so flipping one during the
-  // countdown would desync it from the dialog the user actually completed.
+  // embedded-signup featureType from these same fields, so flipping one while the
+  // connect is in flight would desync it from the dialog the user completed.
   // A disabled fieldset does that natively — a control inside one is `:disabled` per
   // spec, so the existing `disabled:` styles dim it and any field added here later is
   // covered without revisiting this line.
@@ -337,7 +328,6 @@ function SdkConnectSection({
           <EmbeddedSignupButton
             isConnecting={isConnecting}
             onLaunch={openFacebookDialog}
-            secondsLeft={secondsLeft}
           />
         )}
       </div>
@@ -346,21 +336,19 @@ function SdkConnectSection({
 }
 
 type EmbeddedSignupButtonProps = {
-  /** The countdown is running, or the connect is already in flight. */
+  /** A code has come back and the connect is in flight. */
   isConnecting: boolean
-  secondsLeft: number
   onLaunch: () => void
 }
 
 /**
  * The card's only action. It launches the Meta dialog, then becomes a frozen status
- * control once a code comes back, so the user can read why the form is waiting
+ * control once a code comes back, so the user can read why the form is busy
  * instead of being able to start a second signup over the first.
  */
 function EmbeddedSignupButton({
   isConnecting,
   onLaunch,
-  secondsLeft,
 }: EmbeddedSignupButtonProps) {
   const t = useTranslations()
 
@@ -368,9 +356,7 @@ function EmbeddedSignupButton({
     return (
       <Button disabled size="sm" type="submit" variant="secondary">
         <Loader2Icon className="animate-spin" />
-        {secondsLeft > 0
-          ? t("whatsapp.autoConnect.countdown", { seconds: secondsLeft })
-          : t("whatsapp.autoConnect.inProgress")}
+        {t("whatsapp.autoConnect.inProgress")}
       </Button>
     )
   }

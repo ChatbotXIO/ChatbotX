@@ -10,14 +10,11 @@ import {
 } from "../libs/embedded-signup"
 import { FORM_FIELDS } from "../libs/form-fields"
 import type { ConnectWhatsappSchema } from "../schemas"
-import { useAutoSubmitCountdown } from "./use-auto-submit-countdown"
 
 type UseEmbeddedSignupAutoConnectParams = {
-  /** Seconds the user sees before the connect submits itself. */
-  delaySeconds: number
   /** A failed connect hands the flow back to the user for a fresh signup. */
   hasFailed: boolean
-  /** Submits the connect form. Called once, with no event. */
+  /** Submits the connect form. Called once per code, with no event. */
   onSubmit: () => void
   /** The relay reported a failed signup; the caller owns the localized message. */
   onRelayError: () => void
@@ -26,8 +23,6 @@ type UseEmbeddedSignupAutoConnectParams = {
 type EmbeddedSignupAutoConnect = {
   /** True from the moment Meta returns a code until the connect resolves. */
   isConnecting: boolean
-  /** Seconds still to wait; `0` once the submit is in flight. */
-  secondsLeft: number
 }
 
 /**
@@ -38,15 +33,15 @@ type EmbeddedSignupAutoConnect = {
  * here because its OAuth origin is bound to `window.location`, which breaks
  * white-label custom domains. Once the code lands there is nothing left for the
  * user to fill in (the WABA / phone / business ids are derived server-side from
- * the token), so the connect submits itself after a short, visible delay.
+ * the token), so the connect submits itself right away.
  *
- * The form is the single source of truth: `code` alone gates the countdown, so
- * clearing it is all it takes to return to the launch button. A consumed OAuth
- * code can never be exchanged again, which is why a failed connect drops it
- * instead of leaving the user in front of a permanently disabled control.
+ * The form is the single source of truth: `code` alone drives both the submit
+ * and the frozen UI, so clearing it is all it takes to return to the launch
+ * button. A consumed OAuth code can never be exchanged again, which is why a
+ * failed connect drops it instead of leaving the user in front of a permanently
+ * disabled control.
  */
 export function useEmbeddedSignupAutoConnect({
-  delaySeconds,
   hasFailed,
   onSubmit,
   onRelayError,
@@ -54,6 +49,7 @@ export function useEmbeddedSignupAutoConnect({
   const { control, setValue } = useFormContext<ConnectWhatsappSchema>()
   const code = useWatch({ control, name: FORM_FIELDS.CODE })
   const handleRelayError = useCallbackRef(onRelayError)
+  const handleSubmit = useCallbackRef(onSubmit)
 
   useEffect(() => {
     const brokerOrigin = getBrokerOrigin()
@@ -89,11 +85,17 @@ export function useEmbeddedSignupAutoConnect({
     setValue(FORM_FIELDS.CODE, "")
   }, [hasFailed, setValue])
 
-  const secondsLeft = useAutoSubmitCountdown({
-    active: Boolean(code),
-    seconds: delaySeconds,
-    onElapsed: onSubmit,
-  })
+  // Submitting from an effect rather than from the message handler keeps `code` as
+  // the only trigger: the form has already committed the value by the time this
+  // runs, and re-running is tied to the value changing, so one relayed code
+  // produces exactly one submit. `handleSubmit` is stable, so a fresh closure from
+  // the caller cannot fire it a second time.
+  useEffect(() => {
+    if (!code) {
+      return
+    }
+    handleSubmit()
+  }, [code, handleSubmit])
 
-  return { isConnecting: Boolean(code), secondsLeft }
+  return { isConnecting: Boolean(code) }
 }

@@ -7,7 +7,6 @@ import { WA_OAUTH_RESULT } from "@/features/integration-whatsapp/libs/embedded-s
 
 const BROKER_ORIGIN = "https://broker.test"
 const OAUTH_CODE = "AQD-relayed-code"
-const DELAY_SECONDS = 3
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -57,13 +56,12 @@ const SETTINGS: WhatsappCredentialPublic = {
   verifyToken: "verify-token",
 }
 
-describe("WhatsappCreate embedded signup countdown", () => {
+describe("WhatsappCreate connect card", () => {
   let container: HTMLDivElement
   let root: Root
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    vi.useFakeTimers()
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -78,7 +76,6 @@ describe("WhatsappCreate embedded signup countdown", () => {
       root.unmount()
     })
     container.remove()
-    vi.useRealTimers()
   })
 
   const relayCode = () => {
@@ -89,12 +86,6 @@ describe("WhatsappCreate embedded signup countdown", () => {
           origin: BROKER_ORIGIN,
         }),
       )
-    })
-  }
-
-  const advance = (seconds: number) => {
-    act(() => {
-      vi.advanceTimersByTime(seconds * 1000)
     })
   }
 
@@ -133,29 +124,16 @@ describe("WhatsappCreate embedded signup countdown", () => {
     expect(optionStates()).toEqual(statesBefore)
   })
 
-  test("counts down on the action button and stops offering a fresh launch", () => {
+  test("reports the connect as in progress the moment the code arrives", () => {
     relayCode()
 
-    expect(actionButton()?.textContent).toContain("whatsapp.autoConnect")
-    expect(actionButton()?.textContent).toContain(String(DELAY_SECONDS))
+    // No waiting step to observe any more — the card goes straight to connecting.
+    expect(actionButton()?.textContent).toContain(
+      "whatsapp.autoConnect.inProgress",
+    )
     // The launch affordance is replaced, not merely covered: the one remaining
     // action is the frozen status control, so no second signup can be started.
     expect(actionButton()?.type).toBe("submit")
     expect(actionButton()?.disabled).toBe(true)
-
-    advance(1)
-    expect(actionButton()?.textContent).toContain(String(DELAY_SECONDS - 1))
-  })
-
-  test("reports the connect as in progress once the countdown reaches zero", () => {
-    relayCode()
-    advance(DELAY_SECONDS)
-
-    expect(actionButton()?.textContent).toContain(
-      "whatsapp.autoConnect.inProgress",
-    )
-    expect(actionButton()?.disabled).toBe(true)
-    expect(fieldset()?.disabled).toBe(true)
-    expect(switches().length).toBeGreaterThan(0)
   })
 })

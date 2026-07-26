@@ -2947,7 +2947,6 @@
       "label": "Commands"
     },
     "autoConnect": {
-      "countdown": "Connecting in {seconds}s…",
       "inProgress": "Connecting…"
     },
     "connectExisting": "Connect an existing WhatsApp Business Account",

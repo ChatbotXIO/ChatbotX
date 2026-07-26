@@ -16,7 +16,6 @@ import type { ConnectWhatsappSchema } from "@/features/integration-whatsapp/sche
 
 const BROKER_ORIGIN = "https://broker.test"
 const FOREIGN_ORIGIN = "https://evil.test"
-const DELAY_SECONDS = 3
 const OAUTH_CODE = "AQD-relayed-code"
 
 vi.mock("@/lib/oauth-broker", () => ({
@@ -31,19 +30,13 @@ type ProbeProps = {
 
 /** Mirrors the hook's output into the DOM so assertions read one source. */
 function Probe({ hasFailed, onSubmit, onRelayError }: ProbeProps) {
-  const { isConnecting, secondsLeft } = useEmbeddedSignupAutoConnect({
-    delaySeconds: DELAY_SECONDS,
+  const { isConnecting } = useEmbeddedSignupAutoConnect({
     hasFailed,
     onSubmit,
     onRelayError,
   })
 
-  return (
-    <output>
-      <span data-testid="is-connecting">{String(isConnecting)}</span>
-      <span data-testid="seconds-left">{secondsLeft}</span>
-    </output>
-  )
+  return <output data-testid="is-connecting">{String(isConnecting)}</output>
 }
 
 /**
@@ -72,7 +65,6 @@ describe("useEmbeddedSignupAutoConnect", () => {
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    vi.useFakeTimers()
     onSubmit = vi.fn<() => void>()
     onRelayError = vi.fn<() => void>()
     container = document.createElement("div")
@@ -85,7 +77,6 @@ describe("useEmbeddedSignupAutoConnect", () => {
       root.unmount()
     })
     container.remove()
-    vi.useRealTimers()
   })
 
   const render = (hasFailed = false) => {
@@ -114,36 +105,33 @@ describe("useEmbeddedSignupAutoConnect", () => {
     code,
   })
 
-  const read = (testId: string) =>
-    container.querySelector<HTMLElement>(`[data-testid='${testId}']`)
+  const isConnecting = () =>
+    container.querySelector<HTMLElement>("[data-testid='is-connecting']")
       ?.textContent
 
-  const isConnecting = () => read("is-connecting")
-  const secondsLeft = () => read("seconds-left")
-
-  test("submits itself once the countdown elapses", () => {
+  test("submits as soon as the broker relays a code", () => {
     render()
     expect(isConnecting()).toBe("false")
-
-    relay(successPayload())
-    expect(isConnecting()).toBe("true")
-    expect(secondsLeft()).toBe("3")
-
-    act(() => {
-      vi.advanceTimersByTime(1000)
-    })
-    expect(secondsLeft()).toBe("2")
     expect(onSubmit).not.toHaveBeenCalled()
 
-    act(() => {
-      vi.advanceTimersByTime(2000)
-    })
-    expect(secondsLeft()).toBe("0")
-    expect(onSubmit).toHaveBeenCalledTimes(1)
+    relay(successPayload())
 
-    // Still connecting after the deadline: the button must stay disabled while
-    // the action is in flight rather than flashing back to the launch state.
+    // No delay to advance: the code is everything the exchange needs, so the
+    // submit goes out on the same tick the value lands.
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    // Still connecting afterwards: the button must stay frozen while the action
+    // is in flight rather than flashing back to the launch state.
     expect(isConnecting()).toBe("true")
+  })
+
+  test("submits once for one code, not on every re-render", () => {
+    render()
+    relay(successPayload())
+
+    render()
+    render()
+
+    expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
   test("ignores a payload from any origin other than the broker", () => {
@@ -152,12 +140,8 @@ describe("useEmbeddedSignupAutoConnect", () => {
     relay(successPayload(), FOREIGN_ORIGIN)
 
     expect(isConnecting()).toBe("false")
-    expect(onRelayError).not.toHaveBeenCalled()
-
-    act(() => {
-      vi.advanceTimersByTime(DELAY_SECONDS * 1000)
-    })
     expect(onSubmit).not.toHaveBeenCalled()
+    expect(onRelayError).not.toHaveBeenCalled()
   })
 
   test("ignores an unrelated message from the broker origin", () => {
@@ -166,6 +150,7 @@ describe("useEmbeddedSignupAutoConnect", () => {
     relay({ type: "some-other-oauth-result", status: "success", code: "x" })
 
     expect(isConnecting()).toBe("false")
+    expect(onSubmit).not.toHaveBeenCalled()
     expect(onRelayError).not.toHaveBeenCalled()
   })
 
@@ -176,21 +161,18 @@ describe("useEmbeddedSignupAutoConnect", () => {
     relay(null)
 
     expect(isConnecting()).toBe("false")
+    expect(onSubmit).not.toHaveBeenCalled()
     expect(onRelayError).not.toHaveBeenCalled()
   })
 
-  test("reports a relay failure without arming the countdown", () => {
+  test("reports a relay failure without submitting", () => {
     render()
 
     relay({ type: WA_OAUTH_RESULT, status: "error" })
 
     expect(onRelayError).toHaveBeenCalledTimes(1)
-    expect(isConnecting()).toBe("false")
-
-    act(() => {
-      vi.advanceTimersByTime(DELAY_SECONDS * 1000)
-    })
     expect(onSubmit).not.toHaveBeenCalled()
+    expect(isConnecting()).toBe("false")
   })
 
   test("treats a success payload with no code as a failure", () => {
@@ -199,57 +181,33 @@ describe("useEmbeddedSignupAutoConnect", () => {
     relay({ type: WA_OAUTH_RESULT, status: "success" })
 
     expect(onRelayError).toHaveBeenCalledTimes(1)
+    expect(onSubmit).not.toHaveBeenCalled()
     expect(isConnecting()).toBe("false")
   })
 
   test("returns to the launch state when the connect fails", () => {
     render()
     relay(successPayload())
-
-    act(() => {
-      vi.advanceTimersByTime(DELAY_SECONDS * 1000)
-    })
     expect(onSubmit).toHaveBeenCalledTimes(1)
 
     // A consumed code cannot be exchanged again, so failing must drop it.
     render(true)
 
     expect(isConnecting()).toBe("false")
-    expect(secondsLeft()).toBe("3")
   })
 
   test("re-arms for a second signup after a failure", () => {
     render()
     relay(successPayload())
-    act(() => {
-      vi.advanceTimersByTime(DELAY_SECONDS * 1000)
-    })
     render(true)
 
     // `hasErrored` drops back to false while the next submit is executing, which
     // is what lets a second failure reset the flow again.
     render(false)
     relay(successPayload("AQD-second-code"))
+
     expect(isConnecting()).toBe("true")
-
-    act(() => {
-      vi.advanceTimersByTime(DELAY_SECONDS * 1000)
-    })
     expect(onSubmit).toHaveBeenCalledTimes(2)
-  })
-
-  test("does not submit after the section unmounts", () => {
-    render()
-    relay(successPayload())
-
-    act(() => {
-      root.unmount()
-    })
-    act(() => {
-      vi.advanceTimersByTime(10_000)
-    })
-
-    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   test("stops listening to the relay after unmount", () => {
