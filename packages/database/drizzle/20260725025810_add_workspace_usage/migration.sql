@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS "WorkspaceUsage";
+
 CREATE TABLE "WorkspaceUsage" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
