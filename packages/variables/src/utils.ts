@@ -79,19 +79,43 @@ const capitalizeFirstLetter = (value: string | null): string | null => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-export const extractVariables = (text: string): string[] => {
-  const regex = /\{\{([\w.]+)\}\}/g
-  return [...new Set(Array.from(text.matchAll(regex), (match) => match[1]))]
+const VARIABLE_RE = /\{\{([\w.]+)\}\}/g
+
+// `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
+// where the placeholder sits — a call the position-independent mapping can't
+// make. resolveGenderLabel returns the opening form; inside a sentence it is
+// that label lowercased.
+const SENTENCE_CASED_VARIABLES = new Set<string>([systemFieldTypes.enum.gender])
+
+// The text before a placeholder that opens the message, a line, or a sentence.
+const SENTENCE_OPENING_RE = /(?:^|[.!?…\n\r])[\s"'“‘([]*$/
+
+export type InterpolateOptions = {
+  /** Case `{{gender}}` by position. Prose wants it; URLs and JSON must not. */
+  sentenceCase?: boolean
 }
+
+export const extractVariables = (text: string): string[] => [
+  ...new Set(Array.from(text.matchAll(VARIABLE_RE), (match) => match[1])),
+]
 
 export const interpolate = (
   text: string,
   mapping: Record<string, string>,
+  options: InterpolateOptions = {},
 ): string =>
-  text.replace(
-    /\{\{([\w.]+)\}\}/g,
-    (match, variable) => mapping[variable] ?? match,
-  )
+  text.replace(VARIABLE_RE, (match, variable: string, offset: number) => {
+    const value = mapping[variable]
+    if (value === undefined) {
+      return match
+    }
+    if (!(options.sentenceCase && SENTENCE_CASED_VARIABLES.has(variable))) {
+      return value
+    }
+    return SENTENCE_OPENING_RE.test(text.slice(0, offset))
+      ? value
+      : value.toLowerCase()
+  })
 
 const getTimezone = ({
   contact,
@@ -208,6 +232,16 @@ const getCommentMessagePostId = (
   return typeof postId === "string" ? postId : null
 }
 
+// The contact's own language, in the order the platform learns it: the channel
+// language we recorded, then the locale their profile reports. Undefined when
+// the contact never told us, so the caller picks the fallback. Blank values
+// normalise away here rather than shadowing that fallback.
+const getContactLanguage = (
+  context: ContactVariableContext,
+): string | undefined =>
+  languageFromLocale(context.contactInbox?.language) ??
+  languageFromLocale(context.contact.locale)
+
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
   key: SystemFieldType,
@@ -234,7 +268,10 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.profile_pic:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.gender:
-      return resolveGenderLabel(workspace?.language, contact.gender)
+      return resolveGenderLabel(
+        getContactLanguage(context) ?? workspace?.language,
+        contact.gender,
+      )
     case systemFieldTypes.enum.user_country:
       return contact.country
     case systemFieldTypes.enum.user_state:

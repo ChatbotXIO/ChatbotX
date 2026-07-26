@@ -182,6 +182,137 @@ describe("contactVariableService.replaceAll", () => {
   })
 })
 
+describe("contactVariableService.replaceAll gender casing", () => {
+  const genderVariables = (gender: string | null, language: string) => ({
+    ...createVariables(),
+    contact: { ...contact, gender } as ContactModel,
+    workspace: { ...workspace, language } as WorkspaceModel,
+  })
+
+  test("capitalises {{gender}} when it opens the text", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{gender}} vui lòng xác nhận đơn hàng.",
+        variables: genderVariables("male", "vi"),
+      }),
+    ).resolves.toBe("Anh vui lòng xác nhận đơn hàng.")
+  })
+
+  test("lowercases {{gender}} inside a sentence", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Xin chào {{gender}}, đơn hàng đã được giao.",
+        variables: genderVariables("female", "vi"),
+      }),
+    ).resolves.toBe("Xin chào chị, đơn hàng đã được giao.")
+  })
+
+  test("capitalises {{gender}} after a sentence break and after a newline", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Cảm ơn. {{gender}} nhé!\n{{gender}} cần hỗ trợ gì thêm không?",
+        variables: genderVariables(null, "vi"),
+      }),
+    ).resolves.toBe("Cảm ơn. Anh/Chị nhé!\nAnh/Chị cần hỗ trợ gì thêm không?")
+  })
+
+  test("keeps the Vietnamese labels for a region-tagged workspace language", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Kính gửi {{gender}}",
+        variables: genderVariables("female", "vi-VN"),
+      }),
+    ).resolves.toBe("Kính gửi chị")
+  })
+
+  test("falls back to the English labels for other workspace languages", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{gender}} — hello {{gender}}",
+        variables: genderVariables("male", "de"),
+      }),
+    ).resolves.toBe("Male — hello male")
+  })
+
+  test("leaves other variables untouched by the sentence casing", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Hi {{first_name}}, {{gender}}!",
+        variables: genderVariables("male", "vi"),
+      }),
+    ).resolves.toBe("Hi Ada, anh!")
+  })
+})
+
+describe("contactVariableService.replaceAll gender language", () => {
+  const render = (input: {
+    workspaceLanguage: string
+    contactLocale?: string | null
+    inboxLanguage?: string | null
+  }) =>
+    contactVariableService.replaceAll({
+      text: "{{gender}}",
+      variables: {
+        ...createVariables(),
+        contact: {
+          ...contact,
+          gender: "female",
+          locale: input.contactLocale ?? null,
+        } as ContactModel,
+        contactInbox: {
+          ...contactInbox,
+          language: input.inboxLanguage ?? null,
+        } as ContactInboxModel,
+        workspace: {
+          ...workspace,
+          language: input.workspaceLanguage,
+        } as WorkspaceModel,
+      },
+    })
+
+  test("prefers the contact channel language over the workspace language", async () => {
+    await expect(
+      render({ inboxLanguage: "vi", workspaceLanguage: "en" }),
+    ).resolves.toBe("Chị")
+  })
+
+  test("falls back to the language read from the contact locale", async () => {
+    await expect(
+      render({ contactLocale: "vi_VN", workspaceLanguage: "en" }),
+    ).resolves.toBe("Chị")
+  })
+
+  test("prefers the channel language over the contact locale", async () => {
+    await expect(
+      render({
+        contactLocale: "vi_VN",
+        inboxLanguage: "en",
+        workspaceLanguage: "vi",
+      }),
+    ).resolves.toBe("Female")
+  })
+
+  test("falls back to the workspace language when the contact has none", async () => {
+    await expect(render({ workspaceLanguage: "vi" })).resolves.toBe("Chị")
+  })
+
+  test("treats a blank contact language as unknown so the workspace wins", async () => {
+    await expect(
+      render({
+        contactLocale: "",
+        inboxLanguage: "",
+        workspaceLanguage: "vi",
+      }),
+    ).resolves.toBe("Chị")
+  })
+
+  test("keeps the contact language even when it differs from the workspace", async () => {
+    await expect(
+      render({ contactLocale: "en_US", workspaceLanguage: "vi" }),
+    ).resolves.toBe("Female")
+  })
+})
+
 describe("contactVariableService.getAll", () => {
   test("uses a provided contact inbox object and skips the inbox query", async () => {
     mockContactFindFirst.mockResolvedValue(contact)
