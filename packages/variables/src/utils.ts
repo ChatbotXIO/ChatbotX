@@ -232,6 +232,16 @@ const getCommentMessagePostId = (
   return typeof postId === "string" ? postId : null
 }
 
+// The contact's own language, in the order the platform learns it: the channel
+// language we recorded, then the locale their profile reports. Undefined when
+// the contact never told us, so the caller picks the fallback. Blank values
+// normalise away here rather than shadowing that fallback.
+const getContactLanguage = (
+  context: ContactVariableContext,
+): string | undefined =>
+  languageFromLocale(context.contactInbox?.language) ??
+  languageFromLocale(context.contact.locale)
+
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
   key: SystemFieldType,
@@ -258,7 +268,10 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.profile_pic:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.gender:
-      return resolveGenderLabel(workspace?.language, contact.gender)
+      return resolveGenderLabel(
+        getContactLanguage(context) ?? workspace?.language,
+        contact.gender,
+      )
     case systemFieldTypes.enum.user_country:
       return contact.country
     case systemFieldTypes.enum.user_state:
