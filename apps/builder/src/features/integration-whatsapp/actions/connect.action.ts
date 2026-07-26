@@ -3,6 +3,7 @@
 import {
   buildContext,
   connectChannelIntegration,
+  inboxService,
   integrationWhatsappService,
   platformCredentialService,
   workspaceService,
@@ -45,6 +46,7 @@ import {
   isCoexistOnboardingIntent,
   WHATSAPP_OAUTH_CALLBACK_PATH,
 } from "../libs/embedded-signup"
+import { buildWhatsappPhoneName } from "../libs/phone-name"
 import { toRegistrationOutcome } from "../libs/registration-outcome"
 import {
   type ConnectWhatsappResult,
@@ -228,6 +230,18 @@ async function persistIntegration(params: {
   const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
     phoneNumber.display_phone_number,
   )
+  const basePhoneName = phoneNumber.verified_name.trim() || displayPhoneNumber
+  const hasWorkspaceDuplicateName =
+    await inboxService.existsByWorkspaceIdAndName({
+      tx,
+      workspaceId: resolvedWorkspaceId,
+      name: basePhoneName,
+    })
+  const phoneName = buildWhatsappPhoneName({
+    verifiedName: basePhoneName,
+    displayPhoneNumber,
+    hasWorkspaceDuplicateName,
+  })
 
   let integrationRow: IntegrationWhatsappModel | undefined
 
@@ -239,7 +253,7 @@ async function persistIntegration(params: {
       workspaceId: resolvedWorkspaceId,
       channel: "whatsapp",
       sourceId: phoneNumber.id,
-      name: phoneNumber.verified_name,
+      name: phoneName,
     },
     insertIntegration: async (inboxId) => {
       const [row] = await tx
@@ -252,7 +266,7 @@ async function persistIntegration(params: {
           phoneNumberId: phoneNumber.id,
           wabaId,
           businessId,
-          name: phoneNumber.verified_name,
+          name: phoneName,
           displayPhoneNumber,
           isCoexist,
           platformType,

@@ -100,6 +100,23 @@ class InboxService extends BaseService {
     })
   }
 
+  async existsByWorkspaceIdAndName(props: {
+    workspaceId: string
+    name: string
+    tx?: DatabaseClient
+  }): Promise<boolean> {
+    const client = props.tx ?? db
+    const row = await client.query.inboxModel.findFirst({
+      where: {
+        workspaceId: props.workspaceId,
+        name: props.name,
+      },
+      columns: { id: true },
+    })
+
+    return row !== undefined
+  }
+
   async resolveBroadcastInboxIds(input: {
     workspaceId: string
     channels?: ChannelType[] | null
