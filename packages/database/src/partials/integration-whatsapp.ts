@@ -13,3 +13,12 @@ export const whatsappTemplateCategories = z.enum(["MARKETING", "UTILITY"])
 export type WhatsappTemplateCategory = z.infer<
   typeof whatsappTemplateCategories
 >
+
+export const whatsappRegistrationStatuses = z.enum([
+  "pending_verification",
+  "registered",
+  "failed",
+])
+export type WhatsappRegistrationStatus = z.infer<
+  typeof whatsappRegistrationStatuses
+>

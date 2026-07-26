@@ -1,7 +1,13 @@
+import {
+  ChannelError,
+  ChannelErrorCategory,
+  UNKNOWN_ERROR,
+} from "@chatbotx.io/sdk"
 import ky, { HTTPError } from "ky"
 import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue, WhatsappException } from "../exception"
+import { mapToChannelError } from "../lib/error-mapper"
 import { logger } from "../lib/logger"
 
 const api = ky.create({
@@ -123,27 +129,98 @@ function retrieveCreditLineId(
   })
 }
 
-export function registerPhoneNumber({ auth }: { auth: WhatsappAuthValue }) {
+export type RegisterPhoneNumberResult =
+  | { status: "registered" }
+  | { status: "verification_required"; error: ChannelError }
+  | { status: "failed"; error: ChannelError }
+
+const PHONE_VERIFICATION_REQUIRED_CODE = 133_006
+
+const isVerificationRequiredError = (error: ChannelError): boolean =>
+  Number(error.code) === PHONE_VERIFICATION_REQUIRED_CODE
+
+const createVerificationRequiredError = (phoneNumberId: string) => {
+  const error = new ChannelError(
+    "WhatsApp phone number verification is required before registration.",
+    ChannelErrorCategory.PERMISSION_DENIED,
+    {
+      code: PHONE_VERIFICATION_REQUIRED_CODE,
+      httpStatusCode: 403,
+      subCode: null,
+      type: "PhoneVerificationRequired",
+    },
+  )
+  error.setOriginError({ phoneNumberId })
+  return error
+}
+
+const createPhoneNumberNotFoundError = (phoneNumberId: string) => {
+  const error = new ChannelError(
+    "WhatsApp phone number was not found in the selected WhatsApp Business Account.",
+    ChannelErrorCategory.PERMISSION_DENIED,
+    {
+      code: UNKNOWN_ERROR.code,
+      httpStatusCode: 404,
+      subCode: null,
+      type: "PhoneNumberNotFound",
+    },
+  )
+  error.setOriginError({ phoneNumberId })
+  return error
+}
+
+export function registerPhoneNumber({
+  auth,
+  phoneNumberId,
+  pin,
+}: {
+  auth: WhatsappAuthValue
+  phoneNumberId: string
+  pin?: string
+}): Promise<RegisterPhoneNumberResult> {
   const { version = DEFAULT_API_VERSION } = auth
 
   return rescue(async () => {
     const phoneNumbers = await getPhoneNumbers(auth)
+    const phoneNumber = phoneNumbers.find(
+      (candidate) => candidate.id === phoneNumberId,
+    )
 
-    for (const phoneNumber of phoneNumbers) {
-      if (phoneNumber.code_verification_status !== "VERIFIED") {
-        continue
+    if (!phoneNumber) {
+      return {
+        status: "failed",
+        error: createPhoneNumberNotFoundError(phoneNumberId),
       }
+    }
 
-      const pin = generatePin(phoneNumber.id, auth.metadata.wabaId)
+    if (phoneNumber.code_verification_status !== "VERIFIED") {
+      return {
+        status: "verification_required",
+        error: createVerificationRequiredError(phoneNumberId),
+      }
+    }
+
+    try {
+      const registrationPin =
+        pin ?? generatePin(phoneNumber.id, auth.metadata.wabaId)
+
       await api.post(`${API_URL}/${version}/${phoneNumber.id}/register`, {
         json: {
           messaging_product: "whatsapp",
-          pin,
+          pin: registrationPin,
         },
         headers: {
           Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
       })
+      return { status: "registered" }
+    } catch (error) {
+      const channelError = mapToChannelError(error)
+      if (isVerificationRequiredError(channelError)) {
+        return { status: "verification_required", error: channelError }
+      }
+
+      return { status: "failed", error: channelError }
     }
   })
 }
