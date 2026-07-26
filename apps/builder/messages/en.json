@@ -287,6 +287,7 @@
       "contacts": "Contacts",
       "mac": "Monthly active contacts",
       "botMessages": "Bot messages",
+      "monthlyBotMessages": "Bot messages (monthly)",
       "workspaces": "Workspaces",
       "channels": "Channels",
       "teamMembers": "Team members"
@@ -315,6 +316,12 @@
       "bannerDescription": "Creating new resources is disabled. You can still disconnect channels and schedule workspace deletion.",
       "bannerCta": "Upgrade",
       "createDisabled": "Creating new {feature} is disabled. Upgrade to continue."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Monthly active contact limit reached",
+      "bannerDescription": "Sending and receiving messages is paused until you upgrade your plan.",
+      "bannerCta": "Upgrade",
+      "createDisabled": "Creating new {feature} is disabled until you upgrade your plan."
     }
   },
   "broadcasts": {

@@ -20,6 +20,9 @@ const {
   mockBulkCreate,
   mockBulkUpdateTracking,
   mockCreateMessageRepository,
+  mockWorkspaceFind,
+  mockQuotaIncrementBy,
+  mockWorkspaceUsageIncrement,
 } = vi.hoisted(() => {
   const mockBulkCreate = vi.fn().mockResolvedValue([])
   const mockBulkCreateAttachments = vi.fn().mockResolvedValue([])
@@ -41,6 +44,9 @@ const {
     mockBulkCreate,
     mockBulkUpdateTracking: vi.fn().mockResolvedValue(null),
     mockCreateMessageRepository,
+    mockWorkspaceFind: vi.fn(),
+    mockQuotaIncrementBy: vi.fn().mockResolvedValue(undefined),
+    mockWorkspaceUsageIncrement: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -111,6 +117,15 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
+  workspaceService: {
+    find: mockWorkspaceFind,
+  },
+  quotaEnforcementService: {
+    incrementBy: mockQuotaIncrementBy,
+  },
+  workspaceUsageService: {
+    increment: mockWorkspaceUsageIncrement,
   },
 }))
 
@@ -317,6 +332,12 @@ describe("bulkImportHistorical", () => {
       bulkCreate: mockBulkCreate,
       bulkCreateAttachments: vi.fn().mockResolvedValue([]),
     })
+    mockWorkspaceFind.mockResolvedValue({
+      id: "workspace-1",
+      ownerId: "owner-1",
+    })
+    mockQuotaIncrementBy.mockResolvedValue(undefined)
+    mockWorkspaceUsageIncrement.mockResolvedValue(undefined)
   })
 
   it("empty batch returns zero counts without opening a transaction", async () => {
@@ -364,6 +385,64 @@ describe("bulkImportHistorical", () => {
     expect(result.skippedContacts).toBe(0)
     expect(result.failedMessages).toBe(0)
     expect(result.contactInboxIds.get("src-1")).toBe("ci-1")
+  })
+
+  it("bumps the info-only contacts quota for newly-imported contacts, never MAC", async () => {
+    stubNewContactsTransaction([
+      {
+        sourceId: "src-1",
+        contactId: "id-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ])
+    mockBulkCreate.mockResolvedValueOnce([{ id: "m-1", sourceId: "m-src-1" }])
+
+    await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      batch: [{ contact: contact("src-1"), messages: [msg("m-src-1")] }],
+    })
+
+    expect(mockWorkspaceFind).toHaveBeenCalledWith({
+      where: { id: workspaceId },
+    })
+    expect(mockQuotaIncrementBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "contacts",
+      count: 1,
+    })
+    expect(mockWorkspaceUsageIncrement).toHaveBeenCalledWith(
+      workspaceId,
+      "contacts",
+      1,
+    )
+  })
+
+  it("does not touch the contacts quota when no new contact is imported", async () => {
+    // All contacts already exist — bulkImportContacts resolves them without
+    // any new insert, so importedContacts stays 0 (mirrors the idempotent
+    // re-run scenario below).
+    enqueueSelect({
+      rows: [{ id: "ci-existing", sourceId: "src-1", contactId: "c-existing" }],
+    })
+    enqueueSelect({
+      rows: [{ id: "conv-existing", contactId: "c-existing" }],
+    })
+    mockBulkCreate.mockResolvedValueOnce([])
+
+    const result = await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      batch: [{ contact: contact("src-1"), messages: [] }],
+    })
+
+    expect(result.importedContacts).toBe(0)
+    expect(mockWorkspaceFind).not.toHaveBeenCalled()
+    expect(mockQuotaIncrementBy).not.toHaveBeenCalled()
+    expect(mockWorkspaceUsageIncrement).not.toHaveBeenCalled()
   })
 
   it("flushes contact-inbox activity in one bulk service call", async () => {

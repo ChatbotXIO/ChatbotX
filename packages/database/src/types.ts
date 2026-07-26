@@ -25,6 +25,7 @@ export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type WorkspaceMemberModel =
   typeof schema.workspaceMemberModel.$inferSelect
 export type UserQuotaModel = typeof schema.userQuotaModel.$inferSelect
+export type WorkspaceUsageModel = typeof schema.workspaceUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect

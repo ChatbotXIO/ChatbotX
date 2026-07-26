@@ -28,6 +28,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   inboxModel: {},
+  workspaceUsageModel: { workspaceId: "workspaceId-column" },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({

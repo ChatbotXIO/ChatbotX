@@ -229,7 +229,13 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
     expect(distributedStore.delete).not.toHaveBeenCalled()
   })
 
-  test("creates an unblocked active trial access state", async () => {
+  test("blocks the lockdown-fallback trial via the mac gate (macLimit 0 means 'cannot act')", async () => {
+    // No snapshot mocked in this suite's beforeEach, so ensureBootstrapPlan
+    // stamps BOOTSTRAP_TRIAL_FALLBACK (every limit 0, including macLimit).
+    // The access gate now enforces that "0 macUsed >= 0 macLimit" fail-closed
+    // stance directly, matching the fallback's documented intent (the user
+    // can log in, but not act) instead of relying only on the per-resource
+    // *Limit: 0 columns to block individual creates.
     await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     const [values] = insertBuilder.values.mock.calls[0]
@@ -246,7 +252,8 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
     })
 
     expect(accessState).toMatchObject({
-      blocked: false,
+      blocked: true,
+      reason: "mac",
       planName: "Trial",
       status: "trial",
     })

@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "87aa899b-0047-41df-afa4-ea5d7f45f609",
-  "prevIds": ["aa239284-842c-4462-b5d3-5d1f610c8d8b"],
+  "id": "8d352f7b-93ae-4fcd-89cf-f174d4ad8bd5",
+  "prevIds": ["87aa899b-0047-41df-afa4-ea5d7f45f609"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -621,6 +621,12 @@
     {
       "isRlsEnabled": false,
       "name": "UserQuota",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceUsage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -8630,6 +8636,136 @@
       "entityType": "columns",
       "schema": "public",
       "table": "UserQuota"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "contactsUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "channelsUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "teamMembersUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "botMessagesUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "macUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "syncedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceUsage"
     },
     {
       "type": "bigint",
@@ -26525,6 +26661,19 @@
       "schemaTo": "public",
       "tableTo": "Workspace",
       "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "WorkspaceUsage_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WorkspaceUsage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ErrorLog_workspaceId_Workspace_id_fkey",
@@ -28924,6 +29073,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "WorkspaceUsage_pkey",
+      "schema": "public",
+      "table": "WorkspaceUsage",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "ErrorLog_pkey",
       "schema": "public",
       "table": "ErrorLog",
@@ -29538,6 +29695,15 @@
       "name": "UserQuota_userId_key",
       "schema": "public",
       "table": "UserQuota",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "nullsNotDistinct": false,
+      "name": "WorkspaceUsage_workspaceId_key",
+      "schema": "public",
+      "table": "WorkspaceUsage",
       "entityType": "uniques"
     },
     {

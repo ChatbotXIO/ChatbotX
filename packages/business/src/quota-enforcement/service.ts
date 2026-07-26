@@ -1,9 +1,11 @@
-import { macTrackingService } from "@chatbotx.io/analytics"
+import { macAnalyticsService, macTrackingService } from "@chatbotx.io/analytics"
 import { db, type Transaction } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
+import { logger } from "../logger"
 import { type QuotaMetric, userQuotaService } from "../user-quota/service"
+import { workspaceUsageService } from "../workspace-usage/service"
 
 const ALL_METRICS: readonly QuotaMetric[] = [
   "workspaces",
@@ -25,6 +27,17 @@ export type QuotaUsageSummary = Record<
   QuotaMetric,
   { used: number; limit: number | null }
 >
+
+export type WorkspaceQuotaUsageSummary = Omit<
+  Record<QuotaMetric, { used: number; limit: number | null }>,
+  "workspaces"
+> & {
+  [Metric in Exclude<QuotaMetric, "workspaces">]: {
+    workspaceUsed: number
+    used: number
+    limit: number | null
+  }
+}
 
 type QuotaContext = {
   tenantId: string
@@ -363,6 +376,16 @@ class QuotaEnforcementService {
         }
         if (counted) {
           await macTrackingService.incrementWorkspaceMacCache(workspaceId, 1)
+          // Display-only breakdown, mirroring the `contacts` pattern below.
+          // Never let a failure here affect the authoritative MAC counters above.
+          await workspaceUsageService
+            .increment(workspaceId, "mac")
+            .catch((err) => {
+              logger.warn(
+                { err, workspaceId },
+                "workspace usage mac increment failed",
+              )
+            })
         }
         // Info-only total-contacts counter: every brand-new contact counts,
         // independent of the MAC period/limit. Recorded HERE so the single
@@ -370,10 +393,58 @@ class QuotaEnforcementService {
         // can forget to bump `contacts` (callers previously did this by hand,
         // and the bulk-import path forgot it entirely).
         await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
+        // The workspace row is a display-only breakdown. Never let a failure
+        // here affect the authoritative UserQuota increment above.
+        await workspaceUsageService
+          .increment(workspaceId, "contacts")
+          .catch((err) => {
+            logger.warn(
+              { err, workspaceId },
+              "workspace usage contact increment failed",
+            )
+          })
 
         return { ok: true, value }
       },
     })
+  }
+
+  /**
+   * Create a brand-new contact WITHOUT consuming MAC.
+   *
+   * For contacts created passively (manual UI add, public-API upsert) where no
+   * inbound/outbound activity has occurred yet. Unlike
+   * {@link createNewContactWithMac} this applies NO MAC gate, writes NO
+   * `ContactActiveMonthly` presence row (which the authoritative MAC reconcile
+   * would otherwise re-sum), and does NOT increment `mac`. It only bumps the
+   * info-only `contacts` metric (user+pool) plus the display-only
+   * per-workspace breakdown. `contacts` is never gated, so there is no
+   * remaining-slots check and no distributed lock.
+   */
+  async createContactWithoutMac<T>(args: {
+    /** Workspace owner whose plan the `contacts` count rolls up to. */
+    ownerId: string
+    workspaceId: string
+    create: (tx: Transaction) => Promise<T>
+  }): Promise<T> {
+    const { ownerId, workspaceId, create } = args
+
+    const value = await db.transaction(async (tx) => create(tx))
+
+    const ctx = await this.resolveContext(ownerId)
+    await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
+    // Display-only breakdown; never let its failure affect the counter above
+    // (mirrors createNewContactWithMac's own workspaceUsageService call).
+    await workspaceUsageService
+      .increment(workspaceId, "contacts")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage contact increment failed",
+        )
+      })
+
+    return value
   }
 
   /** {@link macExhaustedLevel} for an already-resolved context. */
@@ -508,6 +579,57 @@ class QuotaEnforcementService {
         },
       ]),
     ) as QuotaUsageSummary
+  }
+
+  /**
+   * Adds this workspace's display-only contribution to the unchanged,
+   * enforcement-authoritative account summary. WorkspaceUsage is never read by
+   * a limit or consumption path.
+   */
+  async getWorkspaceUsageSummary(args: {
+    userId: string
+    workspaceId: string
+  }): Promise<WorkspaceQuotaUsageSummary> {
+    const [summary, workspaceUsage, macUsed] = await Promise.all([
+      this.getUsageSummary(args.userId),
+      workspaceUsageService.getUsage(args.workspaceId),
+      macAnalyticsService.getActiveContactCountByWorkspaceId({
+        workspaceId: args.workspaceId,
+      }),
+    ])
+
+    return {
+      contacts: {
+        ...summary.contacts,
+        workspaceUsed: workspaceUsage.contactsUsed,
+      },
+      channels: {
+        ...summary.channels,
+        workspaceUsed: workspaceUsage.channelsUsed,
+      },
+      teamMembers: {
+        ...summary.teamMembers,
+        workspaceUsed: workspaceUsage.teamMembersUsed,
+      },
+      botMessages: {
+        ...summary.botMessages,
+        workspaceUsed: workspaceUsage.botMessagesUsed,
+      },
+      // Reads straight from the `WorkspaceMac` ledger rather than
+      // `workspaceUsage.macUsed`, even though both are grounded from the same
+      // source by the scheduled reconcile: this DB read is always fresh, while
+      // `workspaceUsage.macUsed` is a Redis-cached mirror that only advances
+      // when every MAC write-through succeeds. `macUsed` still gets written
+      // (mirrors `contactsUsed`'s pattern) for callers that want the counter
+      // shape without an extra `@chatbotx.io/analytics` round-trip.
+      mac: { ...summary.mac, workspaceUsed: macUsed },
+      // The monthly account total intentionally reuses the lifetime
+      // per-workspace bot-message count as its display-only contribution.
+      monthlyBotMessages: {
+        ...summary.monthlyBotMessages,
+        workspaceUsed: workspaceUsage.botMessagesUsed,
+      },
+    }
   }
 
   /**

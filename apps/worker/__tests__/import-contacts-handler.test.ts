@@ -95,6 +95,17 @@ const workspaceFind = vi.fn()
 // Returns the set of source ids already linked to the inbox. Per call so the
 // processBatch pre-check and the insert-time re-check can return different sets.
 const findExistingSourceIds = vi.fn(async () => new Set<string>())
+// MAC spies: the import handler must never touch these (see the
+// "does not increment MAC" regression test below). Present in the mock only
+// so a future accidental import surfaces as a call these tests can assert
+// against, not as a silent module-resolution failure. `incrementBy` and
+// `workspaceUsageIncrement` ARE expected to be called now for the info-only
+// `contacts` metric.
+const createNewContactWithMac = vi.fn()
+const incrementBy = vi.fn()
+const workspaceUsageIncrement = vi.fn()
+const claimNewActiveContact = vi.fn()
+const claimNewActiveContacts = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
@@ -112,6 +123,23 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
+  quotaEnforcementService: {
+    createNewContactWithMac: (...args: unknown[]) =>
+      createNewContactWithMac(...args),
+    incrementBy: (...args: unknown[]) => incrementBy(...args),
+  },
+  workspaceUsageService: {
+    increment: (...args: unknown[]) => workspaceUsageIncrement(...args),
+  },
+}))
+
+vi.mock("@chatbotx.io/analytics", () => ({
+  macTrackingService: {
+    claimNewActiveContact: (...args: unknown[]) =>
+      claimNewActiveContact(...args),
+    claimNewActiveContacts: (...args: unknown[]) =>
+      claimNewActiveContacts(...args),
   },
 }))
 
@@ -216,6 +244,13 @@ beforeEach(() => {
   headObject.mockResolvedValue({ ContentLength: 1024 })
   workspaceFind.mockReset()
   workspaceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
+  createNewContactWithMac.mockReset()
+  incrementBy.mockReset()
+  incrementBy.mockResolvedValue(undefined)
+  workspaceUsageIncrement.mockReset()
+  workspaceUsageIncrement.mockResolvedValue(undefined)
+  claimNewActiveContact.mockReset()
+  claimNewActiveContacts.mockReset()
 })
 
 const runContactsImport = (row: unknown) =>
@@ -515,5 +550,58 @@ describe("contacts import pipeline", () => {
     expect(lastUpdate()).toMatchObject({ status: "failed" })
     // Bad meta is rejected before the object stream is ever fetched.
     expect(getObjectStream).not.toHaveBeenCalled()
+  })
+
+  test("counts imported contacts toward the info-only contacts quota, never MAC", async () => {
+    // Locks in the invariant documented at handler.ts: import creates contact
+    // records and bumps the info-only `contacts` metric, but MAC is counted
+    // later only from real interaction — this path must never reserve MAC
+    // quota or touch the MAC ledger/presence row.
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,first@example.com",
+        "ext-2,+15557654321,second@example.com",
+      ]),
+    )
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 2,
+      failedCount: 0,
+    })
+    expect(createNewContactWithMac).not.toHaveBeenCalled()
+    expect(claimNewActiveContact).not.toHaveBeenCalled()
+    expect(claimNewActiveContacts).not.toHaveBeenCalled()
+    expect(incrementBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "contacts",
+      count: 2,
+    })
+    expect(workspaceUsageIncrement).toHaveBeenCalledWith("ws-1", "contacts", 2)
+  })
+
+  test("does not touch the contacts quota when no row is actually inserted", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findExistingSourceIds.mockResolvedValue(new Set(["ext-1"]))
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,ok@example.com",
+      ]),
+    )
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 0,
+      failedCount: 1,
+    })
+    expect(incrementBy).not.toHaveBeenCalled()
+    expect(workspaceUsageIncrement).not.toHaveBeenCalled()
   })
 })

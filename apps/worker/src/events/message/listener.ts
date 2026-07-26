@@ -1,3 +1,7 @@
+import type {
+  MacMessageInPayload,
+  MacMessageOutPayload,
+} from "@chatbotx.io/analytics"
 import {
   broadcastAnalyticsService,
   contactAnalyticsService,
@@ -5,7 +9,10 @@ import {
   macTrackingService,
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
-import { contactInboxService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  workspaceUsageService,
+} from "@chatbotx.io/business"
 import type {
   EventBusMessageMetadata,
   MessageEvenTypeMap,
@@ -14,6 +21,42 @@ import type {
 } from "@chatbotx.io/event-bus"
 import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
+import { logger } from "../../lib/logger"
+
+/**
+ * Mirrors the per-workspace MAC deltas `macTrackingService.trackMessage{In,Out}`
+ * actually persisted (post dedup) onto `WorkspaceUsage.macUsed`, the same
+ * display-only breakdown `quotaEnforcementService.createNewContactWithMac`
+ * write-throughs at the sync chokepoint. Best-effort: a failure here never
+ * affects the authoritative `UserQuota.macUsed`/`WorkspaceMac.macCount`
+ * counters, which `track()` already persisted before returning.
+ */
+async function mirrorWorkspaceUsageMac(
+  deltas: Map<string, number>,
+): Promise<void> {
+  await Promise.all(
+    Array.from(deltas.entries()).map(([workspaceId, delta]) =>
+      workspaceUsageService
+        .increment(workspaceId, "mac", delta)
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId, delta },
+            "workspace usage mac increment failed",
+          )
+        }),
+    ),
+  )
+}
+
+async function trackMessageOutAndMirror(payloads: MacMessageOutPayload[]) {
+  const deltas = await macTrackingService.trackMessageOut(payloads)
+  await mirrorWorkspaceUsageMac(deltas)
+}
+
+async function trackMessageInAndMirror(payloads: MacMessageInPayload[]) {
+  const deltas = await macTrackingService.trackMessageIn(payloads)
+  await mirrorWorkspaceUsageMac(deltas)
+}
 
 function formatSendFailureError(errorData: unknown): string {
   if (errorData instanceof Error) {
@@ -95,7 +138,7 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     },
     {
       name: "mac-tracking",
-      handler: macTrackingService.trackMessageOut.bind(macTrackingService),
+      handler: trackMessageOutAndMirror,
     },
     {
       name: "active-hourly",
@@ -161,7 +204,7 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
   [messageEventTypeSchema.enum["message:received"]]: [
     {
       name: "mac-tracking",
-      handler: macTrackingService.trackMessageIn.bind(macTrackingService),
+      handler: trackMessageInAndMirror,
     },
     {
       name: "active-hourly",

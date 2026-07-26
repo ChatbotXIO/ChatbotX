@@ -19,7 +19,9 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { workspaceUsageService } from "../workspace-usage/service"
 import type { ListInboxesRequest, ListInboxesResponse } from "./schema"
 
 type InboxWhere = Partial<{ id: string; workspaceId: string }>
@@ -197,11 +199,22 @@ class InboxService extends BaseService {
       .values({ id: data.id ?? createId(), ...data })
       .returning()
 
+    await workspaceUsageService
+      .increment(data.workspaceId, "channels")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId: data.workspaceId },
+          "workspace usage channel increment failed",
+        )
+      })
+
     return { inbox, wasCreated: true }
   }
 
   async disconnect(props: {
     inboxId: string
+    ownerId: string
+    workspaceId: string
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
@@ -210,6 +223,28 @@ class InboxService extends BaseService {
       .update(inboxModel)
       .set({ status: inboxStatuses.enum.disconnected })
       .where(eq(inboxModel.id, props.inboxId))
+
+    // Best-effort: never block/roll back the disconnect if release fails, the
+    // nightly reconcile self-heals.
+    await quotaEnforcementService
+      .release({ userId: props.ownerId, metric: "channels" })
+      .catch((err) => {
+        logger.warn(
+          { err, inboxId: props.inboxId, ownerId: props.ownerId },
+          "inbox disconnect: channel quota release failed",
+        )
+      })
+
+    // Display-only breakdown, mirroring the `contacts` release. Never let a
+    // failure here affect the authoritative counter released above.
+    await workspaceUsageService
+      .decrement(props.workspaceId, "channels")
+      .catch((err) => {
+        logger.warn(
+          { err, inboxId: props.inboxId, workspaceId: props.workspaceId },
+          "inbox disconnect: workspace usage channel decrement failed",
+        )
+      })
   }
 
   async isConnected(props: {

@@ -118,9 +118,17 @@ export const workspaceActionClient = workspaceActionClientAllowExpired.use(
     // self-hosted editions have no quota row and stay unrestricted. The quota
     // read is cached, so this adds no per-action DB round-trip in the hot path.
     if (isCloud()) {
-      const { blocked } = await userQuotaService.getAccessState(ctx.user.id)
+      const { blocked, reason } = await userQuotaService.getAccessState(
+        ctx.user.id,
+      )
       if (blocked) {
-        throw new ChatbotXException("Trial expired", "trialExpired", 403)
+        throw reason === "mac"
+          ? new ChatbotXException(
+              "Monthly active contact limit reached",
+              "macLimitReached",
+              403,
+            )
+          : new ChatbotXException("Trial expired", "trialExpired", 403)
       }
     }
 

@@ -8,12 +8,20 @@ import { AlertTriangleIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 
-export async function ExpiredBanner({ blocked }: { blocked: boolean }) {
+interface ExpiredBannerProps {
+  blocked: boolean
+  /** Why access is blocked; picks the banner copy. Defaults to the plan/trial message. */
+  reason?: "status" | "mac" | null
+}
+
+export async function ExpiredBanner({ blocked, reason }: ExpiredBannerProps) {
   if (!blocked) {
     return null
   }
 
-  const t = await getTranslations("billing.trialExpired")
+  const t = await getTranslations(
+    reason === "mac" ? "billing.macLimitReached" : "billing.trialExpired",
+  )
 
   return (
     <Alert className="border-amber-500/40 bg-amber-500/5" variant="warning">

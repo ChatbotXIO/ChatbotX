@@ -1,6 +1,6 @@
 "use server"
 
-import { inboxService } from "@chatbotx.io/business"
+import { inboxService, workspaceService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import {
@@ -17,11 +17,14 @@ export const disconnectTiktokAction = workspaceActionClientAllowExpired
     }: {
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      const integrationTiktok = await findOrFail({
-        table: integrationTiktokModel,
-        where: { workspaceId, id },
-        message: "Integration TikTok not found",
-      })
+      const [integrationTiktok, workspace] = await Promise.all([
+        findOrFail({
+          table: integrationTiktokModel,
+          where: { workspaceId, id },
+          message: "Integration TikTok not found",
+        }),
+        workspaceService.findById({ id: workspaceId }),
+      ])
 
       await db.transaction(async (tx) => {
         await tx
@@ -29,6 +32,8 @@ export const disconnectTiktokAction = workspaceActionClientAllowExpired
           .where(eq(integrationTiktokModel.id, integrationTiktok.id))
         await inboxService.disconnect({
           inboxId: integrationTiktok.inboxId,
+          ownerId: workspace.ownerId,
+          workspaceId,
           tx,
         })
       })

@@ -24,8 +24,8 @@ export interface QuotaSummary {
 }
 
 /**
- * Sidebar-footer plan + usage block (ManyChat-style). Renders a circular usage
- * ring for the headline metric and a plan-state CTA:
+ * Sidebar-footer plan + usage block. Renders a segmented usage bar for the
+ * headline metric and a plan-state CTA:
  *  - trial   → countdown text + prominent Upgrade CTA.
  *  - pastDue → destructive "Update payment" CTA.
  * Renders nothing when collapsed to icons, or when there is no limit to show
@@ -43,7 +43,7 @@ export function NavUsage({
   const t = useTranslations()
   const { state, isMobile } = useSidebar()
 
-  // The rail is too narrow to render the ring/CTA when collapsed to icons.
+  // The rail is too narrow to render the usage bar/CTA when collapsed to icons.
   if (state === "collapsed" && !isMobile) {
     return null
   }
@@ -65,6 +65,7 @@ export function NavUsage({
           label={usageLabels[primary.key]}
           limit={primary.limit}
           used={primary.used}
+          workspaceUsed={primary.workspaceUsed ?? 0}
         />
       )}
 

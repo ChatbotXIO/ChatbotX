@@ -8,6 +8,8 @@ import type {
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { logger } from "../logger"
+import { workspaceUsageService } from "../workspace-usage/service"
 
 type WorkspaceMemberWithWorkspace = WorkspaceMemberModel & {
   workspace: WorkspaceModel
@@ -27,7 +29,41 @@ export class WorkspaceMemberService extends BaseService {
       .values(data)
       .returning()
 
+    await workspaceUsageService
+      .increment(data.workspaceId, "teamMembers")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId: data.workspaceId },
+          "workspace usage team member increment failed",
+        )
+      })
+
     return workspaceMember
+  }
+
+  async delete(props: {
+    id: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { id, workspaceId, tx = db } = props
+    await tx
+      .delete(workspaceMemberModel)
+      .where(
+        and(
+          eq(workspaceMemberModel.id, id),
+          eq(workspaceMemberModel.workspaceId, workspaceId),
+        ),
+      )
+
+    await workspaceUsageService
+      .decrement(workspaceId, "teamMembers")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage team member decrement failed",
+        )
+      })
   }
 
   async listByUserIdUncached(props: {

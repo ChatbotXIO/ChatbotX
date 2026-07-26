@@ -1,19 +1,22 @@
 import { macRepository } from "@chatbotx.io/analytics"
 import {
-  liveKeyFor,
   parseLiveCount,
   tenantService,
-  USER_QUOTA_LABEL,
   userQuotaService,
+  WORKSPACE_USAGE_LABEL,
+  workspaceUsageService,
 } from "@chatbotx.io/business"
 import { count, db, eq, sql } from "@chatbotx.io/database/client"
 import {
   contactModel,
   inboxModel,
   userQuotaModel,
+  workspaceMemberModel,
   workspaceModel,
+  workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import { cacheConnections } from "@chatbotx.io/redis"
+import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 
 // Derived from the shared key builder so the reconcile walks exactly the keys
@@ -33,6 +36,8 @@ type CacheClient = Awaited<ReturnType<typeof cacheConnections.useExisting>>
 
 export const syncUserQuota = async (): Promise<void> => {
   const client = await cacheConnections.useExisting()
+
+  await reconcileWorkspaceUsage(client)
 
   // SCAN instead of KEYS to avoid blocking Redis on large key sets
   const userIds: string[] = []
@@ -75,6 +80,98 @@ export const syncUserQuota = async (): Promise<void> => {
   for (let i = 0; i < allUserIds.length; i += BATCH_SIZE) {
     const batch = allUserIds.slice(i, i + BATCH_SIZE)
     await Promise.all(batch.map(reconcileUser))
+  }
+}
+
+/**
+ * Re-ground the display-only WorkspaceUsage breakdown from its source tables.
+ * Bot messages intentionally remain untouched because their account-level
+ * counterpart is also write-through-only.
+ */
+export const reconcileWorkspaceUsage = async (
+  client: CacheClient,
+): Promise<void> => {
+  try {
+    const [workspaces, contactCounts, channelCounts, memberCounts, macCounts] =
+      await Promise.all([
+        db.select({ id: workspaceModel.id }).from(workspaceModel),
+        db
+          .select({ workspaceId: contactModel.workspaceId, used: count() })
+          .from(contactModel)
+          .groupBy(contactModel.workspaceId),
+        db
+          .select({ workspaceId: inboxModel.workspaceId, used: count() })
+          .from(inboxModel)
+          .groupBy(inboxModel.workspaceId),
+        db
+          .select({
+            workspaceId: workspaceMemberModel.workspaceId,
+            used: count(),
+          })
+          .from(workspaceMemberModel)
+          .groupBy(workspaceMemberModel.workspaceId),
+        macRepository.getActiveContactCountsByWorkspaceIds(),
+      ])
+
+    const contactsByWorkspace = new Map(
+      contactCounts.map((row) => [row.workspaceId, row.used]),
+    )
+    const channelsByWorkspace = new Map(
+      channelCounts.map((row) => [row.workspaceId, row.used]),
+    )
+    const membersByWorkspace = new Map(
+      memberCounts.map((row) => [row.workspaceId, row.used]),
+    )
+
+    const BATCH_SIZE = 50
+    for (let i = 0; i < workspaces.length; i += BATCH_SIZE) {
+      const batch = workspaces.slice(i, i + BATCH_SIZE)
+      await Promise.all(
+        batch.map(async ({ id: workspaceId }) => {
+          const contactsUsed = contactsByWorkspace.get(workspaceId) ?? 0
+          const channelsUsed = channelsByWorkspace.get(workspaceId) ?? 0
+          const teamMembersUsed = membersByWorkspace.get(workspaceId) ?? 0
+          const macUsed = macCounts.get(workspaceId) ?? 0
+
+          await db
+            .insert(workspaceUsageModel)
+            .values({
+              workspaceId,
+              contactsUsed,
+              channelsUsed,
+              teamMembersUsed,
+              macUsed,
+              syncedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: workspaceUsageModel.workspaceId,
+              set: {
+                contactsUsed,
+                channelsUsed,
+                teamMembersUsed,
+                macUsed,
+                syncedAt: new Date(),
+                updatedAt: sql`CURRENT_TIMESTAMP`,
+              },
+            })
+
+          await client.hset(
+            liveKeyFor(WORKSPACE_USAGE_LABEL, workspaceId),
+            "contacts",
+            String(contactsUsed),
+            "channels",
+            String(channelsUsed),
+            "teamMembers",
+            String(teamMembersUsed),
+            "mac",
+            String(macUsed),
+          )
+          await workspaceUsageService.invalidate(workspaceId)
+        }),
+      )
+    }
+  } catch (err) {
+    logger.error({ err }, "workspace-usage: failed to reconcile usage")
   }
 }
 

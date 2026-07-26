@@ -3,6 +3,9 @@
 import {
   contactInboxService,
   messageCleanupService,
+  quotaEnforcementService,
+  workspaceService,
+  workspaceUsageService,
 } from "@chatbotx.io/business"
 import { db, inArray, sql } from "@chatbotx.io/database/client"
 import { contactSources } from "@chatbotx.io/database/partials"
@@ -645,6 +648,30 @@ export const bulkImportContacts = async (props: {
     })?.catch((error) => {
       logger.error(error, "[coexist] Failed to emit contact:created")
     })
+  }
+
+  // Info-only `contacts` count for the newly-created contacts in this batch.
+  // MAC is not consumed here — Coexist history sync is a passive backfill, not
+  // real-time message activity.
+  if (importedContacts > 0) {
+    const workspace = await workspaceService.find({
+      where: { id: workspaceId },
+    })
+    if (workspace) {
+      await quotaEnforcementService.incrementBy({
+        userId: workspace.ownerId,
+        metric: "contacts",
+        count: importedContacts,
+      })
+      await workspaceUsageService
+        .increment(workspaceId, "contacts", importedContacts)
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId },
+            "workspace usage contact increment failed",
+          )
+        })
+    }
   }
 
   return {

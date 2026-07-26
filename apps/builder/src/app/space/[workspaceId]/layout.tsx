@@ -26,8 +26,8 @@ import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 import {
-  buildQuotaMetrics,
-  isBlockedFromPlan,
+  buildWorkspaceQuotaMetrics,
+  resolveBlockReason,
   resolveTrialEndsAt,
 } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
@@ -56,14 +56,26 @@ export default async function WorkspaceLayout({
   const cloud = isCloud()
 
   // Check if user is a member of the workspace
-  const [allWorkspaceMembers, { storageUrl }, platformAdmin, quota, usage] =
-    await Promise.all([
-      workspaceMemberService.listByUserId({ userId: user.id }),
-      getTenantSettings(),
-      isPlatformAdmin(user),
-      cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
-      cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
-    ])
+  const [
+    allWorkspaceMembers,
+    { storageUrl },
+    platformAdmin,
+    quota,
+    usage,
+    atLimit,
+  ] = await Promise.all([
+    workspaceMemberService.listByUserId({ userId: user.id }),
+    getTenantSettings(),
+    isPlatformAdmin(user),
+    cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
+    cloud
+      ? quotaEnforcementService.getWorkspaceUsageSummary({
+          userId: user.id,
+          workspaceId,
+        })
+      : null,
+    cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
+  ])
   const targetWorkspaceMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
   )
@@ -84,13 +96,18 @@ export default async function WorkspaceLayout({
   }))
 
   const trialEndsAt = resolveTrialEndsAt(quota)
-  const blocked = isBlockedFromPlan(quota?.planStatus ?? null, trialEndsAt)
+  const blockReason = resolveBlockReason(
+    quota?.planStatus ?? null,
+    trialEndsAt,
+    atLimit?.mac ?? false,
+  )
+  const blocked = blockReason !== null
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
     planStatus: quota?.planStatus ?? null,
     trialEndsAt,
-    metrics: buildQuotaMetrics(usage),
+    metrics: buildWorkspaceQuotaMetrics(usage),
   }
 
   const cookieStore = await cookies()
@@ -121,7 +138,7 @@ export default async function WorkspaceLayout({
           {!scheduledForDeletion && (
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}
-          <ExpiredBanner blocked={cloud && blocked} />
+          <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
           {children}
         </main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
