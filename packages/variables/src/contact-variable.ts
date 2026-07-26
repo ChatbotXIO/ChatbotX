@@ -144,7 +144,8 @@ export const contactVariableService = {
         }
       }
 
-      return interpolate(text, mapping)
+      // Prose: "Anh vui lòng…" opening a sentence, "Xin chào anh" inside one.
+      return interpolate(text, mapping, { sentenceCase: true })
     } catch (error) {
       const message = "Unable to render custom fields to message"
       logger.error(error, message)

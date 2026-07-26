@@ -182,6 +182,68 @@ describe("contactVariableService.replaceAll", () => {
   })
 })
 
+describe("contactVariableService.replaceAll gender casing", () => {
+  const genderVariables = (gender: string | null, language: string) => ({
+    ...createVariables(),
+    contact: { ...contact, gender } as ContactModel,
+    workspace: { ...workspace, language } as WorkspaceModel,
+  })
+
+  test("capitalises {{gender}} when it opens the text", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{gender}} vui lòng xác nhận đơn hàng.",
+        variables: genderVariables("male", "vi"),
+      }),
+    ).resolves.toBe("Anh vui lòng xác nhận đơn hàng.")
+  })
+
+  test("lowercases {{gender}} inside a sentence", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Xin chào {{gender}}, đơn hàng đã được giao.",
+        variables: genderVariables("female", "vi"),
+      }),
+    ).resolves.toBe("Xin chào chị, đơn hàng đã được giao.")
+  })
+
+  test("capitalises {{gender}} after a sentence break and after a newline", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Cảm ơn. {{gender}} nhé!\n{{gender}} cần hỗ trợ gì thêm không?",
+        variables: genderVariables(null, "vi"),
+      }),
+    ).resolves.toBe("Cảm ơn. Anh/Chị nhé!\nAnh/Chị cần hỗ trợ gì thêm không?")
+  })
+
+  test("keeps the Vietnamese labels for a region-tagged workspace language", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Kính gửi {{gender}}",
+        variables: genderVariables("female", "vi-VN"),
+      }),
+    ).resolves.toBe("Kính gửi chị")
+  })
+
+  test("falls back to the English labels for other workspace languages", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{gender}} — hello {{gender}}",
+        variables: genderVariables("male", "de"),
+      }),
+    ).resolves.toBe("Male — hello male")
+  })
+
+  test("leaves other variables untouched by the sentence casing", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Hi {{first_name}}, {{gender}}!",
+        variables: genderVariables("male", "vi"),
+      }),
+    ).resolves.toBe("Hi Ada, anh!")
+  })
+})
+
 describe("contactVariableService.getAll", () => {
   test("uses a provided contact inbox object and skips the inbox query", async () => {
     mockContactFindFirst.mockResolvedValue(contact)
