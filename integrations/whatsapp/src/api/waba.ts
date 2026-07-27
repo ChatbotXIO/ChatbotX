@@ -6,7 +6,6 @@ import type {
   WhatsappAuthValue,
   WhatsappPagination,
 } from "../schema"
-import type { WhatsappPhoneNumberResponse } from "./phone-number"
 
 export type WhatsappWabaMMLite = {
   marketing_messages_onboarding_status?: WhatsappMarketingMessagesLiteApiStatus
@@ -19,7 +18,6 @@ export type WhatsappWabaDetailResponse = WhatsappWabaMMLite & {
     id: string
     name: string
   }
-  phone_numbers: WhatsappPhoneNumberResponse
 }
 
 export type WhatsappMarketingMessagesLiteApiStatus =
@@ -39,7 +37,7 @@ export function findWaba(props: {
   version?: string
 }) {
   const { version = DEFAULT_API_VERSION } = props
-  const fields = props.fields || "name,owner_business_info,phone_numbers"
+  const fields = props.fields || "name,owner_business_info"
 
   return rescue(() =>
     ky

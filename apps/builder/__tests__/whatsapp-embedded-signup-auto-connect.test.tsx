@@ -1,6 +1,6 @@
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { FormProvider, useForm } from "react-hook-form"
+import { FormProvider, useForm, useWatch } from "react-hook-form"
 import {
   afterEach,
   beforeEach,
@@ -35,8 +35,18 @@ function Probe({ hasFailed, onSubmit, onRelayError }: ProbeProps) {
     onSubmit,
     onRelayError,
   })
+  const phoneNumberId = useWatch<ConnectWhatsappSchema>({
+    name: "phoneNumberId",
+  })
+  const wabaId = useWatch<ConnectWhatsappSchema>({ name: "wabaId" })
 
-  return <output data-testid="is-connecting">{String(isConnecting)}</output>
+  return (
+    <>
+      <output data-testid="is-connecting">{String(isConnecting)}</output>
+      <output data-testid="phone-number-id">{phoneNumberId}</output>
+      <output data-testid="waba-id">{wabaId}</output>
+    </>
+  )
 }
 
 /**
@@ -50,6 +60,10 @@ function Harness({ children }: { children: ReactNode }) {
       transferPhoneNumber: false,
       manualConnect: false,
       marketingMessageLite: true,
+      wabaId: "",
+      phoneNumberId: "",
+      signupSessionId: "",
+      oauthCodeSource: undefined,
       code: "",
     },
   })
@@ -108,6 +122,11 @@ describe("useEmbeddedSignupAutoConnect", () => {
   const isConnecting = () =>
     container.querySelector<HTMLElement>("[data-testid='is-connecting']")
       ?.textContent
+  const phoneNumberId = () =>
+    container.querySelector<HTMLElement>("[data-testid='phone-number-id']")
+      ?.textContent
+  const wabaId = () =>
+    container.querySelector<HTMLElement>("[data-testid='waba-id']")?.textContent
 
   test("submits as soon as the broker relays a code", () => {
     render()
@@ -122,6 +141,20 @@ describe("useEmbeddedSignupAutoConnect", () => {
     // Still connecting afterwards: the button must stay frozen while the action
     // is in flight rather than flashing back to the launch state.
     expect(isConnecting()).toBe("true")
+  })
+
+  test("writes relayed selection ids before submitting", () => {
+    render()
+
+    relay({
+      ...successPayload(),
+      phoneNumberId: "phone-123",
+      wabaId: "waba-456",
+    })
+
+    expect(phoneNumberId()).toBe("phone-123")
+    expect(wabaId()).toBe("waba-456")
+    expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
   test("submits once for one code, not on every re-render", () => {

@@ -1,9 +1,12 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
+import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import {
   type IntegrationWhatsappRegistrationError,
   integrationWhatsappModel,
 } from "@chatbotx.io/database/schema"
+import type { WhatsappSignupSessionModel } from "@chatbotx.io/database/types"
+import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 
@@ -18,6 +21,28 @@ type RecordRegistrationOutcomeInput = {
   id: string
   workspaceId: string
   outcome: RegistrationOutcome
+}
+
+type CreateSignupSessionInput = {
+  userId: string
+  ownerId: string
+  workspaceId?: string | null
+  wabaId: string
+  businessId: string
+  accessToken: string
+  apiVersion: string
+  candidatePhoneNumberIds: string[]
+}
+
+type ConsumeSignupSessionInput = {
+  id: string
+  userId: string
+  ownerId: string
+  phoneNumberId: string
+}
+
+type ConsumedSignupSession = WhatsappSignupSessionModel & {
+  accessToken: string
 }
 
 const serializeRegistrationError = (
@@ -58,6 +83,53 @@ const buildRegistrationUpdate = (outcome: RegistrationOutcome) => {
 }
 
 class IntegrationWhatsappService extends BaseService {
+  findConnectedPhoneNumberIds(phoneNumberIds: string[]): Promise<Set<string>> {
+    return integrationWhatsappRepository.findConnectedPhoneNumberIds(
+      phoneNumberIds,
+    )
+  }
+
+  async createSignupSession(
+    input: CreateSignupSessionInput,
+  ): Promise<WhatsappSignupSessionModel> {
+    if (input.candidatePhoneNumberIds.length === 0) {
+      throw new Error(
+        "Cannot create a WhatsApp signup session without candidates",
+      )
+    }
+
+    const encryptedAccessToken = await encryptUtils.encryptText(
+      input.accessToken,
+    )
+
+    return integrationWhatsappRepository.createSignupSession({
+      userId: input.userId,
+      ownerId: input.ownerId,
+      workspaceId: input.workspaceId,
+      wabaId: input.wabaId,
+      businessId: input.businessId,
+      encryptedAccessToken,
+      apiVersion: input.apiVersion,
+      candidatePhoneNumberIds: input.candidatePhoneNumberIds,
+    })
+  }
+
+  async consumeSignupSession(
+    input: ConsumeSignupSessionInput,
+  ): Promise<ConsumedSignupSession | null> {
+    const session =
+      await integrationWhatsappRepository.consumeSignupSession(input)
+    if (!session) {
+      return null
+    }
+
+    const accessToken = await encryptUtils.decryptText(
+      encryptedDataSchema.parse(session.encryptedAccessToken),
+    )
+
+    return { ...session, accessToken }
+  }
+
   async recordRegistrationOutcome(
     input: RecordRegistrationOutcomeInput,
   ): Promise<void> {

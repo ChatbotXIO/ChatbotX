@@ -44,6 +44,9 @@ export type WhatsappPhoneNumberResponse = {
   paging: WhatsappPagination
 }
 
+const PHONE_NUMBER_PAGE_LIMIT = 100
+const PHONE_NUMBER_MAX_PAGES = 20
+
 export function listPhoneNumbers(props: {
   wabaId: string
   accessToken: string
@@ -51,18 +54,37 @@ export function listPhoneNumbers(props: {
 }): Promise<WhatsappPhoneNumberResponse> {
   const { version = DEFAULT_API_VERSION } = props
 
-  return rescue(() =>
-    ky
-      .get<WhatsappPhoneNumberResponse>(
-        `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
-        {
+  return rescue(async () => {
+    const data: WhatsappPhoneNumber[] = []
+    let paging: WhatsappPagination = { cursors: { before: "", after: "" } }
+    const firstUrl = new URL(
+      `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
+    )
+    firstUrl.searchParams.set("limit", String(PHONE_NUMBER_PAGE_LIMIT))
+    let nextUrl: string | undefined = firstUrl.toString()
+
+    for (let page = 0; nextUrl && page < PHONE_NUMBER_MAX_PAGES; page += 1) {
+      const response: WhatsappPhoneNumberResponse = await ky
+        .get<WhatsappPhoneNumberResponse>(nextUrl, {
           headers: {
             Authorization: `Bearer ${props.accessToken}`,
           },
-        },
-      )
-      .json(),
-  )
+        })
+        .json()
+
+      data.push(...response.data)
+      paging = response.paging
+
+      const candidateNextUrl: string | undefined = response.paging?.next
+      if (!candidateNextUrl || candidateNextUrl === nextUrl) {
+        break
+      }
+
+      nextUrl = candidateNextUrl
+    }
+
+    return { data, paging: { cursors: paging.cursors } }
+  })
 }
 
 export function findPhoneNumber(props: {

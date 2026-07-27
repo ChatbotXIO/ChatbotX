@@ -9,6 +9,7 @@ import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue, WhatsappException } from "../exception"
 import { mapToChannelError } from "../lib/error-mapper"
 import { logger } from "../lib/logger"
+import { listPhoneNumbers } from "./phone-number"
 
 const api = ky.create({
   timeout: 60_000,
@@ -181,8 +182,12 @@ export function registerPhoneNumber({
   const { version = DEFAULT_API_VERSION } = auth
 
   return rescue(async () => {
-    const phoneNumbers = await getPhoneNumbers(auth)
-    const phoneNumber = phoneNumbers.find(
+    const phoneNumbers = await listPhoneNumbers({
+      wabaId: auth.metadata.wabaId,
+      accessToken: auth.tokens.accessToken,
+      version,
+    })
+    const phoneNumber = phoneNumbers.data.find(
       (candidate) => candidate.id === phoneNumberId,
     )
 
@@ -222,27 +227,6 @@ export function registerPhoneNumber({
 
       return { status: "failed", error: channelError }
     }
-  })
-}
-
-function getPhoneNumbers(auth: WhatsappAuthValue) {
-  const { version = DEFAULT_API_VERSION } = auth
-
-  return rescue(async () => {
-    const response = await api
-      .get(`${API_URL}/${version}/${auth.metadata.wabaId}/phone_numbers`, {
-        headers: {
-          Authorization: `Bearer ${auth.tokens.accessToken}`,
-        },
-      })
-      .json<{
-        data: Array<{
-          id: string
-          code_verification_status: string
-        }>
-      }>()
-
-    return response.data
   })
 }
 

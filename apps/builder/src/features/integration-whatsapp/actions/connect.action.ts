@@ -49,9 +49,12 @@ import {
 import { buildWhatsappPhoneName } from "../libs/phone-name"
 import { toRegistrationOutcome } from "../libs/registration-outcome"
 import {
+  CONNECT_WHATSAPP_RESULT_TYPES,
   type ConnectWhatsappResult,
   type ConnectWhatsappSchema,
   connectWhatsappSchema,
+  WHATSAPP_OAUTH_CODE_SOURCES,
+  type WhatsappPhoneNumberOption,
 } from "../schemas"
 import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
 
@@ -64,13 +67,15 @@ async function resolveAccessToken(
   }
 
   if (input.code) {
-    // The code came from the Facebook OAuth dialog opened with an explicit
-    // `redirect_uri` (the broker callback), so the exchange must echo the exact
-    // same redirect_uri. Mirrors `buildFacebookOAuthDialogUrl`.
+    const redirectUri =
+      input.oauthCodeSource === WHATSAPP_OAUTH_CODE_SOURCES.SDK
+        ? undefined
+        : buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH)
+
     const exchangeResult = await exchangeAccessToken(
       whatsappSettings,
       input.code,
-      buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
+      redirectUri,
     )
     return exchangeResult.access_token
   }
@@ -92,7 +97,6 @@ async function deriveSignupTargets(
   version: string,
 ): Promise<{
   wabaId: string
-  phoneNumber: WhatsappPhoneNumber
   businessId: string
 }> {
   const wabaId = await getSharedWabaId(accessToken, appAccessToken)
@@ -102,25 +106,15 @@ async function deriveSignupTargets(
     )
   }
 
-  // findWaba returns the phone numbers inline, so the caller can use the result
-  // directly instead of round-tripping to /phone_numbers a second time.
   const waba = await findWaba({
     wabaId,
     acessToken: accessToken,
     version,
-    fields: "owner_business_info,phone_numbers",
+    fields: "owner_business_info",
   })
-
-  const phoneNumber = waba.phone_numbers?.data?.[0]
-  if (!phoneNumber) {
-    throw new ChatbotXException(
-      "No phone number found on the WhatsApp Business Account",
-    )
-  }
 
   return {
     wabaId,
-    phoneNumber,
     businessId: waba.owner_business_info?.id ?? "",
   }
 }
@@ -157,12 +151,216 @@ async function fetchAndValidatePhoneNumber(params: {
 async function ensurePhoneNumberNotConnected(
   phoneNumberId: string,
 ): Promise<void> {
-  const existedPhoneNumber = await db.query.integrationWhatsappModel.findFirst({
-    where: { phoneNumberId },
+  const connectedPhoneNumberIds =
+    await integrationWhatsappService.findConnectedPhoneNumberIds([
+      phoneNumberId,
+    ])
+
+  if (connectedPhoneNumberIds.has(phoneNumberId)) {
+    throw new ChatbotXException("Phone number is already connected")
+  }
+}
+
+function toPhoneNumberOption(
+  phoneNumber: WhatsappPhoneNumber,
+): WhatsappPhoneNumberOption {
+  return {
+    id: phoneNumber.id,
+    label:
+      phoneNumber.verified_name.trim() ||
+      phoneNumber.display_phone_number ||
+      phoneNumber.id,
+    displayPhoneNumber: phoneNumber.display_phone_number,
+  }
+}
+
+async function listConnectablePhoneNumbers(params: {
+  wabaId: string
+  accessToken: string
+  version: string
+}): Promise<WhatsappPhoneNumber[]> {
+  const response = await whatsappListPhoneNumbers(params)
+  if (response.data.length === 0) {
+    return []
+  }
+
+  const connectedPhoneNumberIds =
+    await integrationWhatsappService.findConnectedPhoneNumberIds(
+      response.data.map((phoneNumber) => phoneNumber.id),
+    )
+
+  return response.data.filter(
+    (phoneNumber) => !connectedPhoneNumberIds.has(phoneNumber.id),
+  )
+}
+
+async function createPhoneNumberSelectionResult(params: {
+  userId: string
+  ownerId: string
+  workspaceId?: string | null
+  wabaId: string
+  businessId: string
+  accessToken: string
+  version: string
+  candidates: WhatsappPhoneNumber[]
+}): Promise<ConnectWhatsappResult> {
+  const signupSession = await integrationWhatsappService.createSignupSession({
+    userId: params.userId,
+    ownerId: params.ownerId,
+    workspaceId: params.workspaceId,
+    wabaId: params.wabaId,
+    businessId: params.businessId,
+    accessToken: params.accessToken,
+    apiVersion: params.version,
+    candidatePhoneNumberIds: params.candidates.map(
+      (phoneNumber) => phoneNumber.id,
+    ),
   })
 
-  if (existedPhoneNumber) {
-    throw new ChatbotXException("Phone number is already connected")
+  return {
+    type: CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_SELECTION,
+    signupSessionId: signupSession.id,
+    phoneNumbers: params.candidates.map(toPhoneNumberOption),
+  }
+}
+
+type PreparedConnectInput =
+  | {
+      source: "direct"
+      accessToken: string
+      wabaId: string
+      businessId: string
+      phoneNumber: WhatsappPhoneNumber
+    }
+  | {
+      source: "selection_required"
+      result: ConnectWhatsappResult
+    }
+
+async function prepareConnectInput(params: {
+  input: ConnectWhatsappSchema
+  whatsappSettings: WhatsappCredential
+  ownerId: string
+  userId: string
+}): Promise<PreparedConnectInput> {
+  const { input, whatsappSettings, ownerId, userId } = params
+
+  if (input.signupSessionId) {
+    const consumedSession =
+      await integrationWhatsappService.consumeSignupSession({
+        id: input.signupSessionId,
+        userId,
+        ownerId,
+        phoneNumberId: input.phoneNumberId ?? "",
+      })
+
+    if (!consumedSession) {
+      throw new ChatbotXException("Whatsapp signup session expired")
+    }
+
+    return {
+      source: "direct",
+      accessToken: consumedSession.accessToken,
+      wabaId: consumedSession.wabaId,
+      businessId: consumedSession.businessId,
+      phoneNumber: await fetchAndValidatePhoneNumber({
+        wabaId: consumedSession.wabaId,
+        phoneNumberId: input.phoneNumberId ?? "",
+        accessToken: consumedSession.accessToken,
+        version: consumedSession.apiVersion,
+      }),
+    }
+  }
+
+  const accessToken = await resolveAccessToken(input, whatsappSettings)
+
+  if (input.manualConnect) {
+    return {
+      source: "direct",
+      accessToken,
+      wabaId: input.wabaId ?? "",
+      businessId: input.businessId ?? "",
+      phoneNumber: await fetchAndValidatePhoneNumber({
+        wabaId: input.wabaId ?? "",
+        phoneNumberId: input.phoneNumberId ?? "",
+        accessToken,
+        version: whatsappSettings.version,
+      }),
+    }
+  }
+
+  const targets = await deriveSignupTargets(
+    accessToken,
+    `${whatsappSettings.clientId}|${whatsappSettings.clientSecret}`,
+    whatsappSettings.version,
+  )
+
+  if (input.wabaId && input.wabaId !== targets.wabaId) {
+    throw new ChatbotXException(
+      "Selected WhatsApp Business Account does not match authorization",
+    )
+  }
+
+  if (input.phoneNumberId) {
+    return {
+      source: "direct",
+      accessToken,
+      wabaId: targets.wabaId,
+      businessId: input.businessId ?? targets.businessId,
+      phoneNumber: await fetchAndValidatePhoneNumber({
+        wabaId: targets.wabaId,
+        phoneNumberId: input.phoneNumberId,
+        accessToken,
+        version: whatsappSettings.version,
+      }),
+    }
+  }
+
+  const candidates = await listConnectablePhoneNumbers({
+    wabaId: targets.wabaId,
+    accessToken,
+    version: whatsappSettings.version,
+  })
+
+  if (candidates.length === 0) {
+    return {
+      source: "selection_required",
+      result: {
+        type: CONNECT_WHATSAPP_RESULT_TYPES.NO_PHONE_NUMBER_CANDIDATES,
+        ...(input.workspaceId
+          ? { redirectUrl: `/space/${input.workspaceId}/settings/channels` }
+          : {}),
+      },
+    }
+  }
+
+  if (candidates.length === 1) {
+    const [phoneNumber] = candidates
+    if (!phoneNumber) {
+      throw new ChatbotXException("No phone number found")
+    }
+
+    return {
+      source: "direct",
+      accessToken,
+      wabaId: targets.wabaId,
+      businessId: input.businessId ?? targets.businessId,
+      phoneNumber,
+    }
+  }
+
+  return {
+    source: "selection_required",
+    result: await createPhoneNumberSelectionResult({
+      userId,
+      ownerId,
+      workspaceId: input.workspaceId || null,
+      wabaId: targets.wabaId,
+      businessId: input.businessId ?? targets.businessId,
+      accessToken,
+      version: whatsappSettings.version,
+      candidates,
+    }),
   }
 }
 
@@ -339,13 +537,13 @@ function buildResult(params: {
 
   if (isManual) {
     return {
-      type: "manualResult",
+      type: CONNECT_WHATSAPP_RESULT_TYPES.MANUAL_RESULT,
       data: { integrationId, workspaceId, webhookUrl, verifyToken },
     }
   }
 
   return {
-    type: "redirect",
+    type: CONNECT_WHATSAPP_RESULT_TYPES.REDIRECT,
     redirectUrl: `/space/${workspaceId}`,
     integrationId,
     workspaceId,
@@ -384,38 +582,17 @@ export const connectWhatsappAction = authActionClient
 
         const isManual = parsedInput.manualConnect
 
-        const accessToken = await resolveAccessToken(
-          parsedInput,
+        const preparedInput = await prepareConnectInput({
+          input: parsedInput,
           whatsappSettings,
-        )
-
-        // Manual connect supplies the ids directly. The OAuth dialog returns only
-        // a `code`, so derive the WABA / phone / business server-side from the
-        // exchanged token when they are missing.
-        let wabaId = parsedInput.wabaId ?? ""
-        let businessId = parsedInput.businessId ?? ""
-        let phoneNumber: WhatsappPhoneNumber
-
-        if (isManual || (wabaId && parsedInput.phoneNumberId)) {
-          phoneNumber = await fetchAndValidatePhoneNumber({
-            wabaId,
-            phoneNumberId: parsedInput.phoneNumberId ?? "",
-            accessToken,
-            version: whatsappSettings.version,
-          })
-        } else {
-          const derived = await deriveSignupTargets(
-            accessToken,
-            `${whatsappSettings.clientId}|${whatsappSettings.clientSecret}`,
-            whatsappSettings.version,
-          )
-          wabaId = derived.wabaId
-          phoneNumber = derived.phoneNumber
-          if (!businessId) {
-            businessId = derived.businessId
-          }
+          ownerId,
+          userId: ctx.user.id,
+        })
+        if (preparedInput.source === "selection_required") {
+          return preparedInput.result
         }
 
+        const { accessToken, wabaId, businessId, phoneNumber } = preparedInput
         await ensurePhoneNumberNotConnected(phoneNumber.id)
 
         // Provider-facing URLs (the webhook override_callback_uri sent to Meta on

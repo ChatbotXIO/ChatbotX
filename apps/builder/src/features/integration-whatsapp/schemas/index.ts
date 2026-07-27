@@ -7,15 +7,45 @@ export type ManualOnboardingResult = {
   verifyToken: string
 }
 
+export type WhatsappPhoneNumberOption = {
+  id: string
+  label: string
+  displayPhoneNumber: string
+}
+
+export const CONNECT_WHATSAPP_RESULT_TYPES = {
+  REDIRECT: "redirect",
+  MANUAL_RESULT: "manualResult",
+  PHONE_NUMBER_SELECTION: "phoneNumberSelection",
+  NO_PHONE_NUMBER_CANDIDATES: "noPhoneNumberCandidates",
+} as const
+
+export const WHATSAPP_OAUTH_CODE_SOURCES = {
+  SDK: "sdk",
+  REDIRECT: "redirect",
+} as const
+
 export type ConnectWhatsappResult =
   | {
-      type: "redirect"
+      type: typeof CONNECT_WHATSAPP_RESULT_TYPES.REDIRECT
       redirectUrl: string
       integrationId: string
       workspaceId: string
       isCoexist: boolean
     }
-  | { type: "manualResult"; data: ManualOnboardingResult }
+  | {
+      type: typeof CONNECT_WHATSAPP_RESULT_TYPES.MANUAL_RESULT
+      data: ManualOnboardingResult
+    }
+  | {
+      type: typeof CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_SELECTION
+      signupSessionId: string
+      phoneNumbers: WhatsappPhoneNumberOption[]
+    }
+  | {
+      type: typeof CONNECT_WHATSAPP_RESULT_TYPES.NO_PHONE_NUMBER_CANDIDATES
+      redirectUrl?: string
+    }
 
 export const connectWhatsappSchema = z
   .object({
@@ -30,6 +60,13 @@ export const connectWhatsappSchema = z
     marketingMessageLite: z.boolean(),
     phoneNumberId: z.string().nullish(),
     workspaceId: z.string().nullish(),
+    signupSessionId: z.string().nullish(),
+    oauthCodeSource: z
+      .enum([
+        WHATSAPP_OAUTH_CODE_SOURCES.SDK,
+        WHATSAPP_OAUTH_CODE_SOURCES.REDIRECT,
+      ])
+      .nullish(),
     accessToken: z.string().nullish(),
     code: z.string().nullish(),
   })
@@ -54,6 +91,17 @@ export const connectWhatsappSchema = z
           code: z.ZodIssueCode.custom,
           message: "Required access token",
           path: ["accessToken"],
+        })
+      }
+      return
+    }
+
+    if (data.signupSessionId) {
+      if (!data.phoneNumberId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required phone number id",
+          path: ["phoneNumberId"],
         })
       }
       return

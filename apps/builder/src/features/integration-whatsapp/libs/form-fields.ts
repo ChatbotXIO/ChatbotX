@@ -17,5 +17,7 @@ export const FORM_FIELDS = {
   MARKETING_MESSAGE_LITE: "marketingMessageLite",
   PHONE_NUMBER_ID: "phoneNumberId",
   BUSINESS_ID: "businessId",
+  SIGNUP_SESSION_ID: "signupSessionId",
+  OAUTH_CODE_SOURCE: "oauthCodeSource",
   CODE: "code",
 } as const satisfies Record<string, keyof ConnectWhatsappSchema>

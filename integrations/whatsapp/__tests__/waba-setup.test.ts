@@ -11,8 +11,8 @@ vi.mock("ky", async () => {
   return {
     ...actual,
     default: {
+      get: apiGetMock,
       create: vi.fn(() => ({
-        get: apiGetMock,
         post: apiPostMock,
       })),
     },
@@ -29,8 +29,12 @@ const auth = {
 
 const phoneNumbersResponse = (
   data: Array<{ id: string; code_verification_status: string }>,
+  next?: string,
 ) => ({
-  json: vi.fn().mockResolvedValue({ data }),
+  json: vi.fn().mockResolvedValue({
+    data,
+    paging: { cursors: { before: "", after: "" }, ...(next ? { next } : {}) },
+  }),
 })
 
 describe("registerPhoneNumber", () => {
@@ -79,5 +83,32 @@ describe("registerPhoneNumber", () => {
 
     expect(result).toMatchObject({ status: "failed" })
     expect(apiPostMock).not.toHaveBeenCalled()
+  })
+
+  test("registers a selected phone number that appears after the first page", async () => {
+    apiGetMock
+      .mockReturnValueOnce(
+        phoneNumbersResponse(
+          [{ id: "2005", code_verification_status: "VERIFIED" }],
+          "https://graph.facebook.com/v23.0/1000/phone_numbers?after=page-2",
+        ),
+      )
+      .mockReturnValueOnce(
+        phoneNumbersResponse([
+          { id: "2006", code_verification_status: "VERIFIED" },
+        ]),
+      )
+
+    const result = await registerPhoneNumber({
+      auth,
+      phoneNumberId: "2006",
+    })
+
+    expect(result).toEqual({ status: "registered" })
+    expect(apiGetMock).toHaveBeenCalledTimes(2)
+    expect(apiPostMock).toHaveBeenCalledWith(
+      expect.stringContaining("/2006/register"),
+      expect.anything(),
+    )
   })
 })
