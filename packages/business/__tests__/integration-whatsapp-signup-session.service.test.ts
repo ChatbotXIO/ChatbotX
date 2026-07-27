@@ -1,47 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const {
-  dbQueryFindFirstMock,
-  dbUpdateBuilderMock,
-  dbUpdateMock,
-  repositoryMock,
-  encryptTextMock,
-  decryptTextMock,
-} = vi.hoisted(() => ({
-  dbQueryFindFirstMock: vi.fn(),
-  dbUpdateBuilderMock: {
-    returning: vi.fn(),
-    set: vi.fn(),
-    where: vi.fn(),
-  },
-  dbUpdateMock: vi.fn(),
+// The service owns no SQL of its own — every statement lives in the repository,
+// so this suite mocks that boundary and asserts on what the service asks for.
+const { repositoryMock, encryptTextMock, decryptTextMock } = vi.hoisted(() => ({
   repositoryMock: {
     createSignupSession: vi.fn(),
     consumeSignupSession: vi.fn(),
+    findActiveSignupSession: vi.fn(),
     findConnectedPhoneNumberIds: vi.fn(),
+    findVerificationCodeRequestedAt: vi.fn(),
+    claimVerificationCodeSlot: vi.fn(),
+    releaseVerificationCodeSlot: vi.fn(),
+    purgeFinishedSignupSessions: vi.fn(),
+    updateRegistration: vi.fn(),
   },
   encryptTextMock: vi.fn(),
   decryptTextMock: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
-  db: {
-    query: {
-      integrationWhatsappModel: {
-        findFirst: dbQueryFindFirstMock,
-      },
-    },
-    update: dbUpdateMock,
-  },
-  eq: vi.fn((left: unknown, right: unknown) => ({ left, right })),
-  isNull: vi.fn((column: unknown) => ({ column, operator: "isNull" })),
-  lt: vi.fn((left: unknown, right: unknown) => ({
-    left,
-    operator: "lt",
-    right,
-  })),
-  or: vi.fn((...conditions: unknown[]) => ({ conditions, operator: "or" })),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -69,10 +43,9 @@ const { ChannelError, ChannelErrorCategory } = await import("@chatbotx.io/sdk")
 describe("integrationWhatsappService signup sessions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    dbUpdateMock.mockReturnValue(dbUpdateBuilderMock)
-    dbUpdateBuilderMock.set.mockReturnValue(dbUpdateBuilderMock)
-    dbUpdateBuilderMock.where.mockReturnValue(dbUpdateBuilderMock)
-    dbUpdateBuilderMock.returning.mockResolvedValue([])
+    repositoryMock.updateRegistration.mockResolvedValue(null)
+    repositoryMock.claimVerificationCodeSlot.mockResolvedValue(null)
+    repositoryMock.findVerificationCodeRequestedAt.mockResolvedValue(null)
   })
 
   test("encrypts access token before creating a signup session", async () => {
@@ -167,10 +140,6 @@ describe("integrationWhatsappService signup sessions", () => {
       fbtraceId: "trace-1",
     })
 
-    dbUpdateBuilderMock.returning.mockResolvedValueOnce([
-      { registrationError: null },
-    ])
-
     const result = await integrationWhatsappService.recordRegistrationOutcome({
       id: "integration-1",
       workspaceId: "workspace-1",
@@ -178,23 +147,27 @@ describe("integrationWhatsappService signup sessions", () => {
     })
 
     expect(result).toBeNull()
-    expect(dbUpdateBuilderMock.set).toHaveBeenCalledWith({
-      registrationStatus: "failed",
-      registrationError: expect.objectContaining({
-        code: 100,
-        subCode: 2_593_005,
-        message: "Invalid parameter",
-        type: "OAuthException",
-        userTitle: "Phone number is not verified",
-        userMessage: "Phone number is not verified through SMS or voice.",
-        fbtraceId: "trace-1",
-      }),
+    expect(repositoryMock.updateRegistration).toHaveBeenCalledWith({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      values: {
+        registrationStatus: "failed",
+        registrationError: expect.objectContaining({
+          code: 100,
+          subCode: 2_593_005,
+          message: "Invalid parameter",
+          type: "OAuthException",
+          userTitle: "Phone number is not verified",
+          userMessage: "Phone number is not verified through SMS or voice.",
+          fbtraceId: "trace-1",
+        }),
+      },
     })
   })
 
   test("claims a verification code request slot atomically", async () => {
     const requestedAt = new Date("2026-07-27T08:00:00.000Z")
-    dbUpdateBuilderMock.returning.mockResolvedValueOnce([{ requestedAt }])
+    repositoryMock.claimVerificationCodeSlot.mockResolvedValueOnce(requestedAt)
 
     const result = await integrationWhatsappService.claimVerificationCodeSlot({
       id: "integration-1",
@@ -204,15 +177,21 @@ describe("integrationWhatsappService signup sessions", () => {
     })
 
     expect(result).toEqual({ status: "claimed", requestedAt })
-    expect(dbUpdateBuilderMock.set).toHaveBeenCalledWith({
-      verificationCodeRequestedAt: requestedAt,
+    // The cutoff is the service's job: the repository only applies whatever
+    // window it is handed.
+    expect(repositoryMock.claimVerificationCodeSlot).toHaveBeenCalledWith({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      now: requestedAt,
+      cutoff: new Date("2026-07-27T07:59:00.000Z"),
     })
-    expect(dbQueryFindFirstMock).not.toHaveBeenCalled()
+    expect(
+      repositoryMock.findVerificationCodeRequestedAt,
+    ).not.toHaveBeenCalled()
   })
 
   test("returns remaining cooldown when verification code was requested recently", async () => {
-    dbUpdateBuilderMock.returning.mockResolvedValueOnce([])
-    dbQueryFindFirstMock.mockResolvedValueOnce({
+    repositoryMock.findVerificationCodeRequestedAt.mockResolvedValueOnce({
       verificationCodeRequestedAt: new Date("2026-07-27T08:00:10.000Z"),
     })
 
@@ -227,6 +206,37 @@ describe("integrationWhatsappService signup sessions", () => {
       status: "cooldown",
       requestedAt: new Date("2026-07-27T08:00:10.000Z"),
       remainingSeconds: 40,
+    })
+  })
+
+  test("reports not_found when neither the claim nor the row lookup matches", async () => {
+    const result = await integrationWhatsappService.claimVerificationCodeSlot({
+      id: "missing",
+      workspaceId: "workspace-1",
+      cooldownSeconds: 60,
+    })
+
+    expect(result).toEqual({ status: "not_found" })
+  })
+
+  test("allows an immediate retry when a released slot left no timestamp", async () => {
+    // A concurrent request that failed at Meta clears the timestamp on its way
+    // out, so the row exists with nothing to wait for.
+    repositoryMock.findVerificationCodeRequestedAt.mockResolvedValueOnce({
+      verificationCodeRequestedAt: null,
+    })
+
+    const result = await integrationWhatsappService.claimVerificationCodeSlot({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      cooldownSeconds: 60,
+      now: new Date("2026-07-27T08:00:30.000Z"),
+    })
+
+    expect(result).toEqual({
+      status: "cooldown",
+      requestedAt: null,
+      remainingSeconds: 0,
     })
   })
 })

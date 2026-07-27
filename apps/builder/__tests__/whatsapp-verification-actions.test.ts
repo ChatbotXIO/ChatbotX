@@ -22,19 +22,27 @@ type VerifyCodeActionHandler = (args: {
 const {
   claimVerificationCodeSlotMock,
   findWorkspaceIntegrationMock,
+  loggerErrorMock,
   recordRegistrationOutcomeMock,
   registerPhoneNumberMock,
+  releaseVerificationCodeSlotMock,
   requestVerificationCodeMock,
   revalidatePathMock,
   verifyCodeMock,
 } = vi.hoisted(() => ({
   claimVerificationCodeSlotMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
   recordRegistrationOutcomeMock: vi.fn(),
   registerPhoneNumberMock: vi.fn(),
+  releaseVerificationCodeSlotMock: vi.fn(),
   requestVerificationCodeMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   verifyCodeMock: vi.fn(),
+}))
+
+vi.mock("@/lib/log", () => ({
+  logger: { error: loggerErrorMock },
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -50,6 +58,7 @@ vi.mock("@chatbotx.io/business", () => ({
     claimVerificationCodeSlot: claimVerificationCodeSlotMock,
     findWorkspaceIntegration: findWorkspaceIntegrationMock,
     recordRegistrationOutcome: recordRegistrationOutcomeMock,
+    releaseVerificationCodeSlot: releaseVerificationCodeSlotMock,
   },
 }))
 
@@ -59,6 +68,30 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
   mapToChannelError: (error: unknown) => error,
+  readWhatsappOriginErrorDetail: (originError: unknown) => {
+    const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+      typeof value === "object" && value !== null
+        ? (value as Record<string, unknown>)
+        : undefined
+
+    const readString = (
+      source: Record<string, unknown> | undefined,
+      key: string,
+    ): string | undefined =>
+      typeof source?.[key] === "string" ? (source[key] as string) : undefined
+
+    const source = asRecord(originError)
+    const error = asRecord(source?.error)
+
+    return {
+      userTitle:
+        readString(source, "userTitle") ??
+        readString(error, "error_user_title"),
+      userMessage:
+        readString(source, "userMessage") ??
+        readString(error, "error_user_msg"),
+    }
+  },
   registerPhoneNumber: registerPhoneNumberMock,
   requestVerificationCode: requestVerificationCodeMock,
   verifyCode: verifyCodeMock,
@@ -66,6 +99,28 @@ vi.mock("@chatbotx.io/integration-whatsapp", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
+}))
+
+// Vitest resolves `next-intl/server` to next-intl's react-client build, whose
+// `getTranslations` throws outright. Mirrors the real `en.json` values so the
+// fallback assertions below read as the operator would see them.
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn((namespace?: string) => {
+    const messages: Record<string, string> = {
+      "whatsapp.phoneVerification.errors.integrationNotFound":
+        "WhatsApp integration not found.",
+      "whatsapp.phoneVerification.errors.codeNotSent":
+        "WhatsApp verification code could not be sent.",
+      "whatsapp.phoneVerification.errors.codeNotVerified":
+        "WhatsApp verification code could not be verified.",
+      "whatsapp.phoneVerification.errors.registrationFailed":
+        "WhatsApp phone number verification failed.",
+    }
+
+    return Promise.resolve(
+      (key: string) => messages[namespace ? `${namespace}.${key}` : key] ?? key,
+    )
+  }),
 }))
 
 const { requestWhatsappVerificationCodeAction, verifyWhatsappPhoneCodeAction } =
@@ -97,10 +152,24 @@ const integration = {
   isCoexist: false,
 }
 
+/**
+ * A rejection shaped the way Meta actually rejects `request_code`: the useful
+ * sentence lives on the origin error, not on the exception message.
+ */
+const metaRefusedError = () =>
+  new ChannelError(
+    "Invalid parameter",
+    ChannelErrorCategory.PAYLOAD_INVALID,
+  ).setOriginError({
+    userTitle: "Cannot send code",
+    userMessage: "This number cannot receive SMS.",
+  })
+
 describe("Whatsapp verification actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     findWorkspaceIntegrationMock.mockResolvedValue(integration)
+    releaseVerificationCodeSlotMock.mockResolvedValue(undefined)
     claimVerificationCodeSlotMock.mockResolvedValue({
       status: "claimed",
       requestedAt: new Date("2026-07-27T08:00:00.000Z"),
@@ -124,12 +193,29 @@ describe("Whatsapp verification actions", () => {
       status: "sent",
       requestedAt: "2026-07-27T08:00:00.000Z",
     })
+    // No `language` — the action leaves it unset so `requestVerificationCode`
+    // applies DEFAULT_WHATSAPP_VERIFICATION_LANGUAGE, keeping one owner for the
+    // default instead of a copy on every caller.
     expect(requestVerificationCodeMock).toHaveBeenCalledWith({
       auth,
       phoneNumberId: "phone-1",
       codeMethod: "SMS",
-      language: "en_US",
     })
+  })
+
+  test("keeps the integration not-found message when the slot claim finds no row", async () => {
+    claimVerificationCodeSlotMock.mockResolvedValueOnce({ status: "not_found" })
+
+    await expect(
+      requestCodeAction({
+        bindArgsParsedInputs: ["workspace-1"],
+        parsedInput: {
+          integrationId: "integration-1",
+          codeMethod: "SMS",
+        },
+      }),
+    ).rejects.toThrow("WhatsApp integration not found.")
+    expect(requestVerificationCodeMock).not.toHaveBeenCalled()
   })
 
   test("returns cooldown without calling Meta when another code was requested recently", async () => {
@@ -176,6 +262,89 @@ describe("Whatsapp verification actions", () => {
         },
       }),
     ).rejects.toThrow("Request code failed: Please try again in some time.")
+  })
+
+  test("throws Facebook's raw error_user_msg when request_code returns a Graph error payload", async () => {
+    requestVerificationCodeMock.mockRejectedValueOnce(
+      new ChannelError(
+        "Invalid parameter",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+      ).setOriginError({
+        error: {
+          error_user_title: "Code couldn't be sent",
+          error_user_msg: "Request code failed: Please try again in some time.",
+          fbtrace_id: "trace-1",
+        },
+      }),
+    )
+
+    await expect(
+      requestCodeAction({
+        bindArgsParsedInputs: ["workspace-1"],
+        parsedInput: {
+          integrationId: "integration-1",
+          codeMethod: "SMS",
+        },
+      }),
+    ).rejects.toThrow("Request code failed: Please try again in some time.")
+  })
+
+  test("releases the cooldown slot when Meta never sent the code", async () => {
+    requestVerificationCodeMock.mockRejectedValueOnce(metaRefusedError())
+
+    await expect(
+      requestCodeAction({
+        bindArgsParsedInputs: ["workspace-1"],
+        parsedInput: {
+          integrationId: "integration-1",
+          codeMethod: "SMS",
+        },
+      }),
+    ).rejects.toThrow("This number cannot receive SMS.")
+
+    // Without this the operator would wait out a full cooldown for a code that
+    // was never delivered, so the retry has to be immediate.
+    expect(releaseVerificationCodeSlotMock).toHaveBeenCalledWith({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      claimedAt: new Date("2026-07-27T08:00:00.000Z"),
+    })
+  })
+
+  test("still reports Meta's reason when handing the slot back fails", async () => {
+    requestVerificationCodeMock.mockRejectedValueOnce(metaRefusedError())
+    releaseVerificationCodeSlotMock.mockRejectedValueOnce(
+      new Error("database unavailable"),
+    )
+
+    // Releasing the slot is a courtesy. What the operator has to see is why
+    // Meta refused, so a failed release is logged rather than surfaced.
+    await expect(
+      requestCodeAction({
+        bindArgsParsedInputs: ["workspace-1"],
+        parsedInput: {
+          integrationId: "integration-1",
+          codeMethod: "SMS",
+        },
+      }),
+    ).rejects.toThrow("This number cannot receive SMS.")
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({ integrationId: "integration-1" }),
+      "Failed to release WhatsApp verification code slot",
+    )
+  })
+
+  test("keeps the cooldown slot when Meta accepted the request", async () => {
+    await requestCodeAction({
+      bindArgsParsedInputs: ["workspace-1"],
+      parsedInput: {
+        integrationId: "integration-1",
+        codeMethod: "SMS",
+      },
+    })
+
+    expect(releaseVerificationCodeSlotMock).not.toHaveBeenCalled()
   })
 
   test("verifies the OTP then retries phone registration", async () => {

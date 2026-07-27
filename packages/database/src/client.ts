@@ -188,5 +188,26 @@ export const isDatabaseError = (
   error.cause !== null &&
   "code" in error.cause
 
-export const isUniqueViolationError = (error: unknown): boolean =>
-  isDatabaseError(error) && error.cause.code === "23505"
+/**
+ * Detects a unique-constraint violation (SQLSTATE 23505).
+ *
+ * Pass `constraint` to match one specific index — a table with several unique
+ * indexes otherwise reports every collision the same way, and each usually
+ * needs its own message.
+ */
+export const isUniqueViolationError = (
+  error: unknown,
+  constraint?: string,
+): boolean => {
+  if (!(isDatabaseError(error) && error.cause.code === "23505")) {
+    return false
+  }
+
+  if (constraint === undefined) {
+    return true
+  }
+
+  const cause = error.cause as { constraint?: unknown }
+
+  return cause.constraint === constraint
+}

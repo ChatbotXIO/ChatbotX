@@ -1,9 +1,15 @@
+import { WHATSAPP_VERIFICATION_CODE_METHODS } from "@chatbotx.io/integration-whatsapp/constants"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const WHATSAPP_VERIFICATION_COOLDOWN_SECONDS = 60
 
-export const whatsappVerificationCodeMethods = z.enum(["SMS", "VOICE"])
+// Derived from the integration's constant so a method Meta stops accepting is
+// removed in exactly one place; hand-listing them lets the form and the API
+// drift apart silently.
+export const whatsappVerificationCodeMethods = z.enum(
+  WHATSAPP_VERIFICATION_CODE_METHODS,
+)
 export type WhatsappVerificationCodeMethod = z.infer<
   typeof whatsappVerificationCodeMethods
 >

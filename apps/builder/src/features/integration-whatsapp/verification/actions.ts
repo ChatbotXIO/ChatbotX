@@ -9,6 +9,7 @@ import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import {
   mapToChannelError,
+  readWhatsappOriginErrorDetail,
   registerPhoneNumber,
   requestVerificationCode,
   verifyCode,
@@ -16,6 +17,8 @@ import {
 } from "@chatbotx.io/integration-whatsapp"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidatePath } from "next/cache"
+import { getTranslations } from "next-intl/server"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { toRegistrationOutcome } from "../libs/registration-outcome"
 import {
@@ -29,12 +32,7 @@ type VerifyWhatsappPhoneCodeResult = {
   status: "registered"
 }
 
-const VERIFICATION_LANGUAGE = "en_US"
-
-type WhatsappUserFacingError = {
-  userTitle?: string
-  userMessage?: string
-}
+const ERROR_MESSAGES_NAMESPACE = "whatsapp.phoneVerification.errors"
 
 function getIntegrationAuth(
   integration: IntegrationWhatsappModel,
@@ -42,32 +40,21 @@ function getIntegrationAuth(
   return integration.auth as WhatsappAuthValue
 }
 
+/**
+ * Prefers whatever Meta wrote for the operator to read, since it names the
+ * concrete blocker ("this number is on another WABA"), and only falls back to
+ * our own wording when the payload carries nothing usable.
+ */
 function buildActionErrorMessage(
   registrationError: IntegrationWhatsappRegistrationError | null | undefined,
+  fallbackMessage: string,
 ): string {
   return (
     registrationError?.userMessage ??
     registrationError?.userTitle ??
     registrationError?.message ??
-    "WhatsApp phone number verification failed"
+    fallbackMessage
   )
-}
-
-function readWhatsappUserFacingError(
-  originError: unknown,
-): WhatsappUserFacingError {
-  if (typeof originError !== "object" || originError === null) {
-    return {}
-  }
-
-  const source = originError as Record<string, unknown>
-
-  return {
-    userTitle:
-      typeof source.userTitle === "string" ? source.userTitle : undefined,
-    userMessage:
-      typeof source.userMessage === "string" ? source.userMessage : undefined,
-  }
 }
 
 function buildWhatsappApiActionErrorMessage(
@@ -75,13 +62,13 @@ function buildWhatsappApiActionErrorMessage(
   fallbackMessage: string,
 ): string {
   const channelError = mapToChannelError(error)
-  const userFacingError = readWhatsappUserFacingError(
+  const originError = readWhatsappOriginErrorDetail(
     channelError.getOriginError(),
   )
 
   return (
-    userFacingError.userMessage ??
-    userFacingError.userTitle ??
+    originError.userMessage ??
+    originError.userTitle ??
     channelError.message ??
     fallbackMessage
   )
@@ -99,6 +86,7 @@ function throwWhatsappApiActionError(
 async function getWorkspaceIntegration(input: {
   workspaceId: string
   integrationId: string
+  notFoundMessage: string
 }) {
   const integration = await integrationWhatsappService.findWorkspaceIntegration(
     {
@@ -108,7 +96,7 @@ async function getWorkspaceIntegration(input: {
   )
 
   if (!integration) {
-    throw new ChatbotXException("Whatsapp integration not found")
+    throw new ChatbotXException(input.notFoundMessage)
   }
 
   return integration
@@ -120,6 +108,7 @@ async function retryRegistration(input: {
   auth: WhatsappAuthValue
   phoneNumberId: string
   isCoexist: boolean
+  fallbackMessage: string
 }): Promise<void> {
   if (input.isCoexist) {
     await integrationWhatsappService.recordRegistrationOutcome({
@@ -143,7 +132,9 @@ async function retryRegistration(input: {
     })
 
   if (outcome.status !== "registered") {
-    throw new ChatbotXException(buildActionErrorMessage(registrationError))
+    throw new ChatbotXException(
+      buildActionErrorMessage(registrationError, input.fallbackMessage),
+    )
   }
 }
 
@@ -155,9 +146,11 @@ export const requestWhatsappVerificationCodeAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }): Promise<WhatsappVerificationRequestResult> => {
+      const t = await getTranslations(ERROR_MESSAGES_NAMESPACE)
       const integration = await getWorkspaceIntegration({
         workspaceId,
         integrationId: parsedInput.integrationId,
+        notFoundMessage: t("integrationNotFound"),
       })
 
       const slot = await integrationWhatsappService.claimVerificationCodeSlot({
@@ -167,7 +160,7 @@ export const requestWhatsappVerificationCodeAction = workspaceActionClient
       })
 
       if (slot.status === "not_found") {
-        throw new ChatbotXException("Whatsapp integration not found")
+        throw new ChatbotXException(t("integrationNotFound"))
       }
 
       if (slot.status === "cooldown") {
@@ -183,13 +176,27 @@ export const requestWhatsappVerificationCodeAction = workspaceActionClient
           auth: getIntegrationAuth(integration),
           phoneNumberId: integration.phoneNumberId,
           codeMethod: parsedInput.codeMethod,
-          language: VERIFICATION_LANGUAGE,
         })
       } catch (error) {
-        throwWhatsappApiActionError(
-          error,
-          "WhatsApp verification code could not be sent",
-        )
+        // Meta never sent a code, so the cooldown this claim started would
+        // punish the operator for our failure. Hand the slot back so the retry
+        // is immediate — but only as a best effort: why Meta refused is what
+        // the operator has to see, and letting a database failure surface in
+        // its place would replace the real reason with a confusing one.
+        await integrationWhatsappService
+          .releaseVerificationCodeSlot({
+            id: integration.id,
+            workspaceId,
+            claimedAt: slot.requestedAt,
+          })
+          .catch((releaseError: unknown) => {
+            logger.error(
+              { err: releaseError, integrationId: integration.id, workspaceId },
+              "Failed to release WhatsApp verification code slot",
+            )
+          })
+
+        throwWhatsappApiActionError(error, t("codeNotSent"))
       }
 
       return {
@@ -207,9 +214,11 @@ export const verifyWhatsappPhoneCodeAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }): Promise<VerifyWhatsappPhoneCodeResult> => {
+      const t = await getTranslations(ERROR_MESSAGES_NAMESPACE)
       const integration = await getWorkspaceIntegration({
         workspaceId,
         integrationId: parsedInput.integrationId,
+        notFoundMessage: t("integrationNotFound"),
       })
       const auth = getIntegrationAuth(integration)
 
@@ -220,10 +229,7 @@ export const verifyWhatsappPhoneCodeAction = workspaceActionClient
           code: parsedInput.code,
         })
       } catch (error) {
-        throwWhatsappApiActionError(
-          error,
-          "WhatsApp verification code could not be verified",
-        )
+        throwWhatsappApiActionError(error, t("codeNotVerified"))
       }
 
       await retryRegistration({
@@ -232,6 +238,7 @@ export const verifyWhatsappPhoneCodeAction = workspaceActionClient
         auth,
         phoneNumberId: integration.phoneNumberId,
         isCoexist: integration.isCoexist,
+        fallbackMessage: t("registrationFailed"),
       })
 
       const integrationPath = `/space/${workspaceId}/whatsapps/${integration.id}`

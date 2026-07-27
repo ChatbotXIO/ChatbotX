@@ -4,7 +4,12 @@ import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { logger } from "../lib/logger"
-import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
+import { fetchAllWhatsappPages } from "../lib/pagination"
+import {
+  EMPTY_PAGINATION,
+  type WhatsappAuthValue,
+  type WhatsappPagination,
+} from "../schema"
 
 const LEADING_PLUS_RE = /^\+/
 const NON_DIGIT_RE = /\D/g
@@ -44,9 +49,13 @@ export type WhatsappPhoneNumberResponse = {
   paging: WhatsappPagination
 }
 
-const PHONE_NUMBER_PAGE_LIMIT = 100
-const PHONE_NUMBER_MAX_PAGES = 20
-
+/**
+ * Lists every phone number on a WABA.
+ *
+ * All pages are aggregated, so the returned cursors describe no remaining
+ * page — they are kept only because callers type against
+ * `WhatsappPhoneNumberResponse`.
+ */
 export function listPhoneNumbers(props: {
   wabaId: string
   accessToken: string
@@ -55,35 +64,13 @@ export function listPhoneNumbers(props: {
   const { version = DEFAULT_API_VERSION } = props
 
   return rescue(async () => {
-    const data: WhatsappPhoneNumber[] = []
-    let paging: WhatsappPagination = { cursors: { before: "", after: "" } }
-    const firstUrl = new URL(
-      `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
-    )
-    firstUrl.searchParams.set("limit", String(PHONE_NUMBER_PAGE_LIMIT))
-    let nextUrl: string | undefined = firstUrl.toString()
+    const data = await fetchAllWhatsappPages<WhatsappPhoneNumber>({
+      firstUrl: `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
+      accessToken: props.accessToken,
+      resource: "phone_numbers",
+    })
 
-    for (let page = 0; nextUrl && page < PHONE_NUMBER_MAX_PAGES; page += 1) {
-      const response: WhatsappPhoneNumberResponse = await ky
-        .get<WhatsappPhoneNumberResponse>(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${props.accessToken}`,
-          },
-        })
-        .json()
-
-      data.push(...response.data)
-      paging = response.paging
-
-      const candidateNextUrl: string | undefined = response.paging?.next
-      if (!candidateNextUrl || candidateNextUrl === nextUrl) {
-        break
-      }
-
-      nextUrl = candidateNextUrl
-    }
-
-    return { data, paging: { cursors: paging.cursors } }
+    return { data, paging: EMPTY_PAGINATION }
   })
 }
 

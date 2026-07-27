@@ -25,6 +25,7 @@ const {
   connectChannelIntegrationMock,
   createSignupSessionMock,
   consumeSignupSessionMock,
+  findActiveSignupSessionMock,
   createIdMock,
   dbTransactionMock,
   exchangeAccessTokenMock,
@@ -34,6 +35,7 @@ const {
   getSharedWabaIdMock,
   inboxExistsByWorkspaceIdAndNameMock,
   invalidateCacheByTagsMock,
+  isUniqueViolationErrorMock,
   listPhoneNumbersMock,
   platformCredentialResolveMock,
   recordRegistrationOutcomeMock,
@@ -48,6 +50,7 @@ const {
   connectChannelIntegrationMock: vi.fn(),
   createSignupSessionMock: vi.fn(),
   consumeSignupSessionMock: vi.fn(),
+  findActiveSignupSessionMock: vi.fn(),
   createIdMock: vi.fn(),
   dbTransactionMock: vi.fn(),
   exchangeAccessTokenMock: vi.fn(),
@@ -57,6 +60,7 @@ const {
   getSharedWabaIdMock: vi.fn(),
   inboxExistsByWorkspaceIdAndNameMock: vi.fn(),
   invalidateCacheByTagsMock: vi.fn(),
+  isUniqueViolationErrorMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
   recordRegistrationOutcomeMock: vi.fn(),
@@ -100,6 +104,7 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationWhatsappService: {
     createSignupSession: createSignupSessionMock,
     consumeSignupSession: consumeSignupSessionMock,
+    findActiveSignupSession: findActiveSignupSessionMock,
     findConnectedPhoneNumberIds: findConnectedPhoneNumberIdsMock,
     recordRegistrationOutcome: recordRegistrationOutcomeMock,
   },
@@ -116,6 +121,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     transaction: dbTransactionMock,
   },
   eq: (left: unknown, right: unknown) => ({ left, right }),
+  isUniqueViolationError: isUniqueViolationErrorMock,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -123,6 +129,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     inboxId: "inboxId",
     id: "id",
   },
+  WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT:
+    "IntegrationWhatsapp_phoneNumberId_key",
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
@@ -159,6 +167,42 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: createIdMock,
+}))
+
+// Vitest resolves `next-intl/server` to next-intl's react-client build, whose
+// `getTranslations` throws outright. The connect action reads from the root
+// namespace, so the keys are looked up verbatim.
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn((namespace?: string) => {
+    const messages: Record<string, string> = {
+      "channels.duplicated.whatsapp":
+        "This WhatsApp number is already connected to another workspace.",
+      "whatsapp.connect.errors.accessTokenRequired":
+        "WhatsApp access token is required.",
+      "whatsapp.connect.errors.appSettingsNotFound":
+        "WhatsApp app settings were not found.",
+      "whatsapp.connect.errors.failedToPersistIntegration":
+        "Failed to save the WhatsApp integration.",
+      "whatsapp.connect.errors.noPhoneNumberFound":
+        "No WhatsApp phone number was found.",
+      "whatsapp.connect.errors.noPhoneNumbersFound":
+        "No phone numbers were found for this WhatsApp Business Account.",
+      "whatsapp.connect.errors.phoneNumberNotFound":
+        "Selected WhatsApp phone number was not found.",
+      "whatsapp.connect.errors.unableToVerifyToken":
+        "Unable to verify the WhatsApp token.",
+      "whatsapp.connect.errors.wabaMismatch":
+        "Selected WhatsApp Business Account does not match the authorization.",
+      "whatsapp.connect.errors.wabaResolveFailed":
+        "Could not resolve the WhatsApp Business Account from the authorization.",
+      "whatsapp.signupSessionExpired":
+        "Your WhatsApp signup session has expired. Please start the connection again.",
+    }
+
+    return Promise.resolve(
+      (key: string) => messages[namespace ? `${namespace}.${key}` : key] ?? key,
+    )
+  }),
 }))
 
 const { connectWhatsappAction } = await import(
@@ -204,6 +248,10 @@ describe("connectWhatsappAction registration", () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
+    // The happy paths below never collide on the phone number; the tests that
+    // exercise the constraint opt in explicitly.
+    isUniqueViolationErrorMock.mockReturnValue(false)
+
     createIdMock
       .mockReturnValueOnce("integration-1")
       .mockReturnValueOnce("inbox-source-id")
@@ -222,12 +270,16 @@ describe("connectWhatsappAction registration", () => {
         businessId: "",
       },
     })
-    consumeSignupSessionMock.mockResolvedValue({
+    // The session is read up front and only spent inside the write transaction,
+    // so the two halves return different shapes: the payload, then whether the
+    // claim was still unspent.
+    findActiveSignupSessionMock.mockResolvedValue({
       accessToken: "access-token-1",
       apiVersion: "v23.0",
       businessId: "business-1",
       wabaId: "waba-1",
     })
+    consumeSignupSessionMock.mockResolvedValue(true)
     exchangeAccessTokenMock.mockResolvedValue({
       access_token: "access-token-1",
     })
@@ -405,5 +457,154 @@ describe("connectWhatsappAction registration", () => {
       verifiedName: selectedPhoneNumber.verified_name,
       registrationError,
     })
+  })
+
+  test("still shows the verification screen when Meta asks for a code without an error payload", async () => {
+    registerPhoneNumberMock.mockResolvedValueOnce({
+      status: "verification_required",
+      error: new Error("Phone number is not verified"),
+    })
+    // Meta usually attaches an explanatory error, but not always. Gating the
+    // screen on the error too would strand the operator away from the only page
+    // that can finish the connect.
+    recordRegistrationOutcomeMock.mockResolvedValueOnce(null)
+
+    const result = await callConnectWhatsappAction({
+      ctx: { user: { id: "user-1" } },
+      parsedInput: {
+        businessId: null,
+        wabaId: null,
+        connectExisting: false,
+        transferPhoneNumber: false,
+        manualConnect: false,
+        marketingMessageLite: true,
+        phoneNumberId: null,
+        workspaceId: "ws-1",
+        signupSessionId: null,
+        accessToken: null,
+        code: "oauth-code-1",
+      },
+    })
+
+    expect(result).toEqual({
+      type: "phoneNumberVerificationRequired",
+      redirectUrl: "/space/ws-1",
+      integrationId: integrationRow.id,
+      workspaceId: "ws-1",
+      displayPhoneNumber: selectedPhoneNumber.display_phone_number,
+      verifiedName: selectedPhoneNumber.verified_name,
+      registrationError: null,
+    })
+  })
+
+  test("reports an expired signup session without spending the Meta token", async () => {
+    findActiveSignupSessionMock.mockResolvedValueOnce(null)
+
+    await expect(
+      callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: {
+          businessId: null,
+          wabaId: null,
+          connectExisting: true,
+          transferPhoneNumber: false,
+          manualConnect: false,
+          marketingMessageLite: true,
+          phoneNumberId: selectedPhoneNumber.id,
+          workspaceId: "ws-1",
+          signupSessionId: "signup-session-1",
+          accessToken: null,
+          code: null,
+        },
+      }),
+    ).rejects.toThrow(
+      "Your WhatsApp signup session has expired. Please start the connection again.",
+    )
+    expect(consumeSignupSessionMock).not.toHaveBeenCalled()
+    expect(dbTransactionMock).not.toHaveBeenCalled()
+  })
+
+  test("aborts the connect when the session was already spent by a concurrent request", async () => {
+    consumeSignupSessionMock.mockResolvedValueOnce(false)
+
+    await expect(
+      callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: {
+          businessId: null,
+          wabaId: null,
+          connectExisting: true,
+          transferPhoneNumber: false,
+          manualConnect: false,
+          marketingMessageLite: true,
+          phoneNumberId: selectedPhoneNumber.id,
+          workspaceId: "ws-1",
+          signupSessionId: "signup-session-1",
+          accessToken: null,
+          code: null,
+        },
+      }),
+    ).rejects.toThrow(
+      "Your WhatsApp signup session has expired. Please start the connection again.",
+    )
+  })
+
+  test("maps the phone number unique violation to the already-connected message", async () => {
+    // The pre-flight check can pass and still lose the race, so the constraint
+    // is the real gate; its violation has to read like the pre-flight rejection
+    // rather than a raw Postgres error.
+    isUniqueViolationErrorMock.mockReturnValue(true)
+    dbTransactionMock.mockRejectedValueOnce(
+      new Error("duplicate key value violates unique constraint"),
+    )
+
+    await expect(
+      callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: {
+          businessId: null,
+          wabaId: null,
+          connectExisting: true,
+          transferPhoneNumber: false,
+          manualConnect: false,
+          marketingMessageLite: true,
+          phoneNumberId: selectedPhoneNumber.id,
+          workspaceId: "ws-1",
+          signupSessionId: "signup-session-1",
+          accessToken: null,
+          code: null,
+        },
+      }),
+    ).rejects.toThrow(
+      "This WhatsApp number is already connected to another workspace.",
+    )
+  })
+
+  test("rejects a phone number the pre-flight check already sees connected", async () => {
+    findConnectedPhoneNumberIdsMock.mockResolvedValue(
+      new Set<string>([selectedPhoneNumber.id]),
+    )
+
+    await expect(
+      callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: {
+          businessId: null,
+          wabaId: null,
+          connectExisting: true,
+          transferPhoneNumber: false,
+          manualConnect: false,
+          marketingMessageLite: true,
+          phoneNumberId: selectedPhoneNumber.id,
+          workspaceId: "ws-1",
+          signupSessionId: "signup-session-1",
+          accessToken: null,
+          code: null,
+        },
+      }),
+    ).rejects.toThrow(
+      "This WhatsApp number is already connected to another workspace.",
+    )
+    expect(dbTransactionMock).not.toHaveBeenCalled()
   })
 })

@@ -28,6 +28,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "db:check": "dotenv -e ../../.env -- drizzle-kit check",
+    "db:check-drift": "dotenv -e ../../.env -- node ./scripts/check-schema-drift.mjs",
     "db:fix-chain": "node ./scripts/fix-migration-chain.mjs",
     "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
     "db:bootstrap-message-shard": "dotenv -e ../../.env -- tsx scripts/bootstrap-message-shard.ts",

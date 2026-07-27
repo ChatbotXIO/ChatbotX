@@ -9,9 +9,17 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, type Transaction } from "@chatbotx.io/database/client"
+import {
+  db,
+  eq,
+  isUniqueViolationError,
+  type Transaction,
+} from "@chatbotx.io/database/client"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
-import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
+import {
+  integrationWhatsappModel,
+  WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
+} from "@chatbotx.io/database/schema"
 import type {
   IntegrationWhatsappModel,
   UserModel,
@@ -38,6 +46,7 @@ import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { getTranslations } from "next-intl/server"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
@@ -60,6 +69,7 @@ import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
 async function resolveAccessToken(
   input: ConnectWhatsappSchema,
   whatsappSettings: WhatsappCredential,
+  messages: ConnectErrorMessages,
 ): Promise<string> {
   if (input.accessToken) {
     return input.accessToken
@@ -74,7 +84,7 @@ async function resolveAccessToken(
     return exchangeResult.access_token
   }
 
-  throw new ChatbotXException("Access token is required")
+  throw new ChatbotXException(messages.accessTokenRequired)
 }
 
 /**
@@ -89,15 +99,14 @@ async function deriveSignupTargets(
   accessToken: string,
   appAccessToken: string,
   version: string,
+  messages: ConnectErrorMessages,
 ): Promise<{
   wabaId: string
   businessId: string
 }> {
   const wabaId = await getSharedWabaId(accessToken, appAccessToken)
   if (!wabaId) {
-    throw new ChatbotXException(
-      "Could not resolve WhatsApp Business Account from authorization",
-    )
+    throw new ChatbotXException(messages.wabaResolveFailed)
   }
 
   const waba = await findWaba({
@@ -118,8 +127,9 @@ async function fetchAndValidatePhoneNumber(params: {
   phoneNumberId: string
   accessToken: string
   version: string
+  messages: ConnectErrorMessages
 }): Promise<WhatsappPhoneNumber> {
-  const { wabaId, phoneNumberId, accessToken, version } = params
+  const { wabaId, phoneNumberId, accessToken, version, messages } = params
 
   const phoneNumbers = await whatsappListPhoneNumbers({
     wabaId,
@@ -128,7 +138,7 @@ async function fetchAndValidatePhoneNumber(params: {
   })
 
   if (phoneNumbers.data.length === 0) {
-    throw new ChatbotXException("No phone numbers found")
+    throw new ChatbotXException(messages.noPhoneNumbersFound)
   }
 
   const foundPhoneNumber = phoneNumbers.data.find(
@@ -136,14 +146,43 @@ async function fetchAndValidatePhoneNumber(params: {
   )
 
   if (!foundPhoneNumber) {
-    throw new ChatbotXException("Phone number not found")
+    throw new ChatbotXException(messages.phoneNumberNotFound)
   }
 
   return foundPhoneNumber
 }
 
+/**
+ * The outcomes an operator can act on, resolved once per request.
+ *
+ * Some are ordinary operator outcomes and some are broken preconditions, but
+ * `ChatbotXException` can surface them to the browser either way, so resolve
+ * all user-visible wording through translations once per request.
+ */
+type ConnectErrorMessages = {
+  accessTokenRequired: string
+  appSettingsNotFound: string
+  failedToPersistIntegration: string
+  noPhoneNumberFound: string
+  noPhoneNumbersFound: string
+  phoneNumberAlreadyConnected: string
+  phoneNumberNotFound: string
+  signupSessionExpired: string
+  unableToVerifyToken: string
+  wabaMismatch: string
+  wabaResolveFailed: string
+}
+
+/**
+ * Rejects a phone number that already backs an integration.
+ *
+ * This is the friendly check only — several network round trips separate it
+ * from the insert, so `IntegrationWhatsapp_phoneNumberId_key` is what actually
+ * makes the invariant hold under concurrent connects.
+ */
 async function ensurePhoneNumberNotConnected(
   phoneNumberId: string,
+  messages: ConnectErrorMessages,
 ): Promise<void> {
   const connectedPhoneNumberIds =
     await integrationWhatsappService.findConnectedPhoneNumberIds([
@@ -151,7 +190,33 @@ async function ensurePhoneNumberNotConnected(
     ])
 
   if (connectedPhoneNumberIds.has(phoneNumberId)) {
-    throw new ChatbotXException("Phone number is already connected")
+    throw new ChatbotXException(messages.phoneNumberAlreadyConnected)
+  }
+}
+
+/**
+ * Spends the signup session inside the connect transaction, so the session and
+ * the integration it authorizes commit together.
+ *
+ * Losing the race here means a concurrent request already connected this
+ * number; rolling back leaves nothing half-written.
+ */
+async function spendSignupSession(
+  claim: SignupSessionClaim | undefined,
+  tx: Transaction,
+  messages: ConnectErrorMessages,
+): Promise<void> {
+  if (!claim) {
+    return
+  }
+
+  const consumed = await integrationWhatsappService.consumeSignupSession({
+    ...claim,
+    tx,
+  })
+
+  if (!consumed) {
+    throw new ChatbotXException(messages.signupSessionExpired)
   }
 }
 
@@ -276,6 +341,18 @@ async function createPhoneNumberSelectionResult(params: {
   }
 }
 
+/**
+ * Identifies the pending phone-number selection that authorizes a connect.
+ * Held until the integration is written so the session is only spent on a
+ * connect that actually succeeded.
+ */
+type SignupSessionClaim = {
+  id: string
+  userId: string
+  ownerId: string
+  phoneNumberId: string
+}
+
 type PreparedConnectInput =
   | {
       source: "direct"
@@ -283,6 +360,7 @@ type PreparedConnectInput =
       wabaId: string
       businessId: string
       phoneNumber: WhatsappPhoneNumber
+      signupSessionClaim?: SignupSessionClaim
     }
   | {
       source: "selection_required"
@@ -294,37 +372,50 @@ async function prepareConnectInput(params: {
   whatsappSettings: WhatsappCredential
   ownerId: string
   userId: string
+  messages: ConnectErrorMessages
 }): Promise<PreparedConnectInput> {
-  const { input, whatsappSettings, ownerId, userId } = params
+  const { input, whatsappSettings, ownerId, userId, messages } = params
 
   if (input.signupSessionId) {
-    const consumedSession =
-      await integrationWhatsappService.consumeSignupSession({
-        id: input.signupSessionId,
-        userId,
-        ownerId,
-        phoneNumberId: input.phoneNumberId ?? "",
-      })
+    const signupSessionClaim: SignupSessionClaim = {
+      id: input.signupSessionId,
+      userId,
+      ownerId,
+      phoneNumberId: input.phoneNumberId ?? "",
+    }
+    // Read without spending: everything below can still fail, and the user
+    // cannot re-run Meta's signup to get another token. The claim is spent in
+    // the same transaction that writes the integration.
+    const session =
+      await integrationWhatsappService.findActiveSignupSession(
+        signupSessionClaim,
+      )
 
-    if (!consumedSession) {
-      throw new ChatbotXException("Whatsapp signup session expired")
+    if (!session) {
+      throw new ChatbotXException(messages.signupSessionExpired)
     }
 
     return {
       source: "direct",
-      accessToken: consumedSession.accessToken,
-      wabaId: consumedSession.wabaId,
-      businessId: consumedSession.businessId,
+      accessToken: session.accessToken,
+      wabaId: session.wabaId,
+      businessId: session.businessId,
+      signupSessionClaim,
       phoneNumber: await fetchAndValidatePhoneNumber({
-        wabaId: consumedSession.wabaId,
-        phoneNumberId: input.phoneNumberId ?? "",
-        accessToken: consumedSession.accessToken,
-        version: consumedSession.apiVersion,
+        wabaId: session.wabaId,
+        phoneNumberId: signupSessionClaim.phoneNumberId,
+        accessToken: session.accessToken,
+        version: session.apiVersion,
+        messages,
       }),
     }
   }
 
-  const accessToken = await resolveAccessToken(input, whatsappSettings)
+  const accessToken = await resolveAccessToken(
+    input,
+    whatsappSettings,
+    messages,
+  )
 
   if (input.manualConnect) {
     return {
@@ -337,6 +428,7 @@ async function prepareConnectInput(params: {
         phoneNumberId: input.phoneNumberId ?? "",
         accessToken,
         version: whatsappSettings.version,
+        messages,
       }),
     }
   }
@@ -345,12 +437,11 @@ async function prepareConnectInput(params: {
     accessToken,
     `${whatsappSettings.clientId}|${whatsappSettings.clientSecret}`,
     whatsappSettings.version,
+    messages,
   )
 
   if (input.wabaId && input.wabaId !== targets.wabaId) {
-    throw new ChatbotXException(
-      "Selected WhatsApp Business Account does not match authorization",
-    )
+    throw new ChatbotXException(messages.wabaMismatch)
   }
 
   if (input.phoneNumberId) {
@@ -364,6 +455,7 @@ async function prepareConnectInput(params: {
         phoneNumberId: input.phoneNumberId,
         accessToken,
         version: whatsappSettings.version,
+        messages,
       }),
     }
   }
@@ -389,7 +481,7 @@ async function prepareConnectInput(params: {
   ) {
     const [phoneNumber] = candidates
     if (!phoneNumber) {
-      throw new ChatbotXException("No phone number found")
+      throw new ChatbotXException(messages.noPhoneNumberFound)
     }
 
     return {
@@ -441,6 +533,7 @@ async function persistIntegration(params: {
   auth: WhatsappAuthValue
   isCoexist: boolean
   platformType: string
+  messages: ConnectErrorMessages
 }): Promise<{
   workspaceId: string
   createdWorkspace: boolean
@@ -458,6 +551,7 @@ async function persistIntegration(params: {
     auth,
     isCoexist,
     platformType,
+    messages,
   } = params
 
   let resolvedWorkspaceId = workspaceId
@@ -537,13 +631,44 @@ async function persistIntegration(params: {
   })
 
   if (!integrationRow) {
-    throw new ChatbotXException("Failed to persist Whatsapp integration")
+    throw new ChatbotXException(messages.failedToPersistIntegration)
   }
 
   return {
     workspaceId: resolvedWorkspaceId,
     createdWorkspace,
     integrationRow,
+  }
+}
+
+/**
+ * Writes the integration and spends the signup session as one unit.
+ *
+ * `ensurePhoneNumberNotConnected` ran several network calls ago, so a
+ * concurrent connect can still reach the insert first. The unique index turns
+ * that into a constraint violation, which is the same user-visible situation
+ * the pre-flight check reports.
+ */
+async function connectInTransaction(
+  params: Omit<Parameters<typeof persistIntegration>[0], "tx" | "messages"> & {
+    signupSessionClaim?: SignupSessionClaim
+    messages: ConnectErrorMessages
+  },
+): Promise<Awaited<ReturnType<typeof persistIntegration>>> {
+  const { signupSessionClaim, messages, ...persistParams } = params
+
+  try {
+    return await db.transaction(async (tx) => {
+      await spendSignupSession(signupSessionClaim, tx, messages)
+
+      return persistIntegration({ tx, ...persistParams, messages })
+    })
+  } catch (err) {
+    if (isUniqueViolationError(err, WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT)) {
+      throw new ChatbotXException(messages.phoneNumberAlreadyConnected)
+    }
+
+    throw err
   }
 }
 
@@ -593,7 +718,11 @@ function buildResult(params: {
     registrationError,
   } = params
 
-  if (requiresPhoneVerification && registrationError) {
+  // Meta asking for a verification code is the whole reason to show the
+  // verification panel. It usually comes with an explanatory error, but not
+  // always — gating on the error too would silently redirect the operator away
+  // from the only screen that can finish the connect.
+  if (requiresPhoneVerification) {
     return {
       type: CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_VERIFICATION_REQUIRED,
       redirectUrl: `/space/${workspaceId}`,
@@ -601,7 +730,7 @@ function buildResult(params: {
       workspaceId,
       displayPhoneNumber: phoneNumber.display_phone_number,
       verifiedName: phoneNumber.verified_name,
-      registrationError,
+      registrationError: registrationError ?? null,
     }
   }
 
@@ -631,6 +760,23 @@ export const connectWhatsappAction = authActionClient
       ctx: { user: UserModel }
       parsedInput: ConnectWhatsappSchema
     }): Promise<ConnectWhatsappResult> => {
+      const t = await getTranslations()
+      const messages: ConnectErrorMessages = {
+        accessTokenRequired: t("whatsapp.connect.errors.accessTokenRequired"),
+        appSettingsNotFound: t("whatsapp.connect.errors.appSettingsNotFound"),
+        failedToPersistIntegration: t(
+          "whatsapp.connect.errors.failedToPersistIntegration",
+        ),
+        noPhoneNumberFound: t("whatsapp.connect.errors.noPhoneNumberFound"),
+        noPhoneNumbersFound: t("whatsapp.connect.errors.noPhoneNumbersFound"),
+        phoneNumberAlreadyConnected: t("channels.duplicated.whatsapp"),
+        phoneNumberNotFound: t("whatsapp.connect.errors.phoneNumberNotFound"),
+        signupSessionExpired: t("whatsapp.signupSessionExpired"),
+        unableToVerifyToken: t("whatsapp.connect.errors.unableToVerifyToken"),
+        wabaMismatch: t("whatsapp.connect.errors.wabaMismatch"),
+        wabaResolveFailed: t("whatsapp.connect.errors.wabaResolveFailed"),
+      }
+
       try {
         const ownerId = parsedInput.workspaceId
           ? ((
@@ -646,7 +792,7 @@ export const connectWhatsappAction = authActionClient
           })
 
         if (!whatsappCredential) {
-          throw new ChatbotXException("Whatsapp App settings not found")
+          throw new ChatbotXException(messages.appSettingsNotFound)
         }
         const whatsappSettings = whatsappCredential.config
 
@@ -657,13 +803,14 @@ export const connectWhatsappAction = authActionClient
           whatsappSettings,
           ownerId,
           userId: ctx.user.id,
+          messages,
         })
         if (preparedInput.source === "selection_required") {
           return preparedInput.result
         }
 
         const { accessToken, wabaId, businessId, phoneNumber } = preparedInput
-        await ensurePhoneNumberNotConnected(phoneNumber.id)
+        await ensurePhoneNumberNotConnected(phoneNumber.id, messages)
 
         // Provider-facing URLs (the webhook override_callback_uri sent to Meta on
         // manual connect, and the stored OAuth redirectUrl) must live on the fixed
@@ -728,21 +875,20 @@ export const connectWhatsappAction = authActionClient
           }
         }
 
-        const { workspaceId, integrationRow } = await db.transaction((tx) =>
-          persistIntegration({
-            tx,
-            ownerId,
-            userId: ctx.user.id,
-            workspaceId: parsedInput.workspaceId,
-            integrationId,
-            phoneNumber,
-            wabaId,
-            businessId,
-            auth,
-            isCoexist,
-            platformType,
-          }),
-        )
+        const { workspaceId, integrationRow } = await connectInTransaction({
+          signupSessionClaim: preparedInput.signupSessionClaim,
+          messages,
+          ownerId,
+          userId: ctx.user.id,
+          workspaceId: parsedInput.workspaceId,
+          integrationId,
+          phoneNumber,
+          wabaId,
+          businessId,
+          auth,
+          isCoexist,
+          platformType,
+        })
 
         let registrationError:
           | IntegrationWhatsappModel["registrationError"]
@@ -805,7 +951,7 @@ export const connectWhatsappAction = authActionClient
           throw err
         }
 
-        throw new ChatbotXException("Unable to verify Whatsapp token")
+        throw new ChatbotXException(messages.unableToVerifyToken)
       }
     },
   )

@@ -3008,6 +3008,25 @@
         "codeSent": "Đã gửi mã xác minh qua {method}.",
         "cooldown": "Vui lòng chờ {seconds}s trước khi yêu cầu mã khác.",
         "verified": "Số điện thoại đã được xác minh và đăng ký thành công."
+      },
+      "errors": {
+        "integrationNotFound": "Không tìm thấy kết nối WhatsApp.",
+        "codeNotSent": "Không gửi được mã xác minh WhatsApp.",
+        "codeNotVerified": "Không xác minh được mã WhatsApp.",
+        "registrationFailed": "Xác minh số điện thoại WhatsApp không thành công."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "Thiếu access token WhatsApp.",
+        "appSettingsNotFound": "Không tìm thấy cấu hình ứng dụng WhatsApp.",
+        "failedToPersistIntegration": "Không lưu được kết nối WhatsApp.",
+        "noPhoneNumberFound": "Không tìm thấy số điện thoại WhatsApp.",
+        "noPhoneNumbersFound": "Không tìm thấy số điện thoại trong WhatsApp Business Account này.",
+        "phoneNumberNotFound": "Không tìm thấy số điện thoại WhatsApp đã chọn.",
+        "unableToVerifyToken": "Không xác minh được token WhatsApp.",
+        "wabaMismatch": "WhatsApp Business Account đã chọn không khớp với quyền đã cấp.",
+        "wabaResolveFailed": "Không xác định được WhatsApp Business Account từ quyền đã cấp."
       }
     },
     "marketingMessageLite": "Tin nhắn tiếp thị Lite",
@@ -3211,7 +3230,8 @@
     "templateHeader": {
       "label": "Tiêu đề mẫu"
     },
-    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác"
+    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
+    "signupSessionExpired": "Phiên đăng ký WhatsApp đã hết hạn. Vui lòng bắt đầu kết nối lại."
   },
   "zalo": {
     "title": "Zalo OA",

@@ -1,21 +1,22 @@
 import ky from "ky"
 import type { WhatsappAuthValue } from ".."
-import { API_URL, DEFAULT_API_VERSION } from "../constants"
+import {
+  API_URL,
+  DEFAULT_API_VERSION,
+  DEFAULT_WHATSAPP_VERIFICATION_LANGUAGE,
+  type WhatsappVerificationCodeMethod,
+} from "../constants"
 import { rescue } from "../exception"
 
 const api = ky.create({
   timeout: 60_000,
 })
 
-export const WHATSAPP_VERIFICATION_CODE_METHODS = {
-  SMS: "SMS",
-  VOICE: "VOICE",
-} as const
-
-export type WhatsappVerificationCodeMethod =
-  (typeof WHATSAPP_VERIFICATION_CODE_METHODS)[keyof typeof WHATSAPP_VERIFICATION_CODE_METHODS]
-
-export const DEFAULT_WHATSAPP_VERIFICATION_LANGUAGE = "en_US"
+export {
+  DEFAULT_WHATSAPP_VERIFICATION_LANGUAGE,
+  WHATSAPP_VERIFICATION_CODE_METHODS,
+  type WhatsappVerificationCodeMethod,
+} from "../constants"
 
 export function requestVerificationCode({
   auth,

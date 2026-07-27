@@ -91,13 +91,27 @@ describe("listPhoneNumbers", () => {
     expect(getMock).toHaveBeenCalledTimes(1)
   })
 
-  test("caps pagination even if Graph API keeps returning new cursors", async () => {
-    getMock.mockImplementation((url: string) =>
+  test("returns the phone numbers when Meta omits paging", async () => {
+    getMock.mockReturnValueOnce(response({ data: [phoneNumber("1001")] }))
+
+    const result = await listPhoneNumbers({
+      wabaId: "waba",
+      accessToken: "token",
+      version: "v23.0",
+    })
+
+    expect(result.data.map((item) => item.id)).toEqual(["1001"])
+    expect(result.paging.cursors).toEqual({ before: "", after: "" })
+    expect(getMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not send the access token to a next URL on another origin", async () => {
+    getMock.mockReturnValue(
       response({
-        data: [phoneNumber(`phone-${getMock.mock.calls.length}`)],
+        data: [phoneNumber("1001")],
         paging: {
           cursors: { before: "a", after: "b" },
-          next: `${url}&after=${getMock.mock.calls.length}`,
+          next: "https://attacker.example/graph/phone_numbers?after=b",
         },
       }),
     )
@@ -108,8 +122,32 @@ describe("listPhoneNumbers", () => {
       version: "v23.0",
     })
 
-    expect(result.data).toHaveLength(20)
-    expect(result.paging.next).toBeUndefined()
+    expect(result.data.map((item) => item.id)).toEqual(["1001"])
+    expect(getMock).toHaveBeenCalledTimes(1)
+    expect(String(getMock.mock.calls[0]?.[0])).toContain(
+      "https://graph.facebook.com/",
+    )
+  })
+
+  test("fails instead of returning a truncated phone-number list", async () => {
+    getMock.mockImplementation((url: string) =>
+      response({
+        data: [phoneNumber(`phone-${getMock.mock.calls.length}`)],
+        paging: {
+          cursors: { before: "a", after: "b" },
+          next: `${url}&after=${getMock.mock.calls.length}`,
+        },
+      }),
+    )
+
+    await expect(
+      listPhoneNumbers({
+        wabaId: "waba",
+        accessToken: "token",
+        version: "v23.0",
+      }),
+    ).rejects.toThrow("Graph pagination exceeded 20 pages")
+
     expect(getMock).toHaveBeenCalledTimes(20)
   })
 })
