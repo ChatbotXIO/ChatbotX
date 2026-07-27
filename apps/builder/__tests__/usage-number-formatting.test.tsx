@@ -30,16 +30,40 @@ const renderWithLocale = (locale: string, node: ReactNode) =>
   )
 
 describe("usage number formatting", () => {
-  test("UsageRing renders its label without exposing numeric usage values", () => {
+  test("UsageRing renders label with compact usage value", () => {
     const html = renderWithLocale(
-      "vi",
+      "en",
       <UsageRing label="MAC" limit={10_000} used={1234} workspaceUsed={456} />,
     )
 
     expect(html).toContain("MAC")
-    expect(html).not.toContain("456 / 1.234 / 10.000")
-    expect(html).not.toContain("1.234")
-    expect(html).not.toContain("10.000")
+    expect(html).toContain("456")
+    expect(html).toContain("10K")
+    expect(html).not.toContain("1,234")
+    expect(html).not.toContain("10,000")
+  })
+
+  test("UsageRing formats compact values across boundary cases", () => {
+    const cases: [number, number, string, string][] = [
+      [999, 10_000, "999", "10K"],
+      [1000, 10_000, "1K", "10K"],
+      [1500, 10_000, "1.5K", "10K"],
+      [3_000_000, 5_000_000, "3M", "5M"],
+    ]
+
+    for (const [workspaceUsed, limit, expectedUsed, expectedLimit] of cases) {
+      const html = renderWithLocale(
+        "en",
+        <UsageRing
+          label="MAC"
+          limit={limit}
+          used={workspaceUsed}
+          workspaceUsed={workspaceUsed}
+        />,
+      )
+      expect(html).toContain(expectedUsed)
+      expect(html).toContain(expectedLimit)
+    }
   })
 
   test("UsageRing renders nested workspace and user fill widths", () => {
