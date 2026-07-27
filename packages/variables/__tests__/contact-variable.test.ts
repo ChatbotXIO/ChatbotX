@@ -13,6 +13,7 @@ const {
   mockContactInboxFindFirst,
   mockFindLatestLastIncomingMessageAt,
   mockListIncomingTextsByContactInbox,
+  mockResolveCouponVariable,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
   mockContactCustomFieldFindMany: vi.fn(),
@@ -21,6 +22,7 @@ const {
   mockWorkspaceFind: vi.fn(),
   mockFindLatestLastIncomingMessageAt: vi.fn(),
   mockListIncomingTextsByContactInbox: vi.fn().mockResolvedValue([]),
+  mockResolveCouponVariable: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -40,6 +42,12 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/utils", () => ({
   getPublicFileUrl: (path: string, baseUrl: string) =>
     new URL(path, baseUrl).toString(),
+}))
+
+vi.mock("@chatbotx.io/business/coupon", () => ({
+  couponService: {
+    resolveCouponVariable: mockResolveCouponVariable,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -160,6 +168,23 @@ describe("contactVariableService.replaceAll", () => {
         variables: createVariables(),
       }),
     ).resolves.toBe(" {{foo.bar}}")
+  })
+
+  test("substitutes coupon topic variables with issued coupon code", async () => {
+    mockResolveCouponVariable.mockResolvedValue("HHFgpe")
+
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Mã giảm giá của bạn là {{coupon:11619011544072192}}",
+        variables: createVariables(),
+      }),
+    ).resolves.toBe("Mã giảm giá của bạn là HHFgpe")
+
+    expect(mockResolveCouponVariable).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      topicId: "11619011544072192",
+    })
   })
 
   test("does not render custom field null values as string null", async () => {

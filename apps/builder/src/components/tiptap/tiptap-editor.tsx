@@ -6,6 +6,12 @@ import Placeholder from "@tiptap/extension-placeholder"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import emojiSuggestion from "./extensions/emoij/suggestion"
+import {
+  plainTextToParagraphHtmlWithVariableMentions,
+  renderVariableMentionHTML,
+  renderVariableMentionText,
+  toVariableMentionAttrs,
+} from "./extensions/variable-injection/mention"
 import variableInjectionSuggestion from "./extensions/variable-injection/suggestion"
 import "./tiptap-editor.css"
 import type { ChannelType } from "@chatbotx.io/database/partials"
@@ -18,14 +24,15 @@ import {
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { htmlToText } from "html-to-text"
 import { CodeXml, Smile } from "lucide-react"
-import { useEffect, useState } from "react"
-import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import { useEffect, useRef, useState } from "react"
+import { usePromptVariableOptions } from "./use-prompt-variable-options"
 
 type TiptapEditorProps = {
   initValue?: string
   placeholder?: string
   showEmojiPicker?: boolean
   channels?: ChannelType[]
+  includeCouponVariables?: boolean
   onChange?: (content: string) => void
 }
 
@@ -33,24 +40,31 @@ export const TiptapEditor = ({
   initValue,
   onChange,
   channels,
+  includeCouponVariables = false,
   placeholder = "Type a message...",
   showEmojiPicker = true,
 }: TiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
   const [isOpenCustomField, setIsOpenCustomField] = useState(false)
-  const customFieldSelectOptions = useCustomFieldSelectOptions({
-    includeReserved: true,
-    customFieldValueKey: "name",
+  const promptVariableOptions = usePromptVariableOptions({
     channels,
+    includeCouponVariables,
   })
+  const promptVariableOptionsRef = useRef(promptVariableOptions)
+
+  useEffect(() => {
+    promptVariableOptionsRef.current = promptVariableOptions
+  }, [promptVariableOptions])
 
   const tiptapEditor = useEditor({
     extensions: [
       StarterKit,
       Mention.configure({
+        renderHTML: renderVariableMentionHTML,
+        renderText: renderVariableMentionText,
         suggestion: variableInjectionSuggestion({
-          listOfPromptVariables: customFieldSelectOptions,
+          listOfPromptVariables: () => promptVariableOptionsRef.current,
         }),
       }),
       Emoji.configure({
@@ -100,12 +114,10 @@ export const TiptapEditor = ({
 
   useEffect(() => {
     if (tiptapEditor && initValue) {
-      const escHtml = (s: string) =>
-        s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      const html = initValue
-        .split("\n")
-        .map((line) => `<p>${line ? escHtml(line) : "<br>"}</p>`)
-        .join("")
+      const html = plainTextToParagraphHtmlWithVariableMentions(
+        initValue,
+        promptVariableOptionsRef.current,
+      )
       tiptapEditor.commands.setContent(html)
     }
   }, [tiptapEditor, initValue])
@@ -140,28 +152,40 @@ export const TiptapEditor = ({
             </div>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
-            {customFieldSelectOptions.length > 0 && (
+            {promptVariableOptions.length > 0 && (
               <div className="max-h-60 w-50 overflow-y-auto">
-                {customFieldSelectOptions.map((field) => (
-                  <Button
-                    className="w-full cursor-pointer justify-start rounded-none p-2"
-                    key={field.value}
-                    onClick={() => {
-                      tiptapEditor
-                        ?.chain()
-                        .insertContent({
-                          type: "mention",
-                          attrs: { id: `${field.value}}}` },
-                        })
-                        .focus()
-                        .run()
-                      setIsOpenCustomField(false)
-                    }}
-                    variant="ghost"
-                  >
-                    {field.label}
-                  </Button>
-                ))}
+                {promptVariableOptions.map((field, index) => {
+                  const showGroup =
+                    Boolean(field.group) &&
+                    promptVariableOptions[index - 1]?.group !== field.group
+
+                  return (
+                    <div key={field.value}>
+                      {showGroup ? (
+                        <div className="px-2 pt-2 pb-1 font-medium text-muted-foreground text-xs">
+                          {field.group}
+                        </div>
+                      ) : null}
+                      <Button
+                        className="w-full cursor-pointer justify-start rounded-none p-2"
+                        onClick={() => {
+                          tiptapEditor
+                            ?.chain()
+                            .insertContent({
+                              type: "mention",
+                              attrs: toVariableMentionAttrs(field),
+                            })
+                            .focus()
+                            .run()
+                          setIsOpenCustomField(false)
+                        }}
+                        variant="ghost"
+                      >
+                        {field.label}
+                      </Button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </PopoverContent>

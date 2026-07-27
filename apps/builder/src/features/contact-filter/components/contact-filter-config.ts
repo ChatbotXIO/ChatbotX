@@ -36,13 +36,15 @@ export type ConditionOption = {
 }
 
 export type FieldConfig = {
-  /** `ContactFilterField` for static fields, `customField:<id>` for custom fields. */
+  /** `ContactFilterField` for static fields, `customField:<id>` for custom fields, `couponTopic:<id>` for coupon topics. */
   name: string
   /** Set for dynamic custom-field configs; identifies the workspace custom field. */
   customFieldId?: string
   /** Raw custom field type from the workspace, used for custom-field operator rules. */
   customFieldType?: string
-  /** Display label override (custom field name); static fields fall back to i18n. */
+  /** Set for dynamic coupon-topic configs; identifies the workspace coupon topic. */
+  topicId?: string
+  /** Display label override (custom field / coupon topic name); static fields fall back to i18n. */
   label?: string
   formField: FormFieldType
   group: ContactFilterFieldGroup
@@ -70,6 +72,7 @@ export type ContactFilterFieldGroup =
   | "systemTime"
   | "ecommerce"
   | "systemFields"
+  | "topicCoupon"
   | "customFields"
 
 type GroupedContactFilterFieldGroup = Exclude<
@@ -344,6 +347,9 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "lastSentMessageFailed",
   ],
   systemFields: ["lastUserInput", "lastUserInputType"],
+  // Populated dynamically — each coupon topic gets its own FieldConfig with
+  // group "topicCoupon" set directly (see couponTopicConfigs below).
+  topicCoupon: [],
   customFields: ["customFields"],
 } as const satisfies Record<
   GroupedContactFilterFieldGroup,
@@ -378,6 +384,7 @@ export const getFieldConfigs = ({
   sequenceOptions = [],
   reflinkOptions = [],
   assigneeOptions = [],
+  couponTopicOptions = [],
 }: {
   t: (key: string) => string
   tagOptions: SelectOption[]
@@ -388,6 +395,7 @@ export const getFieldConfigs = ({
   sequenceOptions?: SelectOption[]
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
+  couponTopicOptions?: SelectOption[]
 }): FieldConfig[] => {
   const channelOptions = getChannelMultiSelectOptions(t)
 
@@ -423,7 +431,19 @@ export const getFieldConfigs = ({
     group: "customFields",
   }))
 
-  return [...staticConfigs, ...customFieldConfigs]
+  // Each workspace coupon topic becomes its own filter field (replaces the
+  // old static "Coupon issued"/"Coupon usage" pair). Encoded as
+  // `couponTopic:<id>` so the form/row can map back to a
+  // `{ field: "couponTopic", topicId }` condition.
+  const couponTopicConfigs: FieldConfig[] = couponTopicOptions.map((topic) => ({
+    name: `couponTopic:${topic.value}`,
+    topicId: topic.value,
+    label: topic.label,
+    formField: formFieldTypes.enum.text,
+    group: "topicCoupon",
+  }))
+
+  return [...staticConfigs, ...customFieldConfigs, ...couponTopicConfigs]
 }
 
 export const getFieldOptions = (
@@ -502,6 +522,7 @@ export const getConditionOptions = (
     value: operatorTypes.enum.notBetween,
     label: t("fields.operator.notBetween"),
   },
+  { value: operatorTypes.enum.used, label: t("fields.operator.used") },
 ]
 
 export const formatConditionValueDisplay = (

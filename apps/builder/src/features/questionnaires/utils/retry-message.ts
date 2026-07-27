@@ -1,4 +1,5 @@
 import type { SupportedQuestionnaireQuestionType } from "@chatbotx.io/database/partials"
+import type { useTranslations } from "next-intl"
 
 const defaultRetryMessageKeyByType = {
   text: "questionnaires.defaultRetryMessages.text",
@@ -8,10 +9,7 @@ const defaultRetryMessageKeyByType = {
   multipleChoice: "questionnaires.defaultRetryMessages.multipleChoice",
 } as const satisfies Record<SupportedQuestionnaireQuestionType, string>
 
-type QuestionnaireRetryMessageKey =
-  (typeof defaultRetryMessageKeyByType)[SupportedQuestionnaireQuestionType]
-
-type QuestionnaireTranslator = (key: QuestionnaireRetryMessageKey) => string
+type QuestionnaireTranslator = ReturnType<typeof useTranslations>
 
 export const getQuestionnaireDefaultRetryMessageKey = (
   type: SupportedQuestionnaireQuestionType,

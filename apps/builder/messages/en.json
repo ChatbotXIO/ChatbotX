@@ -65,6 +65,7 @@
     "openWebchat": "Open Webchat",
     "removeTag": "Remove Tag",
     "rename": "Rename",
+    "reset": "Reset",
     "save": "Save",
     "selectAll": "Select all",
     "selectRow": "Select row",
@@ -485,6 +486,7 @@
       "questionnaireStarted": "Questionnaire started",
       "questionnaireInProgress": "Questionnaire in progress",
       "questionnaireFinished": "Questionnaire finished",
+      "couponTopic": "Coupon",
       "votedOnPoll": "Voted on the poll",
       "lastComment": "Last comment",
       "commentedOnPost": "Commented on Post",
@@ -546,6 +548,7 @@
       "systemTime": "System Time",
       "ecommerce": "Ecommerce",
       "systemFields": "System Fields",
+      "topicCoupon": "Topic coupon",
       "customFields": "Custom Fields",
       "email": "Email",
       "sms": "SMS"
@@ -733,7 +736,8 @@
       "startsWith": "Starts with",
       "endsWith": "Ends with",
       "isBetween": "Interval",
-      "notBetween": "Not interval"
+      "notBetween": "Not interval",
+      "used": "Used"
     },
     "contactFilter": {
       "allConditions": "All of the following conditions",
@@ -2037,6 +2041,8 @@
       "make": "Make",
       "triggers": "Triggers",
       "questionnaires": "Questionnaires",
+      "setUpCoupon": "Set up Coupon",
+      "markCouponUsed": "Mark Coupon used",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "condition": "Condition",
@@ -3866,6 +3872,70 @@
     "title": "TikTok",
     "description": "Connect your TikTok account to reply to direct messages.",
     "refreshToken": "Refresh Token"
+  },
+  "coupons": {
+    "title": "Coupons",
+    "description": "Manage campaign coupon topics, imports, exports, and flow-ready coupon codes.",
+    "singular": "Coupon",
+    "topicCouponsTitle": "Topic Coupons",
+    "tabs": {
+      "topicCoupon": "Topic Coupon",
+      "coupon": "Coupon",
+      "listTopic": "List Topic",
+      "archive": "Archive"
+    },
+    "topic": {
+      "create": "Create New",
+      "edit": "Edit topic"
+    },
+    "actions": {
+      "import": "Import coupons",
+      "export": "Download Coupon List",
+      "downloadImportTemplate": "Download import template"
+    },
+    "fields": {
+      "topic": "Topic",
+      "selectTopic": "Select topic",
+      "importCsvOnly": "Click or drag .csv file to this area to upload",
+      "allTopics": "All topics",
+      "couponCount": "Coupons",
+      "validity": "Validity period",
+      "unlimited": "Unlimited",
+      "code": "Code",
+      "issueStatus": "Status",
+      "usageStatus": "Usage",
+      "allIssueStatuses": "All statuses",
+      "allUsageStatuses": "All usage",
+      "searchCode": "Search code"
+    },
+    "issueStatuses": {
+      "published": "Published",
+      "unpublished": "Unpublished"
+    },
+    "usageStatuses": {
+      "used": "Used",
+      "notUsed": "Not used yet"
+    },
+    "variables": {
+      "group": "Coupons"
+    },
+    "messages": {
+      "topicSaved": "Coupon topic saved.",
+      "editLocked": "Name and description are locked after coupons have been created or imported.",
+      "archiveTitle": "Archive coupon topic",
+      "archiveConfirm": "Archive \"{name}\"? It will move to the Archive list.",
+      "archiveBulkConfirm": "Archive {count} selected topics? They will move to the Archive list.",
+      "restoreTitle": "Restore coupon topic",
+      "unarchiveConfirm": "Restore \"{name}\"? It will move back to the Topic list.",
+      "unarchiveBulkConfirm": "Restore {count} selected topics? They will move back to the Topic list.",
+      "deleteTitle": "Delete coupon topic",
+      "deleteConfirm": "Delete this archived topic? Coupon history is preserved.",
+      "empty": "No coupons found.",
+      "importStarted": "Coupon import started.",
+      "exportStarted": "Coupon export started.",
+      "exportFailed": "Coupon export failed.",
+      "exportCount": "{count} coupon rows will be exported."
+    }
   },
   "helpMenu": {
     "title": "Help",

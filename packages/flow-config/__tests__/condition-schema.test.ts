@@ -33,6 +33,16 @@ describe("conditionFilterConditionSchema", () => {
 
     expect(parsed.customFieldType).toBeUndefined()
   })
+
+  test("preserves topicId so coupon topic conditions keep their selected topic", () => {
+    const parsed = conditionFilterConditionSchema.parse({
+      field: "couponTopic",
+      operator: "used",
+      topicId: "11619011544072192",
+    })
+
+    expect(parsed.topicId).toBe("11619011544072192")
+  })
 })
 
 describe("setCustomFieldStepSchema", () => {

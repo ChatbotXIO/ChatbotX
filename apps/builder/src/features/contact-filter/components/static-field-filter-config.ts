@@ -307,7 +307,7 @@ export const getStaticFieldValueInputConfig = (
   config: FieldConfig | undefined,
   operator: string | undefined,
 ): CustomFieldValueInputConfig | undefined => {
-  if (!config || config.customFieldId) {
+  if (!config || config.customFieldId || config.topicId) {
     return
   }
   if (isValuelessOperator(operator)) {

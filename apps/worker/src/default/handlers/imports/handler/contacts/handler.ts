@@ -56,9 +56,11 @@ const prepareContacts = async ({
     : []
 
   const [inbox, workspace, tag, fields] = await Promise.all([
-    db.query.inboxModel.findFirst({
-      where: { id: row.inboxId, workspaceId: row.workspaceId },
-    }),
+    row.inboxId
+      ? db.query.inboxModel.findFirst({
+          where: { id: row.inboxId, workspaceId: row.workspaceId },
+        })
+      : null,
     workspaceService.find({ where: { id: row.workspaceId } }),
     meta.tagId
       ? db.query.tagModel.findFirst({
@@ -139,7 +141,7 @@ const insertContactBatch = async (
 ): Promise<number> => {
   const externalIds = eligible.map((row) => row.externalId as string)
   const latestExisting = await contactInboxService.findExistingSourceIds({
-    inboxId: ctx.row.inboxId,
+    inboxId: deps.inbox.id,
     sourceIds: externalIds,
   })
 
@@ -191,7 +193,7 @@ const insertContactBatch = async (
             id: contactInboxId,
             originalContactId: contactId,
             contactId,
-            inboxId: ctx.row.inboxId,
+            inboxId: deps.inbox.id,
             channel: deps.inbox.channel,
             source: contactSources.enum.imported,
             sourceId: row.externalId,
@@ -211,7 +213,7 @@ const insertContactBatch = async (
     // Re-created contacts keep their history: cancel any pending message
     // cleanup recorded when contacts with these inbox identities were deleted.
     await messageCleanupService.cancelByInboxSource({
-      inboxId: ctx.row.inboxId,
+      inboxId: deps.inbox.id,
       sourceIds: survivors.flatMap(({ row }) =>
         row.externalId ? [row.externalId] : [],
       ),
@@ -227,7 +229,7 @@ const insertContactBatch = async (
         .map(({ contactId }) => contactId)
       await tx.delete(contactModel).where(inArray(contactModel.id, orphanIds))
       logger.warn(
-        { inboxId: ctx.row.inboxId, conflicts: orphanIds.length },
+        { inboxId: deps.inbox.id, conflicts: orphanIds.length },
         "Import contact source conflict: skipped already-linked contacts",
       )
     }
@@ -290,7 +292,7 @@ const processContactBatch = async (
 
     const externalIds = contacts.map((c) => c.externalId as string)
     const existing = await contactInboxService.findExistingSourceIds({
-      inboxId: ctx.row.inboxId,
+      inboxId: deps.inbox.id,
       sourceIds: externalIds,
     })
 

@@ -65,6 +65,7 @@
     "openWebchat": "Mở webchat",
     "removeTag": "Xóa thẻ",
     "rename": "Đổi tên",
+    "reset": "Đặt lại",
     "save": "Lưu",
     "selectAll": "Chọn tất cả",
     "selectRow": "Chọn hàng",
@@ -486,6 +487,7 @@
       "questionnaireStarted": "Bảng câu hỏi đã bắt đầu",
       "questionnaireInProgress": "Bảng câu hỏi đang thực hiện",
       "questionnaireFinished": "Bảng câu hỏi đã hoàn tất",
+      "couponTopic": "Mã giảm giá",
       "votedOnPoll": "Đã bình chọn khảo sát",
       "lastComment": "Bình luận cuối",
       "commentedOnPost": "Đã bình luận bài viết",
@@ -547,6 +549,7 @@
       "systemTime": "Thời gian hệ thống",
       "ecommerce": "Thương mại điện tử",
       "systemFields": "Trường hệ thống",
+      "topicCoupon": "Topic coupon",
       "customFields": "Trường tùy chỉnh",
       "email": "Email",
       "sms": "SMS"
@@ -732,6 +735,7 @@
       "endsWith": "Kết thúc bằng",
       "isBetween": "Khoảng",
       "notBetween": "Không phải khoảng",
+      "used": "Đã sử dụng",
       "hasAnyValue": "Có bất kỳ giá trị nào",
       "hasNoValue": "Không có giá trị",
       "greaterThan": "Lớn hơn",
@@ -2053,6 +2057,8 @@
       "make": "Make",
       "triggers": "Trigger",
       "questionnaires": "Bảng câu hỏi",
+      "setUpCoupon": "Thiết lập Coupon",
+      "markCouponUsed": "Đánh dấu Coupon đã dùng",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
       "condition": "Điều kiện",
@@ -3891,6 +3897,70 @@
     "title": "TikTok",
     "description": "Kết nối tài khoản TikTok để trả lời tin nhắn trực tiếp.",
     "refreshToken": "Làm mới Token"
+  },
+  "coupons": {
+    "title": "Coupon",
+    "description": "Quản lý chủ đề coupon, import, export và mã coupon dùng trong flow.",
+    "singular": "Coupon",
+    "topicCouponsTitle": "Topic Coupon",
+    "tabs": {
+      "topicCoupon": "Topic Coupon",
+      "coupon": "Coupon",
+      "listTopic": "List Topic",
+      "archive": "Lưu trữ"
+    },
+    "topic": {
+      "create": "Tạo mới",
+      "edit": "Chỉnh sửa chủ đề"
+    },
+    "actions": {
+      "import": "Import coupon",
+      "export": "Tải danh sách Coupon",
+      "downloadImportTemplate": "Tải file mẫu import"
+    },
+    "fields": {
+      "topic": "Chủ đề",
+      "selectTopic": "Chọn chủ đề",
+      "importCsvOnly": "Nhấp hoặc kéo thả file .csv vào khu vực này để tải lên",
+      "allTopics": "Tất cả chủ đề",
+      "couponCount": "Coupon",
+      "validity": "Thời hạn",
+      "unlimited": "Không giới hạn",
+      "code": "Mã",
+      "issueStatus": "Trạng thái",
+      "usageStatus": "Sử dụng",
+      "allIssueStatuses": "Tất cả trạng thái",
+      "allUsageStatuses": "Tất cả sử dụng",
+      "searchCode": "Tìm mã"
+    },
+    "issueStatuses": {
+      "published": "Published",
+      "unpublished": "Unpublished"
+    },
+    "usageStatuses": {
+      "used": "Đã dùng",
+      "notUsed": "Chưa dùng"
+    },
+    "variables": {
+      "group": "Coupons"
+    },
+    "messages": {
+      "topicSaved": "Đã lưu chủ đề coupon.",
+      "editLocked": "Tên và mô tả bị khóa sau khi đã tạo hoặc import coupon.",
+      "archiveTitle": "Lưu trữ chủ đề coupon",
+      "archiveConfirm": "Lưu trữ \"{name}\"? Chủ đề sẽ được chuyển sang danh sách Lưu trữ.",
+      "archiveBulkConfirm": "Lưu trữ {count} chủ đề đã chọn? Các chủ đề sẽ được chuyển sang danh sách Lưu trữ.",
+      "restoreTitle": "Khôi phục chủ đề coupon",
+      "unarchiveConfirm": "Khôi phục \"{name}\"? Chủ đề sẽ được chuyển về danh sách Topic.",
+      "unarchiveBulkConfirm": "Khôi phục {count} chủ đề đã chọn? Các chủ đề sẽ được chuyển về danh sách Topic.",
+      "deleteTitle": "Xóa chủ đề coupon",
+      "deleteConfirm": "Xóa chủ đề đã lưu trữ này? Lịch sử coupon vẫn được giữ lại.",
+      "empty": "Không tìm thấy coupon.",
+      "importStarted": "Đã bắt đầu import coupon.",
+      "exportStarted": "Đã bắt đầu export coupon.",
+      "exportFailed": "Export coupon thất bại.",
+      "exportCount": "{count} dòng coupon sẽ được export."
+    }
   },
   "helpMenu": {
     "title": "Trợ giúp",

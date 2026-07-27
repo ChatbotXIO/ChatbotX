@@ -28,6 +28,8 @@ export type UserQuotaModel = typeof schema.userQuotaModel.$inferSelect
 export type WorkspaceUsageModel = typeof schema.workspaceUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
+export type CouponTopicModel = typeof schema.couponTopicModel.$inferSelect
+export type CouponModel = typeof schema.couponModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect
 export type IntegrationSmtpModel =
   typeof schema.integrationSmtpModel.$inferSelect

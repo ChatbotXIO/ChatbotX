@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
@@ -53,6 +54,7 @@ export const useContactFilterConfigs = (
   const assigneeOptions = useContactAssigneeOptions({
     includeUnassigned: true,
   })
+  const { options: couponTopicOptions } = useCouponTopicOptions()
 
   const configs = useMemo(
     () =>
@@ -66,6 +68,7 @@ export const useContactFilterConfigs = (
         sequenceOptions,
         reflinkOptions,
         assigneeOptions,
+        couponTopicOptions,
       }),
     [
       t,
@@ -77,6 +80,7 @@ export const useContactFilterConfigs = (
       sequenceOptions,
       reflinkOptions,
       assigneeOptions,
+      couponTopicOptions,
     ],
   )
 

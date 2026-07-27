@@ -293,6 +293,51 @@ describe("contacts import pipeline", () => {
     expect(transactionFn).toHaveBeenCalledTimes(1)
   })
 
+  test("verifies object size server-side even when a stored file size exists", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,first@example.com",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        file: {
+          id: "file-1",
+          path: "imports/contacts/ws-1/test.csv",
+          fileName: "test.csv",
+          mimeType: "text/csv",
+          fileSize: "1024",
+        },
+      }),
+    )
+
+    expect(headObject).toHaveBeenCalledWith("imports/contacts/ws-1/test.csv")
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      totalCount: 1,
+      processedCount: 1,
+      successCount: 1,
+      failedCount: 0,
+    })
+  })
+
+  test("marks row failed and does not stream when object size exceeds the import limit", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockClear()
+    headObject.mockResolvedValue({ ContentLength: 21 * 1024 * 1024 })
+
+    await runContactsImport(buildRow())
+
+    expect(getObjectStream).not.toHaveBeenCalled()
+    expect(lastUpdate()).toMatchObject({
+      status: "failed",
+      errorMessage: "File exceeds 20MB limit",
+    })
+  })
+
   test("counts blank row as failed but continues", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     getObjectStream.mockResolvedValue(

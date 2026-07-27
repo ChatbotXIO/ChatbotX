@@ -36,6 +36,8 @@ export const stepTypes = z.enum([
   "clearCustomField",
   "cancelContactInput",
   "questionnaires",
+  "setUpCoupon",
+  "markCouponUsed",
   "condition",
 
   // Inbox Operations (I_)

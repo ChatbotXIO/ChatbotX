@@ -16,6 +16,7 @@ import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversati
 import { blockContactStepSchema } from "./steps/block-contact"
 import { clearCustomFieldStepSchema } from "./steps/clear-custom-field"
 import { countCharactersStepSchema } from "./steps/count-characters"
+import { markCouponUsedStepSchema, setUpCouponStepSchema } from "./steps/coupon"
 import { deleteContactStepSchema } from "./steps/delete-contact"
 import { disableBotStepSchema } from "./steps/disable-bot"
 import { disableMessengerComposerStepSchema } from "./steps/disable-messenger-composer"
@@ -81,6 +82,8 @@ const contactSteps = [
   clearCustomFieldStepSchema,
   deleteContactStepSchema,
   questionnairesStepSchema,
+  setUpCouponStepSchema,
+  markCouponUsedStepSchema,
 ]
 
 const broadcastSteps = [

@@ -38,6 +38,7 @@ import {
   StarIcon,
   StarOffIcon,
   TagIcon,
+  TicketPercentIcon,
   UserIcon,
   UserRoundXIcon,
   WebhookIcon,
@@ -536,6 +537,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     icon: CogIcon,
     stepType: null,
     children: [
+      {
+        label: t("coupons.tabs.topicCoupon"),
+        icon: TicketPercentIcon,
+        stepType: stepTypes.enum.setUpCoupon,
+      },
       {
         label: t("flows.actions.getDataFromJson"),
         icon: CodeIcon,

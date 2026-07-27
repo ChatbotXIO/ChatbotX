@@ -1,5 +1,5 @@
 import { relationsFilterToSQL, type SQL } from "drizzle-orm"
-import { PgDialect } from "drizzle-orm/pg-core"
+import { alias, PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test } from "vitest"
 import { operatorTypes } from "../src/partials"
 import {
@@ -2800,6 +2800,131 @@ describe("applyContactFilter — custom fields", () => {
     expect(query.sql).not.toContain("NOT EXISTS")
     expect(query.sql).toContain('"ContactCustomField"."value" =')
     expect(query.params).toContain("yes")
+  })
+})
+
+describe("applyContactFilter — couponTopic (dynamic per-topic field)", () => {
+  test("isNotEmpty matches contacts issued a coupon of this topic", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "couponTopic",
+          topicId: "topic-1",
+          operator: operatorTypes.enum.isNotEmpty,
+        },
+      ],
+    })
+    const query = renderFirstRawCondition(where)
+
+    expect(query.sql).toContain("EXISTS")
+    expect(query.sql).not.toContain("usedAt")
+    expect(query.params).toContain("topic-1")
+  })
+
+  test("used matches contacts who redeemed a coupon of this topic", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "couponTopic",
+          topicId: "topic-1",
+          operator: operatorTypes.enum.used,
+        },
+      ],
+    })
+    const query = renderFirstRawCondition(where)
+
+    expect(query.sql).toContain("EXISTS")
+    expect(query.sql).toContain("usedAt")
+    expect(query.params).toContain("topic-1")
+  })
+
+  test("used correlates workspace through the active contact table alias", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "couponTopic",
+          topicId: "topic-1",
+          operator: operatorTypes.enum.used,
+        },
+      ],
+    })
+    const raw = (where as { AND?: Array<{ RAW?: unknown }> }).AND?.[0]?.RAW
+    expect(typeof raw).toBe("function")
+
+    const contactAlias = alias(contactModel, "contact_alias")
+    const query = new PgDialect().sqlToQuery(
+      (raw as (table: typeof contactModel) => SQL)(contactAlias),
+    )
+
+    expect(query.sql).toContain('"contact_alias"."workspaceId"')
+    expect(query.sql).not.toContain('"Contact"."workspaceId"')
+  })
+
+  test("eq scopes to a specific coupon code within the topic", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "couponTopic",
+          topicId: "topic-1",
+          operator: operatorTypes.enum.eq,
+          value: "SAVE10",
+        },
+      ],
+    })
+    const query = renderFirstRawCondition(where)
+
+    expect(query.sql).toContain("EXISTS")
+    expect(query.sql).not.toContain("usedAt")
+    expect(query.params).toEqual(["topic-1", "SAVE10"])
+  })
+
+  test("eq escapes LIKE wildcards in the coupon code so it matches exactly", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "couponTopic",
+          topicId: "topic-1",
+          operator: operatorTypes.enum.eq,
+          value: "A%B_C",
+        },
+      ],
+    })
+    const query = renderFirstRawCondition(where)
+
+    expect(query.params).toEqual(["topic-1", escapeLikePattern("A%B_C")])
+    expect(query.params).not.toContain("A%B_C")
+  })
+
+  test("drops the condition when topicId is missing", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "couponTopic", operator: operatorTypes.enum.isNotEmpty },
+        ],
+      }),
+    ).toEqual({})
+  })
+
+  test("drops unsupported operators", () => {
+    expect(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "couponTopic",
+            topicId: "topic-1",
+            operator: operatorTypes.enum.contains,
+            value: "x",
+          },
+        ],
+      }),
+    ).toEqual({})
   })
 })
 

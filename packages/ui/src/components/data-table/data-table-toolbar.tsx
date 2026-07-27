@@ -6,6 +6,7 @@ import * as React from "react"
 
 import { DataTableDateFilter } from "@chatbotx.io/ui/components/data-table/data-table-date-filter"
 import { DataTableFacetedFilter } from "@chatbotx.io/ui/components/data-table/data-table-faceted-filter"
+import { DataTableSelectFilter } from "@chatbotx.io/ui/components/data-table/data-table-select-filter"
 import { DataTableSliderFilter } from "@chatbotx.io/ui/components/data-table/data-table-slider-filter"
 import { DataTableViewOptions } from "@chatbotx.io/ui/components/data-table/data-table-view-options"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -137,13 +138,21 @@ function DataTableToolbarFilter<TData>({
           )
 
         case "select":
+          return (
+            <DataTableSelectFilter
+              column={column}
+              title={columnMeta.placeholder ?? columnMeta.label ?? column.id}
+              options={columnMeta.options ?? []}
+            />
+          )
+
         case "multiSelect":
           return (
             <DataTableFacetedFilter
               column={column}
               title={columnMeta.label ?? column.id}
               options={columnMeta.options ?? []}
-              multiple={columnMeta.variant === "multiSelect"}
+              multiple
             />
           )
 

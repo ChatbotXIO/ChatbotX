@@ -10,14 +10,15 @@ import {
   contactInboxModel,
   contactModel,
   conversationModel,
+  couponModel,
   questionnaireModel,
   questionnaireSubmissionModel,
 } from "../../schema"
-import { likeContains } from "../../utils"
+import { escapeLikePattern, likeContains } from "../../utils"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import { buildCustomFieldWhere } from "./custom-field-predicates"
-import { contactInboxExists, joinTableExists } from "./exists"
+import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
 import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
@@ -89,6 +90,16 @@ const questionnaireSubmissionExists = joinTableExists(
   questionnaireSubmissionModel.contactId,
 )
 
+const couponExists = (
+  predicate: (contactId: AnyColumn, workspaceId: AnyColumn) => SQL,
+  negate = false,
+): ContactWhere =>
+  existsWhere(
+    (contactId, contactTable) =>
+      sql`SELECT 1 FROM ${couponModel} WHERE ${couponModel.issuedContactId} = ${contactId} AND ${predicate(contactId, contactTable.workspaceId)}`,
+    negate,
+  )
+
 const toStringArrayValue = (value: unknown): string[] =>
   (Array.isArray(value) ? value : [value]).filter(
     (item): item is string => typeof item === "string" && item !== "",
@@ -147,6 +158,49 @@ const buildConversationAssignedWhere = (
 
   const predicate = combineWithOr(predicates)
   return predicate ? conversationExists(predicate, negative) : {}
+}
+
+/**
+ * Dynamic per-coupon-topic condition (one filter field per real workspace
+ * topic, `field: "couponTopic"` + runtime `topicId` — same shape as custom
+ * fields): `isNotEmpty` = issued this topic, `used` = redeemed this topic,
+ * `eq` = issued this topic with a specific coupon code.
+ */
+const buildCouponTopicWhere = (
+  topicId: string | undefined,
+  operator: string,
+  value: unknown,
+): ContactWhere => {
+  if (!topicId) {
+    return {}
+  }
+
+  const topicPredicate = (_contactId: AnyColumn, workspaceId: AnyColumn) =>
+    sql`${couponModel.workspaceId} = ${workspaceId} AND ${couponModel.topicId} = ${topicId}`
+
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    return couponExists(topicPredicate)
+  }
+
+  if (operator === operatorTypes.enum.used) {
+    return couponExists(
+      (_contactId, workspaceId) =>
+        sql`${couponModel.workspaceId} = ${workspaceId} AND ${couponModel.topicId} = ${topicId} AND ${couponModel.usedAt} IS NOT NULL`,
+    )
+  }
+
+  if (
+    operator === operatorTypes.enum.eq &&
+    typeof value === "string" &&
+    value
+  ) {
+    return couponExists(
+      (_contactId, workspaceId) =>
+        sql`${couponModel.workspaceId} = ${workspaceId} AND ${couponModel.topicId} = ${topicId} AND ${couponModel.code} ILIKE ${escapeLikePattern(value)}`,
+    )
+  }
+
+  return {}
 }
 
 const EMAIL_KEYWORD_PATTERN = /@/
@@ -465,6 +519,9 @@ function buildConditionWhere(
         operator,
         value,
       )
+
+    case "couponTopic":
+      return buildCouponTopicWhere(condition.topicId, operator, value)
 
     case "conversationAssigned":
       return buildConversationAssignedWhere(operator, value)

@@ -19,25 +19,22 @@ describe("perform action SendGrid registration", () => {
   })
 })
 
-describe("perform action MailerLite menu", () => {
-  test("includes the MailerLite subscriber action", () => {
-    const items = performActionMenus(t).flatMap((item) => item.children ?? [])
-    expect(
-      items.some(
-        (item) => item.stepType === stepTypes.enum.mailerLiteAddSubscriber,
-      ),
-    ).toBe(true)
-  })
-})
+describe("perform action coupon menu", () => {
+  test("exposes topic coupon under tools as the create path", () => {
+    const tools = performActionMenus(t).find(
+      (item) => item.label === "flows.actions.tools",
+    )
 
-describe("perform action Moosend menu", () => {
-  test("includes the exact translated Moosend action", () => {
-    const items = performActionMenus(t).flatMap((item) => item.children ?? [])
-    expect(items).toContainEqual(
+    expect(tools?.children).toContainEqual(
       expect.objectContaining({
-        label: "flows.actions.moosendCreateContact",
-        stepType: stepTypes.enum.moosendCreateContact,
+        label: "coupons.tabs.topicCoupon",
+        stepType: stepTypes.enum.setUpCoupon,
       }),
     )
+    expect(
+      performActionMenus(t).some(
+        (item) => item.stepType === stepTypes.enum.setUpCoupon,
+      ),
+    ).toBe(false)
   })
 })

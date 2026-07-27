@@ -20,6 +20,7 @@ type ImportDropzoneProps = {
   onUploaded: (result: UploadResult, csvHeaders: string[]) => void
   onCleared: () => void
   onUploadingChange?: (isUploading: boolean) => void
+  uploadLabel?: string
 }
 
 const noop = () => undefined
@@ -31,6 +32,7 @@ export function ImportDropzone({
   onUploaded,
   onCleared,
   onUploadingChange,
+  uploadLabel,
 }: ImportDropzoneProps) {
   const t = useTranslations()
   const { upload } = usePresignedUpload(workspaceId, type, subType)
@@ -71,6 +73,7 @@ export function ImportDropzone({
           accept: config.acceptedExtensions,
           maxSize: config.maxFileSizeMB,
           isCard: true,
+          uploadLabel,
         }}
         mode="file"
         onDrop={(file: File) => {

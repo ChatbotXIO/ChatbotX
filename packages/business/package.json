@@ -10,6 +10,7 @@
     "./contact-inbox": "./src/contact-inbox/index.ts",
     "./contact-locale": "./src/contact-locale/index.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
+    "./coupon": "./src/coupon/index.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
     "./smart-delay": "./src/smart-delay/index.ts",
     "./errors": "./src/errors.ts",

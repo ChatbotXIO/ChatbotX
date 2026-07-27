@@ -10,6 +10,7 @@ import type {
   ConversationModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import { logger } from "./logger"
 import type { ContactCustomFieldValue, ReplaceVariableProps } from "./schema"
 import {
@@ -141,6 +142,8 @@ export const contactVariableService = {
                 renderTimezone,
               )
             : ""
+        } else if (isCouponVariable(variable)) {
+          mapping[variable] = await resolveCouponVariable(context, variable)
         }
       }
 

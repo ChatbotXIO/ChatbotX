@@ -21,6 +21,7 @@ import { chooseChannelStep } from "./choose-channel"
 import { clearCustomFieldStep } from "./clear-custom-field"
 import { conditionStep } from "./condition"
 import { countCharactersStep } from "./count-characters"
+import { markCouponUsedStep, setUpCouponStep } from "./coupon"
 import type { StepDefinition } from "./definition"
 import { deleteContactStep } from "./delete-contact"
 import { disableBotStep } from "./disable-bot"
@@ -151,6 +152,8 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.unsubscribeSequence]: unsubscribeSequenceStep,
   [stepTypes.enum.chooseChannel]: chooseChannelStep,
   [stepTypes.enum.questionnaires]: questionnairesStep,
+  [stepTypes.enum.setUpCoupon]: setUpCouponStep,
+  [stepTypes.enum.markCouponUsed]: markCouponUsedStep,
   [stepTypes.enum.condition]: conditionStep,
   [stepTypes.enum.addNotes]: addNotesStep,
   [stepTypes.enum.waitUserReply]: undefined,

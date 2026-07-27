@@ -9,6 +9,7 @@ import { botFieldAPIs } from "@/features/bot-fields/api"
 import { broadcastAPIs } from "@/features/broadcasts/api"
 import { contactsAPIs } from "@/features/contacts/api"
 import { conversationsAPI } from "@/features/conversations/api"
+import { couponsAPI } from "@/features/coupons/api"
 import { customFieldsAPI } from "@/features/custom-fields/api"
 import { emailTopicsAPI } from "@/features/email-topics/api"
 import { errorLogsAPI } from "@/features/error-logs/api"
@@ -57,6 +58,7 @@ export const router = {
   aiAgentsAPI,
   broadcastAPIs,
   conversationsAPI,
+  couponsAPI,
   emailTopicsAPI,
   tagsAPI,
   customFieldsAPI,

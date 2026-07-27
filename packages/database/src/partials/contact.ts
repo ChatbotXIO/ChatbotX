@@ -194,6 +194,7 @@ export const contactFilterFields = z.enum([
   "questionnaireStarted",
   "questionnaireInProgress",
   "questionnaireFinished",
+  "couponTopic",
   "votedOnPoll",
   "lastComment",
   "commentedOnPost",

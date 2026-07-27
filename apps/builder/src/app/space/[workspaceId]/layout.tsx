@@ -21,6 +21,7 @@ import { RefreshOnNavigation } from "@/components/refresh-on-navigation"
 import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { isCloud } from "@/env"
+import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
@@ -139,7 +140,12 @@ export default async function WorkspaceLayout({
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}
           <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
-          {children}
+          <CouponTopicStoreProvider
+            autoInitialize={false}
+            workspaceId={workspaceId}
+          >
+            {children}
+          </CouponTopicStoreProvider>
         </main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
       </SidebarInset>
