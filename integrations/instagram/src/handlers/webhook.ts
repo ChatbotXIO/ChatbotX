@@ -56,11 +56,25 @@ const handleWebhookEvent = async (
       throw new InstagramWebhookException("Invalid webhook signature")
     }
 
-    const webhookData = instagramWebhookEventSchema.parse(JSON.parse(body))
+    const parsedWebhook = instagramWebhookEventSchema.safeParse(
+      JSON.parse(body),
+    )
+    if (!parsedWebhook.success) {
+      logger.warn(
+        {
+          issues: parsedWebhook.error.issues.map(({ code, path }) => ({
+            code,
+            path,
+          })),
+        },
+        "instagram webhook payload unrecognized — skipping",
+      )
+      return
+    }
+    const webhookData = parsedWebhook.data
     if (webhookData.object !== "instagram") {
       throw new InstagramWebhookException(
         `Unsupported webhook object type: ${webhookData.object}`,
-        webhookData,
       )
     }
 
@@ -78,7 +92,12 @@ const handleWebhookEvent = async (
       const parsed = instagramCommentEventValueSchema.safeParse(commentValue)
       if (!parsed.success) {
         logger.warn(
-          { error: parsed.error, value: commentValue },
+          {
+            issues: parsed.error.issues.map(({ code, path }) => ({
+              code,
+              path,
+            })),
+          },
           "comment event parse failed — skipping",
         )
         return
@@ -163,7 +182,6 @@ const handleWebhookEvent = async (
 
     throw new InstagramWebhookException(
       `Failed to process webhook event: ${errorMessage}`,
-      await req.text().catch(() => null),
     )
   }
 }
