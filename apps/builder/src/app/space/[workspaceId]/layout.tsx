@@ -3,7 +3,6 @@ import {
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
-  userQuotaService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import {
@@ -25,12 +24,9 @@ import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
-import {
-  buildWorkspaceQuotaMetrics,
-  resolveBlockReason,
-  resolveTrialEndsAt,
-} from "@/lib/quota-metrics"
+import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
+import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
 export default async function WorkspaceLayout({
   children,
@@ -56,32 +52,29 @@ export default async function WorkspaceLayout({
   const cloud = isCloud()
 
   // Check if user is a member of the workspace
-  const [
-    allWorkspaceMembers,
-    { storageUrl },
-    platformAdmin,
-    quota,
-    usage,
-    atLimit,
-  ] = await Promise.all([
-    workspaceMemberService.listByUserId({ userId: user.id }),
-    getTenantSettings(),
-    isPlatformAdmin(user),
-    cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
-    cloud
-      ? quotaEnforcementService.getWorkspaceUsageSummary({
-          userId: user.id,
-          workspaceId,
-        })
-      : null,
-    cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
-  ])
+  const [allWorkspaceMembers, { storageUrl }, platformAdmin] =
+    await Promise.all([
+      workspaceMemberService.listByUserId({ userId: user.id }),
+      getTenantSettings(),
+      isPlatformAdmin(user),
+    ])
   const targetWorkspaceMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
   )
   if (!targetWorkspaceMember) {
     return notFound()
   }
+
+  const [{ blocked, blockReason, quota, trialEndsAt }, usage] =
+    await Promise.all([
+      resolveWorkspaceBlockState(targetWorkspaceMember.workspace.ownerId),
+      cloud
+        ? quotaEnforcementService.getWorkspaceUsageSummary({
+            userId: targetWorkspaceMember.workspace.ownerId,
+            workspaceId,
+          })
+        : null,
+    ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
     targetWorkspaceMember.workspace,
@@ -94,14 +87,6 @@ export default async function WorkspaceLayout({
       ? new URL(workspaceMember.workspace.logo, storageUrl).toString()
       : null,
   }))
-
-  const trialEndsAt = resolveTrialEndsAt(quota)
-  const blockReason = resolveBlockReason(
-    quota?.planStatus ?? null,
-    trialEndsAt,
-    atLimit?.mac ?? false,
-  )
-  const blocked = blockReason !== null
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
