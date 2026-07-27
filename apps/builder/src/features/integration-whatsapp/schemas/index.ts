@@ -1,3 +1,4 @@
+import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 
 export type ManualOnboardingResult = {
@@ -18,11 +19,8 @@ export const CONNECT_WHATSAPP_RESULT_TYPES = {
   MANUAL_RESULT: "manualResult",
   PHONE_NUMBER_SELECTION: "phoneNumberSelection",
   NO_PHONE_NUMBER_CANDIDATES: "noPhoneNumberCandidates",
-} as const
-
-export const WHATSAPP_OAUTH_CODE_SOURCES = {
-  SDK: "sdk",
-  REDIRECT: "redirect",
+  PHONE_NUMBERS_ALREADY_CONNECTED: "phoneNumbersAlreadyConnected",
+  PHONE_NUMBER_VERIFICATION_REQUIRED: "phoneNumberVerificationRequired",
 } as const
 
 export type ConnectWhatsappResult =
@@ -44,7 +42,18 @@ export type ConnectWhatsappResult =
     }
   | {
       type: typeof CONNECT_WHATSAPP_RESULT_TYPES.NO_PHONE_NUMBER_CANDIDATES
-      redirectUrl?: string
+    }
+  | {
+      type: typeof CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBERS_ALREADY_CONNECTED
+    }
+  | {
+      type: typeof CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_VERIFICATION_REQUIRED
+      redirectUrl: string
+      integrationId: string
+      workspaceId: string
+      displayPhoneNumber: string
+      verifiedName: string
+      registrationError: IntegrationWhatsappRegistrationError | null
     }
 
 export const connectWhatsappSchema = z
@@ -61,12 +70,6 @@ export const connectWhatsappSchema = z
     phoneNumberId: z.string().nullish(),
     workspaceId: z.string().nullish(),
     signupSessionId: z.string().nullish(),
-    oauthCodeSource: z
-      .enum([
-        WHATSAPP_OAUTH_CODE_SOURCES.SDK,
-        WHATSAPP_OAUTH_CODE_SOURCES.REDIRECT,
-      ])
-      .nullish(),
     accessToken: z.string().nullish(),
     code: z.string().nullish(),
   })

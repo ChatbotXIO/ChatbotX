@@ -29,7 +29,6 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
             t("messages.createdFailed", {
               feature: t("fields.aiFile.label"),
             }),
-          { duration: 5000 },
         )
       },
     },

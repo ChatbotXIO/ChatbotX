@@ -39,9 +39,6 @@ export type WhatsappOAuthRelayResult = {
   type: typeof WA_OAUTH_RESULT
   status: "success" | "error"
   code?: string
-  codeSource?: "sdk" | "redirect"
-  phoneNumberId?: string
-  wabaId?: string
 }
 
 /** State round-tripped through Facebook so the broker knows where to relay back. */
@@ -119,7 +116,7 @@ export function isCoexistOnboardingIntent(
 }
 
 /** The exact embedded-signup `extras` object Meta expects. */
-export function buildEmbeddedSignupExtras(featureType?: string) {
+function buildEmbeddedSignupExtras(featureType?: string) {
   return {
     sessionInfoVersion: 3,
     setup: {},
@@ -139,8 +136,6 @@ export type FacebookOAuthDialogParams = {
   locale?: string
 }
 
-export type WhatsappEmbeddedSignupBrokerParams = FacebookOAuthDialogParams
-
 /**
  * Build the absolute Facebook OAuth dialog URL to open in a popup. `redirect_uri`
  * is the broker callback (the only origin registered with Meta); `state` carries
@@ -157,38 +152,6 @@ export function buildFacebookOAuthDialogUrl(
     buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
   )
   url.searchParams.set("response_type", "code")
-  url.searchParams.set(
-    "state",
-    encodeOAuthState({
-      referer: params.resellerOrigin,
-      locale: params.locale,
-    }),
-  )
-
-  const featureType = resolveEmbeddedSignupFeatureType({
-    connectExisting: params.connectExisting,
-    transferPhoneNumber: params.transferPhoneNumber,
-  })
-  url.searchParams.set(
-    "extras",
-    JSON.stringify(buildEmbeddedSignupExtras(featureType)),
-  )
-
-  return url.toString()
-}
-
-/**
- * Build the broker launcher URL. The launcher runs the Facebook JS SDK on the
- * Meta-registered broker origin, captures `WA_EMBEDDED_SIGNUP` session info,
- * then relays `{ code, phoneNumberId, wabaId }` back to the reseller tab.
- */
-export function buildWhatsappEmbeddedSignupBrokerUrl(
-  params: WhatsappEmbeddedSignupBrokerParams,
-): string {
-  const url = new URL(buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH))
-  url.searchParams.set("client_id", params.clientId)
-  url.searchParams.set("config_id", params.configId)
-  url.searchParams.set("version", params.version)
   url.searchParams.set(
     "state",
     encodeOAuthState({

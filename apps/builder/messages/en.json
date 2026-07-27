@@ -2951,9 +2951,6 @@
     },
     "connectExisting": "Connect an existing WhatsApp Business Account",
     "embeddedSignupDone": "Signup complete — you can close this tab.",
-    "embeddedSignupContinue": "Continue with Facebook",
-    "embeddedSignupFailed": "Signup could not be completed.",
-    "embeddedSignupLoading": "Continue to complete WhatsApp signup.",
     "embeddedSignupPopupBlocked": "Please allow pop-ups for this site, then try again.",
     "fillRequiredFields": "Please fill in all required fields",
     "continueManualConnect": "Continue — manual connect",
@@ -2970,6 +2967,31 @@
       "qrCodeHint": "Scan the QR code to open the webhook URL",
       "moreSettings": "More settings",
       "goToInbox": "Take me there"
+    },
+    "phoneVerification": {
+      "title": "Verify WhatsApp phone number",
+      "description": "Request a verification code from Meta, enter the code here, and the phone number will be registered automatically.",
+      "errorTitle": "Phone number verification required",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Voice call"
+      },
+      "actions": {
+        "sendCode": "Send code",
+        "resendIn": "Resend in {seconds}s",
+        "verify": "Verify and register"
+      },
+      "fields": {
+        "code": {
+          "label": "Verification code",
+          "placeholder": "Enter Meta OTP"
+        }
+      },
+      "messages": {
+        "codeSent": "Verification code sent by {method}.",
+        "cooldown": "Please wait {seconds}s before requesting another code.",
+        "verified": "Phone number verified and registered successfully."
+      }
     },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
@@ -3049,6 +3071,10 @@
       "title": "Manage your WhatsApp account",
       "description": "Review your WhatsApp account status, messaging limits, and quality. Update settings or resolve issues if needed",
       "goToBusinessManager": "Go to Meta Business Manager",
+      "unavailable": {
+        "title": "Account health is temporarily unavailable",
+        "description": "We could not load this WhatsApp phone number from Meta right now. Other recovery actions on this page are still available."
+      },
       "fields": {
         "displayPhoneNumber": {
           "label": "Display phone number",

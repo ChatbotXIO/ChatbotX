@@ -53,7 +53,6 @@ import {
   type ConnectWhatsappResult,
   type ConnectWhatsappSchema,
   connectWhatsappSchema,
-  WHATSAPP_OAUTH_CODE_SOURCES,
   type WhatsappPhoneNumberOption,
 } from "../schemas"
 import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
@@ -67,15 +66,10 @@ async function resolveAccessToken(
   }
 
   if (input.code) {
-    const redirectUri =
-      input.oauthCodeSource === WHATSAPP_OAUTH_CODE_SOURCES.SDK
-        ? undefined
-        : buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH)
-
     const exchangeResult = await exchangeAccessToken(
       whatsappSettings,
       input.code,
-      redirectUri,
+      buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
     )
     return exchangeResult.access_token
   }
@@ -174,24 +168,82 @@ function toPhoneNumberOption(
   }
 }
 
-async function listConnectablePhoneNumbers(params: {
+const PHONE_NUMBER_AVAILABILITY_REASONS = {
+  NO_PHONE_NUMBERS: "noPhoneNumbers",
+  ALL_CONNECTED: "allConnected",
+  AVAILABLE: "available",
+} as const
+
+type PhoneNumberAvailabilityReason =
+  (typeof PHONE_NUMBER_AVAILABILITY_REASONS)[keyof typeof PHONE_NUMBER_AVAILABILITY_REASONS]
+
+type AvailablePhoneNumbersResult = {
+  reason: PhoneNumberAvailabilityReason
+  phoneNumbers: WhatsappPhoneNumber[]
+  totalPhoneNumberCount: number
+}
+
+async function getAvailablePhoneNumbers(params: {
   wabaId: string
   accessToken: string
   version: string
-}): Promise<WhatsappPhoneNumber[]> {
+}): Promise<AvailablePhoneNumbersResult> {
   const response = await whatsappListPhoneNumbers(params)
-  if (response.data.length === 0) {
-    return []
+  const phoneNumbers = response.data
+
+  if (phoneNumbers.length === 0) {
+    return {
+      reason: PHONE_NUMBER_AVAILABILITY_REASONS.NO_PHONE_NUMBERS,
+      phoneNumbers: [],
+      totalPhoneNumberCount: 0,
+    }
   }
 
   const connectedPhoneNumberIds =
     await integrationWhatsappService.findConnectedPhoneNumberIds(
-      response.data.map((phoneNumber) => phoneNumber.id),
+      phoneNumbers.map((phoneNumber) => phoneNumber.id),
     )
 
-  return response.data.filter(
+  const availablePhoneNumbers = phoneNumbers.filter(
     (phoneNumber) => !connectedPhoneNumberIds.has(phoneNumber.id),
   )
+
+  if (availablePhoneNumbers.length === 0) {
+    return {
+      reason: PHONE_NUMBER_AVAILABILITY_REASONS.ALL_CONNECTED,
+      phoneNumbers: [],
+      totalPhoneNumberCount: phoneNumbers.length,
+    }
+  }
+
+  return {
+    reason: PHONE_NUMBER_AVAILABILITY_REASONS.AVAILABLE,
+    phoneNumbers: availablePhoneNumbers,
+    totalPhoneNumberCount: phoneNumbers.length,
+  }
+}
+
+function createUnavailablePhoneNumberResult(
+  reason: PhoneNumberAvailabilityReason,
+): PreparedConnectInput | null {
+  switch (reason) {
+    case PHONE_NUMBER_AVAILABILITY_REASONS.NO_PHONE_NUMBERS:
+      return {
+        source: "selection_required",
+        result: {
+          type: CONNECT_WHATSAPP_RESULT_TYPES.NO_PHONE_NUMBER_CANDIDATES,
+        },
+      }
+    case PHONE_NUMBER_AVAILABILITY_REASONS.ALL_CONNECTED:
+      return {
+        source: "selection_required",
+        result: {
+          type: CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBERS_ALREADY_CONNECTED,
+        },
+      }
+    default:
+      return null
+  }
 }
 
 async function createPhoneNumberSelectionResult(params: {
@@ -316,25 +368,25 @@ async function prepareConnectInput(params: {
     }
   }
 
-  const candidates = await listConnectablePhoneNumbers({
+  const phoneNumberAvailability = await getAvailablePhoneNumbers({
     wabaId: targets.wabaId,
     accessToken,
     version: whatsappSettings.version,
   })
 
-  if (candidates.length === 0) {
-    return {
-      source: "selection_required",
-      result: {
-        type: CONNECT_WHATSAPP_RESULT_TYPES.NO_PHONE_NUMBER_CANDIDATES,
-        ...(input.workspaceId
-          ? { redirectUrl: `/space/${input.workspaceId}/settings/channels` }
-          : {}),
-      },
-    }
+  const unavailablePhoneNumberResult = createUnavailablePhoneNumberResult(
+    phoneNumberAvailability.reason,
+  )
+  if (unavailablePhoneNumberResult) {
+    return unavailablePhoneNumberResult
   }
 
-  if (candidates.length === 1) {
+  const candidates = phoneNumberAvailability.phoneNumbers
+
+  if (
+    phoneNumberAvailability.totalPhoneNumberCount === 1 &&
+    candidates.length === 1
+  ) {
     const [phoneNumber] = candidates
     if (!phoneNumber) {
       throw new ChatbotXException("No phone number found")
@@ -525,6 +577,9 @@ function buildResult(params: {
   integrationId: string
   webhookUrl: string
   verifyToken: string
+  phoneNumber: WhatsappPhoneNumber
+  requiresPhoneVerification: boolean
+  registrationError?: IntegrationWhatsappModel["registrationError"] | null
 }): ConnectWhatsappResult {
   const {
     isManual,
@@ -533,7 +588,22 @@ function buildResult(params: {
     integrationId,
     webhookUrl,
     verifyToken,
+    phoneNumber,
+    requiresPhoneVerification,
+    registrationError,
   } = params
+
+  if (requiresPhoneVerification && registrationError) {
+    return {
+      type: CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_VERIFICATION_REQUIRED,
+      redirectUrl: `/space/${workspaceId}`,
+      integrationId,
+      workspaceId,
+      displayPhoneNumber: phoneNumber.display_phone_number,
+      verifiedName: phoneNumber.verified_name,
+      registrationError,
+    }
+  }
 
   if (isManual) {
     return {
@@ -674,17 +744,24 @@ export const connectWhatsappAction = authActionClient
           }),
         )
 
+        let registrationError:
+          | IntegrationWhatsappModel["registrationError"]
+          | null = null
+        let requiresPhoneVerification = false
         if (!isCoexist) {
           const registrationResult = await registerPhoneNumber({
             auth,
             phoneNumberId: phoneNumber.id,
           })
+          requiresPhoneVerification =
+            registrationResult.status === "verification_required"
           const outcome = toRegistrationOutcome(registrationResult)
-          await integrationWhatsappService.recordRegistrationOutcome({
-            id: integrationRow.id,
-            workspaceId,
-            outcome,
-          })
+          registrationError =
+            await integrationWhatsappService.recordRegistrationOutcome({
+              id: integrationRow.id,
+              workspaceId,
+              outcome,
+            })
         }
 
         const whatsappCtx = await buildContext({
@@ -713,6 +790,9 @@ export const connectWhatsappAction = authActionClient
           integrationId,
           webhookUrl,
           verifyToken,
+          phoneNumber,
+          requiresPhoneVerification,
+          registrationError,
         })
       } catch (err: unknown) {
         logger.error({ err }, "Unable to verify whatsapp token")

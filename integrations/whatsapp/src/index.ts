@@ -1,3 +1,4 @@
+export * from "./api/verification"
 export * from "./api/waba-setup"
 export { getWhatsappClient } from "./client"
 export * from "./integration"

@@ -71,12 +71,9 @@ export function CoexistPopup({
       if (result.success) {
         toast.success(
           t(enabled ? "coexist.success.enabled" : "coexist.success.disabled"),
-          { duration: 5000 },
         )
       } else if (result.msg) {
-        toast.error(result.msg, {
-          duration: 5000,
-        })
+        toast.error(result.msg)
       } else {
         const reason = result.reason
         const messageKey =
@@ -84,9 +81,7 @@ export function CoexistPopup({
             ? REASON_TO_KEY[reason]
             : "coexist.errors.unknown"
 
-        toast.error(t(messageKey), {
-          duration: 5000,
-        })
+        toast.error(t(messageKey))
       }
     } catch (error) {
       await clientErrorHandler(error)

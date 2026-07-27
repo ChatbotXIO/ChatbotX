@@ -1,6 +1,7 @@
 "use client"
 
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
+import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
 import type {
   WhatsappPhoneNumber,
   WhatsappPhoneNumberResponse,
@@ -31,7 +32,7 @@ import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
 import { connectWhatsappAction } from "../actions/connect.action"
 import { useEmbeddedSignupAutoConnect } from "../hooks/use-embedded-signup-auto-connect"
-import { buildWhatsappEmbeddedSignupBrokerUrl } from "../libs/embedded-signup"
+import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
 import { FORM_FIELDS } from "../libs/form-fields"
 import {
   CONNECT_WHATSAPP_RESULT_TYPES,
@@ -40,6 +41,7 @@ import {
   type ManualOnboardingResult,
   type WhatsappPhoneNumberOption,
 } from "../schemas"
+import { WhatsappPhoneVerificationPanel } from "../verification/whatsapp-phone-verification-panel"
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
 // Constants
@@ -104,6 +106,14 @@ export default function WhatsappCreate({
   const [phoneSelection, setPhoneSelection] = useState<{
     phoneNumbers: WhatsappPhoneNumberOption[]
   } | null>(null)
+  const [phoneVerification, setPhoneVerification] = useState<{
+    integrationId: string
+    workspaceId: string
+    redirectUrl: string
+    displayPhoneNumber: string
+    verifiedName: string
+    registrationError: IntegrationWhatsappRegistrationError | null
+  } | null>(null)
   const [showCoexist, setShowCoexist] = useState<{
     integrationId: string
     workspaceId: string
@@ -128,7 +138,6 @@ export default function WhatsappCreate({
             form.setValue(FORM_FIELDS.SIGNUP_SESSION_ID, data.signupSessionId)
             form.setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
             form.setValue(FORM_FIELDS.CODE, "")
-            form.setValue(FORM_FIELDS.OAUTH_CODE_SOURCE, undefined)
             setPhoneSelection({ phoneNumbers: data.phoneNumbers })
             return
           }
@@ -138,10 +147,30 @@ export default function WhatsappCreate({
           ) {
             toast.error(t("fields.phoneNumberId.noPhoneNumbersFound"))
             form.setValue(FORM_FIELDS.CODE, "")
-            form.setValue(FORM_FIELDS.OAUTH_CODE_SOURCE, undefined)
-            if (data.redirectUrl) {
-              router.push(data.redirectUrl)
-            }
+            return
+          }
+          if (
+            data.type ===
+            CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBERS_ALREADY_CONNECTED
+          ) {
+            toast.error(t("channels.duplicated.whatsapp"))
+            form.setValue(FORM_FIELDS.CODE, "")
+            return
+          }
+          if (
+            data.type ===
+            CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_VERIFICATION_REQUIRED
+          ) {
+            setPhoneSelection(null)
+            setPhoneVerification({
+              integrationId: data.integrationId,
+              workspaceId: data.workspaceId,
+              redirectUrl: data.redirectUrl,
+              displayPhoneNumber: data.displayPhoneNumber,
+              verifiedName: data.verifiedName,
+              registrationError: data.registrationError,
+            })
+            form.setValue(FORM_FIELDS.CODE, "")
             return
           }
 
@@ -178,7 +207,6 @@ export default function WhatsappCreate({
           accessToken: "",
           code: "",
           signupSessionId: "",
-          oauthCodeSource: undefined,
         },
       },
     },
@@ -254,6 +282,33 @@ export default function WhatsappCreate({
     )
   }
 
+  const renderCardContent = () => {
+    if (phoneVerification) {
+      return (
+        <WhatsappPhoneVerificationPanel
+          displayPhoneNumber={phoneVerification.displayPhoneNumber}
+          integrationId={phoneVerification.integrationId}
+          onVerified={() => router.push(phoneVerification.redirectUrl)}
+          registrationError={phoneVerification.registrationError}
+          verifiedName={phoneVerification.verifiedName}
+          workspaceId={phoneVerification.workspaceId}
+        />
+      )
+    }
+
+    if (manualResult) {
+      return <WhatsappOnboardingResult result={manualResult} />
+    }
+
+    return (
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+          {renderConnectSection()}
+        </form>
+      </Form>
+    )
+  }
+
   return (
     <Card className={`${CARD_MARGIN} ${MAX_CARD_WIDTH}`}>
       <CardHeader>
@@ -262,17 +317,7 @@ export default function WhatsappCreate({
         </CardTitle>
         <CardDescription />
       </CardHeader>
-      <CardContent>
-        {manualResult ? (
-          <WhatsappOnboardingResult result={manualResult} />
-        ) : (
-          <Form {...form}>
-            <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-              {renderConnectSection()}
-            </form>
-          </Form>
-        )}
-      </CardContent>
+      <CardContent>{renderCardContent()}</CardContent>
     </Card>
   )
 }
@@ -319,7 +364,7 @@ function SdkConnectSection({
   })
 
   const openFacebookDialog = useCallback(() => {
-    const url = buildWhatsappEmbeddedSignupBrokerUrl({
+    const url = buildFacebookOAuthDialogUrl({
       resellerOrigin: window.location.origin,
       clientId: settings.clientId,
       configId: settings.configId,

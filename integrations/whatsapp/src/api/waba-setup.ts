@@ -136,24 +136,11 @@ export type RegisterPhoneNumberResult =
   | { status: "failed"; error: ChannelError }
 
 const PHONE_VERIFICATION_REQUIRED_CODE = 133_006
+const PHONE_NOT_VERIFIED_SUBCODE = 2_593_005
 
 const isVerificationRequiredError = (error: ChannelError): boolean =>
-  Number(error.code) === PHONE_VERIFICATION_REQUIRED_CODE
-
-const createVerificationRequiredError = (phoneNumberId: string) => {
-  const error = new ChannelError(
-    "WhatsApp phone number verification is required before registration.",
-    ChannelErrorCategory.PERMISSION_DENIED,
-    {
-      code: PHONE_VERIFICATION_REQUIRED_CODE,
-      httpStatusCode: 403,
-      subCode: null,
-      type: "PhoneVerificationRequired",
-    },
-  )
-  error.setOriginError({ phoneNumberId })
-  return error
-}
+  Number(error.code) === PHONE_VERIFICATION_REQUIRED_CODE ||
+  Number(error.subCode) === PHONE_NOT_VERIFIED_SUBCODE
 
 const createPhoneNumberNotFoundError = (phoneNumberId: string) => {
   const error = new ChannelError(
@@ -170,14 +157,27 @@ const createPhoneNumberNotFoundError = (phoneNumberId: string) => {
   return error
 }
 
+const createVerificationRequiredError = (phoneNumberId: string) => {
+  const error = new ChannelError(
+    "WhatsApp phone number verification is required before registration.",
+    ChannelErrorCategory.PERMISSION_DENIED,
+    {
+      code: PHONE_VERIFICATION_REQUIRED_CODE,
+      httpStatusCode: 403,
+      subCode: null,
+      type: "PhoneVerificationRequired",
+    },
+  )
+  error.setOriginError({ phoneNumberId })
+  return error
+}
+
 export function registerPhoneNumber({
   auth,
   phoneNumberId,
-  pin,
 }: {
   auth: WhatsappAuthValue
   phoneNumberId: string
-  pin?: string
 }): Promise<RegisterPhoneNumberResult> {
   const { version = DEFAULT_API_VERSION } = auth
 
@@ -206,8 +206,7 @@ export function registerPhoneNumber({
     }
 
     try {
-      const registrationPin =
-        pin ?? generatePin(phoneNumber.id, auth.metadata.wabaId)
+      const registrationPin = generatePin(phoneNumber.id, auth.metadata.wabaId)
 
       await api.post(`${API_URL}/${version}/${phoneNumber.id}/register`, {
         json: {

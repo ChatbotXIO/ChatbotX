@@ -61,25 +61,12 @@ export function useEmbeddedSignupAutoConnect({
         return
       }
 
-      console.log({ event })
       const relayed = event.data as WhatsappOAuthRelayResult | undefined
       if (relayed?.type !== WA_OAUTH_RESULT) {
         return
       }
 
       if (relayed.status === "success" && relayed.code) {
-        if (relayed.wabaId) {
-          setValue(FORM_FIELDS.WABA_ID, relayed.wabaId)
-        }
-        if (relayed.phoneNumberId) {
-          setValue(FORM_FIELDS.PHONE_NUMBER_ID, relayed.phoneNumberId)
-        }
-        setValue(
-          FORM_FIELDS.OAUTH_CODE_SOURCE,
-          relayed.codeSource ?? "redirect",
-        )
-        // `code` is the auto-submit trigger, so write selection ids first. That
-        // keeps the submit correct even if a future refactor splits this handler.
         setValue(FORM_FIELDS.CODE, relayed.code)
         return
       }
@@ -99,7 +86,6 @@ export function useEmbeddedSignupAutoConnect({
     setValue(FORM_FIELDS.WABA_ID, "")
     setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
     setValue(FORM_FIELDS.SIGNUP_SESSION_ID, "")
-    setValue(FORM_FIELDS.OAUTH_CODE_SOURCE, undefined)
   }, [hasFailed, setValue])
 
   // Submitting from an effect rather than from the message handler keeps `code` as

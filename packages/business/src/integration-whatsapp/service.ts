@@ -1,11 +1,14 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq, isNull, lt, or } from "@chatbotx.io/database/client"
 import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import {
   type IntegrationWhatsappRegistrationError,
   integrationWhatsappModel,
 } from "@chatbotx.io/database/schema"
-import type { WhatsappSignupSessionModel } from "@chatbotx.io/database/types"
+import type {
+  IntegrationWhatsappModel,
+  WhatsappSignupSessionModel,
+} from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
@@ -22,6 +25,25 @@ type RecordRegistrationOutcomeInput = {
   workspaceId: string
   outcome: RegistrationOutcome
 }
+
+type FindWorkspaceIntegrationInput = {
+  id: string
+  workspaceId: string
+}
+
+type ClaimVerificationCodeSlotInput = FindWorkspaceIntegrationInput & {
+  cooldownSeconds: number
+  now?: Date
+}
+
+type VerificationCodeSlotClaim =
+  | { status: "claimed"; requestedAt: Date }
+  | {
+      status: "cooldown"
+      requestedAt: Date | null
+      remainingSeconds: number
+    }
+  | { status: "not_found" }
 
 type CreateSignupSessionInput = {
   userId: string
@@ -47,13 +69,49 @@ type ConsumedSignupSession = WhatsappSignupSessionModel & {
 
 const serializeRegistrationError = (
   error: ChannelError,
-): IntegrationWhatsappRegistrationError => ({
-  code: error.code,
-  subCode: error.subCode ?? null,
-  message: error.message,
-  ...(error.type === undefined ? {} : { type: error.type }),
-  at: new Date().toISOString(),
-})
+): IntegrationWhatsappRegistrationError => {
+  const originError = readRegistrationErrorOrigin(error.getOriginError())
+
+  return {
+    code: error.code,
+    subCode: error.subCode ?? null,
+    message: error.message,
+    ...(error.type === undefined ? {} : { type: error.type }),
+    ...(originError.userTitle === undefined
+      ? {}
+      : { userTitle: originError.userTitle }),
+    ...(originError.userMessage === undefined
+      ? {}
+      : { userMessage: originError.userMessage }),
+    ...(originError.fbtraceId === undefined
+      ? {}
+      : { fbtraceId: originError.fbtraceId }),
+    at: new Date().toISOString(),
+  }
+}
+
+type RegistrationErrorOrigin = {
+  userTitle?: string
+  userMessage?: string
+  fbtraceId?: string
+}
+
+function readRegistrationErrorOrigin(originError: unknown) {
+  if (typeof originError !== "object" || originError === null) {
+    return {}
+  }
+
+  const source = originError as Record<string, unknown>
+
+  return {
+    userTitle:
+      typeof source.userTitle === "string" ? source.userTitle : undefined,
+    userMessage:
+      typeof source.userMessage === "string" ? source.userMessage : undefined,
+    fbtraceId:
+      typeof source.fbtraceId === "string" ? source.fbtraceId : undefined,
+  } satisfies RegistrationErrorOrigin
+}
 
 const buildRegistrationUpdate = (outcome: RegistrationOutcome) => {
   switch (outcome.status) {
@@ -132,8 +190,8 @@ class IntegrationWhatsappService extends BaseService {
 
   async recordRegistrationOutcome(
     input: RecordRegistrationOutcomeInput,
-  ): Promise<void> {
-    await db
+  ): Promise<IntegrationWhatsappRegistrationError | null> {
+    const [row] = await db
       .update(integrationWhatsappModel)
       .set(buildRegistrationUpdate(input.outcome))
       .where(
@@ -142,6 +200,88 @@ class IntegrationWhatsappService extends BaseService {
           eq(integrationWhatsappModel.workspaceId, input.workspaceId),
         ),
       )
+      .returning({
+        registrationError: integrationWhatsappModel.registrationError,
+      })
+
+    return row?.registrationError ?? null
+  }
+
+  async findWorkspaceIntegration(
+    input: FindWorkspaceIntegrationInput,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const integration = await db.query.integrationWhatsappModel.findFirst({
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+      },
+    })
+
+    return integration ?? null
+  }
+
+  async claimVerificationCodeSlot(
+    input: ClaimVerificationCodeSlotInput,
+  ): Promise<VerificationCodeSlotClaim> {
+    const now = input.now ?? new Date()
+    const cooldownMs = input.cooldownSeconds * 1000
+    const cutoff = new Date(now.getTime() - cooldownMs)
+
+    const [claimed] = await db
+      .update(integrationWhatsappModel)
+      .set({ verificationCodeRequestedAt: now })
+      .where(
+        and(
+          eq(integrationWhatsappModel.id, input.id),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+          or(
+            isNull(integrationWhatsappModel.verificationCodeRequestedAt),
+            lt(integrationWhatsappModel.verificationCodeRequestedAt, cutoff),
+          ),
+        ),
+      )
+      .returning({
+        requestedAt: integrationWhatsappModel.verificationCodeRequestedAt,
+      })
+
+    if (claimed?.requestedAt) {
+      return { status: "claimed", requestedAt: claimed.requestedAt }
+    }
+
+    const existing = await db.query.integrationWhatsappModel.findFirst({
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+      },
+      columns: {
+        verificationCodeRequestedAt: true,
+      },
+    })
+
+    if (!existing) {
+      return { status: "not_found" }
+    }
+
+    if (!existing.verificationCodeRequestedAt) {
+      return {
+        status: "cooldown",
+        requestedAt: null,
+        remainingSeconds: input.cooldownSeconds,
+      }
+    }
+
+    const nextAllowedAt =
+      existing.verificationCodeRequestedAt.getTime() + cooldownMs
+    const remainingSeconds = Math.max(
+      0,
+      Math.ceil((nextAllowedAt - now.getTime()) / 1000),
+    )
+
+    return {
+      status: "cooldown",
+      requestedAt: existing.verificationCodeRequestedAt,
+      remainingSeconds,
+    }
   }
 }
 

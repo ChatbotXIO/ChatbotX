@@ -6,10 +6,15 @@ import {
   pgEnum,
   pgTable,
   text,
+  timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { whatsappRegistrationStatuses } from "../partials"
-import { bigintAsString, sharedColumns } from "../partials/shared"
+import {
+  bigintAsString,
+  sharedColumns,
+  timestampConfig,
+} from "../partials/shared"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
@@ -18,6 +23,9 @@ export type IntegrationWhatsappRegistrationError = {
   subCode: string | number | null
   message: string
   type?: string
+  userTitle?: string
+  userMessage?: string
+  fbtraceId?: string
   at: string
 }
 
@@ -44,6 +52,7 @@ export const integrationWhatsappModel = pgTable(
       .notNull()
       .default("pending_verification"),
     registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
+    verificationCodeRequestedAt: timestamp(timestampConfig),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

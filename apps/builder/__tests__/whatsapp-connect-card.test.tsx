@@ -30,6 +30,13 @@ vi.mock("@/features/integration-whatsapp/actions/connect.action", () => ({
   connectWhatsappAction: vi.fn(async () => ({ data: undefined })),
 }))
 
+vi.mock("@/features/integration-whatsapp/verification/actions", () => ({
+  requestWhatsappVerificationCodeAction: vi.fn(async () => ({
+    data: undefined,
+  })),
+  verifyWhatsappPhoneCodeAction: vi.fn(async () => ({ data: undefined })),
+}))
+
 vi.mock("@/features/inboxes/components/inbox-icon", () => ({
   InboxIcon: () => null,
 }))

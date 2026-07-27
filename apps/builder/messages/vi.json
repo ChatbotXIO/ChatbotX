@@ -2968,9 +2968,6 @@
     },
     "connectExisting": "Kết nối tài khoản WhatsApp Business hiện có",
     "embeddedSignupDone": "Đã hoàn tất đăng ký — bạn có thể đóng tab này.",
-    "embeddedSignupContinue": "Tiếp tục với Facebook",
-    "embeddedSignupFailed": "Không thể hoàn tất đăng ký.",
-    "embeddedSignupLoading": "Tiếp tục để hoàn tất đăng ký WhatsApp.",
     "embeddedSignupPopupBlocked": "Vui lòng cho phép cửa sổ bật lên cho trang này rồi thử lại.",
     "fillRequiredFields": "Vui lòng điền đầy đủ các trường bắt buộc",
     "continueManualConnect": "Tiếp tục — kết nối thủ công",
@@ -2987,6 +2984,31 @@
       "qrCodeHint": "Quét mã QR để mở URL webhook",
       "moreSettings": "Cài đặt thêm",
       "goToInbox": "Đưa tôi đến đó"
+    },
+    "phoneVerification": {
+      "title": "Xác minh số điện thoại WhatsApp",
+      "description": "Yêu cầu mã xác minh từ Meta, nhập mã tại đây, sau đó số điện thoại sẽ được đăng ký tự động.",
+      "errorTitle": "Số điện thoại cần được xác minh",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Cuộc gọi thoại"
+      },
+      "actions": {
+        "sendCode": "Gửi mã",
+        "resendIn": "Gửi lại sau {seconds}s",
+        "verify": "Xác minh và đăng ký"
+      },
+      "fields": {
+        "code": {
+          "label": "Mã xác minh",
+          "placeholder": "Nhập OTP từ Meta"
+        }
+      },
+      "messages": {
+        "codeSent": "Đã gửi mã xác minh qua {method}.",
+        "cooldown": "Vui lòng chờ {seconds}s trước khi yêu cầu mã khác.",
+        "verified": "Số điện thoại đã được xác minh và đăng ký thành công."
+      }
     },
     "marketingMessageLite": "Tin nhắn tiếp thị Lite",
     "messageTemplate": {
@@ -3066,6 +3088,10 @@
       "title": "Quản lý tài khoản WhatsApp của bạn",
       "description": "Xem trạng thái tài khoản WhatsApp, giới hạn nhắn tin và chất lượng. Cập nhật cài đặt hoặc khắc phục sự cố nếu cần",
       "goToBusinessManager": "Mở Meta Business Manager",
+      "unavailable": {
+        "title": "Tạm thời không tải được tình trạng tài khoản",
+        "description": "Hiện không thể tải số điện thoại WhatsApp này từ Meta. Các thao tác khôi phục khác trên trang vẫn có thể sử dụng."
+      },
       "fields": {
         "displayPhoneNumber": {
           "label": "Số điện thoại hiển thị",

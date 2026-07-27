@@ -81,40 +81,6 @@ describe("buildFacebookOAuthDialogUrl", () => {
   })
 })
 
-describe("buildWhatsappEmbeddedSignupBrokerUrl", () => {
-  test("opens the broker launcher with SDK params and reseller state", async () => {
-    const { buildWhatsappEmbeddedSignupBrokerUrl, decodeOAuthState } =
-      await loadWith({
-        NEXT_PUBLIC_BROKER_URL: BROKER_URL,
-      })
-
-    const result = new URL(
-      buildWhatsappEmbeddedSignupBrokerUrl({
-        resellerOrigin: RESELLER_ORIGIN,
-        clientId: "client-1",
-        configId: "config-1",
-        version: "v21.0",
-        connectExisting: true,
-        transferPhoneNumber: false,
-        locale: "vi",
-      }),
-    )
-
-    expect(result.origin).toBe(BROKER_URL)
-    expect(result.pathname).toBe("/integrations/whatsapp/callback")
-    expect(result.searchParams.get("client_id")).toBe("client-1")
-    expect(result.searchParams.get("config_id")).toBe("config-1")
-    expect(result.searchParams.get("version")).toBe("v21.0")
-
-    const state = decodeOAuthState(result.searchParams.get("state") ?? "")
-    expect(state).toEqual({ referer: RESELLER_ORIGIN, locale: "vi" })
-
-    const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
-    expect(extras.sessionInfoVersion).toBe(3)
-    expect(extras.featureType).toBe("whatsapp_business_app_onboarding")
-  })
-})
-
 describe("encodeOAuthState / decodeOAuthState", () => {
   test("round-trips referer and locale", async () => {
     const { encodeOAuthState, decodeOAuthState } = await loadWith({

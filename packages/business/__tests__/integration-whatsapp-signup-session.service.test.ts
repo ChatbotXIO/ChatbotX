@@ -1,6 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { repositoryMock, encryptTextMock, decryptTextMock } = vi.hoisted(() => ({
+const {
+  dbQueryFindFirstMock,
+  dbUpdateBuilderMock,
+  dbUpdateMock,
+  repositoryMock,
+  encryptTextMock,
+  decryptTextMock,
+} = vi.hoisted(() => ({
+  dbQueryFindFirstMock: vi.fn(),
+  dbUpdateBuilderMock: {
+    returning: vi.fn(),
+    set: vi.fn(),
+    where: vi.fn(),
+  },
+  dbUpdateMock: vi.fn(),
   repositoryMock: {
     createSignupSession: vi.fn(),
     consumeSignupSession: vi.fn(),
@@ -8,6 +22,26 @@ const { repositoryMock, encryptTextMock, decryptTextMock } = vi.hoisted(() => ({
   },
   encryptTextMock: vi.fn(),
   decryptTextMock: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
+  db: {
+    query: {
+      integrationWhatsappModel: {
+        findFirst: dbQueryFindFirstMock,
+      },
+    },
+    update: dbUpdateMock,
+  },
+  eq: vi.fn((left: unknown, right: unknown) => ({ left, right })),
+  isNull: vi.fn((column: unknown) => ({ column, operator: "isNull" })),
+  lt: vi.fn((left: unknown, right: unknown) => ({
+    left,
+    operator: "lt",
+    right,
+  })),
+  or: vi.fn((...conditions: unknown[]) => ({ conditions, operator: "or" })),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -30,10 +64,15 @@ vi.mock("@chatbotx.io/encryption", async () => {
 const { integrationWhatsappService } = await import(
   "../src/integration-whatsapp/service"
 )
+const { ChannelError, ChannelErrorCategory } = await import("@chatbotx.io/sdk")
 
 describe("integrationWhatsappService signup sessions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    dbUpdateMock.mockReturnValue(dbUpdateBuilderMock)
+    dbUpdateBuilderMock.set.mockReturnValue(dbUpdateBuilderMock)
+    dbUpdateBuilderMock.where.mockReturnValue(dbUpdateBuilderMock)
+    dbUpdateBuilderMock.returning.mockResolvedValue([])
   })
 
   test("encrypts access token before creating a signup session", async () => {
@@ -111,5 +150,83 @@ describe("integrationWhatsappService signup sessions", () => {
 
     expect(result).toBeNull()
     expect(decryptTextMock).not.toHaveBeenCalled()
+  })
+
+  test("stores Meta user-facing registration error details", async () => {
+    const error = new ChannelError(
+      "Invalid parameter",
+      ChannelErrorCategory.PAYLOAD_INVALID,
+      {
+        code: 100,
+        subCode: 2_593_005,
+        type: "OAuthException",
+      },
+    ).setOriginError({
+      userTitle: "Phone number is not verified",
+      userMessage: "Phone number is not verified through SMS or voice.",
+      fbtraceId: "trace-1",
+    })
+
+    dbUpdateBuilderMock.returning.mockResolvedValueOnce([
+      { registrationError: null },
+    ])
+
+    const result = await integrationWhatsappService.recordRegistrationOutcome({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      outcome: { status: "failed", error },
+    })
+
+    expect(result).toBeNull()
+    expect(dbUpdateBuilderMock.set).toHaveBeenCalledWith({
+      registrationStatus: "failed",
+      registrationError: expect.objectContaining({
+        code: 100,
+        subCode: 2_593_005,
+        message: "Invalid parameter",
+        type: "OAuthException",
+        userTitle: "Phone number is not verified",
+        userMessage: "Phone number is not verified through SMS or voice.",
+        fbtraceId: "trace-1",
+      }),
+    })
+  })
+
+  test("claims a verification code request slot atomically", async () => {
+    const requestedAt = new Date("2026-07-27T08:00:00.000Z")
+    dbUpdateBuilderMock.returning.mockResolvedValueOnce([{ requestedAt }])
+
+    const result = await integrationWhatsappService.claimVerificationCodeSlot({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      cooldownSeconds: 60,
+      now: requestedAt,
+    })
+
+    expect(result).toEqual({ status: "claimed", requestedAt })
+    expect(dbUpdateBuilderMock.set).toHaveBeenCalledWith({
+      verificationCodeRequestedAt: requestedAt,
+    })
+    expect(dbQueryFindFirstMock).not.toHaveBeenCalled()
+  })
+
+  test("returns remaining cooldown when verification code was requested recently", async () => {
+    dbUpdateBuilderMock.returning.mockResolvedValueOnce([])
+    dbQueryFindFirstMock.mockResolvedValueOnce({
+      verificationCodeRequestedAt: new Date("2026-07-27T08:00:10.000Z"),
+    })
+
+    const result = await integrationWhatsappService.claimVerificationCodeSlot({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      cooldownSeconds: 60,
+      now: new Date("2026-07-27T08:00:30.000Z"),
+    })
+
+    expect(result).toEqual({
+      status: "cooldown",
+      requestedAt: new Date("2026-07-27T08:00:10.000Z"),
+      remainingSeconds: 40,
+    })
   })
 })

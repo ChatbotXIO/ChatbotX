@@ -30,14 +30,12 @@ export function useChannelReconnectResult() {
 
     const timer = setTimeout(() => {
       if (result === "success") {
-        toast.success(t("reconnect.success"), { duration: 5000 })
+        toast.success(t("reconnect.success"))
       } else {
         const knownReason = RECONNECT_ERROR_REASONS.find(
           (candidate) => candidate === reason,
         )
-        toast.error(t(`reconnect.errors.${knownReason ?? "failed"}`), {
-          duration: 5000,
-        })
+        toast.error(t(`reconnect.errors.${knownReason ?? "failed"}`))
       }
       router.replace(`${window.location.pathname}${qs}`, { scroll: false })
     }, 0)
