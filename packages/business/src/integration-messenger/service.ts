@@ -16,6 +16,15 @@ export function findMessengerIntegrationByIdForWorkspace(props: {
   })
 }
 
+export function findMessengerIntegrationByPageId(props: {
+  workspaceId: string
+  pageId: string
+}) {
+  return db.query.integrationMessengerModel.findFirst({
+    where: { workspaceId: props.workspaceId, pageId: props.pageId },
+  })
+}
+
 /**
  * Replace the stored OAuth credentials after an OAuth reconnect. Scoped by
  * workspace so a forged integration id can never touch another tenant's row.

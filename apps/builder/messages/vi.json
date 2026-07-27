@@ -3614,7 +3614,20 @@
   },
   "facebookLeadAdsAutomation": {
     "title": "Tự động hóa Facebook Lead Ads",
-    "description": "Tự động hóa Facebook Lead Ads cho các liên hệ của bạn."
+    "description": "Tự động hóa Facebook Lead Ads cho các liên hệ của bạn.",
+    "create": "Tạo mới",
+    "leads": "Số lead",
+    "facebookPage": "Trang Facebook",
+    "leadForm": "Biểu mẫu Lead",
+    "allForms": "Tất cả biểu mẫu",
+    "allFormsNote": "Lead từ mọi biểu mẫu của trang này sẽ được thu thập. Các trường tiêu chuẩn (email, số điện thoại, tên, giới tính) được lưu tự động vào trường liên hệ tương ứng.",
+    "leadData": "Dữ liệu Lead",
+    "whatFlow": "Kịch bản được kích hoạt",
+    "none": "Không có",
+    "addNewPage": "Thêm mới",
+    "noEligiblePages": "Không có trang phù hợp. Dùng \"Thêm mới\" để cấp quyền truy cập lead.",
+    "duplicateError": "Đã tồn tại một automation cho trang và biểu mẫu này.",
+    "subscribeError": "Không thể đăng ký nhận thông báo lead từ Facebook cho trang này, nên automation chưa được tạo. Hãy kết nối lại trang bằng \"Thêm mới\" rồi thử lại."
   },
   "ecommerce": {
     "title": "Thương mại điện tử",

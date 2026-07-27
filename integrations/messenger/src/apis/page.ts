@@ -9,6 +9,7 @@ import type {
   PersonaRequest,
   SyncPersonaInput,
 } from "../schema"
+import { hasLeadsRetrieval } from "./auth"
 
 export const PAGE_SUBSCRIBE_SCOPES = [
   "messages",
@@ -25,6 +26,32 @@ export const PAGE_SUBSCRIBE_SCOPES = [
   "live_videos",
   "standby",
 ]
+
+/**
+ * Page webhook fields for a Facebook Lead Ads-enabled page: the base Messenger
+ * set plus `leadgen`. POSTing this to /subscribed_apps preserves the existing
+ * subscriptions while adding lead delivery. Note: a later plain Messenger
+ * reconnect re-subscribes with `PAGE_SUBSCRIBE_SCOPES` (dropping `leadgen`); the
+ * user re-runs "Add New" to restore it.
+ */
+export const LEAD_ADS_PAGE_SUBSCRIBE_FIELDS = [
+  ...PAGE_SUBSCRIBE_SCOPES,
+  "leadgen",
+]
+
+/**
+ * Page webhook fields implied by a token's granted scopes: the base Messenger
+ * set, plus `leadgen` when the token carries `leads_retrieval`. Lets callers
+ * subscribe a page to exactly what its scopes support without special-casing
+ * lead-ads at each site.
+ */
+export function scopesToPageSubscribeFields(
+  scopes: string[] | undefined,
+): string[] {
+  return hasLeadsRetrieval(scopes)
+    ? LEAD_ADS_PAGE_SUBSCRIBE_FIELDS
+    : PAGE_SUBSCRIBE_SCOPES
+}
 
 export const exchangeLongLivedToken = (
   settings: {

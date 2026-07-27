@@ -4,12 +4,14 @@ import {
 } from "@chatbotx.io/business"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
+  debugToken,
   exchangeCodeForToken,
   getFacebookUser,
   getUserPages,
 } from "@chatbotx.io/integration-messenger"
 import {
   exchangeLongLivedToken,
+  scopesToPageSubscribeFields,
   subscribePageToAppWebhook,
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
@@ -108,10 +110,21 @@ export async function reconnectMessengerHandler(props: {
       ...(userInfo ? { userInfo } : {}),
     })
 
+    // Re-subscribe the page to exactly the webhook fields its reconnected
+    // token's scopes support (a plain reconnect would otherwise re-subscribe
+    // with only the base fields and silently drop `leadgen` delivery for any
+    // Facebook Lead Ads automation on this page). Best-effort: a failed
+    // debug_token check falls back to the base subscription.
+    const debug = await debugToken(
+      pageToken,
+      props.credentialConfig.version,
+    ).catch(() => undefined)
+
     await subscribePageToAppWebhook({
       pageId: integrationMessenger.pageId,
       accessToken: pageToken,
       version: props.credentialConfig.version,
+      subscribedFields: scopesToPageSubscribeFields(debug?.scopes).join(","),
     })
 
     return { status: "success" }

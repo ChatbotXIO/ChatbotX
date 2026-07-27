@@ -45,6 +45,8 @@ import { userQuotaRelations } from "./enterprise/user-quota"
 import { workspaceUsageRelations } from "./enterprise/workspace-usage"
 import { errorLogRelations } from "./error-log"
 import { externalWebhookRelations } from "./external-webhook"
+import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automation"
+import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
 import { fbCommentAutomationRelations } from "./fb-comment-automation"
 import { fbCommentAutomationReplyRelations } from "./fb-comment-automation-reply"
 import { fileRelations } from "./file"
@@ -156,6 +158,8 @@ export const relations = {
   ...emailTopicRelations,
   ...analyticsEmailTopicRelations,
   ...errorLogRelations,
+  ...facebookLeadAdsAutomationRelations,
+  ...facebookLeadAdsLeadRelations,
   ...fbCommentAutomationRelations,
   ...fbCommentAutomationReplyRelations,
   ...auditLogRelations,
