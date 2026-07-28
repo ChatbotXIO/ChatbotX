@@ -7,6 +7,7 @@ import {
   isQuickReplyCarrierStep,
   MAX_QUICK_REPLIES,
   sendAudioStepDefaultFn,
+  sendCarouselStepDefaultFn,
   sendFileStepDefaultFn,
   sendGifStepDefaultFn,
   sendImageStepDefaultFn,
@@ -68,6 +69,7 @@ describe("sendMessage quick replies", () => {
       ...sendGifStepDefaultFn(),
       url: "https://example.com/anim.gif",
     }
+    const carouselStep = sendCarouselStepDefaultFn()
 
     expect(isQuickReplyCarrierStep("telegram", textStep)).toBe(true)
     expect(isQuickReplyCarrierStep("telegram", imageStep)).toBe(true)
@@ -77,6 +79,7 @@ describe("sendMessage quick replies", () => {
     expect(isQuickReplyCarrierStep("telegram", gifStep)).toBe(true)
 
     expect(isQuickReplyCarrierStep("whatsapp", imageStep)).toBe(true)
+    expect(isQuickReplyCarrierStep("whatsapp", carouselStep)).toBe(true)
     expect(isQuickReplyCarrierStep("zalo", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("messenger", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("instagram", imageStep)).toBe(true)

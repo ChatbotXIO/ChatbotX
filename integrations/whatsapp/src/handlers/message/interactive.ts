@@ -1,21 +1,24 @@
-import { Body, Button, Footer } from "whatsapp-api-js/messages"
-
-const ID_MAX_LENGTH = 256
-const TITLE_MAX_LENGTH = 20
-const BODY_MAX_LENGTH = 1024
-const FOOTER_MAX_LENGTH = 60
+import { Body, Button, Footer, Row } from "whatsapp-api-js/messages"
+import { clampText, messageLimits } from "./message-limits"
 
 export function generateButton({ id, title }: { id: string; title: string }) {
   return new Button(
-    id.slice(0, ID_MAX_LENGTH),
-    title.slice(0, TITLE_MAX_LENGTH),
+    clampText(id, messageLimits.buttonId),
+    clampText(title, messageLimits.buttonTitle),
+  )
+}
+
+export function generateRow({ id, title }: { id: string; title: string }) {
+  return new Row(
+    clampText(id, messageLimits.rowId),
+    clampText(title, messageLimits.rowTitle),
   )
 }
 
 export function generateBody(text: string) {
-  return new Body(text.slice(0, BODY_MAX_LENGTH))
+  return new Body(clampText(text, messageLimits.bodyText))
 }
 
 export function generateFooter(text: string) {
-  return new Footer(text.slice(0, FOOTER_MAX_LENGTH))
+  return new Footer(clampText(text, messageLimits.footerText))
 }
