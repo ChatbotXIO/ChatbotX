@@ -167,3 +167,78 @@ export function getNodeFromButton(nodes: FlowNode[], buttonId: string) {
     nodeId: foundedNodeId,
   }
 }
+
+export function getNodeFromQuickReply(nodes: FlowNode[], quickReplyId: string) {
+  for (const node of nodes) {
+    if (
+      !("quickReplies" in node.data.details && node.data.details.quickReplies)
+    ) {
+      continue
+    }
+
+    const quickReply = node.data.details.quickReplies.find(
+      (reply) => reply.id === quickReplyId,
+    )
+    if (quickReply) {
+      return { quickReply, nodeId: node.id }
+    }
+  }
+
+  return { quickReply: null, nodeId: null }
+}
+
+export const flowActionTargetTypes = {
+  /** A reply owned by a step: step buttons, card buttons, list options. */
+  button: "button",
+  /** A reply owned by the node, shared by every step it renders. */
+  quickReply: "quickReply",
+} as const
+
+export type FlowActionTargetType =
+  (typeof flowActionTargetTypes)[keyof typeof flowActionTargetTypes]
+
+export type FlowActionTarget = {
+  details: ButtonStepProps
+  nodeId: string | null
+  targetType: FlowActionTargetType
+}
+
+/**
+ * Resolves the reply a contact tapped, wherever the builder put it.
+ *
+ * Only Messenger and Instagram tell buttons and quick replies apart on the way
+ * in; WhatsApp, Zalo, Telegram and TikTok deliver both through a single webhook
+ * field. Since the two are encoded with the same payload, the click alone can
+ * never say which one it was — the flow is the only authority. Searching both
+ * places keeps those channels routing to the next node instead of stalling.
+ *
+ * Step buttons win a tie: they were the only resolvable target before quick
+ * replies were searched, so existing flows keep their behavior exactly.
+ */
+export function resolveFlowActionTarget(
+  nodes: FlowNode[],
+  actionId: string,
+): FlowActionTarget | null {
+  const { button, nodeId } = getNodeFromButton(nodes, actionId)
+  if (button) {
+    return {
+      details: button,
+      nodeId,
+      targetType: flowActionTargetTypes.button,
+    }
+  }
+
+  const { quickReply, nodeId: quickReplyNodeId } = getNodeFromQuickReply(
+    nodes,
+    actionId,
+  )
+  if (quickReply) {
+    return {
+      details: quickReply,
+      nodeId: quickReplyNodeId,
+      targetType: flowActionTargetTypes.quickReply,
+    }
+  }
+
+  return null
+}
