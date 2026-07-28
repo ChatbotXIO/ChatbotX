@@ -50,6 +50,9 @@ function Harness({ children }: { children: ReactNode }) {
       transferPhoneNumber: false,
       manualConnect: false,
       marketingMessageLite: true,
+      wabaId: "",
+      phoneNumberId: "",
+      signupSessionId: "",
       code: "",
     },
   })

@@ -2985,6 +2985,50 @@
       "moreSettings": "Cài đặt thêm",
       "goToInbox": "Đưa tôi đến đó"
     },
+    "phoneVerification": {
+      "title": "Xác minh số điện thoại WhatsApp",
+      "description": "Yêu cầu mã xác minh từ Meta, nhập mã tại đây, sau đó số điện thoại sẽ được đăng ký tự động.",
+      "errorTitle": "Số điện thoại cần được xác minh",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Cuộc gọi thoại"
+      },
+      "actions": {
+        "sendCode": "Gửi mã",
+        "resendIn": "Gửi lại sau {seconds}s",
+        "verify": "Xác minh và đăng ký"
+      },
+      "fields": {
+        "code": {
+          "label": "Mã xác minh",
+          "placeholder": "Nhập OTP từ Meta"
+        }
+      },
+      "messages": {
+        "codeSent": "Đã gửi mã xác minh qua {method}.",
+        "cooldown": "Vui lòng chờ {seconds}s trước khi yêu cầu mã khác.",
+        "verified": "Số điện thoại đã được xác minh và đăng ký thành công."
+      },
+      "errors": {
+        "integrationNotFound": "Không tìm thấy kết nối WhatsApp.",
+        "codeNotSent": "Không gửi được mã xác minh WhatsApp.",
+        "codeNotVerified": "Không xác minh được mã WhatsApp.",
+        "registrationFailed": "Xác minh số điện thoại WhatsApp không thành công."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "Thiếu access token WhatsApp.",
+        "appSettingsNotFound": "Không tìm thấy cấu hình ứng dụng WhatsApp.",
+        "failedToPersistIntegration": "Không lưu được kết nối WhatsApp.",
+        "noPhoneNumberFound": "Không tìm thấy số điện thoại WhatsApp.",
+        "noPhoneNumbersFound": "Không tìm thấy số điện thoại trong WhatsApp Business Account này.",
+        "phoneNumberNotFound": "Không tìm thấy số điện thoại WhatsApp đã chọn.",
+        "unableToVerifyToken": "Không xác minh được token WhatsApp.",
+        "wabaMismatch": "WhatsApp Business Account đã chọn không khớp với quyền đã cấp.",
+        "wabaResolveFailed": "Không xác định được WhatsApp Business Account từ quyền đã cấp."
+      }
+    },
     "marketingMessageLite": "Tin nhắn tiếp thị Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3063,6 +3107,10 @@
       "title": "Quản lý tài khoản WhatsApp của bạn",
       "description": "Xem trạng thái tài khoản WhatsApp, giới hạn nhắn tin và chất lượng. Cập nhật cài đặt hoặc khắc phục sự cố nếu cần",
       "goToBusinessManager": "Mở Meta Business Manager",
+      "unavailable": {
+        "title": "Tạm thời không tải được tình trạng tài khoản",
+        "description": "Hiện không thể tải số điện thoại WhatsApp này từ Meta. Các thao tác khôi phục khác trên trang vẫn có thể sử dụng."
+      },
       "fields": {
         "displayPhoneNumber": {
           "label": "Số điện thoại hiển thị",
@@ -3182,7 +3230,8 @@
     "templateHeader": {
       "label": "Tiêu đề mẫu"
     },
-    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác"
+    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
+    "signupSessionExpired": "Phiên đăng ký WhatsApp đã hết hạn. Vui lòng bắt đầu kết nối lại."
   },
   "zalo": {
     "title": "Zalo OA",

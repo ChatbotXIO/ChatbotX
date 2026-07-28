@@ -83,6 +83,9 @@ export function useEmbeddedSignupAutoConnect({
       return
     }
     setValue(FORM_FIELDS.CODE, "")
+    setValue(FORM_FIELDS.WABA_ID, "")
+    setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
+    setValue(FORM_FIELDS.SIGNUP_SESSION_ID, "")
   }, [hasFailed, setValue])
 
   // Submitting from an effect rather than from the message handler keeps `code` as

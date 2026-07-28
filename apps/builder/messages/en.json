@@ -2968,6 +2968,50 @@
       "moreSettings": "More settings",
       "goToInbox": "Take me there"
     },
+    "phoneVerification": {
+      "title": "Verify WhatsApp phone number",
+      "description": "Request a verification code from Meta, enter the code here, and the phone number will be registered automatically.",
+      "errorTitle": "Phone number verification required",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Voice call"
+      },
+      "actions": {
+        "sendCode": "Send code",
+        "resendIn": "Resend in {seconds}s",
+        "verify": "Verify and register"
+      },
+      "fields": {
+        "code": {
+          "label": "Verification code",
+          "placeholder": "Enter Meta OTP"
+        }
+      },
+      "messages": {
+        "codeSent": "Verification code sent by {method}.",
+        "cooldown": "Please wait {seconds}s before requesting another code.",
+        "verified": "Phone number verified and registered successfully."
+      },
+      "errors": {
+        "integrationNotFound": "WhatsApp integration not found.",
+        "codeNotSent": "WhatsApp verification code could not be sent.",
+        "codeNotVerified": "WhatsApp verification code could not be verified.",
+        "registrationFailed": "WhatsApp phone number verification failed."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "WhatsApp access token is required.",
+        "appSettingsNotFound": "WhatsApp app settings were not found.",
+        "failedToPersistIntegration": "Failed to save the WhatsApp integration.",
+        "noPhoneNumberFound": "No WhatsApp phone number was found.",
+        "noPhoneNumbersFound": "No phone numbers were found for this WhatsApp Business Account.",
+        "phoneNumberNotFound": "Selected WhatsApp phone number was not found.",
+        "unableToVerifyToken": "Unable to verify the WhatsApp token.",
+        "wabaMismatch": "Selected WhatsApp Business Account does not match the authorization.",
+        "wabaResolveFailed": "Could not resolve the WhatsApp Business Account from the authorization."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3046,6 +3090,10 @@
       "title": "Manage your WhatsApp account",
       "description": "Review your WhatsApp account status, messaging limits, and quality. Update settings or resolve issues if needed",
       "goToBusinessManager": "Go to Meta Business Manager",
+      "unavailable": {
+        "title": "Account health is temporarily unavailable",
+        "description": "We could not load this WhatsApp phone number from Meta right now. Other recovery actions on this page are still available."
+      },
       "fields": {
         "displayPhoneNumber": {
           "label": "Display phone number",
@@ -3165,7 +3213,8 @@
     "templateHeader": {
       "label": "Template Header"
     },
-    "transferPhoneNumber": "Transfer phone from another Whatsapp provider"
+    "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
+    "signupSessionExpired": "Your WhatsApp signup session has expired. Please start the connection again."
   },
   "zalo": {
     "title": "Zalo OA",

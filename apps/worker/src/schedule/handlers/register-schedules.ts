@@ -183,6 +183,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeWhatsappSignupSessions,
+    {
+      pattern: "0 * * * *",
+    },
+    {
+      name: ScheduleJobData.purgeWhatsappSignupSessions,
+      data: {
+        type: ScheduleJobData.purgeWhatsappSignupSessions,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeWorkspaces,
     {
       pattern: "0 * * * *",
