@@ -294,9 +294,20 @@ export const facebookElementSchema = z.object({
 })
 export type FacebookElement = z.infer<typeof facebookElementSchema>
 
+/**
+ * How Messenger sizes the images of a generic template's elements: `horizontal`
+ * is 1.91:1, `square` is 1:1. Meta accepts no other value and defaults to
+ * `horizontal` when the field is absent.
+ */
+export const facebookImageAspectRatioSchema = z.enum(["horizontal", "square"])
+export type FacebookImageAspectRatio = z.infer<
+  typeof facebookImageAspectRatioSchema
+>
+
 export const facebookMessageAttachmentPayloadSchema = z.object({
   url: z.url().optional(),
   is_reusable: z.boolean().optional(),
+  image_aspect_ratio: facebookImageAspectRatioSchema.optional(),
   template_type: z
     .enum([
       "generic",
