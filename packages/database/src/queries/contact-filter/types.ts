@@ -10,6 +10,8 @@ export type ContactFilterConditionInput = {
   customFieldType?: string
   /** Form/value-input type of the custom field, used to cast the text value. */
   valueType?: string
+  /** Present for dynamic coupon-topic conditions (`field === "couponTopic"`). */
+  topicId?: string
 }
 
 /**

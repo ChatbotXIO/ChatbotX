@@ -48,6 +48,15 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
+const VARIABLE_PLACEHOLDER_REGEX = /\{\{([\w.]+|coupon:[^{}\n]+)\}\}/g
+// `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
+// where the placeholder sits — a call the position-independent mapping can't
+// make. resolveGenderLabel returns the opening form; inside a sentence it is
+// that label lowercased.
+const SENTENCE_CASED_VARIABLES = new Set<string>([systemFieldTypes.enum.gender])
+
+// The text before a placeholder that opens the message, a line, or a sentence.
+const SENTENCE_OPENING_RE = /(?:^|[.!?…\n\r])[\s"'“‘([]*$/
 
 const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.inboundMessage]: "Inbound Message",
@@ -79,24 +88,17 @@ const capitalizeFirstLetter = (value: string | null): string | null => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-const VARIABLE_RE = /\{\{([\w.]+)\}\}/g
-
-// `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
-// where the placeholder sits — a call the position-independent mapping can't
-// make. resolveGenderLabel returns the opening form; inside a sentence it is
-// that label lowercased.
-const SENTENCE_CASED_VARIABLES = new Set<string>([systemFieldTypes.enum.gender])
-
-// The text before a placeholder that opens the message, a line, or a sentence.
-const SENTENCE_OPENING_RE = /(?:^|[.!?…\n\r])[\s"'“‘([]*$/
-
 export type InterpolateOptions = {
   /** Case `{{gender}}` by position. Prose wants it; URLs and JSON must not. */
   sentenceCase?: boolean
 }
 
 export const extractVariables = (text: string): string[] => [
-  ...new Set(Array.from(text.matchAll(VARIABLE_RE), (match) => match[1])),
+  ...new Set(
+    Array.from(text.matchAll(VARIABLE_PLACEHOLDER_REGEX), (match) =>
+      match[1].trim(),
+    ),
+  ),
 ]
 
 export const interpolate = (
@@ -104,18 +106,22 @@ export const interpolate = (
   mapping: Record<string, string>,
   options: InterpolateOptions = {},
 ): string =>
-  text.replace(VARIABLE_RE, (match, variable: string, offset: number) => {
-    const value = mapping[variable]
-    if (value === undefined) {
-      return match
-    }
-    if (!(options.sentenceCase && SENTENCE_CASED_VARIABLES.has(variable))) {
-      return value
-    }
-    return SENTENCE_OPENING_RE.test(text.slice(0, offset))
-      ? value
-      : value.toLowerCase()
-  })
+  text.replace(
+    VARIABLE_PLACEHOLDER_REGEX,
+    (match, variable: string, offset: number) => {
+      const key = variable.trim()
+      const value = mapping[key]
+      if (value === undefined) {
+        return match
+      }
+      if (!(options.sentenceCase && SENTENCE_CASED_VARIABLES.has(key))) {
+        return value
+      }
+      return SENTENCE_OPENING_RE.test(text.slice(0, offset))
+        ? value
+        : value.toLowerCase()
+    },
+  )
 
 const getTimezone = ({
   contact,

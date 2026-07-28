@@ -1,12 +1,12 @@
-import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { type Ref, useEffect, useImperativeHandle, useState } from "react"
-import type { PromptVariableListRef } from "./definition"
+import type { PromptVariableListRef, PromptVariableOption } from "./definition"
+import { toVariableMentionAttrs } from "./mention"
 
 export type VariableListProps = {
   ref: Ref<PromptVariableListRef>
-  items: SelectOption[]
-  command: ({ id }: { id: string }) => void
+  items: PromptVariableOption[]
+  command: (attrs: ReturnType<typeof toVariableMentionAttrs>) => void
 }
 
 export const VariableList = ({
@@ -16,8 +16,8 @@ export const VariableList = ({
   ref: React.Ref<{
     onKeyDown: ({ event }: { event: KeyboardEvent }) => boolean
   }>
-  items: SelectOption[]
-  command: ({ id }: { id: string }) => void
+  items: PromptVariableOption[]
+  command: (attrs: ReturnType<typeof toVariableMentionAttrs>) => void
 }) => {
   const t = useTranslations()
 
@@ -27,7 +27,7 @@ export const VariableList = ({
     const item = props.items[index]
 
     if (item) {
-      props.command({ id: `${item.value}}}` })
+      props.command(toVariableMentionAttrs(item))
     }
 
     return Boolean(item)
@@ -76,17 +76,28 @@ export const VariableList = ({
             e.stopPropagation()
           }}
         >
-          {props.items.map((item, index) => (
-            <button
-              className={`px-2 ${index === selectedIndex ? "is-selected text-gray-100" : "text-gray-600"}`}
-              // biome-ignore lint/suspicious/noArrayIndexKey: index is unique
-              key={index}
-              onClick={() => selectItem(index)}
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
+          {props.items.map((item, index) => {
+            const showGroup =
+              Boolean(item.group) &&
+              props.items[index - 1]?.group !== item.group
+
+            return (
+              <div key={item.value}>
+                {showGroup ? (
+                  <div className="px-2 pt-2 pb-1 font-medium text-muted-foreground text-xs">
+                    {item.group}
+                  </div>
+                ) : null}
+                <button
+                  className={`px-2 ${index === selectedIndex ? "is-selected text-gray-100" : "text-gray-600"}`}
+                  onClick={() => selectItem(index)}
+                  type="button"
+                >
+                  {item.label}
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
       {props.items.length === 0 && (

@@ -10,6 +10,11 @@ export const conditionFilterConditionSchema = z.object({
     .optional(),
   customFieldId: zodBigintAsString().optional(),
   /**
+   * Runtime coupon topic id for dynamic coupon-topic filter rows. Kept so
+   * publish validation does not strip the selected topic before worker match.
+   */
+  topicId: zodBigintAsString().optional(),
+  /**
    * Precise custom-field type (`date` | `datetime`). Kept alongside `valueType`
    * so the runtime filter compares a date field by wall clock rather than the
    * zone-aware datetime path. Without it here, zod strips the key on save and

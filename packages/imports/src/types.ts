@@ -7,7 +7,7 @@ export type BuildPathInput = {
 
 export type ImportHandlerByType = {
   [T in ImportType]: {
-    buildPath: (input: BuildPathInput, entry: ImportEntry<T>) => string
+    buildPath: (input: BuildPathInput, entry: ImportEntry<ImportType>) => string
   }
 }
 

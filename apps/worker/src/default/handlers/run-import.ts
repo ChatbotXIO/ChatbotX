@@ -3,7 +3,12 @@ import { importFormats, importTypes } from "@chatbotx.io/database/partials"
 import { importModel } from "@chatbotx.io/database/schema"
 import type { JobRunImport } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
-import { type ImportRow, importHandlers, runImportPipeline } from "./imports"
+import {
+  type AnyImportTypeHandler,
+  type ImportRow,
+  importHandlers,
+  runImportPipeline,
+} from "./imports"
 
 export const runImport = async (data: JobRunImport["data"]): Promise<void> => {
   const row = await db.query.importModel.findFirst({
@@ -55,7 +60,7 @@ export const runImport = async (data: JobRunImport["data"]): Promise<void> => {
     return
   }
 
-  const handler = importHandlers[parsedType.data]
+  const handler: AnyImportTypeHandler = importHandlers[parsedType.data]
   const importRow: ImportRow = {
     ...row,
     file: row.file,

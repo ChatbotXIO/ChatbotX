@@ -8,6 +8,7 @@ import {
 import { describe, expect, test } from "vitest"
 import {
   contactFilterCriteriaSchema,
+  couponTopicConditionSchema,
   customFieldConditionSchema,
   singleContactFilterConditionSchema,
 } from "@/features/contact-filter/schemas"
@@ -268,6 +269,75 @@ describe("staticFieldFilter", () => {
         }).success,
       ).toBe(true)
     }
+  })
+})
+
+describe("couponTopicConditionSchema", () => {
+  test("accepts isNotEmpty and used without a value", () => {
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "topic-1",
+        operator: operatorTypes.enum.isNotEmpty,
+      }).success,
+    ).toBe(true)
+
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "topic-1",
+        operator: operatorTypes.enum.used,
+      }).success,
+    ).toBe(true)
+  })
+
+  test("accepts eq with a coupon code value", () => {
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "topic-1",
+        operator: operatorTypes.enum.eq,
+        value: "SAVE10",
+      }).success,
+    ).toBe(true)
+  })
+
+  test("rejects a missing topicId", () => {
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "",
+        operator: operatorTypes.enum.isNotEmpty,
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects eq without a value and unsupported operators", () => {
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "topic-1",
+        operator: operatorTypes.enum.eq,
+      }).success,
+    ).toBe(false)
+
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "topic-1",
+        operator: operatorTypes.enum.contains,
+        value: "SAVE10",
+      }).success,
+    ).toBe(false)
+
+    expect(
+      couponTopicConditionSchema.safeParse({
+        field: "couponTopic",
+        topicId: "topic-1",
+        operator: operatorTypes.enum.ne,
+        value: "topic-1",
+      }).success,
+    ).toBe(false)
   })
 })
 

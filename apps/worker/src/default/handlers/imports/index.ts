@@ -1,12 +1,14 @@
 import type { ImportType } from "@chatbotx.io/database/partials"
 import type { ImportTypeHandler } from "./base-import"
 import { contactsImportHandler } from "./handler/contacts/handler"
+import { couponsImportHandler } from "./handler/coupons/handler"
 
 // biome-ignore lint/suspicious/noExplicitAny: handler generics intentionally erased at registry boundary
 export type AnyImportTypeHandler = ImportTypeHandler<any, any, any>
 
 export const importHandlers = {
   contacts: contactsImportHandler,
+  coupons: couponsImportHandler,
 } as const satisfies Record<ImportType, AnyImportTypeHandler>
 
 export type { ImportRow, ImportTypeHandler } from "./base-import"

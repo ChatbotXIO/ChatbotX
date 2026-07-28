@@ -81,6 +81,13 @@ const booleanCustomFieldConfig: FieldConfig = {
   group: "customFields",
 }
 
+const couponTopicConfig: FieldConfig = {
+  name: "couponTopic:topic-1",
+  topicId: "topic-1",
+  formField: formFieldTypes.enum.text,
+  group: "topicCoupon",
+}
+
 const roundTripCondition = (
   condition: ContactFilterCondition,
   config: FieldConfig | undefined,
@@ -135,6 +142,23 @@ describe("buildConditionDraft", () => {
       valueType: formFieldTypes.enum.number,
       operator: operatorTypes.enum.gt,
       value: "10",
+    })
+  })
+
+  test("omits empty value for coupon topic used conditions", () => {
+    expect(
+      buildConditionDraft(
+        {
+          field: "couponTopic:topic-1",
+          operator: operatorTypes.enum.used,
+          value: "",
+        },
+        couponTopicConfig,
+      ),
+    ).toEqual({
+      field: "couponTopic",
+      topicId: "topic-1",
+      operator: operatorTypes.enum.used,
     })
   })
 })

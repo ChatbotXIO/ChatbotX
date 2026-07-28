@@ -4,11 +4,11 @@ import { contactInboxModel } from "../../schema"
 import type { ContactWhere, RawTable, RelationExists } from "./types"
 
 export const existsWhere = (
-  buildSelect: (contactId: AnyColumn) => SQL,
+  buildSelect: (contactId: AnyColumn, table: RawTable) => SQL,
   negate = false,
 ): ContactWhere => ({
   RAW: (table: RawTable): SQL => {
-    const inner = buildSelect(table.id)
+    const inner = buildSelect(table.id, table)
     return negate ? sql`NOT EXISTS (${inner})` : sql`EXISTS (${inner})`
   },
 })

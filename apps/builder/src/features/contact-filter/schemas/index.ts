@@ -6,6 +6,10 @@ import {
 import { z } from "zod"
 import { booleanOperators } from "./boolean-filter"
 import {
+  type CouponTopicCondition,
+  couponTopicConditionSchema,
+} from "./coupon-topic-filter"
+import {
   type CustomFieldCondition,
   customFieldConditionSchema,
 } from "./custom-field-filter"
@@ -16,6 +20,10 @@ import { numberOperators } from "./number"
 import { selectOperators } from "./select-filter"
 import { textOperators } from "./text-filter"
 
+export {
+  type CouponTopicCondition,
+  couponTopicConditionSchema,
+} from "./coupon-topic-filter"
 export {
   type CustomFieldCondition,
   customFieldConditionSchema,
@@ -40,11 +48,12 @@ export const mappingConditions: Record<FormFieldType, OperatorType[]> = {
 export type ContactFilterCondition =
   | z.infer<(typeof contactFilterConditionSchemas)[number]>
   | CustomFieldCondition
+  | CouponTopicCondition
 
 /** One validated condition row (matches `conditions` elements in {@link contactFilterCriteriaSchema}). */
-// Static fields are a discriminated union on `field`; dynamic custom fields go
-// through the single `customFieldConditionSchema` branch (their `field` is the
-// literal "customField" + a runtime `customFieldId`). The trailing cast keeps
+// Static fields are a discriminated union on `field`; dynamic custom fields and
+// coupon-topic fields each go through their own single-branch schema (`field`
+// literal "customField" / "couponTopic" + a runtime id). The trailing cast keeps
 // `z.infer` aligned with the value the resolver derives — without it, Zod v4
 // widens the dynamic-array discriminated union output to `unknown`, diverging
 // from react-hook-form's inferred field type.
@@ -56,6 +65,7 @@ export const singleContactFilterConditionSchema = z.union([
     contactFilterConditionSchemas,
   ),
   customFieldConditionSchema,
+  couponTopicConditionSchema,
 ]) as unknown as z.ZodType<ContactFilterCondition>
 
 export const contactFilterCriteriaSchema = z.object({

@@ -36,6 +36,7 @@ import {
   subscribeBroadcast,
   unsubscribeBroadcast,
 } from "./contact"
+import { markCouponUsed, setUpCoupon } from "./coupon"
 import { handleAIDeleteMessageHistory } from "./delete-message-history"
 import { subscribeDripSubscriber } from "./drip-handler"
 import { handleAIEditImage } from "./edit-image"
@@ -409,6 +410,8 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
   [stepTypes.enum.questionnaires]: questionnaires,
+  [stepTypes.enum.setUpCoupon]: setUpCoupon,
+  [stepTypes.enum.markCouponUsed]: markCouponUsed,
   [stepTypes.enum.condition]: handleCondition,
   [stepTypes.enum.subscribeBroadcast]: subscribeBroadcast,
   [stepTypes.enum.unsubscribeBroadcast]: unsubscribeBroadcast,

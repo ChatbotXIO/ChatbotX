@@ -12,6 +12,7 @@ import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
+import { exportCoupons } from "./handlers/export-coupons"
 import { runImport } from "./handlers/run-import"
 import { sendAuditLog } from "./handlers/send-audit-log"
 import { sendErrorLog } from "./handlers/send-error-log"
@@ -38,6 +39,12 @@ const worker = new Worker(
           return
         }
         await loopableExportContacts(job.data.data)
+        return
+      case DefaultJobAction.exportCoupons:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
+        await exportCoupons(job.data.data)
         return
       case DefaultJobAction.bulkTagContacts:
         if (await isBlockedJob(job.data.data)) {

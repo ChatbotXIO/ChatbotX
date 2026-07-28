@@ -1,4 +1,4 @@
-import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
+import type { PromptVariableOption } from "./definition"
 
 /**
  * Filters variable options for the `{{`-mention suggestion. Matches on both the
@@ -7,8 +7,8 @@ import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
  */
 export const getFilteredMentions = (
   query: string,
-  listOfPromptVariables: SelectOption[],
-): SelectOption[] => {
+  listOfPromptVariables: PromptVariableOption[],
+): PromptVariableOption[] => {
   const normalizedQuery = query.toLowerCase()
   return listOfPromptVariables.filter(
     (item) =>

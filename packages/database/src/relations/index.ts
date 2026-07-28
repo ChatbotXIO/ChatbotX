@@ -34,6 +34,7 @@ import { contactsToTagsRelations } from "./contact-to-tag"
 import { contactToTagChannelRelations } from "./contact-to-tag-channel"
 import { conversationRelations } from "./conversation"
 import { conversationParticipantRelations } from "./conversation-participant"
+import { couponRelations } from "./coupon"
 import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
 import { emailTopicRelations } from "./email-topic"
@@ -130,6 +131,7 @@ export const relations = {
   ...aiMCPServerRelations,
   ...attachmentRelations,
   ...conversationRelations,
+  ...couponRelations,
   ...messageRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,

@@ -29,6 +29,7 @@ import { toast } from "sonner"
 
 type FileDropzoneConfigs = {
   uploadKeyName: string
+  uploadLabel: string
   linkKeyName: string
   accept: Record<string, string[]>
   maxSize: number
@@ -81,7 +82,12 @@ export default function FileDropzone({
   parentName,
   type = "image",
   mode = "file",
-  configs: { accept = { "image/*": [] }, maxSize = 10, isCard = false } = {},
+  configs: {
+    accept = { "image/*": [] },
+    maxSize = 10,
+    isCard = false,
+    uploadLabel,
+  } = {},
   onMode,
   onRemove,
   onDrop,
@@ -172,7 +178,7 @@ export default function FileDropzone({
     <div className="flex flex-col items-center">
       <UploadIcon className="text-gray-500" size={30} type={type} />
       <div>
-        {t("actions.selectFile")}
+        {uploadLabel ?? t("actions.selectFile")}
         {!isCard && (
           <>
             {t("texts.or")}
