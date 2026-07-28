@@ -58,11 +58,9 @@ export const couponTopicModel = pgTable(
       table.workspaceId.asc().nullsLast(),
       table.expiresAt.asc().nullsLast(),
     ),
-    index("CouponTopic_workspaceId_name_idx").using(
-      "btree",
-      table.workspaceId.asc().nullsLast(),
-      table.name.asc().nullsLast(),
-    ),
+    uniqueIndex("CouponTopic_workspaceId_name_idx")
+      .on(table.workspaceId, sql`lower(${table.name})`)
+      .where(sql`"deletedAt" IS NULL`),
   ],
 )
 

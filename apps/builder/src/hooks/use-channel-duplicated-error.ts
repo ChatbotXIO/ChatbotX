@@ -21,7 +21,7 @@ export function useChannelDuplicatedError(channel?: string) {
     const qs = params.size > 0 ? `?${params.toString()}` : ""
 
     const timer = setTimeout(() => {
-      toast.error(t(key as Parameters<typeof t>[0]), { duration: 5000 })
+      toast.error(t(key as Parameters<typeof t>[0]))
       router.replace(`${window.location.pathname}${qs}`, { scroll: false })
     }, 0)
 

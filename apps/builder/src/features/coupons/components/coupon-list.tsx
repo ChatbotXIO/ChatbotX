@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
-import { XIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -37,6 +37,10 @@ export function CouponList({ workspaceId }: CouponListProps) {
   const [issueStatus, setIssueStatus] = useState("")
   const [usageStatus, setUsageStatus] = useState("")
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const perPage = 50
+  const [pageCount, setPageCount] = useState(1)
+  const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const { options: topicOptions } = useCouponTopicOptions()
 
@@ -60,14 +64,16 @@ export function CouponList({ workspaceId }: CouponListProps) {
       const couponResult = await client.couponsAPI.listCouponsAPI({
         workspaceId,
         ...filter,
-        page: 1,
-        perPage: 50,
+        page,
+        perPage,
       })
       setRows(couponResult.data)
+      setPageCount(couponResult.pageCount)
+      setTotal(couponResult.total)
     } finally {
       setIsLoading(false)
     }
-  }, [filter, workspaceId])
+  }, [filter, page, workspaceId])
 
   useEffect(() => {
     load().catch((error) =>
@@ -81,7 +87,10 @@ export function CouponList({ workspaceId }: CouponListProps) {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <select
             className="h-9 rounded-md border bg-background px-3 text-sm"
-            onChange={(event) => setTopicId(event.target.value)}
+            onChange={(event) => {
+              setPage(1)
+              setTopicId(event.target.value)
+            }}
             value={topicId}
           >
             <option value="">{t("coupons.fields.allTopics")}</option>
@@ -93,7 +102,10 @@ export function CouponList({ workspaceId }: CouponListProps) {
           </select>
           <select
             className="h-9 rounded-md border bg-background px-3 text-sm"
-            onChange={(event) => setIssueStatus(event.target.value)}
+            onChange={(event) => {
+              setPage(1)
+              setIssueStatus(event.target.value)
+            }}
             value={issueStatus}
           >
             <option value="">{t("coupons.fields.allIssueStatuses")}</option>
@@ -106,7 +118,10 @@ export function CouponList({ workspaceId }: CouponListProps) {
           </select>
           <select
             className="h-9 rounded-md border bg-background px-3 text-sm"
-            onChange={(event) => setUsageStatus(event.target.value)}
+            onChange={(event) => {
+              setPage(1)
+              setUsageStatus(event.target.value)
+            }}
             value={usageStatus}
           >
             <option value="">{t("coupons.fields.allUsageStatuses")}</option>
@@ -119,12 +134,22 @@ export function CouponList({ workspaceId }: CouponListProps) {
           </select>
           <Input
             className="w-56"
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setPage(1)
+              setSearch(event.target.value)
+            }}
             placeholder={t("coupons.fields.searchCode")}
             value={search}
           />
           {search ? (
-            <Button onClick={() => setSearch("")} size="sm" variant="outline">
+            <Button
+              onClick={() => {
+                setPage(1)
+                setSearch("")
+              }}
+              size="sm"
+              variant="outline"
+            >
               <XIcon className="size-4" />
               {t("actions.reset")}
             </Button>
@@ -183,6 +208,38 @@ export function CouponList({ workspaceId }: CouponListProps) {
             ) : null}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
+        <div className="text-muted-foreground">
+          {t("analytics.total")}: {total.toLocaleString()}
+        </div>
+        {pageCount > 1 ? (
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">
+              {t("analytics.pagination.pageOf", { page, pageCount })}
+            </span>
+            <Button
+              aria-label={t("analytics.pagination.previousPage")}
+              disabled={page <= 1}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              size="icon"
+              variant="outline"
+            >
+              <ChevronLeftIcon className="size-4" />
+            </Button>
+            <Button
+              aria-label={t("analytics.pagination.nextPage")}
+              disabled={page >= pageCount}
+              onClick={() =>
+                setPage((current) => Math.min(pageCount, current + 1))
+              }
+              size="icon"
+              variant="outline"
+            >
+              <ChevronRightIcon className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   )

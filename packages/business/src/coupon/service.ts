@@ -113,9 +113,48 @@ class CouponService extends BaseService {
   }
 
   async listCouponsForExport(
-    input: Parameters<typeof couponRepository.listCouponsForExport>[0],
+    input: Parameters<typeof couponRepository.listCoupons>[0],
   ) {
-    return await couponRepository.listCouponsForExport(input)
+    const limit = input.perPage ?? 1000
+    const rows: Awaited<
+      ReturnType<typeof couponRepository.listCouponsForExportPage>
+    > = []
+    let lastId: string | null = null
+
+    while (true) {
+      const page = await couponRepository.listCouponsForExportPage({
+        workspaceId: input.workspaceId,
+        filter: {
+          topicId: input.topicId,
+          issueStatus: input.issueStatus,
+          usageStatus: input.usageStatus,
+          search: input.search,
+        },
+        lastId,
+        limit,
+      })
+      rows.push(...page)
+      if (page.length < limit) {
+        break
+      }
+      lastId = page.at(-1)?.id ?? null
+      if (!lastId) {
+        break
+      }
+    }
+
+    return rows
+  }
+
+  async listCouponsForExportPage(input: {
+    workspaceId: string
+    filter: Parameters<
+      typeof couponRepository.listCouponsForExportPage
+    >[0]["filter"]
+    lastId?: string | null
+    limit?: number
+  }) {
+    return await couponRepository.listCouponsForExportPage(input)
   }
 
   async listActiveTopicOptions(input: {

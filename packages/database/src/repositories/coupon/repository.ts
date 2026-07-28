@@ -10,6 +10,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  ne,
   or,
   sql,
 } from "@chatbotx.io/database/client"
@@ -20,6 +21,7 @@ import {
   couponIssueStatuses,
   couponTopicStatuses,
   couponUsageStatuses,
+  exportSubTypes,
   fileContextTypes,
   fileStatuses,
   importFormats,
@@ -199,14 +201,22 @@ export const couponRepository = {
     input: { workspaceId: string; name: string; excludeId?: string },
     tx: DatabaseClient = db,
   ) {
-    return await tx.query.couponTopicModel.findFirst({
-      where: {
-        workspaceId: input.workspaceId,
-        deletedAt: { isNull: true },
-        name: { ilike: input.name },
-        id: input.excludeId ? { ne: input.excludeId } : undefined,
-      },
-    })
+    const rows = await tx
+      .select()
+      .from(couponTopicModel)
+      .where(
+        and(
+          eq(couponTopicModel.workspaceId, input.workspaceId),
+          isNull(couponTopicModel.deletedAt),
+          eq(sql`lower(${couponTopicModel.name})`, input.name.toLowerCase()),
+          input.excludeId
+            ? ne(couponTopicModel.id, input.excludeId)
+            : undefined,
+        ),
+      )
+      .limit(1)
+
+    return rows[0]
   },
 
   async createTopic(
@@ -401,7 +411,15 @@ export const couponRepository = {
     return Number(row?.total ?? 0)
   },
 
-  async listCouponsForExport(input: CouponListInput, tx: DatabaseClient = db) {
+  async listCouponsForExportPage(
+    input: {
+      workspaceId: string
+      filter: Omit<CouponListInput, "workspaceId" | "page" | "perPage">
+      lastId?: string | null
+      limit?: number
+    },
+    tx: DatabaseClient = db,
+  ) {
     const rows = await tx
       .select({
         id: couponModel.id,
@@ -423,8 +441,15 @@ export const couponRepository = {
           activeTopicWhere(input.workspaceId),
         ),
       )
-      .where(couponListWhere(input))
-      .orderBy(asc(couponTopicModel.name), asc(couponModel.createdAt))
+      .where(
+        and(
+          couponListWhere({ workspaceId: input.workspaceId, ...input.filter }),
+          input.lastId ? gt(couponModel.id, input.lastId) : undefined,
+        ),
+      )
+      .orderBy(asc(couponModel.id))
+      .limit(input.limit ?? 1000)
+
     return rows.map(toCouponListRow)
   },
 
@@ -688,7 +713,7 @@ export const couponRepository = {
         workspaceId: input.workspaceId,
         userId: input.userId,
         contextType: fileContextTypes.enum.export,
-        subType: "coupons",
+        subType: exportSubTypes.enum.coupons,
         path: input.path,
         fileName: input.fileName,
         mimeType: "text/csv",
@@ -699,15 +724,16 @@ export const couponRepository = {
   },
 
   async getExportFile(
-    input: { workspaceId: string; fileId: string },
+    input: { workspaceId: string; fileId: string; userId: string },
     tx: DatabaseClient = db,
   ) {
     return await tx.query.fileModel.findFirst({
       where: {
         id: input.fileId,
         workspaceId: input.workspaceId,
+        userId: input.userId,
         contextType: fileContextTypes.enum.export,
-        subType: "coupons",
+        subType: exportSubTypes.enum.coupons,
       },
     })
   },
@@ -715,6 +741,7 @@ export const couponRepository = {
   async updateExportFile(
     input: {
       fileId: string
+      workspaceId: string
       status?: (typeof fileStatuses.enum)[keyof typeof fileStatuses.enum]
       fileSize?: string | null
       meta?: { totalRecords?: number }
@@ -730,7 +757,12 @@ export const couponRepository = {
         meta: input.meta,
         uploadedAt: input.uploadedAt,
       })
-      .where(eq(fileModel.id, input.fileId))
+      .where(
+        and(
+          eq(fileModel.id, input.fileId),
+          eq(fileModel.workspaceId, input.workspaceId),
+        ),
+      )
   },
 
   async isTopicIssueable(

@@ -1,3 +1,4 @@
+import { Transform } from "node:stream"
 import { db, eq } from "@chatbotx.io/database/client"
 import type { ImportFormat, ImportType } from "@chatbotx.io/database/partials"
 import { type fileModel, importModel } from "@chatbotx.io/database/schema"
@@ -204,7 +205,7 @@ const loadImportObject = async (input: {
   let headSize: number | null = null
   try {
     const head = await uploader.headObject(input.path)
-    headSize = head.ContentLength ?? 0
+    headSize = head.ContentLength ?? null
   } catch (error) {
     logger.warn(
       { err: error },
@@ -212,17 +213,41 @@ const loadImportObject = async (input: {
     )
   }
 
-  if (headSize != null) {
-    if (headSize > input.maxBytes) {
-      throw new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`)
-    }
-    return await uploader.getObjectStream(input.path)
+  if (headSize != null && headSize > input.maxBytes) {
+    throw new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`)
   }
 
   const object = await uploader.getObjectStream(input.path)
-  const objectSize = object.contentLength ?? 0
-  if (objectSize > input.maxBytes) {
+  const objectSize = object.contentLength ?? null
+  if (objectSize != null && objectSize > input.maxBytes) {
     throw new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`)
   }
-  return { stream: object.stream }
+
+  if (headSize != null || objectSize != null) {
+    return { stream: object.stream }
+  }
+
+  let bytes = 0
+  const guard = new Transform({
+    transform(chunk, _encoding, callback) {
+      let size = 0
+      if (typeof chunk === "string") {
+        size = Buffer.byteLength(chunk)
+      } else if (Buffer.isBuffer(chunk)) {
+        size = chunk.length
+      } else {
+        size = chunk.byteLength
+      }
+      bytes += size
+      if (bytes > input.maxBytes) {
+        callback(
+          new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`),
+        )
+        return
+      }
+      callback(null, chunk)
+    },
+  })
+
+  return { stream: object.stream.pipe(guard) }
 }

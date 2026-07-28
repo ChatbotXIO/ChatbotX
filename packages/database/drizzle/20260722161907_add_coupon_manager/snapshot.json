@@ -21560,15 +21560,15 @@
           "opclass": null
         },
         {
-          "value": "name",
-          "isExpression": false,
+          "value": "lower(\"name\")",
+          "isExpression": true,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
         }
       ],
-      "isUnique": false,
-      "where": null,
+      "isUnique": true,
+      "where": "\"deletedAt\" IS NULL",
       "with": "",
       "method": "btree",
       "concurrently": false,

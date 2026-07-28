@@ -15,7 +15,10 @@ export async function getCouponExportFile(
     throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" })
   }
 
-  const file = await couponService.getExportFile(input)
+  const file = await couponService.getExportFile({
+    ...input,
+    userId,
+  })
   const downloadUrl =
     file.status === "uploaded"
       ? await uploader.getPresignedDownload(file.path, 5 * 60)

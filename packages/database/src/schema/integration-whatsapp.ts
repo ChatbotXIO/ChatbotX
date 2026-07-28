@@ -6,10 +6,15 @@ import {
   pgEnum,
   pgTable,
   text,
+  timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { whatsappRegistrationStatuses } from "../partials"
-import { bigintAsString, sharedColumns } from "../partials/shared"
+import {
+  bigintAsString,
+  sharedColumns,
+  timestampConfig,
+} from "../partials/shared"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
@@ -18,8 +23,21 @@ export type IntegrationWhatsappRegistrationError = {
   subCode: string | number | null
   message: string
   type?: string
+  userTitle?: string
+  userMessage?: string
+  fbtraceId?: string
   at: string
 }
+
+/**
+ * Enforces that a Meta phone number backs exactly one integration.
+ *
+ * Exported so callers can recognise this specific collision: the table has
+ * more than one unique index, and this one means "already connected" rather
+ * than a bug.
+ */
+export const WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT =
+  "IntegrationWhatsapp_phoneNumberId_key"
 
 export const whatsappRegistrationStatus = pgEnum(
   "whatsappRegistrationStatus",
@@ -44,6 +62,7 @@ export const integrationWhatsappModel = pgTable(
       .notNull()
       .default("pending_verification"),
     registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
+    verificationCodeRequestedAt: timestamp(timestampConfig),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -61,6 +80,14 @@ export const integrationWhatsappModel = pgTable(
     uniqueIndex("IntegrationWhatsapp_inboxId_key").using(
       "btree",
       table.inboxId.asc().nullsLast(),
+    ),
+    // A Meta phone number can back exactly one integration platform-wide.
+    // The application already enforces this before insert, but that check and
+    // the insert are separated by network calls, so only the database can close
+    // the race. Doubles as the lookup index for `findConnectedPhoneNumberIds`.
+    uniqueIndex(WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT).using(
+      "btree",
+      table.phoneNumberId.asc().nullsLast(),
     ),
     check(
       "IntegrationWhatsapp_registrationStatus_error_consistent",

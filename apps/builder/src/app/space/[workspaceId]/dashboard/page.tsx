@@ -1,9 +1,4 @@
 import { BaseDashboard } from "@chatbotx.io/analytics-nextjs/components/base-dashboard"
-import {
-  quotaEnforcementService,
-  userQuotaService,
-  workspaceService,
-} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { isCloud } from "@/env"
@@ -11,7 +6,7 @@ import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { resolveBlockReason, resolveTrialEndsAt } from "@/lib/quota-metrics"
+import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
 export default async function Dashboard({
   params,
@@ -38,23 +33,14 @@ export default async function Dashboard({
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
   const cloud = isCloud()
+  const { targetWorkspace } = userAndWorkspace
 
-  const [inboxesResult, workspace, quota, atLimit] = await Promise.all([
+  const [inboxesResult, { blocked, blockReason }] = await Promise.all([
     listInboxes({ workspaceId, includes: ["integration"] }),
-    workspaceService.find({ where: { id: workspaceId } }),
-    cloud ? userQuotaService.getForUser(userAndWorkspace.user.id) : null,
-    cloud
-      ? quotaEnforcementService.getAtLimitMap(userAndWorkspace.user.id)
-      : null,
+    resolveWorkspaceBlockState(targetWorkspace.ownerId),
   ])
 
   const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")
-  const blockReason = resolveBlockReason(
-    quota?.planStatus ?? null,
-    resolveTrialEndsAt(quota),
-    atLimit?.mac ?? false,
-  )
-  const blocked = blockReason !== null
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,7 +60,7 @@ export default async function Dashboard({
           workspaceId,
           timezone,
         }}
-        workspaceCreatedAt={workspace?.createdAt}
+        workspaceCreatedAt={targetWorkspace.createdAt}
       />
     </div>
   )

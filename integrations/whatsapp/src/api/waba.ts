@@ -1,12 +1,13 @@
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
-import type {
-  MessageTemplateEntity,
-  WhatsappAuthValue,
-  WhatsappPagination,
+import { fetchAllWhatsappPages } from "../lib/pagination"
+import {
+  EMPTY_PAGINATION,
+  type MessageTemplateEntity,
+  type WhatsappAuthValue,
+  type WhatsappPagination,
 } from "../schema"
-import type { WhatsappPhoneNumberResponse } from "./phone-number"
 
 export type WhatsappWabaMMLite = {
   marketing_messages_onboarding_status?: WhatsappMarketingMessagesLiteApiStatus
@@ -19,7 +20,6 @@ export type WhatsappWabaDetailResponse = WhatsappWabaMMLite & {
     id: string
     name: string
   }
-  phone_numbers: WhatsappPhoneNumberResponse
 }
 
 export type WhatsappMarketingMessagesLiteApiStatus =
@@ -39,7 +39,7 @@ export function findWaba(props: {
   version?: string
 }) {
   const { version = DEFAULT_API_VERSION } = props
-  const fields = props.fields || "name,owner_business_info,phone_numbers"
+  const fields = props.fields || "name,owner_business_info"
 
   return rescue(() =>
     ky
@@ -75,27 +75,13 @@ export function listFlows({
   const { version = DEFAULT_API_VERSION } = auth
 
   return rescue(async () => {
-    const allFlows: WhatsappFlow[] = []
-    let nextUrl: string | undefined =
-      `${API_URL}/${version}/${auth.metadata.wabaId}/flows`
+    const data = await fetchAllWhatsappPages<WhatsappFlow>({
+      firstUrl: `${API_URL}/${version}/${auth.metadata.wabaId}/flows`,
+      accessToken: auth.tokens.accessToken,
+      resource: "flows",
+    })
 
-    while (nextUrl) {
-      const response: ListFlowsResponse = await ky
-        .get<ListFlowsResponse>(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${auth.tokens.accessToken}`,
-          },
-        })
-        .json()
-
-      allFlows.push(...response.data)
-      nextUrl = response.paging?.next
-    }
-
-    return {
-      data: allFlows,
-      paging: { cursors: { before: "", after: "" } },
-    }
+    return { data, paging: EMPTY_PAGINATION }
   })
 }
 
@@ -114,33 +100,31 @@ export type CreateMessageTemplateProps = {
   components: any[]
 }
 
+/**
+ * Meta allows 250 message templates per WABA, rising to 6,000 once the business
+ * portfolio is verified, so 60 pages of 100 already hold the largest account it
+ * will ever hand us. The spare pages absorb a trailing `paging.next` on a full
+ * final page, which keeps the bound a guard against a runaway walk rather than
+ * a limit a real customer can hit.
+ *
+ * Reference: https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/
+ */
+const MESSAGE_TEMPLATE_MAX_PAGES = 70
+
 export const listMessageTemplates = (
   auth: WhatsappAuthValue,
 ): Promise<ListMessageTemplatesReponse> => {
   const { version = DEFAULT_API_VERSION } = auth
 
   return rescue(async () => {
-    const allTemplates: MessageTemplateEntity[] = []
-    let nextUrl: string | undefined =
-      `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`
+    const data = await fetchAllWhatsappPages<MessageTemplateEntity>({
+      firstUrl: `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`,
+      accessToken: auth.tokens.accessToken,
+      resource: "message_templates",
+      maxPages: MESSAGE_TEMPLATE_MAX_PAGES,
+    })
 
-    while (nextUrl) {
-      const response: ListMessageTemplatesReponse = await ky
-        .get<ListMessageTemplatesReponse>(nextUrl, {
-          headers: {
-            Authorization: `Bearer ${auth.tokens.accessToken}`,
-          },
-        })
-        .json()
-
-      allTemplates.push(...response.data)
-      nextUrl = response.paging?.next
-    }
-
-    return {
-      data: allTemplates,
-      paging: { next: "" },
-    }
+    return { data, paging: { next: "" } }
   })
 }
 

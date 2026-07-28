@@ -22,7 +22,15 @@ class ExternalWebhookService extends BaseService {
   }): Promise<ExternalWebhookModel> {
     const { workspaceId, provider, event, url } = props
 
-    await assertPublicUrl(url, "Webhook URL")
+    try {
+      await assertPublicUrl(url, "Webhook URL")
+    } catch (error) {
+      throw new ChatbotXException(
+        error instanceof Error ? error.message : "Invalid webhook URL",
+        "invalidRequestData",
+        422,
+      )
+    }
 
     const existing = await db.query.externalWebhookModel.findFirst({
       where: { workspaceId, event, url },

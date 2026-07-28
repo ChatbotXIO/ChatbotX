@@ -16,6 +16,9 @@ type ErrorBody = {
     message?: string
     error_subcode?: number | string
     error_data?: number | string
+    error_user_title?: string
+    error_user_msg?: string
+    fbtrace_id?: string
   }
 }
 type OriginShape = { httpStatus?: number; errorBody?: ErrorBody }
@@ -27,6 +30,23 @@ export type ChannelErrorSource = {
   subCode?: number | string | null
   type?: string
   message?: string
+  userTitle?: string
+  userMessage?: string
+  fbtraceId?: string
+}
+
+function parseErrorBody(
+  err: ErrorBody["error"] | undefined,
+): Omit<ChannelErrorSource, "httpStatusCode"> {
+  return {
+    code: err?.code,
+    subCode: err?.error_subcode ?? err?.error_data,
+    type: err?.type,
+    message: err?.message,
+    userTitle: err?.error_user_title,
+    userMessage: err?.error_user_msg,
+    fbtraceId: err?.fbtrace_id,
+  }
 }
 
 export function parseOriginError(originError: unknown): ChannelErrorSource {
@@ -36,10 +56,7 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
 
     return {
       httpStatusCode: err?.status ?? originError.response.status,
-      code: err?.code,
-      subCode: err?.error_subcode ?? err?.error_data,
-      type: err?.type,
-      message: err?.message,
+      ...parseErrorBody(err),
     }
   }
 
@@ -48,10 +65,7 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
     const err = shaped.errorBody?.error
     return {
       httpStatusCode: err?.status ?? shaped.httpStatus,
-      code: err?.code,
-      subCode: err?.error_subcode ?? err?.error_data,
-      type: err?.type,
-      message: err?.message,
+      ...parseErrorBody(err),
     }
   }
 
@@ -60,10 +74,7 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
     const err = explicit.response.error
     return {
       httpStatusCode: err.status ?? FALLBACK_HTTP_STATUS,
-      code: err.code,
-      subCode: err.error_subcode ?? err.error_data,
-      type: err.type,
-      message: err.message,
+      ...parseErrorBody(err),
     }
   }
 

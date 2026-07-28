@@ -4,6 +4,7 @@ import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conditionModel, triggerModel } from "@chatbotx.io/database/schema"
 import { updateTriggerCache } from "@chatbotx.io/events"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { toConditionColumns } from "@/features/conditions/to-condition-columns"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateTriggerSchema } from "../schema/mutation"
 
@@ -61,15 +62,7 @@ export const updateTriggerAction = workspaceActionClient
       for (const condition of conditionsToUpdate) {
         await tx
           .update(conditionModel)
-          .set({
-            type: condition.type,
-            sourceId: "sourceId" in condition ? condition.sourceId : null,
-            operator: "operator" in condition ? condition.operator : null,
-            value:
-              "value" in condition && condition.value !== null
-                ? condition.value
-                : null,
-          })
+          .set(toConditionColumns(condition))
           .where(eq(conditionModel.id, condition.id ?? ""))
       }
 
@@ -78,10 +71,7 @@ export const updateTriggerAction = workspaceActionClient
           conditionsToCreate.map((c) => ({
             id: createId(),
             triggerId: id,
-            type: c.type,
-            sourceId: "sourceId" in c ? c.sourceId : null,
-            operator: "operator" in c ? c.operator : null,
-            value: "value" in c && c.value !== null ? c.value : null,
+            ...toConditionColumns(c),
           })),
         )
       }

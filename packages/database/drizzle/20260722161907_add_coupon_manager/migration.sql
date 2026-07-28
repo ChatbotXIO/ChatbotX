@@ -38,7 +38,7 @@ CREATE INDEX "Coupon_workspaceId_code_idx" ON "Coupon" ("workspaceId","code");--
 CREATE INDEX "Coupon_workspaceId_topicId_issuedContactId_usedAt_idx" ON "Coupon" ("workspaceId","topicId","issuedContactId","usedAt");--> statement-breakpoint
 CREATE INDEX "CouponTopic_workspaceId_status_deletedAt_idx" ON "CouponTopic" ("workspaceId","status","deletedAt");--> statement-breakpoint
 CREATE INDEX "CouponTopic_workspaceId_expiresAt_idx" ON "CouponTopic" ("workspaceId","expiresAt");--> statement-breakpoint
-CREATE INDEX "CouponTopic_workspaceId_name_idx" ON "CouponTopic" ("workspaceId","name");--> statement-breakpoint
+CREATE UNIQUE INDEX "CouponTopic_workspaceId_name_idx" ON "CouponTopic" ("workspaceId", lower("name")) WHERE "deletedAt" IS NULL;--> statement-breakpoint
 ALTER TABLE "Coupon" ADD CONSTRAINT "Coupon_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Coupon" ADD CONSTRAINT "Coupon_topicId_CouponTopic_id_fkey" FOREIGN KEY ("topicId") REFERENCES "CouponTopic"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Coupon" ADD CONSTRAINT "Coupon_issuedContactId_Contact_id_fkey" FOREIGN KEY ("issuedContactId") REFERENCES "Contact"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint

@@ -1,9 +1,16 @@
 import { rescue } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
+import { logger } from "../lib/logger"
 import type { TiktokApiResponse, TiktokSendMessageRequest } from "../schema"
 
 type SendMessageResult = {
+  // TikTok's business/message/send/ response nests the created message's id
+  // under data.message.message_id, not data.message_id — keep the flat field
+  // as a defensive fallback in case a message_type returns a flatter shape.
   message_id?: string
+  message?: {
+    message_id?: string
+  }
 }
 
 type UploadMediaResult = {
@@ -49,5 +56,13 @@ export const sendTiktokMessage = (
       "business/message/send/",
       { json: payload },
     )
-    return response.data?.message_id
+    const messageId =
+      response.data?.message?.message_id ?? response.data?.message_id
+    if (!messageId) {
+      logger.warn(
+        { data: response.data },
+        "No message_id in TikTok send response — outgoing message row will keep sourceId=null and its echo will be inserted as a new row",
+      )
+    }
+    return messageId
   })

@@ -15,6 +15,11 @@ export * from "./nodes/send-message"
 export * from "./nodes/split-traffic"
 export * from "./nodes/start-flow"
 export * from "./nodes/wait"
+export type { FlowRoute, FlowRouteUpdate } from "./routable-handle"
+export {
+  applyRouteInNode,
+  applyRouteUpdatesInNodes,
+} from "./routable-handle"
 // Export all shared
 export * from "./shared"
 export * from "./states"

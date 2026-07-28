@@ -10,12 +10,17 @@ import {
 } from "../exception"
 
 function extractApiFields(exc: WhatsappException): ChannelErrorSource {
+  const originFields = parseOriginError(exc.getOriginError())
+
   return {
     message: exc.message,
     code: exc.code,
     subCode: exc.subCode ?? null,
     type: exc.type,
     httpStatusCode: exc.httpStatusCode,
+    userTitle: originFields.userTitle,
+    userMessage: originFields.userMessage,
+    fbtraceId: originFields.fbtraceId,
   }
 }
 
@@ -169,7 +174,7 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
   const numCode = typeof fields.code === "number" ? fields.code : undefined
   const category = categorize(numCode, fields.type)
 
-  return new ChannelError(
+  const channelError = new ChannelError(
     fields.message ?? "WhatsApp API call failed",
     category,
     {
@@ -179,6 +184,20 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
       type: fields.type,
     },
   )
+
+  if (
+    fields.userTitle !== undefined ||
+    fields.userMessage !== undefined ||
+    fields.fbtraceId !== undefined
+  ) {
+    channelError.setOriginError({
+      userTitle: fields.userTitle,
+      userMessage: fields.userMessage,
+      fbtraceId: fields.fbtraceId,
+    })
+  }
+
+  return channelError
 }
 
 // === Revoked / invalidated access token detection ===

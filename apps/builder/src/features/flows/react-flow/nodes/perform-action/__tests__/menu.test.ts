@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest"
 import type { TranslationFn } from "../../types"
 import { performActionMenus } from "../menu"
 
-const t = ((key: string) => key) as unknown as TranslationFn
+const t = ((key: string) => key) as TranslationFn
 
 describe("perform action SendGrid registration", () => {
   test("exposes Add Contact to SendGrid in email actions", () => {
@@ -36,5 +36,26 @@ describe("perform action coupon menu", () => {
         (item) => item.stepType === stepTypes.enum.setUpCoupon,
       ),
     ).toBe(false)
+  })
+})
+
+describe("perform action email integrations", () => {
+  test("keeps MailerLite and Moosend in the email actions group", () => {
+    const emailActions = performActionMenus(t).find(
+      (item) => item.label === "flows.actions.emailActions",
+    )
+
+    expect(emailActions?.children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "flows.actions.mailerLiteAddSubscriber",
+          stepType: stepTypes.enum.mailerLiteAddSubscriber,
+        }),
+        expect.objectContaining({
+          label: "flows.actions.moosendCreateContact",
+          stepType: stepTypes.enum.moosendCreateContact,
+        }),
+      ]),
+    )
   })
 })

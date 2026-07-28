@@ -139,6 +139,8 @@ export type RefLinkStatModel = typeof schema.refLinkStatModel.$inferSelect
 export type WhatsappCoexistStagingModel =
   typeof schema.whatsappCoexistStagingModel.$inferSelect
 export type CoexistSyncRunModel = typeof schema.coexistSyncRunModel.$inferSelect
+export type WhatsappSignupSessionModel =
+  typeof schema.whatsappSignupSessionModel.$inferSelect
 
 export type InboxWithIntegrations = InboxModel & {
   integrationInstagram?: IntegrationInstagramModel | null

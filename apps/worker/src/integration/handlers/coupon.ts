@@ -43,7 +43,7 @@ export async function setUpCoupon(
       },
       "Coupon issue failed",
     )
-    return { status: "success", result: null }
+    return { status: "error", result: null }
   }
 }
 
@@ -82,6 +82,6 @@ export async function markCouponUsed(
       },
       "Coupon mark-used failed",
     )
-    return { status: "success", result: null }
+    return { status: "error", result: null }
   }
 }

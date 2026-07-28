@@ -30,6 +30,8 @@ import {
 } from "@chatbotx.io/ui/components/ui/table"
 import {
   ArchiveIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -62,6 +64,10 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
   const formatter = useFormatter()
   const [topics, setTopics] = useState<CouponTopicResource[]>([])
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const perPage = 50
+  const [pageCount, setPageCount] = useState(1)
+  const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<CouponTopicResource | null>(null)
@@ -83,10 +89,12 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
         workspaceId,
         archived,
         search: search || undefined,
-        page: 1,
-        perPage: 50,
+        page,
+        perPage,
       })
       setTopics(result.data)
+      setPageCount(result.pageCount)
+      setTotal(result.total)
       setSelectedTopicIds((current) => {
         const visibleIds = new Set(result.data.map((topic) => topic.id))
         return new Set([...current].filter((id) => visibleIds.has(id)))
@@ -94,7 +102,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [archived, search, workspaceId])
+  }, [archived, page, search, workspaceId])
 
   useEffect(() => {
     load().catch((error) =>
@@ -189,6 +197,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
   }
 
   const resetSearch = () => {
+    setPage(1)
     setSearch("")
   }
 
@@ -226,7 +235,10 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
       <div className="flex flex-wrap items-center gap-2">
         <Input
           className="w-56"
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setPage(1)
+            setSearch(event.target.value)
+          }}
           placeholder={t("actions.search")}
           value={search}
         />
@@ -417,6 +429,38 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
             ) : null}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
+        <div className="text-muted-foreground">
+          {t("analytics.total")}: {total.toLocaleString()}
+        </div>
+        {pageCount > 1 ? (
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">
+              {t("analytics.pagination.pageOf", { page, pageCount })}
+            </span>
+            <Button
+              aria-label={t("analytics.pagination.previousPage")}
+              disabled={page <= 1}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              size="icon"
+              variant="outline"
+            >
+              <ChevronLeftIcon className="size-4" />
+            </Button>
+            <Button
+              aria-label={t("analytics.pagination.nextPage")}
+              disabled={page >= pageCount}
+              onClick={() =>
+                setPage((current) => Math.min(pageCount, current + 1))
+              }
+              size="icon"
+              variant="outline"
+            >
+              <ChevronRightIcon className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </div>
       <TopicDialog
         onOpenChange={setDialogOpen}

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   findTopicByName: vi.fn(),
   createTopic: vi.fn(),
   updateTopic: vi.fn(),
+  getExportFile: vi.fn(),
   isUniqueViolationError: vi.fn(),
   selectWorkspace: vi.fn(),
 }))
@@ -37,7 +38,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   couponTopicStatuses: { enum: { active: "active", archived: "archived" } },
-  fileStatuses: { enum: { uploaded: "uploaded" } },
+  fileStatuses: {
+    enum: { uploaded: "uploaded" },
+    parse: (value: unknown) => value,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -56,6 +60,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findTopicByName: (...args: unknown[]) => mocks.findTopicByName(...args),
     createTopic: (...args: unknown[]) => mocks.createTopic(...args),
     updateTopic: (...args: unknown[]) => mocks.updateTopic(...args),
+    getExportFile: (...args: unknown[]) => mocks.getExportFile(...args),
   },
 }))
 
@@ -279,13 +284,13 @@ describe("couponService topic validation", () => {
     ).rejects.toMatchObject({ code: "couponTopicDescriptionTooLong" })
   })
 
-  test("createTopic rejects a duplicate name in the same workspace", async () => {
+  test("createTopic rejects a duplicate name in the same workspace regardless of case", async () => {
     mocks.findTopicByName.mockResolvedValue({ id: "existing-topic" })
 
     await expect(
       couponService.createTopic({
         workspaceId: "workspace-1",
-        name: "Duplicate",
+        name: "DuPlIcAtE",
       }),
     ).rejects.toMatchObject({ code: "couponTopicNameDuplicated" })
   })
@@ -331,5 +336,29 @@ describe("couponService topic validation", () => {
         expiresAt: expect.any(Date),
       }),
     )
+  })
+})
+
+describe("couponService.getExportFile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("requires the export file to belong to the requesting user", async () => {
+    mocks.getExportFile.mockResolvedValue(undefined)
+
+    await expect(
+      couponService.getExportFile({
+        workspaceId: "workspace-1",
+        fileId: "file-1",
+        userId: "user-2",
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mocks.getExportFile).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      fileId: "file-1",
+      userId: "user-2",
+    })
   })
 })

@@ -36,6 +36,17 @@ export type WhatsappPagination = {
   next?: string
 }
 
+/**
+ * Stand-in cursors for list helpers that already walked every page, so there is
+ * no further page for a caller to request.
+ *
+ * Frozen because every such response hands out this same instance: a caller
+ * that mutated it would silently rewrite the cursors of every other response.
+ */
+export const EMPTY_PAGINATION: WhatsappPagination = Object.freeze({
+  cursors: Object.freeze({ before: "", after: "" }),
+})
+
 export type WhatsappFlow = {
   id: string
   name: string
