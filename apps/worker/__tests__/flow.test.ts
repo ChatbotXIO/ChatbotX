@@ -5,6 +5,7 @@ import type {
   EdgeSchema,
   FlowNode,
 } from "@chatbotx.io/flow-config"
+import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 
@@ -30,6 +31,16 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { query: {}, update: vi.fn(), insert: vi.fn() },
   eq: vi.fn(),
+}))
+
+// Any action carrying a button ID goes through the rich-response fallback
+// before the flow is consulted, so it has to resolve to "no rich response".
+const findRichResponseByButton = vi.fn(async () => null)
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  createMessageRepository: async () => ({ findRichResponseByButton }),
+}))
+vi.mock("@chatbotx.io/automated-response", () => ({
+  automatedResponseService: { enqueue: vi.fn(async () => undefined) },
 }))
 
 // Passthrough the real schema: a transitive dependency imports `createSelectSchema`
@@ -327,6 +338,166 @@ describe("flow action channel gating (bare flow ID)", () => {
         action: BARE_FLOW_ID,
       },
       "runFlowPostback: bare flow ID could not be resolved, skipping",
+    )
+  })
+})
+
+describe("flow action target resolution", () => {
+  const FLOW_ID = "11612473309626368"
+  const FLOW_VERSION_ID = "11612473309626369"
+  const REPLY_ID = "11612473309626370"
+
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+    vi.mocked(logger.warn).mockClear()
+    findRichResponseByButton.mockClear()
+    detectConversationAndContactInbox.mockReset()
+    detectFlowVersion.mockReset()
+    // WhatsApp, Zalo, Telegram and TikTok all deliver a tapped reply through a
+    // single webhook field, so the channel cannot say whether it was a step
+    // button or a node quick reply.
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: { ...makeContactInbox(), channel: "whatsapp" },
+    })
+  })
+
+  function makeNode(id: string, details: Record<string, unknown>): FlowNode {
+    return {
+      id,
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: id, isStartNode: false, details },
+    } as FlowNode
+  }
+
+  /** A node holding `details`, wired to node-2 through the tapped reply. */
+  function mockFlowWithReply(details: Record<string, unknown>) {
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: REPLY_ID,
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    detectFlowVersion.mockResolvedValue({
+      flowVersion: makeFlowVersion(
+        [makeNode("node-1", details), makeNode("node-2", { steps: [] })],
+        edges,
+      ),
+      useLatestFlowVersion: true,
+    })
+  }
+
+  function replyAction() {
+    return encodeButtonPayload({
+      flowId: FLOW_ID,
+      flowVersionId: FLOW_VERSION_ID,
+      buttonId: REPLY_ID,
+    })
+  }
+
+  function expectAdvancedToNextNode() {
+    expect(integrationQueueAdd).toHaveBeenCalled()
+    const [action, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(action).toBe("sendFlow")
+    expect(job.data.nodeId).toBe("node-2")
+  }
+
+  test("runFlowPostback advances the flow for a node quick reply", async () => {
+    mockFlowWithReply({
+      steps: [],
+      quickReplies: [makeQuickReply(REPLY_ID, "Yes")],
+    })
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+    } as never)
+
+    expectAdvancedToNextNode()
+  })
+
+  test("runFlowPostback still advances the flow for a step button", async () => {
+    mockFlowWithReply({
+      steps: [
+        {
+          id: "step-1",
+          stepType: "sendText",
+          buttons: [makeQuickReply(REPLY_ID, "Buy now")],
+        },
+      ],
+    })
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+    } as never)
+
+    expectAdvancedToNextNode()
+  })
+
+  test("runFlowQuickReply advances the flow for a step button", async () => {
+    mockFlowWithReply({
+      steps: [
+        {
+          id: "step-1",
+          stepType: "sendText",
+          buttons: [makeQuickReply(REPLY_ID, "Buy now")],
+        },
+      ],
+    })
+
+    await runFlowQuickReply({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+    } as never)
+
+    expectAdvancedToNextNode()
+  })
+
+  test("runFlowQuickReply still advances the flow for a node quick reply", async () => {
+    mockFlowWithReply({
+      steps: [],
+      quickReplies: [makeQuickReply(REPLY_ID, "Yes")],
+    })
+
+    await runFlowQuickReply({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+    } as never)
+
+    expectAdvancedToNextNode()
+  })
+
+  test("an action matching no reply is warned about instead of failing silently", async () => {
+    mockFlowWithReply({ steps: [], quickReplies: [] })
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+    } as never)
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ buttonId: REPLY_ID, flowId: FLOW_ID }),
+      "runFlowPostback: action matches no button or quick reply, skipping",
     )
   })
 })
@@ -867,6 +1038,43 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
         channel: "whatsapp",
       },
       details: { steps: [imageStep], quickReplies },
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { step: { id: string }; quickReplies?: ButtonStepProps[] } },
+    ]
+    expect(job.data.step.id).toBe("step-1")
+    expect(job.data.quickReplies).toEqual(quickReplies)
+  })
+
+  test("attaches quick replies to a carousel carrier for whatsapp", async () => {
+    const quickReplies = [makeQuickReply()]
+    const carouselStep = {
+      ...makeStep("sendCarousel"),
+      id: "step-1",
+      layout: "horizontal",
+      cards: [
+        {
+          id: "card-1",
+          stepType: "sendCard",
+          title: "Card",
+          subtitle: "",
+          buttons: [],
+        },
+      ],
+    }
+    const props = {
+      ...makeBaseProps(),
+      contactInbox: {
+        ...makeContactInbox(),
+        channel: "whatsapp",
+      },
+      details: { steps: [carouselStep], quickReplies },
       triggerNextNode: false,
     }
 
