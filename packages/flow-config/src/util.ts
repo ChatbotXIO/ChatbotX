@@ -1,10 +1,8 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import type { FlowNode } from "./nodes"
-import type { BaseStepSchema } from "./steps/base"
+import { findButtonInNodes } from "./routable-handle"
 import type { ButtonStepProps } from "./steps/button"
-import type { SendCardStepSchema } from "./steps/send-card"
-import type { WhatsappOptionListItem } from "./steps/whatsapp-option-list"
 
 export const extractMetadata = (
   key: string,
@@ -112,59 +110,11 @@ export const appendCodeToMagicLink = (url: string, code: string): string => {
 }
 
 export function getNodeFromButton(nodes: FlowNode[], buttonId: string) {
-  let foundedButton: ButtonStepProps | null = null
-  let foundedNodeId: string | null = null
-
-  for (const node of nodes) {
-    if (!("steps" in node.data.details && node.data.details.steps)) {
-      continue
-    }
-    for (const step of node.data.details.steps as BaseStepSchema[]) {
-      if (!("buttons" in step || "cards" in step || "options" in step)) {
-        continue
-      }
-
-      let buttons: ButtonStepProps[] = []
-      if ("buttons" in step) {
-        buttons = step.buttons as ButtonStepProps[]
-      } else if ("cards" in step) {
-        const cards = step.cards as SendCardStepSchema[]
-        buttons = cards.flatMap(
-          (card) => (card.buttons ?? []) as ButtonStepProps[],
-        )
-      }
-
-      const button = buttons.find((b) => b.id === buttonId)
-      if (button) {
-        foundedButton = button
-        foundedNodeId = step.nodeId ?? node.id
-        break
-      }
-
-      if ("options" in step) {
-        const options = (step.options ?? []) as WhatsappOptionListItem[]
-        const option = options.find((o) => o.id === buttonId)
-        if (option) {
-          foundedButton = {
-            id: option.id,
-            label: option.title,
-            buttonType: null,
-            beforeStep: null,
-            steps: [],
-          }
-          foundedNodeId = step.nodeId ?? node.id
-          break
-        }
-      }
-    }
-    if (foundedButton) {
-      break
-    }
-  }
+  const found = findButtonInNodes(nodes, buttonId)
 
   return {
-    button: foundedButton,
-    nodeId: foundedNodeId,
+    button: found?.button ?? null,
+    nodeId: found?.runtimeNodeId ?? null,
   }
 }
 
