@@ -40,6 +40,8 @@ type StepBearingDetails = Extract<
   { steps: readonly unknown[] }
 >
 type FlowNodeStep = StepBearingDetails["steps"][number]
+type CardBearingStep = Extract<FlowNodeStep, { cards: readonly unknown[] }>
+type FlowCard = CardBearingStep["cards"][number]
 type PageButtonElement = Extract<
   PageElementSchema,
   { type: typeof pageElementTypes.enum.button }
@@ -78,6 +80,18 @@ const replaceFirst = <Item>(
 
   return null
 }
+
+/**
+ * A card's buttons as persisted, which older rows may not carry at all.
+ *
+ * `buttons` only became a required card field in #381; before that the schema
+ * was a union accepting a card that held just a subtitle or just an image. Those
+ * rows are still in the database and reach this module unparsed, so the declared
+ * type describes new writes rather than old reads. Every other collection here
+ * sits behind an `in` gate on the step; a card's buttons are one level below
+ * that gate and so need their own.
+ */
+const readCardButtons = (card: FlowCard) => card.buttons ?? []
 
 const createRouteFields = (route: FlowRoute) =>
   route
@@ -214,7 +228,7 @@ const cardButtonsAccessor: RoutableHandleAccessor = {
       }
 
       for (const card of step.cards) {
-        const button = card.buttons.find(
+        const button = readCardButtons(card).find(
           (candidate) => candidate.id === handleId,
         )
         if (button) {
@@ -236,7 +250,7 @@ const cardButtonsAccessor: RoutableHandleAccessor = {
       }
 
       const cards = replaceFirst(step.cards, (card) => {
-        const buttons = replaceFirst(card.buttons, (button) =>
+        const buttons = replaceFirst(readCardButtons(card), (button) =>
           button.id === handleId ? updateButtonRoute(button, route) : null,
         )
         return buttons ? { ...card, buttons: buttons.items } : null

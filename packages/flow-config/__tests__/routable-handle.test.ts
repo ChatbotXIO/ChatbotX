@@ -63,6 +63,15 @@ const stripQuickReplies = (node: FlowNode): FlowNode =>
     },
   }) as FlowNode
 
+/**
+ * Mirrors a card persisted before #381, when the schema was a union that let a
+ * card carry only a subtitle or only an image — with no `buttons` key at all.
+ */
+const stripCardButtons = <Card extends { buttons: unknown }>(card: Card) =>
+  Object.fromEntries(
+    Object.entries(card).filter(([key]) => key !== "buttons"),
+  ) as Card
+
 const getMailElements = (node: FlowNode) => {
   if (
     !(
@@ -503,6 +512,48 @@ describe("applyRouteInNode", () => {
     expect(disconnectedSteps[1].cards[0].buttons[0]).toMatchObject({
       buttonType: null,
       beforeStep: null,
+    })
+  })
+
+  test("routes past a legacy card persisted without a buttons array", () => {
+    const cardButton = makeButton("second-card-button", "Card")
+    const node = makeMessageNode("legacy-cards-node", {
+      steps: [
+        {
+          ...sendCarouselStepDefaultFn(),
+          cards: [
+            stripCardButtons({
+              ...sendCardStepDefaultFn(),
+              id: "subtitle-only-card",
+              title: "Subtitle only",
+              subtitle: "No buttons key at all",
+            }),
+            {
+              ...sendCardStepDefaultFn(),
+              id: "card-with-button",
+              title: "Card",
+              buttons: [cardButton],
+            },
+          ],
+        },
+      ],
+    })
+
+    expect("buttons" in getSteps(node)[0].cards[0]).toBe(false)
+    expect(getNodeFromButton([node], cardButton.id).nodeId).toBe(
+      "legacy-cards-node",
+    )
+
+    const connected = applyRouteInNode(node, cardButton.id, {
+      targetNodeId: "target-node",
+    })
+    const connectedSteps = getSteps(connected as FlowNode)
+    if (!("cards" in connectedSteps[0])) {
+      throw new Error("Expected a carousel step")
+    }
+    expect(connectedSteps[0].cards[1].buttons[0]).toMatchObject({
+      buttonType: buttonTypes.enum.startAnotherNode,
+      beforeStep: { nodeId: "target-node" },
     })
   })
 })
