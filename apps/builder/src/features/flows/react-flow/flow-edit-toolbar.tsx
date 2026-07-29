@@ -65,7 +65,6 @@ import {
   isRedoShortcut,
   isUndoShortcut,
 } from "./flow-edit-toolbar-keyboard"
-import { resolveFlowValidationMessageKey } from "./flow-validation-message"
 import { useFlowHistory } from "./stores/use-flow-history"
 
 export function FlowEditToolbar({
@@ -201,18 +200,18 @@ export function FlowEditToolbar({
     // validate nodes & edges
     const nodes = getNodes()
     const edges = getEdges()
-    const validationResult = updateFlowVersionSchema.safeParse({
+    const { success } = updateFlowVersionSchema.safeParse({
       nodes,
       edges,
     })
 
-    if (validationResult.success) {
+    if (success) {
       executePublish({
         nodes: nodes as unknown as PublishFlowSchema["nodes"],
         edges: edges as unknown as PublishFlowSchema["edges"],
       })
     } else {
-      toast.error(t(resolveFlowValidationMessageKey(validationResult.error)))
+      toast.error(t("messages.flowConfigIncomplete"))
     }
     setIsValidating(false)
   }

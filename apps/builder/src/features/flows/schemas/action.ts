@@ -1,8 +1,4 @@
-import {
-  edgeSchema,
-  flowVersionSchema,
-  refineWhatsappCarouselButtons,
-} from "@chatbotx.io/flow-config"
+import { edgeSchema, flowVersionSchema } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -28,7 +24,7 @@ export type UpdateDraftFlowVersionSchema = z.infer<
 >
 
 export const publishFlowSchema = z.object({
-  nodes: z.array(flowVersionSchema).superRefine(refineWhatsappCarouselButtons),
+  nodes: z.array(flowVersionSchema),
   edges: z.array(edgeSchema),
 })
 export type PublishFlowSchema = z.infer<typeof publishFlowSchema>

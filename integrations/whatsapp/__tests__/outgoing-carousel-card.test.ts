@@ -382,29 +382,45 @@ describe("whatsapp outgoing card", () => {
     expect(cards[0].action.buttons[0].quick_reply.title).toHaveLength(20)
   })
 
-  test("maps openWebsite buttons to cta_url actions", async () => {
+  test("sends openWebsite buttons as replies, like the single-card path", async () => {
     const url = "https://example.com/products/1"
-    const label = "View this product immediately"
     await sendCards([
       makeCard({
         id: "card-1",
         imageUrl: IMAGE_URL,
-        buttons: [makeWebsiteButton("1000000000003", label, url)],
+        buttons: [
+          makeWebsiteButton("1000000000003", "Open", url),
+          makeButton("1000000000004", "Reply"),
+        ],
       }),
       makeCard({
         id: "card-2",
         imageUrl: IMAGE_URL,
-        buttons: [makeWebsiteButton("1000000000005", label, url)],
+        buttons: [
+          makeWebsiteButton("1000000000005", "Open", url),
+          makeButton("1000000000006", "Reply"),
+        ],
       }),
     ])
 
     expect(rawPayloads()[0].interactive.action.cards[0]).toMatchObject({
       action: {
-        name: "cta_url",
-        parameters: {
-          display_text: "View this product im",
-          url,
-        },
+        buttons: [
+          {
+            type: "quick_reply",
+            quick_reply: {
+              id: `${FLOW_ID}:${FLOW_VERSION_ID}:1000000000003`,
+              title: "Open",
+            },
+          },
+          {
+            type: "quick_reply",
+            quick_reply: {
+              id: `${FLOW_ID}:${FLOW_VERSION_ID}:1000000000004`,
+              title: "Reply",
+            },
+          },
+        ],
       },
     })
   })
@@ -429,40 +445,6 @@ describe("whatsapp outgoing card", () => {
     expect(
       cards.map((card) => card.action.buttons[0].quick_reply.title),
     ).toEqual(["Same", "Same"])
-  })
-
-  test.each([
-    [
-      "mixed URL and reply buttons",
-      [
-        makeWebsiteButton("1000000000003", "Open", "https://example.com/open"),
-        makeButton("1000000000004", "Reply"),
-      ],
-    ],
-    [
-      "multiple URL buttons",
-      [
-        makeWebsiteButton(
-          "1000000000003",
-          "First",
-          "https://example.com/first",
-        ),
-        makeWebsiteButton(
-          "1000000000004",
-          "Second",
-          "https://example.com/second",
-        ),
-      ],
-    ],
-  ])("does not rewrite %s into a different action", async (_case, buttons) => {
-    await sendCards([
-      makeCard({ id: "card-1", imageUrl: IMAGE_URL, buttons }),
-      makeCard({ id: "card-2", imageUrl: IMAGE_URL, buttons }),
-    ])
-
-    for (const card of rawPayloads()[0].interactive.action.cards) {
-      expect(card).not.toHaveProperty("action")
-    }
   })
 
   test.each([
@@ -589,13 +571,15 @@ describe("whatsapp outgoing card", () => {
     })
   })
 
-  test("rejects a successful raw response without a provider message id", async () => {
+  test("warns instead of failing when a raw response carries no message id", async () => {
     mockApiFetch.mockResolvedValue(
       new Response(JSON.stringify({ messages: [{}] }), { status: 200 }),
     )
 
-    await expect(sendCards([makeCard(), makeCard()])).rejects.toBeDefined()
-    expect(mockLogger.error).toHaveBeenCalled()
+    await expect(sendCards([makeCard(), makeCard()])).resolves.toEqual({
+      messageIds: [],
+    })
+    expect(mockLogger.warn).toHaveBeenCalled()
   })
 
   test("drops reply buttons that repeat an earlier label", async () => {

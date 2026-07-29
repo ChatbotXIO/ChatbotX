@@ -175,23 +175,6 @@ export type TemplateMessage = {
   }
 }
 
-export type CarouselQuickReplyAction = {
-  buttons: Array<{
-    type: "quick_reply"
-    quick_reply: { id: string; title: string }
-  }>
-}
-
-export type CarouselUrlAction = {
-  name: "cta_url"
-  parameters: {
-    display_text: string
-    url: string
-  }
-}
-
-export type CarouselCardAction = CarouselQuickReplyAction | CarouselUrlAction
-
 export type CarouselCard = {
   card_index: number
   type: "cta_url"
@@ -200,7 +183,12 @@ export type CarouselCard = {
     image: { link: string }
   }
   body?: { text: string }
-  action?: CarouselCardAction
+  action?: {
+    buttons: Array<{
+      type: "quick_reply"
+      quick_reply: { id: string; title: string }
+    }>
+  }
 }
 
 export type InteractiveCarouselMessage = {

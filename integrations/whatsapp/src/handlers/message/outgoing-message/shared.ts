@@ -8,7 +8,6 @@ import {
   getCanonicalReplyPayload,
   type MessageButtonTemplate,
 } from "@chatbotx.io/sdk"
-import { chunk } from "remeda"
 import {
   ActionButtons,
   ActionList,
@@ -132,6 +131,12 @@ function selectReplyButtons(props: {
   return selected
 }
 
+function chunkList<T>(items: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, index * size + size),
+  )
+}
+
 /**
  * Builds the message sequence that carries `bodyText`, an optional image and a
  * set of replies.
@@ -193,8 +198,8 @@ export function buildWhatsappButtonMessages(props: {
   return [
     ...leading,
     ...(props.media ? [props.media] : []),
-    ...chunk(replies, MAX_LIST_ROWS).map((replyChunk) => {
-      const [firstRow, ...restRows] = replyChunk.map(({ id, label }) =>
+    ...chunkList(replies, MAX_LIST_ROWS).map((chunk) => {
+      const [firstRow, ...restRows] = chunk.map(({ id, label }) =>
         generateRow({ id, title: label }),
       )
 
