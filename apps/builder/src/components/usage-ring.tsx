@@ -2,77 +2,75 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useFormatter } from "next-intl"
 import { quotaUsageState } from "@/lib/quota-metrics"
 
-const SIZE = 32
-const STROKE = 3
-const RADIUS = (SIZE - STROKE) / 2
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+interface UsageRingProps {
+  className?: string
+  label: string
+  limit: number
+  used: number
+  /** Current workspace's contribution to the account-wide usage total. */
+  workspaceUsed: number
+}
 
 /**
- * Presentational circular usage ring (ManyChat-style) for the sidebar footer.
- * Like {@link UsageBars} the caller owns label resolution; numbers are
- * formatted via next-intl so server and client render the same text (works in
- * both RSC and client trees). The ring fills clockwise from the top; the
- * track turns destructive once usage reaches the limit.
+ * Presentational three-tier usage bar for the sidebar footer: workspace usage
+ * is green, account-wide usage is amber, and remaining plan capacity is gray.
+ * The caller owns label resolution and must supply the workspace contribution.
+ * Numbers are formatted via next-intl so server and client produce identical
+ * text.
  */
 export function UsageRing({
   used,
   limit,
   label,
+  workspaceUsed,
   className,
-}: {
-  used: number
-  limit: number
-  label: string
-  className?: string
-}) {
+}: UsageRingProps) {
   const formatter = useFormatter()
-  const { pct, isOverLimit } = quotaUsageState(used, limit)
-  const dashOffset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE
+  const { pct: userPct, isOverLimit } = quotaUsageState(used, limit)
+  const { pct: workspacePct } = quotaUsageState(workspaceUsed, limit)
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      {/* Decorative: the adjacent "used / limit" text is the accessible label. */}
-      {/* biome-ignore lint/a11y/noSvgWithoutTitle: marked aria-hidden, text label conveys the value */}
-      <svg
-        aria-hidden
-        className="shrink-0 -rotate-90"
-        height={SIZE}
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        width={SIZE}
-      >
-        <circle
-          className="stroke-muted"
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          fill="none"
-          r={RADIUS}
-          strokeWidth={STROKE}
-        />
-        <circle
-          className={cn(
-            "transition-[stroke-dashoffset]",
-            isOverLimit ? "stroke-destructive" : "stroke-primary",
-          )}
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          fill="none"
-          r={RADIUS}
-          strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          strokeWidth={STROKE}
-        />
-      </svg>
-      <div className="grid min-w-0 flex-1 leading-tight">
-        <span className="truncate text-muted-foreground text-xs">{label}</span>
-        <span
-          className={cn(
-            "font-medium text-sm tabular-nums",
-            isOverLimit && "text-destructive",
-          )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="min-w-0 truncate text-muted-foreground">
+            {label}
+          </span>
+          <span
+            className={cn(
+              "shrink-0 text-muted-foreground tabular-nums",
+              isOverLimit && "font-medium text-destructive",
+            )}
+          >
+            {formatter.number(workspaceUsed, {
+              notation: "compact",
+              compactDisplay: "short",
+              maximumFractionDigits: 1,
+            })}{" "}
+            /{" "}
+            {formatter.number(limit, {
+              notation: "compact",
+              compactDisplay: "short",
+              maximumFractionDigits: 1,
+            })}
+          </span>
+        </div>
+        <div
+          aria-hidden
+          className="relative mt-1 h-2 overflow-hidden rounded-full bg-muted"
         >
-          {formatter.number(used)} / {formatter.number(limit)}
-        </span>
+          <div
+            className={cn(
+              "h-full rounded-full transition-[width]",
+              isOverLimit ? "bg-destructive" : "bg-amber-500 dark:bg-amber-500",
+            )}
+            style={{ width: `${userPct}%` }}
+          />
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-emerald-500 transition-[width] dark:bg-emerald-500"
+            style={{ width: `${workspacePct}%` }}
+          />
+        </div>
       </div>
     </div>
   )

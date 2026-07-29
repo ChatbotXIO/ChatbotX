@@ -17,14 +17,20 @@ const CARD_STYLES =
 export default function InboxNewCard({
   workspaceId,
   blocked = false,
+  reason,
 }: {
   workspaceId: string
   blocked?: boolean
+  /** Why creation is blocked; picks the tooltip copy. Defaults to the plan/trial message. */
+  reason?: "status" | "mac" | null
 }) {
   const t = useTranslations()
-  const disabledReason = t("billing.trialExpired.createDisabled", {
-    feature: t("fields.inbox.label"),
-  })
+  const disabledReason = t(
+    reason === "mac"
+      ? "billing.macLimitReached.createDisabled"
+      : "billing.trialExpired.createDisabled",
+    { feature: t("fields.inbox.label") },
+  )
 
   if (blocked) {
     return (

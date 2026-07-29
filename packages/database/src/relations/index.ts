@@ -34,6 +34,7 @@ import { contactsToTagsRelations } from "./contact-to-tag"
 import { contactToTagChannelRelations } from "./contact-to-tag-channel"
 import { conversationRelations } from "./conversation"
 import { conversationParticipantRelations } from "./conversation-participant"
+import { couponRelations } from "./coupon"
 import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
 import { emailTopicRelations } from "./email-topic"
@@ -42,7 +43,11 @@ import { customDomainRelations } from "./enterprise/custom-domain"
 import { tenantRelations } from "./enterprise/tenant"
 import { tenantHelpItemRelations } from "./enterprise/tenant-help-item"
 import { userQuotaRelations } from "./enterprise/user-quota"
+import { workspaceUsageRelations } from "./enterprise/workspace-usage"
 import { errorLogRelations } from "./error-log"
+import { externalWebhookRelations } from "./external-webhook"
+import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automation"
+import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
 import { fbCommentAutomationRelations } from "./fb-comment-automation"
 import { fbCommentAutomationReplyRelations } from "./fb-comment-automation-reply"
 import { fileRelations } from "./file"
@@ -106,6 +111,7 @@ import { webhookRelations } from "./webhook"
 import { webhookExecutionRelations } from "./webhook-execution"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
+import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
 import { workspaceRelations } from "./workspace"
 import { workspaceMemberRelations } from "./workspace-member"
 
@@ -125,6 +131,7 @@ export const relations = {
   ...aiMCPServerRelations,
   ...attachmentRelations,
   ...conversationRelations,
+  ...couponRelations,
   ...messageRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,
@@ -132,6 +139,7 @@ export const relations = {
   ...tenantHelpItemRelations,
   ...platformCredentialRelations,
   ...userQuotaRelations,
+  ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
   ...broadcastRelations,
@@ -153,6 +161,8 @@ export const relations = {
   ...emailTopicRelations,
   ...analyticsEmailTopicRelations,
   ...errorLogRelations,
+  ...facebookLeadAdsAutomationRelations,
+  ...facebookLeadAdsLeadRelations,
   ...fbCommentAutomationRelations,
   ...fbCommentAutomationReplyRelations,
   ...auditLogRelations,
@@ -186,6 +196,7 @@ export const relations = {
   ...triggerRelations,
   ...webhookRelations,
   ...webhookExecutionRelations,
+  ...externalWebhookRelations,
   ...conditionRelations,
   ...triggerStatsRelations,
   ...triggerContactHistoryRelations,
@@ -218,4 +229,5 @@ export const relations = {
   ...questionnaireRelations,
   ...coexistSyncRunRelations,
   ...userPersistentMenuRelations,
+  ...whatsappSignupSessionRelations,
 }

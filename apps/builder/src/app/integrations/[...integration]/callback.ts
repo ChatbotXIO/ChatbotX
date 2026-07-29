@@ -40,6 +40,7 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
+import { enableLeadgenForWorkspacePages } from "@/features/facebook-lead-ad-automation/lib/pages"
 import {
   reconnectInstagramFacebookHandler,
   reconnectInstagramHandler,
@@ -64,10 +65,11 @@ import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
   referer: z.url(),
-  // Facebook Ads reuses the Messenger OAuth callback (the only redirect_uri
-  // registered with the Facebook app); the connect action sets this flag so
-  // the Messenger branch dispatches to the Ads token-storage logic.
-  flow: z.literal("facebookAds").optional(),
+  // Facebook Ads and Lead Ads reuse the Messenger OAuth callback (the only
+  // redirect_uri registered with the Facebook app); the connect action sets
+  // this flag so the Messenger branch dispatches to the right token-storage /
+  // webhook-subscription logic instead of the page picker.
+  flow: z.enum(["facebookAds", "facebookLeadAds"]).optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
   // of this existing integration row (matched against its stored page/account
   // identity) instead of running the connect/page-select flow.
@@ -248,6 +250,15 @@ export const handleCallback = async (
           callbackUrl,
           workspaceId: workspace.id,
         })
+        return redirect(safeReferer)
+      }
+
+      // Lead Ads re-auth: the grant just added `leads_retrieval` to the user↔app
+      // permissions (so existing page tokens gain it). Subscribe eligible pages
+      // to the `leadgen` webhook field, then return to the Lead Ads list — no
+      // token is stored and the Messenger page-picker is skipped.
+      if (stateParams.flow === "facebookLeadAds") {
+        await enableLeadgenForWorkspacePages(workspace.id)
         return redirect(safeReferer)
       }
 

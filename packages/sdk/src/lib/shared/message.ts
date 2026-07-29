@@ -126,6 +126,21 @@ export type MessageButtonTemplate = {
     }
 )
 
+/**
+ * Reserved MessageButtonTemplate postback payloads that ask the Messenger
+ * channel to render Facebook's native "share your email / phone" quick
+ * reply (Send API content_type "user_email" / "user_phone_number") instead
+ * of a literal text button. Facebook fills the value from the contact's own
+ * Messenger account at tap time, so the sender never needs to know it in
+ * advance. Only integrations/messenger's quick reply converter interprets
+ * these; every other channel just renders them as an inert text button, so
+ * callers must gate emitting them to the messenger channel.
+ */
+export const MESSENGER_NATIVE_QUICK_REPLY = {
+  USER_EMAIL: "messenger:native-quick-reply:user_email",
+  USER_PHONE_NUMBER: "messenger:native-quick-reply:user_phone_number",
+} as const
+
 export function getCanonicalReplyPayload(
   button: MessageButtonTemplate,
 ): string {

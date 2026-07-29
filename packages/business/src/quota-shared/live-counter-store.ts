@@ -1,5 +1,6 @@
 import { db, eq, type PgTable, sql } from "@chatbotx.io/database/client"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
+import { cacheKeyFor, liveKeyFor } from "@chatbotx.io/utils"
 import type { PgColumn } from "drizzle-orm/pg-core"
 import { logger } from "../logger"
 
@@ -16,6 +17,7 @@ export type QuotaMetric =
   | "contacts"
   | "mac"
   | "botMessages"
+  | "monthlyBotMessages"
 
 const CACHE_TTL = 60 // seconds
 
@@ -41,16 +43,6 @@ export function parseLiveCount(value: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-/** Redis live-counter hash key for a scope id, namespaced by `label`. */
-export const liveKeyFor = (label: string, id: string): string =>
-  `${label}-live:${id}`
-
-/** Redis row-cache key for a scope id, namespaced by `label`. */
-export const cacheKeyFor = (label: string, id: string): string =>
-  `${label}:${id}`
-
-export const USER_QUOTA_LABEL = "user-quota"
-
 export interface LiveCounterConfig<TRow> {
   /** Fetch the row for an id from the DB (cold-start seed + reconcile source). */
   fetchRow: (id: string) => Promise<TRow | null>
@@ -64,8 +56,14 @@ export interface LiveCounterConfig<TRow> {
   label: string
   /** The table the counters live on (insert/upsert target). */
   table: PgTable
-  /** metric → its `${metric}Used` Drizzle column, for the SET `+ 1` expression. */
-  usedColumns: Record<QuotaMetric, PgColumn>
+  /**
+   * metric → its `${metric}Used` Drizzle column, for the SET `+ 1` expression.
+   * Partial: a caller whose table only tracks a subset of metrics simply omits
+   * the rest, instead of aliasing them onto an unrelated column to satisfy an
+   * exhaustive shape (that aliasing previously made `getLiveCounts` cold-seed
+   * Redis fields from the wrong column — see `WorkspaceUsageService`).
+   */
+  usedColumns: Partial<Record<QuotaMetric, PgColumn>>
 }
 
 /**

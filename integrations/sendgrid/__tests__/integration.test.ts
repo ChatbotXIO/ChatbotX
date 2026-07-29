@@ -46,7 +46,9 @@ describe("SendGrid integration", () => {
   test("rejects keys missing a required scope", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => jsonResponse({ scopes: ["marketing_campaigns.read"] })),
+      vi.fn(async () =>
+        jsonResponse({ scopes: ["marketing_campaigns.update"] }),
+      ),
     )
     await expect(
       integration.runAction("validateCredentials", {
@@ -143,7 +145,7 @@ describe("SendGrid integration", () => {
       contacts: [
         {
           email: "a@example.com",
-          phone_number_id: "phone",
+          phone_number: "phone",
           custom_fields: { "field-1": "Pro" },
         },
       ],

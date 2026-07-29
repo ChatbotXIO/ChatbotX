@@ -36,6 +36,12 @@ Examples: `feat/instagram-channel`, `fix/whatsapp-webhook`, `bugfix/webhook-time
 
 Bot-generated branches (`dependabot/*`, `renovate/*`) are exempt from this convention and are skipped by the `post-checkout` hook.
 
+## Working Branch
+
+- **Never commit directly to `main` or `master`.** These branches only advance through merged PRs.
+- If the current branch is `main` (or `master`) when you are about to commit, **create a new feature branch first** (`git checkout -b <type>/<description>`, following the naming convention above), then commit onto that branch.
+- **Never** push to `main`/`master` directly and **never** force-push shared branches.
+
 ## Staging Rules
 
 - **Never** use `git add -A` or `git add .` — stage specific files only

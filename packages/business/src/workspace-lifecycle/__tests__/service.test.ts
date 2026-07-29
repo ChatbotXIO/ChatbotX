@@ -1,20 +1,25 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockDbExecute, mockListWithIntegrationsByWorkspace, mockSql } =
-  vi.hoisted(() => {
-    const sql = Object.assign(
-      vi.fn(() => ({})),
-      {
-        raw: vi.fn((value: string) => value),
-      },
-    )
+const {
+  mockDbExecute,
+  mockListWithIntegrationsByWorkspace,
+  mockInboxDisconnect,
+  mockSql,
+} = vi.hoisted(() => {
+  const sql = Object.assign(
+    vi.fn(() => ({})),
+    {
+      raw: vi.fn((value: string) => value),
+    },
+  )
 
-    return {
-      mockDbExecute: vi.fn(),
-      mockListWithIntegrationsByWorkspace: vi.fn(),
-      mockSql: sql,
-    }
-  })
+  return {
+    mockDbExecute: vi.fn(),
+    mockListWithIntegrationsByWorkspace: vi.fn(),
+    mockInboxDisconnect: vi.fn().mockResolvedValue(undefined),
+    mockSql: sql,
+  }
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { execute: mockDbExecute },
@@ -27,6 +32,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("../../inbox/service", () => ({
   inboxService: {
     listWithIntegrationsByWorkspace: mockListWithIntegrationsByWorkspace,
+    disconnect: mockInboxDisconnect,
   },
 }))
 
@@ -35,6 +41,7 @@ const { workspaceLifecycleService } = await import("../service")
 describe("workspaceLifecycleService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockInboxDisconnect.mockResolvedValue(undefined)
   })
 
   test("purgeWorkspaceHeavyData drains each table until a short batch", async () => {
@@ -104,11 +111,18 @@ describe("workspaceLifecycleService", () => {
         teardownLevel: "disconnect",
         tx: tx as never,
         workspaceId: "workspace-1",
+        ownerId: "owner-1",
       }),
     ).resolves.toBe(1)
 
     expect(disconnect).toHaveBeenCalledWith({ token: "secret" })
     expect(tx.update).toHaveBeenCalled()
     expect(tx.delete).toHaveBeenCalled()
+    expect(mockInboxDisconnect).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+      tx,
+    })
   })
 })

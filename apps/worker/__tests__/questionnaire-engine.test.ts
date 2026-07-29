@@ -141,6 +141,64 @@ describe("runQuestionnaireEngine", () => {
     )
   })
 
+  test("offers Messenger's native email quick reply for an email question", async () => {
+    await runQuestionnaireEngine(makeProps())
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        text: "What is your email?",
+        quickReplies: [
+          {
+            id: "messenger:native-quick-reply:user_email",
+            label: "What is your email?",
+            buttonType: "postback",
+            postback: "messenger:native-quick-reply:user_email",
+          },
+        ],
+      }),
+    })
+  })
+
+  test("offers Messenger's native phone quick reply for a phone question", async () => {
+    mocks.startOrResume.mockResolvedValue({
+      status: "wait",
+      submission: { id: "submission-1" },
+      question: { ...question, type: "phone", title: "What is your phone?" },
+    })
+
+    await runQuestionnaireEngine(makeProps())
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        quickReplies: [
+          expect.objectContaining({
+            id: "messenger:native-quick-reply:user_phone_number",
+            postback: "messenger:native-quick-reply:user_phone_number",
+          }),
+        ],
+      }),
+    })
+  })
+
+  test("does not offer a native quick reply outside Messenger", async () => {
+    await runQuestionnaireEngine(
+      makeProps({
+        contactInbox: {
+          id: "contact-inbox-1",
+          contactId: "contact-1",
+          channel: "webchat",
+        },
+      }),
+    )
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({ quickReplies: undefined }),
+    })
+  })
+
   test("stops the flow when the contact already submitted the questionnaire", async () => {
     mocks.startOrResume.mockResolvedValue({
       status: "skip",
@@ -414,7 +472,10 @@ describe("runQuestionnaireEngine", () => {
   })
 
   test("parses serialized conversation timestamps before reading sharded messages", async () => {
-    mocks.answerCurrent.mockResolvedValue({ status: "cancelled" })
+    mocks.answerCurrent.mockResolvedValue({
+      status: "skip",
+      reason: "question_missing",
+    })
 
     await runQuestionnaireEngine(
       makeProps({
@@ -439,7 +500,10 @@ describe("runQuestionnaireEngine", () => {
 
   test("falls back to a concrete sinceTime when safe sinceTime cannot be derived", async () => {
     mocks.getSafeSinceTime.mockReturnValueOnce(undefined)
-    mocks.answerCurrent.mockResolvedValue({ status: "cancelled" })
+    mocks.answerCurrent.mockResolvedValue({
+      status: "skip",
+      reason: "question_missing",
+    })
 
     await runQuestionnaireEngine(
       makeProps({
@@ -460,8 +524,11 @@ describe("runQuestionnaireEngine", () => {
     )
   })
 
-  test("clears challenge and continues flow when retry limit cancels submission", async () => {
-    mocks.answerCurrent.mockResolvedValue({ status: "cancelled" })
+  test("clears challenge and returns success when the current question is missing", async () => {
+    mocks.answerCurrent.mockResolvedValue({
+      status: "skip",
+      reason: "question_missing",
+    })
 
     const result = await runQuestionnaireEngine(
       makeProps({
@@ -472,7 +539,7 @@ describe("runQuestionnaireEngine", () => {
       }),
     )
 
-    expect(result).toEqual({ status: "success", result: null })
+    expect(result).toEqual({ status: "success", result: "question_missing" })
     expect(mocks.updateChallenge).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       conversationId: "conversation-1",

@@ -1,11 +1,16 @@
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { forwardRef, useCallback, useEffect, useState } from "react"
+import type { FocusEvent, Ref } from "react"
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { NumericFormat, type NumericFormatProps } from "react-number-format"
+import { useComposedRefs } from "../../lib/compose-refs"
 import { Button } from "./button"
 import { Input } from "./input"
 
 export interface NumberInputProps
-  extends Omit<NumericFormatProps, "value" | "onValueChange"> {
+  extends Omit<
+    NumericFormatProps,
+    "value" | "onValueChange" | "getInputRef"
+  > {
   stepper?: number
   thousandSeparator?: string
   placeholder?: string
@@ -18,6 +23,7 @@ export interface NumberInputProps
   onValueChange?: (value: number | undefined) => void
   fixedDecimalScale?: boolean
   decimalScale?: number
+  getInputRef?: ((el: HTMLInputElement | null) => void) | Ref<HTMLInputElement>
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
@@ -35,36 +41,59 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       suffix,
       prefix,
       value: controlledValue,
+      onBlur,
+      getInputRef,
       ...props
     },
     ref,
   ) => {
+    const inputRef = useRef<HTMLInputElement>(null)
+    const handleInputRef = useCallback(
+      (node: HTMLInputElement | null) => {
+        inputRef.current = node
+
+        if (typeof getInputRef === "function") {
+          getInputRef(node)
+          return
+        }
+
+        if (getInputRef) {
+          getInputRef.current = node
+        }
+      },
+      [getInputRef],
+    )
+    const composedRef = useComposedRefs(ref, handleInputRef)
     const [value, setValue] = useState<number | undefined>(
       controlledValue ?? defaultValue,
     )
 
+    const clampValue = useCallback(
+      (nextValue: number) => Math.min(Math.max(nextValue, min), max),
+      [min, max],
+    )
+
     const handleIncrement = useCallback(() => {
-      setValue((prev) =>
-        prev === undefined
-          ? (stepper ?? 1)
-          : Math.min(prev + (stepper ?? 1), max),
+      const nextValue = clampValue(
+        value === undefined ? (stepper ?? 1) : value + (stepper ?? 1),
       )
-    }, [stepper, max])
+
+      setValue(nextValue)
+      onValueChange?.(nextValue)
+    }, [clampValue, onValueChange, stepper, value])
 
     const handleDecrement = useCallback(() => {
-      setValue((prev) =>
-        prev === undefined
-          ? -(stepper ?? 1)
-          : Math.max(prev - (stepper ?? 1), min),
+      const nextValue = clampValue(
+        value === undefined ? -(stepper ?? 1) : value - (stepper ?? 1),
       )
-    }, [stepper, min])
+
+      setValue(nextValue)
+      onValueChange?.(nextValue)
+    }, [clampValue, onValueChange, stepper, value])
 
     useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (
-          document.activeElement ===
-          (ref as React.RefObject<HTMLInputElement>).current
-        ) {
+        if (document.activeElement === inputRef.current) {
           if (e.key === "ArrowUp") {
             handleIncrement()
           } else if (e.key === "ArrowDown") {
@@ -78,7 +107,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       return () => {
         window.removeEventListener("keydown", handleKeyDown)
       }
-    }, [handleIncrement, handleDecrement, ref])
+    }, [handleIncrement, handleDecrement])
 
     useEffect(() => {
       if (controlledValue !== undefined) {
@@ -98,20 +127,20 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       }
     }
 
-    const handleBlur = () => {
+    const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
       if (value !== undefined) {
-        if (value < min) {
-          setValue(min)
-          // biome-ignore lint/style/noNonNullAssertion: <explanation>
-          ;(ref as React.RefObject<HTMLInputElement>).current!.value =
-            String(min)
-        } else if (value > max) {
-          setValue(max)
-          // biome-ignore lint/style/noNonNullAssertion: <explanation>
-          ;(ref as React.RefObject<HTMLInputElement>).current!.value =
-            String(max)
+        const clampedValue = clampValue(value)
+
+        if (clampedValue !== value) {
+          setValue(clampedValue)
+          if (inputRef.current) {
+            inputRef.current.value = String(clampedValue)
+          }
+          onValueChange?.(clampedValue)
         }
       }
+
+      onBlur?.(event)
     }
 
     return (
@@ -124,7 +153,6 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           fixedDecimalScale={fixedDecimalScale}
           allowNegative={min < 0}
           valueIsNumericString
-          onBlur={handleBlur}
           max={max}
           min={min}
           suffix={suffix}
@@ -132,8 +160,9 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           customInput={Input}
           placeholder={placeholder}
           className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-r-none relative"
-          getInputRef={ref}
+          getInputRef={composedRef}
           {...props}
+          onBlur={handleBlur}
         />
 
         <div className="flex flex-col">

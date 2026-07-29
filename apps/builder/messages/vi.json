@@ -65,6 +65,7 @@
     "openWebchat": "Mở webchat",
     "removeTag": "Xóa thẻ",
     "rename": "Đổi tên",
+    "reset": "Đặt lại",
     "save": "Lưu",
     "selectAll": "Chọn tất cả",
     "selectRow": "Chọn hàng",
@@ -287,6 +288,7 @@
       "contacts": "Liên hệ",
       "mac": "Liên hệ hoạt động hằng tháng",
       "botMessages": "Tin nhắn bot",
+      "monthlyBotMessages": "Tin nhắn bot (hàng tháng)",
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
       "teamMembers": "Thành viên nhóm"
@@ -316,6 +318,12 @@
       "bannerDescription": "Tạo tài nguyên mới đã bị vô hiệu hóa. Bạn vẫn có thể ngắt kết nối các kênh và lên lịch xóa workspace.",
       "bannerCta": "Nâng cấp",
       "createDisabled": "Tạo {feature} mới đã bị vô hiệu hóa. Hãy nâng cấp để tiếp tục."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Đã đạt giới hạn liên hệ hoạt động hằng tháng",
+      "bannerDescription": "Gửi và nhận tin nhắn đã tạm dừng cho đến khi bạn nâng cấp gói.",
+      "bannerCta": "Nâng cấp",
+      "createDisabled": "Tạo {feature} mới đã bị vô hiệu hóa cho đến khi bạn nâng cấp gói."
     }
   },
   "broadcasts": {
@@ -323,7 +331,8 @@
     "status": {
       "scheduled": "Đã lên lịch",
       "sent": "Đã gửi",
-      "sending": "Đang gửi"
+      "sending": "Đang gửi",
+      "cancelled": "Đã huỷ"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -415,6 +424,7 @@
     "yes": "Có",
     "no": "Không",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Nhập ngày dạng YYYY-MM-DD HH:mm hoặc một biến",
     "operator": {
@@ -477,6 +487,7 @@
       "questionnaireStarted": "Bảng câu hỏi đã bắt đầu",
       "questionnaireInProgress": "Bảng câu hỏi đang thực hiện",
       "questionnaireFinished": "Bảng câu hỏi đã hoàn tất",
+      "couponTopic": "Mã giảm giá",
       "votedOnPoll": "Đã bình chọn khảo sát",
       "lastComment": "Bình luận cuối",
       "commentedOnPost": "Đã bình luận bài viết",
@@ -538,6 +549,7 @@
       "systemTime": "Thời gian hệ thống",
       "ecommerce": "Thương mại điện tử",
       "systemFields": "Trường hệ thống",
+      "topicCoupon": "Topic coupon",
       "customFields": "Trường tùy chỉnh",
       "email": "Email",
       "sms": "SMS"
@@ -723,6 +735,7 @@
       "endsWith": "Kết thúc bằng",
       "isBetween": "Khoảng",
       "notBetween": "Không phải khoảng",
+      "used": "Đã sử dụng",
       "hasAnyValue": "Có bất kỳ giá trị nào",
       "hasNoValue": "Không có giá trị",
       "greaterThan": "Lớn hơn",
@@ -1986,6 +1999,15 @@
     },
     "webchatParentUrl": {
       "label": "URL cha của Webchat"
+    },
+    "make": {
+      "inviteUrl": "Link mời",
+      "inviteUrlHint": "Link mời của Make custom app đã publish (ví dụ: https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Sự kiện",
+      "placeholder": "Nhập tên sự kiện rồi nhấn Enter",
+      "description": "Thêm một hoặc nhiều tên sự kiện. Khi Make gắn webhook cho một trong các sự kiện này, dữ liệu sẽ được gửi đến đó khi step này chạy."
     }
   },
   "flows": {
@@ -2032,7 +2054,11 @@
       "blockContact": "Chặn liên hệ",
       "broadcastActions": "Hành động phát sóng",
       "callApi": "Yêu cầu bên ngoài",
+      "make": "Make",
+      "triggers": "Trigger",
       "questionnaires": "Bảng câu hỏi",
+      "setUpCoupon": "Thiết lập Coupon",
+      "markCouponUsed": "Đánh dấu Coupon đã dùng",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
       "condition": "Điều kiện",
@@ -2206,6 +2232,9 @@
       "durationLabel": "Thời lượng",
       "waitAndContinue": "Chờ <value>{duration} {unit}</value> rồi tiếp tục",
       "cancelOnReplyHint": "Follow-up sẽ không được gửi nếu khách hàng trả lời trước khi hết thời gian chờ."
+    },
+    "setCustomField": {
+      "temporalHint": "Để trống để lưu ngày/giờ hiện tại."
     }
   },
   "folders": {
@@ -2513,6 +2542,15 @@
     "errors": {
       "invalidApiKey": "API Key không hợp lệ. Vui lòng kiểm tra lại API Key SendGrid và thử lại.",
       "missingScopes": "API key này phải có quyền đọc Marketing. Vui lòng đảm bảo API key SendGrid của bạn bao gồm quyền Marketing."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make. Developer Access Token của workspace sẽ được tự động sao chép vào clipboard khi bạn bấm Connect — dán vào lúc tạo connection trong Make.",
+      "notConfigured": "Chưa tìm thấy link mời Make. Vui lòng thêm trong Cài đặt Nền tảng.",
+      "noWorkspaceToken": "Workspace này chưa có Developer Access Token. Hãy tạo token ở mục Workspace token phía trên rồi bấm Connect lại."
     }
   },
   "integrations": {
@@ -2931,6 +2969,9 @@
       "description": "Đây là những từ khóa đặc biệt cho bot WhatsApp biết phải làm gì",
       "label": "Lệnh"
     },
+    "autoConnect": {
+      "inProgress": "Đang kết nối…"
+    },
     "connectExisting": "Kết nối tài khoản WhatsApp Business hiện có",
     "embeddedSignupDone": "Đã hoàn tất đăng ký — bạn có thể đóng tab này.",
     "embeddedSignupPopupBlocked": "Vui lòng cho phép cửa sổ bật lên cho trang này rồi thử lại.",
@@ -2949,6 +2990,50 @@
       "qrCodeHint": "Quét mã QR để mở URL webhook",
       "moreSettings": "Cài đặt thêm",
       "goToInbox": "Đưa tôi đến đó"
+    },
+    "phoneVerification": {
+      "title": "Xác minh số điện thoại WhatsApp",
+      "description": "Yêu cầu mã xác minh từ Meta, nhập mã tại đây, sau đó số điện thoại sẽ được đăng ký tự động.",
+      "errorTitle": "Số điện thoại cần được xác minh",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Cuộc gọi thoại"
+      },
+      "actions": {
+        "sendCode": "Gửi mã",
+        "resendIn": "Gửi lại sau {seconds}s",
+        "verify": "Xác minh và đăng ký"
+      },
+      "fields": {
+        "code": {
+          "label": "Mã xác minh",
+          "placeholder": "Nhập OTP từ Meta"
+        }
+      },
+      "messages": {
+        "codeSent": "Đã gửi mã xác minh qua {method}.",
+        "cooldown": "Vui lòng chờ {seconds}s trước khi yêu cầu mã khác.",
+        "verified": "Số điện thoại đã được xác minh và đăng ký thành công."
+      },
+      "errors": {
+        "integrationNotFound": "Không tìm thấy kết nối WhatsApp.",
+        "codeNotSent": "Không gửi được mã xác minh WhatsApp.",
+        "codeNotVerified": "Không xác minh được mã WhatsApp.",
+        "registrationFailed": "Xác minh số điện thoại WhatsApp không thành công."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "Thiếu access token WhatsApp.",
+        "appSettingsNotFound": "Không tìm thấy cấu hình ứng dụng WhatsApp.",
+        "failedToPersistIntegration": "Không lưu được kết nối WhatsApp.",
+        "noPhoneNumberFound": "Không tìm thấy số điện thoại WhatsApp.",
+        "noPhoneNumbersFound": "Không tìm thấy số điện thoại trong WhatsApp Business Account này.",
+        "phoneNumberNotFound": "Không tìm thấy số điện thoại WhatsApp đã chọn.",
+        "unableToVerifyToken": "Không xác minh được token WhatsApp.",
+        "wabaMismatch": "WhatsApp Business Account đã chọn không khớp với quyền đã cấp.",
+        "wabaResolveFailed": "Không xác định được WhatsApp Business Account từ quyền đã cấp."
+      }
     },
     "marketingMessageLite": "Tin nhắn tiếp thị Lite",
     "messageTemplate": {
@@ -3028,6 +3113,10 @@
       "title": "Quản lý tài khoản WhatsApp của bạn",
       "description": "Xem trạng thái tài khoản WhatsApp, giới hạn nhắn tin và chất lượng. Cập nhật cài đặt hoặc khắc phục sự cố nếu cần",
       "goToBusinessManager": "Mở Meta Business Manager",
+      "unavailable": {
+        "title": "Tạm thời không tải được tình trạng tài khoản",
+        "description": "Hiện không thể tải số điện thoại WhatsApp này từ Meta. Các thao tác khôi phục khác trên trang vẫn có thể sử dụng."
+      },
       "fields": {
         "displayPhoneNumber": {
           "label": "Số điện thoại hiển thị",
@@ -3147,7 +3236,8 @@
     "templateHeader": {
       "label": "Tiêu đề mẫu"
     },
-    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác"
+    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
+    "signupSessionExpired": "Phiên đăng ký WhatsApp đã hết hạn. Vui lòng bắt đầu kết nối lại."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3434,7 +3524,13 @@
     "responseType": "Kiểu trả lời",
     "points": "Điểm",
     "retryMessage": "Tin nhắn thử lại nếu câu trả lời không hợp lệ",
-    "defaultRetryMessage": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
+    "defaultRetryMessages": {
+      "text": "Nội dung bạn đã nhập không phải là văn bản hợp lệ. Vui lòng thử lại",
+      "number": "Nội dung bạn đã nhập không phải là số hợp lệ. Vui lòng thử lại",
+      "email": "Nội dung bạn đã nhập không phải là email hợp lệ. Vui lòng thử lại",
+      "phone": "Nội dung bạn đã nhập không phải là số điện thoại hợp lệ. Vui lòng thử lại",
+      "multipleChoice": "Nội dung bạn đã nhập không phải là lựa chọn hợp lệ. Vui lòng thử lại"
+    },
     "customField": "Lưu câu trả lời vào trường tùy chỉnh hoặc trường hệ thống",
     "options": "Tùy chọn",
     "mode": "Chế độ",
@@ -3579,7 +3675,20 @@
   },
   "facebookLeadAdsAutomation": {
     "title": "Tự động hóa Facebook Lead Ads",
-    "description": "Tự động hóa Facebook Lead Ads cho các liên hệ của bạn."
+    "description": "Tự động hóa Facebook Lead Ads cho các liên hệ của bạn.",
+    "create": "Tạo mới",
+    "leads": "Số lead",
+    "facebookPage": "Trang Facebook",
+    "leadForm": "Biểu mẫu Lead",
+    "allForms": "Tất cả biểu mẫu",
+    "allFormsNote": "Lead từ mọi biểu mẫu của trang này sẽ được thu thập. Các trường tiêu chuẩn (email, số điện thoại, tên, giới tính) được lưu tự động vào trường liên hệ tương ứng.",
+    "leadData": "Dữ liệu Lead",
+    "whatFlow": "Kịch bản được kích hoạt",
+    "none": "Không có",
+    "addNewPage": "Thêm mới",
+    "noEligiblePages": "Không có trang phù hợp. Dùng \"Thêm mới\" để cấp quyền truy cập lead.",
+    "duplicateError": "Đã tồn tại một automation cho trang và biểu mẫu này.",
+    "subscribeError": "Không thể đăng ký nhận thông báo lead từ Facebook cho trang này, nên automation chưa được tạo. Hãy kết nối lại trang bằng \"Thêm mới\" rồi thử lại."
   },
   "ecommerce": {
     "title": "Thương mại điện tử",
@@ -3705,7 +3814,9 @@
     "title": "Bạn đã hủy đăng ký.",
     "description": "Bạn sẽ không còn nhận email từ người gửi này nữa.",
     "invalidTitle": "Liên kết hủy đăng ký không hợp lệ.",
-    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn."
+    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+    "unavailableTitle": "Không thể hủy đăng ký.",
+    "unavailableDescription": "Không gian làm việc này không còn khả dụng."
   },
   "extensionsMe": {
     "actions": {
@@ -3841,6 +3952,70 @@
     "title": "TikTok",
     "description": "Kết nối tài khoản TikTok để trả lời tin nhắn trực tiếp.",
     "refreshToken": "Làm mới Token"
+  },
+  "coupons": {
+    "title": "Coupon",
+    "description": "Quản lý chủ đề coupon, import, export và mã coupon dùng trong flow.",
+    "singular": "Coupon",
+    "topicCouponsTitle": "Topic Coupon",
+    "tabs": {
+      "topicCoupon": "Topic Coupon",
+      "coupon": "Coupon",
+      "listTopic": "List Topic",
+      "archive": "Lưu trữ"
+    },
+    "topic": {
+      "create": "Tạo mới",
+      "edit": "Chỉnh sửa chủ đề"
+    },
+    "actions": {
+      "import": "Import coupon",
+      "export": "Tải danh sách Coupon",
+      "downloadImportTemplate": "Tải file mẫu import"
+    },
+    "fields": {
+      "topic": "Chủ đề",
+      "selectTopic": "Chọn chủ đề",
+      "importCsvOnly": "Nhấp hoặc kéo thả file .csv vào khu vực này để tải lên",
+      "allTopics": "Tất cả chủ đề",
+      "couponCount": "Coupon",
+      "validity": "Thời hạn",
+      "unlimited": "Không giới hạn",
+      "code": "Mã",
+      "issueStatus": "Trạng thái",
+      "usageStatus": "Sử dụng",
+      "allIssueStatuses": "Tất cả trạng thái",
+      "allUsageStatuses": "Tất cả sử dụng",
+      "searchCode": "Tìm mã"
+    },
+    "issueStatuses": {
+      "published": "Published",
+      "unpublished": "Unpublished"
+    },
+    "usageStatuses": {
+      "used": "Đã dùng",
+      "notUsed": "Chưa dùng"
+    },
+    "variables": {
+      "group": "Coupons"
+    },
+    "messages": {
+      "topicSaved": "Đã lưu chủ đề coupon.",
+      "editLocked": "Tên và mô tả bị khóa sau khi đã tạo hoặc import coupon.",
+      "archiveTitle": "Lưu trữ chủ đề coupon",
+      "archiveConfirm": "Lưu trữ \"{name}\"? Chủ đề sẽ được chuyển sang danh sách Lưu trữ.",
+      "archiveBulkConfirm": "Lưu trữ {count} chủ đề đã chọn? Các chủ đề sẽ được chuyển sang danh sách Lưu trữ.",
+      "restoreTitle": "Khôi phục chủ đề coupon",
+      "unarchiveConfirm": "Khôi phục \"{name}\"? Chủ đề sẽ được chuyển về danh sách Topic.",
+      "unarchiveBulkConfirm": "Khôi phục {count} chủ đề đã chọn? Các chủ đề sẽ được chuyển về danh sách Topic.",
+      "deleteTitle": "Xóa chủ đề coupon",
+      "deleteConfirm": "Xóa chủ đề đã lưu trữ này? Lịch sử coupon vẫn được giữ lại.",
+      "empty": "Không tìm thấy coupon.",
+      "importStarted": "Đã bắt đầu import coupon.",
+      "exportStarted": "Đã bắt đầu export coupon.",
+      "exportFailed": "Export coupon thất bại.",
+      "exportCount": "{count} dòng coupon sẽ được export."
+    }
   },
   "helpMenu": {
     "title": "Trợ giúp",

@@ -25,8 +25,11 @@ export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type WorkspaceMemberModel =
   typeof schema.workspaceMemberModel.$inferSelect
 export type UserQuotaModel = typeof schema.userQuotaModel.$inferSelect
+export type WorkspaceUsageModel = typeof schema.workspaceUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
+export type CouponTopicModel = typeof schema.couponTopicModel.$inferSelect
+export type CouponModel = typeof schema.couponModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect
 export type IntegrationSmtpModel =
   typeof schema.integrationSmtpModel.$inferSelect
@@ -92,6 +95,10 @@ export type InboxTeamModel = typeof schema.inboxTeamModel.$inferSelect
 export type InboxTeamMemberModel =
   typeof schema.inboxTeamMemberModel.$inferSelect
 export type ErrorLogModel = typeof schema.errorLogModel.$inferSelect
+export type FacebookLeadAdsAutomationModel =
+  typeof schema.facebookLeadAdsAutomationModel.$inferSelect
+export type FacebookLeadAdsLeadModel =
+  typeof schema.facebookLeadAdsLeadModel.$inferSelect
 export type FBCommentAutomationModel =
   typeof schema.fbCommentAutomationModel.$inferSelect
 export type FBCommentAutomationReplyModel =
@@ -113,6 +120,8 @@ export type TriggerExecutionModel =
   typeof schema.triggerExecutionModel.$inferSelect
 export type WebhookExecutionModel =
   typeof schema.webhookExecutionModel.$inferSelect
+export type ExternalWebhookModel =
+  typeof schema.externalWebhookModel.$inferSelect
 export type ContactInboxModel = typeof schema.contactInboxModel.$inferSelect
 export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
@@ -130,6 +139,8 @@ export type RefLinkStatModel = typeof schema.refLinkStatModel.$inferSelect
 export type WhatsappCoexistStagingModel =
   typeof schema.whatsappCoexistStagingModel.$inferSelect
 export type CoexistSyncRunModel = typeof schema.coexistSyncRunModel.$inferSelect
+export type WhatsappSignupSessionModel =
+  typeof schema.whatsappSignupSessionModel.$inferSelect
 
 export type InboxWithIntegrations = InboxModel & {
   integrationInstagram?: IntegrationInstagramModel | null

@@ -1,16 +1,12 @@
 import {
-  buttonTypes,
-  type EmailStepSchema,
+  applyRouteUpdatesInNodes,
   type FlowNode,
+  type FlowRouteUpdate,
   nodeTypeSchema,
-  type PageElementSchema,
-  pageElementTypes,
   sendMessageNodeDefaultFn,
-  startAnotherNodeStepDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import {
-  addEdge,
   Background,
   type Connection,
   Controls,
@@ -55,9 +51,13 @@ import ZoomOutButton from "./panel-buttons/zoom-out-button"
 import { duplicateFlowNode } from "./toolbar/duplicate-node-data"
 import "./react-flow-wrapper.css"
 import { createId } from "@chatbotx.io/utils"
-import type { ButtonProps } from "react-day-picker"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { serializeFlowContent } from "../flow-version-content"
+import {
+  getRoutableHandleId,
+  replaceSourceHandleEdge,
+  toRouteRemovals,
+} from "./edge-routing"
 import ButtonEdge from "./edges/button-edge"
 import { hasMeaningfulNodeChange } from "./react-flow-node-change"
 import { useFlowHistoryStoreApi } from "./stores/flow-history-store-provider"
@@ -104,7 +104,6 @@ export function ReactFlowWrapper({
     addNodes,
     getNodes,
     updateNodeData,
-    addEdges,
     updateEdge,
     getEdges,
     deleteElements,
@@ -114,7 +113,7 @@ export function ReactFlowWrapper({
   const [nodes, setNodes, onNodesChange] = useNodesState(
     flowVersion.nodes as unknown as FlowNode[],
   )
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(
     (flowVersion.edges as unknown as Edge[]).map((edge) => ({
       ...edge,
       type: "buttonedge",
@@ -150,9 +149,11 @@ export function ReactFlowWrapper({
     )
 
   const handleChanges = useDebouncedCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: wip
-    (changedNodes: any[], changedEdges: any[]) => {
-      savingDraft({ nodes: changedNodes, edges: changedEdges })
+    (changedNodes: FlowNode[], changedEdges: Edge[]) => {
+      savingDraft({
+        nodes: changedNodes,
+        edges: changedEdges as unknown as UpdateDraftFlowVersionSchema["edges"],
+      })
     },
     1500,
     4000,
@@ -203,17 +204,6 @@ export function ReactFlowWrapper({
     }
     releaseSnapshotSession()
   }, [takeSnapshot, releaseSnapshotSession])
-
-  // Snapshot first, then mutate React Flow's live node data. updateNodeData
-  // writes directly into the internal store, so callers must preserve the
-  // pre-mutation state before passing data in.
-  const updateNodeDataWithHistory = useCallback(
-    (nodeId: string, data: FlowNode["data"]) => {
-      takeCoalescedSnapshot()
-      updateNodeData(nodeId, data)
-    },
-    [takeCoalescedSnapshot, updateNodeData],
-  )
 
   const hasMeaningfulEdgeChange = useCallback(
     (changes: Parameters<typeof onEdgesChange>[0]) =>
@@ -390,92 +380,41 @@ export function ReactFlowWrapper({
     [updateNodeData],
   )
 
-  const onConnect = useCallback(
-    (params: Connection) => {
-      takeCoalescedSnapshot()
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            type: "buttonedge",
-          },
-          eds,
-        ),
+  const applyButtonRoutes = useCallback(
+    (routeUpdates: readonly FlowRouteUpdate[]) => {
+      setNodes((currentNodes) =>
+        applyRouteUpdatesInNodes(currentNodes, routeUpdates),
       )
     },
-    [setEdges, takeCoalescedSnapshot],
+    [setNodes],
   )
 
-  const connectButtonToNode = useCallback(
-    (connectionState: FinalConnectionState, toNodeId: string) => {
-      if (!connectionState.fromNode) {
+  const onConnect = useCallback(
+    (params: Connection) => {
+      if (params.source === params.target) {
         return
       }
 
       takeCoalescedSnapshot()
-      const fromNodeId = connectionState.fromNode.id
-      const handleId = connectionState.fromHandle?.id
-      const data = connectionState.fromNode.data as FlowNode["data"]
+      setEdges((currentEdges) =>
+        replaceSourceHandleEdge(currentEdges, {
+          ...params,
+          type: "buttonedge",
+        }),
+      )
 
-      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-      function connectButtonsInStep(step: any): boolean {
-        const buttonIndex = (step.buttons as ButtonProps[]).findIndex(
-          (button: ButtonProps) => button.id === handleId,
-        )
-        if (buttonIndex === -1) {
-          return false
-        }
-
-        const targetButton = step.buttons[buttonIndex]
-        targetButton.buttonType = buttonTypes.enum.startAnotherNode
-        targetButton.beforeStep = startAnotherNodeStepDefaultFn({
-          nodeId: toNodeId,
-          viewOnly: true,
-        })
-        step.buttons[buttonIndex] = targetButton
-        updateNodeDataWithHistory(fromNodeId, data)
-        return true
-      }
-
-      function connectElementsInStep(step: EmailStepSchema): boolean {
-        const elements = step.elements as PageElementSchema[]
-        for (
-          let elementIndex = 0;
-          elementIndex < elements.length;
-          elementIndex++
-        ) {
-          const element = elements[elementIndex]
-          if (
-            element.type === pageElementTypes.enum.button &&
-            element.beforeStep &&
-            element.beforeStep.id === handleId
-          ) {
-            element.beforeStep.stepType = buttonTypes.enum.startAnotherNode
-            element.beforeStep = startAnotherNodeStepDefaultFn({
-              nodeId: toNodeId,
-              viewOnly: true,
-            })
-            elements[elementIndex] = element
-            updateNodeDataWithHistory(fromNodeId, data)
-            return true
-          }
-        }
-        return false
-      }
-
-      if ("steps" in data.details) {
-        for (const step of data.details.steps as EmailStepSchema[]) {
-          if ("buttons" in step && connectButtonsInStep(step)) {
-            break
-          }
-
-          if ("elements" in step && connectElementsInStep(step)) {
-            return
-          }
-        }
+      const handleId = getRoutableHandleId(params.source, params.sourceHandle)
+      if (handleId) {
+        applyButtonRoutes([
+          {
+            sourceNodeId: params.source,
+            handleId,
+            route: { targetNodeId: params.target },
+          },
+        ])
       }
     },
-    [takeCoalescedSnapshot, updateNodeDataWithHistory],
+    [applyButtonRoutes, setEdges, takeCoalescedSnapshot],
   )
 
   const onConnectEnd = useCallback(
@@ -483,111 +422,63 @@ export function ReactFlowWrapper({
       _event: MouseEvent | TouchEvent,
       connectionState: FinalConnectionState,
     ): void => {
-      // cases:
-      // 1. From node to empty space: create new sendMessage node
-      // 2. From node to node: create new buttonedge
-      // 3.
-
-      // if from handle or from node is not set, return
-      if (!(connectionState.fromHandle && connectionState.fromNode)) {
+      const fromHandle = connectionState.fromHandle
+      const fromNode = connectionState.fromNode
+      if (
+        !(fromHandle?.id && fromNode) ||
+        fromHandle.type !== "source" ||
+        connectionState.toHandle ||
+        connectionState.toNode
+      ) {
         return
       }
 
-      // handle case of dragging from source handle
-      if (connectionState.fromHandle.type === "source") {
-        // drop connection to empty space
-        if (!(connectionState.toHandle && connectionState.toNode)) {
-          const allNodes = getNodes()
-          const messageNodesLength = allNodes.filter(
-            (node) => node.type === nodeTypeSchema.enum.sendMessage,
-          ).length
+      const fromHandleId = fromHandle.id
+      const messageNodesLength = getNodes().filter(
+        (node) => node.type === nodeTypeSchema.enum.sendMessage,
+      ).length
+      const position = connectionState.to
+        ? screenToFlowPosition(connectionState.to)
+        : { x: 300, y: 300 }
+      const newNode = sendMessageNodeDefaultFn({
+        nodeProps: { position },
+        dataProps: {
+          name: `${t("actions.sendMessage")} #${messageNodesLength + 1}`,
+        },
+      })
 
-          const position = connectionState.to
-            ? screenToFlowPosition(connectionState.to)
-            : { x: 300, y: 300 }
-          const newNode = sendMessageNodeDefaultFn({
-            nodeProps: {
-              position,
-            },
-            dataProps: {
-              name: `Send Message #${messageNodesLength + 1}`,
-            },
-          })
-          takeCoalescedSnapshot()
-          addNodes([newNode])
+      takeCoalescedSnapshot()
+      addNodes([newNode])
+      setEdges((currentEdges) =>
+        replaceSourceHandleEdge(currentEdges, {
+          id: createId(),
+          source: fromNode.id,
+          target: newNode.id,
+          sourceHandle: fromHandleId,
+          targetHandle: newNode.id,
+          type: "buttonedge",
+        }),
+      )
 
-          addEdges({
-            id: createId(),
-            source: connectionState.fromNode.id,
-            target: newNode.id,
-            sourceHandle: connectionState.fromHandle.id,
-            targetHandle: newNode.id,
-            type: "buttonedge",
-          })
-
-          // if the source is button, update the button data
-          if (connectionState.fromHandle.id !== connectionState.fromNode.id) {
-            connectButtonToNode(connectionState, newNode.id)
-          }
-
-          return
-        }
-
-        if (connectionState.toHandle && connectionState.toNode) {
-          // if to node is the same as from node, return
-          if (connectionState.toNode.id === connectionState.fromNode.id) {
-            return
-          }
-
-          const allEdges = getEdges()
-
-          // if it's already connected, return
-          const isConnected = allEdges.some(
-            (edge) =>
-              edge.sourceHandle === connectionState.fromHandle?.id &&
-              edge.targetHandle === connectionState.toHandle?.id,
-          )
-          if (isConnected) {
-            return
-          }
-
-          // this connection is from node to node, so we need to create a new buttonedge
-          if (connectionState.toHandle.id === connectionState.toNode.id) {
-            // Each source handle just can connect to one target handle
-            // Remove the existing edges that have the same source handle
-            const connectedEdges = allEdges.filter(
-              (edge) => edge.sourceHandle === connectionState.fromHandle?.id,
-            )
-
-            takeCoalescedSnapshot()
-            deleteElements({
-              edges: connectedEdges.map((edge) => ({
-                id: edge.id,
-              })),
-            })
-
-            // if the handle is from button, update the button data
-            if (connectionState.fromHandle.id !== connectionState.fromNode.id) {
-              connectButtonToNode(connectionState, connectionState.toNode.id)
-            }
-            return
-          }
-
-          return
-        }
-
-        return
+      const handleId = getRoutableHandleId(fromNode.id, fromHandleId)
+      if (handleId) {
+        applyButtonRoutes([
+          {
+            sourceNodeId: fromNode.id,
+            handleId,
+            route: { targetNodeId: newNode.id },
+          },
+        ])
       }
     },
     [
       addNodes,
-      addEdges,
       getNodes,
-      deleteElements,
-      getEdges,
-      connectButtonToNode,
+      setEdges,
+      applyButtonRoutes,
       screenToFlowPosition,
       takeCoalescedSnapshot,
+      t,
     ],
   )
 
@@ -616,68 +507,9 @@ export function ReactFlowWrapper({
   const onEdgesDelete = useCallback(
     (edges: Edge[]) => {
       takeCoalescedSnapshot()
-
-      for (const edge of edges) {
-        // if the edge is from node to node, do nothing
-        if (edge.source === edge.sourceHandle) {
-          continue
-        }
-
-        // the edge is from button to node, we need to update the button data
-        const foundedNode = getNodes().find((node) => node.id === edge.source)
-        if (!foundedNode) {
-          continue
-        }
-
-        const data = foundedNode.data as FlowNode["data"]
-        if ("details" in data && data.details && "steps" in data.details) {
-          const stepIndex = data.details.steps.findIndex(
-            (step) =>
-              "buttons" in step &&
-              step.buttons.some((button) => button.id === edge.sourceHandle),
-          )
-          if (stepIndex !== -1 && "buttons" in data.details.steps[stepIndex]) {
-            const buttonIndex = data.details.steps[stepIndex].buttons.findIndex(
-              (button: ButtonProps) => button.id === edge.sourceHandle,
-            )
-            if (buttonIndex !== -1) {
-              data.details.steps[stepIndex].buttons[buttonIndex].beforeStep =
-                null
-              data.details.steps[stepIndex].buttons[buttonIndex].buttonType =
-                null
-
-              // update the node data
-              updateNodeDataWithHistory(foundedNode.id, data)
-            }
-            continue
-          }
-
-          // Handle button page elements in steps (e.g. SendMail node)
-          let elementFound = false
-          for (const step of data.details.steps) {
-            if (!("elements" in step)) {
-              continue
-            }
-            for (const element of (step as EmailStepSchema).elements) {
-              if (
-                element.type === pageElementTypes.enum.button &&
-                element.beforeStep &&
-                element.beforeStep.id === edge.sourceHandle
-              ) {
-                Object.assign(element, { buttonType: null, beforeStep: null })
-                updateNodeDataWithHistory(foundedNode.id, data)
-                elementFound = true
-                break
-              }
-            }
-            if (elementFound) {
-              break
-            }
-          }
-        }
-      }
+      applyButtonRoutes(toRouteRemovals(edges))
     },
-    [getNodes, takeCoalescedSnapshot, updateNodeDataWithHistory],
+    [applyButtonRoutes, takeCoalescedSnapshot],
   )
 
   return (

@@ -113,6 +113,12 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  isWorkspaceScheduledForDeletion: (
+    workspace:
+      | { scheduledDeletionAt?: Date | string | null }
+      | null
+      | undefined,
+  ) => Boolean(workspace?.scheduledDeletionAt),
   contactInboxService: {
     findLatestBySource: mockContactInboxFindLatest,
     updateTracking: mockContactInboxUpdateTracking,

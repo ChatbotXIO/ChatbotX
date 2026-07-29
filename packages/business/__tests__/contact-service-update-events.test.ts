@@ -37,8 +37,16 @@ vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  macAnalyticsService: {},
+}))
+
 vi.mock("../src/quota-enforcement/service", () => ({
   quotaEnforcementService: {},
+}))
+
+vi.mock("../src/user-quota/service", () => ({
+  userQuotaService: {},
 }))
 
 vi.mock("../src/workspace/service", () => ({

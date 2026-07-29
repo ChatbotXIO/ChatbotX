@@ -10,14 +10,15 @@ import {
   contactInboxModel,
   contactModel,
   conversationModel,
+  couponModel,
   questionnaireModel,
   questionnaireSubmissionModel,
 } from "../../schema"
-import { likeContains } from "../../utils"
+import { escapeLikePattern, likeContains } from "../../utils"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import { buildCustomFieldWhere } from "./custom-field-predicates"
-import { contactInboxExists, joinTableExists } from "./exists"
+import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
 import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
@@ -35,6 +36,7 @@ import {
   contactInboxInteractedWithin24hSQL as buildRecentInteractionPredicate,
 } from "./predicates"
 import { buildRelationSetWhere } from "./relation-sets"
+import { resolveFilterTimezone } from "./timezone"
 import type {
   ContactWhere,
   ContactFilterConditionInput as FilterConditionInput,
@@ -52,6 +54,13 @@ export {
   pruneEmailPhoneFilterConditions,
 } from "./permission"
 export { contactInboxInteractedWithin24hSQL } from "./predicates"
+export {
+  DEFAULT_FILTER_TIMEZONE,
+  filterValueToUtcDayEndIso,
+  filterValueToUtcDayStartIso,
+  filterValueToUtcIso,
+  resolveFilterTimezone,
+} from "./timezone"
 export type {
   ContactFilterConditionInput,
   ContactFilterCriteriaInput,
@@ -80,6 +89,16 @@ const questionnaireSubmissionExists = joinTableExists(
   questionnaireSubmissionModel,
   questionnaireSubmissionModel.contactId,
 )
+
+const couponExists = (
+  predicate: (contactId: AnyColumn, workspaceId: AnyColumn) => SQL,
+  negate = false,
+): ContactWhere =>
+  existsWhere(
+    (contactId, contactTable) =>
+      sql`SELECT 1 FROM ${couponModel} WHERE ${couponModel.issuedContactId} = ${contactId} AND ${predicate(contactId, contactTable.workspaceId)}`,
+    negate,
+  )
 
 const toStringArrayValue = (value: unknown): string[] =>
   (Array.isArray(value) ? value : [value]).filter(
@@ -139,6 +158,49 @@ const buildConversationAssignedWhere = (
 
   const predicate = combineWithOr(predicates)
   return predicate ? conversationExists(predicate, negative) : {}
+}
+
+/**
+ * Dynamic per-coupon-topic condition (one filter field per real workspace
+ * topic, `field: "couponTopic"` + runtime `topicId` — same shape as custom
+ * fields): `isNotEmpty` = issued this topic, `used` = redeemed this topic,
+ * `eq` = issued this topic with a specific coupon code.
+ */
+const buildCouponTopicWhere = (
+  topicId: string | undefined,
+  operator: string,
+  value: unknown,
+): ContactWhere => {
+  if (!topicId) {
+    return {}
+  }
+
+  const topicPredicate = (_contactId: AnyColumn, workspaceId: AnyColumn) =>
+    sql`${couponModel.workspaceId} = ${workspaceId} AND ${couponModel.topicId} = ${topicId}`
+
+  if (operator === operatorTypes.enum.isNotEmpty) {
+    return couponExists(topicPredicate)
+  }
+
+  if (operator === operatorTypes.enum.used) {
+    return couponExists(
+      (_contactId, workspaceId) =>
+        sql`${couponModel.workspaceId} = ${workspaceId} AND ${couponModel.topicId} = ${topicId} AND ${couponModel.usedAt} IS NOT NULL`,
+    )
+  }
+
+  if (
+    operator === operatorTypes.enum.eq &&
+    typeof value === "string" &&
+    value
+  ) {
+    return couponExists(
+      (_contactId, workspaceId) =>
+        sql`${couponModel.workspaceId} = ${workspaceId} AND ${couponModel.topicId} = ${topicId} AND ${couponModel.code} ILIKE ${escapeLikePattern(value)}`,
+    )
+  }
+
+  return {}
 }
 
 const EMAIL_KEYWORD_PATTERN = /@/
@@ -283,8 +345,9 @@ export function applyContactFilter(
     return {}
   }
 
+  const timezone = resolveFilterTimezone(criteria.timezone)
   const conditionWheres = conditions
-    .map(buildConditionWhere)
+    .map((condition) => buildConditionWhere(condition, timezone))
     .filter((w): w is ContactWhere => Object.keys(w).length > 0)
 
   if (conditionWheres.length === 0) {
@@ -298,7 +361,10 @@ export function applyContactFilter(
   return { AND: conditionWheres }
 }
 
-function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
+function buildConditionWhere(
+  condition: FilterConditionInput,
+  timezone: string,
+): ContactWhere {
   const { field, operator, value } = condition
 
   switch (field) {
@@ -326,22 +392,32 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
       return buildColumnWhere(field, operator, value)
 
     case "contactCreatedAt":
-      return buildDateColumnWhere("createdAt", operator, value)
+      return buildDateColumnWhere("createdAt", operator, value, timezone)
 
     case "contactCreatedDateMinutesAgo":
       return buildMinutesAgoWhere("createdAt", operator, value)
 
     case "lastSeen":
-      return buildDateColumnWhere("lastReadAt", operator, value)
+      return buildLatestContactInboxDateWhere(
+        contactInboxModel.contactLastReadAt,
+        operator,
+        value,
+        timezone,
+      )
 
     case "lastSeenMinutesAgo":
-      return buildMinutesAgoWhere("lastReadAt", operator, value)
+      return buildLatestContactInboxMinutesAgoWhere(
+        contactInboxModel.contactLastReadAt,
+        operator,
+        value,
+      )
 
     case "lastSent":
       return buildLatestContactInboxDateWhere(
         contactInboxModel.lastOutboundMessageAt,
         operator,
         value,
+        timezone,
       )
 
     case "lastInteraction":
@@ -349,6 +425,7 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
         contactInboxModel.lastIncomingMessageAt,
         operator,
         value,
+        timezone,
       )
 
     case "lastInteractionMinutesAgo":
@@ -443,11 +520,14 @@ function buildConditionWhere(condition: FilterConditionInput): ContactWhere {
         value,
       )
 
+    case "couponTopic":
+      return buildCouponTopicWhere(condition.topicId, operator, value)
+
     case "conversationAssigned":
       return buildConversationAssignedWhere(operator, value)
 
     case "customField":
-      return buildCustomFieldWhere(condition)
+      return buildCustomFieldWhere({ ...condition, timezone })
 
     case "archived":
       return buildExistsBooleanWhere(

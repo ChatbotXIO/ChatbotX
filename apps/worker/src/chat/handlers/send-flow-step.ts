@@ -190,6 +190,7 @@ export async function sendFlowStep({
   richResponse,
   quickReplies,
   sendFrom,
+  commentAnchor,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
@@ -400,6 +401,21 @@ export async function sendFlowStep({
       }
     }
 
+    const isPublicCommentReply = commentAnchor?.replyChannel === "public"
+    if (isPublicCommentReply) {
+      // Mirrors postPublicCommentReply's shape (comment-automation/index.ts) so
+      // this message is recognized as a public comment reply below and routed
+      // through sendMessageToChannel's "comment" channel group instead of a
+      // normal flow DM. sendComment only reads text + the first attachment and
+      // ignores buttons/quick replies/multiple cards — a carousel/button-heavy
+      // first step degrades to best-effort text-and-first-attachment, same
+      // precedent as the private-reply fix's Messenger-template gap.
+      contentAttributes = {
+        ...contentAttributes,
+        replyToCommentId: commentAnchor.commentId,
+      }
+    }
+
     const messageInput = {
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
@@ -411,6 +427,7 @@ export async function sendFlowStep({
       text: messageText,
       contentAttributes,
       createdAt: new Date(),
+      ...(isPublicCommentReply ? { type: "comment" as const } : {}),
     }
 
     // Upload file if exists
@@ -473,19 +490,38 @@ export async function sendFlowStep({
       }),
     ])
 
-    const channelSend = sendFlowStepToChannel({
-      conversation,
-      contactInbox: targetContactInbox,
-      flowId,
-      flowVersionId,
-      step: resolvedStep as SendFlowStepData,
-      metadata,
-      richResponse,
-      quickReplies: canonicalQuickReplies,
-      messageId: message?.id,
-      messageCreatedAt: message?.createdAt,
-      sendFrom,
-    })
+    const channelSend = isPublicCommentReply
+      ? sendMessageToChannel({
+          conversation,
+          contactInbox: targetContactInbox,
+          message,
+          quickReplies: canonicalQuickReplies,
+          metadata,
+          sendFrom,
+        })
+      : sendFlowStepToChannel({
+          conversation,
+          contactInbox: targetContactInbox,
+          flowId,
+          flowVersionId,
+          step: resolvedStep as SendFlowStepData,
+          metadata,
+          richResponse,
+          quickReplies: canonicalQuickReplies,
+          messageId: message?.id,
+          messageCreatedAt: message?.createdAt,
+          sendFrom,
+          // Comment-anchored private replies are Messenger-only (no Instagram
+          // private_replies equivalent) — defensive re-check in case a resolved
+          // contactInboxId ever points at a different channel than the job
+          // intended. A "public" anchor never reaches this branch (routed to
+          // sendMessageToChannel above instead).
+          commentAnchor:
+            targetContactInbox.channel === channelTypes.enum.messenger &&
+            commentAnchor?.replyChannel === "private"
+              ? commentAnchor
+              : undefined,
+        })
 
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {

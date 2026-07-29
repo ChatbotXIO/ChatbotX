@@ -63,3 +63,8 @@ export const deleteQuestionnaireSubmissionRequest = z.object({
   questionnaireId: zodBigintAsString(),
   submissionId: zodBigintAsString(),
 })
+
+export const deleteQuestionnaireSubmissionsRequest = z.object({
+  questionnaireId: zodBigintAsString(),
+  submissionIds: z.array(zodBigintAsString()).min(1),
+})

@@ -5,6 +5,7 @@ import {
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
+import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import {
   type ContactSource,
   contactSources,
@@ -13,7 +14,13 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
-import { formatInTimeZone } from "date-fns-tz"
+import {
+  DATE_FORMAT,
+  DATE_TIME_FORMAT,
+  DEFAULT_FILTER_TIMEZONE,
+  formatCustomFieldValueInTimeZone,
+  formatWithFallback,
+} from "@chatbotx.io/utils/datetime"
 import {
   getAssignedTeamName,
   resolveAssigneeEmail,
@@ -41,8 +48,15 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const DATE_PATTERN = "yyyy-MM-dd"
-const DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss"
+const VARIABLE_PLACEHOLDER_REGEX = /\{\{([\w.]+|coupon:[^{}\n]+)\}\}/g
+// `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
+// where the placeholder sits — a call the position-independent mapping can't
+// make. resolveGenderLabel returns the opening form; inside a sentence it is
+// that label lowercased.
+const SENTENCE_CASED_VARIABLES = new Set<string>([systemFieldTypes.enum.gender])
+
+// The text before a placeholder that opens the message, a line, or a sentence.
+const SENTENCE_OPENING_RE = /(?:^|[.!?…\n\r])[\s"'“‘([]*$/
 
 const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.inboundMessage]: "Inbound Message",
@@ -74,31 +88,40 @@ const capitalizeFirstLetter = (value: string | null): string | null => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-export const extractVariables = (text: string): string[] => {
-  const regex = /\{\{([\w.]+)\}\}/g
-  return [...new Set(Array.from(text.matchAll(regex), (match) => match[1]))]
+export type InterpolateOptions = {
+  /** Case `{{gender}}` by position. Prose wants it; URLs and JSON must not. */
+  sentenceCase?: boolean
 }
+
+export const extractVariables = (text: string): string[] => [
+  ...new Set(
+    Array.from(text.matchAll(VARIABLE_PLACEHOLDER_REGEX), (match) =>
+      match[1].trim(),
+    ),
+  ),
+]
 
 export const interpolate = (
   text: string,
   mapping: Record<string, string>,
+  options: InterpolateOptions = {},
 ): string =>
   text.replace(
-    /\{\{([\w.]+)\}\}/g,
-    (match, variable) => mapping[variable] ?? match,
+    VARIABLE_PLACEHOLDER_REGEX,
+    (match, variable: string, offset: number) => {
+      const key = variable.trim()
+      const value = mapping[key]
+      if (value === undefined) {
+        return match
+      }
+      if (!(options.sentenceCase && SENTENCE_CASED_VARIABLES.has(key))) {
+        return value
+      }
+      return SENTENCE_OPENING_RE.test(text.slice(0, offset))
+        ? value
+        : value.toLowerCase()
+    },
   )
-
-const safeFormatInTimeZone = (
-  date: Date | string,
-  timezone: string | null | undefined,
-  pattern: string,
-): string => {
-  try {
-    return formatInTimeZone(date, timezone ?? "UTC", pattern)
-  } catch {
-    return formatInTimeZone(date, "UTC", pattern)
-  }
-}
 
 const getTimezone = ({
   contact,
@@ -106,11 +129,13 @@ const getTimezone = ({
 }: ContactVariableContext): string | null =>
   workspace?.timezone ?? normalizeStoredTimezone(contact.timezone)
 
-const getContactTimezone = ({
+export const getContactTimezone = ({
   contact,
   workspace,
 }: ContactVariableContext): string | null =>
-  normalizeStoredTimezone(contact.timezone) ?? workspace?.timezone ?? "UTC"
+  normalizeStoredTimezone(contact.timezone) ??
+  workspace?.timezone ??
+  DEFAULT_FILTER_TIMEZONE
 
 const formatDate = (
   date: Date | string | null | undefined,
@@ -120,7 +145,7 @@ const formatDate = (
     return null
   }
 
-  return safeFormatInTimeZone(date, timezone, DATE_PATTERN)
+  return formatWithFallback(date, timezone, DATE_FORMAT)
 }
 
 const formatDateTime = (
@@ -131,8 +156,19 @@ const formatDateTime = (
     return null
   }
 
-  return safeFormatInTimeZone(date, timezone, DATE_TIME_PATTERN)
+  return formatWithFallback(date, timezone, DATE_TIME_FORMAT)
 }
+
+export const renderCustomFieldValue = (
+  type: string,
+  value: string | null | undefined,
+  timezone: string | null | undefined,
+): string =>
+  formatCustomFieldValueInTimeZone(
+    type,
+    value,
+    timezone ?? DEFAULT_FILTER_TIMEZONE,
+  )
 
 const getWorkspaceLogo = ({
   workspace,
@@ -202,12 +238,27 @@ const getCommentMessagePostId = (
   return typeof postId === "string" ? postId : null
 }
 
+// The contact's own language, in the order the platform learns it: the channel
+// language we recorded, then the locale their profile reports. Undefined when
+// the contact never told us, so the caller picks the fallback. Blank values
+// normalise away here rather than shadowing that fallback.
+const getContactLanguage = (
+  context: ContactVariableContext,
+): string | undefined =>
+  languageFromLocale(context.contactInbox?.language) ??
+  languageFromLocale(context.contact.locale)
+
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
   key: SystemFieldType,
 ): Promise<string | null> => {
   const { contact, contactInbox, workspace } = context
   const timezone = getTimezone(context)
+  // Timestamps tied to a specific contact (when they subscribed, were last seen)
+  // read in the contact's own timezone, falling back to the workspace timezone
+  // (then UTC). `timezone` above stays workspace-first for workspace-scoped
+  // values like current_time. See getContactTimezone.
+  const contactTimezone = getContactTimezone(context)
 
   switch (key) {
     case systemFieldTypes.enum.email:
@@ -223,7 +274,10 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.profile_pic:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.gender:
-      return resolveGenderLabel(workspace?.language, contact.gender)
+      return resolveGenderLabel(
+        getContactLanguage(context) ?? workspace?.language,
+        contact.gender,
+      )
     case systemFieldTypes.enum.user_country:
       return contact.country
     case systemFieldTypes.enum.user_state:
@@ -243,9 +297,9 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.user_id:
       return contactInbox?.sourceId ?? null
     case systemFieldTypes.enum.subscribed_date:
-      return formatDate(contactInbox?.createdAt, timezone)
+      return formatDate(contactInbox?.createdAt, contactTimezone)
     case systemFieldTypes.enum.last_seen:
-      return formatDateTime(contactInbox?.contactLastReadAt, timezone)
+      return formatDateTime(contactInbox?.contactLastReadAt, contactTimezone)
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
@@ -276,10 +330,10 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.assigned_admin_id:
       return await resolveAssigneeId(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.current_user_time:
-      return safeFormatInTimeZone(
+      return formatWithFallback(
         new Date(),
         getContactTimezone(context),
-        DATE_TIME_PATTERN,
+        DATE_TIME_FORMAT,
       )
     case systemFieldTypes.enum.chat_history:
       return await getChatHistory(contact.id, 50)
@@ -296,7 +350,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.avatar:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.current_time:
-      return safeFormatInTimeZone(new Date(), timezone, DATE_TIME_PATTERN)
+      return formatWithFallback(new Date(), timezone, DATE_TIME_FORMAT)
     case systemFieldTypes.enum.workspace_name:
     case systemFieldTypes.enum.account_name:
       return workspace?.name ?? null
@@ -316,9 +370,18 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.ig_business_follow_user:
     case systemFieldTypes.enum.timezone_name:
     case systemFieldTypes.enum.fb_chat_link:
-    case systemFieldTypes.enum.me:
     case systemFieldTypes.enum.user_code:
     case systemFieldTypes.enum.webchat:
+      return await getIntegrationField(
+        contact,
+        key,
+        contactInbox,
+        context.conversation?.id,
+      )
+    case systemFieldTypes.enum.me:
+      if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
+        return null
+      }
       return await getIntegrationField(
         contact,
         key,

@@ -36,6 +36,7 @@ import {
   subscribeBroadcast,
   unsubscribeBroadcast,
 } from "./contact"
+import { markCouponUsed, setUpCoupon } from "./coupon"
 import { handleAIDeleteMessageHistory } from "./delete-message-history"
 import { subscribeDripSubscriber } from "./drip-handler"
 import { handleAIEditImage } from "./edit-image"
@@ -55,6 +56,7 @@ import { getUserData } from "./get-user-data"
 import { syncKlaviyoProfile } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { addMailerLiteSubscriber } from "./mailer-lite-handler"
+import { handleMakeStep } from "./make-handler"
 import { updateMessengerContactData } from "./messenger-contact-data"
 import {
   disableMessengerComposer,
@@ -110,6 +112,7 @@ export async function sendFlowMessage(
     metadata,
     quickReplies,
     sendFrom,
+    commentAnchor,
   } = props
   await enqueueFlowStepMessage({
     conversationId: conversation.id,
@@ -121,6 +124,7 @@ export async function sendFlowMessage(
     metadata,
     quickReplies,
     sendFrom,
+    commentAnchor,
   })
 }
 
@@ -133,6 +137,7 @@ async function splitTraffic({
   useLatestFlowVersion,
   sendFrom,
   nodeVisits,
+  commentAnchor,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -165,12 +170,21 @@ async function splitTraffic({
         nodeId: connectedEdge.target,
         sendFrom,
         nodeVisits,
+        commentAnchor,
         origin: webhookChannelOrigin(),
       },
     })
   }
 }
 
+// Known gap: `commentAnchor` (comment-triggered public/private-reply flows,
+// see `flow-utils.ts`) is not threaded into `scheduleSmartDelayResume` —
+// `ContactOnSmartDelay` has no column for it, and the resumed `sendFlow` job
+// is rebuilt from that DB row alone (`buildSendFlowResumeJob`). A public or
+// private reply flow with a "wait" step before its first message step loses
+// the anchor: private falls back to the normal (messaging-window-gated) DM
+// send, public falls back to a normal flow DM instead of a comment reply.
+// Fixing this needs a schema change; out of scope for now.
 async function handleWait({
   conversation,
   flowVersion,
@@ -251,6 +265,7 @@ async function startAnotherNode(
       metadata: props.metadata,
       sendFrom: props.sendFrom,
       nodeVisits: props.nodeVisits,
+      commentAnchor: props.commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })
@@ -263,6 +278,7 @@ async function startExternalFlow({
   metadata,
   sendFrom,
   nodeVisits,
+  commentAnchor,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -273,6 +289,7 @@ async function startExternalFlow({
       metadata,
       sendFrom,
       nodeVisits,
+      commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })
@@ -285,6 +302,7 @@ async function startExternalNode({
   metadata,
   sendFrom,
   nodeVisits,
+  commentAnchor,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -296,6 +314,7 @@ async function startExternalNode({
       metadata,
       sendFrom,
       nodeVisits,
+      commentAnchor,
       origin: webhookChannelOrigin(),
     },
   })
@@ -334,6 +353,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.autoAssignConversation]: stepAutoAssignConversation,
   [stepTypes.enum.blockContact]: stepBlockContact,
   [stepTypes.enum.callApi]: externalRequest,
+  [stepTypes.enum.make]: handleMakeStep,
   [stepTypes.enum.cancelContactInput]: undefined,
   [stepTypes.enum.clearCustomField]: clearContactCustomField,
   [stepTypes.enum.countCharacters]: countCharacters,
@@ -390,6 +410,8 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
   [stepTypes.enum.questionnaires]: questionnaires,
+  [stepTypes.enum.setUpCoupon]: setUpCoupon,
+  [stepTypes.enum.markCouponUsed]: markCouponUsed,
   [stepTypes.enum.condition]: handleCondition,
   [stepTypes.enum.subscribeBroadcast]: subscribeBroadcast,
   [stepTypes.enum.unsubscribeBroadcast]: unsubscribeBroadcast,

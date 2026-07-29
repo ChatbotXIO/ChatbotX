@@ -12,6 +12,7 @@ import {
   LinkIcon,
   MapIcon,
   QrCodeIcon,
+  TicketPercentIcon,
   UserCheck2Icon,
   Wand2Icon,
 } from "lucide-react"
@@ -33,6 +34,7 @@ const TOOLS_CONFIG = [
     labelKey: "facebookLeadAdsAutomation.title",
     descriptionKey: "facebookLeadAdsAutomation.description",
     icon: SiFacebook,
+    getLink: (id: string) => `/space/${id}/fb-lead-ads`,
   },
   {
     id: "reflinks",
@@ -98,6 +100,13 @@ const TOOLS_CONFIG = [
     labelKey: "botSimulator.title",
     descriptionKey: "botSimulator.description",
     icon: BotIcon,
+  },
+  {
+    id: "coupons",
+    labelKey: "coupons.title",
+    descriptionKey: "coupons.description",
+    icon: TicketPercentIcon,
+    getLink: (id: string) => `/space/${id}/topic-coupons`,
   },
   // {
   //   id: "webhooks",

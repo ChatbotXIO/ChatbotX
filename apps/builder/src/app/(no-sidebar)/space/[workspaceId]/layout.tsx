@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { ReactNode } from "react"
+import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -40,5 +41,9 @@ export default async function WorkspaceNoSidebarLayout({
     ),
   )
 
-  return children
+  return (
+    <CouponTopicStoreProvider autoInitialize={false} workspaceId={workspaceId}>
+      {children}
+    </CouponTopicStoreProvider>
+  )
 }

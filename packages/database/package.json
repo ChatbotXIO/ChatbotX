@@ -9,6 +9,8 @@
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "countries-list": "^3.3.0",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "drizzle-orm": "1.0.0-beta.22",
     "pg": "^8.20.0",
     "zod": "^4.3.6"
@@ -26,6 +28,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "db:check": "dotenv -e ../../.env -- drizzle-kit check",
+    "db:check-drift": "dotenv -e ../../.env -- node ./scripts/check-schema-drift.mjs",
     "db:fix-chain": "node ./scripts/fix-migration-chain.mjs",
     "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
     "db:bootstrap-message-shard": "dotenv -e ../../.env -- tsx scripts/bootstrap-message-shard.ts",

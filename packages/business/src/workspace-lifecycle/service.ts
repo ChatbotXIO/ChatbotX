@@ -6,14 +6,9 @@ import {
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
-import {
-  channelTypes,
-  inboxStatuses,
-  ROOT_TENANT_ID,
-} from "@chatbotx.io/database/partials"
+import { channelTypes, ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
 import {
   coexistSyncRunModel,
-  inboxModel,
   integrationInstagramModel,
   integrationMessengerModel,
   integrationSmtpModel,
@@ -26,6 +21,14 @@ import {
   whatsappCoexistStagingModel,
 } from "@chatbotx.io/database/schema"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
+// Subpath, not the barrel: the barrel re-exports `dispatch-manager`, whose
+// bucket hashing imports Node's `crypto`. This module ends up in the builder's
+// Edge bundle (instrumentation → oRPC → workspace token auth → workspace
+// service), where a Node built-in is a hard compile error.
+import {
+  cancelPendingDispatchesForWorkspace,
+  removeDispatchesFromSchedule,
+} from "@chatbotx.io/sequence-scheduler/dispatch-cancel"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -43,6 +46,11 @@ import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
 import { logger } from "../logger"
 import { userQuotaService } from "../user-quota/service"
+import {
+  cancelInFlightBroadcastsForWorkspace,
+  completeActiveSequenceEnrollmentsForWorkspace,
+} from "./campaign-cleanup"
+import { cancelSmartDelaysForWorkspace } from "./smart-delay-cleanup"
 
 type WorkspaceTeardownIntegration = {
   disconnect(auth: unknown): Promise<void>
@@ -51,6 +59,11 @@ type WorkspaceTeardownIntegration = {
 
 type DisconnectService = {
   disconnect(workspaceId: string): Promise<void>
+}
+
+type DispatchToRemove = {
+  bucket: number
+  id: string
 }
 
 export type WorkspaceTeardownIntegrations = Record<
@@ -95,6 +108,7 @@ const HEAVY_PURGE_MAX_BATCHES_PER_TABLE = 2000
 class WorkspaceLifecycleService extends BaseService {
   async disconnectWorkspaceChannels(props: {
     workspaceId: string
+    ownerId: string
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
     tx?: DatabaseClient
@@ -109,6 +123,7 @@ class WorkspaceLifecycleService extends BaseService {
     for (const inbox of inboxes) {
       await this.disconnectWorkspaceInbox({
         inbox,
+        ownerId: props.ownerId,
         integrations: props.integrations,
         teardownLevel: props.teardownLevel ?? "disconnect",
         tx,
@@ -157,6 +172,66 @@ class WorkspaceLifecycleService extends BaseService {
         )
       }
     })
+  }
+
+  /**
+   * Disarms everything a workspace has scheduled to fire on its own: in-flight
+   * broadcasts, active sequence enrollments and their queued dispatches, plus
+   * pending/scheduled smart delays (wait steps and follow-ups).
+   *
+   * Called when deletion is scheduled and when the owner's entitlement is torn
+   * down. The runtime guards (`withBlockedOwnerGuard`) would no-op these jobs
+   * anyway, but they would keep waking for the whole grace window — and the
+   * smart-delay scanner would churn them through claim → drop → reset every
+   * tick. Cancelling the rows is what makes the freeze quiet as well as safe.
+   *
+   * Each source is independent and best-effort: a Redis failure on one must not
+   * leave the others armed.
+   */
+  async freezeWorkspaceRuntime(workspaceId: string): Promise<void> {
+    const dispatchesToRemove: DispatchToRemove[] = await db.transaction(
+      async (tx) => {
+        await cancelInFlightBroadcastsForWorkspace({
+          tx,
+          workspaceId,
+        })
+
+        await completeActiveSequenceEnrollmentsForWorkspace({
+          tx,
+          workspaceId,
+        })
+
+        return await cancelPendingDispatchesForWorkspace({
+          client: tx,
+          removeFromSchedule: false,
+          workspaceId,
+        })
+      },
+    )
+
+    try {
+      await removeDispatchesFromSchedule(dispatchesToRemove)
+    } catch (err) {
+      logger.warn(
+        { err, dispatchCount: dispatchesToRemove.length, workspaceId },
+        "workspace-teardown: failed to remove dispatches from schedule",
+      )
+    }
+
+    try {
+      const canceledSmartDelays = await cancelSmartDelaysForWorkspace({
+        workspaceId,
+      })
+      logger.info(
+        { canceledSmartDelays, workspaceId },
+        "workspace-freeze: canceled smart delays",
+      )
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId },
+        "workspace-freeze: failed to cancel smart delays",
+      )
+    }
   }
 
   /**
@@ -235,6 +310,7 @@ class WorkspaceLifecycleService extends BaseService {
         integrations: props.integrations,
         teardownLevel,
         workspaceId: workspace.id,
+        ownerId: props.ownerId,
       })
       if (teardownLevel === "disconnect") {
         await this.disconnectWorkspaceIntegrations(workspace.id)
@@ -249,11 +325,12 @@ class WorkspaceLifecycleService extends BaseService {
 
   private async disconnectWorkspaceInbox(props: {
     inbox: InboxWithIntegrations
+    ownerId: string
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel: WorkspaceTeardownLevel
     tx: DatabaseClient
   }): Promise<void> {
-    const { inbox, integrations, teardownLevel, tx } = props
+    const { inbox, ownerId, integrations, teardownLevel, tx } = props
     const removeIntegrationRow = teardownLevel === "disconnect"
 
     const finish = async (disconnect?: WorkspaceTeardownIntegration) => {
@@ -270,10 +347,16 @@ class WorkspaceLifecycleService extends BaseService {
         }
       }
 
-      await tx
-        .update(inboxModel)
-        .set({ status: inboxStatuses.enum.disconnected })
-        .where(eq(inboxModel.id, inbox.id))
+      // Delegates to inboxService (already a dependency here) rather than
+      // calling quotaEnforcementService/workspaceUsageService directly: those
+      // import back through tenant/workspace services and would close a
+      // circular dependency with this module.
+      await inboxService.disconnect({
+        inboxId: inbox.id,
+        ownerId,
+        workspaceId: inbox.workspaceId,
+        tx,
+      })
     }
 
     switch (inbox.channel) {

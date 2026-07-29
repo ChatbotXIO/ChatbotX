@@ -5,6 +5,7 @@ import {
   buildPlanNotice,
   buildQuotaMetrics,
   buildTrialInfo,
+  buildWorkspaceQuotaMetrics,
   isBlockedFromPlan,
   type QuotaMetric,
   quotaUsageState,
@@ -55,6 +56,21 @@ describe("buildQuotaMetrics", () => {
       "contacts",
       "teamMembers",
     ])
+  })
+})
+
+describe("buildWorkspaceQuotaMetrics", () => {
+  test("includes monthly bot messages with its workspace contribution", () => {
+    expect(
+      buildWorkspaceQuotaMetrics({
+        monthlyBotMessages: { used: 10, limit: 100, workspaceUsed: 7 },
+      }),
+    ).toContainEqual({
+      key: "monthlyBotMessages",
+      used: 10,
+      limit: 100,
+      workspaceUsed: 7,
+    })
   })
 })
 

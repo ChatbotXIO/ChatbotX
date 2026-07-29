@@ -6,6 +6,8 @@ import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { WorkflowIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { replaceCouponVariableTokensWithLabels } from "@/components/tiptap/extensions/variable-injection/mention"
+import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
 import { useWhatsappFlow } from "../../stores/whatsapp-flow-store-provider"
 import { ButtonGroupViewer } from "../button/viewer"
 
@@ -17,6 +19,7 @@ const WhatsappFlowStepViewer = (props: WhatsappFlowStepViewerProps) => {
   const { data } = props
   const t = useTranslations()
   const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
+  const { labelById } = useCouponTopicOptions()
   const buttons = useMemo(() => {
     if (Array.isArray(data.buttons)) {
       return data.buttons
@@ -47,6 +50,10 @@ const WhatsappFlowStepViewer = (props: WhatsappFlowStepViewerProps) => {
       t("flows.whatsappFlow.selectFlow"),
     [whatsappFlows, data.flow.id, t],
   )
+  const previewText = useMemo(
+    () => replaceCouponVariableTokensWithLabels(data.text, labelById),
+    [data.text, labelById],
+  )
 
   return (
     <Card className="overflow-hidden p-0">
@@ -59,7 +66,7 @@ const WhatsappFlowStepViewer = (props: WhatsappFlowStepViewerProps) => {
             </span>
           </div>
           <p className="bg-gray-200 px-4 py-2 dark:bg-neutral-600">
-            {data.text}
+            {previewText}
           </p>
         </div>
         <ButtonGroupViewer data={buttons} />

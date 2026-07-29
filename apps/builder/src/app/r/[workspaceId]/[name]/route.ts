@@ -5,10 +5,11 @@ import {
   decodeButtonPayload,
   type FlowNode,
   flowEventTypeSchema,
-  getNodeFromButton,
+  resolveFlowActionTarget,
 } from "@chatbotx.io/flow-config"
 import { interpolate } from "@chatbotx.io/variables"
 import { type NextRequest, NextResponse } from "next/server"
+import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export const GET = async (
   request: NextRequest,
@@ -16,6 +17,13 @@ export const GET = async (
 ) => {
   const { workspaceId, name: nameParam } = await context.params
   const name = decodeURIComponent(nameParam)
+  const { servable } = await loadServableWorkspace(workspaceId)
+  if (!servable) {
+    return NextResponse.json(
+      { code: "workspaceScheduledDeletion" },
+      { status: 410 },
+    )
+  }
 
   const row = await db.query.magicLinkModel.findFirst({
     where: {
@@ -83,20 +91,19 @@ export const GET = async (
 
   const nodes = flowVersion?.nodes as unknown as FlowNode[]
 
-  const { button: foundedButton, nodeId: foundedNodeId } = getNodeFromButton(
-    nodes,
-    decodedButton?.buttonId ?? "",
-  )
+  // Quick replies use the same editor as step buttons, so they can also carry a
+  // website link — resolving both keeps their magic links redirecting.
+  const target = resolveFlowActionTarget(nodes, decodedButton?.buttonId ?? "")
 
-  if (!foundedButton) {
+  if (!target) {
     return NextResponse.json({ message: "Button not found" }, { status: 404 })
   }
-  if (!foundedNodeId) {
+  if (!target.nodeId) {
     return NextResponse.json({ message: "Node ID is missing" }, { status: 400 })
   }
 
   await emit(flowEventTypeSchema.enum["flow:clicked"], {
-    nodeId: foundedNodeId,
+    nodeId: target.nodeId,
     context: {
       workspaceId,
       contactId: contactInbox.contactId,

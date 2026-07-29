@@ -6,8 +6,12 @@ export type ContactFilterConditionInput = {
   value?: unknown
   /** Present for dynamic custom-field conditions (`field === "customField"`). */
   customFieldId?: string
+  /** Precise custom-field type (`date` | `datetime`) driving temporal semantics. */
+  customFieldType?: string
   /** Form/value-input type of the custom field, used to cast the text value. */
   valueType?: string
+  /** Present for dynamic coupon-topic conditions (`field === "couponTopic"`). */
+  topicId?: string
 }
 
 /**
@@ -19,6 +23,12 @@ export type ContactFilterConditionInput = {
 export type ContactFilterCriteriaInput = {
   operator: "and" | "or"
   conditions: unknown[]
+  /**
+   * IANA timezone used to interpret naive date/datetime condition values (the
+   * browser's local zone, captured at build/save time). Defaults to UTC when
+   * absent or unrecognized. See {@link ./timezone.resolveFilterTimezone}.
+   */
+  timezone?: string
 }
 
 export type ContactWhere = Record<string, unknown>

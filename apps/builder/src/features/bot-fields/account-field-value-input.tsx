@@ -13,10 +13,12 @@ import { useTranslations } from "next-intl"
 type BotFieldValueInputProps = {
   name?: string
   type: CustomFieldType
+  saveFormat?: "formatted" | "iso"
 }
 
 export const BotFieldValueInput = ({
   name = "value",
+  saveFormat = "formatted",
   type,
 }: BotFieldValueInputProps) => {
   const t = useTranslations()
@@ -42,11 +44,17 @@ export const BotFieldValueInput = ({
         />
       )
     case "date": {
-      return <DatePickerField name={name} />
+      return <DatePickerField name={name} saveFormat={saveFormat} />
     }
     case "datetime": {
       const dateTimeFormat = "yyyy-MM-dd HH:mm"
-      return <DateTimePickerField dateTimeFormat={dateTimeFormat} name={name} />
+      return (
+        <DateTimePickerField
+          dateTimeFormat={dateTimeFormat}
+          name={name}
+          saveFormat={saveFormat}
+        />
+      )
     }
     case "longText":
       return (

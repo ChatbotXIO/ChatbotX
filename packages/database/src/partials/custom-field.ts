@@ -29,6 +29,7 @@ export const operatorTypes = z.enum([
   "gte",
   "isBetween",
   "notBetween",
+  "used",
 ])
 export type OperatorType = z.infer<typeof operatorTypes>
 

@@ -16,6 +16,8 @@ type InboxCardListProps = {
   workspaceId: string
   allowAddNew?: boolean
   blocked?: boolean
+  /** Why creation is blocked; picks the create-card copy. Defaults to the plan/trial message. */
+  reason?: "status" | "mac" | null
   inboxes: ListInboxesResponse["data"]
 }
 
@@ -23,6 +25,7 @@ export function InboxCardList({
   workspaceId,
   allowAddNew = true,
   blocked = false,
+  reason,
   inboxes,
 }: InboxCardListProps) {
   return (
@@ -32,7 +35,11 @@ export function InboxCardList({
       ))}
 
       {allowAddNew && (
-        <InboxNewCard blocked={blocked} workspaceId={workspaceId} />
+        <InboxNewCard
+          blocked={blocked}
+          reason={reason}
+          workspaceId={workspaceId}
+        />
       )}
     </div>
   )

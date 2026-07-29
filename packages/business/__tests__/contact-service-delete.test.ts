@@ -1,7 +1,11 @@
+import { macAnalyticsService } from "@chatbotx.io/analytics"
 import { db } from "@chatbotx.io/database/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { contactService } from "../src/contact"
 import { messageCleanupService } from "../src/message-cleanup"
+import { quotaEnforcementService } from "../src/quota-enforcement/service"
+import { userQuotaService } from "../src/user-quota/service"
+import { workspaceService } from "../src/workspace/service"
 
 type FakeContact = {
   id: string
@@ -202,5 +206,149 @@ describe("contactService.delete", () => {
     expect(select).not.toHaveBeenCalled()
     expect(transaction).not.toHaveBeenCalled()
     expect(record).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactService.delete — quota release", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const stubDelete = (contacts: FakeContact[]) => {
+    vi.spyOn(db.query.contactModel, "findMany").mockResolvedValue(
+      contacts as never,
+    )
+    stubConversations([])
+    vi.spyOn(messageCleanupService, "record").mockResolvedValue()
+    vi.spyOn(contactService, "invalidate").mockResolvedValue()
+    vi.spyOn(db, "transaction").mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        await fn({
+          delete: () => ({ where: () => Promise.resolve() }),
+        })
+      },
+    )
+  }
+
+  test("releases contacts for every deleted contact", async () => {
+    const contacts = [makeContact(0), makeContact(1)]
+    stubDelete(contacts)
+    vi.spyOn(workspaceService, "find").mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    } as never)
+    vi.spyOn(userQuotaService, "getForUser").mockResolvedValue({
+      periodStart: null,
+    } as never)
+    const releaseBy = vi
+      .spyOn(quotaEnforcementService, "releaseBy")
+      .mockResolvedValue()
+
+    await contactService.delete({
+      workspaceId: "ws-1",
+      ids: contacts.map((c) => c.id),
+    })
+
+    expect(releaseBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "contacts",
+      count: 2,
+    })
+  })
+
+  test("does not release mac when the owner has no billing period", async () => {
+    const contacts = [makeContact(0)]
+    stubDelete(contacts)
+    vi.spyOn(workspaceService, "find").mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    } as never)
+    vi.spyOn(userQuotaService, "getForUser").mockResolvedValue({
+      periodStart: null,
+    } as never)
+    const releaseBy = vi
+      .spyOn(quotaEnforcementService, "releaseBy")
+      .mockResolvedValue()
+
+    await contactService.delete({ workspaceId: "ws-1", ids: ["contact-0"] })
+
+    expect(releaseBy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ metric: "mac" }),
+    )
+  })
+
+  test("releases mac only for contacts active in the current period", async () => {
+    const contactA = makeContact(0)
+    const contactB = makeContact(1)
+    stubDelete([contactA, contactB])
+    vi.spyOn(workspaceService, "find").mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    } as never)
+    vi.spyOn(userQuotaService, "getForUser").mockResolvedValue({
+      periodStart: new Date("2026-07-01T00:00:00Z"),
+    } as never)
+    // Only contact 0's contactInbox is MAC-active this period.
+    vi.spyOn(macAnalyticsService, "getActiveContactInboxIds").mockResolvedValue(
+      new Set([contactA.contactInboxes[0]?.id as string]),
+    )
+    const releaseBy = vi
+      .spyOn(quotaEnforcementService, "releaseBy")
+      .mockResolvedValue()
+
+    await contactService.delete({
+      workspaceId: "ws-1",
+      ids: [contactA.id, contactB.id],
+    })
+
+    expect(releaseBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "contacts",
+      count: 2,
+    })
+    expect(releaseBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "mac",
+      count: 1,
+    })
+  })
+
+  test("does not release mac when no deleted contact was active this period", async () => {
+    const contacts = [makeContact(0)]
+    stubDelete(contacts)
+    vi.spyOn(workspaceService, "find").mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    } as never)
+    vi.spyOn(userQuotaService, "getForUser").mockResolvedValue({
+      periodStart: new Date("2026-07-01T00:00:00Z"),
+    } as never)
+    vi.spyOn(macAnalyticsService, "getActiveContactInboxIds").mockResolvedValue(
+      new Set(),
+    )
+    const releaseBy = vi
+      .spyOn(quotaEnforcementService, "releaseBy")
+      .mockResolvedValue()
+
+    await contactService.delete({ workspaceId: "ws-1", ids: ["contact-0"] })
+
+    expect(releaseBy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ metric: "mac" }),
+    )
+  })
+
+  test("does not throw and still returns deleted contacts when release fails", async () => {
+    const contacts = [makeContact(0)]
+    stubDelete(contacts)
+    vi.spyOn(workspaceService, "find").mockRejectedValue(new Error("db down"))
+    const releaseBy = vi.spyOn(quotaEnforcementService, "releaseBy")
+
+    const result = await contactService.delete({
+      workspaceId: "ws-1",
+      ids: ["contact-0"],
+    })
+
+    expect(result).toHaveLength(1)
+    expect(releaseBy).not.toHaveBeenCalled()
   })
 })

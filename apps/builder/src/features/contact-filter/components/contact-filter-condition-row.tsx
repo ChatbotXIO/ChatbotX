@@ -27,16 +27,27 @@ export const ContactFilterConditionRow = ({
   const t = useTranslations()
 
   const isCustomField = row.field === "customField"
-  const fieldConfig = configs.find((c) =>
-    isCustomField && "customFieldId" in row
-      ? String(c.customFieldId) === String(row.customFieldId)
-      : c.name === row.field,
-  )
+  const isCouponTopic = row.field === "couponTopic"
+  const fieldConfig = configs.find((c) => {
+    if (isCustomField && "customFieldId" in row) {
+      return String(c.customFieldId) === String(row.customFieldId)
+    }
+    if (isCouponTopic && "topicId" in row) {
+      return String(c.topicId) === String(row.topicId)
+    }
+    return c.name === row.field
+  })
   const fieldLabel =
     fieldConfig?.label ??
-    (isCustomField
-      ? t("fields.customField.label")
-      : t(`condition.fields.${row.field}`))
+    (() => {
+      if (isCustomField) {
+        return t("fields.customField.label")
+      }
+      if (isCouponTopic) {
+        return t("condition.fields.couponTopic")
+      }
+      return t(`condition.fields.${row.field}`)
+    })()
   const valueDisplay = formatConditionValueDisplay(
     "value" in row ? row.value : undefined,
     fieldConfig?.options,

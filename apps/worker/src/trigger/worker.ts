@@ -1,3 +1,4 @@
+import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   defaultWorkerOptions,
@@ -45,10 +46,14 @@ const worker = new Worker(
           `Found ${matchedTriggers.length} triggers for event type ${eventData.eventType}`,
         )
 
-        await Promise.allSettled(
-          matchedTriggers.map((trigger) =>
-            triggerExecutor.execute(trigger, eventData.contactId),
-          ),
+        await runWithWebhookExecutionContext(
+          eventData.channelOriginated ? { source: "webhook" } : {},
+          () =>
+            Promise.allSettled(
+              matchedTriggers.map((trigger) =>
+                triggerExecutor.execute(trigger, eventData.contactId),
+              ),
+            ),
         )
         return
       }

@@ -1,3 +1,4 @@
+import { Transform } from "node:stream"
 import { db, eq } from "@chatbotx.io/database/client"
 import type { ImportFormat, ImportType } from "@chatbotx.io/database/partials"
 import { type fileModel, importModel } from "@chatbotx.io/database/schema"
@@ -85,15 +86,11 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
   const counters: Counters = { processed: 0, success: 0, failed: 0 }
   let parser: AsyncIterable<Record<string, unknown>>
   try {
-    // M-4: Use HeadObject for a reliable size check. GetObject ContentLength
-    // may be absent for multipart-uploaded objects on some S3-compatible stores.
-    const head = await uploader.headObject(row.file.path)
-    const objectSize = head.ContentLength ?? 0
-    if (objectSize > maxBytes) {
-      await failImport(row.id, `File exceeds ${config.maxFileSizeMB}MB limit`)
-      return
-    }
-    const { stream } = await uploader.getObjectStream(row.file.path)
+    const { stream } = await loadImportObject({
+      importId: row.id,
+      path: row.file.path,
+      maxBytes,
+    })
     parser = createImportRowParser(row.format, stream)
   } catch (error) {
     const message = error instanceof Error ? error.message : "Parser error"
@@ -198,4 +195,59 @@ const flushCounters = async (
       failedCount: counters.failed,
     })
     .where(eq(importModel.id, importId))
+}
+
+const loadImportObject = async (input: {
+  importId: string
+  path: string
+  maxBytes: number
+}): Promise<{ stream: import("node:stream").Readable }> => {
+  let headSize: number | null = null
+  try {
+    const head = await uploader.headObject(input.path)
+    headSize = head.ContentLength ?? null
+  } catch (error) {
+    logger.warn(
+      { err: error },
+      `Import ${input.importId} headObject failed, falling back to stream`,
+    )
+  }
+
+  if (headSize != null && headSize > input.maxBytes) {
+    throw new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`)
+  }
+
+  const object = await uploader.getObjectStream(input.path)
+  const objectSize = object.contentLength ?? null
+  if (objectSize != null && objectSize > input.maxBytes) {
+    throw new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`)
+  }
+
+  if (headSize != null || objectSize != null) {
+    return { stream: object.stream }
+  }
+
+  let bytes = 0
+  const guard = new Transform({
+    transform(chunk, _encoding, callback) {
+      let size = 0
+      if (typeof chunk === "string") {
+        size = Buffer.byteLength(chunk)
+      } else if (Buffer.isBuffer(chunk)) {
+        size = chunk.length
+      } else {
+        size = chunk.byteLength
+      }
+      bytes += size
+      if (bytes > input.maxBytes) {
+        callback(
+          new Error(`File exceeds ${input.maxBytes / BYTES_PER_MB}MB limit`),
+        )
+        return
+      }
+      callback(null, chunk)
+    },
+  })
+
+  return { stream: object.stream.pipe(guard) }
 }

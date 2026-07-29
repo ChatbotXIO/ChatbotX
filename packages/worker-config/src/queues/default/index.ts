@@ -2,7 +2,11 @@ import type {
   BroadcastEventType,
   SequenceStepEventType,
 } from "@chatbotx.io/analytics/schemas"
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  CouponIssueStatus,
+  CouponUsageStatus,
+} from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import { Queue } from "bullmq"
 import {
@@ -22,6 +26,7 @@ export const defaultQueue =
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",
+  exportCoupons: "exportCoupons",
   bulkTagContacts: "bulkTagContacts",
   runImport: "runImport",
   sendErrorLog: "sendErrorLog",
@@ -52,6 +57,25 @@ export type JobExportContacts = {
     | { contactIds: string[]; filter?: undefined }
     | { contactIds?: undefined; filter: ExportContactsFilter }
   )
+}
+
+export type ExportCouponsFilter = {
+  topicId?: string
+  issueStatus?: CouponIssueStatus
+  usageStatus?: CouponUsageStatus
+  search?: string
+}
+
+export type JobExportCoupons = {
+  type: typeof DefaultJobAction.exportCoupons
+  data: {
+    requestedUserId: string
+    workspaceId: string
+    fileId: string
+    outputPath: string
+    outputFormat: "csv"
+    filter?: ExportCouponsFilter
+  }
 }
 
 export type JobBulkTagContacts = {
@@ -151,6 +175,7 @@ export type JobSyncChannelLabels = {
 
 export type DefaultJobData =
   | JobExportContacts
+  | JobExportCoupons
   | JobBulkTagContacts
   | JobRunImport
   | JobSendErrorLog

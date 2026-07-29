@@ -66,15 +66,21 @@ const { evaluateDateTimeTriggers } = await import(
   "../src/trigger/services/datetime-trigger-evaluator"
 )
 
-const dateTimeCondition = (customFieldId: string) => ({
+const dateTimeCondition = (
+  customFieldId: string,
+  overrides: { at?: string; timezone?: string } = {},
+) => ({
   id: `condition-${customFieldId}`,
   type: triggerEventTypes.enum.dateTimeBasedTrigger,
   sourceId: customFieldId,
   value: {
     triggerType: "atTheDayOf",
-    at: "14",
+    at: overrides.at ?? "14",
     timeValue: 0,
     timeType: "minutes",
+    // Only stamp the key when a zone is provided so `dateTimeCondition(id)`
+    // still reproduces a legacy condition saved before timezone capture.
+    ...(overrides.timezone ? { timezone: overrides.timezone } : {}),
   },
 })
 
@@ -82,21 +88,23 @@ const triggerRow = (params: {
   actions?: unknown[]
   conditions: ReturnType<typeof dateTimeCondition>[]
   id: string
+  timezone?: string
 }) => ({
   id: params.id,
   workspaceId: "workspace-1",
   actions: params.actions ?? [{ type: "sendMessage" }],
   conditions: params.conditions,
-  workspace: { timezone: "UTC" },
+  workspace: { timezone: params.timezone ?? "UTC" },
 })
 
 const contactCustomFieldRow = (params: {
   contactId: string
   customFieldId: string
+  value?: string
 }) => ({
   contactId: params.contactId,
   customFieldId: params.customFieldId,
-  value: "2026-07-11T14:00:00.000Z",
+  value: params.value ?? "2026-07-11T14:00:00.000Z",
   contact: { workspaceId: "workspace-1" },
 })
 
@@ -303,5 +311,87 @@ describe("evaluateDateTimeTriggers", () => {
 
     expect(results).toEqual([])
     expect(actionExecute).not.toHaveBeenCalled()
+  })
+
+  test("resolves the target field in the condition's captured timezone over the workspace zone", async () => {
+    // Workspace is UTC, but the condition was saved in Asia/Ho_Chi_Minh (+7).
+    // 14:00 UTC is 21:00 in +7, so `at: "21"` only fires when the condition's
+    // own zone is honored — a UTC resolution would land on hour 14 and miss.
+    triggerFindMany.mockResolvedValueOnce([
+      triggerRow({
+        id: "trigger-001",
+        timezone: "UTC",
+        conditions: [
+          dateTimeCondition("field-1", {
+            at: "21",
+            timezone: "Asia/Ho_Chi_Minh",
+          }),
+        ],
+      }),
+    ])
+    listContactCustomFieldsForDateTimeSweep.mockResolvedValueOnce({
+      rows: [
+        contactCustomFieldRow({
+          contactId: "contact-1",
+          customFieldId: "field-1",
+          value: "2026-07-11T02:00:00.000Z",
+        }),
+      ],
+      nextCursor: undefined,
+    })
+    listContactCustomFieldsForDateTimeSweepContacts.mockResolvedValueOnce([
+      contactCustomFieldRow({
+        contactId: "contact-1",
+        customFieldId: "field-1",
+        value: "2026-07-11T02:00:00.000Z",
+      }),
+    ])
+
+    const results = await evaluateDateTimeTriggers({
+      startOfMinute: Date.parse("2026-07-11T14:00:00.000Z"),
+    })
+
+    expect(results).toEqual([
+      { triggerId: "trigger-001", contactId: "contact-1", matched: true },
+    ])
+    expect(actionExecute).toHaveBeenCalledTimes(1)
+  })
+
+  test("falls back to the workspace timezone for legacy conditions with no captured zone", async () => {
+    // The condition predates timezone capture (no zone stored), so day
+    // boundaries and hour-of-day must resolve in the workspace zone (+7).
+    triggerFindMany.mockResolvedValueOnce([
+      triggerRow({
+        id: "trigger-001",
+        timezone: "Asia/Ho_Chi_Minh",
+        conditions: [dateTimeCondition("field-1", { at: "21" })],
+      }),
+    ])
+    listContactCustomFieldsForDateTimeSweep.mockResolvedValueOnce({
+      rows: [
+        contactCustomFieldRow({
+          contactId: "contact-1",
+          customFieldId: "field-1",
+          value: "2026-07-11T02:00:00.000Z",
+        }),
+      ],
+      nextCursor: undefined,
+    })
+    listContactCustomFieldsForDateTimeSweepContacts.mockResolvedValueOnce([
+      contactCustomFieldRow({
+        contactId: "contact-1",
+        customFieldId: "field-1",
+        value: "2026-07-11T02:00:00.000Z",
+      }),
+    ])
+
+    const results = await evaluateDateTimeTriggers({
+      startOfMinute: Date.parse("2026-07-11T14:00:00.000Z"),
+    })
+
+    expect(results).toEqual([
+      { triggerId: "trigger-001", contactId: "contact-1", matched: true },
+    ])
+    expect(actionExecute).toHaveBeenCalledTimes(1)
   })
 })

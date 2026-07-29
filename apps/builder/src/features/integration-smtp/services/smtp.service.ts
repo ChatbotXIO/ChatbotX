@@ -136,20 +136,28 @@ export async function updateSmtp(
 }
 
 export async function deleteSmtp(workspaceId: string, id: string) {
-  const integration = await findOrFail({
-    table: integrationSmtpModel,
-    where: {
-      id,
-      workspaceId,
-    },
-    message: "SMTP integration not found",
-  })
+  const [integration, workspace] = await Promise.all([
+    findOrFail({
+      table: integrationSmtpModel,
+      where: {
+        id,
+        workspaceId,
+      },
+      message: "SMTP integration not found",
+    }),
+    workspaceService.findById({ id: workspaceId }),
+  ])
 
   await db.transaction(async (tx) => {
     await tx
       .delete(integrationSmtpModel)
       .where(eq(integrationSmtpModel.id, integration.id))
 
-    await inboxService.disconnect({ inboxId: integration.inboxId, tx })
+    await inboxService.disconnect({
+      inboxId: integration.inboxId,
+      ownerId: workspace.ownerId,
+      workspaceId,
+      tx,
+    })
   })
 }

@@ -35,6 +35,13 @@ export const enqueueBroadcast = async () => {
         opts: {
           // Deduplicate fan-out when the scheduler job retries.
           jobId: `schedule-prepare-broadcast-${broadcast.id}`,
+          // A deterministic jobId is a Redis dedup key that outlives ANY
+          // terminal state, `failed` included. Without these two the first
+          // permanent failure turns the key into a tombstone: every later
+          // tick's addBulk is silently dropped, so the broadcast stays
+          // `scheduled` forever and nothing surfaces the stall.
+          removeOnComplete: true,
+          removeOnFail: true,
         },
       })),
     )

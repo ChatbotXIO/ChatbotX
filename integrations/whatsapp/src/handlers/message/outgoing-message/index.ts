@@ -1,4 +1,5 @@
 import {
+  type SendCarouselStepSchema,
   type SendImageStepSchema,
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
@@ -22,6 +23,7 @@ import { API_URL, DEFAULT_API_VERSION } from "../../../constants"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import type { TemplateMessage, WhatsappAuthValue } from "../../../schema"
+import { generateOutgoingMessages as convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
@@ -81,6 +83,25 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.sendCarousel: {
+      const carouselStepProps = props as Parameters<
+        MessageHandlers<
+          WhatsappAuthValue,
+          SendCarouselStepSchema
+        >["sendFlowStep"]
+      >[0]
+
+      yield* convertFlowStepCarousel({
+        flowId: carouselStepProps.data.flowId,
+        flowVersionId: carouselStepProps.data.flowVersionId,
+        metadata: carouselStepProps.data.metadata,
+        quickReplies: carouselStepProps.data.quickReplies,
+        payload: {
+          cards: carouselStepProps.data.step.cards,
+        },
+      })
+      break
+    }
     case stepTypes.enum.sendWaTemplateMessage:
       yield* convertFlowStepWaTemplate(
         props as Parameters<

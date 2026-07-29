@@ -53,16 +53,29 @@ export function ContactFilterSummary({
       <div className="space-y-2">
         {contactFilter.conditions.map((condition) => {
           const isCustomField = condition.field === "customField"
-          const fieldConfig = configs.find((config) =>
-            isCustomField && "customFieldId" in condition
-              ? String(config.customFieldId) === String(condition.customFieldId)
-              : config.name === condition.field,
-          )
+          const isCouponTopic = condition.field === "couponTopic"
+          const fieldConfig = configs.find((config) => {
+            if (isCustomField && "customFieldId" in condition) {
+              return (
+                String(config.customFieldId) === String(condition.customFieldId)
+              )
+            }
+            if (isCouponTopic && "topicId" in condition) {
+              return String(config.topicId) === String(condition.topicId)
+            }
+            return config.name === condition.field
+          })
           const fieldLabel =
             fieldConfig?.label ??
-            (isCustomField
-              ? t("fields.customField.label")
-              : t(`condition.fields.${condition.field}`))
+            (() => {
+              if (isCustomField) {
+                return t("fields.customField.label")
+              }
+              if (isCouponTopic) {
+                return t("condition.fields.couponTopic")
+              }
+              return t(`condition.fields.${condition.field}`)
+            })()
           const conditionOperator =
             operatorLabelByValue.get(condition.operator) ?? condition.operator
           const valueDisplay = formatConditionValueDisplay(
@@ -72,6 +85,7 @@ export function ContactFilterSummary({
           const conditionKey = [
             condition.field,
             "customFieldId" in condition ? condition.customFieldId : "",
+            "topicId" in condition ? condition.topicId : "",
             condition.operator,
             valueDisplay,
           ].join(":")

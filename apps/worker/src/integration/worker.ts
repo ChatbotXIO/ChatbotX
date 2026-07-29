@@ -32,6 +32,7 @@ import {
 } from "./handlers/flow"
 import { runFollowUpResume } from "./handlers/follow-up"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
+import { processLeadgen } from "./handlers/lead-ads"
 import { handleMessageStatus } from "./handlers/message-status"
 import {
   deleteIncomingComment,
@@ -233,6 +234,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.commentAIReply: {
             await processCommentAIReply(job.data.data)
+            return
+          }
+          case IntegrationJobAction.processLeadgen: {
+            await processLeadgen(job.data.data)
             return
           }
           case IntegrationJobAction.createMessage: {

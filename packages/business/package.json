@@ -10,12 +10,14 @@
     "./contact-inbox": "./src/contact-inbox/index.ts",
     "./contact-locale": "./src/contact-locale/index.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
+    "./coupon": "./src/coupon/index.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
     "./smart-delay": "./src/smart-delay/index.ts",
     "./errors": "./src/errors.ts",
     "./referral": "./src/referral/index.ts",
     "./system-field": "./src/system-field/index.ts",
-    "./utils": "./src/utils.ts"
+    "./utils": "./src/utils.ts",
+    "./workspace-lifecycle/predicates": "./src/workspace-lifecycle/predicates.ts"
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",

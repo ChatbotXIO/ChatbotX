@@ -1,6 +1,7 @@
 "use client"
 
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
+import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
 import type {
   WhatsappPhoneNumber,
   WhatsappPhoneNumberResponse,
@@ -23,39 +24,30 @@ import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { useCallback, useEffect, useState, useTransition } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
-import { getBrokerOrigin } from "@/lib/oauth-broker"
 import { connectWhatsappAction } from "../actions/connect.action"
+import { useEmbeddedSignupAutoConnect } from "../hooks/use-embedded-signup-auto-connect"
+import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
+import { FORM_FIELDS } from "../libs/form-fields"
 import {
-  buildFacebookOAuthDialogUrl,
-  WA_OAUTH_RESULT,
-  type WhatsappOAuthRelayResult,
-} from "../libs/embedded-signup"
-import { connectWhatsappSchema, type ManualOnboardingResult } from "../schemas"
+  CONNECT_WHATSAPP_RESULT_TYPES,
+  type ConnectWhatsappSchema,
+  connectWhatsappSchema,
+  type ManualOnboardingResult,
+  type WhatsappPhoneNumberOption,
+} from "../schemas"
+import { WhatsappPhoneVerificationPanel } from "../verification/whatsapp-phone-verification-panel"
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
 // Constants
 const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
 const MAX_CARD_WIDTH = "max-w-md"
 const CARD_MARGIN = "mx-auto mt-40"
-
-// Form field names
-const FORM_FIELDS = {
-  WABA_ID: "wabaId",
-  ACCESS_TOKEN: "accessToken",
-  CONNECT_EXISTING: "connectExisting",
-  TRANSFER_PHONE_NUMBER: "transferPhoneNumber",
-  MANUAL_CONNECT: "manualConnect",
-  MARKETING_MESSAGE_LITE: "marketingMessageLite",
-  PHONE_NUMBER_ID: "phoneNumberId",
-  BUSINESS_ID: "businessId",
-  CODE: "code",
-} as const
 
 type FormVisibility = {
   connectExisting: boolean
@@ -111,6 +103,17 @@ export default function WhatsappCreate({
   const router = useRouter()
   const [manualResult, setManualResult] =
     useState<ManualOnboardingResult | null>(null)
+  const [phoneSelection, setPhoneSelection] = useState<{
+    phoneNumbers: WhatsappPhoneNumberOption[]
+  } | null>(null)
+  const [phoneVerification, setPhoneVerification] = useState<{
+    integrationId: string
+    workspaceId: string
+    redirectUrl: string
+    displayPhoneNumber: string
+    verifiedName: string
+    registrationError: IntegrationWhatsappRegistrationError | null
+  } | null>(null)
   const [showCoexist, setShowCoexist] = useState<{
     integrationId: string
     workspaceId: string
@@ -118,7 +121,7 @@ export default function WhatsappCreate({
   } | null>(null)
 
   // Form setup
-  const { form, handleSubmitWithAction } = useHookFormAction(
+  const { action, form, handleSubmitWithAction } = useHookFormAction(
     connectWhatsappAction,
     zodResolver(connectWhatsappSchema),
     {
@@ -129,8 +132,50 @@ export default function WhatsappCreate({
           }
         },
         onSuccess: ({ data }) => {
+          if (
+            data.type === CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_SELECTION
+          ) {
+            form.setValue(FORM_FIELDS.SIGNUP_SESSION_ID, data.signupSessionId)
+            form.setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
+            form.setValue(FORM_FIELDS.CODE, "")
+            setPhoneSelection({ phoneNumbers: data.phoneNumbers })
+            return
+          }
+          if (
+            data.type ===
+            CONNECT_WHATSAPP_RESULT_TYPES.NO_PHONE_NUMBER_CANDIDATES
+          ) {
+            toast.error(t("fields.phoneNumberId.noPhoneNumbersFound"))
+            form.setValue(FORM_FIELDS.CODE, "")
+            return
+          }
+          if (
+            data.type ===
+            CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBERS_ALREADY_CONNECTED
+          ) {
+            toast.error(t("channels.duplicated.whatsapp"))
+            form.setValue(FORM_FIELDS.CODE, "")
+            return
+          }
+          if (
+            data.type ===
+            CONNECT_WHATSAPP_RESULT_TYPES.PHONE_NUMBER_VERIFICATION_REQUIRED
+          ) {
+            setPhoneSelection(null)
+            setPhoneVerification({
+              integrationId: data.integrationId,
+              workspaceId: data.workspaceId,
+              redirectUrl: data.redirectUrl,
+              displayPhoneNumber: data.displayPhoneNumber,
+              verifiedName: data.verifiedName,
+              registrationError: data.registrationError,
+            })
+            form.setValue(FORM_FIELDS.CODE, "")
+            return
+          }
+
           toast.success(t("messages.connectSuccess", { feature: "Whatsapp" }))
-          if (data.type === "manualResult") {
+          if (data.type === CONNECT_WHATSAPP_RESULT_TYPES.MANUAL_RESULT) {
             setManualResult(data.data)
             return
           }
@@ -161,6 +206,7 @@ export default function WhatsappCreate({
           phoneNumberId: "",
           accessToken: "",
           code: "",
+          signupSessionId: "",
         },
       },
     },
@@ -201,6 +247,30 @@ export default function WhatsappCreate({
     }
   }, [watchTransferPhoneNumber, setValue, updateVisibility])
 
+  const renderConnectSection = () => {
+    if (phoneSelection) {
+      return (
+        <PhoneNumberSelectionSection
+          phoneNumbers={phoneSelection.phoneNumbers}
+        />
+      )
+    }
+
+    if (watchManualConnect) {
+      return <ManualConnectSection watchManualConnect={watchManualConnect} />
+    }
+
+    return (
+      <SdkConnectSection
+        hasFailed={action.hasErrored}
+        onAutoSubmit={handleSubmitWithAction}
+        settings={settings}
+        visibility={visibility}
+        watchManualConnect={watchManualConnect}
+      />
+    )
+  }
+
   if (showCoexist) {
     return (
       <CoexistPopup
@@ -212,6 +282,33 @@ export default function WhatsappCreate({
     )
   }
 
+  const renderCardContent = () => {
+    if (phoneVerification) {
+      return (
+        <WhatsappPhoneVerificationPanel
+          displayPhoneNumber={phoneVerification.displayPhoneNumber}
+          integrationId={phoneVerification.integrationId}
+          onVerified={() => router.push(phoneVerification.redirectUrl)}
+          registrationError={phoneVerification.registrationError}
+          verifiedName={phoneVerification.verifiedName}
+          workspaceId={phoneVerification.workspaceId}
+        />
+      )
+    }
+
+    if (manualResult) {
+      return <WhatsappOnboardingResult result={manualResult} />
+    }
+
+    return (
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+          {renderConnectSection()}
+        </form>
+      </Form>
+    )
+  }
+
   return (
     <Card className={`${CARD_MARGIN} ${MAX_CARD_WIDTH}`}>
       <CardHeader>
@@ -220,25 +317,7 @@ export default function WhatsappCreate({
         </CardTitle>
         <CardDescription />
       </CardHeader>
-      <CardContent>
-        {manualResult ? (
-          <WhatsappOnboardingResult result={manualResult} />
-        ) : (
-          <Form {...form}>
-            <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-              {watchManualConnect ? (
-                <ManualConnectSection watchManualConnect={watchManualConnect} />
-              ) : (
-                <SdkConnectSection
-                  settings={settings}
-                  visibility={visibility}
-                  watchManualConnect={watchManualConnect}
-                />
-              )}
-            </form>
-          </Form>
-        )}
-      </CardContent>
+      <CardContent>{renderCardContent()}</CardContent>
     </Card>
   )
 }
@@ -247,6 +326,10 @@ type SdkConnectSectionProps = {
   visibility: FormVisibility
   watchManualConnect: boolean
   settings: WhatsappCredentialPublic
+  /** Submits the connect form without an event, once Meta returns a code. */
+  onAutoSubmit: () => void
+  /** A failed connect hands the flow back to the user for a fresh signup. */
+  hasFailed: boolean
 }
 
 const LAUNCH_BUTTON_CLASS =
@@ -259,57 +342,26 @@ function SdkConnectSection({
   visibility,
   watchManualConnect,
   settings,
+  onAutoSubmit,
+  hasFailed,
 }: SdkConnectSectionProps) {
   const t = useTranslations()
-  const { setValue, formState, trigger } = useFormContext()
-
-  const finalSubmitRef = useRef<HTMLButtonElement>(null)
-  const watchCode = useWatch({ name: FORM_FIELDS.CODE })
-  const watchConnectExisting = useWatch({ name: FORM_FIELDS.CONNECT_EXISTING })
+  const { control } = useFormContext<ConnectWhatsappSchema>()
+  const watchConnectExisting = useWatch({
+    control,
+    name: FORM_FIELDS.CONNECT_EXISTING,
+  })
   const watchTransferPhoneNumber = useWatch({
+    control,
     name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
   })
 
-  // Submit once we have the OAuth code. The WABA / phone / business ids are not
-  // in the OAuth redirect — they are derived server-side from the token in
-  // connectWhatsappAction.
-  const submitWithCode = useCallback(
-    async (code: string) => {
-      setValue(FORM_FIELDS.CODE, code)
-      try {
-        const valid = await trigger()
-        if (valid) {
-          finalSubmitRef.current?.click()
-        }
-      } catch {
-        toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-      }
-    },
-    [setValue, trigger, t],
-  )
-
-  // The Facebook OAuth dialog redirects the code to the broker callback, which
-  // relays it back to this tab via postMessage. Trust only the broker origin —
-  // a payload from any other origin is ignored.
-  useEffect(() => {
-    const brokerOrigin = getBrokerOrigin()
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== brokerOrigin) {
-        return
-      }
-      const data = event.data as WhatsappOAuthRelayResult | undefined
-      if (data?.type !== WA_OAUTH_RESULT) {
-        return
-      }
-      if (data.status === "success" && data.code) {
-        submitWithCode(data.code)
-      } else {
-        toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-      }
-    }
-    window.addEventListener("message", handleMessage)
-    return () => window.removeEventListener("message", handleMessage)
-  }, [submitWithCode, t])
+  const { isConnecting } = useEmbeddedSignupAutoConnect({
+    hasFailed,
+    onSubmit: onAutoSubmit,
+    onRelayError: () =>
+      toast.error(t("messages.connectFailed", { feature: "Whatsapp" })),
+  })
 
   const openFacebookDialog = useCallback(() => {
     const url = buildFacebookOAuthDialogUrl({
@@ -317,8 +369,8 @@ function SdkConnectSection({
       clientId: settings.clientId,
       configId: settings.configId,
       version: settings.version,
-      connectExisting: Boolean(watchConnectExisting),
-      transferPhoneNumber: Boolean(watchTransferPhoneNumber),
+      connectExisting: watchConnectExisting,
+      transferPhoneNumber: watchTransferPhoneNumber,
       locale: document.documentElement.lang || undefined,
     })
     // Open a real tab (not a popup window) — popups get blocked, and a tab keeps
@@ -329,10 +381,15 @@ function SdkConnectSection({
     }
   }, [settings, watchConnectExisting, watchTransferPhoneNumber, t])
 
-  const showLaunch = !(watchManualConnect || watchCode)
-
+  // Once Meta hands back a code the card keeps every option on screen, showing the
+  // choices the user made, but freezes all of them: the server re-derives the
+  // embedded-signup featureType from these same fields, so flipping one while the
+  // connect is in flight would desync it from the dialog the user completed.
+  // A disabled fieldset does that natively — a control inside one is `:disabled` per
+  // spec, so the existing `disabled:` styles dim it and any field added here later is
+  // covered without revisiting this line.
   return (
-    <>
+    <fieldset className="space-y-4" disabled={isConnecting}>
       {visibility.connectExisting && (
         <SwitchField
           formItemClassName={SWITCH_FIELD_CLASS}
@@ -356,32 +413,86 @@ function SdkConnectSection({
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {showLaunch && (
-          <Button
-            className={LAUNCH_BUTTON_CLASS}
-            onClick={openFacebookDialog}
-            type="button"
-          >
-            {t("actions.continue")}
-          </Button>
+        {!watchManualConnect && (
+          <EmbeddedSignupButton
+            isConnecting={isConnecting}
+            onLaunch={openFacebookDialog}
+          />
         )}
+      </div>
+    </fieldset>
+  )
+}
 
-        {watchCode && (
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              disabled={formState.isSubmitting}
-              ref={finalSubmitRef}
-              size="sm"
-              type="submit"
-              variant="secondary"
-            >
-              {formState.isSubmitting && (
-                <Loader2Icon className="animate-spin" />
-              )}
-              {t("actions.continue")}
-            </Button>
-          </div>
-        )}
+type EmbeddedSignupButtonProps = {
+  /** A code has come back and the connect is in flight. */
+  isConnecting: boolean
+  onLaunch: () => void
+}
+
+/**
+ * The card's only action. It launches the Meta dialog, then becomes a frozen status
+ * control once a code comes back, so the user can read why the form is busy
+ * instead of being able to start a second signup over the first.
+ */
+function EmbeddedSignupButton({
+  isConnecting,
+  onLaunch,
+}: EmbeddedSignupButtonProps) {
+  const t = useTranslations()
+
+  if (isConnecting) {
+    return (
+      <Button disabled size="sm" type="submit" variant="secondary">
+        <Loader2Icon className="animate-spin" />
+        {t("whatsapp.autoConnect.inProgress")}
+      </Button>
+    )
+  }
+
+  return (
+    <Button className={LAUNCH_BUTTON_CLASS} onClick={onLaunch} type="button">
+      {t("actions.continue")}
+    </Button>
+  )
+}
+
+type PhoneNumberSelectionSectionProps = {
+  phoneNumbers: WhatsappPhoneNumberOption[]
+}
+
+function PhoneNumberSelectionSection({
+  phoneNumbers,
+}: PhoneNumberSelectionSectionProps) {
+  const t = useTranslations()
+  const { formState } = useFormContext<ConnectWhatsappSchema>()
+
+  return (
+    <>
+      <RadioGroupField
+        label={t("fields.phoneNumberId.label")}
+        name={FORM_FIELDS.PHONE_NUMBER_ID}
+        options={phoneNumbers.map((phoneNumber) => ({
+          value: phoneNumber.id,
+          label:
+            phoneNumber.displayPhoneNumber &&
+            phoneNumber.displayPhoneNumber !== phoneNumber.label
+              ? `${phoneNumber.label} (${phoneNumber.displayPhoneNumber})`
+              : phoneNumber.label,
+        }))}
+        required
+      />
+
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          disabled={!formState.isValid || formState.isSubmitting}
+          size="sm"
+          type="submit"
+          variant="secondary"
+        >
+          {formState.isSubmitting && <Loader2Icon className="animate-spin" />}
+          {t("actions.connect")}
+        </Button>
       </div>
     </>
   )

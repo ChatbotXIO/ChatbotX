@@ -153,7 +153,6 @@ export abstract class BaseEventEmitter {
     name?: string,
     phone?: string,
     email?: string,
-    customFields?: Record<string, unknown>,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.newContact, {
       workspaceId,
@@ -162,7 +161,6 @@ export abstract class BaseEventEmitter {
         name,
         phone,
         email,
-        customFields,
       },
     })
   }

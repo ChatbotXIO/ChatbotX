@@ -214,6 +214,8 @@ class WorkspaceService extends BaseService {
       }
 
       for (const workspace of claimed.rows) {
+        await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
+
         await workspaceLifecycleService
           .disconnectWorkspaceIntegrations(workspace.id)
           .catch((err) => {
@@ -227,6 +229,7 @@ class WorkspaceService extends BaseService {
           integrations: props?.integrations,
           teardownLevel: "disconnect",
           workspaceId: workspace.id,
+          ownerId: workspace.ownerId,
         })
 
         // Drain high-volume child tables in small self-committing batches
@@ -235,6 +238,18 @@ class WorkspaceService extends BaseService {
         await workspaceLifecycleService.purgeWorkspaceHeavyData({
           workspaceId: workspace.id,
         })
+
+        // Best-effort: never block/roll back the purge if release fails —
+        // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
+        // for every affected owner regardless.
+        await quotaEnforcementService
+          .release({ userId: workspace.ownerId, metric: "workspaces" })
+          .catch((err) => {
+            logger.warn(
+              { err, workspaceId: workspace.id, ownerId: workspace.ownerId },
+              "workspace-purge: workspace quota release failed",
+            )
+          })
       }
 
       const workspaceIds = claimed.rows.map((row) => row.id)

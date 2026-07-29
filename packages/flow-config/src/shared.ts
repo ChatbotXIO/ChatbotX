@@ -16,6 +16,7 @@ import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversati
 import { blockContactStepSchema } from "./steps/block-contact"
 import { clearCustomFieldStepSchema } from "./steps/clear-custom-field"
 import { countCharactersStepSchema } from "./steps/count-characters"
+import { markCouponUsedStepSchema, setUpCouponStepSchema } from "./steps/coupon"
 import { deleteContactStepSchema } from "./steps/delete-contact"
 import { disableBotStepSchema } from "./steps/disable-bot"
 import { disableMessengerComposerStepSchema } from "./steps/disable-messenger-composer"
@@ -32,6 +33,7 @@ import { getResponseAddContactSchema } from "./steps/get-response-add-contact"
 import { klaviyoSyncProfileSchema } from "./steps/klaviyo-sync-profile"
 import { mailchimpAddMemberSchema } from "./steps/mailchimp-add-member"
 import { mailerLiteAddSubscriberSchema } from "./steps/mailer-lite-add-subscriber"
+import { makeStepSchema } from "./steps/make"
 import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { moosendCreateContactSchema } from "./steps/moosend-create-contact"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
@@ -80,6 +82,8 @@ const contactSteps = [
   clearCustomFieldStepSchema,
   deleteContactStepSchema,
   questionnairesStepSchema,
+  setUpCouponStepSchema,
+  markCouponUsedStepSchema,
 ]
 
 const broadcastSteps = [
@@ -99,6 +103,8 @@ const toolSteps = [
   countCharactersStepSchema,
   externalRequestStepSchema,
 ]
+
+const triggerSteps = [makeStepSchema]
 
 const emailSteps = [
   markEmailVerifiedStepSchema,
@@ -160,4 +166,5 @@ export const actionSteps = [
   ...aiSteps,
   ...googleSheetStep,
   ...messengerSteps,
+  ...triggerSteps,
 ]

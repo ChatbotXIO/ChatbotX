@@ -177,6 +177,8 @@ vi.mock("next-intl", () => ({
 
 const conditionOptions: ConditionOption[] = [
   { label: "Is", value: operatorTypes.enum.eq },
+  { label: "Has any value", value: operatorTypes.enum.isNotEmpty },
+  { label: "Used", value: operatorTypes.enum.used },
   { label: "Between", value: operatorTypes.enum.isBetween },
 ]
 
@@ -212,6 +214,12 @@ const configs = {
     formField: formFieldTypes.enum.multiSelect,
     group: "analytics",
     options: [{ label: "VIP", value: "tag-1" }],
+  },
+  couponTopic: {
+    name: "couponTopic:topic-1",
+    topicId: "topic-1",
+    formField: formFieldTypes.enum.text,
+    group: "topicCoupon",
   },
 } as const satisfies Record<string, FieldConfig>
 
@@ -395,6 +403,23 @@ describe("ContactFilterConditionDialog value inputs", () => {
     expect(invalidDialog.onSubmit).not.toHaveBeenCalled()
 
     renderDialog({ config: configs.datetime, value: "{{first_name}}" })
+    expect(
+      (
+        container.querySelector(
+          'button[type="submit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
+    ).toBe(false)
+  })
+
+  test("keeps save enabled for coupon topic used without a value input", () => {
+    renderDialog({
+      config: configs.couponTopic,
+      operator: operatorTypes.enum.used,
+      value: "",
+    })
+
+    expect(container.querySelector('[data-testid="input-value"]')).toBeNull()
     expect(
       (
         container.querySelector(

@@ -45,6 +45,9 @@ export const ContactInboxPanel = ({
   const [contactData, setContactData] = useState<GetContactResponse | null>(
     null,
   )
+  const [coupons, setCoupons] = useState<
+    Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
+  >([])
 
   useEffect(() => {
     const contactId = storeContact?.id
@@ -67,6 +70,11 @@ export const ContactInboxPanel = ({
       .catch(() => {
         setContactData(null)
       })
+
+    client.couponsAPI
+      .listContactCouponsAPI({ workspaceId, contactId })
+      .then(setCoupons)
+      .catch(() => setCoupons([]))
   }, [activeConversationId, storeContact?.id, workspaceId])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
@@ -75,6 +83,30 @@ export const ContactInboxPanel = ({
     }
 
     return [
+      {
+        keyName: t("coupons.title"),
+        content: (
+          <div className="grid gap-2 px-2 text-sm">
+            {coupons.length > 0 ? (
+              coupons.map((coupon) => (
+                <div className="rounded-md border p-2" key={coupon.id}>
+                  <div className="font-medium">{coupon.topicName}</div>
+                  <div className="font-mono">{coupon.code}</div>
+                  <div className="text-muted-foreground">
+                    {coupon.usedAt
+                      ? t("coupons.usageStatuses.used")
+                      : t("coupons.usageStatuses.notUsed")}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-muted-foreground">
+                {t("coupons.messages.empty")}
+              </div>
+            )}
+          </div>
+        ),
+      },
       {
         keyName: t("fields.tags.label"),
         content: (
@@ -114,7 +146,7 @@ export const ContactInboxPanel = ({
         ),
       },
     ]
-  }, [contactData, workspaceId, t])
+  }, [contactData, workspaceId, t, coupons])
 
   if (!storeContact) {
     return null

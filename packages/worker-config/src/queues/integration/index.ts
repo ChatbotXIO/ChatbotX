@@ -3,7 +3,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import type { OutgoingMessage } from "@chatbotx.io/sdk"
+import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -43,6 +43,7 @@ export const IntegrationJobAction = {
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
   commentAIReply: "commentAIReply",
+  processLeadgen: "processLeadgen",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -125,6 +126,8 @@ export type IntegrationJobRunFlowNode = {
     metadata?: MetadataPayload
     sendFrom?: "inbox"
     origin?: "channel"
+    /** See {@link CommentAnchor}. */
+    commentAnchor?: CommentAnchor
   }
 }
 
@@ -365,6 +368,21 @@ export type IntegrationJobCommentAIReply = {
   }
 }
 
+/**
+ * Facebook Lead Ads: a page leadgen webhook. Carries only ids — the handler
+ * resolves the page's Messenger inbox + token, fetches the lead's answers, then
+ * finds/creates the contact by PSID and applies the matched automation.
+ */
+export type IntegrationJobProcessLeadgen = {
+  type: typeof IntegrationJobAction.processLeadgen
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    leadgenId: string
+    formId: string
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveComment
@@ -391,6 +409,7 @@ export type IntegrationJobData =
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation
   | IntegrationJobCommentAIReply
+  | IntegrationJobProcessLeadgen
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"

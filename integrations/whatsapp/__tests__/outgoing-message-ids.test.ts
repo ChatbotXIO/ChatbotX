@@ -20,6 +20,7 @@ const { sendMessage } = await import("../src/handlers/message/outgoing-message")
 
 const ctx = {
   auth: { metadata: { phoneNumber: { id: "pn-1" } } },
+  integrationDetail: { registrationStatus: "registered" },
 } as never
 const contact = { id: "contact-1", sourceId: "84123456789" } as never
 
@@ -43,5 +44,26 @@ describe("whatsapp sendMessage returns provider message ids", () => {
 
     expect(mockSendMessage).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ messageIds: ["wamid.provider-1"] })
+  })
+
+  test("does not block provider sends on local registration status", async () => {
+    await sendMessage({
+      ctx: {
+        auth: { metadata: { phoneNumber: { id: "pn-1" } } },
+        integrationDetail: { registrationStatus: "pending_verification" },
+      },
+      data: {
+        contact,
+        message: { id: "msg-2", contentType: "text", text: "hello" },
+      },
+    } as never)
+
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      "pn-1",
+      contact.sourceId,
+      expect.objectContaining({
+        body: "hello",
+      }),
+    )
   })
 })

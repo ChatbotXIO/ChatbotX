@@ -71,7 +71,7 @@ const openAPIHandler = new OpenAPIHandler(router, {
   ],
 })
 
-export async function handleRequest(request: Request) {
+async function handleRequest(request: Request) {
   const { response } = await openAPIHandler.handle(request, {
     prefix: "/api",
     context: { headers: request.headers, url: request.url },

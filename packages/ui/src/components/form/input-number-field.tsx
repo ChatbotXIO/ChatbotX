@@ -36,7 +36,12 @@ export function InputNumberField<T extends FieldValues>({
       {(field) => (
         <div className="flex items-center gap-2">
           {prefix && <span className="text-muted-foreground">{prefix}</span>}
-          <NumberInput {...props} {...field} />
+          <NumberInput
+            {...props}
+            onBlur={field.onBlur}
+            onValueChange={field.onChange}
+            value={field.value}
+          />
           {suffix && <span className="text-muted-foreground">{suffix}</span>}
         </div>
       )}

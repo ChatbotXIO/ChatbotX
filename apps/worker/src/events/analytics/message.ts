@@ -2,6 +2,7 @@ import { messageAnalyticsService } from "@chatbotx.io/analytics"
 import {
   quotaEnforcementService,
   workspaceService,
+  workspaceUsageService,
 } from "@chatbotx.io/business"
 import type {
   BotMessageSentEventPayload,
@@ -42,6 +43,12 @@ export async function handleBotMessageSent(
           metric: "botMessages",
           count,
         })
+        await quotaEnforcementService.incrementBy({
+          userId: workspace.ownerId,
+          metric: "monthlyBotMessages",
+          count,
+        })
+        await workspaceUsageService.increment(workspaceId, "botMessages", count)
       } catch (err) {
         logger.error(
           { err, workspaceId, count },

@@ -20,7 +20,9 @@ import { z } from "zod"
  *  - `expired`  : trial consumed / churned (Stripe `canceled`/`unpaid`/`paused` for
  *                 a trial-eligible user). Blocked → `/trial-expired`.
  *
- * Access: only `expired` and an expired `trial` block; `active`/`past_due` allow.
+ * Access: allow-list — only `active` and a non-expired `trial` are allowed.
+ * `past_due`, `expired`, an expired `trial`, and any unrecognized status all
+ * block access (see `userQuotaService.getAccessStateFromQuota`).
  * There is no `free` value — the writer folds the free/grandfathered case into
  * `active` (plan identity lives in `planName`). `incomplete*` Stripe statuses are
  * ignored upstream so an abandoned checkout never burns the self-managed trial.

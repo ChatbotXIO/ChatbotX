@@ -1,5 +1,10 @@
+import { fileURLToPath } from "node:url"
 import reactConfig from "@chatbotx.io/vitest-config/react"
 import { mergeConfig, type ViteUserConfig } from "vitest/config"
+
+const serverOnlyNoopPath = fileURLToPath(
+  new URL("./server-only-noop.ts", import.meta.url),
+)
 
 /**
  * Vitest preset for the Next.js builder app.
@@ -11,6 +16,9 @@ import { mergeConfig, type ViteUserConfig } from "vitest/config"
  */
 const config: ViteUserConfig = mergeConfig(reactConfig, {
   resolve: {
+    alias: {
+      "server-only": serverOnlyNoopPath,
+    },
     conditions: ["browser", "module", "import", "default"],
   },
   test: {

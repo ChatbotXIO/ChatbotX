@@ -40,6 +40,11 @@ import {
 } from "./contact-filter-config"
 import { CONTACT_FILTER_DIALOG_SIZE_CLASS } from "./contact-filter-dialog-layout"
 import {
+  getCouponTopicConditionOptions,
+  getCouponTopicValueInputConfig,
+  getDefaultCouponTopicValue,
+} from "./coupon-topic-filter-config"
+import {
   type CustomFieldValueInputConfig,
   customFieldOperatorRequiresArrayValue,
   getCustomFieldConditionOptions,
@@ -61,6 +66,7 @@ import {
 const OPERATORS_WITHOUT_VALUE: string[] = [
   operatorTypes.enum.isEmpty,
   operatorTypes.enum.isNotEmpty,
+  operatorTypes.enum.used,
 ]
 
 const getFirstEnabledOperator = (
@@ -71,7 +77,8 @@ const getFirstEnabledOperator = (
  * Maps a raw form draft to the condition shape validated by
  * `singleContactFilterConditionSchema`. Static fields pass through unchanged;
  * a custom-field config (`customField:<id>`) becomes the dynamic
- * `{ field: "customField", customFieldId, valueType }` branch.
+ * `{ field: "customField", customFieldId, valueType }` branch; a coupon-topic
+ * config (`couponTopic:<id>`) becomes `{ field: "couponTopic", topicId }`.
  */
 export const buildConditionDraft = (
   values: ContactFilterConditionFormDraft,
@@ -92,6 +99,16 @@ export const buildConditionDraft = (
     return shouldOmitValue ? draft : { ...draft, value: values.value }
   }
 
+  if (config?.topicId) {
+    const draft = {
+      field: "couponTopic" as const,
+      topicId: config.topicId,
+      operator,
+    }
+
+    return shouldOmitValue ? draft : { ...draft, value: values.value }
+  }
+
   return shouldOmitValue
     ? {
         field: values.field,
@@ -100,14 +117,21 @@ export const buildConditionDraft = (
     : values
 }
 
+const resolveDraftFieldName = (condition: ContactFilterCondition): string => {
+  if (condition.field === "customField" && "customFieldId" in condition) {
+    return `customField:${condition.customFieldId}`
+  }
+  if (condition.field === "couponTopic" && "topicId" in condition) {
+    return `couponTopic:${condition.topicId}`
+  }
+  return condition.field
+}
+
 /** Inverse of buildConditionDraft; used to prefill the edit form. */
 export const buildDraftFromCondition = (
   condition: ContactFilterCondition,
 ): ContactFilterConditionFormDraft => ({
-  field:
-    condition.field === "customField" && "customFieldId" in condition
-      ? `customField:${condition.customFieldId}`
-      : condition.field,
+  field: resolveDraftFieldName(condition),
   operator: condition.operator,
   value:
     "value" in condition && condition.value !== undefined
@@ -125,16 +149,24 @@ export const getConditionOptionsForConfig = (
   if (config.customFieldId) {
     return getCustomFieldConditionOptions(config, conditionOptions)
   }
+  if (config.topicId) {
+    return getCouponTopicConditionOptions(conditionOptions)
+  }
   return getStaticFieldConditionOptions(config, conditionOptions)
 }
 
 export const getDefaultConditionValue = (
   config: FieldConfig | undefined,
   operator: string,
-): string | string[] =>
-  config?.customFieldId
-    ? getDefaultCustomFieldValue(config, operator)
-    : getDefaultStaticFieldValue(config, operator)
+): string | string[] => {
+  if (config?.customFieldId) {
+    return getDefaultCustomFieldValue(config, operator)
+  }
+  if (config?.topicId) {
+    return getDefaultCouponTopicValue(config, operator)
+  }
+  return getDefaultStaticFieldValue(config, operator)
+}
 
 export const getResetDraftForField = (
   config: FieldConfig | undefined,
@@ -157,7 +189,7 @@ type ContactFilterValueFieldsProps = {
   enableVariables: boolean
 }
 
-type FreeTextInputKind = "text" | "number" | "datetime"
+type FreeTextInputKind = "text" | "number" | "date" | "datetime"
 
 type FilterValueInputProps = {
   name: string
@@ -179,6 +211,10 @@ const FILTER_VALUE_INPUT_CONFIG = {
   number: {
     placeholderKey: "condition.valuePlaceholder",
     type: "number",
+  },
+  date: {
+    placeholderKey: "condition.datePlaceholder",
+    type: undefined,
   },
   datetime: {
     placeholderKey: "condition.datetimePlaceholder",
@@ -276,6 +312,13 @@ const VALUE_INPUT_RENDERERS = {
     <FilterValueInput
       enableVariables={enableVariables}
       kind="number"
+      name="value"
+    />
+  ),
+  date: ({ enableVariables }) => (
+    <FilterValueInput
+      enableVariables={enableVariables}
+      kind="date"
       name="value"
     />
   ),
@@ -418,14 +461,19 @@ export const ContactFilterConditionDialog = ({
     () => getCustomFieldValueInputConfig(activeConfig, watchOperator),
     [activeConfig, watchOperator],
   )
+  const couponTopicInput = useMemo(
+    () => getCouponTopicValueInputConfig(activeConfig, watchOperator),
+    [activeConfig, watchOperator],
+  )
   const staticFieldInput = useMemo(
     () => getStaticFieldValueInputConfig(activeConfig, watchOperator),
     [activeConfig, watchOperator],
   )
+  const resolvedFieldInput =
+    customFieldInput ?? couponTopicInput ?? staticFieldInput
   const valueInputKind = useMemo(
-    () =>
-      resolveValueInputKind(customFieldInput ?? staticFieldInput, valueType),
-    [customFieldInput, staticFieldInput, valueType],
+    () => resolveValueInputKind(resolvedFieldInput, valueType),
+    [resolvedFieldInput, valueType],
   )
 
   const canSaveCondition = useMemo(() => {
@@ -553,7 +601,7 @@ export const ContactFilterConditionDialog = ({
               />
               <div className="overflow-hidden truncate">
                 <ContactFilterValueFields
-                  customFieldInput={customFieldInput ?? staticFieldInput}
+                  customFieldInput={resolvedFieldInput}
                   enableVariables={enableVariables}
                   valueOptions={valueOptions}
                   valueType={valueType}

@@ -1,6 +1,7 @@
 import { contactService, verifyUnsubscribeToken } from "@chatbotx.io/business"
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
+import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export const metadata: Metadata = {
   title: "Unsubscribe",
@@ -25,6 +26,16 @@ export default async function UnsubscribePage(props: UnsubscribePageProps) {
 
   try {
     const payload = await verifyUnsubscribeToken(token)
+    const { servable } = await loadServableWorkspace(payload.wid)
+    if (!servable) {
+      return (
+        <UnsubscribeMessage
+          description={t("unavailableDescription")}
+          title={t("unavailableTitle")}
+        />
+      )
+    }
+
     await contactService.unsubscribeEmail(payload.cid)
   } catch {
     return (

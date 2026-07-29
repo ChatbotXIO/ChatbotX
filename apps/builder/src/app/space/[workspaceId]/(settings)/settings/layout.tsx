@@ -1,3 +1,4 @@
+import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business"
 import type { ReactNode } from "react"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -14,9 +15,9 @@ export default async function SettingLayout({
 }: LayoutSettingProps) {
   const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
   const result = await getCurrentUserAndTargetWorkspace(workspaceId)
-  const scheduledForDeletion = Boolean(
-    result?.targetWorkspace.scheduledDeletionAt,
-  )
+  const scheduledForDeletion = result?.targetWorkspace
+    ? isWorkspaceScheduledForDeletion(result.targetWorkspace)
+    : false
 
   return (
     <>
