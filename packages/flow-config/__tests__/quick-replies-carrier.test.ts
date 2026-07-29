@@ -70,6 +70,13 @@ describe("sendMessage quick replies", () => {
       url: "https://example.com/anim.gif",
     }
     const carouselStep = sendCarouselStepDefaultFn()
+    const interactiveCarouselStep = {
+      ...carouselStep,
+      cards: [
+        ...carouselStep.cards,
+        { ...carouselStep.cards[0], id: "1000000000010" },
+      ],
+    }
 
     expect(isQuickReplyCarrierStep("telegram", textStep)).toBe(true)
     expect(isQuickReplyCarrierStep("telegram", imageStep)).toBe(true)
@@ -80,6 +87,9 @@ describe("sendMessage quick replies", () => {
 
     expect(isQuickReplyCarrierStep("whatsapp", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("whatsapp", carouselStep)).toBe(true)
+    expect(isQuickReplyCarrierStep("whatsapp", interactiveCarouselStep)).toBe(
+      false,
+    )
     expect(isQuickReplyCarrierStep("zalo", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("messenger", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("instagram", imageStep)).toBe(true)

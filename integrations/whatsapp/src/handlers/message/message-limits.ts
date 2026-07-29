@@ -12,6 +12,8 @@ export const messageLimits = {
   bodyText: 1024,
   buttonId: 256,
   buttonTitle: 20,
+  carouselCardBody: 160,
+  carouselMainBody: 1024,
   /** Not validated by the library, but rejected by Meta. */
   caption: 1024,
   footerText: 60,

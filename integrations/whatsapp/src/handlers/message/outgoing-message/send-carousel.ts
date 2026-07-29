@@ -1,4 +1,7 @@
+import { whatsappCarouselCardLimits } from "@chatbotx.io/flow-config"
 import type { ClientMessage } from "whatsapp-api-js/types"
+import type { InteractiveCarouselMessage } from "../../../schema"
+import { buildInteractiveCarouselMessages } from "./interactive-carousel"
 import {
   generateOutgoingMessages as generateCardOutgoingMessages,
   type SendCardPayload,
@@ -9,12 +12,22 @@ export function* generateOutgoingMessages(
   props: Omit<SendCardProps, "payload"> & {
     payload: { cards: SendCardPayload[] }
   },
-): Generator<ClientMessage> {
+): Generator<ClientMessage | InteractiveCarouselMessage> {
+  if (props.payload.cards.length >= whatsappCarouselCardLimits.min) {
+    yield* buildInteractiveCarouselMessages({
+      cards: props.payload.cards,
+      flowId: props.flowId,
+      flowVersionId: props.flowVersionId,
+      metadata: props.metadata,
+    })
+    return
+  }
+
   for (const [index, card] of props.payload.cards.entries()) {
     const isLastCard = index === props.payload.cards.length - 1
 
-    // WhatsApp has no carousel, so the cards arrive as separate messages and
-    // the node's quick replies belong to the last one.
+    // One-card "Card" steps predate Meta's 2-card carousel minimum. Preserve
+    // their legacy rendering and keep node quick replies attached.
     yield* generateCardOutgoingMessages({
       flowId: props.flowId,
       flowVersionId: props.flowVersionId,

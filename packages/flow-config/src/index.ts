@@ -15,6 +15,7 @@ export * from "./nodes/send-message"
 export * from "./nodes/split-traffic"
 export * from "./nodes/start-flow"
 export * from "./nodes/wait"
+export * from "./nodes/whatsapp-carousel-rules"
 export type { FlowRoute, FlowRouteUpdate } from "./routable-handle"
 export {
   applyRouteInNode,

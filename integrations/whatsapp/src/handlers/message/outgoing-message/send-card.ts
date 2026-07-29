@@ -49,7 +49,7 @@ type CardContent = {
   caption: string
 }
 
-function readCardContent(payload: SendCardPayload): CardContent {
+export function readCardContent(payload: SendCardPayload): CardContent {
   const title = payload.title.trim()
   const subtitle = payload.subtitle?.trim() ?? ""
 

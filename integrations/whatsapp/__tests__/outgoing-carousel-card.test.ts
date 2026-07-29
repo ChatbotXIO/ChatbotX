@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockGetWhatsappClient, mockSendMessage, mockLogger } = vi.hoisted(
-  () => {
+const { mockApiFetch, mockGetWhatsappClient, mockSendMessage, mockLogger } =
+  vi.hoisted(() => {
     const sendMessage = vi.fn()
+    const apiFetch = vi.fn()
     return {
-      mockGetWhatsappClient: vi.fn(() => ({ sendMessage })),
+      mockApiFetch: apiFetch,
+      mockGetWhatsappClient: vi.fn(() => ({
+        $$apiFetch$$: apiFetch,
+        sendMessage,
+      })),
       mockSendMessage: sendMessage,
       mockLogger: {
         info: vi.fn(),
@@ -13,8 +18,7 @@ const { mockGetWhatsappClient, mockSendMessage, mockLogger } = vi.hoisted(
         debug: vi.fn(),
       },
     }
-  },
-)
+  })
 
 vi.mock("../src/client", () => ({
   getWhatsappClient: mockGetWhatsappClient,
@@ -82,6 +86,19 @@ const makeButton = (id: string, label: string) => ({
   steps: [],
 })
 
+const makeWebsiteButton = (id: string, label: string, url: string) => ({
+  id,
+  label,
+  buttonType: "openWebsite",
+  beforeStep: {
+    id: `${id}-open`,
+    stepType: "openWebsite",
+    url,
+    browserSize: 100,
+  },
+  steps: [],
+})
+
 const makeQuickReply = (id: string, label: string) => ({
   id,
   label,
@@ -109,12 +126,55 @@ const sendCards = (
     },
   } as never)
 
+const sendTemplate = () =>
+  sendFlowStep({
+    ctx,
+    data: {
+      contact,
+      step: {
+        id: "template-1",
+        stepType: "sendWaTemplateMessage",
+        template: {
+          name: "order_update",
+          language: "en_US",
+          params: {
+            body: [{ type: "text", text: "Order 123" }],
+          },
+        },
+      },
+    },
+  } as never)
+
 const sentMessages = () =>
   mockSendMessage.mock.calls.map((call) => call[2] as Record<string, unknown>)
+
+const rawPayloads = () =>
+  mockApiFetch.mock.calls.map((call) =>
+    JSON.parse((call[1] as RequestInit).body as string),
+  ) as Array<{
+    interactive: {
+      action: { cards: Record<string, unknown>[] }
+      body: { text: string }
+      type: string
+    }
+    recipient_type: string
+    to: string
+    type: string
+  }>
 
 describe("whatsapp outgoing card", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockApiFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          messaging_product: "whatsapp",
+          contacts: [{ input: contact.sourceId, wa_id: contact.sourceId }],
+          messages: [{ id: "wamid.raw-1" }],
+        }),
+        { status: 200 },
+      ),
+    )
     mockSendMessage.mockResolvedValue({
       messaging_product: "whatsapp",
       messages: [{ id: "wamid.provider-1" }],
@@ -201,25 +261,341 @@ describe("whatsapp outgoing card", () => {
     })
   })
 
-  test("sends one message per card and attaches quick replies to the last card only", async () => {
+  test("sends multiple cards as one interactive carousel without node quick replies", async () => {
     await sendCards(
       [
-        makeCard({ id: "card-1", title: "First", imageUrl: IMAGE_URL }),
-        makeCard({ id: "card-2", title: "Second" }),
+        makeCard({
+          id: "card-1",
+          title: "First",
+          imageUrl: IMAGE_URL,
+          buttons: [makeButton("1000000000003", "Choose")],
+        }),
+        makeCard({
+          id: "card-2",
+          title: "Second",
+          imageUrl: IMAGE_URL,
+          buttons: [makeButton("1000000000005", "Choose")],
+        }),
+        makeCard({
+          id: "card-3",
+          title: "Third",
+          imageUrl: IMAGE_URL,
+          buttons: [makeButton("1000000000006", "Choose")],
+        }),
       ],
       [makeQuickReply("1000000000004", "Later")],
     )
 
-    expect(mockSendMessage).toHaveBeenCalledTimes(2)
-    const [first, second] = sentMessages()
-    expect(first).toMatchObject({ _type: "image", link: IMAGE_URL })
-    expect(second).toMatchObject({
-      _type: "interactive",
-      body: { text: "Second" },
+    expect(mockSendMessage).not.toHaveBeenCalled()
+    expect(mockApiFetch).toHaveBeenCalledOnce()
+    const [payload] = rawPayloads()
+    expect(payload).toMatchObject({
+      recipient_type: "individual",
+      to: contact.sourceId,
+      type: "interactive",
+      interactive: {
+        type: "carousel",
+        body: { text: "." },
+      },
     })
-    expect(second.action).toMatchObject({
-      buttons: [{ reply: { title: "Later" } }],
+    expect(payload.interactive.action.cards).toEqual([
+      expect.objectContaining({
+        card_index: 0,
+        type: "cta_url",
+        header: { type: "image", image: { link: IMAGE_URL } },
+        body: { text: "First\nCard subtitle" },
+        action: {
+          buttons: [
+            {
+              type: "quick_reply",
+              quick_reply: {
+                id: `${FLOW_ID}:${FLOW_VERSION_ID}:1000000000003`,
+                title: "Choose",
+              },
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({ card_index: 1, type: "cta_url" }),
+      expect.objectContaining({ card_index: 2, type: "cta_url" }),
+    ])
+    for (const card of payload.interactive.action.cards) {
+      expect(card).not.toHaveProperty("footer")
+    }
+  })
+
+  test("maps optional card body and header fields without repairing invalid cards", async () => {
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        title: "Title",
+        subtitle: "Subtitle",
+        imageUrl: IMAGE_URL,
+        buttons: [],
+      }),
+      makeCard({
+        id: "card-2",
+        title: "",
+        subtitle: "Only subtitle",
+        imageUrl: "",
+        buttons: [],
+      }),
+      makeCard({
+        id: "card-3",
+        title: "",
+        subtitle: "",
+        imageUrl: IMAGE_URL,
+        buttons: [],
+      }),
+    ])
+
+    const cards = rawPayloads()[0].interactive.action.cards
+    expect(cards[0]).toMatchObject({ body: { text: "Title\nSubtitle" } })
+    expect(cards[0]).not.toHaveProperty("action")
+    expect(cards[1]).toMatchObject({ body: { text: "Only subtitle" } })
+    expect(cards[1]).not.toHaveProperty("header")
+    expect(cards[2]).not.toHaveProperty("body")
+    expect(cards[2]).not.toHaveProperty("action")
+  })
+
+  test("clamps carousel card text and button labels to Meta limits", async () => {
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        title: "T".repeat(100),
+        subtitle: "S".repeat(100),
+        imageUrl: IMAGE_URL,
+        buttons: [makeButton("1000000000003", "L".repeat(30))],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [makeButton("1000000000005", "L".repeat(30))],
+      }),
+    ])
+
+    const cards = rawPayloads()[0].interactive.action.cards as Array<{
+      action: { buttons: Array<{ quick_reply: { title: string } }> }
+      body: { text: string }
+    }>
+    expect(cards[0].body.text).toHaveLength(160)
+    expect(cards[0].action.buttons[0].quick_reply.title).toHaveLength(20)
+  })
+
+  test("maps openWebsite buttons to cta_url actions", async () => {
+    const url = "https://example.com/products/1"
+    const label = "View this product immediately"
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        imageUrl: IMAGE_URL,
+        buttons: [makeWebsiteButton("1000000000003", label, url)],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [makeWebsiteButton("1000000000005", label, url)],
+      }),
+    ])
+
+    expect(rawPayloads()[0].interactive.action.cards[0]).toMatchObject({
+      action: {
+        name: "cta_url",
+        parameters: {
+          display_text: "View this product im",
+          url,
+        },
+      },
     })
+  })
+
+  test("keeps duplicate reply labels across cards", async () => {
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        imageUrl: IMAGE_URL,
+        buttons: [makeButton("1000000000003", "Same")],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [makeButton("1000000000005", "Same")],
+      }),
+    ])
+
+    const cards = rawPayloads()[0].interactive.action.cards as Array<{
+      action: { buttons: Array<{ quick_reply: { title: string } }> }
+    }>
+    expect(
+      cards.map((card) => card.action.buttons[0].quick_reply.title),
+    ).toEqual(["Same", "Same"])
+  })
+
+  test.each([
+    [
+      "mixed URL and reply buttons",
+      [
+        makeWebsiteButton("1000000000003", "Open", "https://example.com/open"),
+        makeButton("1000000000004", "Reply"),
+      ],
+    ],
+    [
+      "multiple URL buttons",
+      [
+        makeWebsiteButton(
+          "1000000000003",
+          "First",
+          "https://example.com/first",
+        ),
+        makeWebsiteButton(
+          "1000000000004",
+          "Second",
+          "https://example.com/second",
+        ),
+      ],
+    ],
+  ])("does not rewrite %s into a different action", async (_case, buttons) => {
+    await sendCards([
+      makeCard({ id: "card-1", imageUrl: IMAGE_URL, buttons }),
+      makeCard({ id: "card-2", imageUrl: IMAGE_URL, buttons }),
+    ])
+
+    for (const card of rawPayloads()[0].interactive.action.cards) {
+      expect(card).not.toHaveProperty("action")
+    }
+  })
+
+  test.each([
+    [10, [10]],
+    [11, [9, 2]],
+    [12, [10, 2]],
+    [21, [10, 9, 2]],
+  ])("chunks %i cards into valid carousel sizes", async (count, sizes) => {
+    mockApiFetch.mockImplementation(() => {
+      const requestNumber = mockApiFetch.mock.calls.length
+      return new Response(
+        JSON.stringify({
+          messaging_product: "whatsapp",
+          contacts: [{ input: contact.sourceId, wa_id: contact.sourceId }],
+          messages: [{ id: `wamid.raw-${requestNumber}` }],
+        }),
+        { status: 200 },
+      )
+    })
+
+    const result = await sendCards(
+      Array.from({ length: count }, (_, index) =>
+        makeCard({
+          id: `card-${index}`,
+          imageUrl: IMAGE_URL,
+          buttons: [makeButton(`${1_000_000_000_100 + index}`, "Choose")],
+        }),
+      ),
+    )
+
+    expect(
+      rawPayloads().map((payload) => payload.interactive.action.cards.length),
+    ).toEqual(sizes)
+    expect(result.messageIds).toEqual(
+      sizes.map((_, index) => `wamid.raw-${index + 1}`),
+    )
+  })
+
+  test("sends no message for an empty carousel", async () => {
+    await sendCards([])
+
+    expect(mockApiFetch).not.toHaveBeenCalled()
+    expect(mockSendMessage).not.toHaveBeenCalled()
+  })
+
+  test("maps a raw carousel API error to a channel error", async () => {
+    mockApiFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: 13_100,
+            message: "Invalid carousel",
+            type: "OAuthException",
+          },
+        }),
+        { status: 400 },
+      ),
+    )
+
+    await expect(
+      sendCards([
+        makeCard({
+          id: "card-1",
+          imageUrl: IMAGE_URL,
+          buttons: [makeButton("1000000000003", "Choose")],
+        }),
+        makeCard({
+          id: "card-2",
+          imageUrl: IMAGE_URL,
+          buttons: [makeButton("1000000000005", "Choose")],
+        }),
+      ]),
+    ).rejects.toBeDefined()
+    expect(mockLogger.error).toHaveBeenCalled()
+  })
+
+  test("keeps approved template messages on the shared raw transport", async () => {
+    const result = await sendTemplate()
+
+    expect(mockSendMessage).not.toHaveBeenCalled()
+    expect(mockApiFetch).toHaveBeenCalledOnce()
+    const request = mockApiFetch.mock.calls[0][1] as RequestInit
+    expect(JSON.parse(request.body as string)).toMatchObject({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: contact.sourceId,
+      type: "template",
+      template: {
+        name: "order_update",
+        language: { code: "en_US" },
+        components: [
+          {
+            type: "body",
+            parameters: [{ type: "text", text: "Order 123" }],
+          },
+        ],
+      },
+    })
+    expect(result).toEqual({ messageIds: ["wamid.raw-1"] })
+  })
+
+  test.each([
+    ["carousel", () => sendCards([makeCard(), makeCard()])],
+    ["template", sendTemplate],
+  ])("accepts a minimal forward-compatible raw response for %s", async (_messageType, sendRawMessage) => {
+    mockApiFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          messages: [
+            {
+              id: "wamid.forward-compatible",
+              message_status: "a_future_status",
+              provider_extension: true,
+            },
+          ],
+          provider_extension: { version: 2 },
+        }),
+        { status: 200 },
+      ),
+    )
+
+    await expect(sendRawMessage()).resolves.toEqual({
+      messageIds: ["wamid.forward-compatible"],
+    })
+  })
+
+  test("rejects a successful raw response without a provider message id", async () => {
+    mockApiFetch.mockResolvedValue(
+      new Response(JSON.stringify({ messages: [{}] }), { status: 200 }),
+    )
+
+    await expect(sendCards([makeCard(), makeCard()])).rejects.toBeDefined()
+    expect(mockLogger.error).toHaveBeenCalled()
   })
 
   test("drops reply buttons that repeat an earlier label", async () => {
