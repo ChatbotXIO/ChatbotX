@@ -1,9 +1,7 @@
+import { contactCustomFieldService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
-import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
-import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
-import { createId } from "@chatbotx.io/utils"
 import { integrationService } from "../../services/integrations"
 
 export async function getIntegrationContext(props: {
@@ -64,49 +62,9 @@ export async function saveResultToCustomField(props: {
 }) {
   const { contactId, customFieldId, fullText, workspaceId } = props
 
-  // Get old value before update
-  const existingField = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId,
-      customFieldId,
-    },
+  await contactCustomFieldService.setValues({
+    workspaceId,
+    contactId,
+    fields: [{ customFieldId, value: fullText }],
   })
-  const oldValue = existingField?.value ?? null
-
-  await db
-    .insert(contactCustomFieldModel)
-    .values({
-      contactId,
-      customFieldId,
-      value: fullText,
-      id: createId(),
-    })
-    .onConflictDoUpdate({
-      target: [
-        contactCustomFieldModel.contactId,
-        contactCustomFieldModel.customFieldId,
-      ],
-      set: {
-        value: fullText,
-      },
-    })
-
-  // Emit custom field changed event
-  const customField = await db.query.customFieldModel.findFirst({
-    where: { id: customFieldId },
-  })
-  if (customField) {
-    try {
-      await emitCustomFieldChanged(
-        workspaceId,
-        contactId,
-        customFieldId,
-        customField.name,
-        oldValue,
-        fullText,
-      )
-    } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
-    }
-  }
 }

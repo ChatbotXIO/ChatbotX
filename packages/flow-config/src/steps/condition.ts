@@ -9,6 +9,18 @@ export const conditionFilterConditionSchema = z.object({
     .union([z.string(), z.array(z.string()), z.tuple([z.string(), z.string()])])
     .optional(),
   customFieldId: zodBigintAsString().optional(),
+  /**
+   * Runtime coupon topic id for dynamic coupon-topic filter rows. Kept so
+   * publish validation does not strip the selected topic before worker match.
+   */
+  topicId: zodBigintAsString().optional(),
+  /**
+   * Precise custom-field type (`date` | `datetime`). Kept alongside `valueType`
+   * so the runtime filter compares a date field by wall clock rather than the
+   * zone-aware datetime path. Without it here, zod strips the key on save and
+   * date conditions are silently mis-evaluated.
+   */
+  customFieldType: z.string().optional(),
   valueType: z.string().optional(),
 })
 
@@ -16,6 +28,12 @@ export const conditionCaseSchema = z.object({
   id: zodBigintAsString(),
   operator: z.enum(["and", "or"]),
   conditions: z.array(conditionFilterConditionSchema).min(1),
+  /**
+   * IANA timezone captured from the editor's browser when the flow was saved,
+   * used to interpret naive date/datetime condition values at runtime (the
+   * worker has no browser context). Backend defaults to UTC when absent.
+   */
+  timezone: z.string().max(64).optional(),
 })
 export type ConditionCaseSchema = z.infer<typeof conditionCaseSchema>
 

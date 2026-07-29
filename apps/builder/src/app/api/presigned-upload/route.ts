@@ -19,6 +19,7 @@ import { getDomainFromHeader } from "@/lib/domain"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { safeJsonParse } from "@/lib/serialize"
 import { getUploadHandler } from "@/lib/upload/handlers"
+import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,17 @@ export async function POST(req: NextRequest) {
 
     if (input.workspaceId) {
       await assertCurrentUserCanAccessChatbot(input.workspaceId)
+
+      // Membership alone is not enough: a scheduled-for-deletion (or already
+      // purged) workspace must not accumulate new storage objects and File rows
+      // that the purge cron has no chance of cleaning up.
+      const { servable } = await loadServableWorkspace(input.workspaceId)
+      if (!servable) {
+        return NextResponse.json(
+          { error: "Workspace deletion scheduled" },
+          { status: 403 },
+        )
+      }
       ;({ storageUrl } = await resolveTenantSettings({
         workspaceId: input.workspaceId,
       }))

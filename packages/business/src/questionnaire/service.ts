@@ -35,17 +35,6 @@ import {
 import { ChatbotXException, notFoundException } from "../errors"
 import type { UpdateQuestionnaireInput } from "./types"
 
-const CUSTOM_FIELD_TYPES_BY_QUESTION_TYPE: Record<
-  SupportedQuestionnaireQuestionType,
-  readonly string[]
-> = {
-  text: ["shortText", "longText"],
-  multipleChoice: ["shortText", "longText"],
-  number: ["number"],
-  email: ["email"],
-  phone: ["phoneNumber"],
-} as const
-
 const SYSTEM_FIELDS_BY_QUESTION_TYPE: Record<
   SupportedQuestionnaireQuestionType,
   readonly RichSystemContactField[]
@@ -443,7 +432,7 @@ export class QuestionnaireService extends BaseService {
               workspaceId: input.workspaceId,
               id: { in: customFieldIds },
             },
-            columns: { id: true, type: true },
+            columns: { id: true },
           })
         : []
 
@@ -479,10 +468,9 @@ export class QuestionnaireService extends BaseService {
         const customField = customFields.find(
           (field) => field.id === fieldMapping.customFieldId,
         )
-        const allowedTypes = CUSTOM_FIELD_TYPES_BY_QUESTION_TYPE[question.type]
-        if (!(customField && allowedTypes.includes(customField.type))) {
+        if (!customField) {
           throw new ChatbotXException(
-            "Custom field does not match question type",
+            "Custom field does not exist in the workspace",
             "invalidCustomField",
           )
         }

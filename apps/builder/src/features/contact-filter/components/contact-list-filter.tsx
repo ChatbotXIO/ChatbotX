@@ -7,6 +7,7 @@ import { FilterIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { pruneExcludedConditions } from "../lib/prune-conditions"
+import { getBrowserTimezone } from "../lib/timezone"
 import type { ContactFilterCondition, ContactFilterCriteria } from "../schemas"
 import { ContactFilterConditionEditDialog } from "./contact-filter-condition-dialog"
 import { ContactFilterConditionForm } from "./contact-filter-condition-form"
@@ -78,9 +79,19 @@ export function ContactListFilterPanel({
       onFilterChange({
         operator: pruned.length > 0 ? filter.operator : "and",
         conditions: pruned,
+        timezone: filter.timezone,
       })
     }
   }, [excludeFields, filter, onFilterChange])
+
+  // Stamp the browser timezone onto an active filter so the backend interprets
+  // naive date/datetime values in the user's local zone. Fires at most once per
+  // filter (guarded on the absent timezone), mirroring the prune effect above.
+  useEffect(() => {
+    if (filter.conditions.length > 0 && !filter.timezone) {
+      onFilterChange({ ...filter, timezone: getBrowserTimezone() })
+    }
+  }, [filter, onFilterChange])
 
   const handleToggleOperator = () => {
     onFilterChange({
@@ -113,6 +124,7 @@ export function ContactListFilterPanel({
     onFilterChange({
       operator: conditions.length > 0 ? filter.operator : "and",
       conditions,
+      timezone: conditions.length > 0 ? filter.timezone : undefined,
     })
   }
 

@@ -1,15 +1,14 @@
-import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import type { MentionOptions } from "@tiptap/extension-mention"
 import { ReactRenderer } from "@tiptap/react"
 import tippy from "tippy.js"
-import type { PromptVariableListRef } from "./definition"
+import type { PromptVariableListRef, PromptVariableOption } from "./definition"
 import { getFilteredMentions } from "./filter-mentions"
 import VariableList from "./variable-list"
 
 const suggestion = ({
   listOfPromptVariables,
 }: {
-  listOfPromptVariables: SelectOption[]
+  listOfPromptVariables: PromptVariableOption[] | (() => PromptVariableOption[])
 }): MentionOptions["suggestion"] => ({
   char: "{{",
   allowedPrefixes: null,
@@ -17,7 +16,11 @@ const suggestion = ({
   items: ({ query }: { query: string }) =>
     new Promise((resolve) => {
       setTimeout(() => {
-        resolve(getFilteredMentions(query, listOfPromptVariables))
+        const options =
+          typeof listOfPromptVariables === "function"
+            ? listOfPromptVariables()
+            : listOfPromptVariables
+        resolve(getFilteredMentions(query, options))
       }, 150)
     }),
 

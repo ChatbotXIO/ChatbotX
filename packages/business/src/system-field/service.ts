@@ -84,11 +84,14 @@ type VerifiedMeContext = {
 }
 
 const DEFAULT_GENDER_LABEL_LANGUAGE = "en"
+const LANGUAGE_SUBTAG_RE = /[-_]/
 
-const GENDER_LABELS: Record<
-  string,
-  Record<"male" | "female" | "unknown", string>
-> = {
+type GenderKey = "male" | "female" | "unknown"
+
+// Sentence-opening salutation labels for `{{gender}}`. Defined here, not in the
+// builder's messages/*.json, because the worker loads this package without a
+// next-intl runtime. Non-Vietnamese workspaces fall back to English.
+const GENDER_LABELS: Record<string, Record<GenderKey, string>> = {
   en: { female: "Female", male: "Male", unknown: "Male/Female" },
   vi: { female: "Chị", male: "Anh", unknown: "Anh/Chị" },
 }
@@ -97,18 +100,16 @@ export const resolveGenderLabel = (
   language: string | null | undefined,
   gender: string | null,
 ): string => {
-  const normalized = normalizeGender(gender ?? undefined) ?? "unknown"
+  // Primary subtag only, so a legacy "vi-VN" row still localises.
+  const [subtag] = (language || DEFAULT_GENDER_LABEL_LANGUAGE)
+    .toLowerCase()
+    .split(LANGUAGE_SUBTAG_RE)
   const labels =
-    GENDER_LABELS[language ?? DEFAULT_GENDER_LABEL_LANGUAGE] ??
-    GENDER_LABELS[DEFAULT_GENDER_LABEL_LANGUAGE]
-  switch (normalized) {
-    case "male":
-      return labels.male
-    case "female":
-      return labels.female
-    default:
-      return labels.unknown
-  }
+    GENDER_LABELS[subtag] ?? GENDER_LABELS[DEFAULT_GENDER_LABEL_LANGUAGE]
+  const normalized = normalizeGender(gender ?? undefined)
+  return normalized === "male" || normalized === "female"
+    ? labels[normalized]
+    : labels.unknown
 }
 
 const toGeneratedUtc = (): string =>

@@ -21,13 +21,13 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
+import { USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { isCloud } from "../keys"
 import { logger } from "../logger"
 import {
   LiveCounterStore,
   type QuotaMetric,
-  USER_QUOTA_LABEL,
 } from "../quota-shared/live-counter-store"
 
 export type { QuotaMetric } from "../quota-shared/live-counter-store"
@@ -56,6 +56,7 @@ const BOOTSTRAP_TRIAL_FALLBACK = {
   teamMembersLimit: 0,
   contactsLimit: 0,
   botMessagesLimit: 0,
+  monthlyBotMessagesLimit: 0,
 } as const
 
 interface DefaultPlanSnapshot {
@@ -63,6 +64,7 @@ interface DefaultPlanSnapshot {
   channelsLimit: number | null
   contactsLimit: number | null
   macLimit: number | null
+  monthlyBotMessagesLimit: number | null
   planName: string
   saasMode: boolean
   ssoSaml: boolean
@@ -76,6 +78,7 @@ type BootstrapPlanSnapshot = Pick<
   DefaultPlanSnapshot,
   | "channelsLimit"
   | "botMessagesLimit"
+  | "monthlyBotMessagesLimit"
   | "contactsLimit"
   | "macLimit"
   | "planName"
@@ -89,10 +92,14 @@ type BootstrapPlanSnapshot = Pick<
  * field the gate needs; the rest drive the "trial ended / X days left" UI.
  *  - status mirrors UserQuota.planStatus (active|past_due|trial|expired).
  *  - a user with no quota row at all (pure OSS install) is never blocked.
+ *  - `reason` discriminates WHY `blocked` is true, so the UI can show the
+ *    right paywall copy ("plan inactive" vs "monthly active contact limit
+ *    reached") instead of a single generic message. `null` when not blocked.
  */
 export interface AccessState {
   blocked: boolean
   planName: string | null
+  reason: "status" | "mac" | null
   status: string | null
   trialEndsAt: Date | null
 }
@@ -111,6 +118,7 @@ class UserQuotaService extends BaseService {
       contacts: userQuotaModel.contactsUsed,
       mac: userQuotaModel.macUsed,
       botMessages: userQuotaModel.botMessagesUsed,
+      monthlyBotMessages: userQuotaModel.monthlyBotMessagesUsed,
     },
     getUsed: (quota, metric) => this.getUsedValue(quota, metric),
     fetchRow: (userId) =>
@@ -139,6 +147,8 @@ class UserQuotaService extends BaseService {
         return quota.macUsed
       case "botMessages":
         return quota.botMessagesUsed
+      case "monthlyBotMessages":
+        return quota.monthlyBotMessagesUsed
       default:
         return 0
     }
@@ -236,6 +246,9 @@ class UserQuotaService extends BaseService {
         teamMembersLimit: snapshot.teamMembersLimit,
         macLimit: snapshot.macLimit,
         botMessagesLimit: snapshot.botMessagesLimit,
+        // Additive cross-repo field: an older snapshot omits it, which is
+        // deliberately unlimited (fail-open), never an implicit zero cap.
+        monthlyBotMessagesLimit: snapshot.monthlyBotMessagesLimit ?? null,
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
@@ -320,6 +333,8 @@ class UserQuotaService extends BaseService {
       macUsed: 0,
       botMessagesLimit: null,
       botMessagesUsed: 0,
+      monthlyBotMessagesLimit: null,
+      monthlyBotMessagesUsed: 0,
       whiteLabel: false,
       ssoSaml: false,
       saasMode: false,
@@ -338,6 +353,10 @@ class UserQuotaService extends BaseService {
       workspacesLimit: base.workspacesLimit ?? snapshot.workspacesLimit,
       channelsLimit: base.channelsLimit ?? snapshot.channelsLimit,
       botMessagesLimit: base.botMessagesLimit ?? snapshot.botMessagesLimit,
+      monthlyBotMessagesLimit:
+        base.monthlyBotMessagesLimit ??
+        snapshot.monthlyBotMessagesLimit ??
+        null,
       teamMembersLimit: base.teamMembersLimit ?? snapshot.teamMembersLimit,
       // Monthly-active-contacts cap (`Plan.limits.monthlyActiveContacts`) maps to
       // `macLimit`, NOT `contactsLimit`; without this the free-tier overlay would
@@ -356,32 +375,72 @@ class UserQuotaService extends BaseService {
 
   /**
    * Whether the user may access the app, based on the entitlement snapshot.
-   * Blocked only when a self-managed trial has expired or was consumed:
-   *   - planStatus === "expired"  (trial consumed / churned)
-   *   - planStatus === "trial" and periodEnd has passed
-   * Everything else (active, past_due, no row) is allowed.
+   * Allow-list: only `active` and a non-expired `trial` may send/receive.
+   * `past_due`, `expired`, an expired `trial`, and any unrecognized status are
+   * blocked (`reason: "status"`). On top of the status check, this async
+   * variant also OR-in the **live** MAC count (`reason: "mac"`) — the live
+   * Redis counter is authoritative and can be ahead of the DB `macUsed`
+   * column (see {@link getAccessStateFromQuota} for the pure/DB-only variant).
    */
   async getAccessState(userId: string): Promise<AccessState> {
     const quota = await this.getForUser(userId)
-    return this.getAccessStateFromQuota(quota)
+    const state = this.getAccessStateFromQuota(quota)
+    if (state.blocked) {
+      return state
+    }
+
+    const macLimitReached = await this.isLimitReached(userId, "mac")
+    if (macLimitReached) {
+      return { ...state, blocked: true, reason: "mac" }
+    }
+
+    return state
   }
 
   /**
    * Pure derivation of {@link AccessState} from an already-fetched quota row.
    * Use this when the caller has already loaded the quota (e.g. an RSC that also
    * renders usage bars) to avoid a redundant `getForUser` round-trip.
+   *
+   * Allow-list: only `active` and a non-expired `trial` are allowed; every
+   * other status (`past_due`, `expired`, expired `trial`, unknown) is blocked
+   * with `reason: "status"`. A user with no quota row at all (pure OSS
+   * install / pre-bootstrap) is never blocked.
+   *
+   * Also blocks when the DB `macUsed` column has already reached `macLimit`
+   * (`reason: "mac"`) — a conservative fallback for synchronous/RSC callers
+   * that only have this row; it can lag the live Redis count, which
+   * {@link getAccessState} checks authoritatively.
    */
   getAccessStateFromQuota(quota: UserQuotaModel | null): AccessState {
     if (!quota) {
-      return { blocked: false, status: null, planName: null, trialEndsAt: null }
+      return {
+        blocked: false,
+        status: null,
+        planName: null,
+        trialEndsAt: null,
+        reason: null,
+      }
     }
 
     const trialExpired =
       quota.planStatus === planStatuses.enum.trial &&
       quota.periodEnd !== null &&
       new Date(quota.periodEnd).getTime() <= Date.now()
-    const blocked =
-      quota.planStatus === planStatuses.enum.expired || trialExpired
+    const trialActive =
+      quota.planStatus === planStatuses.enum.trial && !trialExpired
+    const statusAllowed =
+      quota.planStatus === planStatuses.enum.active || trialActive
+    const macLimitReached =
+      quota.macLimit !== null && quota.macUsed >= quota.macLimit
+
+    const blocked = !statusAllowed || macLimitReached
+    let reason: AccessState["reason"] = null
+    if (!statusAllowed) {
+      reason = "status"
+    } else if (macLimitReached) {
+      reason = "mac"
+    }
 
     return {
       blocked,
@@ -389,6 +448,7 @@ class UserQuotaService extends BaseService {
       planName: quota.planName,
       trialEndsAt:
         quota.planStatus === planStatuses.enum.trial ? quota.periodEnd : null,
+      reason,
     }
   }
 
@@ -796,6 +856,11 @@ class UserQuotaService extends BaseService {
         return {
           limit: quota.botMessagesLimit,
           used: quota.botMessagesUsed,
+        }
+      case "monthlyBotMessages":
+        return {
+          limit: quota.monthlyBotMessagesLimit,
+          used: quota.monthlyBotMessagesUsed,
         }
       default:
         return { limit: null, used: 0 }

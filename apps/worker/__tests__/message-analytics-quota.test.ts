@@ -36,14 +36,14 @@ describe("handleBotMessageSent quota accounting", () => {
     )
   })
 
-  it("groups by workspace and increments each workspace owner", async () => {
+  it("groups by workspace and increments both lifetime and monthly counters", async () => {
     await handleBotMessageSent([
       payload("workspace-1"),
       payload("workspace-1"),
       payload("workspace-2"),
     ])
 
-    expect(mocks.incrementBy).toHaveBeenCalledTimes(2)
+    expect(mocks.incrementBy).toHaveBeenCalledTimes(4)
     expect(mocks.incrementBy).toHaveBeenCalledWith({
       userId: "owner-workspace-1",
       metric: "botMessages",
@@ -52,6 +52,16 @@ describe("handleBotMessageSent quota accounting", () => {
     expect(mocks.incrementBy).toHaveBeenCalledWith({
       userId: "owner-workspace-2",
       metric: "botMessages",
+      count: 1,
+    })
+    expect(mocks.incrementBy).toHaveBeenCalledWith({
+      userId: "owner-workspace-1",
+      metric: "monthlyBotMessages",
+      count: 2,
+    })
+    expect(mocks.incrementBy).toHaveBeenCalledWith({
+      userId: "owner-workspace-2",
+      metric: "monthlyBotMessages",
       count: 1,
     })
   })
@@ -77,7 +87,7 @@ describe("handleBotMessageSent quota accounting", () => {
       handleBotMessageSent([payload("workspace-1"), payload("workspace-2")]),
     ).resolves.toBe(undefined)
 
-    expect(mocks.incrementBy).toHaveBeenCalledOnce()
+    expect(mocks.incrementBy).toHaveBeenCalledTimes(2)
     expect(mocks.incrementBy).toHaveBeenCalledWith({
       userId: "owner-workspace-2",
       metric: "botMessages",

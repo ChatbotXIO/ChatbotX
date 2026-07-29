@@ -65,6 +65,7 @@
     "openWebchat": "Open Webchat",
     "removeTag": "Remove Tag",
     "rename": "Rename",
+    "reset": "Reset",
     "save": "Save",
     "selectAll": "Select all",
     "selectRow": "Select row",
@@ -287,6 +288,7 @@
       "contacts": "Contacts",
       "mac": "Monthly active contacts",
       "botMessages": "Bot messages",
+      "monthlyBotMessages": "Bot messages (monthly)",
       "workspaces": "Workspaces",
       "channels": "Channels",
       "teamMembers": "Team members"
@@ -296,8 +298,7 @@
       "channels": "You've reached your channel limit. Upgrade your plan to connect more.",
       "teamMembers": "You've reached your team member limit. Upgrade your plan to invite more.",
       "contacts": "You've reached your contact limit. Upgrade your plan to add more.",
-      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more.",
-      "botMessages": "You've reached your bot message limit. Upgrade your plan to send more."
+      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more."
     },
     "pastDue": {
       "message": "Your last payment failed. Update your payment method to keep your workspace active."
@@ -316,6 +317,12 @@
       "bannerDescription": "Creating new resources is disabled. You can still disconnect channels and schedule workspace deletion.",
       "bannerCta": "Upgrade",
       "createDisabled": "Creating new {feature} is disabled. Upgrade to continue."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Monthly active contact limit reached",
+      "bannerDescription": "Sending and receiving messages is paused until you upgrade your plan.",
+      "bannerCta": "Upgrade",
+      "createDisabled": "Creating new {feature} is disabled until you upgrade your plan."
     }
   },
   "broadcasts": {
@@ -323,7 +330,8 @@
     "status": {
       "scheduled": "Scheduled",
       "sent": "Sent",
-      "sending": "Sending"
+      "sending": "Sending",
+      "cancelled": "Cancelled"
     },
     "stats": {
       "sent": "Sent",
@@ -415,6 +423,7 @@
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
     "datetimePlaceholder": "YYYY-MM-DD HH:mm",
     "datetimeInvalid": "Enter a date as YYYY-MM-DD HH:mm or a variable",
     "operator": {
@@ -477,6 +486,7 @@
       "questionnaireStarted": "Questionnaire started",
       "questionnaireInProgress": "Questionnaire in progress",
       "questionnaireFinished": "Questionnaire finished",
+      "couponTopic": "Coupon",
       "votedOnPoll": "Voted on the poll",
       "lastComment": "Last comment",
       "commentedOnPost": "Commented on Post",
@@ -538,6 +548,7 @@
       "systemTime": "System Time",
       "ecommerce": "Ecommerce",
       "systemFields": "System Fields",
+      "topicCoupon": "Topic coupon",
       "customFields": "Custom Fields",
       "email": "Email",
       "sms": "SMS"
@@ -725,7 +736,8 @@
       "startsWith": "Starts with",
       "endsWith": "Ends with",
       "isBetween": "Interval",
-      "notBetween": "Not interval"
+      "notBetween": "Not interval",
+      "used": "Used"
     },
     "contactFilter": {
       "allConditions": "All of the following conditions",
@@ -1971,6 +1983,15 @@
     },
     "webchatParentUrl": {
       "label": "Webchat Parent URL"
+    },
+    "make": {
+      "inviteUrl": "Invite Link",
+      "inviteUrlHint": "The invite link for your published Make custom app (e.g. https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Events",
+      "placeholder": "Type an event name and press Enter",
+      "description": "Add one or more event names. When Make attaches a webhook for one of these events, data is sent to it when this step runs."
     }
   },
   "flows": {
@@ -2017,7 +2038,11 @@
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
       "callApi": "External API Request",
+      "make": "Make",
+      "triggers": "Triggers",
       "questionnaires": "Questionnaires",
+      "setUpCoupon": "Set up Coupon",
+      "markCouponUsed": "Mark Coupon used",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "condition": "Condition",
@@ -2191,6 +2216,9 @@
       "durationLabel": "Duration",
       "waitAndContinue": "Wait <value>{duration} {unit}</value> and continue",
       "cancelOnReplyHint": "The follow-up won't be sent if the contact replies before the time expires."
+    },
+    "setCustomField": {
+      "temporalHint": "Leave it empty to save the current date/time."
     }
   },
   "folders": {
@@ -2498,6 +2526,15 @@
     "errors": {
       "invalidApiKey": "Invalid API Key. Please check your SendGrid API Key and try again.",
       "missingScopes": "This API key must have Marketing read access. Please ensure your SendGrid API key includes Marketing permissions."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios. Your workspace's Developer Access Token is copied to your clipboard when you click Connect — paste it when creating the connection in Make.",
+      "notConfigured": "No Make invite link found. Please add one in Platform Settings.",
+      "noWorkspaceToken": "No Developer Access Token found for this workspace. Generate one in the Workspace token section above, then click Connect again."
     }
   },
   "integrations": {
@@ -2915,6 +2952,9 @@
       "description": "These are special keywords that tell the WhatsApp bot what to do",
       "label": "Commands"
     },
+    "autoConnect": {
+      "inProgress": "Connecting…"
+    },
     "connectExisting": "Connect an existing WhatsApp Business Account",
     "embeddedSignupDone": "Signup complete — you can close this tab.",
     "embeddedSignupPopupBlocked": "Please allow pop-ups for this site, then try again.",
@@ -2933,6 +2973,50 @@
       "qrCodeHint": "Scan the QR code to open the webhook URL",
       "moreSettings": "More settings",
       "goToInbox": "Take me there"
+    },
+    "phoneVerification": {
+      "title": "Verify WhatsApp phone number",
+      "description": "Request a verification code from Meta, enter the code here, and the phone number will be registered automatically.",
+      "errorTitle": "Phone number verification required",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Voice call"
+      },
+      "actions": {
+        "sendCode": "Send code",
+        "resendIn": "Resend in {seconds}s",
+        "verify": "Verify and register"
+      },
+      "fields": {
+        "code": {
+          "label": "Verification code",
+          "placeholder": "Enter Meta OTP"
+        }
+      },
+      "messages": {
+        "codeSent": "Verification code sent by {method}.",
+        "cooldown": "Please wait {seconds}s before requesting another code.",
+        "verified": "Phone number verified and registered successfully."
+      },
+      "errors": {
+        "integrationNotFound": "WhatsApp integration not found.",
+        "codeNotSent": "WhatsApp verification code could not be sent.",
+        "codeNotVerified": "WhatsApp verification code could not be verified.",
+        "registrationFailed": "WhatsApp phone number verification failed."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "WhatsApp access token is required.",
+        "appSettingsNotFound": "WhatsApp app settings were not found.",
+        "failedToPersistIntegration": "Failed to save the WhatsApp integration.",
+        "noPhoneNumberFound": "No WhatsApp phone number was found.",
+        "noPhoneNumbersFound": "No phone numbers were found for this WhatsApp Business Account.",
+        "phoneNumberNotFound": "Selected WhatsApp phone number was not found.",
+        "unableToVerifyToken": "Unable to verify the WhatsApp token.",
+        "wabaMismatch": "Selected WhatsApp Business Account does not match the authorization.",
+        "wabaResolveFailed": "Could not resolve the WhatsApp Business Account from the authorization."
+      }
     },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
@@ -3012,6 +3096,10 @@
       "title": "Manage your WhatsApp account",
       "description": "Review your WhatsApp account status, messaging limits, and quality. Update settings or resolve issues if needed",
       "goToBusinessManager": "Go to Meta Business Manager",
+      "unavailable": {
+        "title": "Account health is temporarily unavailable",
+        "description": "We could not load this WhatsApp phone number from Meta right now. Other recovery actions on this page are still available."
+      },
       "fields": {
         "displayPhoneNumber": {
           "label": "Display phone number",
@@ -3131,7 +3219,8 @@
     "templateHeader": {
       "label": "Template Header"
     },
-    "transferPhoneNumber": "Transfer phone from another Whatsapp provider"
+    "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
+    "signupSessionExpired": "Your WhatsApp signup session has expired. Please start the connection again."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3414,7 +3503,13 @@
     "responseType": "Response Type",
     "points": "Points",
     "retryMessage": "Retry message if the reply is invalid",
-    "defaultRetryMessage": "What you've entered is not a valid text. Please try again",
+    "defaultRetryMessages": {
+      "text": "What you've entered is not a valid text. Please try again",
+      "number": "What you've entered is not a valid number. Please try again",
+      "email": "What you've entered is not a valid email. Please try again",
+      "phone": "What you've entered is not a valid phone number. Please try again",
+      "multipleChoice": "What you've entered is not a valid option. Please try again"
+    },
     "customField": "Save response to a custom or system field",
     "options": "Options",
     "mode": "Mode",
@@ -3559,7 +3654,20 @@
   },
   "facebookLeadAdsAutomation": {
     "title": "Facebook Lead Ads Automation",
-    "description": "Automate Facebook lead ads for your contacts."
+    "description": "Automate Facebook lead ads for your contacts.",
+    "create": "Create New",
+    "leads": "Leads",
+    "facebookPage": "Facebook Page",
+    "leadForm": "Lead Form",
+    "allForms": "All forms",
+    "allFormsNote": "Leads from every form on this page will be captured. Standard fields (email, phone, name, gender) are saved to matching contact fields automatically.",
+    "leadData": "Lead Data",
+    "whatFlow": "What flow is triggered",
+    "none": "None",
+    "addNewPage": "Add New",
+    "noEligiblePages": "No eligible pages. Use \"Add New\" to grant lead access.",
+    "duplicateError": "An automation already exists for this page and form.",
+    "subscribeError": "Could not subscribe this page to Facebook lead notifications, so the automation was not created. Reconnect the page with \"Add New\" and try again."
   },
   "ecommerce": {
     "title": "Ecommerce",
@@ -3681,7 +3789,9 @@
     "title": "You have been unsubscribed.",
     "description": "You will no longer receive emails from this sender.",
     "invalidTitle": "Invalid unsubscribe link.",
-    "invalidDescription": "This link is invalid or has expired."
+    "invalidDescription": "This link is invalid or has expired.",
+    "unavailableTitle": "Unsubscribe unavailable.",
+    "unavailableDescription": "This workspace is no longer available."
   },
   "extensionsMe": {
     "actions": {
@@ -3817,6 +3927,70 @@
     "title": "TikTok",
     "description": "Connect your TikTok account to reply to direct messages.",
     "refreshToken": "Refresh Token"
+  },
+  "coupons": {
+    "title": "Coupons",
+    "description": "Manage campaign coupon topics, imports, exports, and flow-ready coupon codes.",
+    "singular": "Coupon",
+    "topicCouponsTitle": "Topic Coupons",
+    "tabs": {
+      "topicCoupon": "Topic Coupon",
+      "coupon": "Coupon",
+      "listTopic": "List Topic",
+      "archive": "Archive"
+    },
+    "topic": {
+      "create": "Create New",
+      "edit": "Edit topic"
+    },
+    "actions": {
+      "import": "Import coupons",
+      "export": "Download Coupon List",
+      "downloadImportTemplate": "Download import template"
+    },
+    "fields": {
+      "topic": "Topic",
+      "selectTopic": "Select topic",
+      "importCsvOnly": "Click or drag .csv file to this area to upload",
+      "allTopics": "All topics",
+      "couponCount": "Coupons",
+      "validity": "Validity period",
+      "unlimited": "Unlimited",
+      "code": "Code",
+      "issueStatus": "Status",
+      "usageStatus": "Usage",
+      "allIssueStatuses": "All statuses",
+      "allUsageStatuses": "All usage",
+      "searchCode": "Search code"
+    },
+    "issueStatuses": {
+      "published": "Published",
+      "unpublished": "Unpublished"
+    },
+    "usageStatuses": {
+      "used": "Used",
+      "notUsed": "Not used yet"
+    },
+    "variables": {
+      "group": "Coupons"
+    },
+    "messages": {
+      "topicSaved": "Coupon topic saved.",
+      "editLocked": "Name and description are locked after coupons have been created or imported.",
+      "archiveTitle": "Archive coupon topic",
+      "archiveConfirm": "Archive \"{name}\"? It will move to the Archive list.",
+      "archiveBulkConfirm": "Archive {count} selected topics? They will move to the Archive list.",
+      "restoreTitle": "Restore coupon topic",
+      "unarchiveConfirm": "Restore \"{name}\"? It will move back to the Topic list.",
+      "unarchiveBulkConfirm": "Restore {count} selected topics? They will move back to the Topic list.",
+      "deleteTitle": "Delete coupon topic",
+      "deleteConfirm": "Delete this archived topic? Coupon history is preserved.",
+      "empty": "No coupons found.",
+      "importStarted": "Coupon import started.",
+      "exportStarted": "Coupon export started.",
+      "exportFailed": "Coupon export failed.",
+      "exportCount": "{count} coupon rows will be exported."
+    }
   },
   "helpMenu": {
     "title": "Help",

@@ -1,17 +1,14 @@
 import {
   buildContext,
+  contactCustomFieldService,
   integrationGoogleSheetService,
 } from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  contactCustomFieldModel,
-  spreadsheetModel,
-} from "@chatbotx.io/database/schema"
+import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import type {
   ConversationModel,
   SpreadsheetModel,
 } from "@chatbotx.io/database/types"
-import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import type {
   FilterMode,
   Operator,
@@ -21,7 +18,10 @@ import {
   type GoogleSheetsAuthValue,
   integration as integrationGooglesheets,
 } from "@chatbotx.io/integration-google-sheets"
-import { createId } from "@chatbotx.io/utils"
+import {
+  SourceTimezoneStrategy,
+  TemporalInputParsing,
+} from "@chatbotx.io/utils/datetime"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
@@ -377,60 +377,33 @@ const updateContactCustomFields = async ({
   headers: string[]
   foundRow: string[]
 }) => {
-  // Fetch custom field names for event emission
-  const customFieldIds = step.map
-    .map((m) => m.customFieldId)
-    .filter(Boolean) as string[]
-  const customFields = await db.query.customFieldModel.findMany({
-    where: {
-      id: { in: customFieldIds },
-    },
-    columns: { id: true, name: true },
-  })
-  const customFieldMap = new Map(customFields.map((f) => [f.id, f.name]))
-
-  for (const mapItem of step.map) {
+  const fields = step.map.flatMap((mapItem) => {
     const headerIndex = headers.indexOf(mapItem.header)
-    if (headerIndex !== -1 && mapItem.customFieldId) {
-      const value = foundRow[headerIndex]
-
-      // Get existing value before update
-      const existing = await db.query.contactCustomFieldModel.findFirst({
-        where: {
-          contactId: conversation.contactId,
-          customFieldId: mapItem.customFieldId,
-        },
-        columns: { value: true },
-      })
-
-      await db
-        .insert(contactCustomFieldModel)
-        .values({
-          id: createId(),
-          contactId: conversation.contactId,
-          customFieldId: mapItem.customFieldId,
-          value,
-        })
-        .onConflictDoUpdate({
-          target: [
-            contactCustomFieldModel.contactId,
-            contactCustomFieldModel.customFieldId,
-          ],
-          set: {
-            value,
-          },
-        })
-
-      await emitCustomFieldChanged(
-        conversation.workspaceId,
-        conversation.contactId,
-        mapItem.customFieldId,
-        customFieldMap.get(mapItem.customFieldId) || mapItem.customFieldId,
-        existing?.value || null,
-        value,
-      )
+    if (headerIndex === -1 || !mapItem.customFieldId) {
+      return []
     }
+
+    return [
+      {
+        customFieldId: mapItem.customFieldId,
+        value: foundRow[headerIndex] ?? "",
+      },
+    ]
+  })
+
+  if (fields.length === 0) {
+    return
   }
+
+  await contactCustomFieldService.setValues({
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    fields,
+    // Sheet cells arrive as locale display strings or unix numbers, not ISO.
+    // Anchor naive values to the workspace clock and skip the contact lookup.
+    temporalInputParsing: TemporalInputParsing.Lenient,
+    sourceTimezoneStrategy: SourceTimezoneStrategy.Workspace,
+  })
 }
 
 const getRandomRow = (rows: string[][]): string[] | null => {

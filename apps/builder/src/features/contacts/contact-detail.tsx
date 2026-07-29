@@ -7,12 +7,18 @@ import {
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import { customFieldTypes } from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  formatCustomFieldValueInTimeZone,
+  isTemporalCustomFieldType,
+  resolveTemporalCustomFieldFormValue,
+} from "@chatbotx.io/utils/datetime"
 import {
   AtSignIcon,
   ClockIcon,
@@ -26,6 +32,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
+import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
@@ -96,6 +103,7 @@ export const ContactDetail = ({
   const workspaceId = useWorkspaceId()
   const { conversations } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
+  const [timezone, setTimezone] = useState("UTC")
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
@@ -104,6 +112,10 @@ export const ContactDetail = ({
     useCustomFieldStore((state) => state)
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
+
+  useEffect(() => {
+    setTimezone(getBrowserTimezone())
+  }, [])
 
   const genderOptions = useMemo(
     () => [
@@ -149,7 +161,9 @@ export const ContactDetail = ({
           ? {
               ...field,
               formValue: value,
-              value: getContactFieldDisplayValue(fieldKey, value),
+              value: isTemporalCustomFieldType(field.type)
+                ? formatCustomFieldValueInTimeZone(field.type, value, timezone)
+                : getContactFieldDisplayValue(fieldKey, value),
             }
           : field,
       ),
@@ -157,28 +171,33 @@ export const ContactDetail = ({
   }
 
   const handleChooseCustomField = (customFieldId: string) => {
-    const targetCustomField = customFields.find(
-      (field) => field.id.toString() === customFieldId,
-    )
+    const targetCustomField = customFieldMap.get(customFieldId)
     if (!targetCustomField) {
       return
     }
-    setContactFields([
-      ...contactFields,
+    setContactFields((previous) => [
+      ...previous,
       {
         key: customFieldId,
-        icon: customFieldIconsMap[targetCustomField.type as CustomFieldType],
+        icon: customFieldIconsMap[targetCustomField.type],
         label: targetCustomField.name,
         value: "",
-        type: targetCustomField.type as CustomFieldType,
+        type: targetCustomField.type,
       },
     ])
   }
 
   const customFieldMap = useMemo(() => {
-    const map = new Map()
+    const map = new Map<string, { name: string; type: CustomFieldType }>()
     for (const field of customFields) {
-      map.set(field.id, field)
+      const parsedType = customFieldTypes.safeParse(field.type)
+      if (!parsedType.success) {
+        continue
+      }
+      map.set(field.id.toString(), {
+        name: field.name,
+        type: parsedType.data,
+      })
     }
     return map
   }, [customFields])
@@ -266,12 +285,20 @@ export const ContactDetail = ({
           if (targetCustomField) {
             tmpContactFields.push({
               key: contactCustomField.id,
-              icon: customFieldIconsMap[
-                targetCustomField.type as CustomFieldType
-              ],
+              icon: customFieldIconsMap[targetCustomField.type],
               label: targetCustomField.name,
-              value: contactCustomField.value,
-              type: targetCustomField.type as CustomFieldType,
+              value: formatCustomFieldValueInTimeZone(
+                targetCustomField.type,
+                contactCustomField.value,
+                timezone,
+              ),
+              formValue: isTemporalCustomFieldType(targetCustomField.type)
+                ? resolveTemporalCustomFieldFormValue(
+                    targetCustomField.type,
+                    contactCustomField.value,
+                  )
+                : contactCustomField.value,
+              type: targetCustomField.type,
             })
           }
         }
@@ -291,6 +318,7 @@ export const ContactDetail = ({
     customFieldMap,
     genderOptions,
     languageOptions,
+    timezone,
     t,
   ])
 

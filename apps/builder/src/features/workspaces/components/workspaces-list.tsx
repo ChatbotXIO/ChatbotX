@@ -1,3 +1,4 @@
+import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business"
 import {
   Avatar,
   AvatarFallback,
@@ -29,6 +30,8 @@ type WorkspacesListProps = {
   workspacesLimit?: number | null
   isAtLimit?: boolean
   blocked?: boolean
+  /** Why creation is blocked; picks the create-card copy. Defaults to the plan/trial message. */
+  reason?: "status" | "mac" | null
   ownerWorkspaceIds?: string[]
   superAdminWorkspaceIds?: string[]
 }
@@ -120,7 +123,7 @@ const WorkspaceCard = ({
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
   const href = `/space/${workspace.id}`
-  const isScheduledForDeletion = Boolean(workspace.scheduledDeletionAt)
+  const isScheduledForDeletion = isWorkspaceScheduledForDeletion(workspace)
   const activeHours =
     workspace.isActive && workspace.startTime && workspace.endTime
       ? t("workspace.schedule.activeHours", {
@@ -186,6 +189,7 @@ const WorkspacesList = async ({
   workspacesLimit,
   isAtLimit = false,
   blocked = false,
+  reason,
   ownerWorkspaceIds = [],
   superAdminWorkspaceIds = [],
 }: WorkspacesListProps) => {
@@ -242,9 +246,12 @@ const WorkspacesList = async ({
                 disabled={isAtLimit || blocked}
                 disabledReason={
                   blocked
-                    ? t("billing.trialExpired.createDisabled", {
-                        feature: t("fields.workspace.label"),
-                      })
+                    ? t(
+                        reason === "mac"
+                          ? "billing.macLimitReached.createDisabled"
+                          : "billing.trialExpired.createDisabled",
+                        { feature: t("fields.workspace.label") },
+                      )
                     : t("billing.limitReached.workspaces")
                 }
                 label={createLabel}

@@ -85,6 +85,9 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) =>
 )
 
 vi.mock("@chatbotx.io/business", () => ({
+  customDomainService: {
+    listActiveDomains: vi.fn(async () => []),
+  },
   tagSyncService: {
     enqueueCreate: vi.fn(async () => undefined),
     enqueueDelete: vi.fn(async () => undefined),

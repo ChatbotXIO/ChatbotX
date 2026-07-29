@@ -1,9 +1,10 @@
 "use client"
 
 import type {
-  CustomFieldType,
+  SupportedQuestionnaireQuestionType,
   SystemFieldType,
 } from "@chatbotx.io/database/partials"
+import { supportedQuestionnaireQuestionTypes } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
@@ -46,12 +47,20 @@ import {
   getQuestionFieldMappingReset,
 } from "../utils/field-mapping"
 import { duplicateQuestionnaireQuestionDraft } from "../utils/question"
+import { getQuestionnaireDefaultRetryMessage } from "../utils/retry-message"
 
 type QuestionnaireForEdit = Awaited<
   ReturnType<
     typeof import("../queries/get-questionnaire.query").getQuestionnaire
   >
 >
+
+const getRetryMessageType = (
+  type: string,
+): SupportedQuestionnaireQuestionType =>
+  supportedQuestionnaireQuestionTypes.safeParse(type).success
+    ? (type as SupportedQuestionnaireQuestionType)
+    : "text"
 
 const createDraftQuestion = (
   retryMessage: string,
@@ -65,14 +74,6 @@ const createDraftQuestion = (
   customFieldId: null,
   config: { options: [] },
 })
-
-const customFieldTypesByQuestionType: Record<string, CustomFieldType[]> = {
-  text: ["shortText", "longText"],
-  multipleChoice: ["shortText", "longText"],
-  number: ["number"],
-  email: ["email"],
-  phone: ["phoneNumber"],
-}
 
 const writableSystemFieldIdsByQuestionType: Record<string, SystemFieldType[]> =
   {
@@ -93,7 +94,6 @@ export function EditQuestionnaireForm({
   const t = useTranslations()
   const router = useRouter()
   const flowOptions = useFlowSelectOptions()
-  const defaultRetryMessage = t("questionnaires.defaultRetryMessage")
   const triggerFlowOptions = useMemo(
     () => [
       {
@@ -154,13 +154,22 @@ export function EditQuestionnaireForm({
                   active: question.active,
                   image: question.image ?? { mode: "file", url: "" },
                   point: question.point,
-                  retryMessage: question.retryMessage || defaultRetryMessage,
+                  retryMessage:
+                    question.retryMessage ||
+                    getQuestionnaireDefaultRetryMessage(
+                      getRetryMessageType(question.type),
+                      t,
+                    ),
                   customFieldId:
                     question.systemFieldKey ?? question.customFieldId,
                   systemFieldKey: question.systemFieldKey,
                   config: question.config ?? { options: [] },
                 }))
-              : [createDraftQuestion(defaultRetryMessage)],
+              : [
+                  createDraftQuestion(
+                    getQuestionnaireDefaultRetryMessage("text", t),
+                  ),
+                ],
         },
       },
     },
@@ -293,7 +302,12 @@ export function EditQuestionnaireForm({
                       name={`questions.${index}.type`}
                       options={responseTypeOptions}
                       required
-                      triggerValueChange={() => {
+                      triggerValueChange={(value) => {
+                        if (!value) {
+                          return
+                        }
+                        const nextType =
+                          value as UpdateQuestionnaireRequest["questions"][number]["type"]
                         const reset = getQuestionFieldMappingReset()
                         form.setValue(
                           `questions.${index}.customFieldId`,
@@ -302,6 +316,13 @@ export function EditQuestionnaireForm({
                         form.setValue(
                           `questions.${index}.systemFieldKey`,
                           reset.systemFieldKey,
+                        )
+                        form.setValue(
+                          `questions.${index}.retryMessage`,
+                          getQuestionnaireDefaultRetryMessage(
+                            getRetryMessageType(nextType),
+                            t,
+                          ),
                         )
                       }}
                     />
@@ -453,7 +474,6 @@ export function EditQuestionnaireForm({
                     {enableCustomFieldMapping ? (
                       <CustomFieldSelect
                         allowCreate
-                        customFieldTypes={customFieldTypesByQuestionType[type]}
                         includeReserved
                         label={t("questionnaires.customField")}
                         name={`questions.${index}.customFieldId`}
@@ -534,7 +554,11 @@ export function EditQuestionnaireForm({
             className="min-w-32"
             disabled={fields.length >= 100}
             onClick={() => {
-              append(createDraftQuestion(defaultRetryMessage))
+              append(
+                createDraftQuestion(
+                  getQuestionnaireDefaultRetryMessage("text", t),
+                ),
+              )
               triggerQuestionsValidation()
             }}
             type="button"

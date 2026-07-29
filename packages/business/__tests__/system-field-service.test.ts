@@ -79,7 +79,9 @@ vi.mock("../src/workspace/service", () => ({
   workspaceService: { findById: mocks.workspaceFindById },
 }))
 
-const { systemFieldService } = await import("../src/system-field/service")
+const { resolveGenderLabel, systemFieldService } = await import(
+  "../src/system-field/service"
+)
 
 const payload = {
   channel: "messenger",
@@ -132,6 +134,32 @@ const conversation = {
   createdAt: new Date("2026-06-05T07:34:29.000Z"),
   id: payload.conversationId,
 }
+
+describe("resolveGenderLabel", () => {
+  test("uses the Vietnamese labels for a Vietnamese workspace", () => {
+    expect(resolveGenderLabel("vi", "male")).toBe("Anh")
+    expect(resolveGenderLabel("vi", "female")).toBe("Chị")
+    expect(resolveGenderLabel("vi", "unknown")).toBe("Anh/Chị")
+  })
+
+  test("falls back to the English labels for every other language", () => {
+    expect(resolveGenderLabel("en", "male")).toBe("Male")
+    expect(resolveGenderLabel("de", "female")).toBe("Female")
+    expect(resolveGenderLabel(null, "male")).toBe("Male")
+    expect(resolveGenderLabel(undefined, null)).toBe("Male/Female")
+  })
+
+  test("matches on the primary subtag so region-tagged languages still localise", () => {
+    expect(resolveGenderLabel("vi-VN", "male")).toBe("Anh")
+    expect(resolveGenderLabel("VI", "female")).toBe("Chị")
+    expect(resolveGenderLabel("vi_VN", null)).toBe("Anh/Chị")
+  })
+
+  test("treats an unrecognised gender as unknown", () => {
+    expect(resolveGenderLabel("vi", "nonbinary")).toBe("Anh/Chị")
+    expect(resolveGenderLabel("vi", "")).toBe("Anh/Chị")
+  })
+})
 
 describe("systemFieldService privacy message window", () => {
   beforeEach(() => {

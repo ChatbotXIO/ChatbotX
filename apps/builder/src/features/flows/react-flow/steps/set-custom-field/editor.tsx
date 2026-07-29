@@ -21,7 +21,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
+import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 
 const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
@@ -40,10 +42,24 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
     defaultValues,
   })
 
+  // The selected field's type drives the temporal hint. `inputFieldId` is the
+  // field id (or, for named lookups, its name), so match on either.
+  const customFields = useCustomFieldStore((state) => state.customFields)
+  const selectedFieldId = customFieldForm.watch("inputFieldId")
+  const selectedFieldType = customFields.find(
+    (field) =>
+      field.id.toString() === selectedFieldId || field.name === selectedFieldId,
+  )?.type
+  const isTemporalField =
+    selectedFieldType === "date" || selectedFieldType === "datetime"
+
   function onSubmit(values: SetCustomFieldStepSchema) {
     setValue(`${parentName}.inputFieldId`, values.inputFieldId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
+    // Freeze the editor's browser zone so the worker (no browser context) can
+    // anchor a naive date/datetime value and render "now" for a blank one.
+    setValue(`${parentName}.timezone`, getBrowserTimezone())
 
     setOpen(false)
   }
@@ -77,7 +93,14 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
               options={operations}
               required
             />
-            <InputField label={t("fields.value.label")} name="value" />
+            <div className="flex flex-col gap-1.5">
+              <InputField label={t("fields.value.label")} name="value" />
+              {isTemporalField ? (
+                <p className="text-muted-foreground text-xs">
+                  {t("flows.setCustomField.temporalHint")}
+                </p>
+              ) : null}
+            </div>
 
             <div className="flex w-full items-center justify-end gap-2">
               <Button

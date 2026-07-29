@@ -9,9 +9,12 @@ import { botFieldAPIs } from "@/features/bot-fields/api"
 import { broadcastAPIs } from "@/features/broadcasts/api"
 import { contactsAPIs } from "@/features/contacts/api"
 import { conversationsAPI } from "@/features/conversations/api"
+import { couponsAPI } from "@/features/coupons/api"
 import { customFieldsAPI } from "@/features/custom-fields/api"
 import { emailTopicsAPI } from "@/features/email-topics/api"
 import { errorLogsAPI } from "@/features/error-logs/api"
+import { externalWebhooksAPI } from "@/features/external-webhooks/api"
+import { facebookLeadAdsAPI } from "@/features/facebook-lead-ad-automation/api"
 import { fbCommentsAPI } from "@/features/fb-comments/api"
 import { flowsAPI } from "@/features/flows/api"
 import { foldersAPI } from "@/features/folders/api"
@@ -55,6 +58,7 @@ export const router = {
   aiAgentsAPI,
   broadcastAPIs,
   conversationsAPI,
+  couponsAPI,
   emailTopicsAPI,
   tagsAPI,
   customFieldsAPI,
@@ -82,6 +86,7 @@ export const router = {
   messengerMessageTemplateAPIs,
   savedRepliesAPI,
   fbCommentsAPI,
+  facebookLeadAdsAPI,
   sequencesAPI,
   aiFilesAPI,
   inboxesAPI,
@@ -92,6 +97,7 @@ export const router = {
   messagesAPI,
   personasAPIs,
   errorLogsAPI,
+  externalWebhooksAPI,
   workspacesAPI,
   aiFunctionsAPI,
   platformCredentialsAPI,

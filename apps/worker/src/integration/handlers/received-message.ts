@@ -769,7 +769,7 @@ export const deleteIncomingComment = async (
   }
 }
 
-const detectContactAndConversation = async (props: {
+export const detectContactAndConversation = async (props: {
   inbox: InboxModel
   incomingContact: IncomingContact
   integrationRow: {

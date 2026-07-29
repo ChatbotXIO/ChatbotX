@@ -21,7 +21,7 @@ import type {
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
 } from "@chatbotx.io/flow-config"
-import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
+import type { CommentAnchor, MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -89,6 +89,8 @@ export type ChatJobSendFlowStep = {
     }
     quickReplies?: ButtonStepProps[]
     sendFrom?: "inbox"
+    /** See {@link CommentAnchor}. */
+    commentAnchor?: CommentAnchor
   }
 }
 

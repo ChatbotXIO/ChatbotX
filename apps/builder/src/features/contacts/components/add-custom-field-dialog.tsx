@@ -18,6 +18,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { resolveTemporalCustomFieldSaveFormat } from "@chatbotx.io/utils/datetime"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -31,6 +32,7 @@ import {
 } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useWorkspaceId } from "@/hooks/routing"
+import { getBrowserTimezone } from "../../contact-filter/lib/timezone"
 import { addContactCustomFieldAction } from "../actions/add-contact-custom-field.action"
 import { addContactCustomFieldRequest } from "../schemas/contact-custom-field"
 
@@ -45,6 +47,7 @@ export default function AddContactCustomFieldDialog({
 }: AddContactCustomFieldDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+  const [clientTimezone] = useState(getBrowserTimezone)
   const workspaceId = useWorkspaceId()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -74,6 +77,7 @@ export default function AddContactCustomFieldDialog({
           customFieldId: "",
           operation: FieldOperationType.set,
           value: "",
+          clientTimezone,
         },
       },
       errorMapProps: {},
@@ -192,11 +196,20 @@ export const SetCustomField = ({ parentName }: { parentName?: string }) => {
             granularity="day"
             name={getFieldName("value")}
             required
+            saveFormat={resolveTemporalCustomFieldSaveFormat(
+              selectedCustomFieldType,
+            )}
           />
         )}
 
         {selectedCustomFieldType === "datetime" && (
-          <DateTimePickerField name={getFieldName("value")} required />
+          <DateTimePickerField
+            name={getFieldName("value")}
+            required
+            saveFormat={resolveTemporalCustomFieldSaveFormat(
+              selectedCustomFieldType,
+            )}
+          />
         )}
       </div>
     </>

@@ -9,6 +9,8 @@ const findManyContactInbox = vi.fn()
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
 const insertValues = vi.fn()
+const setCustomFieldValues = vi.fn()
+const insertNormalizedCustomFieldValues = vi.fn()
 const transactionFn = vi.fn()
 const deleteWhere = vi.fn()
 // `drop` = number of ContactInbox rows the simulated INSERT ... ON CONFLICT DO
@@ -93,6 +95,17 @@ const workspaceFind = vi.fn()
 // Returns the set of source ids already linked to the inbox. Per call so the
 // processBatch pre-check and the insert-time re-check can return different sets.
 const findExistingSourceIds = vi.fn(async () => new Set<string>())
+// MAC spies: the import handler must never touch these (see the
+// "does not increment MAC" regression test below). Present in the mock only
+// so a future accidental import surfaces as a call these tests can assert
+// against, not as a silent module-resolution failure. `incrementBy` and
+// `workspaceUsageIncrement` ARE expected to be called now for the info-only
+// `contacts` metric.
+const createNewContactWithMac = vi.fn()
+const incrementBy = vi.fn()
+const workspaceUsageIncrement = vi.fn()
+const claimNewActiveContact = vi.fn()
+const claimNewActiveContacts = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
@@ -102,8 +115,31 @@ vi.mock("@chatbotx.io/business", () => ({
     findExistingSourceIds: (...args: unknown[]) =>
       findExistingSourceIds(...args),
   },
+  contactCustomFieldService: {
+    setValues: (...args: unknown[]) => setCustomFieldValues(...args),
+    insertNormalizedValuesForNewContacts: (...args: unknown[]) =>
+      insertNormalizedCustomFieldValues(...args),
+    deleteByCustomFieldId: vi.fn().mockResolvedValue(undefined),
+  },
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
+  },
+  quotaEnforcementService: {
+    createNewContactWithMac: (...args: unknown[]) =>
+      createNewContactWithMac(...args),
+    incrementBy: (...args: unknown[]) => incrementBy(...args),
+  },
+  workspaceUsageService: {
+    increment: (...args: unknown[]) => workspaceUsageIncrement(...args),
+  },
+}))
+
+vi.mock("@chatbotx.io/analytics", () => ({
+  macTrackingService: {
+    claimNewActiveContact: (...args: unknown[]) =>
+      claimNewActiveContact(...args),
+    claimNewActiveContacts: (...args: unknown[]) =>
+      claimNewActiveContacts(...args),
   },
 }))
 
@@ -197,6 +233,8 @@ beforeEach(() => {
   updateSet.mockReset()
   updateWhere.mockReset()
   insertValues.mockReset()
+  setCustomFieldValues.mockReset()
+  insertNormalizedCustomFieldValues.mockReset()
   transactionFn.mockReset()
   deleteWhere.mockReset()
   conflict.drop = 0
@@ -206,6 +244,13 @@ beforeEach(() => {
   headObject.mockResolvedValue({ ContentLength: 1024 })
   workspaceFind.mockReset()
   workspaceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
+  createNewContactWithMac.mockReset()
+  incrementBy.mockReset()
+  incrementBy.mockResolvedValue(undefined)
+  workspaceUsageIncrement.mockReset()
+  workspaceUsageIncrement.mockResolvedValue(undefined)
+  claimNewActiveContact.mockReset()
+  claimNewActiveContacts.mockReset()
 })
 
 const runContactsImport = (row: unknown) =>
@@ -246,6 +291,51 @@ describe("contacts import pipeline", () => {
     })
     // One bulk transaction for the whole chunk, not one per row.
     expect(transactionFn).toHaveBeenCalledTimes(1)
+  })
+
+  test("verifies object size server-side even when a stored file size exists", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,first@example.com",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        file: {
+          id: "file-1",
+          path: "imports/contacts/ws-1/test.csv",
+          fileName: "test.csv",
+          mimeType: "text/csv",
+          fileSize: "1024",
+        },
+      }),
+    )
+
+    expect(headObject).toHaveBeenCalledWith("imports/contacts/ws-1/test.csv")
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      totalCount: 1,
+      processedCount: 1,
+      successCount: 1,
+      failedCount: 0,
+    })
+  })
+
+  test("marks row failed and does not stream when object size exceeds the import limit", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockClear()
+    headObject.mockResolvedValue({ ContentLength: 21 * 1024 * 1024 })
+
+    await runContactsImport(buildRow())
+
+    expect(getObjectStream).not.toHaveBeenCalled()
+    expect(lastUpdate()).toMatchObject({
+      status: "failed",
+      errorMessage: "File exceeds 20MB limit",
+    })
   })
 
   test("counts blank row as failed but continues", async () => {
@@ -383,12 +473,11 @@ describe("contacts import pipeline", () => {
       failedCount: 0,
     })
 
-    const insertedCustomField = insertValues.mock.calls.find(
-      (call) =>
-        Array.isArray(call[0]) &&
-        call[0].some((v: Record<string, unknown>) => v.customFieldId === "1"),
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entries: [{ contactId: expect.any(String), fields: [] }],
+      }),
     )
-    expect(insertedCustomField).toBeUndefined()
   })
 
   test("keeps valid custom field value", async () => {
@@ -408,16 +497,60 @@ describe("contacts import pipeline", () => {
       }),
     )
 
-    const insertedCustomField = insertValues.mock.calls.find(
-      (call) =>
-        Array.isArray(call[0]) &&
-        call[0].some((v: Record<string, unknown>) => v.customFieldId === "1"),
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        entries: [
+          {
+            contactId: expect.any(String),
+            fields: [{ customFieldId: "1", value: "42" }],
+          },
+        ],
+      }),
     )
-    expect(insertedCustomField).toBeDefined()
-    expect(insertedCustomField?.[0][0]).toMatchObject({
-      customFieldId: "1",
-      value: "42",
-    })
+  })
+
+  test("normalizes imported date and datetime custom fields from loose formats", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findManyCustomFields.mockResolvedValue([
+      { id: "1", type: "date" },
+      { id: "2", type: "datetime" },
+    ])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,birthday,appointment",
+        "ext-1,+15551234567,23 tháng 7 năm 2026,23/07/2026 09:30",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          timezone: "Asia/Ho_Chi_Minh",
+          columnMap: { contactId: "external_id", phoneNumber: "phone" },
+          fieldMapping: [
+            { customFieldId: "1", column: "birthday" },
+            { customFieldId: "2", column: "appointment" },
+          ],
+        },
+      }),
+    )
+
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        entries: [
+          {
+            contactId: expect.any(String),
+            fields: [
+              { customFieldId: "1", value: "2026-07-23T00:00:00+07:00" },
+              { customFieldId: "2", value: "2026-07-23T02:30:00.000Z" },
+            ],
+          },
+        ],
+      }),
+    )
   })
 
   test("fails when format is unsupported", async () => {
@@ -462,5 +595,58 @@ describe("contacts import pipeline", () => {
     expect(lastUpdate()).toMatchObject({ status: "failed" })
     // Bad meta is rejected before the object stream is ever fetched.
     expect(getObjectStream).not.toHaveBeenCalled()
+  })
+
+  test("counts imported contacts toward the info-only contacts quota, never MAC", async () => {
+    // Locks in the invariant documented at handler.ts: import creates contact
+    // records and bumps the info-only `contacts` metric, but MAC is counted
+    // later only from real interaction — this path must never reserve MAC
+    // quota or touch the MAC ledger/presence row.
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,first@example.com",
+        "ext-2,+15557654321,second@example.com",
+      ]),
+    )
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 2,
+      failedCount: 0,
+    })
+    expect(createNewContactWithMac).not.toHaveBeenCalled()
+    expect(claimNewActiveContact).not.toHaveBeenCalled()
+    expect(claimNewActiveContacts).not.toHaveBeenCalled()
+    expect(incrementBy).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "contacts",
+      count: 2,
+    })
+    expect(workspaceUsageIncrement).toHaveBeenCalledWith("ws-1", "contacts", 2)
+  })
+
+  test("does not touch the contacts quota when no row is actually inserted", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findExistingSourceIds.mockResolvedValue(new Set(["ext-1"]))
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,ok@example.com",
+      ]),
+    )
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 0,
+      failedCount: 1,
+    })
+    expect(incrementBy).not.toHaveBeenCalled()
+    expect(workspaceUsageIncrement).not.toHaveBeenCalled()
   })
 })

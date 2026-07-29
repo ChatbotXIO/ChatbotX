@@ -34,6 +34,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 const hasReachedLimit = vi.fn()
 const workspaceServiceFind = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
+  isWorkspaceScheduledForDeletion: (
+    workspace:
+      | { scheduledDeletionAt?: Date | string | null }
+      | null
+      | undefined,
+  ) => Boolean(workspace?.scheduledDeletionAt),
   quotaEnforcementService: {
     hasReachedLimit: (...args: unknown[]) => hasReachedLimit(...args),
   },

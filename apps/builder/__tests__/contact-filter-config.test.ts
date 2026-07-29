@@ -131,6 +131,26 @@ describe("contact filter value-input config", () => {
       customFieldOperatorRequiresArrayValue(operatorTypes.enum.isBetween),
     ).toBe(true)
   })
+
+  test("uses date equality input for custom date fields", () => {
+    const dateConfig: FieldConfig = {
+      name: "customField:cf-date",
+      customFieldId: "cf-date",
+      customFieldType: "date",
+      formField: formFieldTypes.enum.datetime,
+      group: "customFields",
+    }
+
+    expect(
+      getCustomFieldValueInputConfig(dateConfig, operatorTypes.enum.eq),
+    ).toEqual({ kind: "date", defaultValue: "" })
+    expect(
+      getCustomFieldValueInputConfig(dateConfig, operatorTypes.enum.ne),
+    ).toEqual({ kind: "date", defaultValue: "" })
+    expect(
+      getCustomFieldValueInputConfig(dateConfig, operatorTypes.enum.isBetween),
+    ).toEqual({ kind: "datetimeInterval", defaultValue: ["", ""] })
+  })
 })
 
 describe("contact filter field config helpers", () => {

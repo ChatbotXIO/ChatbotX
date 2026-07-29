@@ -46,7 +46,6 @@ export const emitContactCreated = async (
   name?: string,
   phone?: string,
   email?: string,
-  customFields?: Record<string, unknown>,
 ) =>
   await emitToAllEmitters(
     "contactCreated",
@@ -55,7 +54,6 @@ export const emitContactCreated = async (
     name,
     phone,
     email,
-    customFields,
   )
 
 export const emitContactReferredANewContact = async (

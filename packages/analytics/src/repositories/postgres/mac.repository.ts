@@ -260,6 +260,36 @@ export class MacRepository {
   }
 
   /**
+   * Batched variant of {@link getActiveContactCountByWorkspaceId} for the
+   * scheduled `WorkspaceUsage.macUsed` reconcile: every workspace's current
+   * (`periodStart <= now < periodEnd`) `WorkspaceMac.macCount` in one query,
+   * instead of one round-trip per workspace. `DISTINCT ON` picks the
+   * highest-id (latest) row per workspace, matching the single-workspace
+   * method's `ORDER BY id DESC LIMIT 1`. Workspaces with no current period
+   * row (never had MAC activity this period) are simply absent from the
+   * result — callers default those to 0.
+   */
+  async getActiveContactCountsByWorkspaceIds(
+    client: DatabaseClient = db,
+  ): Promise<Map<string, number>> {
+    const rows = await client
+      .selectDistinctOn([workspaceMacModel.workspaceId], {
+        workspaceId: workspaceMacModel.workspaceId,
+        macCount: workspaceMacModel.macCount,
+      })
+      .from(workspaceMacModel)
+      .where(
+        and(
+          lte(workspaceMacModel.periodStart, sql`now()`),
+          gt(workspaceMacModel.periodEnd, sql`now()`),
+        ),
+      )
+      .orderBy(workspaceMacModel.workspaceId, desc(workspaceMacModel.id))
+
+    return new Map(rows.map((row) => [row.workspaceId, Number(row.macCount)]))
+  }
+
+  /**
    * The owner's monthly-active-contacts count, read from the durable
    * `ContactActiveMonthly` ledger across every workspace they own. This is the
    * authoritative source for `UserQuota.macUsed`: every MAC increment (webchat,
@@ -350,6 +380,41 @@ export class MacRepository {
           eq(workspaceMacModel.periodStart, periodStart),
         ),
       )
+  }
+
+  /**
+   * Which of `contactInboxIds` have a `ContactActiveMonthly` presence row for
+   * `periodStart` — i.e. are MAC-active this billing period. Used to decide
+   * whether deleting a contact should release a `mac` slot: releasing for a
+   * contact that was never MAC-active this period would over-release the pool.
+   */
+  async getActiveContactInboxIds(
+    input: {
+      workspaceId: string
+      periodStart: Date
+      contactInboxIds: string[]
+    },
+    client: DatabaseClient = db,
+  ): Promise<Set<string>> {
+    if (input.contactInboxIds.length === 0) {
+      return new Set()
+    }
+
+    const rows = await client
+      .select({ contactInboxId: contactActiveMonthlyModel.contactInboxId })
+      .from(contactActiveMonthlyModel)
+      .where(
+        and(
+          eq(contactActiveMonthlyModel.workspaceId, input.workspaceId),
+          eq(contactActiveMonthlyModel.periodStart, input.periodStart),
+          inArray(
+            contactActiveMonthlyModel.contactInboxId,
+            input.contactInboxIds,
+          ),
+        ),
+      )
+
+    return new Set(rows.map((row) => row.contactInboxId))
   }
 }
 

@@ -8,6 +8,7 @@ export type CustomFieldValueInputKind =
   | "none"
   | "text"
   | "number"
+  | "date"
   | "datetime"
   | "boolean"
   | "numberInterval"
@@ -21,6 +22,7 @@ export type CustomFieldValueInputConfig = {
 type CustomFieldTypeRule = {
   singleInput: CustomFieldValueInputKind
   intervalInput?: CustomFieldValueInputKind
+  equalityInput?: CustomFieldValueInputKind
   enabledOperators: readonly OperatorType[]
 }
 
@@ -93,6 +95,7 @@ const CUSTOM_FIELD_TYPE_RULES: Record<string, CustomFieldTypeRule> = {
   date: {
     singleInput: "datetime",
     intervalInput: "datetimeInterval",
+    equalityInput: "date",
     enabledOperators: [...BASE_OPERATORS, ...RANGE_OPERATORS],
   },
   datetime: {
@@ -122,9 +125,25 @@ const isIntervalOperator = (operator?: string): operator is OperatorType =>
   operator === operatorTypes.enum.isBetween ||
   operator === operatorTypes.enum.notBetween
 
+const isEqualityOperator = (operator?: string): operator is OperatorType =>
+  operator === operatorTypes.enum.eq || operator === operatorTypes.enum.ne
+
 const isValuelessOperator = (operator?: string): operator is OperatorType =>
   operator === operatorTypes.enum.isNotEmpty ||
   operator === operatorTypes.enum.isEmpty
+
+const resolveInputKind = (
+  rule: CustomFieldTypeRule,
+  operator?: string,
+): CustomFieldValueInputKind => {
+  if (isIntervalOperator(operator) && rule.intervalInput) {
+    return rule.intervalInput
+  }
+  if (isEqualityOperator(operator) && rule.equalityInput) {
+    return rule.equalityInput
+  }
+  return rule.singleInput
+}
 
 const getDefaultValueForInputKind = (
   kind: CustomFieldValueInputKind,
@@ -132,6 +151,8 @@ const getDefaultValueForInputKind = (
   switch (kind) {
     case "numberInterval":
       return ["0", "0"]
+    case "date":
+      return ""
     case "datetimeInterval":
       return ["", ""]
     default:
@@ -171,10 +192,7 @@ export const getCustomFieldValueInputConfig = (
   }
 
   const rule = getCustomFieldTypeRule(config.customFieldType)
-  const kind =
-    isIntervalOperator(operator) && rule.intervalInput
-      ? rule.intervalInput
-      : rule.singleInput
+  const kind = resolveInputKind(rule, operator)
 
   return {
     kind,

@@ -1,8 +1,11 @@
 "use server"
 
-import { workspaceMemberCacheTag } from "@chatbotx.io/business"
+import {
+  workspaceMemberCacheTag,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -45,7 +48,7 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       )
     }
 
-    await db.delete(workspaceMemberModel).where(eq(workspaceMemberModel.id, id))
+    await workspaceMemberService.delete({ id, workspaceId })
 
     // The removed member's cached `listByUserId` result still lists this
     // workspace; bust it so their access is revoked immediately.

@@ -10,10 +10,13 @@ export * from "./contact-inbox"
 export * from "./contact-locale"
 export * from "./contact-note"
 export * from "./conversation"
+export * from "./coupon"
 export * from "./custom-field"
 export * from "./email-topic"
 export * from "./enterprise"
 export * from "./external-request"
+export * from "./external-webhook"
+export * from "./facebook-lead-ads-automation/service"
 export * from "./fb-comment-automation/service"
 export * from "./flow"
 export * from "./flow-version"
@@ -52,14 +55,10 @@ export * from "./platform-credential"
 export * from "./qr-code"
 export * from "./questionnaire"
 export * from "./quota-enforcement"
-// Shared quota key builders + the fail-closed live-counter parser, so the
-// reconcile workers read/write the same Redis keys the services use (single
-// source of truth) instead of re-declaring the literal prefixes.
-export {
-  liveKeyFor,
-  parseLiveCount,
-  USER_QUOTA_LABEL,
-} from "./quota-shared/live-counter-store"
+// The fail-closed live-counter parser, so the reconcile workers read the same
+// way the services do. The key builders themselves live in `@chatbotx.io/utils`
+// (single source of truth shared with `packages/analytics`).
+export { parseLiveCount } from "./quota-shared/live-counter-store"
 export * from "./referral"
 export * from "./reflink"
 export * from "./smart-delay"
@@ -73,3 +72,4 @@ export * from "./workspace"
 export * from "./workspace-lifecycle"
 export * from "./workspace-lifecycle/with-blocked-owner-guard"
 export * from "./workspace-member"
+export * from "./workspace-usage"

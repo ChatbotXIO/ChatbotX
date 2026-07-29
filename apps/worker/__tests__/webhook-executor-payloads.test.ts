@@ -3,13 +3,18 @@ import type { MatchableEventType } from "@chatbotx.io/events"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { WebhookWithConditions } from "../src/webhook/types"
 
-const { assertPublicUrl, tagFindFirst } = vi.hoisted(() => ({
-  assertPublicUrl: vi.fn().mockResolvedValue(undefined),
-  tagFindFirst: vi.fn(),
-}))
+const { assertPublicUrl, contactFindById, listCustomFields, tagFindFirst } =
+  vi.hoisted(() => ({
+    assertPublicUrl: vi.fn().mockResolvedValue(undefined),
+    contactFindById: vi.fn(),
+    listCustomFields: vi.fn(),
+    tagFindFirst: vi.fn(),
+  }))
 
 vi.mock("@chatbotx.io/business", () => ({
   assertPublicUrl,
+  contactCustomFieldService: { listWithDefinitions: listCustomFields },
+  contactService: { findById: contactFindById },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -32,12 +37,29 @@ vi.mock("../src/lib/logger", () => ({
 const { WebhookExecutor } = await import(
   "../src/webhook/services/webhook-executor.service"
 )
+const { buildWebhookPayload } = await import(
+  "../src/webhook/services/webhook-payload.builder"
+)
 
 const timestamp = new Date("2026-07-11T10:00:00.000Z")
 const webhook = {
   id: "webhook-1",
   url: "https://example.com/webhook",
 } as WebhookWithConditions
+
+type TagQuery = { where: { id: string; workspaceId?: string } }
+
+// Tag ids are globally unique, so an id-only lookup resolves a row from any
+// workspace. These rows let the mock mimic SQL semantics — a `where` without
+// `workspaceId` matches across workspaces — instead of hiding the difference.
+const tagRows = [
+  { id: "tag-1", workspaceId: "workspace-1", name: "VIP" },
+  {
+    id: "tag-foreign",
+    workspaceId: "workspace-2",
+    name: "Other workspace tag",
+  },
+]
 
 type PayloadCase = {
   eventType: MatchableEventType
@@ -97,16 +119,21 @@ const payloadCases = [
     },
   },
   {
+    // The contact row is committed before `emitContactCreated` fires, so the
+    // stored record — not the event metadata — is the source of truth here.
+    // `customFields` is never populated by any emitter; only the database read
+    // can fill `custom_fields`.
     eventType: triggerEventTypes.enum.newContact,
     metadata: {
       name: "Ada",
-      phone: "+15551234567",
-      email: "ada@example.com",
-      customFields: { plan: "Pro" },
+      phone: "+15550000000",
+      email: "stale@example.com",
     },
     expectedPayload: {
       ...basePayload("new_contact"),
-      name: "Ada",
+      name: "Ada Lovelace",
+      first_name: "Ada",
+      last_name: "Lovelace",
       phone: "+15551234567",
       email: "ada@example.com",
       custom_fields: { plan: "Pro" },
@@ -211,6 +238,15 @@ describe("WebhookExecutor payloads", () => {
     vi.clearAllMocks()
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }))
     tagFindFirst.mockResolvedValue({ name: "VIP" })
+    contactFindById.mockResolvedValue({
+      id: "contact-1",
+      fullName: "Ada Lovelace",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      phoneNumber: "+15551234567",
+      email: "ada@example.com",
+    })
+    listCustomFields.mockResolvedValue([{ name: "plan", value: "Pro" }])
     vi.stubGlobal("fetch", fetchMock)
   })
 
@@ -221,18 +257,78 @@ describe("WebhookExecutor payloads", () => {
   }) => {
     const executor = new WebhookExecutor()
 
-    await executor.execute({
-      webhook,
-      eventData: {
-        workspaceId: "workspace-1",
-        contactId: "contact-1",
-        eventType,
-        eventData: metadata,
-        timestamp,
-      },
+    const payload = await buildWebhookPayload({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      eventType,
+      eventData: metadata,
+      timestamp,
     })
+    await executor.execute({ webhook, payload })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(JSON.parse(String(init.body))).toEqual(expectedPayload)
+  })
+
+  // The tag id arrives as event metadata, so it must never be trusted to belong
+  // to the workspace the webhook is registered under. An id-only lookup would
+  // put another tenant's tag name in this workspace's outbound payload.
+  test("does not leak a tag that belongs to another workspace", async () => {
+    tagFindFirst.mockImplementation((query: TagQuery) =>
+      Promise.resolve(
+        tagRows.find(
+          (row) =>
+            row.id === query.where.id &&
+            (query.where.workspaceId === undefined ||
+              row.workspaceId === query.where.workspaceId),
+        ),
+      ),
+    )
+
+    const payload = await buildWebhookPayload({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      eventType: triggerEventTypes.enum.tagApplied,
+      eventData: { tagId: "tag-foreign" },
+      timestamp,
+    })
+
+    // Asserted on the raw payload, so `timestamp` is still a Date here — the
+    // other cases assert the serialized request body instead.
+    expect(payload).toEqual({
+      event: "tag_applied",
+      contact_id: "contact-1",
+      timestamp,
+      tag: "",
+    })
+  })
+
+  // A contact deleted between the event and the delivery attempt must still
+  // produce a well-formed payload: the subscriber's parser would break on
+  // missing keys, so every field falls back to the metadata or to null.
+  test("falls back to event metadata when the contact no longer exists", async () => {
+    contactFindById.mockResolvedValue(undefined)
+    const executor = new WebhookExecutor()
+
+    const payload = await buildWebhookPayload({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      eventType: triggerEventTypes.enum.newContact,
+      eventData: { name: "Ada", phone: "+15550000000" },
+      timestamp,
+    })
+    await executor.execute({ webhook, payload })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toEqual({
+      ...basePayload("new_contact"),
+      name: "Ada",
+      first_name: null,
+      last_name: null,
+      phone: "+15550000000",
+      email: null,
+      custom_fields: {},
+    })
+    expect(listCustomFields).not.toHaveBeenCalled()
   })
 })

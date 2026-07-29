@@ -1,8 +1,12 @@
-import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
+import {
+  MESSENGER_NATIVE_QUICK_REPLY,
+  type MessageButtonTemplate,
+} from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { convertFlowStepFile } from "../src/handlers/message/outgoing-message/send-file"
 import { convertFlowStepGif } from "../src/handlers/message/outgoing-message/send-gif"
 import { convertFlowStepMedia } from "../src/handlers/message/outgoing-message/send-media"
+import { convertCanonicalFacebookQuickReplies } from "../src/handlers/message/outgoing-message/send-quick-replies"
 import { convertFlowStepText } from "../src/handlers/message/outgoing-message/send-text"
 
 vi.mock("../src/apis/attachment", () => ({
@@ -252,5 +256,40 @@ describe("messenger quick replies attachment", () => {
     )
 
     expect(payload).not.toHaveProperty("quick_replies")
+  })
+})
+
+describe("convertCanonicalFacebookQuickReplies", () => {
+  test("renders a normal postback button as a text quick reply", () => {
+    expect(convertCanonicalFacebookQuickReplies(quickReplies)).toEqual([
+      { content_type: "text", title: "Yes", payload: "flow-1::qr-1" },
+      { content_type: "text", title: "Open", payload: "flow-1::qr-2" },
+    ])
+  })
+
+  test("swaps in Facebook's native email quick reply for the reserved payload", () => {
+    const button: MessageButtonTemplate = {
+      id: MESSENGER_NATIVE_QUICK_REPLY.USER_EMAIL,
+      label: "What is your email?",
+      buttonType: "postback",
+      postback: MESSENGER_NATIVE_QUICK_REPLY.USER_EMAIL,
+    }
+
+    expect(convertCanonicalFacebookQuickReplies([button])).toEqual([
+      { content_type: "user_email" },
+    ])
+  })
+
+  test("swaps in Facebook's native phone quick reply for the reserved payload", () => {
+    const button: MessageButtonTemplate = {
+      id: MESSENGER_NATIVE_QUICK_REPLY.USER_PHONE_NUMBER,
+      label: "What is your phone?",
+      buttonType: "postback",
+      postback: MESSENGER_NATIVE_QUICK_REPLY.USER_PHONE_NUMBER,
+    }
+
+    expect(convertCanonicalFacebookQuickReplies([button])).toEqual([
+      { content_type: "user_phone_number" },
+    ])
   })
 })

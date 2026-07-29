@@ -209,7 +209,7 @@ describe("chat send-message handlers", () => {
           createdAt: new Date("2026-07-09T08:37:21.108Z"),
         } as never,
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ messageIds: ["reply-1"] })
 
     expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
   })
@@ -340,7 +340,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ messageIds: [] })
 
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
@@ -376,7 +376,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ messageIds: [] })
 
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
@@ -410,7 +410,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ messageIds: [] })
   })
 
   test("still throws a retryable ChannelError for channels outside the fix scope", async () => {
@@ -470,7 +470,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ messageIds: [] })
 
     expect(mockRunChannelHandler).not.toHaveBeenCalled()
     expect(mockEmit).toHaveBeenCalledWith(

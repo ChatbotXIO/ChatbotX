@@ -190,10 +190,21 @@ Every `consume` and `incrementBy` call on `UserQuotaService` is write-through: i
    - **Reseller owner with active tenant** → calls `userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)`: runs five parallel `COUNT(*)`/`SUM` queries scoped to `workspaceModel.tenantId` and writes the authoritative current counts to both the `UserQuota` row and the Redis live hash.
    - **Everyone else** → runs per-owner self-count queries scoped to `workspaceModel.ownerId` and writes the same columns.
 
-Counts are written directly (not `GREATEST`), so deletions immediately free quota slots. The private
-`quota-worker` remains the authority for plan limits and period resets; this repository also owns the
-runtime trial-expiry lifecycle: an expired cloud trial enters a blocked, read/delete-only state.
-Blocked owners cannot process new workspace work or send messages, while existing data remains
+Counts are written directly (not `GREATEST`), so a reconcile tick always self-heals any drift.
+
+Reconcile is a **backstop**, not the only place counts shrink. `contacts`/`mac` release synchronously
+when `contactService.delete()` removes a contact, and `channels` releases synchronously when
+`inboxService.disconnect()` disconnects a channel — both call the existing
+`quotaEnforcementService.release`/`releaseBy` (pool-aware, floor-at-zero) right at the delete/disconnect
+call site, best-effort (`.catch()` + log, never blocking the delete). A workspace hard-delete
+(`workspaceService.purgeDueScheduled`) instead calls `userQuotaService.reconcileOwnerPoolUsage` for the
+affected owner immediately after the batch delete — a full absolute recount, since a workspace teardown
+cascades away its contacts/channels/MAC too. The scheduled reconcile above remains the authority for
+races, failures in the synchronous release, and any other drift.
+
+The private `quota-worker` remains the authority for plan limits and period resets; this repository
+also owns the runtime trial-expiry lifecycle: an expired cloud trial enters a blocked, read/delete-only
+state. Blocked owners cannot process new workspace work or send messages, while existing data remains
 available for export or deletion.
 
 `UserQuota.channelsTornDownAt` records when an expired trial's channel integrations were disconnected.

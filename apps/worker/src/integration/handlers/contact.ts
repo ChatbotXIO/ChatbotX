@@ -1,8 +1,11 @@
-import { contactService, tagSyncService } from "@chatbotx.io/business"
+import {
+  contactCustomFieldService,
+  contactService,
+  tagSyncService,
+} from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
 import { and, db, eq, inArray, isNull } from "@chatbotx.io/database/client"
 import {
-  contactCustomFieldModel,
   contactModel,
   contactNoteModel,
   contactsToTagsModel,
@@ -11,7 +14,6 @@ import {
 import { emit } from "@chatbotx.io/event-bus"
 import {
   emitContactUnsubscribed,
-  emitCustomFieldChanged,
   emitSequenceSubscribed,
   emitTagApplied,
   emitTagRemoved,
@@ -32,89 +34,37 @@ import type {
 } from "@chatbotx.io/flow-config"
 import { enrollContactInSequence } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
+import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
   conversation,
   step,
 }: ExecuteStepProps<SetCustomFieldStepSchema>) {
-  // Get old value before update
-  const existingField = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      customFieldId: step.inputFieldId,
-    },
+  await contactCustomFieldService.setValueByKey({
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    keyword: step.inputFieldId,
+    value: step.value,
+    // The editor captured its browser zone at save time; anchor naive
+    // date/datetime values to it (worker has no browser context). Lenient
+    // parsing accepts flexible user input (unix ts, "23/07/2026", ...), and a
+    // blank value stamps "now" in that zone.
+    sourceTimezoneOverride: step.timezone,
+    temporalInputParsing: TemporalInputParsing.Lenient,
+    fillEmptyTemporalWithNow: true,
   })
-  const oldValue = existingField?.value ?? null
-
-  await db
-    .insert(contactCustomFieldModel)
-    .values({
-      contactId: conversation.contactId,
-      customFieldId: step.inputFieldId,
-      value: step.value,
-      id: createId(),
-    })
-    .onConflictDoUpdate({
-      target: [
-        contactCustomFieldModel.contactId,
-        contactCustomFieldModel.customFieldId,
-      ],
-      set: {
-        value: step.value,
-      },
-    })
-
-  const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.inputFieldId },
-  })
-  if (customField) {
-    await emitCustomFieldChanged(
-      conversation.workspaceId,
-      conversation.contactId,
-      step.inputFieldId,
-      customField.name,
-      oldValue,
-      step.value,
-    )
-  }
 }
 
 export async function clearContactCustomField({
   conversation,
   step,
 }: ExecuteStepProps<ClearCustomFieldStepSchema>) {
-  // Get old value before delete
-  const existingField = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      customFieldId: step.inputFieldId,
-    },
+  await contactCustomFieldService.deleteByKey({
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    keyword: step.inputFieldId,
   })
-  const oldValue = existingField?.value ?? null
-
-  await db
-    .delete(contactCustomFieldModel)
-    .where(
-      and(
-        eq(contactCustomFieldModel.contactId, conversation.contactId),
-        eq(contactCustomFieldModel.customFieldId, step.inputFieldId),
-      ),
-    )
-
-  const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.inputFieldId },
-  })
-  if (customField) {
-    await emitCustomFieldChanged(
-      conversation.workspaceId,
-      conversation.contactId,
-      step.inputFieldId,
-      customField.name,
-      oldValue,
-      null,
-    )
-  }
 }
 
 export async function addContactNotes({

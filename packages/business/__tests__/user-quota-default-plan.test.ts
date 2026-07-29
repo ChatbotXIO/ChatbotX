@@ -75,6 +75,15 @@ beforeEach(() => {
 })
 
 describe("userQuotaService default-plan overlay (macLimit)", () => {
+  test("an older snapshot without monthlyBotMessagesLimit remains unlimited", async () => {
+    findFirstQuota.mockResolvedValue(null)
+    stubStore(null, snapshot)
+
+    const quota = await userQuotaService.getForUser(USER)
+
+    expect(quota?.monthlyBotMessagesLimit).toBeNull()
+  })
+
   test("free-tier user (no row) inherits macLimit from the snapshot", async () => {
     findFirstQuota.mockResolvedValue(null)
     stubStore(null, snapshot)

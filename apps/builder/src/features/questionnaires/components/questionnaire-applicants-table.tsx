@@ -3,11 +3,6 @@
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@chatbotx.io/ui/components/ui/avatar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -16,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +29,8 @@ import { getQuestionnaireSubmissionDetailAction } from "../actions/get-questionn
 import type { listQuestionnaireSubmissions } from "../queries"
 import { ApplicantDetailModal } from "./applicant-detail-modal"
 import { DeleteApplicantSubmissionDialog } from "./delete-applicant-submission-dialog"
+import { QuestionnaireApplicantAvatarCell } from "./questionnaire-applicant-avatar-cell"
+import { QuestionnaireApplicantsTableToolbarActions } from "./questionnaire-applicants-table-toolbar-actions"
 
 type ListResult = Awaited<ReturnType<typeof listQuestionnaireSubmissions>>
 type DetailResult = NonNullable<
@@ -69,29 +67,48 @@ export function QuestionnaireApplicantsTable({
   const columns = useMemo<ColumnDef<Submission>[]>(
     () => [
       {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            aria-label={t("actions.selectAll")}
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            className="translate-y-0.5"
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(Boolean(value))
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={t("actions.selectRow")}
+            checked={row.getIsSelected()}
+            className="translate-y-0.5"
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        size: 20,
+        enableSorting: false,
+        enableColumnFilter: false,
+        enableHiding: false,
+      },
+      {
         id: "avatar",
         header: "",
-        cell: ({ row }) => {
-          const name =
-            row.original.contact.fullName ?? t("questionnaires.unknownContact")
-          return (
-            <button
-              className="flex size-8 items-center justify-center"
-              onClick={() =>
-                loadDetail({
-                  questionnaireId,
-                  submissionId: row.original.id,
-                })
-              }
-              type="button"
-            >
-              <Avatar className="size-8">
-                <AvatarImage src={row.original.contact.avatar ?? undefined} />
-                <AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
-              </Avatar>
-            </button>
-          )
-        },
+        cell: ({ row }) => (
+          <QuestionnaireApplicantAvatarCell
+            contact={row.original.contact}
+            onClick={() =>
+              loadDetail({
+                questionnaireId,
+                submissionId: row.original.id,
+              })
+            }
+            unknownContactLabel={t("questionnaires.unknownContact")}
+          />
+        ),
         enableSorting: false,
         enableColumnFilter: false,
       },
@@ -221,7 +238,13 @@ export function QuestionnaireApplicantsTable({
       </CardHeader>
       <CardContent>
         <DataTable table={table}>
-          <DataTableToolbar table={table} />
+          <DataTableToolbar table={table}>
+            <QuestionnaireApplicantsTableToolbarActions
+              questionnaireId={questionnaireId}
+              table={table}
+              workspaceId={workspaceId}
+            />
+          </DataTableToolbar>
         </DataTable>
         <ApplicantDetailModal
           detail={detail}

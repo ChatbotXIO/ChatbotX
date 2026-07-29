@@ -10,9 +10,16 @@ import type {
   ConversationModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import { logger } from "./logger"
 import type { ContactCustomFieldValue, ReplaceVariableProps } from "./schema"
-import { extractVariables, getSystemFieldValue, interpolate } from "./utils"
+import {
+  extractVariables,
+  getContactTimezone,
+  getSystemFieldValue,
+  interpolate,
+  renderCustomFieldValue,
+} from "./utils"
 
 type GetAllProps = {
   contactId: string
@@ -84,14 +91,6 @@ const loadFields = async (
   )
 }
 
-const toVariableValue = (value: unknown): string => {
-  if (value == null) {
-    return ""
-  }
-
-  return String(value)
-}
-
 export const contactVariableService = {
   getAll: async (input: GetAllProps): Promise<ReplaceVariableProps> => {
     const [contact, contactInbox, customFieldsMap] = await Promise.all([
@@ -117,10 +116,12 @@ export const contactVariableService = {
     text: string
     variables: ReplaceVariableProps
   }): Promise<string> => {
-    const {
-      variables: { customFieldsMap },
-      text,
-    } = props
+    const { variables: context, text } = props
+    const { customFieldsMap } = context
+    // Temporal custom fields render in the contact's timezone, falling back to
+    // the workspace timezone (then UTC) — an outgoing message should read in the
+    // recipient's local time when we know it. See getContactTimezone.
+    const renderTimezone = getContactTimezone(context)
 
     try {
       const mapping: Record<string, string> = {}
@@ -128,17 +129,26 @@ export const contactVariableService = {
       for (const variable of variables) {
         if (systemFieldTypes.options.includes(variable as SystemFieldType)) {
           const value = await getSystemFieldValue(
-            props.variables,
+            context,
             variable as SystemFieldType,
           )
           mapping[variable] = value ?? ""
         } else if (customFieldsMap.has(variable)) {
-          const fieldValue = customFieldsMap.get(variable)?.value
-          mapping[variable] = toVariableValue(fieldValue)
+          const fieldValue = customFieldsMap.get(variable)
+          mapping[variable] = fieldValue
+            ? renderCustomFieldValue(
+                fieldValue.type,
+                fieldValue.value,
+                renderTimezone,
+              )
+            : ""
+        } else if (isCouponVariable(variable)) {
+          mapping[variable] = await resolveCouponVariable(context, variable)
         }
       }
 
-      return interpolate(text, mapping)
+      // Prose: "Anh vui lòng…" opening a sentence, "Xin chào anh" inside one.
+      return interpolate(text, mapping, { sentenceCase: true })
     } catch (error) {
       const message = "Unable to render custom fields to message"
       logger.error(error, message)

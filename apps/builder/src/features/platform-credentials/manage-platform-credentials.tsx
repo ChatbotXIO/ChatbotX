@@ -8,6 +8,7 @@ import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
 import { InstagramSettings } from "./instagram/instagram-settings"
 import { InstagramFacebookSettings } from "./instagram-facebook/instagram-facebook-settings"
+import { MakeSettings } from "./make/make-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"
 import { CredentialScopeProvider } from "./provider/credential-scope-context"
 import type { CredentialScope } from "./scope"
@@ -77,6 +78,7 @@ export async function ManagePlatformCredentials({
     zaloResult,
     giphyResult,
     tiktokResult,
+    makeResult,
   ] = await Promise.allSettled([
     resolveCard(scopedUserId, "whatsapp"),
     resolveCard(scopedUserId, "messenger"),
@@ -86,6 +88,7 @@ export async function ManagePlatformCredentials({
     resolveCard(scopedUserId, "zalo"),
     resolveCard(scopedUserId, "giphy"),
     resolveCard(scopedUserId, "tiktok"),
+    resolveCard(scopedUserId, "make"),
   ])
 
   const emptyCard = { publicConfig: null, isInherited: false } as const
@@ -106,6 +109,7 @@ export async function ManagePlatformCredentials({
     giphyResult.status === "fulfilled" ? giphyResult.value : emptyCard
   const tiktok =
     tiktokResult.status === "fulfilled" ? tiktokResult.value : emptyCard
+  const make = makeResult.status === "fulfilled" ? makeResult.value : emptyCard
 
   return (
     <CredentialScopeProvider scope={scope}>
@@ -141,6 +145,10 @@ export async function ManagePlatformCredentials({
         <GiphySettings
           isConfigured={giphy.publicConfig !== null}
           isInherited={giphy.isInherited}
+        />
+        <MakeSettings
+          isInherited={make.isInherited}
+          publicConfig={make.publicConfig}
         />
       </div>
     </CredentialScopeProvider>

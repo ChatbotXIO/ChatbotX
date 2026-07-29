@@ -33,9 +33,7 @@ export function MessengerDisconnect({
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            toast.error(error.serverError, {
-              duration: 5000,
-            })
+            toast.error(error.serverError)
           }
         },
       },

@@ -232,4 +232,41 @@ describe("handleCondition", () => {
       data: expect.objectContaining({ nodeId: "first-target" }),
     })
   })
+
+  test("threads the case timezone into contact filter matching", async () => {
+    const step: ConditionStepSchema = {
+      id: "condition-step-1",
+      stepType: "condition",
+      otherwiseId: "otherwise-handle",
+      cases: [
+        {
+          id: "first-case",
+          operator: "and",
+          timezone: "Asia/Ho_Chi_Minh",
+          conditions: [
+            { field: "contactCreatedAt", operator: "eq", value: "2026-07-20" },
+          ],
+        },
+      ],
+    }
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition(
+      makeProps(step, [
+        { sourceHandle: "first-case", target: "first-target" },
+      ] as EdgeSchema[]),
+    )
+
+    expect(matchesContactFilter).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      contactFilter: {
+        operator: "and",
+        conditions: [
+          { field: "contactCreatedAt", operator: "eq", value: "2026-07-20" },
+        ],
+        timezone: "Asia/Ho_Chi_Minh",
+      },
+    })
+  })
 })

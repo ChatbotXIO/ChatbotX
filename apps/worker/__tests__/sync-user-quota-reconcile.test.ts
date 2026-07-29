@@ -70,8 +70,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // (which would require the full real DB schema, incompatible with the partial
 // schema mock below). The helpers are pure, so re-implementing them is exact.
 vi.mock("@chatbotx.io/business", () => ({
-  USER_QUOTA_LABEL: "user-quota",
-  liveKeyFor: (label: string, id: string) => `${label}-live:${id}`,
   parseLiveCount: (value: string | null) => {
     if (value === null) {
       return null
@@ -92,6 +90,13 @@ vi.mock("@chatbotx.io/business", () => ({
     findByOwner: vi.fn(async () => undefined),
     listActiveOwnerIds: vi.fn(async () => [] as string[]),
   },
+}))
+
+// liveKeyFor/USER_QUOTA_LABEL live in `@chatbotx.io/utils` (shared with
+// `packages/analytics`, so the two MAC writers can never diverge on key format).
+vi.mock("@chatbotx.io/utils", () => ({
+  USER_QUOTA_LABEL: "user-quota",
+  liveKeyFor: (label: string, id: string) => `${label}-live:${id}`,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

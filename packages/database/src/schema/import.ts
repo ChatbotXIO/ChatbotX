@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core"
 import {
   type ContactImportMeta,
+  type CouponImportMeta,
   importFormats,
   importStatuses,
   importTypes,
@@ -46,12 +47,10 @@ export const importModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    inboxId: bigintAsString()
-      .notNull()
-      .references(() => inboxModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    inboxId: bigintAsString().references(() => inboxModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     userId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
@@ -65,7 +64,7 @@ export const importModel = pgTable(
     type: importType().notNull(),
     format: importFormat().notNull(),
     status: importStatus().notNull(),
-    meta: jsonb().$type<ContactImportMeta>().notNull(),
+    meta: jsonb().$type<ContactImportMeta | CouponImportMeta>().notNull(),
     totalCount: integer().default(0).notNull(),
     processedCount: integer().default(0).notNull(),
     successCount: integer().default(0).notNull(),

@@ -184,6 +184,21 @@ const MESSENGER_SCOPES = [
   "pages_utility_messaging",
 ]
 
+/**
+ * Scopes requested by the Facebook Lead Ads "Add New" re-auth. Granting these
+ * upgrades the user↔app permission set so the page's EXISTING Messenger page
+ * token gains `leads_retrieval` (Facebook aggregates granted permissions per
+ * user↔app pair) — no separate lead-ads token is stored.
+ */
+export const LEAD_ADS_SCOPES = [
+  "leads_retrieval",
+  "pages_manage_ads",
+  "pages_manage_metadata",
+  "pages_show_list",
+]
+
+export const LEADS_RETRIEVAL_SCOPE = "leads_retrieval"
+
 export function generateAuthUrl({
   clientId,
   version = DEFAULT_API_VERSION,
@@ -204,6 +219,71 @@ export function generateAuthUrl({
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
   })
   return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
+}
+
+/**
+ * OAuth dialog URL for the Facebook Lead Ads re-auth. Identical to
+ * `generateAuthUrl` except it requests only `LEAD_ADS_SCOPES` — the goal is to
+ * grant `leads_retrieval` on top of the page's existing Messenger permissions,
+ * not to reconnect Messenger. Callers pass `flow: "facebookLeadAds"` in
+ * `stateParams` so the callback short-circuits the Messenger page-picker.
+ */
+export function generateLeadAdsAuthUrl({
+  clientId,
+  version = DEFAULT_API_VERSION,
+  redirectUrl,
+  stateParams,
+}: {
+  clientId: string
+  version?: string
+  redirectUrl: string
+  stateParams?: Record<string, unknown>
+}): string {
+  const params = new URLSearchParams({
+    auth_type: "rerequest",
+    client_id: clientId,
+    redirect_uri: redirectUrl,
+    scope: LEAD_ADS_SCOPES.join(","),
+    response_type: "code",
+    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
+  })
+  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
+}
+
+export type DebugTokenData = {
+  scopes?: string[]
+  is_valid?: boolean
+}
+
+/**
+ * Inspect a token's granted scopes via `GET /debug_token`. Used to check
+ * whether a page's access token carries `leads_retrieval` before offering the
+ * page as a lead source. `debugAccessToken` defaults to the inspected token
+ * (Facebook allows a token to debug itself).
+ */
+export function debugToken(
+  inputToken: string,
+  version: string = DEFAULT_API_VERSION,
+  debugAccessToken: string = inputToken,
+): Promise<DebugTokenData> {
+  const endpoint = `${version}/debug_token`
+
+  return rescue(endpoint, async () => {
+    const res: { data?: DebugTokenData } = await facebookGraphClient.get(
+      endpoint,
+      {
+        searchParams: {
+          input_token: inputToken,
+          access_token: debugAccessToken,
+        },
+      },
+    )
+    return res.data ?? {}
+  })
+}
+
+export function hasLeadsRetrieval(scopes: string[] | undefined): boolean {
+  return Boolean(scopes?.includes(LEADS_RETRIEVAL_SCOPE))
 }
 
 export function exchangeCodeForToken(

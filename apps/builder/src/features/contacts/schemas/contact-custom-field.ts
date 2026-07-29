@@ -21,6 +21,9 @@ export const addContactCustomFieldRequest = z.object({
   customFieldId: zodBigintAsString(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
+  // Browser zone captured at submit — anchors a naive `date` to the user's
+  // local calendar day (same field shape the import flow uses for `timezone`).
+  clientTimezone: z.string().trim().min(1).max(255).optional(),
 })
 export type AddContactCustomFieldRequest = z.infer<
   typeof addContactCustomFieldRequest

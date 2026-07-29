@@ -41,6 +41,9 @@ export function UsageBars({
                   isOverLimit && "font-medium text-destructive",
                 )}
               >
+                {metric.workspaceUsed !== undefined && (
+                  <>{formatter.number(metric.workspaceUsed)} / </>
+                )}
                 {formatter.number(metric.used)} /{" "}
                 {formatter.number(metric.limit)}
               </span>

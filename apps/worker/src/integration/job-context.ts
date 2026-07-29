@@ -16,7 +16,8 @@ export async function runIntegrationJobWithWebhookContext<T>(
   jobData: IntegrationJobData,
   callback: () => Promise<T>,
 ): Promise<T> {
-  const webhookExecutionContext = isChannelOriginatedJob(jobData)
+  const isChannelOriginated = isChannelOriginatedJob(jobData)
+  const webhookExecutionContext = isChannelOriginated
     ? { source: "webhook" as const }
     : {}
 

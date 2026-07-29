@@ -4,7 +4,12 @@ import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { logger } from "../lib/logger"
-import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
+import { fetchAllWhatsappPages } from "../lib/pagination"
+import {
+  EMPTY_PAGINATION,
+  type WhatsappAuthValue,
+  type WhatsappPagination,
+} from "../schema"
 
 const LEADING_PLUS_RE = /^\+/
 const NON_DIGIT_RE = /\D/g
@@ -30,6 +35,7 @@ export const normalizeWhatsappDisplayPhoneNumber = (phone: string): string => {
 export type WhatsappPhoneNumber = {
   verified_name: string
   code_verification_status: string
+  name_status?: string
   display_phone_number: string
   quality_rating: string
   platform_type: string
@@ -43,6 +49,13 @@ export type WhatsappPhoneNumberResponse = {
   paging: WhatsappPagination
 }
 
+/**
+ * Lists every phone number on a WABA.
+ *
+ * All pages are aggregated, so the returned cursors describe no remaining
+ * page — they are kept only because callers type against
+ * `WhatsappPhoneNumberResponse`.
+ */
 export function listPhoneNumbers(props: {
   wabaId: string
   accessToken: string
@@ -50,18 +63,15 @@ export function listPhoneNumbers(props: {
 }): Promise<WhatsappPhoneNumberResponse> {
   const { version = DEFAULT_API_VERSION } = props
 
-  return rescue(() =>
-    ky
-      .get<WhatsappPhoneNumberResponse>(
-        `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.accessToken}`,
-          },
-        },
-      )
-      .json(),
-  )
+  return rescue(async () => {
+    const data = await fetchAllWhatsappPages<WhatsappPhoneNumber>({
+      firstUrl: `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
+      accessToken: props.accessToken,
+      resource: "phone_numbers",
+    })
+
+    return { data, paging: EMPTY_PAGINATION }
+  })
 }
 
 export function findPhoneNumber(props: {

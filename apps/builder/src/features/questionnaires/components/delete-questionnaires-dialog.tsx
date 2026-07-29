@@ -22,6 +22,7 @@ type Props = {
   questionnaires: QuestionnaireListItem[]
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
 export function DeleteQuestionnairesDialog({
@@ -29,6 +30,7 @@ export function DeleteQuestionnairesDialog({
   questionnaires,
   open,
   onOpenChange,
+  onSuccess,
 }: Props) {
   const t = useTranslations()
   const router = useRouter()
@@ -43,6 +45,7 @@ export function DeleteQuestionnairesDialog({
         )
         onOpenChange(false)
         router.refresh()
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

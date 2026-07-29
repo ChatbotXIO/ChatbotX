@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => {
     subscribePageToAppWebhook: vi.fn().mockResolvedValue(undefined),
     tx,
     txChain,
+    workspaceFindById: vi.fn(),
   }
 })
 
@@ -37,6 +38,7 @@ vi.mock("@chatbotx.io/business", () => ({
   inboxService: { disconnect: mocks.inboxDisconnect },
   instagramIntegrationExistsForPage: mocks.instagramExists,
   messengerIntegrationExistsForPage: mocks.messengerExists,
+  workspaceService: { findById: mocks.workspaceFindById },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -148,6 +150,10 @@ describe("Meta disconnect actions", () => {
     mocks.instagramDisconnect.mockResolvedValue(undefined)
     mocks.instagramFacebookDisconnect.mockResolvedValue(undefined)
     mocks.subscribePageToAppWebhook.mockResolvedValue(undefined)
+    mocks.workspaceFindById.mockResolvedValue({
+      id: "workspace-1",
+      ownerId: "owner-1",
+    })
   })
 
   test("messenger disconnect preserves a shared Instagram page subscription", async () => {
@@ -165,6 +171,8 @@ describe("Meta disconnect actions", () => {
     })
     expect(mocks.inboxDisconnect).toHaveBeenCalledWith({
       inboxId: "inbox-1",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
       tx: mocks.tx,
     })
   })
@@ -190,6 +198,8 @@ describe("Meta disconnect actions", () => {
     expect(mocks.instagramFacebookDisconnect).not.toHaveBeenCalled()
     expect(mocks.inboxDisconnect).toHaveBeenCalledWith({
       inboxId: "inbox-2",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
       tx: mocks.tx,
     })
   })

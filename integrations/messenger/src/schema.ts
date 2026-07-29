@@ -225,6 +225,18 @@ export const messengerFeedChangeSchema = z.object({
 })
 export type MessengerFeedChange = z.infer<typeof messengerFeedChangeSchema>
 
+// Facebook Lead Ads: a `leadgen` change carries only ids — the worker fetches
+// the lead's answers from the Graph API using the page token.
+export const messengerLeadgenValueSchema = z.object({
+  leadgen_id: z.string(),
+  form_id: z.string(),
+  page_id: z.string(),
+  created_time: z.number().optional(),
+  ad_id: z.string().optional(),
+  adgroup_id: z.string().optional(),
+})
+export type MessengerLeadgenValue = z.infer<typeof messengerLeadgenValueSchema>
+
 export const messengerPageEntrySchema = z.object({
   id: z.string(),
   time: z.number(),
@@ -252,7 +264,7 @@ export const incomingWebhookEventSchema = z.object({
 export type IncomingWebhookEvent = z.infer<typeof incomingWebhookEventSchema>
 
 export const facebookQuickReplySchema = z.object({
-  content_type: z.enum(["text", "location", "user_phone_number"]),
+  content_type: z.enum(["text", "location", "user_phone_number", "user_email"]),
   title: z.string().optional(),
   payload: z.string().optional(),
   image_url: z.url().optional(),
@@ -282,9 +294,20 @@ export const facebookElementSchema = z.object({
 })
 export type FacebookElement = z.infer<typeof facebookElementSchema>
 
+/**
+ * How Messenger sizes the images of a generic template's elements: `horizontal`
+ * is 1.91:1, `square` is 1:1. Meta accepts no other value and defaults to
+ * `horizontal` when the field is absent.
+ */
+export const facebookImageAspectRatioSchema = z.enum(["horizontal", "square"])
+export type FacebookImageAspectRatio = z.infer<
+  typeof facebookImageAspectRatioSchema
+>
+
 export const facebookMessageAttachmentPayloadSchema = z.object({
   url: z.url().optional(),
   is_reusable: z.boolean().optional(),
+  image_aspect_ratio: facebookImageAspectRatioSchema.optional(),
   template_type: z
     .enum([
       "generic",

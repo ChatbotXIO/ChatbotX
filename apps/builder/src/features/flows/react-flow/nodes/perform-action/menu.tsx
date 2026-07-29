@@ -2,6 +2,7 @@ import { stepTypes } from "@chatbotx.io/flow-config"
 import {
   SiClaude,
   SiGooglegemini,
+  SiMake,
   SiMessenger,
 } from "@icons-pack/react-simple-icons"
 import {
@@ -37,8 +38,10 @@ import {
   StarIcon,
   StarOffIcon,
   TagIcon,
+  TicketPercentIcon,
   UserIcon,
   UserRoundXIcon,
+  WebhookIcon,
   ZapIcon,
 } from "lucide-react"
 import { OpenAIIcon } from "@/icons/openai"
@@ -535,6 +538,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     stepType: null,
     children: [
       {
+        label: t("coupons.tabs.topicCoupon"),
+        icon: TicketPercentIcon,
+        stepType: stepTypes.enum.setUpCoupon,
+      },
+      {
         label: t("flows.actions.getDataFromJson"),
         icon: CodeIcon,
         stepType: stepTypes.enum.getDataFromJson,
@@ -595,6 +603,18 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.updateMessengerContactData"),
         icon: CloudDownloadIcon,
         stepType: stepTypes.enum.updateMessengerContactData,
+      },
+    ],
+  },
+  {
+    label: t("flows.actions.triggers"),
+    icon: WebhookIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.actions.make"),
+        icon: SiMake,
+        stepType: stepTypes.enum.make,
       },
     ],
   },

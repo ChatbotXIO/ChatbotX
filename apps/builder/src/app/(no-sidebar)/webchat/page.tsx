@@ -1,4 +1,7 @@
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  isWorkspaceScheduledForDeletion,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { SearchParams } from "next/dist/server/request/search-params"
@@ -67,7 +70,7 @@ export default async function WebchatPage(props: WebchatPageProps) {
   const workspace = await workspaceService.find({
     where: { id: data.workspaceId },
   })
-  if (workspace?.scheduledDeletionAt) {
+  if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     const t = await getTranslations("webchat")
 
     return (

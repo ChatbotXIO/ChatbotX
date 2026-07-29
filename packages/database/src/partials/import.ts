@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { channelTypes } from "./channel"
 
-export const importTypes = z.enum(["contacts"])
+export const importTypes = z.enum(["contacts", "coupons"])
 export type ImportType = z.infer<typeof importTypes>
 
 export const importFormats = z.enum(["csv", "xlsx", "xls"])
@@ -47,12 +47,19 @@ export const countryCodeSchema = z
 export const contactImportMetaSchema = z.object({
   channel: channelTypes,
   countryCode: countryCodeSchema.optional(),
+  timezone: z.string().trim().min(1).max(255).optional(),
   columnMap: contactImportColumnMapSchema,
   fieldMapping: contactImportFieldMappingSchema.optional(),
   tagId: bigintAsStringSchema.optional(),
 })
 export type ContactImportMeta = z.infer<typeof contactImportMetaSchema>
 
+export const couponImportMetaSchema = z.object({
+  topicId: bigintAsStringSchema,
+})
+export type CouponImportMeta = z.infer<typeof couponImportMetaSchema>
+
 export const importMetaByType = {
   contacts: contactImportMetaSchema,
+  coupons: couponImportMetaSchema,
 } as const satisfies Record<ImportType, z.ZodTypeAny>

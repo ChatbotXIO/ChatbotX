@@ -4,12 +4,16 @@ const findBy = vi.fn()
 const findFirst = vi.fn()
 const identify = vi.fn()
 const smartDelayFindById = vi.fn()
+const findWorkspaceId = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findBy },
 }))
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { query: { importModel: { findFirst } } },
+}))
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  createAiWorkspaceScopeRepository: () => ({ findWorkspaceId }),
 }))
 vi.mock("@chatbotx.io/business/smart-delay", () => ({
   smartDelayService: { findById: smartDelayFindById },
@@ -27,6 +31,7 @@ beforeEach(() => {
   findFirst.mockReset()
   identify.mockReset()
   smartDelayFindById.mockReset()
+  findWorkspaceId.mockReset()
 })
 
 describe("resolveWorkspaceId", () => {
@@ -81,9 +86,43 @@ describe("resolveWorkspaceId", () => {
     ).resolves.toBe("workspace-from-smart-delay")
   })
 
+  // The scope assertion is the point: one shared repository method means a
+  // mis-wired row in the resolver table would still return a workspace id and
+  // silently attribute an AI job to the wrong record kind.
+  test.each([
+    { field: "aiFileId", id: "ai-file-1", scope: "aiFile" },
+    { field: "aiEmbeddingId", id: "ai-embedding-1", scope: "aiEmbedding" },
+    { field: "sourceId", id: "source-1", scope: "conversationSource" },
+    {
+      field: "conversationEmbeddingId",
+      id: "embedding-1",
+      scope: "conversationEmbedding",
+    },
+  ])("resolves $field through the $scope scope", async ({
+    field,
+    id,
+    scope,
+  }) => {
+    findWorkspaceId.mockResolvedValue("workspace-from-ai-record")
+
+    await expect(resolveWorkspaceId({ [field]: id })).resolves.toBe(
+      "workspace-from-ai-record",
+    )
+    expect(findWorkspaceId).toHaveBeenCalledWith({ id, scope })
+  })
+
+  test("prefers the earlier resolver when a payload carries several ids", async () => {
+    findBy.mockResolvedValue({ workspaceId: "workspace-from-conversation" })
+
+    await expect(
+      resolveWorkspaceId({ aiFileId: "ai-file-1", conversationId: "conv-1" }),
+    ).resolves.toBe("workspace-from-conversation")
+    expect(findWorkspaceId).not.toHaveBeenCalled()
+  })
+
   test("fails open when no workspace identity is available", async () => {
     await expect(
-      resolveWorkspaceId({ type: "embedding" }),
+      resolveWorkspaceId({ type: "unknown" }),
     ).resolves.toBeUndefined()
   })
 })

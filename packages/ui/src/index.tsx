@@ -3,6 +3,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app"
 import { throttle } from "nuqs/server"
 import { Toaster } from "./components/ui/sonner"
 import { TooltipProvider } from "./components/ui/tooltip"
+import { DEFAULT_TOAST_DURATION_MS } from "./config/toast"
 import { ThemeProvider } from "./providers/theme"
 
 type UiProviderProperties = ThemeProviderProps & {
@@ -30,7 +31,11 @@ export const UiProvider = ({
         {/* <AuthProvider privacyUrl={privacyUrl} termsUrl={termsUrl} helpUrl={helpUrl}>
       <AnalyticsProvider> */}
         <TooltipProvider>{children}</TooltipProvider>
-        <Toaster duration={800} position="top-right" richColors />
+        <Toaster
+          duration={DEFAULT_TOAST_DURATION_MS}
+          position="top-right"
+          richColors
+        />
         {/* </AnalyticsProvider>
     </AuthProvider> */}
       </ThemeProvider>

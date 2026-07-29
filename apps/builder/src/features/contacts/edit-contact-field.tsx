@@ -13,6 +13,11 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import {
+  isTemporalCustomFieldType,
+  resolveTemporalCustomFieldFormValue,
+  resolveTemporalCustomFieldSaveFormat,
+} from "@chatbotx.io/utils/datetime"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -21,6 +26,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { BotFieldValueInput } from "../bot-fields/account-field-value-input"
+import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import { deleteContactCustomFieldAction } from "./actions/delete-contact-custom-field.action"
 import { updateContactFieldAction } from "./actions/update-contact-field.action"
 import { updateContactFieldRequest } from "./schemas/action"
@@ -86,11 +92,15 @@ export function EditContactField(props: EditContactField) {
 
   useEffect(() => {
     if (targetField) {
+      const value = targetField.formValue ?? targetField.value ?? ""
       form.setValue(
         targetField.key ?? "",
-        targetField.formValue ?? targetField.value ?? "",
+        isTemporalCustomFieldType(targetField.type)
+          ? resolveTemporalCustomFieldFormValue(targetField.type, value)
+          : value,
       )
       form.setValue(contactInboxIdField, targetField.contactInboxId ?? "")
+      form.setValue("clientTimezone", getBrowserTimezone())
     }
   }, [targetField, form])
 
@@ -135,6 +145,9 @@ export function EditContactField(props: EditContactField) {
             ) : (
               <BotFieldValueInput
                 name={targetField?.key ?? ""}
+                saveFormat={resolveTemporalCustomFieldSaveFormat(
+                  targetField?.type ?? "",
+                )}
                 type={targetField?.type ?? "shortText"}
               />
             )}

@@ -5,8 +5,11 @@ import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { TiktokConfig } from "../schema"
 import { tiktokWebhookEventSchema } from "../schema"
 
-// TikTok recommends rejecting events older than 5 seconds
-const WEBHOOK_TIMESTAMP_WINDOW_SECONDS = 5
+// TikTok recommends rejecting events older than 5 seconds, but our webhook
+// route does several DB round-trips (integration lookup, freeze check) before
+// this check runs, so a tight window drops legitimate live deliveries. 300s
+// still blocks replay while giving that request path room to breathe.
+const WEBHOOK_TIMESTAMP_WINDOW_SECONDS = 300
 // Allow 2s of clock skew between TikTok servers and ours
 const WEBHOOK_CLOCK_SKEW_SECONDS = 2
 
@@ -15,7 +18,7 @@ async function verifySignature(
   signature: string,
   body: string,
 ): Promise<boolean> {
-  const parts = signature.split(",")
+  const parts = signature.split(",").map((p) => p.trim())
   const tPart = parts.find((p) => p.startsWith("t="))
   const sPart = parts.find((p) => p.startsWith("s="))
 
@@ -98,17 +101,20 @@ export const webhookHandler = async (
     return "ok"
   }
 
-  await queue?.add("incomingMessage", {
-    type: "incomingMessage",
-    data: {
-      integrationType: "tiktok",
-      integrationIdentifier,
-      payload: event.data,
+  await queue?.add(
+    "incomingMessage",
+    {
+      type: "incomingMessage",
+      data: {
+        integrationType: "tiktok",
+        integrationIdentifier,
+        payload: event.data,
+      },
     },
     // Add delay for echo events to avoid race condition where echo arrives
     // before the send message API response completes
-    opts: event.data.event === "im_send_msg" ? { delay: 2000 } : undefined,
-  })
+    event.data.event === "im_send_msg" ? { delay: 2000 } : undefined,
+  )
 
   return "ok"
 }
