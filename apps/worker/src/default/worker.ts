@@ -13,6 +13,9 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
+import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
+import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
+import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
 import { runImport } from "./handlers/run-import"
 import { sendAuditLog } from "./handlers/send-audit-log"
 import { sendErrorLog } from "./handlers/send-error-log"
@@ -71,6 +74,24 @@ const worker = new Worker(
           return
         }
         await handleSyncChannelLabels(job.data.data)
+        return
+      case DefaultJobAction.submitMetaCatalogSync:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
+        await submitMetaCatalogSync(job.data.data)
+        return
+      case DefaultJobAction.importMetaCatalogProducts:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
+        await importMetaCatalogProducts(job.data.data)
+        return
+      case DefaultJobAction.checkMetaCatalogSync:
+        if (await isBlockedJob(job.data.data)) {
+          return
+        }
+        await checkMetaCatalogSync(job.data.data)
         return
       default:
         logger.warn(`Unknown job name: ${job.name}`)

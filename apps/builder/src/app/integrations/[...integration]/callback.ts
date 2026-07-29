@@ -1,5 +1,6 @@
 import {
   integrationFacebookAdsService,
+  integrationMetaCatalogService,
   platformCredentialService,
   workspaceMemberService,
   workspaceService,
@@ -26,6 +27,7 @@ import {
   getFacebookUser as getMessengerFacebookUser,
 } from "@chatbotx.io/integration-messenger"
 import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
+import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
 import {
   AuthType,
   type AuthValue,
@@ -69,7 +71,7 @@ const stateValidationSchema = z.object({
   // redirect_uri registered with the Facebook app); the connect action sets
   // this flag so the Messenger branch dispatches to the right token-storage /
   // webhook-subscription logic instead of the page picker.
-  flow: z.enum(["facebookAds", "facebookLeadAds"]).optional(),
+  flow: z.enum(["facebookAds", "facebookLeadAds", "metaCatalog"]).optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
   // of this existing integration row (matched against its stored page/account
   // identity) instead of running the connect/page-select flow.
@@ -107,6 +109,36 @@ const storeFacebookAdsConnection = async (args: {
   await integrationFacebookAdsService.upsert({
     workspaceId: args.workspaceId,
     auth: facebookAdsAuth,
+    tokenExpiresAt,
+  })
+}
+
+const storeMetaCatalogConnection = async (args: {
+  credentialConfig: { clientId: string; clientSecret: string; version?: string }
+  code: string
+  callbackUrl: string
+  workspaceId: string
+}): Promise<void> => {
+  const shortLivedToken = await exchangeFacebookAdsCode(
+    args.credentialConfig,
+    args.code,
+    args.callbackUrl,
+  )
+  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
+    args.credentialConfig,
+    shortLivedToken,
+  )
+  const tokenExpiresAt = expiresIn
+    ? new Date(Date.now() + expiresIn * 1000)
+    : null
+  const auth: MetaCatalogAuthValue = {
+    accessToken,
+    expiresAt: tokenExpiresAt?.toISOString(),
+    version: args.credentialConfig.version,
+  }
+  await integrationMetaCatalogService.upsert({
+    workspaceId: args.workspaceId,
+    auth,
     tokenExpiresAt,
   })
 }
@@ -238,6 +270,18 @@ export const handleCallback = async (
       const callbackUrl = buildBrokerCallbackUrl(
         "/integrations/messenger/callback",
       )
+
+      if (stateParams.flow === "metaCatalog") {
+        await storeMetaCatalogConnection({
+          credentialConfig: messengerCredential.config,
+          code,
+          callbackUrl,
+          workspaceId: workspace.id,
+        })
+        const setupUrl = new URL(safeReferer)
+        setupUrl.searchParams.set("metaCatalog", "setup")
+        return redirect(setupUrl.toString())
+      }
 
       // Facebook Ads OAuth is routed through this same Messenger callback; the
       // state `flow` flag marks it. Store the Ads token and return the user to

@@ -4,6 +4,14 @@ import * as schema from "../schema"
 
 export const productRelations = defineRelationsPart(schema, (r) => ({
   productModel: {
+    category: r.one.productCategoryModel({
+      from: r.productModel.categoryId,
+      to: r.productCategoryModel.id,
+    }),
+    subcategory: r.one.productCategoryModel({
+      from: r.productModel.subcategoryId,
+      to: r.productCategoryModel.id,
+    }),
     variantOptions: r.many.productVariantOptionModel({
       from: r.productModel.id,
       to: r.productVariantOptionModel.productId,

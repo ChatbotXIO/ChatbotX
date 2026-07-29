@@ -5,6 +5,14 @@ import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@chatbotx.io/ui/components/ui/dialog"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -25,6 +33,40 @@ const STATUS_VARIANTS: Record<
   processing: "default",
   completed: "outline",
   failed: "destructive",
+}
+
+function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
+  const t = useTranslations()
+  if (item.errorSample.length === 0) {
+    return <span className="text-red-600 tabular-nums">{item.failedCount}</span>
+  }
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className="h-auto p-0 text-red-600" variant="link">
+          {item.failedCount}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("fields.import.histories.errorDetails")}</DialogTitle>
+        </DialogHeader>
+        <div className="max-h-96 space-y-2 overflow-auto">
+          {item.errorSample.map((error) => (
+            <div
+              className="grid grid-cols-[5rem_1fr] gap-2 rounded-md border p-2 text-sm"
+              key={`${error.row}-${error.reason}`}
+            >
+              <span className="font-medium">
+                {t("fields.import.histories.row", { row: error.row })}
+              </span>
+              <span className="text-muted-foreground">{error.reason}</span>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
@@ -110,11 +152,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
         accessorKey: "failedCount",
         size: 100,
         header: t("fields.import.histories.failed"),
-        cell: ({ row }) => (
-          <span className="text-red-600 tabular-nums">
-            {row.original.failedCount}
-          </span>
-        ),
+        cell: ({ row }) => <ImportErrorSampleButton item={row.original} />,
         enableSorting: false,
         enableHiding: false,
       },

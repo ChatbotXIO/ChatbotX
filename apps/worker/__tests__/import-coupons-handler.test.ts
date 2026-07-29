@@ -28,6 +28,43 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  importService: {
+    markProcessing: vi.fn(() => {
+      mocks.updateValues.push({ status: "processing" })
+      return Promise.resolve()
+    }),
+    fail: vi.fn(
+      (
+        _importId: string,
+        // The real service takes the thrown value and derives the stored
+        // message itself, so the stand-in has to do the same — otherwise these
+        // assertions would be checking a shape the service never persists.
+        error: unknown,
+        counters?: {
+          processed: number
+          success: number
+          failed: number
+        },
+        errorSample?: Array<{ row: number; reason: string }>,
+      ) => {
+        mocks.updateValues.push({
+          status: "failed",
+          errorMessage: error instanceof Error ? error.message : error,
+          totalCount: counters?.processed,
+          processedCount: counters?.processed,
+          successCount: counters?.success,
+          failedCount: counters?.failed,
+          errorSample,
+        })
+        return Promise.resolve()
+      },
+    ),
+    flushProgress: vi.fn(() => Promise.resolve()),
+    complete: vi.fn(() => Promise.resolve()),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   importModel: {},
 }))
@@ -39,14 +76,19 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/imports", () => ({
-  getImportEntry: () => ({
-    config: {
-      maxFileSizeMB: 0.000_01,
-      maxRows: 100,
-    },
-  }),
-}))
+vi.mock("@chatbotx.io/imports", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@chatbotx.io/imports")>()
+  return {
+    ...original,
+    getImportEntry: () => ({
+      config: {
+        maxFileSizeMB: 0.000_01,
+        maxRows: 100,
+        acceptedFormats: ["csv"],
+      },
+    }),
+  }
+})
 
 vi.mock("@chatbotx.io/imports/parsers", () => ({
   cleanText: (value: unknown, maxLength: number) =>
@@ -129,6 +171,74 @@ describe("runImportPipeline coupon stream guard", () => {
       errorMessage: expect.stringContaining("File exceeds"),
       totalCount: 0,
       processedCount: 0,
+    })
+  })
+
+  test("keeps the first 50 row diagnostics when parsing fails after partial progress", async () => {
+    mocks.headObject.mockResolvedValue({ ContentLength: 5 })
+    mocks.getObjectStream.mockResolvedValue({
+      contentLength: 5,
+      stream: Readable.from(["file"]),
+    })
+    mocks.createImportRowParser.mockReturnValue(
+      (async function* () {
+        for await (const row of Array.from(
+          { length: 60 },
+          (_, index) => index,
+        )) {
+          yield { coupon: `INVALID-${row}` }
+        }
+        throw new Error("corrupt trailing worksheet data")
+      })(),
+    )
+    const invalidRowHandler: typeof handler = {
+      ...handler,
+      processRow: (_deps, _row, _meta, context) => ({
+        error: `Invalid row ${context.rowNumber}`,
+      }),
+    }
+
+    await runImportPipeline(importRow, invalidRowHandler)
+
+    expect(mocks.updateValues.at(-1)).toMatchObject({
+      status: "failed",
+      errorMessage: "corrupt trailing worksheet data",
+      processedCount: 60,
+      failedCount: 60,
+      errorSample: expect.arrayContaining([
+        { row: 2, reason: "Invalid row 2" },
+        { row: 51, reason: "Invalid row 51" },
+      ]),
+    })
+    expect((mocks.updateValues.at(-1)?.errorSample as unknown[]).length).toBe(
+      50,
+    )
+  })
+
+  test("stops at the configured row limit before buffering unbounded input", async () => {
+    mocks.headObject.mockResolvedValue({ ContentLength: 5 })
+    mocks.getObjectStream.mockResolvedValue({
+      contentLength: 5,
+      stream: Readable.from(["file"]),
+    })
+    mocks.createImportRowParser.mockReturnValue(
+      (async function* () {
+        for await (const row of Array.from(
+          { length: 101 },
+          (_, index) => index,
+        )) {
+          yield { coupon: `CODE-${row}` }
+        }
+      })(),
+    )
+
+    await runImportPipeline(importRow, handler)
+
+    expect(mocks.processBatch).not.toHaveBeenCalled()
+    expect(mocks.updateValues.at(-1)).toMatchObject({
+      status: "failed",
+      errorMessage: "Row limit exceeded (100)",
+      processedCount: 100,
     })
   })
 })

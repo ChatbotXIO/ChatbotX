@@ -1,0 +1,1 @@
+ALTER TABLE "MetaCatalogSyncRun" ADD COLUMN "direction" "metaCatalogItemDirection" DEFAULT 'push'::"metaCatalogItemDirection" NOT NULL;

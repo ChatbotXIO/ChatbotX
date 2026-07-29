@@ -15,6 +15,8 @@ import { ProductForm } from "./product-form"
 type EditProductProps = {
   workspaceId: string
   product: ProductDetailResource
+  /** Null until this product has taken part in a Meta Catalog sync. */
+  metaCatalogId: string | null
 }
 
 function buildDefaultValues(product: ProductDetailResource) {
@@ -23,7 +25,11 @@ function buildDefaultValues(product: ProductDetailResource) {
   return { ...defaults, ...rest }
 }
 
-export function EditProduct({ workspaceId, product }: EditProductProps) {
+export function EditProduct({
+  workspaceId,
+  product,
+  metaCatalogId,
+}: EditProductProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -57,6 +63,7 @@ export function EditProduct({ workspaceId, product }: EditProductProps) {
         form={form as UseFormReturn<ProductFormRequest>}
         handleSubmitWithAction={handleSubmitWithAction}
         isEdit
+        metaCatalogId={metaCatalogId}
         workspaceId={workspaceId}
       />
     </ProductStoreProvider>

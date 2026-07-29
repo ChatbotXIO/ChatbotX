@@ -33,6 +33,9 @@ export const DefaultJobAction = {
   sendAuditLog: "sendAuditLog",
   syncTag: "syncTag",
   syncChannelLabels: "syncChannelLabels",
+  importMetaCatalogProducts: "importMetaCatalogProducts",
+  submitMetaCatalogSync: "submitMetaCatalogSync",
+  checkMetaCatalogSync: "checkMetaCatalogSync",
 } as const
 
 export type ExportContactsFilter = {
@@ -173,6 +176,36 @@ export type JobSyncChannelLabels = {
   }
 }
 
+export type JobSubmitMetaCatalogSync = {
+  type: typeof DefaultJobAction.submitMetaCatalogSync
+  data: {
+    workspaceId: string
+    runId: string
+  }
+}
+
+export type JobImportMetaCatalogProducts = {
+  type: typeof DefaultJobAction.importMetaCatalogProducts
+  data: {
+    workspaceId: string
+    integrationMetaCatalogId: string
+    /**
+     * The history row to report progress into. Optional so jobs already queued
+     * without one keep draining instead of failing on a missing field.
+     */
+    runId?: string
+  }
+}
+
+export type JobCheckMetaCatalogSync = {
+  type: typeof DefaultJobAction.checkMetaCatalogSync
+  data: {
+    workspaceId: string
+    runId: string
+    attempt: number
+  }
+}
+
 export type DefaultJobData =
   | JobExportContacts
   | JobExportCoupons
@@ -182,3 +215,6 @@ export type DefaultJobData =
   | JobSendAuditLog
   | JobSyncTag
   | JobSyncChannelLabels
+  | JobImportMetaCatalogProducts
+  | JobSubmitMetaCatalogSync
+  | JobCheckMetaCatalogSync

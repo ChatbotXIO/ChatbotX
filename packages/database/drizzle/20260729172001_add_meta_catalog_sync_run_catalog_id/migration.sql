@@ -1,0 +1,1 @@
+ALTER TABLE "MetaCatalogSyncRun" ADD COLUMN "catalogId" text;

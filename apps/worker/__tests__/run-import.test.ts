@@ -23,6 +23,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   importModel: { id: "Import.id" },
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  importService: {
+    findForWorker: (...args: unknown[]) => findFirst(...args),
+    fail: (_importId: string, errorMessage: string) => {
+      updateSet({ status: "failed", errorMessage })
+      return Promise.resolve()
+    },
+  },
+}))
+
 const runImportPipeline = vi.fn()
 vi.mock("../src/default/handlers/imports", () => ({
   runImportPipeline: (row: unknown, handler: unknown) =>

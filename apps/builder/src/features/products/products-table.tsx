@@ -12,10 +12,14 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
-import { SiFacebook } from "@icons-pack/react-simple-icons"
+import { PlusIcon } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import type { listImports } from "@/features/import/queries/list-imports.queries"
+import { ImportProductDialog } from "./components/import-product-dialog"
+import { MetaCatalogDialog } from "./components/meta-catalog-dialog"
 import { DeleteProductsDialog } from "./delete-product-dialog"
 import { getProductColumns } from "./products-table-columns"
 import { ProductsTableToolbarActions } from "./products-table-toolbar-actions"
@@ -25,9 +29,18 @@ import type { ProductResource } from "./schema/resource"
 type ProductsTableProps = {
   promises: Promise<[ListProductsResponse]>
   workspaceId: string
+  importHistoryPromise: Promise<[Awaited<ReturnType<typeof listImports>>]>
+  initialMetaCatalogState: Parameters<
+    typeof MetaCatalogDialog
+  >[0]["initialState"]
 }
 
-export function ProductsTable({ promises, workspaceId }: ProductsTableProps) {
+export function ProductsTable({
+  promises,
+  workspaceId,
+  importHistoryPromise,
+  initialMetaCatalogState,
+}: ProductsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -50,6 +63,9 @@ export function ProductsTable({ promises, workspaceId }: ProductsTableProps) {
     shallow: false,
     clearOnDefault: true,
   })
+  const selectedProductIds = table
+    .getFilteredSelectedRowModel()
+    .rows.map((row) => row.original.id)
 
   return (
     <Card>
@@ -58,10 +74,23 @@ export function ProductsTable({ promises, workspaceId }: ProductsTableProps) {
           {t("products.title")}
         </CardTitle>
         <CardAction>
-          <Button size="sm" type="button">
-            <SiFacebook />
-            {t("actions.syncMetaCatalog")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm">
+              <Link href={`/space/${workspaceId}/products/create`}>
+                <PlusIcon />
+                {t("actions.create")}
+              </Link>
+            </Button>
+            <ImportProductDialog
+              historyPromise={importHistoryPromise}
+              workspaceId={workspaceId}
+            />
+            <MetaCatalogDialog
+              initialState={initialMetaCatalogState}
+              selectedProductIds={selectedProductIds}
+              workspaceId={workspaceId}
+            />
+          </div>
         </CardAction>
       </CardHeader>
       <CardContent>

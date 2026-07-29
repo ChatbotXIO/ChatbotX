@@ -169,6 +169,14 @@ export type AnalyticsSequenceEventModel =
 export type AnalyticsFlowNodeEventModel =
   typeof schema.analyticsFlowNodeEventModel.$inferSelect
 export type ProductModel = typeof schema.productModel.$inferSelect
+export type ProductCategoryModel =
+  typeof schema.productCategoryModel.$inferSelect
+export type IntegrationMetaCatalogModel =
+  typeof schema.integrationMetaCatalogModel.$inferSelect
+export type MetaCatalogItemModel =
+  typeof schema.metaCatalogItemModel.$inferSelect
+export type MetaCatalogSyncRunModel =
+  typeof schema.metaCatalogSyncRunModel.$inferSelect
 export type ProductVariantOptionModel =
   typeof schema.productVariantOptionModel.$inferSelect
 export type ProductVariantModel = typeof schema.productVariantModel.$inferSelect

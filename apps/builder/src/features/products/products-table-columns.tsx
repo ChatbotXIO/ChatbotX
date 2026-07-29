@@ -12,7 +12,8 @@ import {
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon, Trash } from "lucide-react"
+import { EllipsisVerticalIcon, PencilIcon, Trash } from "lucide-react"
+import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import {
   type Dispatch,
@@ -184,12 +185,12 @@ export function getProductColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("actions.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Open menu"
+              aria-label={t("actions.actions")}
               className="flex size-8 p-0 data-[state=open]:bg-muted"
               variant="ghost"
             >
@@ -197,6 +198,14 @@ export function getProductColumns({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/space/${row.original.workspaceId}/products/${row.original.id}/edit`}
+              >
+                <PencilIcon />
+                {t("actions.edit")}
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"

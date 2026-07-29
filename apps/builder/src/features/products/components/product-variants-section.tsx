@@ -22,6 +22,7 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
+import { PRICE_INPUT_PROPS } from "../constants"
 import type { ProductFormRequest } from "../schema/action"
 
 function computeCartesianProduct(
@@ -192,6 +193,7 @@ export function ProductVariantsSection() {
                     </td>
                     <td className="p-2">
                       <InputNumberField
+                        {...PRICE_INPUT_PROPS}
                         min={0}
                         name={`variants.${index}.price`}
                         placeholder="0"
