@@ -1,13 +1,13 @@
-import type { ButtonStepProps, MetadataPayload } from "@chatbotx.io/flow-config"
+import {
+  type ButtonStepProps,
+  type MetadataPayload,
+  whatsappCarouselCardLimits,
+} from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
 import type { CarouselCard, InteractiveCarouselMessage } from "../../../schema"
 import { clampText, messageLimits } from "../message-limits"
 import { readCardContent, type SendCardPayload } from "./send-card"
 import { normalizeRawButton } from "./shared"
-
-/** Meta: "Messages must include between 2 and 10 cards." */
-export const CAROUSEL_MIN_CARDS = 2
-const CAROUSEL_MAX_CARDS = 10
 
 /** Both examples in Meta's docs carry this card type, the quick-reply one included. */
 const CAROUSEL_CARD_TYPE = "cta_url"
@@ -81,7 +81,7 @@ function buildCarouselCard(
 export function chunkCarouselCards(
   cards: SendCardPayload[],
 ): SendCardPayload[][] {
-  const chunks = chunk(cards, CAROUSEL_MAX_CARDS)
+  const chunks = chunk(cards, whatsappCarouselCardLimits.max)
   const lastChunk = chunks.at(-1)
   const previousChunk = chunks.at(-2)
 

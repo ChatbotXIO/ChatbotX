@@ -1,9 +1,7 @@
+import { whatsappCarouselCardLimits } from "@chatbotx.io/flow-config"
 import type { ClientMessage } from "whatsapp-api-js/types"
 import type { InteractiveCarouselMessage } from "../../../schema"
-import {
-  buildInteractiveCarouselMessages,
-  CAROUSEL_MIN_CARDS,
-} from "./interactive-carousel"
+import { buildInteractiveCarouselMessages } from "./interactive-carousel"
 import {
   generateOutgoingMessages as generateCardOutgoingMessages,
   type SendCardPayload,
@@ -15,7 +13,7 @@ export function* generateOutgoingMessages(
     payload: { cards: SendCardPayload[] }
   },
 ): Generator<ClientMessage | InteractiveCarouselMessage> {
-  if (props.payload.cards.length >= CAROUSEL_MIN_CARDS) {
+  if (props.payload.cards.length >= whatsappCarouselCardLimits.min) {
     yield* buildInteractiveCarouselMessages({
       cards: props.payload.cards,
       flowId: props.flowId,
