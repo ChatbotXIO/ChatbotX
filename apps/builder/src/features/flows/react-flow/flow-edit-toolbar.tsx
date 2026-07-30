@@ -212,7 +212,9 @@ export function FlowEditToolbar({
         edges: edges as unknown as PublishFlowSchema["edges"],
       })
     } else {
-      toast.error(t(resolveFlowValidationMessageKey(validationResult.error)))
+      toast.error(t(resolveFlowValidationMessageKey(validationResult.error)), {
+        duration: 5000,
+      })
     }
     setIsValidating(false)
   }
