@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { deleteProductCategoryAction } from "../actions/delete-product-category.action"
 
 type DeleteCategoryDialogProps = {
@@ -45,8 +46,7 @@ export function DeleteCategoryDialog({
         onOpenChange(false)
         router.refresh()
       },
-      onError: ({ error }) =>
-        toast.error(error.serverError ?? t("deleteError")),
+      onError: toastActionError(t("deleteError")),
     },
   )
 

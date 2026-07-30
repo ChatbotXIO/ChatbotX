@@ -90,9 +90,6 @@ export async function submitMetaCatalogSync(
       handles: [],
       skippedItems: skipped,
     })
-    const accessToken = await integrationMetaCatalogService.resolveToken(
-      connection.id,
-    )
     const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
 
     const handles: MetaCatalogBatchHandle[] = []
@@ -100,7 +97,7 @@ export async function submitMetaCatalogSync(
     const batches = chunk(accepted, CATALOG_BATCH_SIZE)
     for (const [batchIndex, batch] of batches.entries()) {
       const response = await submitItemsBatch({
-        accessToken,
+        accessToken: auth.accessToken,
         catalogId,
         version: auth.version,
         requests: batch.map((item) => ({

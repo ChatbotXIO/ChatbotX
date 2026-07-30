@@ -2,6 +2,7 @@ import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { SiFacebook } from "@icons-pack/react-simple-icons"
 import { useTranslations } from "next-intl"
+import { META_BLUE_SURFACE, META_BLUE_TEXT } from "../lib/meta-catalog-brand"
 import type { MetaCatalogConnection } from "./meta-catalog-types"
 
 const STATUS_STYLES: Record<MetaCatalogConnection["status"], string> = {
@@ -62,8 +63,13 @@ export function MetaCatalogConnectionInfo({
   return (
     <section className="space-y-4">
       <header className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0866FF]/10">
-          <SiFacebook className="size-5 text-[#0866FF]" />
+        <div
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-full",
+            META_BLUE_SURFACE,
+          )}
+        >
+          <SiFacebook className={cn("size-5", META_BLUE_TEXT)} />
         </div>
         <div className="min-w-0 flex-1">
           {/* Its own wording, not the table's "not available" fallback: at this

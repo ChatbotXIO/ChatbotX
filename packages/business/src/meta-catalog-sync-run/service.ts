@@ -19,26 +19,12 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "../errors"
+import { resolveMetaCatalogOutcome } from "../meta-catalog-shared/outcome-status"
 
 const ACTIVE_RUN_CONSTRAINT = "MetaCatalogSyncRun_active_idx"
 const GENERIC_SYNC_FAILURE =
   "Meta Catalog sync failed. Please try again or contact support."
 const MAX_DIAGNOSTIC_ITEMS = 50
-
-const determineCompletionStatus = ({
-  succeededCount,
-  failedCount,
-  skippedCount,
-}: {
-  succeededCount: number
-  failedCount: number
-  skippedCount: number
-}) => {
-  if (failedCount === 0 && skippedCount === 0) {
-    return "succeeded" as const
-  }
-  return succeededCount > 0 ? ("partial" as const) : ("failed" as const)
-}
 
 const isActiveRunViolation = (error: unknown): boolean =>
   isDatabaseError(error) &&
@@ -199,7 +185,7 @@ class MetaCatalogSyncRunService extends BaseService {
       const errors = [...(current?.itemErrors ?? []), ...input.errors]
       const failedCount = (current?.failedCount ?? 0) + input.errors.length
       const skippedCount = current?.skippedCount ?? 0
-      const status = determineCompletionStatus({
+      const status = resolveMetaCatalogOutcome({
         succeededCount,
         failedCount,
         skippedCount,
@@ -276,10 +262,9 @@ class MetaCatalogSyncRunService extends BaseService {
     await db
       .update(metaCatalogSyncRunModel)
       .set({
-        status: determineCompletionStatus({
+        status: resolveMetaCatalogOutcome({
           succeededCount: input.succeededCount,
           failedCount: input.failedCount,
-          skippedCount: 0,
         }),
         totalCount: input.totalCount,
         succeededCount: input.succeededCount,

@@ -42,13 +42,10 @@ export async function checkMetaCatalogSync(
       throw new Error("Meta Catalog is not selected")
     }
     const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
-    const accessToken = await integrationMetaCatalogService.resolveToken(
-      connection.id,
-    )
     const checks = await Promise.all(
       run.handles.map((batch) =>
         checkItemsBatch({
-          accessToken,
+          accessToken: auth.accessToken,
           catalogId,
           handle: batch.handle,
           retailerIds: batch.retailerIds,

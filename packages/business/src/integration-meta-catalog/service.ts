@@ -18,31 +18,13 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "../errors"
+import { resolveMetaCatalogOutcome } from "../meta-catalog-shared/outcome-status"
 
 const GENERIC_IMPORT_FAILURE =
   "Meta Catalog import failed. Please try again or contact support."
 const WORKSPACE_UNIQUE_CONSTRAINT = "IntegrationMetaCatalog_workspaceId_key"
 const CURRENCY_CODE_REGEX = /^[A-Z]{3}$/
 const TRAILING_SLASH_REGEX = /\/$/
-const IMPORT_COMPLETION_RULES = [
-  {
-    matches: (counts: { imported: number; failed: number }) =>
-      counts.failed === 0,
-    status: "succeeded",
-  },
-  {
-    matches: (counts: { imported: number; failed: number }) =>
-      counts.imported > 0,
-    status: "partial",
-  },
-] as const
-
-const resolveImportCompletionStatus = (counts: {
-  imported: number
-  failed: number
-}) =>
-  IMPORT_COMPLETION_RULES.find((rule) => rule.matches(counts))?.status ??
-  ("failed" as const)
 
 export const metaCatalogStoredAuthSchema = z.object({
   accessToken: z.string().min(1),
@@ -131,7 +113,14 @@ class IntegrationMetaCatalogService extends BaseService {
     }
   }
 
-  async resolveToken(connectionId: string): Promise<string> {
+  /**
+   * The stored credentials, refusing a connection Meta has already rejected.
+   *
+   * Returns the whole record rather than just the token because every Graph call
+   * needs both the token and the version it was issued against — asking for them
+   * separately meant reading the row twice and decrypting the same blob twice.
+   */
+  async resolveAuth(connectionId: string): Promise<MetaCatalogStoredAuth> {
     const row = await db.query.integrationMetaCatalogModel.findFirst({
       where: { id: connectionId },
       columns: { encryptedAuth: true, status: true },
@@ -144,21 +133,6 @@ class IntegrationMetaCatalogService extends BaseService {
         "Meta Catalog connection requires reconnection",
         "metaCatalogReconnectRequired",
       )
-    }
-    const auth = await encryptUtils.decryptObject(
-      encryptedDataSchema.parse(row.encryptedAuth),
-      metaCatalogStoredAuthSchema,
-    )
-    return auth.accessToken
-  }
-
-  async resolveAuth(connectionId: string): Promise<MetaCatalogStoredAuth> {
-    const row = await db.query.integrationMetaCatalogModel.findFirst({
-      where: { id: connectionId },
-      columns: { encryptedAuth: true },
-    })
-    if (!row) {
-      throw notFoundException("Meta Catalog integration not found")
     }
     return await encryptUtils.decryptObject(
       encryptedDataSchema.parse(row.encryptedAuth),
@@ -271,9 +245,9 @@ class IntegrationMetaCatalogService extends BaseService {
     failedCount: number
     error?: string
   }) {
-    const importStatus = resolveImportCompletionStatus({
-      imported: input.importedCount,
-      failed: input.failedCount,
+    const importStatus = resolveMetaCatalogOutcome({
+      succeededCount: input.importedCount,
+      failedCount: input.failedCount,
     })
     await db
       .update(integrationMetaCatalogModel)

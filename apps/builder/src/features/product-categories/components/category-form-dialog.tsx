@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { createProductCategoryAction } from "../actions/create-product-category.action"
 import { updateProductCategoryAction } from "../actions/update-product-category.action"
 import { productCategoryFormSchema } from "../schema/action"
@@ -70,8 +71,7 @@ export function CategoryFormDialog({
           setOpen(false)
           router.refresh()
         },
-        onError: ({ error }) =>
-          toast.error(error.serverError ?? t("saveError")),
+        onError: toastActionError(t("saveError")),
       },
       errorMapProps: {},
     },

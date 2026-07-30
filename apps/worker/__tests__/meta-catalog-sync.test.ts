@@ -6,7 +6,6 @@ const mocks = vi.hoisted(() => ({
   findConnection: vi.fn(),
   findWorkspace: vi.fn(),
   listProducts: vi.fn(),
-  resolveToken: vi.fn(),
   resolveAuth: vi.fn(),
   findLinkedItems: vi.fn(),
   findLinkedItemsByProducts: vi.fn(),
@@ -26,7 +25,6 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationMetaCatalogService: {
     findByWorkspaceIdOrFail: (...args: unknown[]) =>
       mocks.findConnection(...args),
-    resolveToken: (...args: unknown[]) => mocks.resolveToken(...args),
     resolveAuth: (...args: unknown[]) => mocks.resolveAuth(...args),
     markInvalid: (...args: unknown[]) => mocks.markInvalid(...args),
   },
@@ -109,8 +107,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.findConnection.mockResolvedValue(connection)
   mocks.findWorkspace.mockResolvedValue({ id: "workspace-1", name: "Store" })
-  mocks.resolveToken.mockResolvedValue("catalog-token")
-  mocks.resolveAuth.mockResolvedValue({ version: "v24.0" })
+  mocks.resolveAuth.mockResolvedValue({
+    accessToken: "catalog-token",
+    version: "v24.0",
+  })
   mocks.findLinkedItems.mockResolvedValue([])
   mocks.findLinkedItemsByProducts.mockResolvedValue([])
   mocks.recordSubmission.mockResolvedValue(undefined)
@@ -155,7 +155,7 @@ describe("Meta Catalog sync workers", () => {
       retailerId: "product-0",
     })
     expect(firstRequests[1]).toMatchObject({ method: "CREATE" })
-    expect(mocks.resolveToken).toHaveBeenCalledWith("connection-1")
+    expect(mocks.resolveAuth).toHaveBeenCalledWith("connection-1")
     expect(mocks.recordSubmission).toHaveBeenCalledWith(
       expect.objectContaining({
         totalCount: 1001,
@@ -197,7 +197,7 @@ describe("Meta Catalog sync workers", () => {
       attempt: 0,
     })
 
-    expect(mocks.resolveToken).toHaveBeenCalledWith("connection-1")
+    expect(mocks.resolveAuth).toHaveBeenCalledWith("connection-1")
     expect(mocks.complete).toHaveBeenCalledWith({
       runId: "run-2",
       integrationMetaCatalogId: "connection-1",

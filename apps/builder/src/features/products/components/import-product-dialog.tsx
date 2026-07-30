@@ -38,6 +38,7 @@ import { ImportDropzone } from "@/features/import/components/import-dropzone"
 import { ImportHistoryList } from "@/features/import/components/import-history-list"
 import type { UploadResult } from "@/features/import/hooks/use-presigned-upload"
 import type { listImports } from "@/features/import/queries/list-imports.queries"
+import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { importProductsAction } from "../actions/import-products.action"
 
 type ImportProductDialogProps = {
@@ -81,7 +82,7 @@ export function ImportProductDialog({
           router.refresh()
         }
       },
-      onError: ({ error }) => toast.error(error.serverError ?? t("error")),
+      onError: toastActionError(t("error")),
     },
   )
 

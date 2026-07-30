@@ -105,11 +105,12 @@ export const selectMetaCatalogAction = workspaceActionClient
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     const connection =
       await integrationMetaCatalogService.findByWorkspaceIdOrFail(workspaceId)
-    const [token, auth] = await Promise.all([
-      integrationMetaCatalogService.resolveToken(connection.id),
-      integrationMetaCatalogService.resolveAuth(connection.id),
-    ])
-    const catalog = await getCatalog(token, parsedInput.catalogId, auth.version)
+    const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
+    const catalog = await getCatalog(
+      auth.accessToken,
+      parsedInput.catalogId,
+      auth.version,
+    )
     const selected = await integrationMetaCatalogService.selectCatalog({
       workspaceId,
       catalogId: catalog.id,
@@ -142,9 +143,6 @@ export const selectMetaCatalogAction = workspaceActionClient
         },
       )
     } catch (error) {
-      console.error({
-        error: JSON.stringify(error, null, 2),
-      })
       // Persisted for the workspace to read in history, so it is written in
       // their locale rather than the server's default.
       const t = await getTranslations("metaCatalog.errors")
@@ -171,12 +169,9 @@ export const listMetaCatalogBusinessesAction = workspaceActionClient
   .action(async ({ ctx, bindArgsParsedInputs: [workspaceId] }) => {
     const connection =
       await integrationMetaCatalogService.findByWorkspaceIdOrFail(workspaceId)
-    const [token, auth] = await Promise.all([
-      integrationMetaCatalogService.resolveToken(connection.id),
-      integrationMetaCatalogService.resolveAuth(connection.id),
-    ])
+    const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
     return {
-      businesses: await listBusinesses(token, auth.version),
+      businesses: await listBusinesses(auth.accessToken, auth.version),
       suggestedName: ctx.workspace.name,
     }
   })
@@ -192,12 +187,9 @@ export const createMetaCatalogAction = workspaceActionClient
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     const connection =
       await integrationMetaCatalogService.findByWorkspaceIdOrFail(workspaceId)
-    const [token, auth] = await Promise.all([
-      integrationMetaCatalogService.resolveToken(connection.id),
-      integrationMetaCatalogService.resolveAuth(connection.id),
-    ])
+    const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
     const catalog = await createCatalog({
-      accessToken: token,
+      accessToken: auth.accessToken,
       businessId: parsedInput.businessId,
       name: parsedInput.name,
       version: auth.version,
@@ -249,11 +241,14 @@ export const syncToMetaCatalogAction = workspaceActionClient
     // catalog is the only connection-level prerequisite left. Verify it against
     // Graph only when it changes — a re-typed identical id costs no roundtrip.
     if (catalogId !== connection.catalogId) {
-      const [token, auth] = await Promise.all([
-        integrationMetaCatalogService.resolveToken(connection.id),
-        integrationMetaCatalogService.resolveAuth(connection.id),
-      ])
-      const catalog = await getCatalog(token, catalogId, auth.version)
+      const auth = await integrationMetaCatalogService.resolveAuth(
+        connection.id,
+      )
+      const catalog = await getCatalog(
+        auth.accessToken,
+        catalogId,
+        auth.version,
+      )
       await integrationMetaCatalogService.bindCatalog({
         workspaceId,
         catalogId: catalog.id,

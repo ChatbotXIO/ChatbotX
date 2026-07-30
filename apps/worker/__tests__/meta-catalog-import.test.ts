@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   claimImport: vi.fn(),
-  resolveToken: vi.fn(),
   resolveAuth: vi.fn(),
   getPage: vi.fn(),
   mapProduct: vi.fn(),
@@ -21,7 +20,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business", () => ({
   integrationMetaCatalogService: {
     claimImport: (...args: unknown[]) => mocks.claimImport(...args),
-    resolveToken: (...args: unknown[]) => mocks.resolveToken(...args),
     resolveAuth: (...args: unknown[]) => mocks.resolveAuth(...args),
     updateImportProgress: (...args: unknown[]) => mocks.updateProgress(...args),
     completeImport: (...args: unknown[]) => mocks.completeImport(...args),
@@ -64,8 +62,10 @@ beforeEach(() => {
     id: "connection-1",
     catalogId: "catalog-1",
   })
-  mocks.resolveToken.mockResolvedValue("token")
-  mocks.resolveAuth.mockResolvedValue({ version: "v24.0" })
+  mocks.resolveAuth.mockResolvedValue({
+    accessToken: "token",
+    version: "v24.0",
+  })
   mocks.importPage.mockResolvedValue({ imported: 1, existing: 0 })
   mocks.mapProduct.mockImplementation((product: { retailer_id?: string }) =>
     product.retailer_id

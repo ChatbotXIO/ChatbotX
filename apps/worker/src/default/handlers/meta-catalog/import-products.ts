@@ -7,6 +7,7 @@ import {
   getCatalogProductsPage,
   isInvalidMetaTokenError,
   MAX_META_CATALOG_PRODUCT_PAGES,
+  type MetaCatalogProductPage,
   toImportedMetaProduct,
 } from "@chatbotx.io/integration-meta-catalog"
 import type { JobImportMetaCatalogProducts } from "@chatbotx.io/worker-config"
@@ -20,6 +21,7 @@ type ImportCounters = {
 
 /** Keeps the persisted `importError` readable when a catalog fails in many ways. */
 const MAX_REPORTED_REASONS = 3
+const UNEXPECTED_SHAPE_REASON = "Meta returned a product in an unexpected shape"
 
 /**
  * "2 Meta products could not be imported" is unactionable on its own, so the
@@ -39,10 +41,91 @@ const describeFailures = (reasons: Map<string, number>): string => {
 }
 
 /**
- * Both records of the same outcome, written together: the connection carries the
- * "latest import" summary the Import tab reads, the run row is the entry that
- * stays in history. Missing the run write would leave it active forever and,
- * since only one run per workspace may be active, block every later sync.
+ * The running totals of one import, and why anything was left out. Kept out of
+ * the handler so the loop reads as "fetch a page, write it, report" instead of
+ * as bookkeeping between every step.
+ */
+const createImportTally = () => {
+  const counters: ImportCounters = { total: 0, imported: 0, failed: 0 }
+  const reasons = new Map<string, number>()
+
+  const reject = (reason: string, count = 1) => {
+    counters.failed += count
+    reasons.set(reason, (reasons.get(reason) ?? 0) + count)
+  }
+
+  /**
+   * Folds one Meta page into the totals and hands back the products worth
+   * writing. A product Meta sent in a shape this codebase cannot read never
+   * reaches the mapper, so those are counted straight off the page.
+   */
+  const readPage = (page: MetaCatalogProductPage) => {
+    counters.total += page.products.length + page.invalidCount
+    if (page.invalidCount > 0) {
+      reject(UNEXPECTED_SHAPE_REASON, page.invalidCount)
+    }
+    const mapped = page.products.map(toImportedMetaProduct)
+    for (const result of mapped) {
+      if (!result.ok) {
+        reject(result.reason)
+      }
+    }
+    return mapped.filter((result) => result.ok).map((result) => result.product)
+  }
+
+  const addImported = (count: number) => {
+    counters.imported += count
+  }
+
+  /** The sentence the workspace reads, or nothing when everything landed. */
+  const summarize = () =>
+    counters.failed > 0
+      ? `${counters.failed} Meta products could not be imported: ${describeFailures(reasons)}`
+      : undefined
+
+  return {
+    counters,
+    reasons,
+    reject,
+    readPage,
+    addImported,
+    summarize,
+  }
+}
+
+/**
+ * Progress for a run in flight, written to both records: the connection carries
+ * the "latest import" summary the Import tab reads, the run row is what moves in
+ * history while the job works.
+ */
+const reportProgress = async (input: {
+  connectionId: string
+  runId?: string
+  counters: ImportCounters
+}) => {
+  const { connectionId, runId, counters } = input
+  await Promise.all([
+    integrationMetaCatalogService.updateImportProgress({
+      connectionId,
+      totalCount: counters.total,
+      importedCount: counters.imported,
+      failedCount: counters.failed,
+    }),
+    runId
+      ? metaCatalogSyncRunService.recordImportProgress({
+          runId,
+          totalCount: counters.total,
+          succeededCount: counters.imported,
+          failedCount: counters.failed,
+        })
+      : null,
+  ])
+}
+
+/**
+ * Both records of the same outcome, written together. Missing the run write
+ * would leave it active forever and, since only one run per workspace may be
+ * active, block every later sync.
  */
 const finishImport = async (input: {
   connectionId: string
@@ -71,6 +154,35 @@ const finishImport = async (input: {
   ])
 }
 
+/**
+ * Meta has no more pages, so this is the final verdict. Anything left out is
+ * logged for support as well as persisted, because the stored sentence is capped
+ * at the three most common reasons while the log keeps all of them.
+ */
+const finishAfterLastPage = async (input: {
+  connectionId: string
+  runId?: string
+  tally: ReturnType<typeof createImportTally>
+}) => {
+  const { connectionId, runId, tally } = input
+  if (tally.counters.failed > 0) {
+    logger.warn(
+      {
+        connectionId,
+        failed: tally.counters.failed,
+        reasons: Object.fromEntries(tally.reasons),
+      },
+      "Meta Catalog import skipped products",
+    )
+  }
+  await finishImport({
+    connectionId,
+    runId,
+    counters: tally.counters,
+    error: tally.summarize(),
+  })
+}
+
 export async function importMetaCatalogProducts(
   data: JobImportMetaCatalogProducts["data"],
 ): Promise<void> {
@@ -94,19 +206,14 @@ export async function importMetaCatalogProducts(
     await metaCatalogSyncRunService.claim(runId)
   }
 
-  const counters: ImportCounters = { total: 0, imported: 0, failed: 0 }
-  const failureReasons = new Map<string, number>()
-  const addFailureReason = (reason: string, count = 1) =>
-    failureReasons.set(reason, (failureReasons.get(reason) ?? 0) + count)
+  const tally = createImportTally()
+  const { counters } = tally
   try {
     const { catalogId } = connection
     if (!catalogId) {
       throw new Error("Meta Catalog is not selected")
     }
-    const [accessToken, auth] = await Promise.all([
-      integrationMetaCatalogService.resolveToken(connection.id),
-      integrationMetaCatalogService.resolveAuth(connection.id),
-    ])
+    const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
     let after: string | undefined
     for (
       let pageIndex = 0;
@@ -114,84 +221,33 @@ export async function importMetaCatalogProducts(
       pageIndex++
     ) {
       const page = await getCatalogProductsPage({
-        accessToken,
+        accessToken: auth.accessToken,
         catalogId,
         version: auth.version,
         after,
       })
-      counters.total += page.products.length + page.invalidCount
-      counters.failed += page.invalidCount
-      if (page.invalidCount > 0) {
-        addFailureReason(
-          "Meta returned a product in an unexpected shape",
-          page.invalidCount,
-        )
-      }
-      const mapped = page.products.map(toImportedMetaProduct)
-      const validProducts = mapped
-        .filter((result) => result.ok)
-        .map((result) => result.product)
-      counters.failed += mapped.length - validProducts.length
-      for (const result of mapped) {
-        if (!result.ok) {
-          addFailureReason(result.reason)
-        }
-      }
-
       const result = await metaCatalogImportService.importPage({
         workspaceId: data.workspaceId,
         integrationMetaCatalogId: connection.id,
         catalogId,
-        products: validProducts,
+        products: tally.readPage(page),
       })
-      counters.imported += result.imported + result.existing
-      await Promise.all([
-        integrationMetaCatalogService.updateImportProgress({
-          connectionId: connection.id,
-          totalCount: counters.total,
-          importedCount: counters.imported,
-          failedCount: counters.failed,
-        }),
-        runId
-          ? metaCatalogSyncRunService.recordImportProgress({
-              runId,
-              totalCount: counters.total,
-              succeededCount: counters.imported,
-              failedCount: counters.failed,
-            })
-          : null,
-      ])
+      tally.addImported(result.imported + result.existing)
+      await reportProgress({ connectionId: connection.id, runId, counters })
 
       after = page.nextCursor
       if (!after) {
-        if (counters.failed > 0) {
-          logger.warn(
-            {
-              connectionId: connection.id,
-              failed: counters.failed,
-              reasons: Object.fromEntries(failureReasons),
-            },
-            "Meta Catalog import skipped products",
-          )
-        }
-        await finishImport({
-          connectionId: connection.id,
-          runId,
-          counters,
-          error:
-            counters.failed > 0
-              ? `${counters.failed} Meta products could not be imported: ${describeFailures(failureReasons)}`
-              : undefined,
-        })
+        await finishAfterLastPage({ connectionId: connection.id, runId, tally })
         return
       }
     }
-    counters.failed += 1
+    const pageLimitReason = `Meta Catalog exceeds the ${MAX_META_CATALOG_PRODUCT_PAGES}-page import limit`
+    tally.reject(pageLimitReason)
     await finishImport({
       connectionId: connection.id,
       runId,
       counters,
-      error: `Meta Catalog exceeds the ${MAX_META_CATALOG_PRODUCT_PAGES}-page import limit`,
+      error: pageLimitReason,
     })
   } catch (error) {
     const message =

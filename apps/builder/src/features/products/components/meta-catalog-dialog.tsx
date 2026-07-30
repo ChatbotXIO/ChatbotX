@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import {
   connectMetaCatalogAction,
   disconnectMetaCatalogAction,
@@ -33,6 +34,7 @@ import {
   selectMetaCatalogAction,
   syncToMetaCatalogAction,
 } from "../actions/meta-catalog.action"
+import { META_BLUE_SURFACE, META_BLUE_TEXT } from "../lib/meta-catalog-brand"
 import { MetaCatalogCallout } from "./meta-catalog-callout"
 import { MetaCatalogConnectionInfo } from "./meta-catalog-connection-info"
 import { MetaCatalogCreatePanel } from "./meta-catalog-create-panel"
@@ -54,7 +56,6 @@ type MetaCatalogTab = (typeof CATALOG_TABS)[number]
 const TOKEN_EXPIRY_WARNING_MS = 7 * 24 * 60 * 60 * 1000
 const POLL_INTERVAL_MS = 5000
 /** Meta blue — the connection is a Meta-owned surface, so the brand color leads. */
-const META_BLUE = "text-[#0866FF]"
 
 /**
  * Pushing to Meta is the primary intent, so the dialog normally opens there.
@@ -169,13 +170,11 @@ export function MetaCatalogDialog({
           setCatalogId(data.connection?.catalogId ?? "")
         }
       },
-      onError: ({ error }) =>
-        toast.error(error.serverError ?? t("errors.load")),
+      onError: toastActionError(t("errors.load")),
     },
   )
   const connect = useAction(connectMetaCatalogAction.bind(null, workspaceId), {
-    onError: ({ error }) =>
-      toast.error(error.serverError ?? t("errors.connect")),
+    onError: toastActionError(t("errors.connect")),
   })
   const selectCatalog = useAction(
     selectMetaCatalogAction.bind(null, workspaceId),
@@ -185,8 +184,7 @@ export function MetaCatalogDialog({
         loadState()
         clearSetupQuery()
       },
-      onError: ({ error }) =>
-        toast.error(error.serverError ?? t("errors.catalog")),
+      onError: toastActionError(t("errors.catalog")),
     },
   )
   const sync = useAction(syncToMetaCatalogAction.bind(null, workspaceId), {
@@ -195,7 +193,7 @@ export function MetaCatalogDialog({
       setTab("history")
       loadState()
     },
-    onError: ({ error }) => toast.error(error.serverError ?? t("errors.sync")),
+    onError: toastActionError(t("errors.sync")),
   })
   const disconnect = useAction(
     disconnectMetaCatalogAction.bind(null, workspaceId),
@@ -206,8 +204,7 @@ export function MetaCatalogDialog({
         setOpen(false)
         router.refresh()
       },
-      onError: ({ error }) =>
-        toast.error(error.serverError ?? t("errors.disconnect")),
+      onError: toastActionError(t("errors.disconnect")),
     },
   )
 
@@ -454,8 +451,13 @@ export function MetaCatalogDialog({
           </Tabs>
         ) : (
           <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-[#0866FF]/10">
-              <SiFacebook className={cn("size-6", META_BLUE)} />
+            <div
+              className={cn(
+                "flex size-12 items-center justify-center rounded-full",
+                META_BLUE_SURFACE,
+              )}
+            >
+              <SiFacebook className={cn("size-6", META_BLUE_TEXT)} />
             </div>
             <p className="max-w-sm text-muted-foreground text-sm">
               {t("connectDescription")}

@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import {
   createMetaCatalogAction,
   listMetaCatalogBusinessesAction,
@@ -57,8 +58,7 @@ export function MetaCatalogCreatePanel({
         }
         setIsOpen(true)
       },
-      onError: ({ error }) =>
-        toast.error(error.serverError ?? t("errors.businesses")),
+      onError: toastActionError(t("errors.businesses")),
     },
   )
 
@@ -71,8 +71,7 @@ export function MetaCatalogCreatePanel({
       setIsOpen(false)
       onCreated(data.catalogId)
     },
-    onError: ({ error }) =>
-      toast.error(error.serverError ?? t("errors.create")),
+    onError: toastActionError(t("errors.create")),
   })
 
   if (!isOpen) {
