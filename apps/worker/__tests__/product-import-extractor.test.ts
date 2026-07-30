@@ -7,6 +7,7 @@ const columnMap = {
   discount: "Discount",
   inventoryQuantity: "Quantity",
   imageUrl: "Image",
+  productUrl: "Product URL",
 }
 
 describe("product import row extraction", () => {
@@ -19,6 +20,7 @@ describe("product import row extraction", () => {
           Discount: 10,
           Quantity: "5",
           Image: "https://example.com/product.jpg",
+          "Product URL": "https://example.com/products/product",
         },
         columnMap,
         2,
@@ -32,6 +34,7 @@ describe("product import row extraction", () => {
         discount: 10,
         inventoryQuantity: 5,
         imageUrl: "https://example.com/product.jpg",
+        productUrl: "https://example.com/products/product",
       },
     })
   })
@@ -44,6 +47,11 @@ describe("product import row extraction", () => {
     [{ Name: "P", Quantity: 1.5 }, "non-negative integer"],
     [{ Name: "P", Image: "ftp://example.com/a.jpg" }, "HTTP or HTTPS"],
     [{ Name: "P", Image: "not-a-url" }, "Image URL is invalid"],
+    [
+      { Name: "P", "Product URL": "ftp://example.com/product" },
+      "Product URL must use HTTP or HTTPS",
+    ],
+    [{ Name: "P", "Product URL": "not-a-url" }, "Product URL is invalid"],
   ])("returns a row-level error without throwing", (row, expected) => {
     const result = extractProductDraft(row, columnMap, 3)
     expect(result).toEqual({

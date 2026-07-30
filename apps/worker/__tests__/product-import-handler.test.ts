@@ -29,6 +29,7 @@ const productRow = {
   sourceRow: 2,
   name: "Product",
   categoryName: "Shoes",
+  productUrl: "https://example.com/products/product",
 }
 
 beforeEach(() => {
@@ -66,6 +67,7 @@ describe("productsImportHandler", () => {
         expect.objectContaining({
           name: "Product",
           categoryId: "category-1",
+          productUrl: "https://example.com/products/product",
         }),
       ],
     })

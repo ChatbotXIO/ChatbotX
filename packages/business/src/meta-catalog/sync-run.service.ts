@@ -218,6 +218,13 @@ class MetaCatalogSyncRunService extends BaseService {
     totalCount: number
     handles: MetaCatalogBatchHandle[]
     skippedItems: MetaCatalogSkippedItem[]
+    /**
+     * Confirmed failures only. `itemErrors` below may additionally carry
+     * provisional "not yet submitted" placeholders for crash recovery — those
+     * must never be counted here, or the history view would show a live run
+     * as having failed items it merely hasn't gotten to yet.
+     */
+    failedCount: number
     itemErrors?: MetaCatalogItemError[]
   }) {
     const itemErrors = sanitizeItemErrors(input.itemErrors ?? [])
@@ -253,7 +260,7 @@ class MetaCatalogSyncRunService extends BaseService {
           skippedItems: input.skippedItems.slice(0, MAX_DIAGNOSTIC_ITEMS),
           skippedCount: input.skippedItems.length,
           itemErrors: itemErrors.slice(0, MAX_DIAGNOSTIC_ITEMS),
-          failedCount: itemErrors.length,
+          failedCount: input.failedCount,
         })
         .where(eq(metaCatalogSyncRunModel.id, input.runId))
       return true

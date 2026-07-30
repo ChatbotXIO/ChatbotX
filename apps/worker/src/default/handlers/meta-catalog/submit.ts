@@ -176,6 +176,9 @@ export async function submitMetaCatalogSync(
         totalCount,
         handles,
         skippedItems: skipped,
+        // Confirmed failures only — `pendingItems` are batches not yet
+        // submitted, not failures, so they must stay out of failedCount.
+        failedCount: itemErrors.length,
         itemErrors: [...itemErrors, ...pendingItems],
       })
       if (!saved) {

@@ -12,6 +12,7 @@ export type ProductImportDraft = {
   vendor?: string
   inventoryQuantity?: number
   imageUrl?: string
+  productUrl?: string
 }
 
 export type ProductDraftResult =
@@ -39,7 +40,10 @@ const parseOptionalNumber = (
     : { error: `${fieldLabel} must be a number` }
 }
 
-const parseImageUrl = (value: unknown): { value?: string; error?: string } => {
+const parseOptionalHttpUrl = (
+  value: unknown,
+  fieldLabel: string,
+): { value?: string; error?: string } => {
   const text = cleanText(
     typeof value === "number" ? String(value) : value,
     2048,
@@ -51,9 +55,9 @@ const parseImageUrl = (value: unknown): { value?: string; error?: string } => {
     const url = new URL(text)
     return ["http:", "https:"].includes(url.protocol)
       ? { value: url.toString() }
-      : { error: "Image URL must use HTTP or HTTPS" }
+      : { error: `${fieldLabel} must use HTTP or HTTPS` }
   } catch {
-    return { error: "Image URL is invalid" }
+    return { error: `${fieldLabel} is invalid` }
   }
 }
 
@@ -76,12 +80,20 @@ export const extractProductDraft = (
     read(row, columnMap.inventoryQuantity),
     "Inventory quantity",
   )
-  const imageUrl = parseImageUrl(read(row, columnMap.imageUrl))
+  const imageUrl = parseOptionalHttpUrl(
+    read(row, columnMap.imageUrl),
+    "Image URL",
+  )
+  const productUrl = parseOptionalHttpUrl(
+    read(row, columnMap.productUrl),
+    "Product URL",
+  )
   const validationError = [
     price.error,
     discount.error,
     inventoryQuantity.error,
     imageUrl.error,
+    productUrl.error,
   ].find(Boolean)
   if (validationError) {
     return { ok: false, error: validationError }
@@ -115,6 +127,7 @@ export const extractProductDraft = (
       vendor: cleanText(read(row, columnMap.vendor), 255),
       inventoryQuantity: inventoryQuantity.value,
       imageUrl: imageUrl.value,
+      productUrl: productUrl.value,
     },
   }
 }

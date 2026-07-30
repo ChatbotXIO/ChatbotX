@@ -106,6 +106,13 @@ class ProductCategoryService extends BaseService {
     return await productCategoryRepository.countProducts(input)
   }
 
+  /**
+   * Matching is case-insensitive (an importer's "electronics" must land on an
+   * existing "Electronics"), so — like `resolvePaths` — this loads the full
+   * top-level list and folds case in JS rather than querying by exact name.
+   * A DB round-trip that only matched exact case would create a duplicate
+   * category on every casing drift.
+   */
   async resolveByNames(input: {
     workspaceId: string
     names: string[]
@@ -114,29 +121,42 @@ class ProductCategoryService extends BaseService {
   }) {
     const { tx = db } = input
     const names = Array.from(
-      new Set(input.names.map(normalizeCategoryName).filter(Boolean)),
+      new Map(
+        input.names
+          .map(normalizeCategoryName)
+          .filter(Boolean)
+          .map((name) => [name.toLowerCase(), name] as const),
+      ).values(),
     )
-    const rows = input.createMissing
-      ? await productCategoryRepository.createMissingByName(
-          {
-            workspaceId: input.workspaceId,
-            names,
-          },
-          tx,
-        )
-      : await productCategoryRepository.findByNames(
-          {
-            workspaceId: input.workspaceId,
-            names,
-          },
-          tx,
-        )
 
+    let rows = await productCategoryRepository.list(input.workspaceId, tx)
+    const topLevelByName = () =>
+      new Map(
+        rows
+          .filter((row) => !row.parentId)
+          .map((row) => [normalizeCategoryName(row.name).toLowerCase(), row]),
+      )
+
+    if (input.createMissing) {
+      const existing = topLevelByName()
+      const missingNames = names.filter(
+        (name) => !existing.has(name.toLowerCase()),
+      )
+      if (missingNames.length > 0) {
+        await productCategoryRepository.createMissingByName(
+          { workspaceId: input.workspaceId, names: missingNames },
+          tx,
+        )
+        rows = await productCategoryRepository.list(input.workspaceId, tx)
+      }
+    }
+
+    const resolved = topLevelByName()
     return new Map(
-      rows.map((row) => [
-        normalizeCategoryName(row.name).toLowerCase(),
-        row.id,
-      ]),
+      names.flatMap((name) => {
+        const row = resolved.get(name.toLowerCase())
+        return row ? [[name.toLowerCase(), row.id] as const] : []
+      }),
     )
   }
 
