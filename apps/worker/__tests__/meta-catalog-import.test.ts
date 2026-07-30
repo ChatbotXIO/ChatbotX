@@ -1,3 +1,4 @@
+import { MetaCatalogException } from "@chatbotx.io/integration-meta-catalog"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   runProgress: vi.fn(),
   runComplete: vi.fn(),
   runFail: vi.fn(),
+  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -49,16 +51,23 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/integration-meta-catalog", () => ({
-  MAX_META_CATALOG_PRODUCT_PAGES: 2,
-  getCatalogProductsPage: (...args: unknown[]) => mocks.getPage(...args),
-  toImportedMetaProduct: (...args: unknown[]) => mocks.mapProduct(...args),
-  isInvalidMetaTokenError: (...args: unknown[]) =>
-    mocks.isInvalidToken(...args),
-}))
+vi.mock("@chatbotx.io/integration-meta-catalog", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@chatbotx.io/integration-meta-catalog")
+    >()
+  return {
+    ...actual,
+    MAX_META_CATALOG_PRODUCT_PAGES: 2,
+    getCatalogProductsPage: (...args: unknown[]) => mocks.getPage(...args),
+    toImportedMetaProduct: (...args: unknown[]) => mocks.mapProduct(...args),
+    isInvalidMetaTokenError: (...args: unknown[]) =>
+      mocks.isInvalidToken(...args),
+  }
+})
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), warn: vi.fn() },
+  logger: { error: mocks.loggerError, warn: vi.fn() },
 }))
 
 const { importMetaCatalogProducts } = await import(
@@ -156,6 +165,39 @@ describe("Meta Catalog product import worker", () => {
     expect(mocks.markInvalid).toHaveBeenCalledWith("workspace-1")
     // Passed as the thrown value, not a flattened message — the service owns
     // the extraction so a channel error's user-facing detail is not lost here.
+    expect(mocks.failImport).toHaveBeenCalledWith("connection-1", error)
+  })
+
+  test("logs safe Graph diagnostics with the failing import phase", async () => {
+    const error = new MetaCatalogException(
+      "Unsupported get request for catalog",
+      400,
+      100,
+    )
+    mocks.getPage.mockRejectedValue(error)
+
+    await importMetaCatalogProducts({
+      workspaceId: "workspace-1",
+      integrationMetaCatalogId: "connection-1",
+    })
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: expect.objectContaining({
+          message: "Unsupported get request for catalog (code 100)",
+          name: "MetaCatalogException",
+        }),
+        error: "Unsupported get request for catalog (code 100)",
+        graphCode: 100,
+        statusCode: 400,
+        connectionId: "connection-1",
+        workspaceId: "workspace-1",
+        catalogId: "catalog-1",
+        pageIndex: 0,
+        phase: "fetch-products",
+      }),
+      "Unsupported get request for catalog (code 100)",
+    )
     expect(mocks.failImport).toHaveBeenCalledWith("connection-1", error)
   })
 
