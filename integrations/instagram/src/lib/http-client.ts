@@ -1,8 +1,71 @@
 import { UNKNOWN_ERROR } from "@chatbotx.io/sdk"
 import ky, { isHTTPError, type KyInstance } from "ky"
 import { INSTAGRAM_API_URL, INSTAGRAM_OAUTH_URL } from "../constants"
-import { InstagramAPIException, parseOriginError } from "../exception"
+import {
+  type ChannelErrorSource,
+  InstagramAPIException,
+  parseOriginError,
+} from "../exception"
 import { logger } from "./logger"
+
+const EXPECTED_POLICY_ERRORS: ReadonlyArray<{
+  code: number
+  subCode?: number
+}> = [{ code: 230 }, { code: 100, subCode: 33 }]
+
+export function isExpectedPolicyError(
+  source: Pick<ChannelErrorSource, "code" | "subCode">,
+): boolean {
+  const code = Number(source.code)
+  if (Number.isNaN(code)) {
+    return false
+  }
+  const subCode =
+    source.subCode === null || source.subCode === undefined
+      ? undefined
+      : Number(source.subCode)
+  return EXPECTED_POLICY_ERRORS.some(
+    (entry) =>
+      entry.code === code &&
+      (entry.subCode === undefined || entry.subCode === subCode),
+  )
+}
+
+function sanitizeRequestUrl(url: string | undefined): string | undefined {
+  if (!url) {
+    return
+  }
+  try {
+    const parsedUrl = new URL(url)
+    return `${parsedUrl.origin}${parsedUrl.pathname}`
+  } catch {
+    return
+  }
+}
+
+export function logChannelError(
+  source: ChannelErrorSource,
+  context: { url?: string; method?: string },
+): void {
+  const payload = {
+    url: sanitizeRequestUrl(context.url),
+    method: context.method,
+    httpStatus: source.httpStatusCode,
+    code: source.code,
+    subCode: source.subCode,
+    type: source.type,
+  }
+
+  if (isExpectedPolicyError(source)) {
+    logger.warn(
+      payload,
+      `Instagram API expected policy error: ${source.message ?? "unknown"}`,
+    )
+    return
+  }
+
+  logger.error(payload, `Instagram API error: ${source.message ?? "unknown"}`)
+}
 
 type HttpClientConfig = {
   baseUrl: string
@@ -43,27 +106,16 @@ class InstagramHttpClient {
         statusCodes: [408, 413, 429, 500, 502, 503, 504],
         backoffLimit: config.retryDelay ?? 1000,
       },
-      hooks: {
-        beforeError: [
-          ({ error, request }) => {
-            if (isHTTPError(error)) {
-              logger.error(
-                {
-                  url: request.url,
-                  method: request.method,
-                },
-                `HTTP ${error.response.status}: ${error.response.statusText}`,
-              )
-            }
-            return error
-          },
-        ],
-      },
     })
   }
 
   private toException(error: unknown): InstagramAPIException {
     const sdkException = parseOriginError(error)
+
+    logChannelError(sdkException, {
+      url: isHTTPError(error) ? error.request.url : undefined,
+      method: isHTTPError(error) ? error.request.method : undefined,
+    })
 
     return new InstagramAPIException(
       sdkException.message ?? UNKNOWN_ERROR.message,
