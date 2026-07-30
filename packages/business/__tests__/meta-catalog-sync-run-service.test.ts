@@ -129,6 +129,7 @@ describe("metaCatalogSyncRunService error persistence", () => {
         totalCount: 1,
         handles: [],
         skippedItems: [],
+        failedCount: 1,
         itemErrors: [
           {
             retailerId: "retailer-1",
@@ -149,6 +150,27 @@ describe("metaCatalogSyncRunService error persistence", () => {
           },
         ],
       }),
+    )
+  })
+
+  test("writes the caller-provided failedCount instead of counting stored itemErrors", async () => {
+    await metaCatalogSyncRunService.recordSubmission({
+      runId: "run-1",
+      submissionLeaseId: "lease-1",
+      totalCount: 1,
+      handles: [],
+      skippedItems: [],
+      failedCount: 0,
+      itemErrors: [
+        {
+          retailerId: "retailer-1",
+          reason: "Submission was interrupted; sync this item again",
+        },
+      ],
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ failedCount: 0 }),
     )
   })
 })
