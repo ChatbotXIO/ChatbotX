@@ -140,3 +140,15 @@ export const channelDuplicatedException = () =>
     "This account is already connected to another workspace.",
     "channelDuplicated",
   )
+
+export const channelLimitReachedException = () =>
+  new ChatbotXException(
+    "Channel limit reached for this plan",
+    "channelLimitReached",
+  )
+
+export const workspaceLimitReachedException = () =>
+  new ChatbotXException(
+    "Workspace limit reached for this plan",
+    "workspaceLimitReached",
+  )

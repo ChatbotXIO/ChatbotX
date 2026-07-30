@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { ChatbotXException } from "../../errors"
 
 const mocks = vi.hoisted(() => ({
   inboxFindMany: vi.fn(),
+  inboxFindFirst: vi.fn(),
   inboxUpdate: vi.fn(),
   inboxUpdateSet: vi.fn(),
   inboxUpdateWhere: vi.fn(),
+  inboxInsert: vi.fn(),
+  inboxInsertValues: vi.fn(),
   count: vi.fn(),
 }))
 
@@ -13,10 +17,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       inboxModel: {
         findMany: mocks.inboxFindMany,
+        findFirst: mocks.inboxFindFirst,
       },
     },
     $count: mocks.count,
     update: mocks.inboxUpdate,
+    insert: mocks.inboxInsert,
   },
   eq: vi.fn((column, value) => ({ column, value })),
   relationsFilterToSQL: vi.fn((_, where) => where),
@@ -49,24 +55,46 @@ const { inboxService } = await import("../service")
 const { quotaEnforcementService } = (await import(
   "../../quota-enforcement/service"
 )) as unknown as {
-  quotaEnforcementService: { release: ReturnType<typeof vi.fn> }
+  quotaEnforcementService: {
+    tryConsume: ReturnType<typeof vi.fn>
+    release: ReturnType<typeof vi.fn>
+  }
 }
 const { workspaceUsageService } = (await import(
   "../../workspace-usage/service"
 )) as unknown as {
-  workspaceUsageService: { decrement: ReturnType<typeof vi.fn> }
+  workspaceUsageService: {
+    increment: ReturnType<typeof vi.fn>
+    decrement: ReturnType<typeof vi.fn>
+  }
 }
 
 beforeEach(() => {
   mocks.inboxFindMany.mockReset()
+  mocks.inboxFindFirst.mockReset()
   mocks.inboxUpdate.mockReset()
   mocks.inboxUpdateSet.mockReset()
   mocks.inboxUpdateWhere.mockReset()
+  mocks.inboxInsert.mockReset()
+  mocks.inboxInsertValues.mockReset()
   mocks.count.mockReset()
+  quotaEnforcementService.tryConsume.mockReset()
   quotaEnforcementService.release.mockReset()
   quotaEnforcementService.release.mockResolvedValue(undefined)
+  workspaceUsageService.increment.mockReset()
+  workspaceUsageService.increment.mockResolvedValue(undefined)
   workspaceUsageService.decrement.mockReset()
   workspaceUsageService.decrement.mockResolvedValue(undefined)
+
+  mocks.inboxInsert.mockReturnValue({
+    values: mocks.inboxInsertValues.mockReturnValue({
+      returning: vi.fn().mockResolvedValue([{ id: "new-inbox" }]),
+    }),
+  })
+
+  mocks.inboxUpdateWhere.mockReturnValue({
+    returning: vi.fn().mockResolvedValue([{ id: "reconnected-inbox" }]),
+  })
 
   mocks.inboxUpdate.mockReturnValue({
     set: mocks.inboxUpdateSet.mockReturnValue({
@@ -164,6 +192,71 @@ describe("InboxService.disconnect", () => {
         workspaceId: "workspace-1",
       }),
     ).resolves.toBeUndefined()
+  })
+})
+
+describe("InboxService.create", () => {
+  test("throws a typed channelLimitReached exception when the owner's quota is exhausted", async () => {
+    mocks.inboxFindFirst.mockResolvedValue(undefined)
+    quotaEnforcementService.tryConsume.mockResolvedValue({ ok: false })
+
+    const createInbox = inboxService.create({
+      data: {
+        workspaceId: "workspace-1",
+        channel: "whatsapp",
+        name: "WhatsApp",
+      } as never,
+      ownerId: "owner-1",
+    })
+
+    await expect(createInbox).rejects.toMatchObject({
+      code: "channelLimitReached",
+      message: "Channel limit reached for this plan",
+    })
+    await expect(createInbox.catch((err) => err)).resolves.toBeInstanceOf(
+      ChatbotXException,
+    )
+    expect(mocks.inboxInsert).not.toHaveBeenCalled()
+  })
+
+  test("creates the inbox and increments usage when the quota allows it", async () => {
+    mocks.inboxFindFirst.mockResolvedValue(undefined)
+    quotaEnforcementService.tryConsume.mockResolvedValue({ ok: true })
+
+    const result = await inboxService.create({
+      data: {
+        workspaceId: "workspace-1",
+        channel: "whatsapp",
+        name: "WhatsApp",
+      } as never,
+      ownerId: "owner-1",
+    })
+
+    expect(result).toEqual({ inbox: { id: "new-inbox" }, wasCreated: true })
+    expect(mocks.inboxInsert).toHaveBeenCalledTimes(1)
+    expect(workspaceUsageService.increment).toHaveBeenCalledWith(
+      "workspace-1",
+      "channels",
+    )
+  })
+
+  test("reconnects an existing disconnected inbox without consuming quota", async () => {
+    mocks.inboxFindFirst.mockResolvedValue({
+      id: "existing-inbox",
+      status: "disconnected",
+    })
+
+    await inboxService.create({
+      data: {
+        workspaceId: "workspace-1",
+        channel: "whatsapp",
+        name: "WhatsApp",
+      } as never,
+      ownerId: "owner-1",
+    })
+
+    expect(quotaEnforcementService.tryConsume).not.toHaveBeenCalled()
+    expect(mocks.inboxUpdate).toHaveBeenCalledTimes(1)
   })
 })
 
