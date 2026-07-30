@@ -53,6 +53,7 @@
     "@chatbotx.io/integration-mailchimp": "workspace:*",
     "@chatbotx.io/integration-mailer-lite": "workspace:*",
     "@chatbotx.io/integration-messenger": "workspace:*",
+    "@chatbotx.io/integration-meta-catalog": "workspace:*",
     "@chatbotx.io/integration-moosend": "workspace:*",
     "@chatbotx.io/integration-sendgrid": "workspace:*",
     "@chatbotx.io/integration-smtp": "workspace:*",

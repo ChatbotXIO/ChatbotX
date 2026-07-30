@@ -13,3 +13,8 @@ export const useProductSelectOptions = (): {
     [products],
   )
 }
+
+export const useProductSuggestionOptions = () => {
+  const vendors = useProductStore((state) => state.vendors)
+  return { vendors }
+}

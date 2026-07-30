@@ -38,6 +38,7 @@ import { integrationsAPI } from "@/features/integrations/api"
 import { messagesAPI } from "@/features/messages/api"
 import { personasAPIs } from "@/features/personas/api"
 import { platformCredentialsAPI } from "@/features/platform-credentials/api"
+import { productCategoriesAPI } from "@/features/product-categories/api"
 import { productsAPI } from "@/features/products/api"
 import { questionnairesAPI } from "@/features/questionnaires/api"
 import { refLinksAPI } from "@/features/reflinks/api"
@@ -102,6 +103,7 @@ export const router = {
   aiFunctionsAPI,
   platformCredentialsAPI,
   productsAPI,
+  productCategoriesAPI,
   questionnairesAPI,
   refLinksAPI,
   keywordsAPI,

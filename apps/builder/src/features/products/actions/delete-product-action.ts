@@ -1,15 +1,15 @@
 "use server"
 
+import { productService } from "@chatbotx.io/business"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { workspaceActionClient } from "@/lib/safe-action"
-import { productService } from "../services"
+import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
-export const deleteProductAction = workspaceActionClient
+export const deleteProductAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(

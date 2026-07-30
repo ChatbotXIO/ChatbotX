@@ -90,7 +90,9 @@ import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
+import { metaCatalogRelations } from "./meta-catalog"
 import { productRelations } from "./product"
+import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
 import { reflinkRelations } from "./reflink"
 import { savedReplyRelations } from "./save-reply"
@@ -226,6 +228,8 @@ export const relations = {
   ...analyticsSequenceEventRelations,
   ...analyticsFlowNodeEventRelations,
   ...productRelations,
+  ...productCategoryRelations,
+  ...metaCatalogRelations,
   ...questionnaireRelations,
   ...coexistSyncRunRelations,
   ...userPersistentMenuRelations,

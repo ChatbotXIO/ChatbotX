@@ -1,5 +1,6 @@
 "use client"
 
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -23,28 +24,35 @@ import { MultiSelect } from "@chatbotx.io/ui/components/ui/sersavan/multi-select
 import { PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import { useProductSelectOptions } from "../provider/product-hook"
+import { useCategoryOptions } from "@/features/product-categories/provider/use-category-options"
+import {
+  useProductSelectOptions,
+  useProductSuggestionOptions,
+} from "../provider/product-hook"
 import type { ProductFormRequest } from "../schema/action"
 
-export function ProductMoreOptionsSection() {
+export function ProductMoreOptionsSection({
+  workspaceId,
+}: {
+  workspaceId: string
+}) {
   const productOptions = useProductSelectOptions()
+  const {
+    options: categoryOptions,
+    childOptionsOf,
+    isLoading: isLoadingCategories,
+  } = useCategoryOptions(workspaceId)
+  const { vendors } = useProductSuggestionOptions()
   const t = useTranslations("products")
   const tActions = useTranslations("actions")
   const { control, register, watch, setValue } =
     useFormContext<ProductFormRequest>()
+  const subcategoryOptions = childOptionsOf(watch("categoryId"))
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "addons",
   })
-
-  const vendorOptions = [{ value: "none", label: t("fields.vendor.label") }]
-
-  const categoryOptions = [{ value: "none", label: t("fields.category.label") }]
-
-  const subcategoryOptions = [
-    { value: "none", label: t("fields.subcategory.label") },
-  ]
 
   return (
     <>
@@ -166,12 +174,19 @@ export function ProductMoreOptionsSection() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <SelectField
-              label={t("fields.vendor.label")}
-              name="vendor"
-              options={vendorOptions}
-              placeholder={t("fields.vendor.label")}
-            />
+            <div>
+              <InputField
+                label={t("fields.vendor.label")}
+                list="product-vendors"
+                name="vendor"
+                placeholder={t("fields.vendor.label")}
+              />
+              <datalist id="product-vendors">
+                {vendors.map((vendor) => (
+                  <option key={vendor} value={vendor} />
+                ))}
+              </datalist>
+            </div>
             <InputNumberField
               className="w-full"
               label={t("fields.rank.label")}
@@ -179,16 +194,32 @@ export function ProductMoreOptionsSection() {
               placeholder="10"
             />
             <SelectField
+              allowClear
+              clearLabel={t("fields.category.placeholder")}
+              // An empty, enabled select during the fetch reads as "this product
+              // has no category", which is exactly wrong on an edit form.
+              disabled={isLoadingCategories}
               label={t("fields.category.label")}
-              name="category"
+              name="categoryId"
               options={categoryOptions}
               placeholder={t("fields.category.label")}
+              // The old sub-category belongs to the old parent, so keeping it
+              // would save a pair that fails the server's parentage check.
+              triggerValueChange={() =>
+                setValue("subcategoryId", null, { shouldDirty: true })
+              }
             />
             <SelectField
+              allowClear
+              clearLabel={t("fields.subcategory.placeholder")}
+              // Nothing to choose until a category is picked, and the list is
+              // empty when that category has no children — either way an
+              // enabled, empty select would just look broken.
+              disabled={isLoadingCategories || subcategoryOptions.length === 0}
               label={t("fields.subcategory.label")}
-              name="subcategory"
+              name="subcategoryId"
               options={subcategoryOptions}
-              placeholder={t("fields.subcategory.label")}
+              placeholder={t("fields.subcategory.placeholder")}
             />
           </div>
 

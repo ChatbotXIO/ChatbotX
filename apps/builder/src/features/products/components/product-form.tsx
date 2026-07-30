@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl"
 import type { BaseSyntheticEvent } from "react"
 import { useMemo, useState } from "react"
 import { type UseFormReturn, useWatch } from "react-hook-form"
+import { PRICE_INPUT_PROPS, PRODUCT_CURRENCIES } from "../constants"
 import type { ProductFormRequest } from "../schema/action"
 import { ProductImagesSection } from "./product-images-section"
 import { ProductMoreOptionsSection } from "./product-more-options-section"
@@ -35,6 +36,8 @@ type ProductFormProps = {
   form: UseFormReturn<ProductFormRequest>
   handleSubmitWithAction: (event?: BaseSyntheticEvent) => void | Promise<void>
   isEdit?: boolean
+  /** Only ever set on an existing product that has been synced with Meta. */
+  metaCatalogId?: string | null
 }
 
 export function ProductForm({
@@ -42,6 +45,7 @@ export function ProductForm({
   form,
   handleSubmitWithAction,
   isEdit = false,
+  metaCatalogId = null,
 }: ProductFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -53,6 +57,11 @@ export function ProductForm({
       { value: "track", label: t("products.inventoryPolicy.track") },
     ],
     [t],
+  )
+
+  const currencyOptions = useMemo(
+    () => PRODUCT_CURRENCIES.map((code) => ({ value: code, label: code })),
+    [],
   )
 
   const longDescription =
@@ -101,15 +110,17 @@ export function ProductForm({
                 {t("products.sections.pricing")}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <InputNumberField
+                  {...PRICE_INPUT_PROPS}
                   label={t("products.fields.price.label")}
                   min={0}
                   name="price"
                   required
                 />
                 <InputNumberField
+                  {...PRICE_INPUT_PROPS}
                   label={t("products.fields.taxes.label")}
                   max={100}
                   min={0}
@@ -117,11 +128,28 @@ export function ProductForm({
                   required
                 />
                 <InputNumberField
+                  {...PRICE_INPUT_PROPS}
                   label={t("products.fields.discount.label")}
                   max={100}
                   min={0}
                   name="discount"
                   required
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <SelectField
+                  label={t("products.fields.currency.label")}
+                  name="currency"
+                  options={currencyOptions}
+                />
+                <InputField
+                  description={t("products.fields.productUrl.description")}
+                  descriptionType="tooltip"
+                  formItemClassName="col-span-2"
+                  label={t("products.fields.productUrl.label")}
+                  name="productUrl"
+                  placeholder={t("products.fields.productUrl.placeholder")}
+                  type="url"
                 />
               </div>
             </CardContent>
@@ -191,7 +219,24 @@ export function ProductForm({
             )}
             {t("products.sections.moreOptions")}
           </button>
-          {showMoreOptions && <ProductMoreOptionsSection />}
+          {showMoreOptions && (
+            <ProductMoreOptionsSection workspaceId={workspaceId} />
+          )}
+          {/* Read-only, and absent entirely until a sync has happened: the value
+              is decided by Meta, so an empty field here would invite edits that
+              cannot be made. */}
+          {metaCatalogId ? (
+            <Card>
+              <CardContent className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground text-sm">
+                  {t("products.fields.metaCatalogId.label")}
+                </span>
+                <span className="font-medium font-mono text-sm tabular-nums">
+                  {metaCatalogId}
+                </span>
+              </CardContent>
+            </Card>
+          ) : null}
           <div className="flex items-center justify-end gap-2">
             <Button
               onClick={() => router.push(`/space/${workspaceId}/products`)}

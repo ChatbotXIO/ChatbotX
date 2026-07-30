@@ -1,4 +1,7 @@
 import { z } from "zod"
+import { DEFAULT_PRODUCT_CURRENCY } from "../constants"
+
+const CURRENCY_CODE_LENGTH = 3
 
 export const productFormRequest = z.object({
   name: z.string().trim().min(1).max(255).default(""),
@@ -7,6 +10,15 @@ export const productFormRequest = z.object({
   price: z.coerce.number().min(0).default(0),
   taxes: z.coerce.number().min(0).max(100).default(0),
   discount: z.coerce.number().min(0).max(100).default(0),
+  currency: z
+    .string()
+    .trim()
+    .length(CURRENCY_CODE_LENGTH)
+    .default(DEFAULT_PRODUCT_CURRENCY),
+  productUrl: z
+    .union([z.url(), z.literal("")])
+    .nullish()
+    .default(""),
   sku: z.string().nullish().default(""),
   inventoryPolicy: z.enum(["dont_track", "track"]).default("dont_track"),
   inventoryQuantity: z.coerce.number().int().min(0).default(0),
@@ -50,8 +62,8 @@ export const productFormRequest = z.object({
   tags: z.array(z.string()).default([]),
   vendor: z.string().nullish(),
   rank: z.coerce.number().int().default(10),
-  category: z.string().nullish(),
-  subcategory: z.string().nullish(),
+  categoryId: z.string().regex(/^\d+$/).nullish(),
+  subcategoryId: z.string().regex(/^\d+$/).nullish(),
   isSearchable: z.boolean().default(true),
   allowSpecialRequest: z.boolean().default(false),
   isAddonOnly: z.boolean().default(false),

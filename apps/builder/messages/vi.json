@@ -1356,6 +1356,8 @@
       "label": "Trạng thái",
       "pending": "Đang chờ",
       "processing": "Đang xử lý",
+      "completed": "Hoàn tất",
+      "failed": "Thất bại",
       "success": "Thành công",
       "error": "Lỗi"
     },
@@ -1836,12 +1838,19 @@
     "import": {
       "label": "Nhập",
       "uploading": "Đang tải lên…",
+      "fileTooLarge": "Tệp vượt quá giới hạn {size} MB.",
+      "unsupportedFileType": "Định dạng tệp này không được hỗ trợ.",
+      "unableToReadHeaders": "Không thể đọc tiêu đề của tệp nhập.",
+      "uploadError": "Không thể tải tệp lên.",
       "histories": {
         "title": "Lịch sử nhập",
+        "recent": "Import gần đây",
         "progress": "Tiến độ",
         "success": "Thành công",
         "failed": "Thất bại",
-        "completedAt": "Hoàn thành lúc"
+        "completedAt": "Hoàn thành lúc",
+        "errorDetails": "Lỗi import",
+        "row": "Dòng {row}"
       }
     },
     "line": {
@@ -2692,8 +2701,8 @@
   },
   "coexist": {
     "title": "Đồng bộ liên hệ và lịch sử chat hiện có?",
-    "descriptionWhatsapp": "Khi bật, ChatbotX sẽ nhập liên hệ và tối đa 6 tháng lịch sử chat từ số WhatsApp này.",
-    "descriptionMessenger": "Khi bật, ChatbotX sẽ nhập liên hệ Messenger hiện có và tối đa 3 tháng lịch sử hội thoại từ Page này.",
+    "descriptionWhatsapp": "Khi bật, hệ thống sẽ nhập liên hệ và tối đa 6 tháng lịch sử chat từ số WhatsApp này.",
+    "descriptionMessenger": "Khi bật, hệ thống sẽ nhập liên hệ Messenger hiện có và tối đa 3 tháng lịch sử hội thoại từ Page này.",
     "enable": "Bật đồng bộ",
     "decline": "Không đồng bộ",
     "billingNote": "Page lớn có thể mất vài giờ để hoàn tất.",
@@ -3324,8 +3333,8 @@
     "at": "Lúc"
   },
   "developerAccessToken": {
-    "title": "Token truy cập API ChatbotX",
-    "description": "Tạo token để cho phép workspace của bạn truy cập API ChatbotX. Giữ token này bí mật và không chia sẻ với ai."
+    "title": "Token truy cập API",
+    "description": "Tạo token để cho phép workspace của bạn truy cập API công khai. Giữ token này bí mật và không chia sẻ với ai."
   },
   "contacts": {
     "title": "Liên hệ",
@@ -3866,7 +3875,7 @@
         "label": "Mô tả dài"
       },
       "price": {
-        "label": "Giá $"
+        "label": "Giá"
       },
       "taxes": {
         "label": "Thuế (0-100%)"
@@ -3874,8 +3883,16 @@
       "discount": {
         "label": "Giảm giá (0-100%)"
       },
+      "currency": {
+        "label": "Đơn vị tiền tệ"
+      },
+      "productUrl": {
+        "label": "URL sản phẩm",
+        "placeholder": "https://store.example.com/products/123",
+        "description": "Trang khách hàng mở từ Messenger Shopping. Sản phẩm không có URL sẽ bị bỏ qua khi đồng bộ lên Meta Catalog."
+      },
       "sku": {
-        "label": "ID nội dung/ID nhà bán lẻ/SKU",
+        "label": "SKU",
         "placeholder": "Tùy chọn"
       },
       "inventoryPolicy": {
@@ -3894,10 +3911,12 @@
         "label": "Xếp hạng"
       },
       "category": {
-        "label": "Danh mục"
+        "label": "Danh mục",
+        "placeholder": "Chưa phân loại"
       },
       "subcategory": {
-        "label": "Danh mục con"
+        "label": "Danh mục con",
+        "placeholder": "Không có"
       },
       "isSearchable": {
         "label": "Sản phẩm này có thể tìm kiếm trong bot"
@@ -3935,7 +3954,10 @@
         "label": "Sản phẩm",
         "placeholder": "Chọn sản phẩm..."
       },
-      "variantsDescription": "Thêm biến thể nếu sản phẩm có nhiều phiên bản, như kích thước hoặc màu sắc"
+      "variantsDescription": "Thêm biến thể nếu sản phẩm có nhiều phiên bản, như kích thước hoặc màu sắc",
+      "metaCatalogId": {
+        "label": "Meta Catalog ID"
+      }
     },
     "inventoryPolicy": {
       "dont_track": "Không theo dõi kho hàng",
@@ -4009,6 +4031,205 @@
       "exportStarted": "Đã bắt đầu export coupon.",
       "exportFailed": "Export coupon thất bại.",
       "exportCount": "{count} dòng coupon sẽ được export."
+    }
+  },
+  "productCategories": {
+    "title": "Danh mục",
+    "loadError": "Không thể tải danh mục sản phẩm.",
+    "all": "Tất cả sản phẩm",
+    "create": "Tạo danh mục",
+    "edit": "Đổi tên danh mục",
+    "name": "Tên danh mục",
+    "namePlaceholder": "vd. Bộ sưu tập mùa hè",
+    "parent": "Danh mục cha",
+    "noParent": "Không có (cấp gốc)",
+    "save": "Lưu",
+    "created": "Đã tạo danh mục.",
+    "updated": "Đã cập nhật danh mục.",
+    "deleted": "Đã xóa danh mục.",
+    "saveError": "Không thể lưu danh mục này.",
+    "deleteError": "Không thể xóa danh mục này.",
+    "delete": "Xóa",
+    "cancel": "Hủy",
+    "actions": "Thao tác danh mục",
+    "deleteTitle": "Xóa “{name}”?",
+    "deleteDescription": "{count, plural, =0 {Không có sản phẩm nào thuộc danh mục này.} one {# sản phẩm sẽ chuyển sang Chưa phân loại.} other {# sản phẩm sẽ chuyển sang Chưa phân loại.}}",
+    "createSub": "Tạo danh mục con",
+    "empty": "Chưa có danh mục nào. Hãy tạo một danh mục để nhóm sản phẩm.",
+    "columns": {
+      "name": "Tên",
+      "products": "Sản phẩm",
+      "subcategories": "Danh mục con"
+    },
+    "expand": "Hiện danh mục con",
+    "collapse": "Ẩn danh mục con",
+    "productCount": "{count, plural, =0 {Không có sản phẩm} one {# sản phẩm} other {# sản phẩm}}",
+    "deleteChildrenWarning": "{count, plural, one {# danh mục con cũng sẽ bị xóa.} other {# danh mục con cũng sẽ bị xóa.}}"
+  },
+  "productImport": {
+    "title": "Import",
+    "mapColumns": "Ánh xạ cột",
+    "mapColumnsHint": "Chọn cột trong file tương ứng với từng trường sản phẩm. Để trống nếu muốn bỏ qua.",
+    "downloadTemplate": "Tải file mẫu",
+    "upload": "Tải lên file .csv hoặc .xlsx",
+    "confirm": "Bắt đầu import",
+    "started": "Đã bắt đầu import sản phẩm.",
+    "error": "Import sản phẩm thất bại.",
+    "notMapped": "Không ánh xạ",
+    "createMissingCategories": "Tạo các danh mục chưa tồn tại",
+    "fields": {
+      "name": "Tên sản phẩm",
+      "sku": "Mã sản phẩm",
+      "price": "Giá bán",
+      "discount": "Giảm giá",
+      "shortDescription": "Mô tả ngắn",
+      "category": "Danh mục",
+      "vendor": "Thương hiệu",
+      "inventoryQuantity": "Số lượng",
+      "imageUrl": "Hình ảnh"
+    },
+    "template": {
+      "sheetName": "Sản phẩm",
+      "name": "Tên sản phẩm",
+      "sku": "Mã sản phẩm",
+      "price": "Giá bán",
+      "discount": "Giảm giá",
+      "shortDescription": "Mô tả ngắn",
+      "category": "Danh mục",
+      "vendor": "Thương hiệu",
+      "inventoryQuantity": "Số lượng",
+      "imageUrl": "Hình ảnh",
+      "exampleOne": {
+        "name": "Áo thun cổ điển",
+        "description": "Áo thun cotton mềm mại",
+        "category": "Quần áo",
+        "vendor": "Thương hiệu mẫu"
+      },
+      "exampleTwo": {
+        "name": "Túi vải canvas",
+        "description": "Túi vải canvas tái sử dụng",
+        "category": "Phụ kiện",
+        "vendor": "Thương hiệu mẫu"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "Đồng bộ Meta Catalog",
+    "connect": "Kết nối Meta",
+    "connectDescription": "Kết nối tài khoản Meta Business để đẩy sản phẩm của bạn lên catalog hiện có.",
+    "tabs": {
+      "sync": "Đồng bộ lên Meta",
+      "import": "Đồng bộ từ Meta",
+      "history": "Lịch sử",
+      "connection": "Kết nối"
+    },
+    "catalogId": "Meta Catalog ID",
+    "catalogIdPlaceholder": "Nhập Catalog ID từ Commerce Manager",
+    "createCatalog": {
+      "trigger": "Tạo catalog mới",
+      "description": "Một catalog thương mại trống sẽ được tạo trong Business Manager của bạn và dùng cho workspace này.",
+      "business": "Business Manager",
+      "businessPlaceholder": "Chọn Business Manager",
+      "noBusinesses": "Tài khoản Meta này không quản lý Business Manager nào nên chưa thể tạo catalog.",
+      "name": "Tên catalog",
+      "confirm": "Tạo catalog",
+      "created": "Đã tạo catalog.",
+      "errors": {
+        "businesses": "Không thể tải danh sách Business Manager.",
+        "create": "Không thể tạo catalog."
+      }
+    },
+    "importDescription": "Kéo sản phẩm từ catalog Meta về workspace của bạn. Lấy ID trong Commerce Manager.",
+    "importCatalogAction": "Nhập",
+    "importProgress": "Đang nhập sản phẩm Meta: {imported}/{total}",
+    "importQueued": "Đang chờ tiến trình nhập bắt đầu…",
+    "importResult": "Đã nhập {imported}/{total} sản phẩm từ Meta",
+    "retryImport": "Thử nhập lại",
+    "syncNow": "Đồng bộ ngay",
+    "syncSelectionRequired": "Hãy chọn sản phẩm muốn đẩy lên, rồi bấm đồng bộ.",
+    "syncSelectionCount": "{count} sản phẩm đã chọn sẽ được đẩy lên Meta Catalog.",
+    "connectionInfo": {
+      "heading": "Meta catalog đang kết nối",
+      "noCatalog": "Chưa chọn catalog nào",
+      "lastCatalogId": "Meta Catalog ID gần nhất",
+      "businessId": "Business ID",
+      "authMode": "Hình thức uỷ quyền",
+      "tokenExpiresAt": "Token hết hạn",
+      "lastImportedAt": "Lần nhập gần nhất",
+      "unknown": "Không có",
+      "never": "Chưa lần nào",
+      "noExpiry": "Không hết hạn",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook Business Extension"
+      },
+      "connectionStatuses": {
+        "active": "Đang hoạt động",
+        "invalid": "Cần kết nối lại"
+      }
+    },
+    "disconnect": "Ngắt kết nối",
+    "reconnect": "Kết nối lại",
+    "reconnectWarning": "Token Meta không hợp lệ hoặc sẽ hết hạn trong vòng bảy ngày.",
+    "requirements": {
+      "intro": "Sản phẩm đồng bộ lên Shopping Messenger cần thỏa mãn các yêu cầu sau:",
+      "description": {
+        "label": "Mô tả chi tiết sản phẩm",
+        "value": "Ngoài tiêu đề còn có thông số kỹ thuật, chất liệu, công dụng và tính năng độc đáo."
+      },
+      "image": {
+        "label": "Hình ảnh sản phẩm",
+        "value": "Độ phân giải chất lượng cao ≥ 500px x 500px, kích thước ảnh phải ≤ 8MB."
+      },
+      "video": {
+        "label": "Video sản phẩm",
+        "value": "Kích thước video phải ≤ 200MB."
+      },
+      "price": {
+        "label": "Giá",
+        "value": "Phải bao gồm giá sản phẩm cho tất cả sản phẩm."
+      },
+      "minimumItems": "Cung cấp ít nhất 6 mặt hàng cho khách hàng lựa chọn."
+    },
+    "historyEmpty": "Chưa có lần đồng bộ hay nhập nào.",
+    "historyFailures": "{failed} lỗi · {skipped} bỏ qua",
+    "historyCatalog": "Danh mục {id}",
+    "diagnostics": "Chi tiết lỗi và sản phẩm bị bỏ qua",
+    "itemError": "Sản phẩm {id}: {reason}",
+    "itemSkipped": "Sản phẩm {id}: đã bỏ qua — {reason}",
+    "skipReasons": {
+      "missingImage": "thiếu hình ảnh",
+      "missingDescription": "thiếu mô tả",
+      "missingStoreUrl": "chưa cấu hình URL cửa hàng",
+      "hasVariants": "chưa hỗ trợ sản phẩm có biến thể"
+    },
+    "statuses": {
+      "queued": "Đang chờ",
+      "running": "Đang chạy",
+      "succeeded": "Thành công",
+      "partial": "Hoàn thành một phần",
+      "failed": "Thất bại"
+    },
+    "directions": {
+      "push": "Đẩy lên Meta",
+      "import": "Nhập từ Meta"
+    },
+    "messages": {
+      "catalogSelected": "Đã bắt đầu nhập sản phẩm từ catalog.",
+      "syncStarted": "Đã bắt đầu đồng bộ Meta Catalog.",
+      "disconnected": "Đã ngắt kết nối Meta Catalog."
+    },
+    "errors": {
+      "load": "Không thể tải cài đặt Meta Catalog.",
+      "connect": "Không thể kết nối Meta Catalog.",
+      "catalog": "Không thể chọn catalog này.",
+      "sync": "Không thể bắt đầu đồng bộ catalog.",
+      "disconnect": "Không thể ngắt kết nối Meta Catalog.",
+      "invalidAppSettings": "Chưa cấu hình ứng dụng Meta.",
+      "emptyScope": "Phạm vi đồng bộ đã chọn không có sản phẩm.",
+      "alreadyRunning": "Đang có một tiến trình đồng bộ hoặc nhập Meta Catalog chạy. Vui lòng đợi hoàn tất.",
+      "queueImport": "Không thể đưa tiến trình nhập Meta Catalog vào hàng đợi.",
+      "queueSync": "Không thể đưa tiến trình đồng bộ Meta Catalog vào hàng đợi."
     }
   },
   "helpMenu": {

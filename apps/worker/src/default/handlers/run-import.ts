@@ -1,84 +1,61 @@
-import { db, eq } from "@chatbotx.io/database/client"
+import { importService } from "@chatbotx.io/business"
 import { importFormats, importTypes } from "@chatbotx.io/database/partials"
-import { importModel } from "@chatbotx.io/database/schema"
 import type { JobRunImport } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
-import {
-  type AnyImportTypeHandler,
-  type ImportRow,
-  importHandlers,
-  runImportPipeline,
-} from "./imports"
+import { type ImportRow, importHandlers, runImportPipeline } from "./imports"
 
 export const runImport = async (data: JobRunImport["data"]): Promise<void> => {
-  const row = await db.query.importModel.findFirst({
-    where: { id: data.importId },
-    with: { file: true },
-  })
+  const row = await importService.findForWorker(data.importId)
   if (!row) {
     logger.warn(`Import row not found: ${data.importId}`)
     return
   }
   if (!row.file) {
     logger.warn(`Import ${row.id} has no associated file`)
-    await db
-      .update(importModel)
-      .set({
-        status: "failed",
-        errorMessage: "Associated file not found",
-        completedAt: new Date(),
-      })
-      .where(eq(importModel.id, row.id))
+    await importService.fail(row.id, "Associated file not found")
     return
   }
 
   const parsedType = importTypes.safeParse(row.type)
   if (!parsedType.success) {
     logger.warn(`Unknown import type: ${row.type}`)
-    await db
-      .update(importModel)
-      .set({
-        status: "failed",
-        errorMessage: `Unknown import type: ${row.type}`,
-        completedAt: new Date(),
-      })
-      .where(eq(importModel.id, row.id))
+    await importService.fail(row.id, `Unknown import type: ${row.type}`)
     return
   }
 
   const parsedFormat = importFormats.safeParse(row.format)
   if (!parsedFormat.success) {
     logger.warn(`Unknown import format: ${row.format}`)
-    await db
-      .update(importModel)
-      .set({
-        status: "failed",
-        errorMessage: `Unknown import format: ${row.format}`,
-        completedAt: new Date(),
-      })
-      .where(eq(importModel.id, row.id))
+    await importService.fail(row.id, `Unknown import format: ${row.format}`)
     return
   }
 
-  const handler: AnyImportTypeHandler = importHandlers[parsedType.data]
   const importRow: ImportRow = {
     ...row,
     file: row.file,
     format: parsedFormat.data,
   }
+  const importType = parsedType.data
 
   try {
-    await runImportPipeline(importRow, handler)
+    switch (importType) {
+      case "contacts":
+        await runImportPipeline(importRow, importHandlers.contacts)
+        break
+      case "coupons":
+        await runImportPipeline(importRow, importHandlers.coupons)
+        break
+      case "products":
+        await runImportPipeline(importRow, importHandlers.products)
+        break
+      default: {
+        const exhaustiveType: never = importType
+        throw new Error(`Unsupported import type: ${exhaustiveType}`)
+      }
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error"
     logger.error(error, `Import ${row.id} fatal error`)
-    await db
-      .update(importModel)
-      .set({
-        status: "failed",
-        errorMessage: message,
-        completedAt: new Date(),
-      })
-      .where(eq(importModel.id, row.id))
+    await importService.fail(row.id, message)
   }
 }

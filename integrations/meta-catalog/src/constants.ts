@@ -1,0 +1,11 @@
+export const GRAPH_API_URL = "https://graph.facebook.com"
+export const DEFAULT_API_VERSION = "v24.0"
+export const META_CATALOG_SCOPES = ["catalog_management"] as const
+export const CATALOG_BATCH_SIZE = 1000
+export const MAX_IMAGES_PER_ITEM = 21
+export const MAX_TITLE_LENGTH = 100
+export const MAX_DESCRIPTION_LENGTH = 5000
+export const MAX_CUSTOM_LABELS = 5
+export const MAX_CUSTOM_LABEL_LENGTH = 100
+export const META_CATALOG_PRODUCT_PAGE_SIZE = 100
+export const MAX_META_CATALOG_PRODUCT_PAGES = 100

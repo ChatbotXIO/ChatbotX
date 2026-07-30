@@ -1,6 +1,7 @@
 import type { Readable } from "node:stream"
 import type { ImportFormat } from "@chatbotx.io/database/partials"
 import { createImportCsvParser } from "./csv"
+import { createImportXlsxParser } from "./xlsx"
 
 export type ImportRowIterable = AsyncIterable<Record<string, unknown>>
 
@@ -12,8 +13,11 @@ export const createImportRowParser = (
     case "csv":
       return createImportCsvParser(stream) as ImportRowIterable
     case "xlsx":
+      return createImportXlsxParser(stream)
     case "xls":
-      throw new Error(`Import format not yet supported: ${format}`)
+      throw new Error(
+        "Legacy .xls files are not supported. Save the workbook as .xlsx and try again.",
+      )
     default: {
       const exhaustive: never = format
       throw new Error(`Unknown import format: ${exhaustive as string}`)
@@ -28,3 +32,9 @@ export {
   type ImportCsvRow,
 } from "./csv"
 export { extractCsvHeaders, parseCsvLine } from "./headers"
+export {
+  assertXlsxArchiveWithinLimits,
+  createImportXlsxParser,
+  readXlsxHeaders,
+  toImportCellValue,
+} from "./xlsx"

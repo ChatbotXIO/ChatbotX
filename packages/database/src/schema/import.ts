@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -6,13 +7,18 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
   type ContactImportMeta,
   type CouponImportMeta,
+  type ImportFormat,
+  type ImportStatus,
+  type ImportType,
   importFormats,
   importStatuses,
   importTypes,
+  type ProductImportMeta,
 } from "../partials"
 import {
   bigintAsString,
@@ -26,15 +32,15 @@ import { workspaceModel } from "./workspace"
 
 export const importType = pgEnum(
   "importType",
-  importTypes.options as [string, ...string[]],
+  importTypes.options as [ImportType, ...ImportType[]],
 )
 export const importFormat = pgEnum(
   "importFormat",
-  importFormats.options as [string, ...string[]],
+  importFormats.options as [ImportFormat, ...ImportFormat[]],
 )
 export const importStatus = pgEnum(
   "importStatus",
-  importStatuses.options as [string, ...string[]],
+  importStatuses.options as [ImportStatus, ...ImportStatus[]],
 )
 
 export const importModel = pgTable(
@@ -64,12 +70,18 @@ export const importModel = pgTable(
     type: importType().notNull(),
     format: importFormat().notNull(),
     status: importStatus().notNull(),
-    meta: jsonb().$type<ContactImportMeta | CouponImportMeta>().notNull(),
+    meta: jsonb()
+      .$type<ContactImportMeta | CouponImportMeta | ProductImportMeta>()
+      .notNull(),
     totalCount: integer().default(0).notNull(),
     processedCount: integer().default(0).notNull(),
     successCount: integer().default(0).notNull(),
     failedCount: integer().default(0).notNull(),
     errorMessage: text(),
+    errorSample: jsonb()
+      .$type<Array<{ row: number; reason: string }>>()
+      .default([])
+      .notNull(),
     completedAt: timestamp(timestampConfig),
   },
   (table) => [
@@ -89,5 +101,10 @@ export const importModel = pgTable(
       table.type.asc().nullsLast(),
     ),
     index("Import_fileId_idx").using("btree", table.fileId.asc().nullsLast()),
+    uniqueIndex("Import_products_active_idx")
+      .on(table.workspaceId)
+      .where(
+        sql`${table.type} = 'products' AND ${table.status} IN ('pending', 'processing')`,
+      ),
   ],
 )

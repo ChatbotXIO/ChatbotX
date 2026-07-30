@@ -1,9 +1,9 @@
 "use server"
 
+import { productService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { toggleProductActiveRequest } from "../schema/action"
-import { productService } from "../services"
 
 export const toggleProductActiveAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

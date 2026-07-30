@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { channelTypes } from "./channel"
 
-export const importTypes = z.enum(["contacts", "coupons"])
+export const importTypes = z.enum(["contacts", "coupons", "products"])
 export type ImportType = z.infer<typeof importTypes>
 
 export const importFormats = z.enum(["csv", "xlsx", "xls"])
@@ -59,7 +59,42 @@ export const couponImportMetaSchema = z.object({
 })
 export type CouponImportMeta = z.infer<typeof couponImportMetaSchema>
 
+export const productImportFields = z.enum([
+  "name",
+  "sku",
+  "price",
+  "discount",
+  "shortDescription",
+  "category",
+  "vendor",
+  "inventoryQuantity",
+  "imageUrl",
+])
+export type ProductImportField = z.infer<typeof productImportFields>
+
+export const productImportColumnMapSchema = z.object({
+  name: z.string().min(1),
+  sku: z.string().optional(),
+  price: z.string().optional(),
+  discount: z.string().optional(),
+  shortDescription: z.string().optional(),
+  category: z.string().optional(),
+  vendor: z.string().optional(),
+  inventoryQuantity: z.string().optional(),
+  imageUrl: z.string().optional(),
+})
+export type ProductImportColumnMap = z.infer<
+  typeof productImportColumnMapSchema
+>
+
+export const productImportMetaSchema = z.object({
+  columnMap: productImportColumnMapSchema,
+  createMissingCategories: z.boolean().default(true),
+})
+export type ProductImportMeta = z.infer<typeof productImportMetaSchema>
+
 export const importMetaByType = {
   contacts: contactImportMetaSchema,
   coupons: couponImportMetaSchema,
+  products: productImportMetaSchema,
 } as const satisfies Record<ImportType, z.ZodTypeAny>

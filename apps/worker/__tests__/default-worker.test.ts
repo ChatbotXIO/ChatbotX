@@ -12,13 +12,16 @@ type DefaultWorkerProcessor = (job: DefaultWorkerJob) => Promise<void>
 
 const workerState = vi.hoisted(() => ({
   defaultQueueAdd: vi.fn(),
+  checkMetaCatalogSync: vi.fn(),
   handleBulkTagContacts: vi.fn(),
   isBlockedWorkspace: vi.fn(),
+  importMetaCatalogProducts: vi.fn(),
   loggerError: vi.fn(),
   loggerInfo: vi.fn(),
   loggerWarn: vi.fn(),
   processor: undefined as DefaultWorkerProcessor | undefined,
   resolveWorkspaceId: vi.fn(),
+  submitMetaCatalogSync: vi.fn(),
   workerClose: vi.fn(async () => undefined),
   workerOn: vi.fn(),
 }))
@@ -46,11 +49,14 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   DefaultJobAction: {
     bulkTagContacts: "bulkTagContacts",
     exportContacts: "exportContacts",
+    checkMetaCatalogSync: "checkMetaCatalogSync",
+    importMetaCatalogProducts: "importMetaCatalogProducts",
     runImport: "runImport",
     sendAuditLog: "sendAuditLog",
     sendErrorLog: "sendErrorLog",
     syncChannelLabels: "syncChannelLabels",
     syncTag: "syncTag",
+    submitMetaCatalogSync: "submitMetaCatalogSync",
   },
   defaultQueue: {
     add: (...args: unknown[]) => workerState.defaultQueueAdd(...args),
@@ -92,6 +98,21 @@ vi.mock("../src/default/handlers/export-contacts", () => ({
 
 vi.mock("../src/default/handlers/run-import", () => ({
   runImport: vi.fn(),
+}))
+
+vi.mock("../src/default/handlers/meta-catalog/check", () => ({
+  checkMetaCatalogSync: (...args: unknown[]) =>
+    workerState.checkMetaCatalogSync(...args),
+}))
+
+vi.mock("../src/default/handlers/meta-catalog/import-products", () => ({
+  importMetaCatalogProducts: (...args: unknown[]) =>
+    workerState.importMetaCatalogProducts(...args),
+}))
+
+vi.mock("../src/default/handlers/meta-catalog/submit", () => ({
+  submitMetaCatalogSync: (...args: unknown[]) =>
+    workerState.submitMetaCatalogSync(...args),
 }))
 
 vi.mock("../src/default/handlers/send-audit-log", () => ({
@@ -143,12 +164,15 @@ const processDefaultJob = async (
 
 beforeEach(() => {
   workerState.defaultQueueAdd.mockReset()
+  workerState.checkMetaCatalogSync.mockReset()
   workerState.handleBulkTagContacts.mockReset()
   workerState.isBlockedWorkspace.mockReset()
+  workerState.importMetaCatalogProducts.mockReset()
   workerState.loggerError.mockReset()
   workerState.loggerInfo.mockReset()
   workerState.loggerWarn.mockReset()
   workerState.resolveWorkspaceId.mockReset()
+  workerState.submitMetaCatalogSync.mockReset()
   workerState.resolveWorkspaceId.mockResolvedValue("workspace-1")
   workerState.isBlockedWorkspace.mockResolvedValue(false)
 })
@@ -176,5 +200,30 @@ describe("default worker", () => {
       jobData.data,
       { attemptsMade: 2 },
     )
+  })
+
+  test.each([
+    "submitMetaCatalogSync",
+    "checkMetaCatalogSync",
+    "importMetaCatalogProducts",
+  ] as const)("skips %s jobs for frozen workspaces", async (type) => {
+    workerState.isBlockedWorkspace.mockResolvedValue(true)
+    const jobData = {
+      type,
+      data: {
+        workspaceId: "workspace-1",
+        runId: "run-1",
+        integrationMetaCatalogId: "connection-1",
+        ...(type === "checkMetaCatalogSync" ? { attempt: 0 } : {}),
+      },
+    } as DefaultJobData
+
+    await processDefaultJob(jobData)
+
+    expect(workerState.resolveWorkspaceId).toHaveBeenCalledWith(jobData.data)
+    expect(workerState.isBlockedWorkspace).toHaveBeenCalledWith("workspace-1")
+    expect(workerState.submitMetaCatalogSync).not.toHaveBeenCalled()
+    expect(workerState.checkMetaCatalogSync).not.toHaveBeenCalled()
+    expect(workerState.importMetaCatalogProducts).not.toHaveBeenCalled()
   })
 })

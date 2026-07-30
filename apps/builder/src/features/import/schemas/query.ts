@@ -44,6 +44,7 @@ export type ListImportsItem = {
   successCount: number
   failedCount: number
   errorMessage: string | null
+  errorSample: Array<{ row: number; reason: string }>
   completedAt: Date | null
   createdAt: Date
   updatedAt: Date

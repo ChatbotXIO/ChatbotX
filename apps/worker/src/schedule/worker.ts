@@ -25,6 +25,7 @@ import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
+import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { refreshZaloTokens } from "./handlers/refresh-zalo-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
@@ -111,6 +112,10 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.scanCoexistRuns:
           await scanCoexistRuns()
+          return
+
+        case ScheduleJobData.reconcileMetaCatalogSyncs:
+          await reconcileMetaCatalogSyncs()
           return
 
         case ScheduleJobData.purgeCoexistStaging:

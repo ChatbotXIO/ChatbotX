@@ -169,6 +169,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.reconcileMetaCatalogSyncs,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.reconcileMetaCatalogSyncs,
+      data: {
+        type: ScheduleJobData.reconcileMetaCatalogSyncs,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeCoexistStaging,
     {
       pattern: "0 * * * *",

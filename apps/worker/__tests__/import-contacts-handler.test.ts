@@ -108,6 +108,56 @@ const claimNewActiveContact = vi.fn()
 const claimNewActiveContacts = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
+  importService: {
+    markProcessing: () => {
+      updateSet({ status: "processing" })
+      return Promise.resolve()
+    },
+    fail: (
+      _importId: string,
+      errorMessage: string,
+      counters?: { processed: number; success: number; failed: number },
+      errorSample?: Array<{ row: number; reason: string }>,
+    ) => {
+      updateSet({
+        status: "failed",
+        errorMessage,
+        totalCount: counters?.processed,
+        processedCount: counters?.processed,
+        successCount: counters?.success,
+        failedCount: counters?.failed,
+        errorSample,
+      })
+      return Promise.resolve()
+    },
+    flushProgress: (input: {
+      counters: { processed: number; success: number; failed: number }
+      errorSample?: Array<{ row: number; reason: string }>
+    }) => {
+      updateSet({
+        processedCount: input.counters.processed,
+        successCount: input.counters.success,
+        failedCount: input.counters.failed,
+        errorSample: input.errorSample,
+      })
+      return Promise.resolve()
+    },
+    complete: (input: {
+      counters: { processed: number; success: number; failed: number }
+      errorSample: Array<{ row: number; reason: string }>
+    }) => {
+      updateSet({
+        status: "completed",
+        totalCount: input.counters.processed,
+        processedCount: input.counters.processed,
+        successCount: input.counters.success,
+        failedCount: input.counters.failed,
+        errorSample: input.errorSample,
+        completedAt: new Date(),
+      })
+      return Promise.resolve()
+    },
+  },
   workspaceService: {
     find: (...args: unknown[]) => workspaceFind(...args),
   },

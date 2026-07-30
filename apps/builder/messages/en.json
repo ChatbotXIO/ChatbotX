@@ -1376,6 +1376,8 @@
       "label": "Status",
       "pending": "Pending",
       "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed",
       "success": "Success",
       "error": "Error"
     },
@@ -1826,12 +1828,19 @@
     "import": {
       "label": "Import",
       "uploading": "Uploading…",
+      "fileTooLarge": "The file exceeds the {size} MB limit.",
+      "unsupportedFileType": "This file type is not supported.",
+      "unableToReadHeaders": "Unable to read the import headers.",
+      "uploadError": "The file could not be uploaded.",
       "histories": {
         "title": "Import history",
+        "recent": "Recent imports",
         "progress": "Progress",
         "success": "Success",
         "failed": "Failed",
-        "completedAt": "Completed at"
+        "completedAt": "Completed at",
+        "errorDetails": "Import errors",
+        "row": "Row {row}"
       }
     },
     "line": {
@@ -2676,8 +2685,8 @@
   },
   "coexist": {
     "title": "Sync existing contacts and chat history?",
-    "descriptionWhatsapp": "When enabled, ChatbotX will import contacts and up to 6 months of chat history from this WhatsApp number.",
-    "descriptionMessenger": "When enabled, ChatbotX will import existing Messenger contacts and up to 3 months of conversation history from this Page.",
+    "descriptionWhatsapp": "When enabled, contacts and up to 6 months of chat history will be imported from this WhatsApp number.",
+    "descriptionMessenger": "When enabled, existing Messenger contacts and up to 3 months of conversation history will be imported from this Page.",
     "enable": "Enable sync",
     "decline": "Don't sync",
     "billingNote": "Large pages may take several hours to complete.",
@@ -3332,8 +3341,8 @@
     "title": "Error Logs"
   },
   "developerAccessToken": {
-    "title": "ChatbotX API Access Token",
-    "description": "Generate a token to allow your workspace to access ChatbotX APIs. Keep this token secret and do not share it with anyone."
+    "title": "API Access Token",
+    "description": "Generate a token to allow your workspace to access the public APIs. Keep this token secret and do not share it with anyone."
   },
   "contacts": {
     "title": "Contacts",
@@ -3841,7 +3850,7 @@
         "label": "Long Description"
       },
       "price": {
-        "label": "Price $"
+        "label": "Price"
       },
       "taxes": {
         "label": "Taxes (0-100%)"
@@ -3849,8 +3858,16 @@
       "discount": {
         "label": "Discount (0-100%)"
       },
+      "currency": {
+        "label": "Currency"
+      },
+      "productUrl": {
+        "label": "Product URL",
+        "placeholder": "https://store.example.com/products/123",
+        "description": "The page customers open from Messenger Shopping. Products without a URL are skipped when syncing to Meta Catalog."
+      },
       "sku": {
-        "label": "Content ID/Retailer ID/SKU",
+        "label": "SKU",
         "placeholder": "Optional"
       },
       "inventoryPolicy": {
@@ -3869,10 +3886,12 @@
         "label": "Rank"
       },
       "category": {
-        "label": "Category"
+        "label": "Category",
+        "placeholder": "Uncategorized"
       },
       "subcategory": {
-        "label": "Subcategory"
+        "label": "Subcategory",
+        "placeholder": "None"
       },
       "isSearchable": {
         "label": "This product is searchable inside the bot"
@@ -3910,7 +3929,10 @@
         "label": "Products",
         "placeholder": "Select products..."
       },
-      "variantsDescription": "Add variants if this product comes in multiple versions, like different sizes or colors"
+      "variantsDescription": "Add variants if this product comes in multiple versions, like different sizes or colors",
+      "metaCatalogId": {
+        "label": "Meta Catalog ID"
+      }
     },
     "inventoryPolicy": {
       "dont_track": "Don't track inventory",
@@ -3984,6 +4006,205 @@
       "exportStarted": "Coupon export started.",
       "exportFailed": "Coupon export failed.",
       "exportCount": "{count} coupon rows will be exported."
+    }
+  },
+  "productCategories": {
+    "title": "Categories",
+    "loadError": "Unable to load product categories.",
+    "all": "All products",
+    "create": "Create category",
+    "edit": "Rename category",
+    "name": "Category name",
+    "namePlaceholder": "e.g. Summer collection",
+    "parent": "Parent category",
+    "noParent": "None (top level)",
+    "save": "Save",
+    "created": "Category created.",
+    "updated": "Category updated.",
+    "deleted": "Category deleted.",
+    "saveError": "Unable to save this category.",
+    "deleteError": "Unable to delete this category.",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "actions": "Category actions",
+    "deleteTitle": "Delete “{name}”?",
+    "deleteDescription": "{count, plural, =0 {No products are assigned to this category.} one {# product will move to Uncategorized.} other {# products will move to Uncategorized.}}",
+    "createSub": "Create subcategory",
+    "empty": "No categories yet. Create one to group your products.",
+    "columns": {
+      "name": "Name",
+      "products": "Products",
+      "subcategories": "Subcategories"
+    },
+    "expand": "Show subcategories",
+    "collapse": "Hide subcategories",
+    "productCount": "{count, plural, =0 {No products} one {# product} other {# products}}",
+    "deleteChildrenWarning": "{count, plural, one {Its # subcategory will be deleted too.} other {Its # subcategories will be deleted too.}}"
+  },
+  "productImport": {
+    "title": "Import",
+    "mapColumns": "Column mapping",
+    "mapColumnsHint": "Match each product field to a column from your file. Leave a field unmapped to skip it.",
+    "downloadTemplate": "Download template",
+    "upload": "Upload a .csv or .xlsx file",
+    "confirm": "Start import",
+    "started": "Product import started.",
+    "error": "Product import failed.",
+    "notMapped": "Not mapped",
+    "createMissingCategories": "Create categories that do not exist",
+    "fields": {
+      "name": "Product name",
+      "sku": "SKU",
+      "price": "Price",
+      "discount": "Discount",
+      "shortDescription": "Short description",
+      "category": "Category",
+      "vendor": "Vendor",
+      "inventoryQuantity": "Inventory quantity",
+      "imageUrl": "Image URL"
+    },
+    "template": {
+      "sheetName": "Products",
+      "name": "Product name",
+      "sku": "SKU",
+      "price": "Price",
+      "discount": "Discount",
+      "shortDescription": "Short description",
+      "category": "Category",
+      "vendor": "Vendor",
+      "inventoryQuantity": "Inventory quantity",
+      "imageUrl": "Image URL",
+      "exampleOne": {
+        "name": "Classic T-shirt",
+        "description": "Soft cotton T-shirt",
+        "category": "Clothing",
+        "vendor": "Example Brand"
+      },
+      "exampleTwo": {
+        "name": "Canvas tote",
+        "description": "Reusable canvas tote bag",
+        "category": "Accessories",
+        "vendor": "Example Brand"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "Sync Meta Catalog",
+    "connect": "Connect Meta",
+    "connectDescription": "Connect a Meta Business account to push your products to an existing catalog.",
+    "tabs": {
+      "sync": "Sync to Meta",
+      "import": "Sync from Meta",
+      "history": "History",
+      "connection": "Connection"
+    },
+    "catalogId": "Meta Catalog ID",
+    "catalogIdPlaceholder": "Enter a Catalog ID from Commerce Manager",
+    "createCatalog": {
+      "trigger": "Create a new catalog",
+      "description": "An empty commerce catalog will be created in your Business Manager and used for this workspace.",
+      "business": "Business Manager",
+      "businessPlaceholder": "Select a Business Manager",
+      "noBusinesses": "This Meta account does not manage any Business Manager, so a catalog cannot be created here.",
+      "name": "Catalog name",
+      "confirm": "Create catalog",
+      "created": "Catalog created.",
+      "errors": {
+        "businesses": "Unable to load your Business Managers.",
+        "create": "Unable to create the catalog."
+      }
+    },
+    "importDescription": "Pull products from a Meta catalog into your workspace. Find the ID in Commerce Manager.",
+    "importCatalogAction": "Import",
+    "importProgress": "Importing Meta products: {imported}/{total}",
+    "importQueued": "Waiting for the import to start…",
+    "importResult": "Imported {imported} of {total} Meta products",
+    "retryImport": "Retry import",
+    "syncNow": "Sync now",
+    "syncSelectionRequired": "Select the products you want to push, then run the sync.",
+    "syncSelectionCount": "{count} selected products will be pushed to Meta Catalog.",
+    "connectionInfo": {
+      "heading": "Connected Meta catalog",
+      "noCatalog": "No catalog selected yet",
+      "lastCatalogId": "Last Meta Catalog ID",
+      "businessId": "Business ID",
+      "authMode": "Authorization",
+      "tokenExpiresAt": "Token expires",
+      "lastImportedAt": "Last import",
+      "unknown": "Not available",
+      "never": "Never",
+      "noExpiry": "Does not expire",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook Business Extension"
+      },
+      "connectionStatuses": {
+        "active": "Active",
+        "invalid": "Needs reconnect"
+      }
+    },
+    "disconnect": "Disconnect",
+    "reconnect": "Reconnect",
+    "reconnectWarning": "The Meta token is invalid or expires within seven days.",
+    "requirements": {
+      "intro": "Products synced to Messenger Shopping must meet these requirements:",
+      "description": {
+        "label": "Detailed description",
+        "value": "Beyond the title, cover specifications, materials, use cases, and standout features."
+      },
+      "image": {
+        "label": "Product image",
+        "value": "High resolution of at least 500px × 500px, file size up to 8MB."
+      },
+      "video": {
+        "label": "Product video",
+        "value": "File size up to 200MB."
+      },
+      "price": {
+        "label": "Price",
+        "value": "Every product must carry a price."
+      },
+      "minimumItems": "Publish at least 6 items so customers have enough to choose from."
+    },
+    "historyEmpty": "No sync or import has run yet.",
+    "historyFailures": "{failed} failed · {skipped} skipped",
+    "historyCatalog": "Catalog {id}",
+    "diagnostics": "Error and skipped-item details",
+    "itemError": "Item {id}: {reason}",
+    "itemSkipped": "Item {id}: skipped — {reason}",
+    "skipReasons": {
+      "missingImage": "missing image",
+      "missingDescription": "missing description",
+      "missingStoreUrl": "store URL is not configured",
+      "hasVariants": "variants are not supported yet"
+    },
+    "statuses": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "partial": "Partially completed",
+      "failed": "Failed"
+    },
+    "directions": {
+      "push": "Pushed to Meta",
+      "import": "Imported from Meta"
+    },
+    "messages": {
+      "catalogSelected": "Catalog import started.",
+      "syncStarted": "Meta Catalog sync started.",
+      "disconnected": "Meta Catalog disconnected."
+    },
+    "errors": {
+      "load": "Unable to load Meta Catalog settings.",
+      "connect": "Unable to connect Meta Catalog.",
+      "catalog": "Unable to select this catalog.",
+      "sync": "Unable to start catalog sync.",
+      "disconnect": "Unable to disconnect Meta Catalog.",
+      "invalidAppSettings": "Meta app settings are not configured.",
+      "emptyScope": "The selected sync scope has no products.",
+      "alreadyRunning": "A Meta Catalog sync or import is already running. Wait for it to finish.",
+      "queueImport": "Unable to queue the Meta Catalog import.",
+      "queueSync": "Unable to queue the Meta Catalog sync."
     }
   },
   "helpMenu": {

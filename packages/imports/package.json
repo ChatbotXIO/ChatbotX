@@ -6,6 +6,7 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
+    "@types/unzipper": "^0.10.11",
     "typescript": "^5",
     "vitest": "^3.2.4"
   },
@@ -13,12 +14,17 @@
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "csv-parse": "^6.2.1",
+    "exceljs": "^4.4.0",
+    "unzipper": "^0.12.5",
     "zod": "^4.3.6"
   },
   "exports": {
     ".": "./src/index.ts",
+    "./file-validation": "./src/file-validation.ts",
+    "./registry": "./src/registry.ts",
     "./parsers": "./src/parsers/index.ts",
     "./parsers/headers": "./src/parsers/headers.ts",
+    "./stream-guard": "./src/stream-guard.ts",
     "./modules/contacts": "./src/modules/contacts/index.ts"
   },
   "scripts": {

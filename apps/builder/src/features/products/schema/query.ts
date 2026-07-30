@@ -15,6 +15,7 @@ export const listProductsSearchParams = createSearchParamsCache({
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString,
+  categoryId: parseAsString,
 })
 
 export type ListProductsSearchParams = Awaited<
@@ -25,6 +26,7 @@ export type ListProductsSearchParams = Awaited<
 
 export const listProductsRequest = basePaginationRequest.extend({
   name: z.string().nullish(),
+  categoryId: z.string().regex(/^\d+$/).nullish(),
 })
 export type ListProductsRequest = z.infer<typeof listProductsRequest>
 
