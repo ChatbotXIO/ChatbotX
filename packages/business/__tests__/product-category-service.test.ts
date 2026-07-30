@@ -224,7 +224,9 @@ describe("productCategoryService missing rows", () => {
 
 describe("productCategoryService resolveByNames", () => {
   test("keys the result by lower-cased name so importers can match either casing", async () => {
-    mocks.findByNames.mockResolvedValue([{ id: "category-1", name: "Shoes" }])
+    mocks.list.mockResolvedValue([
+      { id: "category-1", name: "Shoes", parentId: null },
+    ])
 
     const resolved = await productCategoryService.resolveByNames({
       workspaceId,
@@ -235,28 +237,45 @@ describe("productCategoryService resolveByNames", () => {
     expect(resolved.get("shoes")).toBe("category-1")
   })
 
-  test("trims and de-duplicates the names before querying", async () => {
-    mocks.findByNames.mockResolvedValue([])
+  test("matches an existing category regardless of casing without creating a duplicate", async () => {
+    mocks.list.mockResolvedValue([
+      { id: "category-1", name: "Electronics", parentId: null },
+    ])
+
+    const resolved = await productCategoryService.resolveByNames({
+      workspaceId,
+      names: ["electronics"],
+      createMissing: true,
+    })
+
+    expect(mocks.createMissingByName).not.toHaveBeenCalled()
+    expect(resolved.get("electronics")).toBe("category-1")
+  })
+
+  test("collapses names that differ only by case into a single creation", async () => {
+    mocks.list.mockResolvedValue([])
+    mocks.createMissingByName.mockResolvedValue(undefined)
 
     await productCategoryService.resolveByNames({
       workspaceId,
-      names: [" Shoes ", "Shoes", "", "   "],
-      createMissing: false,
+      names: [" Shoes ", "SHOES", "shoes", "", "   "],
+      createMissing: true,
     })
 
-    expect(mocks.findByNames).toHaveBeenCalledWith(
-      {
-        workspaceId,
-        names: ["Shoes"],
-      },
+    expect(mocks.createMissingByName).toHaveBeenCalledTimes(1)
+    expect(mocks.createMissingByName).toHaveBeenCalledWith(
+      { workspaceId, names: ["shoes"] },
       { name: "default-db" },
     )
   })
 
   test("creates the missing rows only when the import asked it to", async () => {
-    mocks.createMissingByName.mockResolvedValue([
-      { id: "category-2", name: "Bags" },
-    ])
+    mocks.list
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: "category-2", name: "Bags", parentId: null },
+      ])
+    mocks.createMissingByName.mockResolvedValue(undefined)
 
     const resolved = await productCategoryService.resolveByNames({
       workspaceId,
@@ -264,8 +283,25 @@ describe("productCategoryService resolveByNames", () => {
       createMissing: true,
     })
 
-    expect(mocks.findByNames).not.toHaveBeenCalled()
+    expect(mocks.createMissingByName).toHaveBeenCalledWith(
+      { workspaceId, names: ["Bags"] },
+      { name: "default-db" },
+    )
     expect(resolved.get("bags")).toBe("category-2")
+  })
+
+  test("does not create anything when the name already exists", async () => {
+    mocks.list.mockResolvedValue([
+      { id: "category-1", name: "Shoes", parentId: null },
+    ])
+
+    await productCategoryService.resolveByNames({
+      workspaceId,
+      names: ["Shoes"],
+      createMissing: true,
+    })
+
+    expect(mocks.createMissingByName).not.toHaveBeenCalled()
   })
 })
 
