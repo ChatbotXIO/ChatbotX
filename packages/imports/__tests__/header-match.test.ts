@@ -12,6 +12,8 @@ describe("product import header matching", () => {
     ["SKU", "sku"],
     ["Giá bán", "price"],
     ["Price", "price"],
+    ["Product URL", "productUrl"],
+    ["Link sản phẩm", "productUrl"],
   ])("maps %s to %s", (header, field) => {
     expect(matchProductImportHeaders([header])).toHaveProperty(field, header)
   })

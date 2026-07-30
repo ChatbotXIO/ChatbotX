@@ -22,6 +22,7 @@ const HEADER_CANDIDATES = {
   vendor: ["vendor", "brand", "thuonghieu"],
   inventoryQuantity: ["inventoryquantity", "quantity", "soluong"],
   imageUrl: ["imageurl", "image", "hinhanh"],
+  productUrl: ["producturl", "url", "linksanpham"],
 } as const satisfies Record<ProductImportField, readonly string[]>
 
 const normalizedCandidates = Object.fromEntries(

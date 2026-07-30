@@ -4061,7 +4061,8 @@
       "category": "Category",
       "vendor": "Vendor",
       "inventoryQuantity": "Inventory quantity",
-      "imageUrl": "Image URL"
+      "imageUrl": "Image URL",
+      "productUrl": "Product URL"
     },
     "template": {
       "sheetName": "Products",
@@ -4074,6 +4075,7 @@
       "vendor": "Vendor",
       "inventoryQuantity": "Inventory quantity",
       "imageUrl": "Image URL",
+      "productUrl": "Product URL",
       "exampleOne": {
         "name": "Classic T-shirt",
         "description": "Soft cotton T-shirt",
