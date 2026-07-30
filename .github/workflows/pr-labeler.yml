@@ -1,7 +1,7 @@
 name: PR Labeler
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
@@ -28,8 +28,6 @@ jobs:
               'dependencies':    { color: '0366d6', description: 'Dependency updates' },
             };
 
-            // Maps conventional commit prefix → labels to apply.
-            // The '!' variant (breaking change) adds 'breaking-change' on top.
             const TYPE_MAP = [
               { re: /^feat(\([^)]+\))?!/,              labels: ['feature', 'breaking-change'] },
               { re: /^feat(\([^)]+\))?:/,              labels: ['feature'] },
@@ -44,7 +42,11 @@ jobs:
               { re: /^build\(deps\)|^chore\(deps\)/,   labels: ['dependencies'] },
             ];
 
-            const title = context.payload.pull_request.title;
+            const title = context.payload.pull_request && context.payload.pull_request.title;
+            if (!title) {
+              console.log('No pull_request title in payload; skipping.');
+              return;
+            }
             const match = TYPE_MAP.find(({ re }) => re.test(title));
             if (!match) {
               console.log(`No conventional commit prefix found in: "${title}"`);
