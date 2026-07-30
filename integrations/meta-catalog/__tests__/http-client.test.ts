@@ -37,6 +37,8 @@ describe("metaCatalogGraphClient error mapping", () => {
         error_user_msg:
           "This catalog is not connected to a commerce account yet.",
         code: 100,
+        error_subcode: 33,
+        fbtrace_id: "trace-1",
       }),
     )
 
@@ -45,7 +47,9 @@ describe("metaCatalogGraphClient error mapping", () => {
     ).rejects.toMatchObject({
       message:
         "Invalid parameter — This catalog is not connected to a commerce account yet.",
+      fbTraceId: "trace-1",
       graphCode: 100,
+      graphSubcode: 33,
       statusCode: 400,
     })
   })

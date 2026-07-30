@@ -3,11 +3,23 @@ import { SdkException } from "@chatbotx.io/sdk"
 export class MetaCatalogException extends SdkException {
   readonly statusCode: number
   readonly graphCode?: number
+  readonly graphSubcode?: number
+  readonly fbTraceId?: string
 
-  constructor(message: string, statusCode: number, graphCode?: number) {
+  constructor(
+    message: string,
+    statusCode: number,
+    graphCode?: number,
+    details?: {
+      graphSubcode?: number
+      fbTraceId?: string
+    },
+  ) {
     super(message, graphCode ?? "metaCatalogError", statusCode)
     this.statusCode = statusCode
     this.graphCode = graphCode
+    this.graphSubcode = details?.graphSubcode
+    this.fbTraceId = details?.fbTraceId
   }
 }
 

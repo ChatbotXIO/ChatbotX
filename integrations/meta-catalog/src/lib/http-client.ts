@@ -33,6 +33,8 @@ type GraphErrorBody = {
     /** Graph's own end-user-facing wording, when it has one. */
     error_user_title?: string
     error_user_msg?: string
+    error_subcode?: number
+    fbtrace_id?: string
   }
 }
 
@@ -102,6 +104,10 @@ class MetaCatalogHttpClient {
           graphErrorMessage(body.error) ?? `Meta Graph request failed: ${url}`,
           error.response.status,
           body.error?.code,
+          {
+            graphSubcode: body.error?.error_subcode,
+            fbTraceId: body.error?.fbtrace_id,
+          },
         )
       }
       throw error

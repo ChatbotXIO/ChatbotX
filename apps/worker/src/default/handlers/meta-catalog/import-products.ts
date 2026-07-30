@@ -215,29 +215,35 @@ export async function importMetaCatalogProducts(
   }
   const tally = createImportTally()
   const { counters } = tally
+  let catalogId: string | undefined
+  let pageIndex = 0
+  let phase = "validate-import"
   try {
     if (run && run.integrationMetaCatalogId !== connection.id) {
       throw new Error("Meta Catalog import run does not match its connection")
     }
     // New history rows snapshot the source catalog. Keep the connection
     // fallback solely for legacy jobs that predate run catalog snapshots.
-    const catalogId = run?.catalogId ?? connection.catalogId
+    catalogId = run?.catalogId ?? connection.catalogId ?? undefined
     if (!catalogId) {
       throw new Error("Meta Catalog is not selected")
     }
+    phase = "resolve-auth"
     const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
     let after: string | undefined
     for (
-      let pageIndex = 0;
+      pageIndex = 0;
       pageIndex < MAX_META_CATALOG_PRODUCT_PAGES;
       pageIndex++
     ) {
+      phase = "fetch-products"
       const page = await getCatalogProductsPage({
         accessToken: auth.accessToken,
         catalogId,
         version: auth.version,
         after,
       })
+      phase = "import-products"
       const result = await metaCatalogImportService.importPage({
         workspaceId: data.workspaceId,
         integrationMetaCatalogId: connection.id,
@@ -245,10 +251,12 @@ export async function importMetaCatalogProducts(
         products: tally.readPage(page),
       })
       tally.addImported(result.imported + result.existing)
+      phase = "report-progress"
       await reportProgress({ connectionId: connection.id, runId, counters })
 
       after = page.nextCursor
       if (!after) {
+        phase = "finish-import"
         await finishAfterLastPage({ connectionId: connection.id, runId, tally })
         return
       }
@@ -264,7 +272,15 @@ export async function importMetaCatalogProducts(
   } catch (error) {
     const safeLog = safeMetaCatalogErrorLog(error, "Meta Catalog import failed")
     logger.error(
-      { ...safeLog.details, connectionId: connection.id },
+      {
+        ...safeLog.details,
+        connectionId: connection.id,
+        workspaceId: data.workspaceId,
+        runId,
+        catalogId,
+        pageIndex,
+        phase,
+      },
       safeLog.message,
     )
     if (isInvalidMetaTokenError(error)) {
