@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
-import { CheckIcon, ChevronRightIcon } from "lucide-react"
+import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
 
@@ -210,7 +210,7 @@ function DropdownMenuRadioItem({
         data-slot="dropdown-menu-radio-item-indicator"
       >
         <MenuPrimitive.RadioItemIndicator>
-          <CheckIcon />
+          <CircleIcon className="size-2 fill-current" />
         </MenuPrimitive.RadioItemIndicator>
       </span>
       {children}

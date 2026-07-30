@@ -4,6 +4,7 @@ import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-f
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
+  type DialogChangeEventDetails,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -164,7 +165,15 @@ export function ExportContactDialog({
     resetFormAndAction()
   }
 
-  const handleOpenChange = (next: boolean) => {
+  const handleOpenChange = (
+    next: boolean,
+    eventDetails?: DialogChangeEventDetails,
+  ) => {
+    if (!next && eventDetails?.reason === "outside-press") {
+      eventDetails.cancel()
+      return
+    }
+
     setOpen(next)
     if (!next) {
       resetDialog()

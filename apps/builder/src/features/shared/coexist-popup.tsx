@@ -95,8 +95,11 @@ export function CoexistPopup({
 
   return (
     <Dialog
-      onOpenChange={() => {
-        // Mandatory billing gate — user must pick explicitly, cannot dismiss
+      onOpenChange={(isOpen, eventDetails) => {
+        if (!isOpen) {
+          // Mandatory billing gate — user must pick explicitly, cannot dismiss.
+          eventDetails.cancel()
+        }
       }}
       open
     >

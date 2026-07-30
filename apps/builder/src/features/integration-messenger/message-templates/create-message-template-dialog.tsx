@@ -5,6 +5,7 @@ import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
+  type DialogChangeEventDetails,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -292,7 +293,12 @@ export function CreateMessageTemplateDialog({
   }, [form, formDefaultValues, resetFormAndAction])
 
   const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
+    (isOpen: boolean, eventDetails: DialogChangeEventDetails) => {
+      if (!isOpen && eventDetails.reason === "outside-press") {
+        eventDetails.cancel()
+        return
+      }
+
       setOpen(isOpen)
       if (isOpen) {
         form.reset(formDefaultValues)

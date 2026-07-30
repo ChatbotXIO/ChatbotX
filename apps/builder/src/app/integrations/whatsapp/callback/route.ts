@@ -11,7 +11,7 @@ import { sanitizeReferer } from "@/lib/oauth-referer"
 
 export const dynamic = "force-dynamic"
 
-const SUPPORTED_LOCALES = new Set(["en", "vi"])
+const SUPPORTED_LOCALES = new Set(["en", "vi", "ar"])
 
 // Characters that could break out of an inline <script>: `<` (so `</script>`
 // can't close the tag) and the JS line terminators U+2028 / U+2029 (emitted raw

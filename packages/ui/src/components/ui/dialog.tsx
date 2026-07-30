@@ -1,11 +1,13 @@
 "use client"
 
-import * as React from "react"
+import type * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+
+type DialogChangeEventDetails = DialogPrimitive.Root.ChangeEventDetails
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -133,6 +135,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  type DialogChangeEventDetails,
   DialogClose,
   DialogContent,
   DialogDescription,
