@@ -2686,7 +2686,7 @@
     "noVersionsFound": "Không tìm thấy phiên bản đã xuất bản",
     "publishVersionSuccess": "Đã xuất bản phiên bản mới",
     "flowConfigIncomplete": "Một số cấu hình chưa hoàn chỉnh",
-    "whatsappCarouselButtonsMismatch": "Với WhatsApp, mọi thẻ trong một carousel phải có cùng số nút",
+    "whatsappCarouselButtonsMismatch": "Với WhatsApp, mọi thẻ trong một carousel phải có nút giống nhau: hoặc mỗi thẻ đúng một nút mở liên kết, hoặc mỗi thẻ cùng số nút trả lời",
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",
     "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại.",
     "redoHistoryCleared": "Đã xoá lịch sử làm lại",

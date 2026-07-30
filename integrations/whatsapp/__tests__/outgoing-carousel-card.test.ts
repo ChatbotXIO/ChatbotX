@@ -45,8 +45,10 @@ const ctx = {
   },
 } as never
 
+const contactInboxId = "contact-1"
+
 const contact = {
-  id: "contact-1",
+  id: contactInboxId,
   sourceId: "84123456789",
 } as never
 
@@ -382,7 +384,87 @@ describe("whatsapp outgoing card", () => {
     expect(cards[0].action.buttons[0].quick_reply.title).toHaveLength(20)
   })
 
-  test("sends openWebsite buttons as replies, like the single-card path", async () => {
+  test("sends a lone openWebsite button as a link button", async () => {
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        imageUrl: IMAGE_URL,
+        buttons: [
+          makeWebsiteButton(
+            "1000000000003",
+            "L".repeat(30),
+            "https://example.com/products/1",
+          ),
+        ],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [
+          makeWebsiteButton(
+            "1000000000005",
+            "Visit",
+            "https://example.com/products/2",
+          ),
+        ],
+      }),
+    ])
+
+    const cards = rawPayloads()[0].interactive.action.cards
+    expect(cards[0]).toMatchObject({
+      action: {
+        name: "cta_url",
+        parameters: {
+          display_text: "L".repeat(20),
+          // A plain URL carries no click code, so it is sent untouched.
+          url: "https://example.com/products/1",
+        },
+      },
+    })
+    expect(cards[1]).toMatchObject({
+      action: { parameters: { url: "https://example.com/products/2" } },
+    })
+  })
+
+  test("carries the contact inbox id on a magic link", async () => {
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        imageUrl: IMAGE_URL,
+        buttons: [
+          makeWebsiteButton(
+            "1000000000003",
+            "Open",
+            "https://app.example.com/r/workspace-1/promo",
+          ),
+        ],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [
+          makeWebsiteButton(
+            "1000000000005",
+            "Open",
+            "https://app.example.com/r/workspace-1/promo",
+          ),
+        ],
+      }),
+    ])
+
+    const [card] = rawPayloads()[0].interactive.action.cards as Array<{
+      action: { parameters: { url: string } }
+    }>
+    const code = new URL(card.action.parameters.url).searchParams.get("code")
+
+    // Trailing empty segments hold the broadcast and sequence ids, which a flow
+    // send leaves out — the redirect route reads the contact inbox id last.
+    expect(code).toBe(
+      `${FLOW_ID}:${FLOW_VERSION_ID}:1000000000003:::${contactInboxId}`,
+    )
+  })
+
+  test("falls back to replies when a card mixes a link with a reply", async () => {
     const url = "https://example.com/products/1"
     await sendCards([
       makeCard({
@@ -403,6 +485,8 @@ describe("whatsapp outgoing card", () => {
       }),
     ])
 
+    // Meta accepts one URL button or several replies, never a mix, so the whole
+    // card degrades to replies rather than losing its extra buttons.
     expect(rawPayloads()[0].interactive.action.cards[0]).toMatchObject({
       action: {
         buttons: [

@@ -90,20 +90,33 @@ describe("WhatsApp carousel publish rules", () => {
     expect(publishNodesSchema.safeParse([node]).success).toBe(true)
   })
 
-  test("allows different button kinds while the count matches", () => {
-    // WhatsApp receives every card button as a reply, so an "open website"
-    // button is the same type on the wire as any other.
+  test("rejects a link card next to a reply card", () => {
+    // A lone "open website" button is sent as Meta's single URL button, so it is
+    // a different button type than a reply even though both cards have one.
     const node = makeCarouselNode({
       cardButtons: [[makeWebsiteButton("Open")], [makeReplyButton("Reply")]],
     })
 
-    expect(publishNodesSchema.safeParse([node]).success).toBe(true)
+    expect(publishNodesSchema.safeParse([node]).success).toBe(false)
   })
 
   test.each([
     [
       "matching reply buttons",
       [[makeReplyButton("One")], [makeReplyButton("Two")]],
+    ],
+    [
+      "a link button on every card",
+      [[makeWebsiteButton("Open")], [makeWebsiteButton("Visit")]],
+    ],
+    [
+      // A card cannot mix the two kinds, so both are sent as replies and the
+      // card counts as a two-reply card on both sides of the comparison.
+      "cards that each mix a link with a reply",
+      [
+        [makeWebsiteButton("Open"), makeReplyButton("One")],
+        [makeReplyButton("Two"), makeWebsiteButton("Visit")],
+      ],
     ],
     ["no buttons", [[], []]],
     ["one card", [[makeReplyButton("One")]]],

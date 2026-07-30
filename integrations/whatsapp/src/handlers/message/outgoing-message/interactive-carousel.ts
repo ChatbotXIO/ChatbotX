@@ -1,10 +1,16 @@
 import {
+  appendCodeToMagicLink,
   type ButtonStepProps,
   type MetadataPayload,
+  readCarouselCardUrlButton,
   whatsappCarouselCardLimits,
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
-import type { CarouselCard, InteractiveCarouselMessage } from "../../../schema"
+import type {
+  CarouselCard,
+  CarouselCardAction,
+  InteractiveCarouselMessage,
+} from "../../../schema"
 import { clampText, messageLimits } from "../message-limits"
 import { readCardContent, type SendCardPayload } from "./send-card"
 import { normalizeRawButton } from "./shared"
@@ -23,21 +29,25 @@ type CarouselProps = {
   flowId: string
   flowVersionId?: string
   metadata?: MetadataPayload
+  contactInboxId?: string
 }
 
 type CardProps = Omit<CarouselProps, "cards">
 
 /**
- * Every button becomes a quick reply, the same as the single-card path: a
- * WhatsApp reply routes back into the flow, and this integration has never
- * mapped `openWebsite` to a link.
- *
  * Replies are not deduplicated here. Dropping a repeated label on one card only
  * would break Meta's rule that button counts match across all cards.
+ *
+ * `contactInboxId` is left out on purpose — see `normalizeRawButton`.
  */
 function buildCardButtons(buttons: ButtonStepProps[], props: CardProps) {
   return buttons.map((button) => {
-    const reply = normalizeRawButton({ ...props, button })
+    const reply = normalizeRawButton({
+      flowId: props.flowId,
+      flowVersionId: props.flowVersionId,
+      metadata: props.metadata,
+      button,
+    })
 
     return {
       type: "quick_reply" as const,
@@ -49,6 +59,41 @@ function buildCardButtons(buttons: ButtonStepProps[], props: CardProps) {
   })
 }
 
+/**
+ * A carousel card is the one place WhatsApp accepts a link button, so an
+ * `openWebsite` button keeps its URL here while every other path in this
+ * integration still sends it as a reply.
+ *
+ * The code is appended for the same reason as on Messenger: a magic link carries
+ * it back to the redirect route, which needs it to tell who clicked. A plain URL
+ * is returned untouched by `appendCodeToMagicLink`.
+ */
+function buildCardAction(
+  buttons: ButtonStepProps[],
+  props: CardProps,
+): CarouselCardAction | undefined {
+  const urlButton = readCarouselCardUrlButton(buttons)
+
+  if (urlButton) {
+    const { id, label } = normalizeRawButton({
+      ...props,
+      button: urlButton.button,
+    })
+
+    return {
+      name: CAROUSEL_CARD_TYPE,
+      parameters: {
+        display_text: clampText(label, messageLimits.buttonTitle),
+        url: appendCodeToMagicLink(urlButton.url, id),
+      },
+    }
+  }
+
+  const replies = buildCardButtons(buttons, props)
+
+  return replies.length > 0 ? { buttons: replies } : undefined
+}
+
 function buildCarouselCard(
   payload: SendCardPayload,
   cardIndex: number,
@@ -56,7 +101,7 @@ function buildCarouselCard(
 ): CarouselCard {
   const content = readCardContent(payload)
   const bodyText = clampText(content.caption, messageLimits.carouselCardBody)
-  const buttons = buildCardButtons(payload.buttons ?? [], props)
+  const action = buildCardAction(payload.buttons ?? [], props)
 
   return {
     card_index: cardIndex,
@@ -70,7 +115,7 @@ function buildCarouselCard(
         }
       : {}),
     ...(bodyText ? { body: { text: bodyText } } : {}),
-    ...(buttons.length > 0 ? { action: { buttons } } : {}),
+    ...(action ? { action } : {}),
   }
 }
 

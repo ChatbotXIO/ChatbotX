@@ -2670,7 +2670,7 @@
     "noVersionsFound": "No published versions found",
     "publishVersionSuccess": "A new version has been published",
     "flowConfigIncomplete": "Some configurations are incomplete",
-    "whatsappCarouselButtonsMismatch": "On WhatsApp, every card in a carousel must have the same number of buttons",
+    "whatsappCarouselButtonsMismatch": "On WhatsApp, a carousel needs the same buttons on every card: either a single link button on each card, or the same number of reply buttons on each card",
     "duplicateNodeError": "Could not duplicate the block. Please try again.",
     "deleteNodeError": "Could not delete the block. Please try again.",
     "redoHistoryCleared": "Redo history cleared",

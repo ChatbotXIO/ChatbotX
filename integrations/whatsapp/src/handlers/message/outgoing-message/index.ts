@@ -96,6 +96,7 @@ function* convertFlowStepToWhatsappMessage(
         flowVersionId: carouselStepProps.data.flowVersionId,
         metadata: carouselStepProps.data.metadata,
         quickReplies: carouselStepProps.data.quickReplies,
+        contactInboxId: carouselStepProps.data.contact.id,
         payload: {
           cards: carouselStepProps.data.step.cards,
         },

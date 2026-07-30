@@ -18,6 +18,8 @@ export type SendCardProps = {
   flowVersionId?: string
   metadata?: MetadataPayload
   quickReplies?: MessageButtonTemplate[]
+  /** Only a carousel card's link button carries this — see `normalizeRawButton`. */
+  contactInboxId?: string
   payload: SendCardPayload
 }
 

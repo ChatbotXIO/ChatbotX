@@ -175,6 +175,23 @@ export type TemplateMessage = {
   }
 }
 
+/**
+ * Meta: "Cards must include either one URL button, or one or more quick-reply
+ * buttons." The two are separate shapes rather than one shape with optional
+ * fields, so a card carrying both kinds has no valid payload at all.
+ */
+export type CarouselCardAction =
+  | {
+      buttons: Array<{
+        type: "quick_reply"
+        quick_reply: { id: string; title: string }
+      }>
+    }
+  | {
+      name: "cta_url"
+      parameters: { display_text: string; url: string }
+    }
+
 export type CarouselCard = {
   card_index: number
   type: "cta_url"
@@ -183,12 +200,7 @@ export type CarouselCard = {
     image: { link: string }
   }
   body?: { text: string }
-  action?: {
-    buttons: Array<{
-      type: "quick_reply"
-      quick_reply: { id: string; title: string }
-    }>
-  }
+  action?: CarouselCardAction
 }
 
 export type InteractiveCarouselMessage = {

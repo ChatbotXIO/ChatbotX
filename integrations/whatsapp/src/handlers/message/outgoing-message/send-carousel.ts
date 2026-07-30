@@ -19,6 +19,7 @@ export function* generateOutgoingMessages(
       flowId: props.flowId,
       flowVersionId: props.flowVersionId,
       metadata: props.metadata,
+      contactInboxId: props.contactInboxId,
     })
     return
   }
