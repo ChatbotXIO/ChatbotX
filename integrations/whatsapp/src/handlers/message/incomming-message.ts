@@ -1,41 +1,28 @@
 import { deriveAdSourcePlatform } from "@chatbotx.io/business/referral"
-import { decodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
-  type Context,
   contentTypes,
-  type ExternalMediaResult,
   type IncomingContact,
   type IncomingMessage,
   type MessageHandlers,
   type MessageReferral,
-  type MessageWhatsappFlowResponseEntity,
   messageTypes,
-  SdkException,
 } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
-import fetch from "cross-fetch"
-import imageSize from "image-size"
-import type { WhatsAppAPI } from "whatsapp-api-js"
-import type {
-  ServerAudioMessage,
-  ServerButtonMessage,
-  ServerContactsMessage,
-  ServerDocumentMessage,
-  ServerImageMessage,
-  ServerInteractiveNFMMessage,
-  ServerLocationMessage,
-  ServerOrderMessage,
-  ServerStickerMessage,
-  ServerTextMessage,
-  ServerVideoMessage,
-} from "whatsapp-api-js/types"
+import type { ServerMessageTypes } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../../client"
-import { logger } from "../../lib/logger"
+import { asString } from "../../lib/value"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
-
-type WhatsappNfmFlowResponse = Record<string, unknown> & {
-  flow_token?: string
-}
+import {
+  parseAudioMessage,
+  parseDocumentMessage,
+  parseImageMessage,
+  parseStickerMessage,
+  parseVideoMessage,
+} from "./incoming-media"
+import { readInteractiveReply, readTemplateButtonReply } from "./incoming-reply"
+import type {
+  IncomingMessageFragment,
+  WhatsappMessageParser,
+} from "./message-parser-types"
 
 type WhatsappReferralPayload = Record<string, unknown> & {
   ctwa_clid?: string
@@ -49,9 +36,6 @@ type WhatsappReferralPayload = Record<string, unknown> & {
   video_url?: string
   thumbnail_url?: string
 }
-
-const asString = (value: unknown): string | null =>
-  typeof value === "string" && value.length > 0 ? value : null
 
 const getWhatsappReferral = (
   message: WhatsappWebhookEvent["message"],
@@ -76,6 +60,85 @@ const getWhatsappReferral = (
   }
 }
 
+const REF_PREFIX = "/ref-"
+
+const parseTextMessage: WhatsappMessageParser<"text"> = (message) => {
+  const body = message.text.body
+  return body.startsWith(REF_PREFIX)
+    ? { ref: body.slice(REF_PREFIX.length) }
+    : { text: body }
+}
+
+const parseLocationMessage: WhatsappMessageParser<"location"> = (message) => {
+  const attached = message.location
+  const label = [attached.name, attached.address].filter(Boolean).join(": ")
+
+  return {
+    contentType: contentTypes.enum.location,
+    // `[...].join(": ") ?? "Received location"` never fell back — `join`
+    // never returns null/undefined — so a location with neither field used to
+    // silently produce `""`. Fixed here (owner decision, 2026-07-31).
+    text: label || "Received location",
+    contentAttributes: attached,
+  }
+}
+
+const parseContactsMessage: WhatsappMessageParser<"contacts"> = (message) => ({
+  text: "Received contacts",
+  contentAttributes: { contacts: message.contacts },
+})
+
+const parseOrderMessage: WhatsappMessageParser<"order"> = (message) => ({
+  contentAttributes: message.order,
+})
+
+const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = (
+  message,
+) => {
+  const reply = readInteractiveReply(message.interactive)
+  return {
+    text: reply.text,
+    postbackAction: reply.postbackAction,
+    buttonTitle: reply.buttonTitle,
+    contentAttributes: reply.contentAttributes,
+  }
+}
+
+const parseButtonMessage: WhatsappMessageParser<"button"> = (message) => {
+  const reply = readTemplateButtonReply(message.button)
+  return {
+    text: reply.text,
+    postbackAction: reply.postbackAction,
+    buttonTitle: reply.buttonTitle,
+  }
+}
+
+/**
+ * One parser per WhatsApp message type — a Strategy table replacing the old
+ * nested `switch`, mirroring `routableHandleAccessors`
+ * (`packages/flow-config/src/routable-handle.ts:296`), this repo's existing
+ * pattern for "look up the handler for a discriminant".
+ *
+ * Unlisted types (`reaction`, `system`, `request_welcome`, and anything Meta
+ * adds later) fall through to the generic label in `receiveMessage` below,
+ * matching the old `default` branch exactly.
+ */
+const messageParsers: {
+  readonly [Type in ServerMessageTypes["type"]]?: WhatsappMessageParser<Type>
+} = {
+  text: parseTextMessage,
+  location: parseLocationMessage,
+  contacts: parseContactsMessage,
+  order: parseOrderMessage,
+  interactive: parseInteractiveMessage,
+  button: parseButtonMessage,
+  audio: parseAudioMessage,
+  document: parseDocumentMessage,
+  image: parseImageMessage,
+  sticker: parseStickerMessage,
+  video: parseVideoMessage,
+}
+
 export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"] =
   async (props) => {
     const {
@@ -85,6 +148,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
 
     const data = payload as WhatsappWebhookEvent
     const whatsappClient = getWhatsappClient(ctx.auth)
+    const referral = getWhatsappReferral(data.message)
 
     const message: IncomingMessage = {
       sourceId: data.message.id,
@@ -95,271 +159,36 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       sourceId: data.from,
       firstName: data.name,
     }
-    let postbackAction: string | null = null
-    let ref: string | null = null
-    let buttonTitle: string | null = null
-    const referral = getWhatsappReferral(data.message)
 
-    switch (data.message.type) {
-      case "text": {
-        const body = (data.message as ServerTextMessage).text.body
-        if (body.startsWith("/ref-")) {
-          ref = body.slice(5)
-        } else {
-          message.text = body
-        }
-        break
-      }
-      case "audio": {
-        const attached = (data.message as ServerAudioMessage).audio
-        const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
+    const parse = messageParsers[data.message.type]
+    // The registry key is the discriminant just read off `data.message`, so
+    // the pairing is sound; TypeScript cannot prove it through the lookup —
+    // same documented-assertion pattern as `readInteractiveReply`.
+    const fragment: IncomingMessageFragment = parse
+      ? await parse(data.message as never, { ctx, whatsappClient })
+      : { text: `Received ${data.message.type}` }
 
-        message.attachments = [
-          {
-            sourceId: attached.id,
-            mimeType: attached.mime_type,
-            fileType: "audio",
-            ...mediaSpecs,
-          },
-        ]
-        break
-      }
-      case "document": {
-        const attached = (data.message as ServerDocumentMessage).document
-        const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
-
-        message.text = attached.caption
-        message.attachments = [
-          {
-            name: attached.filename,
-            sourceId: attached.id,
-            mimeType: attached.mime_type,
-            fileType: "file",
-            ...mediaSpecs,
-          },
-        ]
-        break
-      }
-      case "image": {
-        const attached = (data.message as ServerImageMessage).image
-        const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
-
-        message.text = attached.caption
-        message.attachments = [
-          {
-            sourceId: attached.id,
-            mimeType: attached.mime_type,
-            fileType: "image",
-            ...mediaSpecs,
-          },
-        ]
-
-        break
-      }
-      case "sticker": {
-        const attached = (data.message as ServerStickerMessage).sticker
-        const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
-
-        message.attachments = [
-          {
-            sourceId: attached.id,
-            mimeType: attached.mime_type,
-            fileType: "image",
-            ...mediaSpecs,
-          },
-        ]
-        break
-      }
-      case "video": {
-        const attached = (data.message as ServerVideoMessage).video
-        const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
-
-        message.attachments = [
-          {
-            sourceId: attached.id,
-            mimeType: attached.mime_type,
-            fileType: "video",
-            ...mediaSpecs,
-          },
-        ]
-        break
-      }
-      case "location": {
-        const attached = (data.message as ServerLocationMessage).location
-        message.contentType = contentTypes.enum.location
-        message.text =
-          [attached.name, attached.address]
-            .filter((v) => Boolean(v))
-            .join(": ") ?? "Received location"
-        message.contentAttributes = attached
-        break
-      }
-      case "contacts": {
-        message.text = "Received contacts"
-        message.contentAttributes = {
-          contacts: (data.message as ServerContactsMessage).contacts,
-        }
-        break
-      }
-      case "interactive": {
-        switch (data.message.interactive.type) {
-          case "button_reply": {
-            message.text = data.message.interactive.button_reply.title
-            postbackAction = data.message.interactive.button_reply.id
-            buttonTitle = data.message.interactive.button_reply.title
-            break
-          }
-          case "list_reply": {
-            message.text = data.message.interactive.list_reply.title
-            message.contentAttributes = data.message.interactive.list_reply
-            postbackAction = data.message.interactive.list_reply.id
-            buttonTitle = data.message.interactive.list_reply.title
-            break
-          }
-          case "nfm_reply": {
-            const reply = (
-              data.message.interactive as ServerInteractiveNFMMessage
-            ).nfm_reply
-            const flowResponse = parseNfmReplyResponse(reply.response_json)
-            const flowToken = getNfmFlowToken(flowResponse)
-            const decodedPayload = flowToken
-              ? decodeButtonPayload(flowToken)
-              : null
-
-            if (flowToken && decodedPayload?.buttonId) {
-              postbackAction = flowToken
-            }
-
-            message.text = reply.body ?? ""
-            buttonTitle = reply.body ?? null
-            const flowResponseEntity: MessageWhatsappFlowResponseEntity = {
-              type: "whatsapp_flow_response",
-              name: reply.name,
-              flowResponse,
-              flowToken,
-              decoded: decodedPayload,
-            }
-            message.contentAttributes = flowResponseEntity
-            break
-          }
-          default: {
-            logger.warn(
-              { interactive: data.message.interactive },
-              "Unhandled WhatsApp interactive reply",
-            )
-            message.text = "Received interactive (coming soon)"
-            break
-          }
-        }
-        break
-      }
-      case "button": {
-        // Carousel card quick-reply buttons and message-template quick-reply
-        // buttons both arrive here. Unlike a reply button (which carries its
-        // flow action in `id`), these carry it in `payload` — confirmed
-        // against a live webhook capture (2026-07-30). `asString` guards
-        // against a foreign app on the same number sending a blank payload;
-        // the worker's `sanitizeFlowAction` is the actual authority that drops
-        // anything that doesn't decode as this flow engine's own format.
-        const attached = (data.message as ServerButtonMessage).button
-        message.text = attached.text
-        buttonTitle = attached.text
-        postbackAction = asString(attached.payload)
-        break
-      }
-      case "order": {
-        message.contentAttributes = (data.message as ServerOrderMessage).order
-        break
-      }
-      // case "request_welcome": do nothing
-      // case "reaction": do nothing
-      // case "system": do nothing
-      default:
-        message.text = `Received ${data.message.type}`
-        break
+    if (fragment.text !== undefined) {
+      message.text = fragment.text
+    }
+    if (fragment.contentType) {
+      message.contentType = fragment.contentType
+    }
+    if (fragment.attachments) {
+      message.attachments = fragment.attachments
+    }
+    if (fragment.contentAttributes) {
+      message.contentAttributes = fragment.contentAttributes
     }
 
     return {
       message,
       contact,
-      postbackAction,
+      postbackAction: fragment.postbackAction ?? null,
       quickReplyAction: null,
-      ref: ref ?? referral?.ref ?? null,
+      ref: fragment.ref ?? referral?.ref ?? null,
       referralSource: referral?.source ?? null,
       referral,
-      buttonTitle,
+      buttonTitle: fragment.buttonTitle ?? null,
     }
   }
-
-const fetchMedia = async (
-  ctx: Context<WhatsappAuthValue>,
-  whatsappClient: WhatsAppAPI,
-  mediaId: string,
-): Promise<ExternalMediaResult> => {
-  try {
-    const mediaResponse = await whatsappClient.retrieveMedia(mediaId)
-    if ("url" in mediaResponse && "mime_type" in mediaResponse) {
-      // we don't use whatsappClient.fetchMedia
-      // big thanks for: https://stackoverflow.com/questions/77846881/cannot-download-media-from-whatsapp-business-api-working-with-postman-and-curl#answer-77872700
-      const response = await fetch(mediaResponse.url, {
-        headers: {
-          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-          "User-Agent": "node",
-        },
-      })
-      if (response.ok && response.body) {
-        const result: ExternalMediaResult = {
-          originPath: `${ctx.storagePrefix}/${createId()}`,
-          size: Number.parseInt(
-            response.headers.get("content-length") ?? "0",
-            10,
-          ),
-        }
-
-        const bytes = await response.arrayBuffer()
-        const arrayBytes = new Uint8Array(bytes)
-
-        const mimeType = mediaResponse.mime_type
-        if (mimeType.startsWith("image/")) {
-          // Retrieve width / height
-          const dimensions = imageSize(arrayBytes)
-          result.width = dimensions.width
-          result.height = dimensions.height
-        }
-
-        await ctx.uploader?.putObject(result.originPath, Buffer.from(bytes), {
-          ACL: "public-read",
-          ContentLength: result.size,
-          ContentType: mimeType,
-        })
-
-        return result
-      }
-    }
-
-    logger.error({ mediaId, mediaResponse }, "Unable to fetch media:")
-
-    throw new SdkException("Unable to download media")
-  } catch (error) {
-    logger.error(error, "Unable to fetch media info:")
-
-    throw new SdkException("Unable to fetch media info")
-  }
-}
-
-const parseNfmReplyResponse = (
-  responseJson: string,
-): WhatsappNfmFlowResponse => {
-  try {
-    return JSON.parse(responseJson) as WhatsappNfmFlowResponse
-  } catch (error) {
-    logger.warn(
-      { error, responseJson },
-      "Failed to parse nfm_reply.response_json",
-    )
-    return {}
-  }
-}
-
-const getNfmFlowToken = (flowResponse: WhatsappNfmFlowResponse) =>
-  typeof flowResponse.flow_token === "string" ? flowResponse.flow_token : null

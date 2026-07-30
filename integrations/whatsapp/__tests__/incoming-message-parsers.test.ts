@@ -152,6 +152,25 @@ describe("WhatsApp receiveMessage — media", () => {
     expect(result.message?.text).toBeUndefined()
   })
 
+  test("document/image with no caption: the text key is absent, not present-and-undefined", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        type: "document",
+        document: {
+          id: "media-doc-2",
+          mime_type: "application/pdf",
+          filename: "invoice.pdf",
+        },
+      }),
+    )
+
+    // The refactor omits the `text` key when there is no caption, instead of
+    // today's `message.text = undefined` (key present, value undefined).
+    // Verified equivalent for every consumer (a truthiness check and a
+    // Drizzle insert) — see plan §5.2.
+    expect(result.message).not.toHaveProperty("text")
+  })
+
   test("video: attachment fileType video, and a caption is NOT surfaced as text", async () => {
     const result = await receiveMessage(
       buildProps({
@@ -191,7 +210,7 @@ describe("WhatsApp receiveMessage — location / contacts / order", () => {
     expect(result.message?.contentType).toBe("location")
   })
 
-  test("location with neither name nor address (today's dead-code fallback)", async () => {
+  test("location with neither name nor address falls back to a fixed label", async () => {
     const result = await receiveMessage(
       buildProps({
         type: "location",
@@ -199,12 +218,10 @@ describe("WhatsApp receiveMessage — location / contacts / order", () => {
       }),
     )
 
-    // `[...].join(": ") ?? "Received location"` never falls back — `join`
-    // never returns null/undefined, so this is `""` today, not the intended
-    // "Received location". Flipped to the fixed behavior in the refactor
-    // commit (plan §5.4) — do not "fix" this assertion without updating it
-    // there too.
-    expect(result.message?.text).toBe("")
+    // Was a dead-code `""` before the refactor (plan §5.4) — `join` never
+    // returns null/undefined, so `?? "Received location"` never fired. Fixed
+    // as an owner-approved edge case (2026-07-31).
+    expect(result.message?.text).toBe("Received location")
   })
 
   test("contacts sets a fixed text and carries the contacts payload", async () => {
