@@ -51,3 +51,57 @@ export const flattenTree = <T extends CategoryNode>(categories: T[]): T[] => {
   const placed = new Set(ordered.map((category) => category.id))
   return [...ordered, ...categories.filter(({ id }) => !placed.has(id))]
 }
+
+/** A category plus what the table row needs that the category itself cannot say. */
+export type CategoryTableRow<T> = {
+  category: T
+  /** 0 for a top-level row, 1 for a sub-category. Drives the indent. */
+  depth: number
+  /** Whether the row gets a chevron, and what the sub-category column shows. */
+  childCount: number
+}
+
+/**
+ * The rows the management table actually renders: parents in the query's order,
+ * each expanded parent immediately followed by its children.
+ *
+ * Collapsing is applied here rather than in the component so that `depth` and
+ * `childCount` are derived from the same pass that decides visibility — the
+ * previous card grid recomputed child counts separately and could disagree with
+ * what it had drawn.
+ *
+ * The walk is two levels deep on purpose: `productCategoryService` rejects a
+ * third, so descending further would be dead code. A row whose parent is absent
+ * from the input is treated as top-level rather than dropped — the parent may
+ * have been filtered out upstream, and hiding the child would look like data
+ * loss.
+ */
+export const toTableRows = <T extends CategoryNode>(
+  categories: T[],
+  expandedIds: ReadonlySet<string>,
+): CategoryTableRow<T>[] => {
+  const byParent = groupByParent(categories)
+  const known = new Set(categories.map(({ id }) => id))
+  const childCountOf = (id: string) => byParent.get(id)?.length ?? 0
+
+  return categories
+    .filter(({ parentId }) => !(parentId && known.has(parentId)))
+    .flatMap((parent) => {
+      const row = {
+        category: parent,
+        depth: 0,
+        childCount: childCountOf(parent.id),
+      }
+      if (!expandedIds.has(parent.id)) {
+        return [row]
+      }
+      return [
+        row,
+        ...(byParent.get(parent.id) ?? []).map((child) => ({
+          category: child,
+          depth: 1,
+          childCount: childCountOf(child.id),
+        })),
+      ]
+    })
+}

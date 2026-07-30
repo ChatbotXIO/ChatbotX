@@ -41,36 +41,19 @@ import { MetaCatalogCreatePanel } from "./meta-catalog-create-panel"
 import { MetaCatalogHistory } from "./meta-catalog-history"
 import { MetaCatalogRequirements } from "./meta-catalog-requirements"
 import {
+  CATALOG_TABS,
+  HISTORY_ONLY_TABS,
+  type MetaCatalogTab,
+  resolveInitialMetaCatalogTab,
+} from "./meta-catalog-tabs"
+import {
   ACTIVE_SYNC_STATUSES,
   type MetaCatalogViewState,
 } from "./meta-catalog-types"
 
-/**
- * `sync` pushes local → Meta; `import` pulls Meta → local. The last tab is
- * named for what it shows — the linked account — because nothing on it is a
- * setting: every value is decided by OAuth or by the import worker.
- */
-const CATALOG_TABS = ["sync", "import", "history", "connection"] as const
-type MetaCatalogTab = (typeof CATALOG_TABS)[number]
-
 const TOKEN_EXPIRY_WARNING_MS = 7 * 24 * 60 * 60 * 1000
 const POLL_INTERVAL_MS = 5000
 /** Meta blue — the connection is a Meta-owned surface, so the brand color leads. */
-
-/**
- * Pushing to Meta is the primary intent, so the dialog normally opens there.
- * The exception is a connection with nothing to push to yet — straight out of
- * OAuth, or bound to no catalog: `sync` could only say "tick some rows first",
- * while pulling the catalog in is the step actually being asked for.
- *
- * Deliberately keyed on the missing binding rather than on "never imported":
- * a workspace that only ever pushes keeps `importStatus: "idle"` forever, and
- * should not be sent to the import tab every time.
- */
-const resolveInitialTab = (
-  connection: MetaCatalogViewState["connection"],
-  isSetupFlow: boolean,
-): MetaCatalogTab => (isSetupFlow || !connection?.catalogId ? "import" : "sync")
 
 /**
  * Result of the last finished pull. Rendered from the connection's counters
@@ -131,7 +114,12 @@ export function MetaCatalogDialog({
   // Read at mount too, not only in `handleOpenChange`: the setup flow opens the
   // dialog through `setOpen` directly, so it never passes through that handler.
   const [tab, setTab] = useState<MetaCatalogTab>(() =>
-    resolveInitialTab(initialState.connection, isSetupFlow),
+    resolveInitialMetaCatalogTab({
+      connection: initialState.connection,
+      hasHistory: initialState.history.length > 0,
+      hasSelection: selectedProductIds.length > 0,
+      isSetupFlow,
+    }),
   )
   const [state, setState] = useState<MetaCatalogViewState>(initialState)
   const [catalogId, setCatalogId] = useState(
@@ -147,7 +135,14 @@ export function MetaCatalogDialog({
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      setTab(resolveInitialTab(state.connection, isSetupFlow))
+      setTab(
+        resolveInitialMetaCatalogTab({
+          connection: state.connection,
+          hasHistory: state.history.length > 0,
+          hasSelection: selectedProductIds.length > 0,
+          isSetupFlow,
+        }),
+      )
       setOpen(true)
       return
     }
@@ -200,7 +195,9 @@ export function MetaCatalogDialog({
     {
       onSuccess: () => {
         toast.success(t("messages.disconnected"))
-        setState({ connection: null, history: [] })
+        setState((current) => ({ connection: null, history: current.history }))
+        setCatalogId("")
+        setTab("history")
         setOpen(false)
         router.refresh()
       },
@@ -242,6 +239,7 @@ export function MetaCatalogDialog({
   }, [hasActiveSync, loadState, open])
 
   const connection = state.connection
+  const visibleTabs = connection ? CATALOG_TABS : HISTORY_ONLY_TABS
   const tokenExpiresSoon =
     connection?.tokenExpiresAt != null &&
     new Date(connection.tokenExpiresAt).getTime() - Date.now() <
@@ -338,7 +336,7 @@ export function MetaCatalogDialog({
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
 
-        {connection ? (
+        {connection || state.history.length > 0 ? (
           <Tabs
             className="grid grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden"
             onValueChange={(value) => setTab(value as MetaCatalogTab)}
@@ -346,7 +344,7 @@ export function MetaCatalogDialog({
           >
             <div className="border-b px-6">
               <TabsList className="rounded-none border-0 bg-transparent p-0 shadow-none">
-                {CATALOG_TABS.map((value) => (
+                {visibleTabs.map((value) => (
                   <TabsTrigger className="py-3" key={value} value={value}>
                     {t(`tabs.${value}`)}
                   </TabsTrigger>
@@ -355,98 +353,104 @@ export function MetaCatalogDialog({
             </div>
 
             <div className="min-h-48 overflow-y-auto px-6 py-6">
-              <TabsContent className="space-y-4" value="sync">
-                {connection.status === "invalid" || tokenExpiresSoon ? (
-                  <MetaCatalogCallout
-                    action={
-                      <Button
-                        onClick={() => connect.execute()}
-                        size="sm"
-                        variant="outline"
+              {connection ? (
+                <>
+                  <TabsContent className="space-y-4" value="sync">
+                    {connection.status === "invalid" || tokenExpiresSoon ? (
+                      <MetaCatalogCallout
+                        action={
+                          <Button
+                            onClick={() => connect.execute()}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {t("reconnect")}
+                          </Button>
+                        }
+                        tone="warning"
                       >
-                        {t("reconnect")}
-                      </Button>
-                    }
-                    tone="warning"
-                  >
-                    {t("reconnectWarning")}
-                  </MetaCatalogCallout>
-                ) : null}
+                        {t("reconnectWarning")}
+                      </MetaCatalogCallout>
+                    ) : null}
 
-                {hasSelection ? (
-                  <MetaCatalogCallout tone="info">
-                    {t("syncSelectionCount", {
-                      count: selectedProductIds.length,
-                    })}
-                  </MetaCatalogCallout>
-                ) : (
-                  <MetaCatalogCallout tone="warning">
-                    {t("syncSelectionRequired")}
-                  </MetaCatalogCallout>
-                )}
+                    {hasSelection ? (
+                      <MetaCatalogCallout tone="info">
+                        {t("syncSelectionCount", {
+                          count: selectedProductIds.length,
+                        })}
+                      </MetaCatalogCallout>
+                    ) : (
+                      <MetaCatalogCallout tone="warning">
+                        {t("syncSelectionRequired")}
+                      </MetaCatalogCallout>
+                    )}
 
-                {renderCatalogIdField()}
+                    {renderCatalogIdField()}
 
-                <MetaCatalogRequirements />
-              </TabsContent>
+                    <MetaCatalogRequirements />
+                  </TabsContent>
 
-              <TabsContent className="space-y-4" value="import">
-                {ACTIVE_SYNC_STATUSES.has(connection.importStatus) ? (
-                  <MetaCatalogCallout tone="info">
-                    <Loader2Icon className="size-4 shrink-0 animate-spin" />
-                    {connection.importTotalCount > 0
-                      ? t("importProgress", {
-                          imported: connection.importedCount,
-                          total: connection.importTotalCount,
-                        })
-                      : // Meta has not answered the first page yet, so "0/0"
-                        // would read as an empty catalog rather than a wait.
-                        t("importQueued")}
-                  </MetaCatalogCallout>
-                ) : (
-                  // The counts have to outlive the run: the whole point of the
-                  // import is knowing how many products arrived, and that
-                  // question is asked after it finishes, not during.
-                  <ImportOutcome connection={connection} />
-                )}
-
-                {connection.importError ? (
-                  <MetaCatalogCallout
-                    action={
-                      connection.importStatus === "failed" ? (
-                        <Button
-                          disabled={selectCatalog.isPending}
-                          onClick={() =>
-                            selectCatalog.execute({
-                              catalogId: connection.catalogId ?? "",
+                  <TabsContent className="space-y-4" value="import">
+                    {ACTIVE_SYNC_STATUSES.has(connection.importStatus) ? (
+                      <MetaCatalogCallout tone="info">
+                        <Loader2Icon className="size-4 shrink-0 animate-spin" />
+                        {connection.importTotalCount > 0
+                          ? t("importProgress", {
+                              imported: connection.importedCount,
+                              total: connection.importTotalCount,
                             })
-                          }
-                          size="sm"
-                          variant="outline"
-                        >
-                          {t("retryImport")}
-                        </Button>
-                      ) : null
-                    }
-                    tone="danger"
-                  >
-                    {connection.importError}
-                  </MetaCatalogCallout>
-                ) : null}
+                          : // Meta has not answered the first page yet, so "0/0"
+                            // would read as an empty catalog rather than a wait.
+                            t("importQueued")}
+                      </MetaCatalogCallout>
+                    ) : (
+                      // The counts have to outlive the run: the whole point of the
+                      // import is knowing how many products arrived, and that
+                      // question is asked after it finishes, not during.
+                      <ImportOutcome connection={connection} />
+                    )}
 
-                <p className="text-muted-foreground text-sm">
-                  {t("importDescription")}
-                </p>
-                {renderCatalogIdField()}
-              </TabsContent>
+                    {connection.importError ? (
+                      <MetaCatalogCallout
+                        action={
+                          connection.importStatus === "failed" ? (
+                            <Button
+                              disabled={selectCatalog.isPending}
+                              onClick={() =>
+                                selectCatalog.execute({
+                                  catalogId: connection.catalogId ?? "",
+                                })
+                              }
+                              size="sm"
+                              variant="outline"
+                            >
+                              {t("retryImport")}
+                            </Button>
+                          ) : null
+                        }
+                        tone="danger"
+                      >
+                        {connection.importError}
+                      </MetaCatalogCallout>
+                    ) : null}
+
+                    <p className="text-muted-foreground text-sm">
+                      {t("importDescription")}
+                    </p>
+                    {renderCatalogIdField()}
+                  </TabsContent>
+                </>
+              ) : null}
 
               <TabsContent value="history">
                 <MetaCatalogHistory history={state.history} />
               </TabsContent>
 
-              <TabsContent value="connection">
-                <MetaCatalogConnectionInfo connection={connection} />
-              </TabsContent>
+              {connection ? (
+                <TabsContent value="connection">
+                  <MetaCatalogConnectionInfo connection={connection} />
+                </TabsContent>
+              ) : null}
             </div>
           </Tabs>
         ) : (
@@ -471,7 +475,7 @@ export function MetaCatalogDialog({
           <div className="flex justify-center gap-2">
             {connection && tab === "connection" ? (
               <Button
-                disabled={disconnect.isPending}
+                disabled={disconnect.isPending || hasActiveSync}
                 onClick={() => disconnect.execute()}
                 variant="destructive"
               >

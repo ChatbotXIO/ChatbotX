@@ -4,6 +4,8 @@ import {
   db,
   eq,
   inArray,
+  ne,
+  or,
   sql,
 } from "@chatbotx.io/database/client"
 import { metaCatalogItemModel } from "@chatbotx.io/database/schema"
@@ -28,7 +30,65 @@ const inCatalog = (scope: CatalogScope) =>
     eq(metaCatalogItemModel.catalogId, scope.catalogId),
   )
 
+/**
+ * `linkImported` and `markSucceeded` both call this before writing, so every
+ * write is safe on its own regardless of what the caller already holds.
+ * `pg_advisory_xact_lock` is re-entrant per transaction, so a caller that
+ * needs the lock held across a read-then-write sequence (see `importPage`)
+ * can also take it upfront without this becoming a double-lock bug.
+ */
+const lockCatalogAssignments = async (
+  scope: CatalogScope,
+  tx: DatabaseClient,
+): Promise<void> => {
+  const lockKey = `${scope.integrationMetaCatalogId}:${scope.catalogId}`
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`,
+  )
+}
+
+/**
+ * A product's retailerId can legitimately change between syncs — a SKU gets
+ * added, removed, or reused by another product — and the two callers that
+ * assign one (`resolveRetailerIds` at submit time, a Meta import page pulled
+ * independently) can each work from a snapshot that's since gone stale: a push
+ * run's own poll can take minutes, and an import isn't blocked from running
+ * while a push is in flight. Either write's `onConflictDoUpdate` only reconciles
+ * against the retailerId-scoped unique index, so a row still parked under a
+ * product's *old* retailerId is invisible to that arbiter and collides with the
+ * productId-scoped index instead. Clearing those stale rows first keeps one row
+ * per productId per catalog regardless of which side raced ahead.
+ */
+const clearStaleProductLinks = async (
+  scope: CatalogScope & {
+    items: Array<{ productId: string; retailerId: string }>
+  },
+  tx: DatabaseClient,
+) => {
+  await tx
+    .delete(metaCatalogItemModel)
+    .where(
+      and(
+        inCatalog(scope),
+        or(
+          ...scope.items.flatMap((item) => [
+            and(
+              eq(metaCatalogItemModel.productId, item.productId),
+              ne(metaCatalogItemModel.retailerId, item.retailerId),
+            ),
+            and(
+              eq(metaCatalogItemModel.retailerId, item.retailerId),
+              ne(metaCatalogItemModel.productId, item.productId),
+            ),
+          ]),
+        ),
+      ),
+    )
+}
+
 export const metaCatalogItemRepository = {
+  lockCatalogAssignments,
+
   /**
    * The catalog a product most recently took part in. Products can be linked to
    * more than one catalog over time — the newest sync is the one worth showing,
@@ -95,21 +155,36 @@ export const metaCatalogItemRepository = {
     input: CatalogScope & {
       items: Array<{ productId: string; retailerId: string }>
     },
-    tx: DatabaseClient = db,
+    tx: DatabaseClient,
   ) {
     if (input.items.length === 0) {
       return
     }
-    await tx.insert(metaCatalogItemModel).values(
-      input.items.map((item) => ({
-        id: createId(),
-        integrationMetaCatalogId: input.integrationMetaCatalogId,
-        catalogId: input.catalogId,
-        direction: "import" as const,
-        productId: item.productId,
-        retailerId: item.retailerId,
-      })),
-    )
+    await lockCatalogAssignments(input, tx)
+    await clearStaleProductLinks(input, tx)
+    await tx
+      .insert(metaCatalogItemModel)
+      .values(
+        input.items.map((item) => ({
+          id: createId(),
+          integrationMetaCatalogId: input.integrationMetaCatalogId,
+          catalogId: input.catalogId,
+          direction: "import" as const,
+          productId: item.productId,
+          retailerId: item.retailerId,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [
+          metaCatalogItemModel.integrationMetaCatalogId,
+          metaCatalogItemModel.catalogId,
+          metaCatalogItemModel.retailerId,
+        ],
+        set: {
+          productId: sql`excluded."productId"`,
+          direction: sql`excluded."direction"`,
+        },
+      })
   },
 
   async markSucceeded(
@@ -120,12 +195,14 @@ export const metaCatalogItemRepository = {
         fingerprint: string
       }>
     },
-    tx: DatabaseClient = db,
+    tx: DatabaseClient,
   ) {
     if (input.items.length === 0) {
       return
     }
     const syncedAt = new Date()
+    await lockCatalogAssignments(input, tx)
+    await clearStaleProductLinks(input, tx)
     await tx
       .insert(metaCatalogItemModel)
       .values(

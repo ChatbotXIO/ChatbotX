@@ -83,6 +83,11 @@ export const metaCatalogSyncRunModel = pgTable(
     }),
     selectedProductIds: jsonb().$type<string[]>().default([]).notNull(),
     handles: jsonb().$type<MetaCatalogBatchHandle[]>().default([]).notNull(),
+    /**
+     * Ownership token for the submit phase. A stalled BullMQ delivery can
+     * overlap its recovery; only the current lease may checkpoint or release.
+     */
+    submissionLeaseId: text(),
     totalCount: integer().default(0).notNull(),
     succeededCount: integer().default(0).notNull(),
     failedCount: integer().default(0).notNull(),

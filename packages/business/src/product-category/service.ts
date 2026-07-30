@@ -1,9 +1,25 @@
-import { isUniqueViolationError } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  isUniqueViolationError,
+} from "@chatbotx.io/database/client"
 import { productCategoryRepository } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 
 const normalizeCategoryName = (name: string): string => name.trim()
+
+export type ProductCategoryPath = {
+  categoryName: string
+  subcategoryName?: string
+}
+
+export const getProductCategoryPathKey = (path: ProductCategoryPath): string =>
+  `${normalizeCategoryName(path.categoryName).toLowerCase()}\u0000${normalizeCategoryName(path.subcategoryName ?? "").toLowerCase()}`
+
+/** Keyed by parent row id, not by category name — distinct from `getProductCategoryPathKey`. */
+const getCategoryChildKey = (parentId: string | null, name: string): string =>
+  `${parentId}\u0000${normalizeCategoryName(name).toLowerCase()}`
 
 class ProductCategoryService extends BaseService {
   async list(workspaceId: string) {
@@ -94,25 +110,139 @@ class ProductCategoryService extends BaseService {
     workspaceId: string
     names: string[]
     createMissing: boolean
+    tx?: DatabaseClient
   }) {
+    const { tx = db } = input
     const names = Array.from(
       new Set(input.names.map(normalizeCategoryName).filter(Boolean)),
     )
     const rows = input.createMissing
-      ? await productCategoryRepository.createMissingByName({
-          workspaceId: input.workspaceId,
-          names,
-        })
-      : await productCategoryRepository.findByNames({
-          workspaceId: input.workspaceId,
-          names,
-        })
+      ? await productCategoryRepository.createMissingByName(
+          {
+            workspaceId: input.workspaceId,
+            names,
+          },
+          tx,
+        )
+      : await productCategoryRepository.findByNames(
+          {
+            workspaceId: input.workspaceId,
+            names,
+          },
+          tx,
+        )
 
     return new Map(
       rows.map((row) => [
         normalizeCategoryName(row.name).toLowerCase(),
         row.id,
       ]),
+    )
+  }
+
+  async resolvePaths(input: {
+    workspaceId: string
+    paths: ProductCategoryPath[]
+    createMissing: boolean
+    tx?: DatabaseClient
+  }) {
+    const { tx = db } = input
+    const paths = Array.from(
+      new Map(
+        input.paths
+          .map((path) => ({
+            categoryName: normalizeCategoryName(path.categoryName),
+            subcategoryName:
+              normalizeCategoryName(path.subcategoryName ?? "") || undefined,
+          }))
+          .filter((path) => path.categoryName)
+          .map((path) => [getProductCategoryPathKey(path), path]),
+      ).values(),
+    )
+    let rows = await productCategoryRepository.list(input.workspaceId, tx)
+    const topLevelByName = () =>
+      new Map(
+        rows
+          .filter((row) => !row.parentId)
+          .map((row) => [normalizeCategoryName(row.name).toLowerCase(), row]),
+      )
+
+    if (input.createMissing) {
+      const currentTopLevel = topLevelByName()
+      const missingTopLevelNames = paths
+        .map((path) => path.categoryName)
+        .filter(
+          (name) =>
+            !currentTopLevel.has(normalizeCategoryName(name).toLowerCase()),
+        )
+      if (missingTopLevelNames.length > 0) {
+        await productCategoryRepository.createMissingByName(
+          {
+            workspaceId: input.workspaceId,
+            names: missingTopLevelNames,
+          },
+          tx,
+        )
+        rows = await productCategoryRepository.list(input.workspaceId, tx)
+      }
+
+      const refreshedTopLevel = topLevelByName()
+      const existingChildren = new Set(
+        rows
+          .filter((row) => row.parentId)
+          .map((row) => getCategoryChildKey(row.parentId, row.name)),
+      )
+      const children = paths.flatMap((path) => {
+        if (!path.subcategoryName) {
+          return []
+        }
+        const parent = refreshedTopLevel.get(path.categoryName.toLowerCase())
+        if (
+          !parent ||
+          existingChildren.has(
+            getCategoryChildKey(parent.id, path.subcategoryName),
+          )
+        ) {
+          return []
+        }
+        return [{ parentId: parent.id, name: path.subcategoryName }]
+      })
+      if (children.length > 0) {
+        await productCategoryRepository.createMissingChildren(
+          { workspaceId: input.workspaceId, children },
+          tx,
+        )
+        rows = await productCategoryRepository.list(input.workspaceId, tx)
+      }
+    }
+
+    const resolvedTopLevel = topLevelByName()
+    const childByParentAndName = new Map(
+      rows
+        .filter((row) => row.parentId)
+        .map((row) => [getCategoryChildKey(row.parentId, row.name), row]),
+    )
+    return new Map(
+      paths.flatMap((path) => {
+        const category = resolvedTopLevel.get(path.categoryName.toLowerCase())
+        if (!category) {
+          return []
+        }
+        const subcategory = path.subcategoryName
+          ? childByParentAndName.get(
+              getCategoryChildKey(category.id, path.subcategoryName),
+            )
+          : undefined
+        return [
+          [
+            getProductCategoryPathKey(path),
+            {
+              categoryId: category.id,
+              subcategoryId: subcategory?.id ?? null,
+            },
+          ] as const,
+        ]
+      }),
     )
   }
 

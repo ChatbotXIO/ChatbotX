@@ -3867,7 +3867,7 @@
         "description": "The page customers open from Messenger Shopping. Products without a URL are skipped when syncing to Meta Catalog."
       },
       "sku": {
-        "label": "Content ID/Retailer ID/SKU",
+        "label": "SKU",
         "placeholder": "Optional"
       },
       "inventoryPolicy": {
@@ -4016,6 +4016,8 @@
     "edit": "Rename category",
     "name": "Category name",
     "namePlaceholder": "e.g. Summer collection",
+    "parent": "Parent category",
+    "noParent": "None (top level)",
     "save": "Save",
     "created": "Category created.",
     "updated": "Category updated.",
@@ -4029,7 +4031,13 @@
     "deleteDescription": "{count, plural, =0 {No products are assigned to this category.} one {# product will move to Uncategorized.} other {# products will move to Uncategorized.}}",
     "createSub": "Create subcategory",
     "empty": "No categories yet. Create one to group your products.",
-    "emptySubcategories": "No subcategories yet.",
+    "columns": {
+      "name": "Name",
+      "products": "Products",
+      "subcategories": "Subcategories"
+    },
+    "expand": "Show subcategories",
+    "collapse": "Hide subcategories",
     "productCount": "{count, plural, =0 {No products} one {# product} other {# products}}",
     "deleteChildrenWarning": "{count, plural, one {Its # subcategory will be deleted too.} other {Its # subcategories will be deleted too.}}"
   },

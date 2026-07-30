@@ -142,7 +142,7 @@ function RunDiagnostics({ run }: { run: MetaCatalogSyncRun }) {
         {run.skippedItems.map((item) => (
           <p key={`${item.productId}-${item.reason}`}>
             {t("itemSkipped", {
-              id: item.productId,
+              id: item.productName ?? item.productId,
               reason: t(`skipReasons.${item.reason}`),
             })}
           </p>

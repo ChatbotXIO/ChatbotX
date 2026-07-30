@@ -17,10 +17,18 @@ const PRODUCT_FIELDS = [
   "currency",
   "image_url",
   "additional_image_urls",
+  "images",
+  "image_cdn_urls",
+  "additional_image_cdn_urls",
   "availability",
   "brand",
   "product_type",
   "quantity_to_sell_on_facebook",
+  "custom_label_0",
+  "custom_label_1",
+  "custom_label_2",
+  "custom_label_3",
+  "custom_label_4",
   "url",
 ] as const
 

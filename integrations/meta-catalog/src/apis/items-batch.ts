@@ -99,7 +99,13 @@ export async function submitItemsBatch(input: {
         // Without this Graph rejects the call with "(#100) The parameter
         // item_type is required". Every request we build is a catalog product.
         item_type: BATCH_ITEM_TYPE,
-        allow_upsert: "false",
+        // A linked product always requests UPDATE, and a Content ID is
+        // considered immutable forever once linked (see resolveRetailerIds) —
+        // so if the item was deleted on Meta's side, this is the only chance
+        // to recreate it. With allow_upsert false, Meta just drops that
+        // request instead of erroring, which would leave the product silently
+        // stuck retrying the same dead retailer_id on every future sync.
+        allow_upsert: "true",
         requests: JSON.stringify(
           input.requests.map((request) => ({
             method: request.method,

@@ -1,13 +1,17 @@
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
+  inArray,
   isDatabaseError,
+  isNull,
   notInArray,
 } from "@chatbotx.io/database/client"
 import {
   integrationMetaCatalogModel,
   integrationModel,
+  metaCatalogSyncRunModel,
 } from "@chatbotx.io/database/schema"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import { createId } from "@chatbotx.io/utils"
@@ -18,13 +22,20 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "../errors"
-import { resolveMetaCatalogOutcome } from "../meta-catalog-shared/outcome-status"
+import { resolveMetaCatalogOutcome } from "./outcome-status"
 
 const GENERIC_IMPORT_FAILURE =
   "Meta Catalog import failed. Please try again or contact support."
 const WORKSPACE_UNIQUE_CONSTRAINT = "IntegrationMetaCatalog_workspaceId_key"
 const CURRENCY_CODE_REGEX = /^[A-Z]{3}$/
 const TRAILING_SLASH_REGEX = /\/$/
+const ACTIVE_IMPORT_STATUSES = ["queued", "running"] as const
+
+const toPublicMetaCatalogImportMessage = (message: string) =>
+  toPublicErrorMessage(
+    new ChatbotXException(message, "metaCatalogPublicError"),
+    GENERIC_IMPORT_FAILURE,
+  )
 
 export const metaCatalogStoredAuthSchema = z.object({
   accessToken: z.string().min(1),
@@ -40,14 +51,36 @@ const isWorkspaceUniqueViolation = (error: unknown): boolean =>
   error.cause.constraint === WORKSPACE_UNIQUE_CONSTRAINT
 
 class IntegrationMetaCatalogService extends BaseService {
-  findByWorkspaceId(workspaceId: string) {
-    return db.query.integrationMetaCatalogModel.findFirst({
-      where: { workspaceId },
+  findByWorkspaceId(workspaceId: string, tx: DatabaseClient = db) {
+    return tx.query.integrationMetaCatalogModel.findFirst({
+      where: { workspaceId, deletedAt: { isNull: true } },
     })
   }
 
-  async findByWorkspaceIdOrFail(workspaceId: string) {
-    const connection = await this.findByWorkspaceId(workspaceId)
+  async findByWorkspaceIdOrFail(workspaceId: string, tx: DatabaseClient = db) {
+    const connection = await this.findByWorkspaceId(workspaceId, tx)
+    if (!connection) {
+      throw notFoundException("Meta Catalog integration not found")
+    }
+    return connection
+  }
+
+  /**
+   * Serializes connection lifecycle transitions. Starting a run and
+   * disconnecting take this same row lock, so neither can observe a connection
+   * halfway through the other's state transition.
+   */
+  async lockByWorkspaceIdOrFail(workspaceId: string, tx: DatabaseClient) {
+    const [connection] = await tx
+      .select()
+      .from(integrationMetaCatalogModel)
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.workspaceId, workspaceId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+        ),
+      )
+      .for("update")
     if (!connection) {
       throw notFoundException("Meta Catalog integration not found")
     }
@@ -65,18 +98,52 @@ class IntegrationMetaCatalogService extends BaseService {
       tokenExpiresAt: input.tokenExpiresAt,
       status: "active" as const,
       authMode: "oauth" as const,
+      deletedAt: null,
     }
 
     const updateExisting = async () => {
-      const existing = await this.findByWorkspaceId(input.workspaceId)
-      if (!existing) {
-        return
-      }
-      await db
-        .update(integrationMetaCatalogModel)
-        .set(values)
-        .where(eq(integrationMetaCatalogModel.id, existing.id))
-      return existing.id
+      return await db.transaction(async (tx) => {
+        const [current] = await tx
+          .select({
+            id: integrationMetaCatalogModel.id,
+            deletedAt: integrationMetaCatalogModel.deletedAt,
+          })
+          .from(integrationMetaCatalogModel)
+          .where(eq(integrationMetaCatalogModel.workspaceId, input.workspaceId))
+          .for("update")
+        if (!current) {
+          return
+        }
+        let hasActiveRun = false
+        if (current.deletedAt) {
+          const [activeRun] = await tx
+            .select({ id: metaCatalogSyncRunModel.id })
+            .from(metaCatalogSyncRunModel)
+            .where(
+              and(
+                eq(metaCatalogSyncRunModel.workspaceId, input.workspaceId),
+                inArray(metaCatalogSyncRunModel.status, ["queued", "running"]),
+              ),
+            )
+            .limit(1)
+          hasActiveRun = Boolean(activeRun)
+        }
+        const [existing] = await tx
+          .update(integrationMetaCatalogModel)
+          .set({
+            ...values,
+            // Preserve an active run's import flag so its worker can finish
+            // against the revived connection. Reset only a genuinely idle
+            // deleted session; terminalizing a live run here could orphan
+            // already accepted Meta batch handles.
+            ...(current.deletedAt && !hasActiveRun
+              ? { importStatus: "idle" as const, importError: null }
+              : {}),
+          })
+          .where(eq(integrationMetaCatalogModel.id, current.id))
+          .returning({ id: integrationMetaCatalogModel.id })
+        return existing?.id
+      })
     }
 
     const existingId = await updateExisting()
@@ -122,13 +189,19 @@ class IntegrationMetaCatalogService extends BaseService {
    */
   async resolveAuth(connectionId: string): Promise<MetaCatalogStoredAuth> {
     const row = await db.query.integrationMetaCatalogModel.findFirst({
-      where: { id: connectionId },
+      where: { id: connectionId, deletedAt: { isNull: true } },
       columns: { encryptedAuth: true, status: true },
     })
     if (!row) {
       throw notFoundException("Meta Catalog integration not found")
     }
     if (row.status === "invalid") {
+      throw new ChatbotXException(
+        "Meta Catalog connection requires reconnection",
+        "metaCatalogReconnectRequired",
+      )
+    }
+    if (!row.encryptedAuth) {
       throw new ChatbotXException(
         "Meta Catalog connection requires reconnection",
         "metaCatalogReconnectRequired",
@@ -145,8 +218,10 @@ class IntegrationMetaCatalogService extends BaseService {
     catalogId: string
     catalogName?: string
     businessId?: string
+    tx?: DatabaseClient
   }) {
-    const [row] = await db
+    const { tx = db } = input
+    const [row] = await tx
       .update(integrationMetaCatalogModel)
       .set({
         catalogId: input.catalogId,
@@ -161,6 +236,7 @@ class IntegrationMetaCatalogService extends BaseService {
       .where(
         and(
           eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
+          isNull(integrationMetaCatalogModel.deletedAt),
           notInArray(integrationMetaCatalogModel.importStatus, [
             "queued",
             "running",
@@ -169,7 +245,7 @@ class IntegrationMetaCatalogService extends BaseService {
       )
       .returning()
     if (!row) {
-      const existing = await this.findByWorkspaceId(input.workspaceId)
+      const existing = await this.findByWorkspaceId(input.workspaceId, tx)
       if (existing && ["queued", "running"].includes(existing.importStatus)) {
         throw new ChatbotXException(
           "A Meta Catalog product import is already running",
@@ -192,15 +268,22 @@ class IntegrationMetaCatalogService extends BaseService {
     catalogId: string
     catalogName?: string
     businessId?: string
+    tx?: DatabaseClient
   }) {
-    const [row] = await db
+    const { tx = db } = input
+    const [row] = await tx
       .update(integrationMetaCatalogModel)
       .set({
         catalogId: input.catalogId,
         catalogName: input.catalogName,
         businessId: input.businessId,
       })
-      .where(eq(integrationMetaCatalogModel.workspaceId, input.workspaceId))
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+        ),
+      )
       .returning()
     if (!row) {
       throw notFoundException("Meta Catalog integration not found")
@@ -208,13 +291,15 @@ class IntegrationMetaCatalogService extends BaseService {
     return row
   }
 
-  async claimImport(connectionId: string) {
+  async claimImport(input: { connectionId: string; workspaceId: string }) {
     const [row] = await db
       .update(integrationMetaCatalogModel)
       .set({ importStatus: "running" })
       .where(
         and(
-          eq(integrationMetaCatalogModel.id, connectionId),
+          eq(integrationMetaCatalogModel.id, input.connectionId),
+          eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
+          isNull(integrationMetaCatalogModel.deletedAt),
           eq(integrationMetaCatalogModel.importStatus, "queued"),
         ),
       )
@@ -235,7 +320,13 @@ class IntegrationMetaCatalogService extends BaseService {
         importedCount: input.importedCount,
         importFailedCount: input.failedCount,
       })
-      .where(eq(integrationMetaCatalogModel.id, input.connectionId))
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.id, input.connectionId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+          eq(integrationMetaCatalogModel.importStatus, "running"),
+        ),
+      )
   }
 
   async completeImport(input: {
@@ -256,10 +347,18 @@ class IntegrationMetaCatalogService extends BaseService {
         importTotalCount: input.totalCount,
         importedCount: input.importedCount,
         importFailedCount: input.failedCount,
-        importError: input.error ?? null,
+        importError: input.error
+          ? toPublicMetaCatalogImportMessage(input.error)
+          : null,
         lastImportedAt: new Date(),
       })
-      .where(eq(integrationMetaCatalogModel.id, input.connectionId))
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.id, input.connectionId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+          eq(integrationMetaCatalogModel.importStatus, "running"),
+        ),
+      )
   }
 
   /**
@@ -275,7 +374,16 @@ class IntegrationMetaCatalogService extends BaseService {
         importError: toPublicErrorMessage(error, GENERIC_IMPORT_FAILURE),
         lastImportedAt: new Date(),
       })
-      .where(eq(integrationMetaCatalogModel.id, connectionId))
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.id, connectionId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+          inArray(integrationMetaCatalogModel.importStatus, [
+            "queued",
+            "running",
+          ]),
+        ),
+      )
   }
 
   async saveSettings(input: {
@@ -311,7 +419,12 @@ class IntegrationMetaCatalogService extends BaseService {
         currency,
         storeUrl: storeUrl.toString().replace(TRAILING_SLASH_REGEX, ""),
       })
-      .where(eq(integrationMetaCatalogModel.workspaceId, input.workspaceId))
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+        ),
+      )
       .returning()
     if (!row) {
       throw notFoundException("Meta Catalog integration not found")
@@ -323,21 +436,66 @@ class IntegrationMetaCatalogService extends BaseService {
     await db
       .update(integrationMetaCatalogModel)
       .set({ status: "invalid" })
-      .where(eq(integrationMetaCatalogModel.workspaceId, workspaceId))
+      .where(
+        and(
+          eq(integrationMetaCatalogModel.workspaceId, workspaceId),
+          isNull(integrationMetaCatalogModel.deletedAt),
+        ),
+      )
   }
 
   async disconnect(workspaceId: string) {
-    const existing = await this.findByWorkspaceId(workspaceId)
-    if (!existing) {
-      return
-    }
     await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(integrationMetaCatalogModel)
+        .where(
+          and(
+            eq(integrationMetaCatalogModel.workspaceId, workspaceId),
+            isNull(integrationMetaCatalogModel.deletedAt),
+          ),
+        )
+        .for("update")
+      if (!existing) {
+        return
+      }
+      const [activeRun] = await tx
+        .select({ id: metaCatalogSyncRunModel.id })
+        .from(metaCatalogSyncRunModel)
+        .where(
+          and(
+            eq(metaCatalogSyncRunModel.workspaceId, workspaceId),
+            inArray(metaCatalogSyncRunModel.status, ["queued", "running"]),
+          ),
+        )
+        .limit(1)
+      if (
+        activeRun ||
+        ACTIVE_IMPORT_STATUSES.includes(
+          existing.importStatus as (typeof ACTIVE_IMPORT_STATUSES)[number],
+        )
+      ) {
+        throw new ChatbotXException(
+          "Wait for the active Meta Catalog sync to finish before disconnecting",
+          "metaCatalogSyncAlreadyRunning",
+        )
+      }
       await tx
-        .delete(integrationMetaCatalogModel)
-        .where(eq(integrationMetaCatalogModel.id, existing.id))
-      await tx
-        .delete(integrationModel)
-        .where(eq(integrationModel.id, existing.integrationId))
+        .update(integrationMetaCatalogModel)
+        .set({
+          deletedAt: new Date(),
+          encryptedAuth: null,
+          tokenExpiresAt: null,
+          status: "invalid",
+          importStatus: "failed",
+          importError: "Meta Catalog was disconnected",
+        })
+        .where(
+          and(
+            eq(integrationMetaCatalogModel.id, existing.id),
+            isNull(integrationMetaCatalogModel.deletedAt),
+          ),
+        )
     })
   }
 }

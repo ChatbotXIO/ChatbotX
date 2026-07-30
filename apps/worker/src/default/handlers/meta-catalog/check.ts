@@ -4,6 +4,7 @@ import {
   productService,
   workspaceService,
 } from "@chatbotx.io/business"
+import type { MetaCatalogBatchHandle } from "@chatbotx.io/database/partials"
 import { metaCatalogItemRepository } from "@chatbotx.io/database/repositories"
 import {
   checkItemsBatch,
@@ -17,17 +18,35 @@ import {
   type JobCheckMetaCatalogSync,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
+import { safeMetaCatalogErrorLog } from "./safe-error-log"
 
 const MAX_POLL_ATTEMPTS = 12
 const BASE_POLL_DELAY_MS = 5000
 
+class CheckDispatchError extends Error {
+  readonly cause: unknown
+
+  constructor(cause: unknown) {
+    super("Failed to dispatch the next Meta Catalog status check")
+    this.cause = cause
+  }
+}
+
 const pollDelay = (attempt: number): number =>
   Math.min(BASE_POLL_DELAY_MS * 2 ** attempt, 60_000)
+
+const getBatchRetailerIds = (batch: MetaCatalogBatchHandle): string[] =>
+  "items" in batch
+    ? batch.items.map((item) => item.retailerId)
+    : batch.retailerIds
 
 export async function checkMetaCatalogSync(
   data: JobCheckMetaCatalogSync["data"],
 ): Promise<void> {
-  const run = await metaCatalogSyncRunService.findById(data.runId)
+  const run = await metaCatalogSyncRunService.findById({
+    runId: data.runId,
+    workspaceId: data.workspaceId,
+  })
   if (run.status !== "running") {
     return
   }
@@ -37,7 +56,11 @@ export async function checkMetaCatalogSync(
       await integrationMetaCatalogService.findByWorkspaceIdOrFail(
         data.workspaceId,
       )
-    const { catalogId } = connection
+    if (run.integrationMetaCatalogId !== connection.id) {
+      throw new Error("Meta Catalog sync run does not match its connection")
+    }
+    // Poll the catalog that produced these handles, never a later UI binding.
+    const catalogId = run.catalogId ?? connection.catalogId
     if (!catalogId) {
       throw new Error("Meta Catalog is not selected")
     }
@@ -48,7 +71,7 @@ export async function checkMetaCatalogSync(
           accessToken: auth.accessToken,
           catalogId,
           handle: batch.handle,
-          retailerIds: batch.retailerIds,
+          retailerIds: getBatchRetailerIds(batch),
           version: auth.version,
         }),
       ),
@@ -60,27 +83,63 @@ export async function checkMetaCatalogSync(
       }
       const nextAttempt = data.attempt + 1
       await metaCatalogSyncRunService.incrementPollAttempt(run.id)
-      await defaultQueue.add(
-        DefaultJobAction.checkMetaCatalogSync,
-        {
-          type: DefaultJobAction.checkMetaCatalogSync,
-          data: {
-            workspaceId: data.workspaceId,
-            runId: run.id,
-            attempt: nextAttempt,
+      try {
+        await defaultQueue.add(
+          DefaultJobAction.checkMetaCatalogSync,
+          {
+            type: DefaultJobAction.checkMetaCatalogSync,
+            data: {
+              workspaceId: data.workspaceId,
+              runId: run.id,
+              attempt: nextAttempt,
+            },
           },
-        },
-        {
-          delay: pollDelay(nextAttempt),
-          jobId: `mc-check-${run.id}-${nextAttempt}`,
-        },
-      )
+          {
+            delay: pollDelay(nextAttempt),
+            jobId: `mc-check-${run.id}-${nextAttempt}`,
+          },
+        )
+      } catch (error) {
+        throw new CheckDispatchError(error)
+      }
       return
     }
 
     const results = checks.flatMap((check) => check.results)
+    // Submission recorded which productId asked for which retailerId, so this
+    // never has to guess one from the other — a retailerId is frequently a
+    // product's SKU, not its id, and re-deriving the productId from it later
+    // silently mismatched every brand-new item whose Content ID was a SKU.
+    const productIdByRetailerId = new Map(
+      run.handles.flatMap((batch) =>
+        "items" in batch
+          ? batch.items.map(
+              (item) => [item.retailerId, item.productId] as const,
+            )
+          : [],
+      ),
+    )
+    const legacyRetailerIds = run.handles.flatMap((batch) =>
+      "retailerIds" in batch ? batch.retailerIds : [],
+    )
+    if (legacyRetailerIds.length > 0) {
+      const legacyLinks = await metaCatalogItemRepository.findByRetailerIds({
+        integrationMetaCatalogId: connection.id,
+        catalogId,
+        retailerIds: legacyRetailerIds,
+      })
+      const linkedProductIdByRetailerId = new Map(
+        legacyLinks.map((item) => [item.retailerId, item.productId]),
+      )
+      for (const retailerId of legacyRetailerIds) {
+        productIdByRetailerId.set(
+          retailerId,
+          linkedProductIdByRetailerId.get(retailerId) ?? retailerId,
+        )
+      }
+    }
     const requestedRetailerIds = Array.from(
-      new Set(run.handles.flatMap((batch) => batch.retailerIds)),
+      new Set(run.handles.flatMap(getBatchRetailerIds)),
     )
     const resultsByRetailerId = new Map(
       results
@@ -101,22 +160,18 @@ export async function checkMetaCatalogSync(
         },
       ]
     })
-    const successfulRetailerIds = requestedRetailerIds.filter(
-      (retailerId) => resultsByRetailerId.get(retailerId)?.success,
-    )
-    const existingLinks = await metaCatalogItemRepository.findByRetailerIds({
-      integrationMetaCatalogId: connection.id,
-      catalogId,
-      retailerIds: successfulRetailerIds,
-    })
-    const productIdByRetailerId = new Map(
-      existingLinks.map((item) => [item.retailerId, item.productId]),
+    const successfulRetailerIds = new Set(
+      requestedRetailerIds.filter(
+        (retailerId) => resultsByRetailerId.get(retailerId)?.success,
+      ),
     )
     const retailerIdByProductId = new Map(
-      successfulRetailerIds.map((retailerId) => [
-        productIdByRetailerId.get(retailerId) ?? retailerId,
-        retailerId,
-      ]),
+      requestedRetailerIds
+        .filter((retailerId) => successfulRetailerIds.has(retailerId))
+        .map((retailerId) => [
+          productIdByRetailerId.get(retailerId) ?? retailerId,
+          retailerId,
+        ]),
     )
     const [products, workspace] = await Promise.all([
       productService.listForCatalogSync({
@@ -127,6 +182,17 @@ export async function checkMetaCatalogSync(
     ])
     if (!workspace) {
       throw new Error("Workspace not found")
+    }
+    const loadedProductIds = new Set(products.map((product) => product.id))
+    for (const retailerId of successfulRetailerIds) {
+      const productId = productIdByRetailerId.get(retailerId) ?? retailerId
+      if (!loadedProductIds.has(productId)) {
+        errors.push({
+          retailerId,
+          reason:
+            "The local product for this legacy Meta sync could not be resolved; sync this item again",
+        })
+      }
     }
     const succeededItems = products.flatMap((product) => {
       const mapped = toMetaItem(
@@ -156,11 +222,16 @@ export async function checkMetaCatalogSync(
       errors,
     })
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Meta Catalog status check failed"
-    logger.error({ err: error, runId: data.runId }, message)
+    if (error instanceof CheckDispatchError) {
+      // Keep the run active. BullMQ retries this job, and the scheduled
+      // reconciler is the durable fallback if Redis stays unavailable.
+      throw error.cause
+    }
+    const safeLog = safeMetaCatalogErrorLog(
+      error,
+      "Meta Catalog status check failed",
+    )
+    logger.error({ ...safeLog.details, runId: data.runId }, safeLog.message)
     if (isInvalidMetaTokenError(error)) {
       await integrationMetaCatalogService.markInvalid(data.workspaceId)
     }

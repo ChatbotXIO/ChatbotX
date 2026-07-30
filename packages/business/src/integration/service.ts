@@ -1,5 +1,16 @@
-import { db, eq } from "@chatbotx.io/database/client"
-import { integrationModel } from "@chatbotx.io/database/schema"
+import {
+  and,
+  db,
+  eq,
+  exists,
+  isNull,
+  ne,
+  or,
+} from "@chatbotx.io/database/client"
+import {
+  integrationMetaCatalogModel,
+  integrationModel,
+} from "@chatbotx.io/database/schema"
 import type { IntegrationModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 
@@ -8,7 +19,28 @@ class IntegrationService extends BaseService {
     return await db
       .select()
       .from(integrationModel)
-      .where(eq(integrationModel.workspaceId, workspaceId))
+      .where(
+        and(
+          eq(integrationModel.workspaceId, workspaceId),
+          or(
+            ne(integrationModel.integrationType, "metaCatalog"),
+            exists(
+              db
+                .select({ id: integrationMetaCatalogModel.id })
+                .from(integrationMetaCatalogModel)
+                .where(
+                  and(
+                    eq(
+                      integrationMetaCatalogModel.integrationId,
+                      integrationModel.id,
+                    ),
+                    isNull(integrationMetaCatalogModel.deletedAt),
+                  ),
+                ),
+            ),
+          ),
+        ),
+      )
   }
 }
 

@@ -1,4 +1,6 @@
 import {
+  MAX_CUSTOM_LABEL_LENGTH,
+  MAX_CUSTOM_LABELS,
   MAX_DESCRIPTION_LENGTH,
   MAX_IMAGES_PER_ITEM,
   MAX_TITLE_LENGTH,
@@ -33,6 +35,7 @@ export type CatalogProduct = {
   allowOutOfStockPurchase: boolean
   isActive: boolean
   images: Array<{ url: string; type: "link" | "file" }>
+  tags: string[]
   vendor: string | null
   category?: { name: string } | null
   subcategory?: { name: string } | null
@@ -109,6 +112,10 @@ const stripHtml = (value: string): string =>
     .replace(/\s+/g, " ")
     .trim()
 
+const resolveDescription = (product: CatalogProduct): string =>
+  stripHtml(product.longDescription ?? "") ||
+  stripHtml(product.shortDescription ?? "")
+
 const formatAmount = (amount: number, currency: string): string => {
   const fractionDigits = currency.toUpperCase() === "VND" ? 0 : 2
   const formattedAmount = Number(amount.toFixed(fractionDigits)).toString()
@@ -129,8 +136,7 @@ const resolveSkipReason = (
     },
     {
       reason: SkipReason.missingDescription,
-      when: () =>
-        !stripHtml(product.shortDescription ?? product.longDescription ?? ""),
+      when: () => !resolveDescription(product),
     },
     {
       reason: SkipReason.missingStoreUrl,
@@ -163,15 +169,29 @@ export const toMetaItem = (
     return { ok: false, productId: product.id, reason }
   }
 
-  const description = stripHtml(
-    product.shortDescription ?? product.longDescription ?? "",
-  ).slice(0, MAX_DESCRIPTION_LENGTH)
+  const description = resolveDescription(product).slice(
+    0,
+    MAX_DESCRIPTION_LENGTH,
+  )
+  const shortDescription = stripHtml(product.shortDescription ?? "").slice(
+    0,
+    MAX_DESCRIPTION_LENGTH,
+  )
   const currency = resolveCurrency(product, settings)
   const salePrice =
     product.discount > 0
       ? Math.max(0, product.price * (1 - product.discount / 100))
       : undefined
   const productType = resolveProductType(product)
+  const cleanedTags = product.tags
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, MAX_CUSTOM_LABELS)
+    .map((tag) => tag.slice(0, MAX_CUSTOM_LABEL_LENGTH))
+  const customLabels = Array.from(
+    { length: MAX_CUSTOM_LABELS },
+    (_, index) => cleanedTags[index] ?? "",
+  )
 
   return {
     ok: true,
@@ -180,6 +200,7 @@ export const toMetaItem = (
     data: {
       title: product.name.slice(0, MAX_TITLE_LENGTH),
       description,
+      short_description: shortDescription,
       availability: resolveMetaAvailability(product),
       condition: "new",
       image: product.images
@@ -188,12 +209,19 @@ export const toMetaItem = (
         .map((image) => ({ url: image.url, tag: [] })),
       link: resolveProductLink(product, settings),
       price: formatAmount(product.price, currency),
-      ...(salePrice === undefined
-        ? {}
-        : { sale_price: formatAmount(salePrice, currency) }),
+      sale_price:
+        salePrice === undefined ? "" : formatAmount(salePrice, currency),
       brand: product.vendor?.trim() || settings.workspaceName,
-      ...(productType ? { product_type: productType } : {}),
-      quantity_to_sell_on_facebook: product.inventoryQuantity,
+      product_type: productType ?? "",
+      // `dont_track` can retain a stale hidden quantity in the local row.
+      // Sending it would make a later Meta import infer tracked inventory.
+      quantity_to_sell_on_facebook:
+        product.inventoryPolicy === "track" ? product.inventoryQuantity : 0,
+      custom_label_0: customLabels[0] ?? "",
+      custom_label_1: customLabels[1] ?? "",
+      custom_label_2: customLabels[2] ?? "",
+      custom_label_3: customLabels[3] ?? "",
+      custom_label_4: customLabels[4] ?? "",
     },
   }
 }

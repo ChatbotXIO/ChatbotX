@@ -34,15 +34,21 @@ export type MetaCatalogBatchRequest = {
 export type MetaCatalogProductData = {
   title: string
   description: string
+  short_description?: string
   availability: string
   condition: "new"
   image: Array<{ url: string; tag: string[] }>
   link: string
   price: string
-  sale_price?: string
+  sale_price: string
   brand: string
-  product_type?: string
+  product_type: string
   quantity_to_sell_on_facebook: number
+  custom_label_0: string
+  custom_label_1: string
+  custom_label_2: string
+  custom_label_3: string
+  custom_label_4: string
 }
 
 export type MetaCatalogBatchItemResult = {
@@ -63,10 +69,21 @@ export const metaCatalogRemoteProductSchema = z
     currency: z.string().optional(),
     image_url: z.string().optional(),
     additional_image_urls: z.array(z.string()).optional(),
+    // Meta may return localized image objects or locale-keyed maps here.
+    // Preserve the raw shapes and normalize them in the inbound mapper.
+    images: z.unknown().optional(),
+    image_cdn_urls: z.unknown().optional(),
+    additional_image_cdn_urls: z.unknown().optional(),
+    image_fetch_status: z.unknown().optional(),
     availability: z.string().optional(),
     brand: z.string().optional(),
     product_type: z.string().optional(),
     quantity_to_sell_on_facebook: z.union([z.number(), z.string()]).optional(),
+    custom_label_0: z.string().optional(),
+    custom_label_1: z.string().optional(),
+    custom_label_2: z.string().optional(),
+    custom_label_3: z.string().optional(),
+    custom_label_4: z.string().optional(),
     url: z.string().optional(),
   })
   .passthrough()

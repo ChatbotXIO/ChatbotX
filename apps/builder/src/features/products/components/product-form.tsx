@@ -227,7 +227,7 @@ export function ProductForm({
               cannot be made. */}
           {metaCatalogId ? (
             <Card>
-              <CardContent className="flex items-center justify-between gap-4 pt-6">
+              <CardContent className="flex items-center justify-between gap-4">
                 <span className="text-muted-foreground text-sm">
                   {t("products.fields.metaCatalogId.label")}
                 </span>

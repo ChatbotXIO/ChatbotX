@@ -1297,6 +1297,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       ky:
         specifier: ^2.0.2
         version: 2.0.2

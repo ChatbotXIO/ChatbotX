@@ -8,6 +8,7 @@ describe("Meta Catalog inbound product mapper", () => {
       retailer_id: "merchant-sku-1",
       name: "Imported product",
       description: "Description",
+      short_description: "Short description",
       price: "100",
       sale_price: "80",
       image_url: "https://cdn.example.com/main.jpg",
@@ -16,6 +17,8 @@ describe("Meta Catalog inbound product mapper", () => {
         "https://cdn.example.com/second.jpg",
       ],
       product_type: "Shoes",
+      custom_label_0: "featured",
+      custom_label_1: "summer",
       quantity_to_sell_on_facebook: "4",
       availability: "in stock",
     })
@@ -28,8 +31,12 @@ describe("Meta Catalog inbound product mapper", () => {
         price: 100,
         discount: 20,
         categoryName: "Shoes",
+        longDescription: "Description",
+        shortDescription: "Short description",
+        tags: ["featured", "summer"],
         inventoryQuantity: 4,
         inventoryPolicy: "track",
+        allowOutOfStockPurchase: false,
         images: [
           { type: "link", url: "https://cdn.example.com/main.jpg" },
           { type: "link", url: "https://cdn.example.com/second.jpg" },
@@ -107,7 +114,9 @@ describe("Meta Catalog inbound product mapper", () => {
     expect(result).toEqual(
       expect.objectContaining({
         ok: true,
-        product: expect.objectContaining({ productUrl: undefined }),
+        product: expect.not.objectContaining({
+          productUrl: expect.anything(),
+        }),
       }),
     )
   })
@@ -122,7 +131,169 @@ describe("Meta Catalog inbound product mapper", () => {
 
     expect(result).toEqual({
       ok: true,
-      product: expect.objectContaining({ images: [] }),
+      product: expect.not.objectContaining({ images: expect.anything() }),
+    })
+  })
+
+  test("prefers original localized images over Meta CDN copies", () => {
+    const result = toImportedMetaProduct({
+      retailer_id: "remote-images",
+      name: "Product with images",
+      image_url: "",
+      additional_image_urls: [],
+      images: {
+        en_US: [{ url: "https://origin.example.com/main.jpg", tag: ["en_US"] }],
+      },
+      image_cdn_urls: {
+        en_US: "https://cdn.example.com/main.jpg",
+      },
+      additional_image_cdn_urls: [
+        "https://cdn.example.com/second.jpg",
+        "https://origin.example.com/main.jpg",
+      ],
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      product: expect.objectContaining({
+        images: [{ type: "link", url: "https://origin.example.com/main.jpg" }],
+      }),
+    })
+  })
+
+  test("falls back to Meta CDN images when original image fields are empty", () => {
+    const result = toImportedMetaProduct({
+      retailer_id: "remote-cdn-images",
+      name: "Product with CDN images",
+      image_url: "",
+      additional_image_urls: [],
+      image_cdn_urls: {
+        en_US: "https://cdn.example.com/main.jpg",
+      },
+      additional_image_cdn_urls: [
+        "https://cdn.example.com/second.jpg",
+        "https://cdn.example.com/main.jpg",
+      ],
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      product: expect.objectContaining({
+        images: [
+          { type: "link", url: "https://cdn.example.com/main.jpg" },
+          { type: "link", url: "https://cdn.example.com/second.jpg" },
+        ],
+      }),
+    })
+  })
+
+  test("preserves ambiguous available-for-order inventory policy", () => {
+    const result = toImportedMetaProduct({
+      retailer_id: "remote-inventory",
+      name: "Backordered product",
+      quantity_to_sell_on_facebook: "0",
+      availability: "available for order",
+      product_type: "Home > Robot vacuums",
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      product: expect.objectContaining({
+        categoryName: "Home",
+        subcategoryName: "Robot vacuums",
+        inventoryQuantity: 0,
+      }),
+    })
+    expect(result).toEqual({
+      ok: true,
+      product: expect.not.objectContaining({
+        inventoryPolicy: expect.anything(),
+        allowOutOfStockPurchase: expect.anything(),
+      }),
+    })
+  })
+
+  test("preserves inventory policy when a zero-quantity product is discontinued", () => {
+    const result = toImportedMetaProduct({
+      retailer_id: "remote-inactive-untracked",
+      name: "Inactive untracked product",
+      quantity_to_sell_on_facebook: "0",
+      availability: "discontinued",
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      product: expect.objectContaining({
+        inventoryQuantity: 0,
+        isActive: false,
+      }),
+    })
+    expect(result).toEqual({
+      ok: true,
+      product: expect.not.objectContaining({
+        inventoryPolicy: expect.anything(),
+        allowOutOfStockPurchase: expect.anything(),
+      }),
+    })
+  })
+
+  test("rejects malformed sale price instead of clearing local discount", () => {
+    expect(
+      toImportedMetaProduct({
+        retailer_id: "remote-invalid-sale",
+        name: "Invalid sale",
+        price: "100 USD",
+        sale_price: "not-a-price",
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        ok: false,
+        reason: expect.stringContaining("sale price is invalid"),
+      }),
+    )
+  })
+
+  test("does not invent inventory settings when Meta omits quantity", () => {
+    const result = toImportedMetaProduct({
+      retailer_id: "remote-no-inventory",
+      name: "Ads-only product",
+      availability: "in stock",
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      product: expect.not.objectContaining({
+        price: expect.anything(),
+        discount: expect.anything(),
+        inventoryQuantity: expect.anything(),
+        inventoryPolicy: expect.anything(),
+        allowOutOfStockPurchase: expect.anything(),
+        isActive: expect.anything(),
+      }),
+    })
+  })
+
+  test("preserves explicit clears for nullable local product fields", () => {
+    const result = toImportedMetaProduct({
+      retailer_id: "remote-cleared-fields",
+      name: "Cleared product",
+      description: "",
+      short_description: "",
+      brand: "",
+      product_type: "",
+      url: "",
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      product: expect.objectContaining({
+        productUrl: null,
+        shortDescription: null,
+        longDescription: null,
+        vendor: null,
+        categoryName: null,
+        subcategoryName: null,
+      }),
     })
   })
 })

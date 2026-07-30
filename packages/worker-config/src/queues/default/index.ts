@@ -181,6 +181,8 @@ export type JobSubmitMetaCatalogSync = {
   data: {
     workspaceId: string
     runId: string
+    /** Set only by the stale-run reconciler; normal BullMQ retries cannot steal. */
+    recovery?: boolean
   }
 }
 

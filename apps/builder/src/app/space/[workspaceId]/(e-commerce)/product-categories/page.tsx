@@ -10,8 +10,8 @@ export default async function ProductCategoriesPage({
   const { workspaceId } = await params
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  // The whole tree, both levels: which level is shown is a client-side concern
-  // driven by `?parentId=`, so re-fetching per drill-in would buy nothing.
+  // The whole tree, both levels: the table expands in place, so there is no
+  // navigation left that a second fetch could serve.
   const categories = await productCategoryService.list(workspaceId)
 
   return <ManageCategories categories={categories} workspaceId={workspaceId} />

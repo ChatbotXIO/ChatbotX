@@ -2,16 +2,33 @@
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@chatbotx.io/ui/components/ui/table"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import {
+  ChevronDownIcon,
   ChevronRightIcon,
+  EllipsisIcon,
   FolderIcon,
   PencilIcon,
+  PlusIcon,
   TrashIcon,
 } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { groupByParent, rootsOf } from "../lib/category-tree"
+import { toTableRows } from "../lib/category-tree"
 import type { ProductCategoryResource } from "../schema/resource"
 import { CategoryFormDialog } from "./category-form-dialog"
 import { DeleteCategoryDialog } from "./delete-category-dialog"
@@ -22,156 +39,210 @@ type ManageCategoriesProps = {
 }
 
 /**
- * Folder-style management for the two-level category tree. The whole tree
- * arrives as one flat list — it is small enough that paging it would cost more
- * than it saves — and the level being shown is decided by `?parentId=`, so a
- * drilled-in view stays shareable and survives a refresh.
+ * The two-level category tree as one expandable table. The whole tree arrives as
+ * a flat list — small enough that paging it would cost more than it saves — so
+ * every level is already on the client and expanding is a local state change
+ * rather than navigation.
+ *
+ * Which rows are open is deliberately *not* in the URL: it is a transient view
+ * preference, and putting it in `?parentId=` (as the previous drill-in did) made
+ * a shared link carry someone else's scroll position rather than the page.
  */
 export function ManageCategories({
   workspaceId,
   categories,
 }: ManageCategoriesProps) {
   const t = useTranslations("productCategories")
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [editing, setEditing] = useState<ProductCategoryResource | null>(null)
   const [deleting, setDeleting] = useState<ProductCategoryResource | null>(null)
-
-  const childrenByParent = useMemo(
-    () => groupByParent(categories),
-    [categories],
+  const [addingChildTo, setAddingChildTo] =
+    useState<ProductCategoryResource | null>(null)
+  // Open by default: the point of a single table is seeing the whole tree, and
+  // a first visit that shows only parents is indistinguishable from a workspace
+  // that has no sub-categories.
+  const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
   )
 
-  // Falling back to the root rather than an empty screen: the parent may have
-  // been deleted in another tab, and a stale id should not look like data loss.
-  const parent =
-    categories.find(
-      (category) => category.id === searchParams.get("parentId"),
-    ) ?? null
-  const parentId = parent?.id ?? null
-  const visible = parentId
-    ? (childrenByParent.get(parentId) ?? [])
-    : rootsOf(categories)
+  // Tracking what is *closed* rather than what is open keeps a category created
+  // after the first render visible: an unknown id is expanded, so a refreshed
+  // list never hides rows the user just added.
+  const expandedIds = useMemo(
+    () =>
+      new Set(
+        categories.map(({ id }) => id).filter((id) => !collapsedIds.has(id)),
+      ),
+    [categories, collapsedIds],
+  )
+  const rows = useMemo(
+    () => toTableRows(categories, expandedIds),
+    [categories, expandedIds],
+  )
   const childCountOf = (categoryId: string) =>
-    childrenByParent.get(categoryId)?.length ?? 0
+    rows.find(({ category }) => category.id === categoryId)?.childCount ?? 0
 
-  const openParent = (nextParentId: string | null) => {
-    const params = new URLSearchParams(searchParams)
-    if (nextParentId) {
-      params.set("parentId", nextParentId)
-    } else {
-      params.delete("parentId")
-    }
-    router.push(`?${params.toString()}`)
+  const toggleExpanded = (categoryId: string) => {
+    setCollapsedIds((current) => {
+      const next = new Set(current)
+      if (next.has(categoryId)) {
+        next.delete(categoryId)
+      } else {
+        next.add(categoryId)
+      }
+      return next
+    })
+  }
+
+  const startAddingChild = (category: ProductCategoryResource) => {
+    // Opening the parent first, so the new sub-category is not created into a
+    // collapsed row the user then has to go looking for.
+    setCollapsedIds((current) => {
+      const next = new Set(current)
+      next.delete(category.id)
+      return next
+    })
+    setAddingChildTo(category)
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <AppBreadcrumb
-            items={[
-              {
-                label: t("title"),
-                element: (
-                  <Button
-                    className="p-0 hover:bg-transparent"
-                    onClick={() => openParent(null)}
-                    variant="ghost"
-                  >
-                    {t("title")}
-                  </Button>
-                ),
-              },
-              ...(parent
-                ? [
-                    {
-                      label: parent.name,
-                      element: (
-                        <Button
-                          className="p-0 hover:bg-transparent"
-                          disabled
-                          variant="ghost"
-                        >
-                          {parent.name}
-                        </Button>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-          />
+          <AppBreadcrumb items={[{ label: t("title") }]} />
         </div>
         <CategoryFormDialog
-          key={parentId ?? "root"}
-          parentId={parentId}
+          parentCandidates={categories}
+          parentId={null}
           workspaceId={workspaceId}
         />
       </div>
 
-      {visible.length === 0 ? (
+      {categories.length === 0 ? (
         <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground text-sm">
-          {parentId ? t("emptySubcategories") : t("empty")}
+          {t("empty")}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((category) => {
-            const label = (
-              <>
-                <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate text-left">
-                  {category.name}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {t("productCount", { count: category.productCount })}
-                </span>
-              </>
-            )
-            return (
-              <div
-                className="group flex items-center gap-1 rounded-lg border pr-2 hover:border-primary"
-                key={category.id}
-              >
-                {/* Only a top-level category can be opened; rendering a
-                    sub-category as a button would put an inert stop in the tab
-                    order and promise a drill-in that does not exist. */}
-                {parentId ? (
-                  <div className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2 text-sm">
-                    {label}
-                  </div>
-                ) : (
-                  <Button
-                    className="min-w-0 flex-1 justify-start gap-3 px-4 hover:bg-transparent"
-                    onClick={() => openParent(category.id)}
-                    size="lg"
-                    variant="ghost"
-                  >
-                    {label}
-                    <ChevronRightIcon className="text-muted-foreground" />
-                  </Button>
-                )}
-                <Button
-                  aria-label={t("edit")}
-                  onClick={() => setEditing(category)}
-                  size="icon"
-                  variant="ghost"
-                >
-                  <PencilIcon />
-                </Button>
-                <Button
-                  aria-label={t("delete")}
-                  onClick={() => setDeleting(category)}
-                  size="icon"
-                  variant="ghost"
-                >
-                  <TrashIcon />
-                </Button>
-              </div>
-            )
-          })}
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("columns.name")}</TableHead>
+                <TableHead className="w-32 text-right">
+                  {t("columns.products")}
+                </TableHead>
+                <TableHead className="w-32 text-right">
+                  {t("columns.subcategories")}
+                </TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map(({ category, depth, childCount }) => {
+                const isExpanded = expandedIds.has(category.id)
+                return (
+                  <TableRow key={category.id}>
+                    <TableCell>
+                      <div
+                        className={cn(
+                          "flex items-center gap-2",
+                          depth > 0 && "pl-8",
+                        )}
+                      >
+                        {childCount > 0 ? (
+                          <Button
+                            aria-expanded={isExpanded}
+                            aria-label={
+                              isExpanded ? t("collapse") : t("expand")
+                            }
+                            className="size-6"
+                            onClick={() => toggleExpanded(category.id)}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            {isExpanded ? (
+                              <ChevronDownIcon />
+                            ) : (
+                              <ChevronRightIcon />
+                            )}
+                          </Button>
+                        ) : (
+                          // A spacer rather than nothing: without it the folder
+                          // icons of childless and expandable rows sit on
+                          // different vertical lines.
+                          <span aria-hidden className="size-6 shrink-0" />
+                        )}
+                        <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{category.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {category.productCount}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground tabular-nums">
+                      {/* A sub-category cannot have children of its own, so a
+                          zero here would read as "none yet" rather than "not
+                          possible". */}
+                      {depth > 0 ? "—" : childCount}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-label={t("actions")}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <EllipsisIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() => setEditing(category)}
+                          >
+                            <PencilIcon />
+                            {t("edit")}
+                          </DropdownMenuItem>
+                          {depth === 0 ? (
+                            <DropdownMenuItem
+                              onSelect={() => startAddingChild(category)}
+                            >
+                              <PlusIcon />
+                              {t("createSub")}
+                            </DropdownMenuItem>
+                          ) : null}
+                          <DropdownMenuItem
+                            onSelect={() => setDeleting(category)}
+                            variant="destructive"
+                          >
+                            <TrashIcon />
+                            {t("delete")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 
+      {addingChildTo ? (
+        <CategoryFormDialog
+          hideTrigger
+          key={`new-child-${addingChildTo.id}`}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAddingChildTo(null)
+            }
+          }}
+          open
+          parentCandidates={categories}
+          parentId={addingChildTo.id}
+          workspaceId={workspaceId}
+        />
+      ) : null}
       {editing ? (
         <CategoryFormDialog
           category={editing}

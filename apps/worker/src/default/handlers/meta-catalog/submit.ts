@@ -9,6 +9,7 @@ import { metaCatalogItemRepository } from "@chatbotx.io/database/repositories"
 import {
   CATALOG_BATCH_SIZE,
   concurrencyForUsage,
+  isDefiniteMetaRequestRejection,
   isInvalidMetaTokenError,
   resolveRetailerIds,
   submitItemsBatch,
@@ -20,6 +21,12 @@ import {
   type JobSubmitMetaCatalogSync,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
+import { safeMetaCatalogErrorLog } from "./safe-error-log"
+
+const INTERRUPTED_ITEM_REASON =
+  "Submission was interrupted; sync this item again"
+const SUBMISSION_LEASE_LOST = new Error("Meta Catalog submission lease lost")
+const SUBMISSION_STALE_MS = 2 * 60 * 1000
 
 const chunk = <T>(items: readonly T[], size: number): T[][] => {
   const chunks: T[][] = []
@@ -29,20 +36,57 @@ const chunk = <T>(items: readonly T[], size: number): T[][] => {
   return chunks
 }
 
+const enqueueFirstCheck = async (input: {
+  workspaceId: string
+  runId: string
+}) => {
+  await defaultQueue.add(
+    DefaultJobAction.checkMetaCatalogSync,
+    {
+      type: DefaultJobAction.checkMetaCatalogSync,
+      data: { ...input, attempt: 0 },
+    },
+    {
+      delay: 5000,
+      jobId: `mc-check-${input.runId}-0`,
+    },
+  )
+}
+
 export async function submitMetaCatalogSync(
   data: JobSubmitMetaCatalogSync["data"],
 ): Promise<void> {
-  const run = await metaCatalogSyncRunService.claim(data.runId)
+  const run = data.recovery
+    ? await metaCatalogSyncRunService.claimStaleSubmission({
+        runId: data.runId,
+        workspaceId: data.workspaceId,
+        staleBefore: new Date(Date.now() - SUBMISSION_STALE_MS),
+      })
+    : await metaCatalogSyncRunService.claimSubmission({
+        runId: data.runId,
+        workspaceId: data.workspaceId,
+      })
   if (!run) {
     return
   }
+  const { submissionLeaseId } = run
+  if (!submissionLeaseId) {
+    return
+  }
 
+  const handles: MetaCatalogBatchHandle[] = [...(run.handles ?? [])]
+  let hasIndeterminateSubmission = false
   try {
     const [connection, workspace] = await Promise.all([
       integrationMetaCatalogService.findByWorkspaceIdOrFail(data.workspaceId),
       workspaceService.find({ where: { id: data.workspaceId } }),
     ])
-    const { catalogId } = connection
+    if (run.integrationMetaCatalogId !== connection.id) {
+      throw new Error("Meta Catalog sync run does not match its connection")
+    }
+    // New runs own an immutable destination. The connection fallback is only
+    // for rows queued before catalogId was persisted on the run.
+    const catalogId = run.catalogId ?? connection.catalogId
     if (!(catalogId && workspace)) {
       throw new Error("Meta Catalog settings are incomplete")
     }
@@ -94,41 +138,107 @@ export async function submitMetaCatalogSync(
         productId: item.productId,
         reason: item.reason,
       }))
-    const accepted = mapped.filter((item) => item.ok)
+    const priorItemErrors = (run.itemErrors ?? []).filter(
+      (item) => item.reason !== INTERRUPTED_ITEM_REASON,
+    )
+    // Handles are durable operational state. Diagnostic errors are capped for
+    // the UI and therefore must never decide what recovery considers settled.
+    const settledRetailerIds = new Set(
+      handles.flatMap((batch) =>
+        "items" in batch
+          ? batch.items.map((item) => item.retailerId)
+          : batch.retailerIds,
+      ),
+    )
+    const accepted = mapped
+      .filter((item) => item.ok)
+      .filter((item) => !settledRetailerIds.has(item.retailerId))
     const linkedRetailerIds = new Set(
       existingLinks.map((item) => item.retailerId),
     )
-    // Persist the scope before talking to Graph. A run that dies mid-submit
-    // otherwise lands in history as "0/0 · 0 failed · 0 skipped", which hides
-    // both how much was attempted and which rows were skipped locally.
-    await metaCatalogSyncRunService.recordSubmission({
-      runId: run.id,
-      totalCount: products.length,
-      handles: [],
-      skippedItems: skipped,
-    })
+    const itemErrors: Array<{ retailerId: string; reason: string }> = [
+      ...priorItemErrors,
+    ]
+    const batches = chunk(accepted, CATALOG_BATCH_SIZE)
+    const totalCount = Math.max(run.totalCount ?? 0, products.length)
+    const checkpoint = async (nextBatchIndex: number) => {
+      const pendingItems = batches
+        .slice(nextBatchIndex)
+        .flatMap((pendingBatch) =>
+          pendingBatch.map((item) => ({
+            retailerId: item.retailerId,
+            reason: INTERRUPTED_ITEM_REASON,
+          })),
+        )
+      const saved = await metaCatalogSyncRunService.recordSubmission({
+        runId: run.id,
+        submissionLeaseId,
+        totalCount,
+        handles,
+        skippedItems: skipped,
+        itemErrors: [...itemErrors, ...pendingItems],
+      })
+      if (!saved) {
+        throw SUBMISSION_LEASE_LOST
+      }
+    }
+    // Persist the scope and provisional unsent tail before talking to Graph.
+    // A retry can distinguish settled items from batches it must re-submit.
+    await checkpoint(0)
     const auth = await integrationMetaCatalogService.resolveAuth(connection.id)
 
-    const handles: MetaCatalogBatchHandle[] = []
-    const itemErrors: Array<{ retailerId: string; reason: string }> = []
-    const batches = chunk(accepted, CATALOG_BATCH_SIZE)
     for (const [batchIndex, batch] of batches.entries()) {
-      const response = await submitItemsBatch({
-        accessToken: auth.accessToken,
-        catalogId,
-        version: auth.version,
-        requests: batch.map((item) => ({
-          method: linkedRetailerIds.has(item.retailerId) ? "UPDATE" : "CREATE",
-          retailerId: item.retailerId,
-          data: item.data,
-        })),
-      })
+      let response: Awaited<ReturnType<typeof submitItemsBatch>>
+      try {
+        response = await submitItemsBatch({
+          accessToken: auth.accessToken,
+          catalogId,
+          version: auth.version,
+          requests: batch.map((item) => ({
+            // Recovery follows an indeterminate request: UPDATE safely finds
+            // an item Meta may already have accepted, while another CREATE
+            // could only report "retailer_id already exists" without linking.
+            method:
+              data.recovery || linkedRetailerIds.has(item.retailerId)
+                ? "UPDATE"
+                : "CREATE",
+            retailerId: item.retailerId,
+            data: item.data,
+          })),
+        })
+      } catch (error) {
+        // Continue only when Graph confirms a parameter-validation rejection.
+        // A transport, throttling, permission, or 5xx failure is systemic or
+        // may happen after Meta accepted the batch, so treating it as a final
+        // per-item rejection could create untracked remote products.
+        if (
+          isInvalidMetaTokenError(error) ||
+          !isDefiniteMetaRequestRejection(error)
+        ) {
+          hasIndeterminateSubmission = true
+          throw error
+        }
+        const reason =
+          error instanceof Error ? error.message : "Meta rejected this batch"
+        itemErrors.push(
+          ...batch.map((item) => ({ retailerId: item.retailerId, reason })),
+        )
+        await checkpoint(batchIndex + 1)
+        continue
+      }
       handles.push(
         ...response.handles.map((handle) => ({
           handle,
-          retailerIds: batch.map((item) => item.retailerId),
+          items: batch.map((item) => ({
+            productId: item.productId,
+            retailerId: item.retailerId,
+          })),
         })),
       )
+      // Persist accepted handles before any later Graph request. The pending
+      // items are provisional failures so a crash produces an honest partial
+      // result instead of silently dropping the unsubmitted tail.
+      await checkpoint(batchIndex + 1)
       if (concurrencyForUsage(response.usage) === 0) {
         itemErrors.push(
           ...batches.slice(batchIndex + 1).flatMap((remainingBatch) =>
@@ -142,13 +252,14 @@ export async function submitMetaCatalogSync(
       }
     }
 
-    await metaCatalogSyncRunService.recordSubmission({
-      runId: run.id,
-      totalCount: products.length,
-      handles,
-      skippedItems: skipped,
-      itemErrors,
-    })
+    await checkpoint(batches.length)
+    const finishedSubmission = await metaCatalogSyncRunService.finishSubmission(
+      run.id,
+      submissionLeaseId,
+    )
+    if (!finishedSubmission) {
+      return
+    }
 
     if (handles.length === 0) {
       await metaCatalogSyncRunService.complete({
@@ -161,23 +272,26 @@ export async function submitMetaCatalogSync(
       return
     }
 
-    await defaultQueue.add(
-      DefaultJobAction.checkMetaCatalogSync,
-      {
-        type: DefaultJobAction.checkMetaCatalogSync,
-        data: { workspaceId: data.workspaceId, runId: run.id, attempt: 0 },
-      },
-      {
-        delay: 5000,
-        jobId: `mc-check-${run.id}-0`,
-      },
-    )
+    await enqueueFirstCheck({
+      workspaceId: data.workspaceId,
+      runId: run.id,
+    })
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Meta Catalog submission failed"
-    logger.error({ err: error, runId: data.runId }, message)
+    if (error === SUBMISSION_LEASE_LOST) {
+      return
+    }
+    const safeLog = safeMetaCatalogErrorLog(
+      error,
+      "Meta Catalog submission failed",
+    )
+    logger.error({ ...safeLog.details, runId: data.runId }, safeLog.message)
     if (isInvalidMetaTokenError(error)) {
       await integrationMetaCatalogService.markInvalid(data.workspaceId)
+    }
+    if (handles.length > 0 || hasIndeterminateSubmission) {
+      // Let BullMQ retry dispatch/recovery while the checkpointed run remains
+      // pollable. Marking it failed here would orphan accepted Meta batches.
+      throw error
     }
     await metaCatalogSyncRunService.fail(data.runId, error)
   }

@@ -12,6 +12,7 @@ import {
 } from "@chatbotx.io/integration-meta-catalog"
 import type { JobImportMetaCatalogProducts } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
+import { safeMetaCatalogErrorLog } from "./safe-error-log"
 
 type ImportCounters = {
   total: number
@@ -187,9 +188,19 @@ export async function importMetaCatalogProducts(
   data: JobImportMetaCatalogProducts["data"],
 ): Promise<void> {
   const { runId } = data
-  const connection = await integrationMetaCatalogService.claimImport(
-    data.integrationMetaCatalogId,
-  )
+  const run = runId
+    ? await metaCatalogSyncRunService.claim({
+        runId,
+        workspaceId: data.workspaceId,
+      })
+    : undefined
+  if (runId && !run) {
+    return
+  }
+  const connection = await integrationMetaCatalogService.claimImport({
+    connectionId: data.integrationMetaCatalogId,
+    workspaceId: data.workspaceId,
+  })
   if (!connection) {
     // Another import already holds the connection. The run row cannot be left
     // queued: only one run per workspace may be active, so it would block every
@@ -202,14 +213,15 @@ export async function importMetaCatalogProducts(
     }
     return
   }
-  if (runId) {
-    await metaCatalogSyncRunService.claim(runId)
-  }
-
   const tally = createImportTally()
   const { counters } = tally
   try {
-    const { catalogId } = connection
+    if (run && run.integrationMetaCatalogId !== connection.id) {
+      throw new Error("Meta Catalog import run does not match its connection")
+    }
+    // New history rows snapshot the source catalog. Keep the connection
+    // fallback solely for legacy jobs that predate run catalog snapshots.
+    const catalogId = run?.catalogId ?? connection.catalogId
     if (!catalogId) {
       throw new Error("Meta Catalog is not selected")
     }
@@ -250,9 +262,11 @@ export async function importMetaCatalogProducts(
       error: pageLimitReason,
     })
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Meta Catalog import failed"
-    logger.error({ err: error, connectionId: connection.id }, message)
+    const safeLog = safeMetaCatalogErrorLog(error, "Meta Catalog import failed")
+    logger.error(
+      { ...safeLog.details, connectionId: connection.id },
+      safeLog.message,
+    )
     if (isInvalidMetaTokenError(error)) {
       await integrationMetaCatalogService.markInvalid(data.workspaceId)
     }

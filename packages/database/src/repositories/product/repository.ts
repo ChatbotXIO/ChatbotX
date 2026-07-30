@@ -6,7 +6,9 @@ import {
   eq,
   inArray,
   isNotNull,
+  or,
   relationsFilterToSQL,
+  sql,
 } from "@chatbotx.io/database/client"
 import { inventoryPolicyTypes } from "@chatbotx.io/database/partials"
 import { productModel } from "@chatbotx.io/database/schema"
@@ -35,10 +37,14 @@ export type ProductImportInsert = {
   currency?: string
   productUrl?: string | null
   shortDescription?: string | null
+  longDescription?: string | null
   categoryId?: string | null
+  subcategoryId?: string | null
+  tags?: string[]
   vendor?: string | null
   inventoryQuantity?: number
   inventoryPolicy?: "dont_track" | "track"
+  allowOutOfStockPurchase?: boolean
   images?: Array<{ url: string; type: "link" | "file" }>
   isActive?: boolean
 }
@@ -140,10 +146,14 @@ export const productRepository = {
           ...(product.currency ? { currency: product.currency } : {}),
           productUrl: product.productUrl ?? null,
           shortDescription: product.shortDescription ?? null,
+          longDescription: product.longDescription ?? null,
           categoryId: product.categoryId ?? null,
+          subcategoryId: product.subcategoryId ?? null,
+          tags: product.tags ?? [],
           vendor: product.vendor ?? null,
           inventoryQuantity: product.inventoryQuantity ?? 0,
           inventoryPolicy: product.inventoryPolicy ?? "dont_track",
+          allowOutOfStockPurchase: product.allowOutOfStockPurchase ?? false,
           images: product.images ?? [],
           isActive: product.isActive ?? true,
         })),
@@ -281,6 +291,33 @@ export const productRepository = {
         and(
           eq(productModel.workspaceId, input.workspaceId),
           inArray(productModel.id, input.productIds),
+        ),
+      )
+  },
+
+  /**
+   * A Meta retailer ID is either our immutable product id or the merchant SKU
+   * that was current when the item was submitted. Import uses both identifiers
+   * so it can reconnect an item that Meta already knows before a local link row
+   * has been written (for example while an outbound batch is still polling).
+   */
+  async findByImportIdentifiers(
+    input: { workspaceId: string; retailerIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.retailerIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select()
+      .from(productModel)
+      .where(
+        and(
+          eq(productModel.workspaceId, input.workspaceId),
+          or(
+            inArray(productModel.id, input.retailerIds),
+            inArray(sql<string>`btrim(${productModel.sku})`, input.retailerIds),
+          ),
         ),
       )
   },

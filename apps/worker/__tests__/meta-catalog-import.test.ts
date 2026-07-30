@@ -33,7 +33,16 @@ vi.mock("@chatbotx.io/business", () => ({
   // replaces the whole module, so an omitted export is `undefined` at runtime
   // with nothing failing at compile time.
   metaCatalogSyncRunService: {
-    claim: (...args: unknown[]) => mocks.runClaim(...args),
+    claim: async (...args: unknown[]) => {
+      const run = await mocks.runClaim(...args)
+      return run
+        ? {
+            ...run,
+            integrationMetaCatalogId:
+              run.integrationMetaCatalogId ?? "connection-1",
+          }
+        : run
+    },
     recordImportProgress: (...args: unknown[]) => mocks.runProgress(...args),
     completeImport: (...args: unknown[]) => mocks.runComplete(...args),
     fail: (...args: unknown[]) => mocks.runFail(...args),
@@ -73,6 +82,10 @@ beforeEach(() => {
       : { ok: false, reason: "invalid" },
   )
   mocks.isInvalidToken.mockReturnValue(false)
+  mocks.runClaim.mockResolvedValue({
+    id: "run-1",
+    catalogId: "catalog-1",
+  })
 })
 
 describe("Meta Catalog product import worker", () => {
@@ -215,7 +228,14 @@ describe("Meta Catalog import sync history", () => {
 
     await importWithRun()
 
-    expect(mocks.runClaim).toHaveBeenCalledWith("run-1")
+    expect(mocks.runClaim).toHaveBeenCalledWith({
+      runId: "run-1",
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.claimImport).toHaveBeenCalledWith({
+      connectionId: "connection-1",
+      workspaceId: "workspace-1",
+    })
     expect(mocks.runProgress).toHaveBeenCalledWith({
       runId: "run-1",
       totalCount: 2,
@@ -229,6 +249,26 @@ describe("Meta Catalog import sync history", () => {
       failedCount: 1,
       error: "1 Meta products could not be imported: invalid (1)",
     })
+  })
+
+  test("imports from the catalog snapshotted on the run", async () => {
+    mocks.runClaim.mockResolvedValue({
+      id: "run-1",
+      catalogId: "catalog-snapshot",
+    })
+    mocks.getPage.mockResolvedValue({
+      products: [{ retailer_id: "one" }],
+      invalidCount: 0,
+    })
+
+    await importWithRun()
+
+    expect(mocks.getPage).toHaveBeenCalledWith(
+      expect.objectContaining({ catalogId: "catalog-snapshot" }),
+    )
+    expect(mocks.importPage).toHaveBeenCalledWith(
+      expect.objectContaining({ catalogId: "catalog-snapshot" }),
+    )
   })
 
   test("fails the run when another import already holds the connection", async () => {

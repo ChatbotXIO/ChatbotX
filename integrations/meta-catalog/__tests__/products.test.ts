@@ -14,6 +14,8 @@ vi.mock("../src/lib/http-client", () => ({
 }))
 
 const { getCatalogProductsPage } = await import("../src/apis/products")
+const SYNCED_PRODUCT_FIELDS_REGEX =
+  /retailer_id.*images.*image_cdn_urls.*quantity_to_sell_on_facebook.*custom_label_4/
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -51,7 +53,7 @@ describe("Meta Catalog products API", () => {
         headers: { Authorization: "Bearer token" },
         searchParams: {
           after: "cursor-1",
-          fields: expect.stringContaining("retailer_id"),
+          fields: expect.stringMatching(SYNCED_PRODUCT_FIELDS_REGEX),
           limit: "100",
         },
       }),

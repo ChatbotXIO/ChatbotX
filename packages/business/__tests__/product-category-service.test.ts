@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
+  createMissingChildren: vi.fn(),
   createMissingByName: vi.fn(),
   deleteRow: vi.fn(),
   find: vi.fn(),
@@ -9,10 +10,12 @@ const mocks = vi.hoisted(() => ({
   invalidateCacheByTags: vi.fn(),
   isUniqueViolationError: vi.fn(),
   listChildren: vi.fn(),
+  list: vi.fn(),
   update: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  db: { name: "default-db" },
   isUniqueViolationError: (...args: unknown[]) =>
     mocks.isUniqueViolationError(...args),
 }))
@@ -22,10 +25,13 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     create: (...args: unknown[]) => mocks.create(...args),
     createMissingByName: (...args: unknown[]) =>
       mocks.createMissingByName(...args),
+    createMissingChildren: (...args: unknown[]) =>
+      mocks.createMissingChildren(...args),
     delete: (...args: unknown[]) => mocks.deleteRow(...args),
     find: (...args: unknown[]) => mocks.find(...args),
     findByNames: (...args: unknown[]) => mocks.findByNames(...args),
     listChildren: (...args: unknown[]) => mocks.listChildren(...args),
+    list: (...args: unknown[]) => mocks.list(...args),
     update: (...args: unknown[]) => mocks.update(...args),
   },
 }))
@@ -45,6 +51,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.isUniqueViolationError.mockReturnValue(false)
   mocks.listChildren.mockResolvedValue([])
+  mocks.list.mockResolvedValue([])
+  mocks.createMissingChildren.mockResolvedValue(undefined)
   mocks.create.mockResolvedValue({ id: "category-1" })
   mocks.update.mockResolvedValue({ id: "category-1" })
   mocks.deleteRow.mockResolvedValue({ id: "category-1" })
@@ -236,10 +244,13 @@ describe("productCategoryService resolveByNames", () => {
       createMissing: false,
     })
 
-    expect(mocks.findByNames).toHaveBeenCalledWith({
-      workspaceId,
-      names: ["Shoes"],
-    })
+    expect(mocks.findByNames).toHaveBeenCalledWith(
+      {
+        workspaceId,
+        names: ["Shoes"],
+      },
+      { name: "default-db" },
+    )
   })
 
   test("creates the missing rows only when the import asked it to", async () => {
@@ -255,5 +266,140 @@ describe("productCategoryService resolveByNames", () => {
 
     expect(mocks.findByNames).not.toHaveBeenCalled()
     expect(resolved.get("bags")).toBe("category-2")
+  })
+})
+
+describe("productCategoryService resolvePaths", () => {
+  test("creates and resolves a two-level category path in one transaction", async () => {
+    const tx = { name: "transaction-client" }
+    mocks.list
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: "category-1", name: "Home", parentId: null },
+      ])
+      .mockResolvedValueOnce([
+        { id: "category-1", name: "Home", parentId: null },
+        {
+          id: "subcategory-1",
+          name: "Robot vacuums",
+          parentId: "category-1",
+        },
+      ])
+    mocks.createMissingByName.mockResolvedValue([])
+
+    const resolved = await productCategoryService.resolvePaths({
+      workspaceId,
+      paths: [
+        {
+          categoryName: " Home ",
+          subcategoryName: " Robot vacuums ",
+        },
+      ],
+      createMissing: true,
+      tx,
+    })
+
+    expect(mocks.createMissingByName).toHaveBeenCalledWith(
+      { workspaceId, names: ["Home"] },
+      tx,
+    )
+    expect(mocks.createMissingChildren).toHaveBeenCalledWith(
+      {
+        workspaceId,
+        children: [{ parentId: "category-1", name: "Robot vacuums" }],
+      },
+      tx,
+    )
+    expect(resolved.get("home\u0000robot vacuums")).toEqual({
+      categoryId: "category-1",
+      subcategoryId: "subcategory-1",
+    })
+  })
+
+  test("returns nothing for a path that doesn't exist when createMissing is false", async () => {
+    const resolved = await productCategoryService.resolvePaths({
+      workspaceId,
+      paths: [{ categoryName: "Ghost" }],
+      createMissing: false,
+    })
+
+    expect(resolved.size).toBe(0)
+    expect(mocks.createMissingByName).not.toHaveBeenCalled()
+    expect(mocks.createMissingChildren).not.toHaveBeenCalled()
+  })
+
+  test("creates only the missing sub-category when the top-level already exists", async () => {
+    const tx = { name: "transaction-client" }
+    mocks.list
+      .mockResolvedValueOnce([
+        { id: "category-1", name: "Home", parentId: null },
+      ])
+      .mockResolvedValueOnce([
+        { id: "category-1", name: "Home", parentId: null },
+        { id: "subcategory-2", name: "Vacuums", parentId: "category-1" },
+      ])
+
+    const resolved = await productCategoryService.resolvePaths({
+      workspaceId,
+      paths: [{ categoryName: "Home", subcategoryName: "Vacuums" }],
+      createMissing: true,
+      tx,
+    })
+
+    expect(mocks.createMissingByName).not.toHaveBeenCalled()
+    expect(mocks.createMissingChildren).toHaveBeenCalledWith(
+      {
+        workspaceId,
+        children: [{ parentId: "category-1", name: "Vacuums" }],
+      },
+      tx,
+    )
+    expect(resolved.get("home\u0000vacuums")).toEqual({
+      categoryId: "category-1",
+      subcategoryId: "subcategory-2",
+    })
+  })
+
+  test("collapses equivalent paths that differ only in whitespace into one resolution", async () => {
+    const tx = { name: "transaction-client" }
+    mocks.list
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: "category-1", name: "Home", parentId: null },
+      ])
+      .mockResolvedValueOnce([
+        { id: "category-1", name: "Home", parentId: null },
+        { id: "subcategory-1", name: "Vacuums", parentId: "category-1" },
+      ])
+    mocks.createMissingByName.mockResolvedValue([])
+
+    const resolved = await productCategoryService.resolvePaths({
+      workspaceId,
+      paths: [
+        { categoryName: "Home", subcategoryName: "Vacuums" },
+        { categoryName: "  Home  ", subcategoryName: "  Vacuums  " },
+      ],
+      createMissing: true,
+      tx,
+    })
+
+    expect(mocks.createMissingByName).toHaveBeenCalledTimes(1)
+    expect(mocks.createMissingByName).toHaveBeenCalledWith(
+      { workspaceId, names: ["Home"] },
+      tx,
+    )
+    expect(mocks.createMissingChildren).toHaveBeenCalledTimes(1)
+    expect(mocks.createMissingChildren).toHaveBeenCalledWith(
+      {
+        workspaceId,
+        children: [{ parentId: "category-1", name: "Vacuums" }],
+      },
+      tx,
+    )
+    expect(resolved.size).toBe(1)
+    expect(resolved.get("home\u0000vacuums")).toEqual({
+      categoryId: "category-1",
+      subcategoryId: "subcategory-1",
+    })
   })
 })

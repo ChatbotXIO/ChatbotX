@@ -191,6 +191,47 @@ export const productCategoryRepository = {
     )
   },
 
+  async createMissingChildren(
+    input: {
+      workspaceId: string
+      children: Array<{ parentId: string; name: string }>
+    },
+    tx: DatabaseClient = db,
+  ) {
+    const children = Array.from(
+      new Map(
+        input.children
+          .map((child) => ({
+            parentId: child.parentId,
+            name: child.name.trim(),
+          }))
+          .filter((child) => child.name)
+          .map((child) => [`${child.parentId}\u0000${child.name}`, child]),
+      ).values(),
+    )
+    if (children.length === 0) {
+      return
+    }
+
+    await tx
+      .insert(productCategoryModel)
+      .values(
+        children.map((child) => ({
+          id: createId(),
+          workspaceId: input.workspaceId,
+          parentId: child.parentId,
+          name: child.name,
+        })),
+      )
+      .onConflictDoNothing({
+        target: [
+          productCategoryModel.workspaceId,
+          productCategoryModel.parentId,
+          productCategoryModel.name,
+        ],
+      })
+  },
+
   async findByNames(
     input: { workspaceId: string; names: string[] },
     tx: DatabaseClient = db,

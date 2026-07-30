@@ -12,11 +12,13 @@ const mocks = vi.hoisted(() => ({
   submitItemsBatch: vi.fn(),
   checkItemsBatch: vi.fn(),
   recordSubmission: vi.fn(),
+  finishSubmission: vi.fn(),
   complete: vi.fn(),
   fail: vi.fn(),
   markInvalid: vi.fn(),
   incrementPollAttempt: vi.fn(),
   concurrencyForUsage: vi.fn(),
+  isDefiniteMetaRequestRejection: vi.fn(),
   isInvalidMetaTokenError: vi.fn(),
   resolveRetailerIds: vi.fn(),
   queueAdd: vi.fn(),
@@ -31,8 +33,40 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   metaCatalogSyncRunService: {
     claim: (...args: unknown[]) => mocks.claim(...args),
-    findById: (...args: unknown[]) => mocks.findRun(...args),
+    claimSubmission: async (...args: unknown[]) => {
+      const run = await mocks.claim(...args)
+      return run
+        ? {
+            ...run,
+            integrationMetaCatalogId:
+              run.integrationMetaCatalogId ?? "connection-1",
+            submissionLeaseId: run.submissionLeaseId ?? "lease-1",
+          }
+        : run
+    },
+    claimStaleSubmission: async (...args: unknown[]) => {
+      const run = await mocks.findRun(...args)
+      return run
+        ? {
+            ...run,
+            integrationMetaCatalogId:
+              run.integrationMetaCatalogId ?? "connection-1",
+            submissionLeaseId: run.submissionLeaseId ?? "lease-2",
+          }
+        : run
+    },
+    findById: async (...args: unknown[]) => {
+      const run = await mocks.findRun(...args)
+      return run
+        ? {
+            ...run,
+            integrationMetaCatalogId:
+              run.integrationMetaCatalogId ?? "connection-1",
+          }
+        : run
+    },
     recordSubmission: (...args: unknown[]) => mocks.recordSubmission(...args),
+    finishSubmission: (...args: unknown[]) => mocks.finishSubmission(...args),
     complete: (...args: unknown[]) => mocks.complete(...args),
     fail: (...args: unknown[]) => mocks.fail(...args),
     incrementPollAttempt: (...args: unknown[]) =>
@@ -58,6 +92,8 @@ vi.mock("@chatbotx.io/integration-meta-catalog", () => ({
   CATALOG_BATCH_SIZE: 1000,
   concurrencyForUsage: (...args: unknown[]) =>
     mocks.concurrencyForUsage(...args),
+  isDefiniteMetaRequestRejection: (...args: unknown[]) =>
+    mocks.isDefiniteMetaRequestRejection(...args),
   isInvalidMetaTokenError: (...args: unknown[]) =>
     mocks.isInvalidMetaTokenError(...args),
   resolveRetailerIds: (...args: unknown[]) => mocks.resolveRetailerIds(...args),
@@ -106,7 +142,7 @@ const connection = {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
   mocks.findConnection.mockResolvedValue(connection)
   mocks.findWorkspace.mockResolvedValue({ id: "workspace-1", name: "Store" })
   mocks.resolveAuth.mockResolvedValue({
@@ -115,12 +151,14 @@ beforeEach(() => {
   })
   mocks.findLinkedItems.mockResolvedValue([])
   mocks.findLinkedItemsByProducts.mockResolvedValue([])
-  mocks.recordSubmission.mockResolvedValue(undefined)
+  mocks.recordSubmission.mockResolvedValue(true)
+  mocks.finishSubmission.mockResolvedValue(true)
   mocks.complete.mockResolvedValue(undefined)
   mocks.fail.mockResolvedValue(undefined)
   mocks.markInvalid.mockResolvedValue(undefined)
   mocks.incrementPollAttempt.mockResolvedValue(undefined)
   mocks.concurrencyForUsage.mockReturnValue(1)
+  mocks.isDefiniteMetaRequestRejection.mockReturnValue(false)
   mocks.isInvalidMetaTokenError.mockReturnValue(false)
   // Stands in for the real resolver, whose collision rules are covered in
   // integrations/meta-catalog/__tests__/retailer-id.test.ts.
@@ -181,9 +219,94 @@ describe("Meta Catalog sync workers", () => {
       expect.objectContaining({
         totalCount: 1001,
         handles: [
-          { handle: "handle-1", retailerIds: expect.any(Array) },
-          { handle: "handle-2", retailerIds: ["product-1000"] },
+          { handle: "handle-1", items: expect.any(Array) },
+          {
+            handle: "handle-2",
+            items: [{ productId: "product-1000", retailerId: "product-1000" }],
+          },
         ],
+      }),
+    )
+  })
+
+  test("submits and polls against the catalog snapshotted on the run", async () => {
+    mocks.claim.mockResolvedValue({
+      id: "run-snapshot",
+      catalogId: "catalog-snapshot",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.submitItemsBatch.mockResolvedValue({ handles: ["handle-1"] })
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-snapshot",
+    })
+
+    expect(mocks.submitItemsBatch).toHaveBeenCalledWith(
+      expect.objectContaining({ catalogId: "catalog-snapshot" }),
+    )
+    expect(mocks.findLinkedItemsByProducts).toHaveBeenCalledWith(
+      expect.objectContaining({ catalogId: "catalog-snapshot" }),
+    )
+
+    mocks.findRun.mockResolvedValue({
+      id: "run-snapshot",
+      status: "running",
+      catalogId: "catalog-snapshot",
+      handles: [
+        {
+          handle: "handle-1",
+          items: [{ productId: "product-1", retailerId: "product-1" }],
+        },
+      ],
+    })
+    mocks.checkItemsBatch.mockResolvedValue({
+      completed: true,
+      results: [{ retailerId: "product-1", success: true }],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+
+    await checkMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-snapshot",
+      attempt: 0,
+    })
+
+    expect(mocks.checkItemsBatch).toHaveBeenCalledWith(
+      expect.objectContaining({ catalogId: "catalog-snapshot" }),
+    )
+    expect(mocks.complete).toHaveBeenCalledWith(
+      expect.objectContaining({ catalogId: "catalog-snapshot" }),
+    )
+  })
+
+  test("rejects a run whose connection does not belong to the job context", async () => {
+    mocks.claim.mockResolvedValue({
+      id: "run-mismatch",
+      integrationMetaCatalogId: "connection-other",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-mismatch",
+    })
+
+    expect(mocks.claim).toHaveBeenCalledWith({
+      runId: "run-mismatch",
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.listProducts).not.toHaveBeenCalled()
+    expect(mocks.submitItemsBatch).not.toHaveBeenCalled()
+    expect(mocks.fail).toHaveBeenCalledWith(
+      "run-mismatch",
+      expect.objectContaining({
+        message: "Meta Catalog sync run does not match its connection",
       }),
     )
   })
@@ -227,7 +350,11 @@ describe("Meta Catalog sync workers", () => {
       handles: [
         {
           handle: "handle-1",
-          retailerIds: ["product-ok", "product-failed", "product-missing"],
+          items: [
+            { productId: "product-ok", retailerId: "product-ok" },
+            { productId: "product-failed", retailerId: "product-failed" },
+            { productId: "product-missing", retailerId: "product-missing" },
+          ],
         },
       ],
     })
@@ -310,7 +437,9 @@ describe("Meta Catalog sync workers", () => {
       handles: [
         {
           handle: "handle-1",
-          retailerIds: ["merchant-retailer-1"],
+          items: [
+            { productId: "local-product-1", retailerId: "merchant-retailer-1" },
+          ],
         },
       ],
     })
@@ -318,12 +447,6 @@ describe("Meta Catalog sync workers", () => {
       completed: true,
       results: [{ retailerId: "merchant-retailer-1", success: true }],
     })
-    mocks.findLinkedItems.mockResolvedValue([
-      {
-        productId: "local-product-1",
-        retailerId: "merchant-retailer-1",
-      },
-    ])
     mocks.listProducts.mockResolvedValue([{ id: "local-product-1" }])
 
     await checkMetaCatalogSync({
@@ -346,6 +469,85 @@ describe("Meta Catalog sync workers", () => {
         ],
       }),
     )
+  })
+
+  test("continues polling batch handles persisted before product IDs were added", async () => {
+    mocks.findRun.mockResolvedValue({
+      id: "legacy-run",
+      status: "running",
+      handles: [
+        {
+          handle: "legacy-handle",
+          retailerIds: ["legacy-retailer"],
+        },
+      ],
+    })
+    mocks.findLinkedItems.mockResolvedValue([
+      {
+        productId: "local-product",
+        retailerId: "legacy-retailer",
+      },
+    ])
+    mocks.checkItemsBatch.mockResolvedValue({
+      completed: true,
+      results: [{ retailerId: "legacy-retailer", success: true }],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "local-product" }])
+
+    await checkMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "legacy-run",
+      attempt: 0,
+    })
+
+    expect(mocks.checkItemsBatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        handle: "legacy-handle",
+        retailerIds: ["legacy-retailer"],
+      }),
+    )
+    expect(mocks.listProducts).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      productIds: ["local-product"],
+    })
+  })
+
+  test("reports a legacy SKU batch as unresolved instead of silently succeeding", async () => {
+    mocks.findRun.mockResolvedValue({
+      id: "legacy-sku-run",
+      status: "running",
+      handles: [
+        {
+          handle: "legacy-handle",
+          retailerIds: ["META-SKU"],
+        },
+      ],
+    })
+    mocks.checkItemsBatch.mockResolvedValue({
+      completed: true,
+      results: [{ retailerId: "META-SKU", success: true }],
+    })
+    mocks.listProducts.mockResolvedValue([])
+
+    await checkMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "legacy-sku-run",
+      attempt: 0,
+    })
+
+    expect(mocks.complete).toHaveBeenCalledWith({
+      runId: "legacy-sku-run",
+      integrationMetaCatalogId: "connection-1",
+      catalogId: "catalog-1",
+      succeededItems: [],
+      errors: [
+        {
+          retailerId: "META-SKU",
+          reason:
+            "The local product for this legacy Meta sync could not be resolved; sync this item again",
+        },
+      ],
+    })
   })
 
   test("stops before the next chunk when Meta reports exhausted BUC quota", async () => {
@@ -381,6 +583,251 @@ describe("Meta Catalog sync workers", () => {
         ],
       }),
     )
+  })
+
+  test("keeps syncing remaining batches when Meta rejects one batch outright", async () => {
+    const products = Array.from({ length: 1001 }, (_, index) => ({
+      id: `product-${index}`,
+    }))
+    mocks.claim.mockResolvedValue({
+      id: "run-batch-error",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+    mocks.listProducts.mockResolvedValue(products)
+    mocks.submitItemsBatch
+      .mockRejectedValueOnce(new Error("Invalid parameter"))
+      .mockResolvedValueOnce({ handles: ["handle-2"] })
+    mocks.isDefiniteMetaRequestRejection.mockReturnValue(true)
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-batch-error",
+    })
+
+    expect(mocks.submitItemsBatch).toHaveBeenCalledTimes(2)
+    expect(mocks.fail).not.toHaveBeenCalled()
+    expect(mocks.markInvalid).not.toHaveBeenCalled()
+    const rejectedRetailerIds = Array.from(
+      { length: 1000 },
+      (_, index) => `product-${index}`,
+    )
+    expect(mocks.recordSubmission).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handles: [
+          {
+            handle: "handle-2",
+            items: [{ productId: "product-1000", retailerId: "product-1000" }],
+          },
+        ],
+        itemErrors: rejectedRetailerIds.map((retailerId) => ({
+          retailerId,
+          reason: "Invalid parameter",
+        })),
+      }),
+    )
+    expect(mocks.queueAdd).toHaveBeenCalled()
+  })
+
+  test("keeps an indeterminate first batch recoverable", async () => {
+    const transportError = new Error("Connection reset")
+    mocks.claim.mockResolvedValue({
+      id: "run-transport-error",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.submitItemsBatch.mockRejectedValue(transportError)
+
+    await expect(
+      submitMetaCatalogSync({
+        workspaceId: "workspace-1",
+        runId: "run-transport-error",
+      }),
+    ).rejects.toThrow(transportError)
+
+    expect(mocks.fail).not.toHaveBeenCalled()
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("checkpoints and polls an accepted batch when a later batch fails", async () => {
+    const transportError = new Error("Connection reset")
+    mocks.claim.mockResolvedValue({
+      id: "run-partial-transport-error",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+      handles: [],
+      itemErrors: [],
+    })
+    mocks.listProducts.mockResolvedValue(
+      Array.from({ length: 1001 }, (_, index) => ({
+        id: `product-${index}`,
+      })),
+    )
+    mocks.submitItemsBatch
+      .mockResolvedValueOnce({ handles: ["handle-1"] })
+      .mockRejectedValueOnce(transportError)
+
+    await expect(
+      submitMetaCatalogSync({
+        workspaceId: "workspace-1",
+        runId: "run-partial-transport-error",
+      }),
+    ).rejects.toThrow(transportError)
+
+    expect(mocks.recordSubmission).toHaveBeenCalledWith(
+      expect.objectContaining({
+        handles: [{ handle: "handle-1", items: expect.any(Array) }],
+      }),
+    )
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+    expect(mocks.fail).not.toHaveBeenCalled()
+  })
+
+  test("recovers checker dispatch without resubmitting checkpointed items", async () => {
+    const queueError = new Error("Redis unavailable")
+    const checkpointedHandle = {
+      handle: "handle-1",
+      items: [{ productId: "product-1", retailerId: "product-1" }],
+    }
+    mocks.claim
+      .mockResolvedValueOnce({
+        id: "run-checker-recovery",
+        scope: "all",
+        categoryId: null,
+        selectedProductIds: [],
+        handles: [],
+        itemErrors: [],
+      })
+      .mockResolvedValueOnce(null)
+    mocks.findRun.mockResolvedValue({
+      id: "run-checker-recovery",
+      status: "running",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+      handles: [checkpointedHandle],
+      itemErrors: [],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.submitItemsBatch.mockResolvedValue({ handles: ["handle-1"] })
+    mocks.queueAdd.mockRejectedValueOnce(queueError).mockResolvedValueOnce(null)
+
+    await expect(
+      submitMetaCatalogSync({
+        workspaceId: "workspace-1",
+        runId: "run-checker-recovery",
+      }),
+    ).rejects.toThrow(queueError)
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-checker-recovery",
+      recovery: true,
+    })
+
+    expect(mocks.submitItemsBatch).toHaveBeenCalledOnce()
+    expect(mocks.queueAdd).toHaveBeenCalledTimes(2)
+    expect(mocks.fail).not.toHaveBeenCalled()
+  })
+
+  test("resubmits only the uncheckpointed tail after a persistence failure", async () => {
+    const persistenceError = new Error("Database unavailable")
+    const products = Array.from({ length: 1001 }, (_, index) => ({
+      id: `product-${index}`,
+    }))
+    const checkpointedHandle = {
+      handle: "handle-1",
+      items: products.slice(0, 1000).map((product) => ({
+        productId: product.id,
+        retailerId: product.id,
+      })),
+    }
+    mocks.claim
+      .mockResolvedValueOnce({
+        id: "run-checkpoint-recovery",
+        scope: "all",
+        categoryId: null,
+        selectedProductIds: [],
+        handles: [],
+        itemErrors: [],
+        totalCount: 0,
+      })
+      .mockResolvedValueOnce(null)
+    mocks.findRun.mockResolvedValue({
+      id: "run-checkpoint-recovery",
+      status: "running",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+      handles: [checkpointedHandle],
+      itemErrors: [
+        {
+          retailerId: "product-1000",
+          reason: "Submission was interrupted; sync this item again",
+        },
+      ],
+      totalCount: 1001,
+    })
+    mocks.listProducts.mockResolvedValue(products)
+    mocks.submitItemsBatch
+      .mockResolvedValueOnce({ handles: ["handle-1"] })
+      .mockResolvedValueOnce({ handles: ["handle-2"] })
+      .mockResolvedValueOnce({ handles: ["handle-2"] })
+    mocks.recordSubmission
+      .mockResolvedValueOnce(true)
+      .mockRejectedValueOnce(persistenceError)
+      .mockResolvedValue(true)
+
+    await expect(
+      submitMetaCatalogSync({
+        workspaceId: "workspace-1",
+        runId: "run-checkpoint-recovery",
+      }),
+    ).rejects.toThrow(persistenceError)
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-checkpoint-recovery",
+      recovery: true,
+    })
+
+    expect(mocks.submitItemsBatch).toHaveBeenCalledTimes(2)
+    expect(mocks.submitItemsBatch.mock.calls[1]?.[0].requests).toEqual([
+      expect.objectContaining({
+        method: "UPDATE",
+        retailerId: "product-1000",
+      }),
+    ])
+    expect(mocks.fail).not.toHaveBeenCalled()
+    expect(mocks.queueAdd).toHaveBeenCalledOnce()
+  })
+
+  test("aborts the run when a batch fails because the Meta token is invalid", async () => {
+    const tokenError = new Error("Invalid OAuth access token")
+    mocks.claim.mockResolvedValue({
+      id: "run-invalid-token-submit",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.submitItemsBatch.mockRejectedValue(tokenError)
+    mocks.isInvalidMetaTokenError.mockReturnValue(true)
+
+    await expect(
+      submitMetaCatalogSync({
+        workspaceId: "workspace-1",
+        runId: "run-invalid-token-submit",
+      }),
+    ).rejects.toThrow(tokenError)
+
+    expect(mocks.markInvalid).toHaveBeenCalledWith("workspace-1")
+    expect(mocks.fail).not.toHaveBeenCalled()
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
   })
 
   test.each([
@@ -425,7 +872,12 @@ describe("Meta Catalog sync workers", () => {
     mocks.findRun.mockResolvedValue({
       id: "run-pending",
       status: "running",
-      handles: [{ handle: "handle-1", retailerIds: ["product-1"] }],
+      handles: [
+        {
+          handle: "handle-1",
+          items: [{ productId: "product-1", retailerId: "product-1" }],
+        },
+      ],
     })
     mocks.checkItemsBatch.mockResolvedValue({
       completed: false,
@@ -457,11 +909,45 @@ describe("Meta Catalog sync workers", () => {
     expect(mocks.complete).not.toHaveBeenCalled()
   })
 
+  test("keeps an unfinished run recoverable when checker dispatch fails", async () => {
+    const redisError = new Error("Redis unavailable")
+    mocks.findRun.mockResolvedValue({
+      id: "run-dispatch-recovery",
+      status: "running",
+      handles: [
+        {
+          handle: "handle-1",
+          items: [{ productId: "product-1", retailerId: "product-1" }],
+        },
+      ],
+    })
+    mocks.checkItemsBatch.mockResolvedValue({
+      completed: false,
+      results: [],
+    })
+    mocks.queueAdd.mockRejectedValue(redisError)
+
+    await expect(
+      checkMetaCatalogSync({
+        workspaceId: "workspace-1",
+        runId: "run-dispatch-recovery",
+        attempt: 0,
+      }),
+    ).rejects.toThrow(redisError)
+
+    expect(mocks.fail).not.toHaveBeenCalled()
+  })
+
   test("fails after the maximum status polling attempts", async () => {
     mocks.findRun.mockResolvedValue({
       id: "run-timeout",
       status: "running",
-      handles: [{ handle: "handle-1", retailerIds: ["product-1"] }],
+      handles: [
+        {
+          handle: "handle-1",
+          items: [{ productId: "product-1", retailerId: "product-1" }],
+        },
+      ],
     })
     mocks.checkItemsBatch.mockResolvedValue({
       completed: false,
@@ -489,7 +975,12 @@ describe("Meta Catalog sync workers", () => {
     mocks.findRun.mockResolvedValue({
       id: "run-invalid-token",
       status: "running",
-      handles: [{ handle: "handle-1", retailerIds: ["product-1"] }],
+      handles: [
+        {
+          handle: "handle-1",
+          items: [{ productId: "product-1", retailerId: "product-1" }],
+        },
+      ],
     })
     mocks.checkItemsBatch.mockRejectedValue(tokenError)
     mocks.isInvalidMetaTokenError.mockReturnValue(true)

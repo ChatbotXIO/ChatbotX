@@ -2,6 +2,7 @@
 
 import {
   integrationMetaCatalogService,
+  metaCatalogOperationService,
   metaCatalogSyncRunService,
   platformCredentialService,
 } from "@chatbotx.io/business"
@@ -82,11 +83,11 @@ const selectCatalogRequest = z.object({
  * with a code because it has no request locale; the action is where it becomes a
  * sentence the workspace can read.
  */
-const createSyncRun = async (
-  input: Parameters<typeof metaCatalogSyncRunService.create>[0],
-) => {
+const translateSyncCollision = async <Result>(
+  operation: () => Promise<Result>,
+): Promise<Result> => {
   try {
-    return await metaCatalogSyncRunService.create(input)
+    return await operation()
   } catch (error) {
     if (
       error instanceof ChatbotXException &&
@@ -111,22 +112,17 @@ export const selectMetaCatalogAction = workspaceActionClient
       parsedInput.catalogId,
       auth.version,
     )
-    const selected = await integrationMetaCatalogService.selectCatalog({
-      workspaceId,
-      catalogId: catalog.id,
-      catalogName: catalog.name,
-      businessId: catalog.businessId,
-    })
     // Created before the job is queued so the pull shows up in history the
     // moment it is requested, the same way a push does. A pull covers whatever
     // Meta happens to hold, so its scope is always "all".
-    const run = await createSyncRun({
-      workspaceId,
-      integrationMetaCatalogId: selected.id,
-      direction: "import",
-      catalogId: catalog.id,
-      scope: "all",
-    })
+    const { connection: selected, run } = await translateSyncCollision(() =>
+      metaCatalogOperationService.startImport({
+        workspaceId,
+        catalogId: catalog.id,
+        catalogName: catalog.name,
+        businessId: catalog.businessId,
+      }),
+    )
     try {
       await defaultQueue.add(
         DefaultJobAction.importMetaCatalogProducts,
@@ -240,6 +236,8 @@ export const syncToMetaCatalogAction = workspaceActionClient
     // Currency and product URL now live on each product, so the destination
     // catalog is the only connection-level prerequisite left. Verify it against
     // Graph only when it changes — a re-typed identical id costs no roundtrip.
+    let catalogName: string | undefined
+    let businessId: string | undefined
     if (catalogId !== connection.catalogId) {
       const auth = await integrationMetaCatalogService.resolveAuth(
         connection.id,
@@ -249,21 +247,18 @@ export const syncToMetaCatalogAction = workspaceActionClient
         catalogId,
         auth.version,
       )
-      await integrationMetaCatalogService.bindCatalog({
-        workspaceId,
-        catalogId: catalog.id,
-        catalogName: catalog.name,
-        businessId: catalog.businessId,
-      })
+      catalogName = catalog.name
+      businessId = catalog.businessId
     }
-    const run = await createSyncRun({
-      workspaceId,
-      integrationMetaCatalogId: connection.id,
-      // Taken from the request, not from `connection`: the rebind above may have
-      // just moved the connection, and this run belongs to the new destination.
-      catalogId,
-      ...runInput,
-    })
+    const run = await translateSyncCollision(() =>
+      metaCatalogOperationService.startPush({
+        workspaceId,
+        catalogId,
+        catalogName,
+        businessId,
+        ...runInput,
+      }),
+    )
     try {
       await defaultQueue.add(
         DefaultJobAction.submitMetaCatalogSync,

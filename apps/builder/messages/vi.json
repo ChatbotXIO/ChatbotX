@@ -3892,7 +3892,7 @@
         "description": "Trang khách hàng mở từ Messenger Shopping. Sản phẩm không có URL sẽ bị bỏ qua khi đồng bộ lên Meta Catalog."
       },
       "sku": {
-        "label": "ID nội dung/ID nhà bán lẻ/SKU",
+        "label": "SKU",
         "placeholder": "Tùy chọn"
       },
       "inventoryPolicy": {
@@ -4041,6 +4041,8 @@
     "edit": "Đổi tên danh mục",
     "name": "Tên danh mục",
     "namePlaceholder": "vd. Bộ sưu tập mùa hè",
+    "parent": "Danh mục cha",
+    "noParent": "Không có (cấp gốc)",
     "save": "Lưu",
     "created": "Đã tạo danh mục.",
     "updated": "Đã cập nhật danh mục.",
@@ -4054,7 +4056,13 @@
     "deleteDescription": "{count, plural, =0 {Không có sản phẩm nào thuộc danh mục này.} one {# sản phẩm sẽ chuyển sang Chưa phân loại.} other {# sản phẩm sẽ chuyển sang Chưa phân loại.}}",
     "createSub": "Tạo danh mục con",
     "empty": "Chưa có danh mục nào. Hãy tạo một danh mục để nhóm sản phẩm.",
-    "emptySubcategories": "Chưa có danh mục con nào.",
+    "columns": {
+      "name": "Tên",
+      "products": "Sản phẩm",
+      "subcategories": "Danh mục con"
+    },
+    "expand": "Hiện danh mục con",
+    "collapse": "Ẩn danh mục con",
     "productCount": "{count, plural, =0 {Không có sản phẩm} one {# sản phẩm} other {# sản phẩm}}",
     "deleteChildrenWarning": "{count, plural, one {# danh mục con cũng sẽ bị xóa.} other {# danh mục con cũng sẽ bị xóa.}}"
   },

@@ -42,10 +42,24 @@ export const metaCatalogSkipReasons = z.enum([
 ])
 export type MetaCatalogSkipReason = z.infer<typeof metaCatalogSkipReasons>
 
-export type MetaCatalogBatchHandle = {
-  handle: string
-  retailerIds: string[]
-}
+export type MetaCatalogBatchHandle =
+  | {
+      handle: string
+      /**
+       * The productId is stored alongside the retailerId Meta echoes back,
+       * rather than re-derived from it later — a retailerId is often a
+       * product's SKU, not its id.
+       */
+      items: Array<{ productId: string; retailerId: string }>
+    }
+  | {
+      /**
+       * Rollout compatibility for runs queued before productId was persisted.
+       * Remove after all pre-change running rows have aged out.
+       */
+      handle: string
+      retailerIds: string[]
+    }
 
 export type MetaCatalogItemError = {
   retailerId: string

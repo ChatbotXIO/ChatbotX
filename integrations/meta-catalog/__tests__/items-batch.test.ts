@@ -159,7 +159,7 @@ describe("submitItemsBatch", () => {
       expect.objectContaining({
         form: expect.objectContaining({
           item_type: "PRODUCT_ITEM",
-          allow_upsert: "false",
+          allow_upsert: "true",
         }),
       }),
     )

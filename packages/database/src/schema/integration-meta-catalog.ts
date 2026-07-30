@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -64,10 +65,11 @@ export const integrationMetaCatalogModel = pgTable(
     catalogId: text(),
     catalogName: text(),
     businessId: text(),
-    encryptedAuth: jsonb().notNull(),
+    encryptedAuth: jsonb(),
     authMode: metaCatalogAuthMode().default("oauth").notNull(),
     tokenExpiresAt: timestamp(timestampConfig),
     status: metaCatalogConnectionStatus().default("active").notNull(),
+    deletedAt: timestamp(timestampConfig),
     importStatus: metaCatalogImportStatus().default("idle").notNull(),
     importTotalCount: integer().default(0).notNull(),
     importedCount: integer().default(0).notNull(),
@@ -82,5 +84,6 @@ export const integrationMetaCatalogModel = pgTable(
       table.integrationId,
     ),
     uniqueIndex("IntegrationMetaCatalog_workspaceId_key").on(table.workspaceId),
+    index("IntegrationMetaCatalog_deletedAt_idx").on(table.deletedAt),
   ],
 )

@@ -43,7 +43,12 @@ export type MetaCatalogSyncRun = {
   skippedCount: number
   error: string | null
   itemErrors: Array<{ retailerId: string; reason: string }>
-  skippedItems: Array<{ productId: string; reason: MetaCatalogSkipReason }>
+  skippedItems: Array<{
+    productId: string
+    /** Undefined when the product has since been deleted. */
+    productName?: string
+    reason: MetaCatalogSkipReason
+  }>
   createdAt: Date | string
 }
 
