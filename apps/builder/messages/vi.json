@@ -4086,7 +4086,8 @@
       "category": "Danh mục",
       "vendor": "Thương hiệu",
       "inventoryQuantity": "Số lượng",
-      "imageUrl": "Hình ảnh"
+      "imageUrl": "Hình ảnh",
+      "productUrl": "URL sản phẩm"
     },
     "template": {
       "sheetName": "Sản phẩm",
@@ -4099,6 +4100,7 @@
       "vendor": "Thương hiệu",
       "inventoryQuantity": "Số lượng",
       "imageUrl": "Hình ảnh",
+      "productUrl": "URL sản phẩm",
       "exampleOne": {
         "name": "Áo thun cổ điển",
         "description": "Áo thun cotton mềm mại",

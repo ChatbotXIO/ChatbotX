@@ -69,6 +69,7 @@ export const productImportFields = z.enum([
   "vendor",
   "inventoryQuantity",
   "imageUrl",
+  "productUrl",
 ])
 export type ProductImportField = z.infer<typeof productImportFields>
 
@@ -82,6 +83,7 @@ export const productImportColumnMapSchema = z.object({
   vendor: z.string().optional(),
   inventoryQuantity: z.string().optional(),
   imageUrl: z.string().optional(),
+  productUrl: z.string().optional(),
 })
 export type ProductImportColumnMap = z.infer<
   typeof productImportColumnMapSchema

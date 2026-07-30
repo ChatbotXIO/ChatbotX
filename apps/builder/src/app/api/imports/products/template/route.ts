@@ -21,6 +21,7 @@ export async function GET() {
     vendor: t("vendor"),
     inventoryQuantity: t("inventoryQuantity"),
     imageUrl: t("imageUrl"),
+    productUrl: t("productUrl"),
   }
   const template = await createProductImportTemplate({
     sheetName: t("sheetName"),
@@ -36,6 +37,7 @@ export async function GET() {
         vendor: t("exampleOne.vendor"),
         inventoryQuantity: 25,
         imageUrl: "https://example.com/product-one.jpg",
+        productUrl: "https://example.com/products/product-one",
       },
       {
         name: t("exampleTwo.name"),
@@ -47,6 +49,7 @@ export async function GET() {
         vendor: t("exampleTwo.vendor"),
         inventoryQuantity: 50,
         imageUrl: "https://example.com/product-two.jpg",
+        productUrl: "https://example.com/products/product-two",
       },
     ],
   })

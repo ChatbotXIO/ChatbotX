@@ -91,6 +91,7 @@ const processProductBatch = async (
         vendor: row.vendor,
         inventoryQuantity: row.inventoryQuantity,
         images: row.imageUrl ? [{ url: row.imageUrl, type: "link" }] : [],
+        productUrl: row.productUrl,
       })),
     })
     return {
