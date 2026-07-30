@@ -10,6 +10,7 @@ import {
   CATALOG_BATCH_SIZE,
   concurrencyForUsage,
   isInvalidMetaTokenError,
+  resolveRetailerIds,
   submitItemsBatch,
   toMetaItem,
 } from "@chatbotx.io/integration-meta-catalog"
@@ -57,9 +58,25 @@ export async function submitMetaCatalogSync(
       catalogId,
       productIds: products.map((product) => product.id),
     })
-    const retailerIdByProductId = new Map(
-      existingLinks.map((item) => [item.productId, item.retailerId]),
-    )
+    // A SKU is only free if no other item in the catalog already answers to it,
+    // links outside this run's scope included — reusing one would repoint that
+    // item at the wrong product.
+    const skuClaims = await metaCatalogItemRepository.findByRetailerIds({
+      integrationMetaCatalogId: connection.id,
+      catalogId,
+      retailerIds: products
+        .map((product) => product.sku?.trim())
+        .filter((sku): sku is string => Boolean(sku)),
+    })
+    const retailerIdByProductId = resolveRetailerIds({
+      products,
+      linkedByProductId: new Map(
+        existingLinks.map((item) => [item.productId, item.retailerId]),
+      ),
+      ownerByRetailerId: new Map(
+        skuClaims.map((item) => [item.retailerId, item.productId]),
+      ),
+    })
     const mapped = products.map((product) =>
       toMetaItem(
         product,

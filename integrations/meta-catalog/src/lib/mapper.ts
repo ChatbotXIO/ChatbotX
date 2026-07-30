@@ -17,6 +17,8 @@ const TRAILING_SLASHES_REGEX = /\/+$/
 
 export type CatalogProduct = {
   id: string
+  /** Preferred Content ID — see `resolveRetailerIds` for when it is usable. */
+  sku?: string | null
   name: string
   shortDescription: string | null
   longDescription: string | null

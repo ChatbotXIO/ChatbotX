@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   incrementPollAttempt: vi.fn(),
   concurrencyForUsage: vi.fn(),
   isInvalidMetaTokenError: vi.fn(),
+  resolveRetailerIds: vi.fn(),
   queueAdd: vi.fn(),
 }))
 
@@ -59,6 +60,7 @@ vi.mock("@chatbotx.io/integration-meta-catalog", () => ({
     mocks.concurrencyForUsage(...args),
   isInvalidMetaTokenError: (...args: unknown[]) =>
     mocks.isInvalidMetaTokenError(...args),
+  resolveRetailerIds: (...args: unknown[]) => mocks.resolveRetailerIds(...args),
   submitItemsBatch: (...args: unknown[]) => mocks.submitItemsBatch(...args),
   checkItemsBatch: (...args: unknown[]) => mocks.checkItemsBatch(...args),
   fingerprintMetaItem: (data: { title: string }) => `fingerprint:${data.title}`,
@@ -120,6 +122,25 @@ beforeEach(() => {
   mocks.incrementPollAttempt.mockResolvedValue(undefined)
   mocks.concurrencyForUsage.mockReturnValue(1)
   mocks.isInvalidMetaTokenError.mockReturnValue(false)
+  // Stands in for the real resolver, whose collision rules are covered in
+  // integrations/meta-catalog/__tests__/retailer-id.test.ts.
+  mocks.resolveRetailerIds.mockImplementation(
+    ({
+      products,
+      linkedByProductId,
+    }: {
+      products: Array<{ id: string; sku?: string | null }>
+      linkedByProductId: Map<string, string>
+    }) =>
+      new Map(
+        products.map((product) => [
+          product.id,
+          linkedByProductId.get(product.id) ||
+            product.sku?.trim() ||
+            product.id,
+        ]),
+      ),
+  )
   mocks.queueAdd.mockResolvedValue(undefined)
 })
 
@@ -165,6 +186,38 @@ describe("Meta Catalog sync workers", () => {
         ],
       }),
     )
+  })
+
+  test("sends the SKU as the Content ID and checks who already owns it", async () => {
+    mocks.claim.mockResolvedValue({
+      id: "run-sku",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+    mocks.listProducts.mockResolvedValue([
+      { id: "product-1", sku: "TSHIRT-BLK-M" },
+      { id: "product-2", sku: "  " },
+      { id: "product-3", sku: null },
+    ])
+    mocks.submitItemsBatch.mockResolvedValue({ handles: ["handle-1"] })
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-sku",
+    })
+
+    // Only real SKUs are worth a claim lookup — blanks can never be Content IDs.
+    expect(mocks.findLinkedItems).toHaveBeenCalledWith({
+      integrationMetaCatalogId: "connection-1",
+      catalogId: "catalog-1",
+      retailerIds: ["TSHIRT-BLK-M"],
+    })
+    expect(mocks.submitItemsBatch.mock.calls[0]?.[0].requests).toEqual([
+      expect.objectContaining({ retailerId: "TSHIRT-BLK-M" }),
+      expect.objectContaining({ retailerId: "product-2" }),
+      expect.objectContaining({ retailerId: "product-3" }),
+    ])
   })
 
   test("fingerprints only confirmed successes and retains item errors", async () => {
