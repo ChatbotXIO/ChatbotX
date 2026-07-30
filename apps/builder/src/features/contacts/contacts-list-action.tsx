@@ -63,12 +63,14 @@ export function ContactListAction({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline">
-          <ListIcon />
-          Actions
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="outline">
+            <ListIcon />
+            Actions
+          </Button>
+        }
+      />
       <DropdownMenuContent className="w-56">
         <AssignConversationDialog
           contactIds={rows.map((r) => r.id)}
@@ -165,7 +167,7 @@ export function ContactListAction({
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <ListIcon className="mr-2" size={16} />
+            <ListIcon className="me-2" size={16} />
             {t("actions.more")}
           </DropdownMenuSubTrigger>
 

@@ -14,7 +14,6 @@ import {
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import type { PopoverContentProps } from "@radix-ui/react-popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useMemo, useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
@@ -44,7 +43,7 @@ export const OptionItem = ({
       {option.label}
       <Check
         className={cn(
-          "ml-auto h-4 w-4",
+          "ms-auto h-4 w-4",
           isSelected ? "opacity-100" : "opacity-0",
         )}
       />
@@ -64,7 +63,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   options: SelectOption[]
   className?: string
   popoverClassName?: string
-  side?: PopoverContentProps["side"]
+  side?: React.ComponentProps<typeof PopoverContent>["side"]
   triggerValueChange?: (value: string) => void
   disableValues?: string[]
   portal?: boolean
@@ -119,24 +118,26 @@ export function ComboboxField<T extends FieldValues>({
 
         return (
           <Popover modal={true} onOpenChange={setOpen} open={open}>
-            <PopoverTrigger asChild>
-              <Button
-                aria-expanded={open}
-                aria-label={label || "Select option"}
-                className={cn(
-                  "w-full justify-between",
-                  className,
-                  !field.value && "text-muted-foreground",
-                )}
-                role="combobox"
-                variant="outline"
-              >
-                <span className="truncate">
-                  {selectedLabel || placeholder || "Please select..."}
-                </span>
-                <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
+            <PopoverTrigger
+              render={
+                <Button
+                  aria-expanded={open}
+                  aria-label={label || "Select option"}
+                  className={cn(
+                    "w-full justify-between",
+                    className,
+                    !field.value && "text-muted-foreground",
+                  )}
+                  role="combobox"
+                  variant="outline"
+                >
+                  <span className="truncate">
+                    {selectedLabel || placeholder || "Please select..."}
+                  </span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              }
+            />
             <PopoverContent
               align="start"
               className={cn("w-[200px] p-0", popoverClassName)}

@@ -110,11 +110,13 @@ export function CouponActionEditor({ parentName }: { parentName: string }) {
   return (
     <BaseStepEditor icon={TicketPercentIcon} title={dialogTitle}>
       <Dialog onOpenChange={setOpen} open={open}>
-        <DialogTrigger asChild>
-          <Button size="sm" type="button" variant="outline">
-            {t("actions.update")}
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" type="button" variant="outline">
+              {t("actions.update")}
+            </Button>
+          }
+        />
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{dialogTitle}</DialogTitle>

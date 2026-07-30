@@ -61,7 +61,7 @@ export const ContactFilterConditionRow = ({
     <div className="flex min-h-11 items-center gap-2 rounded-md border bg-background px-3 transition-colors hover:bg-muted/50">
       <button
         aria-label={`${t("actions.edit")}: ${editLabel}`}
-        className="flex flex-1 cursor-pointer flex-wrap items-center gap-2 text-left"
+        className="flex flex-1 cursor-pointer flex-wrap items-center gap-2 text-start"
         onClick={onEdit}
         type="button"
       >

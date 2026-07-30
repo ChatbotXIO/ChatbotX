@@ -76,7 +76,7 @@ export default function AddContactTagDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className={"flex max-h-screen max-w-xl flex-col"}>
         <DialogHeader>
@@ -102,11 +102,13 @@ export default function AddContactTagDialog({
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
 
               <Button
                 disabled={

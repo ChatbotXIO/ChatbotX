@@ -145,7 +145,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
           <p className="text-muted-foreground text-sm">
             {t("fields.conversationStarter.description")}
           </p>
-          <Accordion className="w-full" collapsible type="single">
+          <Accordion className="w-full">
             {conversationStarters.map((_, index) => (
               <AccordionItem
                 className="flex flex-col gap-2"
@@ -253,11 +253,15 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
         />
 
         <DialogFooter>
-          <Button asChild size="sm" variant="ghost">
-            <Link href={`/space/${workspaceId}/settings/channels`}>
-              {t("actions.cancel")}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link href={`/space/${workspaceId}/settings/channels`}>
+                {t("actions.cancel")}
+              </Link>
+            }
+            size="sm"
+            variant="ghost"
+          />
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"

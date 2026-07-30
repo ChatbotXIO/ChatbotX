@@ -42,7 +42,7 @@ export const DeleteStepDialog = memo(function DeleteStepDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction
-            className="ml-auto bg-destructive hover:bg-destructive/90"
+            className="ms-auto bg-destructive hover:bg-destructive/90"
             onClick={onConfirm}
           >
             {t("actions.delete")}

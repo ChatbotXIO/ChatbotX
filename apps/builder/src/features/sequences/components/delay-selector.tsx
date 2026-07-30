@@ -51,7 +51,7 @@ export const DelaySelector = memo(function DelaySelector({
 
   return (
     <div className="flex w-[280px] items-center gap-2">
-      <span className="mr-2 ml-2 whitespace-nowrap text-muted-foreground text-sm">
+      <span className="ms-2 me-2 whitespace-nowrap text-muted-foreground text-sm">
         {t("sequences.afterText")}
       </span>
       {delayUnit === "specificTime" ? (

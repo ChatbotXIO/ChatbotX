@@ -61,16 +61,18 @@ export function InviteWorkspaceMemberDialog({
       {atLimit ? (
         <div className="flex items-center gap-2">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <Button disabled>
-                  <PlusIcon className="size-4" />
-                  {t("actions.inviteFeature", {
-                    feature: t("fields.member.label"),
-                  })}
-                </Button>
-              </span>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <span className="inline-flex">
+                  <Button disabled>
+                    <PlusIcon className="size-4" />
+                    {t("actions.inviteFeature", {
+                      feature: t("fields.member.label"),
+                    })}
+                  </Button>
+                </span>
+              }
+            />
             <TooltipContent>
               {t("billing.limitReached.teamMembers")}
             </TooltipContent>
@@ -83,14 +85,16 @@ export function InviteWorkspaceMemberDialog({
           )}
         </div>
       ) : (
-        <DialogTrigger asChild>
-          <Button>
-            <PlusIcon className="size-4" />
-            {t("actions.inviteFeature", {
-              feature: t("fields.member.label"),
-            })}
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button>
+              <PlusIcon className="size-4" />
+              {t("actions.inviteFeature", {
+                feature: t("fields.member.label"),
+              })}
+            </Button>
+          }
+        />
       )}
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>

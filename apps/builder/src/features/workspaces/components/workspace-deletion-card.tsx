@@ -133,18 +133,20 @@ export function WorkspaceDeletionCard({
             </Button>
           ) : (
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  disabled={isPending}
-                  size="sm"
-                  type="button"
-                  variant="destructive"
-                >
-                  {isScheduling && <Loader2Icon className="animate-spin" />}
-                  <Trash2Icon className="size-4" />
-                  {t("workspace.deletion.schedule")}
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    disabled={isPending}
+                    size="sm"
+                    type="button"
+                    variant="destructive"
+                  >
+                    {isScheduling && <Loader2Icon className="animate-spin" />}
+                    <Trash2Icon className="size-4" />
+                    {t("workspace.deletion.schedule")}
+                  </Button>
+                }
+              />
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>

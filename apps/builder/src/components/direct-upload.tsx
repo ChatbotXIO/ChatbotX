@@ -174,7 +174,7 @@ export function DirectUploadOrInsertLink({
               ) : (
                 <div className="flex w-full min-w-0 items-center gap-2 px-3">
                   <fileConfigs.icon className="size-5 flex-none" />
-                  <span className="min-w-0 flex-1 truncate text-left">
+                  <span className="min-w-0 flex-1 truncate text-start">
                     {publicUrl}
                   </span>
                 </div>
@@ -241,7 +241,7 @@ export function DirectUploadOrInsertLink({
       )}
 
       {publicUrl && (
-        <div className="absolute top-0 right-0 z-1 size-6 rounded-full bg-white p-0 dark:bg-neutral-500!">
+        <div className="absolute inset-e-2 top-0 z-1 size-6 rounded-full bg-white p-0 dark:bg-neutral-500!">
           <Button
             className="size-6 p-0!"
             onClick={clearInputFile}

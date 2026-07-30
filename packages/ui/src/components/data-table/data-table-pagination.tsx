@@ -91,7 +91,7 @@ export function DataTablePagination<TData>({
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronsLeft />
+            <ChevronsLeft className="rtl:rotate-180" />
           </Button>
           <Button
             aria-label={labels?.previousPage ?? "Go to previous page"}
@@ -101,7 +101,7 @@ export function DataTablePagination<TData>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeft />
+            <ChevronLeft className="rtl:rotate-180" />
           </Button>
           <Button
             aria-label={labels?.nextPage ?? "Go to next page"}
@@ -111,7 +111,7 @@ export function DataTablePagination<TData>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronRight />
+            <ChevronRight className="rtl:rotate-180" />
           </Button>
           <Button
             aria-label={labels?.lastPage ?? "Go to last page"}
@@ -121,7 +121,7 @@ export function DataTablePagination<TData>({
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronsRight />
+            <ChevronsRight className="rtl:rotate-180" />
           </Button>
         </div>
       </div>

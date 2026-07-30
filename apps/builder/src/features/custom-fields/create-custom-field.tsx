@@ -18,7 +18,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import { type ReactElement, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldRequest } from "./schemas/action"
@@ -26,7 +26,7 @@ import { createCustomFieldRequest } from "./schemas/action"
 type CreateCustomFieldDialogProps = {
   workspaceId: string
   folderId: string | null
-  triggerButton?: ReactNode
+  triggerButton?: ReactElement
   onSuccess?: () => void
   modal?: boolean
 }
@@ -49,23 +49,19 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
 
   return (
     <Dialog modal={modal} onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        {triggerButton ? (
-          triggerButton
-        ) : (
-          <Button size="sm">
-            <PlusIcon />
-            {t("actions.createFeature", {
-              feature: t("fields.customField.label"),
-            })}
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen max-w-lg overflow-y-scroll"}
-        onInteractOutside={(e) => e.stopPropagation()}
-        onPointerDownOutside={(e) => e.stopPropagation()}
-      >
+      <DialogTrigger
+        render={
+          triggerButton ?? (
+            <Button size="sm">
+              <PlusIcon />
+              {t("actions.createFeature", {
+                feature: t("fields.customField.label"),
+              })}
+            </Button>
+          )
+        }
+      />
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {

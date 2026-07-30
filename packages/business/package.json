@@ -46,6 +46,7 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
+    "@eloqnt/cli": "^0.6.1",
     "@types/node": "^24.10.4",
     "typescript": "^5",
     "vitest": "^4.1.0"

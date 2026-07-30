@@ -36,12 +36,16 @@ export default async function ImportContactsHistoriesPage(props: {
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center gap-3">
-        <Button asChild size="icon" variant="outline">
-          <Link href={`/space/${workspaceId}/contacts`}>
-            <ArrowLeftIcon className="size-4" />
-            <span className="sr-only">{t("actions.back")}</span>
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link href={`/space/${workspaceId}/contacts`}>
+              <ArrowLeftIcon className="size-4 rtl:rotate-180" />
+              <span className="sr-only">{t("actions.back")}</span>
+            </Link>
+          }
+          size="icon"
+          variant="outline"
+        />
         <h4 className="font-bold text-xl">
           {t("fields.import.histories.title")}
         </h4>

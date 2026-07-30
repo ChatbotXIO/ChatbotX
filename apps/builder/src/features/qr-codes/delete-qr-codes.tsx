@@ -64,12 +64,14 @@ export function DeleteQrCodesDialog({
   return (
     <Dialog {...props}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.delete")} ({qrCodes.length})
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" variant="outline">
+              <Trash aria-hidden="true" className="me-2 size-4" />
+              {t("actions.delete")} ({qrCodes.length})
+            </Button>
+          }
+        />
       ) : null}
       <DialogContent className="max-h-screen max-w-xl overflow-y-auto">
         <DialogHeader>
@@ -86,15 +88,17 @@ export function DeleteQrCodesDialog({
         </DialogHeader>
 
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button
-              onClick={() => onOpenChange?.(false)}
-              size="sm"
-              variant="ghost"
-            >
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button
+                onClick={() => onOpenChange?.(false)}
+                size="sm"
+                variant="ghost"
+              >
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             disabled={isPending}
             onClick={() => execute({ ids: qrCodes.map((q) => q.id) })}
@@ -102,7 +106,7 @@ export function DeleteQrCodesDialog({
             variant="destructive"
           >
             {isPending && (
-              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
+              <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             )}
             {t("actions.delete")}
           </Button>

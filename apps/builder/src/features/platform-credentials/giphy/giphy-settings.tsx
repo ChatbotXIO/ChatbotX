@@ -82,11 +82,13 @@ export function EditGiphySettingsDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogTitle>
           {t("messages.editFeature", { feature: "GIPHY" })}
@@ -171,7 +173,7 @@ export function EditGiphySettingsForm({
               onConfirm={() => executeDelete()}
             />
           )}
-          <div className="ml-auto flex gap-2">
+          <div className="ms-auto flex gap-2">
             <Button
               onClick={() => {
                 resetFormAndAction()

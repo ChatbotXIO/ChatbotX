@@ -64,12 +64,14 @@ export const DeleteMagicLinksDialog = ({
   return (
     <Dialog {...props}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="sm" type="button" variant="outline">
-            <Trash aria-hidden className="mr-2 size-4" />
-            {t("actions.delete")} ({magicLinks.length})
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" type="button" variant="outline">
+              <Trash aria-hidden className="me-2 size-4" />
+              {t("actions.delete")} ({magicLinks.length})
+            </Button>
+          }
+        />
       ) : null}
       <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
@@ -86,16 +88,18 @@ export const DeleteMagicLinksDialog = ({
         </DialogHeader>
 
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button
-              onClick={() => onOpenChange?.(false)}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button
+                onClick={() => onOpenChange?.(false)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
@@ -105,7 +109,7 @@ export const DeleteMagicLinksDialog = ({
             variant="destructive"
           >
             {isPending && (
-              <Loader aria-hidden className="mr-2 size-4 animate-spin" />
+              <Loader aria-hidden className="me-2 size-4 animate-spin" />
             )}
             {t("actions.delete")}
           </Button>

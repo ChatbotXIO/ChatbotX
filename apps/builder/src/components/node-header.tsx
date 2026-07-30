@@ -1,3 +1,5 @@
+import { mergeProps } from "@base-ui/react/merge-props"
+import { useRender } from "@base-ui/react/use-render"
 import { Button, type ButtonProps } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -5,7 +7,6 @@ import {
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { Slot } from "@radix-ui/react-slot"
 import { useNodeId, useReactFlow } from "@xyflow/react"
 import { EllipsisVertical, Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -44,32 +45,27 @@ NodeHeader.displayName = "NodeHeader"
 
 /* NODE HEADER TITLE -------------------------------------------------------- */
 
-export type NodeHeaderTitleProps = HTMLAttributes<HTMLHeadingElement> & {
-  asChild?: boolean
-}
+export type NodeHeaderTitleProps = useRender.ComponentProps<"h3">
 
 /**
  * The title text for the node. To maintain a native application feel, the title
  * text is not selectable.
  */
 export const NodeHeaderTitle = ({
-  ref,
   className,
-  asChild,
+  render,
   ...props
-}: NodeHeaderTitleProps & {
-  ref: React.RefObject<HTMLHeadingElement>
-}) => {
-  const Comp = asChild ? Slot : "h3"
-
-  return (
-    <Comp
-      ref={ref}
-      {...props}
-      className={cn(className, "user-select-none flex-1 font-semibold")}
-    />
-  )
-}
+}: NodeHeaderTitleProps) =>
+  useRender({
+    defaultTagName: "h3",
+    render,
+    props: mergeProps<"h3">(
+      {
+        className: cn(className, "user-select-none flex-1 font-semibold"),
+      } as React.ComponentProps<"h3">,
+      props,
+    ),
+  })
 
 NodeHeaderTitle.displayName = "NodeHeaderTitle"
 
@@ -105,7 +101,7 @@ export const NodeHeaderActions = ({
     ref={ref}
     {...props}
     className={cn(
-      "ml-auto flex items-center gap-1 justify-self-end",
+      "ms-auto flex items-center gap-1 justify-self-end",
       className,
     )}
   />
@@ -176,11 +172,13 @@ export const NodeHeaderMenuAction = ({
   ref: React.RefObject<HTMLButtonElement>
 }) => (
   <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <NodeHeaderAction ref={ref} {...props}>
-        {trigger ?? <EllipsisVertical />}
-      </NodeHeaderAction>
-    </DropdownMenuTrigger>
+    <DropdownMenuTrigger
+      render={
+        <NodeHeaderAction ref={ref} {...props}>
+          {trigger ?? <EllipsisVertical />}
+        </NodeHeaderAction>
+      }
+    />
     <DropdownMenuContent>{children}</DropdownMenuContent>
   </DropdownMenu>
 )

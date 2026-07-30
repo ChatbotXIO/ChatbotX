@@ -35,23 +35,25 @@ export default function InboxNewCard({
   if (blocked) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Card aria-disabled className="items-center justify-center py-0">
-            <CardContent className="justify-middle flex h-full w-full flex-wrap items-center gap-2 px-0">
-              <span
-                className={cn(
-                  CARD_STYLES,
-                  "cursor-not-allowed text-muted-foreground",
-                )}
-              >
-                <PlusCircleIcon className="h-4 w-4" />
-                {t("actions.createFeature", {
-                  feature: t("fields.inbox.label"),
-                })}
-              </span>
-            </CardContent>
-          </Card>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Card aria-disabled className="items-center justify-center py-0">
+              <CardContent className="justify-middle flex h-full w-full flex-wrap items-center gap-2 px-0">
+                <span
+                  className={cn(
+                    CARD_STYLES,
+                    "cursor-not-allowed text-muted-foreground",
+                  )}
+                >
+                  <PlusCircleIcon className="h-4 w-4" />
+                  {t("actions.createFeature", {
+                    feature: t("fields.inbox.label"),
+                  })}
+                </span>
+              </CardContent>
+            </Card>
+          }
+        />
         <TooltipContent>{disabledReason}</TooltipContent>
       </Tooltip>
     )

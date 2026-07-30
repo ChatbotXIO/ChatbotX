@@ -14,15 +14,18 @@ export function AddAutomatedResponseButton() {
   const t = useTranslations()
 
   return (
-    <Button asChild size={"sm"}>
-      <Link
-        href={`/space/${workspaceId}/automated-responses/create?${searchParams.toString()}`}
-      >
-        <PlusIcon />
-        {t("actions.createFeature", {
-          feature: t("fields.automatedResponse.label"),
-        })}
-      </Link>
-    </Button>
+    <Button
+      render={
+        <Link
+          href={`/space/${workspaceId}/automated-responses/create?${searchParams.toString()}`}
+        >
+          <PlusIcon />
+          {t("actions.createFeature", {
+            feature: t("fields.automatedResponse.label"),
+          })}
+        </Link>
+      }
+      size={"sm"}
+    />
   )
 }

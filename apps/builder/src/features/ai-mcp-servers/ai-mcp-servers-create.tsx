@@ -212,14 +212,16 @@ export function AIMcpServersCreate({
       : t("messages.createFeature", { feature: t("fields.mcpServer.label") })
 
   const trigger = controlledOpen === undefined && (
-    <DialogTrigger asChild>
-      <Button>
-        <PlusIcon className="h-4 w-4" />
-        {t("actions.createFeature", {
-          feature: t("fields.mcpServer.label"),
-        })}
-      </Button>
-    </DialogTrigger>
+    <DialogTrigger
+      render={
+        <Button>
+          <PlusIcon className="h-4 w-4" />
+          {t("actions.createFeature", {
+            feature: t("fields.mcpServer.label"),
+          })}
+        </Button>
+      }
+    />
   )
 
   const watchAuthType = useWatch({
@@ -302,9 +304,11 @@ export function AIMcpServersCreate({
               </div>
             )}
             <DialogFooter className="gap-2 sm:space-x-0">
-              <DialogClose asChild>
-                <Button variant="outline">{t("actions.cancel")}</Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button variant="outline">{t("actions.cancel")}</Button>
+                }
+              />
 
               <Button
                 disabled={

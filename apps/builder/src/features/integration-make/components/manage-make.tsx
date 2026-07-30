@@ -22,20 +22,24 @@ export function ManageMake({
     >
       {inviteUrl ? (
         <div className="flex flex-col gap-2">
-          <Button asChild size="sm" variant="secondary">
-            <a
-              href={inviteUrl}
-              onClick={() => {
-                if (workspaceToken) {
-                  handleCopy(workspaceToken)
-                }
-              }}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {t("actions.connect")}
-            </a>
-          </Button>
+          <Button
+            render={
+              <a
+                href={inviteUrl}
+                onClick={() => {
+                  if (workspaceToken) {
+                    handleCopy(workspaceToken)
+                  }
+                }}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {t("actions.connect")}
+              </a>
+            }
+            size="sm"
+            variant="secondary"
+          />
           {!workspaceToken && (
             <p className="text-muted-foreground text-xs">
               {t("make.setting.noWorkspaceToken")}

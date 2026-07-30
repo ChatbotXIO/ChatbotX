@@ -28,11 +28,13 @@ export default function AddNodeButton() {
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <ControlButton className="h-9! w-14! bg-primary! p-0! text-primary-foreground!">
-          <PlusIcon className="max-h-full! max-w-full! fill-none!" />
-        </ControlButton>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <ControlButton className="h-9! w-14! bg-primary! p-0! text-primary-foreground!">
+            <PlusIcon className="max-h-full! max-w-full! fill-none!" />
+          </ControlButton>
+        }
+      />
       <PopoverContent className="w-44 p-2">
         <div className="flex flex-col items-start">
           {Object.values(allNodesConfig).map((it, idx) => {

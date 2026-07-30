@@ -321,12 +321,14 @@ export function MetaCatalogDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button">
-          <SiFacebook />
-          {t("title")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button">
+            <SiFacebook />
+            {t("title")}
+          </Button>
+        }
+      />
 
       <DialogContent
         aria-describedby={undefined}

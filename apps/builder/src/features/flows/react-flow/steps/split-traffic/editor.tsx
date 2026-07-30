@@ -75,7 +75,12 @@ const SplitTrafficStepEditor = ({
             <Slider
               className="flex-1"
               max={100}
-              onValueChange={(value) => handleSliderChange(index, value)}
+              onValueChange={(value) =>
+                handleSliderChange(
+                  index,
+                  Array.isArray(value) ? value : [value],
+                )
+              }
               step={1}
               value={[cases?.[index]?.value ?? 0]}
             />
@@ -90,7 +95,7 @@ const SplitTrafficStepEditor = ({
             <span>%</span>
           </div>
           <Button
-            className="absolute top-0 right-0 z-50 h-8 w-8 cursor-pointer bg-background p-0 opacity-0 shadow-sm transition-opacity hover:bg-accent/10 group-hover:opacity-100"
+            className="absolute end-0 top-0 z-50 h-8 w-8 cursor-pointer bg-background p-0 opacity-0 shadow-sm transition-opacity hover:bg-accent/10 group-hover:opacity-100"
             onClick={(e) => {
               e.stopPropagation()
               handleRemove(index)
@@ -111,7 +116,7 @@ const SplitTrafficStepEditor = ({
         type="button"
         variant="dashed"
       >
-        <PlusIcon className="mr-1 size-4" />
+        <PlusIcon className="me-1 size-4" />
         {t("flows.splitTraffic.addVariation")}
       </Button>
     </div>

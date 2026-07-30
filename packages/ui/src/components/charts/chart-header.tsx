@@ -20,9 +20,7 @@ export default function ChartHeader({ title, helpText }: ChartHeaderProps) {
         <CardTitle>{title}</CardTitle>
         {helpText && (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <InfoIcon size={18} />
-            </TooltipTrigger>
+            <TooltipTrigger render={<InfoIcon size={18} />} />
             <TooltipContent>
               <p>{helpText}</p>
             </TooltipContent>

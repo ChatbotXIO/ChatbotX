@@ -115,11 +115,13 @@ const MailerLiteDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -179,7 +181,7 @@ const MailerLiteDialog = ({ parentName }: { parentName: string }) => {
                       name={`mergeFields.${index}.contactFieldId`}
                       placeholder={t("mailerLite.fields.emptyField")}
                     />
-                    <ArrowRightIcon className="size-4 text-muted-foreground" />
+                    <ArrowRightIcon className="size-4 text-muted-foreground rtl:rotate-180" />
                     <SelectField
                       disableValues={mappedFields.flatMap(
                         (mapping, mappingIndex) =>

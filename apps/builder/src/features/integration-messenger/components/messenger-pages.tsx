@@ -106,14 +106,19 @@ export function FacebookPages({
           </AlertDescription>
         </Alert>
         <div className="flex justify-end gap-2">
-          <Button asChild size="sm" variant="ghost">
-            <Link href={cancelHref}>{t("actions.cancel")}</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/channels/create">
-              {t("messenger.selectPage.tryAgain")}
-            </Link>
-          </Button>
+          <Button
+            render={<Link href={cancelHref}>{t("actions.cancel")}</Link>}
+            size="sm"
+            variant="ghost"
+          />
+          <Button
+            render={
+              <Link href="/channels/create">
+                {t("messenger.selectPage.tryAgain")}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </div>
     )
@@ -129,7 +134,7 @@ export function FacebookPages({
 
         {/* Styling ::-webkit-scrollbar opts out of the OS overlay scrollbar,
             so the bar stays visible whenever the list overflows. */}
-        <div className="max-h-75 overflow-y-auto pr-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:w-2">
+        <div className="max-h-75 overflow-y-auto pe-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:w-2">
           <RadioGroupField
             label={t("messenger.selectFacebookPage")}
             name="pageId"
@@ -144,9 +149,11 @@ export function FacebookPages({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button asChild size="sm" variant="ghost">
-            <Link href={cancelHref}>{t("actions.cancel")}</Link>
-          </Button>
+          <Button
+            render={<Link href={cancelHref}>{t("actions.cancel")}</Link>}
+            size="sm"
+            variant="ghost"
+          />
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"

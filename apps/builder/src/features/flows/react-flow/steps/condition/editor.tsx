@@ -63,7 +63,7 @@ const ConditionStepEditor = ({ parentName }: ConditionStepEditorProps) => {
           type="button"
           variant="dashed"
         >
-          <PlusIcon aria-hidden="true" className="mr-1 size-4" />
+          <PlusIcon aria-hidden="true" className="me-1 size-4" />
           {t("flows.condition.addCase")}
         </Button>
       </div>

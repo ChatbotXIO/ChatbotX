@@ -78,7 +78,11 @@ export const SpreadsheetCustomFieldMapping = ({
             />
           </div>
           <div className="w-[10%]">
-            {type === "update" ? <ArrowRightIcon /> : <ArrowLeftIcon />}
+            {type === "update" ? (
+              <ArrowRightIcon className="rtl:rotate-180" />
+            ) : (
+              <ArrowLeftIcon className="rtl:rotate-180" />
+            )}
           </div>
           <InputField
             className="w-full"

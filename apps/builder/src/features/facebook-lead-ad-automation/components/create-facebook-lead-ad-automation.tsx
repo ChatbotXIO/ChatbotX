@@ -214,7 +214,7 @@ export function CreateFacebookLeadAdAutomationForm({
                 name="pageId"
                 options={pageOptions}
                 placeholder={t("actions.pleaseSelect")}
-                popoverClassName="w-[var(--radix-popover-trigger-width)]"
+                popoverClassName="w-[var(--anchor-width)]"
                 required
                 triggerValueChange={onPageChange}
               />
@@ -231,7 +231,7 @@ export function CreateFacebookLeadAdAutomationForm({
                 name="formId"
                 options={formOptions}
                 placeholder={t("actions.pleaseSelect")}
-                popoverClassName="w-[var(--radix-popover-trigger-width)]"
+                popoverClassName="w-[var(--anchor-width)]"
                 required
                 triggerValueChange={onFormChange}
               />
@@ -253,7 +253,7 @@ export function CreateFacebookLeadAdAutomationForm({
                 name="flowId"
                 options={flowOptions}
                 placeholder={t("facebookLeadAdsAutomation.none")}
-                popoverClassName="w-[var(--radix-popover-trigger-width)]"
+                popoverClassName="w-[var(--anchor-width)]"
               />
             ) : null}
 

@@ -29,18 +29,20 @@ export function DeleteNode({ nodeId }: { nodeId: string }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          className="size-8 text-destructive hover:text-destructive"
-          disabled={isFlowMutating}
-          onClick={onDelete}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <TrashIcon />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            className="size-8 text-destructive hover:text-destructive"
+            disabled={isFlowMutating}
+            onClick={onDelete}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <TrashIcon />
+          </Button>
+        }
+      />
       <TooltipContent>
         <p>{t("actions.delete")}</p>
       </TooltipContent>

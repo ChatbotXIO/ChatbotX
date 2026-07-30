@@ -36,11 +36,13 @@ export function SignOut() {
         </DialogHeader>
 
         <div className="flex items-center justify-end gap-2">
-          <DialogClose asChild>
-            <Button size="sm" type="button" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" type="button" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             disabled={isLoading}
             onClick={async () => {

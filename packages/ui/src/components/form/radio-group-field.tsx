@@ -1,11 +1,12 @@
-import type { RadioGroupProps } from "@radix-ui/react-radio-group"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import { cn } from "../../lib/utils"
 import { Label } from "../ui/label"
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
 import { FormFieldWrapper } from "./field-wrapper"
 
-type RadioGroupFieldProps<T extends FieldValues> = RadioGroupProps & {
+type RadioGroupFieldProps<T extends FieldValues> = React.ComponentProps<
+  typeof RadioGroup
+> & {
   name: FieldPath<T>
   label?: string
   description?: string

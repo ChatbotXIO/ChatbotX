@@ -28,17 +28,19 @@ export function ContactNoteList({
           <div className="flex w-full">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-1 items-center gap-2 text-sm">
-                    <CircleUserRound />
-                    <div>
-                      {formatDate(contactNote.updatedAt, {
-                        month: "short",
-                        locale,
-                      })}
+                <TooltipTrigger
+                  render={
+                    <div className="flex flex-1 items-center gap-2 text-sm">
+                      <CircleUserRound />
+                      <div>
+                        {formatDate(contactNote.updatedAt, {
+                          month: "short",
+                          locale,
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </TooltipTrigger>
+                  }
+                />
                 <TooltipContent>
                   <p>{contactNote.createdBy?.name ?? "Unknown"}</p>
                 </TooltipContent>

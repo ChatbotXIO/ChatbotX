@@ -79,9 +79,7 @@ export default function SettingsChannelsPage({
   return (
     <Accordion
       className="w-full"
-      collapsible
-      defaultValue={selectedChannel}
-      type="single"
+      defaultValue={selectedChannel ? [selectedChannel] : []}
     >
       {integrationItems.map((integration) => (
         <AccordionItem

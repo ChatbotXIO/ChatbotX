@@ -75,12 +75,15 @@ export function ProductsTable({
         </CardTitle>
         <CardAction>
           <div className="flex items-center gap-2">
-            <Button asChild size="sm">
-              <Link href={`/space/${workspaceId}/products/create`}>
-                <PlusIcon />
-                {t("actions.create")}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link href={`/space/${workspaceId}/products/create`}>
+                  <PlusIcon />
+                  {t("actions.create")}
+                </Link>
+              }
+              size="sm"
+            />
             <ImportProductDialog
               historyPromise={importHistoryPromise}
               workspaceId={workspaceId}

@@ -100,11 +100,13 @@ export function RenameInboxTeamDialog({
               <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter className="sm:justify-start">
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button type="button" variant="secondary">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting

@@ -83,11 +83,13 @@ export function ManageDrip(props: {
         />
       ) : (
         <Dialog onOpenChange={setOpen} open={open}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="secondary">
-              {t("actions.connect")}
-            </Button>
-          </DialogTrigger>
+          <DialogTrigger
+            render={
+              <Button size="sm" variant="secondary">
+                {t("actions.connect")}
+              </Button>
+            }
+          />
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -104,11 +106,13 @@ export function ManageDrip(props: {
                   type="password"
                 />
                 <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="secondary">
-                      {t("actions.cancel")}
-                    </Button>
-                  </DialogClose>
+                  <DialogClose
+                    render={
+                      <Button type="button" variant="secondary">
+                        {t("actions.cancel")}
+                      </Button>
+                    }
+                  />
                   <Button
                     disabled={
                       !form.formState.isValid || form.formState.isSubmitting

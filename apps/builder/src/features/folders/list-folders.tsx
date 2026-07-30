@@ -115,19 +115,19 @@ const ListFolders = (props: ListFoldersProps) => {
       </div>
 
       {/* Folders list */}
-      <ScrollArea className="max-h-44" type="auto">
+      <ScrollArea className="max-h-44">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {folders.map((folderItem: FolderResource) => (
             <div className="overflow-hidden" key={folderItem.id}>
-              <div className="group flex items-center gap-2 rounded-lg border pr-3 hover:border-primary">
+              <div className="group flex items-center gap-2 rounded-lg border pe-3 hover:border-primary">
                 <Button
-                  className="flex flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-0 pl-4 hover:bg-transparent"
+                  className="flex flex-1 overflow-hidden text-ellipsis whitespace-nowrap ps-4 pe-0 hover:bg-transparent"
                   onClick={() => setFolderId(folderItem.id)}
                   size="lg"
                   variant="ghost"
                 >
                   <FolderIcon />
-                  <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left">
+                  <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-start">
                     {folderItem.name}
                   </div>
                 </Button>

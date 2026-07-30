@@ -1,6 +1,6 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { InfoIcon } from "lucide-react"
-import type { ReactNode } from "react"
+import type { ReactElement } from "react"
 import {
   type FieldPath,
   type FieldValues,
@@ -31,7 +31,7 @@ type FormFieldWrapperProps<T extends FieldValues> = {
       onBlur: () => void
     },
     description?: string,
-  ) => ReactNode
+  ) => ReactElement
 }
 
 export function FormFieldWrapper<T extends FieldValues>({
@@ -61,9 +61,11 @@ export function FormFieldWrapper<T extends FieldValues>({
               )}
               {description && descriptionType === "tooltip" ? (
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={
+                      <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                    }
+                  />
                   <TooltipContent className="max-w-sm">
                     {description}
                   </TooltipContent>

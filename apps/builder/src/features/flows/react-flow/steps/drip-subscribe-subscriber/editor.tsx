@@ -144,11 +144,13 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("drip.title")}</DialogTitle>
@@ -255,7 +257,7 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
                         name={`mergeFields.${index}.contactFieldId`}
                         placeholder={t("drip.fields.nothingSelected")}
                       />
-                      <ArrowRightIcon className="size-4 text-muted-foreground" />
+                      <ArrowRightIcon className="size-4 text-muted-foreground rtl:rotate-180" />
                       <ComboboxField
                         emptyText={t("actions.noRecordFound")}
                         label=""

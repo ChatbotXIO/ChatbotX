@@ -1,5 +1,4 @@
 import { logger } from "@chatbotx.io/ui/lib/logger"
-import type { SelectProps } from "@radix-ui/react-select"
 import ky from "ky"
 import type { LucideIcon } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -25,7 +24,9 @@ export type SelectOption = SingleSelectOption & {
   children?: SelectOption[]
 }
 
-export type SelectFieldProps<T extends FieldValues> = SelectProps & {
+export type SelectFieldProps<T extends FieldValues> = React.ComponentProps<
+  typeof Select
+> & {
   name: FieldPath<T>
   label?: string
   placeholder?: string
@@ -138,14 +139,14 @@ export const SelectField = <T extends FieldValues>(
       required={required}
     >
       {(field) => {
-        const handleSelectChange = (value: string) => {
+        const handleSelectChange = (value: unknown) => {
           if (value === CLEAR_VALUE) {
             field.onChange(undefined as T[FieldPath<T>])
             triggerValueChange?.(undefined)
             return
           }
           field.onChange(value as T[FieldPath<T>])
-          triggerValueChange?.(value)
+          triggerValueChange?.(value as string)
         }
 
         return (

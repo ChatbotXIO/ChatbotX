@@ -96,12 +96,14 @@ export function BulkMoveCommentAutomationFolderDialog<
   return (
     <Dialog onOpenChange={onOpenChange} {...props}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <FolderUpIcon aria-hidden="true" className="size-4" />
-            {t("actions.move")}
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" variant="outline">
+              <FolderUpIcon aria-hidden="true" className="size-4" />
+              {t("actions.move")}
+            </Button>
+          }
+        />
       ) : null}
       <DialogContent className="max-w-lg">
         <DialogHeader>
@@ -148,7 +150,7 @@ export function BulkMoveCommentAutomationFolderDialog<
                 type="submit"
               >
                 {form.formState.isSubmitting && (
-                  <Loader2Icon className="mr-2 size-4 animate-spin" />
+                  <Loader2Icon className="me-2 size-4 animate-spin" />
                 )}
                 {t("actions.confirm")}
               </Button>

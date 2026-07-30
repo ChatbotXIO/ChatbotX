@@ -63,7 +63,7 @@ export default function DeleteContactDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className={"max-h-screen max-w-md"}>
         <DialogHeader>
@@ -79,11 +79,13 @@ export default function DeleteContactDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button size="sm" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
 
           <Button
             disabled={isPending}

@@ -74,7 +74,7 @@ export function WorkspaceStatusSwitch({
   const switchElement = (
     <Switch
       checked={isActive}
-      className="absolute top-3 left-3 z-10"
+      className="absolute start-3 top-3 z-10"
       disabled={!canManageStatus || scheduledForDeletion}
       onCheckedChange={
         canManageStatus && !scheduledForDeletion
@@ -95,9 +95,11 @@ export function WorkspaceStatusSwitch({
         switchElement
       ) : (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="absolute z-10 inline-flex">{switchElement}</span>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <span className="absolute z-10 inline-flex">{switchElement}</span>
+            }
+          />
           <TooltipContent>{disabledTooltip}</TooltipContent>
         </Tooltip>
       )}

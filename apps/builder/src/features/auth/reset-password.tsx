@@ -100,9 +100,13 @@ export const ResetPassword = () => {
           </Form>
 
           <div className="mt-3 space-y-3">
-            <Button asChild className="w-full" variant="outline">
-              <Link href="/auth/sign-in">{t("actions.backToSignIn")}</Link>
-            </Button>
+            <Button
+              className="w-full"
+              render={
+                <Link href="/auth/sign-in">{t("actions.backToSignIn")}</Link>
+              }
+              variant="outline"
+            />
           </div>
         </CardContent>
       </Card>

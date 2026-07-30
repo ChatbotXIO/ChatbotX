@@ -47,15 +47,19 @@ export function TiktokManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button asChild size="sm" variant="secondary">
-          <Link
-            className="flex items-center gap-2"
-            href={`/channels/create?channel=tiktok&workspaceId=${workspaceId}`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", { feature: t("fields.tiktok.label") })}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link
+              className="flex items-center gap-2"
+              href={`/channels/create?channel=tiktok&workspaceId=${workspaceId}`}
+            >
+              <PlusCircleIcon className="h-4 w-4" />
+              {t("actions.addFeature", { feature: t("fields.tiktok.label") })}
+            </Link>
+          }
+          size="sm"
+          variant="secondary"
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border">

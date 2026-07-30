@@ -78,7 +78,7 @@ export const DeleteAIMcpServerDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction disabled={isPending} onClick={handleDelete}>
-            {isPending && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
+            {isPending && <Loader2Icon className="me-2 h-4 w-4 animate-spin" />}
             {t("actions.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>

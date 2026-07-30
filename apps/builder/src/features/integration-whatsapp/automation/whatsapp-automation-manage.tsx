@@ -48,11 +48,15 @@ export function WhatsappAutomationManage({
           <h4 className="flex-1 font-medium">
             {t("whatsapp.icebreakers.label")}
           </h4>
-          <Button asChild size="sm" variant="secondary">
-            <Link href={managerUrl} rel="noopener" target="_blank">
-              {t("actions.manage")}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link href={managerUrl} rel="noopener" target="_blank">
+                {t("actions.manage")}
+              </Link>
+            }
+            size="sm"
+            variant="secondary"
+          />
         </div>
         <p className="text-muted-foreground text-sm">
           {t("whatsapp.icebreakers.description")}
@@ -75,11 +79,15 @@ export function WhatsappAutomationManage({
       <div className="flex flex-col gap-2">
         <div className="flex">
           <h4 className="flex-1 font-medium">{t("whatsapp.commands.label")}</h4>
-          <Button asChild size="sm" variant="secondary">
-            <Link href={managerUrl} rel="noopener" target="_blank">
-              {t("actions.manage")}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link href={managerUrl} rel="noopener" target="_blank">
+                {t("actions.manage")}
+              </Link>
+            }
+            size="sm"
+            variant="secondary"
+          />
         </div>
         <p className="text-muted-foreground text-sm">
           {t("whatsapp.commands.description")}

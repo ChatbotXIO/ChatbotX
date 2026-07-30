@@ -93,13 +93,17 @@ export function InstagramAccounts({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button asChild size="sm" variant="ghost">
-            <Link
-              href={`/space/${workspaceId}/settings/channels?channel=instagram`}
-            >
-              {t("actions.cancel")}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link
+                href={`/space/${workspaceId}/settings/channels?channel=instagram`}
+              >
+                {t("actions.cancel")}
+              </Link>
+            }
+            size="sm"
+            variant="ghost"
+          />
           <Button disabled={form.formState.isSubmitting} type="submit">
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />

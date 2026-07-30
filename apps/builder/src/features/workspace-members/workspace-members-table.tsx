@@ -57,9 +57,9 @@ const renderContactsCell = (
   if (contacts) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <CheckCircle2Icon className="size-5 text-primary" />
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={<CheckCircle2Icon className="size-5 text-primary" />}
+        />
         <TooltipContent>{t("fields.permissions.contacts")}</TooltipContent>
       </Tooltip>
     )
@@ -68,9 +68,9 @@ const renderContactsCell = (
   if (onlyAssignedContacts) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <CircleDashedIcon className="size-5 text-primary" />
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={<CircleDashedIcon className="size-5 text-primary" />}
+        />
         <TooltipContent>
           {t("fields.permissions.onlyAssignedContacts")}
         </TooltipContent>
@@ -117,11 +117,13 @@ export function WorkspaceMembersTable({
             </Avatar>
 
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.user.name}
-                </div>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <div className="inline-block max-w-[200px] truncate">
+                    {row.original.user.name}
+                  </div>
+                }
+              />
               <TooltipContent>
                 <p>{row.original.user.name}</p>
               </TooltipContent>
@@ -221,12 +223,14 @@ export function WorkspaceMembersTable({
         id: "actions",
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">{t("actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">{t("actions.openMenu")}</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}

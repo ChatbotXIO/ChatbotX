@@ -98,13 +98,15 @@ function MissingDomainPricingButton({
 }) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <SidebarMenuButton className="h-9 cursor-pointer p-0" tooltip={title}>
-          <span className={PRICING_ROW_CLASS}>
-            <PricingRow title={title} />
-          </span>
-        </SidebarMenuButton>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <SidebarMenuButton className="h-9 cursor-pointer p-0" tooltip={title}>
+            <span className={PRICING_ROW_CLASS}>
+              <PricingRow title={title} />
+            </span>
+          </SidebarMenuButton>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Set up a custom domain first</AlertDialogTitle>
@@ -116,9 +118,9 @@ function MissingDomainPricingButton({
         <AlertDialogFooter>
           <AlertDialogCancel>Not now</AlertDialogCancel>
           {/* Plain anchor: the custom-domain page may live in another Next.js zone. */}
-          <AlertDialogAction asChild>
-            <a href={customDomainHref}>Add domain</a>
-          </AlertDialogAction>
+          <AlertDialogAction
+            render={<a href={customDomainHref}>Add domain</a>}
+          />
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

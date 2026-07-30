@@ -43,12 +43,12 @@ function ResizableHandle({
         // when in focus
         "focus-visible:ring-ring focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-hidden",
         // dom pseudo element :after
-        "after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2",
+        "after:absolute after:inset-y-0 after:start-1/2 after:w-1 ltr:after:-translate-x-1/2 rtl:after:translate-x-1/2",
         // when the orientation changes
         "aria-[orientation=vertical]:h-auto aria-[orientation=vertical]:w-px",
         "aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:w-full",
         // dom pseudo element :after when the orientation changes
-        "aria-[orientation=vertical]:after:left-0 aria-[orientation=vertical]:after:h-1 aria-[orientation=vertical]:after:w-full aria-[orientation=vertical]:after:translate-x-0 aria-[orientation=vertical]:after:-translate-y-1/2",
+        "aria-[orientation=vertical]:after:start-0 aria-[orientation=vertical]:after:h-1 aria-[orientation=vertical]:after:w-full aria-[orientation=vertical]:after:translate-x-0 aria-[orientation=vertical]:after:-translate-y-1/2",
         // icon
         "[&[aria-orientation=horizontal]>div]:rotate-90",
         className

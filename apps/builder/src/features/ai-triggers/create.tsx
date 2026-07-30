@@ -97,12 +97,16 @@ export function CreateAITriggerDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("actions.createFeature", { feature: t("fields.aiTrigger.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("actions.createFeature", {
+              feature: t("fields.aiTrigger.label"),
+            })}
+          </Button>
+        }
+      />
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
@@ -133,7 +137,7 @@ export function CreateAITriggerDialog({
                       <InputField name={`questions.${i}.name`} />
                     </div>
                     <div className="flex basis-1/12 justify-center">
-                      <ArrowRightIcon className="mt-2" />
+                      <ArrowRightIcon className="mt-2 rtl:rotate-180" />
                     </div>
 
                     <div className="basis-5/12">
@@ -180,11 +184,13 @@ export function CreateAITriggerDialog({
               />
 
               <DialogFooter className="justify-end">
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button type="button" variant="secondary">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting

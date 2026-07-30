@@ -82,14 +82,16 @@ export function getFlowColumns({
       cell: ({ row }) => (
         <div className="max-w-[300px] truncate">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                className="max-w-[300px] truncate"
-                href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
-              >
-                {row.original.name}
-              </Link>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Link
+                  className="max-w-[300px] truncate"
+                  href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
+                >
+                  {row.original.name}
+                </Link>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name}</p>
             </TooltipContent>
@@ -206,15 +208,17 @@ export function getFlowColumns({
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Open menu"
-              className="flex size-8 p-0 data-[state=open]:bg-muted"
-              variant="ghost"
-            >
-              <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Open menu"
+                className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
+              >
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "rename" })}

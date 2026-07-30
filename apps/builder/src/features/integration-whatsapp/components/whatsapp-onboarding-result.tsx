@@ -59,18 +59,28 @@ export function WhatsappOnboardingResult({
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <Button asChild size="sm" type="button" variant="outline">
-          <Link
-            href={`/space/${result.workspaceId}/whatsapps/${result.integrationId}/useful-links`}
-          >
-            {t("whatsapp.manualOnboarding.moreSettings")}
-          </Link>
-        </Button>
-        <Button asChild size="sm" type="button" variant="default">
-          <Link href={`/space/${result.workspaceId}/inbox`}>
-            {t("whatsapp.manualOnboarding.goToInbox")}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link
+              href={`/space/${result.workspaceId}/whatsapps/${result.integrationId}/useful-links`}
+            >
+              {t("whatsapp.manualOnboarding.moreSettings")}
+            </Link>
+          }
+          size="sm"
+          type="button"
+          variant="outline"
+        />
+        <Button
+          render={
+            <Link href={`/space/${result.workspaceId}/inbox`}>
+              {t("whatsapp.manualOnboarding.goToInbox")}
+            </Link>
+          }
+          size="sm"
+          type="button"
+          variant="default"
+        />
       </div>
     </div>
   )

@@ -44,7 +44,7 @@ function ImageThumbnail({
         src={url}
       />
       <Button
-        className="absolute top-1 right-1 size-5 opacity-0 transition-opacity group-hover:opacity-100"
+        className="absolute end-1 top-1 size-5 opacity-0 transition-opacity group-hover:opacity-100"
         onClick={onRemove}
         size="icon"
         type="button"

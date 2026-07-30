@@ -278,9 +278,9 @@ export const PlainTextTiptapEditor = ({
   const iconBarClassName = cn(
     "absolute z-10 flex cursor-pointer items-center",
     inline
-      ? "top-1/2 right-1 -translate-y-1/2"
+      ? "end-1 top-1/2 -translate-y-1/2"
       : cn(
-          "right-0 bottom-0 translate-y-full rounded-b-sm bg-gray-500 hover:bg-gray-600",
+          "end-0 bottom-0 translate-y-full rounded-b-sm bg-gray-500 hover:bg-gray-600",
           isEditorFocused ? "opacity-100" : "opacity-0",
         ),
   )
@@ -296,11 +296,14 @@ export const PlainTextTiptapEditor = ({
       <div className={iconBarClassName}>
         {showEmojiPicker && (
           <Popover onOpenChange={setIsOpenEmoji} open={isOpenEmoji}>
-            <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>
-              <div className={iconWrapperClassName}>
-                <Smile className={iconClassName} size={inline ? 16 : 14} />
-              </div>
-            </PopoverTrigger>
+            <PopoverTrigger
+              onClick={() => setIsEditorFocused(true)}
+              render={
+                <div className={iconWrapperClassName}>
+                  <Smile className={iconClassName} size={inline ? 16 : 14} />
+                </div>
+              }
+            />
             <PopoverContent className="w-auto p-0">
               <EmojiPicker onEmojiClick={onEmojiClick} />
             </PopoverContent>
@@ -308,11 +311,14 @@ export const PlainTextTiptapEditor = ({
         )}
 
         <Popover onOpenChange={setIsOpenCustomField} open={isOpenCustomField}>
-          <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>
-            <div className={iconWrapperClassName}>
-              <CodeXml className={iconClassName} size={inline ? 16 : 14} />
-            </div>
-          </PopoverTrigger>
+          <PopoverTrigger
+            onClick={() => setIsEditorFocused(true)}
+            render={
+              <div className={iconWrapperClassName}>
+                <CodeXml className={iconClassName} size={inline ? 16 : 14} />
+              </div>
+            }
+          />
           <PopoverContent className="w-auto p-0">
             {promptVariableOptions.length > 0 && (
               <div className="max-h-60 w-50 overflow-y-auto">

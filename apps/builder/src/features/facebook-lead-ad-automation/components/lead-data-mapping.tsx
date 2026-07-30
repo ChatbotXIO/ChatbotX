@@ -68,14 +68,14 @@ export function LeadDataMapping({
           <div className="flex-1 truncate rounded-md border bg-muted px-3 py-2 text-muted-foreground text-sm">
             {entry.label}
           </div>
-          <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
+          <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
           <div className="flex-1">
             <ComboboxField
               emptyText={t("actions.noRecordFound")}
               name={`fieldMapping.${index}.target`}
               options={targetOptions}
               placeholder={t("facebookLeadAdsAutomation.none")}
-              popoverClassName="w-[var(--radix-popover-trigger-width)]"
+              popoverClassName="w-[var(--anchor-width)]"
             />
           </div>
         </div>

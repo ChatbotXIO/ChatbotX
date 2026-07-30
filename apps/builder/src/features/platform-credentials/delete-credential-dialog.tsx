@@ -42,15 +42,17 @@ export function DeleteCredentialDialog({
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
-      <AlertDialogTrigger asChild>
-        <Button
-          disabled={isDeleting || disabled}
-          type="button"
-          variant="destructive"
-        >
-          {t("actions.delete")}
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button
+            disabled={isDeleting || disabled}
+            type="button"
+            variant="destructive"
+          >
+            {t("actions.delete")}
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
@@ -71,7 +73,7 @@ export function DeleteCredentialDialog({
               onConfirm()
             }}
           >
-            {isDeleting && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+            {isDeleting && <Loader2Icon className="me-2 size-4 animate-spin" />}
             {t("actions.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>

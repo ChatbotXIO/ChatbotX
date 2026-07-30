@@ -22,12 +22,13 @@ export const SpreadsheetViewer = ({ data }: SpreadsheetViewerProps) => {
           <FileSpreadsheetIcon className="text-gray-500" size={20} />
           <p className="font-bold">{t("fields.googleSheets.label")}</p>
         </div>
-        <div className="mt-2 ml-4 text-center text-gray-500 text-xs">
+        <div className="ms-4 mt-2 text-center text-gray-500 text-xs">
           {t(`flows.actions.${data.stepType}`)}
         </div>
       </div>
 
       <div className="flex flex-col items-end gap-2">
+        {/* React Flow routes these handles from physical Position.Right, so their offsets stay physical. */}
         {successState && (
           <div className="relative flex items-center gap-2 text-xs">
             {t("messages.success")}

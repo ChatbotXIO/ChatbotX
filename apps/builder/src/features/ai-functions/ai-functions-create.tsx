@@ -138,14 +138,16 @@ export function AIFunctionsCreate({
   const title = t(titleKey, { feature: t("fields.aiFunction.label") })
 
   const trigger = controlledOpen === undefined && (
-    <DialogTrigger asChild>
-      <Button>
-        <PlusIcon className="h-4 w-4" />
-        {t("actions.createFeature", {
-          feature: t("fields.aiFunction.label"),
-        })}
-      </Button>
-    </DialogTrigger>
+    <DialogTrigger
+      render={
+        <Button>
+          <PlusIcon className="h-4 w-4" />
+          {t("actions.createFeature", {
+            feature: t("fields.aiFunction.label"),
+          })}
+        </Button>
+      }
+    />
   )
 
   return (
@@ -221,9 +223,9 @@ export function AIFunctionsCreate({
             />
 
             <DialogFooter className="gap-2 sm:space-x-0">
-              <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
-              </DialogClose>
+              <DialogClose
+                render={<Button variant="ghost">{t("actions.cancel")}</Button>}
+              />
 
               <Button
                 disabled={

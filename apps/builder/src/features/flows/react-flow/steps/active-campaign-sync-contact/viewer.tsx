@@ -20,6 +20,7 @@ export default function ActiveCampaignSyncContactViewer(props: {
             title={t("flows.actions.activeCampaignSyncContact")}
           />
         </div>
+        {/* React Flow keeps each state's connector on physical Position.Right. */}
         <div className="my-2 mr-3 flex flex-col gap-1">
           {props.data.states.map((state) => (
             <BaseStateViewer data={state} key={state.id} />

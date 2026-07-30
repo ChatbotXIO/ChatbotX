@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import { BaseStepEditor } from "../base/editor"
 import { AIIcon } from "./components/ai-icon"
 import { AIModelDialog } from "./components/ai-model-dialog"
@@ -21,7 +22,7 @@ export const AIGenerateTextEditor = (props: AIGenerateTextEditorProps) => {
     <BaseStepEditor
       iconNode={<AIIcon provider={provider} showLabel={false} />}
       title={t("fields.flows.aiGenerateText", {
-        aiName: t(`aiProviders.${provider}`),
+        aiName: t(getAiProviderLabelKey(provider)),
       })}
     >
       <AIModelDialog parentName={parentName} />

@@ -72,10 +72,10 @@ const JsonTreeNode = ({
 
   if (!isExpandable(value)) {
     return (
-      <div className="flex items-center gap-1 pl-4">
+      <div className="flex items-center gap-1 ps-4">
         {label !== null && (
           <button
-            className="cursor-pointer truncate text-left text-foreground hover:underline"
+            className="cursor-pointer truncate text-start text-foreground hover:underline"
             onClick={() => onSelectPath(path)}
             type="button"
           >
@@ -96,10 +96,10 @@ const JsonTreeNode = ({
 
   if (depth >= maxDepth) {
     return (
-      <div className="flex items-center gap-1 pl-4">
+      <div className="flex items-center gap-1 ps-4">
         {label !== null && (
           <button
-            className="cursor-pointer truncate text-left text-foreground hover:underline"
+            className="cursor-pointer truncate text-start text-foreground hover:underline"
             onClick={() => onSelectPath(path)}
             type="button"
           >
@@ -123,7 +123,7 @@ const JsonTreeNode = ({
   const hiddenCount = entries.length - visibleEntries.length
 
   return (
-    <div className={cn(depth > 0 && "pl-4")}>
+    <div className={cn(depth > 0 && "ps-4")}>
       <div className="flex items-center gap-1">
         <button
           aria-label={expanded ? t("actions.collapse") : t("actions.expand")}
@@ -134,7 +134,7 @@ const JsonTreeNode = ({
           {expanded ? (
             <ChevronDownIcon size={12} />
           ) : (
-            <ChevronRightIcon size={12} />
+            <ChevronRightIcon className="rtl:rotate-180" size={12} />
           )}
         </button>
         {label === null ? (
@@ -143,7 +143,7 @@ const JsonTreeNode = ({
           </span>
         ) : (
           <button
-            className="cursor-pointer truncate text-left text-foreground hover:underline"
+            className="cursor-pointer truncate text-start text-foreground hover:underline"
             onClick={() => onSelectPath(path)}
             type="button"
           >
@@ -167,7 +167,7 @@ const JsonTreeNode = ({
           ))}
           {hiddenCount > 0 && (
             <button
-              className="pl-4 text-left text-muted-foreground italic hover:underline"
+              className="ps-4 text-start text-muted-foreground italic hover:underline"
               onClick={() => setShowAllChildren(true)}
               type="button"
             >

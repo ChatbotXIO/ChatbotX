@@ -87,16 +87,18 @@ export function CategorySidebar({
             </span>
           </Button>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={t("actions")}
-                className="size-8 opacity-0 group-hover:opacity-100"
-                size="icon"
-                variant="ghost"
-              >
-                <EllipsisIcon />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={t("actions")}
+                  className="size-8 opacity-0 group-hover:opacity-100"
+                  size="icon"
+                  variant="ghost"
+                >
+                  <EllipsisIcon />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => setEditingCategory(category)}>
                 <PencilIcon />

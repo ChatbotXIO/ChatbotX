@@ -26,13 +26,17 @@ export const LangSelector: React.FC = () => {
   }
 
   return (
-    <Select defaultValue={locale} onValueChange={onChangeLocale}>
-      <SelectTrigger className="w-[180px]">
+    <Select
+      defaultValue={locale}
+      onValueChange={(value) => onChangeLocale(value as string)}
+    >
+      <SelectTrigger className="w-45">
         <SelectValue placeholder={t("fields.language.placeholder")} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="en">{t("fields.language.english")}</SelectItem>
         <SelectItem value="vi">{t("fields.language.vietnamese")}</SelectItem>
+        <SelectItem value="ar">{t("fields.language.arabic")}</SelectItem>
       </SelectContent>
     </Select>
   )

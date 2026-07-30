@@ -75,14 +75,16 @@ export function getQuestionnaireColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              className="inline-block max-w-[320px] truncate font-medium"
-              href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/edit`}
-            >
-              {row.original.name}
-            </Link>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Link
+                className="inline-block max-w-[320px] truncate font-medium"
+                href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/edit`}
+              >
+                {row.original.name}
+              </Link>
+            }
+          />
           <TooltipContent>{row.original.name}</TooltipContent>
         </Tooltip>
       ),
@@ -113,24 +115,28 @@ export function getQuestionnaireColumns({
       ),
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={t("actions.openMenu")}
-              className="size-8 p-0"
-              variant="ghost"
-            >
-              <EllipsisVerticalIcon className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/applicants`}
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label={t("actions.openMenu")}
+                className="size-8 p-0"
+                variant="ghost"
               >
-                <ListChecksIcon />
-                {t("questionnaires.applicants")}
-              </Link>
-            </DropdownMenuItem>
+                <EllipsisVerticalIcon className="size-4" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              render={
+                <Link
+                  href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/applicants`}
+                >
+                  <ListChecksIcon />
+                  {t("questionnaires.applicants")}
+                </Link>
+              }
+            />
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "rename" })}
             >

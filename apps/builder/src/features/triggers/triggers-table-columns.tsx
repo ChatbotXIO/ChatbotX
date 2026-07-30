@@ -80,16 +80,18 @@ export function getColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="inline-block max-w-[300px] truncate">
-              <Link
-                className="truncate"
-                href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
-              >
-                {row.original.name}
-              </Link>
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="inline-block max-w-[300px] truncate">
+                <Link
+                  className="truncate"
+                  href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
+                >
+                  {row.original.name}
+                </Link>
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.name}</p>
           </TooltipContent>
@@ -149,21 +151,25 @@ export function getColumns({
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost">
-              <MoreHorizontalIcon className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
-              >
-                <PencilIcon />
-                {t("actions.edit")}
-              </Link>
-            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <Link
+                  href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
+                >
+                  <PencilIcon />
+                  {t("actions.edit")}
+                </Link>
+              }
+            />
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "rename" })}
             >

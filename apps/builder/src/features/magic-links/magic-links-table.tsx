@@ -116,11 +116,13 @@ export const MagicLinksTable = ({
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name}</p>
             </TooltipContent>
@@ -144,11 +146,13 @@ export const MagicLinksTable = ({
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="max-w-[240px] truncate font-mono text-xs">
-                {row.original.url}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="max-w-[240px] truncate font-mono text-xs">
+                  {row.original.url}
+                </div>
+              }
+            />
             <TooltipContent className="max-w-md break-all">
               <p>{row.original.url}</p>
             </TooltipContent>
@@ -164,12 +168,14 @@ export const MagicLinksTable = ({
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" type="button" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">{t("actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" type="button" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">{t("actions.openMenu")}</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {

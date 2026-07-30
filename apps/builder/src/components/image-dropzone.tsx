@@ -26,7 +26,7 @@ function AttachedImage({
         src={image}
       />
       <Button
-        className="absolute top-0 right-0 hover:bg-transparent"
+        className="absolute end-0 top-0 hover:bg-transparent"
         onClick={onClick}
         variant="ghost"
       >

@@ -30,7 +30,7 @@ export function QuestionnairesTableToolbarActions({
             size="sm"
             variant="outline"
           >
-            <Trash2Icon aria-hidden="true" className="mr-2 size-4" />
+            <Trash2Icon aria-hidden="true" className="me-2 size-4" />
             {t("actions.delete")} ({selectedRows.length})
           </Button>
           <DeleteQuestionnairesDialog

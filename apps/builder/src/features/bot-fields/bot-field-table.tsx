@@ -98,11 +98,13 @@ export function BotFieldsTable({
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name}</p>
             </TooltipContent>
@@ -125,11 +127,13 @@ export function BotFieldsTable({
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.description}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.description}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.description}</p>
             </TooltipContent>
@@ -155,11 +159,13 @@ export function BotFieldsTable({
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.value}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.value}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.value}</p>
             </TooltipContent>
@@ -173,12 +179,14 @@ export function BotFieldsTable({
         header: "Actions",
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}

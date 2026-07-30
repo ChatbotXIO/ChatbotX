@@ -59,12 +59,14 @@ export function DeleteAIFileDialog({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="icon" variant="ghost">
-            <Trash2Icon className="h-4 w-4" />
-            <span className="sr-only">{t("actions.delete")}</span>
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="icon" variant="ghost">
+              <Trash2Icon className="h-4 w-4" />
+              <span className="sr-only">{t("actions.delete")}</span>
+            </Button>
+          }
+        />
       ) : null}
 
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
@@ -81,9 +83,9 @@ export function DeleteAIFileDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button variant="ghost">{t("actions.cancel")}</Button>
-          </DialogClose>
+          <DialogClose
+            render={<Button variant="ghost">{t("actions.cancel")}</Button>}
+          />
           <Button
             aria-label="Delete AI file"
             disabled={isPending}
@@ -93,7 +95,7 @@ export function DeleteAIFileDialog({
             {isPending && (
               <Loader
                 aria-hidden="true"
-                className="mr-2 h-4 w-4 animate-spin"
+                className="me-2 h-4 w-4 animate-spin"
               />
             )}
             {t("actions.delete")}

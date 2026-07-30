@@ -146,8 +146,9 @@ export default function EditAutomatedResponseForm(
           </Label>
 
           <ToggleGroup
-            defaultValue={responseMode}
-            onValueChange={(val) => {
+            defaultValue={[responseMode]}
+            onValueChange={(vals) => {
+              const val = vals[0]
               if (val) {
                 setResponseMode(val)
                 if (val === responseModes.enum.flowId) {
@@ -158,8 +159,7 @@ export default function EditAutomatedResponseForm(
                 }
               }
             }}
-            type="single"
-            value={responseMode}
+            value={[responseMode]}
             variant="outline"
           >
             <ToggleGroupItem

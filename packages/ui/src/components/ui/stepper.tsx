@@ -1,6 +1,7 @@
 // @ts-nocheck
 
-import { Slot } from "@radix-ui/react-slot";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
 import * as Stepperize from "@stepperize/react";
 import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
@@ -227,72 +228,68 @@ const defineStepper = <const Steps extends Stepperize.Step[]>(
       },
       Title,
       Description,
-      Panel: ({ children, asChild, ...props }) => {
-        const Comp = asChild ? Slot : "div";
+      Panel: ({ children, render, ...props }) => {
         const { tracking } = useStepperProvider();
 
-        return (
-          <Comp
-            date-component="stepper-step-panel"
-            ref={(node) => scrollIntoStepperPanel(node, tracking)}
-            {...props}
-          >
-            {children}
-          </Comp>
-        );
+        return useRender({
+          defaultTagName: "div",
+          render,
+          props: mergeProps(
+            {
+              "date-component": "stepper-step-panel",
+              ref: (node) => scrollIntoStepperPanel(node, tracking),
+              children,
+            },
+            props,
+          ),
+        });
       },
-      Controls: ({ children, className, asChild, ...props }) => {
-        const Comp = asChild ? Slot : "div";
-        return (
-          <Comp
-            date-component="stepper-controls"
-            className={cn("flex justify-end gap-4", className)}
-            {...props}
-          >
-            {children}
-          </Comp>
-        );
+      Controls: ({ children, className, render, ...props }) => {
+        return useRender({
+          defaultTagName: "div",
+          render,
+          props: mergeProps(
+            {
+              "date-component": "stepper-controls",
+              className: cn("flex justify-end gap-4", className),
+              children,
+            },
+            props,
+          ),
+        });
       },
     },
   };
 };
 
-const Title = ({
-  children,
-  className,
-  asChild,
-  ...props
-}: React.ComponentProps<"h4"> & { asChild?: boolean }) => {
-  const Comp = asChild ? Slot : "h4";
-
-  return (
-    <Comp
-      date-component="stepper-step-title"
-      className={cn("text-base font-medium", className)}
-      {...props}
-    >
-      {children}
-    </Comp>
-  );
+const Title = ({ children, className, render, ...props }) => {
+  return useRender({
+    defaultTagName: "h4",
+    render,
+    props: mergeProps(
+      {
+        "date-component": "stepper-step-title",
+        className: cn("text-base font-medium", className),
+        children,
+      },
+      props,
+    ),
+  });
 };
 
-const Description = ({
-  children,
-  className,
-  asChild,
-  ...props
-}: React.ComponentProps<"p"> & { asChild?: boolean }) => {
-  const Comp = asChild ? Slot : "p";
-
-  return (
-    <Comp
-      date-component="stepper-step-description"
-      className={cn("text-sm text-muted-foreground", className)}
-      {...props}
-    >
-      {children}
-    </Comp>
-  );
+const Description = ({ children, className, render, ...props }) => {
+  return useRender({
+    defaultTagName: "p",
+    render,
+    props: mergeProps(
+      {
+        "date-component": "stepper-step-description",
+        className: cn("text-sm text-muted-foreground", className),
+        children,
+      },
+      props,
+    ),
+  });
 };
 
 const StepperSeparator = ({
@@ -399,7 +396,7 @@ const classForSeparator = cva(
       },
       labelOrientation: {
         vertical:
-          "absolute left-[calc(50%+30px)] right-[calc(-50%+20px)] top-5 block shrink-0",
+          "absolute start-[calc(50%+30px)] end-[calc(-50%+20px)] top-5 block shrink-0",
       },
     },
   }

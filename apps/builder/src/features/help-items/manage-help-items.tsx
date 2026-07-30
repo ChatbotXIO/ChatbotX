@@ -43,7 +43,7 @@ import type { HelpItemScope } from "./scope"
 type HelpItemFormValues = z.input<typeof helpItemSchema>
 
 type HelpItemFormDialogProps = {
-  trigger: React.ReactNode
+  trigger: React.ReactElement
   title: string
   defaultValues: HelpItemFormValues
   onSubmit: (values: HelpItemFormValues) => void
@@ -80,7 +80,7 @@ const HelpItemFormDialog = ({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -122,11 +122,13 @@ const HelpItemFormDialog = ({
               name="position"
             />
             <DialogFooter className="gap-2 sm:space-x-0">
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="outline">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button disabled={isPending} type="submit">
                 {isPending && <Loader2 className="animate-spin" />}
                 {t("actions.save")}

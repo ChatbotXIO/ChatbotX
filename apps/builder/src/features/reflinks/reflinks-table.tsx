@@ -94,11 +94,13 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name}</p>
             </TooltipContent>
@@ -122,11 +124,13 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.flow.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.flow.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.flow.name}</p>
             </TooltipContent>
@@ -145,12 +149,14 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "copyUrl" })}

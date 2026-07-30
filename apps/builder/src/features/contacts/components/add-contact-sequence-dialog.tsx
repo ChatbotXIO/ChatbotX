@@ -78,7 +78,7 @@ export default function AddContactSequenceDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className={"flex h-96 max-h-screen max-w-xl flex-col"}>
         <DialogHeader>
@@ -100,9 +100,9 @@ export default function AddContactSequenceDialog({
             </div>
 
             <DialogFooter className="mt-4">
-              <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
-              </DialogClose>
+              <DialogClose
+                render={<Button variant="ghost">{t("actions.cancel")}</Button>}
+              />
 
               <Button
                 disabled={

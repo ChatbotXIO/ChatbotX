@@ -134,12 +134,14 @@ export function OpenaiCompatibleConnectDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("openaiCompatible.addProvider")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("openaiCompatible.addProvider")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("openaiCompatible.addProvider")}</DialogTitle>
@@ -194,11 +196,13 @@ export function OpenaiCompatibleConnectDialog({
               required
             />
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="secondary">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting

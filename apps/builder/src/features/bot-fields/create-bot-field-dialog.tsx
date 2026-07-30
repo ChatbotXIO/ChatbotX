@@ -105,14 +105,16 @@ export function CreateBotFieldDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("actions.createFeature", {
-            feature: t("fields.botField.label"),
-          })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("actions.createFeature", {
+              feature: t("fields.botField.label"),
+            })}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>

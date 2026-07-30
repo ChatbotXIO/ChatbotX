@@ -8,6 +8,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -329,19 +330,23 @@ export function AddCondition({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline">
-          <PlusIcon />
-          {t("actions.addCondition")}
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="outline">
+            <PlusIcon />
+            {t("actions.addCondition")}
+          </Button>
+        }
+      />
       <DropdownMenuContent>
         {options.map((option, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: safe index
           <div key={index}>
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              {option.label}
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-muted-foreground text-xs">
+                {option.label}
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             {option.children.map((child) => (
               <DropdownMenuItem
                 key={child.value}

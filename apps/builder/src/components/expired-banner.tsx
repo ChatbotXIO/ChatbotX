@@ -29,9 +29,12 @@ export async function ExpiredBanner({ blocked, reason }: ExpiredBannerProps) {
       <AlertTitle>{t("bannerTitle")}</AlertTitle>
       <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p>{t("bannerDescription")}</p>
-        <Button asChild className="shrink-0" size="sm" variant="outline">
-          <Link href="/portal/pricing">{t("bannerCta")}</Link>
-        </Button>
+        <Button
+          className="shrink-0"
+          render={<Link href="/portal/pricing">{t("bannerCta")}</Link>}
+          size="sm"
+          variant="outline"
+        />
       </AlertDescription>
     </Alert>
   )

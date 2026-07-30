@@ -21,7 +21,7 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
     <div className="relative flex items-center gap-2">
       <div className="relative min-w-0 flex-1">
         {isAnalytics && (
-          <span className="absolute top-1/2 left-2 -translate-y-1/2 font-medium text-muted-foreground text-xs dark:text-white">
+          <span className="absolute start-2 top-1/2 -translate-y-1/2 font-medium text-muted-foreground text-xs dark:text-white">
             {clickPercent}%
           </span>
         )}
@@ -33,6 +33,7 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
         >
           {data.label}
         </Button>
+        {/* React Flow routes from physical Position.Right, so this offset must stay physical. */}
         {(data.buttonType === buttonTypes.enum.sendMessage ||
           data.buttonType === buttonTypes.enum.performAction ||
           data.buttonType === buttonTypes.enum.startAnotherNode ||
@@ -71,6 +72,7 @@ export const OnSuccessStepViewer = (props: ButtonStepViewerProps) => {
 
   return (
     <div className="relative flex items-center justify-end gap-2 text-green-500 text-xs">
+      {/* React Flow keeps the connector and its clearance on the physical right edge. */}
       <div className="mr-4">{t("actions.onSuccess")}</div>
       <BaseHandle
         className="transform-none! top-0.5! border-green-500!"
@@ -89,6 +91,7 @@ export const OnSkipStepViewer = (props: ButtonStepViewerProps) => {
 
   return (
     <div className="relative flex items-center justify-end gap-2 text-xs text-yellow-500">
+      {/* React Flow keeps the connector and its clearance on the physical right edge. */}
       <div className="mr-4">{t("actions.onSkip")}</div>
       <BaseHandle
         className="transform-none! top-0.5! border-yellow-500!"
@@ -107,6 +110,7 @@ export const OnFailureStepViewer = (props: ButtonStepViewerProps) => {
 
   return (
     <div className="relative flex items-center justify-end gap-2 text-red-500 text-xs">
+      {/* React Flow keeps the connector and its clearance on the physical right edge. */}
       <div className="mr-4">{t("actions.onFailure")}</div>
       <BaseHandle
         className="transform-none! top-0.5! border-red-500!"

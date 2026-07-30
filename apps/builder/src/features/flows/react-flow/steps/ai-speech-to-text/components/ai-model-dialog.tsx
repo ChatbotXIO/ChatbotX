@@ -55,11 +55,13 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="capitalize">
@@ -90,11 +92,13 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
             </div>
 
             <DialogFooter className="flex items-end">
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button size="sm" type="submit">
                 {t("actions.confirm")}
               </Button>

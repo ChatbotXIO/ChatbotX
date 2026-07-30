@@ -223,12 +223,14 @@ export function ExportCouponDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <DownloadIcon className="size-4" />
-          {t("coupons.actions.export")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" variant="outline">
+            <DownloadIcon className="size-4" />
+            {t("coupons.actions.export")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>{t("coupons.actions.export")}</DialogTitle>

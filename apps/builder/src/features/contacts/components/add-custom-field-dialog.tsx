@@ -93,7 +93,7 @@ export default function AddContactCustomFieldDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className="max-h-screen max-w-xl">
         <DialogHeader>
@@ -109,9 +109,9 @@ export default function AddContactCustomFieldDialog({
             <SetCustomField />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
-              </DialogClose>
+              <DialogClose
+                render={<Button variant="ghost">{t("actions.cancel")}</Button>}
+              />
 
               <Button
                 disabled={

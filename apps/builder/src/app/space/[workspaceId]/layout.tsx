@@ -132,7 +132,7 @@ export default async function WorkspaceLayout({
             {children}
           </CouponTopicStoreProvider>
         </main>
-        <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
+        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 border" />
       </SidebarInset>
     </SidebarProvider>
   )

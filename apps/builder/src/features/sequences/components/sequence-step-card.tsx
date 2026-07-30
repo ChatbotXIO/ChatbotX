@@ -99,7 +99,7 @@ export function SequenceStepCard({
 
   return (
     <div className="grid">
-      <div className="mt-2 mb-2 space-y-4 pl-4">
+      <div className="mt-2 mb-2 space-y-4 ps-4">
         <Card className="py-2 shadow-none">
           <CardContent>
             {/* Main row */}
@@ -153,7 +153,7 @@ export function SequenceStepCard({
               </div>
 
               {/* Column 4: Actions */}
-              <div className="@6xl:order-4 order-2 @6xl:ml-0 ml-auto flex items-center gap-1">
+              <div className="@6xl:order-4 order-2 @6xl:ms-0 ms-auto flex items-center gap-1">
                 <Button
                   className="h-8 w-8 hover:bg-muted hover:text-primary"
                   onClick={() =>

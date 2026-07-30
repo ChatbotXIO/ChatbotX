@@ -13,15 +13,18 @@ export function AddSequenceButton() {
   const t = useTranslations()
 
   return (
-    <Button asChild size={"sm"}>
-      <Link
-        href={`/space/${workspaceId}/sequences/create?${searchParams.toString()}`}
-      >
-        <PlusIcon />
-        {t("actions.createFeature", {
-          feature: t("fields.sequence.label"),
-        })}
-      </Link>
-    </Button>
+    <Button
+      render={
+        <Link
+          href={`/space/${workspaceId}/sequences/create?${searchParams.toString()}`}
+        >
+          <PlusIcon />
+          {t("actions.createFeature", {
+            feature: t("fields.sequence.label"),
+          })}
+        </Link>
+      }
+      size={"sm"}
+    />
   )
 }

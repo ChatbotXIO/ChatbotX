@@ -100,11 +100,7 @@ export function CoexistPopup({
       }}
       open
     >
-      <DialogContent
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-        showCloseButton={false}
-      >
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="mb-4">{t("coexist.title")}</DialogTitle>
           <DialogDescription>

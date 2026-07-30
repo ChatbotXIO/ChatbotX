@@ -73,13 +73,13 @@ function PostIdTagInput({
     <div className="flex min-h-9 flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1.5 outline-none transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
       {value.map((id) => (
         <Badge
-          className="flex items-center gap-1 pr-1"
+          className="flex items-center gap-1 pe-1"
           key={id}
           variant="secondary"
         >
           <span className="max-w-50 truncate font-mono text-xs">{id}</span>
           <button
-            className="ml-1 rounded-full p-0.5 transition-colors hover:bg-destructive/20"
+            className="ms-1 rounded-full p-0.5 transition-colors hover:bg-destructive/20"
             onClick={() => removeTag(id)}
             type="button"
           >
@@ -111,7 +111,7 @@ function PostCard({
   return (
     <button
       className={cn(
-        "relative w-full cursor-pointer rounded-md border p-2 text-left transition-colors",
+        "relative w-full cursor-pointer rounded-md border p-2 text-start transition-colors",
         selected
           ? "border-primary bg-primary/5"
           : "border-border hover:bg-muted",
@@ -120,7 +120,7 @@ function PostCard({
       type="button"
     >
       {selected && (
-        <span className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <span className="absolute end-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <CheckIcon className="h-3 w-3" />
         </span>
       )}

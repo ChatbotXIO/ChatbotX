@@ -91,17 +91,19 @@ const TemplateCarouselVideoPreviewComponent = (
                 <div className="mt-2 flex items-center justify-center">
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          disabled={fields.length <= 2}
-                          onClick={removeCard}
-                          size="icon"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <Minus size={25} />
-                        </Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            disabled={fields.length <= 2}
+                            onClick={removeCard}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Minus size={25} />
+                          </Button>
+                        }
+                      />
                       <TooltipContent>
                         <p>Delete</p>
                       </TooltipContent>
@@ -109,16 +111,18 @@ const TemplateCarouselVideoPreviewComponent = (
                   </TooltipProvider>
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          disabled={index === 0}
-                          onClick={() => swap(index, index - 1)}
-                          type="button"
-                          variant="ghost"
-                        >
-                          <ArrowLeft size={25} />
-                        </Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            disabled={index === 0}
+                            onClick={() => swap(index, index - 1)}
+                            type="button"
+                            variant="ghost"
+                          >
+                            <ArrowLeft size={25} />
+                          </Button>
+                        }
+                      />
                       <TooltipContent>
                         <p>Move Left</p>
                       </TooltipContent>
@@ -127,16 +131,18 @@ const TemplateCarouselVideoPreviewComponent = (
 
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          disabled={index === fields.length - 1}
-                          onClick={() => swap(index, index + 1)}
-                          type="button"
-                          variant="ghost"
-                        >
-                          <ArrowRight size={25} />
-                        </Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            disabled={index === fields.length - 1}
+                            onClick={() => swap(index, index + 1)}
+                            type="button"
+                            variant="ghost"
+                          >
+                            <ArrowRight size={25} />
+                          </Button>
+                        }
+                      />
                       <TooltipContent>
                         <p>Move Right</p>
                       </TooltipContent>
@@ -144,11 +150,17 @@ const TemplateCarouselVideoPreviewComponent = (
                   </TooltipProvider>
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button onClick={addCard} type="button" variant="ghost">
-                          <Plus size={25} />
-                        </Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            onClick={addCard}
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Plus size={25} />
+                          </Button>
+                        }
+                      />
                       <TooltipContent>
                         <p>Add</p>
                       </TooltipContent>
@@ -164,17 +176,19 @@ const TemplateCarouselVideoPreviewComponent = (
           <>
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="absolute top-1/2 right-0 size-8 shrink-0 -translate-y-1/2"
-                    disabled={current === fields.length - 1}
-                    onClick={onNext}
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ChevronRight size={25} />
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      className="absolute end-0 top-1/2 size-8 shrink-0 -translate-y-1/2"
+                      disabled={current === fields.length - 1}
+                      onClick={onNext}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ChevronRight className="rtl:rotate-180" size={25} />
+                    </Button>
+                  }
+                />
                 <TooltipContent>
                   <p>Next</p>
                 </TooltipContent>
@@ -183,17 +197,19 @@ const TemplateCarouselVideoPreviewComponent = (
 
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="absolute top-1/2 -left-0 size-8 shrink-0 -translate-y-1/2"
-                    disabled={current === 0}
-                    onClick={onPrev}
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ChevronLeft size={25} />
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      className="absolute -start-0 top-1/2 size-8 shrink-0 -translate-y-1/2"
+                      disabled={current === 0}
+                      onClick={onPrev}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ChevronLeft className="rtl:rotate-180" size={25} />
+                    </Button>
+                  }
+                />
                 <TooltipContent>
                   <p>Prev</p>
                 </TooltipContent>

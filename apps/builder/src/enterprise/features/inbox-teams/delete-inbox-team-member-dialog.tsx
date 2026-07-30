@@ -77,15 +77,17 @@ export function DeleteInboxTeamMembersDialog({
         </DialogHeader>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button
-              onClick={() => onOpenChange(false)}
-              size="sm"
-              variant="ghost"
-            >
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button
+                onClick={() => onOpenChange(false)}
+                size="sm"
+                variant="ghost"
+              >
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
@@ -94,7 +96,7 @@ export function DeleteInboxTeamMembersDialog({
             variant="destructive"
           >
             {isPending && (
-              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
+              <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             )}
             {t("actions.delete")}
           </Button>

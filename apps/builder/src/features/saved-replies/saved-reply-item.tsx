@@ -42,7 +42,7 @@ export const SavedReplyItem = ({
 
   return (
     <Button
-      className={`flex h-auto w-full items-start justify-between gap-3 rounded-none border-b px-4 py-3 text-left hover:bg-accent ${isLast ? "border-b-0" : ""}`}
+      className={`flex h-auto w-full items-start justify-between gap-3 rounded-none border-b px-4 py-3 text-start hover:bg-accent ${isLast ? "border-b-0" : ""}`}
       onClick={() => onSelect(item)}
       type="button"
       variant="ghost"

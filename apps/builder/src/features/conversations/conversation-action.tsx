@@ -178,11 +178,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <EllipsisVerticalIcon />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost">
+            <EllipsisVerticalIcon />
+          </Button>
+        }
+      />
       <DropdownMenuContent className="w-56">
         {conversation.followed ? (
           <DropdownMenuItem

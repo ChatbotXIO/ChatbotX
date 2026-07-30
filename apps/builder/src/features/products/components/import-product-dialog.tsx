@@ -135,12 +135,14 @@ export function ImportProductDialog({
       }}
       open={open}
     >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <UploadIcon />
-          {t("title")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            <UploadIcon />
+            {t("title")}
+          </Button>
+        }
+      />
 
       <DialogContent
         aria-describedby={undefined}

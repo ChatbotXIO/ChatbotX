@@ -65,17 +65,19 @@ export default function MessageHead() {
         </div>
         {!isConversationActive(activeConversation) && (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                disabled={isEnablingBot}
-                onClick={() => {
-                  enableBot({ ids: [activeConversation.id] })
-                }}
-                variant="ghost"
-              >
-                <BotIcon />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  disabled={isEnablingBot}
+                  onClick={() => {
+                    enableBot({ ids: [activeConversation.id] })
+                  }}
+                  variant="ghost"
+                >
+                  <BotIcon />
+                </Button>
+              }
+            />
             <TooltipContent>
               <p>{t("actions.transferConversationToBot")}</p>
             </TooltipContent>

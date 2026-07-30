@@ -126,7 +126,7 @@ export function QuestionnaireApplicantsTable({
             row.original.contact.fullName ?? t("questionnaires.unknownContact")
           return (
             <button
-              className="text-left font-medium hover:underline"
+              className="text-start font-medium hover:underline"
               onClick={() =>
                 loadDetail({
                   questionnaireId,
@@ -193,15 +193,17 @@ export function QuestionnaireApplicantsTable({
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={t("actions.openMenu")}
-                className="size-8 p-0"
-                variant="ghost"
-              >
-                <EllipsisVerticalIcon className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={t("actions.openMenu")}
+                  className="size-8 p-0"
+                  variant="ghost"
+                >
+                  <EllipsisVerticalIcon className="size-4" />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onSelect={() => setDeleteId(row.original.id)}

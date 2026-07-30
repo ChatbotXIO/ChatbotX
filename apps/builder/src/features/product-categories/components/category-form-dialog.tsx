@@ -98,12 +98,14 @@ export function CategoryFormDialog({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       {hideTrigger ? null : (
-        <DialogTrigger asChild>
-          <Button aria-label={createLabel} size="sm" variant="outline">
-            <PlusIcon />
-            {createLabel}
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button aria-label={createLabel} size="sm" variant="outline">
+              <PlusIcon />
+              {createLabel}
+            </Button>
+          }
+        />
       )}
       <DialogContent>
         <DialogHeader>

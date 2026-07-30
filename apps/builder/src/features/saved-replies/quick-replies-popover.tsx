@@ -8,8 +8,8 @@ import {
 } from "@chatbotx.io/ui/components/ui/popover"
 import { useTranslations } from "next-intl"
 import {
+  type ReactElement,
   type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -21,7 +21,7 @@ import { useSavedReplyStore } from "./provider/saved-reply-store-context"
 type SavedReplySlashPopoverProps = {
   inputValue: string
   onSelect: (text: string) => void
-  children: ReactNode
+  children: ReactElement
 }
 
 export const QuickRepliesPopover = ({
@@ -142,13 +142,11 @@ export const QuickRepliesPopover = ({
   return (
     <div onKeyDownCapture={onKeyDownCapture}>
       <Popover onOpenChange={setOpen} open={open && shouldShow}>
-        <PopoverTrigger asChild>{children}</PopoverTrigger>
+        <PopoverTrigger render={children} />
         <PopoverContent
           align="start"
           className="max-h-75 w-100 overflow-y-auto p-0"
-          onOpenAutoFocus={(event) => {
-            event.preventDefault()
-          }}
+          initialFocus={false}
           side="top"
         >
           {isLoadingSavedReplies ? (
@@ -167,7 +165,7 @@ export const QuickRepliesPopover = ({
             ? null
             : filteredSavedReplies.map((reply, index) => (
                 <Button
-                  className={`flex h-auto w-full flex-col items-start justify-between gap-3 rounded-none border-b px-4 py-3 text-left hover:bg-accent ${
+                  className={`flex h-auto w-full flex-col items-start justify-between gap-3 rounded-none border-b px-4 py-3 text-start hover:bg-accent ${
                     index === activeIndex ? "bg-accent" : "hover:bg-accent"
                   }`}
                   key={reply.id}

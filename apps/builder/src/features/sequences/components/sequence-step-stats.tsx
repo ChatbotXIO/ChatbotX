@@ -173,7 +173,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
             <span>
               {formatValue(statItem.value)}
               {statItem.percentage && (
-                <span className="ml-0.5 text-muted-foreground">
+                <span className="ms-0.5 text-muted-foreground">
                   ({statItem.percentage}%)
                 </span>
               )}

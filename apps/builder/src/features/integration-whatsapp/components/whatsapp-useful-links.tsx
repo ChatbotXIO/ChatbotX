@@ -55,21 +55,21 @@ export default memo(function WhatsappUsefulLinks({
     <div className="my-4 flex flex-col flex-wrap items-center gap-4">
       {links.map((link) => (
         <Button
-          asChild
           className="w-xs"
           key={link.label}
+          render={
+            <Link
+              aria-label={link.ariaLabel}
+              href={link.href}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {link.label}
+            </Link>
+          }
           size="sm"
           variant="secondary"
-        >
-          <Link
-            aria-label={link.ariaLabel}
-            href={link.href}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {link.label}
-          </Link>
-        </Button>
+        />
       ))}
     </div>
   )

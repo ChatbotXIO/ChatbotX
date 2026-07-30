@@ -390,11 +390,13 @@ export const MessageInput = () => {
             {t("messages.messagingWindowClosed")}
           </p>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline">
-                {t("messages.sendHumanAgentTag")}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button size="sm" variant="outline">
+                  {t("messages.sendHumanAgentTag")}
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>{t("messages.warning")}</AlertDialogTitle>
@@ -485,7 +487,7 @@ export const MessageInput = () => {
               <FileUploadPreview ref={fileUploadRef} />
             </div>
           )}
-          <div className="flex w-full items-center pl-2.5">
+          <div className="flex w-full items-center ps-2.5">
             <div className="min-w-0 flex-1">
               <InboxIcon
                 channel={

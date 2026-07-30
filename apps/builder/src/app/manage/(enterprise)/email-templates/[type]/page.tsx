@@ -113,12 +113,16 @@ export default async function ManageEmailTemplateEditPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button asChild size="icon" variant="outline">
-          <Link href="/manage/email-templates">
-            <ArrowLeftIcon className="size-4" />
-            <span className="sr-only">{t("actions.back")}</span>
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link href="/manage/email-templates">
+              <ArrowLeftIcon className="size-4 rtl:rotate-180" />
+              <span className="sr-only">{t("actions.back")}</span>
+            </Link>
+          }
+          size="icon"
+          variant="outline"
+        />
         <h3 className="font-bold text-lg sm:text-xl">
           {t(config.titleKey as Parameters<typeof t>[0])}
         </h3>

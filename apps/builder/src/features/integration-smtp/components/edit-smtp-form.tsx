@@ -93,9 +93,13 @@ export const EditSmtpForm = ({
         <SelectField
           label={t("fields.provider.label")}
           name="provider"
-          onValueChange={handleProviderChange}
           options={providerOptions}
           required
+          triggerValueChange={(value) => {
+            if (value) {
+              handleProviderChange(value)
+            }
+          }}
         />
 
         <div className="flex gap-2">

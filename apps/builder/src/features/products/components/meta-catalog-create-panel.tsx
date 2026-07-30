@@ -103,7 +103,10 @@ export function MetaCatalogCreatePanel({
       ) : (
         <div className="grid gap-2">
           <Label htmlFor="meta-catalog-business">{t("business")}</Label>
-          <Select onValueChange={setBusinessId} value={businessId}>
+          <Select
+            onValueChange={(value) => setBusinessId(value as string)}
+            value={businessId}
+          >
             <SelectTrigger className="w-full" id="meta-catalog-business">
               <SelectValue placeholder={t("businessPlaceholder")} />
             </SelectTrigger>

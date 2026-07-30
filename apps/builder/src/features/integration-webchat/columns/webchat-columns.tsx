@@ -43,11 +43,13 @@ export function getWebchatColumns({
         const webchat = row.original
         return (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[300px] truncate">
-                {webchat.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-75 truncate">
+                  {webchat.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{webchat.name}</p>
             </TooltipContent>
@@ -120,30 +122,34 @@ export function getWebchatColumns({
               </Button>
             </EmbedCodeDialog>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  aria-label={t("actions.openMenu")}
-                  className="h-8 w-8 p-0"
-                  variant="ghost"
-                >
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
+              <DropdownMenuTrigger
+                render={
                   <Button
-                    asChild
-                    className="w-full justify-start"
-                    size="sm"
+                    aria-label={t("actions.openMenu")}
+                    className="h-8 w-8 p-0"
                     variant="ghost"
                   >
-                    <Link
-                      href={`/space/${webchat.workspaceId}/webchats/${webchat.id}/edit`}
-                    >
-                      {t("actions.edit")}
-                    </Link>
+                    <MoreHorizontalIcon className="h-4 w-4" />
                   </Button>
-                </DropdownMenuItem>
+                }
+              />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  render={
+                    <Button
+                      className="w-full justify-start"
+                      render={
+                        <Link
+                          href={`/space/${webchat.workspaceId}/webchats/${webchat.id}/edit`}
+                        >
+                          {t("actions.edit")}
+                        </Link>
+                      }
+                      size="sm"
+                      variant="ghost"
+                    />
+                  }
+                />
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() =>

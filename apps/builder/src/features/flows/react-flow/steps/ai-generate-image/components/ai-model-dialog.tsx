@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { QualitySelect, SizeSelect } from "../constants"
 import { AIModelSelect } from "./ai-model-select"
@@ -65,16 +66,18 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="capitalize">
             {t("fields.flows.aiGenerateImage", {
-              aiName: t(`aiProviders.${provider}`),
+              aiName: t(getAiProviderLabelKey(provider)),
             })}
           </DialogTitle>
           <DialogDescription />
@@ -105,11 +108,13 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
             </div>
 
             <DialogFooter className="flex items-end">
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button size="sm" type="submit">
                 {t("actions.confirm")}
               </Button>

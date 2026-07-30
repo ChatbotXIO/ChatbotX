@@ -35,7 +35,9 @@ export function SliderField<T extends FieldValues>(props: SliderFieldProps<T>) {
             defaultValue={[field.value]}
             max={max}
             min={min}
-            onValueChange={(value) => field.onChange(value[0])}
+            onValueChange={(value) =>
+              field.onChange(Array.isArray(value) ? value[0] : value)
+            }
             step={step}
           />
           <div className="w-20 shrink-1">

@@ -269,12 +269,14 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
               {t("actions.restore")} ({selectedCount})
             </Button>
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="destructive">
-                  <Trash2Icon className="size-4" />
-                  {t("actions.delete")} ({selectedCount})
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger
+                render={
+                  <Button size="sm" variant="destructive">
+                    <Trash2Icon className="size-4" />
+                    {t("actions.delete")} ({selectedCount})
+                  </Button>
+                }
+              />
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
@@ -295,7 +297,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
           </>
         ) : null}
         <Button
-          className="ml-auto"
+          className="ms-auto"
           onClick={() => {
             setEditing(null)
             setDialogOpen(true)
@@ -360,12 +362,16 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
                 </TableCell>
                 <TableCell className="text-center">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="icon" variant="ghost">
-                        <MoreHorizontalIcon className="size-4" />
-                        <span className="sr-only">{t("actions.openMenu")}</span>
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button size="icon" variant="ghost">
+                          <MoreHorizontalIcon className="size-4" />
+                          <span className="sr-only">
+                            {t("actions.openMenu")}
+                          </span>
+                        </Button>
+                      }
+                    />
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => {
@@ -373,7 +379,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
                           setDialogOpen(true)
                         }}
                       >
-                        <PencilIcon className="mr-2 size-4" />
+                        <PencilIcon className="me-2 size-4" />
                         {t("actions.edit")}
                       </DropdownMenuItem>
                       {archived ? (
@@ -386,14 +392,14 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
                               })
                             }
                           >
-                            <RotateCcwIcon className="mr-2 size-4" />
+                            <RotateCcwIcon className="me-2 size-4" />
                             {t("actions.restore")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => setDeletingTopic(topic)}
                           >
-                            <Trash2Icon className="mr-2 size-4" />
+                            <Trash2Icon className="me-2 size-4" />
                             {t("actions.delete")}
                           </DropdownMenuItem>
                         </>
@@ -406,7 +412,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
                             })
                           }
                         >
-                          <ArchiveIcon className="mr-2 size-4" />
+                          <ArchiveIcon className="me-2 size-4" />
                           {t("actions.archive")}
                         </DropdownMenuItem>
                       )}
@@ -446,7 +452,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
               size="icon"
               variant="outline"
             >
-              <ChevronLeftIcon className="size-4" />
+              <ChevronLeftIcon className="size-4 rtl:rotate-180" />
             </Button>
             <Button
               aria-label={t("analytics.pagination.nextPage")}
@@ -457,7 +463,7 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
               size="icon"
               variant="outline"
             >
-              <ChevronRightIcon className="size-4" />
+              <ChevronRightIcon className="size-4 rtl:rotate-180" />
             </Button>
           </div>
         ) : null}

@@ -38,16 +38,18 @@ export function SetStartNode({ nodeId }: { nodeId: string }) {
 
   return node?.data.isStartNode ? null : (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          className="size-8"
-          onClick={onClick}
-          size="icon"
-          variant="ghost"
-        >
-          <PlayIcon />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            className="size-8"
+            onClick={onClick}
+            size="icon"
+            variant="ghost"
+          >
+            <PlayIcon />
+          </Button>
+        }
+      />
       <TooltipContent>
         <p>{t("actions.setStartNode")}</p>
       </TooltipContent>

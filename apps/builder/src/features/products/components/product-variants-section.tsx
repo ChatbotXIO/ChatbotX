@@ -161,11 +161,11 @@ export function ProductVariantsSection() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="w-8 p-2 text-left" />
-                  <th className="p-2 text-left font-medium">
+                  <th className="w-8 p-2 text-start" />
+                  <th className="p-2 text-start font-medium">
                     {t("fields.variant.label")}
                   </th>
-                  <th className="p-2 text-left font-medium">
+                  <th className="p-2 text-start font-medium">
                     {t("fields.price.label")}
                   </th>
                 </tr>

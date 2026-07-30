@@ -9,13 +9,13 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
-import type { ReactNode } from "react"
+import type { ReactElement } from "react"
 import { useState } from "react"
 import { CreateSmtpForm } from "./create-smtp-form"
 
 type CreateSmtpDialogProps = {
   readonly workspaceId: string
-  readonly children: ReactNode
+  readonly children: ReactElement
 }
 
 export const CreateSmtpDialog = ({
@@ -27,7 +27,7 @@ export const CreateSmtpDialog = ({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger render={children} />
 
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>

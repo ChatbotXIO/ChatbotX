@@ -71,11 +71,13 @@ export default function WebchatMessageMenu({
 
   return menus.length > 0 ? (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="size-5" size="icon" variant="ghost">
-          <MenuIcon />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button className="size-5" size="icon" variant="ghost">
+            <MenuIcon />
+          </Button>
+        }
+      />
       <DropdownMenuContent className="w-56">
         {menus.map((menu, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
@@ -99,11 +101,17 @@ export default function WebchatMessageMenu({
               </DropdownMenuItem>
             )}
             {menu.type === webchatPersistentMenuType.enum.url && (
-              <DropdownMenuItem asChild>
-                <Link href={menu.url} rel="noopener noreferrer" target="_blank">
-                  {menu.label}
-                </Link>
-              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={
+                  <Link
+                    href={menu.url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {menu.label}
+                  </Link>
+                }
+              />
             )}
           </Fragment>
         ))}

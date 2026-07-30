@@ -166,7 +166,7 @@ export const MessageActionsEditor = ({
                 />
               </button>
               <Button
-                className="absolute -top-1.5 -right-1.5 size-4 rounded-full p-0"
+                className="absolute -end-1.5 -top-1.5 size-4 rounded-full p-0"
                 onClick={() => setRemovedAttachment(true)}
                 size="icon"
                 type="button"
@@ -307,30 +307,32 @@ export const MessageActions = ({
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <Button
-          className="self-center opacity-0 transition-opacity group-hover:opacity-100"
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <EllipsisVerticalIcon className="size-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="flex w-auto flex-col gap-0.5 p-1" side="top">
-        {messageLink && (
+      <PopoverTrigger
+        render={
           <Button
-            asChild
-            className="justify-start"
-            size="sm"
+            className="self-center opacity-0 transition-opacity group-hover:opacity-100"
+            size="icon"
             type="button"
             variant="ghost"
           >
-            <a href={messageLink} rel="noopener noreferrer" target="_blank">
-              <ExternalLinkIcon className="size-4" />
-              {t("messages.viewMessage")}
-            </a>
+            <EllipsisVerticalIcon className="size-4" />
           </Button>
+        }
+      />
+      <PopoverContent className="flex w-auto flex-col gap-0.5 p-1" side="top">
+        {messageLink && (
+          <Button
+            className="justify-start"
+            render={
+              <a href={messageLink} rel="noopener noreferrer" target="_blank">
+                <ExternalLinkIcon className="size-4" />
+                {t("messages.viewMessage")}
+              </a>
+            }
+            size="sm"
+            type="button"
+            variant="ghost"
+          />
         )}
 
         {!isOutgoing && (
@@ -369,18 +371,20 @@ export const MessageActions = ({
 
         {onDelete && (
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                className="justify-start text-destructive hover:text-destructive"
-                disabled={isDeleted}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <TrashIcon className="size-3" />
-                {t("actions.delete")}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  className="justify-start text-destructive hover:text-destructive"
+                  disabled={isDeleted}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <TrashIcon className="size-3" />
+                  {t("actions.delete")}
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

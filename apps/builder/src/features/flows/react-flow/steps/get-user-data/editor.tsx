@@ -195,13 +195,15 @@ const GetUserDataStepEditor = ({ parentName }: { parentName: string }) => {
         />
 
         <Dialog onOpenChange={setOpen} open={open}>
-          <DialogTrigger asChild>
-            <div className="flex justify-center">
-              <Button size="sm" variant="outline">
-                {t("actions.edit")}
-              </Button>
-            </div>
-          </DialogTrigger>
+          <DialogTrigger
+            render={
+              <div className="flex justify-center">
+                <Button size="sm" variant="outline">
+                  {t("actions.edit")}
+                </Button>
+              </div>
+            }
+          />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t("flows.actions.getUserData")}</DialogTitle>

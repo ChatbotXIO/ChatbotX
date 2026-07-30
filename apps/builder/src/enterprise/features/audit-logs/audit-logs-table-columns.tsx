@@ -34,11 +34,13 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
                 <AvatarFallback>{row.original.user.name?.[0]}</AvatarFallback>
               </Avatar>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="inline-block max-w-[200px] truncate">
-                    {row.original.user.name}
-                  </div>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <div className="inline-block max-w-[200px] truncate">
+                      {row.original.user.name}
+                    </div>
+                  }
+                />
                 <TooltipContent>
                   <p>{row.original.user.name}</p>
                 </TooltipContent>
@@ -68,11 +70,13 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="inline-block max-w-[300px] truncate">
-              {row.original.detail}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="inline-block max-w-[300px] truncate">
+                {row.original.detail}
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.detail}</p>
           </TooltipContent>

@@ -1,7 +1,8 @@
 "use client"
 
 import type * as React from "react"
-import { Command as CommandPrimitive } from "cmdk"
+import { Command as CommandPrimitive } from "cmdk-base"
+
 import { SearchIcon } from "lucide-react"
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
@@ -36,7 +37,8 @@ function CommandDialog({
   className,
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
+}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
+  children?: React.ReactNode
   title?: string
   description?: string
   className?: string
@@ -163,7 +165,7 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        "text-muted-foreground ml-auto text-xs tracking-widest",
+        "text-muted-foreground ms-auto text-xs tracking-widest",
         className,
       )}
       {...props}

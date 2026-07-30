@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import * as PopoverPrimitive from "@radix-ui/react-popover"
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
 
@@ -21,25 +21,35 @@ function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
+  anchor,
   portal = true,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
-  portal?: boolean
-}) {
+}: React.ComponentProps<typeof PopoverPrimitive.Popup> &
+  Pick<
+    React.ComponentProps<typeof PopoverPrimitive.Positioner>,
+    "align" | "alignOffset" | "side" | "sideOffset" | "anchor"
+  > & {
+    portal?: boolean
+  }) {
   const popoverContent = (
-    <PopoverPrimitive.Content
-      data-slot="popover-content"
+    <PopoverPrimitive.Positioner
       align={align}
+      anchor={anchor}
       sideOffset={sideOffset}
-      className={cn(
-        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
-        className,
-      )}
-      onWheel={(e) => {
-        e.stopPropagation();
-      }}
-      {...props}
-    />
+      className="isolate z-50"
+    >
+      <PopoverPrimitive.Popup
+        data-slot="popover-content"
+        className={cn(
+          "bg-popover text-popover-foreground data-starting-style:opacity-0 data-ending-style:opacity-0 data-starting-style:scale-95 data-ending-style:scale-95 transition-[transform,opacity] w-72 max-h-(--available-height) origin-(--transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+          className,
+        )}
+        onWheel={(e) => {
+          e.stopPropagation();
+        }}
+        {...props}
+      />
+    </PopoverPrimitive.Positioner>
   )
 
   return (
@@ -53,10 +63,4 @@ function PopoverContent({
   )
 }
 
-function PopoverAnchor({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
-}
-
-export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+export { Popover, PopoverTrigger, PopoverContent }

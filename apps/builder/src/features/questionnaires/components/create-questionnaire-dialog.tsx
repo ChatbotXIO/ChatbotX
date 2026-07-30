@@ -64,12 +64,14 @@ export function CreateQuestionnaireDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon className="size-4" />
-          {t("actions.add")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon className="size-4" />
+            {t("actions.add")}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("questionnaires.addNew")}</DialogTitle>

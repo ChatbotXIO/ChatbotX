@@ -57,12 +57,14 @@ export function BulkDeleteSequenceDialog({
   return (
     <Dialog onOpenChange={onOpenChange} {...props}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.delete")} ({sequences.length})
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" variant="outline">
+              <Trash aria-hidden="true" className="me-2 size-4" />
+              {t("actions.delete")} ({sequences.length})
+            </Button>
+          }
+        />
       ) : null}
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
@@ -78,15 +80,17 @@ export function BulkDeleteSequenceDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button
-              onClick={() => onOpenChange(false)}
-              size="sm"
-              variant="ghost"
-            >
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button
+                onClick={() => onOpenChange(false)}
+                size="sm"
+                variant="ghost"
+              >
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             aria-label="Delete selected rows"
             onClick={handleBulkDelete}

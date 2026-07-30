@@ -76,12 +76,16 @@ export function CreateTriggerDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("actions.createFeature", { feature: t("fields.trigger.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("actions.createFeature", {
+              feature: t("fields.trigger.label"),
+            })}
+          </Button>
+        }
+      />
 
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
@@ -101,11 +105,13 @@ export function CreateTriggerDialog({
               <InputField label="Name" name="name" required />
 
               <DialogFooter className="justify-end">
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button type="button" variant="secondary">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting

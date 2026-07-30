@@ -49,15 +49,19 @@ export function ContactCustomFieldManage({
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <Button
-          className="flex cursor-pointer justify-start px-0!"
-          variant="link"
-        >
-          <PlusCircleIcon />
-          {t("actions.addFeature", { feature: t("fields.customField.label") })}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            className="flex cursor-pointer justify-start px-0!"
+            variant="link"
+          >
+            <PlusCircleIcon />
+            {t("actions.addFeature", {
+              feature: t("fields.customField.label"),
+            })}
+          </Button>
+        }
+      />
       <PopoverContent>
         <div className="mb-3 flex items-center">
           <p className="flex-1 font-medium">{t("fields.customField.label")}</p>

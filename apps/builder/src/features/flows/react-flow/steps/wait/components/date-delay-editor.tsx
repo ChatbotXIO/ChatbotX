@@ -75,9 +75,11 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
               {t("flows.wait.datetimeLabel")}
             </Label>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <InfoIcon className="text-muted-foreground" size={14} />
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <InfoIcon className="text-muted-foreground" size={14} />
+                }
+              />
               <TooltipContent>
                 <p>{t("flows.wait.datetimeTooltip")}</p>
               </TooltipContent>

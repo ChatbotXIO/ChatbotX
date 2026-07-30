@@ -26,6 +26,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { AIModelSelect } from "../../ai-generate-text/components/ai-model-select"
 import { OpenaiCompatibleModelFields } from "../../ai-generate-text/components/openai-compatible-model-fields"
@@ -85,16 +86,18 @@ export const AIExtractDataDialog = ({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent aria-describedby={undefined} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="capitalize">
             {t("fields.flows.aiExtractData", {
-              aiName: t(`aiProviders.${provider}`),
+              aiName: t(getAiProviderLabelKey(provider)),
             })}
           </DialogTitle>
           <DialogDescription />
@@ -102,7 +105,7 @@ export const AIExtractDataDialog = ({
 
         <Form {...form}>
           <form className="flex flex-col space-y-6" onSubmit={handleSubmit}>
-            <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-6 overflow-y-auto pr-2">
+            <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-6 overflow-y-auto pe-2">
               <SelectField
                 label={t("fields.inputType.label")}
                 name="inputType"
@@ -163,7 +166,7 @@ export const AIExtractDataDialog = ({
                         placeholder={t("fields.extractFields.key.placeholder")}
                         required
                       />
-                      <ArrowRightIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                      <ArrowRightIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground rtl:rotate-180" />
                       <CustomFieldSelect
                         allowCreate={true}
                         includeReserved={false}
@@ -199,11 +202,13 @@ export const AIExtractDataDialog = ({
             </div>
 
             <DialogFooter className="flex items-end">
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button size="sm" type="submit">
                 {t("actions.confirm")}
               </Button>

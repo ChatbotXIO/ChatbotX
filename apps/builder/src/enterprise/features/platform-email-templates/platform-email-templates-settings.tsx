@@ -105,12 +105,16 @@ export async function PlatformEmailTemplatesSettings({
                 <CardDescription>{t(config.descriptionKey)}</CardDescription>
               </CardHeader>
               <CardFooter>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`${basePath}/${config.type}`}>
-                    <PencilIcon className="size-3.5" />
-                    {t("actions.edit")}
-                  </Link>
-                </Button>
+                <Button
+                  render={
+                    <Link href={`${basePath}/${config.type}`}>
+                      <PencilIcon className="size-3.5" />
+                      {t("actions.edit")}
+                    </Link>
+                  }
+                  size="sm"
+                  variant="outline"
+                />
               </CardFooter>
             </Card>
           )

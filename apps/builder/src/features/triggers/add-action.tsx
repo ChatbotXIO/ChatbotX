@@ -84,12 +84,14 @@ export function AddAction({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline">
-          <PlusIcon />
-          {t("actions.addAction")}
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="outline">
+            <PlusIcon />
+            {t("actions.addAction")}
+          </Button>
+        }
+      />
       <DropdownMenuContent>
         {options.map((option) => (
           <DropdownMenuItem

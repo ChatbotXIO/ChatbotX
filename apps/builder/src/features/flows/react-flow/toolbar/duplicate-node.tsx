@@ -35,21 +35,23 @@ export function DuplicateNode({ nodeId }: { nodeId: string }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          className="size-8"
-          disabled={isFlowMutating}
-          onClick={onClick}
-          size="icon"
-          variant="ghost"
-        >
-          {isFlowMutating ? (
-            <Loader2Icon className="animate-spin" />
-          ) : (
-            <CopyIcon />
-          )}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            className="size-8"
+            disabled={isFlowMutating}
+            onClick={onClick}
+            size="icon"
+            variant="ghost"
+          >
+            {isFlowMutating ? (
+              <Loader2Icon className="animate-spin" />
+            ) : (
+              <CopyIcon />
+            )}
+          </Button>
+        }
+      />
       <TooltipContent>
         <p>{t("actions.duplicate")}</p>
       </TooltipContent>

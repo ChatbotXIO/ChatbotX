@@ -1,5 +1,7 @@
 "use client";
 
+// Locally patched for RTL; reapply after refreshing from the upstream shadcn registry.
+
 import {
   FormControl,
   FormDescription,
@@ -12,7 +14,6 @@ import { Input } from "@chatbotx.io/ui/components/ui/input";
 import { Badge } from "@chatbotx.io/ui/components/ui/badge";
 import {
   Popover,
-  PopoverAnchor,
   PopoverContent,
 } from "@chatbotx.io/ui/components/ui/popover";
 import { cn } from "@chatbotx.io/ui/lib/utils";
@@ -211,7 +212,6 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                   }
                 }}
               >
-              <PopoverAnchor asChild>
               <div ref={containerRef} className="relative mb-0">
                 <div
                   className={cn(
@@ -237,7 +237,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                         <Badge
                           variant={tagVariant}
                           className={cn(
-                            "flex items-center gap-1 pr-1 group transition-colors",
+                            "flex items-center gap-1 pe-1 group transition-colors",
                             variant === "enterprise" &&
                               "bg-primary border-primary/20"
                           )}
@@ -249,7 +249,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                               onClick={() =>
                                 removeTag(index, tags, field.onChange)
                               }
-                              className="ml-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
+                              className="ms-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -320,18 +320,18 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                   )}
                 </div>
               </div>
-              </PopoverAnchor>
 
               <PopoverContent
                 align="start"
+                anchor={containerRef}
                 className={cn(
                   // pointer-events-auto keeps the list clickable even when a
                   // surrounding modal dialog locks pointer events on the body.
-                  "pointer-events-auto w-(--radix-popover-trigger-width) max-h-60 overflow-auto rounded-md p-0",
+                  "pointer-events-auto w-(--anchor-width) max-h-60 overflow-auto rounded-md p-0",
                   styles.suggestions
                 )}
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onCloseAutoFocus={(e) => e.preventDefault()}
+                finalFocus={false}
+                initialFocus={false}
               >
                 {visibleSuggestions.map((suggestion) => {
                   const isSelected =
@@ -343,7 +343,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                       type="button"
                       onClick={() => addTag(suggestion, tags, field.onChange)}
                       className={cn(
-                        "w-full px-3 py-2 text-left hover:bg-muted transition-colors text-sm disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-50 disabled:hover:bg-transparent",
+                        "w-full px-3 py-2 text-start hover:bg-muted transition-colors text-sm disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-50 disabled:hover:bg-transparent",
                         isSelected &&
                           "cursor-not-allowed text-muted-foreground hover:bg-transparent"
                       )}

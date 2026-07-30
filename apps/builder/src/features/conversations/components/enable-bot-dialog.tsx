@@ -54,7 +54,7 @@ export default function EnableBotDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
@@ -71,11 +71,13 @@ export default function EnableBotDialog({
         </DialogHeader>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button size="sm" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
 
           <Button
             disabled={isPending}

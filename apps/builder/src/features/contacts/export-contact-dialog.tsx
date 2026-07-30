@@ -317,12 +317,9 @@ export function ExportContactDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
-      <DialogContent
-        className="max-h-screen max-w-lg overflow-y-scroll"
-        onInteractOutside={(event) => event.preventDefault()}
-      >
+      <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>{t("actions.exportContacts")}</DialogTitle>
           <DialogDescription />

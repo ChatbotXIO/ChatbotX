@@ -40,15 +40,17 @@ const assignedIcon = (conversation: ListConversationItemResource) => {
   if (conversation.assignedUserId) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Avatar className="size-4">
-            <AvatarImage src={conversation.assignedUser?.image ?? ""} />
+        <TooltipTrigger
+          render={
+            <Avatar className="size-4">
+              <AvatarImage src={conversation.assignedUser?.image ?? ""} />
 
-            <AvatarFallback className="text-[0.5rem]">
-              {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
-            </AvatarFallback>
-          </Avatar>
-        </TooltipTrigger>
+              <AvatarFallback className="text-[0.5rem]">
+                {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
+              </AvatarFallback>
+            </Avatar>
+          }
+        />
         <TooltipContent align="center" side="bottom">
           {conversation.assignedUser?.name ||
             conversation.assignedUser?.email ||
@@ -141,21 +143,23 @@ export default function ConversationItem({
       >
         <div className="relative">
           {contactAvatar}
-          <div className="absolute bottom-0 left-0 transform">
+          <div className="absolute start-0 bottom-0 transform">
             {assignedIcon(conversation)}
           </div>
-          <div className="absolute right-0 bottom-0 transform">
+          <div className="absolute end-0 bottom-0 transform">
             {conversation.contactInboxes?.map((contactInbox) => (
               <Tooltip key={contactInbox.id}>
-                <TooltipTrigger asChild>
-                  <span>
-                    <InboxIcon
-                      channel={contactInbox.channel as ChannelType}
-                      showLabel={false}
-                      size="small"
-                    />
-                  </span>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <span>
+                      <InboxIcon
+                        channel={contactInbox.channel as ChannelType}
+                        showLabel={false}
+                        size="small"
+                      />
+                    </span>
+                  }
+                />
                 <TooltipContent align="center" side="right">
                   {contactInbox.inbox.name}
                 </TooltipContent>
@@ -163,7 +167,7 @@ export default function ConversationItem({
             ))}
           </div>
           {conversation.followed && (
-            <div className="absolute top-0 right-0 transform">
+            <div className="absolute end-0 top-0 transform">
               <StarIcon className="fill-yellow-400 text-zinc-500" />
             </div>
           )}
@@ -171,19 +175,21 @@ export default function ConversationItem({
 
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center justify-between gap-1">
-            <span className="truncate text-left font-medium dark:text-gray-200">
+            <span className="truncate text-start font-medium dark:text-gray-200">
               {conversation.contact?.fullName}
             </span>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  {isComment ? (
-                    <MessageCircleMoreIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <MailIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                  )}
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span>
+                    {isComment ? (
+                      <MessageCircleMoreIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <MailIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                  </span>
+                }
+              />
               <TooltipContent align="center" side="top">
                 {isComment
                   ? t("fields.comment.label")
@@ -193,13 +199,13 @@ export default function ConversationItem({
           </div>
           <div
             className={cn(
-              "w-full truncate text-left text-xs",
+              "w-full truncate text-start text-xs",
               isUnread ? "font-semibold" : "text-gray-500",
             )}
           >
             {previewText}
           </div>
-          <p className="text-right text-neutral-400 text-xs">
+          <p className="text-end text-neutral-400 text-xs">
             <span>
               {conversation.lastActivityAt
                 ? formatDistanceToNowStrict(conversation.lastActivityAt)

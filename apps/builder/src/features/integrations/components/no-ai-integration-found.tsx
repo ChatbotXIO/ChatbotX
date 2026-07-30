@@ -10,11 +10,14 @@ export function NoAIIntegrationFound({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-4">
       <p>{t("messages.noAIIntegrationFound")}</p>
-      <Button asChild type="button">
-        <Link href={`/space/${workspaceId}/settings/integrations`}>
-          {t("actions.connect")}
-        </Link>
-      </Button>
+      <Button
+        render={
+          <Link href={`/space/${workspaceId}/settings/integrations`}>
+            {t("actions.connect")}
+          </Link>
+        }
+        type="button"
+      />
     </div>
   )
 }

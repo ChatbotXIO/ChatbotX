@@ -31,12 +31,15 @@ export function FacebookLeadAdsTableToolbarActions({
         />
       ) : null}
 
-      <Button asChild size="sm">
-        <Link href={`/space/${workspaceId}/fb-lead-ads/create`}>
-          <PlusIcon />
-          {t("facebookLeadAdsAutomation.create")}
-        </Link>
-      </Button>
+      <Button
+        render={
+          <Link href={`/space/${workspaceId}/fb-lead-ads/create`}>
+            <PlusIcon />
+            {t("facebookLeadAdsAutomation.create")}
+          </Link>
+        }
+        size="sm"
+      />
     </>
   )
 }

@@ -58,12 +58,14 @@ export function WebSearchAuthorizedDomainsField() {
           {t("fields.webSearchAuthorizedDomains.label")}
         </Label>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <InfoIcon
-              aria-label={t("fields.webSearchAuthorizedDomains.tooltip")}
-              className="size-4 text-muted-foreground"
-            />
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <InfoIcon
+                aria-label={t("fields.webSearchAuthorizedDomains.tooltip")}
+                className="size-4 text-muted-foreground"
+              />
+            }
+          />
           <TooltipContent className="max-w-sm">
             {t("fields.webSearchAuthorizedDomains.tooltip")}
           </TooltipContent>

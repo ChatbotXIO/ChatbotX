@@ -89,7 +89,7 @@ function NameCell({
             </AvatarFallback>
           </Avatar>
           {channel && (
-            <div className="absolute right-0 bottom-0 translate-x-1">
+            <div className="absolute end-0 bottom-0 ltr:translate-x-1 rtl:-translate-x-1">
               <InboxIcon
                 channel={channel}
                 iconClassName="size-3"
@@ -101,15 +101,17 @@ function NameCell({
         </div>
       </Link>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            className="truncate font-medium leading-5"
-            href={inboxHref}
-            target="_blank"
-          >
-            {contact.fullName}
-          </Link>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Link
+              className="truncate font-medium leading-5"
+              href={inboxHref}
+              target="_blank"
+            >
+              {contact.fullName}
+            </Link>
+          }
+        />
         <TooltipContent>
           <p>{contact.fullName}</p>
         </TooltipContent>
@@ -347,14 +349,16 @@ export function ContactsTable({
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {getUserName(
-                  row.original.conversation?.assignedUser,
-                  t("assignAdmin.unAssigned"),
-                )}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {getUserName(
+                    row.original.conversation?.assignedUser,
+                    t("assignAdmin.unAssigned"),
+                  )}
+                </div>
+              }
+            />
             <TooltipContent>
               {getUserName(
                 row.original.conversation?.assignedUser,

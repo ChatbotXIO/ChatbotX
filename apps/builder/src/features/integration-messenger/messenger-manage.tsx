@@ -49,16 +49,19 @@ export function MessengerManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button asChild variant="secondary">
-          <Link
-            href={`/channels/create?workspaceId=${workspaceId}&channel=messenger`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.messenger.label"),
-            })}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link
+              href={`/channels/create?workspaceId=${workspaceId}&channel=messenger`}
+            >
+              <PlusCircleIcon className="h-4 w-4" />
+              {t("actions.addFeature", {
+                feature: t("fields.messenger.label"),
+              })}
+            </Link>
+          }
+          variant="secondary"
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border">

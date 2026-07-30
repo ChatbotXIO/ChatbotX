@@ -80,17 +80,19 @@ export function getColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="max-w-[400px] truncate">
-              <Link
-                href={`/space/${workspaceId}/webhooks/${row.original.id}/edit`}
-              >
-                <div className="max-w-[400px] truncate">
-                  {row.original.name}
-                </div>
-              </Link>
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="max-w-[400px] truncate">
+                <Link
+                  href={`/space/${workspaceId}/webhooks/${row.original.id}/edit`}
+                >
+                  <div className="max-w-[400px] truncate">
+                    {row.original.name}
+                  </div>
+                </Link>
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.name}</p>
           </TooltipContent>
@@ -150,21 +152,25 @@ export function getColumns({
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost">
-              <MoreHorizontalIcon className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/space/${workspaceId}/webhooks/${row.original.id}/edit`}
-              >
-                <PencilIcon />
-                {t("actions.edit")}
-              </Link>
-            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <Link
+                  href={`/space/${workspaceId}/webhooks/${row.original.id}/edit`}
+                >
+                  <PencilIcon />
+                  {t("actions.edit")}
+                </Link>
+              }
+            />
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "rename" })}
             >

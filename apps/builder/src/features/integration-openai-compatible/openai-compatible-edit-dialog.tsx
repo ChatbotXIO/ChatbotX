@@ -100,12 +100,14 @@ export function OpenaiCompatibleEditDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          <PencilIcon className="size-4" />
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            <PencilIcon className="size-4" />
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{integration.name}</DialogTitle>
@@ -158,11 +160,13 @@ export function OpenaiCompatibleEditDialog({
               required
             />
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="secondary">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button disabled={form.formState.isSubmitting} type="submit">
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

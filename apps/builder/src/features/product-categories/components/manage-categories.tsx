@@ -186,15 +186,17 @@ export function ManageCategories({
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-label={t("actions")}
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <EllipsisIcon />
-                          </Button>
-                        </DropdownMenuTrigger>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              aria-label={t("actions")}
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <EllipsisIcon />
+                            </Button>
+                          }
+                        />
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onSelect={() => setEditing(category)}

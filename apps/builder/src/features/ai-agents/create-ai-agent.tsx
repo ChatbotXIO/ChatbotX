@@ -37,6 +37,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import {
   type CreateAIAgentRequest,
   createAIAgentRequest,
@@ -154,12 +155,16 @@ export function CreateAIAgentDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("actions.createFeature", { feature: t("fields.aiAgent.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("actions.createFeature", {
+              feature: t("fields.aiAgent.label"),
+            })}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-5xl">
         <DialogHeader>
           <DialogTitle>
@@ -183,25 +188,26 @@ export function CreateAIAgentDialog({
                   {t("fields.instructions.label")}
                 </div>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      aria-label={t("actions.moreSettings")}
-                      className="shrink-0"
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <SlidersHorizontalIcon aria-hidden className="size-4" />
-                    </Button>
-                  </PopoverTrigger>
+                  <PopoverTrigger
+                    render={
+                      <Button
+                        aria-label={t("actions.moreSettings")}
+                        className="shrink-0"
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <SlidersHorizontalIcon aria-hidden className="size-4" />
+                      </Button>
+                    }
+                  />
                   <PopoverContent
                     align="start"
                     className="flex w-[340px] flex-col gap-6 overflow-y-auto overscroll-contain p-4"
-                    collisionPadding={16}
                     side="right"
                     style={{
                       maxHeight:
-                        "min(calc(var(--radix-popover-content-available-height) - 1rem), calc(100vh - 2rem))",
+                        "min(calc(var(--available-height) - 1rem), calc(100vh - 2rem))",
                     }}
                   >
                     {modelFields.map((field, index) => {
@@ -252,7 +258,7 @@ export function CreateAIAgentDialog({
                       return (
                         <SelectField
                           key={field.id}
-                          label={`${t(`aiProviders.${provider.provider}`)} ${t("fields.model.label")}`}
+                          label={`${t(getAiProviderLabelKey(provider.provider))} ${t("fields.model.label")}`}
                           name={`models.${index}.model`}
                           options={provider.modelOptions}
                           required
@@ -292,18 +298,18 @@ export function CreateAIAgentDialog({
                   className="relative rounded-md border border-input"
                   key={item.id}
                 >
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute start-3 top-3">
                     <SelectField
                       name={`messages.${index}.role`}
                       options={messageRoleOptions}
                     />
                   </div>
-                  <div className="pt-14 pr-12 pb-3 pl-3">
+                  <div className="ps-3 pe-12 pt-14 pb-3">
                     <PlainTextEditorField name={`messages.${index}.content`} />
                   </div>
                   <Button
                     aria-label={t("actions.delete")}
-                    className="absolute top-1 right-1"
+                    className="absolute end-1 top-1"
                     onClick={() => removeMessage(index)}
                     size="icon"
                     type="button"

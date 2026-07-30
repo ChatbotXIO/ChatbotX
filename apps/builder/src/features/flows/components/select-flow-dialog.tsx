@@ -133,7 +133,7 @@ export function SelectFlowDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger render={children as React.ReactElement} />
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         {title && (
           <DialogHeader>
@@ -182,9 +182,11 @@ export function SelectFlowDialog({
               </Tabs>
 
               <div className="flex justify-end gap-4">
-                <DialogClose asChild>
-                  <Button variant="outline">{t("actions.cancel")}</Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button variant="outline">{t("actions.cancel")}</Button>
+                  }
+                />
 
                 <Button
                   disabled={

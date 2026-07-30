@@ -58,12 +58,14 @@ export function DeleteErrorLogsDialog({
   return (
     <Dialog {...props}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.delete")} ({errorLogs.length})
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" variant="outline">
+              <Trash aria-hidden="true" className="me-2 size-4" />
+              {t("actions.delete")} ({errorLogs.length})
+            </Button>
+          }
+        />
       ) : null}
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
@@ -80,11 +82,13 @@ export function DeleteErrorLogsDialog({
         </DialogHeader>
 
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button size="sm" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
@@ -97,7 +101,7 @@ export function DeleteErrorLogsDialog({
             variant="destructive"
           >
             {isPending && (
-              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
+              <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             )}
             {t("actions.delete")}
           </Button>

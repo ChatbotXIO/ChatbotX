@@ -38,9 +38,13 @@ export default function MagicLinkSent() {
         </div>
 
         <div className="space-y-3">
-          <Button asChild className="w-full" variant="outline">
-            <Link href="/auth/sign-in">{t("actions.backToSignIn")}</Link>
-          </Button>
+          <Button
+            className="w-full"
+            render={
+              <Link href="/auth/sign-in">{t("actions.backToSignIn")}</Link>
+            }
+            variant="outline"
+          />
 
           <div className="text-muted-foreground text-xs">
             <p>{t("auth.didNotReceiveEmail")}</p>

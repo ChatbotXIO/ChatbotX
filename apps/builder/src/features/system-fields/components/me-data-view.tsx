@@ -240,27 +240,33 @@ export function MeDataView({ data }: MeDataViewProps) {
         </Card>
 
         <div className="flex flex-col gap-2">
-          <Button asChild className="w-full" variant="secondary">
-            <a href={buildMeDownloadHref(data.params)}>
-              <Download aria-hidden="true" />
-              {t("extensionsMe.actions.download")}
-            </a>
-          </Button>
+          <Button
+            className="w-full"
+            render={
+              <a href={buildMeDownloadHref(data.params)}>
+                <Download aria-hidden="true" />
+                {t("extensionsMe.actions.download")}
+              </a>
+            }
+            variant="secondary"
+          />
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                className="w-full"
-                disabled={isPending}
-                variant="destructive"
-              >
-                {isPending ? (
-                  <Loader2 aria-hidden="true" className="animate-spin" />
-                ) : (
-                  <Trash2 aria-hidden="true" />
-                )}
-                {t("extensionsMe.actions.delete")}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  className="w-full"
+                  disabled={isPending}
+                  variant="destructive"
+                >
+                  {isPending ? (
+                    <Loader2 aria-hidden="true" className="animate-spin" />
+                  ) : (
+                    <Trash2 aria-hidden="true" />
+                  )}
+                  {t("extensionsMe.actions.delete")}
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.37",
+    "@base-ui/react": "^1.6.0",
     "@bull-board/api": "^8.1.2",
     "@bull-board/hono": "^8.1.2",
     "@bull-board/ui": "^8.1.2",
@@ -81,7 +82,6 @@
     "@orpc/openapi": "^1.14.0",
     "@orpc/server": "^1.14.0",
     "@orpc/zod": "^1.14.0",
-    "@radix-ui/react-slot": "^1.2.4",
     "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-table": "^8.21.3",
     "@tiptap/extension-emoji": "^3.22.5",

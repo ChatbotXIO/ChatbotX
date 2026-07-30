@@ -371,9 +371,11 @@ export function FbCommentForm({
                 <FormLabel className="flex items-center gap-1">
                   {t("facebookCommentAutomation.excludeKeywords")}
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                      }
+                    />
                     <TooltipContent className="max-w-sm">
                       {t(
                         "facebookCommentAutomation.excludeKeywordsDescription",
