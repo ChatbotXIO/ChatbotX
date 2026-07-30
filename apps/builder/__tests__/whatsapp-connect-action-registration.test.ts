@@ -33,7 +33,6 @@ const {
   findWabaMock,
   getCoexistEligibilityMock,
   getSharedWabaIdMock,
-  inboxExistsByWorkspaceIdAndNameMock,
   invalidateCacheByTagsMock,
   isUniqueViolationErrorMock,
   listPhoneNumbersMock,
@@ -58,7 +57,6 @@ const {
   findWabaMock: vi.fn(),
   getCoexistEligibilityMock: vi.fn(),
   getSharedWabaIdMock: vi.fn(),
-  inboxExistsByWorkspaceIdAndNameMock: vi.fn(),
   invalidateCacheByTagsMock: vi.fn(),
   isUniqueViolationErrorMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
@@ -98,9 +96,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: buildContextMock,
   connectChannelIntegration: connectChannelIntegrationMock,
-  inboxService: {
-    existsByWorkspaceIdAndName: inboxExistsByWorkspaceIdAndNameMock,
-  },
   integrationWhatsappService: {
     createSignupSession: createSignupSessionMock,
     consumeSignupSession: consumeSignupSessionMock,
@@ -294,7 +289,6 @@ describe("connectWhatsappAction registration", () => {
       paging: { cursors: { before: "", after: "" } },
     })
     findConnectedPhoneNumberIdsMock.mockResolvedValue(new Set<string>())
-    inboxExistsByWorkspaceIdAndNameMock.mockResolvedValue(false)
     getCoexistEligibilityMock.mockResolvedValue({
       isOnBizApp: true,
       platformType: "CLOUD_API",
