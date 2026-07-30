@@ -243,6 +243,10 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
             break
           }
           default: {
+            logger.warn(
+              { interactive: data.message.interactive },
+              "Unhandled WhatsApp interactive reply",
+            )
             message.text = "Received interactive (coming soon)"
             break
           }
@@ -250,9 +254,17 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
         break
       }
       case "button": {
+        // Carousel card quick-reply buttons and message-template quick-reply
+        // buttons both arrive here. Unlike a reply button (which carries its
+        // flow action in `id`), these carry it in `payload` — confirmed
+        // against a live webhook capture (2026-07-30). `asString` guards
+        // against a foreign app on the same number sending a blank payload;
+        // the worker's `sanitizeFlowAction` is the actual authority that drops
+        // anything that doesn't decode as this flow engine's own format.
         const attached = (data.message as ServerButtonMessage).button
         message.text = attached.text
         buttonTitle = attached.text
+        postbackAction = asString(attached.payload)
         break
       }
       case "order": {
