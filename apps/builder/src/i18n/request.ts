@@ -2,7 +2,6 @@ import { getRequestConfig } from "next-intl/server"
 import { resolveLocale } from "@/i18n/config"
 import { messagesByLocale } from "@/i18n/messages"
 import { getUserLocale } from "@/lib/locale"
-import en from "../../messages/en.json"
 
 function resolveEnglishFallback(key: string, namespace?: string) {
   const path = namespace ? `${namespace}.${key}` : key
@@ -13,7 +12,7 @@ function resolveEnglishFallback(key: string, namespace?: string) {
         typeof value === "object" && value !== null
           ? (value as Record<string, unknown>)[segment]
           : undefined,
-      en,
+      messagesByLocale.en,
     )
 }
 

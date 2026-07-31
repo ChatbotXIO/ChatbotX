@@ -160,7 +160,7 @@ describe("builder message catalogs", () => {
 
 describe("locale resolution", () => {
   test.each([
-    ["pt", "pt-PT"],
+    ["pt", "pt-BR"],
     ["en-US", "en"],
     ["xx", "en"],
   ] as const)("resolves %s to %s", (input, expected) => {

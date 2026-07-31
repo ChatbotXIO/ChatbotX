@@ -63,7 +63,7 @@ export function resolveLocale(value: string | undefined): Locale {
     return defaultLocale
   }
   if (language === "pt") {
-    return "pt-PT"
+    return "pt-BR"
   }
 
   return (
