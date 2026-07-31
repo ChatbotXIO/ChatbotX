@@ -2183,6 +2183,8 @@
       "addCustomField": "Thêm mới"
     },
     "sendCarousel": {
+      "addSlide": "Thêm thẻ",
+      "removeSlide": "Xoá thẻ",
       "whatsappLinkButtonIgnored": "Với WhatsApp, liên kết của thẻ này sẽ không hoạt động: thẻ có nút mở liên kết thì không được có nút nào khác. Nút sẽ được gửi như một nút trả lời."
     },
     "additionalSteps": "Các bước bổ sung",
