@@ -86,7 +86,7 @@ export function NavUser({
           />
           <DropdownMenuContent
             align="end"
-            className="w-(--anchor-width) min-w-56 rounded-lg"
+            className="w-(--anchor-width) min-w-72 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >

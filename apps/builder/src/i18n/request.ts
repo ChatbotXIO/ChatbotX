@@ -1,15 +1,8 @@
 import { getRequestConfig } from "next-intl/server"
-import type { Locale } from "@/i18n/config"
+import { resolveLocale } from "@/i18n/config"
+import { messagesByLocale } from "@/i18n/messages"
 import { getUserLocale } from "@/lib/locale"
-import ar from "../../messages/ar.json"
 import en from "../../messages/en.json"
-import vi from "../../messages/vi.json"
-
-const messagesByLocale: Record<Locale, Record<string, unknown>> = {
-  en,
-  vi,
-  ar,
-}
 
 function resolveEnglishFallback(key: string, namespace?: string) {
   const path = namespace ? `${namespace}.${key}` : key
@@ -25,7 +18,7 @@ function resolveEnglishFallback(key: string, namespace?: string) {
 }
 
 export default getRequestConfig(async () => {
-  const locale = (await getUserLocale()) as Locale
+  const locale = resolveLocale(await getUserLocale())
 
   return {
     locale,

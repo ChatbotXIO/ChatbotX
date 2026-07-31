@@ -1,4 +1,5 @@
 import { getAllCountries, getAllTimezones } from "countries-and-timezones"
+import { localeMeta, locales } from "@/i18n/config"
 
 export const UNKNOWN_COUNTRY = "unknown"
 export const allCountryCodes = [
@@ -13,10 +14,10 @@ export const allCountryOptions = [
   })),
 ]
 
-export const allSupportedLanguages = [
-  { label: "English", value: "en" },
-  { label: "Tiếng Việt", value: "vi" },
-]
+export const allSupportedLanguages = locales.map((locale) => ({
+  label: localeMeta[locale].nativeLabel,
+  value: locale,
+}))
 export const allLanguageCodes = allSupportedLanguages.map(
   (language) => language.value,
 )

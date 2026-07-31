@@ -1,0 +1,4344 @@
+{
+  "actions": {
+    "copy": "Copiar",
+    "copyUrl": "Copiar URL",
+    "actions": "Ações",
+    "add": "Adicionar",
+    "addVariable": "Adicionar variável",
+    "addFeature": "Adicionar {feature}",
+    "addFlowReply": "Adicionar resposta de fluxo",
+    "addMore": "Adicionar mais",
+    "addTag": "Adicionar tag",
+    "addAction": "Adicionar ação",
+    "addCondition": "Adicionar condição",
+    "addTextReply": "Adicionar resposta de texto",
+    "markAsFollowUp": "Marcar para acompanhamento",
+    "removeFromFollowUp": "Remover do acompanhamento",
+    "markAsUnread": "Marcar como não lida",
+    "archive": "Arquivar",
+    "unarchive": "Desarquivar",
+    "archiveConversation": "Arquivar conversa",
+    "assign": "Atribuir",
+    "assignConversation": "Atribuir conversa",
+    "back": "Voltar",
+    "blockContact": "Bloquear contato",
+    "unblockContact": "Desbloquear contato",
+    "undo": "Desfazer",
+    "redo": "Refazer",
+    "cancel": "Cancelar",
+    "clear": "Limpar",
+    "clearCustomField": "Limpar campo personalizado",
+    "collapse": "Recolher",
+    "expand": "Expandir",
+    "confirm": "Confirmar",
+    "connect": "Conectar",
+    "continue": "Continuar",
+    "create": "Criar",
+    "loading": "Carregando...",
+    "createFeature": "Criar {feature}",
+    "delete": "Excluir",
+    "deleteContact": "Excluir contato",
+    "disableBot": "Desativar bot",
+    "disconnect": "Desconectar",
+    "download": "Baixar",
+    "edit": "Editar",
+    "editFeature": "Editar {feature}",
+    "enableBot": "Ativar bot",
+    "export": "Exportar",
+    "getEmbedCode": "Obter código de incorporação",
+    "getID": "Obter ID",
+    "getTools": "Obter ferramentas",
+    "import": "Importar",
+    "exportContacts": "Exportar contatos",
+    "filter": "Filtrar",
+    "selectFile": "Selecionar arquivo",
+    "insertLink": "Inserir link",
+    "addNew": "Adicionar novo",
+    "send": "Enviar",
+    "loginWithMagicLink": "Entrar com link mágico",
+    "manage": "Gerenciar",
+    "admin": "Administrador",
+    "more": "Mais",
+    "moreOptions": "Mais opções",
+    "moreSettings": "Mais configurações",
+    "openMenu": "Abrir menu",
+    "openWebchat": "Abrir webchat",
+    "removeTag": "Remover tag",
+    "rename": "Renomear",
+    "reset": "Redefinir",
+    "save": "Salvar",
+    "selectAll": "Selecionar tudo",
+    "selectRow": "Selecionar linha",
+    "sendFlow": "Enviar fluxo",
+    "sendMessage": "Enviar mensagem",
+    "setCustomField": "Definir campo personalizado",
+    "synchronize": "Sincronizar",
+    "syncMetaCatalog": "Sincronizar catálogo da Meta",
+    "testNow": "Testar agora",
+    "toggle": "Alternar",
+    "toggleTheme": "Alternar tema",
+    "transferConversationToBot": "Transferir conversa para o bot",
+    "update": "Atualizar",
+    "updatePayment": "Atualizar pagamento",
+    "upgradePlan": "Fazer upgrade do plano",
+    "upgradeToPro": "Fazer upgrade para Pro",
+    "uploadFile": "Enviar arquivo",
+    "view": "Visualizar",
+    "viewAnalytics": "Ver análises",
+    "duplicate": "Duplicar",
+    "getDraftLink": "Obter link do rascunho",
+    "getPublishedLink": "Obter link publicado",
+    "getMessengerAdsJson": "Obter JSON para anúncios do Messenger",
+    "getMessengerAdPayload": "Obter payload para anúncio do Messenger",
+    "ok": "OK",
+    "next": "Próximo",
+    "prev": "Anterior",
+    "moveEarlier": "Mover para antes",
+    "moveLater": "Mover para depois",
+    "analytics": "Análises",
+    "deleteAnalytics": "Excluir análises",
+    "flowVersions": "Versões do fluxo",
+    "revertToPublished": "Reverter para a versão publicada",
+    "search": "Pesquisar",
+    "pleaseSelect": "Selecione",
+    "noRecordFound": "Nenhum registro encontrado.",
+    "typeMessage": "Digite uma mensagem",
+    "enterText": "Digite o texto",
+    "enterFieldAndPressEnter": "Digite {field} e pressione Enter",
+    "addAnother": "Adicionar outro...",
+    "messagePlaceholder": "Mensagem...",
+    "signOut": "Sair",
+    "backToSignIn": "Voltar para entrar",
+    "connectFeature": "Conectar {feature}",
+    "scanQRCode": "Escaneie com sua câmera",
+    "inviteFeature": "Convidar {feature}",
+    "joinTheTeam": "Entrar para a equipe",
+    "chooseChannel": "Escolher canal",
+    "chooseSubaction": "Escolher subação",
+    "resend": "Reenviar",
+    "publish": "Publicar",
+    "setStartNode": "Definir como nó inicial",
+    "getNodeId": "Obter ID do nó",
+    "setAsDefaultAgent": "Definir como padrão",
+    "unsetDefaultAgent": "Remover como padrão",
+    "clickToEdit": "Clique para editar",
+    "move": "Mover",
+    "moveUp": "Mover para cima",
+    "moveDown": "Mover para baixo",
+    "removeAssignee": "Remover responsável",
+    "sendMail": "Enviar e-mail",
+    "wait": "Aguardar",
+    "followUp": "Acompanhamento",
+    "landingPage": "Landing page",
+    "generate": "Gerar",
+    "regenerate": "Gerar novamente",
+    "qrCode": "Código QR",
+    "addSequence": "Adicionar sequência",
+    "removeSequence": "Remover sequência",
+    "activate": "Ativar",
+    "deactivate": "Desativar",
+    "onFailure": "Em caso de falha",
+    "onSkip": "Ao ignorar",
+    "onSuccess": "Em caso de sucesso",
+    "clone": "Clonar",
+    "remove": "Remover",
+    "restore": "Restaurar"
+  },
+  "states": {
+    "success": "Sucesso",
+    "error": "Erro",
+    "skip": "Ignorado"
+  },
+  "admins": {
+    "title": "Administradores"
+  },
+  "assignAdmin": {
+    "assignConversation": "Atribuir conversa",
+    "assignedToMe": "Atribuída a mim",
+    "assignedTo": "Atribuída a {name}",
+    "unAssigned": "Não atribuída"
+  },
+  "aiAgent": {
+    "defaultAgent": "Agente padrão",
+    "description": "Gerencie e configure agentes de IA para ampliar os recursos do seu espaço de trabalho com automação e respostas inteligentes.",
+    "title": "Agentes de IA",
+    "name": "Agentes"
+  },
+  "aiFiles": {
+    "description": "Dê aos seus agentes acesso a PDFs, documentos e muito mais",
+    "title": "Conhecimento",
+    "noEmbeddingProvider": "Nenhum provedor de embeddings configurado. Os embeddings de arquivos de IA exigem integração com OpenAI ou Gemini. DeepSeek e Claude não oferecem suporte a modelos de embedding."
+  },
+  "aiFunctions": {
+    "description": "Configure funções de LLM para tornar seu agente de IA mais inteligente",
+    "title": "Funções de IA"
+  },
+  "aiMcpServers": {
+    "description": "Conecte a IA a sistemas externos via MCP",
+    "title": "Servidores MCP",
+    "tools": {
+      "label": "Ferramentas disponíveis"
+    }
+  },
+  "analytics": {
+    "contacts": "Contatos",
+    "newContacts": "Novos contatos",
+    "activeContacts": "Contatos ativos",
+    "botMessagesByResult": "Mensagens recebidas pelo bot",
+    "botMessagesNoResponse": "Mensagens recebidas sem resposta",
+    "botMessagesWithResponse": "Mensagens recebidas com resposta",
+    "aiProvider": "Provedor de IA",
+    "responseCount": "Quantidade de respostas",
+    "percentage": "Porcentagem",
+    "responseTime": "Tempo de resposta",
+    "firstResponseTime": "Tempo da primeira resposta",
+    "totalContacts": "Total de contatos",
+    "averageResponseTime": "Tempo médio de resposta (minutos)",
+    "averageResponseTimeHelp": "O tempo médio que um agente humano leva para responder à mensagem de um cliente.",
+    "averageFirstResponseTimeByAdmin": "Tempo médio da primeira resposta por agentes humanos (minutos)",
+    "averageFirstResponseTimeByAdminHelp": "O tempo médio que um agente humano leva para dar a primeira resposta à mensagem de um cliente.",
+    "averageResponseTimeByAdmin": "Tempo médio de resposta por agentes humanos (minutos)",
+    "averageDurationOfConversation": "Duração média de uma conversa (minutos)",
+    "averageDurationOfConversationHelp": "É o tempo médio em que uma conversa foi atendida por uma pessoa antes de ser transferida para o bot.",
+    "success": "Sucesso",
+    "fallback": "Fallback",
+    "admins": "Agentes humanos",
+    "messages": "Mensagens",
+    "conversations": "Conversas",
+    "assignedConversations": {
+      "title": "Conversas atribuídas",
+      "helpText": "Conversas atribuídas pela caixa de entrada ou pelo bot."
+    },
+    "messagesSentByHumanOrBot": "Mensagens enviadas por pessoa/bot",
+    "human": "Pessoa",
+    "bot": "Bot",
+    "conversationsMovedToHumanOrBot": "Conversas transferidas para pessoa/bot",
+    "uniqueConversationsByAdmins": "Conversas únicas por agentes humanos",
+    "uniqueConversationsByAdminsHelp": "Número de contatos para os quais um agente humano enviou pelo menos uma mensagem.",
+    "messagesSentByAdmins": "Mensagens enviadas por agentes humanos",
+    "messagesSentByAdminsHelp": "Mensagens enviadas pela caixa de entrada.",
+    "allContactsByChannel": "Todos os contatos por canal",
+    "newContactsByChannel": "Novos contatos por canal",
+    "newContactsBySource": "Novos contatos por origem",
+    "assignedConversationsByAdmins": "Conversas atribuídas por agentes humanos",
+    "assignedConversationsByAdminsHelp": "Conversas atribuídas pela caixa de entrada ou pelo bot.",
+    "followUpConversations": "Conversas em acompanhamento",
+    "followUpConversationsHelp": "Conversas marcadas para acompanhamento pela caixa de entrada ou pelo bot.",
+    "archivedConversations": "Conversas arquivadas",
+    "blockedConversations": "Conversas bloqueadas",
+    "blockedConversationsHelp": "Conversas bloqueadas pela sua conta.",
+    "blockedContacts": "Contatos bloqueados",
+    "blockedContactsHelp": "Contatos que não querem receber mensagens da sua conta",
+    "newContactsByCountry": "Novos contatos por país",
+    "date": "Data",
+    "total": "Total",
+    "messagesSent": "Mensagens enviadas",
+    "selectRange": "Selecionar intervalo",
+    "dateFilterPreset": "Predefinição do filtro de data",
+    "noResults": "Nenhum resultado.",
+    "noData": "Sem dados",
+    "comingSoon": "Em breve",
+    "unknown": "Desconhecido",
+    "pagination": {
+      "selectedRows": "{selected} de {total} linha(s) selecionada(s).",
+      "rowsPerPage": "Linhas por página",
+      "pageOf": "Página {page} de {pageCount}",
+      "firstPage": "Ir para a primeira página",
+      "previousPage": "Ir para a página anterior",
+      "nextPage": "Ir para a próxima página",
+      "lastPage": "Ir para a última página"
+    },
+    "sessionsThroughTheRef": "Sessões pela referência \"{ref}\" por dia",
+    "sessionsThroughTheMagicLink": "Sessões pelo link mágico \"{ref}\" por dia"
+  },
+  "flowAnalytics": {
+    "nodes": {
+      "start": "Início",
+      "notFound": "Nó não encontrado"
+    },
+    "stats": {
+      "sent": "Enviado",
+      "delivered": "Entregue",
+      "seen": "Visualizado",
+      "clicked": "Clicado",
+      "waiting": "Aguardando"
+    }
+  },
+  "autoAssignConversation": {
+    "rule": {
+      "allTime": "Distribuição igual de conversas (todo o período)",
+      "label": "Regra de atribuição",
+      "last24Hours": "Distribuição igual de conversas (últimas 24 horas)",
+      "last8Hours": "Distribuição igual de conversas (últimas 8 horas)",
+      "lastHour": "Distribuição igual de conversas (última hora)"
+    },
+    "users": {
+      "label": "Usuários"
+    }
+  },
+  "automatedResponse": {
+    "setting": {
+      "description": "Descrição das respostas automatizadas",
+      "label": "Respostas automatizadas"
+    }
+  },
+  "billing": {
+    "title": "Faturamento",
+    "plan": {
+      "label": "Plano: {plan}",
+      "free": "Grátis"
+    },
+    "usage": {
+      "contacts": "Contatos",
+      "mac": "Contatos ativos mensais",
+      "botMessages": "Mensagens do bot",
+      "monthlyBotMessages": "Mensagens do bot (mensais)",
+      "workspaces": "Espaços de trabalho",
+      "channels": "Canais",
+      "teamMembers": "Membros da equipe"
+    },
+    "limitReached": {
+      "workspaces": "Você atingiu o limite de espaços de trabalho. Faça upgrade do plano para criar mais.",
+      "channels": "Você atingiu o limite de canais. Faça upgrade do plano para conectar mais.",
+      "teamMembers": "Você atingiu o limite de membros da equipe. Faça upgrade do plano para convidar mais.",
+      "contacts": "Você atingiu o limite de contatos. Faça upgrade do plano para adicionar mais.",
+      "mac": "Você atingiu o limite de contatos ativos mensais. Faça upgrade do plano para alcançar mais contatos."
+    },
+    "pastDue": {
+      "message": "Falha no seu último pagamento. Atualize a forma de pagamento para manter seu espaço de trabalho ativo."
+    },
+    "trial": {
+      "daysLeft": "Período de teste: restam {days} dias",
+      "endsTomorrow": "O período de teste termina amanhã",
+      "expired": "Seu período de teste terminou — faça upgrade para manter seu espaço de trabalho ativo",
+      "dismiss": "Dispensar"
+    },
+    "trialExpired": {
+      "title": "Seu período de teste gratuito terminou",
+      "description": "Assine um plano para continuar usando seus espaços de trabalho.",
+      "cta": "Ver planos",
+      "bannerTitle": "Período de teste encerrado",
+      "bannerDescription": "A criação de novos recursos está desativada. Você ainda pode desconectar canais e agendar a exclusão do espaço de trabalho.",
+      "bannerCta": "Fazer upgrade",
+      "createDisabled": "A criação de novos recursos de {feature} está desativada. Faça upgrade para continuar."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Limite de contatos ativos mensais atingido",
+      "bannerDescription": "O envio e o recebimento de mensagens estão pausados até que você faça upgrade do plano.",
+      "bannerCta": "Fazer upgrade",
+      "createDisabled": "A criação de novos recursos de {feature} está desativada até que você faça upgrade do plano."
+    }
+  },
+  "broadcasts": {
+    "title": "Transmissões",
+    "status": {
+      "scheduled": "Agendada",
+      "sent": "Enviada",
+      "sending": "Enviando",
+      "cancelled": "Cancelada"
+    },
+    "stats": {
+      "sent": "Enviado",
+      "delivered": "Entregue",
+      "seen": "Visualizado",
+      "clicked": "Clicado",
+      "failed": "Falhou",
+      "noContacts": "Nenhum contato encontrado",
+      "pageInfo": "Página {page} de {pageCount}",
+      "selectedAll": "Todos selecionados",
+      "selectedCount": "{count} selecionados",
+      "tagAllDialogDescription": "As tags serão adicionadas a todos os contatos selecionados.",
+      "tagDialogDescription": "As tags serão adicionadas a {count} contato(s).",
+      "tagQueued": "Adicionando tags a {count} contatos em segundo plano.",
+      "loadingMore": "Carregando mais...",
+      "receivers": "Destinatários"
+    },
+    "messengerList": {
+      "title": "Lista do Messenger",
+      "description": "Pode conter promoções e será enviada apenas para pessoas que assinaram sua lista do Messenger."
+    },
+    "messengerActiveContacts": {
+      "title": "Contatos ativos do Messenger",
+      "description": "Pode conter promoções e será enviada apenas para usuários que enviaram mensagens ao seu bot nas últimas 24 horas."
+    },
+    "messengerAccountUpdate": {
+      "title": "Atualização de conta do Messenger",
+      "description": "Notifique o usuário sobre uma alteração não recorrente no aplicativo ou na conta dele."
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Atualização de evento confirmado do Messenger",
+      "description": "Envie ao usuário lembretes ou atualizações de um evento no qual ele se inscreveu (por exemplo, comprou ingressos). Esta tag pode ser usada para eventos futuros e em andamento."
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Atualização pós-compra do Messenger",
+      "description": "Notifique o usuário sobre uma atualização de uma compra recente. Confirmação da transação, como faturas ou recibos; notificações do status do envio, como produto em trânsito, enviado, entregue ou atrasado."
+    },
+    "allContacts": {
+      "title": "Todos os contatos",
+      "description": "Envie um fluxo para todos os contatos."
+    },
+    "receiversCount": "Destinatários: {count}",
+    "receiversLoading": "Destinatários: carregando...",
+    "whatsappTemplateMessage": {
+      "title": "Mensagem de modelo",
+      "description": "Envie uma mensagem de modelo do WhatsApp aos seus contatos"
+    },
+    "messengerTemplateMessage": {
+      "title": "Mensagem de modelo",
+      "description": "Envie uma mensagem de modelo do Messenger aos seus contatos"
+    },
+    "whatsappWithin24Hours": {
+      "title": "Contatos ativos nas últimas 24 horas",
+      "description": "Pode conter promoções e será enviada apenas para usuários que enviaram mensagens ao seu bot nas últimas 24 horas."
+    },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "Pode conter promoções e será enviada apenas para usuários que enviaram mensagens ao seu bot nas últimas 24 horas."
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "Use este tipo de mensagem se quiser enviar uma transmissão aos seus contatos do Telegram."
+    },
+    "tiktokActiveContacts": {
+      "title": "TikTok",
+      "description": "Pode conter promoções e será enviada apenas para usuários que enviaram mensagens ao seu bot nas últimas 24 horas. As transmissões do TikTok aceitam apenas texto e imagens."
+    },
+    "flowType": {
+      "flow": {
+        "title": "Fluxo",
+        "description": "Envie um fluxo aos seus contatos"
+      },
+      "template": {
+        "title": "Modelo",
+        "description": "Envie um modelo aos seus contatos"
+      }
+    },
+    "detail": {
+      "title": "Detalhes da transmissão",
+      "subaction": "Subação",
+      "audienceFilter": "Filtro de público",
+      "noAudienceFilter": "Sem filtro de público",
+      "template": "Modelo",
+      "noTemplate": "Sem modelo",
+      "integration": "Integração"
+    }
+  },
+  "condition": {
+    "yes": "Sim",
+    "no": "Não",
+    "valuePlaceholder": "...",
+    "datePlaceholder": "AAAA-MM-DD",
+    "datetimePlaceholder": "AAAA-MM-DD HH:mm",
+    "datetimeInvalid": "Insira uma data no formato AAAA-MM-DD HH:mm ou uma variável",
+    "operator": {
+      "and": "Todas as condições",
+      "or": "Qualquer condição"
+    },
+    "fields": {
+      "locale": "Idioma",
+      "language": "Idioma",
+      "fullName": "Nome completo",
+      "country": "País",
+      "continent": "Continente",
+      "gender": "Gênero",
+      "subscribedToBroadcast": "Inscrito na transmissão",
+      "contactCreatedDate": "Data de criação do contato",
+      "contactCreatedDateMinutesAgo": "Data de criação do contato (minutos atrás)",
+      "source": "Origem",
+      "conversationTransferredToHuman": "Conversa transferida para uma pessoa",
+      "interactedInLast24H": "Interagiu nas últimas 24 horas",
+      "interactedInLast24h": "Interagiu nas últimas 24 horas",
+      "followUp": "Acompanhamento",
+      "isGuestUser": "Usuário convidado",
+      "existingContact": "Contato existente",
+      "hasContactInfo": "Telefone e e-mail",
+      "currentChannel": "Canal",
+      "inbox": "Caixa de entrada",
+      "subjectToEuRules": "Sujeito às regras da UE",
+      "timezone": "Fuso horário",
+      "hasOpportunity": "Tem oportunidade (aberta, ganha, perdida)",
+      "hasOpenOpportunity": "Tem oportunidade aberta",
+      "hasWonOpportunity": "Tem oportunidade ganha",
+      "hasLostOpportunity": "Tem oportunidade perdida",
+      "instagramStoryReply": "A mensagem é uma resposta a um story do Instagram",
+      "followsBusinessOnInstagram": "Segue a empresa no Instagram",
+      "businessFollowsUserOnInstagram": "A empresa segue o usuário no Instagram",
+      "verifiedAccountOnInstagram": "Conta verificada no Instagram",
+      "followerCountOnInstagram": "Número de seguidores no Instagram",
+      "lastSent": "Último envio",
+      "lastDelivered": "Última entrega",
+      "lastSeen": "Última visualização",
+      "lastSeenMinutesAgo": "Última visualização (minutos atrás)",
+      "lastInteraction": "Última interação",
+      "lastInteractionMinutesAgo": "Última interação (minutos atrás)",
+      "unreplied": "Sem resposta",
+      "unread": "Não lida",
+      "appliedJobs": "Vagas às quais se candidatou",
+      "tags": "Tags",
+      "customFields": "Campos personalizados",
+      "phone": "Telefone",
+      "completedWhatsAppFlows": "Fluxos do WhatsApp concluídos",
+      "messengerList": "Lista do Messenger",
+      "subscribedToDripCampaign": "Inscrito na campanha de nutrição",
+      "conversationAssigned": "Conversa atribuída",
+      "entryPointsLinks": "Links de pontos de entrada",
+      "sentMessage": "Enviou mensagem",
+      "keywordsReceived": "Palavras-chave recebidas",
+      "executedFlow": "Fluxo executado",
+      "executedStep": "Etapa executada",
+      "consecutiveAiFailures": "Número de falhas consecutivas da IA",
+      "questionnaireStarted": "Questionário iniciado",
+      "questionnaireInProgress": "Questionário em andamento",
+      "questionnaireFinished": "Questionário concluído",
+      "couponTopic": "Cupom",
+      "votedOnPoll": "Votou na enquete",
+      "lastComment": "Último comentário",
+      "commentedOnPost": "Comentou na publicação",
+      "reactedOnPost": "Reagiu à publicação",
+      "lastTotalTaggedUsers": "Último total de usuários marcados",
+      "lastTotalNewTaggedUsers": "Último total de novos usuários marcados",
+      "email": "E-mail",
+      "phoneWasVerified": "Telefone verificado",
+      "optedInForSms": "Aceitou receber SMS",
+      "broadcastSent": "Transmissão enviada",
+      "broadcastDelivered": "Transmissão entregue",
+      "broadcastSeen": "Transmissão visualizada",
+      "broadcastClicked": "Transmissão clicada",
+      "broadcastFailed": "Falha na transmissão",
+      "emailWasVerified": "E-mail verificado",
+      "optedInForEmail": "Aceitou receber e-mails",
+      "emailSent": "E-mail enviado",
+      "emailDelivered": "E-mail entregue",
+      "emailOpened": "E-mail aberto",
+      "emailClicked": "E-mail clicado",
+      "isWithinWorkingHours": "Está dentro do horário de trabalho",
+      "currentDate": "Data atual",
+      "currentTime": "Hora atual",
+      "currentDayOfMonth": "Dia atual do mês",
+      "currentDayOfWeek": "Dia atual da semana",
+      "currentMonth": "Mês atual",
+      "bought": "Comprou",
+      "boughtItems": "Comprou os itens",
+      "totalSpent": "Total gasto",
+      "numberOfOrders": "Número de pedidos",
+      "shoppingCartTotal": "Total do carrinho",
+      "shoppingCartSubtotal": "Subtotal do carrinho",
+      "shoppingCartIsEmpty": "O carrinho está vazio",
+      "shoppingCartContainsItems": "O carrinho contém itens",
+      "lastSentMessageFailed": "Falha na última mensagem enviada",
+      "lastUserInput": "Última entrada do usuário",
+      "lastUserInputType": "Tipo da última entrada do usuário",
+      "archived": "Arquivada",
+      "blocked": "Bloqueada",
+      "noAdminReply": "Sem resposta do administrador",
+      "contactCreatedAt": "Contato criado em",
+      "lastUserInputTypes": {
+        "text": "Texto",
+        "location": "Localização",
+        "refLink": "Link de referência",
+        "image": "Imagem",
+        "video": "Vídeo",
+        "audio": "Áudio",
+        "gif": "GIF",
+        "file": "Arquivo"
+      }
+    },
+    "fieldGroups": {
+      "opportunity": "Oportunidade",
+      "instagram": "Instagram",
+      "analytics": "Análises",
+      "facebookInstagramComment": "Comentário do Facebook/Instagram",
+      "broadcastWhatsapp": "Transmissão (WhatsApp)",
+      "systemTime": "Hora do sistema",
+      "ecommerce": "E-commerce",
+      "systemFields": "Campos do sistema",
+      "topicCoupon": "Tópico de cupom",
+      "customFields": "Campos personalizados",
+      "email": "E-mail",
+      "sms": "SMS"
+    },
+    "languages": {
+      "ar": "Árabe",
+      "de": "Alemão",
+      "en": "Inglês",
+      "es": "Espanhol",
+      "fil": "Filipino",
+      "fr": "Francês",
+      "hi": "Hindi",
+      "id": "Indonésio",
+      "it": "Italiano",
+      "ja": "Japonês",
+      "km": "Khmer",
+      "ko": "Coreano",
+      "lo": "Laosiano",
+      "ms": "Malaio",
+      "my": "Birmanês",
+      "nl": "Holandês",
+      "pt": "Português",
+      "ru": "Russo",
+      "th": "Tailandês",
+      "vi": "Vietnamita",
+      "zh": "Chinês"
+    },
+    "sources": {
+      "direct": "Direto",
+      "comments": "Comentários",
+      "ads": "Anúncios",
+      "fbLeadAd": "Anúncio de cadastro do Facebook",
+      "inboundMessage": "Mensagem recebida",
+      "imported": "Importado",
+      "api": "API",
+      "webchat": "Webchat",
+      "botLink": "Link do bot",
+      "chatPlugin": "Plugin C. chat"
+    }
+  },
+  "fields": {
+    "omnichannel": {
+      "label": "Omnichannel"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Imagem"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "loginTitle": "Entrar com o Instagram",
+      "loginDescription": "Conecte sua conta comercial do Instagram diretamente via OAuth do Instagram.",
+      "facebookLoginTitle": "Entrar com o Facebook",
+      "facebookLoginDescription": "Conecte uma conta do Instagram vinculada à sua Página do Facebook via OAuth do Facebook.",
+      "connectViaFacebook": "Conectar o Instagram pelo Facebook",
+      "viaFacebookTitle": "Instagram pelo Facebook",
+      "cloneFromMessenger": "Clonar do Messenger",
+      "clonedFromMessenger": "Clonado do Messenger"
+    },
+    "zalo": {
+      "label": "Zalo OA"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "botToken": "Token do bot",
+      "connectInstructions": {
+        "step1": "Abra <link>@BotFather</link> no Telegram.",
+        "step2": "Envie <strong>/newbot</strong> e siga as instruções.",
+        "step3": "Depois de criar o bot, você receberá o token da API do bot. Copie o token da API e cole-o abaixo."
+      }
+    },
+    "matchAll": {
+      "label": "Corresponder a todas as condições abaixo"
+    },
+    "matchAny": {
+      "label": "Corresponder a uma das condições abaixo"
+    },
+    "condition": {
+      "label": "Condição"
+    },
+    "actions": {
+      "label": "Ações"
+    },
+    "tags": {
+      "label": "Tags"
+    },
+    "customFields": {
+      "label": "Campos personalizados"
+    },
+    "pipelines": {
+      "label": "Pipelines"
+    },
+    "sequences": {
+      "label": "Sequências"
+    },
+    "ecommerce": {
+      "label": "E-commerce"
+    },
+    "entryPointLink": {
+      "label": "Link de ponto de entrada"
+    },
+    "assignedId": {
+      "label": "Atribuir a"
+    },
+    "operator": {
+      "label": "Operador",
+      "is": "É",
+      "isNot": "Não é",
+      "in": "Está em",
+      "notIn": "Não está em",
+      "isEmpty": "Não tem valor",
+      "isNotEmpty": "Tem algum valor",
+      "gt": "Maior que",
+      "lt": "Menor que",
+      "gte": "Maior ou igual a",
+      "lte": "Menor ou igual a",
+      "contains": "Contém",
+      "notContains": "Não contém",
+      "startsWith": "Começa com",
+      "endsWith": "Termina com",
+      "isBetween": "Intervalo",
+      "notBetween": "Fora do intervalo",
+      "used": "Usado"
+    },
+    "contactFilter": {
+      "allConditions": "Todas as condições a seguir",
+      "anyConditions": "Qualquer uma das condições abaixo.",
+      "label": "Filtro de contatos",
+      "onlyContactsMatch": "Somente contatos que correspondam a",
+      "moreOptions": "Mais opções"
+    },
+    "contactNote": {
+      "label": "Nota do contato"
+    },
+    "chooseTime": {
+      "label": "Escolher horário"
+    },
+    "notificationType": {
+      "label": "Tipo de notificação",
+      "notifyAdmin": "Notificar administrador",
+      "newMessageToHuman": "Nova mensagem para pessoa",
+      "newOrder": "Novo pedido"
+    },
+    "notificationChannel": {
+      "label": "Canal de notificação",
+      "messenger": "Messenger",
+      "email": "E-mail",
+      "telegram": "Telegram",
+      "browser": "Navegador"
+    },
+    "accessToken": {
+      "label": "Token de acesso"
+    },
+    "botField": {
+      "label": "Campo do bot"
+    },
+    "agent": {
+      "label": "Agente"
+    },
+    "aiAgent": {
+      "label": "Agente de IA"
+    },
+    "aiQueuedMessages": {
+      "label": "Mensagens de IA na fila"
+    },
+    "aiFile": {
+      "label": "Arquivo de IA"
+    },
+    "aiFunction": {
+      "label": "Função de IA"
+    },
+    "aiTrigger": {
+      "label": "Gatilho de IA"
+    },
+    "alphanumericLength": {
+      "label": "Comprimento alfanumérico"
+    },
+    "analytics": {
+      "label": "Análises"
+    },
+    "apiKey": {
+      "label": "Chave de API"
+    },
+    "auth": {
+      "label": "Autenticação"
+    },
+    "authorizedDomain": {
+      "description": "Os domínios ou subdomínios autorizados a acessar seu webchat.",
+      "label": "Domínio autorizado{plural, select, 1 {s} other {}}"
+    },
+    "webSearchAuthorizedDomains": {
+      "label": "Sites autorizados para a ferramenta de pesquisa na web",
+      "placeholder": "exemplo.com",
+      "tooltip": "Lista de domínios que o agente de IA pode acessar. Deixe vazia para permitir todos os domínios."
+    },
+    "authToken": {
+      "label": "Token"
+    },
+    "authType": {
+      "headers": "Cabeçalho personalizado",
+      "none": "Nenhum",
+      "token": "Token"
+    },
+    "automatedResponse": {
+      "label": "Resposta automatizada"
+    },
+    "avatar": {
+      "label": "Imagem do perfil"
+    },
+    "reflink": {
+      "label": "Link de ponto de entrada"
+    },
+    "qrCode": {
+      "label": "Código QR"
+    },
+    "savePayloadToCustomField": {
+      "label": "Salvar payload no campo personalizado"
+    },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Resposta do bot"
+    },
+    "brandColor": {
+      "description": "Esta cor é usada nos botões para combinar com a sua marca na landing page, nos e-mails e no webchat.",
+      "label": "Cor da marca"
+    },
+    "broadcast": {
+      "label": "Transmissão"
+    },
+    "trigger": {
+      "label": "Gatilho"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
+    "button": {
+      "label": "Botão",
+      "whenPressed": "Quando este botão for pressionado"
+    },
+    "buttonLabel": {
+      "label": "Texto do botão"
+    },
+    "category": {
+      "label": "Categoria"
+    },
+    "completed": {
+      "label": "Concluído"
+    },
+    "workspace": {
+      "label": "Espaço de trabalho"
+    },
+    "workspaceId": {
+      "description": "Identificador exclusivo do seu espaço de trabalho.",
+      "label": "ID do espaço de trabalho"
+    },
+    "workspaceName": {
+      "label": "Nome da conta"
+    },
+    "contact": {
+      "label": "Contato"
+    },
+    "contacts": {
+      "label": "Contatos"
+    },
+    "conversation": {
+      "label": "Conversa"
+    },
+    "conversationStarter": {
+      "description": "Os iniciadores de conversa são usados para iniciar uma conversa com um usuário.",
+      "label": "Iniciador de conversa{plural, select, 1 {s} other {}}",
+      "type": {
+        "openWebsite": "Abrir site",
+        "sendFlow": "Enviar fluxo",
+        "sendText": "Enviar texto"
+      }
+    },
+    "createdAt": {
+      "label": "Criado em"
+    },
+    "currentTime": {
+      "label": "Hora atual"
+    },
+    "customRange": {
+      "label": "Intervalo personalizado"
+    },
+    "customCss": {
+      "label": "CSS personalizado"
+    },
+    "theme": {
+      "label": "Tema",
+      "placeholder": "Selecione um tema"
+    },
+    "customJS": {
+      "label": "JS personalizado",
+      "placeholder": "Insira o JavaScript personalizado"
+    },
+    "customCSS": {
+      "label": "CSS personalizado",
+      "placeholder": "Insira o CSS personalizado"
+    },
+    "customField": {
+      "label": "Campo personalizado",
+      "savePayloadTo": "Salvar resposta no campo personalizado",
+      "set_value": "Definir valor",
+      "append": "Adicionar ao final",
+      "prepend": "Adicionar ao início",
+      "increase": "Aumentar em",
+      "decrease": "Diminuir em"
+    },
+    "dataCollect": {
+      "label": "Coleta de dados"
+    },
+    "defaultReply": {
+      "description": "É a resposta padrão que seu espaço de trabalho enviará aos usuários quando não souber como responder à mensagem recebida.",
+      "label": "Resposta padrão"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Defina quanto tempo o bot aguarda antes de responder após a última mensagem do usuário. Se o usuário enviar outra mensagem, o cronômetro será reiniciado e as mensagens serão agrupadas em uma única resposta.",
+      "label": "Atraso da resposta do bot",
+      "minutes": "{count, plural, one {# minuto} other {# minutos}}",
+      "none": "Nenhum",
+      "seconds": "{count, plural, one {# segundo} other {# segundos}}"
+    },
+    "delayType": {
+      "label": "Tipo de atraso",
+      "placeholder": "Tipo de atraso"
+    },
+    "delayUnit": {
+      "days": "Dias",
+      "hours": "Horas",
+      "minutes": "Minutos",
+      "seconds": "Segundos"
+    },
+    "description": {
+      "label": "Descrição",
+      "placeholder": "Insira a descrição"
+    },
+    "developmentMode": {
+      "description": "Seu bot funcionará apenas para administradores do bot. Ative esta opção se estiver criando seu bot e não quiser que usuários que não sejam administradores o utilizem.",
+      "label": "Modo de desenvolvimento"
+    },
+    "email": {
+      "label": "E-mail",
+      "placeholder": "Insira o e-mail"
+    },
+    "embedCode": {
+      "description": "Copie e cole este código no seu site para incorporar o widget de chat.",
+      "label": "Código de incorporação",
+      "securityNote": "Nota de segurança",
+      "securityNoteDescription": "Este widget funcionará apenas em domínios autorizados na configuração do seu webchat. Adicione seu domínio à lista de domínios autorizados."
+    },
+    "processingStatus": {
+      "label": "Status do processamento"
+    },
+    "enable": {
+      "label": "Ativar"
+    },
+    "file": {
+      "label": "Arquivo"
+    },
+    "link": {
+      "label": "Link"
+    },
+    "message": {
+      "label": "Mensagem"
+    },
+    "filter": {
+      "label": "Filtro"
+    },
+    "finalMessage": {
+      "label": "Mensagem final"
+    },
+    "firstName": {
+      "label": "Nome",
+      "placeholder": "Insira o nome"
+    },
+    "countryCode": {
+      "label": "Código do país"
+    },
+    "contactId": {
+      "label": "ID do contato"
+    },
+    "flow": {
+      "label": "Fluxo"
+    },
+    "flowId": {
+      "label": "ID do fluxo"
+    },
+    "flows": {
+      "aiGenerateText": "{aiName}: gerar texto",
+      "aiGenerateImage": "{aiName}: gerar imagem",
+      "aiEditImage": "{aiName}: editar imagem",
+      "aiAnalyzeImage": "{aiName}: analisar imagem",
+      "aiExtractData": "{aiName}: extrair dados",
+      "aiSpeechToText": "{aiName}: converter fala em texto",
+      "aiTextToSpeech": "{aiName}: converter texto em fala",
+      "label": "Fluxos",
+      "placeholder": "Selecione o fluxo",
+      "aiGenerateTextAgent": "{aiName}: agente de geração de texto",
+      "aiDeleteMessageHistory": "{aiName}: excluir histórico de mensagens"
+    },
+    "steps": {
+      "label": "Etapas",
+      "placeholder": "Selecione a etapa"
+    },
+    "folder": {
+      "label": "Pasta"
+    },
+    "format": {
+      "label": "Formato"
+    },
+    "framework": {
+      "angular": "Angular",
+      "ember": "Ember",
+      "react": "React",
+      "svelte": "Svelte",
+      "vue": "Vue"
+    },
+    "function": {
+      "label": "Função"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Modelo Gemini"
+    },
+    "gender": {
+      "female": "Feminino",
+      "label": "Gênero",
+      "male": "Masculino",
+      "unknown": "Desconhecido"
+    },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Host",
+      "placeholder": "smtp.exemplo.com"
+    },
+    "hideHeader": {
+      "label": "Ocultar cabeçalho"
+    },
+    "hideMessageInput": {
+      "label": "Ocultar entrada de mensagem"
+    },
+    "inbox": {
+      "label": "Caixa de entrada",
+      "placeholder": "Selecione uma caixa de entrada"
+    },
+    "inboxTeam": {
+      "label": "Equipe da caixa de entrada"
+    },
+    "teamMembers": {
+      "label": "Membros da equipe"
+    },
+    "inboxTeamMember": {
+      "label": "Membro da equipe da caixa de entrada"
+    },
+    "inputCustomField": {
+      "label": "Campo personalizado de entrada"
+    },
+    "insertLink": {
+      "label": "Inserir link"
+    },
+    "instructions": {
+      "label": "Mensagem do sistema (prompt)"
+    },
+    "isDefault": {
+      "label": "Marcar como padrão"
+    },
+    "isRichResponse": {
+      "description": "Retorne JSON estruturado com mensagens e ações em vez de streaming de texto simples.",
+      "label": "Resposta avançada"
+    },
+    "language": {
+      "description": "Os contatos recebem o idioma padrão quando o idioma do contato é desconhecido.",
+      "label": "Idioma",
+      "placeholder": "Selecione o idioma"
+    },
+    "lastName": {
+      "label": "Sobrenome",
+      "placeholder": "Insira o sobrenome"
+    },
+    "last30days": {
+      "label": "Últimos 30 dias"
+    },
+    "last7days": {
+      "label": "Últimos 7 dias"
+    },
+    "lastInput": {
+      "label": "Última entrada"
+    },
+    "lastUserInputTypes": {
+      "text": "Texto",
+      "location": "Localização",
+      "refLink": "Link de referência",
+      "image": "Imagem",
+      "video": "Vídeo",
+      "audio": "Áudio",
+      "gif": "GIF",
+      "file": "Arquivo"
+    },
+    "lastMonth": {
+      "label": "Último mês"
+    },
+    "lifeTime": {
+      "label": "Todo o período"
+    },
+    "locale": {
+      "label": "Localidade"
+    },
+    "errorLog": {
+      "label": "Log de erros"
+    },
+    "inputType": {
+      "label": "Tipo de entrada",
+      "options": {
+        "text": "Texto",
+        "image": "Imagem",
+        "file": "Arquivo"
+      }
+    },
+    "extractFields": {
+      "label": "Campos a extrair",
+      "key": {
+        "label": "Chave JSON",
+        "placeholder": "por exemplo, e-mail, telefone, endereço"
+      },
+      "customFieldId": {
+        "label": "Salvar no campo personalizado"
+      },
+      "description": {
+        "label": "Descrição (opcional)",
+        "placeholder": "Descreva o que deve ser extraído"
+      }
+    },
+    "max": {
+      "label": "Máximo"
+    },
+    "maxOutputTokens": {
+      "label": "Máximo de tokens"
+    },
+    "mcpServer": {
+      "label": "Servidor MCP"
+    },
+    "systemFunction": {
+      "label": "Função do sistema",
+      "names": {
+        "connectUserToHuman": "Conectar usuário a uma pessoa",
+        "documentReader": "Leitor de documentos",
+        "imageReader": "Leitor de imagens",
+        "urlContext": "Leitor de URL",
+        "webSearch": "Pesquisa na web"
+      }
+    },
+    "min": {
+      "label": "Mínimo"
+    },
+    "model": {
+      "label": "Modelo"
+    },
+    "name": {
+      "label": "Nome",
+      "placeholder": "Insira o nome",
+      "searchPlaceholder": "Pesquisar nome..."
+    },
+    "selectUsers": {
+      "label": "Selecionar usuários"
+    },
+    "node": {
+      "label": "Nó"
+    },
+    "noResults": {
+      "label": "Nenhum resultado encontrado"
+    },
+    "notes": {
+      "label": "Notas"
+    },
+    "numericLength": {
+      "label": "Comprimento numérico"
+    },
+    "numericValue": {
+      "label": "Valor numérico"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Operação"
+    },
+    "outputCustomField": {
+      "label": "Campo personalizado de saída"
+    },
+    "httpMethod": {
+      "label": "Método"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.exemplo.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "Cabeçalhos",
+      "keyPlaceholder": "Cabeçalho",
+      "valuePlaceholder": "Valor"
+    },
+    "requestBody": {
+      "label": "Corpo",
+      "keyPlaceholder": "Campo",
+      "valuePlaceholder": "Valor"
+    },
+    "bodyType": {
+      "label": "Tipo de corpo",
+      "options": {
+        "allContactData": "Todos os dados do contato",
+        "json": "JSON",
+        "formEncoded": "Codificado como formulário"
+      }
+    },
+    "statusCode": {
+      "label": "Código de status"
+    },
+    "outputMessage": {
+      "label": "Mensagem de saída",
+      "placeholder": "Qual é a mensagem de saída?"
+    },
+    "paymentHistory": {
+      "label": "Histórico de pagamentos"
+    },
+    "paymentMethods": {
+      "label": "Formas de pagamento"
+    },
+    "persistentMenu": {
+      "description": "Os menus persistentes são usados para iniciar uma conversa com um usuário.",
+      "label": "Menu persistente{plural, select, 1 {s} other {}}",
+      "type": {
+        "openWebsite": "Abrir site",
+        "sendFlow": "Enviar fluxo"
+      }
+    },
+    "userPersistentMenu": {
+      "pageDefault": "Padrão",
+      "label": "Menu persistente do usuário"
+    },
+    "phoneNumber": {
+      "label": "Número de telefone"
+    },
+    "phoneNumberId": {
+      "label": "Número de telefone",
+      "noPhoneNumbersFound": "Nenhum número de telefone encontrado para esta conta"
+    },
+    "port": {
+      "label": "Porta",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Provedor"
+    },
+    "prompt": {
+      "label": "Prompt",
+      "placeholder": "Digite o prompt"
+    },
+    "userMessage": {
+      "label": "Mensagem do usuário"
+    },
+    "pageUserName": {
+      "label": "Nome do usuário da página"
+    },
+    "purpose": {
+      "label": "Finalidade",
+      "placeholder": "O que esta função faz?"
+    },
+    "question": {
+      "label": "Pergunta",
+      "placeholder": "Vocês estão abertos hoje?"
+    },
+    "imageProfileUrl": {
+      "label": "URL da imagem de perfil"
+    },
+    "persona": {
+      "label": "Persona",
+      "pageDefault": "Persona padrão"
+    },
+    "quickReply": {
+      "label": "Resposta rápida"
+    },
+    "search": {
+      "placeholder": "Pesquisar..."
+    },
+    "logo": {
+      "label": "Logotipo"
+    },
+    "logoLight": {
+      "label": "Logotipo (claro)"
+    },
+    "logoDark": {
+      "label": "Logotipo (escuro)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
+    "brandName": {
+      "label": "Nome da marca",
+      "placeholder": "Digite o nome da marca"
+    },
+    "policyUrl": {
+      "label": "URL da Política de Privacidade"
+    },
+    "termsOfServiceUrl": {
+      "label": "URL dos Termos de Serviço"
+    },
+    "showLogo": {
+      "label": "Mostrar logotipo personalizado"
+    },
+    "quality": {
+      "label": "Qualidade",
+      "options": {
+        "auto": "Automática",
+        "hd": "HD",
+        "md": "Média",
+        "ld": "Baixa"
+      }
+    },
+    "size": {
+      "label": "Tamanho",
+      "options": {
+        "auto": "Automático",
+        "square1024": "Quadrado - 1024×1024",
+        "landscape1536x1024": "Paisagem - 1536×1024",
+        "portrait1024x1536": "Retrato - 1024×1536",
+        "dalle2_256": "256×256",
+        "dalle2_512": "512×512",
+        "dalle3_1792x1024": "1792×1024"
+      }
+    },
+    "status": {
+      "label": "Status",
+      "pending": "Pendente",
+      "processing": "Processando",
+      "completed": "Concluído",
+      "failed": "Falhou",
+      "success": "Sucesso",
+      "error": "Erro"
+    },
+    "subtitle": {
+      "placeholder": "Digite o subtítulo"
+    },
+    "syncToMessenger": {
+      "label": "Sincronizar com o Messenger"
+    },
+    "tag": {
+      "label": "Tag"
+    },
+    "emailTopic": {
+      "label": "Tópico de e-mail"
+    },
+    "emailTopics": {
+      "label": "Tópicos de e-mail"
+    },
+    "emailTopicSent": {
+      "label": "Enviados"
+    },
+    "emailTopicDelivered": {
+      "label": "Entregues (%)"
+    },
+    "emailTopicSeen": {
+      "label": "Visualizados (%)"
+    },
+    "emailTopicClicked": {
+      "label": "Clicados (%)"
+    },
+    "targetCountry": {
+      "description": "O país onde vive a maioria dos seus contatos.",
+      "label": "País de destino"
+    },
+    "team": {
+      "label": "Equipe"
+    },
+    "rememberConversation": {
+      "label": "Lembrar da conversa"
+    },
+    "temperature": {
+      "label": "Temperatura"
+    },
+    "templateMessages": {
+      "label": "Mensagens de modelo"
+    },
+    "text": {
+      "label": "Texto",
+      "placeholder": "Digite o texto"
+    },
+    "thisMonth": {
+      "label": "Este mês"
+    },
+    "timezone": {
+      "description": "Este fuso horário é atribuído aos contatos quando o fuso horário deles é desconhecido.",
+      "label": "Fuso horário"
+    },
+    "title": {
+      "placeholder": "Digite o título"
+    },
+    "today": {
+      "label": "Hoje"
+    },
+    "tools": {
+      "label": "Ferramentas",
+      "placeholder": "Selecione as ferramentas"
+    },
+    "triggerFlowId": {
+      "label": "ID do fluxo acionado",
+      "placeholder": "Qual fluxo será acionado?"
+    },
+    "type": {
+      "label": "Tipo",
+      "placeholder": "Selecione o tipo"
+    },
+    "lastRead": {
+      "label": "Última leitura"
+    },
+    "assignee": {
+      "label": "Responsável"
+    },
+    "modified": {
+      "label": "Modificado"
+    },
+    "estimatedContacts": {
+      "label": "Contatos estimados"
+    },
+    "scheduledAt": {
+      "label": "Agendado para"
+    },
+    "channel": {
+      "label": "Canal"
+    },
+    "comment": {
+      "label": "Comentário"
+    },
+    "directMessage": {
+      "label": "Mensagem direta"
+    },
+    "updatedAt": {
+      "label": "Atualizado em"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "Digite a URL"
+    },
+    "userId": {
+      "label": "ID do usuário",
+      "placeholders": {
+        "instagram": "ID do usuário do Instagram",
+        "messenger": "PSID do Messenger",
+        "telegram": "ID do chat do Telegram",
+        "tiktok": "ID do usuário do TikTok",
+        "zalo": "ID do usuário do Zalo"
+      }
+    },
+    "userTags": {
+      "label": "Tags aplicadas ao usuário"
+    },
+    "username": {
+      "label": "Nome de usuário",
+      "placeholder": "usuario@exemplo.com"
+    },
+    "keywords": {
+      "label": "Palavras-chave"
+    },
+    "value": {
+      "label": "Valor"
+    },
+    "wabaId": {
+      "label": "ID da WABA"
+    },
+    "webchat": {
+      "label": "Webchat"
+    },
+    "welcomeFlowId": {
+      "description": "A mensagem de boas-vindas é enviada automaticamente quando o usuário abre o webchat.",
+      "label": "Fluxo de boas-vindas"
+    },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "SMS"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "Voz"
+    },
+    "googleBm": {
+      "label": "Google BM"
+    },
+    "landingPage": {
+      "label": "Página de destino"
+    },
+    "whatsappFlow": {
+      "label": "Fluxo do WhatsApp"
+    },
+    "shortText": {
+      "label": "Texto curto",
+      "placeholder": "Digite o texto"
+    },
+    "number": {
+      "label": "Número",
+      "placeholder": "Digite o número"
+    },
+    "date": {
+      "label": "Data"
+    },
+    "datetime": {
+      "label": "Data e hora"
+    },
+    "boolean": {
+      "label": "Booleano",
+      "placeholder": "Selecione verdadeiro ou falso",
+      "true": "Verdadeiro",
+      "false": "Falso"
+    },
+    "longText": {
+      "label": "Texto longo"
+    },
+    "replyFormat": {
+      "label": "Formato da resposta",
+      "number": "Número",
+      "text": "Texto",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "image": "Imagem",
+      "file": "Arquivo",
+      "link": "Link",
+      "date": "Data",
+      "datetime": "Data e hora",
+      "location": "Localização",
+      "anyInput": "Qualquer entrada"
+    },
+    "workspaceMember": {
+      "label": "Membro do espaço de trabalho"
+    },
+    "yesterday": {
+      "label": "Ontem"
+    },
+    "permissions": {
+      "label": "Permissões",
+      "superAdmin": "Superadministrador",
+      "analytics": "Análises",
+      "flows": "Fluxos",
+      "contacts": "Contatos",
+      "onlyAssignedContacts": "Somente contatos atribuídos",
+      "emailAndPhone": "E-mail e telefone",
+      "broadcast": "Transmissão",
+      "ecommerce": "Comércio eletrônico"
+    },
+    "member": {
+      "label": "Membro"
+    },
+    "schedule": {
+      "label": "Agendamento",
+      "now": "Agora",
+      "scheduled": "Agendar para mais tarde"
+    },
+    "inputFieldId": {
+      "label": "Campo personalizado de entrada"
+    },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Imagem"
+      }
+    },
+    "inputText": {
+      "label": "Texto de entrada"
+    },
+    "outputFieldId": {
+      "label": "Salvar o resultado em um campo personalizado"
+    },
+    "audio": {
+      "label": "Campo de áudio"
+    },
+    "voiceType": {
+      "label": "Tipo de voz",
+      "placeholder": "Selecione um tipo de voz"
+    },
+    "voiceTone": {
+      "label": "Tom de voz (opcional)",
+      "placeholder": "Fale em um tom alegre."
+    },
+    "jsonPath": {
+      "placeholder": "Digite o caminho JSON",
+      "targetThisRow": "Preencher esta linha a partir do JSON"
+    },
+    "jsonSource": {
+      "title": "Escolher caminho JSON",
+      "tabs": {
+        "testResponse": "Resposta de teste",
+        "pasteSample": "Colar exemplo"
+      },
+      "pastePlaceholder": "Cole um exemplo de resposta JSON",
+      "invalidJson": "JSON inválido",
+      "noTestResponse": "Execute Testar agora para navegar por uma resposta real",
+      "activeTarget": "Preenchendo a linha {row}",
+      "showMore": "Mostrar mais",
+      "showMoreCount": "Mostrar mais {count}"
+    },
+    "spreadsheets": {
+      "label": "Planilhas"
+    },
+    "retryMessage": {
+      "label": "Mensagem de nova tentativa"
+    },
+    "skipButtonLabel": {
+      "label": "Rótulo do botão Ignorar"
+    },
+    "autoSkipTime": {
+      "label": "Tempo para ignorar automaticamente"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Tentativas com falha antes de ignorar automaticamente"
+    },
+    "autoSkip": {
+      "label": "Ignorar automaticamente"
+    },
+    "spreadsheet": {
+      "label": "Planilha"
+    },
+    "worksheet": {
+      "label": "Planilha de trabalho"
+    },
+    "source": {
+      "label": "Origem",
+      "placeholder": "Selecione uma origem"
+    },
+    "password": {
+      "label": "Senha",
+      "placeholder": "••••••••"
+    },
+    "passwordConfirmation": {
+      "label": "Digite a senha novamente"
+    },
+    "newPassword": {
+      "label": "Nova senha"
+    },
+    "currentPassword": {
+      "label": "Senha atual"
+    },
+    "developerAccessToken": {
+      "label": "Token de acesso à API"
+    },
+    "fullName": {
+      "label": "Nome completo"
+    },
+    "botFields": {
+      "label": "Campos do bot"
+    },
+    "keyword": {
+      "label": "Palavra-chave",
+      "searchPlaceholder": "Pesquisar palavra-chave..."
+    },
+    "templateId": {
+      "label": "Modelo do WhatsApp"
+    },
+    "messengerTemplateId": {
+      "label": "Modelo do Messenger"
+    },
+    "whatsappChannel": {
+      "label": "Canal do WhatsApp"
+    },
+    "messengerChannel": {
+      "label": "Canal do Messenger"
+    },
+    "messages": {
+      "label": "Mensagens"
+    },
+    "shortcut": {
+      "label": "Atalho"
+    },
+    "savedReplies": {
+      "label": "Respostas salvas"
+    },
+    "role": {
+      "label": "Função"
+    },
+    "plan": {
+      "label": "Plano"
+    },
+    "price": {
+      "label": "Preço"
+    },
+    "annualPrice": {
+      "label": "Preço anual"
+    },
+    "limitContacts": {
+      "label": "Máximo de contatos"
+    },
+    "marketingFeatures": {
+      "label": "Lista de recursos de marketing",
+      "description": "Uma lista de recursos do produto que ficará visível para os clientes. Exibida nas tabelas de preços."
+    },
+    "currency": {
+      "label": "Moeda"
+    },
+    "clientId": {
+      "label": "ID do cliente"
+    },
+    "clientSecret": {
+      "label": "Segredo do cliente"
+    },
+    "verifyToken": {
+      "label": "Token de verificação do webhook"
+    },
+    "apiVersion": {
+      "label": "Versão da API"
+    },
+    "configId": {
+      "label": "ID de configuração do aplicativo"
+    },
+    "systemUserId": {
+      "label": "ID do usuário do sistema"
+    },
+    "systemUserToken": {
+      "label": "Token do usuário do sistema"
+    },
+    "businessId": {
+      "label": "ID da empresa"
+    },
+    "businessName": {
+      "label": "Nome da empresa"
+    },
+    "publishableKey": {
+      "label": "Chave publicável"
+    },
+    "secretKey": {
+      "label": "Chave secreta"
+    },
+    "freeTrial": {
+      "label": "Teste grátis",
+      "suffix": "dias"
+    },
+    "pricing": {
+      "label": "Preços"
+    },
+    "sequence": {
+      "label": "Sequência"
+    },
+    "from": {
+      "label": "De"
+    },
+    "fromAddress": {
+      "label": "Endereço do remetente",
+      "placeholder": "naoresponda@exemplo.com"
+    },
+    "messageTemplate": {
+      "label": "Modelo de mensagem"
+    },
+    "preheader": {
+      "label": "Pré-cabeçalho"
+    },
+    "subject": {
+      "label": "Assunto"
+    },
+    "to": {
+      "label": "Para"
+    },
+    "smtpChannel": {
+      "label": "Canal SMTP"
+    },
+    "magicLink": {
+      "label": "Link mágico",
+      "nameHint": "Adicionado após /r/{workspaceId}/ na URL pública de rastreamento. Use apenas letras, números, sublinhado e hífen.",
+      "urlHint": "Use chaves duplas na URL, por exemplo, https://example.com/page?utm_campaign='{{campaign}}'. Os valores vêm da string de consulta do link de rastreamento."
+    },
+    "appId": {
+      "label": "ID do aplicativo"
+    },
+    "appSecret": {
+      "label": "Segredo do aplicativo"
+    },
+    "webhookVerifyToken": {
+      "label": "Token de verificação do webhook"
+    },
+    "heading": {
+      "label": "Cabeçalho",
+      "placeholder": "Digite o cabeçalho"
+    },
+    "import": {
+      "label": "Importar",
+      "uploading": "Enviando…",
+      "fileTooLarge": "O arquivo excede o limite de {size} MB.",
+      "unsupportedFileType": "Este tipo de arquivo não é compatível.",
+      "unableToReadHeaders": "Não foi possível ler os cabeçalhos da importação.",
+      "uploadError": "Não foi possível enviar o arquivo.",
+      "histories": {
+        "title": "Histórico de importações",
+        "recent": "Importações recentes",
+        "progress": "Progresso",
+        "success": "Sucesso",
+        "failed": "Falha",
+        "completedAt": "Concluído em",
+        "errorDetails": "Erros de importação",
+        "row": "Linha {row}"
+      }
+    },
+    "line": {
+      "label": "Linha"
+    },
+    "spacing": {
+      "label": "Espaçamento"
+    },
+    "code": {
+      "label": "Código",
+      "placeholder": "Digite o código"
+    },
+    "authCallbackUrl": {
+      "label": "URL de retorno da autenticação",
+      "hint": "Registre esta URL exata como URI de redirecionamento OAuth no aplicativo do seu provedor. Ela deve usar este host, não o seu domínio personalizado — o provedor não consegue acessar um domínio personalizado."
+    },
+    "signInCallbackUrl": {
+      "label": "URL de retorno do login",
+      "hint": "Adicione esta URL aos URIs de redirecionamento autorizados do seu aplicativo Google para habilitar o login com o Google."
+    },
+    "webhookUrl": {
+      "label": "URL do webhook",
+      "hint": "Registre esta URL exata do webhook no aplicativo do seu provedor. Ela deve usar este host, não o seu domínio personalizado — o provedor não consegue acessar um domínio personalizado."
+    },
+    "tiktok": {
+      "label": "TikTok",
+      "accessToken": "Token de acesso",
+      "openId": "Open ID",
+      "clientId": "ID do cliente",
+      "clientSecret": "Segredo do cliente",
+      "displayName": "Nome de exibição",
+      "connectInstructions": {
+        "step1": "Crie um aplicativo TikTok em <link>developers.tiktok.com</link>.",
+        "step2": "Autorize sua conta e copie o <strong>token de acesso</strong>, o <strong>Open ID</strong> e o <strong>segredo do cliente</strong>.",
+        "step3": "Cole as credenciais abaixo para conectar."
+      }
+    },
+    "drip": {
+      "label": "Gotejamento"
+    },
+    "sendGrid": {
+      "label": "SendGrid"
+    },
+    "currentVersion": "Atual",
+    "consecutiveFailedReply": {
+      "label": "Respostas com falha consecutivas"
+    },
+    "currentStep": {
+      "label": "Etapa atual"
+    },
+    "fbChatLink": {
+      "label": "Link da caixa de entrada do Facebook"
+    },
+    "inboxLink": {
+      "label": "Link da caixa de entrada"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "A empresa no Instagram segue o usuário"
+    },
+    "instagramFollowers": {
+      "label": "Seguidores do Instagram"
+    },
+    "instagramFollowsBusiness": {
+      "label": "O usuário segue a empresa no Instagram"
+    },
+    "instagramUsername": {
+      "label": "Nome de usuário do Instagram"
+    },
+    "instagramVerified": {
+      "label": "Instagram verificado"
+    },
+    "lastAd": {
+      "label": "Último anúncio"
+    },
+    "lastAdSourcePlatform": {
+      "label": "Plataforma de origem do último anúncio"
+    },
+    "lastAdSourceUrl": {
+      "label": "URL de origem do último anúncio"
+    },
+    "lastButtonTitle": {
+      "label": "Título do último botão"
+    },
+    "lastCommentId": {
+      "label": "ID do último comentário"
+    },
+    "lastCommentedPostText": {
+      "label": "Texto da última publicação comentada"
+    },
+    "lastCtwa": {
+      "label": "Último CTWA"
+    },
+    "lastFbComment": {
+      "label": "Último comentário no Facebook"
+    },
+    "lastInputFailure": {
+      "label": "Última falha de entrada"
+    },
+    "lastInteraction": {
+      "label": "Última interação"
+    },
+    "lastLatitude": {
+      "label": "Última latitude"
+    },
+    "lastLongitude": {
+      "label": "Última longitude"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Última mensagem enviada em"
+    },
+    "lastPostId": {
+      "label": "ID da última publicação"
+    },
+    "lastSeen": {
+      "label": "Visto pela última vez"
+    },
+    "lastStep": {
+      "label": "Última etapa"
+    },
+    "me": {
+      "label": "Link dos meus dados"
+    },
+    "phone": {
+      "label": "Telefone"
+    },
+    "phoneAndEmail": {
+      "label": "Telefone e e-mail"
+    },
+    "timezoneName": {
+      "label": "Nome do fuso horário"
+    },
+    "totalNewTagged": {
+      "label": "Total de novas tags"
+    },
+    "totalTagged": {
+      "label": "Total de tags"
+    },
+    "userChannel": {
+      "label": "Canal do usuário"
+    },
+    "userExternalId": {
+      "label": "ID externo do usuário"
+    },
+    "userHash": {
+      "label": "Hash do usuário"
+    },
+    "userSource": {
+      "label": "Origem do usuário"
+    },
+    "webchatParentUrl": {
+      "label": "URL principal do webchat"
+    },
+    "make": {
+      "inviteUrl": "Link de convite",
+      "inviteUrlHint": "O link de convite do seu aplicativo personalizado publicado no Make (por exemplo, https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Eventos",
+      "placeholder": "Digite o nome de um evento e pressione Enter",
+      "description": "Adicione um ou mais nomes de eventos. Quando o Make vincula um webhook a um desses eventos, os dados são enviados a ele quando esta etapa é executada."
+    }
+  },
+  "flows": {
+    "title": "Fluxos",
+    "quickReplies": {
+      "limitReached": "O limite de respostas rápidas foi atingido ({max})."
+    },
+    "buttons": {
+      "limitReached": "O limite de botões foi atingido ({max})."
+    },
+    "aiGenerateText": {
+      "label": "{name}: Gerar texto"
+    },
+    "aiGenerateImage": {
+      "label": "{name}: Gerar imagem"
+    },
+    "aiEditImage": {
+      "label": "{name}: Editar imagem"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}: Analisar imagem"
+    },
+    "aiExtractData": {
+      "label": "{name}: Extrair dados"
+    },
+    "openaiCompatible": {
+      "empty": "Conecte um provedor compatível com a OpenAI nas configurações de integração antes de usar esta etapa.",
+      "integration": "Provedor compatível com a OpenAI",
+      "none": "Nenhum"
+    },
+    "actions": {
+      "addContactNotes": "Adicionar notas ao contato",
+      "addContactTag": "Adicionar tag ao contato",
+      "aiDeleteMessageHistory": "Excluir histórico de mensagens",
+      "aiExtractData": "Extrair dados com IA",
+      "aiAnalyzeImage": "Analisar imagem com IA",
+      "aiSpeechToText": "Converter fala em texto com IA",
+      "aiGenerateImage": "Gerar imagem com IA",
+      "aiGenerateTextAgent": "Agente de geração de texto com IA",
+      "aiTextToSpeech": "Converter texto em fala com IA",
+      "archiveConversation": "Arquivar conversa",
+      "assignConversation": "Atribuir conversa",
+      "autoAssignConversation": "Atribuir conversa automaticamente",
+      "blockContact": "Bloquear contato",
+      "broadcastActions": "Ações de transmissão",
+      "callApi": "Solicitação de API externa",
+      "make": "Make",
+      "triggers": "Gatilhos",
+      "questionnaires": "Questionários",
+      "setUpCoupon": "Configurar cupom",
+      "markCouponUsed": "Marcar cupom como usado",
+      "chooseChannel": "Escolher canal",
+      "clearCustomField": "Limpar campo personalizado",
+      "condition": "Condição",
+      "contactActions": "Ações de contato",
+      "countCharacters": "Contar caracteres",
+      "deleteContact": "Excluir contato",
+      "emailActions": "Ações de e-mail",
+      "flowActions": "Ações de fluxo",
+      "followConversation": "Seguir conversa",
+      "formatDate": "Formatar data",
+      "generateCode": "Gerar código",
+      "getDataFromJson": "Obter dados do JSON",
+      "inboxActions": "Ações da caixa de entrada",
+      "markEmailVerified": "Marcar e-mail como verificado",
+      "activeCampaignSyncContact": "Adicionar contato ao ActiveCampaign",
+      "facebookCustomAudience": "Público personalizado do Facebook",
+      "mailchimpAddMember": "Adicionar contato ao Mailchimp",
+      "mailerLiteAddSubscriber": "Adicionar contato ao MailerLite",
+      "klaviyoSyncProfile": "Adicionar contato ao Klaviyo",
+      "moosendCreateContact": "Adicionar contato ao Moosend",
+      "dripSubscribeSubscriber": "Adicionar contato ao Drip",
+      "getResponseAddContact": "Adicionar contato ao GetResponse",
+      "sendGridAddContact": "Adicionar contato ao SendGrid",
+      "messenger": "Messenger",
+      "openWebsite": "Abrir site",
+      "optInEmail": "Aceitar e-mails",
+      "optOutEmail": "Recusar e-mails",
+      "performAction": "Executar ação",
+      "removeContactTag": "Remover tag do contato",
+      "setMessengerUserPersistentMenu": "Definir menu persistente do usuário",
+      "enableMessengerComposer": "Ativar caixa de texto do Messenger",
+      "disableMessengerComposer": "Desativar caixa de texto do Messenger",
+      "setMessengerPersona": "Definir persona",
+      "updateMessengerContactData": "Atualizar dados do contato",
+      "sendAudio": "Enviar áudio",
+      "sendCard": "Enviar cartão",
+      "sendExternalFlow": "Iniciar fluxo externo",
+      "sendExternalNode": "Iniciar nó externo",
+      "sendFile": "Enviar arquivo",
+      "sendGif": "Enviar GIF",
+      "sendImage": "Enviar imagem",
+      "sendMessage": "Enviar mensagem",
+      "sendNode": "Iniciar outro nó",
+      "sendText": "Enviar texto",
+      "sendVideo": "Enviar vídeo",
+      "sendTemplateMessage": "Mensagem de modelo",
+      "whatsappOptionList": "Lista de opções",
+      "noTemplatesAvailable": "Nenhum modelo disponível",
+      "noFlowsAvailable": "Nenhum fluxo disponível",
+      "setCustomField": "Definir campo personalizado",
+      "startAnotherNode": "Iniciar outro nó",
+      "startExternalFlow": "Iniciar fluxo externo",
+      "startExternalNode": "Iniciar nó externo",
+      "startFlow": "Iniciar fluxo",
+      "subscribeBroadcast": "Inscrever na transmissão",
+      "tools": "Ferramentas",
+      "transferConversationToBot": "Transferir conversa para o bot",
+      "transferConversationToHuman": "Transferir conversa para um atendente",
+      "unarchiveConversation": "Desarquivar conversa",
+      "unassignConversation": "Remover atribuição da conversa",
+      "unfollowConversation": "Deixar de seguir conversa",
+      "unsubscribeBroadcast": "Cancelar inscrição na transmissão",
+      "getUserData": "Obter dados do usuário",
+      "sendCarousel": "Enviar carrossel",
+      "actions": "Ações",
+      "findGif": "Encontrar GIF",
+      "spreadsheetGetRow": "Obter linha",
+      "spreadsheetUpdateRow": "Atualizar linha",
+      "spreadsheetSendData": "Enviar dados",
+      "spreadsheetGetRandomRow": "Obter linha aleatória",
+      "spreadsheetClearRow": "Limpar linha",
+      "typing": "Digitando",
+      "sequenceActions": "Ações de sequência",
+      "subscribeSequence": "Inscrever na sequência",
+      "unsubscribeSequence": "Cancelar inscrição na sequência",
+      "splitTraffic": "Dividir tráfego",
+      "aiEditImage": "Editar imagem com IA",
+      "whatsappFlow": "Fluxo do WhatsApp"
+    },
+    "splitTraffic": {
+      "balanceHint": "A soma total deve ser igual a 100%.",
+      "addVariation": "Nova variação"
+    },
+    "condition": {
+      "addCase": "Verificar nova condição",
+      "caseTitle": "Caso {index}",
+      "otherwise": "O usuário não corresponde a essas condições"
+    },
+    "whatsappOptionList": {
+      "buttonLabel": "Rótulo do botão",
+      "optionTitle": "Título",
+      "optionDescription": "Descrição",
+      "addOption": "Adicionar",
+      "editButtonTitle": "Editar botão",
+      "editOptionTitle": "Editar opção"
+    },
+    "whatsappFlow": {
+      "buttonLabel": "Rótulo do botão",
+      "editDialogTitle": "Editar fluxo do WhatsApp",
+      "selectFlow": "Fluxo do WhatsApp",
+      "selectFlowPlaceholder": "Selecione um fluxo",
+      "startScreen": "Tela inicial",
+      "selectScreenPlaceholder": "Selecione uma tela",
+      "fieldMappings": "Salvar resposta em campos personalizados",
+      "paramKey": "Parâmetro",
+      "customField": "Campo personalizado",
+      "selectCustomFieldPlaceholder": "Selecione um campo personalizado",
+      "addMapping": "Adicionar mapeamento",
+      "addCustomField": "Adicionar"
+    },
+    "additionalSteps": "Etapas adicionais",
+    "delayType": {
+      "datetimeCustomField": "Campo personalizado de data e hora",
+      "datetimeCustomFieldValue": "{customField}",
+      "duration": "Duração",
+      "durationValue": "{duration}",
+      "date": "Data",
+      "specificDate": "Data específica",
+      "specificDateValue": "{date}",
+      "random": "Aleatório"
+    },
+    "formatTimezone": {
+      "timezone": "Fuso horário da conta",
+      "contactTimezone": "Fuso horário do contato"
+    },
+    "fields": {
+      "selectTemplatePlaceholder": "Escolha um modelo do WhatsApp",
+      "selectMessengerTemplatePlaceholder": "Escolha um modelo do Messenger",
+      "preview": "Prévia",
+      "typingSecondsLabel": "Digitando por (segundos)",
+      "lookupColumnsLabel": "Colunas de pesquisa:",
+      "filterModeAnd": "E",
+      "filterModeOr": "OU"
+    },
+    "operators": {
+      "append": "Adicionar ao final",
+      "prepend": "Adicionar ao início",
+      "set": "Definir como"
+    },
+    "wait": {
+      "datetimeTooltip": "A data e hora em que o fluxo será acionado.",
+      "setInterval": "Definir intervalo",
+      "delayTypeLabel": "Este é um",
+      "fixed": "Fixo",
+      "randomized": "Aleatório",
+      "delay": "atraso",
+      "durationDetailPrefix": "Aguardar",
+      "dateDetailPrefix": "Aguardar até",
+      "customFieldDetailPrefix": "Aguardar até",
+      "randomDetailPrefix": "Aguardar entre",
+      "randomDetailAnd": "e",
+      "intervalDetailPrefix": "Ativo entre",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Duração",
+      "activeHours": "Horário ativo",
+      "dateTypeLabel": "Tipo de data",
+      "datetimeLabel": "Data e hora",
+      "customFieldLabel": "Campo personalizado",
+      "offset": "Adicionar deslocamento",
+      "offsetLabel": "Deslocamento",
+      "randomRangeLabel": "Intervalo aleatório",
+      "minLabel": "Mín.",
+      "maxLabel": "Máx.",
+      "unitLabel": "Unidade",
+      "specific": "Específico",
+      "dynamic": "Dinâmico",
+      "selectTimePlaceholder": "Selecione um horário"
+    },
+    "followUp": {
+      "durationLabel": "Duração",
+      "waitAndContinue": "Aguardar <value>{duration} {unit}</value> e continuar",
+      "cancelOnReplyHint": "O acompanhamento não será enviado se o contato responder antes que o tempo termine."
+    },
+    "setCustomField": {
+      "temporalHint": "Deixe em branco para salvar a data/hora atual."
+    }
+  },
+  "folders": {
+    "heading": {
+      "title": "Pastas"
+    }
+  },
+  "gemini": {
+    "autoReply": {
+      "description": "Ative a resposta automática com IA para responder aos usuários de forma natural usando seus dados comerciais.",
+      "label": "Resposta automática com IA"
+    },
+    "connect": {
+      "description": "Responda aos usuários de forma natural com IA baseada nos dados da sua empresa.",
+      "label": "Google Gemini"
+    },
+    "title": "Google Gemini"
+  },
+  "general": {
+    "title": "Geral"
+  },
+  "facebookAds": {
+    "title": "Anúncios do Facebook",
+    "setting": {
+      "label": "Anúncios do Facebook",
+      "description": "Expanda seus negócios mais rapidamente conectando seus anúncios do Facebook ao chatbot. Crie públicos personalizados e adicione ou remova pessoas desses públicos.",
+      "reconnect": "Reconectar"
+    },
+    "fields": {
+      "subscriberShouldBe": "O assinante deve ser",
+      "addedToCustomAudience": "Adicionado ao público personalizado",
+      "removedFromCustomAudience": "Removido do público personalizado",
+      "adAccount": "Conta de anúncios",
+      "customAudience": "Público personalizado",
+      "nothingSelected": "Nada selecionado"
+    },
+    "adAccounts": {
+      "loading": "Carregando contas de anúncios...",
+      "error": "Falha ao carregar as contas de anúncios. Verifique sua conexão com os Anúncios do Facebook."
+    },
+    "customAudiences": {
+      "loading": "Carregando públicos personalizados...",
+      "error": "Falha ao carregar os públicos personalizados. Verifique sua conexão com os Anúncios do Facebook."
+    },
+    "errors": {
+      "invalidAppSettings": "As configurações do aplicativo do Facebook não são válidas"
+    }
+  },
+  "googleSheets": {
+    "setting": {
+      "label": "Planilhas Google",
+      "description": "Configuração da integração com o Planilhas Google"
+    },
+    "header": "Cabeçalho da coluna",
+    "title": "Planilhas Google"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no ActiveCampaign."
+    },
+    "dialog": {
+      "description": "Insira a URL e a chave da API disponíveis nas configurações da sua conta do ActiveCampaign."
+    },
+    "fields": {
+      "apiUrl": "URL da API",
+      "apiUrlPlaceholder": "https://youraccount.api-us1.com",
+      "apiKey": "Chave da API",
+      "operation": "Operação",
+      "emailField": "Campo de e-mail",
+      "emailTooltip": "Campo do contato que contém o e-mail usado para identificar o contato no ActiveCampaign.",
+      "phoneField": "Campo de telefone",
+      "phone": "Telefone",
+      "list": "Lista",
+      "lists": "Listas",
+      "tags": "Tags",
+      "automation": "Automação",
+      "customFields": "Campos personalizados no ActiveCampaign",
+      "optional": "Opcional",
+      "nothingSelected": "Nada selecionado",
+      "emptyField": "---",
+      "addCustomField": "Adicionar campo personalizado"
+    },
+    "operations": {
+      "createOrUpdateContact": "Criar ou atualizar contato",
+      "addContactToAutomation": "Adicionar contato à automação"
+    },
+    "lists": {
+      "loading": "Carregando listas do ActiveCampaign...",
+      "error": "Falha ao carregar as listas do ActiveCampaign. Verifique se a integração está conectada.",
+      "empty": "Nenhuma lista do ActiveCampaign encontrada."
+    },
+    "automations": {
+      "loading": "Carregando automações do ActiveCampaign...",
+      "error": "Falha ao carregar as automações do ActiveCampaign. Verifique se a integração está conectada.",
+      "empty": "Nenhuma automação do ActiveCampaign encontrada."
+    },
+    "tags": {
+      "loading": "Carregando tags do ActiveCampaign...",
+      "error": "Falha ao carregar as tags do ActiveCampaign. Verifique se a integração está conectada.",
+      "empty": "Nenhuma tag do ActiveCampaign encontrada."
+    },
+    "customFields": {
+      "loading": "Carregando campos personalizados do ActiveCampaign...",
+      "error": "Falha ao carregar os campos personalizados do ActiveCampaign. Verifique se a integração está conectada.",
+      "empty": "Nenhum campo personalizado do ActiveCampaign encontrado."
+    },
+    "errors": {
+      "invalidCredentials": "A URL ou a chave da API do ActiveCampaign é inválida. Verifique suas credenciais e tente novamente."
+    }
+  },
+  "getResponse": {
+    "title": "GetResponse",
+    "setting": {
+      "label": "GetResponse",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no GetResponse."
+    },
+    "fields": {
+      "apiKey": "Chave da API",
+      "list": "Lista",
+      "listPlaceholder": "Selecione uma lista",
+      "email": "Campo de e-mail",
+      "emailPlaceholder": "Selecione um campo de e-mail",
+      "emailTooltip": "Campo do contato que contém o e-mail usado para identificar contatos no GetResponse.",
+      "tags": "Tags",
+      "tagsPlaceholder": "Selecione tags",
+      "dayOfCycle": "Dia do ciclo da resposta automática",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "Mova um contato para um dia específico do ciclo da resposta automática. Digite 0 para começar no dia 0.",
+      "optional": "Opcional"
+    },
+    "campaigns": {
+      "loading": "Carregando listas do GetResponse...",
+      "error": "Falha ao carregar as listas do GetResponse. Verifique se a integração está conectada.",
+      "empty": "Nenhuma lista do GetResponse encontrada.",
+      "limited": "Apenas a primeira página de listas do GetResponse é exibida."
+    },
+    "tags": {
+      "loading": "Carregando tags do GetResponse...",
+      "error": "Falha ao carregar as tags do GetResponse. Verifique se a integração está conectada.",
+      "empty": "Nenhuma tag do GetResponse encontrada.",
+      "limited": "Apenas a primeira página de tags do GetResponse é exibida."
+    },
+    "errors": {
+      "invalidApiKey": "Chave da API inválida. Verifique a chave da API do GetResponse e tente novamente."
+    }
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no Mailchimp."
+    },
+    "fields": {
+      "audience": "Público",
+      "email": "Campo de e-mail",
+      "emailTooltip": "Campo personalizado que contém o e-mail do usuário para identificar contatos no Mailchimp.",
+      "doubleOptIn": "Confirmação dupla",
+      "doubleOptInTooltip": "Se ativada, um e-mail de confirmação será enviado antes de adicionar o contato à sua lista.",
+      "on": "Ativado",
+      "off": "Desativado",
+      "optional": "Opcional",
+      "tags": "Tags",
+      "mergeFields": "Campos personalizados no Mailchimp"
+    }
+  },
+  "mailerLite": {
+    "title": "MailerLite",
+    "setting": {
+      "label": "MailerLite",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no MailerLite."
+    },
+    "fields": {
+      "apiToken": "Token da API",
+      "group": "Grupo",
+      "groupPlaceholder": "Nada selecionado",
+      "email": "Campo de e-mail",
+      "status": "Tipo",
+      "customFields": "Campos personalizados no MailerLite (opcional)",
+      "emptyField": "---",
+      "providerField": "Selecione um campo do MailerLite",
+      "addMapping": "Adicionar"
+    },
+    "status": {
+      "active": "Inscrito",
+      "unconfirmed": "Não confirmado"
+    },
+    "errors": {
+      "invalidApiKey": "Token da API inválido. Verifique o token da API do MailerLite e tente novamente."
+    }
+  },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "Esta integração permite sincronizar os perfis dos clientes do seu bot com o Klaviyo."
+    },
+    "fields": {
+      "apiKey": "Chave da API",
+      "list": "Lista do Klaviyo",
+      "listPlaceholder": "Selecione uma lista do Klaviyo",
+      "email": "Campo de e-mail",
+      "titleField": "Campo de cargo",
+      "titlePlaceholder": "Selecione um campo",
+      "orgField": "Campo de organização",
+      "orgPlaceholder": "Selecione um campo",
+      "customProperties": "Campos personalizados no Klaviyo",
+      "emptyField": "Selecione um campo do contato",
+      "propertyKey": "Chave da propriedade no Klaviyo",
+      "addMapping": "Adicionar mapeamento"
+    },
+    "lists": {
+      "error": "Não foi possível carregar as listas do Klaviyo. Verifique se a integração está conectada."
+    },
+    "errors": {
+      "invalidApiKey": "Chave da API inválida. Verifique a chave da API do Klaviyo e tente novamente."
+    }
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no Moosend."
+    },
+    "fields": {
+      "apiKey": "Chave da API",
+      "list": "Lista do Moosend",
+      "listPlaceholder": "Selecione uma lista do Moosend",
+      "email": "Campo de e-mail"
+    },
+    "lists": {
+      "loading": "Carregando listas de e-mails do Moosend...",
+      "empty": "Nenhuma lista de e-mails do Moosend encontrada.",
+      "error": "Não foi possível carregar as listas de e-mails do Moosend. Verifique se a integração está conectada."
+    },
+    "errors": {
+      "invalidApiKey": "Chave da API inválida. Verifique a chave da API do Moosend e tente novamente.",
+      "userNotEnabled": "Esta conta do Moosend não está habilitada para acesso à API.",
+      "connectFailed": "Falha ao conectar ao Moosend. Tente novamente mais tarde."
+    }
+  },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no Drip."
+    },
+    "fields": {
+      "apiToken": "Token da API",
+      "account": "Conta",
+      "emailField": "Campo de e-mail",
+      "emailTooltip": "Campo do contato que contém o e-mail usado para identificar o assinante no Drip.",
+      "phone": "Telefone",
+      "tags": "Tags",
+      "customFields": "Campos personalizados no Drip",
+      "optional": "Opcional",
+      "nothingSelected": "Nada selecionado",
+      "addCustomField": "Adicionar campo personalizado"
+    },
+    "accounts": {
+      "loading": "Carregando contas do Drip...",
+      "error": "Falha ao carregar as contas do Drip. Verifique se a integração está conectada."
+    },
+    "tags": {
+      "loading": "Carregando tags do Drip...",
+      "error": "Falha ao carregar as tags do Drip. Verifique se a integração está conectada.",
+      "empty": "Nenhuma tag do Drip encontrada."
+    },
+    "customFields": {
+      "loading": "Carregando campos personalizados do Drip...",
+      "error": "Falha ao carregar os campos personalizados do Drip. Verifique se a integração está conectada.",
+      "empty": "Nenhum campo personalizado do Drip encontrado."
+    },
+    "errors": {
+      "noAccount": "Este token da API não tem acesso a uma conta do Drip."
+    }
+  },
+  "sendGrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "Esta integração permite salvar os contatos dos clientes do seu bot no SendGrid."
+    },
+    "scopeHelp": "Crie uma chave da API do SendGrid com acesso de leitura e gravação ao Marketing.",
+    "acceptedLimitation": "O SendGrid aceita atualizações de contatos para processamento assíncrono. Atualizações aceitas ainda podem falhar posteriormente.",
+    "fields": {
+      "apiKey": "Chave da API",
+      "list": "Lista",
+      "emailField": "Campo de e-mail",
+      "phoneField": "Campo de telefone",
+      "customFields": "Campos personalizados no SendGrid",
+      "optional": "Opcional",
+      "nothingSelected": "Nada selecionado",
+      "addCustomField": "Adicionar campo personalizado"
+    },
+    "lists": {
+      "loading": "Carregando listas do SendGrid...",
+      "error": "Falha ao carregar as listas do SendGrid. Verifique se a integração está conectada."
+    },
+    "customFields": {
+      "loading": "Carregando campos personalizados do SendGrid...",
+      "error": "Falha ao carregar os campos personalizados do SendGrid. Verifique se a integração está conectada."
+    },
+    "errors": {
+      "invalidApiKey": "Chave da API inválida. Verifique a chave da API do SendGrid e tente novamente.",
+      "missingScopes": "Esta chave da API deve ter acesso de leitura ao Marketing. Verifique se a chave da API do SendGrid inclui permissões de Marketing."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Conecte sua conta do Make.com para enviar eventos dos seus fluxos e receber dados de contatos por meio de cenários do Make. O token de acesso do desenvolvedor do seu espaço de trabalho será copiado para a área de transferência quando você clicar em Conectar — cole-o ao criar a conexão no Make.",
+      "notConfigured": "Nenhum link de convite do Make foi encontrado. Adicione um nas Configurações da plataforma.",
+      "noWorkspaceToken": "Nenhum token de acesso do desenvolvedor foi encontrado para este espaço de trabalho. Gere um na seção de token do espaço de trabalho acima e clique em Conectar novamente."
+    }
+  },
+  "integrations": {
+    "title": "Integrações"
+  },
+  "channels": {
+    "title": "Canais",
+    "duplicated": {
+      "generic": "Esta conta já está conectada a outro espaço de trabalho.",
+      "instagram": "Esta conta do Instagram já está conectada a outro espaço de trabalho.",
+      "messenger": "Esta Página do Facebook já está conectada a outro espaço de trabalho.",
+      "telegram": "Este bot do Telegram já está conectado a outro espaço de trabalho.",
+      "tiktok": "Esta conta do TikTok já está conectada a outro espaço de trabalho.",
+      "whatsapp": "Este número do WhatsApp já está conectado a outro espaço de trabalho.",
+      "zalo": "Esta OA do Zalo já está conectada a outro espaço de trabalho."
+    },
+    "reconnect": {
+      "success": "Canal reconectado com sucesso.",
+      "errors": {
+        "notFound": "O canal a ser reconectado não foi encontrado.",
+        "pageNotFound": "A conta autorizada do Facebook não tem acesso a esta Página. Entre com a conta correta e conceda todas as permissões solicitadas.",
+        "accountNotFound": "A conta autorizada não corresponde à conta conectada. Entre com a conta correta.",
+        "cancelled": "A reconexão foi cancelada. Tente novamente e conceda as permissões solicitadas.",
+        "failed": "Falha ao reconectar. Tente novamente."
+      }
+    }
+  },
+  "workspace": {
+    "schedule": {
+      "title": "Definir horário de atividade",
+      "description": "Escolha um horário de início e de término. Se o horário de término for anterior ao de início, a programação continuará durante a noite.",
+      "startTime": "Horário de início",
+      "endTime": "Horário de término",
+      "alwaysRun": "Sempre ativo",
+      "save": "Salvar",
+      "invalidTimeRange": "Os horários de início e término devem ser diferentes",
+      "timeRequired": "Selecione os horários de início e término",
+      "activated": "Espaço de trabalho ativado",
+      "deactivated": "Espaço de trabalho desativado",
+      "activeHours": "Ativo das {startTime} às {endTime}",
+      "permissionRequired": "Somente um superadministrador pode alterar o horário de atividade do espaço de trabalho"
+    },
+    "deletion": {
+      "title": "Excluir espaço de trabalho",
+      "description": "Exclua permanentemente este espaço de trabalho. Todos os contatos, configurações e dados serão excluídos 24 horas após a confirmação.",
+      "schedule": "Excluir espaço de trabalho",
+      "confirmTitle": "Excluir este espaço de trabalho?",
+      "confirmDescription": "Todos os contatos, configurações e dados serão excluídos permanentemente 24 horas após a confirmação. Você pode desfazer a exclusão a qualquer momento antes disso.",
+      "pending": "Este espaço de trabalho será excluído em {countdown} ({date}). Você pode desfazer isso a qualquer momento antes disso.",
+      "pendingFallback": "em breve",
+      "undone": "A exclusão do espaço de trabalho foi cancelada",
+      "bannerTitle": "Exclusão do espaço de trabalho agendada",
+      "bannerDescription": "A exclusão deste espaço de trabalho está agendada. Desfaça a exclusão abaixo para continuar usando-o.",
+      "pendingBlockedToast": "A exclusão deste espaço de trabalho está agendada. Entre em contato com um administrador do espaço de trabalho para restaurar o acesso.",
+      "navDisabledTooltip": "Indisponível enquanto a exclusão do espaço de trabalho estiver agendada",
+      "badge": "Exclusão agendada"
+    }
+  },
+  "workspaces": {
+    "list": {
+      "title": "Lista de espaços de trabalho"
+    }
+  },
+  "workspaceToken": {
+    "title": "Token do espaço de trabalho"
+  },
+  "dialog": {
+    "deleteConfirmation": "Você tem certeza absoluta?\nEsta ação não pode ser desfeita.\nIsso excluirá permanentemente {feature} dos nossos servidores."
+  },
+  "messages": {
+    "moveFeature": "Mover {feature}",
+    "poweredBy": "Desenvolvido por {name}",
+    "noGiphyApiKey": "Nenhuma chave da API do GIPHY encontrada. Adicione uma nas Configurações da plataforma.",
+    "connectedSuccess": "{feature} conectado com sucesso",
+    "connectFailed": "Falha ao conectar {feature}",
+    "connectSuccess": "{feature} conectado com sucesso",
+    "refreshTokenSuccessfully": "Token de {feature} atualizado com sucesso",
+    "success": "Sucesso",
+    "failed": "Falha",
+    "copiedToClipboard": "Copiado para a área de transferência",
+    "messengerAdsJsonDescription": "Você só precisará gerar um novo código JSON se fizer alterações na etapa inicial. Alterações em outras etapas não afetarão este código JSON.",
+    "messengerAdsNotPublished": "Publique o conteúdo deste fluxo e tente novamente.",
+    "messengerAdsNoStartNode": "Este fluxo não tem uma etapa inicial válida. Abra o fluxo, defina uma etapa inicial Enviar mensagem, publique e tente novamente.",
+    "messengerAdsError": "Algo deu errado ao gerar o JSON. Tente novamente.",
+    "messengerAdsInvalidStepType": "A etapa inicial pode conter Texto, Imagem, Cartão, Galeria, Vídeo, vídeo do Facebook, Áudio e Arquivo.",
+    "messengerAdsInvalidVariable": "Você não pode usar campos personalizados na \"Etapa inicial\" devido às limitações do Facebook. Somente first_name, last_name e full_name podem ser adicionados à mensagem.",
+    "copyFailed": "Falha ao copiar para a área de transferência",
+    "createdFailed": "Falha ao criar {feature}",
+    "deletedSuccess": "{feature} excluído com sucesso",
+    "deleteFileComingSoon": "A funcionalidade de exclusão de arquivos estará disponível em breve",
+    "disconnectFeature": "Desconectar {feature}",
+    "disconnectFeatureDescription": "Tem certeza de que deseja desconectar {feature}?",
+    "disconnectSuccess": "{feature} desconectado com sucesso",
+    "reply": "Responder",
+    "viewMessage": "Ver mensagem",
+    "changeLikeState": "Alterar estado da curtida",
+    "changeHideState": "Alterar estado de ocultação",
+    "commentHidden": "Este comentário foi ocultado",
+    "messageDeleted": "A mensagem foi excluída.",
+    "sentAttachments": "Enviou {count, plural, one {1 anexo} other {# anexos}}",
+    "deleteComment": "Excluir comentário",
+    "deleteCommentConfirmation": "Tem certeza de que deseja excluir este comentário? As respostas também serão excluídas, tanto da sua caixa de entrada quanto do Facebook. Esta ação não pode ser desfeita.",
+    "deleteMessageSuccess": "Mensagem excluída",
+    "facebookComment": "Comentário do Facebook",
+    "editComment": "Editar comentário",
+    "editMessageSuccess": "Mensagem atualizada",
+    "editMessagePlaceholder": "Edite sua mensagem...",
+    "saveEdit": "Salvar",
+    "cancelEdit": "Cancelar",
+    "failedToCopy": "Falha ao copiar",
+    "failedToPreviewImage": "Falha ao visualizar a imagem",
+    "loadingData": "Carregando dados...",
+    "errorLoadingData": "Falha ao carregar os dados. Tente novamente.",
+    "leaveEmptyToKeepSecret": "Deixe em branco para manter o segredo atual",
+    "needToAddSettings": "Você precisa adicionar configurações para usar esta integração",
+    "noDataAvailable": "Nenhum dado disponível",
+    "noResults": "Nenhum resultado.",
+    "savedSuccessfully": "Salvo com sucesso",
+    "syncedSuccessfully": "Sincronizado com sucesso",
+    "nameAlreadyExists": "O nome de {feature} já existe",
+    "unknownError": "Erro desconhecido",
+    "updatedSuccess": "{feature} atualizado com sucesso",
+    "updateFileComingSoon": "A funcionalidade de atualização de arquivos estará disponível em breve",
+    "videoError": "Erro no vídeo",
+    "createdSuccess": "{feature} criado com sucesso",
+    "createFeature": "Criar {feature}",
+    "noItemsFound": "Nenhum item encontrado",
+    "editFeature": "Editar {feature}",
+    "duplicateFeature": "Duplicar {feature}",
+    "duplicatedSuccess": "{feature} duplicado com sucesso",
+    "duplicateConfirmation": "Isso criará uma cópia de {feature}.",
+    "deleteFeature": "Excluir {feature}",
+    "deleteConfirmation": "Você tem certeza absoluta?\nEsta ação não pode ser desfeita.\nIsso excluirá permanentemente {feature} dos nossos servidores.",
+    "addFeature": "Adicionar {feature}",
+    "signOutConfirmation": "Tem certeza de que deseja sair?",
+    "copyInvitationUrlSuccess": "Copie o link abaixo e envie para a pessoa que você deseja adicionar como administrador.",
+    "noAIIntegrationFound": "Nenhuma integração de IA encontrada. Conecte uma integração de IA para usar agentes de IA.",
+    "resendFeature": "Reenviar {feature}",
+    "resendFeatureDescription": "Reenvie {feature} aos contatos que ainda não o receberam.",
+    "resendSuccess": "Reenviado com sucesso",
+    "changeDefault": "Alterar padrão",
+    "changeDefaultDescription": "Tem certeza de que deseja alterar o agente de IA padrão?",
+    "unsetDefaultDescription": "Tem certeza de que deseja remover o agente de IA padrão?",
+    "botIsActive": "O bot está ativo",
+    "viewPost": "Ver publicação",
+    "selectConversationTitle": "Selecione uma conversa",
+    "selectConversationDescription": "Escolha uma conversa na lista à esquerda para ver as mensagens e começar a conversar.",
+    "selectConversationContactTitle": "Nenhum contato selecionado",
+    "selectConversationContactDescription": "Selecione uma conversa para ver aqui os detalhes do contato e as informações da caixa de entrada.",
+    "archiveFeature": "Arquivar {feature}",
+    "archiveFeatureDescription": "Tem certeza de que deseja arquivar {feature}?",
+    "disableFeature": "Desativar {feature}",
+    "disableFeatureDescription": "Tem certeza de que deseja desativar {feature}?",
+    "enableFeature": "Ativar {feature}",
+    "enableFeatureDescription": "Tem certeza de que deseja ativar {feature}?",
+    "exportedSuccess": "{feature} exportado com sucesso",
+    "createSuccess": "{feature} criado com sucesso",
+    "deleteFailed": "Falha ao excluir {feature}",
+    "deleteSuccess": "{feature} excluído com sucesso",
+    "error": "Erro",
+    "moveFolderDescription": "Mover {feature} para a pasta",
+    "noData": "Nenhum dado",
+    "featureNotFound": "{feature} não encontrado",
+    "enableSuccess": "{feature} ativado com sucesso",
+    "userInactive": "O usuário está inativo há mais de 7 dias",
+    "messagingWindowClosed": "A mensagem não pode ser enviada fora da janela permitida",
+    "sendHumanAgentTag": "Enviar uma mensagem com a tag HUMAN_AGENT",
+    "warning": "Atenção!",
+    "humanAgentWarningDescription": "Você só pode responder à mensagem de um usuário dentro de 7 dias quando o problema não puder ser resolvido de forma razoável em até 24 horas. Alguns exemplos são fins de semana, feriados ou casos que exigem mais de um dia para serem concluídos. Não use esta opção por nenhum outro motivo, pois isso pode colocar sua Página do Facebook ou conta do Instagram em risco. Em caso de dúvida, não continue.",
+    "humanAgentWindowExpired": "A janela de mensagens expirou. O contato precisa enviar uma mensagem primeiro para reabrir a conversa.",
+    "restoreVersionSuccess": "Fluxo restaurado para a versão selecionada",
+    "revertToPublishedSuccess": "O rascunho foi revertido para a versão publicada",
+    "revertToPublishedConfirmTitle": "Reverter para a versão publicada?",
+    "revertToPublishedConfirmDescription": "Isso descartará as alterações atuais do rascunho e restaurará o conteúdo publicado do fluxo.",
+    "noVersionsFound": "Nenhuma versão publicada encontrada",
+    "publishVersionSuccess": "Uma nova versão foi publicada",
+    "flowConfigIncomplete": "Algumas configurações estão incompletas",
+    "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",
+    "deleteNodeError": "Não foi possível excluir o bloco. Tente novamente.",
+    "redoHistoryCleared": "Histórico de refazer limpo",
+    "historyDepth": "({count})"
+  },
+  "instagram": {
+    "description": "Esta integração permite criar bots do Instagram.",
+    "selectInstagramAccount": "Selecionar conta do Instagram",
+    "iceBreakers": "Quebra-gelos",
+    "iceBreakersDescription": "Os quebra-gelos permitem que os usuários iniciem uma conversa com seu bot por meio de uma lista de perguntas frequentes.",
+    "reconnect": "Reconectar",
+    "title": "Instagram"
+  },
+  "coexist": {
+    "title": "Sincronizar contatos existentes e histórico de conversas?",
+    "descriptionWhatsapp": "Quando ativado, os contatos e até 6 meses de histórico de conversas serão importados deste número do WhatsApp.",
+    "descriptionMessenger": "Quando ativado, os contatos existentes do Messenger e até 3 meses de histórico de conversas serão importados desta Página.",
+    "enable": "Ativar sincronização",
+    "decline": "Não sincronizar",
+    "billingNote": "Páginas grandes podem levar várias horas para serem concluídas.",
+    "toggleLabel": "Sincronizar contatos existentes e histórico de conversas",
+    "toggleHelper": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte.",
+    "toggleHelperMessenger": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte a página do Messenger.",
+    "toggleHelperWhatsapp": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte o número do WhatsApp.",
+    "success": {
+      "enabled": "Sincronização iniciada. Os contatos e as mensagens do histórico aparecerão em breve.",
+      "disabled": "Sincronização desativada."
+    },
+    "errors": {
+      "alreadyTriggered": "A sincronização já foi iniciada para este número. Aguarde a Meta enviar os dados do histórico.",
+      "windowExpired": "A janela de sincronização de 24 horas expirou. Desconecte e reconecte este número para sincronizar novamente.",
+      "notEligible": "Este número não está qualificado para a sincronização do histórico.",
+      "triggerFailed": "Não foi possível iniciar a sincronização. Tente novamente mais tarde.",
+      "unknown": "Não foi possível ativar a sincronização. Tente novamente mais tarde."
+    }
+  },
+  "messenger": {
+    "description": "Esta integração permite criar bots do Messenger.",
+    "welcomeMessage": "Mensagem de boas-vindas",
+    "welcomeMessageDescription": "Esta é a primeira mensagem que o usuário receberá do seu bot. Ela é enviada quando o usuário interage pela primeira vez com o bot ao clicar no botão \"Começar\".",
+    "conversationStarters": "Iniciadores de conversa",
+    "conversationStartersDescription": "Os iniciadores de conversa permitem que os usuários iniciem uma conversa com sua empresa por meio de uma lista de perguntas frequentes.",
+    "persistentMenu": "Menu persistente",
+    "persistentMenuDescription": "O menu pode ser configurado para ajudar os usuários a descobrir e acessar os recursos do seu bot com mais facilidade. Ele está sempre disponível e deve conter as principais ações que os usuários podem realizar a qualquer momento. Um menu comunica com clareza os recursos básicos do bot tanto para novos usuários quanto para quem retorna.",
+    "dynamicPersistentMenu": "Menu persistente dinâmico",
+    "dynamicPersistentMenuDescription": "Permite alterar dinamicamente o menu persistente de cada usuário a qualquer momento.",
+    "botProfile": "Perfil do bot",
+    "botProfileDescription": "Esta configuração permite definir um nome e uma imagem diferentes para o seu bot",
+    "personas": "Personas",
+    "personasDescription": "Esta configuração permite definir um nome e uma imagem diferentes para o seu bot",
+    "defaultPersona": "Persona padrão",
+    "reconnect": "Reconectar",
+    "reconnectDescription": "Sempre reconecte seu bot se ele não estiver respondendo no Messenger ou se você encontrar algum erro de permissão no registro de erros.",
+    "selectFacebookPage": "Selecionar Página do Facebook",
+    "selectPage": {
+      "noPagesTitle": "Nenhuma Página do Facebook encontrada",
+      "noPagesDescription": "Páginas dentro de um Gerenciador de Negócios exigem acesso a ele durante a conexão. Reconecte o Messenger e conceda todas as permissões solicitadas.",
+      "bmLookupFailedTitle": "Algumas páginas do Gerenciador de Negócios podem não aparecer",
+      "bmLookupFailedDescription": "Reconecte o Messenger e conceda acesso ao Gerenciador de Negócios para que as páginas gerenciadas por ele possam ser listadas.",
+      "alreadyConnectedNote": "Esta página já está conectada",
+      "notAdminNote": "É necessária permissão total de administrador na página para conectá-la",
+      "tryAgain": "Tentar reconectar"
+    },
+    "title": "Facebook Messenger",
+    "tabs": {
+      "generalSettings": "Configurações gerais",
+      "messageTemplates": "Modelos de mensagem"
+    },
+    "messageTemplate": {
+      "params": {
+        "postbackPayload": "Carga útil do botão",
+        "postbackPayloadPlaceholder": "Insira a carga útil (opcional)"
+      },
+      "create": {
+        "trigger": "Criar novo modelo",
+        "header": "Cabeçalho",
+        "headerType": "Tipo de cabeçalho",
+        "none": "Nenhum",
+        "text": "Texto",
+        "textAndImage": "Texto + Imagem",
+        "image": "Imagem",
+        "imageHint": "PNG, JPG ou GIF. A imagem é enviada antes do modelo.",
+        "noImageSelected": "Nenhuma imagem selecionada",
+        "body": "Corpo",
+        "buttons": "Botões",
+        "addButton": "Adicionar botão",
+        "addVariable": "Adicionar variável",
+        "buttonText": "Texto do botão",
+        "buttonType": "Tipo de botão",
+        "visitWebsite": "Visitar site",
+        "callPhoneNumber": "Ligar para número de telefone",
+        "postback": "Botão"
+      },
+      "clone": {
+        "title": "Clonar modelo de mensagem",
+        "titleWithName": "Clonar modelo de mensagem: {name}",
+        "channelsLabel": "Canais de destino",
+        "channelsPlaceholder": "Selecione os canais",
+        "succeededCount": "{count} canal(is) clonado(s) com sucesso",
+        "failedCount": "Falha ao clonar em {count} canal(is)",
+        "partialSuccess": "Clonado em {succeeded} canal(is); falhou em {failed} canal(is)",
+        "result": {
+          "title": "Resultados da clonagem",
+          "succeededTitle": "Concluídos com sucesso",
+          "close": "Fechar"
+        }
+      }
+    },
+    "tagSync": {
+      "title": "Sincronização de tags",
+      "description": "Sincronização bidirecional de tags entre este espaço de trabalho e o canal conectado.",
+      "toggleSuccess": "Configuração de sincronização de tags atualizada.",
+      "enabledSince": "Ativada desde {date}",
+      "disabled": "Desativada",
+      "labelSync": "Sincronizar tags",
+      "on": "Ativada",
+      "off": "Desativada",
+      "termsRequired": "O administrador da Página deve aceitar os Termos de Contatos de Páginas do Facebook:"
+    }
+  },
+  "omnichannel": {
+    "title": "Omnichannel"
+  },
+  "openai": {
+    "connect": {
+      "description": "Responda aos usuários com naturalidade usando IA baseada nos dados da sua empresa."
+    },
+    "title": "OpenAI"
+  },
+  "claude": {
+    "autoReply": {
+      "description": "Ative a resposta automática por IA para responder aos usuários com naturalidade usando os dados da sua empresa.",
+      "label": "Resposta automática por IA"
+    },
+    "connect": {
+      "description": "Responda aos usuários com naturalidade usando IA baseada nos dados da sua empresa.",
+      "label": "Claude AI"
+    },
+    "title": "Claude AI"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "Ative a resposta automática por IA para responder aos usuários com naturalidade usando os dados da sua empresa.",
+      "label": "Resposta automática por IA"
+    },
+    "connect": {
+      "description": "Responda aos usuários com naturalidade usando IA baseada nos dados da sua empresa.",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
+  "openrouter": {
+    "autoReply": {
+      "description": "Ative a resposta automática por IA fornecida pelo OpenRouter.",
+      "label": "Resposta automática por IA"
+    },
+    "connect": {
+      "description": "Acesse mais de 300 modelos de IA com uma única chave de API.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
+  "openaiCompatible": {
+    "addProvider": "Adicionar provedor de IA",
+    "addProviderModel": "Adicionar {name}",
+    "apiKeyKeepExisting": "Deixe em branco para manter a chave de API existente.",
+    "autoReply": {
+      "description": "Permita que este provedor seja usado em respostas automáticas por IA.",
+      "label": "Resposta automática por IA"
+    },
+    "connect": {
+      "description": "Conecte provedores compatíveis com a OpenAI como modelos alternativos dos agentes de IA.",
+      "label": "Provedores compatíveis com a OpenAI"
+    },
+    "empty": "Nenhum provedor compatível com a OpenAI configurado.",
+    "fields": {
+      "baseURL": "URL base",
+      "defaultModel": "Modelo padrão",
+      "enabled": "Ativado"
+    },
+    "provider": "Provedor de IA",
+    "title": "Compatível com a OpenAI",
+    "validation": {
+      "invalidBaseURL": "A URL base é inválida ou não é permitida.",
+      "presetAlreadyConnected": "Esta predefinição já está conectada a este espaço de trabalho."
+    }
+  },
+  "settings": {
+    "title": "Configurações",
+    "agents": {
+      "description": "Descrição dos agentes de IA",
+      "title": "Agentes de IA"
+    },
+    "aiTriggers": {
+      "description": "Descrição dos gatilhos de IA",
+      "title": "Gatilhos de IA"
+    },
+    "automatedResponses": {
+      "title": "Palavras-chave"
+    },
+    "openai": {
+      "description": "Descrição da integração com a OpenAI",
+      "title": "Integração com a OpenAI"
+    },
+    "claude": {
+      "description": "Descrição da integração com o Claude",
+      "title": "Integração com o Claude"
+    },
+    "deepseek": {
+      "description": "Descrição da integração com o DeepSeek",
+      "title": "Integração com o DeepSeek"
+    }
+  },
+  "auth": {
+    "orContinueWith": "Ou continue com",
+    "continueWithFacebook": "Continuar com o Facebook",
+    "dontHaveAnAccount": "Não tem uma conta?",
+    "alreadyHaveAnAccount": "Já tem uma conta?",
+    "signUp": "Cadastre-se",
+    "acceptTermsAndPolicy": "Ao clicar em continuar, você concorda com nossa",
+    "and": "e nossos",
+    "privacyPolicy": "Política de Privacidade",
+    "termsOfService": "Termos de Serviço",
+    "signInTitle": "Entrar em {name}",
+    "forgotPasswordTitle": "Esqueceu sua senha?",
+    "forgotPasswordDescription": "Não se preocupe! Enviaremos um link com instruções para redefinir sua senha.",
+    "checkYourEmail": "Verifique seu e-mail",
+    "magicLinkSent": "Enviamos uma URL de verificação para o seu e-mail",
+    "magicLinkSentDescription": "Clique no link enviado por e-mail para continuar.",
+    "didNotReceiveEmail": "Não recebeu o e-mail? Verifique a pasta de spam.",
+    "trySigningInAgain": "Você também pode tentar entrar novamente com outro e-mail.",
+    "signIn": "Entrar",
+    "signUpSuccess": "Cadastro realizado com sucesso. Verifique seu e-mail para confirmar.",
+    "forgotPassword": "Esqueceu a senha?",
+    "rememberedPassword": "Lembrou sua senha?",
+    "forgotPasswordEmailSent": "Enviamos um e-mail com instruções para redefinir sua senha.",
+    "magicLinkSentTitle": "Link mágico enviado",
+    "passwordResetSuccess": "Senha redefinida com sucesso",
+    "resetPasswordTitle": "Redefina sua senha",
+    "resetPasswordDescription": "Digite sua nova senha abaixo.",
+    "signUpTitle": "Cadastre-se em {name}",
+    "changePasswordTitle": "Altere sua senha",
+    "changePasswordDescription": "Defina uma nova senha antes de continuar.",
+    "passwordChangeSuccess": "Senha alterada"
+  },
+  "emailTopics": {
+    "title": "Tópicos de e-mail"
+  },
+  "tags": {
+    "title": "Tags"
+  },
+  "texts": {
+    "or": "ou"
+  },
+  "theme": {
+    "dark": "Escuro",
+    "light": "Claro",
+    "system": "Sistema"
+  },
+  "validation": {
+    "maxSize": "O tamanho do arquivo excede o limite máximo",
+    "maxItemsReached": "Máximo de {max} {feature} permitido por espaço de trabalho",
+    "invalidApiKey": "Chave de API inválida",
+    "maxMustBeGreaterThanMin": "{maxField} deve ser maior ou igual a {minField}"
+  },
+  "webchat": {
+    "chatUnavailable": "Este chat está indisponível no momento.",
+    "description": "Permita que seus clientes recebam respostas automatizadas instantâneas da sua empresa diretamente pelo seu site",
+    "rateLimitExceeded": "Muitas solicitações. Tente novamente em instantes.",
+    "title": "Chat na Web",
+    "workspaceUnavailable": "Este espaço de trabalho não está mais disponível.",
+    "unauthorizedDomain": {
+      "description": "Este site não está autorizado a carregar este widget de chat.",
+      "title": "Webchat indisponível"
+    }
+  },
+  "whatsapp": {
+    "category": {
+      "marketing": {
+        "description": "Descrição da categoria Marketing",
+        "label": "Marketing"
+      },
+      "utility": {
+        "description": "Descrição da categoria Utilidade",
+        "label": "Utilidade"
+      }
+    },
+    "commands": {
+      "description": "Estas são palavras-chave especiais que informam ao bot do WhatsApp o que fazer",
+      "label": "Comandos"
+    },
+    "autoConnect": {
+      "inProgress": "Conectando…"
+    },
+    "connectExisting": "Conectar uma conta existente do WhatsApp Business",
+    "embeddedSignupDone": "Cadastro concluído — você pode fechar esta aba.",
+    "embeddedSignupPopupBlocked": "Permita pop-ups para este site e tente novamente.",
+    "fillRequiredFields": "Preencha todos os campos obrigatórios",
+    "continueManualConnect": "Continuar — conexão manual",
+    "icebreakers": {
+      "description": "Estas são perguntas comuns que as pessoas podem fazer a você com facilidade.",
+      "label": "Quebra-gelos"
+    },
+    "manualConnect": "Conexão manual usando o token de acesso do usuário do sistema.",
+    "manualOnboarding": {
+      "title": "Sua caixa de entrada do WhatsApp está pronta!",
+      "description": "Configure a URL do webhook e o token de verificação no seu aplicativo da Meta. Use os valores abaixo.",
+      "webhookUrl": "URL do webhook",
+      "verifyToken": "Token de verificação do webhook",
+      "qrCodeHint": "Escaneie o código QR para abrir a URL do webhook",
+      "moreSettings": "Mais configurações",
+      "goToInbox": "Ir para a caixa de entrada"
+    },
+    "phoneVerification": {
+      "title": "Verificar número de telefone do WhatsApp",
+      "description": "Solicite um código de verificação à Meta e insira-o aqui. O número de telefone será registrado automaticamente.",
+      "errorTitle": "É necessário verificar o número de telefone",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Chamada de voz"
+      },
+      "actions": {
+        "sendCode": "Enviar código",
+        "resendIn": "Reenviar em {seconds}s",
+        "verify": "Verificar e registrar"
+      },
+      "fields": {
+        "code": {
+          "label": "Código de verificação",
+          "placeholder": "Insira o código de uso único da Meta"
+        }
+      },
+      "messages": {
+        "codeSent": "Código de verificação enviado por {method}.",
+        "cooldown": "Aguarde {seconds}s antes de solicitar outro código.",
+        "verified": "Número de telefone verificado e registrado com sucesso."
+      },
+      "errors": {
+        "integrationNotFound": "Integração com o WhatsApp não encontrada.",
+        "codeNotSent": "Não foi possível enviar o código de verificação do WhatsApp.",
+        "codeNotVerified": "Não foi possível verificar o código do WhatsApp.",
+        "registrationFailed": "Falha na verificação do número de telefone do WhatsApp."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "O token de acesso do WhatsApp é obrigatório.",
+        "appSettingsNotFound": "As configurações do aplicativo do WhatsApp não foram encontradas.",
+        "failedToPersistIntegration": "Falha ao salvar a integração com o WhatsApp.",
+        "noPhoneNumberFound": "Nenhum número de telefone do WhatsApp foi encontrado.",
+        "noPhoneNumbersFound": "Nenhum número de telefone foi encontrado para esta conta do WhatsApp Business.",
+        "phoneNumberNotFound": "O número de telefone do WhatsApp selecionado não foi encontrado.",
+        "unableToVerifyToken": "Não foi possível verificar o token do WhatsApp.",
+        "wabaMismatch": "A conta do WhatsApp Business selecionada não corresponde à autorização.",
+        "wabaResolveFailed": "Não foi possível identificar a conta do WhatsApp Business a partir da autorização."
+      }
+    },
+    "marketingMessageLite": "Marketing Message Lite",
+    "messageTemplate": {
+      "carouselImage": {
+        "label": "Imagem do carrossel"
+      },
+      "carouselVideo": {
+        "label": "Vídeo do carrossel"
+      },
+      "document": {
+        "label": "Documento"
+      },
+      "image": {
+        "label": "Imagem"
+      },
+      "location": {
+        "label": "Localização"
+      },
+      "text": {
+        "label": "Texto"
+      },
+      "video": {
+        "label": "Vídeo"
+      },
+      "viewCatalog": {
+        "label": "Ver catálogo"
+      },
+      "viewProduct": {
+        "label": "Ver produto"
+      },
+      "params": {
+        "couponCode": "Código do cupom",
+        "couponCodePlaceholder": "Insira o código do cupom",
+        "quickReplyPayload": "Carga útil da resposta rápida",
+        "quickReplyPayloadPlaceholder": "Insira a carga útil (opcional)",
+        "flowToken": "Token do fluxo",
+        "flowTokenPlaceholder": "Insira o token do fluxo",
+        "catalogProductId": "ID do produto",
+        "catalogProductIdPlaceholder": "Insira o ID do produto no varejista",
+        "carouselCard": "Cartão {index}",
+        "limitedTimeOffer": "Horário de expiração da oferta",
+        "limitedTimeOfferPlaceholder": "Insira o horário de expiração em milissegundos",
+        "limitedTimeOfferHelp": "Timestamp Unix em milissegundos no qual a oferta expira",
+        "location": "Localização",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "locationName": "Nome do local (opcional)",
+        "locationAddress": "Endereço (opcional)",
+        "enterFormatUrl": "Insira a URL de {format}"
+      }
+    },
+    "sampleBodyCardContent": {
+      "label": "Exemplo de conteúdo do corpo do cartão"
+    },
+    "sampleBodyContent": {
+      "label": "Exemplo de conteúdo do corpo"
+    },
+    "sampleHeaderContent": {
+      "label": "Exemplo de conteúdo do cabeçalho"
+    },
+    "showFooter": {
+      "label": "Exibir rodapé"
+    },
+    "showHeader": {
+      "label": "Exibir cabeçalho"
+    },
+    "tabs": {
+      "accountHealths": "Integridade da conta",
+      "automation": "Automação",
+      "ecommerce": "Comércio eletrônico",
+      "flows": "Fluxos",
+      "messageTemplates": "Modelos de mensagem",
+      "profile": "Perfil",
+      "usefulLinks": "Links úteis"
+    },
+    "accountHealths": {
+      "title": "Gerencie sua conta do WhatsApp",
+      "description": "Confira o status, os limites de mensagens e a qualidade da sua conta do WhatsApp. Atualize as configurações ou resolva problemas, se necessário",
+      "goToBusinessManager": "Ir para o Gerenciador de Negócios da Meta",
+      "unavailable": {
+        "title": "A integridade da conta está temporariamente indisponível",
+        "description": "Não foi possível carregar este número de telefone do WhatsApp pela Meta no momento. As demais ações de recuperação desta página continuam disponíveis."
+      },
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Número de telefone exibido",
+          "tooltip": "O número de telefone exibido aos clientes quando eles enviam uma mensagem à sua empresa."
+        },
+        "businessName": {
+          "label": "Nome da empresa",
+          "tooltip": "O nome de exibição verificado da empresa no WhatsApp."
+        },
+        "displayNameStatus": {
+          "label": "Status do nome de exibição",
+          "tooltip": "Status de aprovação do nome de exibição da sua empresa no WhatsApp."
+        },
+        "qualityRating": {
+          "label": "Classificação de qualidade",
+          "tooltip": "Classificação de qualidade baseada no feedback dos clientes nos últimos 7 dias."
+        },
+        "messagingLimitTier": {
+          "label": "Faixa do limite de mensagens",
+          "tooltip": "Número máximo de clientes únicos para os quais sua empresa pode enviar mensagens em uma janela móvel de 24 horas."
+        },
+        "accountMode": {
+          "label": "Modo da conta",
+          "tooltip": "Indica se a conta do WhatsApp Business está ativa ou no modo sandbox."
+        },
+        "marketingMessages": {
+          "label": "Mensagens de marketing (MM Lite)",
+          "tooltip": "Status da integração da conta do WhatsApp Business à API Marketing Messages Lite.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Não qualificada: modelo OBO",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Não qualificada: inativa ou restrita",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Não qualificada: país não compatível",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Não qualificada: usa o aplicativo WhatsApp Business",
+            "ELIGIBLE": "Qualificada",
+            "PENDING_VALID_PAYMENT_METHOD": "Aguardando método de pagamento válido",
+            "PENDING_INTERNAL_SETUP": "Aguardando configuração interna",
+            "ONBOARDED": "Integrada"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "A conta do WhatsApp Business usa o modelo OBO, que não é compatível. Primeiro, você deve transferir a propriedade da WABA para o cliente ou fazer a integração usando a Intent API.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "A conta do WhatsApp Business está inativa ou impedida de enviar mensagens devido à aplicação de uma política.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "A conta do WhatsApp Business está em uma região que não é compatível com a API MM Lite.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "O número de telefone do WhatsApp Business está sendo usado no aplicativo WhatsApp Business.",
+            "ELIGIBLE": "A conta do WhatsApp Business está qualificada para ser integrada e usar a API MM Lite.",
+            "PENDING_VALID_PAYMENT_METHOD": "É necessário configurar um método de pagamento válido na conta do WhatsApp Business.",
+            "PENDING_INTERNAL_SETUP": "A conta do WhatsApp Business está sendo configurada para usar a API MM Lite e não exige nenhuma outra ação do cliente empresarial ou parceiro. Estima-se que o processo automatizado leve menos de dez minutos. Assine o webhook account_update e aguarde o evento AD_ACCOUNT_LINKED. Abra um chamado de suporte se o processo levar mais de dez minutos e você não tiver recebido um webhook.",
+            "ONBOARDED": "A conta do WhatsApp Business foi integrada com sucesso e está pronta para usar a API MM Lite."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Configuração do webhook",
+          "tooltip": "Status do webhook configurado para receber eventos do WhatsApp.",
+          "configured": "Webhook configurado com sucesso",
+          "notConfigured": "Webhook não configurado"
+        },
+        "phoneNumberHealth": {
+          "label": "Integridade do número de telefone",
+          "tooltip": "Indica se este número de telefone pode enviar mensagens e os problemas que o afetam.",
+          "headline": "Número de telefone - {status}"
+        },
+        "wabaHealth": {
+          "label": "Integridade da conta do WhatsApp Business",
+          "tooltip": "Indica se a conta do WhatsApp Business pode enviar mensagens e os problemas que a afetam.",
+          "headline": "Conta do WhatsApp Business (ID da WABA: {id}) - {status}",
+          "headlineNoId": "Conta do WhatsApp Business - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 clientes a cada 24 h",
+        "TIER_250": "250 clientes a cada 24 h",
+        "TIER_1K": "1.000 clientes a cada 24 h",
+        "TIER_10K": "10.000 clientes a cada 24 h",
+        "TIER_100K": "100.000 clientes a cada 24 h",
+        "TIER_UNLIMITED": "Clientes ilimitados a cada 24 h",
+        "UNKNOWN": "Desconhecido"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Aprovado",
+        "AVAILABLE_WITHOUT_REVIEW": "Disponível sem análise",
+        "DECLINED": "Recusado",
+        "EXPIRED": "Expirado",
+        "NONE": "Nenhum",
+        "PENDING_REVIEW": "Análise pendente"
+      },
+      "accountMode": {
+        "LIVE": "Ativa",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "DISPONÍVEL",
+        "LIMITED": "LIMITADO",
+        "BLOCKED": "BLOQUEADO",
+        "UNKNOWN": "DESCONHECIDO"
+      },
+      "health": {
+        "label": "Status da empresa",
+        "tooltip": "Visão geral da integridade da sua conta do WhatsApp e da capacidade de enviar mensagens.",
+        "blockedMessage": "Seu número de telefone foi impedido de enviar mensagens.",
+        "problem": "Problema:",
+        "possibleSolution": "Solução possível:",
+        "noIssues": "Nenhum problema detectado",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "Indica se este {type} pode enviar mensagens e os problemas que o afetam.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Número de telefone",
+          "WABA": "Conta do WhatsApp Business",
+          "BUSINESS": "Empresa",
+          "MESSAGE_TEMPLATE": "Modelo de mensagem",
+          "APP": "Aplicativo"
+        }
+      }
+    },
+    "templateFooter": {
+      "label": "Rodapé do modelo"
+    },
+    "templateHeader": {
+      "label": "Cabeçalho do modelo"
+    },
+    "transferPhoneNumber": "Transferir telefone de outro provedor do WhatsApp",
+    "signupSessionExpired": "Sua sessão de cadastro do WhatsApp expirou. Inicie a conexão novamente."
+  },
+  "zalo": {
+    "title": "Zalo OA",
+    "refreshPermissions": "Atualizar permissões",
+    "duplicated": "Esta conta do Zalo OA já foi conectada a outro espaço de trabalho.",
+    "tagSync": {
+      "title": "Sincronização de tags",
+      "description": "Espelhe as atribuições de tags locais neste Zalo OA.",
+      "toggleSuccess": "Configuração de sincronização de tags atualizada.",
+      "enabledSince": "Ativada desde {date}",
+      "disabled": "Desativada"
+    }
+  },
+  "telegram": {
+    "description": "Esta integração permite criar bots do Telegram.",
+    "title": "Telegram"
+  },
+  "invitation": {
+    "chatbotInvitationDescription1": "Participe de {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} convidou você para participar de {chatbotName}.",
+    "invalidInvitation": "Este convite é inválido ou expirou.",
+    "workspaceUnavailable": "Este espaço de trabalho não está mais disponível."
+  },
+  "trigger": {
+    "when": "Quando isto acontecer",
+    "conditions": {
+      "tagApplied": "Tag aplicada",
+      "tagRemoved": "Tag removida",
+      "dateTimeBasedTrigger": "Gatilho baseado em data e hora",
+      "customFieldValueChanged": "Campo personalizado alterado",
+      "contactInfoUpdated": "Telefone ou e-mail atualizado",
+      "conversationTransferredToHuman": "Conversa transferida para um atendente",
+      "conversationTransferredToBot": "Conversa transferida para o bot",
+      "newContact": "Novo contato",
+      "contactUnsubscribedFormBroadcast": "Contato cancelou a inscrição na transmissão",
+      "archived": "Arquivada",
+      "followUp": "Acompanhamento",
+      "conversationAssigned": "Conversa atribuída",
+      "conversationUnassigned": "Conversa sem atribuição",
+      "incomingCall": "Chamada recebida",
+      "missedAudioCall": "Chamada de áudio perdida",
+      "callEnded": "Chamada encerrada",
+      "ticketCreated": "Ticket criado",
+      "ticketMovedToStage": "Ticket movido para a etapa",
+      "ticketValueChanged": "Valor do ticket alterado",
+      "ticketStatusChanged": "Status do ticket alterado",
+      "ticketPriorityChanged": "Prioridade do ticket alterada",
+      "subscribedToSequence": "Inscrito na sequência",
+      "unsubscribedFromSequence": "Inscrição na sequência cancelada",
+      "WhatsappShoppingCartSent": "Carrinho de compras do WhatsApp enviado",
+      "userAskedAboutProduct": "Usuário perguntou sobre o produto",
+      "cartAbandoned": "Carrinho abandonado",
+      "newOrder": "Novo pedido",
+      "orderAccepted": "Pedido aceito",
+      "orderShipped": "Pedido enviado",
+      "orderConcluded": "Pedido concluído",
+      "orderCancelled": "Pedido cancelado",
+      "categoryAddedToCart": "Categoria adicionada ao carrinho",
+      "productAddedToCart": "Produto adicionado ao carrinho",
+      "productRemovedFromCart": "Produto removido do carrinho",
+      "productOrdered": "Produto pedido",
+      "contactReferredANewContact": "Contato indicou um novo contato",
+      "contactReferredExistingContact": "Contato indicou um contato existente"
+    },
+    "actions": {
+      "addTag": "Adicionar tag",
+      "removeTag": "Remover tag",
+      "setCustomField": "Definir campo personalizado",
+      "clearCustomField": "Limpar campo personalizado",
+      "startAnotherFlow": "Iniciar outro fluxo",
+      "notifyAdmins": "Notificar administradores",
+      "transferConversationToHuman": "Transferir conversa para um atendente"
+    },
+    "triggerGoesOff": "O gatilho é acionado",
+    "before": "Antes",
+    "after": "Depois",
+    "atTheDayOf": "No dia",
+    "day": "Dia",
+    "hour": "Hora",
+    "minute": "Minuto",
+    "at": "Às"
+  },
+  "errorLogs": {
+    "title": "Logs de erros"
+  },
+  "developerAccessToken": {
+    "title": "Token de acesso à API",
+    "description": "Gere um token para permitir que seu espaço de trabalho acesse as APIs públicas. Mantenha este token em segredo e não o compartilhe com ninguém."
+  },
+  "contacts": {
+    "title": "Contatos",
+    "exportPreparing": "Preparando sua exportação…",
+    "exportPreparingDescription": "Estamos gerando seu arquivo CSV. Isso pode levar alguns instantes.",
+    "exportReadyTitle": "Sua exportação está pronta",
+    "exportReadyDescription": "Copie o link abaixo ou baixe o arquivo diretamente.",
+    "exportDownloadCount": "Baixar ({count})",
+    "exportFailed": "Falha na exportação. Tente novamente.",
+    "copyLink": "Copiar link",
+    "linkCopied": "Link copiado para a área de transferência",
+    "countExact": "{count} contatos",
+    "countCapped": "{count}+ contatos",
+    "exportAllNotice": "Todos os contatos que correspondem ao filtro atual serão exportados.",
+    "exportTakingLong": "A exportação está demorando mais do que o esperado",
+    "exportTakingLongDescription": "A exportação ainda está sendo processada. Você pode fechar esta caixa de diálogo e verificar novamente em alguns minutos no histórico de exportações."
+  },
+  "auditLogs": {
+    "title": "Logs de auditoria"
+  },
+  "customFields": {
+    "title": "Campos personalizados"
+  },
+  "keywords": {
+    "title": "Palavras-chave"
+  },
+  "triggers": {
+    "title": "Gatilhos"
+  },
+  "users": {
+    "title": "Usuários"
+  },
+  "sequences": {
+    "title": "Sequências",
+    "subscribers": "Inscritos",
+    "step": "Mensagem",
+    "addStep": "Adicionar mensagem",
+    "addFirstStep": "Adicionar primeira mensagem",
+    "noSteps": "Ainda não há mensagens. Adicione sua primeira mensagem para começar.",
+    "selectFlow": "Selecionar fluxo",
+    "confirmDeleteStep": "Tem certeza de que deseja excluir esta mensagem?",
+    "delayUnits": {
+      "immediate": "Imediatamente",
+      "minutes": "Minutos",
+      "hours": "Horas",
+      "days": "Dias",
+      "specificTime": "Horário específico"
+    },
+    "timeValidation": "O horário da mensagem deve ser posterior ao da mensagem anterior",
+    "validation": {
+      "exception": "Exceção de validação",
+      "nameExists": "O nome da sequência já existe"
+    },
+    "sendLabel": "Enviar",
+    "selectFlowFirst": "Selecione um fluxo antes de ativar a mensagem",
+    "invalidTimeRange": "O horário de início deve ser anterior ao horário de término",
+    "schedule": "Programação",
+    "scheduleDescription": "Configure quando as mensagens devem ser enviadas",
+    "sendTime": "Horário de envio",
+    "sendTimeDescription": "As mensagens serão enviadas somente durante este intervalo de tempo",
+    "timezone": "Fuso horário",
+    "timezoneDescription": "Todos os horários estão no fuso horário do seu chatbot",
+    "enableSchedule": "Ativar programação",
+    "startTime": "Horário de início",
+    "endTime": "Horário de término",
+    "allDay": "O dia todo",
+    "customTime": "Horário personalizado",
+    "enrollmentSettings": "Configurações de inscrição",
+    "enrollmentDescription": "Controle como os contatos são inscritos nesta sequência",
+    "allowReEnrollment": "Permitir nova inscrição",
+    "allowReEnrollmentDescription": "Os contatos podem ser inscritos várias vezes",
+    "skipWeekends": "Pular fins de semana",
+    "skipWeekendsDescription": "Não enviar mensagens aos sábados e domingos",
+    "unenrollOnReply": "Cancelar inscrição ao responder",
+    "unenrollOnReplyDescription": "Remover o contato da sequência quando ele responder",
+    "performance": "Desempenho",
+    "enrolled": "Inscritos",
+    "completed": "Concluídos",
+    "openRate": "Taxa de abertura",
+    "clickRate": "Taxa de cliques",
+    "replyRate": "Taxa de respostas",
+    "unsubscribeRate": "Taxa de cancelamento de inscrição",
+    "overview": "Visão geral",
+    "analytics": "Análises",
+    "stats": {
+      "sent": "Enviadas",
+      "delivered": "Entregues",
+      "seen": "Visualizadas",
+      "clicked": "Clicadas",
+      "failed": "Falharam",
+      "noContacts": "Nenhum contato encontrado",
+      "pageInfo": "Página {page} de {pageCount}",
+      "selectedAll": "Todos selecionados",
+      "selectedCount": "{count} selecionados",
+      "tagAllDialogDescription": "As tags serão adicionadas a todos os contatos selecionados.",
+      "tagDialogDescription": "As tags serão adicionadas a {count} contato(s).",
+      "tagQueued": "Adicionando tags a {count} contatos em segundo plano.",
+      "loadingMore": "Carregando mais..."
+    },
+    "settings": "Configurações",
+    "flow": "Fluxo",
+    "active": "Ativa",
+    "messageSentAtLeast": "Esta mensagem será enviada pelo menos",
+    "afterPreviousMessage": "após a mensagem anterior (dia = 24 h)",
+    "anyTime": "A qualquer momento",
+    "setTimeRange": "Definir intervalo de tempo",
+    "selectDays": "Selecionar dias",
+    "allDays": "Todos os dias",
+    "deselectAll": "Desmarcar tudo",
+    "monday": "Segunda-feira",
+    "tuesday": "Terça-feira",
+    "wednesday": "Quarta-feira",
+    "thursday": "Quinta-feira",
+    "friday": "Sexta-feira",
+    "saturday": "Sábado",
+    "sunday": "Domingo",
+    "afterText": "Depois"
+  },
+  "tools": {
+    "title": "Ferramentas"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter",
+    "openaiCompatible": "Compatível com OpenAI"
+  },
+  "smtp": {
+    "setting": {
+      "description": "Envie e-mails usando seu servidor SMTP.",
+      "label": "(E-mail) SMTP"
+    },
+    "errors": {
+      "connectionFailed": "Não foi possível conectar ao servidor SMTP. Verifique suas credenciais e tente novamente."
+    }
+  },
+  "botSimulator": {
+    "title": "Simulador de bot",
+    "description": "Simule o comportamento do seu bot em um ambiente em tempo real."
+  },
+  "pollManager": {
+    "title": "Gerenciador de enquetes",
+    "description": "Crie e gerencie enquetes para seus contatos."
+  },
+  "placesNearMe": {
+    "title": "Locais próximos",
+    "description": "Encontre locais próximos aos seus contatos."
+  },
+  "questionnaires": {
+    "title": "Questionários",
+    "description": "Crie e gerencie questionários para seus contatos.",
+    "singular": "Questionário",
+    "submission": "Envio",
+    "addNew": "Adicionar novo",
+    "applicants": "Participantes",
+    "generalSettings": "Configurações gerais",
+    "triggerFlow": "Acionar o fluxo ao concluir o questionário",
+    "enableScore": "Atribuir pontos a cada pergunta respondida.",
+    "enableRetryMessages": "Personalizar mensagens de nova tentativa em caso de falha na resposta.",
+    "enableCustomFieldMapping": "Salvar dados em campos personalizados.",
+    "question": "Pergunta",
+    "activeQuestion": "Ativa",
+    "questionImage": "Imagem da pergunta",
+    "questionImageHint": "Imagem opcional enviada com esta pergunta.",
+    "responseType": "Tipo de resposta",
+    "points": "Pontos",
+    "retryMessage": "Mensagem de nova tentativa se a resposta for inválida",
+    "defaultRetryMessages": {
+      "text": "O que você digitou não é um texto válido. Tente novamente",
+      "number": "O que você digitou não é um número válido. Tente novamente",
+      "email": "O que você digitou não é um e-mail válido. Tente novamente",
+      "phone": "O que você digitou não é um número de telefone válido. Tente novamente",
+      "multipleChoice": "O que você digitou não é uma opção válida. Tente novamente"
+    },
+    "customField": "Salvar resposta em um campo personalizado ou do sistema",
+    "options": "Opções",
+    "mode": "Modo",
+    "completed": "Concluído",
+    "completionRate": "Taxa de conclusão",
+    "date": "Data",
+    "inbox": "Caixa de entrada",
+    "unknownContact": "Contato desconhecido",
+    "noAnswers": "Sem respostas",
+    "responseTypes": {
+      "text": "Texto",
+      "number": "Número",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "multipleChoice": "Múltipla escolha"
+    },
+    "flowModes": {
+      "start": "Iniciar questionário",
+      "end": "Encerrar questionário",
+      "deleteApplicant": "Excluir participante"
+    },
+    "dialogDescriptions": {
+      "create": "Dê um nome ao questionário antes de adicionar perguntas.",
+      "rename": "Atualize o nome do questionário exibido nas listas e nos fluxos.",
+      "flowStep": "Escolha como esta etapa do fluxo interage com um questionário."
+    },
+    "status": {
+      "inProgress": "Em andamento",
+      "completed": "Concluído",
+      "cancelled": "Cancelado",
+      "failed": "Falhou",
+      "timeout": "Tempo esgotado"
+    }
+  },
+  "facebookCommentAutomation": {
+    "title": "Automação de comentários do Facebook",
+    "description": "Automatize comentários do Facebook para seus contatos.",
+    "create": "Criar automação",
+    "replies": "Respostas",
+    "activated": "Automação ativada",
+    "deactivated": "Automação desativada",
+    "trackCommentsOn": "Rastrear comentários em",
+    "trackCommentsOnDescription": "Aplique esta automação a todas as publicações da sua Página ou limite-a a publicações específicas selecionadas por você.",
+    "privateReply": "Resposta privada (caixa de entrada)",
+    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada de quem comentou. Escolha um agente de IA, um modelo de texto fixo (com suporte a spintax), um fluxo de chatbot ou desative a resposta.",
+    "publicReply": "Resposta pública ao comentário",
+    "publicReplyDescription": "Publique uma resposta pública diretamente abaixo do comentário. Compatível com até 10 modelos de texto (com suporte a spintax), agente de IA, fluxo de chatbot ou nenhuma resposta.",
+    "replyMessage": "Mensagem de resposta",
+    "replyMessagePlaceholder": "Digite a mensagem de resposta...",
+    "includeKeywordsType": "Responder a",
+    "includeKeywordsTypeDescription": "Escolha a quais comentários esta automação responde.",
+    "includeKeywords": "Palavras-chave para correspondência",
+    "excludeKeywords": "Excluir comentários com estas palavras-chave",
+    "excludeKeywordsDescription": "Comentários que contêm qualquer uma destas palavras-chave serão ignorados pelas automações de resposta privada e pública.",
+    "keywordsPlaceholder": "Digite e pressione Enter...",
+    "replyAfter": "Responder após",
+    "replyAfterValue": "Valor",
+    "schedule": {
+      "title": "Definir horário de atividade",
+      "description": "Escolha um horário de início e de término. Se o horário de término for anterior ao de início, a programação continuará durante a madrugada.",
+      "startTime": "Horário de início",
+      "endTime": "Horário de término",
+      "alwaysRun": "Executar sempre",
+      "save": "Salvar",
+      "invalidTimeRange": "Os horários de início e término devem ser diferentes",
+      "timeRequired": "Selecione os horários de início e término"
+    },
+    "card": {
+      "targeting": "Segmentação e resposta",
+      "filters": "Filtros e opções",
+      "replyTiming": "Momento da resposta",
+      "hideComments": "Ocultar comentários"
+    },
+    "postType": {
+      "all": "Todas as publicações",
+      "published": "Publicações publicadas",
+      "ads": "Publicações de anúncios",
+      "reels": "Reels",
+      "specificPosts": "Publicações específicas"
+    },
+    "replyType": {
+      "text": "Mensagem de texto",
+      "flow": "Fluxo",
+      "AIAgent": "Agente de IA",
+      "none": "Sem resposta"
+    },
+    "keywordsType": {
+      "all": "Todos os comentários",
+      "equal": "Correspondência exata",
+      "contain": "Contém"
+    },
+    "replyAfterType": {
+      "immediately": "Imediatamente",
+      "seconds": "Após X segundos",
+      "minutes": "Após X minutos",
+      "hours": "Após X horas",
+      "randomWithin3Minutes": "Aleatoriamente em até 3 minutos",
+      "randomWithin5Minutes": "Aleatoriamente em até 5 minutos",
+      "randomWithin10Minutes": "Aleatoriamente em até 10 minutos",
+      "randomWithin20Minutes": "Aleatoriamente em até 20 minutos",
+      "randomWithin30Minutes": "Aleatoriamente em até 30 minutos",
+      "randomWithin60Minutes": "Aleatoriamente em até 60 minutos"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Responder somente a novos contatos",
+      "replyToNewContactsOnlyDescription": "Responder automaticamente somente a pessoas que nunca foram contatos no seu espaço de trabalho.",
+      "replyOncePerUserPerPost": "Responder apenas uma vez a cada usuário por publicação",
+      "replyOncePerUserPerPostDescription": "Cada usuário receberá no máximo uma resposta automática por publicação.",
+      "likeUserComment": "Curtir o comentário do usuário",
+      "likeUserCommentDescription": "Reagir automaticamente com uma curtida ao comentário do usuário.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Responder a usuários que comentaram em outras publicações",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuar respondendo a usuários que já comentaram em suas outras publicações.",
+      "ignoreCommentReplies": "Não responder a respostas de comentários",
+      "ignoreCommentRepliesDescription": "Ignorar a automação para comentários que sejam respostas a outros comentários, e não comentários de nível superior.",
+      "trackUserTags": "Rastrear quando um usuário marca outros usuários",
+      "trackUserTagsDescription": "Acionar a automação quando um usuário marcar ou mencionar outro usuário em seu comentário."
+    },
+    "hideComments": {
+      "all": "Ocultar todos os comentários",
+      "hasPhoneNumber": "Contém número de telefone",
+      "hasImage": "Contém imagem",
+      "hasVideo": "Contém vídeo",
+      "hasLink": "Contém link",
+      "hasKeywords": "Contém palavras-chave",
+      "keywords": "Palavras-chave",
+      "showCommentsAfter": "Mostrar comentários após"
+    },
+    "showCommentsAfter": {
+      "none": "Nunca"
+    },
+    "selectPosts": "Selecionar publicações",
+    "selectPageAll": "Todas as páginas",
+    "chooseSpecificPosts": "Escolher publicações...",
+    "postIdTab": "ID da publicação",
+    "postIdPlaceholder": "Digite os IDs das publicações, um por linha...",
+    "noPostsFound": "Nenhuma publicação encontrada"
+  },
+  "instagramCommentAutomation": {
+    "title": "Automação de comentários do Instagram",
+    "description": "Automatize comentários do Instagram para seus contatos.",
+    "create": "Criar automação",
+    "replies": "Respostas",
+    "activated": "Automação ativada",
+    "deactivated": "Automação desativada",
+    "trackCommentsOn": "Rastrear comentários em",
+    "trackCommentsOnDescription": "Aplique esta automação a todas as publicações da conta conectada ou limite-a a publicações específicas selecionadas por você.",
+    "privateReply": "Resposta privada (caixa de entrada)",
+    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada de quem comentou. Escolha um agente de IA, um modelo de texto fixo (com suporte a spintax), um fluxo de chatbot ou desative a resposta.",
+    "publicReply": "Resposta pública ao comentário",
+    "publicReplyDescription": "Publique uma resposta pública diretamente abaixo do comentário. Compatível com até 10 modelos de texto (com suporte a spintax), agente de IA, fluxo de chatbot ou nenhuma resposta.",
+    "replyMessage": "Mensagem de resposta",
+    "replyMessagePlaceholder": "Digite a mensagem de resposta...",
+    "includeKeywordsType": "Responder a",
+    "includeKeywordsTypeDescription": "Escolha a quais comentários esta automação responde.",
+    "includeKeywords": "Palavras-chave para correspondência",
+    "excludeKeywords": "Excluir comentários com estas palavras-chave",
+    "excludeKeywordsDescription": "Comentários que contêm qualquer uma destas palavras-chave serão ignorados pelas automações de resposta privada e pública.",
+    "keywordsPlaceholder": "Digite e pressione Enter...",
+    "replyAfter": "Responder após",
+    "replyAfterValue": "Valor",
+    "schedule": {
+      "title": "Definir horário de atividade",
+      "description": "Escolha um horário de início e de término. Se o horário de término for anterior ao de início, a programação continuará durante a madrugada.",
+      "startTime": "Horário de início",
+      "endTime": "Horário de término",
+      "alwaysRun": "Executar sempre",
+      "save": "Salvar",
+      "invalidTimeRange": "Os horários de início e término devem ser diferentes",
+      "timeRequired": "Selecione os horários de início e término"
+    },
+    "card": {
+      "targeting": "Segmentação e resposta",
+      "filters": "Filtros e opções",
+      "replyTiming": "Momento da resposta",
+      "hideComments": "Ocultar comentários"
+    },
+    "postType": {
+      "all": "Todas as publicações",
+      "published": "Publicações publicadas",
+      "reels": "Reels",
+      "specificPosts": "Publicações específicas"
+    },
+    "replyType": {
+      "text": "Mensagem de texto",
+      "flow": "Fluxo",
+      "AIAgent": "Agente de IA",
+      "none": "Sem resposta"
+    },
+    "keywordsType": {
+      "all": "Todos os comentários",
+      "equal": "Correspondência exata",
+      "contain": "Contém"
+    },
+    "replyAfterType": {
+      "immediately": "Imediatamente",
+      "seconds": "Após X segundos",
+      "minutes": "Após X minutos",
+      "hours": "Após X horas",
+      "randomWithin3Minutes": "Aleatoriamente em até 3 minutos",
+      "randomWithin5Minutes": "Aleatoriamente em até 5 minutos",
+      "randomWithin10Minutes": "Aleatoriamente em até 10 minutos",
+      "randomWithin20Minutes": "Aleatoriamente em até 20 minutos",
+      "randomWithin30Minutes": "Aleatoriamente em até 30 minutos",
+      "randomWithin60Minutes": "Aleatoriamente em até 60 minutos"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Responder somente a novos contatos",
+      "replyToNewContactsOnlyDescription": "Responder automaticamente somente a pessoas que nunca foram contatos no seu espaço de trabalho.",
+      "replyOncePerUserPerPost": "Responder apenas uma vez a cada usuário por publicação",
+      "replyOncePerUserPerPostDescription": "Cada usuário receberá no máximo uma resposta automática por publicação.",
+      "likeUserComment": "Curtir o comentário do usuário",
+      "likeUserCommentDescription": "Reagir automaticamente com uma curtida ao comentário do usuário.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Responder a usuários que comentaram em outras publicações",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuar respondendo a usuários que já comentaram em suas outras publicações.",
+      "ignoreCommentReplies": "Não responder a respostas de comentários",
+      "ignoreCommentRepliesDescription": "Ignorar a automação para comentários que sejam respostas a outros comentários, e não comentários de nível superior."
+    },
+    "hideComments": {
+      "all": "Ocultar todos os comentários",
+      "hasPhoneNumber": "Contém número de telefone",
+      "hasLink": "Contém link",
+      "hasKeywords": "Contém palavras-chave",
+      "keywords": "Palavras-chave",
+      "showCommentsAfter": "Mostrar comentários após"
+    },
+    "showCommentsAfter": {
+      "none": "Nunca"
+    },
+    "selectPosts": "Selecionar publicações",
+    "selectPageAll": "Todas as contas",
+    "chooseSpecificPosts": "Escolher publicações...",
+    "postIdTab": "ID da publicação",
+    "postIdPlaceholder": "Digite os IDs das publicações, um por linha...",
+    "noPostsFound": "Nenhuma publicação encontrada",
+    "connectionType": {
+      "title": "Escolha o tipo de conexão do Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Conexão pelo Login do Instagram. Compatível com respostas públicas, respostas privadas e ocultação de comentários. Não é possível curtir comentários.",
+      "instagramFacebookTitle": "Login do Instagram com Facebook",
+      "instagramFacebookDescription": "Instagram conectado por meio de uma Página do Facebook. Compatível com respostas públicas, respostas privadas, ocultação e curtidas de comentários."
+    }
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Automação de anúncios de cadastro do Facebook",
+    "description": "Automatize anúncios de cadastro do Facebook para seus contatos.",
+    "create": "Criar novo",
+    "leads": "Cadastros",
+    "facebookPage": "Página do Facebook",
+    "leadForm": "Formulário de cadastro",
+    "allForms": "Todos os formulários",
+    "allFormsNote": "Os cadastros de todos os formulários desta página serão capturados. Os campos padrão (e-mail, telefone, nome e gênero) são salvos automaticamente nos campos correspondentes do contato.",
+    "leadData": "Dados do cadastro",
+    "whatFlow": "Qual fluxo é acionado",
+    "none": "Nenhum",
+    "addNewPage": "Adicionar nova",
+    "noEligiblePages": "Nenhuma página qualificada. Use \"Adicionar nova\" para conceder acesso aos cadastros.",
+    "duplicateError": "Já existe uma automação para esta página e formulário.",
+    "subscribeError": "Não foi possível inscrever esta página nas notificações de cadastros do Facebook, portanto a automação não foi criada. Reconecte a página com \"Adicionar nova\" e tente novamente."
+  },
+  "inboxTeams": {
+    "title": "Equipes da caixa de entrada"
+  },
+  "userPersistentMenus": {
+    "title": "Menus persistentes do usuário"
+  },
+  "webhooks": {
+    "title": "Webhooks"
+  },
+  "reflinks": {
+    "title": "Links de ponto de entrada",
+    "description": "Links de palavras-chave que iniciam fluxos e capturam cargas úteis de referência dos canais."
+  },
+  "qrCodes": {
+    "title": "Códigos QR",
+    "description": "Crie códigos QR que direcionam aos fluxos do seu chatbot."
+  },
+  "magicLinks": {
+    "title": "Links mágicos",
+    "description": "Crie links diretos que redirecionam para sua URL com parâmetros de consulta."
+  },
+  "QRCode": {
+    "title": "Código QR",
+    "description": "Compartilhe este código para que as pessoas abram seu link de rastreamento."
+  },
+  "platformSettings": {
+    "title": "Configurações da plataforma",
+    "errors": {
+      "giphyApiKeyRequired": "A chave da API é obrigatória para configurar o GIPHY.",
+      "giphyApiKeyInvalid": "Chave da API do GIPHY inválida"
+    }
+  },
+  "home": {
+    "welcomeBack": "Bem-vindo de volta, {name}",
+    "subtitle": "Escolha um espaço de trabalho para continuar ou crie um novo.",
+    "noWorkspaces": "Você ainda não tem nenhum espaço de trabalho.",
+    "owner": "Proprietário"
+  },
+  "ecommerce": {
+    "title": "Comércio eletrônico",
+    "description": "Crie e gerencie sua loja virtual."
+  },
+  "appointmentScheduling": {
+    "title": "Agendamento de compromissos",
+    "description": "Crie e gerencie seus agendamentos de compromissos."
+  },
+  "templates": {
+    "title": "Modelos",
+    "description": "Crie e gerencie seus modelos."
+  },
+  "qrCodeGenerator": {
+    "title": "Gerador de códigos QR",
+    "description": "Crie e gerencie seus códigos QR."
+  },
+  "platformAdmin": {
+    "platformCredentials": {
+      "title": "Credenciais da plataforma",
+      "description": "Aplicativos globais padrão de desenvolvedor usados por todos os espaços de trabalho que não têm credenciais próprias de marca branca."
+    },
+    "helpItems": {
+      "title": "Links de ajuda",
+      "description": "Links de ajuda exibidos na barra lateral para todos os espaços de trabalho que não pertencem a um locatário de marca branca."
+    },
+    "queues": {
+      "title": "Filas"
+    }
+  },
+  "platformCredentials": {
+    "title": "Credenciais da plataforma",
+    "usingPlatformDefault": "Usando o padrão da plataforma",
+    "usingPlatformDefaultHint": "Este canal funciona imediatamente com o aplicativo compartilhado da plataforma. Adicione suas próprias configurações a qualquer momento para substituí-lo.",
+    "notConfigured": "Ainda não configurado",
+    "notConfiguredHint": "Adicione suas configurações para começar a usar esta integração."
+  },
+  "platformBranding": {
+    "title": "Identidade visual da plataforma",
+    "sections": {
+      "identity": {
+        "title": "Identidade da marca",
+        "description": "Nome e tema de cores exibidos em toda a plataforma"
+      },
+      "assets": {
+        "title": "Recursos visuais",
+        "description": "Logotipos e favicon exibidos no navegador e na interface"
+      },
+      "legal": {
+        "title": "Links jurídicos",
+        "description": "Links exibidos nos rodapés e fluxos de consentimento"
+      },
+      "advanced": {
+        "title": "Avançado",
+        "description": "Injete CSS ou JavaScript personalizado em todas as páginas"
+      }
+    }
+  },
+  "platformChannels": {
+    "title": "Canais permitidos",
+    "description": "Escolha quais tipos de canal os espaços de trabalho deste locatário podem criar.",
+    "hint": "Deixe todos os canais desmarcados para permitir todos eles."
+  },
+  "platformEmailTemplates": {
+    "title": "Modelos de e-mail",
+    "description": "Deixe o assunto e o corpo em branco para usar o modelo padrão do sistema.",
+    "sections": {
+      "signup": {
+        "title": "E-mail de verificação de cadastro",
+        "description": "Enviado quando um novo usuário cria uma conta"
+      },
+      "forgotPassword": {
+        "title": "E-mail de recuperação de senha",
+        "description": "Enviado quando um usuário solicita a redefinição da senha"
+      },
+      "magicLink": {
+        "title": "E-mail de acesso por link mágico",
+        "description": "Enviado quando um usuário solicita um link mágico para entrar"
+      },
+      "accountCredentials": {
+        "title": "E-mail de credenciais da subconta",
+        "description": "Enviado quando um revendedor provisiona uma nova subconta"
+      }
+    },
+    "fields": {
+      "subject": {
+        "label": "Assunto",
+        "placeholder": "Deixe em branco para usar o assunto padrão"
+      },
+      "body": {
+        "label": "Corpo em HTML",
+        "placeholder": "Deixe em branco para usar o modelo padrão"
+      }
+    },
+    "status": {
+      "custom": "Personalizado",
+      "default": "Padrão"
+    },
+    "availableVariables": "Variáveis disponíveis",
+    "preview": {
+      "title": "Pré-visualização",
+      "empty": "Digite o corpo do modelo para ver uma pré-visualização"
+    }
+  },
+  "manageSidebar": {
+    "platformGroup": "Plataforma",
+    "toolsGroup": "Ferramentas",
+    "saasGroup": "SaaS",
+    "portalUsers": "Subcontas",
+    "portalWorkspaces": "Espaços de trabalho",
+    "portalPlans": "Planos",
+    "portalUsage": "Uso",
+    "portalCustomDomain": "Domínio personalizado",
+    "portalPaymentProcessor": "Processador de pagamentos",
+    "portalSmtp": "Configurações de SMTP",
+    "portalPricingPage": "Preços"
+  },
+  "unsubscribePage": {
+    "title": "Sua inscrição foi cancelada.",
+    "description": "Você não receberá mais e-mails deste remetente.",
+    "invalidTitle": "Link de cancelamento de inscrição inválido.",
+    "invalidDescription": "Este link é inválido ou expirou.",
+    "unavailableTitle": "Cancelamento de inscrição indisponível.",
+    "unavailableDescription": "Este espaço de trabalho não está mais disponível."
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "Excluir meus dados",
+      "download": "Baixar meus dados"
+    },
+    "deleteDialog": {
+      "title": "Excluir seus dados?",
+      "description": "Isso exclui permanentemente os dados de contato do seu perfil, etiquetas, campos personalizados, anexos e todas as mensagens deste registro de contato."
+    },
+    "empty": {
+      "customFields": "Nenhum campo personalizado",
+      "tags": "Nenhuma etiqueta"
+    },
+    "fields": {
+      "email": "E-mail",
+      "gender": "Gênero",
+      "locale": "Idioma e região",
+      "phone": "Telefone",
+      "timezone": "Horário"
+    },
+    "sections": {
+      "customFields": "Campos personalizados",
+      "tags": "Etiquetas do usuário"
+    },
+    "unknown": "Desconhecido"
+  },
+  "orders": {
+    "title": "Pedidos"
+  },
+  "products": {
+    "title": "Produtos",
+    "create": {
+      "title": "Criar produto"
+    },
+    "edit": {
+      "title": "Editar produto"
+    },
+    "sections": {
+      "pricing": "Preços",
+      "images": "Imagens",
+      "inventory": "Estoque",
+      "variants": "Variantes",
+      "addons": "Complementos",
+      "tags": "Etiquetas",
+      "moreOptions": "Mais opções"
+    },
+    "fields": {
+      "shortDescription": {
+        "label": "Descrição curta"
+      },
+      "longDescription": {
+        "label": "Descrição detalhada"
+      },
+      "price": {
+        "label": "Preço"
+      },
+      "taxes": {
+        "label": "Impostos (0-100%)"
+      },
+      "discount": {
+        "label": "Desconto (0-100%)"
+      },
+      "currency": {
+        "label": "Moeda"
+      },
+      "productUrl": {
+        "label": "URL do produto",
+        "placeholder": "https://loja.exemplo.com/produtos/123",
+        "description": "A página que os clientes abrem nas Compras do Messenger. Produtos sem URL são ignorados durante a sincronização com o Catálogo da Meta."
+      },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "Opcional"
+      },
+      "inventoryPolicy": {
+        "label": "Política de estoque"
+      },
+      "inventoryQuantity": {
+        "label": "Quantidade"
+      },
+      "allowOutOfStockPurchase": {
+        "label": "Permitir que os clientes comprem este produto quando estiver sem estoque"
+      },
+      "vendor": {
+        "label": "Fornecedor"
+      },
+      "rank": {
+        "label": "Classificação"
+      },
+      "category": {
+        "label": "Categoria",
+        "placeholder": "Sem categoria"
+      },
+      "subcategory": {
+        "label": "Subcategoria",
+        "placeholder": "Nenhuma"
+      },
+      "isSearchable": {
+        "label": "Este produto pode ser pesquisado dentro do bot"
+      },
+      "allowSpecialRequest": {
+        "label": "Permitir que o usuário faça uma solicitação especial (anexar observações)"
+      },
+      "isActive": {
+        "label": "Ativo"
+      },
+      "isAddonOnly": {
+        "label": "Usar este produto apenas como complemento de outros produtos"
+      },
+      "optionName": {
+        "label": "Nome da opção"
+      },
+      "optionValue": {
+        "label": "Valor da opção"
+      },
+      "variant": {
+        "label": "Variante"
+      },
+      "addImageFromLink": "Adicionar imagem",
+      "uploadImage": "Enviar imagem",
+      "tagsDescription": "As etiquetas podem ser pesquisadas.",
+      "addonsDescription": "Adicione produtos que os clientes possam comprar como complemento. Você também pode oferecer produtos gratuitos aqui. Por exemplo, um restaurante pode oferecer opções de bebidas gratuitas. É necessário criar um produto antes de usá-lo como complemento.",
+      "addonName": {
+        "label": "Nome",
+        "placeholder": "nome"
+      },
+      "addonMaxSelections": {
+        "label": "Máximo de seleções"
+      },
+      "addonProducts": {
+        "label": "Produtos",
+        "placeholder": "Selecione produtos..."
+      },
+      "variantsDescription": "Adicione variantes se este produto tiver várias versões, como tamanhos ou cores diferentes",
+      "metaCatalogId": {
+        "label": "ID do Catálogo da Meta"
+      }
+    },
+    "inventoryPolicy": {
+      "dont_track": "Não controlar o estoque",
+      "track": "Controlar o estoque"
+    }
+  },
+  "tiktok": {
+    "title": "TikTok",
+    "description": "Conecte sua conta do TikTok para responder a mensagens diretas.",
+    "refreshToken": "Atualizar token"
+  },
+  "coupons": {
+    "title": "Cupons",
+    "description": "Gerencie tópicos de cupons de campanha, importações, exportações e códigos de cupom prontos para uso em fluxos.",
+    "singular": "Cupom",
+    "topicCouponsTitle": "Cupons por tópico",
+    "tabs": {
+      "topicCoupon": "Tópico de cupom",
+      "coupon": "Cupom",
+      "listTopic": "Lista de tópicos",
+      "archive": "Arquivo"
+    },
+    "topic": {
+      "create": "Criar novo",
+      "edit": "Editar tópico"
+    },
+    "actions": {
+      "import": "Importar cupons",
+      "export": "Baixar lista de cupons",
+      "downloadImportTemplate": "Baixar modelo de importação"
+    },
+    "fields": {
+      "topic": "Tópico",
+      "selectTopic": "Selecionar tópico",
+      "importCsvOnly": "Clique ou arraste um arquivo .csv para esta área para enviá-lo",
+      "allTopics": "Todos os tópicos",
+      "couponCount": "Cupons",
+      "validity": "Período de validade",
+      "unlimited": "Ilimitado",
+      "code": "Código",
+      "issueStatus": "Status",
+      "usageStatus": "Uso",
+      "allIssueStatuses": "Todos os status",
+      "allUsageStatuses": "Todos os usos",
+      "searchCode": "Pesquisar código"
+    },
+    "issueStatuses": {
+      "published": "Publicado",
+      "unpublished": "Não publicado"
+    },
+    "usageStatuses": {
+      "used": "Usado",
+      "notUsed": "Ainda não usado"
+    },
+    "variables": {
+      "group": "Cupons"
+    },
+    "messages": {
+      "topicSaved": "Tópico de cupons salvo.",
+      "editLocked": "O nome e a descrição ficam bloqueados após a criação ou importação de cupons.",
+      "archiveTitle": "Arquivar tópico de cupons",
+      "archiveConfirm": "Arquivar \"{name}\"? Ele será movido para a lista Arquivo.",
+      "archiveBulkConfirm": "Arquivar os {count} tópicos selecionados? Eles serão movidos para a lista Arquivo.",
+      "restoreTitle": "Restaurar tópico de cupons",
+      "unarchiveConfirm": "Restaurar \"{name}\"? Ele será movido de volta para a lista de tópicos.",
+      "unarchiveBulkConfirm": "Restaurar os {count} tópicos selecionados? Eles serão movidos de volta para a lista de tópicos.",
+      "deleteTitle": "Excluir tópico de cupons",
+      "deleteConfirm": "Excluir este tópico arquivado? O histórico de cupons será preservado.",
+      "empty": "Nenhum cupom encontrado.",
+      "importStarted": "A importação de cupons foi iniciada.",
+      "exportStarted": "A exportação de cupons foi iniciada.",
+      "exportFailed": "Falha ao exportar cupons.",
+      "exportCount": "{count} linhas de cupons serão exportadas."
+    }
+  },
+  "productCategories": {
+    "title": "Categorias",
+    "loadError": "Não foi possível carregar as categorias de produtos.",
+    "all": "Todos os produtos",
+    "create": "Criar categoria",
+    "edit": "Renomear categoria",
+    "name": "Nome da categoria",
+    "namePlaceholder": "Ex.: Coleção de verão",
+    "parent": "Categoria principal",
+    "noParent": "Nenhuma (nível superior)",
+    "save": "Salvar",
+    "created": "Categoria criada.",
+    "updated": "Categoria atualizada.",
+    "deleted": "Categoria excluída.",
+    "saveError": "Não foi possível salvar esta categoria.",
+    "deleteError": "Não foi possível excluir esta categoria.",
+    "delete": "Excluir",
+    "cancel": "Cancelar",
+    "actions": "Ações da categoria",
+    "deleteTitle": "Excluir “{name}”?",
+    "deleteDescription": "{count, plural, =0 {Nenhum produto está atribuído a esta categoria.} one {# produto será movido para Sem categoria.} other {# produtos serão movidos para Sem categoria.}}",
+    "createSub": "Criar subcategoria",
+    "empty": "Ainda não há categorias. Crie uma para agrupar seus produtos.",
+    "columns": {
+      "name": "Nome",
+      "products": "Produtos",
+      "subcategories": "Subcategorias"
+    },
+    "expand": "Mostrar subcategorias",
+    "collapse": "Ocultar subcategorias",
+    "productCount": "{count, plural, =0 {Nenhum produto} one {# produto} other {# produtos}}",
+    "deleteChildrenWarning": "{count, plural, one {A subcategoria será excluída também.} other {As # subcategorias serão excluídas também.}}"
+  },
+  "productImport": {
+    "title": "Importar",
+    "mapColumns": "Mapeamento de colunas",
+    "mapColumnsHint": "Associe cada campo do produto a uma coluna do seu arquivo. Deixe um campo sem mapeamento para ignorá-lo.",
+    "downloadTemplate": "Baixar modelo",
+    "upload": "Enviar um arquivo .csv ou .xlsx",
+    "confirm": "Iniciar importação",
+    "started": "A importação de produtos foi iniciada.",
+    "error": "Falha ao importar produtos.",
+    "notMapped": "Não mapeado",
+    "createMissingCategories": "Criar categorias que não existem",
+    "fields": {
+      "name": "Nome do produto",
+      "sku": "SKU",
+      "price": "Preço",
+      "discount": "Desconto",
+      "shortDescription": "Descrição curta",
+      "category": "Categoria",
+      "vendor": "Fornecedor",
+      "inventoryQuantity": "Quantidade em estoque",
+      "imageUrl": "URL da imagem",
+      "productUrl": "URL do produto"
+    },
+    "template": {
+      "sheetName": "Produtos",
+      "name": "Nome do produto",
+      "sku": "SKU",
+      "price": "Preço",
+      "discount": "Desconto",
+      "shortDescription": "Descrição curta",
+      "category": "Categoria",
+      "vendor": "Fornecedor",
+      "inventoryQuantity": "Quantidade em estoque",
+      "imageUrl": "URL da imagem",
+      "productUrl": "URL do produto",
+      "exampleOne": {
+        "name": "Camiseta clássica",
+        "description": "Camiseta de algodão macio",
+        "category": "Roupas",
+        "vendor": "Marca de exemplo"
+      },
+      "exampleTwo": {
+        "name": "Bolsa de lona",
+        "description": "Bolsa reutilizável de lona",
+        "category": "Acessórios",
+        "vendor": "Marca de exemplo"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "Sincronizar Catálogo da Meta",
+    "connect": "Conectar à Meta",
+    "connectDescription": "Conecte uma conta empresarial da Meta para enviar seus produtos a um catálogo existente.",
+    "tabs": {
+      "sync": "Sincronizar com a Meta",
+      "import": "Sincronizar da Meta",
+      "history": "Histórico",
+      "connection": "Conexão"
+    },
+    "catalogId": "ID do Catálogo da Meta",
+    "catalogIdPlaceholder": "Digite um ID de catálogo do Gerenciador de Comércio",
+    "createCatalog": {
+      "trigger": "Criar um novo catálogo",
+      "description": "Um catálogo comercial vazio será criado no seu Gerenciador de Negócios e usado neste espaço de trabalho.",
+      "business": "Gerenciador de Negócios",
+      "businessPlaceholder": "Selecione um Gerenciador de Negócios",
+      "noBusinesses": "Esta conta da Meta não gerencia nenhum Gerenciador de Negócios, portanto não é possível criar um catálogo aqui.",
+      "name": "Nome do catálogo",
+      "confirm": "Criar catálogo",
+      "created": "Catálogo criado.",
+      "errors": {
+        "businesses": "Não foi possível carregar seus Gerenciadores de Negócios.",
+        "create": "Não foi possível criar o catálogo."
+      }
+    },
+    "importDescription": "Importe produtos de um catálogo da Meta para seu espaço de trabalho. Encontre o ID no Gerenciador de Comércio.",
+    "importCatalogAction": "Importar",
+    "importProgress": "Importando produtos da Meta: {imported}/{total}",
+    "importQueued": "Aguardando o início da importação…",
+    "importResult": "Importados {imported} de {total} produtos da Meta",
+    "retryImport": "Tentar importar novamente",
+    "syncNow": "Sincronizar agora",
+    "syncSelectionRequired": "Selecione os produtos que deseja enviar e execute a sincronização.",
+    "syncSelectionCount": "{count} produtos selecionados serão enviados ao Catálogo da Meta.",
+    "connectionInfo": {
+      "heading": "Catálogo da Meta conectado",
+      "noCatalog": "Nenhum catálogo selecionado ainda",
+      "lastCatalogId": "Último ID do Catálogo da Meta",
+      "businessId": "ID da empresa",
+      "authMode": "Autorização",
+      "tokenExpiresAt": "O token expira em",
+      "lastImportedAt": "Última importação",
+      "unknown": "Indisponível",
+      "never": "Nunca",
+      "noExpiry": "Não expira",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Extensão do Facebook para Empresas"
+      },
+      "connectionStatuses": {
+        "active": "Ativo",
+        "invalid": "É necessário reconectar"
+      }
+    },
+    "disconnect": "Desconectar",
+    "reconnect": "Reconectar",
+    "reconnectWarning": "O token da Meta é inválido ou expira dentro de sete dias.",
+    "requirements": {
+      "intro": "Os produtos sincronizados com as Compras do Messenger devem atender a estes requisitos:",
+      "description": {
+        "label": "Descrição detalhada",
+        "value": "Além do título, inclua especificações, materiais, casos de uso e recursos de destaque."
+      },
+      "image": {
+        "label": "Imagem do produto",
+        "value": "Alta resolução de pelo menos 500 px × 500 px, com arquivo de até 8 MB."
+      },
+      "video": {
+        "label": "Vídeo do produto",
+        "value": "Arquivo de até 200 MB."
+      },
+      "price": {
+        "label": "Preço",
+        "value": "Todos os produtos devem ter um preço."
+      },
+      "minimumItems": "Publique pelo menos 6 itens para que os clientes tenham opções suficientes."
+    },
+    "historyEmpty": "Nenhuma sincronização ou importação foi executada ainda.",
+    "historyFailures": "{failed} com falha · {skipped} ignorados",
+    "historyCatalog": "Catálogo {id}",
+    "diagnostics": "Detalhes de erros e itens ignorados",
+    "itemError": "Item {id}: {reason}",
+    "itemSkipped": "Item {id}: ignorado — {reason}",
+    "skipReasons": {
+      "missingImage": "imagem ausente",
+      "missingDescription": "descrição ausente",
+      "missingStoreUrl": "a URL da loja não está configurada",
+      "hasVariants": "variantes ainda não são compatíveis"
+    },
+    "statuses": {
+      "queued": "Na fila",
+      "running": "Em andamento",
+      "succeeded": "Concluído",
+      "partial": "Parcialmente concluído",
+      "failed": "Falhou"
+    },
+    "directions": {
+      "push": "Enviado à Meta",
+      "import": "Importado da Meta"
+    },
+    "messages": {
+      "catalogSelected": "A importação do catálogo foi iniciada.",
+      "syncStarted": "A sincronização do Catálogo da Meta foi iniciada.",
+      "disconnected": "O Catálogo da Meta foi desconectado."
+    },
+    "errors": {
+      "load": "Não foi possível carregar as configurações do Catálogo da Meta.",
+      "connect": "Não foi possível conectar ao Catálogo da Meta.",
+      "catalog": "Não foi possível selecionar este catálogo.",
+      "sync": "Não foi possível iniciar a sincronização do catálogo.",
+      "disconnect": "Não foi possível desconectar o Catálogo da Meta.",
+      "invalidAppSettings": "As configurações do aplicativo da Meta não estão definidas.",
+      "emptyScope": "O escopo de sincronização selecionado não contém produtos.",
+      "alreadyRunning": "Uma sincronização ou importação do Catálogo da Meta já está em andamento. Aguarde a conclusão.",
+      "queueImport": "Não foi possível colocar a importação do Catálogo da Meta na fila.",
+      "queueSync": "Não foi possível colocar a sincronização do Catálogo da Meta na fila."
+    }
+  },
+  "helpMenu": {
+    "title": "Ajuda",
+    "ariaLabel": "Abrir menu de ajuda"
+  },
+  "helpItems": {
+    "title": "Links de ajuda",
+    "addTitle": "Adicionar link de ajuda",
+    "editTitle": "Editar link de ajuda",
+    "addButton": "Adicionar link",
+    "empty": "Nenhum link de ajuda configurado ainda.",
+    "fields": {
+      "name": "Nome",
+      "namePlaceholder": "Ex.: Documentação",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.exemplo.com",
+      "icon": "Ícone",
+      "iconPlaceholder": "Ex.: book-open, star, circle-question-mark",
+      "position": "Ordem",
+      "iconSearchLink": "Explorar ícones do Lucide →"
+    }
+  }
+}

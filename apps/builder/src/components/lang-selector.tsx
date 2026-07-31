@@ -1,52 +1,86 @@
 "use client"
 
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@chatbotx.io/ui/components/ui/select"
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@chatbotx.io/ui/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@chatbotx.io/ui/components/ui/popover"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import type React from "react"
-import { useTransition } from "react"
-import type { Locale } from "@/i18n/config"
+import { useState, useTransition } from "react"
+import { isLocale, localeMeta, locales, resolveLocale } from "@/i18n/config"
 import { setUserLocale } from "@/lib/locale"
 
+const items = locales.map((value) => ({
+  value,
+  label: localeMeta[value].nativeLabel,
+}))
+
 export const LangSelector: React.FC = () => {
-  const locale = useLocale()
+  const locale = resolveLocale(useLocale())
+  const [open, setOpen] = useState(false)
   const [, startTransition] = useTransition()
   const t = useTranslations()
 
   function onChangeLocale(value: string) {
-    const newLocale = value as Locale
+    if (!isLocale(value)) {
+      return
+    }
     startTransition(() => {
-      setUserLocale(newLocale)
+      setUserLocale(value)
     })
+    setOpen(false)
   }
 
-  const items = [
-    { value: "ar", label: "العربية" },
-    { value: "en", label: "English" },
-    { value: "vi", label: "Tiếng Việt" },
-  ]
-
   return (
-    <Select
-      defaultValue={locale}
-      items={items}
-      onValueChange={(value) => onChangeLocale(value as string)}
-    >
-      <SelectTrigger className="w-45">
-        <SelectValue placeholder={t("fields.language.placeholder")} />
-      </SelectTrigger>
-      <SelectContent>
-        {items.map((item) => (
-          <SelectItem key={item.value} value={item.value}>
-            {item.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Popover onOpenChange={setOpen} open={open}>
+      <PopoverTrigger
+        render={
+          <Button
+            aria-expanded={open}
+            aria-label={t("fields.language.label")}
+            className="w-45 justify-between"
+            role="combobox"
+            variant="outline"
+          >
+            <span className="truncate">{localeMeta[locale].nativeLabel}</span>
+            <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+          </Button>
+        }
+      />
+      <PopoverContent align="start" className="w-45 p-0">
+        <Command>
+          <CommandInput className="h-9" placeholder={t("actions.search")} />
+          <CommandList>
+            <CommandEmpty>{t("actions.noRecordFound")}</CommandEmpty>
+            {items.map((item) => (
+              <CommandItem
+                key={item.value}
+                onSelect={() => onChangeLocale(item.value)}
+                value={item.label}
+              >
+                {item.label}
+                <Check
+                  className={cn(
+                    "ms-auto size-4",
+                    locale === item.value ? "opacity-100" : "opacity-0",
+                  )}
+                />
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

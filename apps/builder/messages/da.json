@@ -1,0 +1,4344 @@
+{
+  "actions": {
+    "copy": "Kopiér",
+    "copyUrl": "Kopiér URL",
+    "actions": "Handlinger",
+    "add": "Tilføj",
+    "addVariable": "Tilføj variabel",
+    "addFeature": "Tilføj {feature}",
+    "addFlowReply": "Tilføj flowsvar",
+    "addMore": "Tilføj mere",
+    "addTag": "Tilføj tag",
+    "addAction": "Tilføj handling",
+    "addCondition": "Tilføj betingelse",
+    "addTextReply": "Tilføj tekstsvar",
+    "markAsFollowUp": "Markér som Opfølgning",
+    "removeFromFollowUp": "Fjern fra Opfølgning",
+    "markAsUnread": "Markér som ulæst",
+    "archive": "Arkivér",
+    "unarchive": "Fjern fra arkiv",
+    "archiveConversation": "Arkivér samtale",
+    "assign": "Tildel",
+    "assignConversation": "Tildel samtale",
+    "back": "Tilbage",
+    "blockContact": "Bloker kontakt",
+    "unblockContact": "Fjern blokering af kontakt",
+    "undo": "Fortryd",
+    "redo": "Gentag",
+    "cancel": "Annullér",
+    "clear": "Ryd",
+    "clearCustomField": "Ryd brugerdefineret felt",
+    "collapse": "Fold sammen",
+    "expand": "Udvid",
+    "confirm": "Bekræft",
+    "connect": "Forbind",
+    "continue": "Fortsæt",
+    "create": "Opret",
+    "loading": "Indlæser...",
+    "createFeature": "Opret {feature}",
+    "delete": "Slet",
+    "deleteContact": "Slet kontakt",
+    "disableBot": "Deaktivér bot",
+    "disconnect": "Afbryd",
+    "download": "Download",
+    "edit": "Rediger",
+    "editFeature": "Rediger {feature}",
+    "enableBot": "Aktivér bot",
+    "export": "Eksportér",
+    "getEmbedCode": "Hent indlejringskode",
+    "getID": "Hent id",
+    "getTools": "Hent værktøjer",
+    "import": "Importér",
+    "exportContacts": "Eksportér kontakter",
+    "filter": "Filtrér",
+    "selectFile": "Vælg fil",
+    "insertLink": "Indsæt link",
+    "addNew": "Tilføj ny",
+    "send": "Send",
+    "loginWithMagicLink": "Log ind med magisk link",
+    "manage": "Administrer",
+    "admin": "Administrator",
+    "more": "Mere",
+    "moreOptions": "Flere muligheder",
+    "moreSettings": "Flere indstillinger",
+    "openMenu": "Åbn menu",
+    "openWebchat": "Åbn Webchat",
+    "removeTag": "Fjern tag",
+    "rename": "Omdøb",
+    "reset": "Nulstil",
+    "save": "Gem",
+    "selectAll": "Vælg alle",
+    "selectRow": "Vælg række",
+    "sendFlow": "Send flow",
+    "sendMessage": "Send besked",
+    "setCustomField": "Angiv brugerdefineret felt",
+    "synchronize": "Synkroniser",
+    "syncMetaCatalog": "Synkroniser Meta-katalog",
+    "testNow": "Test nu",
+    "toggle": "Skift",
+    "toggleTheme": "Skift tema",
+    "transferConversationToBot": "Overfør samtale til bot",
+    "update": "Opdater",
+    "updatePayment": "Opdater betaling",
+    "upgradePlan": "Opgrader plan",
+    "upgradeToPro": "Opgrader til Pro",
+    "uploadFile": "Upload fil",
+    "view": "Vis",
+    "viewAnalytics": "Vis analyser",
+    "duplicate": "Dupliker",
+    "getDraftLink": "Hent kladdelink",
+    "getPublishedLink": "Hent udgivet link",
+    "getMessengerAdsJson": "Hent JSON til Messenger-annoncer",
+    "getMessengerAdPayload": "Hent payload til Messenger-annonce",
+    "ok": "OK",
+    "next": "Næste",
+    "prev": "Forrige",
+    "moveEarlier": "Flyt tidligere",
+    "moveLater": "Flyt Senere",
+    "analytics": "Analyse",
+    "deleteAnalytics": "Slet Analyse",
+    "flowVersions": "Flowversioner",
+    "revertToPublished": "Gendan den udgivne version",
+    "search": "Søg",
+    "pleaseSelect": "Venligst vælg",
+    "noRecordFound": "Ingen poster fundet.",
+    "typeMessage": "Skriv en besked",
+    "enterText": "Indtast tekst",
+    "enterFieldAndPressEnter": "Indtast {field}, og tryk på Enter",
+    "addAnother": "Tilføj en anden...",
+    "messagePlaceholder": "Besked...",
+    "signOut": "Log ud",
+    "backToSignIn": "Tilbage til login",
+    "connectFeature": "Forbind {feature}",
+    "scanQRCode": "Scan mig med dit kamera",
+    "inviteFeature": "Inviter {feature}",
+    "joinTheTeam": "Bliv en del af teamet",
+    "chooseChannel": "Vælg kanal",
+    "chooseSubaction": "Vælg underhandling",
+    "resend": "Send igen",
+    "publish": "Udgiv",
+    "setStartNode": "Angiv som startnode",
+    "getNodeId": "Hent node-id",
+    "setAsDefaultAgent": "Angiv som standardagent",
+    "unsetDefaultAgent": "Fjern som standardagent",
+    "clickToEdit": "Klik for at redigere",
+    "move": "Flyt",
+    "moveUp": "Flyt op",
+    "moveDown": "Flyt ned",
+    "removeAssignee": "Fjern ansvarlig",
+    "sendMail": "Send e-mail",
+    "wait": "Vent",
+    "followUp": "Opfølgning",
+    "landingPage": "Landingsside",
+    "generate": "Generér",
+    "regenerate": "Generér igen",
+    "qrCode": "QR-kode",
+    "addSequence": "Tilføj Sekvens",
+    "removeSequence": "Fjern Sekvens",
+    "activate": "Aktivér",
+    "deactivate": "Deaktivér",
+    "onFailure": "Ved fejl",
+    "onSkip": "På spring over",
+    "onSuccess": "På succes",
+    "clone": "Klon",
+    "remove": "Fjern",
+    "restore": "Gendan"
+  },
+  "states": {
+    "success": "Succes",
+    "error": "Fejl",
+    "skip": "Spring over"
+  },
+  "admins": {
+    "title": "Administratorer"
+  },
+  "assignAdmin": {
+    "assignConversation": "Tildel samtale",
+    "assignedToMe": "Tildelt mig",
+    "assignedTo": "Tildelt til {name}",
+    "unAssigned": "Ikke tildelt"
+  },
+  "aiAgent": {
+    "defaultAgent": "Standardagent",
+    "description": "Administrer og konfigurer AI-agenter for at udvide dit arbejdsområde med intelligent automatisering og intelligente svar.",
+    "title": "AI-agenter",
+    "name": "Agenter"
+  },
+  "aiFiles": {
+    "description": "Giv dine agenter adgang til PDF-filer, dokumenter og meget mere",
+    "title": "Viden",
+    "noEmbeddingProvider": "Der er ikke konfigureret en embedding-udbyder. Embeddings til AI-filer kræver en OpenAI- eller Gemini-integration. DeepSeek og Claude understøtter ikke embedding-modeller."
+  },
+  "aiFunctions": {
+    "description": "Konfigurer LLM-funktioner for at gøre din AI-agent mere intelligent",
+    "title": "AI-funktioner"
+  },
+  "aiMcpServers": {
+    "description": "Forbind AI med eksterne systemer via MCP",
+    "title": "MCP-servere",
+    "tools": {
+      "label": "Tilgængelige værktøjer"
+    }
+  },
+  "analytics": {
+    "contacts": "Kontakter",
+    "newContacts": "Nye kontakter",
+    "activeContacts": "Aktive kontakter",
+    "botMessagesByResult": "Beskeder modtaget af botten",
+    "botMessagesNoResponse": "Modtagne beskeder uden svar",
+    "botMessagesWithResponse": "Modtagne beskeder med svar",
+    "aiProvider": "AI-udbyder",
+    "responseCount": "Antal svar",
+    "percentage": "Procentdel",
+    "responseTime": "Svartid",
+    "firstResponseTime": "Tid til første svar",
+    "totalContacts": "Kontakter i alt",
+    "averageResponseTime": "Gennemsnitlig svartid (minutter)",
+    "averageResponseTimeHelp": "Den gennemsnitlige tid, det tager en menneskelig agent at besvare en kundes besked.",
+    "averageFirstResponseTimeByAdmin": "Menneskelige agenters gennemsnitlige tid til første svar (minutter)",
+    "averageFirstResponseTimeByAdminHelp": "Den gennemsnitlige tid, det tager en menneskelig agent at give det første svar på en kundes besked.",
+    "averageResponseTimeByAdmin": "Menneskelige agenters gennemsnitlige svartid (minutter)",
+    "averageDurationOfConversation": "Gennemsnitlig samtalevarighed (minutter)",
+    "averageDurationOfConversationHelp": "Den gennemsnitlige tid, en samtale er blevet håndteret af et menneske, før den flyttes til botten.",
+    "success": "Succes",
+    "fallback": "Fallback",
+    "admins": "Menneskelige agenter",
+    "messages": "Beskeder",
+    "conversations": "Samtaler",
+    "assignedConversations": {
+      "title": "Tildelte samtaler",
+      "helpText": "Samtaler, der er tildelt fra indbakken eller af botten."
+    },
+    "messagesSentByHumanOrBot": "Beskeder sendt af menneske/bot",
+    "human": "Menneskelig",
+    "bot": "Bot",
+    "conversationsMovedToHumanOrBot": "Samtaler flyttet til menneske/bot",
+    "uniqueConversationsByAdmins": "Unikke samtaler pr. menneskelig agent",
+    "uniqueConversationsByAdminsHelp": "Antal kontakter, som en menneskelig agent har sendt mindst én besked til.",
+    "messagesSentByAdmins": "Beskeder sendt af menneskelige agenter",
+    "messagesSentByAdminsHelp": "Beskeder sendt fra indbakken.",
+    "allContactsByChannel": "Alle kontakter efter kanal",
+    "newContactsByChannel": "Nye kontakter efter kanal",
+    "newContactsBySource": "Nye kontakter efter kilde",
+    "assignedConversationsByAdmins": "Samtaler tildelt efter menneskelig agent",
+    "assignedConversationsByAdminsHelp": "Samtaler, der er tildelt fra indbakken eller af botten.",
+    "followUpConversations": "Samtaler til opfølgning",
+    "followUpConversationsHelp": "Samtaler, der er markeret til opfølgning fra indbakken eller af botten.",
+    "archivedConversations": "Arkiverede samtaler",
+    "blockedConversations": "Blokerede samtaler",
+    "blockedConversationsHelp": "Samtaler, som din konto har blokeret.",
+    "blockedContacts": "Blokerede kontakter",
+    "blockedContactsHelp": "Kontakter, der ikke ønsker at modtage beskeder fra din konto",
+    "newContactsByCountry": "Nye kontakter efter land",
+    "date": "Dato",
+    "total": "I alt",
+    "messagesSent": "Sendte beskeder",
+    "selectRange": "Vælg interval",
+    "dateFilterPreset": "Forudindstillet datofilter",
+    "noResults": "Ingen resultater.",
+    "noData": "Ingen data",
+    "comingSoon": "Kommer snart",
+    "unknown": "Ukendt",
+    "pagination": {
+      "selectedRows": "{selected} af {total} række(r) valgt.",
+      "rowsPerPage": "Rækker pr. side",
+      "pageOf": "Side {page} af {pageCount}",
+      "firstPage": "Gå til første side",
+      "previousPage": "Gå til forrige side",
+      "nextPage": "Gå til næste side",
+      "lastPage": "Gå til sidste side"
+    },
+    "sessionsThroughTheRef": "Sessioner via referencen \"{ref}\" pr. dag",
+    "sessionsThroughTheMagicLink": "Sessioner via det magiske link \"{ref}\" pr. dag"
+  },
+  "flowAnalytics": {
+    "nodes": {
+      "start": "Start",
+      "notFound": "Node ikke fundet"
+    },
+    "stats": {
+      "sent": "Sendt",
+      "delivered": "Leveret",
+      "seen": "Set",
+      "clicked": "Klikket",
+      "waiting": "Venter"
+    }
+  },
+  "autoAssignConversation": {
+    "rule": {
+      "allTime": "Ligelig fordeling af samtaler (hele perioden)",
+      "label": "Tildelingsregel",
+      "last24Hours": "Ligelig fordeling af samtaler (seneste 24 timer)",
+      "last8Hours": "Ligelig fordeling af samtaler (seneste 8 timer)",
+      "lastHour": "Ligelig fordeling af samtaler (seneste time)"
+    },
+    "users": {
+      "label": "Brugere"
+    }
+  },
+  "automatedResponse": {
+    "setting": {
+      "description": "Beskrivelse af automatisk svar",
+      "label": "Automatisk svar"
+    }
+  },
+  "billing": {
+    "title": "Fakturering",
+    "plan": {
+      "label": "Plan: {plan}",
+      "free": "Gratis"
+    },
+    "usage": {
+      "contacts": "Kontakter",
+      "mac": "Månedligt aktive kontakter",
+      "botMessages": "Botbeskeder",
+      "monthlyBotMessages": "Botbeskeder (månedligt)",
+      "workspaces": "Arbejdsområder",
+      "channels": "Kanaler",
+      "teamMembers": "Teammedlemmer"
+    },
+    "limitReached": {
+      "workspaces": "Du har nået grænsen for arbejdsområder. Opgrader dit abonnement for at oprette flere.",
+      "channels": "Du har nået grænsen for kanaler. Opgrader dit abonnement for at forbinde flere.",
+      "teamMembers": "Du har nået grænsen for teammedlemmer. Opgrader dit abonnement for at invitere flere.",
+      "contacts": "Du har nået grænsen for kontakter. Opgrader dit abonnement for at tilføje flere.",
+      "mac": "Du har nået grænsen for månedligt aktive kontakter. Opgrader dit abonnement for at nå ud til flere."
+    },
+    "pastDue": {
+      "message": "Din seneste betaling mislykkedes. Opdater din betalingsmetode for at holde dit arbejdsområde aktivt."
+    },
+    "trial": {
+      "daysLeft": "Prøveperiode: {days} dage tilbage",
+      "endsTomorrow": "Prøveperioden slutter i morgen",
+      "expired": "Din prøveperiode er udløbet — opgrader for at holde dit arbejdsområde aktivt",
+      "dismiss": "Luk"
+    },
+    "trialExpired": {
+      "title": "Din gratis prøveperiode er udløbet",
+      "description": "Abonner på et abonnement for fortsat at bruge dine arbejdsområder.",
+      "cta": "Se abonnementer",
+      "bannerTitle": "Prøveperioden er udløbet",
+      "bannerDescription": "Oprettelse af nye ressourcer er deaktiveret. Du kan stadig afbryde kanaler og planlægge sletning af arbejdsområdet.",
+      "bannerCta": "Opgrader",
+      "createDisabled": "Oprettelse af nye {feature} er deaktiveret. Opgrader for at fortsætte."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Grænsen for månedligt aktive kontakter er nået",
+      "bannerDescription": "Afsendelse og modtagelse af beskeder er sat på pause, indtil du opgraderer dit abonnement.",
+      "bannerCta": "Opgrader",
+      "createDisabled": "Oprettelse af nye {feature} er deaktiveret, indtil du opgraderer dit abonnement."
+    }
+  },
+  "broadcasts": {
+    "title": "Udsendelser",
+    "status": {
+      "scheduled": "Planlagt",
+      "sent": "Sendt",
+      "sending": "Sender",
+      "cancelled": "Annulleret"
+    },
+    "stats": {
+      "sent": "Sendt",
+      "delivered": "Leveret",
+      "seen": "Set",
+      "clicked": "Klikket",
+      "failed": "Mislykkedes",
+      "noContacts": "Ingen kontakter fundet",
+      "pageInfo": "Side {page} af {pageCount}",
+      "selectedAll": "Alle valgt",
+      "selectedCount": "{count} valgt",
+      "tagAllDialogDescription": "Der føjes tags til alle valgte kontakter.",
+      "tagDialogDescription": "Der føjes tags til {count} kontakt(er).",
+      "tagQueued": "Tagger {count} kontakter i baggrunden.",
+      "loadingMore": "Indlæser mere...",
+      "receivers": "Modtagere"
+    },
+    "messengerList": {
+      "title": "Messenger-liste",
+      "description": "Kan indeholde kampagner og sendes kun til personer, der abonnerer på din Messenger-liste."
+    },
+    "messengerActiveContacts": {
+      "title": "Aktive Messenger-kontakter",
+      "description": "Kan indeholde kampagner og sendes kun til brugere, der har skrevet til din bot inden for de seneste 24 timer."
+    },
+    "messengerAccountUpdate": {
+      "title": "Opdatering af Messenger-konto",
+      "description": "Underret brugeren om en enkeltstående ændring af vedkommendes app eller konto."
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Opdatering om bekræftet Messenger-begivenhed",
+      "description": "Send brugeren påmindelser eller opdateringer om en begivenhed, som vedkommende er tilmeldt (f.eks. har købt billetter til). Dette tag kan bruges til kommende og igangværende begivenheder."
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Messenger-opdatering efter køb",
+      "description": "Underret brugeren om en opdatering vedrørende et nyligt køb, f.eks. bekræftelse af transaktionen, fakturaer, kvitteringer eller ændringer i leveringsstatus."
+    },
+    "allContacts": {
+      "title": "Alle kontakter",
+      "description": "Send et flow til alle kontakter."
+    },
+    "receiversCount": "Modtagere: {count}",
+    "receiversLoading": "Modtagere: Indlæser...",
+    "whatsappTemplateMessage": {
+      "title": "Skabelonbesked",
+      "description": "Send en WhatsApp-skabelonbesked til dine kontakter"
+    },
+    "messengerTemplateMessage": {
+      "title": "Skabelonbesked",
+      "description": "Send en Messenger-skabelonbesked til dine kontakter"
+    },
+    "whatsappWithin24Hours": {
+      "title": "Aktive kontakter inden for 24 timer",
+      "description": "Kan indeholde kampagner og sendes kun til brugere, der har skrevet til din bot inden for de seneste 24 timer."
+    },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "Kan indeholde kampagner og sendes kun til brugere, der har skrevet til din bot inden for de seneste 24 timer."
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "Brug denne beskedtype, hvis du vil sende en udsendelse til dine Telegram-kontakter."
+    },
+    "tiktokActiveContacts": {
+      "title": "TikTok",
+      "description": "Kan indeholde kampagner og sendes kun til brugere, der har skrevet til din bot inden for de seneste 24 timer. TikTok-udsendelser understøtter kun tekst og billeder."
+    },
+    "flowType": {
+      "flow": {
+        "title": "Flow",
+        "description": "Send et flow til dine kontakter"
+      },
+      "template": {
+        "title": "Skabelon",
+        "description": "Send en skabelon til dine kontakter"
+      }
+    },
+    "detail": {
+      "title": "Udsendelsesdetaljer",
+      "subaction": "Underhandling",
+      "audienceFilter": "Målgruppefilter",
+      "noAudienceFilter": "Intet målgruppefilter",
+      "template": "Skabelon",
+      "noTemplate": "Ingen skabelon",
+      "integration": "Integration"
+    }
+  },
+  "condition": {
+    "yes": "Ja",
+    "no": "Nej",
+    "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
+    "datetimePlaceholder": "YYYY-MM-DD HH:mm",
+    "datetimeInvalid": "Indtast en dato som YYYY-MM-DD HH:mm eller en variabel",
+    "operator": {
+      "and": "Alle betingelser",
+      "or": "En vilkårlig betingelse"
+    },
+    "fields": {
+      "locale": "Sprog",
+      "language": "Sprog",
+      "fullName": "Fulde navn",
+      "country": "Land",
+      "continent": "Kontinent",
+      "gender": "Køn",
+      "subscribedToBroadcast": "Abonnerer på udsendelse",
+      "contactCreatedDate": "Kontaktens oprettelsesdato",
+      "contactCreatedDateMinutesAgo": "Kontaktens oprettelsesdato (minutter siden)",
+      "source": "Kilde",
+      "conversationTransferredToHuman": "Samtale overført til et menneske",
+      "interactedInLast24H": "Interagerede inden for de seneste 24 timer",
+      "interactedInLast24h": "Interagerede inden for de seneste 24 timer",
+      "followUp": "Opfølgning",
+      "isGuestUser": "Gæstebruger",
+      "existingContact": "Eksisterende kontakt",
+      "hasContactInfo": "Telefon og e-mail",
+      "currentChannel": "Kanal",
+      "inbox": "Indbakke",
+      "subjectToEuRules": "Omfattet af EU-regler",
+      "timezone": "Tidszone",
+      "hasOpportunity": "Har salgsmulighed (åben, vundet, tabt)",
+      "hasOpenOpportunity": "Har en åben salgsmulighed",
+      "hasWonOpportunity": "Har en vundet salgsmulighed",
+      "hasLostOpportunity": "Har en tabt salgsmulighed",
+      "instagramStoryReply": "Beskeden er et svar på en Instagram-story",
+      "followsBusinessOnInstagram": "Følger virksomheden på Instagram",
+      "businessFollowsUserOnInstagram": "Virksomheden følger brugeren på Instagram",
+      "verifiedAccountOnInstagram": "Bekræftet konto på Instagram",
+      "followerCountOnInstagram": "Antal følgere på Instagram",
+      "lastSent": "Seneste sendt",
+      "lastDelivered": "Senest leveret",
+      "lastSeen": "Senest set",
+      "lastSeenMinutesAgo": "Senest set (minutter siden)",
+      "lastInteraction": "Seneste interaktion",
+      "lastInteractionMinutesAgo": "Seneste interaktion (minutter siden)",
+      "unreplied": "Ubesvaret",
+      "unread": "Ulæst",
+      "appliedJobs": "Anvendte jobs",
+      "tags": "Tags",
+      "customFields": "Brugerdefinerede felter",
+      "phone": "Telefon",
+      "completedWhatsAppFlows": "Fuldførte WhatsApp-flows",
+      "messengerList": "Messenger-liste",
+      "subscribedToDripCampaign": "Abonnerer på drypkampagne",
+      "conversationAssigned": "Samtale tildelt",
+      "entryPointsLinks": "Links til indgangspunkter",
+      "sentMessage": "Sendt besked",
+      "keywordsReceived": "Modtagne nøgleord",
+      "executedFlow": "Udført flow",
+      "executedStep": "Udført trin",
+      "consecutiveAiFailures": "Antal AI-fejl i træk",
+      "questionnaireStarted": "Spørgeskema startet",
+      "questionnaireInProgress": "Spørgeskema i gang",
+      "questionnaireFinished": "Spørgeskema afsluttet",
+      "couponTopic": "Kupon",
+      "votedOnPoll": "Stemte i afstemningen",
+      "lastComment": "Seneste kommentar",
+      "commentedOnPost": "Kommenterede opslag",
+      "reactedOnPost": "Reagerede på opslag",
+      "lastTotalTaggedUsers": "Seneste samlede antal taggede brugere",
+      "lastTotalNewTaggedUsers": "Seneste samlede antal nye taggede brugere",
+      "email": "E-mail",
+      "phoneWasVerified": "Telefonnummer bekræftet",
+      "optedInForSms": "Tilmeldt SMS",
+      "broadcastSent": "Udsendelse sendt",
+      "broadcastDelivered": "Udsendelse leveret",
+      "broadcastSeen": "Udsendelse set",
+      "broadcastClicked": "Udsendelse klikket",
+      "broadcastFailed": "Udsendelse Mislykkedes",
+      "emailWasVerified": "E-mail bekræftet",
+      "optedInForEmail": "Tilmeldt e-mail",
+      "emailSent": "E-mail sendt",
+      "emailDelivered": "E-mail leveret",
+      "emailOpened": "E-mail åbnet",
+      "emailClicked": "E-mail klikket",
+      "isWithinWorkingHours": "Er inden for arbejdstiden",
+      "currentDate": "Aktuel dato",
+      "currentTime": "Aktuelt tidspunkt",
+      "currentDayOfMonth": "Aktuel dag i måneden",
+      "currentDayOfWeek": "Aktuel ugedag",
+      "currentMonth": "Aktuel måned",
+      "bought": "Købte",
+      "boughtItems": "Købte varerne",
+      "totalSpent": "Samlet forbrug",
+      "numberOfOrders": "Antal ordrer",
+      "shoppingCartTotal": "Indkøbskurv i alt",
+      "shoppingCartSubtotal": "Indkøbskurvens subtotal",
+      "shoppingCartIsEmpty": "Indkøbskurven er tom",
+      "shoppingCartContainsItems": "Indkøbskurven indeholder varer",
+      "lastSentMessageFailed": "Senest sendte besked mislykkedes",
+      "lastUserInput": "Seneste bruger input",
+      "lastUserInputType": "Seneste bruger input type",
+      "archived": "Arkiveret",
+      "blocked": "Blokeret",
+      "noAdminReply": "Intet svar fra administrator",
+      "contactCreatedAt": "Kontakt oprettet den",
+      "lastUserInputTypes": {
+        "text": "Tekst",
+        "location": "Placering",
+        "refLink": "Ref link",
+        "image": "Billede",
+        "video": "Video",
+        "audio": "Lyd",
+        "gif": "GIF",
+        "file": "Fil"
+      }
+    },
+    "fieldGroups": {
+      "opportunity": "Salgsmulighed",
+      "instagram": "Instagram",
+      "analytics": "Analyse",
+      "facebookInstagramComment": "Facebook-/Instagram-kommentar",
+      "broadcastWhatsapp": "Udsendelse (WhatsApp)",
+      "systemTime": "Systemtid",
+      "ecommerce": "E-handel",
+      "systemFields": "Systemfelter",
+      "topicCoupon": "Emnekupon",
+      "customFields": "Brugerdefinerede felter",
+      "email": "E-mail",
+      "sms": "SMS"
+    },
+    "languages": {
+      "ar": "Arabisk",
+      "de": "Tysk",
+      "en": "Engelsk",
+      "es": "Spansk",
+      "fil": "Filippinsk",
+      "fr": "Fransk",
+      "hi": "Hindi",
+      "id": "Indonesisk",
+      "it": "Italiensk",
+      "ja": "Japansk",
+      "km": "Khmer",
+      "ko": "Koreansk",
+      "lo": "Laotisk",
+      "ms": "Malajisk",
+      "my": "Burmesisk",
+      "nl": "Nederlandsk",
+      "pt": "Portugisisk",
+      "ru": "Russisk",
+      "th": "Thailandsk",
+      "vi": "Vietnamesisk",
+      "zh": "Kinesisk"
+    },
+    "sources": {
+      "direct": "Direkte",
+      "comments": "Kommentarer",
+      "ads": "Annoncer",
+      "fbLeadAd": "FB-leadannonce",
+      "inboundMessage": "Indgående besked",
+      "imported": "Importeret",
+      "api": "API",
+      "webchat": "Webchat",
+      "botLink": "Botlink",
+      "chatPlugin": "C. chatplugin"
+    }
+  },
+  "fields": {
+    "omnichannel": {
+      "label": "Omnichannel"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Billede"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "loginTitle": "Login med Instagram",
+      "loginDescription": "Forbind din Instagram Virksomhedskonto directly via Instagram OAuth.",
+      "facebookLoginTitle": "Login med Facebook",
+      "facebookLoginDescription": "Forbind an Instagram account linked til din Facebook Side via Facebook OAuth.",
+      "connectViaFacebook": "Forbind Instagram via Facebook",
+      "viaFacebookTitle": "Instagram via Facebook",
+      "cloneFromMessenger": "Clone fra Messenger",
+      "clonedFromMessenger": "Cloned fra Messenger"
+    },
+    "zalo": {
+      "label": "Zalo OA"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "botToken": "Bot Token",
+      "connectInstructions": {
+        "step1": "Åbn <link>@BotFather</link> i Telegram.",
+        "step2": "Send <strong>/newbot</strong> og follow den instructions.",
+        "step3": "Efter you oprettet den bot, you vil receive den bot API token. Kopiér den API token og paste it below."
+      }
+    },
+    "matchAll": {
+      "label": "Match alle den betingelser below"
+    },
+    "matchAny": {
+      "label": "Match one af den betingelser below"
+    },
+    "condition": {
+      "label": "Betingelse"
+    },
+    "actions": {
+      "label": "Actions"
+    },
+    "tags": {
+      "label": "Tags"
+    },
+    "customFields": {
+      "label": "Brugerdefineret Felter"
+    },
+    "pipelines": {
+      "label": "Pipelines"
+    },
+    "sequences": {
+      "label": "Sequences"
+    },
+    "ecommerce": {
+      "label": "Ecommerce"
+    },
+    "entryPointLink": {
+      "label": "Entry Point Link"
+    },
+    "assignedId": {
+      "label": "Assign Til"
+    },
+    "operator": {
+      "label": "Operator",
+      "is": "Er",
+      "isNot": "Er ikke",
+      "in": "I",
+      "notIn": "Ikke i",
+      "isEmpty": "Has ingen værdi",
+      "isNotEmpty": "Has vilkårlig værdi",
+      "gt": "Greater than",
+      "lt": "Less than",
+      "gte": "Greater than eller Equal til",
+      "lte": "Less than eller Equal til",
+      "contains": "Contains",
+      "notContains": "Doesn't contain",
+      "startsWith": "Starts med",
+      "endsWith": "Ends med",
+      "isBetween": "Interval",
+      "notBetween": "Ikke interval",
+      "used": "Used"
+    },
+    "contactFilter": {
+      "allConditions": "Alle af den following betingelser",
+      "anyConditions": "Vilkårlig af den below betingelser.",
+      "label": "Kontakt filter",
+      "onlyContactsMatch": "Kun kontakter, that match til",
+      "moreOptions": "Mere Options"
+    },
+    "contactNote": {
+      "label": "Kontakt Note"
+    },
+    "chooseTime": {
+      "label": "Vælg tid"
+    },
+    "notificationType": {
+      "label": "Notification Type",
+      "notifyAdmin": "Notify Admin",
+      "newMessageToHuman": "Ny Besked til Human",
+      "newOrder": "Ny Ordre"
+    },
+    "notificationChannel": {
+      "label": "Notification Kanal",
+      "messenger": "Messenger",
+      "email": "E-mail",
+      "telegram": "Telegram",
+      "browser": "Browser"
+    },
+    "accessToken": {
+      "label": "Access Token"
+    },
+    "botField": {
+      "label": "Bot Felt"
+    },
+    "agent": {
+      "label": "Agent"
+    },
+    "aiAgent": {
+      "label": "AI Agent"
+    },
+    "aiQueuedMessages": {
+      "label": "AI Queued Beskeder"
+    },
+    "aiFile": {
+      "label": "AI Fil"
+    },
+    "aiFunction": {
+      "label": "AI Function"
+    },
+    "aiTrigger": {
+      "label": "AI Trigger"
+    },
+    "alphanumericLength": {
+      "label": "Alphanumeric Length"
+    },
+    "analytics": {
+      "label": "Analytics"
+    },
+    "apiKey": {
+      "label": "API Nøgle"
+    },
+    "auth": {
+      "label": "Auth"
+    },
+    "authorizedDomain": {
+      "description": "Den domains eller subdomains that er autoriseret til access din webchat.",
+      "label": "Autoriseret domæne{plural, select, 1 {} other {r}}"
+    },
+    "webSearchAuthorizedDomains": {
+      "label": "Autoriseret websites for Web Søg tool",
+      "placeholder": "eksempel.com",
+      "tooltip": "Liste af domains that den AI agent kan access. Leave tom til tillad alle domains."
+    },
+    "authToken": {
+      "label": "Token"
+    },
+    "authType": {
+      "headers": "Brugerdefineret Overskrift",
+      "none": "Ingen",
+      "token": "Token"
+    },
+    "automatedResponse": {
+      "label": "Automated Svar"
+    },
+    "avatar": {
+      "label": "Profile Billede"
+    },
+    "reflink": {
+      "label": "Entry Point Link"
+    },
+    "qrCode": {
+      "label": "QR Kode"
+    },
+    "savePayloadToCustomField": {
+      "label": "Gem payload til brugerdefineret felt"
+    },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Bot Svar"
+    },
+    "brandColor": {
+      "description": "Denne farve er used på buttons til match din branding på den landing side, emails og webchat.",
+      "label": "Brand Farve"
+    },
+    "broadcast": {
+      "label": "Broadcast"
+    },
+    "trigger": {
+      "label": "Trigger"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
+    "button": {
+      "label": "Knap",
+      "whenPressed": "Når denne knap er pressed"
+    },
+    "buttonLabel": {
+      "label": "Knap Etiket"
+    },
+    "category": {
+      "label": "Kategori"
+    },
+    "completed": {
+      "label": "Completed"
+    },
+    "workspace": {
+      "label": "Arbejdsområde"
+    },
+    "workspaceId": {
+      "description": "Unique identifier for din arbejdsområde.",
+      "label": "Arbejdsområde Id"
+    },
+    "workspaceName": {
+      "label": "Account Navn"
+    },
+    "contact": {
+      "label": "Kontakt"
+    },
+    "contacts": {
+      "label": "Kontakter"
+    },
+    "conversation": {
+      "label": "Samtale"
+    },
+    "conversationStarter": {
+      "description": "Den samtale starters er used til start a samtale med a bruger.",
+      "label": "Samtalestarter{plural, select, 1 {} other {e}}",
+      "type": {
+        "openWebsite": "Åbn Websted",
+        "sendFlow": "Send Flow",
+        "sendText": "Send Tekst"
+      }
+    },
+    "createdAt": {
+      "label": "Oprettet At"
+    },
+    "currentTime": {
+      "label": "Current Tid"
+    },
+    "customRange": {
+      "label": "Brugerdefineret range"
+    },
+    "customCss": {
+      "label": "Brugerdefineret CSS"
+    },
+    "theme": {
+      "label": "Theme",
+      "placeholder": "Vælg en theme"
+    },
+    "customJS": {
+      "label": "Brugerdefineret JS",
+      "placeholder": "Indtast brugerdefineret JavaScript"
+    },
+    "customCSS": {
+      "label": "Brugerdefineret CSS",
+      "placeholder": "Indtast brugerdefineret CSS"
+    },
+    "customField": {
+      "label": "Brugerdefineret Felt",
+      "savePayloadTo": "Gem svar til Brugerdefineret Felt",
+      "set_value": "Set værdi",
+      "append": "Append til den slut",
+      "prepend": "Prepend til den beginning",
+      "increase": "Increase by",
+      "decrease": "Decrease by"
+    },
+    "dataCollect": {
+      "label": "Data Collect"
+    },
+    "defaultReply": {
+      "description": "It er den standard svar that din arbejdsområde vil send til brugere når den arbejdsområde doesn't know how til respond til den bruger besked.",
+      "label": "Standard Svar"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Set how long den bot waits før replying efter den bruger’s seneste besked. Hvis den bruger sends another besked, den timer resets og beskeder er queued into a single svar.",
+      "label": "Bot svar forsinkelse",
+      "minutes": "{count, plural, one {# minut} other {# minutter}}",
+      "none": "Ingen",
+      "seconds": "{count, plural, one {# sekund} other {# sekunder}}"
+    },
+    "delayType": {
+      "label": "Forsinkelse Type",
+      "placeholder": "Forsinkelse Type"
+    },
+    "delayUnit": {
+      "days": "Dage",
+      "hours": "Timer",
+      "minutes": "Minutter",
+      "seconds": "Sekunder"
+    },
+    "description": {
+      "label": "Beskrivelse",
+      "placeholder": "Indtast beskrivelse"
+    },
+    "developmentMode": {
+      "description": "Din bot vil work kun for bot admins. Aktivér denne option hvis you er building din bot og don't want non admins til brug den bot.",
+      "label": "Development Mode"
+    },
+    "email": {
+      "label": "E-mail",
+      "placeholder": "Indtast e-mail"
+    },
+    "embedCode": {
+      "description": "Kopiér og paste denne kode into din websted til embed den chat widget.",
+      "label": "Embed Kode",
+      "securityNote": "Security Note",
+      "securityNoteDescription": "Denne widget vil kun work på domains that er autoriseret i din webchat configuration. Make sure til tilføj din domæne til den autoriseret domains liste."
+    },
+    "processingStatus": {
+      "label": "Processing Status"
+    },
+    "enable": {
+      "label": "Aktivér"
+    },
+    "file": {
+      "label": "Fil"
+    },
+    "link": {
+      "label": "Link"
+    },
+    "message": {
+      "label": "Besked"
+    },
+    "filter": {
+      "label": "Filter"
+    },
+    "finalMessage": {
+      "label": "Final Besked"
+    },
+    "firstName": {
+      "label": "Første navn",
+      "placeholder": "Indtast første navn"
+    },
+    "countryCode": {
+      "label": "Land Kode"
+    },
+    "contactId": {
+      "label": "Kontakt Id"
+    },
+    "flow": {
+      "label": "Flow"
+    },
+    "flowId": {
+      "label": "Flow Id"
+    },
+    "flows": {
+      "aiGenerateText": "{aiName}: Generér Tekst",
+      "aiGenerateImage": "{aiName}: Generér Billede",
+      "aiEditImage": "{aiName}: Rediger Billede",
+      "aiAnalyzeImage": "{aiName}: Analysér Billede",
+      "aiExtractData": "{aiName}: Udtræk Data",
+      "aiSpeechToText": "{aiName}: Tale til tekst",
+      "aiTextToSpeech": "{aiName}: Tekst til tale",
+      "label": "Flows",
+      "placeholder": "Vælg flow",
+      "aiGenerateTextAgent": "{aiName}: Generér Tekst Agent",
+      "aiDeleteMessageHistory": "{aiName}: Slet Besked Historik"
+    },
+    "steps": {
+      "label": "Steps",
+      "placeholder": "Vælg trin"
+    },
+    "folder": {
+      "label": "Mappe"
+    },
+    "format": {
+      "label": "Format"
+    },
+    "framework": {
+      "angular": "Angular",
+      "ember": "Ember",
+      "react": "React",
+      "svelte": "Svelte",
+      "vue": "Vue"
+    },
+    "function": {
+      "label": "Function"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Gemini Model"
+    },
+    "gender": {
+      "female": "Female",
+      "label": "Gender",
+      "male": "Male",
+      "unknown": "Unknown"
+    },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Host",
+      "placeholder": "smtp.eksempel.com"
+    },
+    "hideHeader": {
+      "label": "Hide Overskrift"
+    },
+    "hideMessageInput": {
+      "label": "Hide Besked Input"
+    },
+    "inbox": {
+      "label": "Inbox",
+      "placeholder": "Vælg enn inbox"
+    },
+    "inboxTeam": {
+      "label": "Inbox Team"
+    },
+    "teamMembers": {
+      "label": "Team Members"
+    },
+    "inboxTeamMember": {
+      "label": "Inbox Team Member"
+    },
+    "inputCustomField": {
+      "label": "Input Brugerdefineret Felt"
+    },
+    "insertLink": {
+      "label": "Insert link"
+    },
+    "instructions": {
+      "label": "System Besked (Prompt)"
+    },
+    "isDefault": {
+      "label": "Mark som standard"
+    },
+    "isRichResponse": {
+      "description": "Return structured JSON med beskeder og actions instead af plain tekst streaming.",
+      "label": "Rich Svar"
+    },
+    "language": {
+      "description": "Kontakter er tildelt den standard sprog når den kontakt sprog er unknown.",
+      "label": "Sprog",
+      "placeholder": "Vælg sprog"
+    },
+    "lastName": {
+      "label": "Seneste navn",
+      "placeholder": "Indtast seneste navn"
+    },
+    "last30days": {
+      "label": "Seneste 30 dage"
+    },
+    "last7days": {
+      "label": "Seneste 7 dage"
+    },
+    "lastInput": {
+      "label": "Seneste Input"
+    },
+    "lastUserInputTypes": {
+      "text": "Tekst",
+      "location": "Placering",
+      "refLink": "Ref link",
+      "image": "Billede",
+      "video": "Video",
+      "audio": "Lyd",
+      "gif": "GIF",
+      "file": "Fil"
+    },
+    "lastMonth": {
+      "label": "Seneste måned"
+    },
+    "lifeTime": {
+      "label": "Lifetime"
+    },
+    "locale": {
+      "label": "Locale"
+    },
+    "errorLog": {
+      "label": "Fejl Log"
+    },
+    "inputType": {
+      "label": "Input Type",
+      "options": {
+        "text": "Tekst",
+        "image": "Billede",
+        "file": "Fil"
+      }
+    },
+    "extractFields": {
+      "label": "Felter til Udtræk",
+      "key": {
+        "label": "JSON Nøgle",
+        "placeholder": "e.g. e-mail, telefon, adresse"
+      },
+      "customFieldId": {
+        "label": "Gem til Brugerdefineret Felt"
+      },
+      "description": {
+        "label": "Beskrivelse (Valgfri)",
+        "placeholder": "Describe what til udtræk"
+      }
+    },
+    "max": {
+      "label": "Maksimum"
+    },
+    "maxOutputTokens": {
+      "label": "Max Tokens"
+    },
+    "mcpServer": {
+      "label": "MCP Server"
+    },
+    "systemFunction": {
+      "label": "System Function",
+      "names": {
+        "connectUserToHuman": "Forbind bruger til Human",
+        "documentReader": "Document Reader",
+        "imageReader": "Billede Reader",
+        "urlContext": "URL Reader",
+        "webSearch": "Web søg"
+      }
+    },
+    "min": {
+      "label": "Minimum"
+    },
+    "model": {
+      "label": "Model"
+    },
+    "name": {
+      "label": "Navn",
+      "placeholder": "Indtast navn",
+      "searchPlaceholder": "Søg navn..."
+    },
+    "selectUsers": {
+      "label": "Vælg brugere"
+    },
+    "node": {
+      "label": "Node"
+    },
+    "noResults": {
+      "label": "Ingen results found"
+    },
+    "notes": {
+      "label": "Notes"
+    },
+    "numericLength": {
+      "label": "Numeric Length"
+    },
+    "numericValue": {
+      "label": "Numeric Værdi"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Operation"
+    },
+    "outputCustomField": {
+      "label": "Output Brugerdefineret Felt"
+    },
+    "httpMethod": {
+      "label": "Method"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.example.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "Headers",
+      "keyPlaceholder": "Overskrift",
+      "valuePlaceholder": "Værdi"
+    },
+    "requestBody": {
+      "label": "Brødtekst",
+      "keyPlaceholder": "Felt",
+      "valuePlaceholder": "Værdi"
+    },
+    "bodyType": {
+      "label": "Brødtekst Type",
+      "options": {
+        "allContactData": "Alle Kontakt Data",
+        "json": "JSON",
+        "formEncoded": "Form Encoded"
+      }
+    },
+    "statusCode": {
+      "label": "Status Kode"
+    },
+    "outputMessage": {
+      "label": "Output Besked",
+      "placeholder": "What er den output besked?"
+    },
+    "paymentHistory": {
+      "label": "Payment Historik"
+    },
+    "paymentMethods": {
+      "label": "Payment Methods"
+    },
+    "persistentMenu": {
+      "description": "Den persistent menus er used til start a samtale med a bruger.",
+      "label": "Vedvarende menu{plural, select, 1 {} other {er}}",
+      "type": {
+        "openWebsite": "Åbn Websted",
+        "sendFlow": "Send Flow"
+      }
+    },
+    "userPersistentMenu": {
+      "pageDefault": "Standard",
+      "label": "Bruger Persistent Menu"
+    },
+    "phoneNumber": {
+      "label": "Telefonnummer"
+    },
+    "phoneNumberId": {
+      "label": "Telefonnummer",
+      "noPhoneNumbersFound": "Ingen telefon numbers found for denne account"
+    },
+    "port": {
+      "label": "Port",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Udbyder"
+    },
+    "prompt": {
+      "label": "Prompt",
+      "placeholder": "Indtast prompt"
+    },
+    "userMessage": {
+      "label": "Bruger besked"
+    },
+    "pageUserName": {
+      "label": "Side Bruger Navn"
+    },
+    "purpose": {
+      "label": "Purpose",
+      "placeholder": "What does denne Function do?"
+    },
+    "question": {
+      "label": "Spørgsmål",
+      "placeholder": "Er you åbn today?"
+    },
+    "imageProfileUrl": {
+      "label": "Billede Profile URL"
+    },
+    "persona": {
+      "label": "Persona",
+      "pageDefault": "Standard persona"
+    },
+    "quickReply": {
+      "label": "Quick Svar"
+    },
+    "search": {
+      "placeholder": "Søg..."
+    },
+    "logo": {
+      "label": "Logo"
+    },
+    "logoLight": {
+      "label": "Logo (Light)"
+    },
+    "logoDark": {
+      "label": "Logo (Dark)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
+    "brandName": {
+      "label": "Brand Navn",
+      "placeholder": "Indtast brand navn"
+    },
+    "policyUrl": {
+      "label": "Privacy Policy URL"
+    },
+    "termsOfServiceUrl": {
+      "label": "Terms af Service URL"
+    },
+    "showLogo": {
+      "label": "Vis Personal Logo"
+    },
+    "quality": {
+      "label": "Quality",
+      "options": {
+        "auto": "Auto",
+        "hd": "HD",
+        "md": "Medium",
+        "ld": "Low"
+      }
+    },
+    "size": {
+      "label": "Størrelse",
+      "options": {
+        "auto": "Auto",
+        "square1024": "Square - 1024×1024",
+        "landscape1536x1024": "Landscape - 1536×1024",
+        "portrait1024x1536": "Portrait - 1024×1536",
+        "dalle2_256": "256×256",
+        "dalle2_512": "512×512",
+        "dalle3_1792x1024": "1792×1024"
+      }
+    },
+    "status": {
+      "label": "Status",
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed",
+      "success": "Succes",
+      "error": "Fejl"
+    },
+    "subtitle": {
+      "placeholder": "Indtast subtitle"
+    },
+    "syncToMessenger": {
+      "label": "Sync til Messenger"
+    },
+    "tag": {
+      "label": "Tag"
+    },
+    "emailTopic": {
+      "label": "E-mail Emne"
+    },
+    "emailTopics": {
+      "label": "E-mail Topics"
+    },
+    "emailTopicSent": {
+      "label": "Sendt"
+    },
+    "emailTopicDelivered": {
+      "label": "Delivered(%)"
+    },
+    "emailTopicSeen": {
+      "label": "Seen(%)"
+    },
+    "emailTopicClicked": {
+      "label": "Clicked(%)"
+    },
+    "targetCountry": {
+      "description": "Den land where most af din kontakter live.",
+      "label": "Target Land"
+    },
+    "team": {
+      "label": "Team"
+    },
+    "rememberConversation": {
+      "label": "Remember samtale"
+    },
+    "temperature": {
+      "label": "Temperature"
+    },
+    "templateMessages": {
+      "label": "Skabelon Beskeder"
+    },
+    "text": {
+      "label": "Tekst",
+      "placeholder": "Indtast tekst"
+    },
+    "thisMonth": {
+      "label": "Denne måned"
+    },
+    "timezone": {
+      "description": "Kontakter er tildelt denne tidszone når den kontakt tidszone er unknown.",
+      "label": "Tidszone"
+    },
+    "title": {
+      "placeholder": "Indtast titel"
+    },
+    "today": {
+      "label": "Today"
+    },
+    "tools": {
+      "label": "Tools",
+      "placeholder": "Vælg tools"
+    },
+    "triggerFlowId": {
+      "label": "Trigger Flow Id",
+      "placeholder": "What flow er triggered?"
+    },
+    "type": {
+      "label": "Type",
+      "placeholder": "Vælg type"
+    },
+    "lastRead": {
+      "label": "Seneste Read"
+    },
+    "assignee": {
+      "label": "Assignee"
+    },
+    "modified": {
+      "label": "Modified"
+    },
+    "estimatedContacts": {
+      "label": "Estimated Kontakter"
+    },
+    "scheduledAt": {
+      "label": "Scheduled At"
+    },
+    "channel": {
+      "label": "Kanal"
+    },
+    "comment": {
+      "label": "Kommentar"
+    },
+    "directMessage": {
+      "label": "Direct Besked"
+    },
+    "updatedAt": {
+      "label": "Updated At"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "Indtast URL"
+    },
+    "userId": {
+      "label": "Bruger Id",
+      "placeholders": {
+        "instagram": "Instagram bruger Id",
+        "messenger": "Messenger PSID",
+        "telegram": "Telegram chat Id",
+        "tiktok": "TikTok bruger Id",
+        "zalo": "Zalo bruger Id"
+      }
+    },
+    "userTags": {
+      "label": "Bruger Applied Tags"
+    },
+    "username": {
+      "label": "Username",
+      "placeholder": "bruger@eksempel.com"
+    },
+    "keywords": {
+      "label": "Nøgleord"
+    },
+    "value": {
+      "label": "Værdi"
+    },
+    "wabaId": {
+      "label": "WABA Id"
+    },
+    "webchat": {
+      "label": "Webchat"
+    },
+    "welcomeFlowId": {
+      "description": "Den welcome besked er automatically sendt når den bruger opens din webchat.",
+      "label": "Welcome Flow"
+    },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "SMS"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "Voice"
+    },
+    "googleBm": {
+      "label": "Google BM"
+    },
+    "landingPage": {
+      "label": "Landing Side"
+    },
+    "whatsappFlow": {
+      "label": "WhatsApp Flow"
+    },
+    "shortText": {
+      "label": "Short Tekst",
+      "placeholder": "Indtast tekst"
+    },
+    "number": {
+      "label": "Nummer",
+      "placeholder": "Indtast nummer"
+    },
+    "date": {
+      "label": "Dato"
+    },
+    "datetime": {
+      "label": "Datetime"
+    },
+    "boolean": {
+      "label": "Boolean",
+      "placeholder": "Vælg true eller false",
+      "true": "True",
+      "false": "False"
+    },
+    "longText": {
+      "label": "Long Tekst"
+    },
+    "replyFormat": {
+      "label": "Svar Format",
+      "number": "Nummer",
+      "text": "Tekst",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "image": "Billede",
+      "file": "Fil",
+      "link": "Link",
+      "date": "Dato",
+      "datetime": "Datetime",
+      "location": "Placering",
+      "anyInput": "Vilkårlig Input"
+    },
+    "workspaceMember": {
+      "label": "Arbejdsområde Member"
+    },
+    "yesterday": {
+      "label": "Yesterday"
+    },
+    "permissions": {
+      "label": "Permissions",
+      "superAdmin": "Super Admin",
+      "analytics": "Analytics",
+      "flows": "Flows",
+      "contacts": "Kontakter",
+      "onlyAssignedContacts": "Kun Tildelt Kontakter",
+      "emailAndPhone": "E-mail og Telefon",
+      "broadcast": "Broadcast",
+      "ecommerce": "Ecommerce"
+    },
+    "member": {
+      "label": "Member"
+    },
+    "schedule": {
+      "label": "Schedule",
+      "now": "Now",
+      "scheduled": "Schedule for later"
+    },
+    "inputFieldId": {
+      "label": "Input Brugerdefineret Felt"
+    },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Billede"
+      }
+    },
+    "inputText": {
+      "label": "Input Tekst"
+    },
+    "outputFieldId": {
+      "label": "Gem result til a brugerdefineret felt"
+    },
+    "audio": {
+      "label": "Lyd Felt"
+    },
+    "voiceType": {
+      "label": "Voice Type",
+      "placeholder": "Vælg en voice type"
+    },
+    "voiceTone": {
+      "label": "Voice tone (Valgfri)",
+      "placeholder": "Speak i a cheerful tone."
+    },
+    "jsonPath": {
+      "placeholder": "Indtast JSON path",
+      "targetThisRow": "Fill denne række fra JSON"
+    },
+    "jsonSource": {
+      "title": "Pick JSON path",
+      "tabs": {
+        "testResponse": "Test svar",
+        "pasteSample": "Paste sample"
+      },
+      "pastePlaceholder": "Paste a sample JSON svar",
+      "invalidJson": "Ugyldig JSON",
+      "noTestResponse": "Run Test Now til browse a live svar",
+      "activeTarget": "Filling række {row}",
+      "showMore": "Vis mere",
+      "showMoreCount": "Vis {count} mere"
+    },
+    "spreadsheets": {
+      "label": "Spreadsheets"
+    },
+    "retryMessage": {
+      "label": "Retry Besked"
+    },
+    "skipButtonLabel": {
+      "label": "Skip Knap Etiket"
+    },
+    "autoSkipTime": {
+      "label": "Auto Skip Tid"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Auto Skip Fail Attempts"
+    },
+    "autoSkip": {
+      "label": "Auto Skip"
+    },
+    "spreadsheet": {
+      "label": "Spreadsheet"
+    },
+    "worksheet": {
+      "label": "Worksheet"
+    },
+    "source": {
+      "label": "Kilde",
+      "placeholder": "Vælg en kilde"
+    },
+    "password": {
+      "label": "Adgangskode",
+      "placeholder": "••••••••"
+    },
+    "passwordConfirmation": {
+      "label": "Re-enter adgangskode"
+    },
+    "newPassword": {
+      "label": "Ny Adgangskode"
+    },
+    "currentPassword": {
+      "label": "Current Adgangskode"
+    },
+    "developerAccessToken": {
+      "label": "API Access Token"
+    },
+    "fullName": {
+      "label": "Full Navn"
+    },
+    "botFields": {
+      "label": "Bot Felter"
+    },
+    "keyword": {
+      "label": "Keyword",
+      "searchPlaceholder": "Søg keyword..."
+    },
+    "templateId": {
+      "label": "WhatsApp Skabelon"
+    },
+    "messengerTemplateId": {
+      "label": "Messenger Skabelon"
+    },
+    "whatsappChannel": {
+      "label": "WhatsApp Kanal"
+    },
+    "messengerChannel": {
+      "label": "Messenger Kanal"
+    },
+    "messages": {
+      "label": "Beskeder"
+    },
+    "shortcut": {
+      "label": "Shortcut"
+    },
+    "savedReplies": {
+      "label": "Saved Replies"
+    },
+    "role": {
+      "label": "Role"
+    },
+    "plan": {
+      "label": "Plan"
+    },
+    "price": {
+      "label": "Pris"
+    },
+    "annualPrice": {
+      "label": "Annual Pris"
+    },
+    "limitContacts": {
+      "label": "Maksimum af Kontakter"
+    },
+    "marketingFeatures": {
+      "label": "Marketing feature liste",
+      "description": "A liste af produkt features that vil be visible til customers. Displayed i pricing tables."
+    },
+    "currency": {
+      "label": "Valuta"
+    },
+    "clientId": {
+      "label": "Client Id"
+    },
+    "clientSecret": {
+      "label": "Client Secret"
+    },
+    "verifyToken": {
+      "label": "Webhook Verify Token"
+    },
+    "apiVersion": {
+      "label": "API Version"
+    },
+    "configId": {
+      "label": "App Config Id"
+    },
+    "systemUserId": {
+      "label": "System Bruger Id"
+    },
+    "systemUserToken": {
+      "label": "System Bruger Token"
+    },
+    "businessId": {
+      "label": "Business Id"
+    },
+    "businessName": {
+      "label": "Business Navn"
+    },
+    "publishableKey": {
+      "label": "Publishable Nøgle"
+    },
+    "secretKey": {
+      "label": "Secret Nøgle"
+    },
+    "freeTrial": {
+      "label": "Free Trial",
+      "suffix": "dage"
+    },
+    "pricing": {
+      "label": "Pricing"
+    },
+    "sequence": {
+      "label": "Sequence"
+    },
+    "from": {
+      "label": "Fra"
+    },
+    "fromAddress": {
+      "label": "Fra Adresse",
+      "placeholder": "noreply@eksempel.com"
+    },
+    "messageTemplate": {
+      "label": "Besked Skabelon"
+    },
+    "preheader": {
+      "label": "Preheader"
+    },
+    "subject": {
+      "label": "Emne"
+    },
+    "to": {
+      "label": "Til"
+    },
+    "smtpChannel": {
+      "label": "SMTP Kanal"
+    },
+    "magicLink": {
+      "label": "Magic Link",
+      "nameHint": "Appended efter /r/{workspaceId}/ i den offentlig tracking URL. Brug letters, numbers, underscore, og hyphen kun.",
+      "urlHint": "Brug double braces i den URL, e.g. https://example.com/page?utm_campaign='{{campaign}}'. Values come fra den tracking link query string."
+    },
+    "appId": {
+      "label": "App Id"
+    },
+    "appSecret": {
+      "label": "App Secret"
+    },
+    "webhookVerifyToken": {
+      "label": "Webhook Verify Token"
+    },
+    "heading": {
+      "label": "Heading",
+      "placeholder": "Indtast heading"
+    },
+    "import": {
+      "label": "Importér",
+      "uploading": "Uploading…",
+      "fileTooLarge": "Den fil exceeds den {size} MB grænse.",
+      "unsupportedFileType": "Denne fil type er ikke supported.",
+      "unableToReadHeaders": "Unable til read den importér headers.",
+      "uploadError": "Den fil could ikke be uploaded.",
+      "histories": {
+        "title": "Importér historik",
+        "recent": "Recent imports",
+        "progress": "Progress",
+        "success": "Succes",
+        "failed": "Failed",
+        "completedAt": "Completed at",
+        "errorDetails": "Importér errors",
+        "row": "Række {row}"
+      }
+    },
+    "line": {
+      "label": "Line"
+    },
+    "spacing": {
+      "label": "Spacing"
+    },
+    "code": {
+      "label": "Kode",
+      "placeholder": "Indtast kode"
+    },
+    "authCallbackUrl": {
+      "label": "Auth Callback URL",
+      "hint": "Register denne exact URL som den OAuth redirect URI i din udbyder app. It must brug denne host, ikke din brugerdefineret domæne — den udbyder cannot reach a brugerdefineret domæne."
+    },
+    "signInCallbackUrl": {
+      "label": "Sign-in Callback URL",
+      "hint": "Tilføj denne til din Google app's autoriseret redirect URIs til aktivér Google sign-in."
+    },
+    "webhookUrl": {
+      "label": "Webhook URL",
+      "hint": "Register denne exact Webhook URL i din udbyder app. It must brug denne host, ikke din brugerdefineret domæne — den udbyder cannot reach a brugerdefineret domæne."
+    },
+    "tiktok": {
+      "label": "TikTok",
+      "accessToken": "Access Token",
+      "openId": "Åbn Id",
+      "clientId": "Client Id",
+      "clientSecret": "Client Secret",
+      "displayName": "Display Navn",
+      "connectInstructions": {
+        "step1": "Opret a TikTok app at <link>developers.tiktok.com</link>.",
+        "step2": "Authorize din account og kopiér den <strong>access token</strong>, <strong>åbn Id</strong>, og <strong>client secret</strong>.",
+        "step3": "Paste den credentials below til forbind."
+      }
+    },
+    "drip": {
+      "label": "Drip"
+    },
+    "sendGrid": {
+      "label": "SendGrid"
+    },
+    "currentVersion": "Current",
+    "consecutiveFailedReply": {
+      "label": "Consecutive Failed Replies"
+    },
+    "currentStep": {
+      "label": "Current Trin"
+    },
+    "fbChatLink": {
+      "label": "Facebook Inbox Link"
+    },
+    "inboxLink": {
+      "label": "Inbox Link"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "Instagram Business Follows Bruger"
+    },
+    "instagramFollowers": {
+      "label": "Instagram Followers"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Instagram Follows Business"
+    },
+    "instagramUsername": {
+      "label": "Instagram Username"
+    },
+    "instagramVerified": {
+      "label": "Instagram Verified"
+    },
+    "lastAd": {
+      "label": "Seneste Ad"
+    },
+    "lastAdSourcePlatform": {
+      "label": "Seneste Ad Kilde Platform"
+    },
+    "lastAdSourceUrl": {
+      "label": "Seneste Ad Kilde URL"
+    },
+    "lastButtonTitle": {
+      "label": "Seneste Knap Titel"
+    },
+    "lastCommentId": {
+      "label": "Seneste Kommentar Id"
+    },
+    "lastCommentedPostText": {
+      "label": "Seneste Commented Post Tekst"
+    },
+    "lastCtwa": {
+      "label": "Seneste CTWA"
+    },
+    "lastFbComment": {
+      "label": "Seneste FB kommentar"
+    },
+    "lastInputFailure": {
+      "label": "Seneste Input Failure"
+    },
+    "lastInteraction": {
+      "label": "Seneste Interaction"
+    },
+    "lastLatitude": {
+      "label": "Seneste Breddegrad"
+    },
+    "lastLongitude": {
+      "label": "Seneste Længdegrad"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Seneste Outbound Besked At"
+    },
+    "lastPostId": {
+      "label": "Seneste Post Id"
+    },
+    "lastSeen": {
+      "label": "Seneste Seen"
+    },
+    "lastStep": {
+      "label": "Seneste Trin"
+    },
+    "me": {
+      "label": "My Data Link"
+    },
+    "phone": {
+      "label": "Telefon"
+    },
+    "phoneAndEmail": {
+      "label": "Telefon og e-mail"
+    },
+    "timezoneName": {
+      "label": "Tidszone Navn"
+    },
+    "totalNewTagged": {
+      "label": "Total Ny Tagged"
+    },
+    "totalTagged": {
+      "label": "Total Tagged"
+    },
+    "userChannel": {
+      "label": "Bruger Kanal"
+    },
+    "userExternalId": {
+      "label": "Bruger External Id"
+    },
+    "userHash": {
+      "label": "Bruger Hash"
+    },
+    "userSource": {
+      "label": "Bruger Kilde"
+    },
+    "webchatParentUrl": {
+      "label": "Webchat Parent URL"
+    },
+    "make": {
+      "inviteUrl": "Invite Link",
+      "inviteUrlHint": "Den invite link for din published Make brugerdefineret app (e.g. https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Events",
+      "placeholder": "Type an event navn og press Indtast",
+      "description": "Tilføj one eller mere event names. Når Make attaches a webhook for one af these events, data er sendt til it når denne trin runs."
+    }
+  },
+  "flows": {
+    "title": "Flows",
+    "quickReplies": {
+      "limitReached": "Quick svar limit reached ({max})."
+    },
+    "buttons": {
+      "limitReached": "Knap limit reached ({max})."
+    },
+    "aiGenerateText": {
+      "label": "{name}: Generér Tekst"
+    },
+    "aiGenerateImage": {
+      "label": "{name}: Generér Billede"
+    },
+    "aiEditImage": {
+      "label": "{name}: Rediger Billede"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}: Analyze Billede"
+    },
+    "aiExtractData": {
+      "label": "{name}: Extract Data"
+    },
+    "openaiCompatible": {
+      "empty": "Forbind en OpenAI-compatible udbyder i integration indstillinger before using denne trin.",
+      "integration": "OpenAI-compatible udbyder",
+      "none": "Ingen"
+    },
+    "actions": {
+      "addContactNotes": "Tilføj Kontakt Notes",
+      "addContactTag": "Tilføj Kontakt Tag",
+      "aiDeleteMessageHistory": "Slet Besked Historik",
+      "aiExtractData": "AI Extract Data",
+      "aiAnalyzeImage": "AI Analyze Billede",
+      "aiSpeechToText": "AI Speech til Tekst",
+      "aiGenerateImage": "AI Generér Billede",
+      "aiGenerateTextAgent": "AI Generér Tekst Agent",
+      "aiTextToSpeech": "AI Tekst til Speech",
+      "archiveConversation": "Arkivér samtale",
+      "assignConversation": "Tildel samtale",
+      "autoAssignConversation": "Auto Tildel Samtale",
+      "blockContact": "Bloker kontakt",
+      "broadcastActions": "Broadcast Handlinger",
+      "callApi": "External API Anmodning",
+      "make": "Make",
+      "triggers": "Triggers",
+      "questionnaires": "Questionnaires",
+      "setUpCoupon": "Set up Kupon",
+      "markCouponUsed": "Mark Kupon used",
+      "chooseChannel": "Vælg kanal",
+      "clearCustomField": "Ryd brugerdefineret felt",
+      "condition": "Betingelse",
+      "contactActions": "Kontakt Handlinger",
+      "countCharacters": "Count Characters",
+      "deleteContact": "Slet kontakt",
+      "emailActions": "E-mail Handlinger",
+      "flowActions": "Flow Handlinger",
+      "followConversation": "Follow Samtale",
+      "formatDate": "Format Dato",
+      "generateCode": "Generér Kode",
+      "getDataFromJson": "Get Data Fra JSON",
+      "inboxActions": "Indbakke Handlinger",
+      "markEmailVerified": "Mark E-mail Verified",
+      "activeCampaignSyncContact": "Tilføj Kontakt til ActiveCampaign",
+      "facebookCustomAudience": "Facebook Brugerdefineret Målgruppe",
+      "mailchimpAddMember": "Tilføj Kontakt til MailChimp",
+      "mailerLiteAddSubscriber": "Tilføj Kontakt til MailerLite",
+      "klaviyoSyncProfile": "Tilføj Kontakt til Klaviyo",
+      "moosendCreateContact": "Tilføj Kontakt til Moosend",
+      "dripSubscribeSubscriber": "Tilføj Kontakt til Drip",
+      "getResponseAddContact": "Tilføj Kontakt til GetResponse",
+      "sendGridAddContact": "Tilføj Kontakt til SendGrid",
+      "messenger": "Messenger",
+      "openWebsite": "Åbn Websted",
+      "optInEmail": "Opt I E-mail",
+      "optOutEmail": "Opt Out E-mail",
+      "performAction": "Perform Handling",
+      "removeContactTag": "Fjern Kontakt Tag",
+      "setMessengerUserPersistentMenu": "Set Bruger Persistent Menu",
+      "enableMessengerComposer": "Aktivér Messenger Composer",
+      "disableMessengerComposer": "Disable Messenger Composer",
+      "setMessengerPersona": "Set Persona",
+      "updateMessengerContactData": "Opdater Kontakt Data",
+      "sendAudio": "Send Lyd",
+      "sendCard": "Send Card",
+      "sendExternalFlow": "Start External Flow",
+      "sendExternalNode": "Start External Node",
+      "sendFile": "Send Fil",
+      "sendGif": "Send Gif",
+      "sendImage": "Send Billede",
+      "sendMessage": "Send besked",
+      "sendNode": "Start Another Node",
+      "sendText": "Send Tekst",
+      "sendVideo": "Send Video",
+      "sendTemplateMessage": "Skabelonbesked",
+      "whatsappOptionList": "Option Liste",
+      "noTemplatesAvailable": "Nej skabeloner tilgængelig",
+      "noFlowsAvailable": "Nej flows tilgængelig",
+      "setCustomField": "Angiv brugerdefineret felt",
+      "startAnotherNode": "Start Another Node",
+      "startExternalFlow": "Start External Flow",
+      "startExternalNode": "Start External Node",
+      "startFlow": "Start Flow",
+      "subscribeBroadcast": "Subscribe Broadcast",
+      "tools": "Tools",
+      "transferConversationToBot": "Overfør samtale til bot",
+      "transferConversationToHuman": "Transfer Samtale til Menneskelig",
+      "unarchiveConversation": "Fjern fra arkiv Samtale",
+      "unassignConversation": "Unassign Samtale",
+      "unfollowConversation": "Unfollow Samtale",
+      "unsubscribeBroadcast": "Unsubscribe Broadcast",
+      "getUserData": "Get Bruger Data",
+      "sendCarousel": "Send Carousel",
+      "actions": "Actions",
+      "findGif": "Find Gif",
+      "spreadsheetGetRow": "Get Række",
+      "spreadsheetUpdateRow": "Opdater Række",
+      "spreadsheetSendData": "Send Data",
+      "spreadsheetGetRandomRow": "Get Random Række",
+      "spreadsheetClearRow": "Ryd Række",
+      "typing": "Typing",
+      "sequenceActions": "Sequence Handlinger",
+      "subscribeSequence": "Subscribe Sequence",
+      "unsubscribeSequence": "Unsubscribe Sequence",
+      "splitTraffic": "Split Traffic",
+      "aiEditImage": "AI Rediger Billede",
+      "whatsappFlow": "WhatsApp Flow"
+    },
+    "splitTraffic": {
+      "balanceHint": "Den i alt sum must equal 100%.",
+      "addVariation": "Ny Variation"
+    },
+    "condition": {
+      "addCase": "Check Ny Betingelse",
+      "caseTitle": "Case {index}",
+      "otherwise": "Den bruger doesn't match these betingelser"
+    },
+    "whatsappOptionList": {
+      "buttonLabel": "Knap Etiket",
+      "optionTitle": "Titel",
+      "optionDescription": "Beskrivelse",
+      "addOption": "Tilføj Ny",
+      "editButtonTitle": "Rediger Knap",
+      "editOptionTitle": "Rediger Option"
+    },
+    "whatsappFlow": {
+      "buttonLabel": "Knap Etiket",
+      "editDialogTitle": "Rediger WhatsApp Flow",
+      "selectFlow": "WhatsApp Flow",
+      "selectFlowPlaceholder": "Vælg en flow",
+      "startScreen": "Start Screen",
+      "selectScreenPlaceholder": "Vælg en screen",
+      "fieldMappings": "Gem Svar til Brugerdefineret Felter",
+      "paramKey": "Parameter",
+      "customField": "Brugerdefineret Felt",
+      "selectCustomFieldPlaceholder": "Vælg brugerdefineret felt",
+      "addMapping": "Tilføj Tilknytning",
+      "addCustomField": "Tilføj Ny"
+    },
+    "additionalSteps": "Additional trin",
+    "delayType": {
+      "datetimeCustomField": "Dato & Tid Brugerdefineret Felt",
+      "datetimeCustomFieldValue": "{customField}",
+      "duration": "Duration",
+      "durationValue": "{duration}",
+      "date": "Dato",
+      "specificDate": "Specific Dato",
+      "specificDateValue": "{date}",
+      "random": "Random"
+    },
+    "formatTimezone": {
+      "timezone": "Konto Tidszone",
+      "contactTimezone": "Kontakt Tidszone"
+    },
+    "fields": {
+      "selectTemplatePlaceholder": "Vælg en WhatsApp skabelon",
+      "selectMessengerTemplatePlaceholder": "Vælg en Messenger skabelon",
+      "preview": "Preview",
+      "typingSecondsLabel": "Typing for (sekunder)",
+      "lookupColumnsLabel": "Lookup Kolonner:",
+      "filterModeAnd": "Og",
+      "filterModeOr": "Eller"
+    },
+    "operators": {
+      "append": "Append til den slut",
+      "prepend": "Prepend til den start",
+      "set": "Set til"
+    },
+    "wait": {
+      "datetimeTooltip": "Den dato og tid when den flow vil være triggered.",
+      "setInterval": "Set Interval",
+      "delayTypeLabel": "Denne er en",
+      "fixed": "Fixed",
+      "randomized": "Randomized",
+      "delay": "delay",
+      "durationDetailPrefix": "Vent",
+      "dateDetailPrefix": "Vent until",
+      "customFieldDetailPrefix": "Vent until",
+      "randomDetailPrefix": "Vent between",
+      "randomDetailAnd": "og",
+      "intervalDetailPrefix": "Active between",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Duration",
+      "activeHours": "Active timer",
+      "dateTypeLabel": "Dato type",
+      "datetimeLabel": "Dato & Tid",
+      "customFieldLabel": "Brugerdefineret felt",
+      "offset": "Tilføj offset",
+      "offsetLabel": "Offset",
+      "randomRangeLabel": "Random range",
+      "minLabel": "Min",
+      "maxLabel": "Max",
+      "unitLabel": "Unit",
+      "specific": "Specific",
+      "dynamic": "Dynamic",
+      "selectTimePlaceholder": "Vælg en tid"
+    },
+    "followUp": {
+      "durationLabel": "Duration",
+      "waitAndContinue": "Vent <værdi>{duration} {unit}</værdi> og fortsæt",
+      "cancelOnReplyHint": "Den follow-up won't være sendt if den kontakt svar before den tid expires."
+    },
+    "setCustomField": {
+      "temporalHint": "Leave it empty til gem den current dato/tid."
+    }
+  },
+  "folders": {
+    "heading": {
+      "title": "Mapper"
+    }
+  },
+  "gemini": {
+    "autoReply": {
+      "description": "Aktivér AI auto svar til respond til brugere naturally med AI powered af din business data.",
+      "label": "AI Auto Svar"
+    },
+    "connect": {
+      "description": "Respond til brugere naturally med AI powered af din business data.",
+      "label": "Google Gemini"
+    },
+    "title": "Google Gemini"
+  },
+  "general": {
+    "title": "Generelt"
+  },
+  "facebookAds": {
+    "title": "Facebook Annoncer",
+    "setting": {
+      "label": "Facebook Annoncer",
+      "description": "Grow din business faster af connecting din Facebook Annoncer til din chatbot. Opret brugerdefineret audiences og tilføj/fjern people til brugerdefineret audiences.",
+      "reconnect": "Reconnect"
+    },
+    "fields": {
+      "subscriberShouldBe": "Abonnent should være",
+      "addedToCustomAudience": "Added til Brugerdefineret Målgruppe",
+      "removedFromCustomAudience": "Removed fra Brugerdefineret Målgruppe",
+      "adAccount": "Ad Konto",
+      "customAudience": "Brugerdefineret Målgruppe",
+      "nothingSelected": "Nothing selected"
+    },
+    "adAccounts": {
+      "loading": "Indlæser ad konti...",
+      "error": "Mislykkedes til load ad konti. Venligst check din Facebook Annoncer connection."
+    },
+    "customAudiences": {
+      "loading": "Indlæser brugerdefineret audiences...",
+      "error": "Mislykkedes til load brugerdefineret audiences. Venligst check din Facebook Annoncer connection."
+    },
+    "errors": {
+      "invalidAppSettings": "Facebook App indstillinger er ikke valid"
+    }
+  },
+  "googleSheets": {
+    "setting": {
+      "label": "Google Sheets",
+      "description": "Google Ark integration configuration"
+    },
+    "header": "Kolonne Header",
+    "title": "Google Sheets"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "Denne integration lets du gem customers kontakter fra din bot til ActiveCampaign."
+    },
+    "dialog": {
+      "description": "Enter den API URL og API Nøgle fra din ActiveCampaign konto indstillinger."
+    },
+    "fields": {
+      "apiUrl": "API URL",
+      "apiUrlPlaceholder": "https://youraccount.api-us1.com",
+      "apiKey": "API Nøgle",
+      "operation": "Operation",
+      "emailField": "E-mail Felt",
+      "emailTooltip": "Kontakt felt containing den e-mail used til identify den ActiveCampaign kontakt.",
+      "phoneField": "Telefon felt",
+      "phone": "Telefon",
+      "list": "Liste",
+      "lists": "Lister",
+      "tags": "Tags",
+      "automation": "Automation",
+      "customFields": "Brugerdefineret Felter i ActiveCampaign",
+      "optional": "Valgfri",
+      "nothingSelected": "Nothing selected",
+      "emptyField": "---",
+      "addCustomField": "Tilføj brugerdefineret felt"
+    },
+    "operations": {
+      "createOrUpdateContact": "Opret eller Opdater Kontakt",
+      "addContactToAutomation": "Tilføj Kontakt til Automation"
+    },
+    "lists": {
+      "loading": "Indlæser ActiveCampaign lister...",
+      "error": "Mislykkedes til load ActiveCampaign lister. Check that den integration er forbundet.",
+      "empty": "Nej ActiveCampaign lister found."
+    },
+    "automations": {
+      "loading": "Indlæser ActiveCampaign automations...",
+      "error": "Mislykkedes til load ActiveCampaign automations. Check that den integration er forbundet.",
+      "empty": "Nej ActiveCampaign automations found."
+    },
+    "tags": {
+      "loading": "Indlæser ActiveCampaign tags...",
+      "error": "Mislykkedes til load ActiveCampaign tags. Check that den integration er forbundet.",
+      "empty": "Nej ActiveCampaign tags found."
+    },
+    "customFields": {
+      "loading": "Indlæser ActiveCampaign brugerdefineret felter...",
+      "error": "Mislykkedes til load ActiveCampaign brugerdefineret felter. Check that den integration er forbundet.",
+      "empty": "Nej ActiveCampaign brugerdefineret felter found."
+    },
+    "errors": {
+      "invalidCredentials": "Ugyldig ActiveCampaign API URL eller API Nøgle. Venligst check din credentials og try again."
+    }
+  },
+  "getResponse": {
+    "title": "GetResponse",
+    "setting": {
+      "label": "GetResponse",
+      "description": "Denne integration lets du gem customers kontakter fra din bot til GetResponse."
+    },
+    "fields": {
+      "apiKey": "API Nøgle",
+      "list": "Liste",
+      "listPlaceholder": "Vælg en liste",
+      "email": "E-mail Felt",
+      "emailPlaceholder": "Vælg en e-mail felt",
+      "emailTooltip": "Kontakt felt that contains den e-mail til identify kontakter i GetResponse.",
+      "tags": "Tags",
+      "tagsPlaceholder": "Vælg tags",
+      "dayOfCycle": "Dag af Autoresponder Cycle",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "Flyt en kontakt til en specific dag i din autoresponder cycle. Enter 0 til start på dag 0.",
+      "optional": "Valgfri"
+    },
+    "campaigns": {
+      "loading": "Indlæser GetResponse lister...",
+      "error": "Mislykkedes til load GetResponse lister. Check that den integration er forbundet.",
+      "empty": "Nej GetResponse lister found.",
+      "limited": "Kun den første side af GetResponse lister er shown."
+    },
+    "tags": {
+      "loading": "Indlæser GetResponse tags...",
+      "error": "Mislykkedes til load GetResponse tags. Check that den integration er forbundet.",
+      "empty": "Nej GetResponse tags found.",
+      "limited": "Kun den første side af GetResponse tags er shown."
+    },
+    "errors": {
+      "invalidApiKey": "Ugyldig API Nøgle. Venligst check din GetResponse API Nøgle og try again."
+    }
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "Denne integration lets du gem customers kontakter fra din bot til MailChimp."
+    },
+    "fields": {
+      "audience": "Målgruppe",
+      "email": "E-mail felt",
+      "emailTooltip": "Brugerdefineret Felt which contains den user's e-mail til identify MailChimp kontakter.",
+      "doubleOptIn": "Double Opt-In",
+      "doubleOptInTooltip": "If ja, en confirmation e-mail vil være sendt til den e-mail before tilføj den kontakt til din liste.",
+      "on": "På",
+      "off": "Off",
+      "optional": "Valgfri",
+      "tags": "Tags",
+      "mergeFields": "Brugerdefineret Felter i MailChimp"
+    }
+  },
+  "mailerLite": {
+    "title": "MailerLite",
+    "setting": {
+      "label": "MailerLite",
+      "description": "Denne integration lets du gem customers kontakter fra din bot til MailerLite."
+    },
+    "fields": {
+      "apiToken": "API Token",
+      "group": "Group",
+      "groupPlaceholder": "Nothing selected",
+      "email": "E-mail Felt",
+      "status": "Type",
+      "customFields": "Brugerdefineret Felter i MailerLite (Valgfri)",
+      "emptyField": "---",
+      "providerField": "Vælg MailerLite felt",
+      "addMapping": "Tilføj Ny"
+    },
+    "status": {
+      "active": "Subscribed",
+      "unconfirmed": "Unconfirmed"
+    },
+    "errors": {
+      "invalidApiKey": "Ugyldig API Token. Venligst check din MailerLite API Token og try again."
+    }
+  },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "Denne integration lets du synkroniser customer profiles fra din bot til Klaviyo."
+    },
+    "fields": {
+      "apiKey": "API Nøgle",
+      "list": "Klaviyo Liste",
+      "listPlaceholder": "Vælg en Klaviyo liste",
+      "email": "E-mail Felt",
+      "titleField": "Titel Felt",
+      "titlePlaceholder": "Vælg en felt",
+      "orgField": "Organization Felt",
+      "orgPlaceholder": "Vælg en felt",
+      "customProperties": "Brugerdefineret Felter i Klaviyo",
+      "emptyField": "Vælg en kontakt felt",
+      "propertyKey": "Klaviyo property nøgle",
+      "addMapping": "Tilføj tilknytning"
+    },
+    "lists": {
+      "error": "Unable til load Klaviyo lister. Check that den integration er forbundet."
+    },
+    "errors": {
+      "invalidApiKey": "Ugyldig API Nøgle. Venligst check din Klaviyo API Nøgle og try again."
+    }
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "Denne integration lets du gem customers kontakter fra din bot til Moosend."
+    },
+    "fields": {
+      "apiKey": "API Nøgle",
+      "list": "Moosend liste",
+      "listPlaceholder": "Vælg en Moosend liste",
+      "email": "E-mail Felt"
+    },
+    "lists": {
+      "loading": "Indlæser Moosend mailing lister...",
+      "empty": "Nej Moosend mailing lister found.",
+      "error": "Unable til load Moosend mailing lister. Check that den integration er forbundet."
+    },
+    "errors": {
+      "invalidApiKey": "Ugyldig API Nøgle. Venligst check din Moosend API Nøgle og try again.",
+      "userNotEnabled": "Denne Moosend konto er ikke aktiveret for API access.",
+      "connectFailed": "Mislykkedes til forbind Moosend. Venligst try again later."
+    }
+  },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "Denne integration lets du gem customers kontakter fra din bot til Drip."
+    },
+    "fields": {
+      "apiToken": "API Token",
+      "account": "Konto",
+      "emailField": "E-mail Felt",
+      "emailTooltip": "Kontakt felt containing den e-mail used til identify den Drip abonnent.",
+      "phone": "Telefon",
+      "tags": "Tags",
+      "customFields": "Brugerdefineret Felter i Drip",
+      "optional": "Valgfri",
+      "nothingSelected": "Nothing selected",
+      "addCustomField": "Tilføj Brugerdefineret Felt"
+    },
+    "accounts": {
+      "loading": "Indlæser Drip konti...",
+      "error": "Mislykkedes til load Drip konti. Check that den integration er forbundet."
+    },
+    "tags": {
+      "loading": "Indlæser Drip tags...",
+      "error": "Mislykkedes til load Drip tags. Check that den integration er forbundet.",
+      "empty": "Nej Drip tags found."
+    },
+    "customFields": {
+      "loading": "Indlæser Drip brugerdefineret felter...",
+      "error": "Mislykkedes til load Drip brugerdefineret felter. Check that den integration er forbundet.",
+      "empty": "Nej Drip brugerdefineret felter found."
+    },
+    "errors": {
+      "noAccount": "Denne API Token does ikke have access til en Drip konto."
+    }
+  },
+  "sendGrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "Denne integration lets du gem customer kontakter fra din bot til SendGrid."
+    },
+    "scopeHelp": "Opret en SendGrid API-nøgle med Marketing read og write access.",
+    "acceptedLimitation": "SendGrid accepts kontakt updates for asynchronous processing. Accepted updates may still fail later.",
+    "fields": {
+      "apiKey": "API Nøgle",
+      "list": "Liste",
+      "emailField": "E-mail felt",
+      "phoneField": "Telefon felt",
+      "customFields": "Brugerdefineret Felter i SendGrid",
+      "optional": "Valgfri",
+      "nothingSelected": "Nothing selected",
+      "addCustomField": "Tilføj brugerdefineret felt"
+    },
+    "lists": {
+      "loading": "Indlæser SendGrid lister...",
+      "error": "Mislykkedes til load SendGrid lister. Check that den integration er forbundet."
+    },
+    "customFields": {
+      "loading": "Indlæser SendGrid brugerdefineret felter...",
+      "error": "Mislykkedes til load SendGrid brugerdefineret felter. Check that den integration er forbundet."
+    },
+    "errors": {
+      "invalidApiKey": "Ugyldig API Nøgle. Venligst check din SendGrid API Nøgle og try again.",
+      "missingScopes": "Denne API-nøgle must have Marketing read access. Venligst ensure din SendGrid API-nøgle includes Marketing tilladelser."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios. Din workspace's Developer Access Token er copied til din clipboard when du click Forbind — paste it when creating den connection i Make.",
+      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger.",
+      "noWorkspaceToken": "Nej Developer Access Token found for denne arbejdsområde. Generér one i den Arbejdsområde token section above, then click Forbind again."
+    }
+  },
+  "integrations": {
+    "title": "Integrationer"
+  },
+  "platformSettings": {
+    "title": "Platform Indstillinger",
+    "errors": {
+      "giphyApiKeyRequired": "API Nøgle er påkrævet til configure GIPHY.",
+      "giphyApiKeyInvalid": "Ugyldig GIPHY API-nøgle"
+    }
+  },
+  "home": {
+    "welcomeBack": "Welcome tilbage, {name}",
+    "subtitle": "Pick en arbejdsområde til jump tilbage i, eller opret en ny one.",
+    "noWorkspaces": "Du don't have vilkårlig arbejdsområder yet.",
+    "owner": "Owner"
+  },
+  "channels": {
+    "title": "Kanaler",
+    "duplicated": {
+      "generic": "Denne konto er allerede forbundet til another arbejdsområde.",
+      "instagram": "Denne Instagram konto er allerede forbundet til another arbejdsområde.",
+      "messenger": "Denne Facebook Page er allerede forbundet til another arbejdsområde.",
+      "telegram": "Denne Telegram bot er allerede forbundet til another arbejdsområde.",
+      "tiktok": "Denne TikTok konto er allerede forbundet til another arbejdsområde.",
+      "whatsapp": "Denne WhatsApp nummer er allerede forbundet til another arbejdsområde.",
+      "zalo": "Denne Zalo OA er allerede forbundet til another arbejdsområde."
+    },
+    "reconnect": {
+      "success": "Kanal reconnected successfully.",
+      "errors": {
+        "notFound": "Den kanal til forbind igen var ikke found.",
+        "pageNotFound": "Den authorized Facebook konto does ikke har access til denne Page. Log i med den correct konto og grant alle requested tilladelser.",
+        "accountNotFound": "Den authorized konto does ikke match den forbundet konto. Log i med den correct konto.",
+        "cancelled": "Forbind igen var annulleret. Prøv igen og grant den requested tilladelser.",
+        "failed": "Forbind igen mislykkedes. Prøv igen."
+      }
+    }
+  },
+  "workspace": {
+    "schedule": {
+      "title": "Set aktiv timer",
+      "description": "Choose a start og slut tid. Hvis den slut tid er earlier than den start tid, den schedule runs overnight.",
+      "startTime": "Start tid",
+      "endTime": "Slut tid",
+      "alwaysRun": "Always run",
+      "save": "Gem",
+      "invalidTimeRange": "Start og slut tid must være different",
+      "timeRequired": "Venligst vælg both start og slut tid",
+      "activated": "Arbejdsområde activated",
+      "deactivated": "Arbejdsområde deactivated",
+      "activeHours": "Aktiv fra {startTime} til {endTime}",
+      "permissionRequired": "Kun a super administrator kan change arbejdsområde aktiv timer"
+    },
+    "deletion": {
+      "title": "Slet arbejdsområde",
+      "description": "Permanently slet denne arbejdsområde. Alle kontakter, indstillinger, og data vil være slettet 24 timer efter du bekræft.",
+      "schedule": "Slet arbejdsområde",
+      "confirmTitle": "Slet denne arbejdsområde?",
+      "confirmDescription": "Alle kontakter, indstillinger, og data vil være permanently slettet 24 timer efter du bekræft. Du kan fortryd den deletion vilkårlig tid før then.",
+      "pending": "Denne arbejdsområde vil være slettet {countdown} ({date}). Du kan fortryd denne på vilkårlig tid før then.",
+      "pendingFallback": "soon",
+      "undone": "Arbejdsområde deletion har been canceled",
+      "bannerTitle": "Arbejdsområde deletion planlagt",
+      "bannerDescription": "Denne arbejdsområde er planlagt for deletion. Fortryd den deletion below til fortsæt using it.",
+      "pendingBlockedToast": "Denne arbejdsområde er planlagt for deletion. Kontakt a arbejdsområde administrator til gendan access.",
+      "navDisabledTooltip": "Unavailable while arbejdsområde deletion er planlagt",
+      "badge": "Deletion planlagt"
+    }
+  },
+  "workspaces": {
+    "list": {
+      "title": "Arbejdsområder Liste"
+    }
+  },
+  "workspaceToken": {
+    "title": "Arbejdsområde token"
+  },
+  "dialog": {
+    "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers."
+  },
+  "messages": {
+    "moveFeature": "Flyt {feature}",
+    "poweredBy": "Powered af {name}",
+    "noGiphyApiKey": "Ingen GIPHY API-nøgle found. Venligst tilføj one i Platform Indstillinger.",
+    "connectedSuccess": "{feature} forbundet successfully",
+    "connectFailed": "Mislykkedes til forbind {feature}",
+    "connectSuccess": "Forbundet {feature} successfully",
+    "refreshTokenSuccessfully": "{feature} token refreshed successfully",
+    "success": "Succes",
+    "failed": "Mislykkedes",
+    "copiedToClipboard": "Copied til clipboard",
+    "messengerAdsJsonDescription": "Du vil kun need til generér a ny JSON kode hvis du make changes til den starting Step. Changes i anden steps won't affect denne JSON kode.",
+    "messengerAdsNotPublished": "Udgiv den content af denne flow og try igen.",
+    "messengerAdsNoStartNode": "Denne flow har ingen valid starting step. Åbn den flow, set a starting Send Besked step, then udgiv og try igen.",
+    "messengerAdsError": "Noget gik galt while generating den JSON. Prøv igen.",
+    "messengerAdsInvalidStepType": "Den starting step kan contain Tekst, Billede, Card, Gallery, Video, Facebook video, Lyd og Fil.",
+    "messengerAdsInvalidVariable": "Du can't use brugerdefineret felter på den 'Starting Step' due til Facebook limitations. Kun first_name, last_name og full_name kan være added til den besked.",
+    "copyFailed": "Mislykkedes til kopiér til clipboard",
+    "createdFailed": "{feature} creation mislykkedes",
+    "deletedSuccess": "{feature} slettet successfully",
+    "deleteFileComingSoon": "Slet fil functionality coming soon",
+    "disconnectFeature": "Afbryd {feature}",
+    "disconnectFeatureDescription": "Er du sikker du want til afbryd den {feature}?",
+    "disconnectSuccess": "{feature} disconnected successfully",
+    "reply": "Svar",
+    "viewMessage": "Vis besked",
+    "changeLikeState": "Change like state",
+    "changeHideState": "Change hide state",
+    "commentHidden": "Denne kommentar var hidden",
+    "messageDeleted": "Den besked har been slettet.",
+    "sentAttachments": "Sendte {count, plural, one {1 vedhæftet fil} other {# vedhæftede filer}}",
+    "deleteComment": "Slet kommentar",
+    "deleteCommentConfirmation": "Er du sikker du want til slet denne kommentar? Its svar vil also være slettet, both i din indbakke og på Facebook. Denne action kan ikke være undone.",
+    "deleteMessageSuccess": "Besked slettet",
+    "facebookComment": "Facebook kommentar",
+    "editComment": "Rediger kommentar",
+    "editMessageSuccess": "Besked updated",
+    "editMessagePlaceholder": "Rediger din besked...",
+    "saveEdit": "Gem",
+    "cancelEdit": "Annullér",
+    "failedToCopy": "Mislykkedes til kopiér",
+    "failedToPreviewImage": "Mislykkedes til preview billede",
+    "loadingData": "Indlæser data...",
+    "errorLoadingData": "Mislykkedes til load data. Prøv igen.",
+    "leaveEmptyToKeepSecret": "Leave empty til keep den current secret",
+    "needToAddSettings": "Du need til tilføj indstillinger til use denne integration",
+    "noDataAvailable": "Ingen data tilgængelig",
+    "noResults": "Ingen resultater.",
+    "savedSuccessfully": "Saved successfully",
+    "syncedSuccessfully": "Synced successfully",
+    "nameAlreadyExists": "{feature} navn allerede exists",
+    "unknownError": "Ukendt fejl",
+    "updatedSuccess": "{feature} updated successfully",
+    "updateFileComingSoon": "Opdater fil functionality coming soon",
+    "videoError": "Video fejl",
+    "createdSuccess": "{feature} oprettet successfully",
+    "createFeature": "Opret {feature}",
+    "noItemsFound": "Ingen items found",
+    "editFeature": "Rediger {feature}",
+    "duplicateFeature": "Dupliker {feature}",
+    "duplicatedSuccess": "{feature} duplicated successfully",
+    "duplicateConfirmation": "Denne vil opret a kopiér af din {feature}.",
+    "deleteFeature": "Slet {feature}",
+    "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers.",
+    "addFeature": "Tilføj {feature}",
+    "signOutConfirmation": "Er du sikker du want til log out?",
+    "copyInvitationUrlSuccess": "Kopiér den link below og send til den person at du want til tilføj as administrator.",
+    "noAIIntegrationFound": "Ingen AI integration found. Venligst forbind an AI integration til use AI agenter.",
+    "resendFeature": "Send igen {feature}",
+    "resendFeatureDescription": "Send igen den {feature} til den kontakter at har ikke modtaget it yet.",
+    "resendSuccess": "Send igen successfully",
+    "changeDefault": "Change Standard",
+    "changeDefaultDescription": "Er du sikker du want til change den standard AI agent?",
+    "unsetDefaultDescription": "Er du sikker du want til unset den standard AI agent?",
+    "botIsActive": "Bot er aktiv",
+    "viewPost": "Vis post",
+    "selectConversationTitle": "Vælg a samtale",
+    "selectConversationDescription": "Choose a samtale fra den liste på den left til vis beskeder og start chatting.",
+    "selectConversationContactTitle": "Ingen kontakt selected",
+    "selectConversationContactDescription": "Vælg a samtale til vis den contact's details og indbakke information here.",
+    "archiveFeature": "Arkivér {feature}",
+    "archiveFeatureDescription": "Er du sikker du want til arkivér den {feature}?",
+    "disableFeature": "Deaktivér {feature}",
+    "disableFeatureDescription": "Er du sikker du want til deaktivér den {feature}?",
+    "enableFeature": "Aktivér {feature}",
+    "enableFeatureDescription": "Er du sikker du want til aktivér den {feature}?",
+    "exportedSuccess": "{feature} exported successfully",
+    "createSuccess": "{feature} oprettet successfully",
+    "deleteFailed": "Mislykkedes til slet {feature}",
+    "deleteSuccess": "{feature} slettet successfully",
+    "error": "Fejl",
+    "moveFolderDescription": "Flyt {feature} til mappe",
+    "noData": "Ingen data",
+    "featureNotFound": "{feature} ikke found",
+    "enableSuccess": "{feature} aktiveret successfully",
+    "userInactive": "Bruger har been inactive mere than 7 dage",
+    "messagingWindowClosed": "Den besked kan ikke være send outside den allowed window",
+    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
+    "humanAgentWindowExpired": "Messaging window udløbet. Den kontakt must besked første til reopen den samtale.",
+    "restoreVersionSuccess": "Flow restored til selected version",
+    "revertToPublishedSuccess": "Draft reverted til den published version",
+    "revertToPublishedConfirmTitle": "Revert til published version?",
+    "revertToPublishedConfirmDescription": "Denne vil discard den current draft changes og gendan den published flow content.",
+    "noVersionsFound": "Ingen published versions found",
+    "publishVersionSuccess": "A ny version har been published",
+    "flowConfigIncomplete": "Some configurations er incomplete",
+    "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",
+    "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
+    "redoHistoryCleared": "Gentag historik cleared",
+    "historyDepth": "({count})"
+  },
+  "instagram": {
+    "description": "Denne integration lets du opret Instagram bots.",
+    "selectInstagramAccount": "Vælg Instagram Konto",
+    "iceBreakers": "Ice Breakers",
+    "iceBreakersDescription": "Ice breakers provide a way for brugere til start a samtale med din bot af showing a liste af frequently asked questions.",
+    "reconnect": "Forbind igen",
+    "title": "Instagram"
+  },
+  "coexist": {
+    "title": "Synkroniser existing kontakter og chat historik?",
+    "descriptionWhatsapp": "Når aktiveret, kontakter og up til 6 months af chat historik vil være importeret fra denne WhatsApp nummer.",
+    "descriptionMessenger": "Når aktiveret, existing Messenger kontakter og up til 3 months af samtale historik vil være importeret fra denne Page.",
+    "enable": "Aktivér synkroniser",
+    "decline": "Don't synkroniser",
+    "billingNote": "Large pages may take several timer til complete.",
+    "toggleLabel": "Synkroniser existing kontakter og chat historik",
+    "toggleHelper": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen.",
+    "toggleHelperMessenger": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen den Messenger page.",
+    "toggleHelperWhatsapp": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen den WhatsApp nummer.",
+    "success": {
+      "enabled": "Synkroniser started. Historical kontakter og beskeder vil appear shortly.",
+      "disabled": "Synkroniser deaktiveret."
+    },
+    "errors": {
+      "alreadyTriggered": "Synkroniser var allerede triggered for denne nummer. Venligst vent for Meta til deliver den historical data.",
+      "windowExpired": "Den 24-hour synkroniser window har udløbet. Venligst afbryd og forbind igen denne nummer til synkroniser igen.",
+      "notEligible": "Denne nummer er ikke eligible for historical synkroniser.",
+      "triggerFailed": "Could ikke start den synkroniser. Prøv igen senere.",
+      "unknown": "Could ikke aktivér synkroniser. Prøv igen senere."
+    }
+  },
+  "messenger": {
+    "description": "Denne integration lets du opret Messenger bots.",
+    "welcomeMessage": "Welcome Besked",
+    "welcomeMessageDescription": "Denne er den første besked den bruger vil modtag fra din Bot. Denne besked er sendt når den bruger interacts for den første tid med den Bot af clicking på den 'Get Started' knap.",
+    "conversationStarters": "Samtale Starters",
+    "conversationStartersDescription": "Samtale Starters provide a way for brugere til start a samtale med din business med a liste af frequently asked questions.",
+    "persistentMenu": "Persistent Menu",
+    "persistentMenuDescription": "Den menu kan være configured til hjælp brugere til mere easily discover og access din Bot features. Den menu er always tilgængelig til brugere. Denne menu should contain den top-level handlinger at brugere kan use it på vilkårlig tid. Having a menu easily communicates den basic capabilities af din bot for beginners og returned brugere.",
+    "dynamicPersistentMenu": "Dynamic Persistent Menu",
+    "dynamicPersistentMenuDescription": "Allows du til dynamically change den persistent menu på vilkårlig tid på den bruger level.",
+    "botProfile": "Bot Profil",
+    "botProfileDescription": "Denne setting allows du til set a different navn og billede for din bot",
+    "personas": "Personas",
+    "personasDescription": "Denne setting allows du til set a different navn og billede for din bot",
+    "defaultPersona": "Standard Persona",
+    "reconnect": "Forbind igen",
+    "reconnectDescription": "Always forbind igen din bot hvis din Messenger bot er ikke responding, eller hvis du er seem vilkårlig permission fejl på den fejl log.",
+    "selectFacebookPage": "Vælg Facebook Page",
+    "selectPage": {
+      "noPagesTitle": "Ingen Facebook Pages found",
+      "noPagesDescription": "Pages inside a Business Manager require Business Manager access during forbindelse. Forbind igen Messenger og grant alle requested tilladelser.",
+      "bmLookupFailedTitle": "Business Manager pages may være missing",
+      "bmLookupFailedDescription": "Forbind igen Messenger og grant Business Manager access so pages managed through a Business Manager kan være listed.",
+      "alreadyConnectedNote": "Denne page er allerede forbundet",
+      "notAdminNote": "Full administrator permission på den page er påkrævet til forbind",
+      "tryAgain": "Try reconnecting"
+    },
+    "title": "Facebook Messenger",
+    "tabs": {
+      "generalSettings": "Generelt Indstillinger",
+      "messageTemplates": "Besked Skabeloner"
+    },
+    "messageTemplate": {
+      "params": {
+        "postbackPayload": "Knap Payload",
+        "postbackPayloadPlaceholder": "Indtast payload (valgfri)"
+      },
+      "create": {
+        "trigger": "Opret ny skabelon",
+        "header": "Overskrift",
+        "headerType": "Overskrift Type",
+        "none": "Ingen",
+        "text": "Tekst",
+        "textAndImage": "Tekst + Billede",
+        "image": "Billede",
+        "imageHint": "PNG, JPG, eller GIF. Den billede er uploaded før submission.",
+        "noImageSelected": "Ingen billede selected",
+        "body": "Brødtekst",
+        "buttons": "Buttons",
+        "addButton": "Tilføj Knap",
+        "addVariable": "Tilføj variabel",
+        "buttonText": "Knap Tekst",
+        "buttonType": "Knap Type",
+        "visitWebsite": "Visit Website",
+        "callPhoneNumber": "Call Telefon Nummer",
+        "postback": "Knap"
+      },
+      "clone": {
+        "title": "Klon Besked Skabelon",
+        "titleWithName": "Klon Besked Skabelon: {name}",
+        "channelsLabel": "Target Kanaler",
+        "channelsPlaceholder": "Vælg kanaler",
+        "succeededCount": "{count} kanal(s) cloned successfully",
+        "failedCount": "{count} kanal(s) mislykkedes til klon",
+        "partialSuccess": "Cloned til {succeeded} kanal(s); {failed} kanal(s) mislykkedes",
+        "result": {
+          "title": "Klon Results",
+          "succeededTitle": "Succeeded",
+          "close": "Close"
+        }
+      }
+    },
+    "tagSync": {
+      "title": "Tag Synkroniser",
+      "description": "Two-way synkroniser af tags between denne arbejdsområde og den forbundet kanal.",
+      "toggleSuccess": "Tag synkroniser setting updated.",
+      "enabledSince": "Aktiveret since {date}",
+      "disabled": "Deaktiveret",
+      "labelSync": "Synkroniser tags",
+      "on": "På",
+      "off": "Off",
+      "termsRequired": "Page administrator must accept den Facebook Page Kontakt Terms:"
+    }
+  },
+  "omnichannel": {
+    "title": "Omnichannel"
+  },
+  "openai": {
+    "connect": {
+      "description": "Respond til brugere naturally med AI powered af din business data."
+    },
+    "title": "OpenAI"
+  },
+  "claude": {
+    "autoReply": {
+      "description": "Aktivér AI auto svar til respond til brugere naturally med AI powered af din business data.",
+      "label": "AI Auto Svar"
+    },
+    "connect": {
+      "description": "Respond til brugere naturally med AI powered af din business data.",
+      "label": "Claude AI"
+    },
+    "title": "Claude AI"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "Aktivér AI auto svar til respond til brugere naturally med AI powered af din business data.",
+      "label": "AI Auto Svar"
+    },
+    "connect": {
+      "description": "Respond til brugere naturally med AI powered af din business data.",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
+  "openrouter": {
+    "autoReply": {
+      "description": "Aktivér AI auto svar powered af OpenRouter.",
+      "label": "AI Auto Svar"
+    },
+    "connect": {
+      "description": "Access 300+ AI models through a single API-nøgle.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
+  "openaiCompatible": {
+    "addProvider": "Tilføj AI Udbyder",
+    "addProviderModel": "Tilføj {name}",
+    "apiKeyKeepExisting": "Leave blank til keep den existing API-nøgle.",
+    "autoReply": {
+      "description": "Tillad denne udbyder til være used for automated AI svar.",
+      "label": "AI Auto Svar"
+    },
+    "connect": {
+      "description": "Forbind OpenAI-compatible providers for AI Agent fallback models.",
+      "label": "OpenAI-compatible providers"
+    },
+    "empty": "Ingen OpenAI-compatible providers configured.",
+    "fields": {
+      "baseURL": "Base URL",
+      "defaultModel": "Standard model",
+      "enabled": "Aktiveret"
+    },
+    "provider": "AI-udbyder",
+    "title": "OpenAI Compatible",
+    "validation": {
+      "invalidBaseURL": "Base URL er ugyldig eller ikke allowed.",
+      "presetAlreadyConnected": "Denne preset er allerede forbundet for denne arbejdsområde."
+    }
+  },
+  "settings": {
+    "title": "Indstillinger",
+    "agents": {
+      "description": "AI Agenter beskrivelse",
+      "title": "AI-agenter"
+    },
+    "aiTriggers": {
+      "description": "AI Triggers beskrivelse",
+      "title": "AI Triggers"
+    },
+    "automatedResponses": {
+      "title": "Nøgleord"
+    },
+    "openai": {
+      "description": "OpenAI integration beskrivelse",
+      "title": "OpenAI Integration"
+    },
+    "claude": {
+      "description": "Claude integration beskrivelse",
+      "title": "Claude Integration"
+    },
+    "deepseek": {
+      "description": "DeepSeek integration beskrivelse",
+      "title": "DeepSeek Integration"
+    }
+  },
+  "auth": {
+    "orContinueWith": "Eller fortsæt med",
+    "continueWithFacebook": "Fortsæt med Facebook",
+    "dontHaveAnAccount": "Don't har an konto?",
+    "alreadyHaveAnAccount": "Allerede har an konto?",
+    "signUp": "Log up",
+    "acceptTermsAndPolicy": "Af clicking fortsæt, du agree til our",
+    "and": "og",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms af Service",
+    "signInTitle": "Log ind til {name}",
+    "forgotPasswordTitle": "Forgot din adgangskode?",
+    "forgotPasswordDescription": "Ingen worries! We'll send du a link med instructions på how til nulstil din adgangskode.",
+    "checkYourEmail": "Check din e-mail",
+    "magicLinkSent": "We sendt verification URL til din e-mail",
+    "magicLinkSentDescription": "Klik den link i din e-mail til fortsæt.",
+    "didNotReceiveEmail": "Didn't modtag den e-mail? Check din spam mappe.",
+    "trySigningInAgain": "Du kan also try signing i igen med a different e-mail.",
+    "signIn": "Log ind",
+    "signUpSuccess": "Signed up successfully. Venligst check din e-mail for verification.",
+    "forgotPassword": "Forgot adgangskode?",
+    "rememberedPassword": "Remembered din adgangskode?",
+    "forgotPasswordEmailSent": "We've sendt du an e-mail med instructions til nulstil din adgangskode.",
+    "magicLinkSentTitle": "Magic link sendt",
+    "passwordResetSuccess": "Adgangskode nulstil successfully",
+    "resetPasswordTitle": "Nulstil din adgangskode",
+    "resetPasswordDescription": "Indtast din ny adgangskode below.",
+    "signUpTitle": "Log up til {name}",
+    "changePasswordTitle": "Change din adgangskode",
+    "changePasswordDescription": "Set a ny adgangskode før continuing.",
+    "passwordChangeSuccess": "Adgangskode changed"
+  },
+  "emailTopics": {
+    "title": "E-mail Topics"
+  },
+  "tags": {
+    "title": "Tags"
+  },
+  "texts": {
+    "or": "eller"
+  },
+  "theme": {
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System"
+  },
+  "validation": {
+    "maxSize": "Fil størrelse exceeds maksimum limit",
+    "maxItemsReached": "Maksimum {max} {feature} allowed per arbejdsområde",
+    "invalidApiKey": "Ugyldig API-nøgle",
+    "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}"
+  },
+  "webchat": {
+    "chatUnavailable": "Denne chat er currently unavailable.",
+    "description": "Let din customers get instant automated responses fra din business directly fra din website",
+    "rateLimitExceeded": "Too many requests. Prøv igen i a moment.",
+    "title": "Web Chat",
+    "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig.",
+    "unauthorizedDomain": {
+      "description": "Denne website er ikke authorized til load denne chat widget.",
+      "title": "Webchat unavailable"
+    }
+  },
+  "whatsapp": {
+    "category": {
+      "marketing": {
+        "description": "Marketing kategori beskrivelse",
+        "label": "Marketing"
+      },
+      "utility": {
+        "description": "Utility kategori beskrivelse",
+        "label": "Utility"
+      }
+    },
+    "commands": {
+      "description": "These er special nøgleord at tell den WhatsApp bot what til do",
+      "label": "Commands"
+    },
+    "autoConnect": {
+      "inProgress": "Connecting…"
+    },
+    "connectExisting": "Forbind an existing WhatsApp Business Konto",
+    "embeddedSignupDone": "Signup complete — du kan close denne tab.",
+    "embeddedSignupPopupBlocked": "Venligst tillad pop-ups for denne site, then try igen.",
+    "fillRequiredFields": "Venligst fill i alle påkrævet felter",
+    "continueManualConnect": "Fortsæt — manual forbind",
+    "icebreakers": {
+      "description": "These er common questions at people kan easily ask du.",
+      "label": "Icebreakers"
+    },
+    "manualConnect": "Manual forbind using System Bruger Adgangstoken.",
+    "manualOnboarding": {
+      "title": "Din Whatsapp indbakke er ready!",
+      "description": "Configure den webhook URL og verification token i din Meta App. Use den values below.",
+      "webhookUrl": "Webhook URL",
+      "verifyToken": "Webhook verification token",
+      "qrCodeHint": "Scan den QR kode til åbn den webhook URL",
+      "moreSettings": "Flere indstillinger",
+      "goToInbox": "Take me there"
+    },
+    "phoneVerification": {
+      "title": "Verify WhatsApp telefon nummer",
+      "description": "Request a verification kode fra Meta, indtast den kode here, og den telefon nummer vil være registered automatically.",
+      "errorTitle": "Telefonnummer verification påkrævet",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Voice call"
+      },
+      "actions": {
+        "sendCode": "Send kode",
+        "resendIn": "Send igen i {seconds}s",
+        "verify": "Verify og register"
+      },
+      "fields": {
+        "code": {
+          "label": "Verification kode",
+          "placeholder": "Indtast Meta OTP"
+        }
+      },
+      "messages": {
+        "codeSent": "Verification kode sendt af {method}.",
+        "cooldown": "Venligst vent {seconds}s før requesting another kode.",
+        "verified": "Telefonnummer verified og registered successfully."
+      },
+      "errors": {
+        "integrationNotFound": "WhatsApp integration ikke found.",
+        "codeNotSent": "WhatsApp verification kode could ikke være sendt.",
+        "codeNotVerified": "WhatsApp verification kode could ikke være verified.",
+        "registrationFailed": "WhatsApp telefon nummer verification mislykkedes."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "WhatsApp access token er påkrævet.",
+        "appSettingsNotFound": "WhatsApp app indstillinger were ikke found.",
+        "failedToPersistIntegration": "Mislykkedes til gem den WhatsApp integration.",
+        "noPhoneNumberFound": "Ingen WhatsApp telefon nummer var found.",
+        "noPhoneNumbersFound": "Ingen telefon numbers were found for denne WhatsApp Business Konto.",
+        "phoneNumberNotFound": "Selected WhatsApp telefon nummer var ikke found.",
+        "unableToVerifyToken": "Unable til verify den WhatsApp token.",
+        "wabaMismatch": "Selected WhatsApp Business Konto does ikke match den authorization.",
+        "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization."
+      }
+    },
+    "marketingMessageLite": "Marketing Besked Lite",
+    "messageTemplate": {
+      "carouselImage": {
+        "label": "Carousel Billede"
+      },
+      "carouselVideo": {
+        "label": "Carousel Video"
+      },
+      "document": {
+        "label": "Document"
+      },
+      "image": {
+        "label": "Billede"
+      },
+      "location": {
+        "label": "Placering"
+      },
+      "text": {
+        "label": "Tekst"
+      },
+      "video": {
+        "label": "Video"
+      },
+      "viewCatalog": {
+        "label": "Vis Catalog"
+      },
+      "viewProduct": {
+        "label": "Vis Product"
+      },
+      "params": {
+        "couponCode": "Kupon Kode",
+        "couponCodePlaceholder": "Indtast kupon kode",
+        "quickReplyPayload": "Quick Svar Payload",
+        "quickReplyPayloadPlaceholder": "Indtast payload (valgfri)",
+        "flowToken": "Flow Token",
+        "flowTokenPlaceholder": "Indtast flow token",
+        "catalogProductId": "Product ID",
+        "catalogProductIdPlaceholder": "Indtast product retailer ID",
+        "carouselCard": "Card {index}",
+        "limitedTimeOffer": "Offer Expiration Tid",
+        "limitedTimeOfferPlaceholder": "Indtast expiration tid i milliseconds",
+        "limitedTimeOfferHelp": "Unix timestamp i milliseconds når den offer expires",
+        "location": "Placering",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "locationName": "Placering navn (valgfri)",
+        "locationAddress": "Address (valgfri)",
+        "enterFormatUrl": "Indtast {format} URL"
+      }
+    },
+    "sampleBodyCardContent": {
+      "label": "Sample brødtekst card content"
+    },
+    "sampleBodyContent": {
+      "label": "Sample brødtekst content"
+    },
+    "sampleHeaderContent": {
+      "label": "Sample overskrift content"
+    },
+    "showFooter": {
+      "label": "Show footer"
+    },
+    "showHeader": {
+      "label": "Show overskrift"
+    },
+    "tabs": {
+      "accountHealths": "Konto Health",
+      "automation": "Automation",
+      "ecommerce": "E-handel",
+      "flows": "Flows",
+      "messageTemplates": "Besked Skabeloner",
+      "profile": "Profil",
+      "usefulLinks": "Useful Links"
+    },
+    "accountHealths": {
+      "title": "Administrer din WhatsApp konto",
+      "description": "Review din WhatsApp konto status, messaging limits, og quality. Opdater indstillinger eller resolve issues hvis needed",
+      "goToBusinessManager": "Go til Meta Business Manager",
+      "unavailable": {
+        "title": "Konto health er temporarily unavailable",
+        "description": "We could ikke load denne WhatsApp telefon nummer fra Meta right nu. Anden recovery handlinger på denne page er still tilgængelig."
+      },
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Display telefon nummer",
+          "tooltip": "Den telefon nummer shown til customers når they besked din business."
+        },
+        "businessName": {
+          "label": "Business navn",
+          "tooltip": "Den verified WhatsApp business display navn."
+        },
+        "displayNameStatus": {
+          "label": "Display navn status",
+          "tooltip": "Approval status af din WhatsApp business display navn."
+        },
+        "qualityRating": {
+          "label": "Quality rating",
+          "tooltip": "Quality rating based på customer feedback over den seneste 7 dage."
+        },
+        "messagingLimitTier": {
+          "label": "Messaging limit tier",
+          "tooltip": "Maksimum nummer af unique customers din business kan besked i a 24-hour rolling window."
+        },
+        "accountMode": {
+          "label": "Konto mode",
+          "tooltip": "Whether den WhatsApp Business Konto er live eller i sandbox mode."
+        },
+        "marketingMessages": {
+          "label": "Marketing Beskeder (MM Lite)",
+          "tooltip": "Onboarding status af den WhatsApp Business Konto into Marketing Beskeder Lite API.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Ineligible: OBO model",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Ineligible: inactive eller restricted",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Ineligible: land ikke supported",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Ineligible: using WhatsApp Business app",
+            "ELIGIBLE": "Eligible",
+            "PENDING_VALID_PAYMENT_METHOD": "Pending valid payment method",
+            "PENDING_INTERNAL_SETUP": "Pending internal setup",
+            "ONBOARDED": "Onboarded"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Den WhatsApp Business Konto uses den OBO model, which er ikke supported. Du must første overfør ownership af den WABA til den customer eller onboard using den Intent API.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Den WhatsApp Business Konto er inactive eller restricted fra messaging due til a policy enforcement issue.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Den WhatsApp Business Konto er i a region at does ikke support den MM Lite API.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Den WhatsApp Business telefon nummer er being used within den WhatsApp Business app.",
+            "ELIGIBLE": "Den WhatsApp Business Konto er eligible til onboard og use den MM Lite API.",
+            "PENDING_VALID_PAYMENT_METHOD": "Den WhatsApp Business Konto requires setting up a valid payment method.",
+            "PENDING_INTERNAL_SETUP": "Den WhatsApp Business Konto er being configured til use den MM Lite API og requires ingen further action fra den business customer eller partner. Den automated setup process er estimated til take less than ten minutter. Subscribe til den account_update webhook og listen for den AD_ACCOUNT_LINKED event. Submit a support ticket hvis den setup process takes mere than ten minutter og du har ikke modtaget a webhook.",
+            "ONBOARDED": "Den WhatsApp Business Konto har successfully onboarded og er ready til use den MM Lite API."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Webhook Configuration",
+          "tooltip": "Status af den webhook configured til modtag WhatsApp events.",
+          "configured": "Webhook configured successfully",
+          "notConfigured": "Webhook ikke configured"
+        },
+        "phoneNumberHealth": {
+          "label": "Telefon Nummer Health",
+          "tooltip": "Whether denne telefon nummer kan send beskeder og vilkårlig issues affecting it.",
+          "headline": "Telefon Nummer - {status}"
+        },
+        "wabaHealth": {
+          "label": "WhatsApp Business Konto Health",
+          "tooltip": "Whether den WhatsApp Business Konto kan send beskeder og vilkårlig issues affecting it.",
+          "headline": "WhatsApp Business Konto (WABA ID: {id}) - {status}",
+          "headlineNoId": "WhatsApp Business Konto - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 customers per 24h",
+        "TIER_250": "250 customers per 24h",
+        "TIER_1K": "1,000 customers per 24h",
+        "TIER_10K": "10,000 customers per 24h",
+        "TIER_100K": "100,000 customers per 24h",
+        "TIER_UNLIMITED": "Unlimited customers per 24h",
+        "UNKNOWN": "Ukendt"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Approved",
+        "AVAILABLE_WITHOUT_REVIEW": "Tilgængelig Uden Review",
+        "DECLINED": "Declined",
+        "EXPIRED": "Udløbet",
+        "NONE": "Ingen",
+        "PENDING_REVIEW": "Pending Review"
+      },
+      "accountMode": {
+        "LIVE": "Live",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "Tilgængelig",
+        "LIMITED": "LIMITED",
+        "BLOCKED": "Blokeret",
+        "UNKNOWN": "Ukendt"
+      },
+      "health": {
+        "label": "Business Status",
+        "tooltip": "Overview af din WhatsApp konto health og messaging capability.",
+        "blockedMessage": "Din telefon nummer har been blokeret fra sender beskeder.",
+        "problem": "Problem:",
+        "possibleSolution": "Possible solution:",
+        "noIssues": "Ingen issues detected",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "Whether denne {type} kan send beskeder og vilkårlig issues affecting it.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Telefon Nummer",
+          "WABA": "WhatsApp Business Konto",
+          "BUSINESS": "Business",
+          "MESSAGE_TEMPLATE": "Besked Skabelon",
+          "APP": "App"
+        }
+      }
+    },
+    "templateFooter": {
+      "label": "Skabelon Footer"
+    },
+    "templateHeader": {
+      "label": "Skabelon Overskrift"
+    },
+    "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
+    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen."
+  },
+  "zalo": {
+    "title": "Zalo OA",
+    "refreshPermissions": "Refresh tilladelser",
+    "duplicated": "Denne Zalo OA konto har allerede been forbundet til another arbejdsområde.",
+    "tagSync": {
+      "title": "Tag Synkroniser",
+      "description": "Mirror local tag assignments til denne Zalo OA.",
+      "toggleSuccess": "Tag synkroniser setting updated.",
+      "enabledSince": "Aktiveret since {date}",
+      "disabled": "Deaktiveret"
+    }
+  },
+  "telegram": {
+    "description": "Denne integration lets du opret Telegram bots.",
+    "title": "Telegram"
+  },
+  "invitation": {
+    "chatbotInvitationDescription1": "Join {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} har invited du til join {chatbotName}.",
+    "invalidInvitation": "Denne invitation er ugyldig eller har udløbet.",
+    "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "inboxTeams": {
+    "title": "Indbakke Teams"
+  },
+  "userPersistentMenus": {
+    "title": "Bruger Persistent Menus"
+  },
+  "webhooks": {
+    "title": "Webhooks"
+  },
+  "reflinks": {
+    "title": "Entry Point Links",
+    "description": "Keyword links at start flows og capture ref payloads fra kanaler."
+  },
+  "qrCodes": {
+    "title": "QR Codes",
+    "description": "Opret QR codes at link til din chatbot flows."
+  },
+  "magicLinks": {
+    "title": "Magic Links",
+    "description": "Opret deep links at redirect til din URL med query parameters."
+  },
+  "QRCode": {
+    "title": "QR Kode",
+    "description": "Share denne kode so people åbn din tracking link."
+  },
+  "trigger": {
+    "when": "Når denne happens",
+    "conditions": {
+      "tagApplied": "Tag Applied",
+      "tagRemoved": "Tag Removed",
+      "dateTimeBasedTrigger": "DateTime Based Udløser",
+      "customFieldValueChanged": "Brugerdefineret Felt Changed",
+      "contactInfoUpdated": "Telefon eller e-mail updated",
+      "conversationTransferredToHuman": "Samtale overført til et menneske",
+      "conversationTransferredToBot": "Samtale transferred til bot",
+      "newContact": "Ny Kontakt",
+      "contactUnsubscribedFormBroadcast": "Kontakt Unsubscribed Fra Broadcast",
+      "archived": "Arkiveret",
+      "followUp": "Opfølgning",
+      "conversationAssigned": "Samtale Tildelt",
+      "conversationUnassigned": "Samtale Ikke tildelt",
+      "incomingCall": "Incoming Call",
+      "missedAudioCall": "Missed Lyd Call",
+      "callEnded": "Call Ended",
+      "ticketCreated": "Ticket Oprettet",
+      "ticketMovedToStage": "Ticket Moved Til Stage",
+      "ticketValueChanged": "Ticket Værdi Changed",
+      "ticketStatusChanged": "Ticket Status Changed",
+      "ticketPriorityChanged": "Ticket Priority Changed",
+      "subscribedToSequence": "Subscribed Til Sekvens",
+      "unsubscribedFromSequence": "Unsubscribed Fra Sekvens",
+      "WhatsappShoppingCartSent": "Whatsapp Shopping Cart Sendt",
+      "userAskedAboutProduct": "Bruger Asked About Product",
+      "cartAbandoned": "Cart Abandoned",
+      "newOrder": "Ny Ordre",
+      "orderAccepted": "Order Accepted",
+      "orderShipped": "Order Shipped",
+      "orderConcluded": "Order Concluded",
+      "orderCancelled": "Order Annulleret",
+      "categoryAddedToCart": "Kategori Added Til Cart",
+      "productAddedToCart": "Product Added Til Cart",
+      "productRemovedFromCart": "Product Removed Fra Cart",
+      "productOrdered": "Product Ordered",
+      "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
+      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt"
+    },
+    "actions": {
+      "addTag": "Tilføj tag",
+      "removeTag": "Fjern tag",
+      "setCustomField": "Angiv brugerdefineret felt",
+      "clearCustomField": "Ryd brugerdefineret felt",
+      "startAnotherFlow": "Start Another Flow",
+      "notifyAdmins": "Notify Administratorer",
+      "transferConversationToHuman": "Transfer Samtale til Menneskelig"
+    },
+    "triggerGoesOff": "Udløser goes off",
+    "before": "Før",
+    "after": "Efter",
+    "atTheDayOf": "På den day af",
+    "day": "Day",
+    "hour": "Hour",
+    "minute": "Minute",
+    "at": "På"
+  },
+  "errorLogs": {
+    "title": "Fejl Logfiler"
+  },
+  "developerAccessToken": {
+    "title": "API Access Token",
+    "description": "Generér a token til allow din arbejdsområde til access den public APIs. Keep denne token secret og do ikke share it med anyone."
+  },
+  "contacts": {
+    "title": "Kontakter",
+    "exportPreparing": "Preparing din eksportér…",
+    "exportPreparingDescription": "We're generating din CSV fil. Denne may take a moment.",
+    "exportReadyTitle": "Din eksportér er ready",
+    "exportReadyDescription": "Kopiér den link below eller download den fil directly.",
+    "exportDownloadCount": "Download ({count})",
+    "exportFailed": "Eksportér mislykkedes. Prøv igen.",
+    "copyLink": "Kopiér link",
+    "linkCopied": "Link copied til clipboard",
+    "countExact": "{count} kontakter",
+    "countCapped": "{count}+ kontakter",
+    "exportAllNotice": "Alle kontakter matching den current filter vil være exported.",
+    "exportTakingLong": "Eksportér er taking longer than expected",
+    "exportTakingLongDescription": "Den eksportér er still processing. Du kan close denne dialog og check tilbage i a few minutter fra den eksportér historik."
+  },
+  "auditLogs": {
+    "title": "Audit Logfiler"
+  },
+  "customFields": {
+    "title": "Brugerdefineret Felter"
+  },
+  "keywords": {
+    "title": "Nøgleord"
+  },
+  "triggers": {
+    "title": "Udløsere"
+  },
+  "users": {
+    "title": "Brugere"
+  },
+  "sequences": {
+    "title": "Sekvenser",
+    "subscribers": "Subscibers",
+    "step": "Besked",
+    "addStep": "Tilføj Besked",
+    "addFirstStep": "Tilføj Første Besked",
+    "noSteps": "Ingen beskeder yet. Tilføj din første besked til get started.",
+    "selectFlow": "Vælg Flow",
+    "confirmDeleteStep": "Er du sure du want til slet denne besked?",
+    "delayUnits": {
+      "immediate": "Immediately",
+      "minutes": "Minutter",
+      "hours": "Timer",
+      "days": "Dage",
+      "specificTime": "Specific Tid"
+    },
+    "timeValidation": "Besked tid must være efter den previous besked",
+    "validation": {
+      "exception": "Validation Exception",
+      "nameExists": "Sekvens navn already exists"
+    },
+    "sendLabel": "Send",
+    "selectFlowFirst": "Vælg a flow før activating den besked",
+    "invalidTimeRange": "Start tid must være før slut tid",
+    "schedule": "Schedule",
+    "scheduleDescription": "Set up når beskeder should være sendt",
+    "sendTime": "Send tid",
+    "sendTimeDescription": "Beskeder vil kun være sendt during denne tid range",
+    "timezone": "Tidszone",
+    "timezoneDescription": "Alle times er i din chatbot's tidszone",
+    "enableSchedule": "Aktivér schedule",
+    "startTime": "Start tid",
+    "endTime": "Slut tid",
+    "allDay": "Alle day",
+    "customTime": "Brugerdefineret tid",
+    "enrollmentSettings": "Enrollment Indstillinger",
+    "enrollmentDescription": "Control how kontakter er enrolled i denne sekvens",
+    "allowReEnrollment": "Allow re-enrollment",
+    "allowReEnrollmentDescription": "Kontakter kan være enrolled multiple times",
+    "skipWeekends": "Spring over weekends",
+    "skipWeekendsDescription": "Don't send beskeder på Saturday og Sunday",
+    "unenrollOnReply": "Unenroll på svar",
+    "unenrollOnReplyDescription": "Fjern kontakt fra sekvens når they svar",
+    "performance": "Performance",
+    "enrolled": "Enrolled",
+    "completed": "Fuldført",
+    "openRate": "Åbn rate",
+    "clickRate": "Klik rate",
+    "replyRate": "Svar rate",
+    "unsubscribeRate": "Unsubscribe rate",
+    "overview": "Overview",
+    "analytics": "Analyse",
+    "stats": {
+      "sent": "Sendt",
+      "delivered": "Leveret",
+      "seen": "Set",
+      "clicked": "Klikket",
+      "failed": "Mislykkedes",
+      "noContacts": "Ingen kontakter fundet",
+      "pageInfo": "Side {page} af {pageCount}",
+      "selectedAll": "Alle valgt",
+      "selectedCount": "{count} valgt",
+      "tagAllDialogDescription": "Der føjes tags til alle valgte kontakter.",
+      "tagDialogDescription": "Der føjes tags til {count} kontakt(er).",
+      "tagQueued": "Tagger {count} kontakter i baggrunden.",
+      "loadingMore": "Indlæser mere..."
+    },
+    "settings": "Indstillinger",
+    "flow": "Flow",
+    "active": "Aktiv",
+    "messageSentAtLeast": "Denne besked vil være sendt på least",
+    "afterPreviousMessage": "efter den previous besked (day = 24h)",
+    "anyTime": "Vilkårlig tid",
+    "setTimeRange": "Set tid range",
+    "selectDays": "Vælg dage",
+    "allDays": "Alle Dage",
+    "deselectAll": "Deselect Alle",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "afterText": "Efter"
+  },
+  "tools": {
+    "title": "Værktøjer"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter",
+    "openaiCompatible": "OpenAI Compatible"
+  },
+  "smtp": {
+    "setting": {
+      "description": "Send emails using din SMTP server.",
+      "label": "(E-mail) SMTP"
+    },
+    "errors": {
+      "connectionFailed": "Kan ikke forbind til SMTP server. Please check din credentials og try igen."
+    }
+  },
+  "botSimulator": {
+    "title": "Bot Simulator",
+    "description": "Simuler din bot's behavior i a real-time environment."
+  },
+  "pollManager": {
+    "title": "Afstemning Manager",
+    "description": "Opret og administrer afstemninger for din kontakter."
+  },
+  "placesNearMe": {
+    "title": "Steder Near Me",
+    "description": "Find steder near din kontakter."
+  },
+  "questionnaires": {
+    "title": "Spørgeskemaer",
+    "description": "Opret og administrer spørgeskemaer for din kontakter.",
+    "singular": "Spørgeskema",
+    "submission": "Submission",
+    "addNew": "Tilføj Ny",
+    "applicants": "Applicants",
+    "generalSettings": "Generelt indstillinger",
+    "triggerFlow": "Udløser den flow af completing den spørgeskema",
+    "enableScore": "Give points for each spørgsmål answered.",
+    "enableRetryMessages": "Customize retry beskeder i case af svar failure.",
+    "enableCustomFieldMapping": "Gem data til brugerdefineret felter.",
+    "question": "Spørgsmål",
+    "activeQuestion": "Aktiv",
+    "questionImage": "Spørgsmål billede",
+    "questionImageHint": "Valgfri billede sendt med denne spørgsmål.",
+    "responseType": "Svar Type",
+    "points": "Points",
+    "retryMessage": "Retry besked hvis den svar er ugyldig",
+    "defaultRetryMessages": {
+      "text": "What you've entered er ikke a valid tekst. Prøv igen",
+      "number": "What you've entered er ikke a valid nummer. Prøv igen",
+      "email": "What you've entered er ikke a valid e-mail. Prøv igen",
+      "phone": "What you've entered er ikke a valid telefon nummer. Prøv igen",
+      "multipleChoice": "What you've entered er ikke a valid option. Prøv igen"
+    },
+    "customField": "Gem svar til a brugerdefineret eller system felt",
+    "options": "Options",
+    "mode": "Mode",
+    "completed": "Fuldført",
+    "completionRate": "Completion rate",
+    "date": "Dato",
+    "inbox": "Indbakke",
+    "unknownContact": "Ukendt kontakt",
+    "noAnswers": "Ingen answers",
+    "responseTypes": {
+      "text": "Tekst",
+      "number": "Nummer",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "multipleChoice": "Multiple choice"
+    },
+    "flowModes": {
+      "start": "Start spørgeskema",
+      "end": "Slut spørgeskema",
+      "deleteApplicant": "Slet applicant"
+    },
+    "dialogDescriptions": {
+      "create": "Navn den spørgeskema før adding spørgsmål.",
+      "rename": "Opdater den spørgeskema navn shown i lister og flows.",
+      "flowStep": "Choose how denne flow trin interacts med a spørgeskema."
+    },
+    "status": {
+      "inProgress": "I progress",
+      "completed": "Fuldført",
+      "cancelled": "Annulleret",
+      "failed": "Mislykkedes",
+      "timeout": "Timeout"
+    }
+  },
+  "facebookCommentAutomation": {
+    "title": "Facebook Kommentar Automatisering",
+    "description": "Automate Facebook kommentarer for din kontakter.",
+    "create": "Opret Automatisering",
+    "replies": "Replies",
+    "activated": "Automatisering activated",
+    "deactivated": "Automatisering deactivated",
+    "trackCommentsOn": "Track kommentarer på",
+    "trackCommentsOnDescription": "Apply denne automatisering til alle opslag på din Side, eller narrow it til specific opslag du vælg.",
+    "privateReply": "Private svar (indbakke)",
+    "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon (spintax supported), a chatbot flow, eller deaktivér.",
+    "publicReply": "Public svar til kommentar",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates (spintax supported), AI Agent, a chatbot flow, eller ingen svar.",
+    "replyMessage": "Svar besked",
+    "replyMessagePlaceholder": "Indtast svar besked...",
+    "includeKeywordsType": "Svar til",
+    "includeKeywordsTypeDescription": "Choose which kommentarer denne automatisering responds til.",
+    "includeKeywords": "Nøgleord til match",
+    "excludeKeywords": "Exclude kommentarer med these nøgleord",
+    "excludeKeywordsDescription": "Kommentarer containing vilkårlig af these nøgleord vil være ignored af both indbakke og public svar automatisering.",
+    "keywordsPlaceholder": "Type og press Indtast...",
+    "replyAfter": "Svar efter",
+    "replyAfterValue": "Værdi",
+    "schedule": {
+      "title": "Set aktiv timer",
+      "description": "Choose a start og slut tid. Hvis den slut tid er earlier than den start tid, den schedule runs overnight.",
+      "startTime": "Start tid",
+      "endTime": "Slut tid",
+      "alwaysRun": "Always run",
+      "save": "Gem",
+      "invalidTimeRange": "Start og slut tid must være different",
+      "timeRequired": "Venligst vælg both start og slut tid"
+    },
+    "card": {
+      "targeting": "Targeting & Svar",
+      "filters": "Filters & Options",
+      "replyTiming": "Svar Timing",
+      "hideComments": "Hide Kommentarer"
+    },
+    "postType": {
+      "all": "Alle opslag",
+      "published": "Published opslag",
+      "ads": "Annoncer opslag",
+      "reels": "Reels",
+      "specificPosts": "Specific opslag"
+    },
+    "replyType": {
+      "text": "Tekst besked",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "Ingen svar"
+    },
+    "keywordsType": {
+      "all": "Alle kommentarer",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "Efter X sekunder",
+      "minutes": "Efter X minutter",
+      "hours": "Efter X timer",
+      "randomWithin3Minutes": "Random within 3 minutter",
+      "randomWithin5Minutes": "Random within 5 minutter",
+      "randomWithin10Minutes": "Random within 10 minutter",
+      "randomWithin20Minutes": "Random within 20 minutter",
+      "randomWithin30Minutes": "Random within 30 minutter",
+      "randomWithin60Minutes": "Random within 60 minutter"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Kun svar til ny kontakter",
+      "replyToNewContactsOnlyDescription": "Kun auto-reply til people who har never been a kontakt i din arbejdsområde før.",
+      "replyOncePerUserPerPost": "Svar kun once til each bruger per opslag",
+      "replyOncePerUserPerPostDescription": "Each bruger vil receive på most one automated svar per opslag.",
+      "likeUserComment": "Like den bruger kommentar",
+      "likeUserCommentDescription": "Automatically react med a like til den commenter's kommentar.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Svar til brugere who commented på anden opslag",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsæt replying til brugere who har already commented på din anden opslag.",
+      "ignoreCommentReplies": "Don't svar til replies til kommentarer",
+      "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
+      "trackUserTags": "Track hvis a bruger tags anden brugere",
+      "trackUserTagsDescription": "Udløser automatisering når a bruger tags eller mentions another bruger i their kommentar."
+    },
+    "hideComments": {
+      "all": "Hide alle kommentarer",
+      "hasPhoneNumber": "Contains telefon nummer",
+      "hasImage": "Contains billede",
+      "hasVideo": "Contains video",
+      "hasLink": "Contains link",
+      "hasKeywords": "Contains nøgleord",
+      "keywords": "Nøgleord",
+      "showCommentsAfter": "Show kommentarer efter"
+    },
+    "showCommentsAfter": {
+      "none": "Never"
+    },
+    "selectPosts": "Vælg Opslag",
+    "selectPageAll": "Alle sider",
+    "chooseSpecificPosts": "Choose opslag...",
+    "postIdTab": "Opslag ID",
+    "postIdPlaceholder": "Indtast opslag IDs, one per line...",
+    "noPostsFound": "Ingen opslag found"
+  },
+  "instagramCommentAutomation": {
+    "title": "Instagram Kommentar Automatisering",
+    "description": "Automate Instagram kommentarer for din kontakter.",
+    "create": "Opret Automatisering",
+    "replies": "Replies",
+    "activated": "Automatisering activated",
+    "deactivated": "Automatisering deactivated",
+    "trackCommentsOn": "Track kommentarer på",
+    "trackCommentsOnDescription": "Apply denne automatisering til alle opslag på din connected konto, eller narrow it til specific opslag du vælg.",
+    "privateReply": "Private svar (indbakke)",
+    "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon (spintax supported), a chatbot flow, eller deaktivér.",
+    "publicReply": "Public svar til kommentar",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates (spintax supported), AI Agent, a chatbot flow, eller ingen svar.",
+    "replyMessage": "Svar besked",
+    "replyMessagePlaceholder": "Indtast svar besked...",
+    "includeKeywordsType": "Svar til",
+    "includeKeywordsTypeDescription": "Choose which kommentarer denne automatisering responds til.",
+    "includeKeywords": "Nøgleord til match",
+    "excludeKeywords": "Exclude kommentarer med these nøgleord",
+    "excludeKeywordsDescription": "Kommentarer containing vilkårlig af these nøgleord vil være ignored af both indbakke og public svar automatisering.",
+    "keywordsPlaceholder": "Type og press Indtast...",
+    "replyAfter": "Svar efter",
+    "replyAfterValue": "Værdi",
+    "schedule": {
+      "title": "Set aktiv timer",
+      "description": "Choose a start og slut tid. Hvis den slut tid er earlier than den start tid, den schedule runs overnight.",
+      "startTime": "Start tid",
+      "endTime": "Slut tid",
+      "alwaysRun": "Always run",
+      "save": "Gem",
+      "invalidTimeRange": "Start og slut tid must være different",
+      "timeRequired": "Venligst vælg both start og slut tid"
+    },
+    "card": {
+      "targeting": "Targeting & Svar",
+      "filters": "Filters & Options",
+      "replyTiming": "Svar Timing",
+      "hideComments": "Hide Kommentarer"
+    },
+    "postType": {
+      "all": "Alle opslag",
+      "published": "Published opslag",
+      "reels": "Reels",
+      "specificPosts": "Specific opslag"
+    },
+    "replyType": {
+      "text": "Tekst besked",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "Ingen svar"
+    },
+    "keywordsType": {
+      "all": "Alle kommentarer",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "Efter X sekunder",
+      "minutes": "Efter X minutter",
+      "hours": "Efter X timer",
+      "randomWithin3Minutes": "Random within 3 minutter",
+      "randomWithin5Minutes": "Random within 5 minutter",
+      "randomWithin10Minutes": "Random within 10 minutter",
+      "randomWithin20Minutes": "Random within 20 minutter",
+      "randomWithin30Minutes": "Random within 30 minutter",
+      "randomWithin60Minutes": "Random within 60 minutter"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Kun svar til ny kontakter",
+      "replyToNewContactsOnlyDescription": "Kun auto-reply til people who har never been a kontakt i din arbejdsområde før.",
+      "replyOncePerUserPerPost": "Svar kun once til each bruger per opslag",
+      "replyOncePerUserPerPostDescription": "Each bruger vil receive på most one automated svar per opslag.",
+      "likeUserComment": "Like den bruger kommentar",
+      "likeUserCommentDescription": "Automatically react med a like til den commenter's kommentar.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Svar til brugere who commented på anden opslag",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsæt replying til brugere who har already commented på din anden opslag.",
+      "ignoreCommentReplies": "Don't svar til replies til kommentarer",
+      "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer."
+    },
+    "hideComments": {
+      "all": "Hide alle kommentarer",
+      "hasPhoneNumber": "Contains telefon nummer",
+      "hasLink": "Contains link",
+      "hasKeywords": "Contains nøgleord",
+      "keywords": "Nøgleord",
+      "showCommentsAfter": "Show kommentarer efter"
+    },
+    "showCommentsAfter": {
+      "none": "Never"
+    },
+    "selectPosts": "Vælg Opslag",
+    "selectPageAll": "Alle accounts",
+    "chooseSpecificPosts": "Choose opslag...",
+    "postIdTab": "Opslag ID",
+    "postIdPlaceholder": "Indtast opslag IDs, one per line...",
+    "noPostsFound": "Ingen opslag found",
+    "connectionType": {
+      "title": "Choose Instagram connection type",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login connection. Supports public svar, private svar, og hiding kommentarer. Liking kommentarer er ikke supported.",
+      "instagramFacebookTitle": "Instagram Login med Facebook",
+      "instagramFacebookDescription": "Instagram connected via a Facebook Side. Supports public svar, private svar, hiding kommentarer, og liking kommentarer."
+    }
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Facebook Lead Annoncer Automatisering",
+    "description": "Automate Facebook lead annoncer for din kontakter.",
+    "create": "Opret Ny",
+    "leads": "Leads",
+    "facebookPage": "Facebook Side",
+    "leadForm": "Lead Form",
+    "allForms": "Alle forms",
+    "allFormsNote": "Leads fra every form på denne side vil være captured. Standard felter (e-mail, telefon, navn, køn) er saved til matching kontakt felter automatically.",
+    "leadData": "Lead Data",
+    "whatFlow": "What flow er triggered",
+    "none": "Ingen",
+    "addNewPage": "Tilføj Ny",
+    "noEligiblePages": "Ingen eligible sider. Use \"Tilføj Ny\" til grant lead access.",
+    "duplicateError": "An automatisering already exists for denne side og form.",
+    "subscribeError": "Could ikke subscribe denne side til Facebook lead notifications, so den automatisering var ikke oprettet. Forbind igen den side med \"Tilføj Ny\" og try igen."
+  },
+  "ecommerce": {
+    "title": "E-handel",
+    "description": "Opret og administrer din e-handel butik."
+  },
+  "appointmentScheduling": {
+    "title": "Aftale Scheduling",
+    "description": "Opret og administrer din aftale scheduling."
+  },
+  "templates": {
+    "title": "Skabeloner",
+    "description": "Opret og administrer din skabeloner."
+  },
+  "qrCodeGenerator": {
+    "title": "QR Kode Generator",
+    "description": "Opret og administrer din QR codes."
+  },
+  "platformAdmin": {
+    "platformCredentials": {
+      "title": "Platform Legitimationsoplysninger",
+      "description": "Global standard developer apps used af alle arbejdsområder at don't har their own white-label legitimationsoplysninger."
+    },
+    "helpItems": {
+      "title": "Hjælp Links",
+      "description": "Hjælp links shown i den sidebjælke for alle arbejdsområder at don't belong til a white-label tenant."
+    },
+    "queues": {
+      "title": "Queues"
+    }
+  },
+  "platformCredentials": {
+    "title": "Platform Legitimationsoplysninger",
+    "usingPlatformDefault": "Using platform standard",
+    "usingPlatformDefaultHint": "Denne kanal works out af den box med den platform's shared app. Tilføj din own indstillinger anytime til override it.",
+    "notConfigured": "Ikke set up yet",
+    "notConfiguredHint": "Tilføj din indstillinger til start using denne integration."
+  },
+  "platformBranding": {
+    "title": "Platform Branding",
+    "sections": {
+      "identity": {
+        "title": "Brand Identity",
+        "description": "Navn og farve theme shown across den platform"
+      },
+      "assets": {
+        "title": "Visual Assets",
+        "description": "Logos og favicon displayed i den browser og UI"
+      },
+      "legal": {
+        "title": "Legal Links",
+        "description": "Links shown i footers og consent flows"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "Inject brugerdefineret CSS eller JavaScript into every side"
+      }
+    }
+  },
+  "platformChannels": {
+    "title": "Allowed Kanaler",
+    "description": "Choose which kanal types arbejdsområder i denne tenant kan opret.",
+    "hint": "Leave every kanal unchecked til allow alle kanaler."
+  },
+  "platformEmailTemplates": {
+    "title": "E-mail Skabeloner",
+    "description": "Leave emne og brødtekst blank til use den system standard skabelon.",
+    "sections": {
+      "signup": {
+        "title": "Signup Verification E-mail",
+        "description": "Sendt når a ny bruger registers an konto"
+      },
+      "forgotPassword": {
+        "title": "Forgot Adgangskode E-mail",
+        "description": "Sendt når a bruger requests a adgangskode nulstil"
+      },
+      "magicLink": {
+        "title": "Magic Link Sign-in E-mail",
+        "description": "Sendt når a bruger requests a magic link til sign i"
+      },
+      "accountCredentials": {
+        "title": "Sub-account Legitimationsoplysninger E-mail",
+        "description": "Sendt når a reseller provisions a ny sub-account"
+      }
+    },
+    "fields": {
+      "subject": {
+        "label": "Emne",
+        "placeholder": "Leave blank til use den standard emne"
+      },
+      "body": {
+        "label": "HTML Brødtekst",
+        "placeholder": "Leave blank til use den standard skabelon"
+      }
+    },
+    "status": {
+      "custom": "Brugerdefineret",
+      "default": "Standard"
+    },
+    "availableVariables": "Tilgængelig variables",
+    "preview": {
+      "title": "Preview",
+      "empty": "Enter skabelon brødtekst til see a preview"
+    }
+  },
+  "manageSidebar": {
+    "platformGroup": "Platform",
+    "toolsGroup": "Værktøjer",
+    "saasGroup": "SaaS",
+    "portalUsers": "Sub-accounts",
+    "portalWorkspaces": "Arbejdsområder",
+    "portalPlans": "Plans",
+    "portalUsage": "Usage",
+    "portalCustomDomain": "Brugerdefineret Domain",
+    "portalPaymentProcessor": "Payment Processor",
+    "portalSmtp": "SMTP Indstillinger",
+    "portalPricingPage": "Pricing"
+  },
+  "unsubscribePage": {
+    "title": "Du har been unsubscribed.",
+    "description": "Du vil ingen longer receive emails fra denne sender.",
+    "invalidTitle": "Ugyldig afmeld link.",
+    "invalidDescription": "Denne link er ugyldig eller har udløbet.",
+    "unavailableTitle": "Afmeld unavailable.",
+    "unavailableDescription": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "Slet My Data",
+      "download": "Download My Data"
+    },
+    "deleteDialog": {
+      "title": "Slet din data?",
+      "description": "Denne permanently deletes din profil kontakt details, tags, brugerdefineret felter, attachments, og alle beskeder for denne kontakt record."
+    },
+    "empty": {
+      "customFields": "Ingen brugerdefineret felter",
+      "tags": "Ingen tags"
+    },
+    "fields": {
+      "email": "E-mail",
+      "gender": "Køn",
+      "locale": "Locale",
+      "phone": "Telefon",
+      "timezone": "Time"
+    },
+    "sections": {
+      "customFields": "Brugerdefineret Felter",
+      "tags": "Bruger Tags"
+    },
+    "unknown": "Ukendt"
+  },
+  "orders": {
+    "title": "Ordrer"
+  },
+  "products": {
+    "title": "Produkter",
+    "create": {
+      "title": "Opret Produkt"
+    },
+    "edit": {
+      "title": "Rediger Produkt"
+    },
+    "sections": {
+      "pricing": "Pricing",
+      "images": "Billeder",
+      "inventory": "Inventory",
+      "variants": "Varianter",
+      "addons": "Add-ons",
+      "tags": "Tags",
+      "moreOptions": "Mere Options"
+    },
+    "fields": {
+      "shortDescription": {
+        "label": "Short Beskrivelse"
+      },
+      "longDescription": {
+        "label": "Long Beskrivelse"
+      },
+      "price": {
+        "label": "Pris"
+      },
+      "taxes": {
+        "label": "Taxes (0-100%)"
+      },
+      "discount": {
+        "label": "Rabat (0-100%)"
+      },
+      "currency": {
+        "label": "Valuta"
+      },
+      "productUrl": {
+        "label": "Produkt URL",
+        "placeholder": "https://store.example.com/products/123",
+        "description": "Den side customers open fra Messenger Shopping. Produkter uden a URL er skipped når syncing til Meta Katalog."
+      },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "Valgfri"
+      },
+      "inventoryPolicy": {
+        "label": "Inventory policy"
+      },
+      "inventoryQuantity": {
+        "label": "Antal"
+      },
+      "allowOutOfStockPurchase": {
+        "label": "Allow customers til purchase denne produkt når it's out af lager"
+      },
+      "vendor": {
+        "label": "Vendor"
+      },
+      "rank": {
+        "label": "Rank"
+      },
+      "category": {
+        "label": "Kategori",
+        "placeholder": "Ikke kategoriseret"
+      },
+      "subcategory": {
+        "label": "Subcategory",
+        "placeholder": "Ingen"
+      },
+      "isSearchable": {
+        "label": "Denne produkt er searchable inside den bot"
+      },
+      "allowSpecialRequest": {
+        "label": "Allow den bruger til request a special request (attach notes)"
+      },
+      "isActive": {
+        "label": "Aktiv"
+      },
+      "isAddonOnly": {
+        "label": "Use denne produkt kun as an addon for others produkter"
+      },
+      "optionName": {
+        "label": "Option Navn"
+      },
+      "optionValue": {
+        "label": "Option Værdi"
+      },
+      "variant": {
+        "label": "Variant"
+      },
+      "addImageFromLink": "Tilføj Billede",
+      "uploadImage": "Upload Billede",
+      "tagsDescription": "Tags er searchable.",
+      "addonsDescription": "Tilføj produkter at clients kan buy as an add-on. Du kan also give gratis produkter here. For example, a restaurant may give gratis drinks options here. Du must opret a produkt før du use it as add-on.",
+      "addonName": {
+        "label": "Navn",
+        "placeholder": "navn"
+      },
+      "addonMaxSelections": {
+        "label": "Max selections"
+      },
+      "addonProducts": {
+        "label": "Produkter",
+        "placeholder": "Select produkter..."
+      },
+      "variantsDescription": "Tilføj varianter hvis denne produkt comes i multiple versions, like different sizes eller colors",
+      "metaCatalogId": {
+        "label": "Meta Katalog ID"
+      }
+    },
+    "inventoryPolicy": {
+      "dont_track": "Don't track inventory",
+      "track": "Track inventory"
+    }
+  },
+  "tiktok": {
+    "title": "TikTok",
+    "description": "Forbind din TikTok konto til svar til direkte beskeder.",
+    "refreshToken": "Refresh Token"
+  },
+  "coupons": {
+    "title": "Kuponer",
+    "description": "Administrer campaign kupon topics, imports, exports, og flow-ready kupon codes.",
+    "singular": "Kupon",
+    "topicCouponsTitle": "Topic Kuponer",
+    "tabs": {
+      "topicCoupon": "Topic Kupon",
+      "coupon": "Kupon",
+      "listTopic": "Liste Topic",
+      "archive": "Arkivér"
+    },
+    "topic": {
+      "create": "Opret Ny",
+      "edit": "Rediger topic"
+    },
+    "actions": {
+      "import": "Importér kuponer",
+      "export": "Download Kupon Liste",
+      "downloadImportTemplate": "Download importér skabelon"
+    },
+    "fields": {
+      "topic": "Topic",
+      "selectTopic": "Select topic",
+      "importCsvOnly": "Click eller drag .csv fil til denne area til upload",
+      "allTopics": "Alle topics",
+      "couponCount": "Kuponer",
+      "validity": "Validity period",
+      "unlimited": "Unlimited",
+      "code": "Kode",
+      "issueStatus": "Status",
+      "usageStatus": "Usage",
+      "allIssueStatuses": "Alle statuses",
+      "allUsageStatuses": "Alle usage",
+      "searchCode": "Søg kode"
+    },
+    "issueStatuses": {
+      "published": "Published",
+      "unpublished": "Unpublished"
+    },
+    "usageStatuses": {
+      "used": "Used",
+      "notUsed": "Ikke used yet"
+    },
+    "variables": {
+      "group": "Kuponer"
+    },
+    "messages": {
+      "topicSaved": "Kupon topic saved.",
+      "editLocked": "Navn og beskrivelse er locked efter kuponer har been oprettet eller importeret.",
+      "archiveTitle": "Arkivér kupon topic",
+      "archiveConfirm": "Arkivér \"{name}\"? It vil flyt til den Arkivér liste.",
+      "archiveBulkConfirm": "Arkivér {count} selected topics? They vil flyt til den Arkivér liste.",
+      "restoreTitle": "Gendan kupon topic",
+      "unarchiveConfirm": "Gendan \"{name}\"? It vil flyt tilbage til den Topic liste.",
+      "unarchiveBulkConfirm": "Gendan {count} selected topics? They vil flyt tilbage til den Topic liste.",
+      "deleteTitle": "Slet kupon topic",
+      "deleteConfirm": "Slet denne arkiveret topic? Kupon history er preserved.",
+      "empty": "Ingen kuponer found.",
+      "importStarted": "Kupon importér started.",
+      "exportStarted": "Kupon eksportér started.",
+      "exportFailed": "Kupon eksportér mislykkedes.",
+      "exportCount": "{count} kupon rows vil være exported."
+    }
+  },
+  "productCategories": {
+    "title": "Kategorier",
+    "loadError": "Unable til load produkt kategorier.",
+    "all": "Alle produkter",
+    "create": "Opret kategori",
+    "edit": "Omdøb kategori",
+    "name": "Kategori navn",
+    "namePlaceholder": "e.g. Summer samling",
+    "parent": "Parent kategori",
+    "noParent": "Ingen (top level)",
+    "save": "Gem",
+    "created": "Kategori oprettet.",
+    "updated": "Kategori updated.",
+    "deleted": "Kategori deleted.",
+    "saveError": "Unable til gem denne kategori.",
+    "deleteError": "Unable til slet denne kategori.",
+    "delete": "Slet",
+    "cancel": "Annullér",
+    "actions": "Kategori handlinger",
+    "deleteTitle": "Slet “{name}”?",
+    "deleteDescription": "{count, plural, =0 {Ingen produkter er tildelt denne kategori.} one {# produkt flyttes til Ikke kategoriseret.} other {# produkter flyttes til Ikke kategoriseret.}}",
+    "createSub": "Opret subcategory",
+    "empty": "Ingen kategorier yet. Opret one til group din produkter.",
+    "columns": {
+      "name": "Navn",
+      "products": "Produkter",
+      "subcategories": "Subcategories"
+    },
+    "expand": "Show subcategories",
+    "collapse": "Hide subcategories",
+    "productCount": "{count, plural, =0 {Ingen produkter} one {# produkt} other {# produkter}}",
+    "deleteChildrenWarning": "{count, plural, one {Dens # underkategori slettes også.} other {Dens # underkategorier slettes også.}}"
+  },
+  "productImport": {
+    "title": "Importér",
+    "mapColumns": "Column mapping",
+    "mapColumnsHint": "Match each produkt felt til a column fra din fil. Leave a felt unmapped til spring over it.",
+    "downloadTemplate": "Download skabelon",
+    "upload": "Upload a .csv eller .xlsx fil",
+    "confirm": "Start importér",
+    "started": "Produkt importér started.",
+    "error": "Produkt importér mislykkedes.",
+    "notMapped": "Ikke mapped",
+    "createMissingCategories": "Opret kategorier at do ikke exist",
+    "fields": {
+      "name": "Produkt navn",
+      "sku": "SKU",
+      "price": "Pris",
+      "discount": "Rabat",
+      "shortDescription": "Short beskrivelse",
+      "category": "Kategori",
+      "vendor": "Vendor",
+      "inventoryQuantity": "Inventory antal",
+      "imageUrl": "Billede URL",
+      "productUrl": "Produkt URL"
+    },
+    "template": {
+      "sheetName": "Produkter",
+      "name": "Produkt navn",
+      "sku": "SKU",
+      "price": "Pris",
+      "discount": "Rabat",
+      "shortDescription": "Short beskrivelse",
+      "category": "Kategori",
+      "vendor": "Vendor",
+      "inventoryQuantity": "Inventory antal",
+      "imageUrl": "Billede URL",
+      "productUrl": "Produkt URL",
+      "exampleOne": {
+        "name": "Classic T-shirt",
+        "description": "Soft cotton T-shirt",
+        "category": "Clothing",
+        "vendor": "Example Brand"
+      },
+      "exampleTwo": {
+        "name": "Canvas tote",
+        "description": "Reusable canvas tote bag",
+        "category": "Accessories",
+        "vendor": "Example Brand"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "Synkroniser Meta-katalog",
+    "connect": "Forbind Meta",
+    "connectDescription": "Forbind a Meta Business konto til push din produkter til an existing katalog.",
+    "tabs": {
+      "sync": "Synkroniser til Meta",
+      "import": "Synkroniser fra Meta",
+      "history": "History",
+      "connection": "Connection"
+    },
+    "catalogId": "Meta Katalog ID",
+    "catalogIdPlaceholder": "Enter a Katalog ID fra Commerce Manager",
+    "createCatalog": {
+      "trigger": "Opret a ny katalog",
+      "description": "An empty commerce katalog vil være oprettet i din Business Manager og used for denne arbejdsområde.",
+      "business": "Business Manager",
+      "businessPlaceholder": "Select a Business Manager",
+      "noBusinesses": "Denne Meta konto does ikke administrer vilkårlig Business Manager, so a katalog kan ikke være oprettet here.",
+      "name": "Katalog navn",
+      "confirm": "Opret katalog",
+      "created": "Katalog oprettet.",
+      "errors": {
+        "businesses": "Unable til load din Business Managers.",
+        "create": "Unable til opret den katalog."
+      }
+    },
+    "importDescription": "Pull produkter fra a Meta katalog into din arbejdsområde. Find den ID i Commerce Manager.",
+    "importCatalogAction": "Importér",
+    "importProgress": "Importing Meta produkter: {imported}/{total}",
+    "importQueued": "Venter for den importér til start…",
+    "importResult": "Importeret {imported} af {total} Meta produkter",
+    "retryImport": "Retry importér",
+    "syncNow": "Synkroniser nu",
+    "syncSelectionRequired": "Select den produkter du want til push, then run den synkroniser.",
+    "syncSelectionCount": "{count} selected produkter vil være pushed til Meta Katalog.",
+    "connectionInfo": {
+      "heading": "Forbundet Meta katalog",
+      "noCatalog": "Ingen katalog selected yet",
+      "lastCatalogId": "Seneste Meta Katalog ID",
+      "businessId": "Business Id",
+      "authMode": "Authorization",
+      "tokenExpiresAt": "Token expires",
+      "lastImportedAt": "Seneste importér",
+      "unknown": "Ikke tilgængelig",
+      "never": "Never",
+      "noExpiry": "Does ikke expire",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook Business Udvidelse"
+      },
+      "connectionStatuses": {
+        "active": "Aktiv",
+        "invalid": "Needs forbind igen"
+      }
+    },
+    "disconnect": "Afbryd",
+    "reconnect": "Forbind igen",
+    "reconnectWarning": "Den Meta token er ugyldig eller expires within seven dage.",
+    "requirements": {
+      "intro": "Produkter synced til Messenger Shopping must meet these requirements:",
+      "description": {
+        "label": "Detailed beskrivelse",
+        "value": "Beyond den titel, cover specifications, materials, use cases, og standout features."
+      },
+      "image": {
+        "label": "Produkt billede",
+        "value": "High resolution af på least 500px × 500px, fil størrelse up til 8MB."
+      },
+      "video": {
+        "label": "Produkt video",
+        "value": "Fil størrelse up til 200MB."
+      },
+      "price": {
+        "label": "Pris",
+        "value": "Every produkt must carry a pris."
+      },
+      "minimumItems": "Udgiv på least 6 varer so customers har enough til choose fra."
+    },
+    "historyEmpty": "Ingen synkroniser eller importér har run yet.",
+    "historyFailures": "{failed} mislykkedes · {skipped} skipped",
+    "historyCatalog": "Katalog {id}",
+    "diagnostics": "Fejl og skipped-item details",
+    "itemError": "Vare {id}: {reason}",
+    "itemSkipped": "Vare {id}: skipped — {reason}",
+    "skipReasons": {
+      "missingImage": "missing billede",
+      "missingDescription": "missing beskrivelse",
+      "missingStoreUrl": "butik URL er ikke configured",
+      "hasVariants": "varianter er ikke supported yet"
+    },
+    "statuses": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "partial": "Partially fuldført",
+      "failed": "Mislykkedes"
+    },
+    "directions": {
+      "push": "Pushed til Meta",
+      "import": "Importeret fra Meta"
+    },
+    "messages": {
+      "catalogSelected": "Katalog importér started.",
+      "syncStarted": "Meta Katalog synkroniser started.",
+      "disconnected": "Meta Katalog disconnected."
+    },
+    "errors": {
+      "load": "Unable til load Meta Katalog indstillinger.",
+      "connect": "Unable til forbind Meta Katalog.",
+      "catalog": "Unable til select denne katalog.",
+      "sync": "Unable til start katalog synkroniser.",
+      "disconnect": "Unable til afbryd Meta Katalog.",
+      "invalidAppSettings": "Meta app indstillinger er ikke configured.",
+      "emptyScope": "Den selected synkroniser scope har ingen produkter.",
+      "alreadyRunning": "A Meta Katalog synkroniser eller importér er already running. Vent for it til finish.",
+      "queueImport": "Unable til queue den Meta Katalog importér.",
+      "queueSync": "Unable til queue den Meta Katalog synkroniser."
+    }
+  },
+  "helpMenu": {
+    "title": "Hjælp",
+    "ariaLabel": "Open hjælp menu"
+  },
+  "helpItems": {
+    "title": "Hjælp Links",
+    "addTitle": "Tilføj Hjælp Link",
+    "editTitle": "Rediger Hjælp Link",
+    "addButton": "Tilføj Link",
+    "empty": "Ingen hjælp links configured yet.",
+    "fields": {
+      "name": "Navn",
+      "namePlaceholder": "e.g. Documentation",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.example.com",
+      "icon": "Icon",
+      "iconPlaceholder": "e.g. book-open, star, circle-question-mark",
+      "position": "Ordre",
+      "iconSearchLink": "Browse Lucide icons →"
+    }
+  }
+}

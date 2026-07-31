@@ -1,0 +1,4344 @@
+{
+  "actions": {
+    "copy": "Salin",
+    "copyUrl": "Salin URL",
+    "actions": "Tindakan",
+    "add": "Tambah",
+    "addVariable": "Tambah Variabel",
+    "addFeature": "Tambah {feature}",
+    "addFlowReply": "Tambah balasan flow",
+    "addMore": "Tambah lagi",
+    "addTag": "Tambah Tag",
+    "addAction": "Tambah Tindakan",
+    "addCondition": "Tambah Kondisi",
+    "addTextReply": "Tambah balasan teks",
+    "markAsFollowUp": "Tandai untuk Ditindaklanjuti",
+    "removeFromFollowUp": "Hapus dari Tindak Lanjut",
+    "markAsUnread": "Tandai Belum Dibaca",
+    "archive": "Arsipkan",
+    "unarchive": "Keluarkan dari Arsip",
+    "archiveConversation": "Arsipkan Percakapan",
+    "assign": "Tetapkan",
+    "assignConversation": "Tetapkan Percakapan",
+    "back": "Kembali",
+    "blockContact": "Blokir Kontak",
+    "unblockContact": "Buka Blokir Kontak",
+    "undo": "Urungkan",
+    "redo": "Ulangi",
+    "cancel": "Batal",
+    "clear": "Bersihkan",
+    "clearCustomField": "Kosongkan Kolom Kustom",
+    "collapse": "Ciutkan",
+    "expand": "Perluas",
+    "confirm": "Konfirmasi",
+    "connect": "Hubungkan",
+    "continue": "Lanjutkan",
+    "create": "Buat",
+    "loading": "Memuat...",
+    "createFeature": "Buat {feature}",
+    "delete": "Hapus",
+    "deleteContact": "Hapus Kontak",
+    "disableBot": "Nonaktifkan Bot",
+    "disconnect": "Putuskan",
+    "download": "Unduh",
+    "edit": "Edit",
+    "editFeature": "Edit {feature}",
+    "enableBot": "Aktifkan Bot",
+    "export": "Ekspor",
+    "getEmbedCode": "Dapatkan Kode Sematan",
+    "getID": "Dapatkan ID",
+    "getTools": "Dapatkan Alat",
+    "import": "Impor",
+    "exportContacts": "Ekspor Kontak",
+    "filter": "Filter",
+    "selectFile": "Pilih file",
+    "insertLink": "Sisipkan tautan",
+    "addNew": "Tambah baru",
+    "send": "Kirim",
+    "loginWithMagicLink": "Masuk dengan Magic Link",
+    "manage": "Kelola",
+    "admin": "Admin",
+    "more": "Lainnya",
+    "moreOptions": "Opsi lainnya",
+    "moreSettings": "Pengaturan lainnya",
+    "openMenu": "Buka menu",
+    "openWebchat": "Buka Webchat",
+    "removeTag": "Hapus Tag",
+    "rename": "Ganti Nama",
+    "reset": "Atur Ulang",
+    "save": "Simpan",
+    "selectAll": "Pilih semua",
+    "selectRow": "Pilih baris",
+    "sendFlow": "Kirim Flow",
+    "sendMessage": "Kirim Pesan",
+    "setCustomField": "Atur Kolom Kustom",
+    "synchronize": "Sinkronkan",
+    "syncMetaCatalog": "Sinkronkan Katalog Meta",
+    "testNow": "Uji Sekarang",
+    "toggle": "Alihkan",
+    "toggleTheme": "Ganti tema",
+    "transferConversationToBot": "Alihkan Percakapan ke Bot",
+    "update": "Perbarui",
+    "updatePayment": "Perbarui pembayaran",
+    "upgradePlan": "Tingkatkan paket",
+    "upgradeToPro": "Tingkatkan ke Pro",
+    "uploadFile": "Unggah File",
+    "view": "Lihat",
+    "viewAnalytics": "Lihat Analitik",
+    "duplicate": "Duplikat",
+    "getDraftLink": "Dapatkan Tautan Draf",
+    "getPublishedLink": "Dapatkan Tautan Terbitan",
+    "getMessengerAdsJson": "Dapatkan JSON untuk Iklan Messenger",
+    "getMessengerAdPayload": "Dapatkan payload untuk Iklan Messenger",
+    "ok": "OK",
+    "next": "Berikutnya",
+    "prev": "Sebelumnya",
+    "moveEarlier": "Pindahkan Lebih Awal",
+    "moveLater": "Pindahkan Lebih Akhir",
+    "analytics": "Analitik",
+    "deleteAnalytics": "Hapus Analitik",
+    "flowVersions": "Versi Flow",
+    "revertToPublished": "Kembalikan ke Versi Terbitan",
+    "search": "Cari",
+    "pleaseSelect": "Silakan pilih",
+    "noRecordFound": "Tidak ada data yang ditemukan.",
+    "typeMessage": "Ketik pesan",
+    "enterText": "Masukkan teks",
+    "enterFieldAndPressEnter": "Masukkan {field} lalu tekan Enter",
+    "addAnother": "Tambah lainnya...",
+    "messagePlaceholder": "Pesan...",
+    "signOut": "Keluar",
+    "backToSignIn": "Kembali ke halaman masuk",
+    "connectFeature": "Hubungkan {feature}",
+    "scanQRCode": "Pindai saya dengan kamera Anda",
+    "inviteFeature": "Undang {feature}",
+    "joinTheTeam": "Bergabung dengan tim",
+    "chooseChannel": "Pilih Kanal",
+    "chooseSubaction": "Pilih Subtindakan",
+    "resend": "Kirim Ulang",
+    "publish": "Terbitkan",
+    "setStartNode": "Tetapkan sebagai Node Awal",
+    "getNodeId": "Dapatkan ID Node",
+    "setAsDefaultAgent": "Tetapkan sebagai Default",
+    "unsetDefaultAgent": "Batalkan Default",
+    "clickToEdit": "Klik untuk mengedit",
+    "move": "Pindahkan",
+    "moveUp": "Pindahkan ke atas",
+    "moveDown": "Pindahkan ke bawah",
+    "removeAssignee": "Hapus Penerima Tugas",
+    "sendMail": "Kirim Email",
+    "wait": "Tunggu",
+    "followUp": "Tindak Lanjut",
+    "landingPage": "Halaman Landing",
+    "generate": "Buat",
+    "regenerate": "Buat Ulang",
+    "qrCode": "Kode QR",
+    "addSequence": "Tambah Sequence",
+    "removeSequence": "Hapus Sequence",
+    "activate": "Aktifkan",
+    "deactivate": "Nonaktifkan",
+    "onFailure": "Saat gagal",
+    "onSkip": "Saat dilewati",
+    "onSuccess": "Saat berhasil",
+    "clone": "Klon",
+    "remove": "Hapus",
+    "restore": "Pulihkan"
+  },
+  "states": {
+    "success": "Berhasil",
+    "error": "Kesalahan",
+    "skip": "Lewati"
+  },
+  "admins": {
+    "title": "Admin"
+  },
+  "assignAdmin": {
+    "assignConversation": "Tetapkan percakapan",
+    "assignedToMe": "Ditugaskan kepada saya",
+    "assignedTo": "Ditugaskan kepada {name}",
+    "unAssigned": "Belum ditugaskan"
+  },
+  "aiAgent": {
+    "defaultAgent": "Agen Default",
+    "description": "Kelola dan konfigurasikan Agen AI untuk meningkatkan kemampuan workspace Anda dengan otomatisasi dan respons cerdas.",
+    "title": "Agen AI",
+    "name": "Agen"
+  },
+  "aiFiles": {
+    "description": "Berikan Agen Anda Akses ke PDF, Dokumen, dan Lainnya",
+    "title": "Pengetahuan",
+    "noEmbeddingProvider": "Tidak ada penyedia embedding yang dikonfigurasi. Embedding file AI memerlukan integrasi OpenAI atau Gemini. DeepSeek dan Claude tidak mendukung model embedding."
+  },
+  "aiFunctions": {
+    "description": "Konfigurasikan fungsi LLM agar agen AI Anda lebih cerdas",
+    "title": "Fungsi AI"
+  },
+  "aiMcpServers": {
+    "description": "Hubungkan AI ke Sistem Eksternal melalui MCP",
+    "title": "Server MCP",
+    "tools": {
+      "label": "Alat yang Tersedia"
+    }
+  },
+  "analytics": {
+    "contacts": "Kontak",
+    "newContacts": "Kontak Baru",
+    "activeContacts": "Kontak Aktif",
+    "botMessagesByResult": "Pesan yang diterima bot",
+    "botMessagesNoResponse": "Pesan diterima tanpa respons",
+    "botMessagesWithResponse": "Pesan diterima dengan respons",
+    "aiProvider": "Penyedia AI",
+    "responseCount": "Jumlah Respons",
+    "percentage": "Persentase",
+    "responseTime": "Waktu Respons",
+    "firstResponseTime": "Waktu Respons Pertama",
+    "totalContacts": "Total Kontak",
+    "averageResponseTime": "Waktu Respons Rata-rata (Menit)",
+    "averageResponseTimeHelp": "Waktu rata-rata yang diperlukan agen manusia untuk membalas pesan pelanggan.",
+    "averageFirstResponseTimeByAdmin": "Waktu respons pertama rata-rata oleh agen manusia (Menit)",
+    "averageFirstResponseTimeByAdminHelp": "Waktu rata-rata yang diperlukan agen manusia untuk memberikan balasan awal kepada pesan pelanggan.",
+    "averageResponseTimeByAdmin": "Waktu respons rata-rata oleh agen manusia (Menit)",
+    "averageDurationOfConversation": "Durasi rata-rata percakapan (Menit)",
+    "averageDurationOfConversationHelp": "Waktu rata-rata percakapan ditangani oleh manusia sebelum dipindahkan ke bot.",
+    "success": "Berhasil",
+    "fallback": "Fallback",
+    "admins": "Agen Manusia",
+    "messages": "Pesan",
+    "conversations": "Percakapan",
+    "assignedConversations": {
+      "title": "Percakapan yang Ditugaskan",
+      "helpText": "Percakapan yang ditugaskan dari inbox atau oleh bot."
+    },
+    "messagesSentByHumanOrBot": "Pesan yang dikirim manusia/bot",
+    "human": "Manusia",
+    "bot": "Bot",
+    "conversationsMovedToHumanOrBot": "Percakapan yang dipindahkan ke manusia/bot",
+    "uniqueConversationsByAdmins": "Percakapan unik berdasarkan agen manusia",
+    "uniqueConversationsByAdminsHelp": "Jumlah kontak yang menerima setidaknya satu pesan dari agen manusia.",
+    "messagesSentByAdmins": "Pesan yang dikirim agen manusia",
+    "messagesSentByAdminsHelp": "Pesan yang dikirim dari inbox.",
+    "allContactsByChannel": "Semua kontak berdasarkan kanal",
+    "newContactsByChannel": "Kontak baru berdasarkan kanal",
+    "newContactsBySource": "Kontak baru berdasarkan sumber",
+    "assignedConversationsByAdmins": "Percakapan yang ditugaskan berdasarkan agen manusia",
+    "assignedConversationsByAdminsHelp": "Percakapan yang ditugaskan dari inbox atau oleh bot.",
+    "followUpConversations": "Percakapan tindak lanjut",
+    "followUpConversationsHelp": "Percakapan yang ditandai untuk ditindaklanjuti dari inbox atau oleh bot.",
+    "archivedConversations": "Percakapan yang diarsipkan",
+    "blockedConversations": "Percakapan yang diblokir",
+    "blockedConversationsHelp": "Percakapan yang diblokir oleh akun Anda.",
+    "blockedContacts": "Kontak yang diblokir",
+    "blockedContactsHelp": "Kontak yang tidak ingin menerima pesan dari akun Anda",
+    "newContactsByCountry": "Kontak baru berdasarkan negara",
+    "date": "Tanggal",
+    "total": "Total",
+    "messagesSent": "Pesan Terkirim",
+    "selectRange": "Pilih rentang",
+    "dateFilterPreset": "Preset filter tanggal",
+    "noResults": "Tidak ada hasil.",
+    "noData": "Tidak ada data",
+    "comingSoon": "Segera hadir",
+    "unknown": "Tidak diketahui",
+    "pagination": {
+      "selectedRows": "{selected} dari {total} baris dipilih.",
+      "rowsPerPage": "Baris per halaman",
+      "pageOf": "Halaman {page} dari {pageCount}",
+      "firstPage": "Buka halaman pertama",
+      "previousPage": "Buka halaman sebelumnya",
+      "nextPage": "Buka halaman berikutnya",
+      "lastPage": "Buka halaman terakhir"
+    },
+    "sessionsThroughTheRef": "Sesi melalui Ref \"{ref}\" per hari",
+    "sessionsThroughTheMagicLink": "Sesi melalui Magic Link \"{ref}\" per hari"
+  },
+  "flowAnalytics": {
+    "nodes": {
+      "start": "Mulai",
+      "notFound": "Node tidak ditemukan"
+    },
+    "stats": {
+      "sent": "Terkirim",
+      "delivered": "Tersampaikan",
+      "seen": "Dilihat",
+      "clicked": "Diklik",
+      "waiting": "Menunggu"
+    }
+  },
+  "autoAssignConversation": {
+    "rule": {
+      "allTime": "Distribusi percakapan merata (Sepanjang waktu)",
+      "label": "Aturan Penugasan",
+      "last24Hours": "Distribusi percakapan merata (24 jam terakhir)",
+      "last8Hours": "Distribusi percakapan merata (8 jam terakhir)",
+      "lastHour": "Distribusi percakapan merata (Satu jam terakhir)"
+    },
+    "users": {
+      "label": "Pengguna"
+    }
+  },
+  "automatedResponse": {
+    "setting": {
+      "description": "Deskripsi respons otomatis",
+      "label": "Respons Otomatis"
+    }
+  },
+  "billing": {
+    "title": "Penagihan",
+    "plan": {
+      "label": "Paket: {plan}",
+      "free": "Gratis"
+    },
+    "usage": {
+      "contacts": "Kontak",
+      "mac": "Kontak aktif bulanan",
+      "botMessages": "Pesan bot",
+      "monthlyBotMessages": "Pesan bot (bulanan)",
+      "workspaces": "Workspace",
+      "channels": "Kanal",
+      "teamMembers": "Anggota tim"
+    },
+    "limitReached": {
+      "workspaces": "Anda telah mencapai batas workspace. Tingkatkan paket untuk membuat lebih banyak.",
+      "channels": "Anda telah mencapai batas kanal. Tingkatkan paket untuk menghubungkan lebih banyak.",
+      "teamMembers": "Anda telah mencapai batas anggota tim. Tingkatkan paket untuk mengundang lebih banyak.",
+      "contacts": "Anda telah mencapai batas kontak. Tingkatkan paket untuk menambahkan lebih banyak.",
+      "mac": "Anda telah mencapai batas kontak aktif bulanan. Tingkatkan paket untuk menjangkau lebih banyak."
+    },
+    "pastDue": {
+      "message": "Pembayaran terakhir Anda gagal. Perbarui metode pembayaran agar workspace tetap aktif."
+    },
+    "trial": {
+      "daysLeft": "Uji coba: tersisa {days} hari",
+      "endsTomorrow": "Uji coba berakhir besok",
+      "expired": "Masa uji coba Anda telah berakhir — tingkatkan paket agar workspace tetap aktif",
+      "dismiss": "Tutup"
+    },
+    "trialExpired": {
+      "title": "Masa uji coba gratis Anda telah berakhir",
+      "description": "Berlangganan paket agar tetap dapat menggunakan workspace Anda.",
+      "cta": "Lihat paket",
+      "bannerTitle": "Masa uji coba berakhir",
+      "bannerDescription": "Pembuatan sumber daya baru dinonaktifkan. Anda masih dapat memutuskan kanal dan menjadwalkan penghapusan workspace.",
+      "bannerCta": "Tingkatkan",
+      "createDisabled": "Pembuatan {feature} baru dinonaktifkan. Tingkatkan paket untuk melanjutkan."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Batas kontak aktif bulanan tercapai",
+      "bannerDescription": "Pengiriman dan penerimaan pesan dijeda hingga Anda meningkatkan paket.",
+      "bannerCta": "Tingkatkan",
+      "createDisabled": "Pembuatan {feature} baru dinonaktifkan hingga Anda meningkatkan paket."
+    }
+  },
+  "broadcasts": {
+    "title": "Broadcast",
+    "status": {
+      "scheduled": "Dijadwalkan",
+      "sent": "Terkirim",
+      "sending": "Mengirim",
+      "cancelled": "Dibatalkan"
+    },
+    "stats": {
+      "sent": "Terkirim",
+      "delivered": "Tersampaikan",
+      "seen": "Dilihat",
+      "clicked": "Diklik",
+      "failed": "Gagal",
+      "noContacts": "Tidak ada kontak yang ditemukan",
+      "pageInfo": "Halaman {page} dari {pageCount}",
+      "selectedAll": "Semua dipilih",
+      "selectedCount": "{count} dipilih",
+      "tagAllDialogDescription": "Tag akan ditambahkan ke semua kontak yang dipilih.",
+      "tagDialogDescription": "Tag akan ditambahkan ke {count} kontak.",
+      "tagQueued": "Memberi tag pada {count} kontak di latar belakang.",
+      "loadingMore": "Memuat lainnya...",
+      "receivers": "Penerima"
+    },
+    "messengerList": {
+      "title": "Daftar Messenger",
+      "description": "Dapat berisi promosi dan hanya akan dikirim kepada orang yang berlangganan daftar Messenger Anda."
+    },
+    "messengerActiveContacts": {
+      "title": "Kontak Aktif Messenger",
+      "description": "Dapat berisi promosi dan hanya akan dikirim kepada pengguna yang mengirim pesan ke bot Anda dalam 24 jam terakhir."
+    },
+    "messengerAccountUpdate": {
+      "title": "Pembaruan Akun Messenger",
+      "description": "Beri tahu pengguna tentang perubahan yang tidak berulang pada aplikasi atau akun mereka."
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Pembaruan Acara Terkonfirmasi Messenger",
+      "description": "Kirim pengingat atau pembaruan kepada pengguna untuk acara yang telah mereka daftarkan (misalnya, membeli tiket). Tag ini dapat digunakan untuk acara mendatang dan acara yang sedang berlangsung."
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Pembaruan Pascapembelian Messenger",
+      "description": "Beri tahu pengguna tentang pembaruan pembelian terbaru. Konfirmasi transaksi, seperti faktur atau tanda terima, serta pemberitahuan status pengiriman, seperti produk dalam perjalanan, telah dikirim, telah diterima, atau tertunda."
+    },
+    "allContacts": {
+      "title": "Semua Kontak",
+      "description": "Kirim flow ke semua kontak."
+    },
+    "receiversCount": "Penerima: {count}",
+    "receiversLoading": "Penerima: Memuat...",
+    "whatsappTemplateMessage": {
+      "title": "Pesan Template",
+      "description": "Kirim pesan template WhatsApp ke kontak Anda"
+    },
+    "messengerTemplateMessage": {
+      "title": "Pesan Template",
+      "description": "Kirim pesan template Messenger ke kontak Anda"
+    },
+    "whatsappWithin24Hours": {
+      "title": "Kontak aktif dalam 24 jam",
+      "description": "Dapat berisi promosi dan hanya akan dikirim kepada pengguna yang mengirim pesan ke bot Anda dalam 24 jam terakhir."
+    },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "Dapat berisi promosi dan hanya akan dikirim kepada pengguna yang mengirim pesan ke bot Anda dalam 24 jam terakhir."
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "Gunakan jenis pesan ini jika Anda ingin mengirim broadcast ke kontak Telegram Anda."
+    },
+    "tiktokActiveContacts": {
+      "title": "TikTok",
+      "description": "Dapat berisi promosi dan hanya akan dikirim kepada pengguna yang mengirim pesan ke bot Anda dalam 24 jam terakhir. Broadcast TikTok hanya mendukung teks dan gambar."
+    },
+    "flowType": {
+      "flow": {
+        "title": "Flow",
+        "description": "Kirim flow ke kontak Anda"
+      },
+      "template": {
+        "title": "Template",
+        "description": "Kirim template ke kontak Anda"
+      }
+    },
+    "detail": {
+      "title": "Detail broadcast",
+      "subaction": "Subtindakan",
+      "audienceFilter": "Filter audiens",
+      "noAudienceFilter": "Tanpa filter audiens",
+      "template": "Template",
+      "noTemplate": "Tanpa template",
+      "integration": "Integrasi"
+    }
+  },
+  "condition": {
+    "yes": "Ya",
+    "no": "Tidak",
+    "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
+    "datetimePlaceholder": "YYYY-MM-DD HH:mm",
+    "datetimeInvalid": "Masukkan tanggal dalam format YYYY-MM-DD HH:mm atau sebuah variabel",
+    "operator": {
+      "and": "Semua kondisi",
+      "or": "Kondisi apa pun"
+    },
+    "fields": {
+      "locale": "Bahasa",
+      "language": "Bahasa",
+      "fullName": "Nama lengkap",
+      "country": "Negara",
+      "continent": "Benua",
+      "gender": "Jenis kelamin",
+      "subscribedToBroadcast": "Berlangganan broadcast",
+      "contactCreatedDate": "Tanggal kontak dibuat",
+      "contactCreatedDateMinutesAgo": "Tanggal kontak dibuat (menit yang lalu)",
+      "source": "Sumber",
+      "conversationTransferredToHuman": "Percakapan dialihkan ke manusia",
+      "interactedInLast24H": "Berinteraksi dalam 24 jam terakhir",
+      "interactedInLast24h": "Berinteraksi dalam 24 jam terakhir",
+      "followUp": "Tindak lanjut",
+      "isGuestUser": "Pengguna tamu",
+      "existingContact": "Kontak yang sudah ada",
+      "hasContactInfo": "Telepon dan email",
+      "currentChannel": "Kanal",
+      "inbox": "Inbox",
+      "subjectToEuRules": "Tunduk pada aturan UE",
+      "timezone": "Zona waktu",
+      "hasOpportunity": "Memiliki peluang (Terbuka, Menang, Kalah)",
+      "hasOpenOpportunity": "Memiliki peluang terbuka",
+      "hasWonOpportunity": "Memiliki peluang yang dimenangkan",
+      "hasLostOpportunity": "Memiliki peluang yang kalah",
+      "instagramStoryReply": "Pesan adalah balasan cerita Instagram",
+      "followsBusinessOnInstagram": "Mengikuti bisnis di Instagram",
+      "businessFollowsUserOnInstagram": "Bisnis mengikuti pengguna di Instagram",
+      "verifiedAccountOnInstagram": "Akun terverifikasi di Instagram",
+      "followerCountOnInstagram": "Jumlah pengikut di Instagram",
+      "lastSent": "Terakhir dikirim",
+      "lastDelivered": "Terakhir disampaikan",
+      "lastSeen": "Terakhir dilihat",
+      "lastSeenMinutesAgo": "Terakhir dilihat (menit yang lalu)",
+      "lastInteraction": "Interaksi terakhir",
+      "lastInteractionMinutesAgo": "Interaksi terakhir (menit yang lalu)",
+      "unreplied": "Belum dibalas",
+      "unread": "Belum dibaca",
+      "appliedJobs": "Lowongan yang dilamar",
+      "tags": "Tag",
+      "customFields": "Kolom kustom",
+      "phone": "Telepon",
+      "completedWhatsAppFlows": "Flow WhatsApp yang Diselesaikan",
+      "messengerList": "Daftar Messenger",
+      "subscribedToDripCampaign": "Berlangganan kampanye drip",
+      "conversationAssigned": "Percakapan ditugaskan",
+      "entryPointsLinks": "Tautan Titik Masuk",
+      "sentMessage": "Mengirim pesan",
+      "keywordsReceived": "Kata Kunci Diterima",
+      "executedFlow": "Menjalankan flow",
+      "executedStep": "Menjalankan Langkah",
+      "consecutiveAiFailures": "Jumlah kegagalan AI berturut-turut",
+      "questionnaireStarted": "Kuesioner dimulai",
+      "questionnaireInProgress": "Kuesioner sedang berlangsung",
+      "questionnaireFinished": "Kuesioner selesai",
+      "couponTopic": "Kupon",
+      "votedOnPoll": "Memberikan suara pada jajak pendapat",
+      "lastComment": "Komentar terakhir",
+      "commentedOnPost": "Mengomentari Postingan",
+      "reactedOnPost": "Bereaksi pada postingan",
+      "lastTotalTaggedUsers": "Total pengguna yang terakhir ditandai",
+      "lastTotalNewTaggedUsers": "Total pengguna baru yang terakhir ditandai",
+      "email": "Email",
+      "phoneWasVerified": "Telepon telah Diverifikasi",
+      "optedInForSms": "Menyetujui SMS",
+      "broadcastSent": "Broadcast Terkirim",
+      "broadcastDelivered": "Broadcast Tersampaikan",
+      "broadcastSeen": "Broadcast Dilihat",
+      "broadcastClicked": "Broadcast Diklik",
+      "broadcastFailed": "Broadcast Gagal",
+      "emailWasVerified": "Email telah Diverifikasi",
+      "optedInForEmail": "Menyetujui Email",
+      "emailSent": "Email Terkirim",
+      "emailDelivered": "Email Tersampaikan",
+      "emailOpened": "Email Dibuka",
+      "emailClicked": "Email Diklik",
+      "isWithinWorkingHours": "Berada dalam jam kerja",
+      "currentDate": "Tanggal saat ini",
+      "currentTime": "Waktu saat ini",
+      "currentDayOfMonth": "Tanggal saat ini",
+      "currentDayOfWeek": "Hari saat ini",
+      "currentMonth": "Bulan saat ini",
+      "bought": "Membeli",
+      "boughtItems": "Membeli item",
+      "totalSpent": "Total pengeluaran",
+      "numberOfOrders": "Jumlah pesanan",
+      "shoppingCartTotal": "Total keranjang belanja",
+      "shoppingCartSubtotal": "Subtotal keranjang belanja",
+      "shoppingCartIsEmpty": "Keranjang belanja kosong",
+      "shoppingCartContainsItems": "Keranjang belanja berisi item",
+      "lastSentMessageFailed": "Pesan Terakhir Gagal Dikirim",
+      "lastUserInput": "Input pengguna terakhir",
+      "lastUserInputType": "Jenis input pengguna terakhir",
+      "archived": "Diarsipkan",
+      "blocked": "Diblokir",
+      "noAdminReply": "Tidak ada balasan admin",
+      "contactCreatedAt": "Kontak dibuat pada",
+      "lastUserInputTypes": {
+        "text": "Teks",
+        "location": "Lokasi",
+        "refLink": "Tautan referensi",
+        "image": "Gambar",
+        "video": "Video",
+        "audio": "Audio",
+        "gif": "GIF",
+        "file": "File"
+      }
+    },
+    "fieldGroups": {
+      "opportunity": "Peluang",
+      "instagram": "Instagram",
+      "analytics": "Analitik",
+      "facebookInstagramComment": "Komentar Facebook/Instagram",
+      "broadcastWhatsapp": "Broadcast (WhatsApp)",
+      "systemTime": "Waktu Sistem",
+      "ecommerce": "E-commerce",
+      "systemFields": "Kolom Sistem",
+      "topicCoupon": "Topik kupon",
+      "customFields": "Kolom Kustom",
+      "email": "Email",
+      "sms": "SMS"
+    },
+    "languages": {
+      "ar": "Arab",
+      "de": "Jerman",
+      "en": "Inggris",
+      "es": "Spanyol",
+      "fil": "Filipina",
+      "fr": "Prancis",
+      "hi": "Hindi",
+      "id": "Indonesia",
+      "it": "Italia",
+      "ja": "Jepang",
+      "km": "Khmer",
+      "ko": "Korea",
+      "lo": "Lao",
+      "ms": "Melayu",
+      "my": "Burma",
+      "nl": "Belanda",
+      "pt": "Portugis",
+      "ru": "Rusia",
+      "th": "Thai",
+      "vi": "Vietnam",
+      "zh": "Tionghoa"
+    },
+    "sources": {
+      "direct": "Langsung",
+      "comments": "Komentar",
+      "ads": "Iklan",
+      "fbLeadAd": "Iklan Prospek FB",
+      "inboundMessage": "Pesan Masuk",
+      "imported": "Diimpor",
+      "api": "API",
+      "webchat": "Webchat",
+      "botLink": "Tautan Bot",
+      "chatPlugin": "Plugin C. chat"
+    }
+  },
+  "fields": {
+    "omnichannel": {
+      "label": "Omnikanal"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Gambar"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "loginTitle": "Login dengan Instagram",
+      "loginDescription": "Hubungkan akun Instagram Business Anda secara langsung melalui Instagram OAuth.",
+      "facebookLoginTitle": "Login dengan Facebook",
+      "facebookLoginDescription": "Hubungkan akun Instagram yang tertaut ke Halaman Facebook melalui Facebook OAuth.",
+      "connectViaFacebook": "Hubungkan Instagram melalui Facebook",
+      "viaFacebookTitle": "Instagram melalui Facebook",
+      "cloneFromMessenger": "Clone dari Messenger",
+      "clonedFromMessenger": "Cloned dari Messenger"
+    },
+    "zalo": {
+      "label": "Zalo OA"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "botToken": "Token Bot",
+      "connectInstructions": {
+        "step1": "Open <link>@BotFather</link> di Telegram.",
+        "step2": "Kirim <strong>/newbot</strong> dan ikuti petunjuknya.",
+        "step3": "Setelah membuat bot, Anda akan menerima token API bot. Salin token API tersebut dan tempelkan di bawah."
+      }
+    },
+    "matchAll": {
+      "label": "Cocokkan semua kondisi di bawah ini"
+    },
+    "matchAny": {
+      "label": "Cocokkan salah satu kondisi di bawah"
+    },
+    "condition": {
+      "label": "Kondisi"
+    },
+    "actions": {
+      "label": "Tindakan"
+    },
+    "tags": {
+      "label": "Tag"
+    },
+    "customFields": {
+      "label": "Kolom Kustom"
+    },
+    "pipelines": {
+      "label": "Pipeline"
+    },
+    "sequences": {
+      "label": "Sequence"
+    },
+    "ecommerce": {
+      "label": "E-commerce"
+    },
+    "entryPointLink": {
+      "label": "Tautan Titik Masuk"
+    },
+    "assignedId": {
+      "label": "Tetapkan Kepada"
+    },
+    "operator": {
+      "label": "Operator",
+      "is": "Adalah",
+      "isNot": "Bukan",
+      "in": "Termasuk",
+      "notIn": "Tidak termasuk",
+      "isEmpty": "Has no nilai",
+      "isNotEmpty": "Memiliki nilai",
+      "gt": "Lebih besar dari",
+      "lt": "Lebih kecil dari",
+      "gte": "Greater than atau Equal to",
+      "lte": "Kurang dari atau sama dengan",
+      "contains": "Berisi",
+      "notContains": "Tidak berisi",
+      "startsWith": "Dimulai dengan",
+      "endsWith": "Diakhiri dengan",
+      "isBetween": "Interval",
+      "notBetween": "Bukan interval",
+      "used": "Digunakan"
+    },
+    "contactFilter": {
+      "allConditions": "Semua dari following conditions",
+      "anyConditions": "Salah satu kondisi di bawah.",
+      "label": "Filter kontak",
+      "onlyContactsMatch": "Hanya kontak yang cocok dengan",
+      "moreOptions": "Opsi Lainnya"
+    },
+    "contactNote": {
+      "label": "Catatan Kontak"
+    },
+    "chooseTime": {
+      "label": "Pilih waktu"
+    },
+    "notificationType": {
+      "label": "Jenis Notifikasi",
+      "notifyAdmin": "Beri Tahu Admin",
+      "newMessageToHuman": "Baru Message ke Human",
+      "newOrder": "Baru Order"
+    },
+    "notificationChannel": {
+      "label": "Kanal Notifikasi",
+      "messenger": "Messenger",
+      "email": "Email",
+      "telegram": "Telegram",
+      "browser": "Browser"
+    },
+    "accessToken": {
+      "label": "Token Akses"
+    },
+    "botField": {
+      "label": "Kolom Bot"
+    },
+    "agent": {
+      "label": "Agen"
+    },
+    "aiAgent": {
+      "label": "Agen AI"
+    },
+    "aiQueuedMessages": {
+      "label": "Pesan AI dalam Antrean"
+    },
+    "aiFile": {
+      "label": "File AI"
+    },
+    "aiFunction": {
+      "label": "Fungsi AI"
+    },
+    "aiTrigger": {
+      "label": "Trigger AI"
+    },
+    "alphanumericLength": {
+      "label": "Panjang Alfanumerik"
+    },
+    "analytics": {
+      "label": "Analitik"
+    },
+    "apiKey": {
+      "label": "Kunci API"
+    },
+    "auth": {
+      "label": "Autentikasi"
+    },
+    "authorizedDomain": {
+      "description": "Domain atau subdomain yang diizinkan untuk mengakses webchat Anda.",
+      "label": "Domain yang Diizinkan{plural, select, 1 {s} other {}}"
+    },
+    "webSearchAuthorizedDomains": {
+      "label": "Authorized websites untuk Web Cari alat",
+      "placeholder": "example.com",
+      "tooltip": "Daftar domain yang dapat diakses agen AI. Biarkan kosong untuk mengizinkan semua domain."
+    },
+    "authToken": {
+      "label": "Token"
+    },
+    "authType": {
+      "headers": "Kustom Header",
+      "none": "Tidak ada",
+      "token": "Token"
+    },
+    "automatedResponse": {
+      "label": "Respons Otomatis"
+    },
+    "avatar": {
+      "label": "Gambar Profil"
+    },
+    "reflink": {
+      "label": "Tautan Titik Masuk"
+    },
+    "qrCode": {
+      "label": "QR Code"
+    },
+    "savePayloadToCustomField": {
+      "label": "Simpan payload ke custom kolom"
+    },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Bot Response"
+    },
+    "brandColor": {
+      "description": "Warna ini digunakan pada tombol agar sesuai dengan merek Anda di halaman landing, email, dan webchat.",
+      "label": "Warna Merek"
+    },
+    "broadcast": {
+      "label": "Broadcast"
+    },
+    "trigger": {
+      "label": "Trigger"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
+    "button": {
+      "label": "Tombol",
+      "whenPressed": "Saat tombol ini ditekan"
+    },
+    "buttonLabel": {
+      "label": "Label Tombol"
+    },
+    "category": {
+      "label": "Kategori"
+    },
+    "completed": {
+      "label": "Selesai"
+    },
+    "workspace": {
+      "label": "Workspace"
+    },
+    "workspaceId": {
+      "description": "Unique identifier untuk workspace.",
+      "label": "ID Workspace"
+    },
+    "workspaceName": {
+      "label": "Nama Akun"
+    },
+    "contact": {
+      "label": "Kontak"
+    },
+    "contacts": {
+      "label": "Kontak"
+    },
+    "conversation": {
+      "label": "Percakapan"
+    },
+    "conversationStarter": {
+      "description": "Pemulai percakapan digunakan untuk memulai percakapan dengan pengguna.",
+      "label": "Pemulai Percakapan{plural, select, 1 {s} other {}}",
+      "type": {
+        "openWebsite": "Buka Situs Web",
+        "sendFlow": "Kirim Flow",
+        "sendText": "Kirim Text"
+      }
+    },
+    "createdAt": {
+      "label": "Dibuat Pada"
+    },
+    "currentTime": {
+      "label": "Waktu Saat Ini"
+    },
+    "customRange": {
+      "label": "Kustom range"
+    },
+    "customCss": {
+      "label": "Kustom CSS"
+    },
+    "theme": {
+      "label": "Tema",
+      "placeholder": "Pilih tema"
+    },
+    "customJS": {
+      "label": "Kustom JS",
+      "placeholder": "Masukkan custom JavaScript"
+    },
+    "customCSS": {
+      "label": "Kustom CSS",
+      "placeholder": "Masukkan custom CSS"
+    },
+    "customField": {
+      "label": "Kustom Field",
+      "savePayloadTo": "Simpan respons ke Kustom Field",
+      "set_value": "Atur nilai",
+      "append": "Append ke end",
+      "prepend": "Prepend ke beginning",
+      "increase": "Tambah sebesar",
+      "decrease": "Kurangi sebesar"
+    },
+    "dataCollect": {
+      "label": "Pengumpulan Data"
+    },
+    "defaultReply": {
+      "description": "Ini adalah respons default yang akan dikirim workspace Anda saat tidak mengetahui cara membalas pesan pengguna.",
+      "label": "Balasan Default"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Atur berapa lama bot menunggu sebelum membalas setelah pesan terakhir pengguna. Jika pengguna mengirim pesan lain, waktu akan diatur ulang dan pesan-pesan akan diantrekan menjadi satu respons.",
+      "label": "Bot balasan delay",
+      "minutes": "{count, plural, one {# menit} other {# menit}}",
+      "none": "Tidak ada",
+      "seconds": "{count, plural, one {# detik} other {# detik}}"
+    },
+    "delayType": {
+      "label": "Jenis Penundaan",
+      "placeholder": "Jenis Penundaan"
+    },
+    "delayUnit": {
+      "days": "Hari",
+      "hours": "Jam",
+      "minutes": "Menit",
+      "seconds": "Detik"
+    },
+    "description": {
+      "label": "Deskripsi",
+      "placeholder": "Masukkan deskripsi"
+    },
+    "developmentMode": {
+      "description": "Bot Anda hanya akan berfungsi untuk admin bot. Aktifkan opsi ini saat membangun bot dan Anda tidak ingin pengguna selain admin menggunakannya.",
+      "label": "Mode Pengembangan"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "Masukkan email"
+    },
+    "embedCode": {
+      "description": "Salin dan tempel kode ini ke situs web Anda untuk menyematkan widget chat.",
+      "label": "Kode Sematan",
+      "securityNote": "Catatan Keamanan",
+      "securityNoteDescription": "Widget ini hanya akan berfungsi pada domain yang diizinkan dalam konfigurasi webchat. Pastikan untuk menambahkan domain Anda ke daftar domain yang diizinkan."
+    },
+    "processingStatus": {
+      "label": "Status Pemrosesan"
+    },
+    "enable": {
+      "label": "Aktifkan"
+    },
+    "file": {
+      "label": "File"
+    },
+    "link": {
+      "label": "Tautan"
+    },
+    "message": {
+      "label": "Pesan"
+    },
+    "filter": {
+      "label": "Filter"
+    },
+    "finalMessage": {
+      "label": "Pesan Akhir"
+    },
+    "firstName": {
+      "label": "First nama",
+      "placeholder": "Masukkan first nama"
+    },
+    "countryCode": {
+      "label": "Kode Negara"
+    },
+    "contactId": {
+      "label": "ID Kontak"
+    },
+    "flow": {
+      "label": "Flow"
+    },
+    "flowId": {
+      "label": "ID Flow"
+    },
+    "flows": {
+      "aiGenerateText": "{aiName}: Buat Text",
+      "aiGenerateImage": "{aiName}: Buat Image",
+      "aiEditImage": "{aiName}: Edit Gambar",
+      "aiAnalyzeImage": "{aiName}: Analisis Gambar",
+      "aiExtractData": "{aiName}: Ekstrak Data",
+      "aiSpeechToText": "{aiName}: Speech ke Text",
+      "aiTextToSpeech": "{aiName}: Text ke Speech",
+      "label": "Flow",
+      "placeholder": "Pilih flow",
+      "aiGenerateTextAgent": "{aiName}: Buat Text Agent",
+      "aiDeleteMessageHistory": "{aiName}: Hapus Message History"
+    },
+    "steps": {
+      "label": "Langkah",
+      "placeholder": "Pilih step"
+    },
+    "folder": {
+      "label": "Folder"
+    },
+    "format": {
+      "label": "Format"
+    },
+    "framework": {
+      "angular": "Angular",
+      "ember": "Ember",
+      "react": "React",
+      "svelte": "Svelte",
+      "vue": "Vue"
+    },
+    "function": {
+      "label": "Fungsi"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Model Gemini"
+    },
+    "gender": {
+      "female": "Wanita",
+      "label": "Jenis Kelamin",
+      "male": "Pria",
+      "unknown": "Tidak diketahui"
+    },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Host",
+      "placeholder": "smtp.example.com"
+    },
+    "hideHeader": {
+      "label": "Sembunyikan Header"
+    },
+    "hideMessageInput": {
+      "label": "Sembunyikan Message Input"
+    },
+    "inbox": {
+      "label": "Inbox",
+      "placeholder": "Pilih inbox"
+    },
+    "inboxTeam": {
+      "label": "Tim Inbox"
+    },
+    "teamMembers": {
+      "label": "Anggota Tim"
+    },
+    "inboxTeamMember": {
+      "label": "Anggota Tim Inbox"
+    },
+    "inputCustomField": {
+      "label": "Input Kustom Field"
+    },
+    "insertLink": {
+      "label": "Insert tautan"
+    },
+    "instructions": {
+      "label": "Pesan Sistem (Prompt)"
+    },
+    "isDefault": {
+      "label": "Tandai sebagai default"
+    },
+    "isRichResponse": {
+      "description": "Return structured JSON dengan pesans dan actions instead dari plain teks streaming.",
+      "label": "Respons Kaya"
+    },
+    "language": {
+      "description": "Kontak diberi bahasa default saat bahasa kontak tidak diketahui.",
+      "label": "Bahasa",
+      "placeholder": "Pilih bahasa"
+    },
+    "lastName": {
+      "label": "Terakhir nama",
+      "placeholder": "Masukkan last nama"
+    },
+    "last30days": {
+      "label": "30 hari terakhir"
+    },
+    "last7days": {
+      "label": "7 hari terakhir"
+    },
+    "lastInput": {
+      "label": "Terakhir Input"
+    },
+    "lastUserInputTypes": {
+      "text": "Teks",
+      "location": "Lokasi",
+      "refLink": "Ref tautan",
+      "image": "Gambar",
+      "video": "Video",
+      "audio": "Audio",
+      "gif": "GIF",
+      "file": "File"
+    },
+    "lastMonth": {
+      "label": "Terakhir month"
+    },
+    "lifeTime": {
+      "label": "Sepanjang Waktu"
+    },
+    "locale": {
+      "label": "Lokal"
+    },
+    "errorLog": {
+      "label": "Log Kesalahan"
+    },
+    "inputType": {
+      "label": "Jenis Input",
+      "options": {
+        "text": "Teks",
+        "image": "Gambar",
+        "file": "File"
+      }
+    },
+    "extractFields": {
+      "label": "Fields ke Extract",
+      "key": {
+        "label": "Kunci JSON",
+        "placeholder": "e.g. email, telepon, address"
+      },
+      "customFieldId": {
+        "label": "Simpan ke Kustom Field"
+      },
+      "description": {
+        "label": "Deskripsi (Opsional)",
+        "placeholder": "Jelaskan apa yang akan diekstrak"
+      }
+    },
+    "max": {
+      "label": "Maksimum"
+    },
+    "maxOutputTokens": {
+      "label": "Token Maksimum"
+    },
+    "mcpServer": {
+      "label": "Server MCP"
+    },
+    "systemFunction": {
+      "label": "Fungsi Sistem",
+      "names": {
+        "connectUserToHuman": "Connect pengguna ke Human",
+        "documentReader": "Pembaca Dokumen",
+        "imageReader": "Pembaca Gambar",
+        "urlContext": "Pembaca URL",
+        "webSearch": "Pencarian web"
+      }
+    },
+    "min": {
+      "label": "Minimum"
+    },
+    "model": {
+      "label": "Model"
+    },
+    "name": {
+      "label": "Nama",
+      "placeholder": "Masukkan nama",
+      "searchPlaceholder": "Cari nama..."
+    },
+    "selectUsers": {
+      "label": "Pilih penggunas"
+    },
+    "node": {
+      "label": "Node"
+    },
+    "noResults": {
+      "label": "Tidak ada hasils found"
+    },
+    "notes": {
+      "label": "Catatan"
+    },
+    "numericLength": {
+      "label": "Panjang Numerik"
+    },
+    "numericValue": {
+      "label": "Nilai Numerik"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Operasi"
+    },
+    "outputCustomField": {
+      "label": "Output Kustom Field"
+    },
+    "httpMethod": {
+      "label": "Metode"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.example.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "Header",
+      "keyPlaceholder": "Header",
+      "valuePlaceholder": "Nilai"
+    },
+    "requestBody": {
+      "label": "Isi",
+      "keyPlaceholder": "Kolom",
+      "valuePlaceholder": "Nilai"
+    },
+    "bodyType": {
+      "label": "Jenis Isi",
+      "options": {
+        "allContactData": "Semua Contact Data",
+        "json": "JSON",
+        "formEncoded": "Formulir Terenkode"
+      }
+    },
+    "statusCode": {
+      "label": "Kode Status"
+    },
+    "outputMessage": {
+      "label": "Pesan Output",
+      "placeholder": "Apa pesan outputnya?"
+    },
+    "paymentHistory": {
+      "label": "Riwayat Pembayaran"
+    },
+    "paymentMethods": {
+      "label": "Metode Pembayaran"
+    },
+    "persistentMenu": {
+      "description": "Menu persisten digunakan untuk memulai percakapan dengan pengguna.",
+      "label": "Menu Persisten{plural, select, 1 {s} other {}}",
+      "type": {
+        "openWebsite": "Buka Situs Web",
+        "sendFlow": "Kirim Flow"
+      }
+    },
+    "userPersistentMenu": {
+      "pageDefault": "Default",
+      "label": "Menu Persisten Pengguna"
+    },
+    "phoneNumber": {
+      "label": "Nomor telepon"
+    },
+    "phoneNumberId": {
+      "label": "Nomor telepon",
+      "noPhoneNumbersFound": "Tidak ada nomor telepon yang ditemukan untuk akun ini"
+    },
+    "port": {
+      "label": "Port",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Penyedia"
+    },
+    "prompt": {
+      "label": "Prompt",
+      "placeholder": "Masukkan prompt"
+    },
+    "userMessage": {
+      "label": "Pesan pengguna"
+    },
+    "pageUserName": {
+      "label": "Nama Pengguna Halaman"
+    },
+    "purpose": {
+      "label": "Tujuan",
+      "placeholder": "Apa fungsi ini?"
+    },
+    "question": {
+      "label": "Pertanyaan",
+      "placeholder": "Apakah Anda buka hari ini?"
+    },
+    "imageProfileUrl": {
+      "label": "URL Gambar Profil"
+    },
+    "persona": {
+      "label": "Persona",
+      "pageDefault": "Persona default"
+    },
+    "quickReply": {
+      "label": "Balasan Cepat"
+    },
+    "search": {
+      "placeholder": "Cari..."
+    },
+    "logo": {
+      "label": "Logo"
+    },
+    "logoLight": {
+      "label": "Logo (Terang)"
+    },
+    "logoDark": {
+      "label": "Logo (Gelap)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
+    "brandName": {
+      "label": "Nama Merek",
+      "placeholder": "Masukkan nama merek"
+    },
+    "policyUrl": {
+      "label": "URL Kebijakan Privasi"
+    },
+    "termsOfServiceUrl": {
+      "label": "URL Ketentuan Layanan"
+    },
+    "showLogo": {
+      "label": "Tampilkan Logo Pribadi"
+    },
+    "quality": {
+      "label": "Kualitas",
+      "options": {
+        "auto": "Otomatis",
+        "hd": "HD",
+        "md": "Sedang",
+        "ld": "Rendah"
+      }
+    },
+    "size": {
+      "label": "Ukuran",
+      "options": {
+        "auto": "Otomatis",
+        "square1024": "Persegi - 1024×1024",
+        "landscape1536x1024": "Lanskap - 1536×1024",
+        "portrait1024x1536": "Potret - 1024×1536",
+        "dalle2_256": "256×256",
+        "dalle2_512": "512×512",
+        "dalle3_1792x1024": "1792×1024"
+      }
+    },
+    "status": {
+      "label": "Status",
+      "pending": "Menunggu",
+      "processing": "Sedang diproses",
+      "completed": "Selesai",
+      "failed": "Gagal",
+      "success": "Berhasil",
+      "error": "Kesalahan"
+    },
+    "subtitle": {
+      "placeholder": "Masukkan subjudul"
+    },
+    "syncToMessenger": {
+      "label": "Sinkronkan ke Messenger"
+    },
+    "tag": {
+      "label": "Tag"
+    },
+    "emailTopic": {
+      "label": "Topik Email"
+    },
+    "emailTopics": {
+      "label": "Topik Email"
+    },
+    "emailTopicSent": {
+      "label": "Terkirim"
+    },
+    "emailTopicDelivered": {
+      "label": "Tersampaikan(%)"
+    },
+    "emailTopicSeen": {
+      "label": "Dilihat(%)"
+    },
+    "emailTopicClicked": {
+      "label": "Diklik(%)"
+    },
+    "targetCountry": {
+      "description": "Negara tempat sebagian besar kontak Anda tinggal.",
+      "label": "Negara Target"
+    },
+    "team": {
+      "label": "Tim"
+    },
+    "rememberConversation": {
+      "label": "Ingat percakapan"
+    },
+    "temperature": {
+      "label": "Temperatur"
+    },
+    "templateMessages": {
+      "label": "Pesan Templat"
+    },
+    "text": {
+      "label": "Teks",
+      "placeholder": "Masukkan teks"
+    },
+    "thisMonth": {
+      "label": "Bulan ini"
+    },
+    "timezone": {
+      "description": "Kontak diberi zona waktu ini ketika zona waktu kontak tidak diketahui.",
+      "label": "Zona waktu"
+    },
+    "title": {
+      "placeholder": "Masukkan judul"
+    },
+    "today": {
+      "label": "Hari ini"
+    },
+    "tools": {
+      "label": "Alat",
+      "placeholder": "Pilih alat"
+    },
+    "triggerFlowId": {
+      "label": "ID Flow Pemicu",
+      "placeholder": "Flow apa yang dipicu?"
+    },
+    "type": {
+      "label": "Jenis",
+      "placeholder": "Pilih jenis"
+    },
+    "lastRead": {
+      "label": "Terakhir Dibaca"
+    },
+    "assignee": {
+      "label": "Penerima Tugas"
+    },
+    "modified": {
+      "label": "Diubah"
+    },
+    "estimatedContacts": {
+      "label": "Perkiraan Kontak"
+    },
+    "scheduledAt": {
+      "label": "Dijadwalkan Pada"
+    },
+    "channel": {
+      "label": "Channel"
+    },
+    "comment": {
+      "label": "Komentar"
+    },
+    "directMessage": {
+      "label": "Pesan Langsung"
+    },
+    "updatedAt": {
+      "label": "Diperbarui Pada"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "Masukkan URL"
+    },
+    "userId": {
+      "label": "ID Pengguna",
+      "placeholders": {
+        "instagram": "ID pengguna Instagram",
+        "messenger": "PSID Messenger",
+        "telegram": "ID chat Telegram",
+        "tiktok": "ID pengguna TikTok",
+        "zalo": "ID pengguna Zalo"
+      }
+    },
+    "userTags": {
+      "label": "Tag yang Diterapkan Pengguna"
+    },
+    "username": {
+      "label": "Nama pengguna",
+      "placeholder": "user@example.com"
+    },
+    "keywords": {
+      "label": "Kata Kunci"
+    },
+    "value": {
+      "label": "Nilai"
+    },
+    "wabaId": {
+      "label": "ID WABA"
+    },
+    "webchat": {
+      "label": "Webchat"
+    },
+    "welcomeFlowId": {
+      "description": "Pesan sambutan dikirim secara otomatis saat pengguna membuka webchat Anda.",
+      "label": "Flow Sambutan"
+    },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "SMS"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "Suara"
+    },
+    "googleBm": {
+      "label": "Google BM"
+    },
+    "landingPage": {
+      "label": "Halaman Arahan"
+    },
+    "whatsappFlow": {
+      "label": "Flow WhatsApp"
+    },
+    "shortText": {
+      "label": "Teks Pendek",
+      "placeholder": "Masukkan teks"
+    },
+    "number": {
+      "label": "Angka",
+      "placeholder": "Masukkan angka"
+    },
+    "date": {
+      "label": "Tanggal"
+    },
+    "datetime": {
+      "label": "Tanggal dan waktu"
+    },
+    "boolean": {
+      "label": "Boolean",
+      "placeholder": "Pilih benar atau salah",
+      "true": "Benar",
+      "false": "Salah"
+    },
+    "longText": {
+      "label": "Teks Panjang"
+    },
+    "replyFormat": {
+      "label": "Format Balasan",
+      "number": "Angka",
+      "text": "Teks",
+      "email": "Email",
+      "phone": "Telepon",
+      "image": "Gambar",
+      "file": "File",
+      "link": "Tautan",
+      "date": "Tanggal",
+      "datetime": "Tanggal dan waktu",
+      "location": "Lokasi",
+      "anyInput": "Input Apa Pun"
+    },
+    "workspaceMember": {
+      "label": "Anggota Workspace"
+    },
+    "yesterday": {
+      "label": "Kemarin"
+    },
+    "permissions": {
+      "label": "Izin",
+      "superAdmin": "Super Admin",
+      "analytics": "Analitik",
+      "flows": "Flow",
+      "contacts": "Kontak",
+      "onlyAssignedContacts": "Hanya Kontak yang Ditugaskan",
+      "emailAndPhone": "Email dan Telepon",
+      "broadcast": "Broadcast",
+      "ecommerce": "E-commerce"
+    },
+    "member": {
+      "label": "Anggota"
+    },
+    "schedule": {
+      "label": "Jadwal",
+      "now": "Sekarang",
+      "scheduled": "Jadwalkan untuk nanti"
+    },
+    "inputFieldId": {
+      "label": "Custom Field Input"
+    },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Gambar"
+      }
+    },
+    "inputText": {
+      "label": "Teks Input"
+    },
+    "outputFieldId": {
+      "label": "Simpan hasil ke custom field"
+    },
+    "audio": {
+      "label": "Field Audio"
+    },
+    "voiceType": {
+      "label": "Jenis Suara",
+      "placeholder": "Pilih jenis suara"
+    },
+    "voiceTone": {
+      "label": "Nada suara (Opsional)",
+      "placeholder": "Bicaralah dengan nada ceria."
+    },
+    "jsonPath": {
+      "placeholder": "Masukkan path JSON",
+      "targetThisRow": "Isi baris ini dari JSON"
+    },
+    "jsonSource": {
+      "title": "Pilih path JSON",
+      "tabs": {
+        "testResponse": "Respons pengujian",
+        "pasteSample": "Tempel sampel"
+      },
+      "pastePlaceholder": "Tempel sampel respons JSON",
+      "invalidJson": "JSON tidak valid",
+      "noTestResponse": "Jalankan Uji Sekarang untuk menelusuri respons langsung",
+      "activeTarget": "Mengisi baris {row}",
+      "showMore": "Tampilkan lainnya",
+      "showMoreCount": "Tampilkan {count} lainnya"
+    },
+    "spreadsheets": {
+      "label": "Spreadsheet"
+    },
+    "retryMessage": {
+      "label": "Pesan Percobaan Ulang"
+    },
+    "skipButtonLabel": {
+      "label": "Label Tombol Lewati"
+    },
+    "autoSkipTime": {
+      "label": "Waktu Lewati Otomatis"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Jumlah Kegagalan untuk Lewati Otomatis"
+    },
+    "autoSkip": {
+      "label": "Lewati Otomatis"
+    },
+    "spreadsheet": {
+      "label": "Spreadsheet"
+    },
+    "worksheet": {
+      "label": "Lembar Kerja"
+    },
+    "source": {
+      "label": "Sumber",
+      "placeholder": "Pilih sumber"
+    },
+    "password": {
+      "label": "Kata Sandi",
+      "placeholder": "••••••••"
+    },
+    "passwordConfirmation": {
+      "label": "Masukkan ulang kata sandi"
+    },
+    "newPassword": {
+      "label": "Kata Sandi Baru"
+    },
+    "currentPassword": {
+      "label": "Kata Sandi Saat Ini"
+    },
+    "developerAccessToken": {
+      "label": "Token Akses API"
+    },
+    "fullName": {
+      "label": "Nama Lengkap"
+    },
+    "botFields": {
+      "label": "Field Bot"
+    },
+    "keyword": {
+      "label": "Kata Kunci",
+      "searchPlaceholder": "Cari kata kunci..."
+    },
+    "templateId": {
+      "label": "Templat WhatsApp"
+    },
+    "messengerTemplateId": {
+      "label": "Templat Messenger"
+    },
+    "whatsappChannel": {
+      "label": "Channel WhatsApp"
+    },
+    "messengerChannel": {
+      "label": "Channel Messenger"
+    },
+    "messages": {
+      "label": "Pesan"
+    },
+    "shortcut": {
+      "label": "Pintasan"
+    },
+    "savedReplies": {
+      "label": "Balasan Tersimpan"
+    },
+    "role": {
+      "label": "Peran"
+    },
+    "plan": {
+      "label": "Paket"
+    },
+    "price": {
+      "label": "Harga"
+    },
+    "annualPrice": {
+      "label": "Harga Tahunan"
+    },
+    "limitContacts": {
+      "label": "Jumlah Maksimum Kontak"
+    },
+    "marketingFeatures": {
+      "label": "Daftar fitur pemasaran",
+      "description": "Daftar fitur produk yang akan terlihat oleh pelanggan. Ditampilkan dalam tabel harga."
+    },
+    "currency": {
+      "label": "Mata Uang"
+    },
+    "clientId": {
+      "label": "ID Klien"
+    },
+    "clientSecret": {
+      "label": "Rahasia Klien"
+    },
+    "verifyToken": {
+      "label": "Token Verifikasi Webhook"
+    },
+    "apiVersion": {
+      "label": "Versi API"
+    },
+    "configId": {
+      "label": "ID Konfigurasi Aplikasi"
+    },
+    "systemUserId": {
+      "label": "ID Pengguna Sistem"
+    },
+    "systemUserToken": {
+      "label": "Token Pengguna Sistem"
+    },
+    "businessId": {
+      "label": "ID Bisnis"
+    },
+    "businessName": {
+      "label": "Nama Bisnis"
+    },
+    "publishableKey": {
+      "label": "Kunci yang Dapat Dipublikasikan"
+    },
+    "secretKey": {
+      "label": "Kunci Rahasia"
+    },
+    "freeTrial": {
+      "label": "Uji Coba Gratis",
+      "suffix": "hari"
+    },
+    "pricing": {
+      "label": "Harga"
+    },
+    "sequence": {
+      "label": "Urutan"
+    },
+    "from": {
+      "label": "Dari"
+    },
+    "fromAddress": {
+      "label": "Alamat Pengirim",
+      "placeholder": "noreply@example.com"
+    },
+    "messageTemplate": {
+      "label": "Templat Pesan"
+    },
+    "preheader": {
+      "label": "Preheader"
+    },
+    "subject": {
+      "label": "Subjek"
+    },
+    "to": {
+      "label": "Kepada"
+    },
+    "smtpChannel": {
+      "label": "Channel SMTP"
+    },
+    "magicLink": {
+      "label": "Tautan Ajaib",
+      "nameHint": "Ditambahkan setelah /r/{workspaceId}/ dalam URL pelacakan publik. Gunakan hanya huruf, angka, garis bawah, dan tanda hubung.",
+      "urlHint": "Gunakan kurung kurawal ganda dalam URL, misalnya https://example.com/page?utm_campaign='{{campaign}}'. Nilai berasal dari string kueri tautan pelacakan."
+    },
+    "appId": {
+      "label": "ID Aplikasi"
+    },
+    "appSecret": {
+      "label": "Rahasia Aplikasi"
+    },
+    "webhookVerifyToken": {
+      "label": "Token Verifikasi Webhook"
+    },
+    "heading": {
+      "label": "Judul",
+      "placeholder": "Masukkan judul"
+    },
+    "import": {
+      "label": "Impor",
+      "uploading": "Sedang mengunggah…",
+      "fileTooLarge": "File melebihi batas {size} MB.",
+      "unsupportedFileType": "Jenis file ini tidak didukung.",
+      "unableToReadHeaders": "Tidak dapat membaca header impor.",
+      "uploadError": "File tidak dapat diunggah.",
+      "histories": {
+        "title": "Riwayat impor",
+        "recent": "Impor terbaru",
+        "progress": "Progres",
+        "success": "Berhasil",
+        "failed": "Gagal",
+        "completedAt": "Selesai pada",
+        "errorDetails": "Kesalahan impor",
+        "row": "Baris {row}"
+      }
+    },
+    "line": {
+      "label": "Garis"
+    },
+    "spacing": {
+      "label": "Jarak"
+    },
+    "code": {
+      "label": "Kode",
+      "placeholder": "Masukkan kode"
+    },
+    "authCallbackUrl": {
+      "label": "URL Callback Autentikasi",
+      "hint": "Daftarkan URL persis ini sebagai URI pengalihan OAuth di aplikasi penyedia Anda. URL harus menggunakan host ini, bukan domain kustom Anda — penyedia tidak dapat menjangkau domain kustom."
+    },
+    "signInCallbackUrl": {
+      "label": "URL Callback Masuk",
+      "hint": "Tambahkan ini ke URI pengalihan resmi aplikasi Google Anda untuk mengaktifkan proses masuk dengan Google."
+    },
+    "webhookUrl": {
+      "label": "URL Webhook",
+      "hint": "Daftarkan URL Webhook persis ini di aplikasi penyedia Anda. URL harus menggunakan host ini, bukan domain kustom Anda — penyedia tidak dapat menjangkau domain kustom."
+    },
+    "tiktok": {
+      "label": "TikTok",
+      "accessToken": "Token Akses",
+      "openId": "Open ID",
+      "clientId": "ID Klien",
+      "clientSecret": "Rahasia Klien",
+      "displayName": "Nama Tampilan",
+      "connectInstructions": {
+        "step1": "Buat aplikasi TikTok di <link>developers.tiktok.com</link>.",
+        "step2": "Otorisasi akun Anda lalu salin <strong>token akses</strong>, <strong>open ID</strong>, dan <strong>rahasia klien</strong>.",
+        "step3": "Tempel kredensial di bawah ini untuk menghubungkan."
+      }
+    },
+    "drip": {
+      "label": "Drip"
+    },
+    "sendGrid": {
+      "label": "SendGrid"
+    },
+    "currentVersion": "Saat Ini",
+    "consecutiveFailedReply": {
+      "label": "Balasan Gagal Berturut-turut"
+    },
+    "currentStep": {
+      "label": "Langkah Saat Ini"
+    },
+    "fbChatLink": {
+      "label": "Tautan Kotak Masuk Facebook"
+    },
+    "inboxLink": {
+      "label": "Tautan Kotak Masuk"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "Bisnis Instagram Mengikuti Pengguna"
+    },
+    "instagramFollowers": {
+      "label": "Pengikut Instagram"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Pengguna Instagram Mengikuti Bisnis"
+    },
+    "instagramUsername": {
+      "label": "Nama Pengguna Instagram"
+    },
+    "instagramVerified": {
+      "label": "Instagram Terverifikasi"
+    },
+    "lastAd": {
+      "label": "Iklan Terakhir"
+    },
+    "lastAdSourcePlatform": {
+      "label": "Platform Sumber Iklan Terakhir"
+    },
+    "lastAdSourceUrl": {
+      "label": "URL Sumber Iklan Terakhir"
+    },
+    "lastButtonTitle": {
+      "label": "Judul Tombol Terakhir"
+    },
+    "lastCommentId": {
+      "label": "ID Komentar Terakhir"
+    },
+    "lastCommentedPostText": {
+      "label": "Teks Postingan Terakhir yang Dikomentari"
+    },
+    "lastCtwa": {
+      "label": "CTWA Terakhir"
+    },
+    "lastFbComment": {
+      "label": "Komentar FB Terakhir"
+    },
+    "lastInputFailure": {
+      "label": "Kegagalan Input Terakhir"
+    },
+    "lastInteraction": {
+      "label": "Interaksi Terakhir"
+    },
+    "lastLatitude": {
+      "label": "Garis Lintang Terakhir"
+    },
+    "lastLongitude": {
+      "label": "Garis Bujur Terakhir"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Pesan Keluar Terakhir Pada"
+    },
+    "lastPostId": {
+      "label": "ID Postingan Terakhir"
+    },
+    "lastSeen": {
+      "label": "Terakhir Dilihat"
+    },
+    "lastStep": {
+      "label": "Langkah Terakhir"
+    },
+    "me": {
+      "label": "Tautan Data Saya"
+    },
+    "phone": {
+      "label": "Telepon"
+    },
+    "phoneAndEmail": {
+      "label": "Telepon dan email"
+    },
+    "timezoneName": {
+      "label": "Nama Zona Waktu"
+    },
+    "totalNewTagged": {
+      "label": "Total Tag Baru"
+    },
+    "totalTagged": {
+      "label": "Total Tag"
+    },
+    "userChannel": {
+      "label": "Channel Pengguna"
+    },
+    "userExternalId": {
+      "label": "ID Eksternal Pengguna"
+    },
+    "userHash": {
+      "label": "Hash Pengguna"
+    },
+    "userSource": {
+      "label": "Sumber Pengguna"
+    },
+    "webchatParentUrl": {
+      "label": "URL Induk Webchat"
+    },
+    "make": {
+      "inviteUrl": "Tautan Undangan",
+      "inviteUrlHint": "Tautan undangan untuk aplikasi kustom Make Anda yang telah dipublikasikan (misalnya https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Peristiwa",
+      "placeholder": "Ketik nama peristiwa lalu tekan Enter",
+      "description": "Tambahkan satu atau beberapa nama peristiwa. Saat Make memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
+    }
+  },
+  "flows": {
+    "title": "Alur",
+    "quickReplies": {
+      "limitReached": "Batas balasan cepat tercapai ({max})."
+    },
+    "buttons": {
+      "limitReached": "Batas tombol tercapai ({max})."
+    },
+    "aiGenerateText": {
+      "label": "{name}: Buat Teks"
+    },
+    "aiGenerateImage": {
+      "label": "{name}: Buat Gambar"
+    },
+    "aiEditImage": {
+      "label": "{name}: Edit Gambar"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}: Analisis Gambar"
+    },
+    "aiExtractData": {
+      "label": "{name}: Ekstrak Data"
+    },
+    "openaiCompatible": {
+      "empty": "Hubungkan penyedia yang kompatibel dengan OpenAI di pengaturan integrasi sebelum menggunakan langkah ini.",
+      "integration": "Penyedia yang kompatibel dengan OpenAI",
+      "none": "Tidak ada"
+    },
+    "actions": {
+      "addContactNotes": "Tambah Catatan Kontak",
+      "addContactTag": "Tambah Tag Kontak",
+      "aiDeleteMessageHistory": "Hapus Riwayat Pesan",
+      "aiExtractData": "AI Ekstrak Data",
+      "aiAnalyzeImage": "AI Analisis Gambar",
+      "aiSpeechToText": "AI Ucapan ke Teks",
+      "aiGenerateImage": "AI Buat Gambar",
+      "aiGenerateTextAgent": "Agen AI Pembuat Teks",
+      "aiTextToSpeech": "AI Teks ke Ucapan",
+      "archiveConversation": "Arsipkan Percakapan",
+      "assignConversation": "Tetapkan Percakapan",
+      "autoAssignConversation": "Tetapkan Percakapan Otomatis",
+      "blockContact": "Blokir Kontak",
+      "broadcastActions": "Tindakan Siaran",
+      "callApi": "Permintaan API Eksternal",
+      "make": "Make",
+      "triggers": "Pemicu",
+      "questionnaires": "Kuesioner",
+      "setUpCoupon": "Siapkan Kupon",
+      "markCouponUsed": "Tandai Kupon Telah Digunakan",
+      "chooseChannel": "Pilih Channel",
+      "clearCustomField": "Kosongkan Kolom Kustom",
+      "condition": "Kondisi",
+      "contactActions": "Tindakan Kontak",
+      "countCharacters": "Hitung Karakter",
+      "deleteContact": "Hapus Kontak",
+      "emailActions": "Tindakan Email",
+      "flowActions": "Tindakan Alur",
+      "followConversation": "Ikuti Percakapan",
+      "formatDate": "Format Tanggal",
+      "generateCode": "Buat Kode",
+      "getDataFromJson": "Ambil Data dari JSON",
+      "inboxActions": "Tindakan Kotak Masuk",
+      "markEmailVerified": "Tandai Email Terverifikasi",
+      "activeCampaignSyncContact": "Tambah Kontak ke ActiveCampaign",
+      "facebookCustomAudience": "Pemirsa Kustom Facebook",
+      "mailchimpAddMember": "Tambah Kontak ke MailChimp",
+      "mailerLiteAddSubscriber": "Tambah Kontak ke MailerLite",
+      "klaviyoSyncProfile": "Tambah Kontak ke Klaviyo",
+      "moosendCreateContact": "Tambah Kontak ke Moosend",
+      "dripSubscribeSubscriber": "Tambah Kontak ke Drip",
+      "getResponseAddContact": "Tambah Kontak ke GetResponse",
+      "sendGridAddContact": "Tambah Kontak ke SendGrid",
+      "messenger": "Messenger",
+      "openWebsite": "Buka Situs Web",
+      "optInEmail": "Ikut Serta Email",
+      "optOutEmail": "Berhenti Ikut Serta Email",
+      "performAction": "Lakukan Tindakan",
+      "removeContactTag": "Hapus Tag Kontak",
+      "setMessengerUserPersistentMenu": "Atur Menu Persisten Pengguna",
+      "enableMessengerComposer": "Aktifkan Penulis Pesan Messenger",
+      "disableMessengerComposer": "Nonaktifkan Penulis Pesan Messenger",
+      "setMessengerPersona": "Atur Persona",
+      "updateMessengerContactData": "Perbarui Data Kontak",
+      "sendAudio": "Kirim Audio",
+      "sendCard": "Kirim Kartu",
+      "sendExternalFlow": "Mulai Alur Eksternal",
+      "sendExternalNode": "Mulai Node Eksternal",
+      "sendFile": "Kirim File",
+      "sendGif": "Kirim GIF",
+      "sendImage": "Kirim Gambar",
+      "sendMessage": "Kirim Pesan",
+      "sendNode": "Mulai Node Lain",
+      "sendText": "Kirim Teks",
+      "sendVideo": "Kirim Video",
+      "sendTemplateMessage": "Pesan Templat",
+      "whatsappOptionList": "Daftar Opsi",
+      "noTemplatesAvailable": "Tidak ada templat yang tersedia",
+      "noFlowsAvailable": "Tidak ada alur yang tersedia",
+      "setCustomField": "Atur Kolom Kustom",
+      "startAnotherNode": "Mulai Node Lain",
+      "startExternalFlow": "Mulai Alur Eksternal",
+      "startExternalNode": "Mulai Node Eksternal",
+      "startFlow": "Mulai Alur",
+      "subscribeBroadcast": "Berlangganan Siaran",
+      "tools": "Alat",
+      "transferConversationToBot": "Alihkan Percakapan ke Bot",
+      "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
+      "unarchiveConversation": "Keluarkan Percakapan dari Arsip",
+      "unassignConversation": "Batalkan Penetapan Percakapan",
+      "unfollowConversation": "Berhenti Mengikuti Percakapan",
+      "unsubscribeBroadcast": "Berhenti Berlangganan Siaran",
+      "getUserData": "Ambil Data Pengguna",
+      "sendCarousel": "Kirim Korsel",
+      "actions": "Tindakan",
+      "findGif": "Cari GIF",
+      "spreadsheetGetRow": "Ambil Baris",
+      "spreadsheetUpdateRow": "Perbarui Baris",
+      "spreadsheetSendData": "Kirim Data",
+      "spreadsheetGetRandomRow": "Ambil Baris Acak",
+      "spreadsheetClearRow": "Kosongkan Baris",
+      "typing": "Mengetik",
+      "sequenceActions": "Tindakan Urutan",
+      "subscribeSequence": "Berlangganan Urutan",
+      "unsubscribeSequence": "Berhenti Berlangganan Urutan",
+      "splitTraffic": "Bagi Trafik",
+      "aiEditImage": "AI Edit Gambar",
+      "whatsappFlow": "Alur WhatsApp"
+    },
+    "splitTraffic": {
+      "balanceHint": "Jumlah total harus sama dengan 100%.",
+      "addVariation": "Variasi Baru"
+    },
+    "condition": {
+      "addCase": "Periksa Kondisi Baru",
+      "caseTitle": "Kasus {index}",
+      "otherwise": "Pengguna tidak cocok dengan kondisi ini"
+    },
+    "whatsappOptionList": {
+      "buttonLabel": "Label Tombol",
+      "optionTitle": "Judul",
+      "optionDescription": "Deskripsi",
+      "addOption": "Tambah Baru",
+      "editButtonTitle": "Edit Tombol",
+      "editOptionTitle": "Edit Opsi"
+    },
+    "whatsappFlow": {
+      "buttonLabel": "Label Tombol",
+      "editDialogTitle": "Edit Alur WhatsApp",
+      "selectFlow": "Alur WhatsApp",
+      "selectFlowPlaceholder": "Pilih alur",
+      "startScreen": "Layar Awal",
+      "selectScreenPlaceholder": "Pilih layar",
+      "fieldMappings": "Simpan Respons ke Kolom Kustom",
+      "paramKey": "Parameter",
+      "customField": "Kolom Kustom",
+      "selectCustomFieldPlaceholder": "Pilih kolom kustom",
+      "addMapping": "Tambah Pemetaan",
+      "addCustomField": "Tambah Baru"
+    },
+    "additionalSteps": "Langkah tambahan",
+    "delayType": {
+      "datetimeCustomField": "Kolom Kustom Tanggal & Waktu",
+      "datetimeCustomFieldValue": "{customField}",
+      "duration": "Durasi",
+      "durationValue": "{duration}",
+      "date": "Tanggal",
+      "specificDate": "Tanggal Tertentu",
+      "specificDateValue": "{date}",
+      "random": "Acak"
+    },
+    "formatTimezone": {
+      "timezone": "Zona Waktu Akun",
+      "contactTimezone": "Zona Waktu Kontak"
+    },
+    "fields": {
+      "selectTemplatePlaceholder": "Pilih templat WhatsApp",
+      "selectMessengerTemplatePlaceholder": "Pilih templat Messenger",
+      "preview": "Pratinjau",
+      "typingSecondsLabel": "Mengetik selama (detik)",
+      "lookupColumnsLabel": "Kolom Pencarian:",
+      "filterModeAnd": "DAN",
+      "filterModeOr": "ATAU"
+    },
+    "operators": {
+      "append": "Tambahkan ke akhir",
+      "prepend": "Tambahkan ke awal",
+      "set": "Atur menjadi"
+    },
+    "wait": {
+      "datetimeTooltip": "Tanggal dan waktu saat alur akan dipicu.",
+      "setInterval": "Atur Interval",
+      "delayTypeLabel": "Ini adalah",
+      "fixed": "Tetap",
+      "randomized": "Diacak",
+      "delay": "penundaan",
+      "durationDetailPrefix": "Tunggu",
+      "dateDetailPrefix": "Tunggu hingga",
+      "customFieldDetailPrefix": "Tunggu hingga",
+      "randomDetailPrefix": "Tunggu antara",
+      "randomDetailAnd": "dan",
+      "intervalDetailPrefix": "Aktif antara",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Durasi",
+      "activeHours": "Jam aktif",
+      "dateTypeLabel": "Jenis tanggal",
+      "datetimeLabel": "Tanggal & Waktu",
+      "customFieldLabel": "Kolom kustom",
+      "offset": "Tambah offset",
+      "offsetLabel": "Offset",
+      "randomRangeLabel": "Rentang acak",
+      "minLabel": "Min",
+      "maxLabel": "Maks",
+      "unitLabel": "Satuan",
+      "specific": "Tertentu",
+      "dynamic": "Dinamis",
+      "selectTimePlaceholder": "Pilih waktu"
+    },
+    "followUp": {
+      "durationLabel": "Durasi",
+      "waitAndContinue": "Tunggu <value>{duration} {unit}</value> lalu lanjutkan",
+      "cancelOnReplyHint": "Tindak lanjut tidak akan dikirim jika kontak membalas sebelum waktunya habis."
+    },
+    "setCustomField": {
+      "temporalHint": "Biarkan kosong untuk menyimpan tanggal/waktu saat ini."
+    }
+  },
+  "folders": {
+    "heading": {
+      "title": "Folder"
+    }
+  },
+  "gemini": {
+    "autoReply": {
+      "description": "Aktifkan balasan otomatis AI untuk merespons pengguna secara alami dengan AI yang didukung oleh data bisnis Anda.",
+      "label": "Balasan Otomatis AI"
+    },
+    "connect": {
+      "description": "Respons pengguna secara alami dengan AI yang didukung oleh data bisnis Anda.",
+      "label": "Google Gemini"
+    },
+    "title": "Google Gemini"
+  },
+  "general": {
+    "title": "Umum"
+  },
+  "facebookAds": {
+    "title": "Iklan Facebook",
+    "setting": {
+      "label": "Iklan Facebook",
+      "description": "Kembangkan bisnis Anda lebih cepat dengan menghubungkan Iklan Facebook ke chatbot Anda. Buat pemirsa kustom dan tambahkan/hapus orang dari pemirsa kustom.",
+      "reconnect": "Hubungkan Kembali"
+    },
+    "fields": {
+      "subscriberShouldBe": "Pelanggan harus",
+      "addedToCustomAudience": "Ditambahkan ke Pemirsa Kustom",
+      "removedFromCustomAudience": "Dihapus dari Pemirsa Kustom",
+      "adAccount": "Akun Iklan",
+      "customAudience": "Pemirsa Kustom",
+      "nothingSelected": "Tidak ada yang dipilih"
+    },
+    "adAccounts": {
+      "loading": "Memuat akun iklan...",
+      "error": "Gagal memuat akun iklan. Periksa koneksi Iklan Facebook Anda."
+    },
+    "customAudiences": {
+      "loading": "Memuat pemirsa kustom...",
+      "error": "Gagal memuat pemirsa kustom. Periksa koneksi Iklan Facebook Anda."
+    },
+    "errors": {
+      "invalidAppSettings": "Pengaturan Aplikasi Facebook tidak valid"
+    }
+  },
+  "googleSheets": {
+    "setting": {
+      "label": "Google Sheets",
+      "description": "Konfigurasi integrasi Google Sheets"
+    },
+    "header": "Header Kolom",
+    "title": "Google Sheets"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke ActiveCampaign."
+    },
+    "dialog": {
+      "description": "Masukkan URL API dan Kunci API dari pengaturan akun ActiveCampaign Anda."
+    },
+    "fields": {
+      "apiUrl": "URL API",
+      "apiUrlPlaceholder": "https://youraccount.api-us1.com",
+      "apiKey": "Kunci API",
+      "operation": "Operasi",
+      "emailField": "Kolom Email",
+      "emailTooltip": "Kolom kontak yang berisi email untuk mengidentifikasi kontak ActiveCampaign.",
+      "phoneField": "Kolom telepon",
+      "phone": "Telepon",
+      "list": "Daftar",
+      "lists": "Daftar",
+      "tags": "Tag",
+      "automation": "Otomatisasi",
+      "customFields": "Kolom Kustom di ActiveCampaign",
+      "optional": "Opsional",
+      "nothingSelected": "Tidak ada yang dipilih",
+      "emptyField": "---",
+      "addCustomField": "Tambah kolom kustom"
+    },
+    "operations": {
+      "createOrUpdateContact": "Buat atau Perbarui Kontak",
+      "addContactToAutomation": "Tambahkan Kontak ke Otomatisasi"
+    },
+    "lists": {
+      "loading": "Memuat daftar ActiveCampaign...",
+      "error": "Gagal memuat daftar ActiveCampaign. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada daftar ActiveCampaign yang ditemukan."
+    },
+    "automations": {
+      "loading": "Memuat otomatisasi ActiveCampaign...",
+      "error": "Gagal memuat otomatisasi ActiveCampaign. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada otomatisasi ActiveCampaign yang ditemukan."
+    },
+    "tags": {
+      "loading": "Memuat tag ActiveCampaign...",
+      "error": "Gagal memuat tag ActiveCampaign. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada tag ActiveCampaign yang ditemukan."
+    },
+    "customFields": {
+      "loading": "Memuat kolom kustom ActiveCampaign...",
+      "error": "Gagal memuat kolom kustom ActiveCampaign. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada kolom kustom ActiveCampaign yang ditemukan."
+    },
+    "errors": {
+      "invalidCredentials": "URL API atau Kunci API ActiveCampaign tidak valid. Periksa kredensial Anda lalu coba lagi."
+    }
+  },
+  "getResponse": {
+    "title": "GetResponse",
+    "setting": {
+      "label": "GetResponse",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke GetResponse."
+    },
+    "fields": {
+      "apiKey": "Kunci API",
+      "list": "Daftar",
+      "listPlaceholder": "Pilih daftar",
+      "email": "Kolom Email",
+      "emailPlaceholder": "Pilih kolom email",
+      "emailTooltip": "Kolom kontak yang berisi email untuk mengidentifikasi kontak di GetResponse.",
+      "tags": "Tag",
+      "tagsPlaceholder": "Pilih tag",
+      "dayOfCycle": "Hari dalam Siklus Penjawab Otomatis",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "Pindahkan kontak ke hari tertentu dalam siklus penjawab otomatis Anda. Masukkan 0 untuk memulai pada hari ke-0.",
+      "optional": "Opsional"
+    },
+    "campaigns": {
+      "loading": "Memuat daftar GetResponse...",
+      "error": "Gagal memuat daftar GetResponse. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada daftar GetResponse yang ditemukan.",
+      "limited": "Hanya halaman pertama daftar GetResponse yang ditampilkan."
+    },
+    "tags": {
+      "loading": "Memuat tag GetResponse...",
+      "error": "Gagal memuat tag GetResponse. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada tag GetResponse yang ditemukan.",
+      "limited": "Hanya halaman pertama tag GetResponse yang ditampilkan."
+    },
+    "errors": {
+      "invalidApiKey": "Kunci API tidak valid. Periksa Kunci API GetResponse Anda lalu coba lagi."
+    }
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke MailChimp."
+    },
+    "fields": {
+      "audience": "Pemirsa",
+      "email": "Kolom email",
+      "emailTooltip": "Kolom Kustom yang berisi email pengguna untuk mengidentifikasi kontak MailChimp.",
+      "doubleOptIn": "Keikutsertaan Ganda",
+      "doubleOptInTooltip": "Jika ya, email konfirmasi akan dikirim ke alamat email sebelum kontak ditambahkan ke daftar Anda.",
+      "on": "Aktif",
+      "off": "Nonaktif",
+      "optional": "Opsional",
+      "tags": "Tag",
+      "mergeFields": "Kolom Kustom di MailChimp"
+    }
+  },
+  "mailerLite": {
+    "title": "MailerLite",
+    "setting": {
+      "label": "MailerLite",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke MailerLite."
+    },
+    "fields": {
+      "apiToken": "Token API",
+      "group": "Grup",
+      "groupPlaceholder": "Tidak ada yang dipilih",
+      "email": "Kolom Email",
+      "status": "Jenis",
+      "customFields": "Kolom Kustom di MailerLite (Opsional)",
+      "emptyField": "---",
+      "providerField": "Pilih kolom MailerLite",
+      "addMapping": "Tambah Baru"
+    },
+    "status": {
+      "active": "Berlangganan",
+      "unconfirmed": "Belum Dikonfirmasi"
+    },
+    "errors": {
+      "invalidApiKey": "Token API tidak valid. Periksa Token API MailerLite Anda lalu coba lagi."
+    }
+  },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "Integrasi ini memungkinkan Anda menyinkronkan profil pelanggan dari bot ke Klaviyo."
+    },
+    "fields": {
+      "apiKey": "Kunci API",
+      "list": "Daftar Klaviyo",
+      "listPlaceholder": "Pilih daftar Klaviyo",
+      "email": "Kolom Email",
+      "titleField": "Kolom Gelar",
+      "titlePlaceholder": "Pilih kolom",
+      "orgField": "Kolom Organisasi",
+      "orgPlaceholder": "Pilih kolom",
+      "customProperties": "Kolom Kustom di Klaviyo",
+      "emptyField": "Pilih kolom kontak",
+      "propertyKey": "Kunci properti Klaviyo",
+      "addMapping": "Tambah pemetaan"
+    },
+    "lists": {
+      "error": "Tidak dapat memuat daftar Klaviyo. Pastikan integrasi telah terhubung."
+    },
+    "errors": {
+      "invalidApiKey": "Kunci API tidak valid. Periksa Kunci API Klaviyo Anda lalu coba lagi."
+    }
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke Moosend."
+    },
+    "fields": {
+      "apiKey": "Kunci API",
+      "list": "Daftar Moosend",
+      "listPlaceholder": "Pilih daftar Moosend",
+      "email": "Kolom Email"
+    },
+    "lists": {
+      "loading": "Memuat milis Moosend...",
+      "empty": "Tidak ada milis Moosend yang ditemukan.",
+      "error": "Tidak dapat memuat milis Moosend. Pastikan integrasi telah terhubung."
+    },
+    "errors": {
+      "invalidApiKey": "Kunci API tidak valid. Periksa Kunci API Moosend Anda lalu coba lagi.",
+      "userNotEnabled": "Akun Moosend ini tidak diaktifkan untuk akses API.",
+      "connectFailed": "Gagal menghubungkan Moosend. Coba lagi nanti."
+    }
+  },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke Drip."
+    },
+    "fields": {
+      "apiToken": "Token API",
+      "account": "Akun",
+      "emailField": "Kolom Email",
+      "emailTooltip": "Kolom kontak yang berisi email untuk mengidentifikasi pelanggan Drip.",
+      "phone": "Telepon",
+      "tags": "Tag",
+      "customFields": "Kolom Kustom di Drip",
+      "optional": "Opsional",
+      "nothingSelected": "Tidak ada yang dipilih",
+      "addCustomField": "Tambah Kolom Kustom"
+    },
+    "accounts": {
+      "loading": "Memuat akun Drip...",
+      "error": "Gagal memuat akun Drip. Pastikan integrasi telah terhubung."
+    },
+    "tags": {
+      "loading": "Memuat tag Drip...",
+      "error": "Gagal memuat tag Drip. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada tag Drip yang ditemukan."
+    },
+    "customFields": {
+      "loading": "Memuat kolom kustom Drip...",
+      "error": "Gagal memuat kolom kustom Drip. Pastikan integrasi telah terhubung.",
+      "empty": "Tidak ada kolom kustom Drip yang ditemukan."
+    },
+    "errors": {
+      "noAccount": "Token API ini tidak memiliki akses ke akun Drip."
+    }
+  },
+  "sendGrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "Integrasi ini memungkinkan Anda menyimpan kontak pelanggan dari bot ke SendGrid."
+    },
+    "scopeHelp": "Buat kunci API SendGrid dengan akses baca dan tulis Marketing.",
+    "acceptedLimitation": "SendGrid menerima pembaruan kontak untuk diproses secara asinkron. Pembaruan yang diterima masih dapat gagal kemudian.",
+    "fields": {
+      "apiKey": "Kunci API",
+      "list": "Daftar",
+      "emailField": "Kolom email",
+      "phoneField": "Kolom telepon",
+      "customFields": "Kolom Kustom di SendGrid",
+      "optional": "Opsional",
+      "nothingSelected": "Tidak ada yang dipilih",
+      "addCustomField": "Tambah kolom kustom"
+    },
+    "lists": {
+      "loading": "Memuat daftar SendGrid...",
+      "error": "Gagal memuat daftar SendGrid. Pastikan integrasi telah terhubung."
+    },
+    "customFields": {
+      "loading": "Memuat kolom kustom SendGrid...",
+      "error": "Gagal memuat kolom kustom SendGrid. Pastikan integrasi telah terhubung."
+    },
+    "errors": {
+      "invalidApiKey": "Kunci API tidak valid. Periksa Kunci API SendGrid Anda lalu coba lagi.",
+      "missingScopes": "Kunci API ini harus memiliki akses baca Marketing. Pastikan kunci API SendGrid Anda menyertakan izin Marketing."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Hubungkan akun Make.com Anda untuk mengirim peristiwa dari alur dan menerima data kontak melalui skenario Make. Token Akses Developer ruang kerja Anda disalin ke papan klip saat Anda mengeklik Hubungkan — tempelkan saat membuat koneksi di Make.",
+      "notConfigured": "Tautan undangan Make tidak ditemukan. Tambahkan tautan di Pengaturan Platform.",
+      "noWorkspaceToken": "Token Akses Developer tidak ditemukan untuk ruang kerja ini. Buat token di bagian token Ruang Kerja di atas, lalu klik Hubungkan lagi."
+    }
+  },
+  "integrations": {
+    "title": "Integrasi"
+  },
+  "platformSettings": {
+    "title": "Pengaturan Platform",
+    "errors": {
+      "giphyApiKeyRequired": "Kunci API diperlukan untuk mengonfigurasi GIPHY.",
+      "giphyApiKeyInvalid": "Kunci API GIPHY tidak valid"
+    }
+  },
+  "home": {
+    "welcomeBack": "Selamat datang kembali, {name}",
+    "subtitle": "Pilih ruang kerja untuk melanjutkan, atau buat yang baru.",
+    "noWorkspaces": "Anda belum memiliki ruang kerja.",
+    "owner": "Pemilik"
+  },
+  "channels": {
+    "title": "Saluran",
+    "duplicated": {
+      "generic": "Akun ini sudah terhubung ke ruang kerja lain.",
+      "instagram": "Akun Instagram ini sudah terhubung ke ruang kerja lain.",
+      "messenger": "Halaman Facebook ini sudah terhubung ke ruang kerja lain.",
+      "telegram": "Bot Telegram ini sudah terhubung ke ruang kerja lain.",
+      "tiktok": "Akun TikTok ini sudah terhubung ke ruang kerja lain.",
+      "whatsapp": "Nomor WhatsApp ini sudah terhubung ke ruang kerja lain.",
+      "zalo": "Zalo OA ini sudah terhubung ke ruang kerja lain."
+    },
+    "reconnect": {
+      "success": "Saluran berhasil dihubungkan kembali.",
+      "errors": {
+        "notFound": "Saluran yang akan dihubungkan kembali tidak ditemukan.",
+        "pageNotFound": "Akun Facebook yang diotorisasi tidak memiliki akses ke Halaman ini. Masuk dengan akun yang benar dan berikan semua izin yang diminta.",
+        "accountNotFound": "Akun yang diotorisasi tidak cocok dengan akun yang terhubung. Masuk dengan akun yang benar.",
+        "cancelled": "Penyambungan ulang dibatalkan. Coba lagi dan berikan izin yang diminta.",
+        "failed": "Gagal menghubungkan kembali. Silakan coba lagi."
+      }
+    }
+  },
+  "workspace": {
+    "schedule": {
+      "title": "Atur jam aktif",
+      "description": "Pilih waktu mulai dan selesai. Jika waktu selesai lebih awal dari waktu mulai, jadwal akan berjalan melewati tengah malam.",
+      "startTime": "Waktu mulai",
+      "endTime": "Waktu selesai",
+      "alwaysRun": "Selalu berjalan",
+      "save": "Simpan",
+      "invalidTimeRange": "Waktu mulai dan selesai harus berbeda",
+      "timeRequired": "Pilih waktu mulai dan selesai",
+      "activated": "Ruang kerja diaktifkan",
+      "deactivated": "Ruang kerja dinonaktifkan",
+      "activeHours": "Aktif dari {startTime} hingga {endTime}",
+      "permissionRequired": "Hanya super admin yang dapat mengubah jam aktif ruang kerja"
+    },
+    "deletion": {
+      "title": "Hapus ruang kerja",
+      "description": "Hapus ruang kerja ini secara permanen. Semua kontak, pengaturan, dan data akan dihapus 24 jam setelah Anda mengonfirmasi.",
+      "schedule": "Hapus ruang kerja",
+      "confirmTitle": "Hapus ruang kerja ini?",
+      "confirmDescription": "Semua kontak, pengaturan, dan data akan dihapus secara permanen 24 jam setelah Anda mengonfirmasi. Anda dapat membatalkan penghapusan kapan saja sebelum itu.",
+      "pending": "Ruang kerja ini akan dihapus {countdown} ({date}). Anda dapat membatalkannya kapan saja sebelum itu.",
+      "pendingFallback": "segera",
+      "undone": "Penghapusan ruang kerja telah dibatalkan",
+      "bannerTitle": "Penghapusan ruang kerja dijadwalkan",
+      "bannerDescription": "Ruang kerja ini dijadwalkan untuk dihapus. Batalkan penghapusan di bawah agar dapat terus menggunakannya.",
+      "pendingBlockedToast": "Ruang kerja ini dijadwalkan untuk dihapus. Hubungi admin ruang kerja untuk memulihkan akses.",
+      "navDisabledTooltip": "Tidak tersedia saat penghapusan ruang kerja dijadwalkan",
+      "badge": "Penghapusan dijadwalkan"
+    }
+  },
+  "workspaces": {
+    "list": {
+      "title": "Daftar Ruang Kerja"
+    }
+  },
+  "workspaceToken": {
+    "title": "Token ruang kerja"
+  },
+  "dialog": {
+    "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami."
+  },
+  "messages": {
+    "moveFeature": "Pindahkan {feature}",
+    "poweredBy": "Didukung oleh {name}",
+    "noGiphyApiKey": "Kunci API GIPHY tidak ditemukan. Tambahkan di Pengaturan Platform.",
+    "connectedSuccess": "{feature} berhasil dihubungkan",
+    "connectFailed": "Gagal menghubungkan {feature}",
+    "connectSuccess": "Berhasil menghubungkan {feature}",
+    "refreshTokenSuccessfully": "Token {feature} berhasil diperbarui",
+    "success": "Berhasil",
+    "failed": "Gagal",
+    "copiedToClipboard": "Disalin ke papan klip",
+    "messengerAdsJsonDescription": "Anda hanya perlu membuat kode JSON baru jika mengubah Langkah awal. Perubahan pada langkah lain tidak akan memengaruhi kode JSON ini.",
+    "messengerAdsNotPublished": "Publikasikan konten alur ini lalu coba lagi.",
+    "messengerAdsNoStartNode": "Alur ini tidak memiliki langkah awal yang valid. Buka alur, tetapkan langkah Kirim Pesan sebagai awal, lalu publikasikan dan coba lagi.",
+    "messengerAdsError": "Terjadi kesalahan saat membuat JSON. Silakan coba lagi.",
+    "messengerAdsInvalidStepType": "Langkah awal dapat berisi Teks, Gambar, Kartu, Galeri, Video, video Facebook, Audio, dan File.",
+    "messengerAdsInvalidVariable": "Anda tidak dapat menggunakan kolom kustom pada 'Langkah Awal' karena batasan Facebook. Hanya first_name, last_name, dan full_name yang dapat ditambahkan ke pesan.",
+    "copyFailed": "Gagal menyalin ke papan klip",
+    "createdFailed": "Gagal membuat {feature}",
+    "deletedSuccess": "{feature} berhasil dihapus",
+    "deleteFileComingSoon": "Fitur penghapusan file segera hadir",
+    "disconnectFeature": "Putuskan {feature}",
+    "disconnectFeatureDescription": "Apakah Anda yakin ingin memutuskan {feature}?",
+    "disconnectSuccess": "{feature} berhasil diputuskan",
+    "reply": "Balas",
+    "viewMessage": "Lihat pesan",
+    "changeLikeState": "Ubah status suka",
+    "changeHideState": "Ubah status sembunyikan",
+    "commentHidden": "Komentar ini disembunyikan",
+    "messageDeleted": "Pesan telah dihapus.",
+    "sentAttachments": "Mengirim {count, plural, one {1 lampiran} other {# lampiran}}",
+    "deleteComment": "Hapus komentar",
+    "deleteCommentConfirmation": "Apakah Anda yakin ingin menghapus komentar ini? Balasannya juga akan dihapus, baik dari kotak masuk Anda maupun dari Facebook. Tindakan ini tidak dapat dibatalkan.",
+    "deleteMessageSuccess": "Pesan dihapus",
+    "facebookComment": "Komentar Facebook",
+    "editComment": "Edit komentar",
+    "editMessageSuccess": "Pesan diperbarui",
+    "editMessagePlaceholder": "Edit pesan Anda...",
+    "saveEdit": "Simpan",
+    "cancelEdit": "Batal",
+    "failedToCopy": "Gagal menyalin",
+    "failedToPreviewImage": "Gagal melihat pratinjau gambar",
+    "loadingData": "Memuat data...",
+    "errorLoadingData": "Gagal memuat data. Silakan coba lagi.",
+    "leaveEmptyToKeepSecret": "Biarkan kosong untuk mempertahankan rahasia saat ini",
+    "needToAddSettings": "Anda perlu menambahkan pengaturan untuk menggunakan integrasi ini",
+    "noDataAvailable": "Tidak ada data yang tersedia",
+    "noResults": "Tidak ada hasil.",
+    "savedSuccessfully": "Berhasil disimpan",
+    "syncedSuccessfully": "Berhasil disinkronkan",
+    "nameAlreadyExists": "Nama {feature} sudah ada",
+    "unknownError": "Kesalahan tidak diketahui",
+    "updatedSuccess": "{feature} berhasil diperbarui",
+    "updateFileComingSoon": "Fitur pembaruan file segera hadir",
+    "videoError": "Kesalahan video",
+    "createdSuccess": "{feature} berhasil dibuat",
+    "createFeature": "Buat {feature}",
+    "noItemsFound": "Tidak ada item yang ditemukan",
+    "editFeature": "Edit {feature}",
+    "duplicateFeature": "Duplikatkan {feature}",
+    "duplicatedSuccess": "{feature} berhasil diduplikat",
+    "duplicateConfirmation": "Tindakan ini akan membuat salinan {feature} Anda.",
+    "deleteFeature": "Hapus {feature}",
+    "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami.",
+    "addFeature": "Tambah {feature}",
+    "signOutConfirmation": "Apakah Anda yakin ingin keluar?",
+    "copyInvitationUrlSuccess": "Salin tautan di bawah dan kirimkan kepada orang yang ingin Anda tambahkan sebagai admin.",
+    "noAIIntegrationFound": "Integrasi AI tidak ditemukan. Hubungkan integrasi AI untuk menggunakan agen AI.",
+    "resendFeature": "Kirim ulang {feature}",
+    "resendFeatureDescription": "Kirim ulang {feature} kepada kontak yang belum menerimanya.",
+    "resendSuccess": "Berhasil dikirim ulang",
+    "changeDefault": "Ubah Default",
+    "changeDefaultDescription": "Apakah Anda yakin ingin mengubah agen AI default?",
+    "unsetDefaultDescription": "Apakah Anda yakin ingin menghapus agen AI default?",
+    "botIsActive": "Bot aktif",
+    "viewPost": "Lihat postingan",
+    "selectConversationTitle": "Pilih percakapan",
+    "selectConversationDescription": "Pilih percakapan dari daftar di sebelah kiri untuk melihat pesan dan mulai mengobrol.",
+    "selectConversationContactTitle": "Tidak ada kontak yang dipilih",
+    "selectConversationContactDescription": "Pilih percakapan untuk melihat detail kontak dan informasi kotak masuk di sini.",
+    "archiveFeature": "Arsipkan {feature}",
+    "archiveFeatureDescription": "Apakah Anda yakin ingin mengarsipkan {feature}?",
+    "disableFeature": "Nonaktifkan {feature}",
+    "disableFeatureDescription": "Apakah Anda yakin ingin menonaktifkan {feature}?",
+    "enableFeature": "Aktifkan {feature}",
+    "enableFeatureDescription": "Apakah Anda yakin ingin mengaktifkan {feature}?",
+    "exportedSuccess": "{feature} berhasil diekspor",
+    "createSuccess": "{feature} berhasil dibuat",
+    "deleteFailed": "Gagal menghapus {feature}",
+    "deleteSuccess": "{feature} berhasil dihapus",
+    "error": "Kesalahan",
+    "moveFolderDescription": "Pindahkan {feature} ke folder",
+    "noData": "Tidak ada data",
+    "featureNotFound": "{feature} tidak ditemukan",
+    "enableSuccess": "{feature} berhasil diaktifkan",
+    "userInactive": "Pengguna tidak aktif selama lebih dari 7 hari",
+    "messagingWindowClosed": "Pesan tidak dapat dikirim di luar jangka waktu yang diizinkan",
+    "sendHumanAgentTag": "Kirim satu pesan dengan tag HUMAN_AGENT",
+    "warning": "Peringatan!",
+    "humanAgentWarningDescription": "Anda hanya boleh menanggapi pesan pengguna dalam waktu 7 hari jika masalahnya tidak dapat diselesaikan secara wajar dalam 24 jam. Contohnya termasuk akhir pekan, hari libur, atau kasus yang memerlukan lebih dari satu hari untuk diselesaikan. Jangan gunakan opsi ini untuk alasan lain karena dapat membahayakan Halaman Facebook atau akun Instagram Anda. Jika tidak yakin, jangan lanjutkan.",
+    "humanAgentWindowExpired": "Jangka waktu perpesanan telah berakhir. Kontak harus mengirim pesan terlebih dahulu untuk membuka kembali percakapan.",
+    "restoreVersionSuccess": "Alur dipulihkan ke versi yang dipilih",
+    "revertToPublishedSuccess": "Draf dikembalikan ke versi yang dipublikasikan",
+    "revertToPublishedConfirmTitle": "Kembalikan ke versi yang dipublikasikan?",
+    "revertToPublishedConfirmDescription": "Tindakan ini akan membuang perubahan draf saat ini dan memulihkan konten alur yang dipublikasikan.",
+    "noVersionsFound": "Tidak ada versi yang dipublikasikan",
+    "publishVersionSuccess": "Versi baru telah dipublikasikan",
+    "flowConfigIncomplete": "Beberapa konfigurasi belum lengkap",
+    "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",
+    "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
+    "redoHistoryCleared": "Riwayat pengulangan dihapus",
+    "historyDepth": "({count})"
+  },
+  "instagram": {
+    "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
+    "selectInstagramAccount": "Pilih Akun Instagram",
+    "iceBreakers": "Pembuka Percakapan",
+    "iceBreakersDescription": "Pembuka percakapan membantu pengguna memulai percakapan dengan bot Anda melalui daftar pertanyaan yang sering diajukan.",
+    "reconnect": "Hubungkan kembali",
+    "title": "Instagram"
+  },
+  "coexist": {
+    "title": "Sinkronkan kontak dan riwayat obrolan yang sudah ada?",
+    "descriptionWhatsapp": "Jika diaktifkan, kontak dan riwayat obrolan hingga 6 bulan akan diimpor dari nomor WhatsApp ini.",
+    "descriptionMessenger": "Jika diaktifkan, kontak Messenger dan riwayat percakapan hingga 3 bulan akan diimpor dari Halaman ini.",
+    "enable": "Aktifkan sinkronisasi",
+    "decline": "Jangan sinkronkan",
+    "billingNote": "Halaman besar mungkin memerlukan beberapa jam untuk selesai.",
+    "toggleLabel": "Sinkronkan kontak dan riwayat obrolan yang sudah ada",
+    "toggleHelper": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali.",
+    "toggleHelperMessenger": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali halaman Messenger.",
+    "toggleHelperWhatsapp": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali nomor WhatsApp.",
+    "success": {
+      "enabled": "Sinkronisasi dimulai. Kontak dan pesan historis akan segera muncul.",
+      "disabled": "Sinkronisasi dinonaktifkan."
+    },
+    "errors": {
+      "alreadyTriggered": "Sinkronisasi sudah dipicu untuk nomor ini. Tunggu hingga Meta mengirimkan data historis.",
+      "windowExpired": "Jangka waktu sinkronisasi 24 jam telah berakhir. Putuskan lalu hubungkan kembali nomor ini untuk menyinkronkan lagi.",
+      "notEligible": "Nomor ini tidak memenuhi syarat untuk sinkronisasi historis.",
+      "triggerFailed": "Sinkronisasi tidak dapat dimulai. Silakan coba lagi nanti.",
+      "unknown": "Sinkronisasi tidak dapat diaktifkan. Silakan coba lagi nanti."
+    }
+  },
+  "messenger": {
+    "description": "Integrasi ini memungkinkan Anda membuat bot Messenger.",
+    "welcomeMessage": "Pesan Selamat Datang",
+    "welcomeMessageDescription": "Ini adalah pesan pertama yang akan diterima pengguna dari Bot Anda. Pesan ini dikirim saat pengguna pertama kali berinteraksi dengan Bot dengan mengeklik tombol 'Mulai'.",
+    "conversationStarters": "Pemulai Percakapan",
+    "conversationStartersDescription": "Pemulai Percakapan membantu pengguna memulai percakapan dengan bisnis Anda melalui daftar pertanyaan yang sering diajukan.",
+    "persistentMenu": "Menu Persisten",
+    "persistentMenuDescription": "Menu dapat dikonfigurasi agar pengguna lebih mudah menemukan dan mengakses fitur Bot Anda. Menu selalu tersedia bagi pengguna dan sebaiknya memuat tindakan tingkat atas yang dapat digunakan kapan saja. Menu membantu mengomunikasikan kemampuan dasar bot kepada pengguna baru maupun pengguna yang kembali.",
+    "dynamicPersistentMenu": "Menu Persisten Dinamis",
+    "dynamicPersistentMenuDescription": "Memungkinkan Anda mengubah menu persisten secara dinamis kapan saja pada tingkat pengguna.",
+    "botProfile": "Profil Bot",
+    "botProfileDescription": "Pengaturan ini memungkinkan Anda menetapkan nama dan gambar yang berbeda untuk bot",
+    "personas": "Persona",
+    "personasDescription": "Pengaturan ini memungkinkan Anda menetapkan nama dan gambar yang berbeda untuk bot",
+    "defaultPersona": "Persona Default",
+    "reconnect": "Hubungkan kembali",
+    "reconnectDescription": "Selalu hubungkan kembali bot jika bot Messenger Anda tidak merespons atau jika Anda melihat kesalahan izin di log kesalahan.",
+    "selectFacebookPage": "Pilih Halaman Facebook",
+    "selectPage": {
+      "noPagesTitle": "Tidak ada Halaman Facebook yang ditemukan",
+      "noPagesDescription": "Halaman di dalam Business Manager memerlukan akses Business Manager saat dihubungkan. Hubungkan kembali Messenger dan berikan semua izin yang diminta.",
+      "bmLookupFailedTitle": "Halaman Business Manager mungkin tidak ditampilkan",
+      "bmLookupFailedDescription": "Hubungkan kembali Messenger dan berikan akses Business Manager agar halaman yang dikelola melalui Business Manager dapat ditampilkan.",
+      "alreadyConnectedNote": "Halaman ini sudah terhubung",
+      "notAdminNote": "Izin admin penuh pada halaman diperlukan untuk menghubungkannya",
+      "tryAgain": "Coba hubungkan kembali"
+    },
+    "title": "Facebook Messenger",
+    "tabs": {
+      "generalSettings": "Pengaturan Umum",
+      "messageTemplates": "Templat Pesan"
+    },
+    "messageTemplate": {
+      "params": {
+        "postbackPayload": "Payload Tombol",
+        "postbackPayloadPlaceholder": "Masukkan payload (opsional)"
+      },
+      "create": {
+        "trigger": "Buat templat baru",
+        "header": "Header",
+        "headerType": "Jenis Header",
+        "none": "Tidak Ada",
+        "text": "Teks",
+        "textAndImage": "Teks + Gambar",
+        "image": "Gambar",
+        "imageHint": "PNG, JPG, atau GIF. Gambar diunggah sebelum dikirim.",
+        "noImageSelected": "Tidak ada gambar yang dipilih",
+        "body": "Isi",
+        "buttons": "Tombol",
+        "addButton": "Tambah Tombol",
+        "addVariable": "Tambah Variabel",
+        "buttonText": "Teks Tombol",
+        "buttonType": "Jenis Tombol",
+        "visitWebsite": "Kunjungi Situs Web",
+        "callPhoneNumber": "Hubungi Nomor Telepon",
+        "postback": "Tombol"
+      },
+      "clone": {
+        "title": "Kloning Templat Pesan",
+        "titleWithName": "Kloning Templat Pesan: {name}",
+        "channelsLabel": "Saluran Tujuan",
+        "channelsPlaceholder": "Pilih saluran",
+        "succeededCount": "{count} saluran berhasil dikloning",
+        "failedCount": "{count} saluran gagal dikloning",
+        "partialSuccess": "Berhasil dikloning ke {succeeded} saluran; {failed} saluran gagal",
+        "result": {
+          "title": "Hasil Kloning",
+          "succeededTitle": "Berhasil",
+          "close": "Tutup"
+        }
+      }
+    },
+    "tagSync": {
+      "title": "Sinkronisasi Tag",
+      "description": "Sinkronisasi tag dua arah antara ruang kerja ini dan saluran yang terhubung.",
+      "toggleSuccess": "Pengaturan sinkronisasi tag diperbarui.",
+      "enabledSince": "Diaktifkan sejak {date}",
+      "disabled": "Dinonaktifkan",
+      "labelSync": "Sinkronkan tag",
+      "on": "Aktif",
+      "off": "Nonaktif",
+      "termsRequired": "Admin Halaman harus menyetujui Ketentuan Kontak Halaman Facebook:"
+    }
+  },
+  "omnichannel": {
+    "title": "Omnichannel"
+  },
+  "openai": {
+    "connect": {
+      "description": "Tanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda."
+    },
+    "title": "OpenAI"
+  },
+  "claude": {
+    "autoReply": {
+      "description": "Aktifkan balasan otomatis AI untuk menanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda.",
+      "label": "Balasan Otomatis AI"
+    },
+    "connect": {
+      "description": "Tanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda.",
+      "label": "Claude AI"
+    },
+    "title": "Claude AI"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "Aktifkan balasan otomatis AI untuk menanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda.",
+      "label": "Balasan Otomatis AI"
+    },
+    "connect": {
+      "description": "Tanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda.",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
+  "openrouter": {
+    "autoReply": {
+      "description": "Aktifkan balasan otomatis AI yang didukung OpenRouter.",
+      "label": "Balasan Otomatis AI"
+    },
+    "connect": {
+      "description": "Akses lebih dari 300 model AI melalui satu kunci API.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
+  "openaiCompatible": {
+    "addProvider": "Tambah Penyedia AI",
+    "addProviderModel": "Tambah {name}",
+    "apiKeyKeepExisting": "Biarkan kosong untuk mempertahankan kunci API yang ada.",
+    "autoReply": {
+      "description": "Izinkan penyedia ini digunakan untuk balasan AI otomatis.",
+      "label": "Balasan Otomatis AI"
+    },
+    "connect": {
+      "description": "Hubungkan penyedia yang kompatibel dengan OpenAI untuk model cadangan Agen AI.",
+      "label": "Penyedia yang kompatibel dengan OpenAI"
+    },
+    "empty": "Tidak ada penyedia kompatibel OpenAI yang dikonfigurasi.",
+    "fields": {
+      "baseURL": "URL Dasar",
+      "defaultModel": "Model default",
+      "enabled": "Diaktifkan"
+    },
+    "provider": "Penyedia AI",
+    "title": "Kompatibel dengan OpenAI",
+    "validation": {
+      "invalidBaseURL": "URL Dasar tidak valid atau tidak diizinkan.",
+      "presetAlreadyConnected": "Preset ini sudah terhubung untuk ruang kerja ini."
+    }
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "agents": {
+      "description": "Deskripsi Agen AI",
+      "title": "Agen AI"
+    },
+    "aiTriggers": {
+      "description": "Deskripsi Pemicu AI",
+      "title": "Pemicu AI"
+    },
+    "automatedResponses": {
+      "title": "Kata Kunci"
+    },
+    "openai": {
+      "description": "Deskripsi integrasi OpenAI",
+      "title": "Integrasi OpenAI"
+    },
+    "claude": {
+      "description": "Deskripsi integrasi Claude",
+      "title": "Integrasi Claude"
+    },
+    "deepseek": {
+      "description": "Deskripsi integrasi DeepSeek",
+      "title": "Integrasi DeepSeek"
+    }
+  },
+  "auth": {
+    "orContinueWith": "Atau lanjutkan dengan",
+    "continueWithFacebook": "Lanjutkan dengan Facebook",
+    "dontHaveAnAccount": "Belum memiliki akun?",
+    "alreadyHaveAnAccount": "Sudah memiliki akun?",
+    "signUp": "Daftar",
+    "acceptTermsAndPolicy": "Dengan mengeklik lanjutkan, Anda menyetujui",
+    "and": "dan",
+    "privacyPolicy": "Kebijakan Privasi",
+    "termsOfService": "Ketentuan Layanan",
+    "signInTitle": "Masuk ke {name}",
+    "forgotPasswordTitle": "Lupa kata sandi?",
+    "forgotPasswordDescription": "Jangan khawatir! Kami akan mengirimkan tautan berisi petunjuk untuk mengatur ulang kata sandi Anda.",
+    "checkYourEmail": "Periksa email Anda",
+    "magicLinkSent": "Kami mengirimkan URL verifikasi ke email Anda",
+    "magicLinkSentDescription": "Klik tautan di email Anda untuk melanjutkan.",
+    "didNotReceiveEmail": "Tidak menerima email? Periksa folder spam Anda.",
+    "trySigningInAgain": "Anda juga dapat mencoba masuk kembali dengan email lain.",
+    "signIn": "Masuk",
+    "signUpSuccess": "Berhasil mendaftar. Periksa email Anda untuk verifikasi.",
+    "forgotPassword": "Lupa kata sandi?",
+    "rememberedPassword": "Ingat kata sandi Anda?",
+    "forgotPasswordEmailSent": "Kami telah mengirim email berisi petunjuk untuk mengatur ulang kata sandi Anda.",
+    "magicLinkSentTitle": "Tautan ajaib dikirim",
+    "passwordResetSuccess": "Kata sandi berhasil diatur ulang",
+    "resetPasswordTitle": "Atur ulang kata sandi Anda",
+    "resetPasswordDescription": "Masukkan kata sandi baru Anda di bawah.",
+    "signUpTitle": "Daftar ke {name}",
+    "changePasswordTitle": "Ubah kata sandi Anda",
+    "changePasswordDescription": "Tetapkan kata sandi baru sebelum melanjutkan.",
+    "passwordChangeSuccess": "Kata sandi diubah"
+  },
+  "emailTopics": {
+    "title": "Topik Email"
+  },
+  "tags": {
+    "title": "Tag"
+  },
+  "texts": {
+    "or": "atau"
+  },
+  "theme": {
+    "dark": "Gelap",
+    "light": "Terang",
+    "system": "Sistem"
+  },
+  "validation": {
+    "maxSize": "Ukuran file melebihi batas maksimum",
+    "maxItemsReached": "Maksimum {max} {feature} diizinkan per ruang kerja",
+    "invalidApiKey": "Kunci API tidak valid",
+    "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}"
+  },
+  "webchat": {
+    "chatUnavailable": "Obrolan ini saat ini tidak tersedia.",
+    "description": "Berikan pelanggan Anda respons otomatis seketika dari bisnis Anda langsung melalui situs web",
+    "rateLimitExceeded": "Terlalu banyak permintaan. Silakan coba lagi sebentar lagi.",
+    "title": "Obrolan Web",
+    "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia.",
+    "unauthorizedDomain": {
+      "description": "Situs web ini tidak diizinkan memuat widget obrolan ini.",
+      "title": "Obrolan web tidak tersedia"
+    }
+  },
+  "whatsapp": {
+    "category": {
+      "marketing": {
+        "description": "Deskripsi kategori pemasaran",
+        "label": "Pemasaran"
+      },
+      "utility": {
+        "description": "Deskripsi kategori utilitas",
+        "label": "Utilitas"
+      }
+    },
+    "commands": {
+      "description": "Ini adalah kata kunci khusus yang memberi tahu bot WhatsApp tindakan yang harus dilakukan",
+      "label": "Perintah"
+    },
+    "autoConnect": {
+      "inProgress": "Menghubungkan…"
+    },
+    "connectExisting": "Hubungkan Akun WhatsApp Business yang sudah ada",
+    "embeddedSignupDone": "Pendaftaran selesai — Anda dapat menutup tab ini.",
+    "embeddedSignupPopupBlocked": "Izinkan pop-up untuk situs ini, lalu coba lagi.",
+    "fillRequiredFields": "Isi semua kolom yang wajib",
+    "continueManualConnect": "Lanjutkan — hubungkan secara manual",
+    "icebreakers": {
+      "description": "Ini adalah pertanyaan umum yang dapat diajukan orang dengan mudah kepada Anda.",
+      "label": "Pembuka percakapan"
+    },
+    "manualConnect": "Hubungkan secara manual menggunakan token akses Pengguna Sistem.",
+    "manualOnboarding": {
+      "title": "Kotak masuk WhatsApp Anda siap!",
+      "description": "Konfigurasikan URL webhook dan token verifikasi di Aplikasi Meta Anda. Gunakan nilai di bawah.",
+      "webhookUrl": "URL webhook",
+      "verifyToken": "Token verifikasi webhook",
+      "qrCodeHint": "Pindai kode QR untuk membuka URL webhook",
+      "moreSettings": "Pengaturan lainnya",
+      "goToInbox": "Bawa saya ke sana"
+    },
+    "phoneVerification": {
+      "title": "Verifikasi nomor telepon WhatsApp",
+      "description": "Minta kode verifikasi dari Meta, masukkan kode di sini, lalu nomor telepon akan didaftarkan secara otomatis.",
+      "errorTitle": "Verifikasi nomor telepon diperlukan",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Panggilan suara"
+      },
+      "actions": {
+        "sendCode": "Kirim kode",
+        "resendIn": "Kirim ulang dalam {seconds} dtk",
+        "verify": "Verifikasi dan daftarkan"
+      },
+      "fields": {
+        "code": {
+          "label": "Kode verifikasi",
+          "placeholder": "Masukkan OTP Meta"
+        }
+      },
+      "messages": {
+        "codeSent": "Kode verifikasi dikirim melalui {method}.",
+        "cooldown": "Tunggu {seconds} dtk sebelum meminta kode lain.",
+        "verified": "Nomor telepon berhasil diverifikasi dan didaftarkan."
+      },
+      "errors": {
+        "integrationNotFound": "Integrasi WhatsApp tidak ditemukan.",
+        "codeNotSent": "Kode verifikasi WhatsApp tidak dapat dikirim.",
+        "codeNotVerified": "Kode verifikasi WhatsApp tidak dapat diverifikasi.",
+        "registrationFailed": "Verifikasi nomor telepon WhatsApp gagal."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "Token akses WhatsApp diperlukan.",
+        "appSettingsNotFound": "Pengaturan aplikasi WhatsApp tidak ditemukan.",
+        "failedToPersistIntegration": "Gagal menyimpan integrasi WhatsApp.",
+        "noPhoneNumberFound": "Nomor telepon WhatsApp tidak ditemukan.",
+        "noPhoneNumbersFound": "Tidak ada nomor telepon yang ditemukan untuk Akun WhatsApp Business ini.",
+        "phoneNumberNotFound": "Nomor telepon WhatsApp yang dipilih tidak ditemukan.",
+        "unableToVerifyToken": "Tidak dapat memverifikasi token WhatsApp.",
+        "wabaMismatch": "Akun WhatsApp Business yang dipilih tidak cocok dengan otorisasi.",
+        "wabaResolveFailed": "Tidak dapat menentukan Akun WhatsApp Business dari otorisasi."
+      }
+    },
+    "marketingMessageLite": "Marketing Message Lite",
+    "messageTemplate": {
+      "carouselImage": {
+        "label": "Gambar Korsel"
+      },
+      "carouselVideo": {
+        "label": "Video Korsel"
+      },
+      "document": {
+        "label": "Dokumen"
+      },
+      "image": {
+        "label": "Gambar"
+      },
+      "location": {
+        "label": "Lokasi"
+      },
+      "text": {
+        "label": "Teks"
+      },
+      "video": {
+        "label": "Video"
+      },
+      "viewCatalog": {
+        "label": "Lihat Katalog"
+      },
+      "viewProduct": {
+        "label": "Lihat Produk"
+      },
+      "params": {
+        "couponCode": "Kode Kupon",
+        "couponCodePlaceholder": "Masukkan kode kupon",
+        "quickReplyPayload": "Payload Balasan Cepat",
+        "quickReplyPayloadPlaceholder": "Masukkan payload (opsional)",
+        "flowToken": "Token Alur",
+        "flowTokenPlaceholder": "Masukkan token alur",
+        "catalogProductId": "ID Produk",
+        "catalogProductIdPlaceholder": "Masukkan ID pengecer produk",
+        "carouselCard": "Kartu {index}",
+        "limitedTimeOffer": "Waktu Berakhir Penawaran",
+        "limitedTimeOfferPlaceholder": "Masukkan waktu berakhir dalam milidetik",
+        "limitedTimeOfferHelp": "Stempel waktu Unix dalam milidetik saat penawaran berakhir",
+        "location": "Lokasi",
+        "latitude": "Lintang",
+        "longitude": "Bujur",
+        "locationName": "Nama lokasi (opsional)",
+        "locationAddress": "Alamat (opsional)",
+        "enterFormatUrl": "Masukkan URL {format}"
+      }
+    },
+    "sampleBodyCardContent": {
+      "label": "Contoh konten isi kartu"
+    },
+    "sampleBodyContent": {
+      "label": "Contoh konten isi"
+    },
+    "sampleHeaderContent": {
+      "label": "Contoh konten header"
+    },
+    "showFooter": {
+      "label": "Tampilkan footer"
+    },
+    "showHeader": {
+      "label": "Tampilkan header"
+    },
+    "tabs": {
+      "accountHealths": "Kesehatan Akun",
+      "automation": "Otomatisasi",
+      "ecommerce": "E-niaga",
+      "flows": "Alur",
+      "messageTemplates": "Templat Pesan",
+      "profile": "Profil",
+      "usefulLinks": "Tautan Berguna"
+    },
+    "accountHealths": {
+      "title": "Kelola akun WhatsApp Anda",
+      "description": "Tinjau status akun WhatsApp, batas perpesanan, dan kualitas Anda. Perbarui pengaturan atau selesaikan masalah jika diperlukan",
+      "goToBusinessManager": "Buka Meta Business Manager",
+      "unavailable": {
+        "title": "Kesehatan akun sementara tidak tersedia",
+        "description": "Kami tidak dapat memuat nomor telepon WhatsApp ini dari Meta saat ini. Tindakan pemulihan lainnya di halaman ini tetap tersedia."
+      },
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Nomor telepon tampilan",
+          "tooltip": "Nomor telepon yang ditampilkan kepada pelanggan saat mereka mengirim pesan ke bisnis Anda."
+        },
+        "businessName": {
+          "label": "Nama bisnis",
+          "tooltip": "Nama tampilan bisnis WhatsApp yang telah diverifikasi."
+        },
+        "displayNameStatus": {
+          "label": "Status nama tampilan",
+          "tooltip": "Status persetujuan nama tampilan bisnis WhatsApp Anda."
+        },
+        "qualityRating": {
+          "label": "Peringkat kualitas",
+          "tooltip": "Peringkat kualitas berdasarkan umpan balik pelanggan selama 7 hari terakhir."
+        },
+        "messagingLimitTier": {
+          "label": "Tingkat batas perpesanan",
+          "tooltip": "Jumlah maksimum pelanggan unik yang dapat dikirimi pesan oleh bisnis Anda dalam jangka waktu bergulir 24 jam."
+        },
+        "accountMode": {
+          "label": "Mode akun",
+          "tooltip": "Apakah Akun WhatsApp Business aktif atau dalam mode sandbox."
+        },
+        "marketingMessages": {
+          "label": "Pesan Pemasaran (MM Lite)",
+          "tooltip": "Status orientasi Akun WhatsApp Business ke API Marketing Messages Lite.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Tidak memenuhi syarat: model OBO",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Tidak memenuhi syarat: tidak aktif atau dibatasi",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Tidak memenuhi syarat: negara tidak didukung",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Tidak memenuhi syarat: menggunakan aplikasi WhatsApp Business",
+            "ELIGIBLE": "Memenuhi syarat",
+            "PENDING_VALID_PAYMENT_METHOD": "Menunggu metode pembayaran yang valid",
+            "PENDING_INTERNAL_SETUP": "Menunggu penyiapan internal",
+            "ONBOARDED": "Orientasi selesai"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Akun WhatsApp Business menggunakan model OBO yang tidak didukung. Anda harus mentransfer kepemilikan WABA kepada pelanggan terlebih dahulu atau melakukan orientasi menggunakan Intent API.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Akun WhatsApp Business tidak aktif atau dibatasi dari perpesanan karena masalah penegakan kebijakan.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Akun WhatsApp Business berada di wilayah yang tidak mendukung API MM Lite.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Nomor telepon WhatsApp Business sedang digunakan di dalam aplikasi WhatsApp Business.",
+            "ELIGIBLE": "Akun WhatsApp Business memenuhi syarat untuk mengikuti orientasi dan menggunakan API MM Lite.",
+            "PENDING_VALID_PAYMENT_METHOD": "Akun WhatsApp Business perlu menyiapkan metode pembayaran yang valid.",
+            "PENDING_INTERNAL_SETUP": "Akun WhatsApp Business sedang dikonfigurasi untuk menggunakan API MM Lite dan tidak memerlukan tindakan lebih lanjut dari pelanggan bisnis atau mitra. Proses penyiapan otomatis diperkirakan memerlukan waktu kurang dari sepuluh menit. Berlangganan webhook account_update dan dengarkan peristiwa AD_ACCOUNT_LINKED. Kirim tiket dukungan jika proses penyiapan memerlukan waktu lebih dari sepuluh menit dan Anda belum menerima webhook.",
+            "ONBOARDED": "Akun WhatsApp Business telah berhasil mengikuti orientasi dan siap menggunakan API MM Lite."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Konfigurasi Webhook",
+          "tooltip": "Status webhook yang dikonfigurasi untuk menerima peristiwa WhatsApp.",
+          "configured": "Webhook berhasil dikonfigurasi",
+          "notConfigured": "Webhook belum dikonfigurasi"
+        },
+        "phoneNumberHealth": {
+          "label": "Kesehatan Nomor Telepon",
+          "tooltip": "Apakah nomor telepon ini dapat mengirim pesan dan masalah apa pun yang memengaruhinya.",
+          "headline": "Nomor Telepon - {status}"
+        },
+        "wabaHealth": {
+          "label": "Kesehatan Akun WhatsApp Business",
+          "tooltip": "Apakah Akun WhatsApp Business dapat mengirim pesan dan masalah apa pun yang memengaruhinya.",
+          "headline": "Akun WhatsApp Business (ID WABA: {id}) - {status}",
+          "headlineNoId": "Akun WhatsApp Business - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 pelanggan per 24 jam",
+        "TIER_250": "250 pelanggan per 24 jam",
+        "TIER_1K": "1.000 pelanggan per 24 jam",
+        "TIER_10K": "10.000 pelanggan per 24 jam",
+        "TIER_100K": "100.000 pelanggan per 24 jam",
+        "TIER_UNLIMITED": "Pelanggan tanpa batas per 24 jam",
+        "UNKNOWN": "Tidak diketahui"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Disetujui",
+        "AVAILABLE_WITHOUT_REVIEW": "Tersedia Tanpa Peninjauan",
+        "DECLINED": "Ditolak",
+        "EXPIRED": "Kedaluwarsa",
+        "NONE": "Tidak Ada",
+        "PENDING_REVIEW": "Menunggu Peninjauan"
+      },
+      "accountMode": {
+        "LIVE": "Aktif",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "TERSEDIA",
+        "LIMITED": "TERBATAS",
+        "BLOCKED": "DIBLOKIR",
+        "UNKNOWN": "TIDAK DIKETAHUI"
+      },
+      "health": {
+        "label": "Status Bisnis",
+        "tooltip": "Ringkasan kesehatan akun WhatsApp dan kemampuan perpesanan Anda.",
+        "blockedMessage": "Nomor telepon Anda telah diblokir dari pengiriman pesan.",
+        "problem": "Masalah:",
+        "possibleSolution": "Kemungkinan solusi:",
+        "noIssues": "Tidak ada masalah yang terdeteksi",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "Apakah {type} ini dapat mengirim pesan dan masalah apa pun yang memengaruhinya.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Nomor Telepon",
+          "WABA": "Akun WhatsApp Business",
+          "BUSINESS": "Bisnis",
+          "MESSAGE_TEMPLATE": "Templat Pesan",
+          "APP": "Aplikasi"
+        }
+      }
+    },
+    "templateFooter": {
+      "label": "Footer Templat"
+    },
+    "templateHeader": {
+      "label": "Header Templat"
+    },
+    "transferPhoneNumber": "Transfer telepon dari penyedia WhatsApp lain",
+    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi."
+  },
+  "zalo": {
+    "title": "Zalo OA",
+    "refreshPermissions": "Perbarui izin",
+    "duplicated": "Akun Zalo OA ini sudah terhubung ke ruang kerja lain.",
+    "tagSync": {
+      "title": "Sinkronisasi Tag",
+      "description": "Cerminkan penetapan tag lokal ke Zalo OA ini.",
+      "toggleSuccess": "Pengaturan sinkronisasi tag diperbarui.",
+      "enabledSince": "Diaktifkan sejak {date}",
+      "disabled": "Dinonaktifkan"
+    }
+  },
+  "telegram": {
+    "description": "Integrasi ini memungkinkan Anda membuat bot Telegram.",
+    "title": "Telegram"
+  },
+  "invitation": {
+    "chatbotInvitationDescription1": "Bergabung dengan {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} mengundang Anda untuk bergabung dengan {chatbotName}.",
+    "invalidInvitation": "Undangan ini tidak valid atau telah kedaluwarsa.",
+    "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia."
+  },
+  "inboxTeams": {
+    "title": "Tim Kotak Masuk"
+  },
+  "userPersistentMenus": {
+    "title": "Menu Persisten Pengguna"
+  },
+  "webhooks": {
+    "title": "Webhook"
+  },
+  "reflinks": {
+    "title": "Tautan Titik Masuk",
+    "description": "Tautan kata kunci yang memulai alur dan menangkap payload referensi dari saluran."
+  },
+  "qrCodes": {
+    "title": "Kode QR",
+    "description": "Buat kode QR yang tertaut ke alur chatbot Anda."
+  },
+  "magicLinks": {
+    "title": "Tautan Ajaib",
+    "description": "Buat tautan dalam yang mengarahkan ke URL Anda dengan parameter kueri."
+  },
+  "QRCode": {
+    "title": "Kode QR",
+    "description": "Bagikan kode ini agar orang membuka tautan pelacakan Anda."
+  },
+  "trigger": {
+    "when": "Ketika ini terjadi",
+    "conditions": {
+      "tagApplied": "Tag Diterapkan",
+      "tagRemoved": "Tag Dihapus",
+      "dateTimeBasedTrigger": "Pemicu Berdasarkan Tanggal dan Waktu",
+      "customFieldValueChanged": "Kolom Kustom Diubah",
+      "contactInfoUpdated": "Nomor telepon atau email diperbarui",
+      "conversationTransferredToHuman": "Percakapan dialihkan ke manusia",
+      "conversationTransferredToBot": "Percakapan dialihkan ke bot",
+      "newContact": "Kontak Baru",
+      "contactUnsubscribedFormBroadcast": "Kontak Berhenti Berlangganan Siaran",
+      "archived": "Diarsipkan",
+      "followUp": "Tindak Lanjut",
+      "conversationAssigned": "Percakapan Ditugaskan",
+      "conversationUnassigned": "Penugasan Percakapan Dihapus",
+      "incomingCall": "Panggilan Masuk",
+      "missedAudioCall": "Panggilan Audio Tak Terjawab",
+      "callEnded": "Panggilan Berakhir",
+      "ticketCreated": "Tiket Dibuat",
+      "ticketMovedToStage": "Tiket Dipindahkan ke Tahap",
+      "ticketValueChanged": "Nilai Tiket Diubah",
+      "ticketStatusChanged": "Status Tiket Diubah",
+      "ticketPriorityChanged": "Prioritas Tiket Diubah",
+      "subscribedToSequence": "Berlangganan Urutan",
+      "unsubscribedFromSequence": "Berhenti Berlangganan Urutan",
+      "WhatsappShoppingCartSent": "Keranjang Belanja WhatsApp Dikirim",
+      "userAskedAboutProduct": "Pengguna Menanyakan Produk",
+      "cartAbandoned": "Keranjang Ditinggalkan",
+      "newOrder": "Pesanan Baru",
+      "orderAccepted": "Pesanan Diterima",
+      "orderShipped": "Pesanan Dikirim",
+      "orderConcluded": "Pesanan Diselesaikan",
+      "orderCancelled": "Pesanan Dibatalkan",
+      "categoryAddedToCart": "Kategori Ditambahkan ke Keranjang",
+      "productAddedToCart": "Produk Ditambahkan ke Keranjang",
+      "productRemovedFromCart": "Produk Dihapus dari Keranjang",
+      "productOrdered": "Produk Dipesan",
+      "contactReferredANewContact": "Kontak Mereferensikan Kontak Baru",
+      "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada"
+    },
+    "actions": {
+      "addTag": "Tambahkan Tag",
+      "removeTag": "Hapus Tag",
+      "setCustomField": "Atur Kolom Kustom",
+      "clearCustomField": "Kosongkan Kolom Kustom",
+      "startAnotherFlow": "Mulai Alur Lain",
+      "notifyAdmins": "Beri Tahu Admin",
+      "transferConversationToHuman": "Alihkan Percakapan ke Manusia"
+    },
+    "triggerGoesOff": "Pemicu dijalankan",
+    "before": "Sebelum",
+    "after": "Setelah",
+    "atTheDayOf": "Pada hari yang sama",
+    "day": "Hari",
+    "hour": "Jam",
+    "minute": "Menit",
+    "at": "Pada"
+  },
+  "errorLogs": {
+    "title": "Log Kesalahan"
+  },
+  "developerAccessToken": {
+    "title": "Token Akses API",
+    "description": "Buat token agar ruang kerja Anda dapat mengakses API publik. Jaga kerahasiaan token ini dan jangan bagikan kepada siapa pun."
+  },
+  "contacts": {
+    "title": "Kontak",
+    "exportPreparing": "Menyiapkan ekspor Anda…",
+    "exportPreparingDescription": "Kami sedang membuat file CSV Anda. Proses ini mungkin memerlukan waktu.",
+    "exportReadyTitle": "Ekspor Anda sudah siap",
+    "exportReadyDescription": "Salin tautan di bawah atau unduh file secara langsung.",
+    "exportDownloadCount": "Unduh ({count})",
+    "exportFailed": "Ekspor gagal. Silakan coba lagi.",
+    "copyLink": "Salin tautan",
+    "linkCopied": "Tautan disalin ke papan klip",
+    "countExact": "{count} kontak",
+    "countCapped": "{count}+ kontak",
+    "exportAllNotice": "Semua kontak yang cocok dengan filter saat ini akan diekspor.",
+    "exportTakingLong": "Ekspor memerlukan waktu lebih lama dari perkiraan",
+    "exportTakingLongDescription": "Ekspor masih diproses. Anda dapat menutup dialog ini dan memeriksanya kembali dalam beberapa menit dari riwayat ekspor."
+  },
+  "auditLogs": {
+    "title": "Log Audit"
+  },
+  "customFields": {
+    "title": "Kolom Kustom"
+  },
+  "keywords": {
+    "title": "Kata Kunci"
+  },
+  "triggers": {
+    "title": "Pemicu"
+  },
+  "users": {
+    "title": "Pengguna"
+  },
+  "sequences": {
+    "title": "Urutan",
+    "subscribers": "Pelanggan",
+    "step": "Pesan",
+    "addStep": "Tambahkan Pesan",
+    "addFirstStep": "Tambahkan Pesan Pertama",
+    "noSteps": "Belum ada pesan. Tambahkan pesan pertama Anda untuk memulai.",
+    "selectFlow": "Pilih Alur",
+    "confirmDeleteStep": "Anda yakin ingin menghapus pesan ini?",
+    "delayUnits": {
+      "immediate": "Segera",
+      "minutes": "Menit",
+      "hours": "Jam",
+      "days": "Hari",
+      "specificTime": "Waktu Tertentu"
+    },
+    "timeValidation": "Waktu pesan harus setelah pesan sebelumnya",
+    "validation": {
+      "exception": "Pengecualian Validasi",
+      "nameExists": "Nama urutan sudah ada"
+    },
+    "sendLabel": "Kirim",
+    "selectFlowFirst": "Pilih alur sebelum mengaktifkan pesan",
+    "invalidTimeRange": "Waktu mulai harus sebelum waktu berakhir",
+    "schedule": "Jadwal",
+    "scheduleDescription": "Atur kapan pesan harus dikirim",
+    "sendTime": "Waktu pengiriman",
+    "sendTimeDescription": "Pesan hanya akan dikirim selama rentang waktu ini",
+    "timezone": "Zona waktu",
+    "timezoneDescription": "Semua waktu mengikuti zona waktu chatbot Anda",
+    "enableSchedule": "Aktifkan jadwal",
+    "startTime": "Waktu mulai",
+    "endTime": "Waktu berakhir",
+    "allDay": "Sepanjang hari",
+    "customTime": "Waktu khusus",
+    "enrollmentSettings": "Pengaturan Pendaftaran",
+    "enrollmentDescription": "Atur cara kontak didaftarkan ke urutan ini",
+    "allowReEnrollment": "Izinkan pendaftaran ulang",
+    "allowReEnrollmentDescription": "Kontak dapat didaftarkan beberapa kali",
+    "skipWeekends": "Lewati akhir pekan",
+    "skipWeekendsDescription": "Jangan kirim pesan pada hari Sabtu dan Minggu",
+    "unenrollOnReply": "Batalkan pendaftaran saat membalas",
+    "unenrollOnReplyDescription": "Hapus kontak dari urutan saat mereka membalas",
+    "performance": "Kinerja",
+    "enrolled": "Terdaftar",
+    "completed": "Selesai",
+    "openRate": "Tingkat dibuka",
+    "clickRate": "Tingkat klik",
+    "replyRate": "Tingkat balasan",
+    "unsubscribeRate": "Tingkat berhenti berlangganan",
+    "overview": "Ikhtisar",
+    "analytics": "Analitik",
+    "stats": {
+      "sent": "Terkirim",
+      "delivered": "Disampaikan",
+      "seen": "Dilihat",
+      "clicked": "Diklik",
+      "failed": "Gagal",
+      "noContacts": "Tidak ada kontak yang ditemukan",
+      "pageInfo": "Halaman {page} dari {pageCount}",
+      "selectedAll": "Semua dipilih",
+      "selectedCount": "{count} dipilih",
+      "tagAllDialogDescription": "Tag akan ditambahkan ke semua kontak yang dipilih.",
+      "tagDialogDescription": "Tag akan ditambahkan ke {count} kontak.",
+      "tagQueued": "Menambahkan tag ke {count} kontak di latar belakang.",
+      "loadingMore": "Memuat lebih banyak..."
+    },
+    "settings": "Pengaturan",
+    "flow": "Alur",
+    "active": "Aktif",
+    "messageSentAtLeast": "Pesan ini akan dikirim setidaknya",
+    "afterPreviousMessage": "setelah pesan sebelumnya (hari = 24 jam)",
+    "anyTime": "Kapan saja",
+    "setTimeRange": "Atur rentang waktu",
+    "selectDays": "Pilih hari",
+    "allDays": "Semua Hari",
+    "deselectAll": "Batalkan Semua Pilihan",
+    "monday": "Senin",
+    "tuesday": "Selasa",
+    "wednesday": "Rabu",
+    "thursday": "Kamis",
+    "friday": "Jumat",
+    "saturday": "Sabtu",
+    "sunday": "Minggu",
+    "afterText": "Setelah"
+  },
+  "tools": {
+    "title": "Alat"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter",
+    "openaiCompatible": "Kompatibel dengan OpenAI"
+  },
+  "smtp": {
+    "setting": {
+      "description": "Kirim email menggunakan server SMTP Anda.",
+      "label": "SMTP (Email)"
+    },
+    "errors": {
+      "connectionFailed": "Tidak dapat terhubung ke server SMTP. Periksa kredensial Anda dan coba lagi."
+    }
+  },
+  "botSimulator": {
+    "title": "Simulator Bot",
+    "description": "Simulasikan perilaku bot Anda dalam lingkungan waktu nyata."
+  },
+  "pollManager": {
+    "title": "Pengelola Jajak Pendapat",
+    "description": "Buat dan kelola jajak pendapat untuk kontak Anda."
+  },
+  "placesNearMe": {
+    "title": "Tempat di Sekitar Saya",
+    "description": "Temukan tempat di dekat kontak Anda."
+  },
+  "questionnaires": {
+    "title": "Kuesioner",
+    "description": "Buat dan kelola kuesioner untuk kontak Anda.",
+    "singular": "Kuesioner",
+    "submission": "Pengajuan",
+    "addNew": "Tambahkan Baru",
+    "applicants": "Peserta",
+    "generalSettings": "Pengaturan umum",
+    "triggerFlow": "Picu alur dengan menyelesaikan kuesioner",
+    "enableScore": "Berikan poin untuk setiap pertanyaan yang dijawab.",
+    "enableRetryMessages": "Sesuaikan pesan percobaan ulang jika balasan gagal.",
+    "enableCustomFieldMapping": "Simpan data ke kolom kustom.",
+    "question": "Pertanyaan",
+    "activeQuestion": "Aktif",
+    "questionImage": "Gambar pertanyaan",
+    "questionImageHint": "Gambar opsional yang dikirim bersama pertanyaan ini.",
+    "responseType": "Jenis Respons",
+    "points": "Poin",
+    "retryMessage": "Pesan percobaan ulang jika balasan tidak valid",
+    "defaultRetryMessages": {
+      "text": "Yang Anda masukkan bukan teks yang valid. Silakan coba lagi",
+      "number": "Yang Anda masukkan bukan angka yang valid. Silakan coba lagi",
+      "email": "Yang Anda masukkan bukan email yang valid. Silakan coba lagi",
+      "phone": "Yang Anda masukkan bukan nomor telepon yang valid. Silakan coba lagi",
+      "multipleChoice": "Yang Anda masukkan bukan pilihan yang valid. Silakan coba lagi"
+    },
+    "customField": "Simpan respons ke kolom kustom atau sistem",
+    "options": "Pilihan",
+    "mode": "Mode",
+    "completed": "Selesai",
+    "completionRate": "Tingkat penyelesaian",
+    "date": "Tanggal",
+    "inbox": "Kotak Masuk",
+    "unknownContact": "Kontak tidak dikenal",
+    "noAnswers": "Tidak ada jawaban",
+    "responseTypes": {
+      "text": "Teks",
+      "number": "Angka",
+      "email": "Email",
+      "phone": "Telepon",
+      "multipleChoice": "Pilihan ganda"
+    },
+    "flowModes": {
+      "start": "Mulai kuesioner",
+      "end": "Akhiri kuesioner",
+      "deleteApplicant": "Hapus peserta"
+    },
+    "dialogDescriptions": {
+      "create": "Beri nama kuesioner sebelum menambahkan pertanyaan.",
+      "rename": "Perbarui nama kuesioner yang ditampilkan dalam daftar dan alur.",
+      "flowStep": "Pilih cara langkah alur ini berinteraksi dengan kuesioner."
+    },
+    "status": {
+      "inProgress": "Sedang berlangsung",
+      "completed": "Selesai",
+      "cancelled": "Dibatalkan",
+      "failed": "Gagal",
+      "timeout": "Waktu habis"
+    }
+  },
+  "facebookCommentAutomation": {
+    "title": "Otomatisasi Komentar Facebook",
+    "description": "Otomatiskan komentar Facebook untuk kontak Anda.",
+    "create": "Buat Otomatisasi",
+    "replies": "Balasan",
+    "activated": "Otomatisasi diaktifkan",
+    "deactivated": "Otomatisasi dinonaktifkan",
+    "trackCommentsOn": "Lacak komentar pada",
+    "trackCommentsOnDescription": "Terapkan otomatisasi ini ke semua postingan di Halaman Anda, atau batasi ke postingan tertentu yang Anda pilih.",
+    "privateReply": "Balasan pribadi (kotak masuk)",
+    "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap (mendukung spintax), alur chatbot, atau nonaktifkan.",
+    "publicReply": "Balasan publik untuk komentar",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks (mendukung spintax), Agen AI, alur chatbot, atau tanpa balasan.",
+    "replyMessage": "Pesan balasan",
+    "replyMessagePlaceholder": "Masukkan pesan balasan...",
+    "includeKeywordsType": "Balas",
+    "includeKeywordsTypeDescription": "Pilih komentar yang akan ditanggapi otomatisasi ini.",
+    "includeKeywords": "Kata kunci yang dicocokkan",
+    "excludeKeywords": "Kecualikan komentar dengan kata kunci ini",
+    "excludeKeywordsDescription": "Komentar yang berisi salah satu kata kunci ini akan diabaikan oleh otomatisasi balasan kotak masuk dan publik.",
+    "keywordsPlaceholder": "Ketik dan tekan Enter...",
+    "replyAfter": "Balas setelah",
+    "replyAfterValue": "Nilai",
+    "schedule": {
+      "title": "Atur jam aktif",
+      "description": "Pilih waktu mulai dan berakhir. Jika waktu berakhir lebih awal dari waktu mulai, jadwal berjalan melewati tengah malam.",
+      "startTime": "Waktu mulai",
+      "endTime": "Waktu berakhir",
+      "alwaysRun": "Selalu berjalan",
+      "save": "Simpan",
+      "invalidTimeRange": "Waktu mulai dan berakhir harus berbeda",
+      "timeRequired": "Pilih waktu mulai dan berakhir"
+    },
+    "card": {
+      "targeting": "Penargetan & Balasan",
+      "filters": "Filter & Pilihan",
+      "replyTiming": "Waktu Balasan",
+      "hideComments": "Sembunyikan Komentar"
+    },
+    "postType": {
+      "all": "Semua postingan",
+      "published": "Postingan yang diterbitkan",
+      "ads": "Postingan iklan",
+      "reels": "Reels",
+      "specificPosts": "Postingan tertentu"
+    },
+    "replyType": {
+      "text": "Pesan teks",
+      "flow": "Alur",
+      "AIAgent": "Agen AI",
+      "none": "Tanpa balasan"
+    },
+    "keywordsType": {
+      "all": "Semua komentar",
+      "equal": "Sama persis",
+      "contain": "Mengandung"
+    },
+    "replyAfterType": {
+      "immediately": "Segera",
+      "seconds": "Setelah X detik",
+      "minutes": "Setelah X menit",
+      "hours": "Setelah X jam",
+      "randomWithin3Minutes": "Acak dalam 3 menit",
+      "randomWithin5Minutes": "Acak dalam 5 menit",
+      "randomWithin10Minutes": "Acak dalam 10 menit",
+      "randomWithin20Minutes": "Acak dalam 20 menit",
+      "randomWithin30Minutes": "Acak dalam 30 menit",
+      "randomWithin60Minutes": "Acak dalam 60 menit"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Hanya balas kontak baru",
+      "replyToNewContactsOnlyDescription": "Hanya balas otomatis orang yang belum pernah menjadi kontak di ruang kerja Anda.",
+      "replyOncePerUserPerPost": "Balas hanya sekali untuk setiap pengguna per postingan",
+      "replyOncePerUserPerPostDescription": "Setiap pengguna akan menerima paling banyak satu balasan otomatis per postingan.",
+      "likeUserComment": "Sukai komentar pengguna",
+      "likeUserCommentDescription": "Secara otomatis berikan reaksi suka pada komentar pemberi komentar.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Balas pengguna yang berkomentar di postingan lain",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Terus balas pengguna yang sudah berkomentar di postingan Anda yang lain.",
+      "ignoreCommentReplies": "Jangan balas balasan komentar",
+      "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
+      "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
+      "trackUserTagsDescription": "Picu otomatisasi saat pengguna menandai atau menyebut pengguna lain dalam komentarnya."
+    },
+    "hideComments": {
+      "all": "Sembunyikan semua komentar",
+      "hasPhoneNumber": "Mengandung nomor telepon",
+      "hasImage": "Mengandung gambar",
+      "hasVideo": "Mengandung video",
+      "hasLink": "Mengandung tautan",
+      "hasKeywords": "Mengandung kata kunci",
+      "keywords": "Kata Kunci",
+      "showCommentsAfter": "Tampilkan komentar setelah"
+    },
+    "showCommentsAfter": {
+      "none": "Jangan pernah"
+    },
+    "selectPosts": "Pilih Postingan",
+    "selectPageAll": "Semua halaman",
+    "chooseSpecificPosts": "Pilih postingan...",
+    "postIdTab": "ID Postingan",
+    "postIdPlaceholder": "Masukkan ID postingan, satu per baris...",
+    "noPostsFound": "Tidak ada postingan yang ditemukan"
+  },
+  "instagramCommentAutomation": {
+    "title": "Otomatisasi Komentar Instagram",
+    "description": "Otomatiskan komentar Instagram untuk kontak Anda.",
+    "create": "Buat Otomatisasi",
+    "replies": "Balasan",
+    "activated": "Otomatisasi diaktifkan",
+    "deactivated": "Otomatisasi dinonaktifkan",
+    "trackCommentsOn": "Lacak komentar pada",
+    "trackCommentsOnDescription": "Terapkan otomatisasi ini ke semua postingan di akun yang terhubung, atau batasi ke postingan tertentu yang Anda pilih.",
+    "privateReply": "Balasan pribadi (kotak masuk)",
+    "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap (mendukung spintax), alur chatbot, atau nonaktifkan.",
+    "publicReply": "Balasan publik untuk komentar",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks (mendukung spintax), Agen AI, alur chatbot, atau tanpa balasan.",
+    "replyMessage": "Pesan balasan",
+    "replyMessagePlaceholder": "Masukkan pesan balasan...",
+    "includeKeywordsType": "Balas",
+    "includeKeywordsTypeDescription": "Pilih komentar yang akan ditanggapi otomatisasi ini.",
+    "includeKeywords": "Kata kunci yang dicocokkan",
+    "excludeKeywords": "Kecualikan komentar dengan kata kunci ini",
+    "excludeKeywordsDescription": "Komentar yang berisi salah satu kata kunci ini akan diabaikan oleh otomatisasi balasan kotak masuk dan publik.",
+    "keywordsPlaceholder": "Ketik dan tekan Enter...",
+    "replyAfter": "Balas setelah",
+    "replyAfterValue": "Nilai",
+    "schedule": {
+      "title": "Atur jam aktif",
+      "description": "Pilih waktu mulai dan berakhir. Jika waktu berakhir lebih awal dari waktu mulai, jadwal berjalan melewati tengah malam.",
+      "startTime": "Waktu mulai",
+      "endTime": "Waktu berakhir",
+      "alwaysRun": "Selalu berjalan",
+      "save": "Simpan",
+      "invalidTimeRange": "Waktu mulai dan berakhir harus berbeda",
+      "timeRequired": "Pilih waktu mulai dan berakhir"
+    },
+    "card": {
+      "targeting": "Penargetan & Balasan",
+      "filters": "Filter & Pilihan",
+      "replyTiming": "Waktu Balasan",
+      "hideComments": "Sembunyikan Komentar"
+    },
+    "postType": {
+      "all": "Semua postingan",
+      "published": "Postingan yang diterbitkan",
+      "reels": "Reels",
+      "specificPosts": "Postingan tertentu"
+    },
+    "replyType": {
+      "text": "Pesan teks",
+      "flow": "Alur",
+      "AIAgent": "Agen AI",
+      "none": "Tanpa balasan"
+    },
+    "keywordsType": {
+      "all": "Semua komentar",
+      "equal": "Sama persis",
+      "contain": "Mengandung"
+    },
+    "replyAfterType": {
+      "immediately": "Segera",
+      "seconds": "Setelah X detik",
+      "minutes": "Setelah X menit",
+      "hours": "Setelah X jam",
+      "randomWithin3Minutes": "Acak dalam 3 menit",
+      "randomWithin5Minutes": "Acak dalam 5 menit",
+      "randomWithin10Minutes": "Acak dalam 10 menit",
+      "randomWithin20Minutes": "Acak dalam 20 menit",
+      "randomWithin30Minutes": "Acak dalam 30 menit",
+      "randomWithin60Minutes": "Acak dalam 60 menit"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Hanya balas kontak baru",
+      "replyToNewContactsOnlyDescription": "Hanya balas otomatis orang yang belum pernah menjadi kontak di ruang kerja Anda.",
+      "replyOncePerUserPerPost": "Balas hanya sekali untuk setiap pengguna per postingan",
+      "replyOncePerUserPerPostDescription": "Setiap pengguna akan menerima paling banyak satu balasan otomatis per postingan.",
+      "likeUserComment": "Sukai komentar pengguna",
+      "likeUserCommentDescription": "Secara otomatis berikan reaksi suka pada komentar pemberi komentar.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Balas pengguna yang berkomentar di postingan lain",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Terus balas pengguna yang sudah berkomentar di postingan Anda yang lain.",
+      "ignoreCommentReplies": "Jangan balas balasan komentar",
+      "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas."
+    },
+    "hideComments": {
+      "all": "Sembunyikan semua komentar",
+      "hasPhoneNumber": "Mengandung nomor telepon",
+      "hasLink": "Mengandung tautan",
+      "hasKeywords": "Mengandung kata kunci",
+      "keywords": "Kata Kunci",
+      "showCommentsAfter": "Tampilkan komentar setelah"
+    },
+    "showCommentsAfter": {
+      "none": "Jangan pernah"
+    },
+    "selectPosts": "Pilih Postingan",
+    "selectPageAll": "Semua akun",
+    "chooseSpecificPosts": "Pilih postingan...",
+    "postIdTab": "ID Postingan",
+    "postIdPlaceholder": "Masukkan ID postingan, satu per baris...",
+    "noPostsFound": "Tidak ada postingan yang ditemukan",
+    "connectionType": {
+      "title": "Pilih jenis koneksi Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Koneksi melalui Login Instagram. Mendukung balasan publik, balasan pribadi, dan menyembunyikan komentar. Menyukai komentar tidak didukung.",
+      "instagramFacebookTitle": "Login Instagram dengan Facebook",
+      "instagramFacebookDescription": "Instagram terhubung melalui Halaman Facebook. Mendukung balasan publik, balasan pribadi, menyembunyikan komentar, dan menyukai komentar."
+    }
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Otomatisasi Iklan Prospek Facebook",
+    "description": "Otomatiskan iklan prospek Facebook untuk kontak Anda.",
+    "create": "Buat Baru",
+    "leads": "Prospek",
+    "facebookPage": "Halaman Facebook",
+    "leadForm": "Formulir Prospek",
+    "allForms": "Semua formulir",
+    "allFormsNote": "Prospek dari setiap formulir di halaman ini akan diambil. Kolom standar (email, telepon, nama, jenis kelamin) otomatis disimpan ke kolom kontak yang sesuai.",
+    "leadData": "Data Prospek",
+    "whatFlow": "Alur yang dipicu",
+    "none": "Tidak Ada",
+    "addNewPage": "Tambahkan Baru",
+    "noEligiblePages": "Tidak ada halaman yang memenuhi syarat. Gunakan \"Tambahkan Baru\" untuk memberikan akses prospek.",
+    "duplicateError": "Otomatisasi untuk halaman dan formulir ini sudah ada.",
+    "subscribeError": "Tidak dapat mendaftarkan halaman ini untuk notifikasi prospek Facebook, sehingga otomatisasi tidak dibuat. Hubungkan kembali halaman melalui \"Tambahkan Baru\" lalu coba lagi."
+  },
+  "ecommerce": {
+    "title": "E-commerce",
+    "description": "Buat dan kelola toko e-commerce Anda."
+  },
+  "appointmentScheduling": {
+    "title": "Penjadwalan Janji Temu",
+    "description": "Buat dan kelola penjadwalan janji temu Anda."
+  },
+  "templates": {
+    "title": "Templat",
+    "description": "Buat dan kelola templat Anda."
+  },
+  "qrCodeGenerator": {
+    "title": "Pembuat Kode QR",
+    "description": "Buat dan kelola kode QR Anda."
+  },
+  "platformAdmin": {
+    "platformCredentials": {
+      "title": "Kredensial Platform",
+      "description": "Aplikasi pengembang bawaan global yang digunakan oleh semua ruang kerja yang tidak memiliki kredensial white-label sendiri."
+    },
+    "helpItems": {
+      "title": "Tautan Bantuan",
+      "description": "Tautan bantuan yang ditampilkan di bilah sisi untuk semua ruang kerja yang tidak termasuk dalam tenant white-label."
+    },
+    "queues": {
+      "title": "Antrean"
+    }
+  },
+  "platformCredentials": {
+    "title": "Kredensial Platform",
+    "usingPlatformDefault": "Menggunakan bawaan platform",
+    "usingPlatformDefaultHint": "Saluran ini langsung berfungsi dengan aplikasi bersama milik platform. Tambahkan pengaturan Anda sendiri kapan saja untuk menggantikannya.",
+    "notConfigured": "Belum disiapkan",
+    "notConfiguredHint": "Tambahkan pengaturan Anda untuk mulai menggunakan integrasi ini."
+  },
+  "platformBranding": {
+    "title": "Pencitraan Merek Platform",
+    "sections": {
+      "identity": {
+        "title": "Identitas Merek",
+        "description": "Nama dan tema warna yang ditampilkan di seluruh platform"
+      },
+      "assets": {
+        "title": "Aset Visual",
+        "description": "Logo dan favicon yang ditampilkan di browser dan antarmuka"
+      },
+      "legal": {
+        "title": "Tautan Hukum",
+        "description": "Tautan yang ditampilkan di footer dan alur persetujuan"
+      },
+      "advanced": {
+        "title": "Lanjutan",
+        "description": "Sisipkan CSS atau JavaScript khusus ke setiap halaman"
+      }
+    }
+  },
+  "platformChannels": {
+    "title": "Saluran yang Diizinkan",
+    "description": "Pilih jenis saluran yang dapat dibuat oleh ruang kerja dalam tenant ini.",
+    "hint": "Biarkan semua saluran tidak dicentang untuk mengizinkan semua saluran."
+  },
+  "platformEmailTemplates": {
+    "title": "Templat Email",
+    "description": "Biarkan subjek dan isi kosong untuk menggunakan templat bawaan sistem.",
+    "sections": {
+      "signup": {
+        "title": "Email Verifikasi Pendaftaran",
+        "description": "Dikirim saat pengguna baru mendaftarkan akun"
+      },
+      "forgotPassword": {
+        "title": "Email Lupa Kata Sandi",
+        "description": "Dikirim saat pengguna meminta pengaturan ulang kata sandi"
+      },
+      "magicLink": {
+        "title": "Email Masuk dengan Tautan Ajaib",
+        "description": "Dikirim saat pengguna meminta tautan ajaib untuk masuk"
+      },
+      "accountCredentials": {
+        "title": "Email Kredensial Subakun",
+        "description": "Dikirim saat reseller menyediakan subakun baru"
+      }
+    },
+    "fields": {
+      "subject": {
+        "label": "Subjek",
+        "placeholder": "Biarkan kosong untuk menggunakan subjek bawaan"
+      },
+      "body": {
+        "label": "Isi HTML",
+        "placeholder": "Biarkan kosong untuk menggunakan templat bawaan"
+      }
+    },
+    "status": {
+      "custom": "Khusus",
+      "default": "Bawaan"
+    },
+    "availableVariables": "Variabel yang tersedia",
+    "preview": {
+      "title": "Pratinjau",
+      "empty": "Masukkan isi templat untuk melihat pratinjau"
+    }
+  },
+  "manageSidebar": {
+    "platformGroup": "Platform",
+    "toolsGroup": "Alat",
+    "saasGroup": "SaaS",
+    "portalUsers": "Subakun",
+    "portalWorkspaces": "Ruang Kerja",
+    "portalPlans": "Paket",
+    "portalUsage": "Penggunaan",
+    "portalCustomDomain": "Domain Khusus",
+    "portalPaymentProcessor": "Pemroses Pembayaran",
+    "portalSmtp": "Pengaturan SMTP",
+    "portalPricingPage": "Harga"
+  },
+  "unsubscribePage": {
+    "title": "Anda telah berhenti berlangganan.",
+    "description": "Anda tidak akan lagi menerima email dari pengirim ini.",
+    "invalidTitle": "Tautan berhenti berlangganan tidak valid.",
+    "invalidDescription": "Tautan ini tidak valid atau sudah kedaluwarsa.",
+    "unavailableTitle": "Berhenti berlangganan tidak tersedia.",
+    "unavailableDescription": "Ruang kerja ini tidak lagi tersedia."
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "Hapus Data Saya",
+      "download": "Unduh Data Saya"
+    },
+    "deleteDialog": {
+      "title": "Hapus data Anda?",
+      "description": "Tindakan ini menghapus secara permanen detail kontak profil, tag, kolom khusus, lampiran, dan semua pesan untuk catatan kontak ini."
+    },
+    "empty": {
+      "customFields": "Tidak ada kolom khusus",
+      "tags": "Tidak ada tag"
+    },
+    "fields": {
+      "email": "Email",
+      "gender": "Jenis Kelamin",
+      "locale": "Lokal",
+      "phone": "Telepon",
+      "timezone": "Waktu"
+    },
+    "sections": {
+      "customFields": "Kolom Khusus",
+      "tags": "Tag Pengguna"
+    },
+    "unknown": "Tidak diketahui"
+  },
+  "orders": {
+    "title": "Pesanan"
+  },
+  "products": {
+    "title": "Produk",
+    "create": {
+      "title": "Buat Produk"
+    },
+    "edit": {
+      "title": "Edit Produk"
+    },
+    "sections": {
+      "pricing": "Harga",
+      "images": "Gambar",
+      "inventory": "Inventaris",
+      "variants": "Varian",
+      "addons": "Tambahan",
+      "tags": "Tag",
+      "moreOptions": "Opsi Lainnya"
+    },
+    "fields": {
+      "shortDescription": {
+        "label": "Deskripsi Singkat"
+      },
+      "longDescription": {
+        "label": "Deskripsi Lengkap"
+      },
+      "price": {
+        "label": "Harga"
+      },
+      "taxes": {
+        "label": "Pajak (0-100%)"
+      },
+      "discount": {
+        "label": "Diskon (0-100%)"
+      },
+      "currency": {
+        "label": "Mata Uang"
+      },
+      "productUrl": {
+        "label": "URL Produk",
+        "placeholder": "https://store.example.com/products/123",
+        "description": "Halaman yang dibuka pelanggan dari Belanja Messenger. Produk tanpa URL akan dilewati saat disinkronkan ke Katalog Meta."
+      },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "Opsional"
+      },
+      "inventoryPolicy": {
+        "label": "Kebijakan inventaris"
+      },
+      "inventoryQuantity": {
+        "label": "Jumlah"
+      },
+      "allowOutOfStockPurchase": {
+        "label": "Izinkan pelanggan membeli produk ini saat stok habis"
+      },
+      "vendor": {
+        "label": "Vendor"
+      },
+      "rank": {
+        "label": "Peringkat"
+      },
+      "category": {
+        "label": "Kategori",
+        "placeholder": "Tanpa kategori"
+      },
+      "subcategory": {
+        "label": "Subkategori",
+        "placeholder": "Tidak ada"
+      },
+      "isSearchable": {
+        "label": "Produk ini dapat dicari di dalam bot"
+      },
+      "allowSpecialRequest": {
+        "label": "Izinkan pengguna membuat permintaan khusus (melampirkan catatan)"
+      },
+      "isActive": {
+        "label": "Aktif"
+      },
+      "isAddonOnly": {
+        "label": "Gunakan produk ini hanya sebagai tambahan untuk produk lain"
+      },
+      "optionName": {
+        "label": "Nama Opsi"
+      },
+      "optionValue": {
+        "label": "Nilai Opsi"
+      },
+      "variant": {
+        "label": "Varian"
+      },
+      "addImageFromLink": "Tambahkan Gambar",
+      "uploadImage": "Unggah Gambar",
+      "tagsDescription": "Tag dapat dicari.",
+      "addonsDescription": "Tambahkan produk yang dapat dibeli klien sebagai tambahan. Anda juga dapat memberikan produk gratis di sini. Misalnya, restoran dapat memberikan pilihan minuman gratis di sini. Anda harus membuat produk sebelum menggunakannya sebagai tambahan.",
+      "addonName": {
+        "label": "Nama",
+        "placeholder": "nama"
+      },
+      "addonMaxSelections": {
+        "label": "Pilihan maksimal"
+      },
+      "addonProducts": {
+        "label": "Produk",
+        "placeholder": "Pilih produk..."
+      },
+      "variantsDescription": "Tambahkan varian jika produk ini tersedia dalam beberapa versi, seperti ukuran atau warna yang berbeda",
+      "metaCatalogId": {
+        "label": "ID Katalog Meta"
+      }
+    },
+    "inventoryPolicy": {
+      "dont_track": "Jangan lacak inventaris",
+      "track": "Lacak inventaris"
+    }
+  },
+  "tiktok": {
+    "title": "TikTok",
+    "description": "Hubungkan akun TikTok Anda untuk membalas pesan langsung.",
+    "refreshToken": "Token Penyegaran"
+  },
+  "coupons": {
+    "title": "Kupon",
+    "description": "Kelola topik kupon kampanye, impor, ekspor, dan kode kupon yang siap digunakan dalam alur.",
+    "singular": "Kupon",
+    "topicCouponsTitle": "Kupon Topik",
+    "tabs": {
+      "topicCoupon": "Topik Kupon",
+      "coupon": "Kupon",
+      "listTopic": "Daftar Topik",
+      "archive": "Arsip"
+    },
+    "topic": {
+      "create": "Buat Baru",
+      "edit": "Edit topik"
+    },
+    "actions": {
+      "import": "Impor kupon",
+      "export": "Unduh Daftar Kupon",
+      "downloadImportTemplate": "Unduh templat impor"
+    },
+    "fields": {
+      "topic": "Topik",
+      "selectTopic": "Pilih topik",
+      "importCsvOnly": "Klik atau seret berkas .csv ke area ini untuk mengunggah",
+      "allTopics": "Semua topik",
+      "couponCount": "Kupon",
+      "validity": "Masa berlaku",
+      "unlimited": "Tidak terbatas",
+      "code": "Kode",
+      "issueStatus": "Status",
+      "usageStatus": "Penggunaan",
+      "allIssueStatuses": "Semua status",
+      "allUsageStatuses": "Semua penggunaan",
+      "searchCode": "Cari kode"
+    },
+    "issueStatuses": {
+      "published": "Diterbitkan",
+      "unpublished": "Belum diterbitkan"
+    },
+    "usageStatuses": {
+      "used": "Sudah digunakan",
+      "notUsed": "Belum digunakan"
+    },
+    "variables": {
+      "group": "Kupon"
+    },
+    "messages": {
+      "topicSaved": "Topik kupon disimpan.",
+      "editLocked": "Nama dan deskripsi dikunci setelah kupon dibuat atau diimpor.",
+      "archiveTitle": "Arsipkan topik kupon",
+      "archiveConfirm": "Arsipkan \"{name}\"? Topik akan dipindahkan ke daftar Arsip.",
+      "archiveBulkConfirm": "Arsipkan {count} topik yang dipilih? Topik tersebut akan dipindahkan ke daftar Arsip.",
+      "restoreTitle": "Pulihkan topik kupon",
+      "unarchiveConfirm": "Pulihkan \"{name}\"? Topik akan dipindahkan kembali ke daftar Topik.",
+      "unarchiveBulkConfirm": "Pulihkan {count} topik yang dipilih? Topik tersebut akan dipindahkan kembali ke daftar Topik.",
+      "deleteTitle": "Hapus topik kupon",
+      "deleteConfirm": "Hapus topik yang diarsipkan ini? Riwayat kupon akan dipertahankan.",
+      "empty": "Tidak ada kupon yang ditemukan.",
+      "importStarted": "Impor kupon dimulai.",
+      "exportStarted": "Ekspor kupon dimulai.",
+      "exportFailed": "Ekspor kupon gagal.",
+      "exportCount": "{count} baris kupon akan diekspor."
+    }
+  },
+  "productCategories": {
+    "title": "Kategori",
+    "loadError": "Tidak dapat memuat kategori produk.",
+    "all": "Semua produk",
+    "create": "Buat kategori",
+    "edit": "Ubah nama kategori",
+    "name": "Nama kategori",
+    "namePlaceholder": "mis. Koleksi musim panas",
+    "parent": "Kategori induk",
+    "noParent": "Tidak ada (tingkat teratas)",
+    "save": "Simpan",
+    "created": "Kategori dibuat.",
+    "updated": "Kategori diperbarui.",
+    "deleted": "Kategori dihapus.",
+    "saveError": "Tidak dapat menyimpan kategori ini.",
+    "deleteError": "Tidak dapat menghapus kategori ini.",
+    "delete": "Hapus",
+    "cancel": "Batal",
+    "actions": "Tindakan kategori",
+    "deleteTitle": "Hapus “{name}”?",
+    "deleteDescription": "{count, plural, =0 {Tidak ada produk yang ditetapkan ke kategori ini.} one {# produk akan dipindahkan ke Tanpa kategori.} other {# produk akan dipindahkan ke Tanpa kategori.}}",
+    "createSub": "Buat subkategori",
+    "empty": "Belum ada kategori. Buat kategori untuk mengelompokkan produk Anda.",
+    "columns": {
+      "name": "Nama",
+      "products": "Produk",
+      "subcategories": "Subkategori"
+    },
+    "expand": "Tampilkan subkategori",
+    "collapse": "Sembunyikan subkategori",
+    "productCount": "{count, plural, =0 {Tidak ada produk} one {# produk} other {# produk}}",
+    "deleteChildrenWarning": "{count, plural, one {# subkategorinya juga akan dihapus.} other {# subkategorinya juga akan dihapus.}}"
+  },
+  "productImport": {
+    "title": "Impor",
+    "mapColumns": "Pemetaan kolom",
+    "mapColumnsHint": "Cocokkan setiap kolom produk dengan kolom dari berkas Anda. Biarkan kolom tidak dipetakan untuk melewatinya.",
+    "downloadTemplate": "Unduh templat",
+    "upload": "Unggah berkas .csv atau .xlsx",
+    "confirm": "Mulai impor",
+    "started": "Impor produk dimulai.",
+    "error": "Impor produk gagal.",
+    "notMapped": "Tidak dipetakan",
+    "createMissingCategories": "Buat kategori yang belum ada",
+    "fields": {
+      "name": "Nama produk",
+      "sku": "SKU",
+      "price": "Harga",
+      "discount": "Diskon",
+      "shortDescription": "Deskripsi singkat",
+      "category": "Kategori",
+      "vendor": "Vendor",
+      "inventoryQuantity": "Jumlah inventaris",
+      "imageUrl": "URL gambar",
+      "productUrl": "URL produk"
+    },
+    "template": {
+      "sheetName": "Produk",
+      "name": "Nama produk",
+      "sku": "SKU",
+      "price": "Harga",
+      "discount": "Diskon",
+      "shortDescription": "Deskripsi singkat",
+      "category": "Kategori",
+      "vendor": "Vendor",
+      "inventoryQuantity": "Jumlah inventaris",
+      "imageUrl": "URL gambar",
+      "productUrl": "URL produk",
+      "exampleOne": {
+        "name": "Kaos klasik",
+        "description": "Kaos katun lembut",
+        "category": "Pakaian",
+        "vendor": "Contoh Merek"
+      },
+      "exampleTwo": {
+        "name": "Tas kanvas",
+        "description": "Tas jinjing kanvas yang dapat digunakan kembali",
+        "category": "Aksesori",
+        "vendor": "Contoh Merek"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "Sinkronkan Katalog Meta",
+    "connect": "Hubungkan Meta",
+    "connectDescription": "Hubungkan akun Meta Business untuk mengirim produk Anda ke katalog yang sudah ada.",
+    "tabs": {
+      "sync": "Sinkronkan ke Meta",
+      "import": "Sinkronkan dari Meta",
+      "history": "Riwayat",
+      "connection": "Koneksi"
+    },
+    "catalogId": "ID Katalog Meta",
+    "catalogIdPlaceholder": "Masukkan ID Katalog dari Commerce Manager",
+    "createCatalog": {
+      "trigger": "Buat katalog baru",
+      "description": "Katalog perdagangan kosong akan dibuat di Business Manager Anda dan digunakan untuk ruang kerja ini.",
+      "business": "Business Manager",
+      "businessPlaceholder": "Pilih Business Manager",
+      "noBusinesses": "Akun Meta ini tidak mengelola Business Manager apa pun, sehingga katalog tidak dapat dibuat di sini.",
+      "name": "Nama katalog",
+      "confirm": "Buat katalog",
+      "created": "Katalog dibuat.",
+      "errors": {
+        "businesses": "Tidak dapat memuat Business Manager Anda.",
+        "create": "Tidak dapat membuat katalog."
+      }
+    },
+    "importDescription": "Tarik produk dari katalog Meta ke ruang kerja Anda. Temukan ID tersebut di Commerce Manager.",
+    "importCatalogAction": "Impor",
+    "importProgress": "Mengimpor produk Meta: {imported}/{total}",
+    "importQueued": "Menunggu impor dimulai…",
+    "importResult": "Berhasil mengimpor {imported} dari {total} produk Meta",
+    "retryImport": "Coba lagi impor",
+    "syncNow": "Sinkronkan sekarang",
+    "syncSelectionRequired": "Pilih produk yang ingin Anda kirim, lalu jalankan sinkronisasi.",
+    "syncSelectionCount": "{count} produk yang dipilih akan dikirim ke Katalog Meta.",
+    "connectionInfo": {
+      "heading": "Katalog Meta yang terhubung",
+      "noCatalog": "Belum ada katalog yang dipilih",
+      "lastCatalogId": "ID Katalog Meta terakhir",
+      "businessId": "ID Bisnis",
+      "authMode": "Otorisasi",
+      "tokenExpiresAt": "Token kedaluwarsa",
+      "lastImportedAt": "Impor terakhir",
+      "unknown": "Tidak tersedia",
+      "never": "Tidak pernah",
+      "noExpiry": "Tidak kedaluwarsa",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook Business Extension"
+      },
+      "connectionStatuses": {
+        "active": "Aktif",
+        "invalid": "Perlu dihubungkan kembali"
+      }
+    },
+    "disconnect": "Putuskan koneksi",
+    "reconnect": "Hubungkan kembali",
+    "reconnectWarning": "Token Meta tidak valid atau akan kedaluwarsa dalam tujuh hari.",
+    "requirements": {
+      "intro": "Produk yang disinkronkan ke Belanja Messenger harus memenuhi persyaratan berikut:",
+      "description": {
+        "label": "Deskripsi terperinci",
+        "value": "Selain judul, sertakan spesifikasi, bahan, penggunaan, dan fitur unggulan."
+      },
+      "image": {
+        "label": "Gambar produk",
+        "value": "Resolusi tinggi minimal 500px × 500px, dengan ukuran berkas hingga 8 MB."
+      },
+      "video": {
+        "label": "Video produk",
+        "value": "Ukuran berkas hingga 200 MB."
+      },
+      "price": {
+        "label": "Harga",
+        "value": "Setiap produk harus memiliki harga."
+      },
+      "minimumItems": "Terbitkan setidaknya 6 item agar pelanggan memiliki cukup pilihan."
+    },
+    "historyEmpty": "Belum ada sinkronisasi atau impor yang dijalankan.",
+    "historyFailures": "{failed} gagal · {skipped} dilewati",
+    "historyCatalog": "Katalog {id}",
+    "diagnostics": "Detail kesalahan dan item yang dilewati",
+    "itemError": "Item {id}: {reason}",
+    "itemSkipped": "Item {id}: dilewati — {reason}",
+    "skipReasons": {
+      "missingImage": "gambar tidak ada",
+      "missingDescription": "deskripsi tidak ada",
+      "missingStoreUrl": "URL toko belum dikonfigurasi",
+      "hasVariants": "varian belum didukung"
+    },
+    "statuses": {
+      "queued": "Dalam antrean",
+      "running": "Sedang berjalan",
+      "succeeded": "Berhasil",
+      "partial": "Selesai sebagian",
+      "failed": "Gagal"
+    },
+    "directions": {
+      "push": "Dikirim ke Meta",
+      "import": "Diimpor dari Meta"
+    },
+    "messages": {
+      "catalogSelected": "Impor katalog dimulai.",
+      "syncStarted": "Sinkronisasi Katalog Meta dimulai.",
+      "disconnected": "Koneksi Katalog Meta diputus."
+    },
+    "errors": {
+      "load": "Tidak dapat memuat pengaturan Katalog Meta.",
+      "connect": "Tidak dapat menghubungkan Katalog Meta.",
+      "catalog": "Tidak dapat memilih katalog ini.",
+      "sync": "Tidak dapat memulai sinkronisasi katalog.",
+      "disconnect": "Tidak dapat memutuskan koneksi Katalog Meta.",
+      "invalidAppSettings": "Pengaturan aplikasi Meta belum dikonfigurasi.",
+      "emptyScope": "Cakupan sinkronisasi yang dipilih tidak memiliki produk.",
+      "alreadyRunning": "Sinkronisasi atau impor Katalog Meta sedang berjalan. Tunggu hingga selesai.",
+      "queueImport": "Tidak dapat memasukkan impor Katalog Meta ke antrean.",
+      "queueSync": "Tidak dapat memasukkan sinkronisasi Katalog Meta ke antrean."
+    }
+  },
+  "helpMenu": {
+    "title": "Bantuan",
+    "ariaLabel": "Buka menu bantuan"
+  },
+  "helpItems": {
+    "title": "Tautan Bantuan",
+    "addTitle": "Tambahkan Tautan Bantuan",
+    "editTitle": "Edit Tautan Bantuan",
+    "addButton": "Tambahkan Tautan",
+    "empty": "Belum ada tautan bantuan yang dikonfigurasi.",
+    "fields": {
+      "name": "Nama",
+      "namePlaceholder": "mis. Dokumentasi",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.example.com",
+      "icon": "Ikon",
+      "iconPlaceholder": "mis. book-open, star, circle-question-mark",
+      "position": "Urutan",
+      "iconSearchLink": "Jelajahi ikon Lucide →"
+    }
+  }
+}

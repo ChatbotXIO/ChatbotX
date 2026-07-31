@@ -302,8 +302,7 @@
       "channels": "Bạn đã đạt giới hạn kênh. Nâng cấp gói để kết nối thêm.",
       "teamMembers": "Bạn đã đạt giới hạn thành viên nhóm. Nâng cấp gói để mời thêm.",
       "contacts": "Bạn đã đạt giới hạn liên hệ. Nâng cấp gói để thêm liên hệ.",
-      "mac": "Bạn đã đạt giới hạn liên hệ hoạt động hằng tháng. Nâng cấp gói để tiếp cận thêm.",
-      "botMessages": "Bạn đã đạt giới hạn tin nhắn bot. Nâng cấp gói để gửi thêm."
+      "mac": "Bạn đã đạt giới hạn liên hệ hoạt động hằng tháng. Nâng cấp gói để tiếp cận thêm."
     },
     "pastDue": {
       "message": "Thanh toán gần nhất của bạn không thành công. Cập nhật phương thức thanh toán để tiếp tục sử dụng workspace."
@@ -656,10 +655,7 @@
     "title": "Token workspace"
   },
   "dialog": {
-    "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
-    "disconnect": {
-      "description": "Bạn có chắc chắn muốn ngắt kết nối {feature}?"
-    }
+    "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
   },
   "fields": {
     "omnichannel": {
@@ -739,16 +735,7 @@
       "endsWith": "Kết thúc bằng",
       "isBetween": "Khoảng",
       "notBetween": "Không phải khoảng",
-      "used": "Đã sử dụng",
-      "hasAnyValue": "Có bất kỳ giá trị nào",
-      "hasNoValue": "Không có giá trị",
-      "greaterThan": "Lớn hơn",
-      "lessThan": "Nhỏ hơn",
-      "greaterThanOrEqualTo": "Lớn hơn hoặc bằng",
-      "lessThanOrEqualTo": "Nhỏ hơn hoặc bằng",
-      "doesNotContain": "Không chứa",
-      "interval": "Khoảng",
-      "notInterval": "Không phải khoảng"
+      "used": "Đã sử dụng"
     },
     "contactFilter": {
       "allConditions": "Tất cả các điều kiện bên dưới",
@@ -1124,10 +1111,8 @@
     },
     "language": {
       "description": "Liên hệ được gán ngôn ngữ mặc định khi ngôn ngữ liên hệ không xác định.",
-      "english": "Tiếng Anh",
       "label": "Ngôn ngữ",
-      "placeholder": "Chọn ngôn ngữ",
-      "vietnamese": "Tiếng Việt"
+      "placeholder": "Chọn ngôn ngữ"
     },
     "lastName": {
       "label": "Họ",
@@ -2612,7 +2597,7 @@
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
-    "sentAttachments": "Đã gửi {count} tệp đính kèm",
+    "sentAttachments": "Đã gửi {count, plural, one {1 tệp đính kèm} other {# tệp đính kèm}}",
     "deleteComment": "Xóa bình luận",
     "deleteCommentConfirmation": "Bạn có chắc muốn xóa bình luận này? Các bình luận trả lời cũng sẽ bị xóa, cả trong hộp thư và trên Facebook. Hành động này không thể hoàn tác.",
     "deleteMessageSuccess": "Đã xóa tin nhắn",
@@ -2786,7 +2771,6 @@
       "clone": {
         "title": "Nhân bản mẫu tin nhắn",
         "titleWithName": "Nhân bản mẫu tin nhắn: {name}",
-        "description": "Chọn các kênh Messenger bạn muốn nhân bản mẫu này đến. Chỉ các mẫu APPROVED mới có thể được nhân bản.",
         "channelsLabel": "Kênh đích",
         "channelsPlaceholder": "Chọn kênh",
         "succeededCount": "Đã nhân bản thành công {count} kênh",
@@ -3387,15 +3371,7 @@
   },
   "magicLinks": {
     "title": "Magic Link",
-    "description": "Liên kết rút gọn: chèn biến từ query vào URL đích.",
-    "createDescription": "Người dùng mở /ml/{workspaceId}/ten-ban; hệ thống chuyển hướng tới URL của bạn.",
-    "pathName": "Đường dẫn (tên)",
-    "pathHint": "Đoạn này nối sau /ml/{workspaceId}/ trong URL công khai. Chỉ dùng chữ, số, gạch dưới và gạch ngang.",
-    "variableHint": "Dùng hai dấu ngoặc trong URL, ví dụ https://example.com/?x={{utm_source}}. Giá trị lấy từ chuỗi query của liên kết theo dõi.",
-    "copyTrackingLink": "Sao chép liên kết theo dõi",
-    "showQr": "Hiện mã QR",
-    "qrTitle": "Mã QR",
-    "qrDescription": "Chia sẻ mã này để mở liên kết theo dõi."
+    "description": "Liên kết rút gọn: chèn biến từ query vào URL đích."
   },
   "sequences": {
     "subscribers": "Người đăng ký",
