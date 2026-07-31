@@ -22,6 +22,7 @@ import {
   RectangleVerticalIcon,
   TrashIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import SendCardStepEditor from "@/features/flows/react-flow/steps/send-card/editor"
@@ -33,6 +34,7 @@ type SendCarouselStepEditorProps = {
 
 const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
   const { parentName } = props
+  const t = useTranslations()
 
   const [api, setApi] = useState<CarouselApi>()
   const { selectedSnap, snapCount } = useSelectedSnapDisplay(api)
@@ -120,7 +122,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
             type="button"
           >
             <PlusIcon />
-            <span className="sr-only">Add slide</span>
+            <span className="sr-only">{t("flows.sendCarousel.addSlide")}</span>
           </Button>
 
           <Button
@@ -132,7 +134,9 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
             variant="destructive"
           >
             <TrashIcon />
-            <span className="sr-only">Remove slide</span>
+            <span className="sr-only">
+              {t("flows.sendCarousel.removeSlide")}
+            </span>
           </Button>
         </div>
 

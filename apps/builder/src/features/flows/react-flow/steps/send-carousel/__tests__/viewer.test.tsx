@@ -26,8 +26,8 @@ vi.mock("@/components/base-handle", () => ({
   ),
 }))
 
-const HORIZONTAL_MARGIN_CLASS = /\bm[lrxe]-\d/
-const FIRST_CARD_FRAME_OFFSET = "mr-4"
+const HORIZONTAL_MARGIN_CLASS = /\bm[slrxe]-\d/
+const FIRST_CARD_FRAME_OFFSET = "me-4"
 
 let container: HTMLDivElement
 let root: Root

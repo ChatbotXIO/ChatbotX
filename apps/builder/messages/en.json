@@ -2167,6 +2167,8 @@
       "addCustomField": "Add New"
     },
     "sendCarousel": {
+      "addSlide": "Add slide",
+      "removeSlide": "Remove slide",
       "whatsappLinkButtonIgnored": "On WhatsApp, this card's link won't work: a card with a link button cannot have other buttons. It will be sent as a reply instead."
     },
     "additionalSteps": "Additional steps",

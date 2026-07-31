@@ -2166,6 +2166,11 @@
       "addMapping": "إضافة تعيين",
       "addCustomField": "إضافة جديد"
     },
+    "sendCarousel": {
+      "addSlide": "إضافة بطاقة",
+      "removeSlide": "إزالة البطاقة",
+      "whatsappLinkButtonIgnored": "في واتساب، لن يعمل رابط هذه البطاقة: لا يمكن أن تحتوي البطاقة التي تتضمن زر رابط على أزرار أخرى. سيتم إرسال الزر كزر رد بدلًا من ذلك."
+    },
     "additionalSteps": "خطوات إضافية",
     "delayType": {
       "datetimeCustomField": "حقل التاريخ والوقت المخصص",
@@ -2674,6 +2679,8 @@
     "noVersionsFound": "لم يتم العثور على إصدارات منشورة",
     "publishVersionSuccess": "تم نشر إصدار جديد",
     "flowConfigIncomplete": "بعض الإعدادات غير مكتملة",
+    "whatsappCarouselButtonsMismatch": "في واتساب، يجب أن يحتوي العرض الدوّار على الأزرار نفسها في كل بطاقة: إما زر رابط واحد في كل بطاقة، أو العدد نفسه من أزرار الرد في كل بطاقة",
+    "whatsappCarouselLinkButtonNotAlone": "في واتساب، لا يمكن أن تحتوي بطاقة العرض الدوّار التي تتضمن زر رابط على أي أزرار أخرى. أزل الأزرار الأخرى من تلك البطاقة، أو غيّر زر الرابط إلى إجراء آخر.",
     "duplicateNodeError": "تعذّر تكرار الكتلة. يُرجى المحاولة مرة أخرى.",
     "deleteNodeError": "تعذّر حذف الكتلة. يُرجى المحاولة مرة أخرى.",
     "redoHistoryCleared": "تم مسح سجل الإعادة",
@@ -4170,7 +4177,7 @@
     "expand": "إظهار الفئات الفرعية",
     "collapse": "إخفاء الفئات الفرعية",
     "productCount": "{count, plural, =0 {لا توجد منتجات} one {# منتج} other {# منتجات}}",
-    "deleteChildrenWarning": "{count, plural, one {سيتم حذف فئتها الفرعية أيضًا.} other {سيتم حذف فئاتها الفرعية أيضًا.}}"
+    "deleteChildrenWarning": "{count, plural, one {سيتم حذف # فئة فرعية أيضًا.} other {سيتم حذف # فئات فرعية أيضًا.}}"
   },
   "productImport": {
     "title": "استيراد",
