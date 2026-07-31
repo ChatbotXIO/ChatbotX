@@ -1,26 +1,36 @@
-import { flowValidationCodes } from "@chatbotx.io/flow-config"
+import {
+  type FlowValidationCode,
+  isFlowValidationCode,
+} from "@chatbotx.io/flow-config"
 import type { ZodError } from "zod"
 
-const flowValidationMessageKeys = {
-  [flowValidationCodes.whatsappCarouselButtonsMismatch]:
-    "messages.whatsappCarouselButtonsMismatch",
-} as const
+/**
+ * Shown when a rule raised no recognisable code — a plain schema failure such as
+ * a missing required field, which has no message of its own.
+ */
+const GENERIC_MESSAGE_KEY = "messages.flowConfigIncomplete"
 
-type FlowValidationCode = keyof typeof flowValidationMessageKeys
+/**
+ * A validation code doubles as its own translation key: the code names the rule
+ * and `messages.<code>` is the text shown for it.
+ *
+ * That convention is what keeps this file channel- and step-agnostic. A new rule
+ * needs a code in `flowValidationCodes` and a string in `messages/*.json`; it
+ * never needs an entry here, so this resolver cannot fall behind the rules it
+ * translates.
+ */
 export type FlowValidationMessageKey =
-  (typeof flowValidationMessageKeys)[FlowValidationCode]
-
-const isFlowValidationCode = (message: string): message is FlowValidationCode =>
-  Object.hasOwn(flowValidationMessageKeys, message)
+  | `messages.${FlowValidationCode}`
+  | typeof GENERIC_MESSAGE_KEY
 
 export const resolveFlowValidationMessageKey = (
   error: ZodError,
-): FlowValidationMessageKey | "messages.flowConfigIncomplete" => {
-  const validationCode = error.issues.find((issue) =>
+): FlowValidationMessageKey => {
+  const code = error.issues.find((issue) =>
     isFlowValidationCode(issue.message),
   )?.message
 
-  return validationCode && isFlowValidationCode(validationCode)
-    ? flowValidationMessageKeys[validationCode]
-    : "messages.flowConfigIncomplete"
+  return code && isFlowValidationCode(code)
+    ? `messages.${code}`
+    : GENERIC_MESSAGE_KEY
 }

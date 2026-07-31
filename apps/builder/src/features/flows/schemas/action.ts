@@ -1,10 +1,7 @@
-import {
-  edgeSchema,
-  flowVersionSchema,
-  refineWhatsappCarouselButtons,
-} from "@chatbotx.io/flow-config"
+import { edgeSchema, flowVersionSchema } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { refineStepsByChannel } from "./channel-step-refinement"
 
 export const createFlowSchema = z.object({
   folderId: zodBigintAsString().nullable(),
@@ -27,8 +24,11 @@ export type UpdateDraftFlowVersionSchema = z.infer<
   typeof updateDraftFlowVersionSchema
 >
 
+// Channel rules are declared per step (see `react-flow/steps/validators.ts`),
+// so this stays one generic hook instead of accumulating a refinement per
+// channel/step pair.
 export const publishFlowSchema = z.object({
-  nodes: z.array(flowVersionSchema).superRefine(refineWhatsappCarouselButtons),
+  nodes: z.array(flowVersionSchema).superRefine(refineStepsByChannel),
   edges: z.array(edgeSchema),
 })
 export type PublishFlowSchema = z.infer<typeof publishFlowSchema>

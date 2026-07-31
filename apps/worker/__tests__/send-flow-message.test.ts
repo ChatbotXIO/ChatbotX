@@ -101,6 +101,19 @@ describe("sendFlowMessage", () => {
     })
   })
 
+  test("omits flowVersionId when the run is using the latest flow version", async () => {
+    await sendFlowMessage({ ...makeProps(), useLatestFlowVersion: true })
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          flowVersionId: undefined,
+        }),
+      }),
+    )
+  })
+
   test("waits on the enqueued job with conversation and step context", async () => {
     const fakeJob = { waitUntilFinished: vi.fn() }
     mocks.chatQueueAdd.mockResolvedValueOnce(fakeJob)

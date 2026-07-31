@@ -500,6 +500,49 @@ describe("flow action target resolution", () => {
       "runFlowPostback: action matches no button or quick reply, skipping",
     )
   })
+
+  /**
+   * Payloads no longer pin a version, so a tap resolves the flow's published
+   * one — which a paused or deleted flow no longer has. Throwing here would
+   * retry the job to no effect and eventually dead-letter it.
+   */
+  test("a tap whose flow no longer resolves is a graceful skip, not a throw", async () => {
+    detectFlowVersion.mockRejectedValue(
+      new SdkException("FlowVersion not found"),
+    )
+
+    await expect(
+      runFlowPostback({
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: replyAction(),
+        ref: null,
+      } as never),
+    ).resolves.toBeUndefined()
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv-1",
+        buttonId: REPLY_ID,
+        flowId: FLOW_ID,
+      }),
+      "runFlowPostback: flow version could not be resolved, skipping",
+    )
+  })
+
+  test("propagates a non-SdkException failure so the job retries", async () => {
+    detectFlowVersion.mockRejectedValue(new Error("connection reset"))
+
+    await expect(
+      runFlowPostback({
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        action: replyAction(),
+        ref: null,
+      } as never),
+    ).rejects.toThrow("connection reset")
+  })
 })
 
 describe("seekConnectedNode", () => {
@@ -824,6 +867,157 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
     expect(job.data.nodeId).toBe("node-2")
     expect(job.data.flowId).toBe("flow-1")
     expect(job.data.sendFrom).toBe("inbox")
+  })
+})
+
+describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
+  beforeEach(() => integrationQueueAdd.mockClear())
+
+  /** node-2 is wired to `btn-1`'s handle, as a since-changed config left it. */
+  function makeFlowWithEdgeFromButton() {
+    const targetNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: {
+        name: "Edge target",
+        isStartNode: false,
+        details: { steps: [] },
+      },
+    }
+    const edge: EdgeSchema = {
+      id: "e1",
+      source: "node-1",
+      sourceHandle: "btn-1",
+      target: "node-2",
+      targetHandle: "input",
+    }
+    return makeFlowVersion([targetNode], [edge])
+  }
+
+  function makeButtonProps(button: ButtonStepProps) {
+    return {
+      ...makeBaseProps(makeFlowWithEdgeFromButton()),
+      details: button,
+      targetType: "button" as const,
+      targetId: button.id,
+      triggerNextNode: true,
+    }
+  }
+
+  test("a startExternalFlow button ignores a stale edge left over from a previous startAnotherNode config", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Button #1",
+        buttonType: "startExternalFlow",
+        beforeStep: {
+          id: "before-1",
+          stepType: "startExternalFlow",
+          flowId: "external-flow-1",
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { flowId: string; nodeId?: string } },
+    ]
+    expect(job.data.flowId).toBe("external-flow-1")
+    expect(job.data.nodeId).toBeUndefined()
+  })
+
+  test("an openWebsite button does not fire the node a stale edge still points at", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Button #2",
+        buttonType: "openWebsite",
+        beforeStep: {
+          id: "before-1",
+          stepType: "openWebsite",
+          url: "https://example.com",
+          browserSize: 100,
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  // --- preserved behavior: these buttons legitimately route by edge ---
+
+  test("a startAnotherNode button still advances to its connected node", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Go",
+        buttonType: "startAnotherNode",
+        beforeStep: {
+          id: "before-1",
+          stepType: "startAnotherNode",
+          nodeId: "node-2",
+          viewOnly: true,
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
+  })
+
+  /**
+   * The one case where `buttonType` and `beforeStep.stepType` disagree:
+   * `sendMessage` and `performAction` buttons own a node, and they record that
+   * jump as a `startAnotherNode` beforeStep. Gating on `buttonType` instead would
+   * silently strand both.
+   */
+  test.each([
+    ["performAction"],
+    ["sendMessage"],
+  ])("a %s button still advances to the node it owns", async (buttonType) => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Run",
+        buttonType,
+        beforeStep: {
+          id: "before-1",
+          stepType: "startAnotherNode",
+          nodeId: "node-2",
+          viewOnly: true,
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
+  })
+
+  test("a button with no action of its own still advances by edge", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps(makeQuickReply("btn-1", "Yes")),
+    )
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
   })
 })
 

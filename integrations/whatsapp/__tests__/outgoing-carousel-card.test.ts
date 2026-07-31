@@ -509,6 +509,54 @@ describe("whatsapp outgoing card", () => {
     })
   })
 
+  /**
+   * Publish rejects this shape for a WhatsApp node, but an `omnichannel` node
+   * carries no WhatsApp rule and still lands here, so the send path is the last
+   * place the loss can be reported. Meta accepts the degraded payload, so
+   * without this warning the button simply stops opening its link.
+   */
+  test("warns that a mixed card's link is dropped", async () => {
+    const url = "https://example.com/products/1"
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        imageUrl: IMAGE_URL,
+        buttons: [
+          makeWebsiteButton("1000000000003", "Open", url),
+          makeButton("1000000000004", "Reply"),
+        ],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [makeButton("1000000000006", "Reply")],
+      }),
+    ])
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ cardIndex: 0, buttonId: "1000000000003" }),
+      expect.stringContaining("link button"),
+    )
+  })
+
+  test("does not warn when a card's lone link button keeps its url", async () => {
+    const url = "https://example.com/products/1"
+    await sendCards([
+      makeCard({
+        id: "card-1",
+        imageUrl: IMAGE_URL,
+        buttons: [makeWebsiteButton("1000000000003", "Open", url)],
+      }),
+      makeCard({
+        id: "card-2",
+        imageUrl: IMAGE_URL,
+        buttons: [makeWebsiteButton("1000000000005", "Visit", url)],
+      }),
+    ])
+
+    expect(mockLogger.warn).not.toHaveBeenCalled()
+  })
+
   test("keeps duplicate reply labels across cards", async () => {
     await sendCards([
       makeCard({

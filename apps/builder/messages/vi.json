@@ -2178,6 +2178,9 @@
       "addMapping": "Thêm ánh xạ",
       "addCustomField": "Thêm mới"
     },
+    "sendCarousel": {
+      "whatsappLinkButtonIgnored": "Với WhatsApp, liên kết của thẻ này sẽ không hoạt động: thẻ có nút mở liên kết thì không được có nút nào khác. Nút sẽ được gửi như một nút trả lời."
+    },
     "additionalSteps": "Các bước bổ sung",
     "delayType": {
       "datetimeCustomField": "Trường tùy chỉnh ngày giờ",
@@ -2687,6 +2690,7 @@
     "publishVersionSuccess": "Đã xuất bản phiên bản mới",
     "flowConfigIncomplete": "Một số cấu hình chưa hoàn chỉnh",
     "whatsappCarouselButtonsMismatch": "Với WhatsApp, mọi thẻ trong một carousel phải có nút giống nhau: hoặc mỗi thẻ đúng một nút mở liên kết, hoặc mỗi thẻ cùng số nút trả lời",
+    "whatsappCarouselLinkButtonNotAlone": "Với WhatsApp, thẻ carousel có nút mở liên kết thì không được có nút nào khác. Hãy xoá các nút còn lại trên thẻ đó, hoặc đổi nút mở liên kết sang hành động khác.",
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",
     "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại.",
     "redoHistoryCleared": "Đã xoá lịch sử làm lại",

@@ -3,9 +3,11 @@ import {
   type ButtonStepProps,
   type MetadataPayload,
   readCarouselCardUrlButton,
+  readStrandedCarouselLinkButton,
   whatsappCarouselCardLimits,
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
+import { logger } from "../../../lib/logger"
 import type {
   CarouselCard,
   CarouselCardAction,
@@ -70,7 +72,7 @@ function buildCardButtons(buttons: ButtonStepProps[], props: CardProps) {
  */
 function buildCardAction(
   buttons: ButtonStepProps[],
-  props: CardProps,
+  props: CardProps & { cardIndex: number },
 ): CarouselCardAction | undefined {
   const urlButton = readCarouselCardUrlButton(buttons)
 
@@ -89,6 +91,24 @@ function buildCardAction(
     }
   }
 
+  // Meta accepts the degraded payload, so this is the only signal that the link
+  // was lost. Publish already blocks it on a WhatsApp node; an `omnichannel` node
+  // carries no WhatsApp rule and still arrives here.
+  const strandedLinkButton = readStrandedCarouselLinkButton(buttons)
+  if (strandedLinkButton) {
+    logger.warn(
+      {
+        flowId: props.flowId,
+        flowVersionId: props.flowVersionId,
+        // Indexed the same way the publish error is, so a report and a rejection
+        // point at the same card.
+        cardIndex: props.cardIndex,
+        buttonId: strandedLinkButton.id,
+      },
+      "Carousel card mixes a link button with other buttons; sending every button as a reply and dropping the link",
+    )
+  }
+
   const replies = buildCardButtons(buttons, props)
 
   return replies.length > 0 ? { buttons: replies } : undefined
@@ -101,7 +121,7 @@ function buildCarouselCard(
 ): CarouselCard {
   const content = readCardContent(payload)
   const bodyText = clampText(content.caption, messageLimits.carouselCardBody)
-  const action = buildCardAction(payload.buttons ?? [], props)
+  const action = buildCardAction(payload.buttons ?? [], { ...props, cardIndex })
 
   return {
     card_index: cardIndex,

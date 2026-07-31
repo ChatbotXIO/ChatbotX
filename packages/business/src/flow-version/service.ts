@@ -46,6 +46,51 @@ class FlowVersionService extends BaseService {
     )
   }
 
+  /**
+   * The version a tapped button belongs to.
+   *
+   * A button payload pins a version only when the run that sent it was pinned;
+   * an unpinned run omits it (`useLatestFlowVersion` in
+   * `apps/worker/src/integration/handlers/step.ts`), which is the common case,
+   * so the flow's published version is the one that produced the message.
+   *
+   * Resolving both here rather than at each call site is deliberate: Drizzle
+   * drops an `undefined` filter value instead of matching on it, so passing an
+   * absent version id straight to `findFirst` silently widens the query from
+   * "this version" to "any version in the workspace" and returns an unrelated
+   * flow's nodes.
+   *
+   * Unlike the worker's `detectFlowVersion`, a paused flow still resolves: this
+   * answers "which nodes did this button come from", which stays true whether or
+   * not the flow is still running.
+   */
+  async findForButtonPayload({
+    flowId,
+    workspaceId,
+    versionId,
+  }: {
+    flowId: string
+    workspaceId: string
+    versionId?: string
+  }): Promise<FlowVersionModel | undefined> {
+    if (versionId) {
+      return await db.query.flowVersionModel.findFirst({
+        where: { id: versionId, workspaceId },
+      })
+    }
+
+    const flow = await db.query.flowModel.findFirst({
+      where: { id: flowId, workspaceId },
+    })
+    if (!flow?.currentVersionId) {
+      return
+    }
+
+    return await db.query.flowVersionModel.findFirst({
+      where: { id: flow.currentVersionId, workspaceId },
+    })
+  }
+
   async findById({
     versionId,
     flowId,

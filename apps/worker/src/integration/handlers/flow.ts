@@ -373,12 +373,29 @@ export async function runStepsAndQuickReplies(
   }
 
   // send next node if exists
-  let relatedEdge: EdgeSchema | null | undefined = null
-  if (
-    targetType === "button" ||
+  //
+  // A tapped button/quickReply resolves its next node through its edge only
+  // when its own action is a node jump — or when it has no action at all
+  // (`buttonType: null`, `whatsappOptionList`), where the edge is the only
+  // routing it has. The canvas keeps type and edge in lockstep: dragging an
+  // edge from a button handle rewrites that button to `startAnotherNode`, and
+  // deleting the edge clears it back to `null` (`updateButtonRoute` /
+  // `createRouteFields` in `flow-config/src/routable-handle.ts`). So a button
+  // carrying an `openWebsite` / `startExternalFlow` / `startExternalNode`
+  // action can never have been wired to a node on purpose — such an edge is
+  // always left over from a config this button has since moved away from, and
+  // following it would fire a node the button no longer targets on top of the
+  // action it actually has.
+  //
+  // `targetType === "step"` keeps never following an edge, as before.
+  const followsEdgeToNextNode =
     targetType === "node" ||
-    targetType === "quickReply"
-  ) {
+    ((targetType === "button" || targetType === "quickReply") &&
+      (details.beforeStep == null ||
+        details.beforeStep.stepType === stepTypes.enum.startAnotherNode))
+
+  let relatedEdge: EdgeSchema | null | undefined = null
+  if (followsEdgeToNextNode) {
     relatedEdge = (flowVersion.edges as EdgeSchema[]).find(
       (edge) => edge.sourceHandle === targetId,
     )
@@ -703,11 +720,35 @@ async function runFlowAction(
     return
   }
 
-  const { flowVersion } = await detectFlowVersion({
-    flowId: parsedAction.flowId,
-    flowVersionId: parsedAction.flowVersionId,
-    workspaceId: conversation.workspaceId,
-  })
+  // A payload pins a version only when the run that sent it was pinned, so most
+  // taps resolve the flow's *published* version — which a paused, unpublished or
+  // deleted flow no longer has. Skip those the way the bare-flow-ID branch above
+  // does: a thrown job would only retry and dead-letter, and the tap is already
+  // in the past. Anything that is not a resolution failure still propagates so
+  // the job can retry.
+  let flowVersion: FlowVersionModel
+  try {
+    const resolved = await detectFlowVersion({
+      flowId: parsedAction.flowId,
+      flowVersionId: parsedAction.flowVersionId,
+      workspaceId: conversation.workspaceId,
+    })
+    flowVersion = resolved.flowVersion
+  } catch (error) {
+    if (error instanceof SdkException) {
+      logger.warn(
+        {
+          ...createFlowActionWarningContext(data),
+          buttonId,
+          flowId: parsedAction.flowId,
+          flowVersionId: parsedAction.flowVersionId,
+        },
+        `${handler.name}: flow version could not be resolved, skipping`,
+      )
+      return
+    }
+    throw error
+  }
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
 
