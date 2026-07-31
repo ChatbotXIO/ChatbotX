@@ -211,7 +211,7 @@ export function AutomatedResponsesTable({
                 }
               />
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, variant: "move" })}
+                onClick={() => setRowAction({ row, variant: "move" })}
               >
                 <FolderUpIcon />
                 {t("actions.move")}

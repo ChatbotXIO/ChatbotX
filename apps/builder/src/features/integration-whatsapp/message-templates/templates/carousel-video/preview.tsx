@@ -20,6 +20,7 @@ import {
   Minus,
   Plus,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { memo, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { TemplateBody } from "../components/body"
@@ -34,6 +35,7 @@ const TemplateCarouselVideoPreviewComponent = (
   props: TemplateCarouselVideoPreviewProps,
 ) => {
   const { parentName = "content" } = props
+  const t = useTranslations()
 
   const { control } = useFormContext()
   const [api, setApi] = useState<CarouselApi>()
@@ -105,7 +107,7 @@ const TemplateCarouselVideoPreviewComponent = (
                         }
                       />
                       <TooltipContent>
-                        <p>Delete</p>
+                        <p>{t("actions.delete")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -119,12 +121,12 @@ const TemplateCarouselVideoPreviewComponent = (
                             type="button"
                             variant="ghost"
                           >
-                            <ArrowLeft size={25} />
+                            <ArrowLeft className="rtl:rotate-180" size={25} />
                           </Button>
                         }
                       />
                       <TooltipContent>
-                        <p>Move Left</p>
+                        <p>{t("actions.moveEarlier")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -139,12 +141,12 @@ const TemplateCarouselVideoPreviewComponent = (
                             type="button"
                             variant="ghost"
                           >
-                            <ArrowRight size={25} />
+                            <ArrowRight className="rtl:rotate-180" size={25} />
                           </Button>
                         }
                       />
                       <TooltipContent>
-                        <p>Move Right</p>
+                        <p>{t("actions.moveLater")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -162,7 +164,7 @@ const TemplateCarouselVideoPreviewComponent = (
                         }
                       />
                       <TooltipContent>
-                        <p>Add</p>
+                        <p>{t("actions.add")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -190,7 +192,7 @@ const TemplateCarouselVideoPreviewComponent = (
                   }
                 />
                 <TooltipContent>
-                  <p>Next</p>
+                  <p>{t("actions.next")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -200,7 +202,7 @@ const TemplateCarouselVideoPreviewComponent = (
                 <TooltipTrigger
                   render={
                     <Button
-                      className="absolute -start-0 top-1/2 size-8 shrink-0 -translate-y-1/2"
+                      className="absolute start-0 top-1/2 size-8 shrink-0 -translate-y-1/2"
                       disabled={current === 0}
                       onClick={onPrev}
                       type="button"
@@ -211,7 +213,7 @@ const TemplateCarouselVideoPreviewComponent = (
                   }
                 />
                 <TooltipContent>
-                  <p>Prev</p>
+                  <p>{t("actions.prev")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

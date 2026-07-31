@@ -85,7 +85,7 @@ function ImportOutcome({
           total: connection.importTotalCount,
         })}
         {connection.lastImportedAt ? (
-          <span className="ml-1 text-muted-foreground">
+          <span className="ms-1 text-muted-foreground">
             ({new Date(connection.lastImportedAt).toLocaleString()})
           </span>
         ) : null}

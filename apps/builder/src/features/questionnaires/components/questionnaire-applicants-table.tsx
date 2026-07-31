@@ -204,7 +204,7 @@ export function QuestionnaireApplicantsTable({
             />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onSelect={() => setDeleteId(row.original.id)}
+                onClick={() => setDeleteId(row.original.id)}
                 variant="destructive"
               >
                 <Trash2Icon />

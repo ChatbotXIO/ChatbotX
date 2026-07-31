@@ -147,7 +147,7 @@ export function getColumns({
           />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
             >
               Delete
               <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

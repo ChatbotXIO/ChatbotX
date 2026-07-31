@@ -201,7 +201,7 @@ export function FbCommentsTable({
               />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onSelect={() =>
+                  onClick={() =>
                     router.push(
                       `/space/${workspaceId}/fb-comments/${row.original.id}`,
                     )
@@ -211,13 +211,13 @@ export function FbCommentsTable({
                   {t("actions.edit")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => setRowAction({ row, variant: "update" })}
+                  onClick={() => setRowAction({ row, variant: "update" })}
                 >
                   <TextIcon className="me-2" />
                   {t("actions.rename")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => setRowAction({ row, variant: "move" })}
+                  onClick={() => setRowAction({ row, variant: "move" })}
                 >
                   <FolderUpIcon className="me-2" />
                   {t("actions.move")}

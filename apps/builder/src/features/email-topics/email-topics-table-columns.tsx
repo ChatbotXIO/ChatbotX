@@ -147,7 +147,7 @@ export function getEmailTopicColumns({
           />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "update" })}
+              onClick={() => setRowAction({ row, variant: "update" })}
             >
               <PencilIcon />
               {t("actions.edit")}
@@ -160,7 +160,7 @@ export function getEmailTopicColumns({
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
             >
               <Trash2Icon className="text-destructive" />
               {t("actions.delete")}

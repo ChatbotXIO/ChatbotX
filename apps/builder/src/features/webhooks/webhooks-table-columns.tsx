@@ -170,13 +170,13 @@ export function getColumns({
               }
             />
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "rename" })}
+              onClick={() => setRowAction({ row, variant: "rename" })}
             >
               <TextIcon />
               {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "move" })}
+              onClick={() => setRowAction({ row, variant: "move" })}
             >
               <FolderUpIcon />
               {t("actions.move")}

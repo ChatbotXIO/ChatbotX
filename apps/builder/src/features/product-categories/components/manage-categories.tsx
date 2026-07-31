@@ -127,10 +127,10 @@ export function ManageCategories({
             <TableHeader>
               <TableRow>
                 <TableHead>{t("columns.name")}</TableHead>
-                <TableHead className="w-32 text-right">
+                <TableHead className="w-32 text-end">
                   {t("columns.products")}
                 </TableHead>
-                <TableHead className="w-32 text-right">
+                <TableHead className="w-32 text-end">
                   {t("columns.subcategories")}
                 </TableHead>
                 <TableHead className="w-12" />
@@ -145,7 +145,7 @@ export function ManageCategories({
                       <div
                         className={cn(
                           "flex items-center gap-2",
-                          depth > 0 && "pl-8",
+                          depth > 0 && "ps-8",
                         )}
                       >
                         {childCount > 0 ? (
@@ -162,7 +162,7 @@ export function ManageCategories({
                             {isExpanded ? (
                               <ChevronDownIcon />
                             ) : (
-                              <ChevronRightIcon />
+                              <ChevronRightIcon className="rtl:rotate-180" />
                             )}
                           </Button>
                         ) : (
@@ -175,10 +175,10 @@ export function ManageCategories({
                         <span className="truncate">{category.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="text-end tabular-nums">
                       {category.productCount}
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground tabular-nums">
+                    <TableCell className="text-end text-muted-foreground tabular-nums">
                       {/* A sub-category cannot have children of its own, so a
                           zero here would read as "none yet" rather than "not
                           possible". */}

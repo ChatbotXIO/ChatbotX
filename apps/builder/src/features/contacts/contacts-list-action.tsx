@@ -1,9 +1,10 @@
 "use client"
 
-import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -78,75 +79,70 @@ export function ContactListAction({
             router.refresh()
           }}
           trigger={
-            <Button
-              className="w-full justify-start"
+            <DropdownMenuItem
+              closeOnClick={false}
               disabled={rows.length === 0}
-              type="button"
-              variant="ghost"
+              onClick={(e) => e.preventDefault()}
             >
               <MessageCirclePlusIcon />
               {t("actions.assign")}
-            </Button>
+            </DropdownMenuItem>
           }
         />
 
         <AddContactTagDialog
           ids={rows.map((r) => r.id)}
           trigger={
-            <Button
-              className="w-full justify-start"
+            <DropdownMenuItem
+              closeOnClick={false}
               disabled={rows.length === 0}
-              type="button"
-              variant="ghost"
+              onClick={(e) => e.preventDefault()}
             >
               <TagIcon />
               {t("actions.addTag")}
-            </Button>
+            </DropdownMenuItem>
           }
         />
 
         <AddContactSequenceDialog
           ids={rows.map((r) => r.id)}
           trigger={
-            <Button
-              className="w-full justify-start"
+            <DropdownMenuItem
+              closeOnClick={false}
               disabled={rows.length === 0}
-              type="button"
-              variant="ghost"
+              onClick={(e) => e.preventDefault()}
             >
               <Layers2Icon />
               {t("actions.addSequence")}
-            </Button>
+            </DropdownMenuItem>
           }
         />
 
         <AddContactCustomFieldDialog
           ids={rows.map((r) => r.id)}
           trigger={
-            <Button
-              className="w-full justify-start"
+            <DropdownMenuItem
+              closeOnClick={false}
               disabled={rows.length === 0}
-              type="button"
-              variant="ghost"
+              onClick={(e) => e.preventDefault()}
             >
               <SaveIcon />
               {t("actions.setCustomField")}
-            </Button>
+            </DropdownMenuItem>
           }
         />
 
         <DeleteContactDialog
           ids={rows.map((r) => r.id)}
           trigger={
-            <Button
-              className="w-full justify-start"
+            <DropdownMenuItem
+              closeOnClick={false}
               disabled={rows.length === 0}
-              type="button"
-              variant="ghost"
+              onClick={(e) => e.preventDefault()}
             >
               <UserRoundXIcon className="text-destructive" />
               {t("actions.delete")}
-            </Button>
+            </DropdownMenuItem>
           }
         />
 
@@ -155,29 +151,26 @@ export function ContactListAction({
           exportAll={exportAll}
           filter={filter}
           trigger={
-            <Button
-              className="w-full justify-start"
+            <DropdownMenuItem
+              closeOnClick={false}
               disabled={rows.length === 0}
-              type="button"
-              variant="ghost"
+              onClick={(e) => e.preventDefault()}
             >
               <CloudDownloadIcon />
               {t("actions.export")}
-            </Button>
+            </DropdownMenuItem>
           }
           workspaceId={workspaceId}
         />
 
-        <Link
-          className={buttonVariants({
-            variant: "ghost",
-            className: "w-full justify-start",
-          })}
-          href={`/space/${workspaceId}/contacts/import`}
-        >
-          <CloudUploadIcon />
-          {t("actions.import")}
-        </Link>
+        <DropdownMenuItem
+          render={
+            <Link href={`/space/${workspaceId}/contacts/import`}>
+              <CloudUploadIcon />
+              {t("actions.import")}
+            </Link>
+          }
+        />
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="px-3 py-2">
@@ -190,45 +183,42 @@ export function ContactListAction({
               <RemoveContactTagDialog
                 ids={rows.map((r) => r.id)}
                 trigger={
-                  <Button
-                    className="w-full justify-start"
+                  <DropdownMenuItem
+                    closeOnClick={false}
                     disabled={rows.length === 0}
-                    type="button"
-                    variant="ghost"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <OctagonXIcon />
                     {t("actions.removeTag")}
-                  </Button>
+                  </DropdownMenuItem>
                 }
               />
 
               <RemoveContactSequenceDialog
                 ids={rows.map((r) => r.id)}
                 trigger={
-                  <Button
-                    className="w-full justify-start"
+                  <DropdownMenuItem
+                    closeOnClick={false}
                     disabled={rows.length === 0}
-                    type="button"
-                    variant="ghost"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <Layers2Icon />
                     {t("actions.removeSequence")}
-                  </Button>
+                  </DropdownMenuItem>
                 }
               />
 
               <ClearContactCustomFieldDialog
                 ids={rows.map((r) => r.id)}
                 trigger={
-                  <Button
-                    className="w-full justify-start"
+                  <DropdownMenuItem
+                    closeOnClick={false}
                     disabled={rows.length === 0}
-                    type="button"
-                    variant="ghost"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <SaveOffIcon />
                     {t("actions.clearCustomField")}
-                  </Button>
+                  </DropdownMenuItem>
                 }
               />
 
@@ -239,15 +229,14 @@ export function ContactListAction({
                     .filter(Boolean) as string[]
                 }
                 trigger={
-                  <Button
-                    className="w-full justify-start"
+                  <DropdownMenuItem
+                    closeOnClick={false}
                     disabled={rows.length === 0}
-                    type="button"
-                    variant="ghost"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <UserIcon />
                     {t("actions.disableBot")}
-                  </Button>
+                  </DropdownMenuItem>
                 }
               />
 
@@ -258,15 +247,14 @@ export function ContactListAction({
                     .filter(Boolean) as string[]
                 }
                 trigger={
-                  <Button
-                    className="w-full justify-start"
+                  <DropdownMenuItem
+                    closeOnClick={false}
                     disabled={rows.length === 0}
-                    type="button"
-                    variant="ghost"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <BotIcon />
                     {t("actions.enableBot")}
-                  </Button>
+                  </DropdownMenuItem>
                 }
               />
 
@@ -277,15 +265,14 @@ export function ContactListAction({
                     .filter(Boolean) as string[]
                 }
                 trigger={
-                  <Button
-                    className="w-full justify-start"
+                  <DropdownMenuItem
+                    closeOnClick={false}
                     disabled={rows.length === 0}
-                    type="button"
-                    variant="ghost"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <ArchiveIcon />
                     {t("actions.archiveConversation")}
-                  </Button>
+                  </DropdownMenuItem>
                 }
               />
             </DropdownMenuSubContent>

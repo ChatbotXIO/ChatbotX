@@ -219,25 +219,25 @@ export function getFlowColumns({
           />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "rename" })}
+              onClick={() => setRowAction({ row, variant: "rename" })}
             >
               <TextIcon />
               {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "move" })}
+              onClick={() => setRowAction({ row, variant: "move" })}
             >
               <FolderUpIcon />
               {t("actions.move")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "duplicate" })}
+              onClick={() => setRowAction({ row, variant: "duplicate" })}
             >
               <CopyPlus />
               {t("actions.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"
             >
               <Trash />

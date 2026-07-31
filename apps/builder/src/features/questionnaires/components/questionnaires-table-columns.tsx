@@ -136,19 +136,19 @@ export function getQuestionnaireColumns({
               }
             />
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "rename" })}
+              onClick={() => setRowAction({ row, variant: "rename" })}
             >
               <TextIcon />
               {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "duplicate" })}
+              onClick={() => setRowAction({ row, variant: "duplicate" })}
             >
               <CopyPlusIcon />
               {t("actions.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"
             >
               <Trash2Icon />

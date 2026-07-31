@@ -115,19 +115,19 @@ export function getAITriggersColumns({
           />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "update" })}
+              onClick={() => setRowAction({ row, variant: "update" })}
             >
               Update
               <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "duplicate" })}
+              onClick={() => setRowAction({ row, variant: "duplicate" })}
             >
               Duplicate
               <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
             >
               Delete
               <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

@@ -214,7 +214,7 @@ export function CustomFieldsTable({
                 {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, variant: "move" })}
+                onClick={() => setRowAction({ row, variant: "move" })}
               >
                 <FolderUpIcon />
                 {t("actions.move")}

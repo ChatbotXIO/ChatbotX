@@ -91,6 +91,10 @@
     "getMessengerAdsJson": "الحصول على JSON لإعلانات ماسنجر",
     "getMessengerAdPayload": "الحصول على بيانات إعلان ماسنجر",
     "ok": "موافق",
+    "next": "التالي",
+    "prev": "السابق",
+    "moveEarlier": "نقل إلى الأمام",
+    "moveLater": "نقل إلى الخلف",
     "analytics": "التحليلات",
     "deleteAnalytics": "حذف التحليلات",
     "flowVersions": "إصدارات المسار",
@@ -1377,7 +1381,9 @@
       "pending": "قيد الانتظار",
       "processing": "قيد المعالجة",
       "success": "نجاح",
-      "error": "خطأ"
+      "error": "خطأ",
+      "completed": "مكتمل",
+      "failed": "فاشل"
     },
     "subtitle": {
       "placeholder": "أدخل العنوان الفرعي"
@@ -1831,8 +1837,15 @@
         "progress": "التقدم",
         "success": "نجاح",
         "failed": "فشل",
-        "completedAt": "اكتمل في"
-      }
+        "completedAt": "اكتمل في",
+        "recent": "الاستيرادات الأخيرة",
+        "errorDetails": "أخطاء الاستيراد",
+        "row": "الصف {row}"
+      },
+      "fileTooLarge": "الملف يتجاوز الحد الأقصى البالغ {size} ميجابايت.",
+      "unsupportedFileType": "نوع الملف هذا غير مدعوم.",
+      "unableToReadHeaders": "تعذّرت قراءة رؤوس الاستيراد.",
+      "uploadError": "تعذّر رفع الملف."
     },
     "line": {
       "label": "السطر"
@@ -3644,7 +3657,8 @@
     "chooseSpecificPosts": "اختر المنشورات...",
     "postIdTab": "معرّف المنشور",
     "postIdPlaceholder": "أدخل معرّفات المنشورات، معرّفًا واحدًا في كل سطر...",
-    "noPostsFound": "لم يتم العثور على منشورات"
+    "noPostsFound": "لم يتم العثور على منشورات",
+    "selectPageAll": "جميع الصفحات"
   },
   "facebookLeadAdsAutomation": {
     "title": "أتمتة إعلانات العملاء المحتملين على Facebook",
@@ -3869,10 +3883,12 @@
         "label": "الترتيب"
       },
       "category": {
-        "label": "الفئة"
+        "label": "الفئة",
+        "placeholder": "غير مصنّف"
       },
       "subcategory": {
-        "label": "الفئة الفرعية"
+        "label": "الفئة الفرعية",
+        "placeholder": "بدون"
       },
       "isSearchable": {
         "label": "يمكن البحث عن هذا المنتج داخل البوت"
@@ -3910,7 +3926,18 @@
         "label": "المنتجات",
         "placeholder": "اختر المنتجات..."
       },
-      "variantsDescription": "أضف متغيرات إذا كان هذا المنتج متوفرًا بإصدارات متعددة، مثل الأحجام أو الألوان المختلفة"
+      "variantsDescription": "أضف متغيرات إذا كان هذا المنتج متوفرًا بإصدارات متعددة، مثل الأحجام أو الألوان المختلفة",
+      "currency": {
+        "label": "العملة"
+      },
+      "productUrl": {
+        "label": "رابط المنتج",
+        "placeholder": "https://store.example.com/products/123",
+        "description": "الصفحة التي يفتحها العملاء من ميسنجر شوبينغ. يتم تخطي المنتجات التي لا تحتوي على رابط عند المزامنة مع كتالوج ميتا."
+      },
+      "metaCatalogId": {
+        "label": "معرّف كتالوج ميتا"
+      }
     },
     "inventoryPolicy": {
       "dont_track": "عدم تتبّع المخزون",
@@ -4005,6 +4032,312 @@
       "iconPlaceholder": "مثال: book-open، star، circle-question-mark",
       "position": "الترتيب",
       "iconSearchLink": "استعراض أيقونات Lucide ←"
+    }
+  },
+  "instagramCommentAutomation": {
+    "title": "أتمتة تعليقات إنستغرام",
+    "description": "أتمتة تعليقات إنستغرام لجهات الاتصال الخاصة بك.",
+    "create": "إنشاء أتمتة",
+    "replies": "الردود",
+    "activated": "تم تفعيل الأتمتة",
+    "deactivated": "تم إيقاف الأتمتة",
+    "trackCommentsOn": "تتبع التعليقات على",
+    "trackCommentsOnDescription": "طبّق هذه الأتمتة على جميع المنشورات في حسابك المتصل، أو حدّدها بمنشورات معينة تختارها.",
+    "privateReply": "رد خاص (البريد الوارد)",
+    "privateReplyDescription": "إرسال رسالة خاصة إلى صندوق وارد المعلّق. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت (مع دعم spintax)، أو مسار روبوت محادثة، أو التعطيل.",
+    "publicReply": "رد علني على التعليق",
+    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية (مع دعم spintax)، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد.",
+    "replyMessage": "رسالة الرد",
+    "replyMessagePlaceholder": "أدخل رسالة الرد...",
+    "includeKeywordsType": "الرد على",
+    "includeKeywordsTypeDescription": "اختر التعليقات التي تستجيب لها هذه الأتمتة.",
+    "includeKeywords": "الكلمات المفتاحية للمطابقة",
+    "excludeKeywords": "استبعاد التعليقات التي تحتوي على هذه الكلمات المفتاحية",
+    "excludeKeywordsDescription": "سيتم تجاهل التعليقات التي تحتوي على أي من هذه الكلمات المفتاحية من قبل أتمتة الرد الخاص والعلني.",
+    "keywordsPlaceholder": "اكتب واضغط على Enter...",
+    "replyAfter": "الرد بعد",
+    "replyAfterValue": "القيمة",
+    "schedule": {
+      "title": "تعيين ساعات النشاط",
+      "description": "اختر وقت البدء والانتهاء. إذا كان وقت الانتهاء أقبل من وقت البدء، يعمل الجدول بين عشية وضحاها.",
+      "startTime": "وقت البدء",
+      "endTime": "وقت الانتهاء",
+      "alwaysRun": "التشغيل دائمًا",
+      "save": "حفظ",
+      "invalidTimeRange": "يجب أن يختلف وقت البدء عن وقت الانتهاء",
+      "timeRequired": "يرجى تحديد وقت البدء والانتهاء"
+    },
+    "card": {
+      "targeting": "الاستهداف والرد",
+      "filters": "المرشحات والخيارات",
+      "replyTiming": "توقيت الرد",
+      "hideComments": "إخفاء التعليقات"
+    },
+    "postType": {
+      "all": "جميع المنشورات",
+      "published": "المنشورات المنشورة",
+      "reels": "ريلز",
+      "specificPosts": "منشورات محددة"
+    },
+    "replyType": {
+      "text": "رسالة نصية",
+      "flow": "مسار",
+      "AIAgent": "وكيل الذكاء الاصطناعي",
+      "none": "بدون رد"
+    },
+    "keywordsType": {
+      "all": "جميع التعليقات",
+      "equal": "تطابق تام",
+      "contain": "يحتوي على"
+    },
+    "replyAfterType": {
+      "immediately": "فورًا",
+      "seconds": "بعد X ثوانٍ",
+      "minutes": "بعد X دقائق",
+      "hours": "بعد X ساعات",
+      "randomWithin3Minutes": "عشوائيًا في غضون 3 دقائق",
+      "randomWithin5Minutes": "عشوائيًا في غضون 5 دقائق",
+      "randomWithin10Minutes": "عشوائيًا في غضون 10 دقائق",
+      "randomWithin20Minutes": "عشوائيًا في غضون 20 دقيقة",
+      "randomWithin30Minutes": "عشوائيًا في غضون 30 دقيقة",
+      "randomWithin60Minutes": "عشوائيًا في غضون 60 دقيقة"
+    },
+    "options": {
+      "replyToNewContactsOnly": "الرد فقط على جهات الاتصال الجديدة",
+      "replyToNewContactsOnlyDescription": "الرد التلقائي فقط على الأشخاص الذين لم يكونوا جهة اتصال في مساحة عملك من قبل.",
+      "replyOncePerUserPerPost": "الرد مرة واحدة فقط على كل مستخدم لكل منشور",
+      "replyOncePerUserPerPostDescription": "سيحصل كل مستخدم على رد تلقائي واحد كحد أقصى لكل منشور.",
+      "likeUserComment": "الإعجاب بتعليق المستخدم",
+      "likeUserCommentDescription": "التفاعل تلقائيًا بإعجاب على تعليق المعلّق.",
+      "replyToUsersWhoCommentedOnOtherPosts": "الرد على المستخدمين الذين علّقوا على منشورات أخرى",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "الاستمرار في الرد على المستخدمين الذين علّقوا سابقًا على منشوراتك الأخرى.",
+      "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
+      "ignoreCommentRepliesDescription": "تجاوز الأتمتة للتعليقات التي هي ردود على تعليقات أخرى، وليست تعليقات من المستوى الأعلى."
+    },
+    "hideComments": {
+      "all": "إخفاء جميع التعليقات",
+      "hasPhoneNumber": "يحتوي على رقم هاتف",
+      "hasLink": "يحتوي على رابط",
+      "hasKeywords": "يحتوي على كلمات مفتاحية",
+      "keywords": "الكلمات المفتاحية",
+      "showCommentsAfter": "إظهار التعليقات بعد"
+    },
+    "showCommentsAfter": {
+      "none": "أبدًا"
+    },
+    "selectPosts": "تحديد المنشورات",
+    "selectPageAll": "جميع الحسابات",
+    "chooseSpecificPosts": "اختر منشورات...",
+    "postIdTab": "معرّف المنشور",
+    "postIdPlaceholder": "أدخل معرّفات المنشورات، واحدًا في كل سطر...",
+    "noPostsFound": "لم يتم العثور على منشورات",
+    "connectionType": {
+      "title": "اختر نوع اتصال إنستغرام",
+      "instagramTitle": "إنستغرام للأعمال",
+      "instagramDescription": "اتصال تسجيل الدخول عبر إنستغرام. يدعم الرد العلني، والرد الخاص، وإخفاء التعليقات. الإعجاب بالتعليقات غير مدعوم.",
+      "instagramFacebookTitle": "تسجيل الدخول إلى إنستغرام عبر فيسبوك",
+      "instagramFacebookDescription": "إنستغرام متصل عبر صفحة فيسبوك. يدعم الرد العلني، والرد الخاص، وإخفاء التعليقات، والإعجاب بالتعليقات."
+    }
+  },
+  "productCategories": {
+    "title": "الفئات",
+    "loadError": "تعذّر تحميل فئات المنتجات.",
+    "all": "جميع المنتجات",
+    "create": "إنشاء فئة",
+    "edit": "إعادة تسمية الفئة",
+    "name": "اسم الفئة",
+    "namePlaceholder": "مثال: تشكيلة الصيف",
+    "parent": "الفئة الأصل",
+    "noParent": "بدون (المستوى الأعلى)",
+    "save": "حفظ",
+    "created": "تم إنشاء الفئة.",
+    "updated": "تم تحديث الفئة.",
+    "deleted": "تم حذف الفئة.",
+    "saveError": "تعذّر حفظ هذه الفئة.",
+    "deleteError": "تعذّر حذف هذه الفئة.",
+    "delete": "حذف",
+    "cancel": "إلغاء",
+    "actions": "إجراءات الفئة",
+    "deleteTitle": "حذف “{name}”؟",
+    "deleteDescription": "{count, plural, =0 {لا توجد منتجات مخصصة لهذه الفئة.} one {سينتقل # منتج إلى غير مصنّف.} other {سينتقل # منتجات إلى غير مصنّف.}}",
+    "createSub": "إنشاء فئة فرعية",
+    "empty": "لا توجد فئات حتى الآن. أنشئ فئة لتجميع منتجاتك.",
+    "columns": {
+      "name": "الاسم",
+      "products": "المنتجات",
+      "subcategories": "الفئات الفرعية"
+    },
+    "expand": "إظهار الفئات الفرعية",
+    "collapse": "إخفاء الفئات الفرعية",
+    "productCount": "{count, plural, =0 {لا توجد منتجات} one {# منتج} other {# منتجات}}",
+    "deleteChildrenWarning": "{count, plural, one {سيتم حذف فئتها الفرعية أيضًا.} other {سيتم حذف فئاتها الفرعية أيضًا.}}"
+  },
+  "productImport": {
+    "title": "استيراد",
+    "mapColumns": "تخطيط الأعمدة",
+    "mapColumnsHint": "طابق كل حقل من حقول المنتج بعمود من ملفك. اترك الحقل بدون تخطيط لتخطّيه.",
+    "downloadTemplate": "تنزيل القالب",
+    "upload": "رفع ملف .csv أو .xlsx",
+    "confirm": "بدء الاستيراد",
+    "started": "بدأ استيراد المنتجات.",
+    "error": "فشل استيراد المنتجات.",
+    "notMapped": "غير مخطط",
+    "createMissingCategories": "إنشاء الفئات غير الموجودة",
+    "fields": {
+      "name": "اسم المنتج",
+      "sku": "رمز المنتج (SKU)",
+      "price": "السعر",
+      "discount": "الخصم",
+      "shortDescription": "وصف مختصر",
+      "category": "الفئة",
+      "vendor": "المورّد",
+      "inventoryQuantity": "كمية المخزون",
+      "imageUrl": "رابط الصورة",
+      "productUrl": "رابط المنتج"
+    },
+    "template": {
+      "sheetName": "المنتجات",
+      "name": "اسم المنتج",
+      "sku": "رمز المنتج (SKU)",
+      "price": "السعر",
+      "discount": "الخصم",
+      "shortDescription": "وصف مختصر",
+      "category": "الفئة",
+      "vendor": "المورّد",
+      "inventoryQuantity": "كمية المخزون",
+      "imageUrl": "رابط الصورة",
+      "productUrl": "رابط المنتج",
+      "exampleOne": {
+        "name": "تي شيرت كلاسيكي",
+        "description": "تي شيرت قطني ناعم",
+        "category": "ملابس",
+        "vendor": "العلامة التجارية النموذجية"
+      },
+      "exampleTwo": {
+        "name": "حقيبة قماشية",
+        "description": "حقيبة قماشية قابلة لإعادة الاستخدام",
+        "category": "إكسسوارات",
+        "vendor": "العلامة التجارية النموذجية"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "مزامنة كتالوج ميتا",
+    "connect": "ربط ميتا",
+    "connectDescription": "اربط حساب ميتا للأعمال لدفع منتجاتك إلى كتالوج موجود.",
+    "tabs": {
+      "sync": "مزامنة إلى ميتا",
+      "import": "مزامنة من ميتا",
+      "history": "السجل",
+      "connection": "الاتصال"
+    },
+    "catalogId": "معرّف كتالوج ميتا",
+    "catalogIdPlaceholder": "أدخل معرّف كتالوج من مدير التجارة",
+    "createCatalog": {
+      "trigger": "إنشاء كتالوج جديد",
+      "description": "سيتم إنشاء كتالوج تجاري فارغ في مدير الأعمال الخاص بك واستخدامه لهذه مساحة العمل.",
+      "business": "مدير الأعمال",
+      "businessPlaceholder": "اختر مدير أعمال",
+      "noBusinesses": "لا يدير حساب ميتا هذا أي مدير أعمال، لذا لا يمكن إنشاء كتالوج هنا.",
+      "name": "اسم الكتالوج",
+      "confirm": "إنشاء الكتالوج",
+      "created": "تم إنشاء الكتالوج.",
+      "errors": {
+        "businesses": "تعذّر تحميل مديري الأعمال الخاصين بك.",
+        "create": "تعذّر إنشاء الكتالوج."
+      }
+    },
+    "importDescription": "استيراد المنتجات من كتالوج ميتا إلى مساحة عملك. يمكنك العثور على المعرّف في مدير التجارة.",
+    "importCatalogAction": "استيراد",
+    "importProgress": "جارٍ استيراد منتجات ميتا: {imported}/{total}",
+    "importQueued": "في انتظار بدء الاستيراد…",
+    "importResult": "تم استيراد {imported} من {total} منتجات ميتا",
+    "retryImport": "إعادة محاولة الاستيراد",
+    "syncNow": "مزامنة الآن",
+    "syncSelectionRequired": "حدد المنتجات التي تريد دفعها، ثم شغّل المزامنة.",
+    "syncSelectionCount": "سيتم دفع {count} من المنتجات المحددة إلى كتالوج ميتا.",
+    "connectionInfo": {
+      "heading": "كتالوج ميتا المتصل",
+      "noCatalog": "لم يتم تحديد كتالوج حتى الآن",
+      "lastCatalogId": "آخر معرّف كتالوج ميتا",
+      "businessId": "معرّف الأعمال",
+      "authMode": "التفويض",
+      "tokenExpiresAt": "انتهاء صلاحية الرمز",
+      "lastImportedAt": "آخر استيراد",
+      "unknown": "غير متوفر",
+      "never": "أبدًا",
+      "noExpiry": "لا تنتهي صلاحيته",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "امتداد فيسبوك للأعمال"
+      },
+      "connectionStatuses": {
+        "active": "نشط",
+        "invalid": "يحتاج إلى إعادة الاتصال"
+      }
+    },
+    "disconnect": "قطع الاتصال",
+    "reconnect": "إعادة الاتصال",
+    "reconnectWarning": "رمز ميتا غير صالح أو ستنتهي صلاحيته في غضون سبعة أيام.",
+    "requirements": {
+      "intro": "يجب أن تستوفي المنتجات المزامنة مع ميسنجر شوبينغ هذه المتطلبات:",
+      "description": {
+        "label": "وصف تفصيلي",
+        "value": "بالإضافة إلى العنوان، غطِّ المواصفات والمواد وحالات الاستخدام والميزات البارزة."
+      },
+      "image": {
+        "label": "صورة المنتج",
+        "value": "دقة عالية لا تقل عن 500 × 500 بكسل، بحجم ملف يصل إلى 8 ميجابايت."
+      },
+      "video": {
+        "label": "فيديو المنتج",
+        "value": "بحجم ملف يصل إلى 200 ميجابايت."
+      },
+      "price": {
+        "label": "السعر",
+        "value": "يجب أن يحمل كل منتج سعرًا."
+      },
+      "minimumItems": "نشر ما لا يقل عن 6 عناصر ليكون لدى العملاء ما يكفي للاختيار من بينه."
+    },
+    "historyEmpty": "لم تُشغَّل أي مزامنة أو استيراد حتى الآن.",
+    "historyFailures": "{failed} فاشل · {skipped} متخطى",
+    "historyCatalog": "الكتالوج {id}",
+    "diagnostics": "تفاصيل الأخطاء والعناصر المتخطاة",
+    "itemError": "العنصر {id}: {reason}",
+    "itemSkipped": "العنصر {id}: تم التخطي — {reason}",
+    "skipReasons": {
+      "missingImage": "صورة مفقودة",
+      "missingDescription": "وصف مفقود",
+      "missingStoreUrl": "لم يتم تكوين رابط المتجر",
+      "hasVariants": "المتغيرات غير مدعومة حاليًا"
+    },
+    "statuses": {
+      "queued": "في الانتظار",
+      "running": "قيد التشغيل",
+      "succeeded": "نجح",
+      "partial": "اكتمل جزئيًا",
+      "failed": "فشل"
+    },
+    "directions": {
+      "push": "تم الدفع إلى ميتا",
+      "import": "تم الاستيراد من ميتا"
+    },
+    "messages": {
+      "catalogSelected": "بدأ استيراد الكتالوج.",
+      "syncStarted": "بدأت مزامنة كتالوج ميتا.",
+      "disconnected": "تم قطع اتصال كتالوج ميتا."
+    },
+    "errors": {
+      "load": "تعذّر تحميل إعدادات كتالوج ميتا.",
+      "connect": "تعذّر ربط كتالوج ميتا.",
+      "catalog": "تعذّر تحديد هذا الكتالوج.",
+      "sync": "تعذّر بدء مزامنة الكتالوج.",
+      "disconnect": "تعذّر قطع اتصال كتالوج ميتا.",
+      "invalidAppSettings": "لم يتم تكوين إعدادات تطبيق ميتا.",
+      "emptyScope": "نطاق المزامنة المحدد لا يحتوي على منتجات.",
+      "alreadyRunning": "توجد مزامنة أو استيراد لكتالوج ميتا قيد التشغيل حاليًا. انتظر حتى ينتهي.",
+      "queueImport": "تعذّر جدولة استيراد كتالوج ميتا.",
+      "queueSync": "تعذّر جدولة مزامنة كتالوج ميتا."
     }
   }
 }

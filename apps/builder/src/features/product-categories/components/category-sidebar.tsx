@@ -54,7 +54,7 @@ export function CategorySidebar({
   }
 
   return (
-    <aside className="w-64 shrink-0 border-r bg-card p-3">
+    <aside className="w-64 shrink-0 border-e bg-card p-3">
       {/* No create button: categories are organised on their own tab, where the
           parent/child structure is actually visible. */}
       <div className="mb-2 px-2">
@@ -75,7 +75,7 @@ export function CategorySidebar({
           <Button
             className={cn(
               "min-w-0 flex-1 justify-between",
-              category.parentId && "pl-6 text-muted-foreground",
+              category.parentId && "ps-6 text-muted-foreground",
               selectedCategoryId === category.id && "bg-accent",
             )}
             onClick={() => selectCategory(category.id)}

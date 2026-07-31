@@ -209,7 +209,7 @@ export function getProductColumns({
               }
             />
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"
             >
               <Trash />
