@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -79,13 +79,15 @@ function DialogBody({ workspaceId }: { workspaceId?: string | null }) {
         <p className="flex-1 text-muted-foreground text-sm">
           {t("fields.instagram.loginDescription")}
         </p>
-        <Button asChild className="w-full" variant="secondary">
-          <Link
-            href={`/channels/create?channel=instagram-direct${workspaceId ? `&workspaceId=${workspaceId}` : ""}`}
-          >
-            {t("fields.instagram.loginTitle")}
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({
+            variant: "secondary",
+            className: "w-full",
+          })}
+          href={`/channels/create?channel=instagram-direct${workspaceId ? `&workspaceId=${workspaceId}` : ""}`}
+        >
+          {t("fields.instagram.loginTitle")}
+        </Link>
       </div>
 
       <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
@@ -96,13 +98,15 @@ function DialogBody({ workspaceId }: { workspaceId?: string | null }) {
         <p className="flex-1 text-muted-foreground text-sm">
           {t("fields.instagram.facebookLoginDescription")}
         </p>
-        <Button asChild className="w-full" variant="secondary">
-          <Link
-            href={`/channels/create?channel=instagram-facebook${workspaceId ? `&workspaceId=${workspaceId}` : ""}`}
-          >
-            {t("fields.instagram.facebookLoginTitle")}
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({
+            variant: "secondary",
+            className: "w-full",
+          })}
+          href={`/channels/create?channel=instagram-facebook${workspaceId ? `&workspaceId=${workspaceId}` : ""}`}
+        >
+          {t("fields.instagram.facebookLoginTitle")}
+        </Link>
       </div>
     </div>
   )
@@ -137,12 +141,14 @@ export function AddInstagramDialog({
 
   return (
     <Dialog defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="secondary">
-          <PlusCircleIcon className="h-4 w-4" />
-          {t("actions.addFeature", { feature: t("fields.instagram.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="secondary">
+            <PlusCircleIcon className="h-4 w-4" />
+            {t("actions.addFeature", { feature: t("fields.instagram.label") })}
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>

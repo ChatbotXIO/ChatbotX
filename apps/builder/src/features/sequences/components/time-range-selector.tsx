@@ -137,8 +137,11 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
       {timeOption === "between" && (
         <div className="gap-2">
           <div className="flex items-center gap-2">
-            <Select onValueChange={handleStartTimeChange} value={startTime}>
-              <SelectTrigger className="w-[120px]">
+            <Select
+              onValueChange={(value) => handleStartTimeChange(value as string)}
+              value={startTime}
+            >
+              <SelectTrigger className="w-30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -152,7 +155,10 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
 
             <span className="text-muted-foreground">-</span>
 
-            <Select onValueChange={handleEndTimeChange} value={endTime}>
+            <Select
+              onValueChange={(value) => handleEndTimeChange(value as string)}
+              value={endTime}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
@@ -168,14 +174,16 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
 
           <div className="mt-3 flex items-center">
             <Popover onOpenChange={handlePopoverClose} open={isDayPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  className="w-full justify-start font-normal"
-                  variant="outline"
-                >
-                  {getDaysLabel()}
-                </Button>
-              </PopoverTrigger>
+              <PopoverTrigger
+                render={
+                  <Button
+                    className="w-full justify-start font-normal"
+                    variant="outline"
+                  >
+                    {getDaysLabel()}
+                  </Button>
+                }
+              />
               <PopoverContent align="start" className="w-80">
                 <div className="space-y-3">
                   <div className="space-y-2">

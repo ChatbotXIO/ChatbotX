@@ -71,7 +71,7 @@ export default function ClearContactCustomFieldDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className={"max-h-screen max-w-md"}>
         <DialogHeader>
@@ -94,9 +94,9 @@ export default function ClearContactCustomFieldDialog({
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
-              </DialogClose>
+              <DialogClose
+                render={<Button variant="ghost">{t("actions.cancel")}</Button>}
+              />
 
               <Button
                 disabled={

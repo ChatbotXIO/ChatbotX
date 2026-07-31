@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { CopyIcon } from "lucide-react"
@@ -59,18 +59,18 @@ export function WhatsappOnboardingResult({
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <Button asChild size="sm" type="button" variant="outline">
-          <Link
-            href={`/space/${result.workspaceId}/whatsapps/${result.integrationId}/useful-links`}
-          >
-            {t("whatsapp.manualOnboarding.moreSettings")}
-          </Link>
-        </Button>
-        <Button asChild size="sm" type="button" variant="default">
-          <Link href={`/space/${result.workspaceId}/inbox`}>
-            {t("whatsapp.manualOnboarding.goToInbox")}
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({ size: "sm", variant: "outline" })}
+          href={`/space/${result.workspaceId}/whatsapps/${result.integrationId}/useful-links`}
+        >
+          {t("whatsapp.manualOnboarding.moreSettings")}
+        </Link>
+        <Link
+          className={buttonVariants({ size: "sm", variant: "default" })}
+          href={`/space/${result.workspaceId}/inbox`}
+        >
+          {t("whatsapp.manualOnboarding.goToInbox")}
+        </Link>
       </div>
     </div>
   )

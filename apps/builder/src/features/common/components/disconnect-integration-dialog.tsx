@@ -13,7 +13,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Loader2Icon, Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
-import type { ReactNode } from "react"
+import type { ReactElement } from "react"
 
 type DisconnectIntegrationDialogProps = {
   open: boolean
@@ -21,7 +21,7 @@ type DisconnectIntegrationDialogProps = {
   featureLabel: string
   onConfirm: () => unknown
   isPending: boolean
-  trigger?: ReactNode
+  trigger?: ReactElement
   showTrigger?: boolean
   translationKey?: "disconnect" | "delete"
 }
@@ -42,19 +42,21 @@ export function DisconnectIntegrationDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       {showTrigger ? (
-        <DialogTrigger asChild>
-          {trigger ??
+        <DialogTrigger
+          render={
+            trigger ??
             (isDelete ? (
               <Button size="sm" variant="outline">
-                <Trash aria-hidden="true" className="mr-2 size-4" />
+                <Trash aria-hidden="true" className="me-2 size-4" />
                 {t("actions.delete")}
               </Button>
             ) : (
               <Button size="sm" variant="destructive">
                 {t("actions.disconnect")}
               </Button>
-            ))}
-        </DialogTrigger>
+            ))
+          }
+        />
       ) : null}
       <DialogContent className="max-h-screen max-w-xl overflow-y-auto">
         <DialogHeader>
@@ -76,11 +78,13 @@ export function DisconnectIntegrationDialog({
         </DialogHeader>
 
         <DialogFooter className={isDelete ? "gap-2 sm:space-x-0" : undefined}>
-          <DialogClose asChild>
-            <Button size="sm" type="button" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" type="button" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             disabled={isPending}
             onClick={() => {

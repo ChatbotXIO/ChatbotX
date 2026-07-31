@@ -77,13 +77,15 @@ export function DeleteCommentAutomationDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="justify-end">
-          <DialogClose asChild>
-            <Button size="sm" type="button" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" type="button" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
-            className="ml-auto"
+            className="ms-auto"
             disabled={isPending || !resource}
             onClick={handleDelete}
             size="sm"

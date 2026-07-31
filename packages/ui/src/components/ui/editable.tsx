@@ -3,7 +3,8 @@
 import { useComposedRefs } from "@chatbotx.io/ui/lib/compose-refs"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { VisuallyHiddenInput } from "@chatbotx.io/ui/components/visually-hidden-input"
-import { Slot } from "@radix-ui/react-slot"
+import { mergeProps } from "@base-ui/react/merge-props"
+import { useRender } from "@base-ui/react/use-render"
 import * as React from "react"
 
 const ROOT_NAME = "Editable"
@@ -63,7 +64,7 @@ function useEditableContext(consumerName: string) {
 type RootElement = React.ComponentRef<typeof EditableRoot>
 
 interface EditableRootProps
-  extends Omit<React.ComponentPropsWithoutRef<"div">, "onSubmit"> {
+  extends Omit<useRender.ComponentProps<"div">, "onSubmit"> {
   id?: string
   defaultValue?: string
   value?: string
@@ -81,7 +82,6 @@ interface EditableRootProps
   name?: string
   placeholder?: string
   triggerMode?: EditableContextValue["triggerMode"]
-  asChild?: boolean
   autosize?: boolean
   disabled?: boolean
   readOnly?: boolean
@@ -108,7 +108,7 @@ const EditableRoot = React.forwardRef<HTMLDivElement, EditableRootProps>(
       name,
       placeholder,
       triggerMode = "click",
-      asChild,
+      render,
       autosize = false,
       disabled,
       required,
@@ -248,17 +248,21 @@ const EditableRoot = React.forwardRef<HTMLDivElement, EditableRootProps>(
       ],
     )
 
-    const RootPrimitive = asChild ? Slot : "div"
-
     return (
       <EditableContext.Provider value={contextValue}>
-        <RootPrimitive
-          data-slot="editable"
-          {...rootProps}
-          id={id}
-          ref={composedRef}
-          className={cn("flex min-w-0 flex-col gap-2", className)}
-        />
+        {useRender({
+          defaultTagName: "div",
+          render,
+          ref: composedRef,
+          props: mergeProps<"div">(
+            { "data-slot": "editable" } as React.ComponentProps<"div">,
+            rootProps,
+            {
+              id,
+              className: cn("flex min-w-0 flex-col gap-2", className),
+            },
+          ),
+        })}
         {isFormControl && (
           <VisuallyHiddenInput
             type="hidden"
@@ -276,76 +280,77 @@ const EditableRoot = React.forwardRef<HTMLDivElement, EditableRootProps>(
 )
 EditableRoot.displayName = ROOT_NAME
 
-interface EditableLabelProps extends React.ComponentPropsWithoutRef<"label"> {
-  asChild?: boolean
-}
+interface EditableLabelProps extends useRender.ComponentProps<"label"> {}
 
 const EditableLabel = React.forwardRef<HTMLLabelElement, EditableLabelProps>(
   (props, forwardedRef) => {
-    const { asChild, className, children, ...labelProps } = props
+    const { render, className, children, ...labelProps } = props
     const context = useEditableContext(LABEL_NAME)
 
-    const LabelPrimitive = asChild ? Slot : "label"
-
-    return (
-      <LabelPrimitive
-        data-disabled={context.disabled ? "" : undefined}
-        data-invalid={context.invalid ? "" : undefined}
-        data-required={context.required ? "" : undefined}
-        data-slot="editable-label"
-        {...labelProps}
-        ref={forwardedRef}
-        id={context.labelId}
-        htmlFor={context.inputId}
-        className={cn(
-          "font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 data-required:after:ml-0.5 data-required:after:text-destructive data-required:after:content-['*']",
-          className,
-        )}
-      >
-        {children}
-      </LabelPrimitive>
-    )
+    return useRender({
+      defaultTagName: "label",
+      render,
+      ref: forwardedRef,
+      props: mergeProps<"label">(
+        {
+          "data-disabled": context.disabled ? "" : undefined,
+          "data-invalid": context.invalid ? "" : undefined,
+          "data-required": context.required ? "" : undefined,
+          "data-slot": "editable-label",
+          children,
+        } as React.ComponentProps<"label">,
+        labelProps,
+        {
+          id: context.labelId,
+          htmlFor: context.inputId,
+          className: cn(
+            "font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 data-required:after:ms-0.5 data-required:after:text-destructive data-required:after:content-['*']",
+            className,
+          ),
+        },
+      ),
+    })
   },
 )
 EditableLabel.displayName = LABEL_NAME
 
-interface EditableAreaProps extends React.ComponentPropsWithoutRef<"div"> {
-  asChild?: boolean
-}
+interface EditableAreaProps extends useRender.ComponentProps<"div"> {}
 
 const EditableArea = React.forwardRef<HTMLDivElement, EditableAreaProps>(
   (props, forwardedRef) => {
-    const { asChild, className, ...areaProps } = props
+    const { render, className, ...areaProps } = props
     const context = useEditableContext(AREA_NAME)
 
-    const AreaPrimitive = asChild ? Slot : "div"
-
-    return (
-      <AreaPrimitive
-        role="group"
-        data-disabled={context.disabled ? "" : undefined}
-        data-editing={context.editing ? "" : undefined}
-        data-slot="editable-area"
-        dir={context.dir}
-        {...areaProps}
-        ref={forwardedRef}
-        className={cn(
-          "relative inline-block min-w-0 data-disabled:cursor-not-allowed data-disabled:opacity-50",
-          className,
-        )}
-      />
-    )
+    return useRender({
+      defaultTagName: "div",
+      render,
+      ref: forwardedRef,
+      props: mergeProps<"div">(
+        {
+          role: "group",
+          "data-disabled": context.disabled ? "" : undefined,
+          "data-editing": context.editing ? "" : undefined,
+          "data-slot": "editable-area",
+          dir: context.dir,
+        } as React.ComponentProps<"div">,
+        areaProps,
+        {
+          className: cn(
+            "relative inline-block min-w-0 data-disabled:cursor-not-allowed data-disabled:opacity-50",
+            className,
+          ),
+        },
+      ),
+    })
   },
 )
 EditableArea.displayName = AREA_NAME
 
-interface EditablePreviewProps extends React.ComponentPropsWithoutRef<"div"> {
-  asChild?: boolean
-}
+interface EditablePreviewProps extends useRender.ComponentProps<"div"> {}
 
 const EditablePreview = React.forwardRef<HTMLDivElement, EditablePreviewProps>(
   (props, forwardedRef) => {
-    const { asChild, className, ...previewProps } = props
+    const { render, className, ...previewProps } = props
     const context = useEditableContext(PREVIEW_NAME)
 
     const onTrigger = React.useCallback(() => {
@@ -400,34 +405,36 @@ const EditablePreview = React.forwardRef<HTMLDivElement, EditablePreviewProps>(
       [previewProps.onKeyDown, onTrigger, context.onEnterKeyDown],
     )
 
-    const PreviewPrimitive = asChild ? Slot : "div"
-
-    if (context.editing || context.readOnly) return null
-
-    return (
-      <PreviewPrimitive
-        // biome-ignore lint/a11y/useSemanticElements: <explanation>
-        role="button"
-        aria-disabled={context.disabled || context.readOnly}
-        data-empty={!context.value ? "" : undefined}
-        data-disabled={context.disabled ? "" : undefined}
-        data-readonly={context.readOnly ? "" : undefined}
-        data-slot="editable-preview"
-        tabIndex={context.disabled || context.readOnly ? undefined : 0}
-        {...previewProps}
-        ref={forwardedRef}
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
-        onFocus={onFocus}
-        onKeyDown={onKeyDown}
-        className={cn(
-          "cursor-text truncate rounded-sm border border-transparent py-1 text-base focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring data-disabled:cursor-not-allowed data-readonly:cursor-default data-empty:text-muted-foreground data-disabled:opacity-50 md:text-sm",
-          className,
-        )}
-      >
-        {context.value || context.placeholder}
-      </PreviewPrimitive>
-    )
+    return useRender({
+      defaultTagName: "div",
+      render,
+      ref: forwardedRef,
+      enabled: !(context.editing || context.readOnly),
+      props: mergeProps<"div">(
+        {
+          // biome-ignore lint/a11y/useSemanticElements: <explanation>
+          role: "button",
+          "aria-disabled": context.disabled || context.readOnly,
+          "data-empty": !context.value ? "" : undefined,
+          "data-disabled": context.disabled ? "" : undefined,
+          "data-readonly": context.readOnly ? "" : undefined,
+          "data-slot": "editable-preview",
+          tabIndex: context.disabled || context.readOnly ? undefined : 0,
+          children: context.value || context.placeholder,
+        } as React.ComponentProps<"div">,
+        previewProps,
+        {
+          onClick,
+          onDoubleClick,
+          onFocus,
+          onKeyDown,
+          className: cn(
+            "cursor-text truncate rounded-sm border border-transparent py-1 text-base focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring data-disabled:cursor-not-allowed data-readonly:cursor-default data-empty:text-muted-foreground data-disabled:opacity-50 md:text-sm",
+            className,
+          ),
+        },
+      ),
+    })
   },
 )
 EditablePreview.displayName = PREVIEW_NAME
@@ -435,17 +442,16 @@ EditablePreview.displayName = PREVIEW_NAME
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect
 
-type InputElement = React.ComponentRef<typeof EditableInput>
+type InputElement = HTMLInputElement | HTMLTextAreaElement
 
-interface EditableInputProps extends React.ComponentPropsWithoutRef<"input"> {
-  asChild?: boolean
+interface EditableInputProps extends useRender.ComponentProps<"input"> {
   maxLength?: number
 }
 
 const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
   (props, forwardedRef) => {
     const {
-      asChild,
+      render,
       className,
       disabled,
       readOnly,
@@ -480,7 +486,7 @@ const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
       (event: React.FocusEvent<InputElement>) => {
         if (isDisabled || isReadOnly) return
 
-        inputProps.onBlur?.(event)
+        inputProps.onBlur?.(event as React.FocusEvent<HTMLInputElement>)
         if (event.defaultPrevented) return
 
         const relatedTarget = event.relatedTarget
@@ -507,7 +513,7 @@ const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
       (event: React.ChangeEvent<InputElement>) => {
         if (isDisabled || isReadOnly) return
 
-        inputProps.onChange?.(event)
+        inputProps.onChange?.(event as React.ChangeEvent<HTMLInputElement>)
         if (event.defaultPrevented) return
 
         context.onValueChange(event.target.value)
@@ -526,7 +532,7 @@ const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
       (event: React.KeyboardEvent<InputElement>) => {
         if (isDisabled || isReadOnly) return
 
-        inputProps.onKeyDown?.(event)
+        inputProps.onKeyDown?.(event as React.KeyboardEvent<HTMLInputElement>)
         if (event.defaultPrevented) return
 
         if (event.key === "Escape") {
@@ -568,43 +574,44 @@ const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
       }
     }, [context.editing, onAutosize, isDisabled, isReadOnly])
 
-    const InputPrimitive = asChild ? Slot : "input"
-
-    if (!context.editing && !isReadOnly) return null
-
-    return (
-      <InputPrimitive
-        aria-required={required}
-        aria-invalid={context.invalid}
-        data-slot="editable-input"
-        dir={context.dir}
-        disabled={isDisabled}
-        readOnly={isReadOnly}
-        required={required}
-        {...inputProps}
-        id={context.inputId}
-        aria-labelledby={context.labelId}
-        ref={composedRef}
-        maxLength={maxLength}
-        placeholder={context.placeholder}
-        value={context.value}
-        onBlur={onBlur}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        className={cn(
-          "flex rounded-sm border border-input bg-transparent py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          context.autosize ? "w-auto" : "w-full",
-          className,
-        )}
-      />
-    )
+    return useRender({
+      defaultTagName: "input",
+      render,
+      ref: composedRef,
+      enabled: context.editing || isReadOnly,
+      props: mergeProps<"input">(
+        {
+          "aria-required": required,
+          "aria-invalid": context.invalid,
+          "data-slot": "editable-input",
+          dir: context.dir,
+          disabled: isDisabled,
+          readOnly: isReadOnly,
+          required,
+        } as React.ComponentProps<"input">,
+        inputProps,
+        {
+          id: context.inputId,
+          "aria-labelledby": context.labelId,
+          maxLength,
+          placeholder: context.placeholder,
+          value: context.value,
+          onBlur,
+          onChange,
+          onKeyDown,
+          className: cn(
+            "flex rounded-sm border border-input bg-transparent py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            context.autosize ? "w-auto" : "w-full",
+            className,
+          ),
+        },
+      ),
+    })
   },
 )
 EditableInput.displayName = INPUT_NAME
 
-interface EditableTriggerProps
-  extends React.ComponentPropsWithoutRef<"button"> {
-  asChild?: boolean
+interface EditableTriggerProps extends useRender.ComponentProps<"button"> {
   forceMount?: boolean
 }
 
@@ -612,7 +619,7 @@ const EditableTrigger = React.forwardRef<
   HTMLButtonElement,
   EditableTriggerProps
 >((props, forwardedRef) => {
-  const { asChild, forceMount = false, ...triggerProps } = props
+  const { render, forceMount = false, ...triggerProps } = props
   const context = useEditableContext(TRIGGER_NAME)
 
   const onTrigger = React.useCallback(() => {
@@ -620,71 +627,76 @@ const EditableTrigger = React.forwardRef<
     context.onEdit()
   }, [context.disabled, context.readOnly, context.onEdit])
 
-  const TriggerPrimitive = asChild ? Slot : "button"
-
-  if (!forceMount && (context.editing || context.readOnly)) return null
-
-  return (
-    <TriggerPrimitive
-      type="button"
-      aria-controls={context.id}
-      aria-disabled={context.disabled || context.readOnly}
-      data-disabled={context.disabled ? "" : undefined}
-      data-readonly={context.readOnly ? "" : undefined}
-      data-slot="editable-trigger"
-      {...triggerProps}
-      ref={forwardedRef}
-      onClick={context.triggerMode === "click" ? onTrigger : undefined}
-      onDoubleClick={context.triggerMode === "dblclick" ? onTrigger : undefined}
-    />
-  )
+  return useRender({
+    defaultTagName: "button",
+    render,
+    ref: forwardedRef,
+    enabled: forceMount || !(context.editing || context.readOnly),
+    props: mergeProps<"button">(
+      {
+        type: "button",
+        "aria-controls": context.id,
+        "aria-disabled": context.disabled || context.readOnly,
+        "data-disabled": context.disabled ? "" : undefined,
+        "data-readonly": context.readOnly ? "" : undefined,
+        "data-slot": "editable-trigger",
+      } as React.ComponentProps<"button">,
+      triggerProps,
+      {
+        onClick: context.triggerMode === "click" ? onTrigger : undefined,
+        onDoubleClick:
+          context.triggerMode === "dblclick" ? onTrigger : undefined,
+      },
+    ),
+  })
 })
 EditableTrigger.displayName = TRIGGER_NAME
 
-interface EditableToolbarProps extends React.ComponentPropsWithoutRef<"div"> {
-  asChild?: boolean
+interface EditableToolbarProps extends useRender.ComponentProps<"div"> {
   orientation?: "horizontal" | "vertical"
 }
 
 const EditableToolbar = React.forwardRef<HTMLDivElement, EditableToolbarProps>(
   (props, forwardedRef) => {
     const {
-      asChild,
+      render,
       className,
       orientation = "horizontal",
       ...toolbarProps
     } = props
     const context = useEditableContext(TOOLBAR_NAME)
 
-    const ToolbarPrimitive = asChild ? Slot : "div"
-
-    return (
-      <ToolbarPrimitive
-        role="toolbar"
-        aria-controls={context.id}
-        aria-orientation={orientation}
-        data-slot="editable-toolbar"
-        dir={context.dir}
-        {...toolbarProps}
-        ref={forwardedRef}
-        className={cn(
-          "flex items-center gap-2",
-          orientation === "vertical" && "flex-col",
-          className,
-        )}
-      />
-    )
+    return useRender({
+      defaultTagName: "div",
+      render,
+      ref: forwardedRef,
+      props: mergeProps<"div">(
+        {
+          role: "toolbar",
+          "aria-controls": context.id,
+          "aria-orientation": orientation,
+          "data-slot": "editable-toolbar",
+          dir: context.dir,
+        } as React.ComponentProps<"div">,
+        toolbarProps,
+        {
+          className: cn(
+            "flex items-center gap-2",
+            orientation === "vertical" && "flex-col",
+            className,
+          ),
+        },
+      ),
+    })
   },
 )
 EditableToolbar.displayName = TOOLBAR_NAME
 
-interface EditableCancelProps extends React.ComponentPropsWithoutRef<"button"> {
-  asChild?: boolean
-}
+interface EditableCancelProps extends useRender.ComponentProps<"button"> {}
 
 const EditableCancel = React.forwardRef<HTMLButtonElement, EditableCancelProps>(
   (props, forwardedRef) => {
-    const { asChild, ...cancelProps } = props
+    const { render, ...cancelProps } = props
     const context = useEditableContext(CANCEL_NAME)
 
     const onClick = React.useCallback(
@@ -704,31 +716,30 @@ const EditableCancel = React.forwardRef<HTMLButtonElement, EditableCancelProps>(
       ],
     )
 
-    const CancelPrimitive = asChild ? Slot : "button"
-
-    if (!context.editing && !context.readOnly) return null
-
-    return (
-      <CancelPrimitive
-        type="button"
-        aria-controls={context.id}
-        data-slot="editable-cancel"
-        {...cancelProps}
-        onClick={onClick}
-        ref={forwardedRef}
-      />
-    )
+    return useRender({
+      defaultTagName: "button",
+      render,
+      ref: forwardedRef,
+      enabled: context.editing || context.readOnly,
+      props: mergeProps<"button">(
+        {
+          type: "button",
+          "aria-controls": context.id,
+          "data-slot": "editable-cancel",
+        } as React.ComponentProps<"button">,
+        cancelProps,
+        { onClick },
+      ),
+    })
   },
 )
 EditableCancel.displayName = CANCEL_NAME
 
-interface EditableSubmitProps extends React.ComponentPropsWithoutRef<"button"> {
-  asChild?: boolean
-}
+interface EditableSubmitProps extends useRender.ComponentProps<"button"> {}
 
 const EditableSubmit = React.forwardRef<HTMLButtonElement, EditableSubmitProps>(
   (props, forwardedRef) => {
-    const { asChild, ...submitProps } = props
+    const { render, ...submitProps } = props
     const context = useEditableContext(SUBMIT_NAME)
 
     const onClick = React.useCallback(
@@ -749,20 +760,22 @@ const EditableSubmit = React.forwardRef<HTMLButtonElement, EditableSubmitProps>(
       ],
     )
 
-    const SubmitPrimitive = asChild ? Slot : "button"
-
     if (!context.editing && !context.readOnly) return null
 
-    return (
-      <SubmitPrimitive
-        type="button"
-        aria-controls={context.id}
-        data-slot="editable-submit"
-        {...submitProps}
-        ref={forwardedRef}
-        onClick={onClick}
-      />
-    )
+    return useRender({
+      defaultTagName: "button",
+      render,
+      ref: forwardedRef,
+      props: mergeProps<"button">(
+        {
+          type: "button",
+          "aria-controls": context.id,
+          "data-slot": "editable-submit",
+        } as React.ComponentProps<"button">,
+        submitProps,
+        { onClick },
+      ),
+    })
   },
 )
 EditableSubmit.displayName = SUBMIT_NAME

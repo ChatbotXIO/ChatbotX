@@ -24,19 +24,21 @@ const EmojiPicker = (props: {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          className="px-2 py-1.5 [&_svg]:size-5"
-          disabled={disabled}
-          size="sm"
-          variant="ghost"
-        >
-          <div className="flex w-5.5 justify-center">
-            <SmileIcon />
-          </div>
-          {label}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            className="px-2 py-1.5 [&_svg]:size-5"
+            disabled={disabled}
+            size="sm"
+            variant="ghost"
+          >
+            <div className="flex w-5.5 justify-center">
+              <SmileIcon />
+            </div>
+            {label}
+          </Button>
+        }
+      />
       <PopoverContent className="w-auto border-0 p-0">
         <BaseEmojiPicker
           autoFocusSearch

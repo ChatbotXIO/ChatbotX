@@ -89,11 +89,13 @@ function OptionDialogInner({
               name="description"
             />
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={!form.formState.isValid}
                 size="sm"

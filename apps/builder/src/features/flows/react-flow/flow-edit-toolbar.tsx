@@ -230,26 +230,28 @@ export function FlowEditToolbar({
   return (
     <div className="flex gap-2">
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t("actions.undo")}
-            className="relative px-1.5"
-            disabled={!canUndo}
-            onClick={undo}
-            size="sm"
-            variant="ghost"
-          >
-            <RotateCcwIcon />
-            {pastCount > 0 && (
-              <Badge
-                className="absolute -top-1 -right-1 min-h-5 min-w-5 rounded-full px-1 text-[10px]"
-                variant="secondary"
-              >
-                {pastCount}
-              </Badge>
-            )}
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label={t("actions.undo")}
+              className="relative px-1.5"
+              disabled={!canUndo}
+              onClick={undo}
+              size="sm"
+              variant="ghost"
+            >
+              <RotateCcwIcon />
+              {pastCount > 0 && (
+                <Badge
+                  className="absolute -end-1 -top-1 min-h-5 min-w-5 rounded-full px-1 text-[10px]"
+                  variant="secondary"
+                >
+                  {pastCount}
+                </Badge>
+              )}
+            </Button>
+          }
+        />
         <TooltipContent>
           <p>
             {t("actions.undo")}{" "}
@@ -258,26 +260,28 @@ export function FlowEditToolbar({
         </TooltipContent>
       </Tooltip>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t("actions.redo")}
-            className="relative px-1.5"
-            disabled={!canRedo}
-            onClick={redo}
-            size="sm"
-            variant="ghost"
-          >
-            <RotateCwIcon />
-            {futureCount > 0 && (
-              <Badge
-                className="absolute -top-1 -right-1 min-h-5 min-w-5 rounded-full px-1 text-[10px]"
-                variant="secondary"
-              >
-                {futureCount}
-              </Badge>
-            )}
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label={t("actions.redo")}
+              className="relative px-1.5"
+              disabled={!canRedo}
+              onClick={redo}
+              size="sm"
+              variant="ghost"
+            >
+              <RotateCwIcon />
+              {futureCount > 0 && (
+                <Badge
+                  className="absolute -end-1 -top-1 min-h-5 min-w-5 rounded-full px-1 text-[10px]"
+                  variant="secondary"
+                >
+                  {futureCount}
+                </Badge>
+              )}
+            </Button>
+          }
+        />
         <TooltipContent>
           <p>
             {t("actions.redo")}{" "}
@@ -286,7 +290,7 @@ export function FlowEditToolbar({
         </TooltipContent>
       </Tooltip>
       <Button
-        className="ml-5"
+        className="ms-5"
         disabled={isValidating || isPendingPublish}
         onClick={onClickPublish}
         size="sm"

@@ -73,11 +73,13 @@ export function DuplicateFlowDialog({
         </DialogHeader>
 
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button size="sm" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             disabled={isPending || !flow}
             onClick={() => execute()}
@@ -85,9 +87,9 @@ export function DuplicateFlowDialog({
             variant="default"
           >
             {isPending ? (
-              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
+              <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             ) : (
-              <CopyPlus aria-hidden="true" className="mr-2 size-4" />
+              <CopyPlus aria-hidden="true" className="me-2 size-4" />
             )}
             {t("actions.duplicate")}
           </Button>

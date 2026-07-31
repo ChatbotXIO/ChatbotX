@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
   TableBody,
@@ -47,15 +47,17 @@ export function TiktokManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button asChild size="sm" variant="secondary">
-          <Link
-            className="flex items-center gap-2"
-            href={`/channels/create?channel=tiktok&workspaceId=${workspaceId}`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", { feature: t("fields.tiktok.label") })}
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({
+            size: "sm",
+            variant: "secondary",
+            className: "flex items-center gap-2",
+          })}
+          href={`/channels/create?channel=tiktok&workspaceId=${workspaceId}`}
+        >
+          <PlusCircleIcon className="h-4 w-4" />
+          {t("actions.addFeature", { feature: t("fields.tiktok.label") })}
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-md border">

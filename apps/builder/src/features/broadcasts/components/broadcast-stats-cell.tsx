@@ -65,7 +65,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
       >
         {value ? formatter.number(value) : "----"}
         {percentage && (
-          <span className="ml-1 text-muted-foreground">({percentage}%)</span>
+          <span className="ms-1 text-muted-foreground">({percentage}%)</span>
         )}
       </button>
 

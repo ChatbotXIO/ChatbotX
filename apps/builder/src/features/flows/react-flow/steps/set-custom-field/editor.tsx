@@ -66,11 +66,13 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <div className="rounded-lg border-2 border-dashed p-4 text-sm">
-          {t("flows.actions.setCustomField")}
-        </div>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <div className="rounded-lg border-2 border-dashed p-4 text-sm">
+            {t("flows.actions.setCustomField")}
+          </div>
+        }
+      />
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.setCustomField")}</DialogTitle>

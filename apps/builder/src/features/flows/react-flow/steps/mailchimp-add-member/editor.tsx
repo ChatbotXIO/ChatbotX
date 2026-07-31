@@ -61,9 +61,9 @@ const FieldLabel = (props: {
     )}
     {props.tooltip && (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <CircleHelpIcon className="size-4 text-muted-foreground" />
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={<CircleHelpIcon className="size-4 text-muted-foreground" />}
+        />
         <TooltipContent className="max-w-xs">{props.tooltip}</TooltipContent>
       </Tooltip>
     )}
@@ -185,11 +185,13 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("flows.actions.mailchimpAddMember")}</DialogTitle>
@@ -273,7 +275,7 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
                         name={`mergeFields.${index}.customFieldId`}
                       />
                     </div>
-                    <ArrowRightIcon className="size-4 text-muted-foreground" />
+                    <ArrowRightIcon className="size-4 text-muted-foreground rtl:rotate-180" />
                     <InputField
                       disabled
                       label=""

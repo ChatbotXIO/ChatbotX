@@ -37,22 +37,22 @@ const FindGifDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <div className="flex justify-center">
-          {gifUrl && gifUrl.length > 0 ? (
-            <Button
-              className="relative h-[150px] w-[240px] p-0!"
-              variant="ghost"
-            >
-              <Image alt={parentName} fill={true} src={gifUrl} />
-            </Button>
-          ) : (
-            <Button size="sm" type="button" variant="outline">
-              {t("flows.actions.findGif")}
-            </Button>
-          )}
-        </div>
-      </DialogTrigger>
+      <DialogTrigger
+        nativeButton={false}
+        render={
+          <div className="flex justify-center">
+            {gifUrl && gifUrl.length > 0 ? (
+              <Button className="relative h-37.5 w-60 p-0!" variant="ghost">
+                <Image alt={parentName} fill={true} src={gifUrl} />
+              </Button>
+            ) : (
+              <Button size="sm" type="button" variant="outline">
+                {t("flows.actions.findGif")}
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-5xl">
         <DialogHeader>

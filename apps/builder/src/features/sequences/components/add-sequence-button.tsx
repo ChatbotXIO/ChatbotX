@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -13,15 +13,14 @@ export function AddSequenceButton() {
   const t = useTranslations()
 
   return (
-    <Button asChild size={"sm"}>
-      <Link
-        href={`/space/${workspaceId}/sequences/create?${searchParams.toString()}`}
-      >
-        <PlusIcon />
-        {t("actions.createFeature", {
-          feature: t("fields.sequence.label"),
-        })}
-      </Link>
-    </Button>
+    <Link
+      className={buttonVariants({ size: "sm" })}
+      href={`/space/${workspaceId}/sequences/create?${searchParams.toString()}`}
+    >
+      <PlusIcon />
+      {t("actions.createFeature", {
+        feature: t("fields.sequence.label"),
+      })}
+    </Link>
   )
 }

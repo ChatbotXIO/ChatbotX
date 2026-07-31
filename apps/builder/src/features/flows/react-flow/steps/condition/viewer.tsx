@@ -107,6 +107,7 @@ const ConditionStepViewerContent = ({ data }: ConditionStepViewerProps) => {
       })}
 
       <div className="flex items-center gap-2">
+        {/* React Flow keeps this connector on physical Position.Right. */}
         <span className="flex-1 text-right text-xs">
           {t("flows.condition.otherwise")}
         </span>

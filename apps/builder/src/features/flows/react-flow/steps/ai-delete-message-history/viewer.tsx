@@ -2,6 +2,7 @@
 
 import type { AIDeleteMessageHistorySchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import { AIIcon } from "../ai-generate-text/components/ai-icon"
 import { StepStateHandles } from "../base/step-state-handles"
 
@@ -21,7 +22,7 @@ export const AIDeleteMessageHistoryViewer = (
       <div className="flex w-full items-center justify-center gap-2 text-center font-bold">
         <AIIcon
           label={t("fields.flows.aiDeleteMessageHistory", {
-            aiName: t(`aiProviders.${provider}`),
+            aiName: t(getAiProviderLabelKey(provider)),
           })}
           provider={provider}
         />

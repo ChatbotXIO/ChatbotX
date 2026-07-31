@@ -7,7 +7,7 @@ import type {
 } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import type { WhatsappWabaMMLite } from "@chatbotx.io/integration-whatsapp/api/waba"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
   Tooltip,
@@ -43,9 +43,9 @@ function FieldRow({
       <div className="mb-2 flex items-center gap-1.5 text-muted-foreground text-sm">
         <span>{label}</span>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <InfoIcon className="size-3.5 cursor-help" />
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={<InfoIcon className="size-3.5 cursor-help" />}
+          />
           <TooltipContent>
             <p className="max-w-xs">{tooltip}</p>
           </TooltipContent>
@@ -256,15 +256,14 @@ export const WhatsappAccountHealths = memo(
                 {t("description")}
               </p>
             </div>
-            <Button asChild size="sm">
-              <Link
-                href={businessManagerUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {t("goToBusinessManager")}
-              </Link>
-            </Button>
+            <Link
+              className={buttonVariants({ size: "sm" })}
+              href={businessManagerUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {t("goToBusinessManager")}
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-1">

@@ -82,12 +82,14 @@ export function CreateFlowDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("actions.createFeature", { feature: t("fields.flow.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("actions.createFeature", { feature: t("fields.flow.label") })}
+          </Button>
+        }
+      />
       <DialogContent className={"max-h-screen max-w-sm overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
@@ -104,11 +106,13 @@ export function CreateFlowDialog({
               <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="ghost">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button type="button" variant="ghost">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting

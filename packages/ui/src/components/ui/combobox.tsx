@@ -70,7 +70,7 @@ const ComboboxTrigger = React.forwardRef<
     data-slot="combobox-trigger"
     ref={ref}
     className={cn(
-      "flex shrink-0 items-center justify-center rounded-r-md border-input bg-transparent text-muted-foreground transition-colors hover:text-foreground/80 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+      "flex shrink-0 items-center justify-center rounded-e-md border-input bg-transparent text-muted-foreground transition-colors hover:text-foreground/80 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
     {...props}
@@ -88,7 +88,7 @@ const ComboboxCancel = React.forwardRef<
     data-slot="combobox-cancel"
     ref={ref}
     className={cn(
-      "-translate-y-1/2 absolute top-1/2 right-1 flex h-6 w-6 items-center justify-center rounded-sm bg-background opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none",
+      "-translate-y-1/2 absolute top-1/2 end-1 flex h-6 w-6 items-center justify-center rounded-sm bg-background opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none",
       className,
     )}
     {...props}
@@ -224,7 +224,7 @@ const ComboboxItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 text-sm outline-hidden data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-50",
-      outset ? "pr-8 pl-2" : "pr-2 pl-8",
+      outset ? "pe-8 ps-2" : "pe-2 ps-8",
       className,
     )}
     {...props}
@@ -232,7 +232,7 @@ const ComboboxItem = React.forwardRef<
     <ComboboxPrimitive.ItemIndicator
       className={cn(
         "absolute flex h-3.5 w-3.5 items-center justify-center",
-        outset ? "right-2" : "left-2",
+        outset ? "end-2" : "start-2",
       )}
     >
       <Check className="h-4 w-4" />

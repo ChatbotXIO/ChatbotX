@@ -149,7 +149,7 @@ export default function SettingIntegrationLayout({
   ]
 
   return (
-    <Accordion className="w-full" collapsible type="single">
+    <Accordion className="w-full">
       {integrationItems.map((integration) => (
         <AccordionItem
           className="transition-all hover:data-[state=open]:rounded-none"

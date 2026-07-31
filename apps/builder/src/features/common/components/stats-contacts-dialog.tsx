@@ -226,7 +226,8 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
             <div className="flex min-w-0 items-center gap-2">
               <Checkbox
                 aria-label={t("actions.selectAll")}
-                checked={selectionState.headerState}
+                checked={selectionState.headerState.checked}
+                indeterminate={selectionState.headerState.indeterminate}
                 onCheckedChange={selectionState.toggleHeader}
               />
               <span className="truncate text-muted-foreground text-sm">
@@ -252,7 +253,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
         <div ref={scrollRootRef} style={{ height: "min(520px, 60vh)" }}>
           <ScrollArea className="h-full">
             {isLoading && (
-              <div className="space-y-2 pr-4">
+              <div className="space-y-2 pe-4">
                 <ContactItemSkeleton />
                 <ContactItemSkeleton />
                 <ContactItemSkeleton />
@@ -266,7 +267,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
               </div>
             )}
             {!isLoading && contacts.length > 0 && (
-              <div className="space-y-2 pr-4">
+              <div className="space-y-2 pe-4">
                 {contacts.map((contact) => (
                   <SelectableContactItem
                     canTag={canTag}
@@ -391,11 +392,13 @@ const StatsTagDialog = memo(function StatsTagDialog({
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
 
               <Button
                 disabled={
@@ -479,7 +482,7 @@ const SelectableContactItem = memo(function SelectableContactItem({
           />
         </div>
         {contact.occurredAt && (
-          <div className="text-left text-muted-foreground text-xs">
+          <div className="text-start text-muted-foreground text-xs">
             {new Date(contact.occurredAt).toLocaleString()}
           </div>
         )}
@@ -488,7 +491,7 @@ const SelectableContactItem = memo(function SelectableContactItem({
       <div className="flex min-w-0 flex-1 items-center justify-center self-center">
         {showErrors && contact.errorContent && (
           <div
-            className="space-y-0 whitespace-pre-wrap text-left text-destructive text-xs"
+            className="space-y-0 whitespace-pre-wrap text-start text-destructive text-xs"
             style={{ overflowWrap: "anywhere" }}
           >
             {formatErrorContent(contact.errorContent)}

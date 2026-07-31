@@ -39,12 +39,14 @@ export const CreateMagicLinkDialog = ({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button">
-          <PlusIcon aria-hidden className="size-4" />
-          {t("actions.createFeature", { feature: t("magicLinks.title") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button">
+            <PlusIcon aria-hidden className="size-4" />
+            {t("actions.createFeature", { feature: t("magicLinks.title") })}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

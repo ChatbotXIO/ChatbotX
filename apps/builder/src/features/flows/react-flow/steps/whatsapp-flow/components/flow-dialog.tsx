@@ -234,7 +234,7 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   )
 
   const handleFlowChange = useCallback(
-    (value: string) => {
+    (value?: string) => {
       const flow = whatsappFlows.find((f) => f.id === value)
       if (flow) {
         form.setValue("flow.id", flow.id, { shouldDirty: true })
@@ -320,7 +320,6 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
               disabled={loadingFlows}
               label={t("flows.whatsappFlow.selectFlow")}
               name="flow.id"
-              onValueChange={handleFlowChange}
               options={flowOptions}
               placeholder={
                 loadingFlows
@@ -328,6 +327,7 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
                   : t("flows.whatsappFlow.selectFlowPlaceholder")
               }
               required
+              triggerValueChange={handleFlowChange}
             />
 
             {selectedFlowId &&
@@ -403,11 +403,13 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
             )}
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={!form.formState.isValid}
                 size="sm"

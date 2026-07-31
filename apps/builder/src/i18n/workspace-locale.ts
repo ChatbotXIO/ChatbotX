@@ -1,4 +1,4 @@
-const SUPPORTED_LOCALES = ["en", "vi"] as const
+const SUPPORTED_LOCALES = ["en", "vi", "ar"] as const
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 const DEFAULT_LOCALE: SupportedLocale = "en"

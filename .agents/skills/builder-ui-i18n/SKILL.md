@@ -48,6 +48,37 @@ export const ExampleButton = () => {
 }
 ```
 
+### Dynamic translation keys
+
+Never pass a raw variable or an unconstrained template literal to `t()`. When a
+runtime value selects a translation key, route it through an exhaustive literal
+map:
+
+```typescript
+const labelKeyByStatus = {
+  active: "features.examples.status.active",
+  paused: "features.examples.status.paused",
+} as const satisfies Record<ExampleStatus, string>
+
+t(labelKeyByStatus[status])
+```
+
+A helper function backed by the same kind of map is also acceptable. This keeps
+every possible key auditable with text search and makes TypeScript report enum
+members that have no translation mapping.
+
+If the key comes from an open-ended source such as a database string, guard the
+lookup and provide a translated fallback:
+
+```typescript
+t.has(key) ? t(key) : t("features.examples.unknown")
+```
+
+`@lingual/i18n-check` also recognizes escape-hatch comments such as
+`// i18n-check t('features.examples.status.active')`. Use one when a genuinely
+dynamic call needs to declare a specific static key as used and doing so
+meaningfully narrows the namespace blind spot.
+
 ## Form Pattern
 
 - Server actions with `bindArgsSchemas` must be bound before passing to hooks:
@@ -135,6 +166,49 @@ import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-f
 - Do not create landing-page style layouts for product workflows.
 - Avoid nested cards and oversized hero typography inside tools.
 - Ensure button and table text fits at mobile and desktop sizes.
+
+### RTL / Logical Properties
+
+The app supports RTL locales (Arabic ships as `ar`). Default to Tailwind's
+logical-property utilities for any new or edited class — never reach for a
+physical-direction class first.
+
+| Physical (avoid) | Logical (use) |
+|---|---|
+| `left-*` | `start-*` (or `inset-s-*` for `inset-*` positioning) |
+| `right-*` | `end-*` (or `inset-e-*` for `inset-*` positioning) |
+| `ml-*` | `ms-*` |
+| `mr-*` | `me-*` |
+| `pl-*` | `ps-*` |
+| `pr-*` | `pe-*` |
+| `border-l-*` | `border-s-*` |
+| `border-r-*` | `border-e-*` |
+| `rounded-l-*` | `rounded-s-*` |
+| `rounded-r-*` | `rounded-e-*` |
+| `text-left` | `text-start` |
+| `text-right` | `text-end` |
+
+- `space-x-*` and `divide-x-*` are already logical in Tailwind v4 (compile to
+  `margin-inline-start/end` / `border-inline-start/end-width`) — leave them as
+  they are, don't rewrite them.
+- Directional chevrons/arrows (dropdown submenu carets, pagination prev/next,
+  breadcrumb separators, wizard next/prev arrows) should flip in RTL via
+  `rtl:rotate-180`, matching the existing convention in `carousel.tsx`,
+  `calendar.tsx`, and `sidebar.tsx`.
+- `translate-x-*` needs case-by-case judgment, not a blind swap: a centering
+  pair (`start-1/2` + `-translate-x-1/2`) stays as-is since X-axis centering is
+  symmetric; a genuinely directional slide (e.g. a switch thumb) needs
+  `ltr:translate-x-...`/`rtl:translate-x-...` treatment, per `switch.tsx`.
+- Carve-outs — physical classes are correct here, do not "fix" them:
+  - `data-[side=...]` selectors driven by a positioning engine (e.g. popover
+    collision avoidance) respond to runtime layout side, not text direction.
+  - Physical `side` props on components like `sheet.tsx`/`sidebar.tsx` are an
+    intentional component API; their internals already map to logical CSS.
+  - Keyboard event key codes (`e.key === "ArrowLeft"`) are a browser API, not
+    a CSS utility.
+  - Symmetric `inset-x-0` (equal both sides) has no more "logical" form.
+  - `packages/mail/src/emails` — email clients have poor RTL support, keep
+    physical unless a dedicated task addresses this.
 
 ## Verification
 

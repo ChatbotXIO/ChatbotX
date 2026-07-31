@@ -17,7 +17,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useEffect } from "react"
+import { type ReactElement, useEffect } from "react"
 import { toast } from "sonner"
 import { changeFolderAction } from "./actions/change-folder.action"
 import { useFolderSelectOptions } from "./provider/folder-hook"
@@ -29,7 +29,7 @@ export type ChangeFolderDialogProps = {
   currentFolderId: string | null
   folderType: FolderType
   open: boolean
-  trigger?: ReactNode
+  trigger?: ReactElement
   onOpenChange: (open: boolean) => void
 }
 
@@ -49,7 +49,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      {trigger && <DialogTrigger render={trigger} />}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

@@ -205,7 +205,7 @@ export default function FileDropzone({
             className="h-full w-full object-cover"
             src={preview}
           />
-          <div className="absolute top-1 right-1 z-10">
+          <div className="absolute end-1 top-1 z-10">
             <Button
               className="size-5 rounded-full"
               onClick={_onRemove}
@@ -256,14 +256,16 @@ export default function FileDropzone({
       <div className="relative mb-2 flex items-center justify-center gap-2">
         <UploadIcon size={25} />
         <span className="capitalize">{type}</span>
-        <div className="absolute right-0">
+        <div className="absolute end-0">
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button onClick={_onMode} variant="link">
-                  <Undo2 size={20} />
-                </Button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Button onClick={_onMode} variant="link">
+                    <Undo2 size={20} />
+                  </Button>
+                }
+              />
               <TooltipContent>
                 <p>Upload File</p>
               </TooltipContent>

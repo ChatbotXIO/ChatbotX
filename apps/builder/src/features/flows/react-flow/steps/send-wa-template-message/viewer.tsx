@@ -38,6 +38,7 @@ export const SendWaTemplateMessageStepViewer = (
             className="relative flex items-center justify-end gap-2"
             key={data.buttons[0].id}
           >
+            {/* React Flow routes from physical Position.Right, so this offset must stay physical. */}
             <span className={cn("font-medium text-sm", "text-green-600")}>
               {data.buttons[0].label}
             </span>

@@ -97,7 +97,7 @@ export function ProductForm({
                   label={t("products.fields.longDescription.label")}
                   name="longDescription"
                 />
-                <p className="text-right text-muted-foreground text-xs">
+                <p className="text-end text-muted-foreground text-xs">
                   {longDescription.length}/840
                 </p>
               </div>

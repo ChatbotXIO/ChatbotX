@@ -47,14 +47,16 @@ function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          className="h-auto p-0 text-destructive tabular-nums"
-          variant="link"
-        >
-          {item.failedCount}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            className="h-auto p-0 text-destructive tabular-nums"
+            variant="link"
+          >
+            {item.failedCount}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("fields.import.histories.errorDetails")}</DialogTitle>

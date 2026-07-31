@@ -1,10 +1,9 @@
-import type * as SwitchPrimitive from "@radix-ui/react-switch"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import { Switch } from "../ui/switch"
 import { FormFieldWrapper } from "./field-wrapper"
 
 type SwitchFieldProps<T extends FieldValues> = React.ComponentProps<
-  typeof SwitchPrimitive.Root
+  typeof Switch
 > & {
   name: FieldPath<T>
   label?: string

@@ -49,7 +49,7 @@ export function ManageLayout({ children, sidebar }: ManageLayoutProps) {
     >
       {sidebar}
       <SidebarInset>
-        <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
+        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 border" />
         <main className="p-4 pb-24 sm:px-6 sm:pt-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

@@ -1,6 +1,6 @@
 import type { TenantModel } from "@chatbotx.io/database/types"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardDescription,
@@ -105,12 +105,13 @@ export async function PlatformEmailTemplatesSettings({
                 <CardDescription>{t(config.descriptionKey)}</CardDescription>
               </CardHeader>
               <CardFooter>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`${basePath}/${config.type}`}>
-                    <PencilIcon className="size-3.5" />
-                    {t("actions.edit")}
-                  </Link>
-                </Button>
+                <Link
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                  href={`${basePath}/${config.type}`}
+                >
+                  <PencilIcon className="size-3.5" />
+                  {t("actions.edit")}
+                </Link>
               </CardFooter>
             </Card>
           )

@@ -70,10 +70,8 @@ export function AutomatedResponsesTable({
         header: ({ table: innerTable }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              innerTable.getIsAllPageRowsSelected() ||
-              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={innerTable.getIsAllPageRowsSelected()}
+            indeterminate={innerTable.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               innerTable.toggleAllPageRowsSelected(Boolean(value))
             }
@@ -193,23 +191,27 @@ export function AutomatedResponsesTable({
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link
-                  href={`/space/${workspaceId}/automated-responses/${row.original.id}/edit`}
-                >
-                  <PencilIcon />
-                  {t("actions.edit")}
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, variant: "move" })}
+                render={
+                  <Link
+                    href={`/space/${workspaceId}/automated-responses/${row.original.id}/edit`}
+                  >
+                    <PencilIcon />
+                    {t("actions.edit")}
+                  </Link>
+                }
+              />
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "move" })}
               >
                 <FolderUpIcon />
                 {t("actions.move")}

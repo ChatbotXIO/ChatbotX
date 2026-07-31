@@ -18,7 +18,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import type { ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { connectTelegramAction } from "../actions/connect.action"
@@ -47,7 +47,7 @@ export function TelegramConnect({
   autoOpen = false,
 }: {
   workspaceId?: string | null
-  children?: ReactNode
+  children?: ReactElement
   autoOpen?: boolean
 }) {
   const t = useTranslations()
@@ -87,40 +87,42 @@ export function TelegramConnect({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger render={children} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {t("actions.addFeature", { feature: t("fields.telegram.label") })}
           </DialogTitle>
-          <DialogDescription asChild>
-            <ol className="mt-2 flex list-none flex-col gap-3">
-              <ConnectStep index={1}>
-                {t.rich("fields.telegram.connectInstructions.step1", {
-                  link: (chunks) => (
-                    <a
-                      className="text-primary underline underline-offset-2"
-                      href="https://t.me/BotFather"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      {chunks}
-                    </a>
-                  ),
-                })}
-              </ConnectStep>
-              <ConnectStep index={2}>
-                {t.rich("fields.telegram.connectInstructions.step2", {
-                  strong: (chunks) => (
-                    <strong className="font-semibold">{chunks}</strong>
-                  ),
-                })}
-              </ConnectStep>
-              <ConnectStep index={3}>
-                {t("fields.telegram.connectInstructions.step3")}
-              </ConnectStep>
-            </ol>
-          </DialogDescription>
+          <DialogDescription
+            render={
+              <ol className="mt-2 flex list-none flex-col gap-3">
+                <ConnectStep index={1}>
+                  {t.rich("fields.telegram.connectInstructions.step1", {
+                    link: (chunks) => (
+                      <a
+                        className="text-primary underline underline-offset-2"
+                        href="https://t.me/BotFather"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {chunks}
+                      </a>
+                    ),
+                  })}
+                </ConnectStep>
+                <ConnectStep index={2}>
+                  {t.rich("fields.telegram.connectInstructions.step2", {
+                    strong: (chunks) => (
+                      <strong className="font-semibold">{chunks}</strong>
+                    ),
+                  })}
+                </ConnectStep>
+                <ConnectStep index={3}>
+                  {t("fields.telegram.connectInstructions.step3")}
+                </ConnectStep>
+              </ol>
+            }
+          />
         </DialogHeader>
         <Form {...form}>
           <form
@@ -136,11 +138,13 @@ export function TelegramConnect({
               type="password"
             />
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="secondary">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting

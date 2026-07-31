@@ -88,12 +88,14 @@ export const CreateTagDialog = ({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("messages.createFeature", { feature: t("fields.tag.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("messages.createFeature", { feature: t("fields.tag.label") })}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>
@@ -106,11 +108,13 @@ export const CreateTagDialog = ({
             <InputField label={t("fields.name.label")} name="name" required />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting

@@ -18,7 +18,8 @@ const CAROUSEL_CARD_GAP = "gap-3"
  * The first card fills the node frame while the rest spill outside it, so the
  * node's `p-4` already sits between card one and card two. Adding it back keeps
  * the gutter even from the node border onward instead of letting the second
- * card crowd the frame.
+ * card crowd the frame. This is fixed canvas geometry (cards spill in document
+ * order, not reading direction), so it stays physical rather than logical.
  */
 const FIRST_CARD_FRAME_OFFSET = "mr-4"
 

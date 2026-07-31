@@ -101,11 +101,13 @@ export function UpdateSpreadsheetDialog({
               <InputField label={t("fields.url.label")} name="url" />
 
               <DialogFooter className="justify-end">
-                <DialogClose asChild>
-                  <Button size="sm" type="button" variant="secondary">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button size="sm" type="button" variant="secondary">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting

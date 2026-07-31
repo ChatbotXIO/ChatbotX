@@ -63,9 +63,9 @@ export function DeleteCategoryDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">{t("cancel")}</Button>
-          </DialogClose>
+          <DialogClose
+            render={<Button variant="outline">{t("cancel")}</Button>}
+          />
           <Button
             disabled={isPending}
             onClick={() => execute()}

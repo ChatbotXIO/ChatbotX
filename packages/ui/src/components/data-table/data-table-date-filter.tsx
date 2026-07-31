@@ -179,26 +179,28 @@ export function DataTableDateFilter<TData>({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="border-dashed">
-          {hasValue ? (
-            // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-            <div
-              // biome-ignore lint/a11y/useSemanticElements: <explanation>
-              role="button"
-              aria-label={`Clear ${title} filter`}
-              tabIndex={0}
-              onClick={onReset}
-              className="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <XCircle />
-            </div>
-          ) : (
-            <CalendarIcon />
-          )}
-          {label}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button variant="outline" size="sm" className="border-dashed">
+            {hasValue ? (
+              // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+              <div
+                // biome-ignore lint/a11y/useSemanticElements: <explanation>
+                role="button"
+                aria-label={`Clear ${title} filter`}
+                tabIndex={0}
+                onClick={onReset}
+                className="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <XCircle />
+              </div>
+            ) : (
+              <CalendarIcon />
+            )}
+            {label}
+          </Button>
+        }
+      />
       <PopoverContent className="w-auto p-0" align="start">
         {multiple ? (
           <Calendar

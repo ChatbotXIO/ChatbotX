@@ -136,7 +136,7 @@ export const BaseEditor = ({
       <CardHeader>
         <CardTitle>{label}</CardTitle>
         <Button
-          className="absolute top-0 right-0 hidden hover:bg-red hover:text-destructive group-hover:block"
+          className="absolute end-0 top-0 hidden hover:bg-red hover:text-destructive group-hover:block"
           onClick={onRemove}
           type="button"
           variant="ghost"

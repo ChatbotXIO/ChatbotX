@@ -178,7 +178,7 @@ export default function PersistentMenuField({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col">
-        <Accordion collapsible type="single">
+        <Accordion>
           {persistentMenus.map((_, index) => {
             if (index === brandingIndex) {
               return null

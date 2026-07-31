@@ -55,30 +55,36 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon" variant="ghost">
-            <MoreHorizontalIcon className="h-4 w-4" />
-            <span className="sr-only">{t("actions.openMenu")}</span>
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button size="icon" variant="ghost">
+              <MoreHorizontalIcon className="h-4 w-4" />
+              <span className="sr-only">{t("actions.openMenu")}</span>
+            </Button>
+          }
+        />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={aiFile.url} rel="noopener" target="_blank">
-              <EyeIcon className="mr-2 h-4 w-4" />
-              {t("actions.view")}
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href={aiFile.url} rel="noopener" target="_blank">
-              <DownloadIcon className="mr-2 h-4 w-4" />
-              {t("actions.download")}
-            </Link>
-          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={
+              <Link href={aiFile.url} rel="noopener" target="_blank">
+                <EyeIcon className="me-2 h-4 w-4" />
+                {t("actions.view")}
+              </Link>
+            }
+          />
+          <DropdownMenuItem
+            render={
+              <Link href={aiFile.url} rel="noopener" target="_blank">
+                <DownloadIcon className="me-2 h-4 w-4" />
+                {t("actions.download")}
+              </Link>
+            }
+          />
           <DropdownMenuItem
             className="text-destructive"
             onClick={() => setOpen(true)}
           >
-            <Trash2Icon className="mr-2 h-4 w-4" />
+            <Trash2Icon className="me-2 h-4 w-4" />
             {t("actions.delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -116,11 +122,13 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[300px] truncate">
-                {row.original.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[300px] truncate">
+                  {row.original.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name}</p>
             </TooltipContent>
@@ -140,14 +148,16 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                className="block max-w-[120px] truncate"
-                variant="secondary"
-              >
-                {row.original.mimeType}
-              </Badge>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Badge
+                  className="block max-w-[120px] truncate"
+                  variant="secondary"
+                >
+                  {row.original.mimeType}
+                </Badge>
+              }
+            />
             <TooltipContent>
               <p>{row.original.mimeType}</p>
             </TooltipContent>

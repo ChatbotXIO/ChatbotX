@@ -67,7 +67,7 @@ export function UpdateConversationAssignee({
           <span className="cursor-pointer text-gray-500 text-xs">
             {agentLabel}
           </span>
-          <ChevronDownIcon className="ml-1 inline-block size-4" />
+          <ChevronDownIcon className="ms-1 inline-block size-4" />
         </div>
       }
     />

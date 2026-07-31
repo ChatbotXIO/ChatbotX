@@ -43,24 +43,26 @@ export function CalendarField<T extends FieldValues>({
     >
       {(field) => (
         <Popover>
-          <PopoverTrigger asChild>
-            <FormControl>
-              <Button
-                className={cn(
-                  "w-[240px] pl-3 text-left font-normal",
-                  !field.value && "text-muted-foreground",
-                )}
-                variant={"outline"}
-              >
-                {field.value ? (
-                  format(field.value, "PPP")
-                ) : (
-                  <span>{placeholder ?? "Pick a date"}</span>
-                )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-              </Button>
-            </FormControl>
-          </PopoverTrigger>
+          <PopoverTrigger
+            render={
+              <FormControl>
+                <Button
+                  className={cn(
+                    "w-[240px] ps-3 text-start font-normal",
+                    !field.value && "text-muted-foreground",
+                  )}
+                  variant={"outline"}
+                >
+                  {field.value ? (
+                    format(field.value, "PPP")
+                  ) : (
+                    <span>{placeholder ?? "Pick a date"}</span>
+                  )}
+                  <CalendarIcon className="ms-auto h-4 w-4 opacity-50" />
+                </Button>
+              </FormControl>
+            }
+          />
           <PopoverContent align="start" className="w-auto p-0">
             <Calendar
               captionLayout="dropdown"

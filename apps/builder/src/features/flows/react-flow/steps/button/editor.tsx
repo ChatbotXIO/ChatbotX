@@ -75,16 +75,22 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
       >
         <div className="flex w-full flex-col gap-2">
           {fields.map((field, index) => (
-            <SortableItem asChild key={field.id} value={field.id}>
-              <div className="flex w-full items-center gap-1">
-                <ButtonStepEditor parentName={`${parentName}.${index}`} />
-                <SortableItemHandle asChild>
-                  <Button className="size-8" size="icon" variant="ghost">
-                    <GripVerticalIcon className="h-4 w-4" />
-                  </Button>
-                </SortableItemHandle>
-              </div>
-            </SortableItem>
+            <SortableItem
+              key={field.id}
+              render={
+                <div className="flex w-full items-center gap-1">
+                  <ButtonStepEditor parentName={`${parentName}.${index}`} />
+                  <SortableItemHandle
+                    render={
+                      <Button className="size-8" size="icon" variant="ghost">
+                        <GripVerticalIcon className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </div>
+              }
+              value={field.id}
+            />
           ))}
         </div>
       </Sortable>

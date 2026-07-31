@@ -117,7 +117,10 @@ function ListInboxTeamsDetail({
                           {openTeams[row.team.id] ? (
                             <ChevronDownIcon size={16} />
                           ) : (
-                            <ChevronRightIcon size={16} />
+                            <ChevronRightIcon
+                              className="rtl:rotate-180"
+                              size={16}
+                            />
                           )}
                         </Button>
                       </TableCell>
@@ -141,12 +144,14 @@ function ListInboxTeamsDetail({
                       </TableCell>
                       <TableCell className="w-1">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost">
-                              <MoreHorizontalIcon className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button size="icon" variant="ghost">
+                                <MoreHorizontalIcon className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            }
+                          />
                           <DropdownMenuContent className="flex flex-col gap-1 p-3">
                             <DropdownMenuItem
                               className="cursor-pointer text-sm"
@@ -181,7 +186,7 @@ function ListInboxTeamsDetail({
                   <TableRow key={`${row.team.id}-members`}>
                     <TableCell />
                     <TableCell colSpan={4}>
-                      <ul className="pl-2">
+                      <ul className="ps-2">
                         {(row.team.inboxTeamMembers || []).map((member) => (
                           <li
                             className="flex items-center justify-between border-b py-2 last:border-b-0"

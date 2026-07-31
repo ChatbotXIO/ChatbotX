@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
-import type { ReactNode } from "react"
+import type { ReactElement } from "react"
 import { useEffect, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import type { ContactFilterCriteria } from "../schemas"
@@ -29,7 +29,7 @@ type ContactFilterDialogCoreProps = {
   value: ContactFilterCriteria
   onApply: (next: ContactFilterCriteria) => void
   onSubmitted?: (submitted: ContactFilterCriteria) => void
-  trigger?: ReactNode
+  trigger?: ReactElement
   excludeFields?: ContactFilterField[]
   inboxChannel?: string
 }
@@ -67,17 +67,19 @@ const ContactFilterDialogCore = ({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button>
-            {btnTitle ??
-              t("actions.addFeature", {
-                feature: t("fields.contactFilter.label"),
-              })}{" "}
-            {filterCount > 0 ? `(${filterCount})` : ""}
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          trigger ?? (
+            <Button>
+              {btnTitle ??
+                t("actions.addFeature", {
+                  feature: t("fields.contactFilter.label"),
+                })}{" "}
+              {filterCount > 0 ? `(${filterCount})` : ""}
+            </Button>
+          )
+        }
+      />
 
       <DialogContent
         className={`${CONTACT_FILTER_DIALOG_SIZE_CLASS} overflow-y-auto`}
@@ -155,7 +157,7 @@ const ContactFilterDialogWithFormContext = ({
   excludeFields,
   inboxChannel,
 }: {
-  trigger?: ReactNode
+  trigger?: ReactElement
   btnTitle?: string
   onSubmitted?: (submitted: ContactFilterCriteria) => void
   excludeFields?: ContactFilterField[]

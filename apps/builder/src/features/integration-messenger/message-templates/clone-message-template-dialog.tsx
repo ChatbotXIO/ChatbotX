@@ -119,11 +119,13 @@ function CloneMessageTemplateForm({
         />
 
         <div className="flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button type="button" variant="outline">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
 
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
@@ -177,10 +179,10 @@ function CloneResultDialog({
                   className="border-b border-dashed last:border-b-0"
                   key={`ok-${item.channel}`}
                 >
-                  <td className="overflow-hidden text-ellipsis whitespace-nowrap py-3 pr-3 font-medium">
+                  <td className="overflow-hidden text-ellipsis whitespace-nowrap py-3 pe-3 font-medium">
                     {item.channel}
                   </td>
-                  <td className="py-3 pl-3 text-left">
+                  <td className="py-3 ps-3 text-start">
                     <div className="flex w-full items-center gap-1.5 text-green-600">
                       <CheckCircle2Icon className="size-4 shrink-0" />
                       <span className="truncate">
@@ -197,10 +199,10 @@ function CloneResultDialog({
                   className="border-b border-dashed last:border-b-0"
                   key={`fail-${item.channel}`}
                 >
-                  <td className="overflow-hidden text-ellipsis whitespace-nowrap py-3 pr-3 font-medium">
+                  <td className="overflow-hidden text-ellipsis whitespace-nowrap py-3 pe-3 font-medium">
                     {item.channel}
                   </td>
-                  <td className="py-3 pl-3 text-left">
+                  <td className="py-3 ps-3 text-start">
                     <div className="flex w-full items-center gap-1.5 text-destructive">
                       <XCircleIcon className="size-4 shrink-0" />
                       <div className="wrap-break-word min-w-0 flex-1 whitespace-pre-wrap text-destructive text-xs leading-relaxed">

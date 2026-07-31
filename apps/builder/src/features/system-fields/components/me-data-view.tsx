@@ -18,7 +18,7 @@ import {
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -240,27 +240,33 @@ export function MeDataView({ data }: MeDataViewProps) {
         </Card>
 
         <div className="flex flex-col gap-2">
-          <Button asChild className="w-full" variant="secondary">
-            <a href={buildMeDownloadHref(data.params)}>
-              <Download aria-hidden="true" />
-              {t("extensionsMe.actions.download")}
-            </a>
-          </Button>
+          <a
+            className={buttonVariants({
+              variant: "secondary",
+              className: "w-full",
+            })}
+            href={buildMeDownloadHref(data.params)}
+          >
+            <Download aria-hidden="true" />
+            {t("extensionsMe.actions.download")}
+          </a>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                className="w-full"
-                disabled={isPending}
-                variant="destructive"
-              >
-                {isPending ? (
-                  <Loader2 aria-hidden="true" className="animate-spin" />
-                ) : (
-                  <Trash2 aria-hidden="true" />
-                )}
-                {t("extensionsMe.actions.delete")}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  className="w-full"
+                  disabled={isPending}
+                  variant="destructive"
+                >
+                  {isPending ? (
+                    <Loader2 aria-hidden="true" className="animate-spin" />
+                  ) : (
+                    <Trash2 aria-hidden="true" />
+                  )}
+                  {t("extensionsMe.actions.delete")}
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

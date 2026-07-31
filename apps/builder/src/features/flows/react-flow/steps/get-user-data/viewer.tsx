@@ -17,6 +17,7 @@ const GetUserDataStepViewer = ({ data }: { data: GetUserDataStepSchema }) => {
         <p className="bg-gray-200 px-4 py-2 dark:bg-neutral-600">
           {data.message}
         </p>
+        {/* React Flow keeps each state's connector on physical Position.Right. */}
         <div className="my-2 mr-3 flex flex-col gap-1">
           {data.states.map((state) => (
             <BaseStateViewer

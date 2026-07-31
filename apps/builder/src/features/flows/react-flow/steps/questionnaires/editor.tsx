@@ -64,11 +64,13 @@ export function QuestionnairesActionEditor({
       title={t("flows.actions.questionnaires")}
     >
       <Dialog onOpenChange={setOpen} open={open}>
-        <DialogTrigger asChild>
-          <Button size="sm" type="button" variant="outline">
-            {t("actions.edit")}
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            <Button size="sm" type="button" variant="outline">
+              {t("actions.edit")}
+            </Button>
+          }
+        />
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("flows.actions.questionnaires")}</DialogTitle>

@@ -60,13 +60,15 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <div className="flex justify-center">
-          <Button size="sm" type="button" variant="outline">
-            {t("actions.edit")}
-          </Button>
-        </div>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <div className="flex justify-center">
+            <Button size="sm" type="button" variant="outline">
+              {t("actions.edit")}
+            </Button>
+          </div>
+        }
+      />
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.formatDate")}</DialogTitle>
@@ -116,9 +118,11 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">{t("actions.cancel")}</Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button variant="outline">{t("actions.cancel")}</Button>
+                }
+              />
 
               <Button
                 disabled={

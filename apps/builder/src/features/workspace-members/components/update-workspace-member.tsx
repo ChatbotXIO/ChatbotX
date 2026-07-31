@@ -63,7 +63,7 @@ export function UpdateWorkspaceMemberDialog({
         <ScrollArea className="h-75">
           <UpdateWorkspaceMemberForm
             cancelHandler={onCancel}
-            className="mr-3"
+            className="me-3"
             submitHandler={onSuccess}
             workspaceMember={workspaceMember}
           />

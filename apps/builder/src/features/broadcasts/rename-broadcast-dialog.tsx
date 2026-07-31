@@ -98,11 +98,13 @@ export function RenameBroadcastDialog({
               <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter className="justify-end">
-                <DialogClose asChild>
-                  <Button size="sm" type="button" variant="ghost">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button size="sm" type="button" variant="ghost">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting

@@ -68,8 +68,8 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
   }
 
   return (
-    <div className="relative pr-3">
-      <div className="absolute top-2 left-3 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1 dark:bg-neutral-500!">
+    <div className="relative pe-3">
+      <div className="absolute start-3 top-2 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1 dark:bg-neutral-500!">
         <Button
           className={cn(
             "size-6 p-0!",
@@ -107,7 +107,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           ))}
         </CarouselContent>
 
-        <div className="absolute top-1/2 -right-3 flex -translate-y-1/2 flex-col gap-2">
+        <div className="absolute -end-3 top-1/2 flex -translate-y-1/2 flex-col gap-2">
           <Button
             className="size-6 cursor-pointer rounded-full"
             data-slot="carousel-add"

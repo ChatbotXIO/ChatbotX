@@ -104,7 +104,7 @@ export default function ManageAccessTokenPage(
             </Button>
 
             <Button
-              className="ml-2"
+              className="ms-2"
               disabled={!form.formState.isValid || form.formState.isSubmitting}
               size="sm"
               type="submit"

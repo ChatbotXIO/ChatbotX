@@ -49,11 +49,9 @@ export function getTagColumns({
       header: ({ table }) => (
         <Checkbox
           aria-label={t("actions.selectAll")}
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected()}
           className="translate-y-0.5"
+          indeterminate={table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) =>
             table.toggleAllPageRowsSelected(Boolean(value))
           }
@@ -79,11 +77,13 @@ export function getTagColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="inline-block max-w-[300px] truncate">
-              {row.original.name}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="inline-block max-w-[300px] truncate">
+                {row.original.name}
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.name}</p>
           </TooltipContent>
@@ -119,18 +119,20 @@ export function getTagColumns({
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Open menu"
-              className="flex size-8 p-0 data-[state=open]:bg-muted"
-              variant="ghost"
-            >
-              <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Open menu"
+                className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
+              >
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "update" })}
+              onClick={() => setRowAction({ row, variant: "update" })}
             >
               <PencilIcon />
               {t("actions.edit")}
@@ -148,7 +150,7 @@ export function getTagColumns({
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
             >
               <Trash2Icon className="text-destructive" />
               {t("actions.delete")}

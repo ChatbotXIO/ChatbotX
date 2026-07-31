@@ -126,7 +126,7 @@ export function UpdateInstagramForm({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Accordion className="w-full" collapsible type="single">
+              <Accordion className="w-full">
                 {conversationStarters.map((_, index) => (
                   <AccordionItem
                     className="flex flex-col gap-2"

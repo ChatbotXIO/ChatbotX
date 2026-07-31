@@ -62,11 +62,13 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost">
-          <MessageSquareMoreIcon size={20} />
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button variant="ghost">
+            <MessageSquareMoreIcon size={20} />
+          </Button>
+        }
+      />
       <PopoverContent align="end" className="w-100 p-0">
         {view.type === "create" ? (
           <SavedReplyCreateForm

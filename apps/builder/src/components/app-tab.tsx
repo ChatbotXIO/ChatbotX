@@ -25,14 +25,16 @@ export function AppTab({ tabs }: AppTabProps) {
         {tabs.map((tab) =>
           tab.disabled ? (
             <Tooltip key={tab.href}>
-              <TooltipTrigger asChild>
-                <span
-                  aria-disabled="true"
-                  className="cursor-not-allowed border-transparent border-b-2 py-6 font-medium text-gray-400 text-sm opacity-60 dark:text-gray-500"
-                >
-                  {tab.label}
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span
+                    aria-disabled="true"
+                    className="cursor-not-allowed border-transparent border-b-2 py-6 font-medium text-gray-400 text-sm opacity-60 dark:text-gray-500"
+                  >
+                    {tab.label}
+                  </span>
+                }
+              />
               <TooltipContent>{tab.disabledTooltip}</TooltipContent>
             </Tooltip>
           ) : (

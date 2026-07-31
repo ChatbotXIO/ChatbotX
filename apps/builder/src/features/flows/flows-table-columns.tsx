@@ -51,11 +51,9 @@ export function getFlowColumns({
       header: ({ table }) => (
         <Checkbox
           aria-label={t("actions.selectAll")}
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected()}
           className="translate-y-0.5"
+          indeterminate={table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) =>
             table.toggleAllPageRowsSelected(Boolean(value))
           }
@@ -82,14 +80,16 @@ export function getFlowColumns({
       cell: ({ row }) => (
         <div className="max-w-[300px] truncate">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                className="max-w-[300px] truncate"
-                href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
-              >
-                {row.original.name}
-              </Link>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Link
+                  className="max-w-[300px] truncate"
+                  href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
+                >
+                  {row.original.name}
+                </Link>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name}</p>
             </TooltipContent>
@@ -206,36 +206,38 @@ export function getFlowColumns({
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Open menu"
-              className="flex size-8 p-0 data-[state=open]:bg-muted"
-              variant="ghost"
-            >
-              <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Open menu"
+                className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
+              >
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "rename" })}
+              onClick={() => setRowAction({ row, variant: "rename" })}
             >
               <TextIcon />
               {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "move" })}
+              onClick={() => setRowAction({ row, variant: "move" })}
             >
               <FolderUpIcon />
               {t("actions.move")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "duplicate" })}
+              onClick={() => setRowAction({ row, variant: "duplicate" })}
             >
               <CopyPlus />
               {t("actions.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"
             >
               <Trash />

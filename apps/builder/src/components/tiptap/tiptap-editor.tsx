@@ -130,15 +130,18 @@ export const TiptapEditor = ({
       />
 
       <div
-        className={`${isEditorFocused ? "opacity-100" : "opacity-0"} absolute right-0 bottom-0 z-10 flex translate-y-full cursor-pointer items-center rounded-b-sm bg-gray-500 hover:bg-gray-600`}
+        className={`${isEditorFocused ? "opacity-100" : "opacity-0"} absolute end-0 bottom-0 z-10 flex translate-y-full cursor-pointer items-center rounded-b-sm bg-gray-500 hover:bg-gray-600`}
       >
         {showEmojiPicker && (
           <Popover onOpenChange={setIsOpenEmoji} open={isOpenEmoji}>
-            <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>
-              <div className="p-2">
-                <Smile className="text-white" size={14} />
-              </div>
-            </PopoverTrigger>
+            <PopoverTrigger
+              onClick={() => setIsEditorFocused(true)}
+              render={
+                <div className="p-2">
+                  <Smile className="text-white" size={14} />
+                </div>
+              }
+            />
             <PopoverContent className="w-auto p-0">
               <EmojiPicker onEmojiClick={onEmojiClick} />
             </PopoverContent>
@@ -146,11 +149,14 @@ export const TiptapEditor = ({
         )}
 
         <Popover onOpenChange={setIsOpenCustomField} open={isOpenCustomField}>
-          <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>
-            <div className="p-2">
-              <CodeXml className="text-white" size={14} />
-            </div>
-          </PopoverTrigger>
+          <PopoverTrigger
+            onClick={() => setIsEditorFocused(true)}
+            render={
+              <div className="p-2">
+                <CodeXml className="text-white" size={14} />
+              </div>
+            }
+          />
           <PopoverContent className="w-auto p-0">
             {promptVariableOptions.length > 0 && (
               <div className="max-h-60 w-50 overflow-y-auto">

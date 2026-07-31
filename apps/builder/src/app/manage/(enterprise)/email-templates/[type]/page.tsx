@@ -9,7 +9,7 @@ import {
   DEFAULT_SIGNUP_SUBJECT,
   DEFAULT_SIGNUP_TEMPLATE,
 } from "@chatbotx.io/mail"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { ArrowLeftIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -113,12 +113,14 @@ export default async function ManageEmailTemplateEditPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button asChild size="icon" variant="outline">
-          <Link href="/manage/email-templates">
-            <ArrowLeftIcon className="size-4" />
-            <span className="sr-only">{t("actions.back")}</span>
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+          href="/manage/email-templates"
+        >
+          <ArrowLeftIcon className="size-4 rtl:rotate-180" />
+          <span className="sr-only">{t("actions.back")}</span>
+        </Link>
+
         <h3 className="font-bold text-lg sm:text-xl">
           {t(config.titleKey as Parameters<typeof t>[0])}
         </h3>

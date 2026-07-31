@@ -178,16 +178,18 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <EllipsisVerticalIcon />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost">
+            <EllipsisVerticalIcon />
+          </Button>
+        }
+      />
       <DropdownMenuContent className="w-56">
         {conversation.followed ? (
           <DropdownMenuItem
             disabled={isRemovingFollowUp}
-            onSelect={() => removeFollowUpFn()}
+            onClick={() => removeFollowUpFn()}
           >
             <StarOffIcon />
             {t("actions.removeFromFollowUp")}
@@ -195,23 +197,20 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
         ) : (
           <DropdownMenuItem
             disabled={isFollowingUp}
-            onSelect={() => followUpFn()}
+            onClick={() => followUpFn()}
           >
             <StarIcon className="fill-yellow-400 text-yellow-400" />
             {t("actions.markAsFollowUp")}
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem
-          disabled={isMarkingUnread}
-          onSelect={() => unreadFn()}
-        >
+        <DropdownMenuItem disabled={isMarkingUnread} onClick={() => unreadFn()}>
           <MailIcon />
           {t("actions.markAsUnread")}
         </DropdownMenuItem>
         {conversation.archivedAt ? (
           <DropdownMenuItem
             disabled={isUnarchiving}
-            onSelect={() => unarchiveFn({ ids: [conversation.id] })}
+            onClick={() => unarchiveFn({ ids: [conversation.id] })}
           >
             <ArchiveXIcon />
             {t("actions.unarchive")}
@@ -219,21 +218,21 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
         ) : (
           <DropdownMenuItem
             disabled={isArchiving}
-            onSelect={() => archiveFn({ ids: [conversation.id] })}
+            onClick={() => archiveFn({ ids: [conversation.id] })}
           >
             <ArchiveIcon />
             {t("actions.archive")}
           </DropdownMenuItem>
         )}
         {conversation.contact?.blockedAt ? (
-          <DropdownMenuItem onSelect={() => unblockContactFn()}>
+          <DropdownMenuItem onClick={() => unblockContactFn()}>
             <UserLockIcon />
             {t("actions.unblockContact")}
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
             disabled={isBlockingContact}
-            onSelect={() => blockContactFn()}
+            onClick={() => blockContactFn()}
           >
             <UserLockIcon />
             {t("actions.blockContact")}
@@ -246,7 +245,10 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             deleteConversation(conversation.id)
           }}
           trigger={
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <DropdownMenuItem
+              closeOnClick={false}
+              onClick={(e) => e.preventDefault()}
+            >
               <TrashIcon className="text-destructive" />
               {t("actions.deleteContact")}
             </DropdownMenuItem>

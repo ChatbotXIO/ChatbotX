@@ -54,11 +54,9 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
         header: ({ table: tableData }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              tableData.getIsAllPageRowsSelected() ||
-              (tableData.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={tableData.getIsAllPageRowsSelected()}
             className="translate-y-0.5"
+            indeterminate={tableData.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               tableData.toggleAllPageRowsSelected(Boolean(value))
             }
@@ -89,9 +87,9 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
           const displayName = stripQrPrefix(row.original.name)
           return (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="max-w-50 truncate">{displayName}</div>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={<div className="max-w-50 truncate">{displayName}</div>}
+              />
               <TooltipContent>
                 <p>{displayName}</p>
               </TooltipContent>
@@ -116,11 +114,13 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.flow.name}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-50 truncate">
+                  {row.original.flow.name}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.flow.name}</p>
             </TooltipContent>
@@ -150,12 +150,14 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">{t("actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">{t("actions.openMenu")}</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() =>

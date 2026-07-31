@@ -53,7 +53,7 @@ export default function ArchiveConversationDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger render={trigger} />
 
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
@@ -70,9 +70,9 @@ export default function ArchiveConversationDialog({
         </DialogHeader>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">{t("actions.cancel")}</Button>
-          </DialogClose>
+          <DialogClose
+            render={<Button variant="ghost">{t("actions.cancel")}</Button>}
+          />
 
           <Button disabled={isPending} onClick={() => execute({ ids })}>
             {isPending && <Loader2Icon className="animate-spin" />}

@@ -137,7 +137,7 @@ export function WorkspaceScheduleDialog({
             {t("workspace.schedule.alwaysRun")}
           </Button>
           <Button
-            className="ml-auto"
+            className="ms-auto"
             disabled={isPending}
             onClick={handleSaveSchedule}
             size="sm"

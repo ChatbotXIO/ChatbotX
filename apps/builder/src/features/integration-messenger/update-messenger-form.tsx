@@ -178,7 +178,7 @@ export function UpdateMessengerForm({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Accordion className="w-full" collapsible type="single">
+              <Accordion className="w-full">
                 {conversationStarters.map((_, index) => (
                   <AccordionItem
                     className="flex flex-col gap-2"
@@ -250,7 +250,7 @@ export function UpdateMessengerForm({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Accordion className="w-full" collapsible type="single">
+              <Accordion className="w-full">
                 {personas.map((persona, index) => (
                   <AccordionItem
                     className="flex flex-col gap-2"
@@ -271,32 +271,34 @@ export function UpdateMessengerForm({
                           </Badge>
                         )}
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              aria-label="Open menu"
-                              className="flex size-8 p-0 data-[state=open]:bg-muted"
-                              variant="ghost"
-                            >
-                              <EllipsisVerticalIcon
-                                aria-hidden="true"
-                                className="size-4"
-                              />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                aria-label="Open menu"
+                                className="flex size-8 p-0 data-[state=open]:bg-muted"
+                                variant="ghost"
+                              >
+                                <EllipsisVerticalIcon
+                                  aria-hidden="true"
+                                  className="size-4"
+                                />
+                              </Button>
+                            }
+                          />
                           <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem
-                              onSelect={() => setPersonaDefault(index)}
+                              onClick={() => setPersonaDefault(index)}
                             >
-                              <UserIcon className="mr-2" />
+                              <UserIcon className="me-2" />
                               {persona.isDefault
                                 ? t("actions.unsetDefaultAgent")
                                 : t("fields.isDefault.label")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
-                              onSelect={() => removePersona(index)}
+                              onClick={() => removePersona(index)}
                             >
-                              <Trash2Icon className="mr-2" />
+                              <Trash2Icon className="me-2" />
                               {t("actions.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>

@@ -39,6 +39,7 @@ export function StateHandle({
           isConnected && fillClass,
         )}
       >
+        {/* React Flow routes from physical Position.Right, so this offset must stay physical. */}
         <Handle
           className="right-[8px]! h-4! w-4! opacity-0!"
           id={stateId}

@@ -85,11 +85,13 @@ export function EditMakeSettingsDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogTitle>
           {t("messages.editFeature", { feature: "Make" })}

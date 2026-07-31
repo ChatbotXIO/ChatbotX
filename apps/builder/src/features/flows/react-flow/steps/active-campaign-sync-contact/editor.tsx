@@ -191,11 +191,13 @@ const ActiveCampaignDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader className="text-center">
           <DialogTitle>{t("activeCampaign.title")}</DialogTitle>
@@ -336,7 +338,7 @@ const ActiveCampaignDialog = ({ parentName }: { parentName: string }) => {
                         name={`fieldValues.${index}.contactFieldId`}
                         placeholder={t("activeCampaign.fields.nothingSelected")}
                       />
-                      <ArrowRightIcon className="size-4 text-muted-foreground" />
+                      <ArrowRightIcon className="size-4 text-muted-foreground rtl:rotate-180" />
                       <ComboboxField
                         emptyText={t("actions.noRecordFound")}
                         label=""

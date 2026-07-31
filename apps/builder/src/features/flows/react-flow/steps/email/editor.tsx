@@ -83,7 +83,7 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
           options={emailTopicOptions}
         />
         <Link
-          className="absolute top-[-2px] right-0 text-primary text-sm hover:underline"
+          className="absolute end-0 top-[-2px] text-primary text-sm hover:underline"
           href={`/space/${params.workspaceId}/email-topics`}
         >
           {t("actions.addNew")}
@@ -117,10 +117,11 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
           onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
           value={fields}
         >
-          <SortableContent asChild>
-            <div className="flex flex-col gap-2">
-              {(fields as PageElementSchema[]).map((field, index) => (
-                <SortableItem asChild key={field.id} value={field.id}>
+          <SortableContent className="flex flex-col gap-2">
+            {(fields as PageElementSchema[]).map((field, index) => (
+              <SortableItem
+                key={field.id}
+                render={
                   <div className="flex items-center gap-2">
                     <div className="flex-1">
                       <PageElementBuilder
@@ -138,27 +139,36 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
                       >
                         <XIcon aria-hidden="true" className="size-4" />
                       </Button>
-                      <SortableItemHandle asChild>
-                        <Button className="size-8" size="icon" variant="ghost">
-                          <MoveVerticalIcon className="h-4 w-4" />
-                        </Button>
-                      </SortableItemHandle>
+                      <SortableItemHandle
+                        render={
+                          <Button
+                            className="size-8"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoveVerticalIcon className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
                     </div>
                   </div>
-                </SortableItem>
-              ))}
-            </div>
+                }
+                value={field.id}
+              />
+            ))}
           </SortableContent>
         </Sortable>
       </Card>
 
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline">
-            <PlusIcon />
-            {t("actions.create")}
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button type="button" variant="outline">
+              <PlusIcon />
+              {t("actions.create")}
+            </Button>
+          }
+        />
         <DropdownMenuContent>
           {PAGE_ELEMENTS.map((item) => (
             <DropdownMenuItem

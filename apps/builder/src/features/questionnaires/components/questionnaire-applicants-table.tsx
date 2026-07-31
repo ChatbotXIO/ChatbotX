@@ -71,11 +71,9 @@ export function QuestionnaireApplicantsTable({
         header: ({ table }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={table.getIsAllPageRowsSelected()}
             className="translate-y-0.5"
+            indeterminate={table.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               table.toggleAllPageRowsSelected(Boolean(value))
             }
@@ -126,7 +124,7 @@ export function QuestionnaireApplicantsTable({
             row.original.contact.fullName ?? t("questionnaires.unknownContact")
           return (
             <button
-              className="text-left font-medium hover:underline"
+              className="text-start font-medium hover:underline"
               onClick={() =>
                 loadDetail({
                   questionnaireId,
@@ -193,18 +191,20 @@ export function QuestionnaireApplicantsTable({
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={t("actions.openMenu")}
-                className="size-8 p-0"
-                variant="ghost"
-              >
-                <EllipsisVerticalIcon className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={t("actions.openMenu")}
+                  className="size-8 p-0"
+                  variant="ghost"
+                >
+                  <EllipsisVerticalIcon className="size-4" />
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onSelect={() => setDeleteId(row.original.id)}
+                onClick={() => setDeleteId(row.original.id)}
                 variant="destructive"
               >
                 <Trash2Icon />

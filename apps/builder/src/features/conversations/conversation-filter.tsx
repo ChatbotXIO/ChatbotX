@@ -96,16 +96,18 @@ export function ConversationFilter({
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <Button className="relative px-2" size="sm" variant="outline">
-          <FilterIcon className={hasFilter ? "text-primary" : ""} />
-          {hasFilter && (
-            <Badge className="absolute -top-1.5 -right-1.5 size-4 justify-center rounded-full p-0 text-[10px]">
-              {filterCount}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button className="relative px-2" size="sm" variant="outline">
+            <FilterIcon className={hasFilter ? "text-primary" : ""} />
+            {hasFilter && (
+              <Badge className="absolute -end-1.5 -top-1.5 size-4 justify-center rounded-full p-0 text-[10px]">
+                {filterCount}
+              </Badge>
+            )}
+          </Button>
+        }
+      />
       <PopoverContent className="w-[min(calc(100vw-2rem),36rem)]">
         <div className="flex flex-col gap-4">
           <SelectField

@@ -155,7 +155,7 @@ export function CouponList({ workspaceId }: CouponListProps) {
             </Button>
           ) : null}
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <ImportCouponDialog onStarted={load} workspaceId={workspaceId} />
           <ExportCouponDialog filter={filter} workspaceId={workspaceId} />
         </div>
@@ -225,7 +225,7 @@ export function CouponList({ workspaceId }: CouponListProps) {
               size="icon"
               variant="outline"
             >
-              <ChevronLeftIcon className="size-4" />
+              <ChevronLeftIcon className="size-4 rtl:rotate-180" />
             </Button>
             <Button
               aria-label={t("analytics.pagination.nextPage")}
@@ -236,7 +236,7 @@ export function CouponList({ workspaceId }: CouponListProps) {
               size="icon"
               variant="outline"
             >
-              <ChevronRightIcon className="size-4" />
+              <ChevronRightIcon className="size-4 rtl:rotate-180" />
             </Button>
           </div>
         ) : null}

@@ -161,7 +161,7 @@ export const ContactInboxPanel = ({
 
       <ContactNotesManage contactNotes={contactData?.contactNotes ?? []} />
 
-      <Accordion className="w-full" collapsible type="single">
+      <Accordion className="w-full">
         {accordionModules.map((module, index) => (
           <AccordionItem
             className="transition-all hover:data-[state=open]:rounded-none"

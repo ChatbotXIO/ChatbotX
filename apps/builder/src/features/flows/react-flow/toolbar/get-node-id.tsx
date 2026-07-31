@@ -27,17 +27,19 @@ export function GetNodeId({ nodeId }: { nodeId: string }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          className="size-8"
-          onClick={onClick}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <FingerprintIcon />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            className="size-8"
+            onClick={onClick}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <FingerprintIcon />
+          </Button>
+        }
+      />
       <TooltipContent>
         <p>{t("actions.getNodeId")}</p>
       </TooltipContent>

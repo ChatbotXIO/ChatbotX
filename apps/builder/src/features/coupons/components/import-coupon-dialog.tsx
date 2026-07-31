@@ -58,12 +58,14 @@ export function ImportCouponDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <UploadIcon className="size-4" />
-          {t("coupons.actions.import")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" variant="outline">
+            <UploadIcon className="size-4" />
+            {t("coupons.actions.import")}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("coupons.actions.import")}</DialogTitle>

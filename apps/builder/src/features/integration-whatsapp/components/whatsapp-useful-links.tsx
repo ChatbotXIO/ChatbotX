@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { memo, useMemo } from "react"
@@ -54,22 +54,20 @@ export default memo(function WhatsappUsefulLinks({
   return (
     <div className="my-4 flex flex-col flex-wrap items-center gap-4">
       {links.map((link) => (
-        <Button
-          asChild
-          className="w-xs"
+        <Link
+          aria-label={link.ariaLabel}
+          className={buttonVariants({
+            size: "sm",
+            variant: "secondary",
+            className: "w-xs",
+          })}
+          href={link.href}
           key={link.label}
-          size="sm"
-          variant="secondary"
+          rel="noopener noreferrer"
+          target="_blank"
         >
-          <Link
-            aria-label={link.ariaLabel}
-            href={link.href}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {link.label}
-          </Link>
-        </Button>
+          {link.label}
+        </Link>
       ))}
     </div>
   )

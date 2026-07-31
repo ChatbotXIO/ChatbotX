@@ -78,10 +78,8 @@ export function CustomFieldsTable({
         header: ({ table: innerTable }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              innerTable.getIsAllPageRowsSelected() ||
-              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={innerTable.getIsAllPageRowsSelected()}
+            indeterminate={innerTable.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               innerTable.toggleAllPageRowsSelected(Boolean(value))
             }
@@ -110,11 +108,13 @@ export function CustomFieldsTable({
         cell: ({ row }) => (
           <div>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.name}
-                </div>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <div className="inline-block max-w-[200px] truncate">
+                    {row.original.name}
+                  </div>
+                }
+              />
               <TooltipContent>
                 <p>{row.original.name}</p>
               </TooltipContent>
@@ -142,11 +142,13 @@ export function CustomFieldsTable({
         cell: ({ row }) => (
           <div>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.description}
-                </div>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <div className="inline-block max-w-[200px] truncate">
+                    {row.original.description}
+                  </div>
+                }
+              />
               <TooltipContent>
                 <p>{row.original.description}</p>
               </TooltipContent>
@@ -196,12 +198,14 @@ export function CustomFieldsTable({
         header: "Actions",
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}
@@ -210,7 +214,7 @@ export function CustomFieldsTable({
                 {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, variant: "move" })}
+                onClick={() => setRowAction({ row, variant: "move" })}
               >
                 <FolderUpIcon />
                 {t("actions.move")}

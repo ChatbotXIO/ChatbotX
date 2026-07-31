@@ -11,7 +11,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useState } from "react"
+import { type ReactElement, useState } from "react"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { CreateContactForm } from "./create-contact-form"
 
@@ -20,7 +20,7 @@ export function CreateContactDialog({
   trigger,
 }: {
   workspaceId: string
-  trigger?: ReactNode
+  trigger?: ReactElement
 }) {
   const router = useRouter()
   const t = useTranslations()
@@ -33,15 +33,19 @@ export function CreateContactDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        {trigger ? (
-          trigger
-        ) : (
-          <Button variant="default">
-            {t("actions.createFeature", { feature: t("fields.contact.label") })}
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          trigger ? (
+            trigger
+          ) : (
+            <Button variant="default">
+              {t("actions.createFeature", {
+                feature: t("fields.contact.label"),
+              })}
+            </Button>
+          )
+        }
+      />
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>

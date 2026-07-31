@@ -39,20 +39,22 @@ export function DataTableViewOptions<TData>({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          aria-label="Toggle columns"
-          // biome-ignore lint/a11y/useSemanticElements: <explanation>
-          role="combobox"
-          variant="outline"
-          size="sm"
-          className="ml-auto hidden h-8 lg:flex"
-        >
-          <Settings2 />
-          View
-          <ChevronsUpDown className="ml-auto opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            aria-label="Toggle columns"
+            // biome-ignore lint/a11y/useSemanticElements: <explanation>
+            role="combobox"
+            variant="outline"
+            size="sm"
+            className="ms-auto hidden h-8 lg:flex"
+          >
+            <Settings2 />
+            View
+            <ChevronsUpDown className="ms-auto opacity-50" />
+          </Button>
+        }
+      />
       <PopoverContent align="end" className="w-44 p-0">
         <Command>
           <CommandInput placeholder="Search columns..." />
@@ -71,7 +73,7 @@ export function DataTableViewOptions<TData>({
                   </span>
                   <Check
                     className={cn(
-                      "ml-auto size-4 shrink-0",
+                      "ms-auto size-4 shrink-0",
                       column.getIsVisible() ? "opacity-100" : "opacity-0",
                     )}
                   />

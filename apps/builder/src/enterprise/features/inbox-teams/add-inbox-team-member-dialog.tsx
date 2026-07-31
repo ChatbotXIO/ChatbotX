@@ -97,9 +97,11 @@ export function AddInboxTeamMemberDialog({
               />
 
               <div className="flex justify-end gap-4">
-                <DialogClose asChild>
-                  <Button variant="outline">{t("actions.cancel")}</Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button variant="outline">{t("actions.cancel")}</Button>
+                  }
+                />
 
                 <Button
                   disabled={

@@ -55,28 +55,30 @@ const CreateWorkspaceCard = ({
   if (disabled) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Card
-            aria-disabled
-            className={cn(CARD_STYLES, "opacity-60 hover:translate-y-0")}
-          >
-            <CardContent className="px-0">
-              <div
-                className={cn(
-                  LINK_STYLES,
-                  "cursor-not-allowed bg-muted text-muted-foreground",
-                )}
-              >
-                <div className="flex size-16 items-center justify-center">
-                  <PlusCircleIcon aria-hidden className="size-8" />
+        <TooltipTrigger
+          render={
+            <Card
+              aria-disabled
+              className={cn(CARD_STYLES, "opacity-60 hover:translate-y-0")}
+            >
+              <CardContent className="px-0">
+                <div
+                  className={cn(
+                    LINK_STYLES,
+                    "cursor-not-allowed bg-muted text-muted-foreground",
+                  )}
+                >
+                  <div className="flex size-16 items-center justify-center">
+                    <PlusCircleIcon aria-hidden className="size-8" />
+                  </div>
+                  <div className="truncate text-center font-medium text-sm">
+                    {label}
+                  </div>
                 </div>
-                <div className="truncate text-center font-medium text-sm">
-                  {label}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TooltipTrigger>
+              </CardContent>
+            </Card>
+          }
+        />
         {disabledReason ? (
           <TooltipContent>{disabledReason}</TooltipContent>
         ) : null}
@@ -136,7 +138,7 @@ const WorkspaceCard = ({
     <Card className={cn(CARD_STYLES, "relative")}>
       <CardContent className="px-0">
         {ownerLabel ? (
-          <span className="absolute top-3 right-3 z-10 rounded-full bg-secondary px-2 py-0.5 font-medium text-[10px] text-secondary-foreground uppercase tracking-wide">
+          <span className="absolute end-3 top-3 z-10 rounded-full bg-secondary px-2 py-0.5 font-medium text-[10px] text-secondary-foreground uppercase tracking-wide">
             {ownerLabel}
           </span>
         ) : null}
@@ -231,7 +233,7 @@ const WorkspacesList = async ({
           </span>
         )}
         {isAtLimit && isCloud() && (
-          <UpgradePlanButton className="ml-auto" size="sm" variant="outline">
+          <UpgradePlanButton className="ms-auto" size="sm" variant="outline">
             <CrownIcon aria-hidden className="size-3.5" />
             {t("actions.upgradePlan")}
           </UpgradePlanButton>

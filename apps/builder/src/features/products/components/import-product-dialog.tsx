@@ -135,12 +135,14 @@ export function ImportProductDialog({
       }}
       open={open}
     >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <UploadIcon />
-          {t("title")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            <UploadIcon />
+            {t("title")}
+          </Button>
+        }
+      />
 
       <DialogContent
         aria-describedby={undefined}
@@ -194,6 +196,13 @@ export function ImportProductDialog({
                       ) : null}
                     </Label>
                     <Select
+                      items={[
+                        { label: t("notMapped"), value: NOT_MAPPED },
+                        ...selectableHeaders.map((header) => ({
+                          label: header,
+                          value: header,
+                        })),
+                      ]}
                       onValueChange={(value) =>
                         setColumnMap((current) => ({
                           ...current,

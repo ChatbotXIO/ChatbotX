@@ -81,11 +81,9 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         header: ({ table: dataTable }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              dataTable.getIsAllPageRowsSelected() ||
-              (dataTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={dataTable.getIsAllPageRowsSelected()}
             className="translate-y-0.5 cursor-pointer"
+            indeterminate={dataTable.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               dataTable.toggleAllPageRowsSelected(Boolean(value))
             }
@@ -115,14 +113,16 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         cell: ({ row }) => (
           <div className="max-w-75 truncate">
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  className="truncate"
-                  href={`/space/${workspaceId}/sequences/${row.original.id}`}
-                >
-                  {row.original.name ?? ""}
-                </Link>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Link
+                    className="truncate"
+                    href={`/space/${workspaceId}/sequences/${row.original.id}`}
+                  >
+                    {row.original.name ?? ""}
+                  </Link>
+                }
+              />
               <TooltipContent>
                 <p>{row.original.name}</p>
               </TooltipContent>
@@ -193,45 +193,47 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         cell: ({ row }) => (
           <div className="flex justify-center">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button size="icon" variant="ghost">
+                    <MoreHorizontalIcon className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => handleToggleStatus(row.original)}
                 >
                   {row.original.active ? (
                     <>
-                      <PauseCircleIcon className="mr-2" />
+                      <PauseCircleIcon className="me-2" />
                       {t("actions.deactivate")}
                     </>
                   ) : (
                     <>
-                      <CheckCircleIcon className="mr-2" />
+                      <CheckCircleIcon className="me-2" />
                       {t("actions.activate")}
                     </>
                   )}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => setRowAction({ row, variant: "update" })}
+                  onClick={() => setRowAction({ row, variant: "update" })}
                 >
-                  <TextIcon className="mr-2" />
+                  <TextIcon className="me-2" />
                   {t("actions.rename")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => setRowAction({ row, variant: "move" })}
+                  onClick={() => setRowAction({ row, variant: "move" })}
                 >
-                  <FolderUpIcon className="mr-2" />
+                  <FolderUpIcon className="me-2" />
                   {t("actions.move")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="hover:bg-muted hover:text-destructive"
                   onClick={() => setRowAction({ row, variant: "delete" })}
                 >
-                  <Trash2Icon className="mr-2" />
+                  <Trash2Icon className="me-2" />
                   {t("actions.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>

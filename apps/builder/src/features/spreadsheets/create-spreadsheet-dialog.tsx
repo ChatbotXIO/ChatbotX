@@ -18,7 +18,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useState } from "react"
+import { type ReactElement, type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { createSpreadsheetAction } from "./actions/create-spreadsheet-action"
 import { createSpreadsheetRequest } from "./schema/mutation"
@@ -77,18 +77,20 @@ export function CreateSpreadsheetDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        {triggerButton ? (
-          triggerButton
-        ) : (
-          <Button size="sm">
-            <PlusIcon />
-            {t("actions.addFeature", {
-              feature: t("fields.spreadsheet.label"),
-            })}
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          triggerButton ? (
+            (triggerButton as ReactElement)
+          ) : (
+            <Button size="sm">
+              <PlusIcon />
+              {t("actions.addFeature", {
+                feature: t("fields.spreadsheet.label"),
+              })}
+            </Button>
+          )
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("actions.add")}</DialogTitle>
@@ -110,11 +112,13 @@ export function CreateSpreadsheetDialog({
               />
 
               <DialogFooter className="justify-end">
-                <DialogClose asChild>
-                  <Button size="sm" type="button" variant="ghost">
-                    {t("actions.cancel")}
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button size="sm" type="button" variant="ghost">
+                      {t("actions.cancel")}
+                    </Button>
+                  }
+                />
 
                 <Button
                   disabled={

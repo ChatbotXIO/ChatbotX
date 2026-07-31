@@ -103,12 +103,12 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
             {sequence.steps.length > 0 && (
               <div>
                 <div className="grid">
-                  <div className="space-y-4 pl-4">
+                  <div className="space-y-4 ps-4">
                     <div className="flex flex-col gap-6 rounded-xl py-2 text-card-foreground shadow-none">
-                      <div className="@6xl:flex hidden items-center gap-4 px-6 pl-4 text-muted-foreground text-xs">
+                      <div className="@6xl:flex hidden items-center gap-4 px-6 ps-4 text-muted-foreground text-xs">
                         <div className="min-w-55 flex-1" />
                         <div className="w-70" />
-                        <div className="ml-2 flex w-100 items-center justify-between gap-4 text-xs">
+                        <div className="ms-2 flex w-100 items-center justify-between gap-4 text-xs">
                           <span className="w-12 text-center">
                             {t("sequences.stats.sent")}
                           </span>
@@ -160,7 +160,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
 
             {!isAddingStep && sequence.steps.length > 0 && (
               <div className="grid">
-                <div className="mt-2 mb-2 space-y-4 pl-4">
+                <div className="mt-2 mb-2 space-y-4 ps-4">
                   <button
                     className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-primary/40 border-dashed font-medium text-primary text-sm hover:bg-primary/5"
                     onClick={handleAddStep}

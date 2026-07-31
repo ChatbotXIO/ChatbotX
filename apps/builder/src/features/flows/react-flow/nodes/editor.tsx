@@ -116,14 +116,14 @@ const NodeEditorQuickReplies = () => {
         }
         value={quickReplies}
       >
-        <SortableContent asChild>
-          <div className="contents gap-2">
-            {quickReplies.map((field, index) => (
-              <SortableItem asChild key={field.id} value={field.id}>
-                <ButtonStepEditor parentName={`quickReplies.${index}`} />
-              </SortableItem>
-            ))}
-          </div>
+        <SortableContent className="contents gap-2">
+          {quickReplies.map((field, index) => (
+            <SortableItem
+              key={field.id}
+              render={<ButtonStepEditor parentName={`quickReplies.${index}`} />}
+              value={field.id}
+            />
+          ))}
         </SortableContent>
       </Sortable>
       {quickReplies.length < MAX_QUICK_REPLIES ? (
@@ -194,12 +194,14 @@ const NodeEditorMenu = memo(
     return (
       nodeMenus.length > 0 && (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <PlusIcon />
-              {t("actions.create")}
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline">
+                <PlusIcon />
+                {t("actions.create")}
+              </Button>
+            }
+          />
 
           <DropdownMenuContent className="w-full">
             <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
@@ -392,10 +394,11 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
           }
           value={stepFields}
         >
-          <SortableContent asChild>
-            <div className="flex w-full flex-col gap-4">
-              {stepFields.map((field, index) => (
-                <SortableItem asChild key={field.id} value={field.id}>
+          <SortableContent className="flex w-full flex-col gap-4">
+            {stepFields.map((field, index) => (
+              <SortableItem
+                key={field.id}
+                render={
                   <div
                     className={cn(
                       "flex items-center gap-2",
@@ -439,15 +442,17 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                           <XIcon aria-hidden="true" className="size-4" />
                         </Button>
 
-                        <SortableItemHandle asChild>
-                          <Button
-                            className="size-8"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoveVerticalIcon className="h-4 w-4" />
-                          </Button>
-                        </SortableItemHandle>
+                        <SortableItemHandle
+                          render={
+                            <Button
+                              className="size-8"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoveVerticalIcon className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
                         {!disabledCopyActionTypes.includes(
                           // biome-ignore lint/suspicious/noExplicitAny: wip
                           (field as any).stepType,
@@ -465,9 +470,10 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                       </div>
                     )}
                   </div>
-                </SortableItem>
-              ))}
-            </div>
+                }
+                value={field.id}
+              />
+            ))}
           </SortableContent>
         </Sortable>
       </div>

@@ -1,5 +1,7 @@
 "use client"
 
+// Locally patched for RTL; reapply after refreshing from the upstream shadcn registry.
+
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
@@ -152,7 +154,7 @@ const buttonVariants = cva(
     variants: {
       theme: {
         minimal:
-          "group relative isolate inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-md bg-primary px-3 py-2 text-left font-medium text-primary-foreground text-sm shadow ring-1 ring-primary before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-md before:bg-gradient-to-b before:from-primary-foreground/20 before:opacity-80 before:transition-opacity before:duration-300 before:ease-[cubic-bezier(0.4,0.36,0,1)] after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:rounded-md after:bg-gradient-to-b after:from-primary-foreground/10 after:to-transparent after:mix-blend-overlay hover:bg-primary/90",
+          "group relative isolate inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-md bg-primary px-3 py-2 text-start font-medium text-primary-foreground text-sm shadow ring-1 ring-primary before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-md before:bg-gradient-to-b before:from-primary-foreground/20 before:opacity-80 before:transition-opacity before:duration-300 before:ease-[cubic-bezier(0.4,0.36,0,1)] after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:rounded-md after:bg-gradient-to-b after:from-primary-foreground/10 after:to-transparent after:mix-blend-overlay hover:bg-primary/90",
         classic:
           "relative overflow-hidden rounded-lg border border-primary/20 bg-gradient-to-r from-primary to-primary/80 px-6 py-3 font-semibold text-primary-foreground hover:shadow-xl active:scale-95",
       },
@@ -264,8 +266,8 @@ export function PricingTableFour({
       {theme === "classic" && (
         <>
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-          <div className="absolute top-1/2 left-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute top-1/4 right-1/4 h-64 w-64 rounded-full bg-secondary/5 blur-2xl" />
+          <div className="absolute start-1/2 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl ltr:-translate-x-1/2 rtl:translate-x-1/2" />
+          <div className="absolute end-1/4 top-1/4 h-64 w-64 rounded-full bg-secondary/5 blur-2xl" />
         </>
       )}
 
@@ -321,7 +323,7 @@ export function PricingTableFour({
                   >
                     {billingToggleLabels.yearly}
                     {yearlyPriceDiscount > 0 && (
-                      <span className="ml-1 rounded border border-primary/20 bg-primary/10 px-2 py-0.5 font-medium text-primary text-xs">
+                      <span className="ms-1 rounded border border-primary/20 bg-primary/10 px-2 py-0.5 font-medium text-primary text-xs">
                         Save {yearlyPriceDiscount}%
                       </span>
                     )}
@@ -359,7 +361,7 @@ export function PricingTableFour({
               {plan.badge && (
                 <Badge
                   className={cn(
-                    "absolute -top-3 left-1/2 z-20 -translate-x-1/2 transform",
+                    "absolute start-1/2 -top-3 z-20 transform ltr:-translate-x-1/2 rtl:translate-x-1/2",
                     theme === "classic"
                       ? "border-primary/20 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
                       : "bg-primary text-primary-foreground",
@@ -371,7 +373,7 @@ export function PricingTableFour({
 
               {/* Classic theme highlight effect */}
               {theme === "classic" && plan.highlight && (
-                <div className="absolute -top-px left-1/2 h-px w-32 -translate-x-1/2 bg-gradient-to-r from-transparent via-primary to-transparent" />
+                <div className="absolute start-1/2 -top-px h-px w-32 bg-gradient-to-r from-transparent via-primary to-transparent ltr:-translate-x-1/2 rtl:translate-x-1/2" />
               )}
 
               <div
@@ -441,7 +443,7 @@ export function PricingTableFour({
                             ) > 0 && (
                               <span
                                 className={cn(
-                                  "ml-2 text-xs",
+                                  "ms-2 text-xs",
                                   theme === "classic"
                                     ? "font-semibold text-emerald-500"
                                     : "font-medium text-primary",

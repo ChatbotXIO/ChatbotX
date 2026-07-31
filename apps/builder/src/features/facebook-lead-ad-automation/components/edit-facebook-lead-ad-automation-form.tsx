@@ -130,7 +130,7 @@ export function EditFacebookLeadAdAutomationForm({
               name="flowId"
               options={flowOptions}
               placeholder={t("facebookLeadAdsAutomation.none")}
-              popoverClassName="w-[var(--radix-popover-trigger-width)]"
+              popoverClassName="w-[var(--anchor-width)]"
             />
 
             <div className="flex justify-end gap-2">

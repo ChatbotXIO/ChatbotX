@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -74,16 +74,15 @@ export function UserPersistentMenuList({
         <CardTitle className="font-bold text-xl">
           {t("userPersistentMenus.title")}
         </CardTitle>
-        <Button asChild size="sm">
-          <Link
-            href={`/space/${workspaceId}/settings/user-persistent-menus/create`}
-          >
-            <PlusIcon />
-            {t("actions.createFeature", {
-              feature: t("fields.userPersistentMenu.label"),
-            })}
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({ size: "sm" })}
+          href={`/space/${workspaceId}/settings/user-persistent-menus/create`}
+        >
+          <PlusIcon />
+          {t("actions.createFeature", {
+            feature: t("fields.userPersistentMenu.label"),
+          })}
+        </Link>
       </CardHeader>
       <CardContent>
         <div className="overflow-hidden rounded-md border">
@@ -99,14 +98,16 @@ export function UserPersistentMenuList({
                 menus.map((menu) => (
                   <TableRow key={menu.id}>
                     <TableCell>{menu.name}</TableCell>
-                    <TableCell className="w-1 text-right">
-                      <Button asChild size="icon" variant="ghost">
-                        <Link
-                          href={`/space/${workspaceId}/settings/user-persistent-menus/${menu.id}`}
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                    <TableCell className="w-1 text-end">
+                      <Link
+                        className={buttonVariants({
+                          size: "icon",
+                          variant: "ghost",
+                        })}
+                        href={`/space/${workspaceId}/settings/user-persistent-menus/${menu.id}`}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Link>
                       <Button
                         className="text-destructive"
                         onClick={() => setDeleteTarget(menu)}

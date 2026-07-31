@@ -59,11 +59,9 @@ export function FacebookLeadAdsTable({
         header: ({ table: tableData }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              tableData.getIsAllPageRowsSelected() ||
-              (tableData.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={tableData.getIsAllPageRowsSelected()}
             className="translate-y-0.5"
+            indeterminate={tableData.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               tableData.toggleAllPageRowsSelected(Boolean(value))
             }
@@ -92,7 +90,7 @@ export function FacebookLeadAdsTable({
         ),
         cell: ({ row }) => (
           <button
-            className="inline-block max-w-[240px] cursor-pointer truncate text-left hover:underline"
+            className="inline-block max-w-[240px] cursor-pointer truncate text-start hover:underline"
             onClick={() =>
               router.push(
                 `/space/${workspaceId}/fb-lead-ads/${row.original.id}`,
@@ -138,11 +136,13 @@ export function FacebookLeadAdsTable({
         cell: ({ row }) => (
           <div className="flex justify-center">
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.flow?.name ?? "—"}
-                </div>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <div className="inline-block max-w-[200px] truncate">
+                    {row.original.flow?.name ?? "—"}
+                  </div>
+                }
+              />
               <TooltipContent>
                 <p>{row.original.flow?.name ?? "—"}</p>
               </TooltipContent>
@@ -159,12 +159,14 @@ export function FacebookLeadAdsTable({
         ),
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() =>

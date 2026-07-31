@@ -38,6 +38,16 @@ const Selector = ({ parentName }: { parentName: string }) => {
           <FormItem>
             <FormControl>
               <Select
+                items={[
+                  {
+                    label: t("fields.persona.pageDefault"),
+                    value: PAGE_DEFAULT_VALUE,
+                  },
+                  ...personas.map((persona) => ({
+                    label: `${persona.name} — ${persona.pageName}`,
+                    value: persona.id,
+                  })),
+                ]}
                 onValueChange={(value) =>
                   field.onChange(value === PAGE_DEFAULT_VALUE ? "" : value)
                 }

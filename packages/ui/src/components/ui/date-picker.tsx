@@ -282,26 +282,26 @@ function Calendar({
         nav: 'space-x-1 flex items-center ',
         button_previous: cn(
           buttonVariants({ variant: 'outline' }),
-          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-5 top-5',
+          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute start-5 top-5',
           disableLeftNavigation() && 'pointer-events-none',
         ),
         button_next: cn(
           buttonVariants({ variant: 'outline' }),
-          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-5 top-5',
+          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute end-5 top-5',
           disableRightNavigation() && 'pointer-events-none',
         ),
         month_grid: 'w-full border-collapse space-y-1',
         weekdays: cn('flex', props.showWeekNumber && 'justify-end'),
         weekday: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
         week: 'flex w-full mt-2',
-        day: 'h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 rounded-1',
+        day: 'h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-e-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-s-md last:[&:has([aria-selected])]:rounded-e-md focus-within:relative focus-within:z-20 rounded-1',
         day_button: cn(
           buttonVariants({ variant: 'ghost' }),
-          'h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-l-md rounded-r-md',
+          'h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-s-md rounded-e-md',
         ),
         range_end: 'day-range-end',
         selected:
-          'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-l-md rounded-r-md',
+          'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-s-md rounded-e-md',
         today: 'bg-accent text-accent-foreground',
         outside:
           'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
@@ -313,18 +313,22 @@ function Calendar({
       components={{
         Chevron: ({ ...props }) =>
           props.orientation === 'left' ? (
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 rtl:rotate-180" />
           ),
         MonthCaption: ({ calendarMonth }) => {
           return (
             <div className="inline-flex gap-2">
               <Select
                 defaultValue={calendarMonth.date.getMonth().toString()}
+                items={MONTHS.map((month) => ({
+                  label: month.label,
+                  value: month.value.toString(),
+                }))}
                 onValueChange={(value) => {
                   const newDate = new Date(calendarMonth.date);
-                  newDate.setMonth(Number.parseInt(value, 10));
+                  newDate.setMonth(Number.parseInt(value as string, 10));
                   props.onMonthChange?.(newDate);
                 }}
               >
@@ -343,7 +347,7 @@ function Calendar({
                 defaultValue={calendarMonth.date.getFullYear().toString()}
                 onValueChange={(value) => {
                   const newDate = new Date(calendarMonth.date);
-                  newDate.setFullYear(Number.parseInt(value, 10));
+                  newDate.setFullYear(Number.parseInt(value as string, 10));
                   props.onMonthChange?.(newDate);
                 }}
               >
@@ -402,7 +406,7 @@ const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelectorProps
 
     return (
       <div className="flex h-10 items-center">
-        <Select defaultValue={period} onValueChange={(value: Period) => handleValueChange(value)}>
+        <Select defaultValue={period} onValueChange={(value) => handleValueChange(value as Period)}>
           <SelectTrigger
             ref={ref}
             className="focus:bg-accent focus:text-accent-foreground w-[65px]"
@@ -573,7 +577,7 @@ const TimePicker = React.forwardRef<TimePickerRef, TimePickerProps>(
     return (
       <div className="flex items-center justify-center gap-2">
         <label htmlFor="datetime-picker-hour-input" className="cursor-pointer">
-          <Clock className="mr-2 h-4 w-4" />
+          <Clock className="me-2 h-4 w-4" />
         </label>
         <TimePickerInput
           picker={hourCycle === 24 ? 'hours' : '12hours'}
@@ -771,30 +775,33 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
 
     return (
       <Popover>
-        <PopoverTrigger asChild disabled={typeof disabled === 'boolean' ? disabled : undefined}>
-          <Button
-            variant="outline"
-            className={cn(
-              'w-full justify-start text-left font-normal',
-              !displayDate && 'text-muted-foreground',
-              className,
-            )}
-            ref={buttonRef}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {displayDate ? (
-              format(
-                displayDate,
-                hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12,
-                {
-                  locale: loc,
-                },
-              )
-            ) : (
-              <span>{placeholder}</span>
-            )}
-          </Button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          disabled={typeof disabled === 'boolean' ? disabled : undefined}
+          render={
+            <Button
+              variant="outline"
+              className={cn(
+                'w-full justify-start text-start font-normal',
+                !displayDate && 'text-muted-foreground',
+                className,
+              )}
+              ref={buttonRef}
+            >
+              <CalendarIcon className="me-2 h-4 w-4" />
+              {displayDate ? (
+                format(
+                  displayDate,
+                  hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12,
+                  {
+                    locale: loc,
+                  },
+                )
+              ) : (
+                <span>{placeholder}</span>
+              )}
+            </Button>
+          }
+        />
         <PopoverContent className="w-auto p-0">
           <Calendar
             mode="single"

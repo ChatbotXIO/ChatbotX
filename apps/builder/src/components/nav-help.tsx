@@ -32,15 +32,17 @@ export const NavHelp = () => {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              aria-label={t("helpMenu.ariaLabel")}
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <CircleHelpIcon className="size-4" />
-              <span>{t("helpMenu.title")}</span>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                aria-label={t("helpMenu.ariaLabel")}
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <CircleHelpIcon className="size-4" />
+                <span>{t("helpMenu.title")}</span>
+              </SidebarMenuButton>
+            }
+          />
           <DropdownMenuContent
             align="end"
             className="min-w-48"
@@ -52,21 +54,24 @@ export const NavHelp = () => {
               .map((item) => {
                 const isMailto = item.url.startsWith("mailto:")
                 return (
-                  <DropdownMenuItem asChild key={item.id}>
-                    <a
-                      href={item.url}
-                      {...(!isMailto && {
-                        rel: "noopener noreferrer",
-                        target: "_blank",
-                      })}
-                    >
-                      <DynamicIcon
-                        className="mr-2 size-4"
-                        name={(item.icon ?? "circle-help") as IconName}
-                      />
-                      {item.name}
-                    </a>
-                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    key={item.id}
+                    render={
+                      <a
+                        href={item.url}
+                        {...(!isMailto && {
+                          rel: "noopener noreferrer",
+                          target: "_blank",
+                        })}
+                      >
+                        <DynamicIcon
+                          className="me-2 size-4"
+                          name={(item.icon ?? "circle-help") as IconName}
+                        />
+                        {item.name}
+                      </a>
+                    }
+                  />
                 )
               })}
           </DropdownMenuContent>

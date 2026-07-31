@@ -102,13 +102,15 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <div className="flex justify-center">
-          <Button size="sm" type="button" variant="outline">
-            {t("actions.edit")}
-          </Button>
-        </div>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <div className="flex justify-center">
+            <Button size="sm" type="button" variant="outline">
+              {t("actions.edit")}
+            </Button>
+          </div>
+        }
+      />
       <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{t("flows.actions.generateCode")}</DialogTitle>
@@ -160,11 +162,13 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
 
               <Button
                 disabled={

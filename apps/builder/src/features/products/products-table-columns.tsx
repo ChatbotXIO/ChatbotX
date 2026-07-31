@@ -65,11 +65,9 @@ export function getProductColumns({
       header: ({ table }) => (
         <Checkbox
           aria-label={t("actions.selectAll")}
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected()}
           className="translate-y-0.5"
+          indeterminate={table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) =>
             table.toggleAllPageRowsSelected(Boolean(value))
           }
@@ -188,26 +186,30 @@ export function getProductColumns({
       header: t("actions.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={t("actions.actions")}
-              className="flex size-8 p-0 data-[state=open]:bg-muted"
-              variant="ghost"
-            >
-              <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/space/${row.original.workspaceId}/products/${row.original.id}/edit`}
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Open menu"
+                className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
               >
-                <PencilIcon />
-                {t("actions.edit")}
-              </Link>
-            </DropdownMenuItem>
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              render={
+                <Link
+                  href={`/space/${row.original.workspaceId}/products/${row.original.id}/edit`}
+                >
+                  <PencilIcon />
+                  {t("actions.edit")}
+                </Link>
+              }
+            />
+            <DropdownMenuItem
+              onClick={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"
             >
               <Trash />

@@ -77,12 +77,16 @@ export function CreateInboxTeamDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("actions.createFeature", { feature: t("fields.inboxTeam.label") })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("actions.createFeature", {
+              feature: t("fields.inboxTeam.label"),
+            })}
+          </Button>
+        }
+      />
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
@@ -107,9 +111,11 @@ export function CreateInboxTeamDialog({
               />
 
               <div className="flex justify-end gap-4">
-                <DialogClose asChild>
-                  <Button variant="outline">{t("actions.cancel")}</Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button variant="outline">{t("actions.cancel")}</Button>
+                  }
+                />
 
                 <Button
                   disabled={

@@ -1,5 +1,7 @@
 "use client";
 
+// Locally patched for RTL; reapply after refreshing from the upstream shadcn registry.
+
 import { Button } from "@chatbotx.io/ui/components/ui/button";
 import {
   Popover,
@@ -314,34 +316,36 @@ export default function InputColor({
       {label && <Label className="mb-3">{label}</Label>}
       <div className="flex items-center gap-4">
         <Popover onOpenChange={handlePopoverChange}>
-          <PopoverTrigger asChild>
-            <Button
-              className="border-border h-10 w-10 border shadow-none relative overflow-hidden"
-              size={"icon"}
-              style={{ backgroundColor: hexInputValue }}
-            >
-              {alpha && colorValues.rgba && colorValues.rgba.a < 1 && (
-                <div
-                  className="absolute inset-0 opacity-20"
-                  style={{
-                    backgroundImage: `linear-gradient(45deg, #ccc 25%, transparent 25%),
+          <PopoverTrigger
+            render={
+              <Button
+                className="border-border h-10 w-10 border shadow-none relative overflow-hidden"
+                size={"icon"}
+                style={{ backgroundColor: hexInputValue }}
+              >
+                {alpha && colorValues.rgba && colorValues.rgba.a < 1 && (
+                  <div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage: `linear-gradient(45deg, #ccc 25%, transparent 25%),
                                     linear-gradient(-45deg, #ccc 25%, transparent 25%),
                                     linear-gradient(45deg, transparent 75%, #ccc 75%),
                                     linear-gradient(-45deg, transparent 75%, #ccc 75%)`,
-                    backgroundSize: "8px 8px",
-                    backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0px",
-                  }}
-                />
-              )}
-            </Button>
-          </PopoverTrigger>
+                      backgroundSize: "8px 8px",
+                      backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0px",
+                    }}
+                  />
+                )}
+              </Button>
+            }
+          />
           <PopoverContent className="w-auto p-3" align="start">
             <div className="color-picker space-y-3">
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-1.5 -left-1 z-10 flex h-7 w-7 items-center gap-1 bg-transparent hover:bg-transparent"
+                  className="absolute -top-1.5 -start-1 z-10 flex h-7 w-7 items-center gap-1 bg-transparent hover:bg-transparent"
                   onClick={handleEyeDropper}
                   disabled={!isEyeDropperAvailable()}
                 >
@@ -362,7 +366,10 @@ export default function InputColor({
                 )}
               </div>
               <div className="flex gap-2">
-                <Select value={colorFormat} onValueChange={setColorFormat}>
+                <Select
+                  value={colorFormat}
+                  onValueChange={(value) => setColorFormat(value as string)}
+                >
                   <SelectTrigger className="!h-7 !w-[4.8rem] rounded-sm px-2 py-1 !text-sm">
                     <SelectValue placeholder="Color" />
                   </SelectTrigger>
@@ -405,7 +412,7 @@ export default function InputColor({
                 ) : colorFormat === "RGB" ? (
                   <div className="flex items-center">
                     <Input
-                      className="h-7 w-13 rounded-l-sm rounded-r-none text-center text-sm "
+                      className="h-7 w-13 rounded-s-sm rounded-e-none text-center text-sm "
                       value={colorValues.rgb.r}
                       onChange={(e) => handleRgbChange("r", e.target.value)}
                       placeholder="255"
@@ -419,7 +426,7 @@ export default function InputColor({
                       maxLength={3}
                     />
                     <Input
-                      className="h-7 w-13 rounded-l-none rounded-r-sm text-center text-sm"
+                      className="h-7 w-13 rounded-s-none rounded-e-sm text-center text-sm"
                       value={colorValues.rgb.b}
                       onChange={(e) => handleRgbChange("b", e.target.value)}
                       placeholder="255"
@@ -429,7 +436,7 @@ export default function InputColor({
                 ) : colorFormat === "RGBA" && alpha && colorValues.rgba ? (
                   <div className="flex items-center">
                     <Input
-                      className="h-7 w-10 rounded-l-sm rounded-r-none text-center text-sm px-1"
+                      className="h-7 w-10 rounded-s-sm rounded-e-none text-center text-sm px-1"
                       value={colorValues.rgba.r}
                       onChange={(e) => handleRgbaChange("r", e.target.value)}
                       placeholder="255"
@@ -450,7 +457,7 @@ export default function InputColor({
                       maxLength={3}
                     />
                     <Input
-                      className="h-7 w-10 rounded-l-none rounded-r-sm text-center text-sm px-1"
+                      className="h-7 w-10 rounded-s-none rounded-e-sm text-center text-sm px-1"
                       value={colorValues.rgba.a.toFixed(2)}
                       onChange={(e) => handleRgbaChange("a", e.target.value)}
                       placeholder="1.00"
@@ -460,7 +467,7 @@ export default function InputColor({
                 ) : colorFormat === "HSL" ? (
                   <div className="flex items-center">
                     <Input
-                      className="h-7 w-13 rounded-l-sm rounded-r-none text-center text-sm"
+                      className="h-7 w-13 rounded-s-sm rounded-e-none text-center text-sm"
                       value={colorValues.hsl.h}
                       onChange={(e) => handleHslChange("h", e.target.value)}
                       placeholder="360"
@@ -474,7 +481,7 @@ export default function InputColor({
                       maxLength={3}
                     />
                     <Input
-                      className="h-7 w-13 rounded-l-none rounded-r-sm text-center text-sm"
+                      className="h-7 w-13 rounded-s-none rounded-e-sm text-center text-sm"
                       value={colorValues.hsl.l}
                       onChange={(e) => handleHslChange("l", e.target.value)}
                       placeholder="100"
@@ -484,7 +491,7 @@ export default function InputColor({
                 ) : colorFormat === "HSLA" && alpha && colorValues.hsla ? (
                   <div className="flex items-center">
                     <Input
-                      className="h-7 w-10 px-1 rounded-l-sm rounded-r-none text-center text-sm"
+                      className="h-7 w-10 px-1 rounded-s-sm rounded-e-none text-center text-sm"
                       value={colorValues.hsla.h}
                       onChange={(e) => handleHslaChange("h", e.target.value)}
                       placeholder="360"
@@ -505,7 +512,7 @@ export default function InputColor({
                       maxLength={3}
                     />
                     <Input
-                      className="h-7 w-10 px-1 rounded-l-none rounded-r-sm text-center text-sm"
+                      className="h-7 w-10 px-1 rounded-s-none rounded-e-sm text-center text-sm"
                       value={colorValues.hsla.a.toFixed(2)}
                       onChange={(e) => handleHslaChange("a", e.target.value)}
                       placeholder="1.00"
@@ -526,7 +533,7 @@ export default function InputColor({
             className={`uppercase ${error ? "border-destructive" : ""}`}
           />
           {isLoading && (
-            <span className="absolute inset-y-0 right-0 flex items-center pr-4">
+            <span className="absolute inset-y-0 end-0 flex items-center pe-4">
               <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             </span>
           )}

@@ -27,9 +27,9 @@ export const TestNowPanel = () => {
         variant="outline"
       >
         {isPending ? (
-          <Loader2Icon className="mr-2 size-4 animate-spin" />
+          <Loader2Icon className="me-2 size-4 animate-spin" />
         ) : (
-          <PlayIcon className="mr-2 size-4" />
+          <PlayIcon className="me-2 size-4" />
         )}
         {t("actions.testNow")}
       </Button>

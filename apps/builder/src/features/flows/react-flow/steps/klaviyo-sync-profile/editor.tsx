@@ -108,11 +108,13 @@ const KlaviyoDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="outline">
-          {t("actions.edit")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" type="button" variant="outline">
+            {t("actions.edit")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("flows.actions.klaviyoSyncProfile")}</DialogTitle>
@@ -170,7 +172,7 @@ const KlaviyoDialog = ({ parentName }: { parentName: string }) => {
                     name={`mergeFields.${index}.contactFieldId`}
                     placeholder={t("klaviyo.fields.emptyField")}
                   />
-                  <ArrowRightIcon className="size-4 text-muted-foreground" />
+                  <ArrowRightIcon className="size-4 text-muted-foreground rtl:rotate-180" />
                   <Input
                     placeholder={t("klaviyo.fields.propertyKey")}
                     {...form.register(`mergeFields.${index}.klaviyoProperty`)}

@@ -18,7 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { DialogFooter } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
@@ -145,7 +145,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
           <p className="text-muted-foreground text-sm">
             {t("fields.conversationStarter.description")}
           </p>
-          <Accordion className="w-full" collapsible type="single">
+          <Accordion className="w-full">
             {conversationStarters.map((_, index) => (
               <AccordionItem
                 className="flex flex-col gap-2"
@@ -253,11 +253,12 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
         />
 
         <DialogFooter>
-          <Button asChild size="sm" variant="ghost">
-            <Link href={`/space/${workspaceId}/settings/channels`}>
-              {t("actions.cancel")}
-            </Link>
-          </Button>
+          <Link
+            className={buttonVariants({ size: "sm", variant: "ghost" })}
+            href={`/space/${workspaceId}/settings/channels`}
+          >
+            {t("actions.cancel")}
+          </Link>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"

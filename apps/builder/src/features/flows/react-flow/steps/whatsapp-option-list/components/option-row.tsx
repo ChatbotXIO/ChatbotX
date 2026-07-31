@@ -19,7 +19,7 @@ function OptionRowInner({ index, item, onEdit, onRemove }: OptionRowProps) {
   return (
     <div className="group relative flex items-center gap-2 rounded-lg bg-background px-3 py-2">
       <button
-        className="flex flex-1 flex-col items-start text-left"
+        className="flex flex-1 flex-col items-start text-start"
         onClick={handleEdit}
         type="button"
       >

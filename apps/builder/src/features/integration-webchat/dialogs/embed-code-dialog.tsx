@@ -19,7 +19,7 @@ import { useClipboard } from "@/hooks/use-clipboard"
 
 type EmbedCodeDialogProps = {
   webchat: IntegrationWebchatModel
-  children: React.ReactNode
+  children: React.ReactElement
 }
 
 export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
@@ -43,7 +43,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger render={children} />
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("fields.embedCode.label")}</DialogTitle>

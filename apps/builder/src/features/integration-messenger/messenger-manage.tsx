@@ -1,7 +1,7 @@
 "use client"
 
 import type { MessengerCredentialPublic } from "@chatbotx.io/database/partials"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
   TableBody,
@@ -49,16 +49,15 @@ export function MessengerManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button asChild variant="secondary">
-          <Link
-            href={`/channels/create?workspaceId=${workspaceId}&channel=messenger`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.messenger.label"),
-            })}
-          </Link>
-        </Button>
+        <Link
+          className={buttonVariants({ variant: "secondary" })}
+          href={`/channels/create?workspaceId=${workspaceId}&channel=messenger`}
+        >
+          <PlusCircleIcon className="h-4 w-4" />
+          {t("actions.addFeature", {
+            feature: t("fields.messenger.label"),
+          })}
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-md border">

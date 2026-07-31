@@ -182,7 +182,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           <div className="5 px-2">
             <FileUploadPreview ref={fileUploadRef} />
           </div>
-          <div className="flex w-full items-center pl-2.5">
+          <div className="flex w-full items-center ps-2.5">
             <div className="flex-1">
               <WebchatMessageMenu
                 accessToken={accessToken}

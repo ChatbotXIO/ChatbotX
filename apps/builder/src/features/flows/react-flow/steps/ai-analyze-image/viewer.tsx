@@ -2,6 +2,7 @@
 
 import type { AIAnalyzeImageSchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import { useFlowTemplate } from "../../stores/flow-template-store-provider"
 import { AIIcon } from "../ai-generate-text/components/ai-icon"
 import { getOpenaiCompatibleStepProviderLabel } from "../ai-generate-text/components/openai-compatible-label"
@@ -24,7 +25,7 @@ export const AIAnalyzeImageViewer = (props: AIAnalyzeImageViewerProps) => {
         <AIIcon
           label={t("fields.flows.aiAnalyzeImage", {
             aiName: getOpenaiCompatibleStepProviderLabel({
-              fallback: t(`aiProviders.${data.provider}`),
+              fallback: t(getAiProviderLabelKey(data.provider)),
               integrations: openaiCompatibleIntegrations,
               step: data,
             }),

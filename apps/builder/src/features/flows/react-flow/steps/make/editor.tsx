@@ -53,13 +53,15 @@ const MakeStepDialog = ({ parentName }: { parentName: string }) => {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <div className="flex justify-center">
-          <Button size="sm" type="button" variant="outline">
-            {t("actions.edit")}
-          </Button>
-        </div>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <div className="flex justify-center">
+            <Button size="sm" type="button" variant="outline">
+              {t("actions.edit")}
+            </Button>
+          </div>
+        }
+      />
       <DialogContent className="max-h-screen max-w-md overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>{t("flows.actions.make")}</DialogTitle>
@@ -80,11 +82,13 @@ const MakeStepDialog = ({ parentName }: { parentName: string }) => {
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
 
               <Button
                 disabled={

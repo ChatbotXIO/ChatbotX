@@ -44,11 +44,13 @@ export function AiIntegrationApiKeyDialog<TForm extends FieldValues>({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
-          {t("actions.connect")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" variant="secondary">
+            {t("actions.connect")}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -64,11 +66,13 @@ export function AiIntegrationApiKeyDialog<TForm extends FieldValues>({
               required
             />
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="secondary">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting

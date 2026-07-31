@@ -71,11 +71,13 @@ export function DeleteContactNoteDialog({
         </DialogHeader>
 
         <DialogFooter className="gap-2 sm:space-x-0">
-          <DialogClose asChild>
-            <Button onClick={onCancel} size="sm" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button onClick={onCancel} size="sm" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
@@ -84,7 +86,7 @@ export function DeleteContactNoteDialog({
             variant="destructive"
           >
             {isPending ? (
-              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
+              <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             ) : null}
             {t("actions.delete")}
           </Button>

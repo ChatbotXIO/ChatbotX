@@ -159,7 +159,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           prefix={prefix}
           customInput={Input}
           placeholder={placeholder}
-          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-r-none relative"
+          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-e-none relative"
           getInputRef={composedRef}
           {...props}
           onBlur={handleBlur}
@@ -168,7 +168,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         <div className="flex flex-col">
           <Button
             aria-label="Increase value"
-            className="px-2 h-4.5 rounded-l-none rounded-br-none border-input border-l-0 border-b-[0.5px] focus-visible:relative"
+            className="px-2 h-4.5 rounded-s-none rounded-ee-none border-input border-s-0 border-b-[0.5px] focus-visible:relative"
             variant="outline"
             type="button"
             onClick={handleIncrement}
@@ -178,7 +178,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           </Button>
           <Button
             aria-label="Decrease value"
-            className="px-2 h-4.5 rounded-l-none rounded-tr-none border-input border-l-0 border-t-[0.5px] focus-visible:relative"
+            className="px-2 h-4.5 rounded-s-none rounded-se-none border-input border-s-0 border-t-[0.5px] focus-visible:relative"
             variant="outline"
             type="button"
             onClick={handleDecrement}

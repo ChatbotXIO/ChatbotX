@@ -5,6 +5,7 @@ import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
+  type DialogChangeEventDetails,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -292,7 +293,12 @@ export function CreateMessageTemplateDialog({
   }, [form, formDefaultValues, resetFormAndAction])
 
   const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
+    (isOpen: boolean, eventDetails: DialogChangeEventDetails) => {
+      if (!isOpen && eventDetails.reason === "outside-press") {
+        eventDetails.cancel()
+        return
+      }
+
       setOpen(isOpen)
       if (isOpen) {
         form.reset(formDefaultValues)
@@ -314,16 +320,15 @@ export function CreateMessageTemplateDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon className="size-4" />
-          {t("messenger.messageTemplate.create.trigger")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent
-        className="max-h-screen overflow-y-auto sm:max-w-2xl"
-        onInteractOutside={(event) => event.preventDefault()}
-      >
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon className="size-4" />
+            {t("messenger.messageTemplate.create.trigger")}
+          </Button>
+        }
+      />
+      <DialogContent className="max-h-screen overflow-y-auto sm:max-w-2xl">
         <DialogHeader className="mb-2">
           <DialogTitle>
             {t("actions.createFeature", {
@@ -439,18 +444,20 @@ export function CreateMessageTemplateDialog({
                 </div>
                 {buttons.length < 3 && (
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="sm" type="button" variant="secondary">
-                        <PlusIcon className="size-4" />
-                        {t("messenger.messageTemplate.create.addButton")}
-                        <ChevronDownIcon className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button size="sm" type="button" variant="secondary">
+                          <PlusIcon className="size-4" />
+                          {t("messenger.messageTemplate.create.addButton")}
+                          <ChevronDownIcon className="size-4" />
+                        </Button>
+                      }
+                    />
                     <DropdownMenuContent align="end">
                       {buttonTypes.map((buttonType) => (
                         <DropdownMenuItem
                           key={buttonType.type}
-                          onSelect={() => {
+                          onClick={() => {
                             if (buttonType.type === "URL") {
                               appendButton({
                                 type: "URL",
@@ -500,11 +507,13 @@ export function CreateMessageTemplateDialog({
             </div>
 
             <DialogFooter className="gap-2 sm:space-x-0">
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="outline">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting

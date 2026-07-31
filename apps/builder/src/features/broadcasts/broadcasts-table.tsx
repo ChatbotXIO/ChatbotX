@@ -4,7 +4,7 @@ import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,11 +80,13 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         ),
         cell: ({ row }) => (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block max-w-[200px] truncate">
-                {row.original.name ?? ""}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[200px] truncate">
+                  {row.original.name ?? ""}
+                </div>
+              }
+            />
             <TooltipContent>
               <p>{row.original.name ?? ""}</p>
             </TooltipContent>
@@ -289,29 +291,31 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         header: "Actions",
         cell: ({ row }) => (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "view" })}
               >
-                <EyeIcon className="mr-2" />
+                <EyeIcon className="me-2" />
                 {t("actions.view")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "rename" })}
               >
-                <PencilIcon className="mr-2" />
+                <PencilIcon className="me-2" />
                 {t("actions.rename")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "resend" })}
               >
-                <RotateCwIcon className="mr-2" />
+                <RotateCwIcon className="me-2" />
                 {t("actions.resend")}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -346,14 +350,15 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <div className="flex justify-end">
-            <Button asChild size="sm">
-              <Link href={`/space/${workspaceId}/broadcasts/create`}>
-                <PlusIcon />
-                {t("actions.createFeature", {
-                  feature: t("fields.broadcast.label"),
-                })}
-              </Link>
-            </Button>
+            <Link
+              className={buttonVariants({ size: "sm" })}
+              href={`/space/${workspaceId}/broadcasts/create`}
+            >
+              <PlusIcon />
+              {t("actions.createFeature", {
+                feature: t("fields.broadcast.label"),
+              })}
+            </Link>
           </div>
         </DataTableToolbar>
       </DataTable>

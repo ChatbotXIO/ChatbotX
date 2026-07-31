@@ -72,19 +72,21 @@ export function DeleteAIFunctionDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="justify-end">
-          <DialogClose asChild>
-            <Button size="sm" type="button" variant="ghost">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" type="button" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
           <Button
-            className="ml-auto"
+            className="ms-auto"
             disabled={isPending}
             onClick={() => execute()}
             size="sm"
             variant="destructive"
           >
-            {isPending && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
+            {isPending && <Loader2Icon className="me-2 h-4 w-4 animate-spin" />}
             {t("actions.confirm")}
           </Button>
         </DialogFooter>

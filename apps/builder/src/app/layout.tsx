@@ -8,9 +8,11 @@ import { SupportChatScript } from "@/components/support-chat-script"
 import { env } from "@/env"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
+import { getDirection } from "@/i18n/direction"
 import { getDomainFromHeader } from "@/lib/domain"
 import "./globals.css"
 import "./themes.css"
+import { DirectionProvider } from "@chatbotx.io/ui/components/ui/direction"
 
 export async function generateMetadata(): Promise<Metadata> {
   const { name, faviconUrl } = await getTenantSettings()
@@ -40,13 +42,15 @@ type Props = {
 
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
+  const dir = getDirection(locale)
   const tenantSettings = await getTenantSettings()
   const domain = await getDomainFromHeader()
   const isBuilderDomain =
     domain === new URL(env.NEXT_PUBLIC_BUILDER_URL).hostname
   const pancakeChatPageId = env.NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID
+
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html dir={dir} lang={locale} suppressHydrationWarning>
       <head>
         <PublicEnvScript />
         {isBuilderDomain && pancakeChatPageId && (
@@ -62,9 +66,11 @@ export default async function RootLayout({ children }: Props) {
         suppressHydrationWarning
       >
         <TenantProvider settings={tenantSettings}>
-          <UiProvider>
-            <NextIntlClientProvider>{children}</NextIntlClientProvider>
-          </UiProvider>
+          <DirectionProvider direction={dir}>
+            <UiProvider>
+              <NextIntlClientProvider>{children}</NextIntlClientProvider>
+            </UiProvider>
+          </DirectionProvider>
         </TenantProvider>
       </body>
     </html>

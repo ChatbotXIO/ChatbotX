@@ -62,86 +62,97 @@ export function NavUser({
           <UpgradePlanDialog onOpenChange={setUpgradeOpen} open={upgradeOpen} />
         )}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              size="lg"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage alt={user.name} src={user.avatar} />
-                <AvatarFallback className="rounded-lg">
-                  {user.name.slice(0, 2) || "  "}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-muted-foreground text-xs">
-                  {user.email}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                size="lg"
+              >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage alt={user.name} src={user.avatar} />
                   <AvatarFallback className="rounded-lg">
                     {user.name.slice(0, 2) || "  "}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
                   <span className="truncate text-muted-foreground text-xs">
                     {user.email}
                   </span>
                 </div>
-              </div>
-            </DropdownMenuLabel>
+                <ChevronsUpDown className="ms-auto size-4" />
+              </SidebarMenuButton>
+            }
+          />
+          <DropdownMenuContent
+            align="end"
+            className="w-(--anchor-width) min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
+            sideOffset={4}
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage alt={user.name} src={user.avatar} />
+                    <AvatarFallback className="rounded-lg">
+                      {user.name.slice(0, 2) || "  "}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-start text-sm leading-tight">
+                    <span className="truncate font-semibold">{user.name}</span>
+                    <span className="truncate text-muted-foreground text-xs">
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             {/* Plan + upgrade is cloud-only; self-hosted editions get everything free. */}
             {isCloud() && (
               <>
-                <DropdownMenuLabel className="font-normal text-muted-foreground text-xs">
-                  {t("billing.plan.label", {
-                    plan: planName ?? t("billing.plan.free"),
-                  })}
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="font-normal text-muted-foreground text-xs">
+                    {t("billing.plan.label", {
+                      plan: planName ?? t("billing.plan.free"),
+                    })}
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
+                    closeOnClick={false}
+                    onClick={() => {
                       setUpgradeOpen(true)
                     }}
                   >
-                    <Crown className="mr-2 h-4 w-4" />
+                    <Crown className="me-2 h-4 w-4" />
                     {t("actions.upgradePlan")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/portal/billing">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      {t("billing.title")}
-                    </Link>
-                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    render={
+                      <Link href="/portal/billing">
+                        <CreditCard className="me-2 h-4 w-4" />
+                        {t("billing.title")}
+                      </Link>
+                    }
+                  />
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
               </>
             )}
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem closeOnClick={false}>
                 Language
                 <LangSelector />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="justify-between">
+              <DropdownMenuItem
+                className="justify-between"
+                closeOnClick={false}
+              >
                 Theme
                 <ThemeSwitcher />
               </DropdownMenuItem>
@@ -162,28 +173,30 @@ export function NavUser({
               <>
                 <DropdownMenuGroup>
                   {isSuperAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin">
-                        <ShieldCheck className="h-4 w-4" />
-                        {t("actions.admin")}
-                      </Link>
-                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      render={
+                        <Link href="/admin">
+                          <ShieldCheck className="h-4 w-4" />
+                          {t("actions.admin")}
+                        </Link>
+                      }
+                    />
                   )}
                   {isCloud() && isPlatformAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/manage">
-                        <Settings2 className="h-4 w-4" />
-                        {t("actions.manage")}
-                      </Link>
-                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      render={
+                        <Link href="/manage">
+                          <Settings2 className="h-4 w-4" />
+                          {t("actions.manage")}
+                        </Link>
+                      }
+                    />
                   )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem asChild>
-              <SignOut />
-            </DropdownMenuItem>
+            <DropdownMenuItem render={<SignOut />} />
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
+import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-label"
 import { useFlowTemplate } from "../../stores/flow-template-store-provider"
 import { AIIcon } from "../ai-generate-text/components/ai-icon"
 import { getOpenaiCompatibleStepProviderLabel } from "../ai-generate-text/components/openai-compatible-label"
@@ -25,7 +26,7 @@ export const AIGenerateTextAgentEditor = (
     (store) => store.openaiCompatibleIntegrations,
   )
   const aiName = getOpenaiCompatibleStepProviderLabel({
-    fallback: t(`aiProviders.${provider}`),
+    fallback: t(getAiProviderLabelKey(provider)),
     integrations: openaiCompatibleIntegrations,
     step,
   })

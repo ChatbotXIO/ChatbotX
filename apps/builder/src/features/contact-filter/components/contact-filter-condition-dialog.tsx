@@ -590,7 +590,7 @@ export const ContactFilterConditionDialog = ({
                 name="field"
                 options={fieldOptions}
                 placeholder={t("actions.pleaseSelect")}
-                popoverClassName="w-[var(--radix-popover-trigger-width)]"
+                popoverClassName="w-[var(--anchor-width)]"
                 portal
                 triggerValueChange={triggerFieldChange}
               />

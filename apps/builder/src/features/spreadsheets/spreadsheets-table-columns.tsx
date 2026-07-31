@@ -40,11 +40,13 @@ export function getSpreadsheetColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="inline-block max-w-[300px] truncate">
-              {row.original.name}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="inline-block max-w-[300px] truncate">
+                {row.original.name}
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.name}</p>
           </TooltipContent>
@@ -61,17 +63,19 @@ export function getSpreadsheetColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="inline-block max-w-[300px] truncate">
-              <Link
-                className="truncate"
-                href={row.original.url}
-                target="_black"
-              >
-                {row.original.url}
-              </Link>
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="inline-block max-w-[300px] truncate">
+                <Link
+                  className="truncate"
+                  href={row.original.url}
+                  target="_black"
+                >
+                  {row.original.url}
+                </Link>
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.url}</p>
           </TooltipContent>
@@ -86,25 +90,27 @@ export function getSpreadsheetColumns({
       header: t("actions.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Open menu"
-              className="flex size-8 p-0 data-[state=open]:bg-muted"
-              variant="ghost"
-            >
-              <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Open menu"
+                className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
+              >
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "update" })}
+              onClick={() => setRowAction({ row, variant: "update" })}
             >
               <PencilIcon />
               {t("actions.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onClick={() => setRowAction({ row, variant: "delete" })}
             >
               <Trash2Icon className="text-destructive" />
               {t("actions.delete")}

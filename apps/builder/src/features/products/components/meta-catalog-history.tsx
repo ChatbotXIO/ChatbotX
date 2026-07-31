@@ -77,7 +77,7 @@ export function MetaCatalogHistory({
                 </div>
               ) : null}
             </div>
-            <div className="text-right tabular-nums">
+            <div className="text-end tabular-nums">
               <div className="font-medium">
                 {run.succeededCount}/{run.totalCount}
               </div>

@@ -68,11 +68,13 @@ export const OpenAIConnectDialog = ({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
-          {t("actions.connect")}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" variant="secondary">
+            {t("actions.connect")}
+          </Button>
+        }
+      />
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
@@ -92,17 +94,20 @@ export const OpenAIConnectDialog = ({
 
             <Collapsible onOpenChange={setIsOpenOptions} open={isOpenOptions}>
               <div className="flex items-center justify-between space-x-4">
-                <CollapsibleTrigger asChild>
-                  <div className="flex w-full items-center">
-                    <div className="flex-1 font-semibold text-sm">
-                      {t("actions.moreOptions")}
+                <CollapsibleTrigger
+                  nativeButton={false}
+                  render={
+                    <div className="flex w-full items-center">
+                      <div className="flex-1 font-semibold text-sm">
+                        {t("actions.moreOptions")}
+                      </div>
+                      <Button className="w-9 p-0" size="sm" variant="ghost">
+                        <ChevronsUpDown className="h-4 w-4" />
+                        <span className="sr-only">{t("actions.toggle")}</span>
+                      </Button>
                     </div>
-                    <Button className="w-9 p-0" size="sm" variant="ghost">
-                      <ChevronsUpDown className="h-4 w-4" />
-                      <span className="sr-only">{t("actions.toggle")}</span>
-                    </Button>
-                  </div>
-                </CollapsibleTrigger>
+                  }
+                />
               </div>
               <CollapsibleContent className="space-y-2">
                 <InputNumberField
@@ -124,11 +129,13 @@ export const OpenAIConnectDialog = ({
             </Collapsible>
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button type="button" variant="secondary">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
 
               <Button type="submit">{t("actions.confirm")}</Button>
             </DialogFooter>

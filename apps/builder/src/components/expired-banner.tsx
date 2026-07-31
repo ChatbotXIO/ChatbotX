@@ -3,7 +3,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@chatbotx.io/ui/components/ui/alert"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { AlertTriangleIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
@@ -29,9 +29,12 @@ export async function ExpiredBanner({ blocked, reason }: ExpiredBannerProps) {
       <AlertTitle>{t("bannerTitle")}</AlertTitle>
       <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p>{t("bannerDescription")}</p>
-        <Button asChild className="shrink-0" size="sm" variant="outline">
-          <Link href="/portal/pricing">{t("bannerCta")}</Link>
-        </Button>
+        <Link
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+          href="/portal/pricing"
+        >
+          {t("bannerCta")}
+        </Link>
       </AlertDescription>
     </Alert>
   )

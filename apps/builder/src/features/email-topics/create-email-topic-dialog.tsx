@@ -87,14 +87,16 @@ export function CreateEmailTopicDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          {t("messages.createFeature", {
-            feature: t("fields.emailTopic.label"),
-          })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <PlusIcon />
+            {t("messages.createFeature", {
+              feature: t("fields.emailTopic.label"),
+            })}
+          </Button>
+        }
+      />
       <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>
@@ -108,11 +110,13 @@ export function CreateEmailTopicDialog({
           <form className="space-y-6" onSubmit={handleSubmitWithAction}>
             <InputField label={t("fields.name.label")} name="name" required />
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <DialogClose
+                render={
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                }
+              />
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting

@@ -13,7 +13,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { FileSpreadsheetIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import type { ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 type SpreadsheetDialogProps = {
   open: boolean
@@ -21,7 +21,7 @@ type SpreadsheetDialogProps = {
   name: string
   onSubmit: () => void
   children?: ReactNode
-  trigger?: ReactNode
+  trigger?: ReactElement
 }
 
 export const SpreadsheetDialog = ({
@@ -37,17 +37,19 @@ export const SpreadsheetDialog = ({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <div className="flex flex-col items-center rounded-md border-2 border-transparent p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
-            <div className="flex items-center justify-center gap-2">
-              <FileSpreadsheetIcon className="text-gray-500" size={20} />
-              <p className="font-medium text-sm">Google Sheets</p>
+      <DialogTrigger
+        render={
+          trigger ?? (
+            <div className="flex flex-col items-center rounded-md border-2 border-transparent p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
+              <div className="flex items-center justify-center gap-2">
+                <FileSpreadsheetIcon className="text-gray-500" size={20} />
+                <p className="font-medium text-sm">Google Sheets</p>
+              </div>
+              <div className="mt-2 text-gray-500 text-xs">{t(`${name}`)}</div>
             </div>
-            <div className="mt-2 text-gray-500 text-xs">{t(`${name}`)}</div>
-          </div>
-        )}
-      </DialogTrigger>
+          )
+        }
+      />
       <DialogContent aria-describedby={undefined} className="flex-1">
         <DialogHeader>
           <DialogTitle className="capitalize">
@@ -59,11 +61,13 @@ export const SpreadsheetDialog = ({
           {children}
         </div>
         <DialogFooter className="flex items-end">
-          <DialogClose asChild>
-            <Button size="sm" type="button" variant="secondary">
-              {t("actions.cancel")}
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button size="sm" type="button" variant="secondary">
+                {t("actions.cancel")}
+              </Button>
+            }
+          />
 
           <Button
             onClick={() => onSubmit()}

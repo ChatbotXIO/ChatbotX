@@ -50,11 +50,9 @@ export function getColumns({
       header: ({ table }) => (
         <Checkbox
           aria-label={t("actions.selectAll")}
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected()}
           className="translate-y-0.5"
+          indeterminate={table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) =>
             table.toggleAllPageRowsSelected(Boolean(value))
           }
@@ -80,16 +78,18 @@ export function getColumns({
       ),
       cell: ({ row }) => (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="inline-block max-w-[300px] truncate">
-              <Link
-                className="truncate"
-                href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
-              >
-                {row.original.name}
-              </Link>
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="inline-block max-w-[300px] truncate">
+                <Link
+                  className="truncate"
+                  href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
+                >
+                  {row.original.name}
+                </Link>
+              </div>
+            }
+          />
           <TooltipContent>
             <p>{row.original.name}</p>
           </TooltipContent>
@@ -149,29 +149,33 @@ export function getColumns({
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost">
-              <MoreHorizontalIcon className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
-              >
-                <PencilIcon />
-                {t("actions.edit")}
-              </Link>
-            </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "rename" })}
+              render={
+                <Link
+                  href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
+                >
+                  <PencilIcon />
+                  {t("actions.edit")}
+                </Link>
+              }
+            />
+            <DropdownMenuItem
+              onClick={() => setRowAction({ row, variant: "rename" })}
             >
               <TextIcon />
               {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "move" })}
+              onClick={() => setRowAction({ row, variant: "move" })}
             >
               <FolderUpIcon />
               {t("actions.move")}

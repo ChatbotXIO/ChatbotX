@@ -166,88 +166,94 @@ const SelectTagsInputFieldBase = <TFieldValues extends FieldValues>({
             <FormControl>
               <div className="relative" ref={containerRef}>
                 <Popover onOpenChange={setOpen} open={open}>
-                  <PopoverTrigger asChild disabled={disabled}>
-                    <div
-                      className={cn(
-                        "flex min-h-[3.5rem] cursor-pointer flex-wrap items-center gap-2 rounded-md p-2",
-                        styles.container,
-                      )}
-                    >
-                      {startIcon && (
-                        <span className="text-muted-foreground">
-                          {startIcon}
-                        </span>
-                      )}
-
-                      <AnimatePresence>
-                        {tags.map((tag: string, index: number) => {
-                          const option = options.find(
-                            (opt) => opt.value === tag,
-                          )
-                          const displayLabel = option?.label || tag
-
-                          return (
-                            <motion.div
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              // biome-ignore lint/suspicious/noArrayIndexKey: safe key
-                              key={`${tag}-${index}`}
-                              transition={{ duration: 0 }}
-                            >
-                              <Badge
-                                className={cn(
-                                  "group flex items-center gap-1 pr-1 transition-colors",
-                                  variant === "enterprise" &&
-                                    "border-primary/20 bg-primary",
-                                )}
-                                variant={tagVariant}
-                              >
-                                <span className="max-w-[150px] truncate">
-                                  {displayLabel}
-                                </span>
-                                <button
-                                  className="ml-1 rounded-full p-0.5 transition-colors hover:bg-destructive/20"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-
-                                    if (disabled) {
-                                      return
-                                    }
-
-                                    removeTag(index, tags, field.onChange)
-                                  }}
-                                  type="button"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            </motion.div>
-                          )
-                        })}
-                      </AnimatePresence>
-
-                      <AnimatePresence mode="wait">
-                        {tags.length === 0 && (
-                          <motion.span
-                            animate={{ opacity: 1 }}
-                            className="text-muted-foreground text-sm"
-                            initial={{ opacity: 0 }}
-                            key="placeholder"
-                            transition={{ duration: 0.15, delay: 0 }}
-                          >
-                            {placeholder}
-                          </motion.span>
+                  <PopoverTrigger
+                    disabled={disabled}
+                    nativeButton={false}
+                    render={
+                      <div
+                        className={cn(
+                          "flex min-h-[3.5rem] cursor-pointer flex-wrap items-center gap-2 rounded-md p-2",
+                          styles.container,
                         )}
-                      </AnimatePresence>
+                      >
+                        {startIcon && (
+                          <span className="text-muted-foreground">
+                            {startIcon}
+                          </span>
+                        )}
 
-                      {endIcon && (
-                        <span className="text-muted-foreground">{endIcon}</span>
-                      )}
+                        <AnimatePresence>
+                          {tags.map((tag: string, index: number) => {
+                            const option = options.find(
+                              (opt) => opt.value === tag,
+                            )
+                            const displayLabel = option?.label || tag
 
-                      <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                    </div>
-                  </PopoverTrigger>
+                            return (
+                              <motion.div
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                // biome-ignore lint/suspicious/noArrayIndexKey: safe key
+                                key={`${tag}-${index}`}
+                                transition={{ duration: 0 }}
+                              >
+                                <Badge
+                                  className={cn(
+                                    "group flex items-center gap-1 pe-1 transition-colors",
+                                    variant === "enterprise" &&
+                                      "border-primary/20 bg-primary",
+                                  )}
+                                  variant={tagVariant}
+                                >
+                                  <span className="max-w-[150px] truncate">
+                                    {displayLabel}
+                                  </span>
+                                  <button
+                                    className="ms-1 rounded-full p-0.5 transition-colors hover:bg-destructive/20"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+
+                                      if (disabled) {
+                                        return
+                                      }
+
+                                      removeTag(index, tags, field.onChange)
+                                    }}
+                                    type="button"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              </motion.div>
+                            )
+                          })}
+                        </AnimatePresence>
+
+                        <AnimatePresence mode="wait">
+                          {tags.length === 0 && (
+                            <motion.span
+                              animate={{ opacity: 1 }}
+                              className="text-muted-foreground text-sm"
+                              initial={{ opacity: 0 }}
+                              key="placeholder"
+                              transition={{ duration: 0.15, delay: 0 }}
+                            >
+                              {placeholder}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+
+                        {endIcon && (
+                          <span className="text-muted-foreground">
+                            {endIcon}
+                          </span>
+                        )}
+
+                        <ChevronDown className="ms-auto h-4 w-4 shrink-0 opacity-50" />
+                      </div>
+                    }
+                  />
                   <PopoverContent
                     align="start"
                     className="w-full p-0"
@@ -280,7 +286,7 @@ const SelectTagsInputFieldBase = <TFieldValues extends FieldValues>({
                               >
                                 {option.label}
                                 {isSelected && (
-                                  <Check className="ml-auto h-4 w-4 text-primary" />
+                                  <Check className="ms-auto h-4 w-4 text-primary" />
                                 )}
                               </CommandItem>
                             )

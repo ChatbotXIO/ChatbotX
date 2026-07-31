@@ -67,7 +67,7 @@ export function UsageRing({
             style={{ width: `${userPct}%` }}
           />
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-emerald-500 transition-[width] dark:bg-emerald-500"
+            className="absolute inset-y-0 start-0 rounded-full bg-emerald-500 transition-[width] dark:bg-emerald-500"
             style={{ width: `${workspacePct}%` }}
           />
         </div>

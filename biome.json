@@ -23,7 +23,8 @@
       "!**/coverage",
       "!**/.github/assets/readme",
       "!**/apps/builder/public/brand",
-      "!**/apps/builder/public/chat-widget/plugin-toggle.svg"
+      "!**/apps/builder/public/chat-widget/plugin-toggle.svg",
+      "!**/.claude"
     ]
   },
   "formatter": {

@@ -239,30 +239,32 @@ export default function AnalysisFilterForm({
           <RotateCwIcon />
         </Button>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={t("analytics.dateFilterPreset")}
-              id="date-range-preset"
-              onClick={(e) => {
-                if (preset === "custom") {
-                  e.preventDefault()
-                  setDialogOpen(true)
-                }
-              }}
-              type="button"
-              variant="outline"
-            >
-              <Calendar1Icon />
-              {preset === "today" && t("fields.today.label")}
-              {preset === "yesterday" && t("fields.yesterday.label")}
-              {preset === "last7" && t("fields.last7days.label")}
-              {preset === "last30" && t("fields.last30days.label")}
-              {preset === "thisMonth" && t("fields.thisMonth.label")}
-              {preset === "lastMonth" && t("fields.lastMonth.label")}
-              {preset === "lifeTime" && t("fields.lifeTime.label")}
-              {preset === "custom" && rangeText}
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label={t("analytics.dateFilterPreset")}
+                id="date-range-preset"
+                onClick={(e) => {
+                  if (preset === "custom") {
+                    e.preventDefault()
+                    setDialogOpen(true)
+                  }
+                }}
+                type="button"
+                variant="outline"
+              >
+                <Calendar1Icon />
+                {preset === "today" && t("fields.today.label")}
+                {preset === "yesterday" && t("fields.yesterday.label")}
+                {preset === "last7" && t("fields.last7days.label")}
+                {preset === "last30" && t("fields.last30days.label")}
+                {preset === "thisMonth" && t("fields.thisMonth.label")}
+                {preset === "lastMonth" && t("fields.lastMonth.label")}
+                {preset === "lifeTime" && t("fields.lifeTime.label")}
+                {preset === "custom" && rangeText}
+              </Button>
+            }
+          />
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => handlePresetChange("today")}>

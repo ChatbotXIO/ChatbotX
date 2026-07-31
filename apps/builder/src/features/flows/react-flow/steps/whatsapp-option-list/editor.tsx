@@ -152,7 +152,7 @@ const WhatsappOptionListStepEditor = ({
             type="button"
             variant="dashed"
           >
-            <PlusIcon className="mr-1 size-4" />
+            <PlusIcon className="me-1 size-4" />
             {t("flows.whatsappOptionList.addOption")}
           </Button>
         )}

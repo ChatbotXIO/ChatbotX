@@ -65,12 +65,19 @@ export function getSelectedCount(
   return Math.max(0, total - selection.excludedIds.size)
 }
 
+export interface HeaderCheckboxState {
+  checked: boolean
+  indeterminate: boolean
+}
+
 export function getHeaderCheckboxState(
   selection: StatsSelection,
   total?: number,
-): boolean | "indeterminate" {
+): HeaderCheckboxState {
   if (selection.mode === "all") {
-    return selection.excludedIds.size === 0 ? true : "indeterminate"
+    return selection.excludedIds.size === 0
+      ? { checked: true, indeterminate: false }
+      : { checked: false, indeterminate: true }
   }
 
   if (
@@ -78,10 +85,12 @@ export function getHeaderCheckboxState(
     total > 0 &&
     selection.includedIds.size >= total
   ) {
-    return true
+    return { checked: true, indeterminate: false }
   }
 
-  return selection.includedIds.size === 0 ? false : "indeterminate"
+  return selection.includedIds.size === 0
+    ? { checked: false, indeterminate: false }
+    : { checked: false, indeterminate: true }
 }
 
 const createAllSelection = (): StatsSelection => ({

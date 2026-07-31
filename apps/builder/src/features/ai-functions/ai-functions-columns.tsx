@@ -40,10 +40,8 @@ export const getAIFunctionsColumns = (
     header: ({ table: innerTable }) => (
       <Checkbox
         aria-label={t("actions.selectAll")}
-        checked={
-          innerTable.getIsAllPageRowsSelected() ||
-          (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-        }
+        checked={innerTable.getIsAllPageRowsSelected()}
+        indeterminate={innerTable.getIsSomePageRowsSelected()}
         onCheckedChange={(value) =>
           innerTable.toggleAllPageRowsSelected(Boolean(value))
         }
@@ -68,9 +66,11 @@ export const getAIFunctionsColumns = (
     ),
     cell: ({ row }) => (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="max-w-[400px] truncate">{row.original.name}</div>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <div className="max-w-[400px] truncate">{row.original.name}</div>
+          }
+        />
         <TooltipContent>
           <p>{row.original.name}</p>
         </TooltipContent>
@@ -103,19 +103,21 @@ export const getAIFunctionsColumns = (
     header: t("actions.actions"),
     cell: ({ row }) => (
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon" variant="ghost">
-            <MoreHorizontalIcon className="h-4 w-4" />
-            <span className="sr-only">{t("actions.openMenu")}</span>
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button size="icon" variant="ghost">
+              <MoreHorizontalIcon className="h-4 w-4" />
+              <span className="sr-only">{t("actions.openMenu")}</span>
+            </Button>
+          }
+        />
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => {
               setRowAction({ row, variant: "edit" })
             }}
           >
-            <PencilIcon className="mr-2 h-4 w-4" />
+            <PencilIcon className="me-2 h-4 w-4" />
             {t("actions.edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -123,7 +125,7 @@ export const getAIFunctionsColumns = (
               setRowAction({ row, variant: "duplicate" })
             }}
           >
-            <CopyIcon className="mr-2 h-4 w-4" />
+            <CopyIcon className="me-2 h-4 w-4" />
             {t("actions.duplicate")}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -132,7 +134,7 @@ export const getAIFunctionsColumns = (
               setRowAction({ row, variant: "delete" })
             }}
           >
-            <Trash2Icon className="mr-2 h-4 w-4" />
+            <Trash2Icon className="me-2 h-4 w-4" />
             {t("actions.delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
