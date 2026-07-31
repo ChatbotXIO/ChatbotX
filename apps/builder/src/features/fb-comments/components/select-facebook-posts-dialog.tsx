@@ -10,6 +10,13 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@chatbotx.io/ui/components/ui/select"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import {
   Tabs,
@@ -26,6 +33,7 @@ import type { FacebookPost } from "../provider/fb-comment-posts-store"
 import { useFbCommentPostsStore } from "../provider/fb-comment-posts-store-context"
 
 const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4"]
+const ALL_PAGES_VALUE = "all"
 
 function PostIdTagInput({
   value,
@@ -180,7 +188,7 @@ function PostGrid({
   )
 }
 
-export function SelectPostsDialog({
+export function SelectFacebookPostsDialog({
   open,
   onOpenChange,
   value,
@@ -197,14 +205,21 @@ export function SelectPostsDialog({
   const publishedPosts = useFbCommentPostsStore((s) => s.publishedPosts)
   const adsPosts = useFbCommentPostsStore((s) => s.adsPosts)
   const reelsPosts = useFbCommentPostsStore((s) => s.reelsPosts)
+  const pages = useFbCommentPostsStore((s) => s.pages)
 
   const [selectedIds, setSelectedIds] = useState<string[]>(value)
+  const [selectedPageId, setSelectedPageId] = useState<string>(ALL_PAGES_VALUE)
 
   useEffect(() => {
     if (open) {
       setSelectedIds(value)
     }
   }, [open, value])
+
+  const filterByPage = (posts: FacebookPost[]) =>
+    selectedPageId === ALL_PAGES_VALUE
+      ? posts
+      : posts.filter((post) => post.pageId === selectedPageId)
 
   const toggleId = (id: string) => {
     setSelectedIds((prev) =>
@@ -225,6 +240,24 @@ export function SelectPostsDialog({
             {t("facebookCommentAutomation.selectPosts")}
           </DialogTitle>
         </DialogHeader>
+
+        {pages.length > 0 && (
+          <Select onValueChange={setSelectedPageId} value={selectedPageId}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PAGES_VALUE}>
+                {t("facebookCommentAutomation.selectPageAll")}
+              </SelectItem>
+              {pages.map((page) => (
+                <SelectItem key={page.id} value={page.id}>
+                  {page.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Tabs defaultValue="published">
           <TabsList className="w-full">
@@ -247,7 +280,7 @@ export function SelectPostsDialog({
               emptyText={t("facebookCommentAutomation.noPostsFound")}
               loading={loading}
               onToggle={toggleId}
-              posts={publishedPosts}
+              posts={filterByPage(publishedPosts)}
               selectedIds={selectedIds}
             />
           </TabsContent>
@@ -257,7 +290,7 @@ export function SelectPostsDialog({
               emptyText={t("facebookCommentAutomation.noPostsFound")}
               loading={loading}
               onToggle={toggleId}
-              posts={adsPosts}
+              posts={filterByPage(adsPosts)}
               selectedIds={selectedIds}
             />
           </TabsContent>
@@ -267,7 +300,7 @@ export function SelectPostsDialog({
               emptyText={t("facebookCommentAutomation.noPostsFound")}
               loading={loading}
               onToggle={toggleId}
-              posts={reelsPosts}
+              posts={filterByPage(reelsPosts)}
               selectedIds={selectedIds}
             />
           </TabsContent>

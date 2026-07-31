@@ -19,6 +19,14 @@ import type {
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
+  type InstagramAuthValue,
+  sendPrivateReply as sendInstagramLoginPrivateReply,
+} from "@chatbotx.io/integration-instagram"
+import {
+  type InstagramAuthValue as InstagramFacebookAuthValue,
+  sendPrivateReply as sendInstagramFacebookPrivateReply,
+} from "@chatbotx.io/integration-instagram-facebook"
+import {
   type MessengerAuthValue,
   sendPrivateReply,
 } from "@chatbotx.io/integration-messenger"
@@ -226,7 +234,7 @@ async function executePublicReply(
     integrationType: string
     integrationIdentifier: string
     commentId: string
-    channelType: "messenger" | "instagram"
+    channelType: "messenger" | "instagram" | "instagramFacebook"
     conversationId: string
     contactInboxId: string
     delay: number
@@ -303,11 +311,11 @@ async function executePublicReply(
 async function executePrivateReply(
   privateReply: FBCommentReply,
   ctx: {
-    auth: MessengerAuthValue
+    auth: MessengerAuthValue | InstagramAuthValue | InstagramFacebookAuthValue
     integrationType: string
     integrationIdentifier: string
     commentId: string
-    channelType: "messenger" | "instagram"
+    channelType: "messenger" | "instagram" | "instagramFacebook"
     conversationId: string
     contactInboxId: string
     workspaceId: string
@@ -321,9 +329,29 @@ async function executePrivateReply(
 
   if (privateReply.type === "text" && privateReply.value) {
     if (ctx.channelType === "messenger") {
-      await sendPrivateReply(ctx.auth, ctx.commentId, privateReply.value)
+      await sendPrivateReply(
+        ctx.auth as MessengerAuthValue,
+        ctx.commentId,
+        privateReply.value,
+      )
+    } else if (ctx.channelType === "instagram") {
+      // Instagram Login sends the private DM through the me/messages endpoint,
+      // addressing the commenter by comment id.
+      await sendInstagramLoginPrivateReply(
+        ctx.auth as InstagramAuthValue,
+        ctx.commentId,
+        privateReply.value,
+      )
+    } else if (ctx.channelType === "instagramFacebook") {
+      // Instagram via Facebook Login sends the private DM through the
+      // {igId}/messages endpoint (Page/Business-asset token), addressing the
+      // commenter by comment id.
+      await sendInstagramFacebookPrivateReply(
+        ctx.auth as InstagramFacebookAuthValue,
+        ctx.commentId,
+        privateReply.value,
+      )
     }
-    // Instagram private DM text reply: out of scope MVP (no private_replies API)
     return
   }
 
@@ -469,7 +497,10 @@ export async function processCommentAutomation(
     return
   }
 
-  const channelType = integrationType as "messenger" | "instagram"
+  const channelType = integrationType as
+    | "messenger"
+    | "instagram"
+    | "instagramFacebook"
   const automations = await fbCommentAutomationService.findActiveAutomations({
     workspaceId,
     channelType,

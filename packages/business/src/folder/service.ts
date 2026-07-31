@@ -16,6 +16,7 @@ import {
   automatedResponseModel,
   customFieldModel,
   emailTopicModel,
+  fbCommentAutomationModel,
   flowModel,
   folderModel,
   sequenceModel,
@@ -250,6 +251,9 @@ class FolderService extends BaseService {
         return webhookModel
       case folderTypes.enum.emailTopic:
         return emailTopicModel
+      case folderTypes.enum.fbComment:
+      case folderTypes.enum.igComment:
+        return fbCommentAutomationModel
       default:
         throw new ChatbotXException("Invalid folder type")
     }

@@ -1,6 +1,6 @@
 "use client"
 
-import { folderTypes } from "@chatbotx.io/database/partials"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -23,11 +23,18 @@ import { toast } from "sonner"
 import { z } from "zod"
 import { changeFolderAction } from "../../folders/actions/change-folder.action"
 import { useFolderSelectOptions } from "../../folders/provider/folder-hook"
-import type { FBCommentResource } from "../schema/resource"
+import type {
+  CommentAutomationRow,
+  CommentAutomationTranslationNamespace,
+} from "./types"
 
-type BulkMoveFolderDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+type BulkMoveCommentAutomationFolderDialogProps<
+  TItem extends Pick<CommentAutomationRow, "id">,
+> = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string
-  fbComments: FBCommentResource[]
+  items: TItem[]
+  folderType: FolderType
+  translationNamespace: CommentAutomationTranslationNamespace
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
@@ -37,14 +44,18 @@ const bulkMoveFolderSchema = z.object({
   newFolderId: zodBigintAsString(),
 })
 
-export function BulkMoveFolderDialog({
+export function BulkMoveCommentAutomationFolderDialog<
+  TItem extends Pick<CommentAutomationRow, "id">,
+>({
   workspaceId,
-  fbComments,
+  items,
+  folderType,
+  translationNamespace,
   showTrigger = true,
   onSuccess,
   onOpenChange,
   ...props
-}: BulkMoveFolderDialogProps) {
+}: BulkMoveCommentAutomationFolderDialogProps<TItem>) {
   const t = useTranslations()
   const router = useRouter()
   const folderOptions = useFolderSelectOptions()
@@ -59,11 +70,11 @@ export function BulkMoveFolderDialog({
   ) => {
     try {
       await Promise.all(
-        fbComments.map((item) =>
+        items.map((item) =>
           changeFolderAction(workspaceId, {
             modelIds: [item.id],
             newFolderId: values.newFolderId,
-            folderType: folderTypes.enum.fbComment,
+            folderType,
           }),
         ),
       )
@@ -77,7 +88,7 @@ export function BulkMoveFolderDialog({
       onSuccess?.()
       router.refresh()
     } catch (error) {
-      console.error("Error moving FB Comment Automations:", error)
+      console.error("Error moving comment automations:", error)
       toast.error(t("messages.unknownError"))
     }
   }
@@ -96,12 +107,12 @@ export function BulkMoveFolderDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.moveFeature", {
-              feature: t("facebookCommentAutomation.title"),
+              feature: t(`${translationNamespace}.title`),
             })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("messages.moveFolderDescription", {
-              count: fbComments.length,
+              count: items.length,
             })}
           </DialogDescription>
         </DialogHeader>

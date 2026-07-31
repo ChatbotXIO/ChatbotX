@@ -57,6 +57,40 @@ export const hideComment = (
   )
 }
 
+/**
+ * Sends a private DM reply to the author of a comment. Facebook-Login tokens
+ * cannot use the `me` alias for the IG node, so — unlike the Instagram Login
+ * package's `me/messages` — this addresses the account directly via `igId`,
+ * matching this package's own `likeComment` (`${igId}/likes`) and Messenger's
+ * `sendPrivateReply` (`${pageId}/messages`), which use the same
+ * Page/Business-asset-token shape.
+ */
+export const sendPrivateReply = (
+  auth: InstagramAuthValue,
+  commentId: string,
+  message: string,
+): Promise<{ message_id?: string; recipient_id: string }> => {
+  const version = auth.metadata.version ?? DEFAULT_API_VERSION
+  const endpoint = `${version}/${auth.metadata.igId}/messages`
+
+  return rescue(endpoint, () =>
+    instagramGraphClient.post<{
+      message_id?: string
+      recipient_id: string
+    }>(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+      json: {
+        recipient: { comment_id: commentId },
+        message: { text: message },
+      },
+      retry: 0,
+    }),
+  )
+}
+
 export const likeComment = (
   auth: InstagramAuthValue,
   commentId: string,

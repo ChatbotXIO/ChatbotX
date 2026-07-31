@@ -12,47 +12,54 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
-import { deleteFbCommentAction } from "../actions/delete-fb-comment.action"
-import type { FBCommentResource } from "../schema/resource"
+import type {
+  CommentAutomationRow,
+  CommentAutomationTranslationNamespace,
+} from "./types"
 
-export function DeleteFbCommentDialog({
-  fbComment,
+export function DeleteCommentAutomationDialog({
+  resource,
   open,
   onOpenChange,
   onSuccess,
+  translationNamespace,
+  action,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  fbComment: FBCommentResource | null
+  resource: Pick<CommentAutomationRow, "id" | "workspaceId"> | null
+  translationNamespace: CommentAutomationTranslationNamespace
+  // A bound next-safe-action action (`someAction.bind(null, workspaceId, id)`).
+  // Called directly rather than through `useAction` — the two callers pass
+  // differently-shaped bound actions (fb vs ig), and hand-typing a generic
+  // that satisfies `useAction`'s SafeActionFn constraint for both is more
+  // fragile than just calling the action and reading its result.
+  action: () => Promise<{ serverError?: string } | undefined>
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const [isPending, setIsPending] = useState(false)
 
-  const { execute, isPending } = useAction(
-    deleteFbCommentAction.bind(
-      null,
-      fbComment?.workspaceId ?? "",
-      fbComment?.id ?? "",
-    ),
-    {
-      onSuccess: () => {
-        toast.success(
-          t("messages.deletedSuccess", {
-            feature: t("facebookCommentAutomation.title"),
-          }),
-        )
-        onOpenChange(false)
-        onSuccess?.()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+  const handleDelete = async () => {
+    setIsPending(true)
+    const result = await action()
+    setIsPending(false)
+
+    if (result?.serverError) {
+      toast.error(result.serverError)
+      return
+    }
+
+    toast.success(
+      t("messages.deletedSuccess", {
+        feature: t(`${translationNamespace}.title`),
+      }),
+    )
+    onOpenChange(false)
+    onSuccess?.()
+  }
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -60,12 +67,12 @@ export function DeleteFbCommentDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
-              feature: t("facebookCommentAutomation.title"),
+              feature: t(`${translationNamespace}.title`),
             })}
           </DialogTitle>
           <DialogDescription>
             {t("messages.deleteConfirmation", {
-              feature: t("facebookCommentAutomation.title"),
+              feature: t(`${translationNamespace}.title`),
             })}
           </DialogDescription>
         </DialogHeader>
@@ -77,8 +84,8 @@ export function DeleteFbCommentDialog({
           </DialogClose>
           <Button
             className="ml-auto"
-            disabled={isPending}
-            onClick={() => execute()}
+            disabled={isPending || !resource}
+            onClick={handleDelete}
             size="sm"
             variant="destructive"
           >

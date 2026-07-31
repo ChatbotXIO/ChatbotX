@@ -6,6 +6,15 @@ export function findInstagramIntegrationByInboxId(inboxId: string) {
   return findOrFail({ table: integrationInstagramModel, where: { inboxId } })
 }
 
+export function findInstagramIntegrationsByWorkspaceId(
+  workspaceId: string,
+  type?: "instagram" | "facebook",
+) {
+  return db.query.integrationInstagramModel.findMany({
+    where: { workspaceId, ...(type ? { type } : {}) },
+  })
+}
+
 export function findInstagramIntegrationByIdForWorkspace(props: {
   id: string
   workspaceId: string

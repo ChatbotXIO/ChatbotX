@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { SiFacebook } from "@icons-pack/react-simple-icons"
+import { SiFacebook, SiInstagram } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
   CalendarIcon,
@@ -28,6 +28,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "facebookCommentAutomation.description",
     icon: SiFacebook,
     getLink: (id: string) => `/space/${id}/fb-comments`,
+  },
+  {
+    id: "instagram-comment",
+    labelKey: "instagramCommentAutomation.title",
+    descriptionKey: "instagramCommentAutomation.description",
+    icon: SiInstagram,
+    getLink: (id: string) => `/space/${id}/ig-comments`,
   },
   {
     id: "facebook-lead-ads",

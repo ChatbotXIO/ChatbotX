@@ -23,7 +23,9 @@
     "vitest": "^4.1.0"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./apis/*": "./src/apis/*.ts",
+    "./schemas": "./src/schemas.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

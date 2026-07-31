@@ -1,5 +1,8 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import {
+  fbCommentAutomationTypes,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
@@ -17,16 +20,18 @@ export async function listFbComments(
 ): Promise<ListFbCommentsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  let folderIdFilter: string | { isNull: true } | undefined
-  if (input.folderId) {
-    folderIdFilter =
-      input.folderId === rootFolderId
-        ? { isNull: true as const }
-        : input.folderId
-  }
+  // No folderId in the URL means the root view, which must scope to unfiled
+  // automations only — treating it the same as "not filtered at all" (the
+  // previous behaviour) surfaced every automation regardless of which folder
+  // it had been moved into.
+  const folderIdFilter: string | { isNull: true } =
+    !input.folderId || input.folderId === rootFolderId
+      ? { isNull: true }
+      : input.folderId
 
   const where = {
     workspaceId: input.workspaceId,
+    type: fbCommentAutomationTypes.enum.messenger,
     folderId: folderIdFilter,
     name: input.name
       ? {
@@ -63,7 +68,7 @@ export async function getFbComment(workspaceId: string, id: string) {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const record = await db.query.fbCommentAutomationModel.findFirst({
-    where: { id, workspaceId },
+    where: { id, workspaceId, type: fbCommentAutomationTypes.enum.messenger },
   })
 
   if (!record) {

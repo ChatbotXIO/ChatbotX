@@ -96,7 +96,7 @@ const handleWebhookEvent = async (
       await queue?.add("incomingComment", {
         type: "incomingComment",
         data: {
-          integrationType: "instagram",
+          integrationType: "instagramFacebook",
           integrationIdentifier: entry.id,
           commentData: {
             commentId: value.id,

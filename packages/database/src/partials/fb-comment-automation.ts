@@ -1,7 +1,17 @@
 import { z } from "zod"
 
-export const fbCommentAutomationTypes = z.enum(["messenger", "instagram"])
+export const fbCommentAutomationTypes = z.enum([
+  "messenger",
+  "instagram",
+  "instagramFacebook",
+])
 export type FBCommentAutomationType = z.infer<typeof fbCommentAutomationTypes>
+
+export const igCommentAutomationTypes = z.enum([
+  "instagram",
+  "instagramFacebook",
+])
+export type IgCommentAutomationType = z.infer<typeof igCommentAutomationTypes>
 
 export const fbCommentPostSchema = z.object({
   type: z.enum(["published", "ads", "reels", "postIds", "all"]),

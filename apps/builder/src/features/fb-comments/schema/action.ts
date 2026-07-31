@@ -49,6 +49,7 @@ export type ListFbCommentsResponse = z.infer<typeof listFbCommentsResponse>
 
 export const createFbCommentRequest = z.object({
   name: z.string().trim().min(1).max(255),
+  type: z.literal("messenger").default("messenger"),
   folderId: zodBigintAsString().nullish(),
   post: fbCommentPostSchema,
   privateReply: fbCommentReplySchema,

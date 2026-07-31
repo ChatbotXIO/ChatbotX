@@ -13,83 +13,98 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { updateFbCommentAction } from "../actions/update-fb-comment.action"
-import type { FBCommentResource } from "../schema/resource"
+import type {
+  CommentAutomationRow,
+  CommentAutomationTranslationNamespace,
+} from "./types"
 
 type ScheduleFormValues = {
   startTime: string
   endTime: string
 }
 
-export function FbCommentScheduleDialog({
-  fbComment,
+type ScheduleActionInput = {
+  isActive: boolean
+  startTime: string | null
+  endTime: string | null
+}
+
+export function CommentAutomationScheduleDialog({
+  resource,
   open,
   onOpenChange,
   onSuccess,
+  translationNamespace,
+  action,
 }: {
-  fbComment: FBCommentResource | null
+  resource: Pick<
+    CommentAutomationRow,
+    "id" | "workspaceId" | "startTime" | "endTime"
+  > | null
   open: boolean
   onOpenChange: (val: boolean) => void
+  translationNamespace: CommentAutomationTranslationNamespace
+  // A bound next-safe-action action (`someAction.bind(null, workspaceId, id)`).
+  // Called directly rather than through `useAction` — see the sibling delete
+  // dialog for why.
+  action: (
+    input: ScheduleActionInput,
+  ) => Promise<{ serverError?: string } | undefined>
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const [isPending, setIsPending] = useState(false)
 
   const form = useForm<ScheduleFormValues>({
     defaultValues: { startTime: "", endTime: "" },
   })
 
   useEffect(() => {
-    if (fbComment) {
+    if (resource) {
       form.reset({
-        startTime: fbComment.startTime ?? "",
-        endTime: fbComment.endTime ?? "",
+        startTime: resource.startTime ?? "",
+        endTime: resource.endTime ?? "",
       })
     }
-  }, [fbComment, form])
+  }, [resource, form])
 
-  const { execute, isPending } = useAction(
-    updateFbCommentAction.bind(
-      null,
-      fbComment?.workspaceId ?? "",
-      fbComment?.id ?? "",
-    ),
-    {
-      onSuccess: () => {
-        toast.success(t("facebookCommentAutomation.activated"))
-        onOpenChange(false)
-        onSuccess?.()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+  const runAction = async (input: ScheduleActionInput) => {
+    setIsPending(true)
+    const result = await action(input)
+    setIsPending(false)
+
+    if (result?.serverError) {
+      toast.error(result.serverError)
+      return
+    }
+
+    toast.success(t(`${translationNamespace}.activated`))
+    onOpenChange(false)
+    onSuccess?.()
+  }
 
   const handleAlwaysRun = () => {
     form.reset({ startTime: "", endTime: "" })
-    execute({ isActive: true, startTime: null, endTime: null })
+    runAction({ isActive: true, startTime: null, endTime: null })
   }
 
   const handleSaveSchedule = () => {
     const { startTime, endTime } = form.getValues()
 
     if (!(startTime && endTime)) {
-      toast.error(t("facebookCommentAutomation.schedule.timeRequired"))
+      toast.error(t(`${translationNamespace}.schedule.timeRequired`))
       return
     }
 
     if (startTime === endTime) {
-      toast.error(t("facebookCommentAutomation.schedule.invalidTimeRange"))
+      toast.error(t(`${translationNamespace}.schedule.invalidTimeRange`))
       return
     }
 
-    execute({ isActive: true, startTime, endTime })
+    runAction({ isActive: true, startTime, endTime })
   }
 
   return (
@@ -97,17 +112,17 @@ export function FbCommentScheduleDialog({
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>
-            {t("facebookCommentAutomation.schedule.title")}
+            {t(`${translationNamespace}.schedule.title`)}
           </DialogTitle>
           <DialogDescription>
-            {t("facebookCommentAutomation.schedule.description")}
+            {t(`${translationNamespace}.schedule.description`)}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <div className="flex w-full items-end gap-2">
             <div className="flex-1">
               <TimeField<ScheduleFormValues>
-                label={t("facebookCommentAutomation.schedule.startTime")}
+                label={t(`${translationNamespace}.schedule.startTime`)}
                 name="startTime"
                 required
               />
@@ -115,7 +130,7 @@ export function FbCommentScheduleDialog({
             <span className="mb-2 text-muted-foreground">-</span>
             <div className="flex-1">
               <TimeField<ScheduleFormValues>
-                label={t("facebookCommentAutomation.schedule.endTime")}
+                label={t(`${translationNamespace}.schedule.endTime`)}
                 name="endTime"
                 required
               />
@@ -131,7 +146,7 @@ export function FbCommentScheduleDialog({
             variant="outline"
           >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("facebookCommentAutomation.schedule.alwaysRun")}
+            {t(`${translationNamespace}.schedule.alwaysRun`)}
           </Button>
           <Button
             className="ml-auto"
@@ -141,7 +156,7 @@ export function FbCommentScheduleDialog({
             type="button"
           >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("facebookCommentAutomation.schedule.save")}
+            {t(`${translationNamespace}.schedule.save`)}
           </Button>
         </DialogFooter>
       </DialogContent>

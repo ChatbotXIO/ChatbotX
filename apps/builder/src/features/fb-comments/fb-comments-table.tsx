@@ -34,12 +34,13 @@ import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { ChangeFolderDialog } from "../folders/change-folder"
+import { BulkDeleteCommentAutomationsDialog } from "../shared/comment-automation/bulk-delete-comment-automations-dialog"
+import { BulkMoveCommentAutomationFolderDialog } from "../shared/comment-automation/bulk-move-comment-automation-folder-dialog"
+import { CommentAutomationScheduleDialog } from "../shared/comment-automation/comment-automation-schedule-dialog"
+import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
+import { RenameCommentAutomationDialog } from "../shared/comment-automation/rename-comment-automation-dialog"
+import { deleteFbCommentAction } from "./actions/delete-fb-comment.action"
 import { updateFbCommentAction } from "./actions/update-fb-comment.action"
-import { BulkDeleteFbCommentsDialog } from "./components/bulk-delete-fb-comments-dialog"
-import { BulkMoveFolderDialog } from "./components/bulk-move-folder-dialog"
-import { DeleteFbCommentDialog } from "./components/delete-fb-comment-dialog"
-import { FbCommentScheduleDialog } from "./components/fb-comment-schedule-dialog"
-import { RenameFbCommentDialog } from "./components/rename-fb-comment-dialog"
 import type { listFbComments } from "./queries"
 import type { ListFbCommentsResponse } from "./schema/action"
 
@@ -260,21 +261,25 @@ export function FbCommentsTable({
           <div className="flex items-center gap-2">
             {selectedRows.length > 0 ? (
               <>
-                <BulkDeleteFbCommentsDialog
-                  fbComments={selectedRows.map((row) => row.original)}
+                <BulkDeleteCommentAutomationsDialog
+                  deleteAction={deleteFbCommentAction}
+                  items={selectedRows.map((row) => row.original)}
                   onOpenChange={() => setRowAction(null)}
                   onSuccess={() => {
                     table.toggleAllRowsSelected(false)
                     router.refresh()
                   }}
+                  translationNamespace="facebookCommentAutomation"
                 />
-                <BulkMoveFolderDialog
-                  fbComments={selectedRows.map((row) => row.original)}
+                <BulkMoveCommentAutomationFolderDialog
+                  folderType={folderTypes.enum.fbComment}
+                  items={selectedRows.map((row) => row.original)}
                   onOpenChange={() => setRowAction(null)}
                   onSuccess={() => {
                     table.toggleAllRowsSelected(false)
                     router.refresh()
                   }}
+                  translationNamespace="facebookCommentAutomation"
                   workspaceId={workspaceId}
                 />
               </>
@@ -288,11 +293,17 @@ export function FbCommentsTable({
         </DataTableToolbar>
       </DataTable>
 
-      <RenameFbCommentDialog
-        fbComment={rowAction?.row.original || null}
+      <RenameCommentAutomationDialog
+        action={updateFbCommentAction.bind(
+          null,
+          rowAction?.row.original?.workspaceId ?? "",
+          rowAction?.row.original?.id ?? "",
+        )}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => router.refresh()}
         open={rowAction?.variant === "update"}
+        resource={rowAction?.row.original || null}
+        translationNamespace="facebookCommentAutomation"
       />
 
       <ChangeFolderDialog
@@ -304,18 +315,30 @@ export function FbCommentsTable({
         workspaceId={workspaceId}
       />
 
-      <DeleteFbCommentDialog
-        fbComment={rowAction?.row.original || null}
+      <DeleteCommentAutomationDialog
+        action={deleteFbCommentAction.bind(
+          null,
+          rowAction?.row.original?.workspaceId ?? "",
+          rowAction?.row.original?.id ?? "",
+        )}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => router.refresh()}
         open={rowAction?.variant === "delete"}
+        resource={rowAction?.row.original || null}
+        translationNamespace="facebookCommentAutomation"
       />
 
-      <FbCommentScheduleDialog
-        fbComment={scheduleDialogItem}
+      <CommentAutomationScheduleDialog
+        action={updateFbCommentAction.bind(
+          null,
+          scheduleDialogItem?.workspaceId ?? "",
+          scheduleDialogItem?.id ?? "",
+        )}
         onOpenChange={() => setScheduleDialogItem(null)}
         onSuccess={() => router.refresh()}
         open={!!scheduleDialogItem}
+        resource={scheduleDialogItem}
+        translationNamespace="facebookCommentAutomation"
       />
     </>
   )
