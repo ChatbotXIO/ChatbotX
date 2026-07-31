@@ -92,4 +92,18 @@ describe("decodeButtonPayload bare flow ID", () => {
       buttonId: "789",
     })
   })
+
+  test("a colon segment that merely contains a digit is rejected, not just accepted because it has one", () => {
+    // Security regression: a channel webhook (e.g. WhatsApp's button.payload)
+    // is untrusted input. Before this schema required the WHOLE segment to be
+    // digits, "x1:y1:z1" decoded successfully (each segment merely contained
+    // a digit) and would crash downstream when bound to a bigint column.
+    expect(decodeButtonPayload("x1:y1:z1")).toBeNull()
+    expect(decodeButtonPayload("123:abc:789")).toBeNull()
+    expect(decodeButtonPayload("123: :789")).toBeNull()
+  })
+
+  test("a colon segment that is all digits but exceeds the signed bigint range is rejected", () => {
+    expect(decodeButtonPayload("9999999999999999999:456:789")).toBeNull()
+  })
 })
