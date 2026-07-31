@@ -15,14 +15,50 @@ export const extractMetadata = (
   return metadata[key] || undefined
 }
 
+// Numeric snowflake ID (createId in @chatbotx.io/utils): every ID generated
+// since the 2004 epoch is at least 13 digits. Length alone is not enough — a
+// 19-digit string can exceed the signed bigint the flow ID column holds — so
+// also cap the value at the bigint maximum.
+const BARE_FLOW_ID_REGEX = /^\d{13,19}$/
+const MAX_SIGNED_BIGINT = 9223372036854775807n
+
+/**
+ * `zodBigintAsString()` (`@chatbotx.io/utils`) only checks that a digit
+ * appears somewhere in the string, not that the whole string is digits —
+ * `/\d+/.test("x1:y1:z1")` is `true`. That gap lets a colon-delimited payload
+ * segment like `"x1"` decode successfully here and then crash when bound to
+ * a `bigint` column (`invalid input syntax for type bigint`) — reachable from
+ * untrusted webhook content (a WhatsApp `button.payload`, for example) since
+ * every segment of this payload is meant to be a real bigint ID.
+ *
+ * Tightened locally rather than in the shared helper: `zodBigintAsString` is
+ * used in ~280 files across the repo (`apps/builder` schemas, analytics,
+ * business), so a global regex change needs its own, separately-scoped
+ * verification rather than riding along with this fix. This also closes the
+ * same class of gap the bare-flow-ID branch below already guards against
+ * (a value that's all digits but exceeds the signed bigint range).
+ */
+const STRICT_DIGITS_REGEX = /^\d+$/
+const isWithinSignedBigintRange = (value: string): boolean => {
+  try {
+    return BigInt(value) <= MAX_SIGNED_BIGINT
+  } catch {
+    return false
+  }
+}
+const strictBigintAsString = () =>
+  zodBigintAsString()
+    .regex(STRICT_DIGITS_REGEX)
+    .refine(isWithinSignedBigintRange, "Value exceeds the signed bigint range")
+
 export const buttonPayloadSchema = z
   .object({
-    f: zodBigintAsString(),
-    fv: zodBigintAsString().optional(),
-    b: zodBigintAsString().optional(),
-    br: zodBigintAsString().optional(),
-    ss: zodBigintAsString().optional(),
-    cid: zodBigintAsString().optional(),
+    f: strictBigintAsString(),
+    fv: strictBigintAsString().optional(),
+    b: strictBigintAsString().optional(),
+    br: strictBigintAsString().optional(),
+    ss: strictBigintAsString().optional(),
+    cid: strictBigintAsString().optional(),
   })
   .transform((data) => ({
     flowId: data.f,
@@ -48,13 +84,6 @@ export const encodeButtonPayload = (props: ButtonPayload): string => {
   }
   return parts.join(":")
 }
-
-// Numeric snowflake ID (createId in @chatbotx.io/utils): every ID generated
-// since the 2004 epoch is at least 13 digits. Length alone is not enough — a
-// 19-digit string can exceed the signed bigint the flow ID column holds — so
-// also cap the value at the bigint maximum.
-const BARE_FLOW_ID_REGEX = /^\d{13,19}$/
-const MAX_SIGNED_BIGINT = 9223372036854775807n
 
 export const decodeButtonPayload = (
   payload: string,

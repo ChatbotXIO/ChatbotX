@@ -17,7 +17,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
 import { tenantService } from "../enterprise/tenant/service"
-import { ChatbotXException, notFoundException } from "../errors"
+import { notFoundException, workspaceLimitReachedException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
@@ -342,7 +342,7 @@ class WorkspaceService extends BaseService {
       metric: "workspaces",
     })
     if (!consumed.ok) {
-      throw new ChatbotXException("Workspace limit reached for this plan")
+      throw workspaceLimitReachedException()
     }
 
     const tenantId =

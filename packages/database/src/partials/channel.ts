@@ -1,17 +1,14 @@
-import { z } from "zod"
+import type { ChannelType } from "@chatbotx.io/utils/channel"
 
-export const channelTypes = z.enum([
-  "omnichannel",
-  "webchat",
-  "messenger",
-  "whatsapp",
-  "zalo",
-  "smtp",
-  "telegram",
-  "instagram",
-  "tiktok",
-])
-export type ChannelType = z.infer<typeof channelTypes>
+/**
+ * `channelTypes` is defined in `@chatbotx.io/utils/channel` so packages that
+ * cannot depend on the database layer (notably `@chatbotx.io/flow-config`, which
+ * holds the per-channel step rules) can still key their tables by channel.
+ *
+ * Re-exported here because this has long been the import site for the rest of
+ * the repo; both paths resolve to the same enum.
+ */
+export { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 
 // A contact's DM conversation is normally stored with a null `sourceId`
 // (`sourceId` is reserved for comment threads, keyed by the post id). TikTok is

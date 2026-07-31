@@ -175,6 +175,47 @@ export type TemplateMessage = {
   }
 }
 
+/**
+ * Meta: "Cards must include either one URL button, or one or more quick-reply
+ * buttons." The two are separate shapes rather than one shape with optional
+ * fields, so a card carrying both kinds has no valid payload at all.
+ */
+export type CarouselCardAction =
+  | {
+      buttons: Array<{
+        type: "quick_reply"
+        quick_reply: { id: string; title: string }
+      }>
+    }
+  | {
+      name: "cta_url"
+      parameters: { display_text: string; url: string }
+    }
+
+export type CarouselCard = {
+  card_index: number
+  type: "cta_url"
+  header?: {
+    type: "image"
+    image: { link: string }
+  }
+  body?: { text: string }
+  action?: CarouselCardAction
+}
+
+export type InteractiveCarouselMessage = {
+  _type: "interactive_carousel"
+  type: "interactive"
+  interactive: {
+    type: "carousel"
+    body: { text: string }
+    action: { cards: CarouselCard[] }
+  }
+}
+
+/** Messages posted raw because whatsapp-api-js does not model their payloads. */
+export type RawWhatsappMessage = InteractiveCarouselMessage | TemplateMessage
+
 export type WhatsappActions = {
   verifyAccessToken: Handler<
     {

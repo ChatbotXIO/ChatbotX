@@ -25,6 +25,7 @@ import {
 import { useState } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import SendCardStepEditor from "@/features/flows/react-flow/steps/send-card/editor"
+import { CarouselCardLinkNotice } from "./card-link-notice"
 
 type SendCarouselStepEditorProps = {
   parentName: string
@@ -103,6 +104,9 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           {fields.map((field, index) => (
             <CarouselItem key={field.id}>
               <SendCardStepEditor parentName={`${parentName}.cards.${index}`} />
+              <CarouselCardLinkNotice
+                cardName={`${parentName}.cards.${index}`}
+              />
             </CarouselItem>
           ))}
         </CarouselContent>

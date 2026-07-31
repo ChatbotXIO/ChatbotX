@@ -19,6 +19,7 @@ import {
   startAnotherNodeStepDefaultFn,
   startExternalFlowStepDefaultFn,
   startExternalNodeStepDefaultFn,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -284,13 +285,23 @@ export function ButtonEditorDialog() {
     setProperty(activeNode, buttonPath, values)
     updateNodeData(activeNode.id, activeNode.data)
 
+    const currentButtonId = values.id as string
     if (values.buttonType === buttonTypes.enum.startAnotherNode) {
       const targetNodeId = values.beforeStep.nodeId
-      const currentButtonId = values.id as string
 
       if (currentButtonId && targetNodeId) {
         refreshEdge(currentButtonId, activeNode.id, targetNodeId)
       }
+    } else if (
+      currentButtonId &&
+      values.beforeStep?.stepType !== stepTypes.enum.startAnotherNode
+    ) {
+      // Any action besides a node jump (openWebsite, startExternalFlow,
+      // startExternalNode, ...) fully handles its own routing on the worker
+      // side. Clear a leftover edge from a previous startAnotherNode/
+      // sendMessage/performAction config so it doesn't keep pointing at a
+      // node this button no longer targets.
+      removeEdge(currentButtonId)
     }
 
     setOpenButtonEditorDialog(false)
@@ -304,6 +315,7 @@ export function ButtonEditorDialog() {
     form,
     onChangeButtonData,
     refreshEdge,
+    removeEdge,
     setOpenButtonEditorDialog,
     updateNodeData,
   ])

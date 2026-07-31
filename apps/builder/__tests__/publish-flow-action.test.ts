@@ -78,6 +78,7 @@ const { publishFlow } = await import(
 
 const findInsertedVersion = () =>
   mockTxInsertValues.mock.calls[0]?.[0] as {
+    id: string
     nodes: Array<{ id: string }>
     startNodeId: string
     isDraft: boolean
@@ -167,6 +168,43 @@ describe("publishFlow", () => {
     expect(draftUpdate?.nodes).toEqual([expect.objectContaining({ id: "2" })])
 
     expect(mockInvalidateList).toHaveBeenCalledWith("10")
+  })
+
+  /**
+   * `Flow.currentVersionId` is how an unpinned run and a magic-link click both
+   * find the live version (`detectFlowVersion`,
+   * `flowVersionService.findForButtonPayload`). If publish ever stopped
+   * repointing it — relying on the `isLatest` flag alone, say — both would keep
+   * serving the *previous* version's nodes, which is the exact "buttons still
+   * fire the old action after publish" bug. Pinned here because the flag and the
+   * column are written by two separate statements.
+   */
+  test("repoints the flow at the version it just inserted", async () => {
+    const node = sendMessageNodeDefaultFn({
+      nodeProps: { id: "2", position: { x: 0, y: 0 } },
+      dataProps: { name: "Canvas", isStartNode: true },
+      detailProps: {
+        beforeStep: {
+          id: "12",
+          stepType: "chooseChannel",
+          channel: "omnichannel",
+        },
+      },
+    })
+    mockFlowFindFirst.mockResolvedValue({
+      id: "10",
+      workspaceId: "1",
+      flowVersions: [{ id: "100", startNodeId: "2", nodes: [], edges: [] }],
+    })
+
+    await publishFlow(
+      { workspaceId: "1", id: "10" },
+      { nodes: [node], edges: [] },
+    )
+
+    const inserted = findInsertedVersion()
+    expect(mockTxSet).toHaveBeenCalledWith({ currentVersionId: inserted.id })
+    expect(inserted.isLatest).toBe(true)
   })
 
   test("throws when the flow has no draft version", async () => {

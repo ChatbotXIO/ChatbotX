@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type ActionHandler = (args: {
@@ -33,7 +34,6 @@ const {
   findWabaMock,
   getCoexistEligibilityMock,
   getSharedWabaIdMock,
-  inboxExistsByWorkspaceIdAndNameMock,
   invalidateCacheByTagsMock,
   isUniqueViolationErrorMock,
   listPhoneNumbersMock,
@@ -58,7 +58,6 @@ const {
   findWabaMock: vi.fn(),
   getCoexistEligibilityMock: vi.fn(),
   getSharedWabaIdMock: vi.fn(),
-  inboxExistsByWorkspaceIdAndNameMock: vi.fn(),
   invalidateCacheByTagsMock: vi.fn(),
   isUniqueViolationErrorMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
@@ -98,9 +97,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: buildContextMock,
   connectChannelIntegration: connectChannelIntegrationMock,
-  inboxService: {
-    existsByWorkspaceIdAndName: inboxExistsByWorkspaceIdAndNameMock,
-  },
   integrationWhatsappService: {
     createSignupSession: createSignupSessionMock,
     consumeSignupSession: consumeSignupSessionMock,
@@ -294,7 +290,6 @@ describe("connectWhatsappAction registration", () => {
       paging: { cursors: { before: "", after: "" } },
     })
     findConnectedPhoneNumberIdsMock.mockResolvedValue(new Set<string>())
-    inboxExistsByWorkspaceIdAndNameMock.mockResolvedValue(false)
     getCoexistEligibilityMock.mockResolvedValue({
       isOnBizApp: true,
       platformType: "CLOUD_API",
@@ -606,5 +601,37 @@ describe("connectWhatsappAction registration", () => {
       "This WhatsApp number is already connected to another workspace.",
     )
     expect(dbTransactionMock).not.toHaveBeenCalled()
+  })
+
+  test("surfaces the real quota error instead of the generic token-verification message", async () => {
+    // Regression guard: a typed ChatbotXException raised deep inside
+    // connectChannelIntegration (e.g. InboxService.create hitting the
+    // owner's channel quota) must reach the caller verbatim rather than
+    // being swallowed by the outer catch-all's "unable to verify token"
+    // fallback.
+    const quotaError = new ChatbotXException(
+      "Channel limit reached for this plan",
+    )
+    Object.assign(quotaError, { code: "channelLimitReached" })
+    connectChannelIntegrationMock.mockRejectedValueOnce(quotaError)
+
+    await expect(
+      callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: {
+          businessId: null,
+          wabaId: null,
+          connectExisting: true,
+          transferPhoneNumber: false,
+          manualConnect: false,
+          marketingMessageLite: true,
+          phoneNumberId: selectedPhoneNumber.id,
+          workspaceId: "ws-1",
+          signupSessionId: "signup-session-1",
+          accessToken: null,
+          code: null,
+        },
+      }),
+    ).rejects.toThrow("Channel limit reached for this plan")
   })
 })

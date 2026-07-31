@@ -19,6 +19,7 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
@@ -98,23 +99,6 @@ class InboxService extends BaseService {
       where: { id: props.id },
       with: InboxService.withIntegrations,
     })
-  }
-
-  async existsByWorkspaceIdAndName(props: {
-    workspaceId: string
-    name: string
-    tx?: DatabaseClient
-  }): Promise<boolean> {
-    const client = props.tx ?? db
-    const row = await client.query.inboxModel.findFirst({
-      where: {
-        workspaceId: props.workspaceId,
-        name: props.name,
-      },
-      columns: { id: true },
-    })
-
-    return row !== undefined
   }
 
   async resolveBroadcastInboxIds(input: {
@@ -208,7 +192,7 @@ class InboxService extends BaseService {
       metric: "channels",
     })
     if (!consumed.ok) {
-      throw new Error("Channel limit reached for this plan")
+      throw channelLimitReachedException()
     }
 
     const [inbox] = await tx

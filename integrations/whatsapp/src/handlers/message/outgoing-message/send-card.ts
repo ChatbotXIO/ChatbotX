@@ -18,6 +18,8 @@ export type SendCardProps = {
   flowVersionId?: string
   metadata?: MetadataPayload
   quickReplies?: MessageButtonTemplate[]
+  /** Only a carousel card's link button carries this — see `normalizeRawButton`. */
+  contactInboxId?: string
   payload: SendCardPayload
 }
 
@@ -49,7 +51,7 @@ type CardContent = {
   caption: string
 }
 
-function readCardContent(payload: SendCardPayload): CardContent {
+export function readCardContent(payload: SendCardPayload): CardContent {
   const title = payload.title.trim()
   const subtitle = payload.subtitle?.trim() ?? ""
 

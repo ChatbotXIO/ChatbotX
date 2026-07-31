@@ -3,7 +3,6 @@
 import {
   buildContext,
   connectChannelIntegration,
-  inboxService,
   integrationWhatsappService,
   platformCredentialService,
   workspaceService,
@@ -574,17 +573,9 @@ async function persistIntegration(params: {
   const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
     phoneNumber.display_phone_number,
   )
-  const basePhoneName = phoneNumber.verified_name.trim() || displayPhoneNumber
-  const hasWorkspaceDuplicateName =
-    await inboxService.existsByWorkspaceIdAndName({
-      tx,
-      workspaceId: resolvedWorkspaceId,
-      name: basePhoneName,
-    })
   const phoneName = buildWhatsappPhoneName({
-    verifiedName: basePhoneName,
+    verifiedName: phoneNumber.verified_name,
     displayPhoneNumber,
-    hasWorkspaceDuplicateName,
   })
 
   let integrationRow: IntegrationWhatsappModel | undefined

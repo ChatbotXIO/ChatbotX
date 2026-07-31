@@ -43,13 +43,20 @@ type WhatsappReplyButton = {
   label: string
 }
 
-function normalizeRawButton(props: {
+/**
+ * `contactInboxId` only reaches the payload of a link button, whose code is read
+ * back by the magic-link redirect route. A reply comes in through the webhook,
+ * which resolves the conversation itself, so it is left out there to keep the id
+ * inside Meta's 256-character limit.
+ */
+export function normalizeRawButton(props: {
   flowId: string
   flowVersionId?: string
   button: ButtonStepProps
   metadata?: MetadataPayload
+  contactInboxId?: string
 }): WhatsappReplyButton {
-  const { flowId, flowVersionId, button, metadata } = props
+  const { flowId, flowVersionId, button, metadata, contactInboxId } = props
 
   return {
     id: encodeButtonPayload({
@@ -58,6 +65,7 @@ function normalizeRawButton(props: {
       buttonId: button.id,
       broadcastId: extractMetadata("broadcastId", metadata),
       sequenceStepId: extractMetadata("sequenceStepId", metadata),
+      contactInboxId,
     }),
     label: button.label,
   }

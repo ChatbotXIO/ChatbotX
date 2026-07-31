@@ -107,6 +107,7 @@ export async function sendFlowMessage(
   const {
     conversation,
     flowVersion,
+    useLatestFlowVersion,
     step,
     trackingContext,
     metadata,
@@ -118,7 +119,7 @@ export async function sendFlowMessage(
     conversationId: conversation.id,
     contactInboxId: props.contactInbox.id,
     flowId: flowVersion.flowId,
-    flowVersionId: flowVersion.id,
+    flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
     step,
     trackingContext,
     metadata,
