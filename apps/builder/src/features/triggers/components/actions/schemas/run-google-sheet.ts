@@ -2,25 +2,45 @@ import { triggerActions } from "@chatbotx.io/database/partials"
 import {
   FilterMode,
   spreadsheetColumnFilterSchema,
-  spreadsheetMappingSchema,
+  spreadsheetContactToSheetMappingSchema,
+  spreadsheetSheetToContactMappingSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import z from "zod"
 
-export const runGoogleSheet = z.object({
+const baseRunGoogleSheetSchema = {
   type: z.literal(triggerActions.enum.runGoogleSheet),
-  action: z.union([
-    z.literal(stepTypes.enum.spreadsheetGetRandomRow),
-    z.literal(stepTypes.enum.spreadsheetClearRow),
-    z.literal(stepTypes.enum.spreadsheetGetRow),
-    z.literal(stepTypes.enum.spreadsheetSendData),
-    z.literal(stepTypes.enum.spreadsheetUpdateRow),
-  ]),
   spreadsheetId: z.string(),
   sheetName: z.string(),
   lookup: spreadsheetColumnFilterSchema,
-  map: z.array(spreadsheetMappingSchema).min(1),
-})
+}
+
+export const runGoogleSheet = z.discriminatedUnion("action", [
+  z.object({
+    ...baseRunGoogleSheetSchema,
+    action: z.literal(stepTypes.enum.spreadsheetGetRow),
+    map: z.array(spreadsheetSheetToContactMappingSchema).min(1),
+  }),
+  z.object({
+    ...baseRunGoogleSheetSchema,
+    action: z.literal(stepTypes.enum.spreadsheetGetRandomRow),
+    map: z.array(spreadsheetSheetToContactMappingSchema).min(1),
+  }),
+  z.object({
+    ...baseRunGoogleSheetSchema,
+    action: z.literal(stepTypes.enum.spreadsheetUpdateRow),
+    map: z.array(spreadsheetContactToSheetMappingSchema).min(1),
+  }),
+  z.object({
+    ...baseRunGoogleSheetSchema,
+    action: z.literal(stepTypes.enum.spreadsheetSendData),
+    map: z.array(spreadsheetContactToSheetMappingSchema).min(1),
+  }),
+  z.object({
+    ...baseRunGoogleSheetSchema,
+    action: z.literal(stepTypes.enum.spreadsheetClearRow),
+  }),
+])
 export type RunGoogleSheet = z.infer<typeof runGoogleSheet>
 
 export const defaultFn = (): RunGoogleSheet => ({

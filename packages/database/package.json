@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "@chatbotx.io/encryption": "workspace:*",
+    "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
@@ -39,6 +40,7 @@
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
     "make:sharding_migration": "./scripts/make-sharding-migration.sh",
     "db:migrate-shards": "dotenv -e ../../.env -- tsx scripts/migrate-shards.ts",
+    "backfill:spreadsheet-step-version": "dotenv -e ../../.env -- tsx scripts/backfill-spreadsheet-step-version.ts",
     "rotate:encryption-key": "dotenv -e ../../.env -- tsx scripts/rotate-encryption-key.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

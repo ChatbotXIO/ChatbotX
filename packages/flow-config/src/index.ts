@@ -1,6 +1,7 @@
 // Export all definitions
 export * from "./definition"
 export * from "./event"
+export * from "./migrations/spreadsheet-write-mapping"
 // Export all nodes
 export * from "./nodes/add-notes"
 export * from "./nodes/base"

@@ -87,13 +87,13 @@ export const GoogleSheetAction = ({ parentName }: { parentName: string }) => {
         sheetName &&
         action !== stepTypes.enum.spreadsheetClearRow && (
           <SpreadsheetCustomFieldMapping
-            parentName={parentName}
-            type={
+            direction={
               action === stepTypes.enum.spreadsheetGetRow ||
               action === stepTypes.enum.spreadsheetGetRandomRow
-                ? "get"
-                : "update"
+                ? "sheetToContact"
+                : "contactToSheet"
             }
+            parentName={parentName}
           />
         )}
     </div>

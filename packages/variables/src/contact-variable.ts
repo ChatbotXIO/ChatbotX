@@ -21,6 +21,61 @@ import {
   renderCustomFieldValue,
 } from "./utils"
 
+const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
+
+type VariableResolver = {
+  readonly matches: (variable: string, context: ReplaceVariableProps) => boolean
+  readonly resolve: (
+    variable: string,
+    context: ReplaceVariableProps,
+    timezone: string | null,
+  ) => Promise<string> | string
+}
+
+const systemFieldResolver: VariableResolver = {
+  matches: (variable) =>
+    systemFieldTypes.options.includes(variable as SystemFieldType),
+  resolve: async (variable, context) =>
+    (await getSystemFieldValue(context, variable as SystemFieldType)) ?? "",
+}
+
+// Match custom-field names exactly (no trimming): the map is keyed by the raw
+// `customField.name`, and the token is built from that same name, so any
+// normalisation here would break names with meaningful surrounding whitespace.
+const toRawCustomFieldName = (variable: string): string =>
+  variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
+
+const rawCustomFieldResolver: VariableResolver = {
+  matches: (variable, context) =>
+    variable.startsWith(RAW_CUSTOM_FIELD_VARIABLE_PREFIX) &&
+    context.customFieldsMap.has(toRawCustomFieldName(variable)),
+  resolve: (variable, context) =>
+    context.customFieldsMap.get(toRawCustomFieldName(variable))?.value ?? "",
+}
+
+const customFieldResolver: VariableResolver = {
+  matches: (variable, context) => context.customFieldsMap.has(variable),
+  resolve: (variable, context, timezone) => {
+    const fieldValue = context.customFieldsMap.get(variable)
+    return fieldValue
+      ? renderCustomFieldValue(fieldValue.type, fieldValue.value, timezone)
+      : ""
+  },
+}
+
+const couponResolver: VariableResolver = {
+  matches: (variable) => isCouponVariable(variable),
+  resolve: async (variable, context) =>
+    await resolveCouponVariable(context, variable),
+}
+
+const variableResolvers = [
+  systemFieldResolver,
+  rawCustomFieldResolver,
+  customFieldResolver,
+  couponResolver,
+] as const satisfies readonly VariableResolver[]
+
 type GetAllProps = {
   contactId: string
   contactInbox: ContactInboxModel | string
@@ -117,7 +172,6 @@ export const contactVariableService = {
     variables: ReplaceVariableProps
   }): Promise<string> => {
     const { variables: context, text } = props
-    const { customFieldsMap } = context
     // Temporal custom fields render in the contact's timezone, falling back to
     // the workspace timezone (then UTC) — an outgoing message should read in the
     // recipient's local time when we know it. See getContactTimezone.
@@ -127,23 +181,15 @@ export const contactVariableService = {
       const mapping: Record<string, string> = {}
       const variables = extractVariables(text)
       for (const variable of variables) {
-        if (systemFieldTypes.options.includes(variable as SystemFieldType)) {
-          const value = await getSystemFieldValue(
+        const resolver = variableResolvers.find((candidate) =>
+          candidate.matches(variable, context),
+        )
+        if (resolver) {
+          mapping[variable] = await resolver.resolve(
+            variable,
             context,
-            variable as SystemFieldType,
+            renderTimezone,
           )
-          mapping[variable] = value ?? ""
-        } else if (customFieldsMap.has(variable)) {
-          const fieldValue = customFieldsMap.get(variable)
-          mapping[variable] = fieldValue
-            ? renderCustomFieldValue(
-                fieldValue.type,
-                fieldValue.value,
-                renderTimezone,
-              )
-            : ""
-        } else if (isCouponVariable(variable)) {
-          mapping[variable] = await resolveCouponVariable(context, variable)
         }
       }
 

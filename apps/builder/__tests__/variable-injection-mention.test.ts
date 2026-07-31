@@ -14,6 +14,12 @@ const COUPON_OPTION = {
   value: "coupon:116190115440721922",
 }
 
+const RAW_CUSTOM_FIELD_OPTION = {
+  group: "Raw custom fields",
+  label: "Full Name",
+  value: "raw:Full Name",
+}
+
 const nodeWithAttrs = (attrs: MentionNodeAttrs) =>
   ({ attrs }) as unknown as Parameters<
     typeof renderVariableMentionText
@@ -53,6 +59,14 @@ describe("variable injection mention", () => {
         [COUPON_OPTION],
       ),
     ).toContain('data-label="Coupon 1"')
+  })
+
+  it("hydrates saved raw custom-field variable text into a labeled mention node", () => {
+    expect(
+      plainTextToParagraphHtmlWithVariableMentions("Name: {{raw:Full Name}}", [
+        RAW_CUSTOM_FIELD_OPTION,
+      ]),
+    ).toContain('data-id="raw:Full Name"')
   })
 
   it("renders coupon tokens in step preview using the topic label", () => {

@@ -50,7 +50,10 @@ export const SpreadsheetDialog = ({
           )
         }
       />
-      <DialogContent aria-describedby={undefined} className="flex-1">
+      <DialogContent
+        aria-describedby={undefined}
+        className="flex-1 sm:max-w-2xl"
+      >
         <DialogHeader>
           <DialogTitle className="capitalize">
             Google Sheets - {t(`${name}`)}

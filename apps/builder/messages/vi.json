@@ -3354,7 +3354,10 @@
     "title": "Nhật ký kiểm tra"
   },
   "customFields": {
-    "title": "Trường tùy chỉnh"
+    "title": "Trường tùy chỉnh",
+    "variables": {
+      "rawGroup": "Trường tùy chỉnh thô"
+    }
   },
   "keywords": {
     "title": "Từ khóa"

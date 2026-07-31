@@ -3,15 +3,15 @@ import {
   spreadsheetColumnFilterDefaultFn,
   spreadsheetColumnFilterSchema,
   spreadsheetDefaultFn,
-  spreadsheetMappingSchema,
   spreadsheetSchema,
+  spreadsheetSheetToContactMappingSchema,
 } from "./spreadsheet"
 import { stepTypes } from "./step-action"
 
 export const spreadsheetGetRandomRowSchema = spreadsheetSchema.extend({
   stepType: z.literal(stepTypes.enum.spreadsheetGetRandomRow),
   lookup: spreadsheetColumnFilterSchema,
-  map: z.array(spreadsheetMappingSchema).min(1),
+  map: z.array(spreadsheetSheetToContactMappingSchema).min(1),
 })
 export type SpreadsheetGetRandomRowSchema = z.infer<
   typeof spreadsheetGetRandomRowSchema
