@@ -2,7 +2,7 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardAction,
@@ -75,15 +75,13 @@ export function ProductsTable({
         </CardTitle>
         <CardAction>
           <div className="flex items-center gap-2">
-            <Button
-              render={
-                <Link href={`/space/${workspaceId}/products/create`}>
-                  <PlusIcon />
-                  {t("actions.create")}
-                </Link>
-              }
-              size="sm"
-            />
+            <Link
+              className={buttonVariants({ size: "sm" })}
+              href={`/space/${workspaceId}/products/create`}
+            >
+              <PlusIcon />
+              {t("actions.create")}
+            </Link>
             <ImportProductDialog
               historyPromise={importHistoryPromise}
               workspaceId={workspaceId}

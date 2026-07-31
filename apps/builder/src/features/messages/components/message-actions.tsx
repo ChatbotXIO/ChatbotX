@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@chatbotx.io/ui/components/ui/alert-dialog"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
@@ -321,18 +321,19 @@ export const MessageActions = ({
       />
       <PopoverContent className="flex w-auto flex-col gap-0.5 p-1" side="top">
         {messageLink && (
-          <Button
-            className="justify-start"
-            render={
-              <a href={messageLink} rel="noopener noreferrer" target="_blank">
-                <ExternalLinkIcon className="size-4" />
-                {t("messages.viewMessage")}
-              </a>
-            }
-            size="sm"
-            type="button"
-            variant="ghost"
-          />
+          <a
+            className={buttonVariants({
+              size: "sm",
+              variant: "ghost",
+              className: "justify-start",
+            })}
+            href={messageLink}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <ExternalLinkIcon className="size-4" />
+            {t("messages.viewMessage")}
+          </a>
         )}
 
         {!isOutgoing && (

@@ -1,5 +1,5 @@
 import { importTypes } from "@chatbotx.io/database/partials"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { ArrowLeftIcon } from "lucide-react"
 import Link from "next/link"
@@ -36,16 +36,14 @@ export default async function ImportContactsHistoriesPage(props: {
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center gap-3">
-        <Button
-          render={
-            <Link href={`/space/${workspaceId}/contacts`}>
-              <ArrowLeftIcon className="size-4 rtl:rotate-180" />
-              <span className="sr-only">{t("actions.back")}</span>
-            </Link>
-          }
-          size="icon"
-          variant="outline"
-        />
+        <Link
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+          href={`/space/${workspaceId}/contacts`}
+        >
+          <ArrowLeftIcon className="size-4 rtl:rotate-180" />
+          <span className="sr-only">{t("actions.back")}</span>
+        </Link>
+
         <h4 className="font-bold text-xl">
           {t("fields.import.histories.title")}
         </h4>

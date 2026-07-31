@@ -7,7 +7,7 @@ import type {
 } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import type { WhatsappWabaMMLite } from "@chatbotx.io/integration-whatsapp/api/waba"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
   Tooltip,
@@ -256,18 +256,14 @@ export const WhatsappAccountHealths = memo(
                 {t("description")}
               </p>
             </div>
-            <Button
-              render={
-                <Link
-                  href={businessManagerUrl}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  {t("goToBusinessManager")}
-                </Link>
-              }
-              size="sm"
-            />
+            <Link
+              className={buttonVariants({ size: "sm" })}
+              href={businessManagerUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {t("goToBusinessManager")}
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-1">

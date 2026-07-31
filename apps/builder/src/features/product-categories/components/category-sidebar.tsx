@@ -100,12 +100,12 @@ export function CategorySidebar({
               }
             />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setEditingCategory(category)}>
+              <DropdownMenuItem onClick={() => setEditingCategory(category)}>
                 <PencilIcon />
                 {t("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setDeletingCategory(category)}
+                onClick={() => setDeletingCategory(category)}
                 variant="destructive"
               >
                 <TrashIcon />

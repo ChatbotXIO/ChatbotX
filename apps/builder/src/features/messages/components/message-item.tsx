@@ -4,7 +4,7 @@ import type {
   MessageButtonTemplate,
   MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
   Carousel,
@@ -335,17 +335,18 @@ const RenderContentAttributes = (props: MessageItemProps) => {
             contentAttributes.payload.buttons.map((button) => {
               if (button.buttonType === "url") {
                 return (
-                  <Button
+                  <Link
+                    className={buttonVariants({
+                      size: "sm",
+                      variant: "secondary",
+                    })}
+                    href={button.url}
                     key={button.id}
-                    render={
-                      <Link href={button.url} target="_blank">
-                        <ExternalLinkIcon />
-                        {button.label}
-                      </Link>
-                    }
-                    size="sm"
-                    variant="secondary"
-                  />
+                    target="_blank"
+                  >
+                    <ExternalLinkIcon />
+                    {button.label}
+                  </Link>
                 )
               }
               return (

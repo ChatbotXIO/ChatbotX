@@ -75,6 +75,7 @@ export const CustomFieldValueChanged = ({
       {customFieldId && (
         <>
           <Select
+            items={operatorOptions}
             onValueChange={(value) => {
               form.setValue(`${parentName}.operator`, value, {
                 shouldValidate: true,

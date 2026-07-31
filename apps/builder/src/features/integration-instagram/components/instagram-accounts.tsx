@@ -2,7 +2,7 @@
 
 import type { InstagramAccount } from "@chatbotx.io/integration-instagram"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -93,17 +93,12 @@ export function InstagramAccounts({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button
-            render={
-              <Link
-                href={`/space/${workspaceId}/settings/channels?channel=instagram`}
-              >
-                {t("actions.cancel")}
-              </Link>
-            }
-            size="sm"
-            variant="ghost"
-          />
+          <Link
+            className={buttonVariants({ size: "sm", variant: "ghost" })}
+            href={`/space/${workspaceId}/settings/channels?channel=instagram`}
+          >
+            {t("actions.cancel")}
+          </Link>
           <Button disabled={form.formState.isSubmitting} type="submit">
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />

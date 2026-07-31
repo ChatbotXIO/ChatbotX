@@ -2,7 +2,7 @@
 
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,18 +136,16 @@ export function getWebchatColumns({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   render={
-                    <Button
-                      className="w-full justify-start"
-                      render={
-                        <Link
-                          href={`/space/${webchat.workspaceId}/webchats/${webchat.id}/edit`}
-                        >
-                          {t("actions.edit")}
-                        </Link>
-                      }
-                      size="sm"
-                      variant="ghost"
-                    />
+                    <Link
+                      className={buttonVariants({
+                        size: "sm",
+                        variant: "ghost",
+                        className: "w-full justify-start",
+                      })}
+                      href={`/space/${webchat.workspaceId}/webchats/${webchat.id}/edit`}
+                    >
+                      {t("actions.edit")}
+                    </Link>
                   }
                 />
                 <DropdownMenuItem

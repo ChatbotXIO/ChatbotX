@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -38,13 +38,15 @@ export default function MagicLinkSent() {
         </div>
 
         <div className="space-y-3">
-          <Button
-            className="w-full"
-            render={
-              <Link href="/auth/sign-in">{t("actions.backToSignIn")}</Link>
-            }
-            variant="outline"
-          />
+          <Link
+            className={buttonVariants({
+              variant: "outline",
+              className: "w-full",
+            })}
+            href="/auth/sign-in"
+          >
+            {t("actions.backToSignIn")}
+          </Link>
 
           <div className="text-muted-foreground text-xs">
             <p>{t("auth.didNotReceiveEmail")}</p>

@@ -121,8 +121,8 @@ export function NavUser({
                 </DropdownMenuGroup>
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
+                    closeOnClick={false}
+                    onClick={() => {
                       setUpgradeOpen(true)
                     }}
                   >

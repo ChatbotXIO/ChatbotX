@@ -61,7 +61,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
   className,
   maxTags,
   maxLength = 100,
-  autoFocus = false,
+  autoFocus = true,
   startIcon,
   endIcon,
   allowDuplicates = false,
@@ -203,6 +203,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
             </FormLabel>}
 
             <FormControl>
+              <div ref={containerRef} className="relative mb-0">
               <Popover
                 open={showSuggestions && visibleSuggestions.length > 0}
                 onOpenChange={(open) => {
@@ -212,7 +213,6 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                   }
                 }}
               >
-              <div ref={containerRef} className="relative mb-0">
                 <div
                   className={cn(
                     "min-h-9 rounded-md flex flex-wrap gap-1 items-center",
@@ -242,7 +242,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                               "bg-primary border-primary/20"
                           )}
                         >
-                          <span className="max-w-[150px] truncate">{tag}</span>
+                          <span className="max-w-37.5 truncate">{tag}</span>
                           {!disabled && (
                             <button
                               type="button"
@@ -259,7 +259,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                     ))}
                   </AnimatePresence>
 
-                  <div className="flex-1 min-w-[120px]">
+                  <div className="flex-1 min-w-30">
                     <Input
                       ref={inputRef}
                       value={inputValue}
@@ -319,7 +319,6 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                     </button>
                   )}
                 </div>
-              </div>
 
               <PopoverContent
                 align="start"
@@ -330,8 +329,6 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                   "pointer-events-auto w-(--anchor-width) max-h-60 overflow-auto rounded-md p-0",
                   styles.suggestions
                 )}
-                finalFocus={false}
-                initialFocus={false}
               >
                 {visibleSuggestions.map((suggestion) => {
                   const isSelected =
@@ -365,6 +362,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                 })}
               </PopoverContent>
               </Popover>
+              </div>
             </FormControl>
 
             {description && <FormDescription>{description}</FormDescription>}

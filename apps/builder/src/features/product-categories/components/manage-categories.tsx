@@ -199,21 +199,21 @@ export function ManageCategories({
                         />
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onSelect={() => setEditing(category)}
+                            onClick={() => setEditing(category)}
                           >
                             <PencilIcon />
                             {t("edit")}
                           </DropdownMenuItem>
                           {depth === 0 ? (
                             <DropdownMenuItem
-                              onSelect={() => startAddingChild(category)}
+                              onClick={() => startAddingChild(category)}
                             >
                               <PlusIcon />
                               {t("createSub")}
                             </DropdownMenuItem>
                           ) : null}
                           <DropdownMenuItem
-                            onSelect={() => setDeleting(category)}
+                            onClick={() => setDeleting(category)}
                             variant="destructive"
                           >
                             <TrashIcon />

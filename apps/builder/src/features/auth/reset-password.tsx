@@ -1,7 +1,7 @@
 "use client"
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -100,13 +100,15 @@ export const ResetPassword = () => {
           </Form>
 
           <div className="mt-3 space-y-3">
-            <Button
-              className="w-full"
-              render={
-                <Link href="/auth/sign-in">{t("actions.backToSignIn")}</Link>
-              }
-              variant="outline"
-            />
+            <Link
+              className={buttonVariants({
+                variant: "outline",
+                className: "w-full",
+              })}
+              href="/auth/sign-in"
+            >
+              {t("actions.backToSignIn")}
+            </Link>
           </div>
         </CardContent>
       </Card>

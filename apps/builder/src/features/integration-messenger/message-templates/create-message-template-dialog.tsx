@@ -457,7 +457,7 @@ export function CreateMessageTemplateDialog({
                       {buttonTypes.map((buttonType) => (
                         <DropdownMenuItem
                           key={buttonType.type}
-                          onSelect={() => {
+                          onClick={() => {
                             if (buttonType.type === "URL") {
                               appendButton({
                                 type: "URL",

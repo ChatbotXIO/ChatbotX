@@ -18,7 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { DialogFooter } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
@@ -253,15 +253,12 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
         />
 
         <DialogFooter>
-          <Button
-            render={
-              <Link href={`/space/${workspaceId}/settings/channels`}>
-                {t("actions.cancel")}
-              </Link>
-            }
-            size="sm"
-            variant="ghost"
-          />
+          <Link
+            className={buttonVariants({ size: "sm", variant: "ghost" })}
+            href={`/space/${workspaceId}/settings/channels`}
+          >
+            {t("actions.cancel")}
+          </Link>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"

@@ -287,7 +287,7 @@ export function UpdateMessengerForm({
                           />
                           <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem
-                              onSelect={() => setPersonaDefault(index)}
+                              onClick={() => setPersonaDefault(index)}
                             >
                               <UserIcon className="me-2" />
                               {persona.isDefault
@@ -296,7 +296,7 @@ export function UpdateMessengerForm({
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
-                              onSelect={() => removePersona(index)}
+                              onClick={() => removePersona(index)}
                             >
                               <Trash2Icon className="me-2" />
                               {t("actions.delete")}

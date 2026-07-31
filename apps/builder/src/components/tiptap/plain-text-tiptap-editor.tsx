@@ -297,6 +297,7 @@ export const PlainTextTiptapEditor = ({
         {showEmojiPicker && (
           <Popover onOpenChange={setIsOpenEmoji} open={isOpenEmoji}>
             <PopoverTrigger
+              nativeButton={false}
               onClick={() => setIsEditorFocused(true)}
               render={
                 <div className={iconWrapperClassName}>
@@ -312,6 +313,7 @@ export const PlainTextTiptapEditor = ({
 
         <Popover onOpenChange={setIsOpenCustomField} open={isOpenCustomField}>
           <PopoverTrigger
+            nativeButton={false}
             onClick={() => setIsEditorFocused(true)}
             render={
               <div className={iconWrapperClassName}>

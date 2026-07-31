@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
@@ -31,15 +31,13 @@ export function FacebookLeadAdsTableToolbarActions({
         />
       ) : null}
 
-      <Button
-        render={
-          <Link href={`/space/${workspaceId}/fb-lead-ads/create`}>
-            <PlusIcon />
-            {t("facebookLeadAdsAutomation.create")}
-          </Link>
-        }
-        size="sm"
-      />
+      <Link
+        className={buttonVariants({ size: "sm" })}
+        href={`/space/${workspaceId}/fb-lead-ads/create`}
+      >
+        <PlusIcon />
+        {t("facebookLeadAdsAutomation.create")}
+      </Link>
     </>
   )
 }

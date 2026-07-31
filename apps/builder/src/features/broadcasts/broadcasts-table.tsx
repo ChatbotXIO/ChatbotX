@@ -4,7 +4,7 @@ import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -350,17 +350,15 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <div className="flex justify-end">
-            <Button
-              render={
-                <Link href={`/space/${workspaceId}/broadcasts/create`}>
-                  <PlusIcon />
-                  {t("actions.createFeature", {
-                    feature: t("fields.broadcast.label"),
-                  })}
-                </Link>
-              }
-              size="sm"
-            />
+            <Link
+              className={buttonVariants({ size: "sm" })}
+              href={`/space/${workspaceId}/broadcasts/create`}
+            >
+              <PlusIcon />
+              {t("actions.createFeature", {
+                feature: t("fields.broadcast.label"),
+              })}
+            </Link>
           </div>
         </DataTableToolbar>
       </DataTable>

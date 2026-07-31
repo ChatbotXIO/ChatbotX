@@ -8,7 +8,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@chatbotx.io/ui/components/ui/alert"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -106,19 +106,18 @@ export function FacebookPages({
           </AlertDescription>
         </Alert>
         <div className="flex justify-end gap-2">
-          <Button
-            render={<Link href={cancelHref}>{t("actions.cancel")}</Link>}
-            size="sm"
-            variant="ghost"
-          />
-          <Button
-            render={
-              <Link href="/channels/create">
-                {t("messenger.selectPage.tryAgain")}
-              </Link>
-            }
-            size="sm"
-          />
+          <Link
+            className={buttonVariants({ size: "sm", variant: "ghost" })}
+            href={cancelHref}
+          >
+            {t("actions.cancel")}
+          </Link>
+          <Link
+            className={buttonVariants({ size: "sm" })}
+            href="/channels/create"
+          >
+            {t("messenger.selectPage.tryAgain")}
+          </Link>
         </div>
       </div>
     )
@@ -149,11 +148,12 @@ export function FacebookPages({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button
-            render={<Link href={cancelHref}>{t("actions.cancel")}</Link>}
-            size="sm"
-            variant="ghost"
-          />
+          <Link
+            className={buttonVariants({ size: "sm", variant: "ghost" })}
+            href={cancelHref}
+          >
+            {t("actions.cancel")}
+          </Link>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"

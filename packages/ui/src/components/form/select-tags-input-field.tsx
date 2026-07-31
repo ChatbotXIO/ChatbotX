@@ -168,6 +168,7 @@ const SelectTagsInputFieldBase = <TFieldValues extends FieldValues>({
                 <Popover onOpenChange={setOpen} open={open}>
                   <PopoverTrigger
                     disabled={disabled}
+                    nativeButton={false}
                     render={
                       <div
                         className={cn(

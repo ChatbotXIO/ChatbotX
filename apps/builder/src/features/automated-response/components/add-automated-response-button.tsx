@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -14,18 +14,14 @@ export function AddAutomatedResponseButton() {
   const t = useTranslations()
 
   return (
-    <Button
-      render={
-        <Link
-          href={`/space/${workspaceId}/automated-responses/create?${searchParams.toString()}`}
-        >
-          <PlusIcon />
-          {t("actions.createFeature", {
-            feature: t("fields.automatedResponse.label"),
-          })}
-        </Link>
-      }
-      size={"sm"}
-    />
+    <Link
+      className={buttonVariants({ size: "sm" })}
+      href={`/space/${workspaceId}/automated-responses/create?${searchParams.toString()}`}
+    >
+      <PlusIcon />
+      {t("actions.createFeature", {
+        feature: t("fields.automatedResponse.label"),
+      })}
+    </Link>
   )
 }

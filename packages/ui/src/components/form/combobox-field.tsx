@@ -84,7 +84,6 @@ export function ComboboxField<T extends FieldValues>({
   side,
   triggerValueChange,
   disableValues,
-  portal = true,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
 
@@ -140,8 +139,7 @@ export function ComboboxField<T extends FieldValues>({
             />
             <PopoverContent
               align="start"
-              className={cn("w-[200px] p-0", popoverClassName)}
-              portal={portal}
+              className={cn("w-50 p-0", popoverClassName)}
               side={side}
             >
               <Command>

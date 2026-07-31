@@ -141,7 +141,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
               onValueChange={(value) => handleStartTimeChange(value as string)}
               value={startTime}
             >
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

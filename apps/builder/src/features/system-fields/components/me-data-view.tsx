@@ -18,7 +18,7 @@ import {
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -240,16 +240,16 @@ export function MeDataView({ data }: MeDataViewProps) {
         </Card>
 
         <div className="flex flex-col gap-2">
-          <Button
-            className="w-full"
-            render={
-              <a href={buildMeDownloadHref(data.params)}>
-                <Download aria-hidden="true" />
-                {t("extensionsMe.actions.download")}
-              </a>
-            }
-            variant="secondary"
-          />
+          <a
+            className={buttonVariants({
+              variant: "secondary",
+              className: "w-full",
+            })}
+            href={buildMeDownloadHref(data.params)}
+          >
+            <Download aria-hidden="true" />
+            {t("extensionsMe.actions.download")}
+          </a>
           <AlertDialog>
             <AlertDialogTrigger
               render={

@@ -392,17 +392,17 @@ export function MessengerMessageTemplatesTable({
             />
             <DropdownMenuContent align="end" className="w-40">
               {row.original.status === "APPROVED" && (
-                <DropdownMenuItem onSelect={() => setCloneTarget(row.original)}>
+                <DropdownMenuItem onClick={() => setCloneTarget(row.original)}>
                   <CopyIcon />
                   {t("actions.clone")}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onSelect={() => setViewTarget(row.original)}>
+              <DropdownMenuItem onClick={() => setViewTarget(row.original)}>
                 <EyeIcon />
                 {t("actions.view")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setDeleteTarget(row.original)}
+                onClick={() => setDeleteTarget(row.original)}
                 variant="destructive"
               >
                 <Trash2Icon />
