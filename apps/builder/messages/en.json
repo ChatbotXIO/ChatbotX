@@ -3551,11 +3551,6 @@
     "replies": "Replies",
     "activated": "Automation activated",
     "deactivated": "Automation deactivated",
-    "platform": "Platform",
-    "platformType": {
-      "messenger": "Facebook",
-      "instagram": "Instagram"
-    },
     "trackCommentsOn": "Track comments on",
     "trackCommentsOnDescription": "Apply this automation to all posts on your Page, or narrow it to specific posts you select.",
     "privateReply": "Private reply (inbox)",
@@ -3625,7 +3620,6 @@
       "replyOncePerUserPerPostDescription": "Each user will receive at most one automated reply per post.",
       "likeUserComment": "Like the user comment",
       "likeUserCommentDescription": "Automatically react with a like to the commenter's comment.",
-      "likeUserCommentNotSupportedOnInstagram": "Liking comments is not supported on Instagram.",
       "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other posts",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue replying to users who have already commented on your other posts.",
       "ignoreCommentReplies": "Don't reply to replies to comments",
@@ -3647,10 +3641,116 @@
       "none": "Never"
     },
     "selectPosts": "Select Posts",
+    "selectPageAll": "All pages",
     "chooseSpecificPosts": "Choose posts...",
     "postIdTab": "Post ID",
     "postIdPlaceholder": "Enter post IDs, one per line...",
     "noPostsFound": "No posts found"
+  },
+  "instagramCommentAutomation": {
+    "title": "Instagram Comment Automation",
+    "description": "Automate Instagram comments for your contacts.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "activated": "Automation activated",
+    "deactivated": "Automation deactivated",
+    "trackCommentsOn": "Track comments on",
+    "trackCommentsOnDescription": "Apply this automation to all posts on your connected account, or narrow it to specific posts you select.",
+    "privateReply": "Private reply (inbox)",
+    "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable.",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates (spintax supported), AI Agent, a chatbot flow, or no reply.",
+    "replyMessage": "Reply message",
+    "replyMessagePlaceholder": "Enter reply message...",
+    "includeKeywordsType": "Reply to",
+    "includeKeywordsTypeDescription": "Choose which comments this automation responds to.",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Exclude comments with these keywords",
+    "excludeKeywordsDescription": "Comments containing any of these keywords will be ignored by both inbox and public reply automation.",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "schedule": {
+      "title": "Set active hours",
+      "description": "Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight.",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "alwaysRun": "Always run",
+      "save": "Save",
+      "invalidTimeRange": "Start and end time must be different",
+      "timeRequired": "Please select both start and end time"
+    },
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "replyTiming": "Reply Timing",
+      "hideComments": "Hide Comments"
+    },
+    "postType": {
+      "all": "All posts",
+      "published": "Published posts",
+      "reels": "Reels",
+      "specificPosts": "Specific posts"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyToNewContactsOnlyDescription": "Only auto-reply to people who have never been a contact in your workspace before.",
+      "replyOncePerUserPerPost": "Reply only once to each user per post",
+      "replyOncePerUserPerPostDescription": "Each user will receive at most one automated reply per post.",
+      "likeUserComment": "Like the user comment",
+      "likeUserCommentDescription": "Automatically react with a like to the commenter's comment.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other posts",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue replying to users who have already commented on your other posts.",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments."
+    },
+    "hideComments": {
+      "all": "Hide all comments",
+      "hasPhoneNumber": "Contains phone number",
+      "hasLink": "Contains link",
+      "hasKeywords": "Contains keywords",
+      "keywords": "Keywords",
+      "showCommentsAfter": "Show comments after"
+    },
+    "showCommentsAfter": {
+      "none": "Never"
+    },
+    "selectPosts": "Select Posts",
+    "selectPageAll": "All accounts",
+    "chooseSpecificPosts": "Choose posts...",
+    "postIdTab": "Post ID",
+    "postIdPlaceholder": "Enter post IDs, one per line...",
+    "noPostsFound": "No posts found",
+    "connectionType": {
+      "title": "Choose Instagram connection type",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login connection. Supports public reply, private reply, and hiding comments. Liking comments is not supported.",
+      "instagramFacebookTitle": "Instagram Login with Facebook",
+      "instagramFacebookDescription": "Instagram connected via a Facebook Page. Supports public reply, private reply, hiding comments, and liking comments."
+    }
   },
   "facebookLeadAdsAutomation": {
     "title": "Facebook Lead Ads Automation",

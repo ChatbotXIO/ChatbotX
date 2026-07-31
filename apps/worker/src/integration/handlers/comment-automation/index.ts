@@ -23,6 +23,10 @@ import {
   sendPrivateReply as sendInstagramLoginPrivateReply,
 } from "@chatbotx.io/integration-instagram"
 import {
+  type InstagramAuthValue as InstagramFacebookAuthValue,
+  sendPrivateReply as sendInstagramFacebookPrivateReply,
+} from "@chatbotx.io/integration-instagram-facebook"
+import {
   type MessengerAuthValue,
   sendPrivateReply,
 } from "@chatbotx.io/integration-messenger"
@@ -230,7 +234,7 @@ async function executePublicReply(
     integrationType: string
     integrationIdentifier: string
     commentId: string
-    channelType: "messenger" | "instagram"
+    channelType: "messenger" | "instagram" | "instagramFacebook"
     conversationId: string
     contactInboxId: string
     delay: number
@@ -307,11 +311,11 @@ async function executePublicReply(
 async function executePrivateReply(
   privateReply: FBCommentReply,
   ctx: {
-    auth: MessengerAuthValue | InstagramAuthValue
+    auth: MessengerAuthValue | InstagramAuthValue | InstagramFacebookAuthValue
     integrationType: string
     integrationIdentifier: string
     commentId: string
-    channelType: "messenger" | "instagram"
+    channelType: "messenger" | "instagram" | "instagramFacebook"
     conversationId: string
     contactInboxId: string
     workspaceId: string
@@ -335,6 +339,15 @@ async function executePrivateReply(
       // addressing the commenter by comment id.
       await sendInstagramLoginPrivateReply(
         ctx.auth as InstagramAuthValue,
+        ctx.commentId,
+        privateReply.value,
+      )
+    } else if (ctx.channelType === "instagramFacebook") {
+      // Instagram via Facebook Login sends the private DM through the
+      // {igId}/messages endpoint (Page/Business-asset token), addressing the
+      // commenter by comment id.
+      await sendInstagramFacebookPrivateReply(
+        ctx.auth as InstagramFacebookAuthValue,
         ctx.commentId,
         privateReply.value,
       )
@@ -484,7 +497,10 @@ export async function processCommentAutomation(
     return
   }
 
-  const channelType = integrationType as "messenger" | "instagram"
+  const channelType = integrationType as
+    | "messenger"
+    | "instagram"
+    | "instagramFacebook"
   const automations = await fbCommentAutomationService.findActiveAutomations({
     workspaceId,
     channelType,

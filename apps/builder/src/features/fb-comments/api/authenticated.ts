@@ -9,13 +9,13 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/sche
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { collectSettled } from "@/lib/collect-settled"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { createFbComment } from "../actions/create-fb-comment.action"
 import { deleteFbComment } from "../actions/delete-fb-comment.action"
 import { updateFbComment } from "../actions/update-fb-comment.action"
 import { listFbComments } from "../queries"
-import { listInstagramAutomationMedia } from "../queries/instagram-posts"
 import {
   createFbCommentRequest,
   listFbCommentsRequest,
@@ -23,6 +23,15 @@ import {
   updateFbCommentRequest,
 } from "../schema/action"
 import { fbCommentResource } from "../schema/resource"
+
+const facebookPostSchema = z.object({
+  id: z.string(),
+  message: z.string().optional(),
+  full_picture: z.string().optional(),
+  created_time: z.string(),
+  permalink_url: z.string().optional(),
+  pageId: z.string(),
+})
 
 export const fbCommentsPrivateAPI = {
   listFbCommentsAPI: authorizedAPI
@@ -92,23 +101,14 @@ export const fbCommentsPrivateAPI = {
       summary: "List Facebook posts for FB Comment Automation",
       tags: ["FB Comments"],
     })
-    .input(
-      withWorkspaceIdSchema.and(
-        z.object({ type: z.enum(["published", "ads", "reels"]) }),
-      ),
-    )
+    .input(withWorkspaceIdSchema)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(
       z.object({
-        posts: z.array(
-          z.object({
-            id: z.string(),
-            message: z.string().optional(),
-            full_picture: z.string().optional(),
-            created_time: z.string(),
-            permalink_url: z.string().optional(),
-          }),
-        ),
+        published: z.array(facebookPostSchema),
+        ads: z.array(facebookPostSchema),
+        reels: z.array(facebookPostSchema),
+        pages: z.array(z.object({ id: z.string(), name: z.string() })),
       }),
     )
     .handler(async ({ input }) => {
@@ -116,62 +116,42 @@ export const fbCommentsPrivateAPI = {
         input.workspaceId,
       )
 
+      const pages = integrations.map((integration) => ({
+        id: integration.pageId,
+        name: integration.name,
+      }))
+
       if (integrations.length === 0) {
-        return { posts: [] }
+        return { published: [], ads: [], reels: [], pages }
       }
 
-      const results = await Promise.allSettled(
-        integrations.map(async (integration) => {
-          const auth = integration.auth as MessengerAuthValue
-          const pageId = integration.pageId
+      const fetchByType = (type: "published" | "ads" | "reels") =>
+        collectSettled(
+          integrations,
+          async (integration) => {
+            const auth = integration.auth as MessengerAuthValue
+            const pageId = integration.pageId
 
-          let posts: FacebookPostListItem[]
-          if (input.type === "published") {
-            posts = await listPublishedPosts({ auth, pageId })
-          } else if (input.type === "ads") {
-            posts = await listAdsPosts({ auth, pageId })
-          } else {
-            posts = await listReelsPosts({ auth, pageId })
-          }
-          return posts
-        }),
-      )
-
-      const posts = results
-        .filter(
-          (r): r is PromiseFulfilledResult<FacebookPostListItem[]> =>
-            r.status === "fulfilled",
+            let posts: FacebookPostListItem[]
+            if (type === "published") {
+              posts = await listPublishedPosts({ auth, pageId })
+            } else if (type === "ads") {
+              posts = await listAdsPosts({ auth, pageId })
+            } else {
+              posts = await listReelsPosts({ auth, pageId })
+            }
+            return posts.map((post) => ({ ...post, pageId }))
+          },
+          (integration) => ({ integrationId: integration.id }),
+          `Failed to list Facebook ${type} posts for an integration`,
         )
-        .flatMap((r) => r.value)
 
-      return { posts }
+      const [published, ads, reels] = await Promise.all([
+        fetchByType("published"),
+        fetchByType("ads"),
+        fetchByType("reels"),
+      ])
+
+      return { published, ads, reels, pages }
     }),
-
-  instagramPostsAPI: authorizedAPI
-    .route({
-      method: "GET",
-      path: "/workspaces/{workspaceId}/fb-comments/instagram-posts",
-      summary: "List Instagram posts for FB Comment Automation",
-      tags: ["FB Comments"],
-    })
-    .input(withWorkspaceIdSchema)
-    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(
-      z.object({
-        posts: z.array(
-          z.object({
-            id: z.string(),
-            message: z.string().optional(),
-            full_picture: z.string().optional(),
-            created_time: z.string(),
-            permalink_url: z.string().optional(),
-            media_product_type: z.string().optional(),
-          }),
-        ),
-      }),
-    )
-    .handler(
-      async ({ input }) =>
-        await listInstagramAutomationMedia(input.workspaceId),
-    ),
 }

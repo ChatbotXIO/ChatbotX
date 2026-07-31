@@ -24,6 +24,7 @@ const {
   mockChatQueueAdd,
   mockSendPrivateReply,
   mockSendInstagramPrivateReply,
+  mockSendInstagramFacebookPrivateReply,
   mockGenerateAIReplyText,
   mockLoggerInfo,
   mockLoggerWarn,
@@ -47,6 +48,7 @@ const {
   mockChatQueueAdd: vi.fn(),
   mockSendPrivateReply: vi.fn(),
   mockSendInstagramPrivateReply: vi.fn(),
+  mockSendInstagramFacebookPrivateReply: vi.fn(),
   mockGenerateAIReplyText: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
@@ -82,6 +84,10 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
   sendPrivateReply: mockSendInstagramPrivateReply,
+}))
+
+vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
+  sendPrivateReply: mockSendInstagramFacebookPrivateReply,
 }))
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({
@@ -484,6 +490,28 @@ describe("processCommentAutomation text private reply channel routing", () => {
       COMMENT_ID,
       "Hi from FB",
     )
+    expect(mockSendInstagramPrivateReply).not.toHaveBeenCalled()
+  })
+
+  test("instagramFacebook sends the DM through the Instagram-via-Facebook sendPrivateReply endpoint", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "Hi from IG-FB" },
+      }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      integrationType: "instagramFacebook",
+    } as any)
+
+    expect(mockSendInstagramFacebookPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "Hi from IG-FB",
+    )
+    // Neither the Messenger nor the Instagram Login endpoint must be used.
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
     expect(mockSendInstagramPrivateReply).not.toHaveBeenCalled()
   })
 })

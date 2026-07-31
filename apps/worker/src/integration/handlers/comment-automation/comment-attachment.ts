@@ -22,7 +22,7 @@ export function needsAttachmentInfo(
  * same boundary as executePrivateReply.
  */
 export function createAttachmentInfoResolver(params: {
-  channelType: "messenger" | "instagram"
+  channelType: "messenger" | "instagram" | "instagramFacebook"
   workspaceId: string
   commentId: string
   integrationRow: {

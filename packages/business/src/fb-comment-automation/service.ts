@@ -11,7 +11,7 @@ import { BaseService } from "../base.service"
 class FbCommentAutomationService extends BaseService {
   findActiveAutomations(props: {
     workspaceId: string
-    channelType: "messenger" | "instagram"
+    channelType: "messenger" | "instagram" | "instagramFacebook"
   }) {
     return db.query.fbCommentAutomationModel.findMany({
       where: {

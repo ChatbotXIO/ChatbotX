@@ -27,13 +27,13 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { useAIAgentStore } from "@/features/ai-agents/provider/ai-agent-store-context"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import type { CreateFbCommentRequest } from "../schema/action"
-import { SelectPostsDialog } from "./select-posts-dialog"
+import { SelectFacebookPostsDialog } from "./select-facebook-posts-dialog"
 
 type FbCommentFormValues = CreateFbCommentRequest
 
@@ -62,7 +62,6 @@ export function FbCommentForm({
 
   const [selectPostsOpen, setSelectPostsOpen] = useState(false)
 
-  const platform = useWatch({ control: form.control, name: "type" })
   const postType = useWatch({ control: form.control, name: "post.type" })
   const postValue = useWatch({ control: form.control, name: "post.value" })
 
@@ -86,39 +85,6 @@ export function FbCommentForm({
     control: form.control,
     name: "hideComments.hasKeywords",
   })
-
-  // Instagram's comment API cannot like comments, so keep the flag off whenever
-  // the platform is Instagram to avoid storing a setting that never runs.
-  useEffect(() => {
-    if (platform === "instagram") {
-      form.setValue("options.likeUserComment", false)
-    }
-  }, [platform, form])
-
-  // Post IDs are platform-specific, so clear any selected posts when the user
-  // actually switches platforms. The ref is seeded with the first-render
-  // platform so an existing automation's valid selection is kept on mount.
-  const prevPlatformRef = useRef(platform)
-  useEffect(() => {
-    if (
-      prevPlatformRef.current != null &&
-      prevPlatformRef.current !== platform
-    ) {
-      form.setValue("post.value", [], { shouldValidate: true })
-    }
-    prevPlatformRef.current = platform
-  }, [platform, form])
-
-  const platformOptions = [
-    {
-      label: t("facebookCommentAutomation.platformType.messenger"),
-      value: "messenger",
-    },
-    {
-      label: t("facebookCommentAutomation.platformType.instagram"),
-      value: "instagram",
-    },
-  ]
 
   const replyTypeOptions = [
     { label: t("facebookCommentAutomation.replyType.text"), value: "text" },
@@ -234,14 +200,6 @@ export function FbCommentForm({
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
           <RadioGroupField
-            label={t("facebookCommentAutomation.platform")}
-            name="type"
-            options={platformOptions}
-            orientation="horizontal"
-            required
-          />
-
-          <RadioGroupField
             description={t(
               "facebookCommentAutomation.trackCommentsOnDescription",
             )}
@@ -263,13 +221,12 @@ export function FbCommentForm({
                 {t("facebookCommentAutomation.chooseSpecificPosts")}
                 {postValue.length > 0 && ` (${postValue.length})`}
               </Button>
-              <SelectPostsDialog
+              <SelectFacebookPostsDialog
                 onChange={(ids) =>
                   form.setValue("post.value", ids, { shouldValidate: true })
                 }
                 onOpenChange={setSelectPostsOpen}
                 open={selectPostsOpen}
-                platform={platform}
                 value={postValue}
               />
             </>
@@ -460,23 +417,15 @@ export function FbCommentForm({
               name="options.replyOncePerUserPerPost"
               required
             />
-            {platform === "instagram" ? (
-              <p className="text-muted-foreground text-sm">
-                {t(
-                  "facebookCommentAutomation.options.likeUserCommentNotSupportedOnInstagram",
-                )}
-              </p>
-            ) : (
-              <SwitchField
-                description={t(
-                  "facebookCommentAutomation.options.likeUserCommentDescription",
-                )}
-                descriptionType="tooltip"
-                label={t("facebookCommentAutomation.options.likeUserComment")}
-                name="options.likeUserComment"
-                required
-              />
-            )}
+            <SwitchField
+              description={t(
+                "facebookCommentAutomation.options.likeUserCommentDescription",
+              )}
+              descriptionType="tooltip"
+              label={t("facebookCommentAutomation.options.likeUserComment")}
+              name="options.likeUserComment"
+              required
+            />
             <SwitchField
               description={t(
                 "facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPostsDescription",
