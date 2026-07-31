@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -89,13 +89,15 @@ export function SelectInstagramConnectionTypeDialog({
                 "instagramCommentAutomation.connectionType.instagramDescription",
               )}
             </p>
-            <Button asChild className="w-full" variant="secondary">
-              <Link
-                href={`/space/${workspaceId}/ig-comments/create?variant=instagram`}
-              >
-                {t("actions.continue")}
-              </Link>
-            </Button>
+            <Link
+              className={buttonVariants({
+                variant: "secondary",
+                className: "w-full",
+              })}
+              href={`/space/${workspaceId}/ig-comments/create?variant=instagram`}
+            >
+              {t("actions.continue")}
+            </Link>
           </div>
 
           <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
@@ -110,13 +112,15 @@ export function SelectInstagramConnectionTypeDialog({
                 "instagramCommentAutomation.connectionType.instagramFacebookDescription",
               )}
             </p>
-            <Button asChild className="w-full" variant="secondary">
-              <Link
-                href={`/space/${workspaceId}/ig-comments/create?variant=instagramFacebook`}
-              >
-                {t("actions.continue")}
-              </Link>
-            </Button>
+            <Link
+              className={buttonVariants({
+                variant: "secondary",
+                className: "w-full",
+              })}
+              href={`/space/${workspaceId}/ig-comments/create?variant=instagramFacebook`}
+            >
+              {t("actions.continue")}
+            </Link>
           </div>
         </div>
       </DialogContent>

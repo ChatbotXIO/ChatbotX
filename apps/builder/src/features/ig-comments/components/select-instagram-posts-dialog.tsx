@@ -244,7 +244,10 @@ export function SelectInstagramPostsDialog({
         </DialogHeader>
 
         {pages.length > 0 && (
-          <Select onValueChange={setSelectedPageId} value={selectedPageId}>
+          <Select
+            onValueChange={(val) => setSelectedPageId(val as string)}
+            value={selectedPageId}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
