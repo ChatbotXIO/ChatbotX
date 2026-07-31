@@ -245,14 +245,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             deleteConversation(conversation.id)
           }}
           trigger={
-            <Button
-              className="w-full justify-start"
-              type="button"
-              variant="ghost"
+            <DropdownMenuItem
+              closeOnClick={false}
+              onClick={(e) => e.preventDefault()}
             >
               <TrashIcon className="text-destructive" />
               {t("actions.deleteContact")}
-            </Button>
+            </DropdownMenuItem>
           }
         />
       </DropdownMenuContent>

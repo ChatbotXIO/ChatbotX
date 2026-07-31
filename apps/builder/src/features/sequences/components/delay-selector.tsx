@@ -49,8 +49,16 @@ export const DelaySelector = memo(function DelaySelector({
   const [showDelayValueError, setShowDelayValueError] = useState(false)
   const [localValue, setLocalValue] = useState(delayValue)
 
+  const delayUnitItems: { label: string; value: DelayUnit }[] = [
+    { label: t("sequences.delayUnits.immediate"), value: "immediate" },
+    { label: t("sequences.delayUnits.minutes"), value: "minutes" },
+    { label: t("sequences.delayUnits.hours"), value: "hours" },
+    { label: t("sequences.delayUnits.days"), value: "days" },
+    { label: t("sequences.delayUnits.specificTime"), value: "specificTime" },
+  ]
+
   return (
-    <div className="flex w-[280px] items-center gap-2">
+    <div className="flex w-70 items-center gap-2">
       <span className="ms-2 me-2 whitespace-nowrap text-muted-foreground text-sm">
         {t("sequences.afterText")}
       </span>
@@ -120,28 +128,19 @@ export const DelaySelector = memo(function DelaySelector({
           )}
           <Select
             disabled={isSaving}
+            items={delayUnitItems}
             onValueChange={(value) => onDelayUnitChange(value as DelayUnit)}
             value={delayUnit}
           >
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-35">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="immediate">
-                {t("sequences.delayUnits.immediate")}
-              </SelectItem>
-              <SelectItem value="minutes">
-                {t("sequences.delayUnits.minutes")}
-              </SelectItem>
-              <SelectItem value="hours">
-                {t("sequences.delayUnits.hours")}
-              </SelectItem>
-              <SelectItem value="days">
-                {t("sequences.delayUnits.days")}
-              </SelectItem>
-              <SelectItem value="specificTime">
-                {t("sequences.delayUnits.specificTime")}
-              </SelectItem>
+              {delayUnitItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

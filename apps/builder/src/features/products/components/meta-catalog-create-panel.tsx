@@ -104,6 +104,10 @@ export function MetaCatalogCreatePanel({
         <div className="grid gap-2">
           <Label htmlFor="meta-catalog-business">{t("business")}</Label>
           <Select
+            items={businesses.map((business) => ({
+              label: business.name ?? business.id,
+              value: business.id,
+            }))}
             onValueChange={(value) => setBusinessId(value as string)}
             value={businessId}
           >

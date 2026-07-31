@@ -29,8 +29,11 @@ export function DataTableSelectFilter<TData, TValue>({
     ? columnFilterValue[0]
     : columnFilterValue
 
+  const items = [{ label: title, value: ALL_VALUE }, ...options]
+
   return (
     <Select
+      items={items}
       onValueChange={(value) =>
         column?.setFilterValue(value === ALL_VALUE ? undefined : [value])
       }

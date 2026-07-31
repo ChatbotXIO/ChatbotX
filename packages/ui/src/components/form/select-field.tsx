@@ -97,6 +97,22 @@ export const SelectField = <T extends FieldValues>(
     [normalizedOptions, disableValues],
   )
 
+  const items = useMemo(() => {
+    const mappedItems = normalizedOptions.map((option) => ({
+      label: option.label,
+      value: option.value,
+    }))
+
+    if (allowClear) {
+      mappedItems.unshift({
+        label: clearLabel || "----",
+        value: CLEAR_VALUE,
+      })
+    }
+
+    return mappedItems
+  }, [normalizedOptions, allowClear, clearLabel])
+
   useEffect(() => {
     if (!fetchOptionsUrl || options.length > 0) {
       return
@@ -151,6 +167,7 @@ export const SelectField = <T extends FieldValues>(
 
         return (
           <Select
+            items={items}
             onValueChange={handleSelectChange}
             value={field.value ?? ""}
             {...rest}

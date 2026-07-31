@@ -196,6 +196,13 @@ export function ImportProductDialog({
                       ) : null}
                     </Label>
                     <Select
+                      items={[
+                        { label: t("notMapped"), value: NOT_MAPPED },
+                        ...selectableHeaders.map((header) => ({
+                          label: header,
+                          value: header,
+                        })),
+                      ]}
                       onValueChange={(value) =>
                         setColumnMap((current) => ({
                           ...current,

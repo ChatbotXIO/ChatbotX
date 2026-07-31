@@ -195,6 +195,10 @@ export const CustomFieldValueChanged = ({
                 name={`${parentName}.value`}
                 render={({ field }) => (
                   <Select
+                    items={[
+                      { label: t("fields.boolean.true"), value: "true" },
+                      { label: t("fields.boolean.false"), value: "false" },
+                    ]}
                     onValueChange={(value) =>
                       field.onChange({
                         text: value === "true" ? "true" : "false",

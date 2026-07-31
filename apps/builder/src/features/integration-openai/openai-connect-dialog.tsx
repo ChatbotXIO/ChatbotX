@@ -95,6 +95,7 @@ export const OpenAIConnectDialog = ({
             <Collapsible onOpenChange={setIsOpenOptions} open={isOpenOptions}>
               <div className="flex items-center justify-between space-x-4">
                 <CollapsibleTrigger
+                  nativeButton={false}
                   render={
                     <div className="flex w-full items-center">
                       <div className="flex-1 font-semibold text-sm">

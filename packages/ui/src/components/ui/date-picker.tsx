@@ -322,6 +322,10 @@ function Calendar({
             <div className="inline-flex gap-2">
               <Select
                 defaultValue={calendarMonth.date.getMonth().toString()}
+                items={MONTHS.map((month) => ({
+                  label: month.label,
+                  value: month.value.toString(),
+                }))}
                 onValueChange={(value) => {
                   const newDate = new Date(calendarMonth.date);
                   newDate.setMonth(Number.parseInt(value as string, 10));

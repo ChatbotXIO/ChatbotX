@@ -51,6 +51,13 @@ const Selector = ({ parentName }: { parentName: string }) => {
           <FormItem>
             <FormControl>
               <Select
+                items={[
+                  {
+                    label: t("fields.userPersistentMenu.pageDefault"),
+                    value: PAGE_DEFAULT_VALUE,
+                  },
+                  ...options,
+                ]}
                 onValueChange={(value) =>
                   field.onChange(value === PAGE_DEFAULT_VALUE ? "" : value)
                 }

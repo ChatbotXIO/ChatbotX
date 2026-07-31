@@ -38,13 +38,11 @@ const FindGifDialog = ({ parentName }: { parentName: string }) => {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
+        nativeButton={false}
         render={
           <div className="flex justify-center">
             {gifUrl && gifUrl.length > 0 ? (
-              <Button
-                className="relative h-[150px] w-[240px] p-0!"
-                variant="ghost"
-              >
+              <Button className="relative h-37.5 w-60 p-0!" variant="ghost">
                 <Image alt={parentName} fill={true} src={gifUrl} />
               </Button>
             ) : (
