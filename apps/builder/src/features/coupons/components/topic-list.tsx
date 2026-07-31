@@ -315,10 +315,8 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
               <TableHead className="w-10">
                 <Checkbox
                   aria-label={t("actions.selectAll")}
-                  checked={
-                    allPageRowsSelected ||
-                    (somePageRowsSelected && "indeterminate")
-                  }
+                  checked={allPageRowsSelected}
+                  indeterminate={somePageRowsSelected}
                   onCheckedChange={(value) => toggleAllPageRows(Boolean(value))}
                 />
               </TableHead>

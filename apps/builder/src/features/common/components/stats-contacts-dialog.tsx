@@ -226,7 +226,8 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
             <div className="flex min-w-0 items-center gap-2">
               <Checkbox
                 aria-label={t("actions.selectAll")}
-                checked={selectionState.headerState}
+                checked={selectionState.headerState.checked}
+                indeterminate={selectionState.headerState.indeterminate}
                 onCheckedChange={selectionState.toggleHeader}
               />
               <span className="truncate text-muted-foreground text-sm">

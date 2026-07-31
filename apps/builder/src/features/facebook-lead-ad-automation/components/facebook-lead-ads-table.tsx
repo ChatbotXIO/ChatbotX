@@ -59,11 +59,9 @@ export function FacebookLeadAdsTable({
         header: ({ table: tableData }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              tableData.getIsAllPageRowsSelected() ||
-              (tableData.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={tableData.getIsAllPageRowsSelected()}
             className="translate-y-0.5"
+            indeterminate={tableData.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               tableData.toggleAllPageRowsSelected(Boolean(value))
             }

@@ -78,10 +78,8 @@ export function CustomFieldsTable({
         header: ({ table: innerTable }) => (
           <Checkbox
             aria-label={t("actions.selectAll")}
-            checked={
-              innerTable.getIsAllPageRowsSelected() ||
-              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={innerTable.getIsAllPageRowsSelected()}
+            indeterminate={innerTable.getIsSomePageRowsSelected()}
             onCheckedChange={(value) =>
               innerTable.toggleAllPageRowsSelected(Boolean(value))
             }

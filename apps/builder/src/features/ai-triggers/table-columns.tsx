@@ -40,11 +40,9 @@ export function getAITriggersColumns({
       header: ({ table }) => (
         <Checkbox
           aria-label={t("actions.selectAll")}
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected()}
           className="translate-y-0.5"
+          indeterminate={table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) =>
             table.toggleAllPageRowsSelected(Boolean(value))
           }
