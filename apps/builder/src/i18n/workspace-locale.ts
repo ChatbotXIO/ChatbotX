@@ -1,16 +1,7 @@
-const SUPPORTED_LOCALES = ["en", "vi", "ar"] as const
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
+import { resolveLocale } from "@/i18n/config"
+import { messagesByLocale } from "@/i18n/messages"
 
-const DEFAULT_LOCALE: SupportedLocale = "en"
-
-function toSupportedLocale(language: string): SupportedLocale {
-  return (SUPPORTED_LOCALES as readonly string[]).includes(language)
-    ? (language as SupportedLocale)
-    : DEFAULT_LOCALE
-}
-
-export async function loadWorkspaceMessages(language: string) {
-  const locale = toSupportedLocale(language)
-  const messages = (await import(`../../messages/${locale}.json`)).default
-  return { locale, messages }
+export function loadWorkspaceMessages(language: string) {
+  const locale = resolveLocale(language)
+  return { locale, messages: messagesByLocale[locale] }
 }

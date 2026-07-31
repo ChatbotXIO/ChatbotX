@@ -6,12 +6,11 @@ import {
   WA_OAUTH_RESULT,
   type WhatsappOAuthRelayResult,
 } from "@/features/integration-whatsapp/libs/embedded-signup"
+import { defaultLocale, isLocale } from "@/i18n/config"
 import { logger } from "@/lib/log"
 import { sanitizeReferer } from "@/lib/oauth-referer"
 
 export const dynamic = "force-dynamic"
-
-const SUPPORTED_LOCALES = new Set(["en", "vi", "ar"])
 
 // Characters that could break out of an inline <script>: `<` (so `</script>`
 // can't close the tag) and the JS line terminators U+2028 / U+2029 (emitted raw
@@ -107,9 +106,8 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
 
   const targetOrigin = new URL(safeReferer).origin
-  const locale = SUPPORTED_LOCALES.has(state.locale ?? "")
-    ? (state.locale as string)
-    : "en"
+  const requestedLocale = state.locale ?? ""
+  const locale = isLocale(requestedLocale) ? requestedLocale : defaultLocale
   const t = await getTranslations({ locale, namespace: "whatsapp" })
 
   const result: WhatsappOAuthRelayResult =

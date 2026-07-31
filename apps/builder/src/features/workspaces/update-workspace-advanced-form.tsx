@@ -2,7 +2,6 @@
 
 import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
@@ -18,6 +17,7 @@ import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateWorkspaceAdvancedAction } from "./actions/update-workspace-action"
 import {
   allCountryOptions,
+  allSupportedLanguages,
   allTimezoneOptions,
   UNKNOWN_COUNTRY,
 } from "./schema/types"
@@ -100,13 +100,12 @@ export function UpdateWorkspaceAdvancedForm({
               description={t("fields.language.description")}
               label={t("fields.language.label")}
             >
-              <SelectField
+              <ComboboxField
+                emptyText={t("actions.noRecordFound")}
                 name="language"
-                options={[
-                  { value: "en", label: t("fields.language.english") },
-                  { value: "vi", label: t("fields.language.vietnamese") },
-                ]}
+                options={allSupportedLanguages}
                 placeholder={t("actions.pleaseSelect")}
+                searchPlaceholder={t("actions.search")}
               />
             </SettingRow>
 

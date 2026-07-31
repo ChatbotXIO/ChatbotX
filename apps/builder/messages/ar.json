@@ -654,6 +654,9 @@
   "workspaceToken": {
     "title": "رمز مساحة العمل"
   },
+  "dialog": {
+    "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا."
+  },
   "fields": {
     "omnichannel": {
       "label": "القنوات الموحدة"
@@ -1116,10 +1119,8 @@
     },
     "language": {
       "description": "تُعيّن اللغة الافتراضية لجهات الاتصال عندما تكون لغتها غير معروفة.",
-      "english": "الإنجليزية",
       "label": "اللغة",
-      "placeholder": "اختر اللغة",
-      "vietnamese": "Tiếng Việt"
+      "placeholder": "اختر اللغة"
     },
     "lastName": {
       "label": "اسم العائلة",

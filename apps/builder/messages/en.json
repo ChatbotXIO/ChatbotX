@@ -654,6 +654,9 @@
   "workspaceToken": {
     "title": "Workspace token"
   },
+  "dialog": {
+    "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers."
+  },
   "fields": {
     "omnichannel": {
       "label": "Omnichannel"
@@ -1116,10 +1119,8 @@
     },
     "language": {
       "description": "Contacts are assigned the default language when the contact language is unknown.",
-      "english": "English",
       "label": "Language",
-      "placeholder": "Select language",
-      "vietnamese": "Tiếng Việt"
+      "placeholder": "Select language"
     },
     "lastName": {
       "label": "Last name",

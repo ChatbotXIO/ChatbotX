@@ -1,0 +1,4344 @@
+{
+  "flows": {
+    "title": "Fluxuri",
+    "quickReplies": {
+      "limitReached": "A fost atinsă limita de răspunsuri rapide ({max})."
+    },
+    "buttons": {
+      "limitReached": "A fost atinsă limita de butoane ({max})."
+    },
+    "aiGenerateText": {
+      "label": "{name}: Generează text"
+    },
+    "aiGenerateImage": {
+      "label": "{name}: Generează imagine"
+    },
+    "aiEditImage": {
+      "label": "{name}: Editează imaginea"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}: Analizează imaginea"
+    },
+    "aiExtractData": {
+      "label": "{name}: Extrage date"
+    },
+    "openaiCompatible": {
+      "empty": "Conectați un furnizor compatibil cu OpenAI în setările integrării înainte de a utiliza acest pas.",
+      "integration": "Furnizor compatibil cu OpenAI",
+      "none": "Niciunul"
+    },
+    "actions": {
+      "addContactNotes": "Adaugă note despre contact",
+      "addContactTag": "Adaugă o etichetă contactului",
+      "aiDeleteMessageHistory": "Șterge istoricul mesajelor",
+      "aiExtractData": "Extrage date cu IA",
+      "aiAnalyzeImage": "Analizează imaginea cu IA",
+      "aiSpeechToText": "Transformă vocea în text cu IA",
+      "aiGenerateImage": "Generează imagine cu IA",
+      "aiGenerateTextAgent": "Agent IA pentru generarea textului",
+      "aiTextToSpeech": "Transformă textul în voce cu IA",
+      "archiveConversation": "Arhivează conversația",
+      "assignConversation": "Atribuie conversația",
+      "autoAssignConversation": "Atribuie automat conversația",
+      "blockContact": "Blochează contactul",
+      "broadcastActions": "Acțiuni de difuzare",
+      "callApi": "Solicitare API externă",
+      "make": "Make",
+      "triggers": "Declanșatoare",
+      "questionnaires": "Chestionare",
+      "setUpCoupon": "Configurează cuponul",
+      "markCouponUsed": "Marchează cuponul ca utilizat",
+      "chooseChannel": "Alege canalul",
+      "clearCustomField": "Golește câmpul personalizat",
+      "condition": "Condiție",
+      "contactActions": "Acțiuni pentru contacte",
+      "countCharacters": "Numără caracterele",
+      "deleteContact": "Șterge contactul",
+      "emailActions": "Acțiuni pentru e-mail",
+      "flowActions": "Acțiuni pentru flux",
+      "followConversation": "Urmărește conversația",
+      "formatDate": "Formatează data",
+      "generateCode": "Generează cod",
+      "getDataFromJson": "Obține date din JSON",
+      "inboxActions": "Acțiuni pentru căsuța de mesaje",
+      "markEmailVerified": "Marchează e-mailul ca verificat",
+      "activeCampaignSyncContact": "Adaugă contactul în ActiveCampaign",
+      "facebookCustomAudience": "Public personalizat Facebook",
+      "mailchimpAddMember": "Adaugă contactul în Mailchimp",
+      "mailerLiteAddSubscriber": "Adaugă contactul în MailerLite",
+      "klaviyoSyncProfile": "Adaugă contactul în Klaviyo",
+      "moosendCreateContact": "Adaugă contactul în Moosend",
+      "dripSubscribeSubscriber": "Adaugă contactul în Drip",
+      "getResponseAddContact": "Adaugă contactul în GetResponse",
+      "sendGridAddContact": "Adaugă contactul în SendGrid",
+      "messenger": "Messenger",
+      "openWebsite": "Deschide site-ul web",
+      "optInEmail": "Abonează la e-mail",
+      "optOutEmail": "Dezabonează de la e-mail",
+      "performAction": "Execută acțiunea",
+      "removeContactTag": "Elimină eticheta contactului",
+      "setMessengerUserPersistentMenu": "Setează meniul persistent al utilizatorului",
+      "enableMessengerComposer": "Activează editorul Messenger",
+      "disableMessengerComposer": "Dezactivează editorul Messenger",
+      "setMessengerPersona": "Setează persona",
+      "updateMessengerContactData": "Actualizează datele contactului",
+      "sendAudio": "Trimite conținut audio",
+      "sendCard": "Trimite un card",
+      "sendExternalFlow": "Pornește un flux extern",
+      "sendExternalNode": "Pornește un nod extern",
+      "sendFile": "Trimite un fișier",
+      "sendGif": "Trimite un GIF",
+      "sendImage": "Trimite o imagine",
+      "sendMessage": "Trimite un mesaj",
+      "sendNode": "Pornește alt nod",
+      "sendText": "Trimite text",
+      "sendVideo": "Trimite un videoclip",
+      "sendTemplateMessage": "Mesaj șablon",
+      "whatsappOptionList": "Listă de opțiuni",
+      "noTemplatesAvailable": "Nu există șabloane disponibile",
+      "noFlowsAvailable": "Nu există fluxuri disponibile",
+      "setCustomField": "Setează câmpul personalizat",
+      "startAnotherNode": "Pornește alt nod",
+      "startExternalFlow": "Pornește un flux extern",
+      "startExternalNode": "Pornește un nod extern",
+      "startFlow": "Pornește fluxul",
+      "subscribeBroadcast": "Abonează la difuzare",
+      "tools": "Instrumente",
+      "transferConversationToBot": "Transferă conversația către robot",
+      "transferConversationToHuman": "Transferă conversația către un operator",
+      "unarchiveConversation": "Scoate conversația din arhivă",
+      "unassignConversation": "Anulează atribuirea conversației",
+      "unfollowConversation": "Nu mai urmări conversația",
+      "unsubscribeBroadcast": "Dezabonează de la difuzare",
+      "getUserData": "Obține datele utilizatorului",
+      "sendCarousel": "Trimite un carusel",
+      "actions": "Acțiuni",
+      "findGif": "Găsește un GIF",
+      "spreadsheetGetRow": "Obține rândul",
+      "spreadsheetUpdateRow": "Actualizează rândul",
+      "spreadsheetSendData": "Trimite date",
+      "spreadsheetGetRandomRow": "Obține un rând aleatoriu",
+      "spreadsheetClearRow": "Golește rândul",
+      "typing": "Scriere",
+      "sequenceActions": "Acțiuni pentru secvență",
+      "subscribeSequence": "Abonează la secvență",
+      "unsubscribeSequence": "Dezabonează de la secvență",
+      "splitTraffic": "Distribuie traficul",
+      "aiEditImage": "Editează imaginea cu IA",
+      "whatsappFlow": "Flux WhatsApp"
+    },
+    "splitTraffic": {
+      "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
+      "addVariation": "Variație nouă"
+    },
+    "condition": {
+      "addCase": "Verifică o condiție nouă",
+      "caseTitle": "Cazul {index}",
+      "otherwise": "Utilizatorul nu îndeplinește aceste condiții"
+    },
+    "whatsappOptionList": {
+      "buttonLabel": "Eticheta butonului",
+      "optionTitle": "Titlu",
+      "optionDescription": "Descriere",
+      "addOption": "Adaugă",
+      "editButtonTitle": "Editează butonul",
+      "editOptionTitle": "Editează opțiunea"
+    },
+    "whatsappFlow": {
+      "buttonLabel": "Eticheta butonului",
+      "editDialogTitle": "Editează fluxul WhatsApp",
+      "selectFlow": "Flux WhatsApp",
+      "selectFlowPlaceholder": "Selectați un flux",
+      "startScreen": "Ecran de pornire",
+      "selectScreenPlaceholder": "Selectați un ecran",
+      "fieldMappings": "Salvează răspunsul în câmpuri personalizate",
+      "paramKey": "Parametru",
+      "customField": "Câmp personalizat",
+      "selectCustomFieldPlaceholder": "Selectați câmpul personalizat",
+      "addMapping": "Adaugă o asociere",
+      "addCustomField": "Adaugă"
+    },
+    "additionalSteps": "Pași suplimentari",
+    "delayType": {
+      "datetimeCustomField": "Câmp personalizat pentru dată și oră",
+      "datetimeCustomFieldValue": "{customField}",
+      "duration": "Durată",
+      "durationValue": "{duration}",
+      "date": "Dată",
+      "specificDate": "Dată specifică",
+      "specificDateValue": "{date}",
+      "random": "Aleatoriu"
+    },
+    "formatTimezone": {
+      "timezone": "Fusul orar al contului",
+      "contactTimezone": "Fusul orar al contactului"
+    },
+    "fields": {
+      "selectTemplatePlaceholder": "Alegeți un șablon WhatsApp",
+      "selectMessengerTemplatePlaceholder": "Alegeți un șablon Messenger",
+      "preview": "Previzualizare",
+      "typingSecondsLabel": "Scriere timp de (secunde)",
+      "lookupColumnsLabel": "Coloane de căutare:",
+      "filterModeAnd": "ȘI",
+      "filterModeOr": "SAU"
+    },
+    "operators": {
+      "append": "Adaugă la sfârșit",
+      "prepend": "Adaugă la început",
+      "set": "Setează la"
+    },
+    "wait": {
+      "datetimeTooltip": "Data și ora la care va fi declanșat fluxul.",
+      "setInterval": "Setează intervalul",
+      "delayTypeLabel": "Acesta este un",
+      "fixed": "Fix",
+      "randomized": "Aleatoriu",
+      "delay": "interval de așteptare",
+      "durationDetailPrefix": "Așteaptă",
+      "dateDetailPrefix": "Așteaptă până la",
+      "customFieldDetailPrefix": "Așteaptă până la",
+      "randomDetailPrefix": "Așteaptă între",
+      "randomDetailAnd": "și",
+      "intervalDetailPrefix": "Activ între",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Durată",
+      "activeHours": "Ore active",
+      "dateTypeLabel": "Tipul datei",
+      "datetimeLabel": "Data și ora",
+      "customFieldLabel": "Câmp personalizat",
+      "offset": "Adaugă un decalaj",
+      "offsetLabel": "Decalaj",
+      "randomRangeLabel": "Interval aleatoriu",
+      "minLabel": "Min.",
+      "maxLabel": "Max.",
+      "unitLabel": "Unitate",
+      "specific": "Specifică",
+      "dynamic": "Dinamică",
+      "selectTimePlaceholder": "Selectați o oră"
+    },
+    "followUp": {
+      "durationLabel": "Durată",
+      "waitAndContinue": "Așteaptă <value>{duration} {unit}</value> și continuă",
+      "cancelOnReplyHint": "Mesajul de urmărire nu va fi trimis dacă persoana de contact răspunde înainte de expirarea timpului."
+    },
+    "setCustomField": {
+      "temporalHint": "Lăsați necompletat pentru a salva data și ora curente."
+    }
+  },
+  "folders": {
+    "heading": {
+      "title": "Dosare"
+    }
+  },
+  "gemini": {
+    "autoReply": {
+      "description": "Activați răspunsul automat cu IA pentru a le răspunde utilizatorilor în mod natural, pe baza datelor companiei dvs.",
+      "label": "Răspuns automat cu IA"
+    },
+    "connect": {
+      "description": "Răspundeți-le utilizatorilor în mod natural cu ajutorul IA, pe baza datelor companiei dvs.",
+      "label": "Google Gemini"
+    },
+    "title": "Google Gemini"
+  },
+  "general": {
+    "title": "General"
+  },
+  "facebookAds": {
+    "title": "Reclame Facebook",
+    "setting": {
+      "label": "Reclame Facebook",
+      "description": "Dezvoltați-vă mai rapid afacerea conectând reclamele Facebook la robotul dvs. conversațional. Creați publicuri personalizate și adăugați sau eliminați persoane din acestea.",
+      "reconnect": "Reconectează"
+    },
+    "fields": {
+      "subscriberShouldBe": "Abonatul trebuie să fie",
+      "addedToCustomAudience": "Adăugat în publicul personalizat",
+      "removedFromCustomAudience": "Eliminat din publicul personalizat",
+      "adAccount": "Cont publicitar",
+      "customAudience": "Public personalizat",
+      "nothingSelected": "Nimic selectat"
+    },
+    "adAccounts": {
+      "loading": "Se încarcă conturile publicitare...",
+      "error": "Conturile publicitare nu au putut fi încărcate. Verificați conexiunea la Facebook Ads."
+    },
+    "customAudiences": {
+      "loading": "Se încarcă publicurile personalizate...",
+      "error": "Publicurile personalizate nu au putut fi încărcate. Verificați conexiunea la Facebook Ads."
+    },
+    "errors": {
+      "invalidAppSettings": "Setările aplicației Facebook nu sunt valide"
+    }
+  },
+  "googleSheets": {
+    "setting": {
+      "label": "Google Sheets",
+      "description": "Configurarea integrării Google Sheets"
+    },
+    "header": "Antetul coloanei",
+    "title": "Google Sheets"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în ActiveCampaign."
+    },
+    "dialog": {
+      "description": "Introduceți adresa URL API și cheia API din setările contului ActiveCampaign."
+    },
+    "fields": {
+      "apiUrl": "Adresă URL API",
+      "apiUrlPlaceholder": "https://contuldvs.api-us1.com",
+      "apiKey": "Cheie API",
+      "operation": "Operațiune",
+      "emailField": "Câmp de e-mail",
+      "emailTooltip": "Câmpul de contact care conține adresa de e-mail utilizată pentru identificarea contactului ActiveCampaign.",
+      "phoneField": "Câmp de telefon",
+      "phone": "Telefon",
+      "list": "Listă",
+      "lists": "Liste",
+      "tags": "Etichete",
+      "automation": "Automatizare",
+      "customFields": "Câmpuri personalizate în ActiveCampaign",
+      "optional": "Opțional",
+      "nothingSelected": "Nimic selectat",
+      "emptyField": "---",
+      "addCustomField": "Adaugă un câmp personalizat"
+    },
+    "operations": {
+      "createOrUpdateContact": "Creează sau actualizează contactul",
+      "addContactToAutomation": "Adaugă contactul la automatizare"
+    },
+    "lists": {
+      "loading": "Se încarcă listele ActiveCampaign...",
+      "error": "Listele ActiveCampaign nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite liste ActiveCampaign."
+    },
+    "automations": {
+      "loading": "Se încarcă automatizările ActiveCampaign...",
+      "error": "Automatizările ActiveCampaign nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite automatizări ActiveCampaign."
+    },
+    "tags": {
+      "loading": "Se încarcă etichetele ActiveCampaign...",
+      "error": "Etichetele ActiveCampaign nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite etichete ActiveCampaign."
+    },
+    "customFields": {
+      "loading": "Se încarcă câmpurile personalizate ActiveCampaign...",
+      "error": "Câmpurile personalizate ActiveCampaign nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite câmpuri personalizate ActiveCampaign."
+    },
+    "errors": {
+      "invalidCredentials": "Adresa URL API sau cheia API ActiveCampaign nu este validă. Verificați datele de autentificare și încercați din nou."
+    }
+  },
+  "getResponse": {
+    "title": "GetResponse",
+    "setting": {
+      "label": "GetResponse",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în GetResponse."
+    },
+    "fields": {
+      "apiKey": "Cheie API",
+      "list": "Listă",
+      "listPlaceholder": "Selectați o listă",
+      "email": "Câmp de e-mail",
+      "emailPlaceholder": "Selectați un câmp de e-mail",
+      "emailTooltip": "Câmpul de contact care conține adresa de e-mail pentru identificarea contactelor în GetResponse.",
+      "tags": "Etichete",
+      "tagsPlaceholder": "Selectați etichete",
+      "dayOfCycle": "Ziua ciclului de răspuns automat",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "Mutați un contact într-o anumită zi din ciclul de răspuns automat. Introduceți 0 pentru a începe în ziua 0.",
+      "optional": "Opțional"
+    },
+    "campaigns": {
+      "loading": "Se încarcă listele GetResponse...",
+      "error": "Listele GetResponse nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite liste GetResponse.",
+      "limited": "Este afișată numai prima pagină a listelor GetResponse."
+    },
+    "tags": {
+      "loading": "Se încarcă etichetele GetResponse...",
+      "error": "Etichetele GetResponse nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite etichete GetResponse.",
+      "limited": "Este afișată numai prima pagină a etichetelor GetResponse."
+    },
+    "errors": {
+      "invalidApiKey": "Cheie API nevalidă. Verificați cheia API GetResponse și încercați din nou."
+    }
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în Mailchimp."
+    },
+    "fields": {
+      "audience": "Public",
+      "email": "Câmp de e-mail",
+      "emailTooltip": "Câmpul personalizat care conține adresa de e-mail a utilizatorului pentru identificarea contactelor Mailchimp.",
+      "doubleOptIn": "Confirmare dublă a abonării",
+      "doubleOptInTooltip": "Dacă opțiunea este activată, se va trimite un e-mail de confirmare înainte de adăugarea contactului în listă.",
+      "on": "Activat",
+      "off": "Dezactivat",
+      "optional": "Opțional",
+      "tags": "Etichete",
+      "mergeFields": "Câmpuri personalizate în Mailchimp"
+    }
+  },
+  "mailerLite": {
+    "title": "MailerLite",
+    "setting": {
+      "label": "MailerLite",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în MailerLite."
+    },
+    "fields": {
+      "apiToken": "Token API",
+      "group": "Grup",
+      "groupPlaceholder": "Nimic selectat",
+      "email": "Câmp de e-mail",
+      "status": "Tip",
+      "customFields": "Câmpuri personalizate în MailerLite (opțional)",
+      "emptyField": "---",
+      "providerField": "Selectați câmpul MailerLite",
+      "addMapping": "Adaugă"
+    },
+    "status": {
+      "active": "Abonat",
+      "unconfirmed": "Neconfirmat"
+    },
+    "errors": {
+      "invalidApiKey": "Token API nevalid. Verificați tokenul API MailerLite și încercați din nou."
+    }
+  },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "Această integrare vă permite să sincronizați profilurile clienților din robotul dvs. cu Klaviyo."
+    },
+    "fields": {
+      "apiKey": "Cheie API",
+      "list": "Listă Klaviyo",
+      "listPlaceholder": "Selectați o listă Klaviyo",
+      "email": "Câmp de e-mail",
+      "titleField": "Câmp pentru titlu",
+      "titlePlaceholder": "Selectați un câmp",
+      "orgField": "Câmp pentru organizație",
+      "orgPlaceholder": "Selectați un câmp",
+      "customProperties": "Câmpuri personalizate în Klaviyo",
+      "emptyField": "Selectați un câmp de contact",
+      "propertyKey": "Cheia proprietății Klaviyo",
+      "addMapping": "Adaugă o asociere"
+    },
+    "lists": {
+      "error": "Listele Klaviyo nu au putut fi încărcate. Verificați dacă integrarea este conectată."
+    },
+    "errors": {
+      "invalidApiKey": "Cheie API nevalidă. Verificați cheia API Klaviyo și încercați din nou."
+    }
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în Moosend."
+    },
+    "fields": {
+      "apiKey": "Cheie API",
+      "list": "Listă Moosend",
+      "listPlaceholder": "Selectați o listă Moosend",
+      "email": "Câmp de e-mail"
+    },
+    "lists": {
+      "loading": "Se încarcă listele de corespondență Moosend...",
+      "empty": "Nu au fost găsite liste de corespondență Moosend.",
+      "error": "Listele de corespondență Moosend nu au putut fi încărcate. Verificați dacă integrarea este conectată."
+    },
+    "errors": {
+      "invalidApiKey": "Cheie API nevalidă. Verificați cheia API Moosend și încercați din nou.",
+      "userNotEnabled": "Acest cont Moosend nu are activat accesul la API.",
+      "connectFailed": "Conectarea la Moosend a eșuat. Încercați din nou mai târziu."
+    }
+  },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în Drip."
+    },
+    "fields": {
+      "apiToken": "Token API",
+      "account": "Cont",
+      "emailField": "Câmp de e-mail",
+      "emailTooltip": "Câmpul de contact care conține adresa de e-mail utilizată pentru identificarea abonatului Drip.",
+      "phone": "Telefon",
+      "tags": "Etichete",
+      "customFields": "Câmpuri personalizate în Drip",
+      "optional": "Opțional",
+      "nothingSelected": "Nimic selectat",
+      "addCustomField": "Adaugă un câmp personalizat"
+    },
+    "accounts": {
+      "loading": "Se încarcă conturile Drip...",
+      "error": "Conturile Drip nu au putut fi încărcate. Verificați dacă integrarea este conectată."
+    },
+    "tags": {
+      "loading": "Se încarcă etichetele Drip...",
+      "error": "Etichetele Drip nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite etichete Drip."
+    },
+    "customFields": {
+      "loading": "Se încarcă câmpurile personalizate Drip...",
+      "error": "Câmpurile personalizate Drip nu au putut fi încărcate. Verificați dacă integrarea este conectată.",
+      "empty": "Nu au fost găsite câmpuri personalizate Drip."
+    },
+    "errors": {
+      "noAccount": "Acest token API nu are acces la niciun cont Drip."
+    }
+  },
+  "sendGrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "Această integrare vă permite să salvați contactele clienților din robotul dvs. în SendGrid."
+    },
+    "scopeHelp": "Creați o cheie API SendGrid cu acces de citire și scriere pentru Marketing.",
+    "acceptedLimitation": "SendGrid acceptă actualizările contactelor pentru procesare asincronă. Actualizările acceptate pot eșua ulterior.",
+    "fields": {
+      "apiKey": "Cheie API",
+      "list": "Listă",
+      "emailField": "Câmp de e-mail",
+      "phoneField": "Câmp de telefon",
+      "customFields": "Câmpuri personalizate în SendGrid",
+      "optional": "Opțional",
+      "nothingSelected": "Nimic selectat",
+      "addCustomField": "Adaugă un câmp personalizat"
+    },
+    "lists": {
+      "loading": "Se încarcă listele SendGrid...",
+      "error": "Listele SendGrid nu au putut fi încărcate. Verificați dacă integrarea este conectată."
+    },
+    "customFields": {
+      "loading": "Se încarcă câmpurile personalizate SendGrid...",
+      "error": "Câmpurile personalizate SendGrid nu au putut fi încărcate. Verificați dacă integrarea este conectată."
+    },
+    "errors": {
+      "invalidApiKey": "Cheie API nevalidă. Verificați cheia API SendGrid și încercați din nou.",
+      "missingScopes": "Această cheie API trebuie să aibă acces de citire pentru Marketing. Asigurați-vă că cheia API SendGrid include permisiuni pentru Marketing."
+    }
+  },
+  "make": {
+    "title": "Make",
+    "setting": {
+      "label": "Make",
+      "description": "Conectați contul Make.com pentru a trimite evenimente din fluxuri și a primi date despre contacte prin scenarii Make. Tokenul de acces pentru dezvoltatori al spațiului de lucru este copiat în clipboard când apăsați pe Conectare — lipiți-l când creați conexiunea în Make.",
+      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei.",
+      "noWorkspaceToken": "Nu a fost găsit niciun token de acces pentru dezvoltatori pentru acest spațiu de lucru. Generați unul în secțiunea pentru tokenul spațiului de lucru de mai sus, apoi apăsați din nou pe Conectare."
+    }
+  },
+  "integrations": {
+    "title": "Integrări"
+  },
+  "platformSettings": {
+    "title": "Setările platformei",
+    "errors": {
+      "giphyApiKeyRequired": "Cheia API este obligatorie pentru configurarea GIPHY.",
+      "giphyApiKeyInvalid": "Cheie API GIPHY nevalidă"
+    }
+  },
+  "home": {
+    "welcomeBack": "Bine ați revenit, {name}",
+    "subtitle": "Alegeți un spațiu de lucru pentru a continua sau creați unul nou.",
+    "noWorkspaces": "Nu aveți încă niciun spațiu de lucru.",
+    "owner": "Proprietar"
+  },
+  "actions": {
+    "copy": "Copiază",
+    "copyUrl": "Copiază adresa URL",
+    "actions": "Acțiuni",
+    "add": "Adaugă",
+    "addVariable": "Adaugă variabilă",
+    "addFeature": "Adaugă {feature}",
+    "addFlowReply": "Adaugă răspuns de flux",
+    "addMore": "Adaugă mai multe",
+    "addTag": "Adaugă etichetă",
+    "addAction": "Adaugă acțiune",
+    "addCondition": "Adaugă condiție",
+    "addTextReply": "Adaugă răspuns text",
+    "markAsFollowUp": "Marchează pentru urmărire",
+    "removeFromFollowUp": "Elimină din urmărire",
+    "markAsUnread": "Marchează ca necitit",
+    "archive": "Arhivează",
+    "unarchive": "Dezarhivează",
+    "archiveConversation": "Arhivează conversația",
+    "assign": "Atribuie",
+    "assignConversation": "Atribuie conversația",
+    "back": "Înapoi",
+    "blockContact": "Blochează contactul",
+    "unblockContact": "Deblochează contactul",
+    "undo": "Anulează",
+    "redo": "Refă",
+    "cancel": "Anulează",
+    "clear": "Șterge",
+    "clearCustomField": "Șterge câmpul personalizat",
+    "collapse": "Restrânge",
+    "expand": "Extinde",
+    "confirm": "Confirmă",
+    "connect": "Conectează",
+    "continue": "Continuă",
+    "create": "Creează",
+    "loading": "Se încarcă...",
+    "createFeature": "Creează {feature}",
+    "delete": "Șterge",
+    "deleteContact": "Șterge contactul",
+    "disableBot": "Dezactivează botul",
+    "disconnect": "Deconectează",
+    "download": "Descarcă",
+    "edit": "Editează",
+    "editFeature": "Editează {feature}",
+    "enableBot": "Activează botul",
+    "export": "Exportă",
+    "getEmbedCode": "Obține codul de încorporare",
+    "getID": "Obține ID-ul",
+    "getTools": "Obține instrumentele",
+    "import": "Importă",
+    "exportContacts": "Exportă contactele",
+    "filter": "Filtrează",
+    "selectFile": "Selectează fișierul",
+    "insertLink": "Inserează linkul",
+    "addNew": "Adaugă nou",
+    "send": "Trimite",
+    "loginWithMagicLink": "Autentifică-te cu link magic",
+    "manage": "Gestionează",
+    "admin": "Administrator",
+    "more": "Mai multe",
+    "moreOptions": "Mai multe opțiuni",
+    "moreSettings": "Mai multe setări",
+    "openMenu": "Deschide meniul",
+    "openWebchat": "Deschide Webchat",
+    "removeTag": "Elimină eticheta",
+    "rename": "Redenumește",
+    "reset": "Resetează",
+    "save": "Salvează",
+    "selectAll": "Selectează tot",
+    "selectRow": "Selectează rândul",
+    "sendFlow": "Trimite fluxul",
+    "sendMessage": "Trimite mesajul",
+    "setCustomField": "Setează câmpul personalizat",
+    "synchronize": "Sincronizează",
+    "syncMetaCatalog": "Sincronizează catalogul Meta",
+    "testNow": "Testează acum",
+    "toggle": "Comută",
+    "toggleTheme": "Schimbă tema",
+    "transferConversationToBot": "Transferă conversația către bot",
+    "update": "Actualizează",
+    "updatePayment": "Actualizează plata",
+    "upgradePlan": "Actualizează planul",
+    "upgradeToPro": "Treci la Pro",
+    "uploadFile": "Încarcă fișierul",
+    "view": "Vezi",
+    "viewAnalytics": "Vezi analizele",
+    "duplicate": "Duplică",
+    "getDraftLink": "Obține linkul ciornei",
+    "getPublishedLink": "Obține linkul publicat",
+    "getMessengerAdsJson": "Obține JSON pentru reclamele Messenger",
+    "getMessengerAdPayload": "Obține conținutul pentru reclama Messenger",
+    "ok": "OK",
+    "next": "Următorul",
+    "prev": "Anteriorul",
+    "moveEarlier": "Mută mai devreme",
+    "moveLater": "Mută mai târziu",
+    "analytics": "Analize",
+    "deleteAnalytics": "Șterge analizele",
+    "flowVersions": "Versiunile fluxului",
+    "revertToPublished": "Revino la versiunea publicată",
+    "search": "Caută",
+    "pleaseSelect": "Selectează",
+    "noRecordFound": "Nu a fost găsită nicio înregistrare.",
+    "typeMessage": "Scrie un mesaj",
+    "enterText": "Introdu textul",
+    "enterFieldAndPressEnter": "Introdu {field} și apasă Enter",
+    "addAnother": "Adaugă altul...",
+    "messagePlaceholder": "Mesaj...",
+    "signOut": "Deconectare",
+    "backToSignIn": "Înapoi la autentificare",
+    "connectFeature": "Conectează {feature}",
+    "scanQRCode": "Scanează-mă cu camera",
+    "inviteFeature": "Invită {feature}",
+    "joinTheTeam": "Alătură-te echipei",
+    "chooseChannel": "Alege canalul",
+    "chooseSubaction": "Alege subacțiunea",
+    "resend": "Retrimite",
+    "publish": "Publică",
+    "setStartNode": "Setează ca nod de pornire",
+    "getNodeId": "Obține ID-ul nodului",
+    "setAsDefaultAgent": "Setează ca implicit",
+    "unsetDefaultAgent": "Elimină setarea implicită",
+    "clickToEdit": "Fă clic pentru a edita",
+    "move": "Mută",
+    "moveUp": "Mută în sus",
+    "moveDown": "Mută în jos",
+    "removeAssignee": "Elimină persoana atribuită",
+    "sendMail": "Trimite e-mail",
+    "wait": "Așteaptă",
+    "followUp": "Urmărire",
+    "landingPage": "Pagină de destinație",
+    "generate": "Generează",
+    "regenerate": "Regenerează",
+    "qrCode": "Cod QR",
+    "addSequence": "Adaugă secvență",
+    "removeSequence": "Elimină secvența",
+    "activate": "Activează",
+    "deactivate": "Dezactivează",
+    "onFailure": "La eșec",
+    "onSkip": "La omitere",
+    "onSuccess": "La reușită",
+    "clone": "Clonează",
+    "remove": "Elimină",
+    "restore": "Restaurează"
+  },
+  "states": {
+    "success": "Succes",
+    "error": "Eroare",
+    "skip": "Omitere"
+  },
+  "admins": {
+    "title": "Administratori"
+  },
+  "assignAdmin": {
+    "assignConversation": "Atribuie conversația",
+    "assignedToMe": "Atribuită mie",
+    "assignedTo": "Atribuită lui {name}",
+    "unAssigned": "Neatribuită"
+  },
+  "aiAgent": {
+    "defaultAgent": "Agent implicit",
+    "description": "Gestionează și configurează agenți AI pentru a îmbunătăți capacitățile spațiului tău de lucru prin automatizări și răspunsuri inteligente.",
+    "title": "Agenți AI",
+    "name": "Agenți"
+  },
+  "aiFiles": {
+    "description": "Oferă agenților acces la PDF-uri, documente și altele",
+    "title": "Cunoștințe",
+    "noEmbeddingProvider": "Nu este configurat niciun furnizor de încorporări. Încorporările fișierelor AI necesită integrarea OpenAI sau Gemini. DeepSeek și Claude nu acceptă modele de încorporare."
+  },
+  "aiFunctions": {
+    "description": "Configurează funcții LLM pentru a face agentul AI mai inteligent",
+    "title": "Funcții AI"
+  },
+  "aiMcpServers": {
+    "description": "Conectează AI la sisteme externe prin MCP",
+    "title": "Servere MCP",
+    "tools": {
+      "label": "Instrumente disponibile"
+    }
+  },
+  "analytics": {
+    "contacts": "Contacte",
+    "newContacts": "Contacte noi",
+    "activeContacts": "Contacte active",
+    "botMessagesByResult": "Mesaje primite de bot",
+    "botMessagesNoResponse": "Mesaje primite fără răspuns",
+    "botMessagesWithResponse": "Mesaje primite cu răspuns",
+    "aiProvider": "Furnizor AI",
+    "responseCount": "Număr de răspunsuri",
+    "percentage": "Procentaj",
+    "responseTime": "Timp de răspuns",
+    "firstResponseTime": "Timpul primului răspuns",
+    "totalContacts": "Total contacte",
+    "averageResponseTime": "Timp mediu de răspuns (minute)",
+    "averageResponseTimeHelp": "Timpul mediu necesar unui agent uman pentru a răspunde la mesajul unui client.",
+    "averageFirstResponseTimeByAdmin": "Timp mediu al primului răspuns al agenților umani (minute)",
+    "averageFirstResponseTimeByAdminHelp": "Timpul mediu necesar unui agent uman pentru a oferi răspunsul inițial la mesajul unui client.",
+    "averageResponseTimeByAdmin": "Timp mediu de răspuns al agenților umani (minute)",
+    "averageDurationOfConversation": "Durata medie a unei conversații (minute)",
+    "averageDurationOfConversationHelp": "Timpul mediu în care o conversație a fost gestionată de un om înainte de a fi mutată la bot.",
+    "success": "Succes",
+    "fallback": "Răspuns alternativ",
+    "admins": "Agenți umani",
+    "messages": "Mesaje",
+    "conversations": "Conversații",
+    "assignedConversations": {
+      "title": "Conversații atribuite",
+      "helpText": "Conversații atribuite din căsuța de mesaje sau de către bot."
+    },
+    "messagesSentByHumanOrBot": "Mesaje trimise de om/bot",
+    "human": "Om",
+    "bot": "Bot",
+    "conversationsMovedToHumanOrBot": "Conversații mutate la om/bot",
+    "uniqueConversationsByAdmins": "Conversații unice ale agenților umani",
+    "uniqueConversationsByAdminsHelp": "Numărul de contacte cărora un agent uman le-a trimis cel puțin un mesaj.",
+    "messagesSentByAdmins": "Mesaje trimise de agenții umani",
+    "messagesSentByAdminsHelp": "Mesaje trimise din căsuța de mesaje.",
+    "allContactsByChannel": "Toate contactele după canal",
+    "newContactsByChannel": "Contacte noi după canal",
+    "newContactsBySource": "Contacte noi după sursă",
+    "assignedConversationsByAdmins": "Conversații atribuite după agent uman",
+    "assignedConversationsByAdminsHelp": "Conversații atribuite din căsuța de mesaje sau de către bot.",
+    "followUpConversations": "Conversații de urmărit",
+    "followUpConversationsHelp": "Conversații marcate pentru urmărire din căsuța de mesaje sau de către bot.",
+    "archivedConversations": "Conversații arhivate",
+    "blockedConversations": "Conversații blocate",
+    "blockedConversationsHelp": "Conversații blocate de contul tău.",
+    "blockedContacts": "Contacte blocate",
+    "blockedContactsHelp": "Contacte care nu doresc să primească mesaje de la contul tău",
+    "newContactsByCountry": "Contacte noi după țară",
+    "date": "Dată",
+    "total": "Total",
+    "messagesSent": "Mesaje trimise",
+    "selectRange": "Selectează intervalul",
+    "dateFilterPreset": "Presetare filtru de dată",
+    "noResults": "Niciun rezultat.",
+    "noData": "Nu există date",
+    "comingSoon": "În curând",
+    "unknown": "Necunoscut",
+    "pagination": {
+      "selectedRows": "{selected} din {total} rând(uri) selectat(e).",
+      "rowsPerPage": "Rânduri pe pagină",
+      "pageOf": "Pagina {page} din {pageCount}",
+      "firstPage": "Mergi la prima pagină",
+      "previousPage": "Mergi la pagina anterioară",
+      "nextPage": "Mergi la pagina următoare",
+      "lastPage": "Mergi la ultima pagină"
+    },
+    "sessionsThroughTheRef": "Sesiuni prin referința „{ref}” pe zi",
+    "sessionsThroughTheMagicLink": "Sesiuni prin linkul magic „{ref}” pe zi"
+  },
+  "flowAnalytics": {
+    "nodes": {
+      "start": "Pornire",
+      "notFound": "Nodul nu a fost găsit"
+    },
+    "stats": {
+      "sent": "Trimis",
+      "delivered": "Livrat",
+      "seen": "Văzut",
+      "clicked": "Accesat",
+      "waiting": "În așteptare"
+    }
+  },
+  "autoAssignConversation": {
+    "rule": {
+      "allTime": "Distribuire egală a conversațiilor (tot timpul)",
+      "label": "Regulă de atribuire",
+      "last24Hours": "Distribuire egală a conversațiilor (ultimele 24 de ore)",
+      "last8Hours": "Distribuire egală a conversațiilor (ultimele 8 ore)",
+      "lastHour": "Distribuire egală a conversațiilor (ultima oră)"
+    },
+    "users": {
+      "label": "Utilizatori"
+    }
+  },
+  "automatedResponse": {
+    "setting": {
+      "description": "Descrierea răspunsurilor automate",
+      "label": "Răspunsuri automate"
+    }
+  },
+  "billing": {
+    "title": "Facturare",
+    "plan": {
+      "label": "Plan: {plan}",
+      "free": "Gratuit"
+    },
+    "usage": {
+      "contacts": "Contacte",
+      "mac": "Contacte active lunar",
+      "botMessages": "Mesaje ale botului",
+      "monthlyBotMessages": "Mesaje ale botului (lunar)",
+      "workspaces": "Spații de lucru",
+      "channels": "Canale",
+      "teamMembers": "Membri ai echipei"
+    },
+    "limitReached": {
+      "workspaces": "Ai atins limita de spații de lucru. Actualizează planul pentru a crea mai multe.",
+      "channels": "Ai atins limita de canale. Actualizează planul pentru a conecta mai multe.",
+      "teamMembers": "Ai atins limita de membri ai echipei. Actualizează planul pentru a invita mai mulți.",
+      "contacts": "Ai atins limita de contacte. Actualizează planul pentru a adăuga mai multe.",
+      "mac": "Ai atins limita de contacte active lunar. Actualizează planul pentru a ajunge la mai multe."
+    },
+    "pastDue": {
+      "message": "Ultima plată a eșuat. Actualizează metoda de plată pentru a menține activ spațiul de lucru."
+    },
+    "trial": {
+      "daysLeft": "Perioadă de probă: au mai rămas {days} zile",
+      "endsTomorrow": "Perioada de probă se încheie mâine",
+      "expired": "Perioada de probă s-a încheiat — actualizează pentru a menține activ spațiul de lucru",
+      "dismiss": "Închide"
+    },
+    "trialExpired": {
+      "title": "Perioada de probă gratuită s-a încheiat",
+      "description": "Abonează-te la un plan pentru a continua să folosești spațiile de lucru.",
+      "cta": "Vezi planurile",
+      "bannerTitle": "Perioadă de probă încheiată",
+      "bannerDescription": "Crearea de resurse noi este dezactivată. Poți în continuare să deconectezi canale și să programezi ștergerea spațiului de lucru.",
+      "bannerCta": "Actualizează",
+      "createDisabled": "Crearea unui nou {feature} este dezactivată. Actualizează pentru a continua."
+    },
+    "macLimitReached": {
+      "bannerTitle": "Limita lunară de contacte active a fost atinsă",
+      "bannerDescription": "Trimiterea și primirea mesajelor este întreruptă până când actualizezi planul.",
+      "bannerCta": "Actualizează",
+      "createDisabled": "Crearea unui nou {feature} este dezactivată până când actualizezi planul."
+    }
+  },
+  "broadcasts": {
+    "title": "Difuzări",
+    "status": {
+      "scheduled": "Programată",
+      "sent": "Trimisă",
+      "sending": "Se trimite",
+      "cancelled": "Anulată"
+    },
+    "stats": {
+      "sent": "Trimis",
+      "delivered": "Livrat",
+      "seen": "Văzut",
+      "clicked": "Accesat",
+      "failed": "Eșuat",
+      "noContacts": "Nu au fost găsite contacte",
+      "pageInfo": "Pagina {page} din {pageCount}",
+      "selectedAll": "Toate selectate",
+      "selectedCount": "{count} selectate",
+      "tagAllDialogDescription": "Etichetele vor fi adăugate tuturor contactelor selectate.",
+      "tagDialogDescription": "Etichetele vor fi adăugate la {count} contact(e).",
+      "tagQueued": "Etichetarea a {count} contacte se efectuează în fundal.",
+      "loadingMore": "Se încarcă mai multe...",
+      "receivers": "Destinatari"
+    },
+    "messengerList": {
+      "title": "Listă Messenger",
+      "description": "Poate conține promoții și va fi trimisă numai persoanelor abonate la lista ta Messenger."
+    },
+    "messengerActiveContacts": {
+      "title": "Contacte Messenger active",
+      "description": "Poate conține promoții și va fi trimisă numai utilizatorilor care au trimis mesaje botului în ultimele 24 de ore."
+    },
+    "messengerAccountUpdate": {
+      "title": "Actualizare cont Messenger",
+      "description": "Notifică utilizatorul despre o modificare nerecurentă a aplicației sau contului său."
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Actualizare eveniment confirmat Messenger",
+      "description": "Trimite utilizatorului mementouri sau actualizări pentru un eveniment la care s-a înscris (de exemplu, a cumpărat bilete). Această etichetă poate fi folosită pentru evenimente viitoare și în desfășurare."
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Actualizare Messenger după cumpărare",
+      "description": "Notifică utilizatorul despre actualizarea unei achiziții recente. Confirmarea tranzacției, cum ar fi facturi sau chitanțe; notificări privind starea expedierii, cum ar fi produsul în tranzit, expediat, livrat sau întârziat."
+    },
+    "allContacts": {
+      "title": "Toate contactele",
+      "description": "Trimite un flux tuturor contactelor."
+    },
+    "receiversCount": "Destinatari: {count}",
+    "receiversLoading": "Destinatari: se încarcă...",
+    "whatsappTemplateMessage": {
+      "title": "Mesaj șablon",
+      "description": "Trimite un mesaj șablon WhatsApp contactelor tale"
+    },
+    "messengerTemplateMessage": {
+      "title": "Mesaj șablon",
+      "description": "Trimite un mesaj șablon Messenger contactelor tale"
+    },
+    "whatsappWithin24Hours": {
+      "title": "Contacte active în ultimele 24 de ore",
+      "description": "Poate conține promoții și va fi trimisă numai utilizatorilor care au trimis mesaje botului în ultimele 24 de ore."
+    },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "Poate conține promoții și va fi trimisă numai utilizatorilor care au trimis mesaje botului în ultimele 24 de ore."
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "Folosește acest tip de mesaj dacă vrei să trimiți o difuzare contactelor tale Telegram."
+    },
+    "tiktokActiveContacts": {
+      "title": "TikTok",
+      "description": "Poate conține promoții și va fi trimisă numai utilizatorilor care au trimis mesaje botului în ultimele 24 de ore. Difuzările TikTok acceptă numai text și imagini."
+    },
+    "flowType": {
+      "flow": {
+        "title": "Flux",
+        "description": "Trimite un flux contactelor tale"
+      },
+      "template": {
+        "title": "Șablon",
+        "description": "Trimite un șablon contactelor tale"
+      }
+    },
+    "detail": {
+      "title": "Detalii difuzare",
+      "subaction": "Subacțiune",
+      "audienceFilter": "Filtru de public",
+      "noAudienceFilter": "Niciun filtru de public",
+      "template": "Șablon",
+      "noTemplate": "Niciun șablon",
+      "integration": "Integrare"
+    }
+  },
+  "condition": {
+    "yes": "Da",
+    "no": "Nu",
+    "valuePlaceholder": "...",
+    "datePlaceholder": "YYYY-MM-DD",
+    "datetimePlaceholder": "YYYY-MM-DD HH:mm",
+    "datetimeInvalid": "Introdu o dată ca YYYY-MM-DD HH:mm sau o variabilă",
+    "operator": {
+      "and": "Toate condițiile",
+      "or": "Orice condiție"
+    },
+    "fields": {
+      "locale": "Limbă",
+      "language": "Limbă",
+      "fullName": "Nume complet",
+      "country": "Țară",
+      "continent": "Continent",
+      "gender": "Gen",
+      "subscribedToBroadcast": "Abonat la difuzare",
+      "contactCreatedDate": "Data creării contactului",
+      "contactCreatedDateMinutesAgo": "Data creării contactului (minute în urmă)",
+      "source": "Sursă",
+      "conversationTransferredToHuman": "Conversație transferată unui om",
+      "interactedInLast24H": "A interacționat în ultimele 24 de ore",
+      "interactedInLast24h": "A interacționat în ultimele 24 de ore",
+      "followUp": "Urmărire",
+      "isGuestUser": "Utilizator invitat",
+      "existingContact": "Contact existent",
+      "hasContactInfo": "Telefon și e-mail",
+      "currentChannel": "Canal",
+      "inbox": "Căsuță de mesaje",
+      "subjectToEuRules": "Supus regulilor UE",
+      "timezone": "Fus orar",
+      "hasOpportunity": "Are oportunitate (deschisă, câștigată, pierdută)",
+      "hasOpenOpportunity": "Are oportunitate deschisă",
+      "hasWonOpportunity": "Are oportunitate câștigată",
+      "hasLostOpportunity": "Are oportunitate pierdută",
+      "instagramStoryReply": "Mesajul este un răspuns la o poveste Instagram",
+      "followsBusinessOnInstagram": "Urmărește compania pe Instagram",
+      "businessFollowsUserOnInstagram": "Compania urmărește utilizatorul pe Instagram",
+      "verifiedAccountOnInstagram": "Cont verificat pe Instagram",
+      "followerCountOnInstagram": "Număr de urmăritori pe Instagram",
+      "lastSent": "Ultimul trimis",
+      "lastDelivered": "Ultimul livrat",
+      "lastSeen": "Ultimul văzut",
+      "lastSeenMinutesAgo": "Ultimul văzut (minute în urmă)",
+      "lastInteraction": "Ultima interacțiune",
+      "lastInteractionMinutesAgo": "Ultima interacțiune (minute în urmă)",
+      "unreplied": "Fără răspuns",
+      "unread": "Necitit",
+      "appliedJobs": "Posturi solicitate",
+      "tags": "Etichete",
+      "customFields": "Câmpuri personalizate",
+      "phone": "Telefon",
+      "completedWhatsAppFlows": "Fluxuri WhatsApp finalizate",
+      "messengerList": "Listă Messenger",
+      "subscribedToDripCampaign": "Abonat la campania secvențială",
+      "conversationAssigned": "Conversație atribuită",
+      "entryPointsLinks": "Linkuri către punctele de intrare",
+      "sentMessage": "Mesaj trimis",
+      "keywordsReceived": "Cuvinte-cheie primite",
+      "executedFlow": "Flux executat",
+      "executedStep": "Pas executat",
+      "consecutiveAiFailures": "Numărul de eșecuri AI consecutive",
+      "questionnaireStarted": "Chestionar început",
+      "questionnaireInProgress": "Chestionar în desfășurare",
+      "questionnaireFinished": "Chestionar finalizat",
+      "couponTopic": "Cupon",
+      "votedOnPoll": "A votat în sondaj",
+      "lastComment": "Ultimul comentariu",
+      "commentedOnPost": "A comentat la postare",
+      "reactedOnPost": "A reacționat la postare",
+      "lastTotalTaggedUsers": "Ultimul număr total de utilizatori etichetați",
+      "lastTotalNewTaggedUsers": "Ultimul număr total de utilizatori noi etichetați",
+      "email": "E-mail",
+      "phoneWasVerified": "Telefon verificat",
+      "optedInForSms": "Și-a dat acordul pentru SMS",
+      "broadcastSent": "Difuzare trimisă",
+      "broadcastDelivered": "Difuzare livrată",
+      "broadcastSeen": "Difuzare văzută",
+      "broadcastClicked": "Difuzare accesată",
+      "broadcastFailed": "Difuzare eșuată",
+      "emailWasVerified": "E-mail verificat",
+      "optedInForEmail": "Și-a dat acordul pentru e-mail",
+      "emailSent": "E-mail trimis",
+      "emailDelivered": "E-mail livrat",
+      "emailOpened": "E-mail deschis",
+      "emailClicked": "E-mail accesat",
+      "isWithinWorkingHours": "Este în timpul programului de lucru",
+      "currentDate": "Data curentă",
+      "currentTime": "Ora curentă",
+      "currentDayOfMonth": "Ziua curentă a lunii",
+      "currentDayOfWeek": "Ziua curentă a săptămânii",
+      "currentMonth": "Luna curentă",
+      "bought": "A cumpărat",
+      "boughtItems": "A cumpărat articolele",
+      "totalSpent": "Total cheltuit",
+      "numberOfOrders": "Număr de comenzi",
+      "shoppingCartTotal": "Total coș de cumpărături",
+      "shoppingCartSubtotal": "Subtotal coș de cumpărături",
+      "shoppingCartIsEmpty": "Coșul de cumpărături este gol",
+      "shoppingCartContainsItems": "Coșul de cumpărături conține articole",
+      "lastSentMessageFailed": "Ultimul mesaj trimis a eșuat",
+      "lastUserInput": "Ultima intrare a utilizatorului",
+      "lastUserInputType": "Tipul ultimei intrări a utilizatorului",
+      "archived": "Arhivat",
+      "blocked": "Blocat",
+      "noAdminReply": "Niciun răspuns de la administrator",
+      "contactCreatedAt": "Contact creat la",
+      "lastUserInputTypes": {
+        "text": "Text",
+        "location": "Locație",
+        "refLink": "Link de referință",
+        "image": "Imagine",
+        "video": "Videoclip",
+        "audio": "Audio",
+        "gif": "GIF",
+        "file": "Fișier"
+      }
+    },
+    "fieldGroups": {
+      "opportunity": "Oportunitate",
+      "instagram": "Instagram",
+      "analytics": "Analize",
+      "facebookInstagramComment": "Comentariu Facebook/Instagram",
+      "broadcastWhatsapp": "Difuzare (WhatsApp)",
+      "systemTime": "Ora sistemului",
+      "ecommerce": "Comerț electronic",
+      "systemFields": "Câmpuri de sistem",
+      "topicCoupon": "Subiect cupon",
+      "customFields": "Câmpuri personalizate",
+      "email": "E-mail",
+      "sms": "SMS"
+    },
+    "languages": {
+      "ar": "Arabă",
+      "de": "Germană",
+      "en": "Engleză",
+      "es": "Spaniolă",
+      "fil": "Filipineză",
+      "fr": "Franceză",
+      "hi": "Hindi",
+      "id": "Indoneziană",
+      "it": "Italiană",
+      "ja": "Japoneză",
+      "km": "Khmeră",
+      "ko": "Coreeană",
+      "lo": "Laoțiană",
+      "ms": "Malaeză",
+      "my": "Birmană",
+      "nl": "Neerlandeză",
+      "pt": "Portugheză",
+      "ru": "Rusă",
+      "th": "Thailandeză",
+      "vi": "Vietnameză",
+      "zh": "Chineză"
+    },
+    "sources": {
+      "direct": "Direct",
+      "comments": "Comentarii",
+      "ads": "Reclame",
+      "fbLeadAd": "Reclamă FB pentru clienți potențiali",
+      "inboundMessage": "Mesaj primit",
+      "imported": "Importat",
+      "api": "API",
+      "webchat": "Webchat",
+      "botLink": "Link bot",
+      "chatPlugin": "Plugin C. chat"
+    }
+  },
+  "fields": {
+    "omnichannel": {
+      "label": "Omnicanal"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Imagine"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "loginTitle": "Autentificare cu Instagram",
+      "loginDescription": "Conectează contul Instagram Business direct prin Instagram OAuth.",
+      "facebookLoginTitle": "Autentificare cu Facebook",
+      "facebookLoginDescription": "Conectează un cont Instagram asociat paginii tale Facebook prin Facebook OAuth.",
+      "connectViaFacebook": "Conectează Instagram prin Facebook",
+      "viaFacebookTitle": "Instagram prin Facebook",
+      "cloneFromMessenger": "Clonează din Messenger",
+      "clonedFromMessenger": "Clonat din Messenger"
+    },
+    "zalo": {
+      "label": "Zalo OA"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "botToken": "Token bot",
+      "connectInstructions": {
+        "step1": "Deschide <link>@BotFather</link> în Telegram.",
+        "step2": "Trimite <strong>/newbot</strong> și urmează instrucțiunile.",
+        "step3": "După crearea botului, vei primi tokenul API al botului. Copiază tokenul API și lipește-l mai jos."
+      }
+    },
+    "matchAll": {
+      "label": "Potrivește toate condițiile de mai jos"
+    },
+    "matchAny": {
+      "label": "Potrivește una dintre condițiile de mai jos"
+    },
+    "condition": {
+      "label": "Condiție"
+    },
+    "actions": {
+      "label": "Acțiuni"
+    },
+    "tags": {
+      "label": "Etichete"
+    },
+    "customFields": {
+      "label": "Câmpuri personalizate"
+    },
+    "pipelines": {
+      "label": "Canale de vânzări"
+    },
+    "sequences": {
+      "label": "Secvențe"
+    },
+    "ecommerce": {
+      "label": "Comerț electronic"
+    },
+    "entryPointLink": {
+      "label": "Link către punctul de intrare"
+    },
+    "assignedId": {
+      "label": "Atribuie către"
+    },
+    "operator": {
+      "label": "Operator",
+      "is": "Este",
+      "isNot": "Nu este",
+      "in": "În",
+      "notIn": "Nu este în",
+      "isEmpty": "Nu are valoare",
+      "isNotEmpty": "Are o valoare",
+      "gt": "Mai mare decât",
+      "lt": "Mai mic decât",
+      "gte": "Mai mare sau egal cu",
+      "lte": "Mai mic sau egal cu",
+      "contains": "Conține",
+      "notContains": "Nu conține",
+      "startsWith": "Începe cu",
+      "endsWith": "Se termină cu",
+      "isBetween": "Interval",
+      "notBetween": "Nu este în interval",
+      "used": "Utilizat"
+    },
+    "contactFilter": {
+      "allConditions": "Toate condițiile următoare",
+      "anyConditions": "Oricare dintre condițiile de mai jos.",
+      "label": "Filtru de contacte",
+      "onlyContactsMatch": "Numai contactele care corespund",
+      "moreOptions": "Mai multe opțiuni"
+    },
+    "contactNote": {
+      "label": "Notă de contact"
+    },
+    "chooseTime": {
+      "label": "Alege ora"
+    },
+    "notificationType": {
+      "label": "Tip de notificare",
+      "notifyAdmin": "Notifică administratorul",
+      "newMessageToHuman": "Mesaj nou către un om",
+      "newOrder": "Comandă nouă"
+    },
+    "notificationChannel": {
+      "label": "Canal de notificare",
+      "messenger": "Messenger",
+      "email": "E-mail",
+      "telegram": "Telegram",
+      "browser": "Browser"
+    },
+    "accessToken": {
+      "label": "Token de acces"
+    },
+    "botField": {
+      "label": "Câmp bot"
+    },
+    "agent": {
+      "label": "Agent"
+    },
+    "aiAgent": {
+      "label": "Agent AI"
+    },
+    "aiQueuedMessages": {
+      "label": "Mesaje AI în coadă"
+    },
+    "aiFile": {
+      "label": "Fișier AI"
+    },
+    "aiFunction": {
+      "label": "Funcție AI"
+    },
+    "aiTrigger": {
+      "label": "Declanșator AI"
+    },
+    "alphanumericLength": {
+      "label": "Lungime alfanumerică"
+    },
+    "analytics": {
+      "label": "Analize"
+    },
+    "apiKey": {
+      "label": "Cheie API"
+    },
+    "auth": {
+      "label": "Autentificare"
+    },
+    "authorizedDomain": {
+      "description": "Domeniile sau subdomeniile autorizate să acceseze webchatul tău.",
+      "label": "Domeni{plural, select, 1 {u autorizat} other {i autorizate}}"
+    },
+    "webSearchAuthorizedDomains": {
+      "label": "Site-uri autorizate pentru instrumentul de căutare web",
+      "placeholder": "example.com",
+      "tooltip": "Lista domeniilor pe care le poate accesa agentul AI. Lasă necompletat pentru a permite toate domeniile."
+    },
+    "authToken": {
+      "label": "Token"
+    },
+    "authType": {
+      "headers": "Antet personalizat",
+      "none": "Niciunul",
+      "token": "Token"
+    },
+    "automatedResponse": {
+      "label": "Răspuns automat"
+    },
+    "avatar": {
+      "label": "Imagine de profil"
+    },
+    "reflink": {
+      "label": "Link către punctul de intrare"
+    },
+    "qrCode": {
+      "label": "Cod QR"
+    },
+    "savePayloadToCustomField": {
+      "label": "Salvează conținutul în câmpul personalizat"
+    },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Răspunsul botului"
+    },
+    "brandColor": {
+      "description": "Această culoare este utilizată pentru butoane, astfel încât să corespundă identității mărcii pe pagina de destinație, în e-mailuri și în webchat.",
+      "label": "Culoarea mărcii"
+    },
+    "broadcast": {
+      "label": "Difuzare"
+    },
+    "trigger": {
+      "label": "Declanșator"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
+    "button": {
+      "label": "Buton",
+      "whenPressed": "Când este apăsat acest buton"
+    },
+    "buttonLabel": {
+      "label": "Eticheta butonului"
+    },
+    "category": {
+      "label": "Categorie"
+    },
+    "completed": {
+      "label": "Finalizat"
+    },
+    "workspace": {
+      "label": "Spațiu de lucru"
+    },
+    "workspaceId": {
+      "description": "Identificator unic pentru spațiul tău de lucru.",
+      "label": "ID spațiu de lucru"
+    },
+    "workspaceName": {
+      "label": "Numele contului"
+    },
+    "contact": {
+      "label": "Contact"
+    },
+    "contacts": {
+      "label": "Contacte"
+    },
+    "conversation": {
+      "label": "Conversație"
+    },
+    "conversationStarter": {
+      "description": "Inițiatorii de conversație sunt utilizați pentru a începe o conversație cu un utilizator.",
+      "label": "Inițiator{plural, select, 1 {} other {i}} de conversație",
+      "type": {
+        "openWebsite": "Deschide site-ul web",
+        "sendFlow": "Trimite fluxul",
+        "sendText": "Trimite text"
+      }
+    },
+    "createdAt": {
+      "label": "Creat la"
+    },
+    "currentTime": {
+      "label": "Ora curentă"
+    },
+    "customRange": {
+      "label": "Interval personalizat"
+    },
+    "customCss": {
+      "label": "CSS personalizat"
+    },
+    "theme": {
+      "label": "Temă",
+      "placeholder": "Selectează o temă"
+    },
+    "customJS": {
+      "label": "JS personalizat",
+      "placeholder": "Introdu JavaScript personalizat"
+    },
+    "customCSS": {
+      "label": "CSS personalizat",
+      "placeholder": "Introdu CSS personalizat"
+    },
+    "customField": {
+      "label": "Câmp personalizat",
+      "savePayloadTo": "Salvează răspunsul în câmpul personalizat",
+      "set_value": "Setează valoarea",
+      "append": "Adaugă la sfârșit",
+      "prepend": "Adaugă la început",
+      "increase": "Mărește cu",
+      "decrease": "Micșorează cu"
+    },
+    "dataCollect": {
+      "label": "Colectare de date"
+    },
+    "defaultReply": {
+      "description": "Acesta este răspunsul implicit pe care spațiul tău de lucru îl va trimite utilizatorilor atunci când nu știe cum să răspundă la mesajul utilizatorului.",
+      "label": "Răspuns implicit"
+    },
+    "smartResponseDelaySeconds": {
+      "description": "Setează cât timp așteaptă botul înainte de a răspunde după ultimul mesaj al utilizatorului. Dacă utilizatorul trimite alt mesaj, temporizatorul se resetează, iar mesajele sunt grupate într-un singur răspuns.",
+      "label": "Întârzierea răspunsului botului",
+      "minutes": "{count, plural, one {# minut} other {# minute}}",
+      "none": "Niciuna",
+      "seconds": "{count, plural, one {# secundă} other {# secunde}}"
+    },
+    "delayType": {
+      "label": "Tip de întârziere",
+      "placeholder": "Tip de întârziere"
+    },
+    "delayUnit": {
+      "days": "Zile",
+      "hours": "Ore",
+      "minutes": "Minute",
+      "seconds": "Secunde"
+    },
+    "description": {
+      "label": "Descriere",
+      "placeholder": "Introdu descrierea"
+    },
+    "developmentMode": {
+      "description": "Botul tău va funcționa numai pentru administratorii botului. Activează această opțiune dacă îți construiești botul și nu vrei ca persoanele care nu sunt administratori să îl folosească.",
+      "label": "Mod de dezvoltare"
+    },
+    "email": {
+      "label": "E-mail",
+      "placeholder": "Introdu adresa de e-mail"
+    },
+    "embedCode": {
+      "description": "Copiază și lipește acest cod în site-ul tău pentru a încorpora widgetul de chat.",
+      "label": "Cod de încorporare",
+      "securityNote": "Notă de securitate",
+      "securityNoteDescription": "Acest widget va funcționa numai pe domeniile autorizate în configurația webchatului tău. Asigură-te că ai adăugat domeniul în lista domeniilor autorizate."
+    },
+    "processingStatus": {
+      "label": "Stare procesare"
+    },
+    "enable": {
+      "label": "Activează"
+    },
+    "file": {
+      "label": "Fișier"
+    },
+    "link": {
+      "label": "Link"
+    },
+    "message": {
+      "label": "Mesaj"
+    },
+    "filter": {
+      "label": "Filtru"
+    },
+    "finalMessage": {
+      "label": "Mesaj final"
+    },
+    "firstName": {
+      "label": "Prenume",
+      "placeholder": "Introdu prenumele"
+    },
+    "countryCode": {
+      "label": "Cod de țară"
+    },
+    "contactId": {
+      "label": "ID contact"
+    },
+    "flow": {
+      "label": "Flux"
+    },
+    "flowId": {
+      "label": "ID flux"
+    },
+    "flows": {
+      "aiGenerateText": "{aiName}: Generează text",
+      "aiGenerateImage": "{aiName}: Generează imagine",
+      "aiEditImage": "{aiName}: Editează imagine",
+      "aiAnalyzeImage": "{aiName}: Analizează imagine",
+      "aiExtractData": "{aiName}: Extrage date",
+      "aiSpeechToText": "{aiName}: Transformă vocea în text",
+      "aiTextToSpeech": "{aiName}: Transformă textul în voce",
+      "label": "Fluxuri",
+      "placeholder": "Selectează fluxul",
+      "aiGenerateTextAgent": "{aiName}: Generează agent text",
+      "aiDeleteMessageHistory": "{aiName}: Șterge istoricul mesajelor"
+    },
+    "steps": {
+      "label": "Pași",
+      "placeholder": "Selectează pasul"
+    },
+    "folder": {
+      "label": "Dosar"
+    },
+    "format": {
+      "label": "Format"
+    },
+    "framework": {
+      "angular": "Angular",
+      "ember": "Ember",
+      "react": "React",
+      "svelte": "Svelte",
+      "vue": "Vue"
+    },
+    "function": {
+      "label": "Funcție"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Model Gemini"
+    },
+    "gender": {
+      "female": "Femeie",
+      "label": "Gen",
+      "male": "Bărbat",
+      "unknown": "Necunoscut"
+    },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Gazdă",
+      "placeholder": "smtp.example.com"
+    },
+    "hideHeader": {
+      "label": "Ascunde antetul"
+    },
+    "hideMessageInput": {
+      "label": "Ascunde introducerea mesajului"
+    },
+    "inbox": {
+      "label": "Căsuță de mesaje",
+      "placeholder": "Selectează o căsuță de mesaje"
+    },
+    "inboxTeam": {
+      "label": "Echipa căsuței de mesaje"
+    },
+    "teamMembers": {
+      "label": "Membrii echipei"
+    },
+    "inboxTeamMember": {
+      "label": "Membru al echipei căsuței de mesaje"
+    },
+    "inputCustomField": {
+      "label": "Câmp personalizat de intrare"
+    },
+    "insertLink": {
+      "label": "Inserează linkul"
+    },
+    "instructions": {
+      "label": "Mesaj de sistem (prompt)"
+    },
+    "isDefault": {
+      "label": "Marchează ca implicit"
+    },
+    "isRichResponse": {
+      "description": "Returnează JSON structurat cu mesaje și acțiuni în locul unui flux de text simplu.",
+      "label": "Răspuns complex"
+    },
+    "language": {
+      "description": "Contactelor li se atribuie limba implicită atunci când limba contactului este necunoscută.",
+      "label": "Limbă",
+      "placeholder": "Selectează limba"
+    },
+    "lastName": {
+      "label": "Nume de familie",
+      "placeholder": "Introdu numele de familie"
+    },
+    "last30days": {
+      "label": "Ultimele 30 de zile"
+    },
+    "last7days": {
+      "label": "Ultimele 7 zile"
+    },
+    "lastInput": {
+      "label": "Ultima intrare"
+    },
+    "lastUserInputTypes": {
+      "text": "Text",
+      "location": "Locație",
+      "refLink": "Link de referință",
+      "image": "Imagine",
+      "video": "Videoclip",
+      "audio": "Audio",
+      "gif": "GIF",
+      "file": "Fișier"
+    },
+    "lastMonth": {
+      "label": "Luna trecută"
+    },
+    "lifeTime": {
+      "label": "Pe întreaga durată"
+    },
+    "locale": {
+      "label": "Localizare"
+    },
+    "errorLog": {
+      "label": "Jurnal de erori"
+    },
+    "inputType": {
+      "label": "Tip de intrare",
+      "options": {
+        "text": "Text",
+        "image": "Imagine",
+        "file": "Fișier"
+      }
+    },
+    "extractFields": {
+      "label": "Câmpuri de extras",
+      "key": {
+        "label": "Cheie JSON",
+        "placeholder": "de ex., e-mail, telefon, adresă"
+      },
+      "customFieldId": {
+        "label": "Salvează în câmpul personalizat"
+      },
+      "description": {
+        "label": "Descriere (opțional)",
+        "placeholder": "Descrie ce trebuie extras"
+      }
+    },
+    "max": {
+      "label": "Maxim"
+    },
+    "maxOutputTokens": {
+      "label": "Număr maxim de tokenuri"
+    },
+    "mcpServer": {
+      "label": "Server MCP"
+    },
+    "systemFunction": {
+      "label": "Funcție de sistem",
+      "names": {
+        "connectUserToHuman": "Conectează utilizatorul la un om",
+        "documentReader": "Cititor de documente",
+        "imageReader": "Cititor de imagini",
+        "urlContext": "Cititor URL",
+        "webSearch": "Căutare web"
+      }
+    },
+    "min": {
+      "label": "Minim"
+    },
+    "model": {
+      "label": "Model"
+    },
+    "name": {
+      "label": "Nume",
+      "placeholder": "Introdu numele",
+      "searchPlaceholder": "Caută numele..."
+    },
+    "selectUsers": {
+      "label": "Selectează utilizatorii"
+    },
+    "node": {
+      "label": "Nod"
+    },
+    "noResults": {
+      "label": "Nu au fost găsite rezultate"
+    },
+    "notes": {
+      "label": "Note"
+    },
+    "numericLength": {
+      "label": "Lungime numerică"
+    },
+    "numericValue": {
+      "label": "Valoare numerică"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Operațiune"
+    },
+    "outputCustomField": {
+      "label": "Câmp personalizat de ieșire"
+    },
+    "httpMethod": {
+      "label": "Metodă"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.example.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "Antete",
+      "keyPlaceholder": "Antet",
+      "valuePlaceholder": "Valoare"
+    },
+    "requestBody": {
+      "label": "Corp",
+      "keyPlaceholder": "Câmp",
+      "valuePlaceholder": "Valoare"
+    },
+    "bodyType": {
+      "label": "Tipul corpului",
+      "options": {
+        "allContactData": "Toate datele contactului",
+        "json": "JSON",
+        "formEncoded": "Codificat ca formular"
+      }
+    },
+    "statusCode": {
+      "label": "Cod de stare"
+    },
+    "outputMessage": {
+      "label": "Mesaj de ieșire",
+      "placeholder": "Care este mesajul de ieșire?"
+    },
+    "paymentHistory": {
+      "label": "Istoricul plăților"
+    },
+    "paymentMethods": {
+      "label": "Metode de plată"
+    },
+    "persistentMenu": {
+      "description": "Meniurile persistente sunt utilizate pentru a începe o conversație cu un utilizator.",
+      "label": "Meniu{plural, select, 1 { persistent} other {ri persistente}}",
+      "type": {
+        "openWebsite": "Deschide site-ul web",
+        "sendFlow": "Trimite fluxul"
+      }
+    },
+    "userPersistentMenu": {
+      "pageDefault": "Implicit",
+      "label": "Meniu persistent al utilizatorului"
+    },
+    "phoneNumber": {
+      "label": "Număr de telefon"
+    },
+    "phoneNumberId": {
+      "label": "Număr de telefon",
+      "noPhoneNumbersFound": "Nu au fost găsite numere de telefon pentru acest cont"
+    },
+    "port": {
+      "label": "Port",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Furnizor"
+    },
+    "prompt": {
+      "label": "Instrucțiune",
+      "placeholder": "Introduceți instrucțiunea"
+    },
+    "userMessage": {
+      "label": "Mesajul utilizatorului"
+    },
+    "pageUserName": {
+      "label": "Numele utilizatorului paginii"
+    },
+    "purpose": {
+      "label": "Scop",
+      "placeholder": "Ce face această funcție?"
+    },
+    "question": {
+      "label": "Întrebare",
+      "placeholder": "Sunteți deschis astăzi?"
+    },
+    "imageProfileUrl": {
+      "label": "URL-ul imaginii de profil"
+    },
+    "persona": {
+      "label": "Persona",
+      "pageDefault": "Persona implicită"
+    },
+    "quickReply": {
+      "label": "Răspuns rapid"
+    },
+    "search": {
+      "placeholder": "Căutați..."
+    },
+    "logo": {
+      "label": "Siglă"
+    },
+    "logoLight": {
+      "label": "Siglă (deschisă)"
+    },
+    "logoDark": {
+      "label": "Siglă (închisă)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
+    "brandName": {
+      "label": "Numele mărcii",
+      "placeholder": "Introduceți numele mărcii"
+    },
+    "policyUrl": {
+      "label": "URL-ul politicii de confidențialitate"
+    },
+    "termsOfServiceUrl": {
+      "label": "URL-ul termenilor și condițiilor"
+    },
+    "showLogo": {
+      "label": "Afișați sigla personală"
+    },
+    "quality": {
+      "label": "Calitate",
+      "options": {
+        "auto": "Automată",
+        "hd": "HD",
+        "md": "Medie",
+        "ld": "Scăzută"
+      }
+    },
+    "size": {
+      "label": "Dimensiune",
+      "options": {
+        "auto": "Automată",
+        "square1024": "Pătrat - 1024×1024",
+        "landscape1536x1024": "Peisaj - 1536×1024",
+        "portrait1024x1536": "Portret - 1024×1536",
+        "dalle2_256": "256×256",
+        "dalle2_512": "512×512",
+        "dalle3_1792x1024": "1792×1024"
+      }
+    },
+    "status": {
+      "label": "Stare",
+      "pending": "În așteptare",
+      "processing": "În curs de procesare",
+      "completed": "Finalizat",
+      "failed": "Eșuat",
+      "success": "Succes",
+      "error": "Eroare"
+    },
+    "subtitle": {
+      "placeholder": "Introduceți subtitlul"
+    },
+    "syncToMessenger": {
+      "label": "Sincronizați cu Messenger"
+    },
+    "tag": {
+      "label": "Etichetă"
+    },
+    "emailTopic": {
+      "label": "Subiectul e-mailului"
+    },
+    "emailTopics": {
+      "label": "Subiectele e-mailurilor"
+    },
+    "emailTopicSent": {
+      "label": "Trimise"
+    },
+    "emailTopicDelivered": {
+      "label": "Livrate(%)"
+    },
+    "emailTopicSeen": {
+      "label": "Văzute(%)"
+    },
+    "emailTopicClicked": {
+      "label": "Accesate(%)"
+    },
+    "targetCountry": {
+      "description": "Țara în care locuiesc majoritatea contactelor dvs.",
+      "label": "Țara vizată"
+    },
+    "team": {
+      "label": "Echipă"
+    },
+    "rememberConversation": {
+      "label": "Rețineți conversația"
+    },
+    "temperature": {
+      "label": "Temperatură"
+    },
+    "templateMessages": {
+      "label": "Mesaje șablon"
+    },
+    "text": {
+      "label": "Text",
+      "placeholder": "Introduceți textul"
+    },
+    "thisMonth": {
+      "label": "Luna aceasta"
+    },
+    "timezone": {
+      "description": "Contactelor li se atribuie acest fus orar atunci când fusul lor orar este necunoscut.",
+      "label": "Fus orar"
+    },
+    "title": {
+      "placeholder": "Introduceți titlul"
+    },
+    "today": {
+      "label": "Astăzi"
+    },
+    "tools": {
+      "label": "Instrumente",
+      "placeholder": "Selectați instrumentele"
+    },
+    "triggerFlowId": {
+      "label": "ID-ul fluxului declanșat",
+      "placeholder": "Ce flux este declanșat?"
+    },
+    "type": {
+      "label": "Tip",
+      "placeholder": "Selectați tipul"
+    },
+    "lastRead": {
+      "label": "Ultima citire"
+    },
+    "assignee": {
+      "label": "Responsabil"
+    },
+    "modified": {
+      "label": "Modificat"
+    },
+    "estimatedContacts": {
+      "label": "Contacte estimate"
+    },
+    "scheduledAt": {
+      "label": "Programat pentru"
+    },
+    "channel": {
+      "label": "Canal"
+    },
+    "comment": {
+      "label": "Comentariu"
+    },
+    "directMessage": {
+      "label": "Mesaj direct"
+    },
+    "updatedAt": {
+      "label": "Actualizat la"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "Introduceți URL-ul"
+    },
+    "userId": {
+      "label": "ID utilizator",
+      "placeholders": {
+        "instagram": "ID-ul utilizatorului Instagram",
+        "messenger": "PSID Messenger",
+        "telegram": "ID-ul conversației Telegram",
+        "tiktok": "ID-ul utilizatorului TikTok",
+        "zalo": "ID-ul utilizatorului Zalo"
+      }
+    },
+    "userTags": {
+      "label": "Etichete aplicate utilizatorului"
+    },
+    "username": {
+      "label": "Nume de utilizator",
+      "placeholder": "utilizator@exemplu.com"
+    },
+    "keywords": {
+      "label": "Cuvinte-cheie"
+    },
+    "value": {
+      "label": "Valoare"
+    },
+    "wabaId": {
+      "label": "ID WABA"
+    },
+    "webchat": {
+      "label": "Chat web"
+    },
+    "welcomeFlowId": {
+      "description": "Mesajul de bun venit este trimis automat când utilizatorul deschide chatul web.",
+      "label": "Flux de bun venit"
+    },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "SMS"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "Voce"
+    },
+    "googleBm": {
+      "label": "Google BM"
+    },
+    "landingPage": {
+      "label": "Pagină de destinație"
+    },
+    "whatsappFlow": {
+      "label": "Flux WhatsApp"
+    },
+    "shortText": {
+      "label": "Text scurt",
+      "placeholder": "Introduceți textul"
+    },
+    "number": {
+      "label": "Număr",
+      "placeholder": "Introduceți numărul"
+    },
+    "date": {
+      "label": "Dată"
+    },
+    "datetime": {
+      "label": "Dată și oră"
+    },
+    "boolean": {
+      "label": "Valoare booleană",
+      "placeholder": "Selectați adevărat sau fals",
+      "true": "Adevărat",
+      "false": "Fals"
+    },
+    "longText": {
+      "label": "Text lung"
+    },
+    "replyFormat": {
+      "label": "Formatul răspunsului",
+      "number": "Număr",
+      "text": "Text",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "image": "Imagine",
+      "file": "Fișier",
+      "link": "Link",
+      "date": "Dată",
+      "datetime": "Dată și oră",
+      "location": "Locație",
+      "anyInput": "Orice intrare"
+    },
+    "workspaceMember": {
+      "label": "Membru al spațiului de lucru"
+    },
+    "yesterday": {
+      "label": "Ieri"
+    },
+    "permissions": {
+      "label": "Permisiuni",
+      "superAdmin": "Super administrator",
+      "analytics": "Analiză",
+      "flows": "Fluxuri",
+      "contacts": "Contacte",
+      "onlyAssignedContacts": "Numai contactele atribuite",
+      "emailAndPhone": "E-mail și telefon",
+      "broadcast": "Difuzare",
+      "ecommerce": "Comerț electronic"
+    },
+    "member": {
+      "label": "Membru"
+    },
+    "schedule": {
+      "label": "Programare",
+      "now": "Acum",
+      "scheduled": "Programați pentru mai târziu"
+    },
+    "inputFieldId": {
+      "label": "Câmp personalizat de intrare"
+    },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Imagine"
+      }
+    },
+    "inputText": {
+      "label": "Text de intrare"
+    },
+    "outputFieldId": {
+      "label": "Salvați rezultatul într-un câmp personalizat"
+    },
+    "audio": {
+      "label": "Câmp audio"
+    },
+    "voiceType": {
+      "label": "Tipul vocii",
+      "placeholder": "Selectați un tip de voce"
+    },
+    "voiceTone": {
+      "label": "Tonul vocii (opțional)",
+      "placeholder": "Vorbiți pe un ton vesel."
+    },
+    "jsonPath": {
+      "placeholder": "Introduceți calea JSON",
+      "targetThisRow": "Completați acest rând din JSON"
+    },
+    "jsonSource": {
+      "title": "Alegeți calea JSON",
+      "tabs": {
+        "testResponse": "Răspuns de test",
+        "pasteSample": "Lipiți un exemplu"
+      },
+      "pastePlaceholder": "Lipiți un exemplu de răspuns JSON",
+      "invalidJson": "JSON nevalid",
+      "noTestResponse": "Rulați testul acum pentru a răsfoi un răspuns real",
+      "activeTarget": "Se completează rândul {row}",
+      "showMore": "Afișați mai multe",
+      "showMoreCount": "Afișați încă {count}"
+    },
+    "spreadsheets": {
+      "label": "Foi de calcul"
+    },
+    "retryMessage": {
+      "label": "Mesaj de reîncercare"
+    },
+    "skipButtonLabel": {
+      "label": "Eticheta butonului de omitere"
+    },
+    "autoSkipTime": {
+      "label": "Timp de omitere automată"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Încercări eșuate înainte de omiterea automată"
+    },
+    "autoSkip": {
+      "label": "Omitere automată"
+    },
+    "spreadsheet": {
+      "label": "Foaie de calcul"
+    },
+    "worksheet": {
+      "label": "Foaie de lucru"
+    },
+    "source": {
+      "label": "Sursă",
+      "placeholder": "Selectați o sursă"
+    },
+    "password": {
+      "label": "Parolă",
+      "placeholder": "••••••••"
+    },
+    "passwordConfirmation": {
+      "label": "Reintroduceți parola"
+    },
+    "newPassword": {
+      "label": "Parolă nouă"
+    },
+    "currentPassword": {
+      "label": "Parola actuală"
+    },
+    "developerAccessToken": {
+      "label": "Token de acces API"
+    },
+    "fullName": {
+      "label": "Nume complet"
+    },
+    "botFields": {
+      "label": "Câmpurile botului"
+    },
+    "keyword": {
+      "label": "Cuvânt-cheie",
+      "searchPlaceholder": "Căutați un cuvânt-cheie..."
+    },
+    "templateId": {
+      "label": "Șablon WhatsApp"
+    },
+    "messengerTemplateId": {
+      "label": "Șablon Messenger"
+    },
+    "whatsappChannel": {
+      "label": "Canal WhatsApp"
+    },
+    "messengerChannel": {
+      "label": "Canal Messenger"
+    },
+    "messages": {
+      "label": "Mesaje"
+    },
+    "shortcut": {
+      "label": "Comandă rapidă"
+    },
+    "savedReplies": {
+      "label": "Răspunsuri salvate"
+    },
+    "role": {
+      "label": "Rol"
+    },
+    "plan": {
+      "label": "Plan"
+    },
+    "price": {
+      "label": "Preț"
+    },
+    "annualPrice": {
+      "label": "Preț anual"
+    },
+    "limitContacts": {
+      "label": "Număr maxim de contacte"
+    },
+    "marketingFeatures": {
+      "label": "Lista funcțiilor de marketing",
+      "description": "O listă a funcțiilor produsului care vor fi vizibile clienților. Este afișată în tabelele de prețuri."
+    },
+    "currency": {
+      "label": "Monedă"
+    },
+    "clientId": {
+      "label": "ID client"
+    },
+    "clientSecret": {
+      "label": "Secret client"
+    },
+    "verifyToken": {
+      "label": "Token de verificare webhook"
+    },
+    "apiVersion": {
+      "label": "Versiune API"
+    },
+    "configId": {
+      "label": "ID-ul configurației aplicației"
+    },
+    "systemUserId": {
+      "label": "ID-ul utilizatorului de sistem"
+    },
+    "systemUserToken": {
+      "label": "Tokenul utilizatorului de sistem"
+    },
+    "businessId": {
+      "label": "ID companie"
+    },
+    "businessName": {
+      "label": "Numele companiei"
+    },
+    "publishableKey": {
+      "label": "Cheie publicabilă"
+    },
+    "secretKey": {
+      "label": "Cheie secretă"
+    },
+    "freeTrial": {
+      "label": "Perioadă de încercare gratuită",
+      "suffix": "zile"
+    },
+    "pricing": {
+      "label": "Prețuri"
+    },
+    "sequence": {
+      "label": "Secvență"
+    },
+    "from": {
+      "label": "De la"
+    },
+    "fromAddress": {
+      "label": "Adresa expeditorului",
+      "placeholder": "noreply@exemplu.ro"
+    },
+    "messageTemplate": {
+      "label": "Șablon de mesaj"
+    },
+    "preheader": {
+      "label": "Antet preliminar"
+    },
+    "subject": {
+      "label": "Subiect"
+    },
+    "to": {
+      "label": "Către"
+    },
+    "smtpChannel": {
+      "label": "Canal SMTP"
+    },
+    "magicLink": {
+      "label": "Link magic",
+      "nameHint": "Se adaugă după /r/{workspaceId}/ în URL-ul public de urmărire. Folosiți numai litere, cifre, caractere de subliniere și cratime.",
+      "urlHint": "Folosiți acolade duble în URL, de exemplu https://example.com/page?utm_campaign='{{campaign}}'. Valorile provin din șirul de interogare al linkului de urmărire."
+    },
+    "appId": {
+      "label": "ID aplicație"
+    },
+    "appSecret": {
+      "label": "Secretul aplicației"
+    },
+    "webhookVerifyToken": {
+      "label": "Token de verificare webhook"
+    },
+    "heading": {
+      "label": "Titlu",
+      "placeholder": "Introduceți titlul"
+    },
+    "import": {
+      "label": "Import",
+      "uploading": "Se încarcă…",
+      "fileTooLarge": "Fișierul depășește limita de {size} MB.",
+      "unsupportedFileType": "Acest tip de fișier nu este acceptat.",
+      "unableToReadHeaders": "Antetele importului nu au putut fi citite.",
+      "uploadError": "Fișierul nu a putut fi încărcat.",
+      "histories": {
+        "title": "Istoricul importurilor",
+        "recent": "Importuri recente",
+        "progress": "Progres",
+        "success": "Succes",
+        "failed": "Eșuat",
+        "completedAt": "Finalizat la",
+        "errorDetails": "Erori de import",
+        "row": "Rândul {row}"
+      }
+    },
+    "line": {
+      "label": "Linie"
+    },
+    "spacing": {
+      "label": "Spațiere"
+    },
+    "code": {
+      "label": "Cod",
+      "placeholder": "Introduceți codul"
+    },
+    "authCallbackUrl": {
+      "label": "URL de revenire pentru autentificare",
+      "hint": "Înregistrați exact acest URL ca URI de redirecționare OAuth în aplicația furnizorului. Trebuie să utilizeze această gazdă, nu domeniul dvs. personalizat — furnizorul nu poate accesa un domeniu personalizat."
+    },
+    "signInCallbackUrl": {
+      "label": "URL de revenire pentru conectare",
+      "hint": "Adăugați-l la URI-urile de redirecționare autorizate ale aplicației Google pentru a activa conectarea cu Google."
+    },
+    "webhookUrl": {
+      "label": "URL webhook",
+      "hint": "Înregistrați exact acest URL webhook în aplicația furnizorului. Trebuie să utilizeze această gazdă, nu domeniul dvs. personalizat — furnizorul nu poate accesa un domeniu personalizat."
+    },
+    "tiktok": {
+      "label": "TikTok",
+      "accessToken": "Token de acces",
+      "openId": "ID deschis",
+      "clientId": "ID client",
+      "clientSecret": "Secret client",
+      "displayName": "Nume afișat",
+      "connectInstructions": {
+        "step1": "Creați o aplicație TikTok la <link>developers.tiktok.com</link>.",
+        "step2": "Autorizați-vă contul și copiați <strong>tokenul de acces</strong>, <strong>ID-ul deschis</strong> și <strong>secretul clientului</strong>.",
+        "step3": "Lipiți datele de autentificare de mai jos pentru conectare."
+      }
+    },
+    "drip": {
+      "label": "Campanie progresivă"
+    },
+    "sendGrid": {
+      "label": "SendGrid"
+    },
+    "currentVersion": "Actuală",
+    "consecutiveFailedReply": {
+      "label": "Răspunsuri eșuate consecutive"
+    },
+    "currentStep": {
+      "label": "Pasul actual"
+    },
+    "fbChatLink": {
+      "label": "Link către mesageria Facebook"
+    },
+    "inboxLink": {
+      "label": "Link către mesagerie"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "Compania Instagram urmărește utilizatorul"
+    },
+    "instagramFollowers": {
+      "label": "Urmăritori Instagram"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Utilizatorul Instagram urmărește compania"
+    },
+    "instagramUsername": {
+      "label": "Nume de utilizator Instagram"
+    },
+    "instagramVerified": {
+      "label": "Instagram verificat"
+    },
+    "lastAd": {
+      "label": "Ultima reclamă"
+    },
+    "lastAdSourcePlatform": {
+      "label": "Platforma sursă a ultimei reclame"
+    },
+    "lastAdSourceUrl": {
+      "label": "URL-ul sursă al ultimei reclame"
+    },
+    "lastButtonTitle": {
+      "label": "Titlul ultimului buton"
+    },
+    "lastCommentId": {
+      "label": "ID-ul ultimului comentariu"
+    },
+    "lastCommentedPostText": {
+      "label": "Textul ultimei postări comentate"
+    },
+    "lastCtwa": {
+      "label": "Ultimul CTWA"
+    },
+    "lastFbComment": {
+      "label": "Ultimul comentariu Facebook"
+    },
+    "lastInputFailure": {
+      "label": "Ultima eroare de introducere"
+    },
+    "lastInteraction": {
+      "label": "Ultima interacțiune"
+    },
+    "lastLatitude": {
+      "label": "Ultima latitudine"
+    },
+    "lastLongitude": {
+      "label": "Ultima longitudine"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Ultimul mesaj trimis la"
+    },
+    "lastPostId": {
+      "label": "ID-ul ultimei postări"
+    },
+    "lastSeen": {
+      "label": "Văzut ultima dată"
+    },
+    "lastStep": {
+      "label": "Ultimul pas"
+    },
+    "me": {
+      "label": "Link către datele mele"
+    },
+    "phone": {
+      "label": "Telefon"
+    },
+    "phoneAndEmail": {
+      "label": "Telefon și e-mail"
+    },
+    "timezoneName": {
+      "label": "Numele fusului orar"
+    },
+    "totalNewTagged": {
+      "label": "Total etichetări noi"
+    },
+    "totalTagged": {
+      "label": "Total etichetări"
+    },
+    "userChannel": {
+      "label": "Canalul utilizatorului"
+    },
+    "userExternalId": {
+      "label": "ID-ul extern al utilizatorului"
+    },
+    "userHash": {
+      "label": "Hash-ul utilizatorului"
+    },
+    "userSource": {
+      "label": "Sursa utilizatorului"
+    },
+    "webchatParentUrl": {
+      "label": "URL-ul părinte al chatului web"
+    },
+    "make": {
+      "inviteUrl": "Link de invitație",
+      "inviteUrlHint": "Linkul de invitație pentru aplicația Make personalizată publicată (de exemplu, https://eu2.make.com/app/invite/...)."
+    },
+    "makeEvents": {
+      "label": "Evenimente",
+      "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
+      "description": "Adăugați unul sau mai multe nume de evenimente. Când Make atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
+    }
+  },
+  "channels": {
+    "title": "Canale",
+    "duplicated": {
+      "generic": "Acest cont este deja conectat la un alt spațiu de lucru.",
+      "instagram": "Acest cont Instagram este deja conectat la un alt spațiu de lucru.",
+      "messenger": "Această pagină de Facebook este deja conectată la un alt spațiu de lucru.",
+      "telegram": "Acest bot Telegram este deja conectat la un alt spațiu de lucru.",
+      "tiktok": "Acest cont TikTok este deja conectat la un alt spațiu de lucru.",
+      "whatsapp": "Acest număr WhatsApp este deja conectat la un alt spațiu de lucru.",
+      "zalo": "Acest OA Zalo este deja conectat la un alt spațiu de lucru."
+    },
+    "reconnect": {
+      "success": "Canal reconectat cu succes.",
+      "errors": {
+        "notFound": "Canalul de reconectat nu a fost găsit.",
+        "pageNotFound": "Contul Facebook autorizat nu are acces la această pagină. Autentifică-te cu contul corect și acordă toate permisiunile solicitate.",
+        "accountNotFound": "Contul autorizat nu corespunde contului conectat. Autentifică-te cu contul corect.",
+        "cancelled": "Reconectarea a fost anulată. Încearcă din nou și acordă permisiunile solicitate.",
+        "failed": "Reconectarea a eșuat. Te rugăm să încerci din nou."
+      }
+    }
+  },
+  "workspace": {
+    "schedule": {
+      "title": "Setează orele active",
+      "description": "Alege o oră de start și de sfârșit. Dacă ora de sfârșit este mai devreme decât ora de start, programul rulează peste noapte.",
+      "startTime": "Ora de start",
+      "endTime": "Ora de sfârșit",
+      "alwaysRun": "Rulează întotdeauna",
+      "save": "Salvează",
+      "invalidTimeRange": "Ora de start și de sfârșit trebuie să fie diferite",
+      "timeRequired": "Te rugăm să selectezi atât ora de start, cât și ora de sfârșit",
+      "activated": "Spațiu de lucru activat",
+      "deactivated": "Spațiu de lucru dezactivat",
+      "activeHours": "Activ de la {startTime} la {endTime}",
+      "permissionRequired": "Doar un super admin poate schimba orele active ale spațiului de lucru"
+    },
+    "deletion": {
+      "title": "Șterge spațiul de lucru",
+      "description": "Șterge definitiv acest spațiu de lucru. Toate contactele, setările și datele vor fi șterse la 24 de ore după confirmare.",
+      "schedule": "Șterge spațiul de lucru",
+      "confirmTitle": "Ștergi acest spațiu de lucru?",
+      "confirmDescription": "Toate contactele, setările și datele vor fi șterse definitiv la 24 de ore după confirmare. Poți anula ștergerea oricând înainte de asta.",
+      "pending": "Acest spațiu de lucru va fi șters {countdown} ({date}). Poți anula acest lucru oricând înainte de asta.",
+      "pendingFallback": "în curând",
+      "undone": "Ștergerea spațiului de lucru a fost anulată",
+      "bannerTitle": "Ștergere spațiu de lucru programată",
+      "bannerDescription": "Acest spațiu de lucru este programat pentru ștergere. Anulează ștergerea de mai jos pentru a continua să-l folosești.",
+      "pendingBlockedToast": "Acest spațiu de lucru este programat pentru ștergere. Contactează un administrator al spațiului de lucru pentru a restaura accesul.",
+      "navDisabledTooltip": "Indisponibil cât timp ștergerea spațiului de lucru este programată",
+      "badge": "Ștergere programată"
+    }
+  },
+  "workspaces": {
+    "list": {
+      "title": "Lista spațiilor de lucru"
+    }
+  },
+  "workspaceToken": {
+    "title": "Token spațiu de lucru"
+  },
+  "dialog": {
+    "deleteConfirmation": "Ești absolut sigur?\nAceastă acțiune nu poate fi anulată.\nAceasta va șterge definitiv {feature} de pe serverele noastre."
+  },
+  "messages": {
+    "moveFeature": "Mută {feature}",
+    "poweredBy": "Susținut de {name}",
+    "noGiphyApiKey": "Nu a fost găsită nicio cheie API GIPHY. Te rugăm să adaugi una în Setările platformei.",
+    "connectedSuccess": "{feature} conectat cu succes",
+    "connectFailed": "Conectarea {feature} a eșuat",
+    "connectSuccess": "{feature} conectat cu succes",
+    "refreshTokenSuccessfully": "Tokenul {feature} a fost reîmprospătat cu succes",
+    "success": "Succes",
+    "failed": "Eșuat",
+    "copiedToClipboard": "Copiat în clipboard",
+    "messengerAdsJsonDescription": "Va trebui să generezi un cod JSON nou doar dacă faci modificări la pasul de start. Modificările din alți pași nu vor afecta acest cod JSON.",
+    "messengerAdsNotPublished": "Publică conținutul acestui flux și încearcă din nou.",
+    "messengerAdsNoStartNode": "Acest flux nu are un pas de start valid. Deschide fluxul, setează un pas de Trimite mesaj ca start, apoi publică și încearcă din nou.",
+    "messengerAdsError": "Ceva nu a mers bine la generarea JSON-ului. Te rugăm să încerci din nou.",
+    "messengerAdsInvalidStepType": "Pasul de start poate conține Text, Imagine, Card, Galerie, Video, Video Facebook, Audio și Fișier.",
+    "messengerAdsInvalidVariable": "Nu poți utiliza câmpuri personalizate la „Pasul de start” din cauza limitărilor Facebook. Doar first_name, last_name și full_name pot fi adăugate în mesaj.",
+    "copyFailed": "Copierea în clipboard a eșuat",
+    "createdFailed": "Crearea {feature} a eșuat",
+    "deletedSuccess": "{feature} șters cu succes",
+    "deleteFileComingSoon": "Funcționalitatea de ștergere a fișierului va fi disponibilă în curând",
+    "disconnectFeature": "Deconectează {feature}",
+    "disconnectFeatureDescription": "Ești sigur că vrei să deconectezi {feature}?",
+    "disconnectSuccess": "{feature} deconectat cu succes",
+    "reply": "Răspunde",
+    "viewMessage": "Vezi mesajul",
+    "changeLikeState": "Schimbă starea de apreciere",
+    "changeHideState": "Schimbă starea de ascundere",
+    "commentHidden": "Acest comentariu a fost ascuns",
+    "messageDeleted": "Mesajul a fost șters.",
+    "sentAttachments": "S-a trimis {count, plural, one {1 atașament} other {# atașamente}}",
+    "deleteComment": "Șterge comentariul",
+    "deleteCommentConfirmation": "Ești sigur că vrei să ștergi acest comentariu? Răspunsurile sale vor fi șterse și ele, atât din mesajele primite, cât și de pe Facebook. Această acțiune nu poate fi anulată.",
+    "deleteMessageSuccess": "Mesaj șters",
+    "facebookComment": "Comentariu Facebook",
+    "editComment": "Editează comentariul",
+    "editMessageSuccess": "Mesaj actualizat",
+    "editMessagePlaceholder": "Editează-ți mesajul...",
+    "saveEdit": "Salvează",
+    "cancelEdit": "Anulează",
+    "failedToCopy": "Copierea a eșuat",
+    "failedToPreviewImage": "Previzualizarea imaginii a eșuat",
+    "loadingData": "Se încarcă datele...",
+    "errorLoadingData": "Încărcarea datelor a eșuat. Te rugăm să încerci din nou.",
+    "leaveEmptyToKeepSecret": "Lasă gol pentru a păstra secretul curent",
+    "needToAddSettings": "Trebuie să adaugi setări pentru a folosi această integrare",
+    "noDataAvailable": "Niciun date disponibile",
+    "noResults": "Niciun rezultat.",
+    "savedSuccessfully": "Salvat cu succes",
+    "syncedSuccessfully": "Sincronizat cu succes",
+    "nameAlreadyExists": "Numele {feature} există deja",
+    "unknownError": "Eroare necunoscută",
+    "updatedSuccess": "{feature} actualizat cu succes",
+    "updateFileComingSoon": "Funcționalitatea de actualizare a fișierului va fi disponibilă în curând",
+    "videoError": "Eroare video",
+    "createdSuccess": "{feature} creat cu succes",
+    "createFeature": "Creează {feature}",
+    "noItemsFound": "Niciun element găsit",
+    "editFeature": "Editează {feature}",
+    "duplicateFeature": "Duplică {feature}",
+    "duplicatedSuccess": "{feature} duplicat cu succes",
+    "duplicateConfirmation": "Aceasta va crea o copie a {feature}.",
+    "deleteFeature": "Șterge {feature}",
+    "deleteConfirmation": "Ești absolut sigur?\nAceastă acțiune nu poate fi anulată.\nAceasta va șterge definitiv {feature} de pe serverele noastre.",
+    "addFeature": "Adaugă {feature}",
+    "signOutConfirmation": "Ești sigur că vrei să te deconectezi?",
+    "copyInvitationUrlSuccess": "Copiază linkul de mai jos și trimite-l persoanei pe care vrei să o adaugi ca admin.",
+    "noAIIntegrationFound": "Nicio integrare IA găsită. Te rugăm să conectezi o integrare IA pentru a folosi agenții IA.",
+    "resendFeature": "Retrimite {feature}",
+    "resendFeatureDescription": "Retrimite {feature} contactelor care nu l-au primit încă.",
+    "resendSuccess": "Retrimitere reușită",
+    "changeDefault": "Schimbă implicit",
+    "changeDefaultDescription": "Ești sigur că vrei să schimbi agentul IA implicit?",
+    "unsetDefaultDescription": "Ești sigur că vrei să anulezi agentul IA implicit?",
+    "botIsActive": "Botul este activ",
+    "viewPost": "Vezi postarea",
+    "selectConversationTitle": "Selectează o conversație",
+    "selectConversationDescription": "Alege o conversație din lista din stânga pentru a vedea mesajele și a începe conversația.",
+    "selectConversationContactTitle": "Niciun contact selectat",
+    "selectConversationContactDescription": "Selectează o conversație pentru a vedea aici detaliile contactului și informațiile despre mesajele primite.",
+    "archiveFeature": "Arhivează {feature}",
+    "archiveFeatureDescription": "Ești sigur că vrei să arhivezi {feature}?",
+    "disableFeature": "Dezactivează {feature}",
+    "disableFeatureDescription": "Ești sigur că vrei să dezactivezi {feature}?",
+    "enableFeature": "Activează {feature}",
+    "enableFeatureDescription": "Ești sigur că vrei să activezi {feature}?",
+    "exportedSuccess": "{feature} exportat cu succes",
+    "createSuccess": "{feature} creat cu succes",
+    "deleteFailed": "Ștergerea {feature} a eșuat",
+    "deleteSuccess": "{feature} șters cu succes",
+    "error": "Eroare",
+    "moveFolderDescription": "Mută {feature} în folder",
+    "noData": "Fără date",
+    "featureNotFound": "{feature} nu a fost găsit",
+    "enableSuccess": "{feature} activat cu succes",
+    "userInactive": "Utilizatorul a fost inactiv mai mult de 7 zile",
+    "messagingWindowClosed": "Mesajul nu poate fi trimis în afara ferestrei permise",
+    "sendHumanAgentTag": "Trimite un mesaj cu eticheta HUMAN_AGENT",
+    "warning": "Avertisment!",
+    "humanAgentWarningDescription": "Poți răspunde la mesajul unui utilizator în termen de 7 zile doar atunci când problema nu poate fi rezolvată în mod rezonabil în 24 de ore. Exemple includ weekendurile, sărbătorile sau cazurile care necesită mai mult de o zi pentru a fi finalizate. Nu folosi această opțiune din niciun alt motiv, deoarece ar putea pune în pericol pagina ta de Facebook sau contul de Instagram. Dacă nu ești sigur, nu continua.",
+    "humanAgentWindowExpired": "Fereastra de mesagerie a expirat. Contactul trebuie să scrie primul pentru a redeschide conversația.",
+    "restoreVersionSuccess": "Fluxul a fost restaurat la versiunea selectată",
+    "revertToPublishedSuccess": "Ciorna a fost readusă la versiunea publicată",
+    "revertToPublishedConfirmTitle": "Revii la versiunea publicată?",
+    "revertToPublishedConfirmDescription": "Aceasta va anula modificările curente din ciornă și va restaura conținutul fluxului publicat.",
+    "noVersionsFound": "Nicio versiune publicată găsită",
+    "publishVersionSuccess": "A fost publicată o versiune nouă",
+    "flowConfigIncomplete": "Unele configurări sunt incomplete",
+    "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
+    "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
+    "redoHistoryCleared": "Istoricul de refacere a fost șters",
+    "historyDepth": "({count})"
+  },
+  "instagram": {
+    "description": "Această integrare îți permite să creezi boți Instagram.",
+    "selectInstagramAccount": "Selectează contul Instagram",
+    "iceBreakers": "Sparge-gheață",
+    "iceBreakersDescription": "Sparge-gheața oferă utilizatorilor o modalitate de a începe o conversație cu botul tău, afișând o listă de întrebări frecvente.",
+    "reconnect": "Reconectează",
+    "title": "Instagram"
+  },
+  "coexist": {
+    "title": "Sincronizezi contactele existente și istoricul conversațiilor?",
+    "descriptionWhatsapp": "Când este activată, contactele și până la 6 luni din istoricul conversațiilor vor fi importate din acest număr WhatsApp.",
+    "descriptionMessenger": "Când este activată, contactele Messenger existente și până la 3 luni din istoricul conversațiilor vor fi importate din această pagină.",
+    "enable": "Activează sincronizarea",
+    "decline": "Nu sincroniza",
+    "billingNote": "Paginile mari pot dura câteva ore pentru a se finaliza.",
+    "toggleLabel": "Sincronizează contactele existente și istoricul conversațiilor",
+    "toggleHelper": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează.",
+    "toggleHelperMessenger": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează pagina Messenger.",
+    "toggleHelperWhatsapp": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează numărul WhatsApp.",
+    "success": {
+      "enabled": "Sincronizarea a început. Contactele și mesajele istorice vor apărea în curând.",
+      "disabled": "Sincronizare dezactivată."
+    },
+    "errors": {
+      "alreadyTriggered": "Sincronizarea a fost deja declanșată pentru acest număr. Te rugăm să aștepți ca Meta să livreze datele istorice.",
+      "windowExpired": "Fereastra de sincronizare de 24 de ore a expirat. Deconectează și reconectează acest număr pentru a sincroniza din nou.",
+      "notEligible": "Acest număr nu este eligibil pentru sincronizarea istoricului.",
+      "triggerFailed": "Sincronizarea nu a putut fi pornită. Te rugăm să încerci din nou mai târziu.",
+      "unknown": "Sincronizarea nu a putut fi activată. Te rugăm să încerci din nou mai târziu."
+    }
+  },
+  "messenger": {
+    "description": "Această integrare îți permite să creezi boți Messenger.",
+    "welcomeMessage": "Mesaj de bun venit",
+    "welcomeMessageDescription": "Acesta este primul mesaj pe care utilizatorul îl va primi de la botul tău. Acest mesaj este trimis atunci când utilizatorul interacționează pentru prima dată cu botul, dând clic pe butonul „Începe”.",
+    "conversationStarters": "Inițiatori de conversație",
+    "conversationStartersDescription": "Inițiatorii de conversație oferă utilizatorilor o modalitate de a începe o conversație cu afacerea ta printr-o listă de întrebări frecvente.",
+    "persistentMenu": "Meniu persistent",
+    "persistentMenuDescription": "Meniul poate fi configurat pentru a ajuta utilizatorii să descopere și să acceseze mai ușor funcțiile botului tău. Meniul este mereu disponibil utilizatorilor. Acest meniu ar trebui să conțină acțiunile de nivel superior pe care utilizatorii le pot folosi oricând. Un meniu ușor de folosit comunică rapid capacitățile de bază ale botului tău începătorilor și utilizatorilor care revin.",
+    "dynamicPersistentMenu": "Meniu persistent dinamic",
+    "dynamicPersistentMenuDescription": "Îți permite să schimbi dinamic meniul persistent oricând, la nivel de utilizator.",
+    "botProfile": "Profil bot",
+    "botProfileDescription": "Această setare îți permite să setezi un nume și o imagine diferite pentru botul tău",
+    "personas": "Persoane",
+    "personasDescription": "Această setare îți permite să setezi un nume și o imagine diferite pentru botul tău",
+    "defaultPersona": "Persona implicită",
+    "reconnect": "Reconectează",
+    "reconnectDescription": "Reconectează întotdeauna botul dacă botul tău Messenger nu răspunde sau dacă vezi vreo eroare de permisiune în jurnalul de erori.",
+    "selectFacebookPage": "Selectează pagina Facebook",
+    "selectPage": {
+      "noPagesTitle": "Nicio pagină de Facebook găsită",
+      "noPagesDescription": "Paginile din interiorul unui Business Manager necesită acces Business Manager în timpul conectării. Reconectează Messenger și acordă toate permisiunile solicitate.",
+      "bmLookupFailedTitle": "Este posibil să lipsească paginile din Business Manager",
+      "bmLookupFailedDescription": "Reconectează Messenger și acordă acces la Business Manager pentru ca paginile gestionate printr-un Business Manager să poată fi listate.",
+      "alreadyConnectedNote": "Această pagină este deja conectată",
+      "notAdminNote": "Este necesară permisiunea completă de administrator pe pagină pentru a te conecta",
+      "tryAgain": "Încearcă să te reconectezi"
+    },
+    "title": "Facebook Messenger",
+    "tabs": {
+      "generalSettings": "Setări generale",
+      "messageTemplates": "Șabloane de mesaje"
+    },
+    "messageTemplate": {
+      "params": {
+        "postbackPayload": "Payload buton",
+        "postbackPayloadPlaceholder": "Introdu payload-ul (opțional)"
+      },
+      "create": {
+        "trigger": "Creează un șablon nou",
+        "header": "Antet",
+        "headerType": "Tip antet",
+        "none": "Niciunul",
+        "text": "Text",
+        "textAndImage": "Text + Imagine",
+        "image": "Imagine",
+        "imageHint": "PNG, JPG sau GIF. Imaginea este încărcată înainte de trimitere.",
+        "noImageSelected": "Nicio imagine selectată",
+        "body": "Corp",
+        "buttons": "Butoane",
+        "addButton": "Adaugă buton",
+        "addVariable": "Adaugă variabilă",
+        "buttonText": "Text buton",
+        "buttonType": "Tip buton",
+        "visitWebsite": "Vizitează site-ul web",
+        "callPhoneNumber": "Apelează numărul de telefon",
+        "postback": "Buton"
+      },
+      "clone": {
+        "title": "Duplică șablonul de mesaj",
+        "titleWithName": "Duplică șablonul de mesaj: {name}",
+        "channelsLabel": "Canale țintă",
+        "channelsPlaceholder": "Selectează canale",
+        "succeededCount": "{count} canal(e) duplicat(e) cu succes",
+        "failedCount": "{count} canal(e) nu au putut fi duplicate",
+        "partialSuccess": "Duplicat pe {succeeded} canal(e); {failed} canal(e) au eșuat",
+        "result": {
+          "title": "Rezultate duplicare",
+          "succeededTitle": "Reușite",
+          "close": "Închide"
+        }
+      }
+    },
+    "tagSync": {
+      "title": "Sincronizare etichete",
+      "description": "Sincronizare bidirecțională a etichetelor între acest spațiu de lucru și canalul conectat.",
+      "toggleSuccess": "Setarea de sincronizare a etichetelor a fost actualizată.",
+      "enabledSince": "Activat din {date}",
+      "disabled": "Dezactivat",
+      "labelSync": "Sincronizează etichetele",
+      "on": "Pornit",
+      "off": "Oprit",
+      "termsRequired": "Administratorul paginii trebuie să accepte Termenii de contact ai paginii Facebook:"
+    }
+  },
+  "omnichannel": {
+    "title": "Omnichannel"
+  },
+  "openai": {
+    "connect": {
+      "description": "Răspunde utilizatorilor în mod natural cu IA alimentată de datele afacerii tale."
+    },
+    "title": "OpenAI"
+  },
+  "claude": {
+    "autoReply": {
+      "description": "Activează răspunsul automat cu IA pentru a răspunde utilizatorilor în mod natural, folosind IA alimentată de datele afacerii tale.",
+      "label": "Răspuns automat IA"
+    },
+    "connect": {
+      "description": "Răspunde utilizatorilor în mod natural cu IA alimentată de datele afacerii tale.",
+      "label": "Claude AI"
+    },
+    "title": "Claude AI"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "Activează răspunsul automat cu IA pentru a răspunde utilizatorilor în mod natural, folosind IA alimentată de datele afacerii tale.",
+      "label": "Răspuns automat IA"
+    },
+    "connect": {
+      "description": "Răspunde utilizatorilor în mod natural cu IA alimentată de datele afacerii tale.",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
+  "openrouter": {
+    "autoReply": {
+      "description": "Activează răspunsul automat cu IA alimentat de OpenRouter.",
+      "label": "Răspuns automat IA"
+    },
+    "connect": {
+      "description": "Accesează peste 300 de modele IA printr-o singură cheie API.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
+  "openaiCompatible": {
+    "addProvider": "Adaugă furnizor IA",
+    "addProviderModel": "Adaugă {name}",
+    "apiKeyKeepExisting": "Lasă gol pentru a păstra cheia API existentă.",
+    "autoReply": {
+      "description": "Permite ca acest furnizor să fie utilizat pentru răspunsuri IA automate.",
+      "label": "Răspuns automat IA"
+    },
+    "connect": {
+      "description": "Conectează furnizori compatibili cu OpenAI pentru modele de rezervă ale Agentului IA.",
+      "label": "Furnizori compatibili cu OpenAI"
+    },
+    "empty": "Niciun furnizor compatibil cu OpenAI configurat.",
+    "fields": {
+      "baseURL": "URL de bază",
+      "defaultModel": "Model implicit",
+      "enabled": "Activat"
+    },
+    "provider": "Furnizor IA",
+    "title": "Compatibil cu OpenAI",
+    "validation": {
+      "invalidBaseURL": "URL-ul de bază este invalid sau nu este permis.",
+      "presetAlreadyConnected": "Acest preset este deja conectat pentru acest spațiu de lucru."
+    }
+  },
+  "settings": {
+    "title": "Setări",
+    "agents": {
+      "description": "Descrierea agenților IA",
+      "title": "Agenți IA"
+    },
+    "aiTriggers": {
+      "description": "Descrierea declanșatoarelor IA",
+      "title": "Declanșatoare IA"
+    },
+    "automatedResponses": {
+      "title": "Cuvinte cheie"
+    },
+    "openai": {
+      "description": "Descrierea integrării OpenAI",
+      "title": "Integrare OpenAI"
+    },
+    "claude": {
+      "description": "Descrierea integrării Claude",
+      "title": "Integrare Claude"
+    },
+    "deepseek": {
+      "description": "Descrierea integrării DeepSeek",
+      "title": "Integrare DeepSeek"
+    }
+  },
+  "auth": {
+    "orContinueWith": "Sau continuă cu",
+    "continueWithFacebook": "Continuă cu Facebook",
+    "dontHaveAnAccount": "Nu ai un cont?",
+    "alreadyHaveAnAccount": "Ai deja un cont?",
+    "signUp": "Înregistrare",
+    "acceptTermsAndPolicy": "Făcând clic pe Continuă, ești de acord cu",
+    "and": "și",
+    "privacyPolicy": "Politica de confidențialitate",
+    "termsOfService": "Termeni și condiții",
+    "signInTitle": "Autentifică-te la {name}",
+    "forgotPasswordTitle": "Ai uitat parola?",
+    "forgotPasswordDescription": "Nicio grijă! Îți vom trimite un link cu instrucțiuni despre cum să-ți resetezi parola.",
+    "checkYourEmail": "Verifică-ți e-mailul",
+    "magicLinkSent": "Ți-am trimis un URL de verificare pe e-mail",
+    "magicLinkSentDescription": "Dă clic pe linkul din e-mail pentru a continua.",
+    "didNotReceiveEmail": "Nu ai primit e-mailul? Verifică folderul de spam.",
+    "trySigningInAgain": "Poți încerca și să te autentifici din nou cu un alt e-mail.",
+    "signIn": "Autentificare",
+    "signUpSuccess": "Înregistrare reușită. Verifică-ți e-mailul pentru confirmare.",
+    "forgotPassword": "Ai uitat parola?",
+    "rememberedPassword": "Ți-ai amintit parola?",
+    "forgotPasswordEmailSent": "Ți-am trimis un e-mail cu instrucțiuni pentru resetarea parolei.",
+    "magicLinkSentTitle": "Link magic trimis",
+    "passwordResetSuccess": "Parola a fost resetată cu succes",
+    "resetPasswordTitle": "Resetează-ți parola",
+    "resetPasswordDescription": "Introdu noua ta parolă mai jos.",
+    "signUpTitle": "Înregistrează-te la {name}",
+    "changePasswordTitle": "Schimbă-ți parola",
+    "changePasswordDescription": "Setează o parolă nouă înainte de a continua.",
+    "passwordChangeSuccess": "Parolă schimbată"
+  },
+  "emailTopics": {
+    "title": "Subiecte de e-mail"
+  },
+  "tags": {
+    "title": "Etichete"
+  },
+  "texts": {
+    "or": "sau"
+  },
+  "theme": {
+    "dark": "Întunecat",
+    "light": "Luminos",
+    "system": "Sistem"
+  },
+  "validation": {
+    "maxSize": "Dimensiunea fișierului depășește limita maximă",
+    "maxItemsReached": "Sunt permise maximum {max} {feature} per spațiu de lucru",
+    "invalidApiKey": "Cheie API invalidă",
+    "maxMustBeGreaterThanMin": "{maxField} trebuie să fie mai mare sau egal cu {minField}"
+  },
+  "webchat": {
+    "chatUnavailable": "Acest chat este momentan indisponibil.",
+    "description": "Oferă-le clienților tăi răspunsuri automate instant din partea afacerii tale direct de pe site-ul tău web",
+    "rateLimitExceeded": "Prea multe cereri. Te rugăm să încerci din nou peste puțin timp.",
+    "title": "Chat web",
+    "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil.",
+    "unauthorizedDomain": {
+      "description": "Acest site web nu este autorizat să încarce acest widget de chat.",
+      "title": "Chat web indisponibil"
+    }
+  },
+  "whatsapp": {
+    "category": {
+      "marketing": {
+        "description": "Descrierea categoriei de marketing",
+        "label": "Marketing"
+      },
+      "utility": {
+        "description": "Descrierea categoriei utilitare",
+        "label": "Utilitate"
+      }
+    },
+    "commands": {
+      "description": "Acestea sunt cuvinte cheie speciale care îi spun botului WhatsApp ce să facă",
+      "label": "Comenzi"
+    },
+    "autoConnect": {
+      "inProgress": "Se conectează…"
+    },
+    "connectExisting": "Conectează un Cont WhatsApp Business existent",
+    "embeddedSignupDone": "Înregistrare completă — poți închide această filă.",
+    "embeddedSignupPopupBlocked": "Te rugăm să permiți ferestrele pop-up pentru acest site, apoi încearcă din nou.",
+    "fillRequiredFields": "Te rugăm să completezi toate câmpurile obligatorii",
+    "continueManualConnect": "Continuă — conectare manuală",
+    "icebreakers": {
+      "description": "Acestea sunt întrebări comune pe care oamenii ți le pot adresa ușor.",
+      "label": "Sparge-gheață"
+    },
+    "manualConnect": "Conectare manuală folosind tokenul de acces System User.",
+    "manualOnboarding": {
+      "title": "Mesajele tale primite WhatsApp sunt gata!",
+      "description": "Configurează URL-ul webhook-ului și tokenul de verificare în aplicația ta Meta. Folosește valorile de mai jos.",
+      "webhookUrl": "URL webhook",
+      "verifyToken": "Token de verificare webhook",
+      "qrCodeHint": "Scanează codul QR pentru a deschide URL-ul webhook-ului",
+      "moreSettings": "Mai multe setări",
+      "goToInbox": "Du-mă acolo"
+    },
+    "phoneVerification": {
+      "title": "Verifică numărul de telefon WhatsApp",
+      "description": "Solicită un cod de verificare de la Meta, introdu codul aici, iar numărul de telefon va fi înregistrat automat.",
+      "errorTitle": "Este necesară verificarea numărului de telefon",
+      "methods": {
+        "sms": "SMS",
+        "voice": "Apel vocal"
+      },
+      "actions": {
+        "sendCode": "Trimite codul",
+        "resendIn": "Retrimite în {seconds}s",
+        "verify": "Verifică și înregistrează"
+      },
+      "fields": {
+        "code": {
+          "label": "Cod de verificare",
+          "placeholder": "Introdu codul OTP Meta"
+        }
+      },
+      "messages": {
+        "codeSent": "Cod de verificare trimis prin {method}.",
+        "cooldown": "Te rugăm să aștepți {seconds}s înainte de a solicita un alt cod.",
+        "verified": "Numărul de telefon a fost verificat și înregistrat cu succes."
+      },
+      "errors": {
+        "integrationNotFound": "Integrarea WhatsApp nu a fost găsită.",
+        "codeNotSent": "Codul de verificare WhatsApp nu a putut fi trimis.",
+        "codeNotVerified": "Codul de verificare WhatsApp nu a putut fi verificat.",
+        "registrationFailed": "Verificarea numărului de telefon WhatsApp a eșuat."
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "Tokenul de acces WhatsApp este necesar.",
+        "appSettingsNotFound": "Setările aplicației WhatsApp nu au fost găsite.",
+        "failedToPersistIntegration": "Salvarea integrării WhatsApp a eșuat.",
+        "noPhoneNumberFound": "Nu a fost găsit niciun număr de telefon WhatsApp.",
+        "noPhoneNumbersFound": "Nu au fost găsite numere de telefon pentru acest Cont WhatsApp Business.",
+        "phoneNumberNotFound": "Numărul de telefon WhatsApp selectat nu a fost găsit.",
+        "unableToVerifyToken": "Tokenul WhatsApp nu a putut fi verificat.",
+        "wabaMismatch": "Contul WhatsApp Business selectat nu corespunde autorizației.",
+        "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație."
+      }
+    },
+    "marketingMessageLite": "Marketing Message Lite",
+    "messageTemplate": {
+      "carouselImage": {
+        "label": "Imagine carusel"
+      },
+      "carouselVideo": {
+        "label": "Videoclip carusel"
+      },
+      "document": {
+        "label": "Document"
+      },
+      "image": {
+        "label": "Imagine"
+      },
+      "location": {
+        "label": "Locație"
+      },
+      "text": {
+        "label": "Text"
+      },
+      "video": {
+        "label": "Videoclip"
+      },
+      "viewCatalog": {
+        "label": "Vezi catalogul"
+      },
+      "viewProduct": {
+        "label": "Vezi produsul"
+      },
+      "params": {
+        "couponCode": "Cod cupon",
+        "couponCodePlaceholder": "Introdu codul cuponului",
+        "quickReplyPayload": "Payload răspuns rapid",
+        "quickReplyPayloadPlaceholder": "Introdu payload-ul (opțional)",
+        "flowToken": "Token flux",
+        "flowTokenPlaceholder": "Introdu tokenul fluxului",
+        "catalogProductId": "ID produs",
+        "catalogProductIdPlaceholder": "Introdu ID-ul de retailer al produsului",
+        "carouselCard": "Card {index}",
+        "limitedTimeOffer": "Ora de expirare a ofertei",
+        "limitedTimeOfferPlaceholder": "Introdu ora de expirare în milisecunde",
+        "limitedTimeOfferHelp": "Marcaj temporal Unix în milisecunde când expiră oferta",
+        "location": "Locație",
+        "latitude": "Latitudine",
+        "longitude": "Longitudine",
+        "locationName": "Nume locație (opțional)",
+        "locationAddress": "Adresă (opțional)",
+        "enterFormatUrl": "Introdu URL-ul {format}"
+      }
+    },
+    "sampleBodyCardContent": {
+      "label": "Conținut exemplu card corp"
+    },
+    "sampleBodyContent": {
+      "label": "Conținut exemplu corp"
+    },
+    "sampleHeaderContent": {
+      "label": "Conținut exemplu antet"
+    },
+    "showFooter": {
+      "label": "Afișează subsolul"
+    },
+    "showHeader": {
+      "label": "Afișează antetul"
+    },
+    "tabs": {
+      "accountHealths": "Sănătate cont",
+      "automation": "Automatizare",
+      "ecommerce": "Comerț electronic",
+      "flows": "Fluxuri",
+      "messageTemplates": "Șabloane de mesaje",
+      "profile": "Profil",
+      "usefulLinks": "Linkuri utile"
+    },
+    "accountHealths": {
+      "title": "Gestionează-ți contul WhatsApp",
+      "description": "Verifică statusul contului tău WhatsApp, limitele de mesagerie și calitatea. Actualizează setările sau rezolvă problemele dacă este necesar",
+      "goToBusinessManager": "Mergi la Meta Business Manager",
+      "unavailable": {
+        "title": "Starea contului este temporar indisponibilă",
+        "description": "Nu am putut încărca acest număr de telefon WhatsApp de la Meta acum. Celelalte acțiuni de recuperare de pe această pagină sunt încă disponibile."
+      },
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Număr de telefon afișat",
+          "tooltip": "Numărul de telefon afișat clienților când îți scriu afacerii."
+        },
+        "businessName": {
+          "label": "Nume afacere",
+          "tooltip": "Numele de afișare verificat al afacerii WhatsApp."
+        },
+        "displayNameStatus": {
+          "label": "Status nume afișat",
+          "tooltip": "Statusul de aprobare al numelui de afișare al afacerii tale WhatsApp."
+        },
+        "qualityRating": {
+          "label": "Evaluare calitate",
+          "tooltip": "Evaluarea calității pe baza feedback-ului clienților din ultimele 7 zile."
+        },
+        "messagingLimitTier": {
+          "label": "Nivel limită de mesagerie",
+          "tooltip": "Numărul maxim de clienți unici pe care afacerea ta îi poate contacta într-o fereastră glisantă de 24 de ore."
+        },
+        "accountMode": {
+          "label": "Mod cont",
+          "tooltip": "Dacă Contul WhatsApp Business este live sau în mod sandbox."
+        },
+        "marketingMessages": {
+          "label": "Mesaje de marketing (MM Lite)",
+          "tooltip": "Statusul de conectare al Contului WhatsApp Business la Marketing Messages Lite API.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Neeligibil: model OBO",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Neeligibil: inactiv sau restricționat",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Neeligibil: țară neacceptată",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Neeligibil: se folosește aplicația WhatsApp Business",
+            "ELIGIBLE": "Eligibil",
+            "PENDING_VALID_PAYMENT_METHOD": "Metodă de plată validă în așteptare",
+            "PENDING_INTERNAL_SETUP": "Configurare internă în așteptare",
+            "ONBOARDED": "Conectat"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Contul WhatsApp Business folosește modelul OBO, care nu este acceptat. Trebuie mai întâi să transferi proprietatea WABA către client sau să te conectezi folosind API-ul Intent.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Contul WhatsApp Business este inactiv sau restricționat de la mesagerie din cauza unei probleme de aplicare a politicii.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Contul WhatsApp Business se află într-o regiune care nu acceptă API-ul MM Lite.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Numărul de telefon WhatsApp Business este utilizat în aplicația WhatsApp Business.",
+            "ELIGIBLE": "Contul WhatsApp Business este eligibil pentru conectare și utilizarea API-ului MM Lite.",
+            "PENDING_VALID_PAYMENT_METHOD": "Contul WhatsApp Business necesită configurarea unei metode de plată valide.",
+            "PENDING_INTERNAL_SETUP": "Contul WhatsApp Business este configurat pentru a folosi API-ul MM Lite și nu necesită nicio acțiune suplimentară din partea clientului de afaceri sau a partenerului. Se estimează că procesul de configurare automată va dura mai puțin de zece minute. Abonează-te la webhook-ul account_update și așteaptă evenimentul AD_ACCOUNT_LINKED. Trimite un tichet de suport dacă procesul de configurare durează mai mult de zece minute și nu ai primit un webhook.",
+            "ONBOARDED": "Contul WhatsApp Business s-a conectat cu succes și este pregătit să folosească API-ul MM Lite."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Configurare webhook",
+          "tooltip": "Statusul webhook-ului configurat pentru a primi evenimente WhatsApp.",
+          "configured": "Webhook configurat cu succes",
+          "notConfigured": "Webhook neconfigurat"
+        },
+        "phoneNumberHealth": {
+          "label": "Sănătate număr de telefon",
+          "tooltip": "Dacă acest număr de telefon poate trimite mesaje și orice probleme care îl afectează.",
+          "headline": "Număr de telefon - {status}"
+        },
+        "wabaHealth": {
+          "label": "Sănătate cont WhatsApp Business",
+          "tooltip": "Dacă Contul WhatsApp Business poate trimite mesaje și orice probleme care îl afectează.",
+          "headline": "Cont WhatsApp Business (ID WABA: {id}) - {status}",
+          "headlineNoId": "Cont WhatsApp Business - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 de clienți per 24h",
+        "TIER_250": "250 de clienți per 24h",
+        "TIER_1K": "1.000 de clienți per 24h",
+        "TIER_10K": "10.000 de clienți per 24h",
+        "TIER_100K": "100.000 de clienți per 24h",
+        "TIER_UNLIMITED": "Clienți nelimitați per 24h",
+        "UNKNOWN": "Necunoscut"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Aprobat",
+        "AVAILABLE_WITHOUT_REVIEW": "Disponibil fără verificare",
+        "DECLINED": "Refuzat",
+        "EXPIRED": "Expirat",
+        "NONE": "Niciunul",
+        "PENDING_REVIEW": "În așteptarea verificării"
+      },
+      "accountMode": {
+        "LIVE": "Live",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "DISPONIBIL",
+        "LIMITED": "LIMITAT",
+        "BLOCKED": "BLOCAT",
+        "UNKNOWN": "NECUNOSCUT"
+      },
+      "health": {
+        "label": "Status afacere",
+        "tooltip": "Prezentare generală a sănătății contului tău WhatsApp și a capacității de mesagerie.",
+        "blockedMessage": "Numărul tău de telefon a fost blocat de la trimiterea mesajelor.",
+        "problem": "Problemă:",
+        "possibleSolution": "Soluție posibilă:",
+        "noIssues": "Nicio problemă detectată",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "Dacă acest {type} poate trimite mesaje și orice probleme care îl afectează.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Număr de telefon",
+          "WABA": "Cont WhatsApp Business",
+          "BUSINESS": "Afacere",
+          "MESSAGE_TEMPLATE": "Șablon de mesaj",
+          "APP": "Aplicație"
+        }
+      }
+    },
+    "templateFooter": {
+      "label": "Subsol șablon"
+    },
+    "templateHeader": {
+      "label": "Antet șablon"
+    },
+    "transferPhoneNumber": "Transferă numărul de telefon de la un alt furnizor WhatsApp",
+    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea."
+  },
+  "zalo": {
+    "title": "Zalo OA",
+    "refreshPermissions": "Reîmprospătează permisiunile",
+    "duplicated": "Acest cont OA Zalo a fost deja conectat la un alt spațiu de lucru.",
+    "tagSync": {
+      "title": "Sincronizare etichete",
+      "description": "Oglindește atribuirile locale de etichete către acest OA Zalo.",
+      "toggleSuccess": "Setarea de sincronizare a etichetelor a fost actualizată.",
+      "enabledSince": "Activat din {date}",
+      "disabled": "Dezactivat"
+    }
+  },
+  "telegram": {
+    "description": "Această integrare îți permite să creezi boți Telegram.",
+    "title": "Telegram"
+  },
+  "invitation": {
+    "chatbotInvitationDescription1": "Alătură-te lui {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} te-a invitat să te alături lui {chatbotName}.",
+    "invalidInvitation": "Această invitație este invalidă sau a expirat.",
+    "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil."
+  },
+  "inboxTeams": {
+    "title": "Echipe mesaje primite"
+  },
+  "userPersistentMenus": {
+    "title": "Meniuri persistente utilizator"
+  },
+  "webhooks": {
+    "title": "Webhook-uri"
+  },
+  "reflinks": {
+    "title": "Linkuri de intrare",
+    "description": "Linkuri cu cuvinte cheie care pornesc fluxuri și capturează payload-uri de referință din canale."
+  },
+  "qrCodes": {
+    "title": "Coduri QR",
+    "description": "Creează coduri QR care leagă la fluxurile tale de chatbot."
+  },
+  "magicLinks": {
+    "title": "Linkuri magice",
+    "description": "Creează linkuri directe care redirecționează către URL-ul tău cu parametri de interogare."
+  },
+  "QRCode": {
+    "title": "Cod QR",
+    "description": "Distribuie acest cod pentru ca oamenii să deschidă linkul tău de urmărire."
+  },
+  "trigger": {
+    "when": "Când se întâmplă asta",
+    "conditions": {
+      "tagApplied": "Etichetă aplicată",
+      "tagRemoved": "Etichetă eliminată",
+      "dateTimeBasedTrigger": "Declanșator bazat pe dată și oră",
+      "customFieldValueChanged": "Câmp personalizat schimbat",
+      "contactInfoUpdated": "Telefon sau e-mail actualizat",
+      "conversationTransferredToHuman": "Conversație transferată către un operator",
+      "conversationTransferredToBot": "Conversație transferată către bot",
+      "newContact": "Contact nou",
+      "contactUnsubscribedFormBroadcast": "Contactul s-a dezabonat de la difuzare",
+      "archived": "Arhivat",
+      "followUp": "Urmărire",
+      "conversationAssigned": "Conversație atribuită",
+      "conversationUnassigned": "Atribuirea conversației anulată",
+      "incomingCall": "Apel primit",
+      "missedAudioCall": "Apel audio pierdut",
+      "callEnded": "Apel încheiat",
+      "ticketCreated": "Tichet creat",
+      "ticketMovedToStage": "Tichet mutat în etapă",
+      "ticketValueChanged": "Valoare tichet schimbată",
+      "ticketStatusChanged": "Status tichet schimbat",
+      "ticketPriorityChanged": "Prioritate tichet schimbată",
+      "subscribedToSequence": "Abonat la secvență",
+      "unsubscribedFromSequence": "Dezabonat de la secvență",
+      "WhatsappShoppingCartSent": "Coș de cumpărături WhatsApp trimis",
+      "userAskedAboutProduct": "Utilizatorul a întrebat despre produs",
+      "cartAbandoned": "Coș abandonat",
+      "newOrder": "Comandă nouă",
+      "orderAccepted": "Comandă acceptată",
+      "orderShipped": "Comandă expediată",
+      "orderConcluded": "Comandă finalizată",
+      "orderCancelled": "Comandă anulată",
+      "categoryAddedToCart": "Categorie adăugată în coș",
+      "productAddedToCart": "Produs adăugat în coș",
+      "productRemovedFromCart": "Produs eliminat din coș",
+      "productOrdered": "Produs comandat",
+      "contactReferredANewContact": "Contactul a recomandat un contact nou",
+      "contactReferredExistingContact": "Contactul a recomandat un contact existent"
+    },
+    "actions": {
+      "addTag": "Adaugă etichetă",
+      "removeTag": "Elimină eticheta",
+      "setCustomField": "Setează câmpul personalizat",
+      "clearCustomField": "Golește câmpul personalizat",
+      "startAnotherFlow": "Pornește alt flux",
+      "notifyAdmins": "Notifică administratorii",
+      "transferConversationToHuman": "Transferă conversația către un operator"
+    },
+    "triggerGoesOff": "Declanșatorul se activează",
+    "before": "Înainte de",
+    "after": "După",
+    "atTheDayOf": "În ziua de",
+    "day": "Zi",
+    "hour": "Oră",
+    "minute": "Minut",
+    "at": "La"
+  },
+  "errorLogs": {
+    "title": "Jurnale de erori"
+  },
+  "developerAccessToken": {
+    "title": "Token de acces API",
+    "description": "Generează un token pentru a permite spațiului tău de lucru să acceseze API-urile publice. Păstrează acest token secret și nu-l distribui nimănui."
+  },
+  "contacts": {
+    "title": "Contacte",
+    "exportPreparing": "Se pregătește exportul tău…",
+    "exportPreparingDescription": "Generăm fișierul tău CSV. Acest lucru poate dura puțin.",
+    "exportReadyTitle": "Exportul tău este gata",
+    "exportReadyDescription": "Copiază linkul de mai jos sau descarcă fișierul direct.",
+    "exportDownloadCount": "Descarcă ({count})",
+    "exportFailed": "Exportul a eșuat. Te rugăm să încerci din nou.",
+    "copyLink": "Copiază linkul",
+    "linkCopied": "Link copiat în clipboard",
+    "countExact": "{count} contacte",
+    "countCapped": "{count}+ contacte",
+    "exportAllNotice": "Toate contactele care corespund filtrului curent vor fi exportate.",
+    "exportTakingLong": "Exportul durează mai mult decât era de așteptat",
+    "exportTakingLongDescription": "Exportul este încă în curs de procesare. Poți închide acest dialog și poți reveni peste câteva minute din istoricul exporturilor."
+  },
+  "auditLogs": {
+    "title": "Jurnale de audit"
+  },
+  "customFields": {
+    "title": "Câmpuri personalizate"
+  },
+  "keywords": {
+    "title": "Cuvinte cheie"
+  },
+  "triggers": {
+    "title": "Declanșatoare"
+  },
+  "users": {
+    "title": "Utilizatori"
+  },
+  "sequences": {
+    "title": "Secvențe",
+    "subscribers": "Abonați",
+    "step": "Mesaj",
+    "addStep": "Adaugă mesaj",
+    "addFirstStep": "Adaugă primul mesaj",
+    "noSteps": "Niciun mesaj încă. Adaugă primul tău mesaj pentru a începe.",
+    "selectFlow": "Selectează fluxul",
+    "confirmDeleteStep": "Ești sigur că vrei să ștergi acest mesaj?",
+    "delayUnits": {
+      "immediate": "Imediat",
+      "minutes": "Minute",
+      "hours": "Ore",
+      "days": "Zile",
+      "specificTime": "Oră specifică"
+    },
+    "timeValidation": "Ora mesajului trebuie să fie după mesajul anterior",
+    "validation": {
+      "exception": "Excepție de validare",
+      "nameExists": "Numele secvenței există deja"
+    },
+    "sendLabel": "Trimite",
+    "selectFlowFirst": "Te rugăm să selectezi un flux înainte de a activa mesajul",
+    "invalidTimeRange": "Ora de start trebuie să fie înainte de ora de sfârșit",
+    "schedule": "Program",
+    "scheduleDescription": "Configurează când ar trebui trimise mesajele",
+    "sendTime": "Ora trimiterii",
+    "sendTimeDescription": "Mesajele vor fi trimise doar în acest interval de timp",
+    "timezone": "Fus orar",
+    "timezoneDescription": "Toate orele sunt în fusul orar al chatbotului tău",
+    "enableSchedule": "Activează programul",
+    "startTime": "Ora de start",
+    "endTime": "Ora de sfârșit",
+    "allDay": "Toată ziua",
+    "customTime": "Oră personalizată",
+    "enrollmentSettings": "Setări de înscriere",
+    "enrollmentDescription": "Controlează modul în care contactele sunt înscrise în această secvență",
+    "allowReEnrollment": "Permite reînscrierea",
+    "allowReEnrollmentDescription": "Contactele pot fi înscrise de mai multe ori",
+    "skipWeekends": "Omite weekendurile",
+    "skipWeekendsDescription": "Nu trimite mesaje sâmbăta și duminica",
+    "unenrollOnReply": "Dezînscrie la răspuns",
+    "unenrollOnReplyDescription": "Elimină contactul din secvență când răspunde",
+    "performance": "Performanță",
+    "enrolled": "Înscris",
+    "completed": "Finalizat",
+    "openRate": "Rata de deschidere",
+    "clickRate": "Rata de clic",
+    "replyRate": "Rata de răspuns",
+    "unsubscribeRate": "Rata de dezabonare",
+    "overview": "Prezentare generală",
+    "analytics": "Analiză",
+    "stats": {
+      "sent": "Trimis",
+      "delivered": "Livrat",
+      "seen": "Văzut",
+      "clicked": "Clicat",
+      "failed": "Eșuat",
+      "noContacts": "Niciun contact găsit",
+      "pageInfo": "Pagina {page} din {pageCount}",
+      "selectedAll": "Toate selectate",
+      "selectedCount": "{count} selectate",
+      "tagAllDialogDescription": "Etichetele vor fi adăugate la toate contactele selectate.",
+      "tagDialogDescription": "Etichetele vor fi adăugate la {count} contact(e).",
+      "tagQueued": "Se etichetează {count} contacte în fundal.",
+      "loadingMore": "Se încarcă mai multe..."
+    },
+    "settings": "Setări",
+    "flow": "Flux",
+    "active": "Activ",
+    "messageSentAtLeast": "Acest mesaj va fi trimis cel puțin",
+    "afterPreviousMessage": "după mesajul anterior (zi = 24h)",
+    "anyTime": "Oricând",
+    "setTimeRange": "Setează intervalul de timp",
+    "selectDays": "Selectează zilele",
+    "allDays": "Toate zilele",
+    "deselectAll": "Deselectează tot",
+    "monday": "Luni",
+    "tuesday": "Marți",
+    "wednesday": "Miercuri",
+    "thursday": "Joi",
+    "friday": "Vineri",
+    "saturday": "Sâmbătă",
+    "sunday": "Duminică",
+    "afterText": "După"
+  },
+  "tools": {
+    "title": "Instrumente"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter",
+    "openaiCompatible": "Compatibil cu OpenAI"
+  },
+  "smtp": {
+    "setting": {
+      "description": "Trimite e-mailuri folosind propriul tău server SMTP.",
+      "label": "(E-mail) SMTP"
+    },
+    "errors": {
+      "connectionFailed": "Nu se poate conecta la serverul SMTP. Te rugăm să verifici credențialele și să încerci din nou."
+    }
+  },
+  "botSimulator": {
+    "title": "Simulator de bot",
+    "description": "Simulează comportamentul botului tău într-un mediu în timp real."
+  },
+  "pollManager": {
+    "title": "Manager de sondaje",
+    "description": "Creează și gestionează sondaje pentru contactele tale."
+  },
+  "placesNearMe": {
+    "title": "Locuri din apropiere",
+    "description": "Găsește locuri lângă contactele tale."
+  },
+  "questionnaires": {
+    "title": "Chestionare",
+    "description": "Creează și gestionează chestionare pentru contactele tale.",
+    "singular": "Chestionar",
+    "submission": "Trimitere",
+    "addNew": "Adaugă nou",
+    "applicants": "Candidați",
+    "generalSettings": "Setări generale",
+    "triggerFlow": "Declanșează fluxul la finalizarea chestionarului",
+    "enableScore": "Acordă puncte pentru fiecare întrebare la care s-a răspuns.",
+    "enableRetryMessages": "Personalizează mesajele de reîncercare în caz de eșec al răspunsului.",
+    "enableCustomFieldMapping": "Salvează datele în câmpuri personalizate.",
+    "question": "Întrebare",
+    "activeQuestion": "Activ",
+    "questionImage": "Imagine întrebare",
+    "questionImageHint": "Imagine opțională trimisă cu această întrebare.",
+    "responseType": "Tip răspuns",
+    "points": "Puncte",
+    "retryMessage": "Mesaj de reîncercare dacă răspunsul este invalid",
+    "defaultRetryMessages": {
+      "text": "Ceea ce ai introdus nu este un text valid. Te rugăm să încerci din nou",
+      "number": "Ceea ce ai introdus nu este un număr valid. Te rugăm să încerci din nou",
+      "email": "Ceea ce ai introdus nu este un e-mail valid. Te rugăm să încerci din nou",
+      "phone": "Ceea ce ai introdus nu este un număr de telefon valid. Te rugăm să încerci din nou",
+      "multipleChoice": "Ceea ce ai introdus nu este o opțiune validă. Te rugăm să încerci din nou"
+    },
+    "customField": "Salvează răspunsul într-un câmp personalizat sau de sistem",
+    "options": "Opțiuni",
+    "mode": "Mod",
+    "completed": "Finalizat",
+    "completionRate": "Rata de finalizare",
+    "date": "Dată",
+    "inbox": "Mesaje primite",
+    "unknownContact": "Contact necunoscut",
+    "noAnswers": "Niciun răspuns",
+    "responseTypes": {
+      "text": "Text",
+      "number": "Număr",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "multipleChoice": "Alegere multiplă"
+    },
+    "flowModes": {
+      "start": "Începe chestionarul",
+      "end": "Încheie chestionarul",
+      "deleteApplicant": "Șterge candidatul"
+    },
+    "dialogDescriptions": {
+      "create": "Denumește chestionarul înainte de a adăuga întrebări.",
+      "rename": "Actualizează numele chestionarului afișat în liste și fluxuri.",
+      "flowStep": "Alege cum interacționează acest pas de flux cu un chestionar."
+    },
+    "status": {
+      "inProgress": "În curs",
+      "completed": "Finalizat",
+      "cancelled": "Anulat",
+      "failed": "Eșuat",
+      "timeout": "Timp expirat"
+    }
+  },
+  "appointmentScheduling": {
+    "description": "Creează și gestionează programările tale.",
+    "title": "Programări"
+  },
+  "coupons": {
+    "actions": {
+      "downloadImportTemplate": "Descarcă șablonul de import",
+      "export": "Descarcă lista de cupoane",
+      "import": "Importă cupoane"
+    },
+    "description": "Gestionează subiectele campaniilor de cupoane, importurile, exporturile și codurile de cupoane pregătite pentru flux.",
+    "fields": {
+      "allIssueStatuses": "Toate stările",
+      "allTopics": "Toate subiectele",
+      "allUsageStatuses": "Toate utilizările",
+      "code": "Cod",
+      "couponCount": "Cupoane",
+      "importCsvOnly": "Dă clic sau trage un fișier .csv în această zonă pentru a-l încărca",
+      "issueStatus": "Stare",
+      "searchCode": "Caută cod",
+      "selectTopic": "Selectează subiectul",
+      "topic": "Subiect",
+      "unlimited": "Nelimitat",
+      "usageStatus": "Utilizare",
+      "validity": "Perioadă de valabilitate"
+    },
+    "issueStatuses": {
+      "published": "Publicat",
+      "unpublished": "Nepublicat"
+    },
+    "messages": {
+      "archiveBulkConfirm": "Arhivezi {count} subiecte selectate? Se vor muta în lista Arhivă.",
+      "archiveConfirm": "Arhivezi „{name}”? Se va muta în lista Arhivă.",
+      "archiveTitle": "Arhivează subiectul de cupoane",
+      "deleteConfirm": "Ștergi acest subiect arhivat? Istoricul cupoanelor este păstrat.",
+      "deleteTitle": "Șterge subiectul de cupoane",
+      "editLocked": "Numele și descrierea sunt blocate după ce au fost create sau importate cupoane.",
+      "empty": "Nu au fost găsite cupoane.",
+      "exportCount": "Vor fi exportate {count} rânduri de cupoane.",
+      "exportFailed": "Exportul cupoanelor a eșuat.",
+      "exportStarted": "Exportul cupoanelor a început.",
+      "importStarted": "Importul cupoanelor a început.",
+      "restoreTitle": "Restaurează subiectul de cupoane",
+      "topicSaved": "Subiectul de cupoane a fost salvat.",
+      "unarchiveBulkConfirm": "Restaurezi {count} subiecte selectate? Se vor muta înapoi în lista Subiecte.",
+      "unarchiveConfirm": "Restaurezi „{name}”? Se va muta înapoi în lista Subiecte."
+    },
+    "singular": "Cupon",
+    "tabs": {
+      "archive": "Arhivă",
+      "coupon": "Cupon",
+      "listTopic": "Listă subiecte",
+      "topicCoupon": "Cupon subiect"
+    },
+    "title": "Cupoane",
+    "topic": {
+      "create": "Creează nou",
+      "edit": "Editează subiectul"
+    },
+    "topicCouponsTitle": "Cupoane pentru subiect",
+    "usageStatuses": {
+      "notUsed": "Neutilizat încă",
+      "used": "Utilizat"
+    },
+    "variables": {
+      "group": "Cupoane"
+    }
+  },
+  "ecommerce": {
+    "description": "Creează și gestionează magazinul tău de comerț electronic.",
+    "title": "Comerț electronic"
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "Șterge datele mele",
+      "download": "Descarcă datele mele"
+    },
+    "deleteDialog": {
+      "description": "Această acțiune șterge definitiv datele de contact din profil, etichetele, câmpurile personalizate, atașamentele și toate mesajele asociate acestei înregistrări de contact.",
+      "title": "Ștergi datele tale?"
+    },
+    "empty": {
+      "customFields": "Niciun câmp personalizat",
+      "tags": "Nicio etichetă"
+    },
+    "fields": {
+      "email": "E-mail",
+      "gender": "Gen",
+      "locale": "Setări regionale",
+      "phone": "Telefon",
+      "timezone": "Fus orar"
+    },
+    "sections": {
+      "customFields": "Câmpuri personalizate",
+      "tags": "Etichete utilizator"
+    },
+    "unknown": "Necunoscut"
+  },
+  "facebookCommentAutomation": {
+    "activated": "Automatizare activată",
+    "card": {
+      "filters": "Filtre și opțiuni",
+      "hideComments": "Ascunde comentarii",
+      "replyTiming": "Cronometrare răspuns",
+      "targeting": "Direcționare și răspuns"
+    },
+    "chooseSpecificPosts": "Alege postări...",
+    "create": "Creează automatizare",
+    "deactivated": "Automatizare dezactivată",
+    "description": "Automatizează comentariile Facebook pentru contactele tale.",
+    "excludeKeywords": "Exclude comentariile cu aceste cuvinte cheie",
+    "excludeKeywordsDescription": "Comentariile care conțin oricare dintre aceste cuvinte cheie vor fi ignorate atât de automatizarea prin mesaje primite, cât și de cea prin răspuns public.",
+    "hideComments": {
+      "all": "Ascunde toate comentariile",
+      "hasImage": "Conține imagine",
+      "hasKeywords": "Conține cuvinte cheie",
+      "hasLink": "Conține link",
+      "hasPhoneNumber": "Conține număr de telefon",
+      "hasVideo": "Conține videoclip",
+      "keywords": "Cuvinte cheie",
+      "showCommentsAfter": "Afișează comentariile după"
+    },
+    "includeKeywords": "Cuvinte cheie de căutat",
+    "includeKeywordsType": "Răspunde la",
+    "includeKeywordsTypeDescription": "Alege la ce comentarii răspunde această automatizare.",
+    "keywordsPlaceholder": "Scrie și apasă Enter...",
+    "keywordsType": {
+      "all": "Toate comentariile",
+      "contain": "Conține",
+      "equal": "Potrivire exactă"
+    },
+    "noPostsFound": "Nu au fost găsite postări",
+    "options": {
+      "ignoreCommentReplies": "Nu răspunde la răspunsurile la comentarii",
+      "ignoreCommentRepliesDescription": "Omite automatizarea pentru comentariile care sunt răspunsuri la alte comentarii, nu comentarii de nivel superior.",
+      "likeUserComment": "Apreciază comentariul utilizatorului",
+      "likeUserCommentDescription": "Reacționează automat cu un like la comentariul persoanei care a comentat.",
+      "replyOncePerUserPerPost": "Răspunde o singură dată fiecărui utilizator per postare",
+      "replyOncePerUserPerPostDescription": "Fiecare utilizator va primi cel mult un răspuns automat per postare.",
+      "replyToNewContactsOnly": "Răspunde doar contactelor noi",
+      "replyToNewContactsOnlyDescription": "Răspunde automat doar persoanelor care nu au fost niciodată contact în spațiul tău de lucru.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Răspunde utilizatorilor care au comentat la alte postări",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuă să răspunzi utilizatorilor care au comentat deja la alte postări ale tale.",
+      "trackUserTags": "Urmărește dacă un utilizator etichetează alți utilizatori",
+      "trackUserTagsDescription": "Declanșează automatizarea când un utilizator etichetează sau menționează un alt utilizator în comentariul său."
+    },
+    "postIdPlaceholder": "Introdu ID-urile postărilor, câte unul pe linie...",
+    "postIdTab": "ID postare",
+    "postType": {
+      "ads": "Postări publicitare",
+      "all": "Toate postările",
+      "published": "Postări publicate",
+      "reels": "Reels",
+      "specificPosts": "Postări specifice"
+    },
+    "privateReply": "Răspuns privat (mesaje primite)",
+    "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix (spintax acceptat), un flux de chatbot sau dezactivează.",
+    "publicReply": "Răspuns public la comentariu",
+    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text (spintax acceptat), Agent IA, un flux de chatbot sau niciun răspuns.",
+    "replies": "Răspunsuri",
+    "replyAfter": "Răspunde după",
+    "replyAfterType": {
+      "hours": "După X ore",
+      "immediately": "Imediat",
+      "minutes": "După X minute",
+      "randomWithin10Minutes": "Aleatoriu în 10 minute",
+      "randomWithin20Minutes": "Aleatoriu în 20 de minute",
+      "randomWithin30Minutes": "Aleatoriu în 30 de minute",
+      "randomWithin3Minutes": "Aleatoriu în 3 minute",
+      "randomWithin5Minutes": "Aleatoriu în 5 minute",
+      "randomWithin60Minutes": "Aleatoriu în 60 de minute",
+      "seconds": "După X secunde"
+    },
+    "replyAfterValue": "Valoare",
+    "replyMessage": "Mesaj de răspuns",
+    "replyMessagePlaceholder": "Introdu mesajul de răspuns...",
+    "replyType": {
+      "AIAgent": "Agent IA",
+      "flow": "Flux",
+      "none": "Niciun răspuns",
+      "text": "Mesaj text"
+    },
+    "schedule": {
+      "alwaysRun": "Rulează întotdeauna",
+      "description": "Alege o oră de start și de sfârșit. Dacă ora de sfârșit este mai devreme decât ora de start, programul rulează peste noapte.",
+      "endTime": "Ora de sfârșit",
+      "invalidTimeRange": "Ora de start și de sfârșit trebuie să fie diferite",
+      "save": "Salvează",
+      "startTime": "Ora de start",
+      "timeRequired": "Te rugăm să selectezi atât ora de start, cât și ora de sfârșit",
+      "title": "Setează orele active"
+    },
+    "selectPageAll": "Toate paginile",
+    "selectPosts": "Selectează postările",
+    "showCommentsAfter": {
+      "none": "Niciodată"
+    },
+    "title": "Automatizare comentarii Facebook",
+    "trackCommentsOn": "Urmărește comentariile la",
+    "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe pagina ta sau restrânge-o la postările specifice pe care le selectezi."
+  },
+  "facebookLeadAdsAutomation": {
+    "addNewPage": "Adaugă nouă",
+    "allForms": "Toate formularele",
+    "allFormsNote": "Vor fi capturate lead-uri de la toate formularele de pe această pagină. Câmpurile standard (e-mail, telefon, nume, gen) sunt salvate automat în câmpurile de contact corespunzătoare.",
+    "create": "Creează nouă",
+    "description": "Automatizează reclamele pentru lead-uri Facebook pentru contactele tale.",
+    "duplicateError": "Există deja o automatizare pentru această pagină și acest formular.",
+    "facebookPage": "Pagină Facebook",
+    "leadData": "Date lead",
+    "leadForm": "Formular lead",
+    "leads": "Lead-uri",
+    "noEligiblePages": "Nicio pagină eligibilă. Folosește „Adaugă nouă” pentru a acorda acces la lead-uri.",
+    "none": "Niciuna",
+    "subscribeError": "Nu s-a putut abona această pagină la notificările Facebook pentru lead-uri, astfel automatizarea nu a fost creată. Reconectează pagina cu „Adaugă nouă” și încearcă din nou.",
+    "title": "Automatizare reclame pentru lead-uri Facebook",
+    "whatFlow": "Ce flux este declanșat"
+  },
+  "helpItems": {
+    "addButton": "Adaugă link",
+    "addTitle": "Adaugă link de ajutor",
+    "editTitle": "Editează linkul de ajutor",
+    "empty": "Niciun link de ajutor configurat încă.",
+    "fields": {
+      "icon": "Pictogramă",
+      "iconPlaceholder": "de ex. book-open, star, circle-question-mark",
+      "iconSearchLink": "Răsfoiește pictogramele Lucide →",
+      "name": "Nume",
+      "namePlaceholder": "de ex. Documentație",
+      "position": "Ordine",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.example.com"
+    },
+    "title": "Linkuri de ajutor"
+  },
+  "helpMenu": {
+    "ariaLabel": "Deschide meniul de ajutor",
+    "title": "Ajutor"
+  },
+  "instagramCommentAutomation": {
+    "activated": "Automatizare activată",
+    "card": {
+      "filters": "Filtre și opțiuni",
+      "hideComments": "Ascunde comentarii",
+      "replyTiming": "Cronometrare răspuns",
+      "targeting": "Direcționare și răspuns"
+    },
+    "chooseSpecificPosts": "Alege postări...",
+    "connectionType": {
+      "instagramDescription": "Conexiune prin Instagram Login. Acceptă răspuns public, răspuns privat și ascunderea comentariilor. Aprecierea comentariilor nu este acceptată.",
+      "instagramFacebookDescription": "Instagram conectat printr-o pagină Facebook. Acceptă răspuns public, răspuns privat, ascunderea comentariilor și aprecierea comentariilor.",
+      "instagramFacebookTitle": "Instagram Login cu Facebook",
+      "instagramTitle": "Instagram Business",
+      "title": "Alege tipul de conexiune Instagram"
+    },
+    "create": "Creează automatizare",
+    "deactivated": "Automatizare dezactivată",
+    "description": "Automatizează comentariile Instagram pentru contactele tale.",
+    "excludeKeywords": "Exclude comentariile cu aceste cuvinte cheie",
+    "excludeKeywordsDescription": "Comentariile care conțin oricare dintre aceste cuvinte cheie vor fi ignorate atât de automatizarea prin mesaje primite, cât și de cea prin răspuns public.",
+    "hideComments": {
+      "all": "Ascunde toate comentariile",
+      "hasKeywords": "Conține cuvinte cheie",
+      "hasLink": "Conține link",
+      "hasPhoneNumber": "Conține număr de telefon",
+      "keywords": "Cuvinte cheie",
+      "showCommentsAfter": "Afișează comentariile după"
+    },
+    "includeKeywords": "Cuvinte cheie de căutat",
+    "includeKeywordsType": "Răspunde la",
+    "includeKeywordsTypeDescription": "Alege la ce comentarii răspunde această automatizare.",
+    "keywordsPlaceholder": "Scrie și apasă Enter...",
+    "keywordsType": {
+      "all": "Toate comentariile",
+      "contain": "Conține",
+      "equal": "Potrivire exactă"
+    },
+    "noPostsFound": "Nu au fost găsite postări",
+    "options": {
+      "ignoreCommentReplies": "Nu răspunde la răspunsurile la comentarii",
+      "ignoreCommentRepliesDescription": "Omite automatizarea pentru comentariile care sunt răspunsuri la alte comentarii, nu comentarii de nivel superior.",
+      "likeUserComment": "Apreciază comentariul utilizatorului",
+      "likeUserCommentDescription": "Reacționează automat cu un like la comentariul persoanei care a comentat.",
+      "replyOncePerUserPerPost": "Răspunde o singură dată fiecărui utilizator per postare",
+      "replyOncePerUserPerPostDescription": "Fiecare utilizator va primi cel mult un răspuns automat per postare.",
+      "replyToNewContactsOnly": "Răspunde doar contactelor noi",
+      "replyToNewContactsOnlyDescription": "Răspunde automat doar persoanelor care nu au fost niciodată contact în spațiul tău de lucru.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Răspunde utilizatorilor care au comentat la alte postări",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuă să răspunzi utilizatorilor care au comentat deja la alte postări ale tale."
+    },
+    "postIdPlaceholder": "Introdu ID-urile postărilor, câte unul pe linie...",
+    "postIdTab": "ID postare",
+    "postType": {
+      "all": "Toate postările",
+      "published": "Postări publicate",
+      "reels": "Reels",
+      "specificPosts": "Postări specifice"
+    },
+    "privateReply": "Răspuns privat (mesaje primite)",
+    "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix (spintax acceptat), un flux de chatbot sau dezactivează.",
+    "publicReply": "Răspuns public la comentariu",
+    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text (spintax acceptat), Agent IA, un flux de chatbot sau niciun răspuns.",
+    "replies": "Răspunsuri",
+    "replyAfter": "Răspunde după",
+    "replyAfterType": {
+      "hours": "După X ore",
+      "immediately": "Imediat",
+      "minutes": "După X minute",
+      "randomWithin10Minutes": "Aleatoriu în 10 minute",
+      "randomWithin20Minutes": "Aleatoriu în 20 de minute",
+      "randomWithin30Minutes": "Aleatoriu în 30 de minute",
+      "randomWithin3Minutes": "Aleatoriu în 3 minute",
+      "randomWithin5Minutes": "Aleatoriu în 5 minute",
+      "randomWithin60Minutes": "Aleatoriu în 60 de minute",
+      "seconds": "După X secunde"
+    },
+    "replyAfterValue": "Valoare",
+    "replyMessage": "Mesaj de răspuns",
+    "replyMessagePlaceholder": "Introdu mesajul de răspuns...",
+    "replyType": {
+      "AIAgent": "Agent IA",
+      "flow": "Flux",
+      "none": "Niciun răspuns",
+      "text": "Mesaj text"
+    },
+    "schedule": {
+      "alwaysRun": "Rulează întotdeauna",
+      "description": "Alege o oră de start și de sfârșit. Dacă ora de sfârșit este mai devreme decât ora de start, programul rulează peste noapte.",
+      "endTime": "Ora de sfârșit",
+      "invalidTimeRange": "Ora de start și de sfârșit trebuie să fie diferite",
+      "save": "Salvează",
+      "startTime": "Ora de start",
+      "timeRequired": "Te rugăm să selectezi atât ora de start, cât și ora de sfârșit",
+      "title": "Setează orele active"
+    },
+    "selectPageAll": "Toate conturile",
+    "selectPosts": "Selectează postările",
+    "showCommentsAfter": {
+      "none": "Niciodată"
+    },
+    "title": "Automatizare comentarii Instagram",
+    "trackCommentsOn": "Urmărește comentariile la",
+    "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe contul tău conectat sau restrânge-o la postările specifice pe care le selectezi."
+  },
+  "manageSidebar": {
+    "platformGroup": "Platformă",
+    "portalCustomDomain": "Domeniu personalizat",
+    "portalPaymentProcessor": "Procesator de plăți",
+    "portalPlans": "Planuri",
+    "portalPricingPage": "Prețuri",
+    "portalSmtp": "Setări SMTP",
+    "portalUsage": "Utilizare",
+    "portalUsers": "Sub-conturi",
+    "portalWorkspaces": "Spații de lucru",
+    "saasGroup": "SaaS",
+    "toolsGroup": "Instrumente"
+  },
+  "metaCatalog": {
+    "catalogId": "ID catalog Meta",
+    "catalogIdPlaceholder": "Introdu un ID de catalog din Commerce Manager",
+    "connect": "Conectează Meta",
+    "connectDescription": "Conectează un cont Meta Business pentru a trimite produsele tale către un catalog existent.",
+    "connectionInfo": {
+      "authMode": "Autorizare",
+      "authModes": {
+        "fbe": "Facebook Business Extension",
+        "oauth": "OAuth"
+      },
+      "businessId": "ID Business",
+      "connectionStatuses": {
+        "active": "Activ",
+        "invalid": "Necesită reconectare"
+      },
+      "heading": "Catalog Meta conectat",
+      "lastCatalogId": "Ultimul ID de catalog Meta",
+      "lastImportedAt": "Ultimul import",
+      "never": "Niciodată",
+      "noCatalog": "Niciun catalog selectat încă",
+      "noExpiry": "Nu expiră",
+      "tokenExpiresAt": "Tokenul expiră",
+      "unknown": "Indisponibil"
+    },
+    "createCatalog": {
+      "business": "Business Manager",
+      "businessPlaceholder": "Selectează un Business Manager",
+      "confirm": "Creează catalog",
+      "created": "Catalog creat.",
+      "description": "Un catalog comercial gol va fi creat în contul tău Business Manager și va fi utilizat pentru acest spațiu de lucru.",
+      "errors": {
+        "businesses": "Nu s-au putut încărca Business Manager-urile tale.",
+        "create": "Nu s-a putut crea catalogul."
+      },
+      "name": "Nume catalog",
+      "noBusinesses": "Acest cont Meta nu gestionează niciun Business Manager, deci un catalog nu poate fi creat aici.",
+      "trigger": "Creează un catalog nou"
+    },
+    "diagnostics": "Detalii despre erori și elemente omise",
+    "directions": {
+      "import": "Importat din Meta",
+      "push": "Trimis către Meta"
+    },
+    "disconnect": "Deconectează",
+    "errors": {
+      "alreadyRunning": "O sincronizare sau un import de catalog Meta rulează deja. Așteaptă să se finalizeze.",
+      "catalog": "Nu s-a putut selecta acest catalog.",
+      "connect": "Nu s-a putut conecta catalogul Meta.",
+      "disconnect": "Nu s-a putut deconecta catalogul Meta.",
+      "emptyScope": "Domeniul de sincronizare selectat nu are produse.",
+      "invalidAppSettings": "Setările aplicației Meta nu sunt configurate.",
+      "load": "Nu s-au putut încărca setările catalogului Meta.",
+      "queueImport": "Nu s-a putut pune în coadă importul catalogului Meta.",
+      "queueSync": "Nu s-a putut pune în coadă sincronizarea catalogului Meta.",
+      "sync": "Nu s-a putut porni sincronizarea catalogului."
+    },
+    "historyCatalog": "Catalog {id}",
+    "historyEmpty": "Nicio sincronizare sau import nu a rulat încă.",
+    "historyFailures": "{failed} cu erori · {skipped} omise",
+    "importCatalogAction": "Importă",
+    "importDescription": "Extrage produse dintr-un catalog Meta în spațiul tău de lucru. Găsește ID-ul în Commerce Manager.",
+    "importProgress": "Se importă produsele Meta: {imported}/{total}",
+    "importQueued": "Se așteaptă începerea importului…",
+    "importResult": "Au fost importate {imported} din {total} produse Meta",
+    "itemError": "Element {id}: {reason}",
+    "itemSkipped": "Element {id}: omis — {reason}",
+    "messages": {
+      "catalogSelected": "Importul catalogului a început.",
+      "disconnected": "Catalog Meta deconectat.",
+      "syncStarted": "Sincronizarea catalogului Meta a început."
+    },
+    "reconnect": "Reconectează",
+    "reconnectWarning": "Tokenul Meta este invalid sau expiră în șapte zile.",
+    "requirements": {
+      "description": {
+        "label": "Descriere detaliată",
+        "value": "Pe lângă titlu, acoperă specificațiile, materialele, cazurile de utilizare și caracteristicile remarcabile."
+      },
+      "image": {
+        "label": "Imagine produs",
+        "value": "Rezoluție înaltă de cel puțin 500px × 500px, dimensiune fișier de până la 8MB."
+      },
+      "intro": "Produsele sincronizate cu Messenger Shopping trebuie să îndeplinească aceste cerințe:",
+      "minimumItems": "Publică cel puțin 6 produse pentru ca utilizatorii să aibă suficiente opțiuni.",
+      "price": {
+        "label": "Preț",
+        "value": "Fiecare produs trebuie să aibă un preț."
+      },
+      "video": {
+        "label": "Videoclip produs",
+        "value": "Dimensiune fișier de până la 200MB."
+      }
+    },
+    "retryImport": "Reîncearcă importul",
+    "skipReasons": {
+      "hasVariants": "variantele nu sunt încă acceptate",
+      "missingDescription": "lipsește descrierea",
+      "missingImage": "lipsește imaginea",
+      "missingStoreUrl": "URL-ul magazinului nu este configurat"
+    },
+    "statuses": {
+      "failed": "Eșuat",
+      "partial": "Finalizat parțial",
+      "queued": "În coadă",
+      "running": "În curs",
+      "succeeded": "Reușit"
+    },
+    "syncNow": "Sincronizează acum",
+    "syncSelectionCount": "{count} produse selectate vor fi trimise către catalogul Meta.",
+    "syncSelectionRequired": "Selectează produsele pe care vrei să le trimiți, apoi rulează sincronizarea.",
+    "tabs": {
+      "connection": "Conexiune",
+      "history": "Istoric",
+      "import": "Sincronizează din Meta",
+      "sync": "Sincronizează către Meta"
+    },
+    "title": "Sincronizează catalogul Meta"
+  },
+  "orders": {
+    "title": "Comenzi"
+  },
+  "platformAdmin": {
+    "helpItems": {
+      "description": "Linkuri de ajutor afișate în bara laterală pentru toate spațiile de lucru care nu aparțin unui tenant white-label.",
+      "title": "Linkuri de ajutor"
+    },
+    "platformCredentials": {
+      "description": "Aplicații globale implicite pentru dezvoltatori, utilizate de toate spațiile de lucru care nu au propriile credențiale white-label.",
+      "title": "Credențiale platformă"
+    },
+    "queues": {
+      "title": "Cozi"
+    }
+  },
+  "platformBranding": {
+    "sections": {
+      "advanced": {
+        "description": "Inserează CSS sau JavaScript personalizat în fiecare pagină",
+        "title": "Avansat"
+      },
+      "assets": {
+        "description": "Logo-uri și favicon afișate în browser și în interfață",
+        "title": "Elemente vizuale"
+      },
+      "identity": {
+        "description": "Numele și paleta de culori afișate pe întreaga platformă",
+        "title": "Identitate brand"
+      },
+      "legal": {
+        "description": "Linkuri afișate în subsoluri și în fluxurile de consimțământ",
+        "title": "Linkuri legale"
+      }
+    },
+    "title": "Branding platformă"
+  },
+  "platformChannels": {
+    "description": "Alege ce tipuri de canale pot crea spațiile de lucru din acest tenant.",
+    "hint": "Lasă toate canalele nebifate pentru a permite toate canalele.",
+    "title": "Canale permise"
+  },
+  "platformCredentials": {
+    "notConfigured": "Nu este configurat încă",
+    "notConfiguredHint": "Adaugă setările tale pentru a începe să folosești această integrare.",
+    "title": "Credențiale platformă",
+    "usingPlatformDefault": "Se folosesc setările implicite ale platformei",
+    "usingPlatformDefaultHint": "Acest canal funcționează imediat cu aplicația partajată a platformei. Adaugă oricând propriile setări pentru a le înlocui."
+  },
+  "platformEmailTemplates": {
+    "availableVariables": "Variabile disponibile",
+    "description": "Lasă subiectul și corpul goale pentru a folosi șablonul implicit al sistemului.",
+    "fields": {
+      "body": {
+        "label": "Conținut HTML",
+        "placeholder": "Lasă gol pentru a folosi șablonul implicit"
+      },
+      "subject": {
+        "label": "Subiect",
+        "placeholder": "Lasă gol pentru a folosi subiectul implicit"
+      }
+    },
+    "preview": {
+      "empty": "Introdu corpul șablonului pentru a vedea o previzualizare",
+      "title": "Previzualizare"
+    },
+    "sections": {
+      "accountCredentials": {
+        "description": "Trimis atunci când un reseller configurează un subcont nou",
+        "title": "E-mail cu credențialele subcontului"
+      },
+      "forgotPassword": {
+        "description": "Trimis atunci când un utilizator solicită resetarea parolei",
+        "title": "E-mail pentru parolă uitată"
+      },
+      "magicLink": {
+        "description": "Trimis atunci când un utilizator solicită un link magic pentru autentificare",
+        "title": "E-mail de autentificare cu link magic"
+      },
+      "signup": {
+        "description": "Trimis atunci când un utilizator nou își înregistrează un cont",
+        "title": "E-mail de verificare la înregistrare"
+      }
+    },
+    "status": {
+      "custom": "Personalizat",
+      "default": "Implicit"
+    },
+    "title": "Șabloane de e-mail"
+  },
+  "productCategories": {
+    "actions": "Acțiuni categorie",
+    "all": "Toate produsele",
+    "cancel": "Anulează",
+    "collapse": "Ascunde subcategoriile",
+    "columns": {
+      "name": "Nume",
+      "products": "Produse",
+      "subcategories": "Subcategorii"
+    },
+    "create": "Creează categorie",
+    "createSub": "Creează subcategorie",
+    "created": "Categorie creată.",
+    "delete": "Șterge",
+    "deleteChildrenWarning": "{count, plural, one {Și subcategoria asociată (#) va fi ștearsă.} other {Și cele # subcategorii asociate vor fi șterse.}}",
+    "deleteDescription": "{count, plural, =0 {Niciun produs nu este atribuit acestei categorii.} one {# produs va fi mutat la Fără categorie.} other {# produse vor fi mutate la Fără categorie.}}",
+    "deleteError": "Nu s-a putut șterge această categorie.",
+    "deleteTitle": "Ștergi „{name}”?",
+    "deleted": "Categorie ștearsă.",
+    "edit": "Redenumește categoria",
+    "empty": "Nicio categorie încă. Creează una pentru a-ți grupa produsele.",
+    "expand": "Afișează subcategoriile",
+    "loadError": "Nu s-au putut încărca categoriile de produse.",
+    "name": "Nume categorie",
+    "namePlaceholder": "de ex. Colecția de vară",
+    "noParent": "Niciuna (nivel de bază)",
+    "parent": "Categorie părinte",
+    "productCount": "{count, plural, =0 {Niciun produs} one {# produs} other {# produse}}",
+    "save": "Salvează",
+    "saveError": "Nu s-a putut salva această categorie.",
+    "title": "Categorii",
+    "updated": "Categorie actualizată."
+  },
+  "productImport": {
+    "confirm": "Începe importul",
+    "createMissingCategories": "Creează categoriile care nu există",
+    "downloadTemplate": "Descarcă șablonul",
+    "error": "Importul produselor a eșuat.",
+    "fields": {
+      "category": "Categorie",
+      "discount": "Reducere",
+      "imageUrl": "URL imagine",
+      "inventoryQuantity": "Cantitate în stoc",
+      "name": "Nume produs",
+      "price": "Preț",
+      "productUrl": "URL produs",
+      "shortDescription": "Descriere scurtă",
+      "sku": "SKU",
+      "vendor": "Furnizor"
+    },
+    "mapColumns": "Mapează coloanele",
+    "mapColumnsHint": "Potrivește fiecare câmp de produs cu o coloană din fișierul tău. Lasă un câmp nemapat pentru a-l omite.",
+    "notMapped": "Nemapat",
+    "started": "Importul produselor a început.",
+    "template": {
+      "category": "Categorie",
+      "discount": "Reducere",
+      "exampleOne": {
+        "category": "Îmbrăcăminte",
+        "description": "Tricou din bumbac moale",
+        "name": "Tricou clasic",
+        "vendor": "Brand exemplu"
+      },
+      "exampleTwo": {
+        "category": "Accesorii",
+        "description": "Sacoșă reutilizabilă din pânză",
+        "name": "Sacoșă din pânză",
+        "vendor": "Brand exemplu"
+      },
+      "imageUrl": "URL imagine",
+      "inventoryQuantity": "Cantitate în stoc",
+      "name": "Nume produs",
+      "price": "Preț",
+      "productUrl": "URL produs",
+      "sheetName": "Produse",
+      "shortDescription": "Descriere scurtă",
+      "sku": "SKU",
+      "vendor": "Furnizor"
+    },
+    "title": "Import",
+    "upload": "Încarcă un fișier .csv sau .xlsx"
+  },
+  "products": {
+    "create": {
+      "title": "Creează produs"
+    },
+    "edit": {
+      "title": "Editează produsul"
+    },
+    "fields": {
+      "addImageFromLink": "Adaugă imagine",
+      "addonMaxSelections": {
+        "label": "Selecții maxime"
+      },
+      "addonName": {
+        "label": "Nume",
+        "placeholder": "nume"
+      },
+      "addonProducts": {
+        "label": "Produse",
+        "placeholder": "Selectează produse..."
+      },
+      "addonsDescription": "Adaugă produse pe care clienții le pot cumpăra ca suplimente. Tot aici poți oferi produse gratuite; de exemplu, un restaurant poate include opțiuni gratuite de băuturi. Trebuie să creezi un produs înainte de a-l folosi ca supliment.",
+      "allowOutOfStockPurchase": {
+        "label": "Permite clienților să cumpere acest produs când este epuizat din stoc"
+      },
+      "allowSpecialRequest": {
+        "label": "Permite utilizatorului să solicite o cerere specială (atașează note)"
+      },
+      "category": {
+        "label": "Categorie",
+        "placeholder": "Fără categorie"
+      },
+      "currency": {
+        "label": "Monedă"
+      },
+      "discount": {
+        "label": "Reducere (0-100%)"
+      },
+      "inventoryPolicy": {
+        "label": "Politica stocului"
+      },
+      "inventoryQuantity": {
+        "label": "Cantitate"
+      },
+      "isActive": {
+        "label": "Activ"
+      },
+      "isAddonOnly": {
+        "label": "Folosește acest produs doar ca supliment pentru alte produse"
+      },
+      "isSearchable": {
+        "label": "Acest produs poate fi căutat în bot"
+      },
+      "longDescription": {
+        "label": "Descriere lungă"
+      },
+      "metaCatalogId": {
+        "label": "ID catalog Meta"
+      },
+      "optionName": {
+        "label": "Nume opțiune"
+      },
+      "optionValue": {
+        "label": "Valoare opțiune"
+      },
+      "price": {
+        "label": "Preț"
+      },
+      "productUrl": {
+        "description": "Pagina pe care clienții o deschid din Messenger Shopping. Produsele fără URL sunt omise la sincronizarea cu Catalogul Meta.",
+        "label": "URL produs",
+        "placeholder": "https://store.example.com/products/123"
+      },
+      "rank": {
+        "label": "Rang"
+      },
+      "shortDescription": {
+        "label": "Descriere scurtă"
+      },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "Opțional"
+      },
+      "subcategory": {
+        "label": "Subcategorie",
+        "placeholder": "Niciuna"
+      },
+      "tagsDescription": "Etichetele pot fi căutate.",
+      "taxes": {
+        "label": "Taxe (0-100%)"
+      },
+      "uploadImage": "Încarcă imagine",
+      "variant": {
+        "label": "Variantă"
+      },
+      "variantsDescription": "Adaugă variante dacă acest produs vine în mai multe versiuni, precum dimensiuni sau culori diferite",
+      "vendor": {
+        "label": "Furnizor"
+      }
+    },
+    "inventoryPolicy": {
+      "dont_track": "Nu urmări inventarul",
+      "track": "Urmărește inventarul"
+    },
+    "sections": {
+      "addons": "Suplimente",
+      "images": "Imagini",
+      "inventory": "Inventar",
+      "moreOptions": "Mai multe opțiuni",
+      "pricing": "Prețuri",
+      "tags": "Etichete",
+      "variants": "Variante"
+    },
+    "title": "Produse"
+  },
+  "qrCodeGenerator": {
+    "description": "Creează și gestionează codurile tale QR.",
+    "title": "Generator de coduri QR"
+  },
+  "templates": {
+    "description": "Creează și gestionează șabloanele tale.",
+    "title": "Șabloane"
+  },
+  "tiktok": {
+    "description": "Conectează-ți contul TikTok pentru a răspunde la mesajele directe.",
+    "refreshToken": "Reînnoiește tokenul",
+    "title": "TikTok"
+  },
+  "unsubscribePage": {
+    "description": "Nu vei mai primi e-mailuri de la acest expeditor.",
+    "invalidDescription": "Acest link este invalid sau a expirat.",
+    "invalidTitle": "Link de dezabonare invalid.",
+    "title": "Ai fost dezabonat.",
+    "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
+    "unavailableTitle": "Dezabonare indisponibilă."
+  }
+}
