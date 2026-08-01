@@ -59,3 +59,43 @@ const writeValueResolvers = {
 
 export const buildSpreadsheetWriteData: WriteValueResolver = (props) =>
   writeValueResolvers[toSpreadsheetStepVersion(props.step.version)](props)
+
+/**
+ * Places each resolved value into the column that matches its mapping header,
+ * so writes stay correct regardless of column order. Mappings whose header no
+ * longer exists in the sheet (`indexOf === -1`) are skipped rather than shifting
+ * every following column. `baseRow` seeds the row for updates so unmapped
+ * columns keep their existing value; leave it empty for appends.
+ *
+ * With `skipEmptyValues` (used by Update Row), a mapping that resolves to an
+ * empty string leaves the existing cell untouched instead of blanking it, so
+ * only explicitly-set values overwrite.
+ */
+export const alignWriteValuesToHeaders = ({
+  map,
+  values,
+  headers,
+  baseRow = [],
+  skipEmptyValues = false,
+}: {
+  map: { header: string }[]
+  values: string[]
+  headers: string[]
+  baseRow?: string[]
+  skipEmptyValues?: boolean
+}): string[] => {
+  const width = Math.max(headers.length, baseRow.length)
+  const row = Array.from({ length: width }, (_, index) => baseRow[index] ?? "")
+  map.forEach((mapItem, index) => {
+    const column = headers.indexOf(mapItem.header)
+    if (column === -1) {
+      return
+    }
+    const value = values[index] ?? ""
+    if (skipEmptyValues && value === "") {
+      return
+    }
+    row[column] = value
+  })
+  return row
+}

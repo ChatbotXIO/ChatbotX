@@ -3,22 +3,25 @@ import { type FilterMode, Operator } from "@chatbotx.io/flow-config"
 type OperatorType = (typeof Operator)[keyof typeof Operator]
 
 const compare = (a: string, b: string, operator: OperatorType): boolean => {
-  const strA = String(a)
-  const strB = String(b)
+  // Trim both sides so lookups are not broken by stray whitespace, e.g. a
+  // trailing space left by the rich-text editor's serialization of a variable
+  // token ("{{Phone}} ") or incidental spaces in a sheet cell.
+  const strA = String(a).trim()
+  const strB = String(b).trim()
 
   switch (operator) {
     case Operator.IS:
-      return String(a) === String(b)
+      return strA === strB
     case Operator.IS_NOT:
-      return String(a) !== String(b)
+      return strA !== strB
     case Operator.GTE:
-      return Number(a) >= Number(b)
+      return Number(strA) >= Number(strB)
     case Operator.LTE:
-      return Number(a) <= Number(b)
+      return Number(strA) <= Number(strB)
     case Operator.GT:
-      return Number(a) > Number(b)
+      return Number(strA) > Number(strB)
     case Operator.LT:
-      return Number(a) < Number(b)
+      return Number(strA) < Number(strB)
     case Operator.CONTAINS:
       return strA.includes(strB)
     case Operator.NOT_CONTAINS:

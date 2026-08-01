@@ -32,7 +32,15 @@ type CustomFieldSelectProps = {
   placeholder?: string
   onValueChange?: (value: string) => void
   portal?: boolean
+  /**
+   * Adds a leading "none" option (value "") so the selection can be unset. Use
+   * when the field is optional and picking nothing is a valid choice.
+   */
+  clearable?: boolean
 }
+
+// Language-neutral marker for the "no selection" option.
+const CLEAR_OPTION_LABEL = "—"
 
 export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   const t = useTranslations()
@@ -48,6 +56,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     placeholder,
     onValueChange,
     portal,
+    clearable,
   } = props
 
   const workspaceId = useWorkspaceId()
@@ -57,6 +66,17 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     channels,
     reservedFieldIds,
   })
+
+  const options = useMemo(
+    () =>
+      clearable
+        ? [
+            { label: CLEAR_OPTION_LABEL, value: "" },
+            ...customFieldSelectOptions,
+          ]
+        : customFieldSelectOptions,
+    [clearable, customFieldSelectOptions],
+  )
 
   const getAllCustomFields = useCustomFieldStore(
     (state) => state.getAllCustomFields,
@@ -101,7 +121,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
       <ComboboxField
         emptyText={t("actions.noRecordFound")}
         name={name}
-        options={customFieldSelectOptions}
+        options={options}
         placeholder={placeholder || t("actions.pleaseSelect")}
         portal={portal}
         triggerValueChange={onValueChange}

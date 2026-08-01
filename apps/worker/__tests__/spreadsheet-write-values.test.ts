@@ -19,7 +19,7 @@ vi.mock("@chatbotx.io/variables", () => ({
   },
 }))
 
-const { buildSpreadsheetWriteData } = await import(
+const { buildSpreadsheetWriteData, alignWriteValuesToHeaders } = await import(
   "../src/integration/handlers/spreadsheet-write-values"
 )
 
@@ -95,5 +95,76 @@ describe("spreadsheet write values", () => {
     expect(mocks.getAll).toHaveBeenCalledTimes(1)
     expect(mocks.replaceAll).toHaveBeenCalledTimes(2)
     expect(mocks.listValues).not.toHaveBeenCalled()
+  })
+})
+
+describe("alignWriteValuesToHeaders", () => {
+  const headers = ["timestamp", "messenger id", "aaa", "test", "ADdD"]
+
+  test("places each value into the column matching its header, regardless of map order", () => {
+    expect(
+      alignWriteValuesToHeaders({
+        map: [{ header: "aaa" }, { header: "timestamp" }],
+        values: ["aaa-value", "ts-value"],
+        headers,
+      }),
+    ).toEqual(["ts-value", "", "aaa-value", "", ""])
+  })
+
+  test("blanks unmapped columns when appending (no base row)", () => {
+    expect(
+      alignWriteValuesToHeaders({
+        map: [{ header: "messenger id" }],
+        values: ["user-123"],
+        headers,
+      }),
+    ).toEqual(["", "user-123", "", "", ""])
+  })
+
+  test("skips mappings whose header no longer exists in the sheet", () => {
+    expect(
+      alignWriteValuesToHeaders({
+        map: [{ header: "removed-column" }, { header: "test" }],
+        values: ["orphan-value", "test-value"],
+        headers,
+      }),
+    ).toEqual(["", "", "", "test-value", ""])
+  })
+
+  test("preserves unmapped columns from the base row on update", () => {
+    expect(
+      alignWriteValuesToHeaders({
+        map: [{ header: "messenger id" }],
+        values: ["new-id"],
+        headers,
+        baseRow: ["2025-01-01", "old-id", "keep-aaa", "keep-test", "keep-ADdD"],
+      }),
+    ).toEqual(["2025-01-01", "new-id", "keep-aaa", "keep-test", "keep-ADdD"])
+  })
+
+  test("falls back to an empty string when a mapped value is missing", () => {
+    expect(
+      alignWriteValuesToHeaders({
+        map: [{ header: "timestamp" }],
+        values: [],
+        headers,
+      }),
+    ).toEqual(["", "", "", "", ""])
+  })
+
+  test("skipEmptyValues keeps the existing cell when a mapped value is empty", () => {
+    expect(
+      alignWriteValuesToHeaders({
+        map: [
+          { header: "timestamp" },
+          { header: "messenger id" },
+          { header: "aaa" },
+        ],
+        values: ["now", "", "phone"],
+        headers,
+        baseRow: ["old-ts", "keep-id", "old-aaa", "keep-test", "keep-ADdD"],
+        skipEmptyValues: true,
+      }),
+    ).toEqual(["now", "keep-id", "phone", "keep-test", "keep-ADdD"])
   })
 })

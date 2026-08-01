@@ -40,6 +40,23 @@ describe("spreadsheet write mapping versions", () => {
     ).toBe("v1")
   })
 
+  test("accepts contact-to-sheet mappings that carry an empty customFieldId", () => {
+    // Legacy v1 write steps persisted `customFieldId: ""`; the schema must keep
+    // validating them so opening an existing step does not error.
+    expect(() =>
+      spreadsheetSendDataSchema.parse({
+        ...spreadsheetSendDataDefaultFn(),
+        spreadsheetId: "11619011544072192",
+        sheetName: "Sheet1",
+        version: "v2",
+        map: [
+          { header: "Name", value: "Ada", customFieldId: "" },
+          { header: "Phone", value: "{{Phone}}", customFieldId: "" },
+        ],
+      }),
+    ).not.toThrow()
+  })
+
   test("converts legacy mappings to raw custom-field tokens all-or-nothing", () => {
     const step = {
       stepType: "spreadsheetSendData",

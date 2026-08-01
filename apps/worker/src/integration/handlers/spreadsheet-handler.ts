@@ -29,7 +29,11 @@ import {
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
-import { buildSpreadsheetWriteData } from "./spreadsheet-write-values"
+import { resolveSpreadsheetLookup } from "./spreadsheet-lookup-values"
+import {
+  alignWriteValuesToHeaders,
+  buildSpreadsheetWriteData,
+} from "./spreadsheet-write-values"
 import type { ExecuteStepResult } from "./step"
 
 const findRowType = {
@@ -129,7 +133,7 @@ export const getSpreadsheetRow = async (
     const foundRow = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.SINGLE,
     }) as string[] | null
     if (!foundRow) {
@@ -166,8 +170,6 @@ export const sendSpreadsheetData = async (
       workspaceId: props.conversation.workspaceId,
     })
 
-    const data = await buildSpreadsheetWriteData(props)
-
     const ctx = await buildContext({
       workspaceId: props.conversation.workspaceId,
       integrationType: "googleSheets",
@@ -175,6 +177,21 @@ export const sendSpreadsheetData = async (
         ...integrationRow,
         auth: integrationRow.auth as GoogleSheetsAuthValue,
       },
+    })
+    const headers = await integrationGooglesheets.runAction(
+      "listSheetHeaders",
+      {
+        ctx,
+        props: {
+          spreadsheetId: worksheet.spreadsheetId,
+          sheetName: props.step.sheetName,
+        },
+      },
+    )
+    const data = alignWriteValuesToHeaders({
+      map: props.step.map,
+      values: await buildSpreadsheetWriteData(props),
+      headers,
     })
     await integrationGooglesheets.runAction("insertRow", {
       ctx,
@@ -203,7 +220,7 @@ export const updateSpreadsheetRow = async (
     const foundRows = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
@@ -219,7 +236,7 @@ export const updateSpreadsheetRow = async (
       workspaceId: props.conversation.workspaceId,
     })
 
-    const data = await buildSpreadsheetWriteData(props)
+    const resolvedValues = await buildSpreadsheetWriteData(props)
 
     const ctx = await buildContext({
       workspaceId: props.conversation.workspaceId,
@@ -230,6 +247,16 @@ export const updateSpreadsheetRow = async (
       },
     })
     for (const foundRow of foundRows) {
+      // Seed from the existing row so unmapped columns keep their value, and
+      // skip empty values so a blank Value input leaves the cell untouched
+      // instead of clearing it.
+      const data = alignWriteValuesToHeaders({
+        map: props.step.map,
+        values: resolvedValues,
+        headers,
+        baseRow: foundRow,
+        skipEmptyValues: true,
+      })
       await integrationGooglesheets.runAction("updateRow", {
         ctx,
         props: {
@@ -259,7 +286,7 @@ export const clearSpreadsheetRow = async (
     const foundRows = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
@@ -312,7 +339,7 @@ export const getSpreadsheetRandomRow = async (
     const foundRow = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.RANDOM,
     }) as string[] | null
     if (!foundRow) {

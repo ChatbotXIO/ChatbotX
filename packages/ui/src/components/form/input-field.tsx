@@ -29,7 +29,7 @@ export function InputField<T extends FieldValues>({
       name={name}
       required={required}
     >
-      {(field) => <Input {...props} {...field} />}
+      {(field) => <Input {...props} {...field} value={field.value ?? ""} />}
     </FormFieldWrapper>
   )
 }

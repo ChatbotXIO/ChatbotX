@@ -1,12 +1,12 @@
 "use client"
 
 import { FilterMode, Operator } from "@chatbotx.io/flow-config"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
+import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { SpreadsheetOperatorSelect } from "../spreadsheet-operator-select"
 import { WorksheetColumnSelect } from "../worksheet-column-select"
 
@@ -69,9 +69,13 @@ export const SpreadsheetColumnFilter = ({
             label=""
             name={getFieldName(`lookup.conditions.${idx}.operator`)}
           />
-          <InputField
+          <PlainTextEditorField
+            includeRawCustomFieldVariables
+            inline
+            label=""
             name={getFieldName(`lookup.conditions.${idx}.value`)}
             placeholder={t("fields.value.label")}
+            showEmojiPicker={false}
           />
           <Button onClick={() => remove(idx)} type="button" variant="ghost">
             <TrashIcon size={20} />

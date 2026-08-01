@@ -51,7 +51,10 @@ const config: IntegrationDefinition<
       await sheetsClient.spreadsheets.values.append({
         spreadsheetId: props.spreadsheetId,
         range: props.sheetName,
-        valueInputOption: "USER_ENTERED",
+        // RAW stores values exactly as provided so contact data (phone numbers
+        // like "+84...", long IDs, leading-zero codes) is not reinterpreted by
+        // Sheets, and untrusted values cannot inject formulas.
+        valueInputOption: "RAW",
         insertDataOption: "INSERT_ROWS",
         requestBody: {
           values: [props.data],
@@ -63,7 +66,10 @@ const config: IntegrationDefinition<
       await sheetsClient.spreadsheets.values.update({
         spreadsheetId: props.spreadsheetId,
         range: `${props.sheetName}!A${props.rowIndex + 1}`,
-        valueInputOption: "USER_ENTERED",
+        // RAW stores values exactly as provided so contact data (phone numbers
+        // like "+84...", long IDs, leading-zero codes) is not reinterpreted by
+        // Sheets, and untrusted values cannot inject formulas.
+        valueInputOption: "RAW",
         requestBody: {
           values: [props.data],
         },

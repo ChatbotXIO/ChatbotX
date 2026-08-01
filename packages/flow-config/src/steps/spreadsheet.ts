@@ -82,7 +82,9 @@ export const spreadsheetSheetToContactMappingDefaultFn = (
 
 export const spreadsheetContactToSheetMappingSchema = z.object({
   header: z.string().min(1),
-  customFieldId: zodBigintAsString().optional(),
+  // Legacy v1 entries persisted `customFieldId: ""`; accept it (and undefined)
+  // so existing steps validate. v2 uses `value`, not `customFieldId`.
+  customFieldId: optionalCustomFieldIdSchema.optional(),
   value: z.string().default(""),
 })
 

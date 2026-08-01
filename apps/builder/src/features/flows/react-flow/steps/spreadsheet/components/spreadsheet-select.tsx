@@ -1,66 +1,43 @@
 "use client"
 
-import {
-  SelectField,
-  type SelectFieldProps,
-} from "@chatbotx.io/ui/components/form/select-field"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { useTranslations } from "next-intl"
-import type { FieldValues } from "react-hook-form"
 import { useWorkspaceId } from "@/hooks/routing"
+import { callAPI } from "@/lib/swr"
 
-type SpreadsheetSelectProps = SelectFieldProps<FieldValues> & {
-  allowCreate?: boolean
+type SpreadsheetSelectProps = {
+  name: string
+  label?: string
+  required?: boolean
+  triggerValueChange?: (value: string) => void
 }
 
 export const SpreadsheetSelect = ({
-  allowCreate = false,
-  ...props
+  name,
+  label,
+  required = true,
+  triggerValueChange,
 }: SpreadsheetSelectProps) => {
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
 
   const url = `/api/workspaces/${workspaceId}/spreadsheets?perPage=9999`
+  const { data } = callAPI<{ data: { id: string; name: string }[] }>(url)
+  const options = (data?.data ?? []).map((spreadsheet) => ({
+    label: spreadsheet.name,
+    value: spreadsheet.id,
+  }))
 
   return (
-    <SelectField
-      {...props}
-      fetchOptionsUrl={url}
-      label={t("fields.spreadsheets.label")}
-      required
+    <ComboboxField
+      emptyText={t("actions.noRecordFound")}
+      label={label ?? t("fields.spreadsheets.label")}
+      name={name}
+      options={options}
+      placeholder={t("actions.pleaseSelect")}
+      popoverClassName="w-[var(--dice-anchor-width)]"
+      required={required}
+      triggerValueChange={triggerValueChange}
     />
-
-    // <FormItem className="w-full">
-    //   {label && label !== "" && (
-    //     <div className="flex items-center">
-    //       <FormLabel className="flex flex-1 gap-1 items-center">
-    //         {label}
-    //         {!isRequired && (
-    //           <span className="text-xxs self-start font-normal">
-    //             (optional)
-    //           </span>
-    //         )}
-    //       </FormLabel>
-    //       {allowCreate && (
-    //         <CreateSpreadsheetDialog
-    //           workspaceId={params.workspaceId}
-    //           triggerButton={
-    //             <Button
-    //               size="sm"
-    //               variant="destructive"
-    //               className="cursor-pointer"
-    //               asChild
-    //             >
-    //               <PlusIcon size={20} className="text-pink-300" />
-    //             </Button>
-    //           }
-    //           onSuccess={() => {
-    //             mutate(url)
-    //           }}
-    //         />
-    //       )}
-    //     </div>
-    //   )}
-
-    // </FormItem>
   )
 }

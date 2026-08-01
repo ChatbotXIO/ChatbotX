@@ -95,6 +95,8 @@ describe("spreadsheet handler - temporal custom-field write", () => {
 
   test("sendSpreadsheetData routes legacy v1 writes through the raw custom-field resolver", async () => {
     mocks.runAction.mockReset()
+    // sendData now fetches the live headers to align values by column.
+    mocks.runAction.mockResolvedValueOnce(["Name", "Birthday"])
 
     const result = await sendSpreadsheetData({
       conversation: CONVERSATION,
@@ -139,13 +141,15 @@ describe("spreadsheet handler - temporal custom-field write", () => {
 
     expect(result.status).toBe("success")
     expect(mocks.listValues).toHaveBeenCalledTimes(1)
+    // The Birthday value lands in its own column (index 1) and the unmapped
+    // "Name" column keeps its existing value instead of being shifted/blanked.
     expect(mocks.runAction).toHaveBeenLastCalledWith("updateRow", {
       ctx: {},
       props: {
         spreadsheetId: "sheet-abc",
         sheetName: "Sheet1",
         rowIndex: 0,
-        data: ["2026-07-23T00:00:00.000Z"],
+        data: ["Alice", "2026-07-23T00:00:00.000Z"],
       },
     })
   })
