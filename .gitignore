@@ -56,5 +56,8 @@ test-webchat
 .cursor/skills/
 CLAUDE.md
 
+# Per-developer Claude Code overrides (hooks, personal permissions)
+.claude/settings.local.json
+
 .pnpm-store/
 .plans/
