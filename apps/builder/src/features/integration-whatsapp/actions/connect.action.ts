@@ -54,7 +54,6 @@ import {
   isCoexistOnboardingIntent,
   WHATSAPP_OAUTH_CALLBACK_PATH,
 } from "../libs/embedded-signup"
-import { buildWhatsappPhoneName } from "../libs/phone-name"
 import { toRegistrationOutcome } from "../libs/registration-outcome"
 import {
   CONNECT_WHATSAPP_RESULT_TYPES,
@@ -573,10 +572,7 @@ async function persistIntegration(params: {
   const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
     phoneNumber.display_phone_number,
   )
-  const phoneName = buildWhatsappPhoneName({
-    verifiedName: phoneNumber.verified_name,
-    displayPhoneNumber,
-  })
+  const phoneName = phoneNumber.verified_name.trim() || displayPhoneNumber
 
   let integrationRow: IntegrationWhatsappModel | undefined
 
@@ -610,6 +606,7 @@ async function persistIntegration(params: {
         .onConflictDoUpdate({
           target: [integrationWhatsappModel.inboxId],
           set: {
+            name: phoneName,
             displayPhoneNumber,
             isCoexist,
             platformType,

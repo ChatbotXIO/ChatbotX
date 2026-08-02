@@ -179,7 +179,7 @@ class InboxService extends BaseService {
       if (existing.status === inboxStatuses.enum.disconnected) {
         const [updated] = await tx
           .update(inboxModel)
-          .set({ status: inboxStatuses.enum.connected })
+          .set({ status: inboxStatuses.enum.connected, name: data.name })
           .where(eq(inboxModel.id, existing.id))
           .returning()
         return { inbox: updated, wasCreated: true }
