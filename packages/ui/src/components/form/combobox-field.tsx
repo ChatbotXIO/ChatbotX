@@ -107,7 +107,9 @@ export function ComboboxField<T extends FieldValues>({
       required={required}
     >
       {(field) => {
-        const selectedLabel = field.value ? optionMap.get(field.value) : null
+        // Resolve the label for the current value, including an empty-value
+        // "none" option so a cleared selection can still show its marker.
+        const selectedLabel = optionMap.get(field.value ?? "") ?? null
 
         const handleSelect = (value: string) => {
           field.onChange(value as T[FieldPath<T>])

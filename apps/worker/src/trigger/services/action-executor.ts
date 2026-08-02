@@ -12,12 +12,14 @@ import {
   FieldOperationType,
   type SpreadsheetClearRowSchema,
   type SpreadsheetColumnFilterSchema,
+  type SpreadsheetContactToSheetMappingSchema,
   type SpreadsheetGetRandomRowSchema,
   type SpreadsheetGetRowSchema,
-  type SpreadsheetMappingSchema,
   type SpreadsheetSendDataSchema,
+  type SpreadsheetSheetToContactMappingSchema,
   type SpreadsheetUpdateRowSchema,
   type StepType,
+  spreadsheetStepVersions,
   stepTypes,
   successStateDefaultFn,
 } from "@chatbotx.io/flow-config"
@@ -316,7 +318,7 @@ export class ActionExecutor {
         const spreadsheetId = action.spreadsheetId as string
         const sheetName = action.sheetName as string
         const lookup = action.lookup as SpreadsheetColumnFilterSchema
-        const map = (action.map as SpreadsheetMappingSchema[]) ?? []
+        const map = action.map ?? []
 
         const baseProps = {
           conversation,
@@ -331,7 +333,7 @@ export class ActionExecutor {
               spreadsheetId,
               sheetName,
               lookup,
-              map,
+              map: map as SpreadsheetSheetToContactMappingSchema[],
               states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
             await getSpreadsheetRow({ ...baseProps, step })
@@ -347,10 +349,7 @@ export class ActionExecutor {
               lookup,
               states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
-            await clearSpreadsheetRow({
-              ...baseProps,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            await clearSpreadsheetRow({ ...baseProps, step })
             break
           }
 
@@ -361,13 +360,10 @@ export class ActionExecutor {
               spreadsheetId,
               sheetName,
               lookup,
-              map,
+              map: map as SpreadsheetSheetToContactMappingSchema[],
               states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
-            await getSpreadsheetRandomRow({
-              ...baseProps,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            await getSpreadsheetRandomRow({ ...baseProps, step })
             break
           }
 
@@ -375,15 +371,13 @@ export class ActionExecutor {
             const step: SpreadsheetSendDataSchema = {
               id: createId(),
               stepType: stepTypes.enum.spreadsheetSendData,
+              version: spreadsheetStepVersions.enum.v2,
               spreadsheetId,
               sheetName,
-              map,
+              map: map as SpreadsheetContactToSheetMappingSchema[],
               states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
-            await sendSpreadsheetData({
-              ...baseProps,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            await sendSpreadsheetData({ ...baseProps, step })
             break
           }
 
@@ -391,16 +385,14 @@ export class ActionExecutor {
             const step: SpreadsheetUpdateRowSchema = {
               id: createId(),
               stepType: stepTypes.enum.spreadsheetUpdateRow,
+              version: spreadsheetStepVersions.enum.v2,
               spreadsheetId,
               sheetName,
               lookup,
-              map,
+              map: map as SpreadsheetContactToSheetMappingSchema[],
               states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
-            await updateSpreadsheetRow({
-              ...baseProps,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            await updateSpreadsheetRow({ ...baseProps, step })
             break
           }
 

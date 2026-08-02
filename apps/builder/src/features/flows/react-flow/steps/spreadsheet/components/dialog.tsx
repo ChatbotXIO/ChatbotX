@@ -38,6 +38,7 @@ export const SpreadsheetDialog = ({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogTrigger
+        nativeButton={false}
         render={
           trigger ?? (
             <div className="flex flex-col items-center rounded-md border-2 border-transparent p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
@@ -50,7 +51,10 @@ export const SpreadsheetDialog = ({
           )
         }
       />
-      <DialogContent aria-describedby={undefined} className="flex-1">
+      <DialogContent
+        aria-describedby={undefined}
+        className="flex-1 sm:max-w-2xl"
+      >
         <DialogHeader>
           <DialogTitle className="capitalize">
             Google Sheets - {t(`${name}`)}

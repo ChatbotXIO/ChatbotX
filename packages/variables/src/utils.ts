@@ -48,7 +48,8 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const VARIABLE_PLACEHOLDER_REGEX = /\{\{([\w.]+|coupon:[^{}\n]+)\}\}/g
+const VARIABLE_PLACEHOLDER_REGEX =
+  /\{\{([\w.]+|coupon:[^{}\n]+|raw:[^{}\n]+)\}\}/g
 // `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
 // where the placeholder sits — a call the position-independent mapping can't
 // make. resolveGenderLabel returns the opening form; inside a sentence it is

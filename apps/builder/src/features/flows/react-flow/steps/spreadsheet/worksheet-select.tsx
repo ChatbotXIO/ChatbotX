@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
@@ -23,25 +23,19 @@ export const WorksheetSelect = ({
 
   const url = `/api/workspaces/${workspaceId}/worksheets?spreadsheetId=${spreadsheetId}`
   const { data } = callAPI<{ data: string[] }>(url)
-  const worksheetOptions = (data?.data ?? []).map((v) => ({
-    label: v,
-    value: v,
+  const worksheetOptions = (data?.data ?? []).map((sheet) => ({
+    label: sheet,
+    value: sheet,
   }))
 
-  // const worksheetOptions = []
-
-  // useEffect(() => {
-  //   if (error || worksheets.length === 0) {
-  //     toast.error("Can't find any sheet from link.")
-  //   }
-  // }, [error, worksheets.length])
-
   return (
-    <SelectField
+    <ComboboxField
+      emptyText={t("actions.noRecordFound")}
       label={label ?? t("fields.worksheet.label")}
       name={name}
       options={worksheetOptions}
       placeholder={t("actions.pleaseSelect")}
+      popoverClassName="w-[var(--dice-anchor-width)]"
       required={required}
     />
   )

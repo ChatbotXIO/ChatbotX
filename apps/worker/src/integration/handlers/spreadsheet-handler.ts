@@ -2,9 +2,8 @@ import {
   buildContext,
   contactCustomFieldService,
   integrationGoogleSheetService,
+  spreadsheetService,
 } from "@chatbotx.io/business"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import type {
   ConversationModel,
   SpreadsheetModel,
@@ -12,7 +11,12 @@ import type {
 import type {
   FilterMode,
   Operator,
+  SpreadsheetClearRowSchema,
+  SpreadsheetGetRandomRowSchema,
   SpreadsheetGetRowSchema,
+  SpreadsheetSchema,
+  SpreadsheetSendDataSchema,
+  SpreadsheetUpdateRowSchema,
 } from "@chatbotx.io/flow-config"
 import {
   type GoogleSheetsAuthValue,
@@ -25,6 +29,11 @@ import {
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
+import { resolveSpreadsheetLookup } from "./spreadsheet-lookup-values"
+import {
+  alignWriteValuesToHeaders,
+  buildSpreadsheetWriteData,
+} from "./spreadsheet-write-values"
 import type { ExecuteStepResult } from "./step"
 
 const findRowType = {
@@ -41,19 +50,12 @@ const getWorksheet = async ({
   id: string
   workspaceId: string
 }): Promise<SpreadsheetModel> =>
-  await findOrFail({
-    table: spreadsheetModel,
-    where: {
-      id,
-      workspaceId,
-    },
-    message: "Spreadsheet not found",
-  })
+  await spreadsheetService.findByWorkspaceIdOrFail({ id, workspaceId })
 
 const getSheetData = async ({
   conversation,
   step,
-}: ExecuteStepProps<SpreadsheetGetRowSchema>) => {
+}: ExecuteStepProps<SpreadsheetSchema>) => {
   const integrationRow =
     await integrationGoogleSheetService.findByWorkspaceIdOrFail(
       conversation.workspaceId,
@@ -131,7 +133,7 @@ export const getSpreadsheetRow = async (
     const foundRow = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.SINGLE,
     }) as string[] | null
     if (!foundRow) {
@@ -156,7 +158,7 @@ export const getSpreadsheetRow = async (
 }
 
 export const sendSpreadsheetData = async (
-  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetSendDataSchema>,
 ): Promise<ExecuteStepResult> => {
   try {
     const integrationRow =
@@ -168,22 +170,6 @@ export const sendSpreadsheetData = async (
       workspaceId: props.conversation.workspaceId,
     })
 
-    const data: string[] = []
-    for (const mapItem of props.step.map) {
-      let value = ""
-      if (mapItem.customFieldId) {
-        const contactCustomField =
-          await db.query.contactCustomFieldModel.findFirst({
-            where: {
-              contactId: props.conversation.contactId,
-              customFieldId: mapItem.customFieldId,
-            },
-          })
-        value = contactCustomField?.value || ""
-      }
-      data.push(value)
-    }
-
     const ctx = await buildContext({
       workspaceId: props.conversation.workspaceId,
       integrationType: "googleSheets",
@@ -191,6 +177,21 @@ export const sendSpreadsheetData = async (
         ...integrationRow,
         auth: integrationRow.auth as GoogleSheetsAuthValue,
       },
+    })
+    const headers = await integrationGooglesheets.runAction(
+      "listSheetHeaders",
+      {
+        ctx,
+        props: {
+          spreadsheetId: worksheet.spreadsheetId,
+          sheetName: props.step.sheetName,
+        },
+      },
+    )
+    const data = alignWriteValuesToHeaders({
+      map: props.step.map,
+      values: await buildSpreadsheetWriteData(props),
+      headers,
     })
     await integrationGooglesheets.runAction("insertRow", {
       ctx,
@@ -212,14 +213,14 @@ export const sendSpreadsheetData = async (
 }
 
 export const updateSpreadsheetRow = async (
-  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetUpdateRowSchema>,
 ): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRows = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
@@ -235,21 +236,7 @@ export const updateSpreadsheetRow = async (
       workspaceId: props.conversation.workspaceId,
     })
 
-    const data: string[] = []
-    for (const mapItem of props.step.map) {
-      let value = ""
-      if (mapItem.customFieldId) {
-        const contactCustomField =
-          await db.query.contactCustomFieldModel.findFirst({
-            where: {
-              contactId: props.conversation.contactId,
-              customFieldId: mapItem.customFieldId,
-            },
-          })
-        value = contactCustomField?.value || ""
-      }
-      data.push(value)
-    }
+    const resolvedValues = await buildSpreadsheetWriteData(props)
 
     const ctx = await buildContext({
       workspaceId: props.conversation.workspaceId,
@@ -260,6 +247,16 @@ export const updateSpreadsheetRow = async (
       },
     })
     for (const foundRow of foundRows) {
+      // Seed from the existing row so unmapped columns keep their value, and
+      // skip empty values so a blank Value input leaves the cell untouched
+      // instead of clearing it.
+      const data = alignWriteValuesToHeaders({
+        map: props.step.map,
+        values: resolvedValues,
+        headers,
+        baseRow: foundRow,
+        skipEmptyValues: true,
+      })
       await integrationGooglesheets.runAction("updateRow", {
         ctx,
         props: {
@@ -282,14 +279,14 @@ export const updateSpreadsheetRow = async (
 }
 
 export const clearSpreadsheetRow = async (
-  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetClearRowSchema>,
 ): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRows = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
@@ -335,14 +332,14 @@ export const clearSpreadsheetRow = async (
 }
 
 export const getSpreadsheetRandomRow = async (
-  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetGetRandomRowSchema>,
 ): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRow = findRows({
       headers,
       rows: values,
-      lookup: props.step.lookup,
+      lookup: await resolveSpreadsheetLookup(props),
       type: findRowType.RANDOM,
     }) as string[] | null
     if (!foundRow) {
@@ -373,7 +370,7 @@ const updateContactCustomFields = async ({
   foundRow,
 }: {
   conversation: ConversationModel
-  step: SpreadsheetGetRowSchema
+  step: SpreadsheetGetRowSchema | SpreadsheetGetRandomRowSchema
   headers: string[]
   foundRow: string[]
 }) => {

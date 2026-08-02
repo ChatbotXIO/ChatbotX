@@ -43,6 +43,14 @@ export const spreadsheetSchema = z.object({
 })
 export type SpreadsheetSchema = z.infer<typeof spreadsheetSchema>
 
+export const spreadsheetStepVersions = z.enum(["v1", "v2"])
+export type SpreadsheetStepVersion = z.infer<typeof spreadsheetStepVersions>
+
+export const toSpreadsheetStepVersion = (
+  value: unknown,
+): SpreadsheetStepVersion =>
+  spreadsheetStepVersions.catch(spreadsheetStepVersions.enum.v1).parse(value)
+
 export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   id: createId(),
   stepType: stepTypes.enum.spreadsheetGetRow,
@@ -51,18 +59,44 @@ export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   states: [successStateDefaultFn(), errorStateDefaultFn()],
 })
 
-export const spreadsheetMappingSchema = z.object({
-  customFieldId: zodBigintAsString(),
+const optionalCustomFieldIdSchema = z.union([
+  zodBigintAsString(),
+  z.literal(""),
+])
+
+export const spreadsheetSheetToContactMappingSchema = z.object({
+  customFieldId: optionalCustomFieldIdSchema,
   header: z.string().min(1),
 })
 
-export type SpreadsheetMappingSchema = z.infer<typeof spreadsheetMappingSchema>
+export type SpreadsheetSheetToContactMappingSchema = z.infer<
+  typeof spreadsheetSheetToContactMappingSchema
+>
 
-export const spreadsheetMappingDefaultFn = (
+export const spreadsheetSheetToContactMappingDefaultFn = (
   header: string,
-): SpreadsheetMappingSchema => ({
+): SpreadsheetSheetToContactMappingSchema => ({
   customFieldId: "",
   header,
+})
+
+export const spreadsheetContactToSheetMappingSchema = z.object({
+  header: z.string().min(1),
+  // Legacy v1 entries persisted `customFieldId: ""`; accept it (and undefined)
+  // so existing steps validate. v2 uses `value`, not `customFieldId`.
+  customFieldId: optionalCustomFieldIdSchema.optional(),
+  value: z.string().default(""),
+})
+
+export type SpreadsheetContactToSheetMappingSchema = z.infer<
+  typeof spreadsheetContactToSheetMappingSchema
+>
+
+export const spreadsheetContactToSheetMappingDefaultFn = (
+  header: string,
+): SpreadsheetContactToSheetMappingSchema => ({
+  header,
+  value: "",
 })
 
 export const spreadsheetColumnFilterSchema = z.object({

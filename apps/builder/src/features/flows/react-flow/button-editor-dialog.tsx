@@ -56,6 +56,7 @@ import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
 import type { MenuItem } from "./nodes/types"
 import { allSteps, DynamicStepEditor } from "./steps"
 import { allButtonsConfig } from "./steps/button-config"
+import { SpreadsheetDialogProvider } from "./steps/spreadsheet/components/spreadsheet-dialog-context"
 import { useStepStore } from "./stores/step-store-provider"
 
 function AllButtonOptions({
@@ -469,42 +470,44 @@ export function ButtonEditorDialog() {
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            className="flex w-full flex-col gap-4"
-            onSubmit={(e) => {
-              e.stopPropagation()
-              return form.handleSubmit(onSave)(e)
-            }}
-          >
-            <InputField
-              disabled={!!buttonEditorConfig?.lockLabel}
-              label={t("fields.name.label")}
-              maxLength={BUTTON_LABEL_MAX}
-              name="label"
-              required
-            />
+          <SpreadsheetDialogProvider>
+            <form
+              className="flex w-full flex-col gap-4"
+              onSubmit={(e) => {
+                e.stopPropagation()
+                return form.handleSubmit(onSave)(e)
+              }}
+            >
+              <InputField
+                disabled={!!buttonEditorConfig?.lockLabel}
+                label={t("fields.name.label")}
+                maxLength={BUTTON_LABEL_MAX}
+                name="label"
+                required
+              />
 
-            <div className="mt-2 font-medium">
-              {t("fields.button.whenPressed")}
-            </div>
+              <div className="mt-2 font-medium">
+                {t("fields.button.whenPressed")}
+              </div>
 
-            {buttonType ? (
-              <div className="flex flex-col gap-2">
-                <ActiveButton
-                  buttonType={buttonType}
+              {buttonType ? (
+                <div className="flex flex-col gap-2">
+                  <ActiveButton
+                    buttonType={buttonType}
+                    onChooseButton={onChooseButton}
+                  />
+                  <ButtonSteps />
+                </div>
+              ) : (
+                <AllButtonOptions
+                  hiddenButtonTypes={
+                    buttonEditorConfig?.hiddenButtonTypes ?? undefined
+                  }
                   onChooseButton={onChooseButton}
                 />
-                <ButtonSteps />
-              </div>
-            ) : (
-              <AllButtonOptions
-                hiddenButtonTypes={
-                  buttonEditorConfig?.hiddenButtonTypes ?? undefined
-                }
-                onChooseButton={onChooseButton}
-              />
-            )}
-          </form>
+              )}
+            </form>
+          </SpreadsheetDialogProvider>
         </Form>
 
         <DialogFooter>

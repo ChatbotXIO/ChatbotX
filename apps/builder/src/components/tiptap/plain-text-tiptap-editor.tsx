@@ -35,6 +35,7 @@ type PlainTextTiptapEditorProps = {
   showEmojiPicker?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includeRawCustomFieldVariables?: boolean
   onChange?: (content: string) => void
   /** Single-line height with the variable picker rendered inside on the right. */
   inline?: boolean
@@ -153,6 +154,7 @@ export const PlainTextTiptapEditor = ({
   onChange,
   channels,
   includeCouponVariables = false,
+  includeRawCustomFieldVariables = false,
   placeholder = "Type a message...",
   showEmojiPicker = true,
   inline = false,
@@ -163,6 +165,7 @@ export const PlainTextTiptapEditor = ({
   const promptVariableOptions = usePromptVariableOptions({
     channels,
     includeCouponVariables,
+    includeRawCustomFieldVariables,
   })
   const promptVariableOptionsRef = useRef(promptVariableOptions)
 

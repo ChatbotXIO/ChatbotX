@@ -6,10 +6,11 @@ import {
 } from "@chatbotx.io/flow-config"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useCallback, useState } from "react"
+import { useCallback } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { SpreadsheetDialog } from "../spreadsheet/components/dialog"
 import { SpreadsheetColumnFilter } from "../spreadsheet/components/spreadsheet-column-filter"
+import { useSpreadsheetDialogOpen } from "../spreadsheet/components/spreadsheet-dialog-context"
 import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
 import { WorksheetSelect } from "../spreadsheet/worksheet-select"
 
@@ -18,7 +19,7 @@ export const SpreadsheetClearRowEditor = ({
 }: {
   parentName: string
 }) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useSpreadsheetDialogOpen(parentName)
   const { getValues, setValue: setValueParent } = useFormContext()
 
   const form = useForm<SpreadsheetClearRowSchema>({
@@ -37,7 +38,7 @@ export const SpreadsheetClearRowEditor = ({
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
     setOpen(false)
-  }, [setValueParent, parentName, form.getValues, form])
+  }, [setValueParent, parentName, form.getValues, form, setOpen])
 
   const onChangeSpreadsheet = useCallback(() => {
     resetField("sheetName")

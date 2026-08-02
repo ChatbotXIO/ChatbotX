@@ -3,15 +3,15 @@ import {
   spreadsheetColumnFilterDefaultFn,
   spreadsheetColumnFilterSchema,
   spreadsheetDefaultFn,
-  spreadsheetMappingSchema,
   spreadsheetSchema,
+  spreadsheetSheetToContactMappingSchema,
 } from "./spreadsheet"
 import { stepTypes } from "./step-action"
 
 export const spreadsheetGetRowSchema = spreadsheetSchema.extend({
   stepType: z.literal(stepTypes.enum.spreadsheetGetRow),
   lookup: spreadsheetColumnFilterSchema,
-  map: z.array(spreadsheetMappingSchema).min(1),
+  map: z.array(spreadsheetSheetToContactMappingSchema).min(1),
 })
 export type SpreadsheetGetRowSchema = z.infer<typeof spreadsheetGetRowSchema>
 

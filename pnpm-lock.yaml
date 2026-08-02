@@ -2042,6 +2042,9 @@ importers:
       '@chatbotx.io/encryption':
         specifier: workspace:*
         version: link:../encryption
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../flow-config
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger

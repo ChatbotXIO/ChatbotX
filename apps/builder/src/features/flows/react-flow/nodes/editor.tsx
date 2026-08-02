@@ -5,6 +5,7 @@ import {
   hiddenActionsStepTypes,
   MAX_QUICK_REPLIES,
   stepTypes,
+  upgradeNodeSteps,
 } from "@chatbotx.io/flow-config"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -36,11 +37,13 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
+import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
+import { SpreadsheetDialogProvider } from "../steps/spreadsheet/components/spreadsheet-dialog-context"
 import { useFlowTemplate } from "../stores/flow-template-store-provider"
 import { useStepStore } from "../stores/step-store-provider"
 import { useFlowHistory } from "../stores/use-flow-history"
@@ -237,6 +240,24 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   const t = useTranslations()
   const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
   const validator = nodeConfig?.validator.shape.data.shape.details
+  const customFields = useCustomFieldStore((state) => state.customFields)
+  const customFieldLookup = useMemo(() => {
+    const customFieldById = new Map(
+      customFields.map((field) => [
+        field.id,
+        {
+          name: field.name,
+          type: field.type,
+        },
+      ]),
+    )
+
+    return (customFieldId: string) => customFieldById.get(customFieldId)
+  }, [customFields])
+  const upgradedNodeDetails = useMemo(
+    () => upgradeNodeSteps(nodeDetails, customFieldLookup),
+    [customFieldLookup, nodeDetails],
+  )
 
   const { getNode, updateNodeData } = useReactFlow()
   const { updatedButtonData, onChangeButtonData } = useStepStore(
@@ -249,7 +270,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     // biome-ignore lint/suspicious/noExplicitAny: wip - validator can be undefined
     resolver: validator ? zodResolver(validator as any) : undefined,
     defaultValues: {
-      ...nodeDetails,
+      ...upgradedNodeDetails,
     },
     mode: "onChange",
   })
@@ -372,132 +393,136 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   )
 
   return (
-    <Form {...form}>
-      {"beforeStep" in nodeDetails && nodeDetails.beforeStep && (
-        <DynamicStepEditor
-          parentName="beforeStep"
-          type={
-            (
-              nodeDetails as {
-                beforeStep: { stepType: StepType }
+    <SpreadsheetDialogProvider>
+      <Form {...form}>
+        {"beforeStep" in upgradedNodeDetails &&
+          upgradedNodeDetails.beforeStep && (
+            <DynamicStepEditor
+              parentName="beforeStep"
+              type={
+                (
+                  upgradedNodeDetails as {
+                    beforeStep: { stepType: StepType }
+                  }
+                ).beforeStep.stepType
               }
-            ).beforeStep.stepType
-          }
-        />
-      )}
+            />
+          )}
 
-      <div className="my-2 flex flex-1 flex-col gap-2">
-        <Sortable
-          getItemValue={(item) => item.id}
-          onMove={({ activeIndex, overIndex }) =>
-            moveStep(activeIndex, overIndex)
-          }
-          value={stepFields}
-        >
-          <SortableContent className="flex w-full flex-col gap-4">
-            {stepFields.map((field, index) => (
-              <SortableItem
-                key={field.id}
-                render={
-                  <div
-                    className={cn(
-                      "flex items-center gap-2",
-                      // biome-ignore lint/suspicious/noExplicitAny: wip
-                      (field as any).stepType === stepTypes.enum.sendCarousel
-                        ? "relative"
-                        : "",
-                    )}
-                  >
-                    {(() => {
-                      const messages = collectErrorMessages(
-                        // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
-                        (form.formState.errors as any).steps?.[index],
-                      )
-                      return messages.length > 0 ? (
-                        <ErrorAlert message={messages.join(", ")} />
-                      ) : (
-                        <div className="w-4">{"\u00A0"}</div>
-                      )
-                    })()}
-                    <div className={cn("break-word flex-1 overflow-hidden")}>
-                      <DynamicStepEditor
-                        key={field.id}
-                        parentName={`steps.${index}`}
+        <div className="my-2 flex flex-1 flex-col gap-2">
+          <Sortable
+            getItemValue={(item) => item.id}
+            onMove={({ activeIndex, overIndex }) =>
+              moveStep(activeIndex, overIndex)
+            }
+            value={stepFields}
+          >
+            <SortableContent className="flex w-full flex-col gap-4">
+              {stepFields.map((field, index) => (
+                <SortableItem
+                  key={field.id}
+                  render={
+                    <div
+                      className={cn(
+                        "flex items-center gap-2",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
-                        type={(field as any).stepType}
-                      />
-                    </div>
-                    {!hiddenActionsStepTypes.includes(
-                      // biome-ignore lint/suspicious/noExplicitAny: wip
-                      (field as any).stepType,
-                    ) && (
-                      <div className="flex flex-col">
-                        <Button
-                          className="size-8 shrink-0"
-                          onClick={() => onRemoveStep(index)}
-                          size="icon"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <XIcon aria-hidden="true" className="size-4" />
-                        </Button>
-
-                        <SortableItemHandle
-                          render={
-                            <Button
-                              className="size-8"
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <MoveVerticalIcon className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                        {!disabledCopyActionTypes.includes(
+                        (field as any).stepType === stepTypes.enum.sendCarousel
+                          ? "relative"
+                          : "",
+                      )}
+                    >
+                      {(() => {
+                        const messages = collectErrorMessages(
+                          // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
+                          (form.formState.errors as any).steps?.[index],
+                        )
+                        return messages.length > 0 ? (
+                          <ErrorAlert message={messages.join(", ")} />
+                        ) : (
+                          <div className="w-4">{"\u00A0"}</div>
+                        )
+                      })()}
+                      <div className={cn("break-word flex-1 overflow-hidden")}>
+                        <DynamicStepEditor
+                          key={field.id}
+                          parentName={`steps.${index}`}
                           // biome-ignore lint/suspicious/noExplicitAny: wip
-                          (field as any).stepType,
-                        ) && (
+                          type={(field as any).stepType}
+                        />
+                      </div>
+                      {!hiddenActionsStepTypes.includes(
+                        // biome-ignore lint/suspicious/noExplicitAny: wip
+                        (field as any).stepType,
+                      ) && (
+                        <div className="flex flex-col">
                           <Button
                             className="size-8 shrink-0"
-                            onClick={() => onCopyStep(index)}
+                            onClick={() => onRemoveStep(index)}
                             size="icon"
                             type="button"
                             variant="ghost"
                           >
-                            <CopyIcon aria-hidden="true" className="size-4" />
+                            <XIcon aria-hidden="true" className="size-4" />
                           </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                }
-                value={field.id}
-              />
-            ))}
-          </SortableContent>
-        </Sortable>
-      </div>
 
-      {"quickReplies" in nodeDetails && nodeDetails.quickReplies && (
-        <>
-          {(() => {
-            const messages = collectErrorMessages(
-              // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
-              (form.formState.errors as any).quickReplies,
-            )
-            return messages.length > 0 ? (
-              <ErrorAlert message={messages.join(", ")} />
-            ) : null
-          })()}
-          <NodeEditorQuickReplies />
-        </>
-      )}
+                          <SortableItemHandle
+                            render={
+                              <Button
+                                className="size-8"
+                                size="icon"
+                                variant="ghost"
+                              >
+                                <MoveVerticalIcon className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          {!disabledCopyActionTypes.includes(
+                            // biome-ignore lint/suspicious/noExplicitAny: wip
+                            (field as any).stepType,
+                          ) && (
+                            <Button
+                              className="size-8 shrink-0"
+                              onClick={() => onCopyStep(index)}
+                              size="icon"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <CopyIcon aria-hidden="true" className="size-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  }
+                  value={field.id}
+                />
+              ))}
+            </SortableContent>
+          </Sortable>
+        </div>
 
-      <NodeEditorMenu nodeType={nodeType} onClick={onAddStep} />
+        {"quickReplies" in upgradedNodeDetails &&
+          upgradedNodeDetails.quickReplies && (
+            <>
+              {(() => {
+                const messages = collectErrorMessages(
+                  // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
+                  (form.formState.errors as any).quickReplies,
+                )
+                return messages.length > 0 ? (
+                  <ErrorAlert message={messages.join(", ")} />
+                ) : null
+              })()}
+              <NodeEditorQuickReplies />
+            </>
+          )}
 
-      <FlowValueSync control={control} pushToFlow={pushToFlow} />
+        <NodeEditorMenu nodeType={nodeType} onClick={onAddStep} />
 
-      <TriggerFormInitially form={form} />
-    </Form>
+        <FlowValueSync control={control} pushToFlow={pushToFlow} />
+
+        <TriggerFormInitially form={form} />
+      </Form>
+    </SpreadsheetDialogProvider>
   )
 })

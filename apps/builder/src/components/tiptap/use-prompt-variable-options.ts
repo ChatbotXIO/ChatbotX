@@ -8,11 +8,13 @@ import type { PromptVariableOption } from "./extensions/variable-injection/defin
 type UsePromptVariableOptionsProps = {
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includeRawCustomFieldVariables?: boolean
 }
 
 export function usePromptVariableOptions({
   channels,
   includeCouponVariables = false,
+  includeRawCustomFieldVariables = false,
 }: UsePromptVariableOptionsProps): PromptVariableOption[] {
   const t = useTranslations()
   const customFieldSelectOptions = useCustomFieldSelectOptions({
@@ -20,6 +22,21 @@ export function usePromptVariableOptions({
     customFieldValueKey: "name",
     channels,
   })
+  const rawCustomFieldSelectOptions = useCustomFieldSelectOptions({
+    customFieldValueKey: "name",
+    prefix: "raw",
+    channels,
+  })
+  const rawCustomFieldOptions = useMemo(
+    () =>
+      includeRawCustomFieldVariables
+        ? rawCustomFieldSelectOptions.map((option) => ({
+            ...option,
+            group: t("customFields.variables.rawGroup"),
+          }))
+        : [],
+    [includeRawCustomFieldVariables, rawCustomFieldSelectOptions, t],
+  )
   const { topics } = useCouponTopicOptions({
     enabled: includeCouponVariables,
   })
@@ -34,7 +51,11 @@ export function usePromptVariableOptions({
   )
 
   return useMemo(
-    () => [...customFieldSelectOptions, ...couponOptions],
-    [couponOptions, customFieldSelectOptions],
+    () => [
+      ...customFieldSelectOptions,
+      ...rawCustomFieldOptions,
+      ...couponOptions,
+    ],
+    [couponOptions, customFieldSelectOptions, rawCustomFieldOptions],
   )
 }

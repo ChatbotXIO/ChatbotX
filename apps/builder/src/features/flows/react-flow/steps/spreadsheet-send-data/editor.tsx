@@ -3,9 +3,10 @@
 import { spreadsheetSendDataSchema } from "@chatbotx.io/flow-config"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useCallback, useState } from "react"
+import { useCallback } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { SpreadsheetDialog } from "@/features/flows/react-flow/steps/spreadsheet/components/dialog"
+import { useSpreadsheetDialogOpen } from "@/features/flows/react-flow/steps/spreadsheet/components/spreadsheet-dialog-context"
 import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
 import { SpreadsheetCustomFieldMapping } from "../spreadsheet/custom-field-mapping"
 import { WorksheetSelect } from "../spreadsheet/worksheet-select"
@@ -18,7 +19,7 @@ export const SpreadsheetSendDataEditor = ({
   parentName,
 }: SpreadsheetSendDataEditorProps) => {
   const { getValues, setValue: setValueParent } = useFormContext()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useSpreadsheetDialogOpen(parentName)
 
   const form = useForm({
     resolver: zodResolver(spreadsheetSendDataSchema),
@@ -48,7 +49,7 @@ export const SpreadsheetSendDataEditor = ({
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
     setOpen(false)
-  }, [setValueParent, parentName, form.getValues, form])
+  }, [setValueParent, parentName, form.getValues, form, setOpen])
 
   return (
     <Form {...form}>
@@ -68,7 +69,7 @@ export const SpreadsheetSendDataEditor = ({
           )}
 
           {spreadsheetId && sheetName && (
-            <SpreadsheetCustomFieldMapping type={"update"} />
+            <SpreadsheetCustomFieldMapping direction="contactToSheet" />
           )}
         </div>
       </SpreadsheetDialog>

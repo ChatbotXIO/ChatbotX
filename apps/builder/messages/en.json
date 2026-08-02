@@ -3376,7 +3376,10 @@
     "title": "Audit Logs"
   },
   "customFields": {
-    "title": "Custom Fields"
+    "title": "Custom Fields",
+    "variables": {
+      "rawGroup": "Raw custom fields"
+    }
   },
   "keywords": {
     "title": "Keywords"

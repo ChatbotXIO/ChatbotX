@@ -6,6 +6,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ContactCustomFieldValue } from "../src/schema"
+import { extractVariables } from "../src/utils"
 
 const {
   mockContactCustomFieldFindMany,
@@ -185,6 +186,44 @@ describe("contactVariableService.replaceAll", () => {
       contactId: "contact-1",
       topicId: "11619011544072192",
     })
+  })
+
+  test("extracts and resolves raw custom field variables verbatim", async () => {
+    expect(extractVariables("{{raw:Full Name}} {{raw:Ngày sinh}}")).toEqual([
+      "raw:Full Name",
+      "raw:Ngày sinh",
+    ])
+
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{raw:Full Name}} {{raw:Ngày sinh}}",
+        variables: createVariables([
+          {
+            key: "Full Name",
+            value: "Ada Lovelace",
+          },
+          {
+            key: "Ngày sinh",
+            type: "date",
+            value: "2026-07-23T00:00:00.000Z",
+          },
+        ]),
+      }),
+    ).resolves.toBe("Ada Lovelace 2026-07-23T00:00:00.000Z")
+  })
+
+  test("keeps unknown raw variables literal and preserves a real raw-prefixed field name", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{raw:Missing}} {{raw:X}}",
+        variables: createVariables([
+          {
+            key: "raw:X",
+            value: "field named raw colon x",
+          },
+        ]),
+      }),
+    ).resolves.toBe("{{raw:Missing}} field named raw colon x")
   })
 
   test("does not render custom field null values as string null", async () => {
