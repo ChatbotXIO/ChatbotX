@@ -315,6 +315,29 @@ describe("processWhatsappTemplate", () => {
     )
   })
 
+  test("sends the variable-resolved params to the channel, not the raw template params", async () => {
+    // Regression: replaceWhatsappTemplateVariables resolved the params but the
+    // channel send received the raw `template`, so WhatsApp received literal
+    // tokens like {{first_name}} instead of the contact's attribute values.
+    const resolvedParams = { body: [{ type: "text", text: "John Doe" }] }
+    mockReplaceVariables.mockResolvedValue(resolvedParams)
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: {
+        id: "tmpl-wa-1",
+        name: "wa-template",
+        language: "en",
+        params: { body: [{ type: "text", text: "{{first_name}}" }] },
+      } as unknown as ProcessWhatsappTemplateParams["template"],
+    })
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+    const sentStep = mockSendFlowStep.mock.calls[0][0].step
+    expect(sentStep.template.params).toEqual(resolvedParams)
+  })
+
   test("throws when validateWhatsappTemplate returns null — repository.create not called", async () => {
     mockValidateTemplate.mockResolvedValue(null)
 
