@@ -2602,6 +2602,7 @@
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
+    "repliedToStory": "Đã trả lời story của bạn",
     "sentAttachments": "Đã gửi {count, plural, one {1 tệp đính kèm} other {# tệp đính kèm}}",
     "deleteComment": "Xóa bình luận",
     "deleteCommentConfirmation": "Bạn có chắc muốn xóa bình luận này? Các bình luận trả lời cũng sẽ bị xóa, cả trong hộp thư và trên Facebook. Hành động này không thể hoàn tác.",

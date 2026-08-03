@@ -2597,6 +2597,7 @@
     "changeHideState": "Cambiar estado de visibilidad",
     "commentHidden": "Este comentario se ha ocultado",
     "messageDeleted": "The mensaje tiene been deleted.",
+    "repliedToStory": "Respondió a tu historia",
     "sentAttachments": "Se enviaron {count, plural, one {1 archivo adjunto} other {# archivos adjuntos}}",
     "deleteComment": "Eliminar comment",
     "deleteCommentConfirmation": "Are tú sure tú want un Eliminar este comment? Its respuestas se also be deleted, both en tu inbox y en Facebook. este action cannot be undone.",

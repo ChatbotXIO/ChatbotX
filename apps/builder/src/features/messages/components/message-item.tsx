@@ -2,6 +2,7 @@
 
 import type {
   MessageButtonTemplate,
+  MessageStoryReplyEntity,
   MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
 import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
@@ -17,6 +18,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
   ExternalLinkIcon,
+  ImageIcon,
   PaperclipIcon,
   ReplyIcon,
   ThumbsUp,
@@ -93,6 +95,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const isLiked = attributes?.liked === true
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
+  const storyReply = getStoryReplyEntity(message.contentAttributes)
 
   return (
     <MessageBubble
@@ -101,6 +104,7 @@ export const MessageItem = (props: MessageItemProps) => {
       variant={variant}
     >
       <div className="flex min-h-11 max-w-[70%] flex-col gap-1">
+        {storyReply && <StoryReplyContext story={storyReply.story} />}
         {isComment ? (
           (message.text ||
             (message.attachments && message.attachments.length > 0)) && (
@@ -315,6 +319,46 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
         </div>
       )
   }
+}
+
+const getStoryReplyEntity = (
+  contentAttributes: MessageResourceWithRelations["contentAttributes"],
+): MessageStoryReplyEntity | undefined => {
+  if (
+    !contentAttributes ||
+    typeof contentAttributes !== "object" ||
+    (contentAttributes as { type?: unknown }).type !== "story_reply"
+  ) {
+    return
+  }
+
+  return contentAttributes as MessageStoryReplyEntity
+}
+
+const StoryReplyContext = (props: {
+  story: MessageStoryReplyEntity["story"]
+}) => {
+  const { story } = props
+  const t = useTranslations("messages")
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg border bg-secondary/50 px-2 py-1.5 text-muted-foreground text-xs">
+      {story.url ? (
+        <Image
+          alt={t("repliedToStory")}
+          className="size-8 rounded-md object-cover"
+          height={32}
+          src={story.url}
+          width={32}
+        />
+      ) : (
+        <span className="flex size-8 flex-none items-center justify-center rounded-md bg-secondary">
+          <ImageIcon className="size-4" />
+        </span>
+      )}
+      <span>{t("repliedToStory")}</span>
+    </div>
+  )
 }
 
 const RenderContentAttributes = (props: MessageItemProps) => {

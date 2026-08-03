@@ -2597,6 +2597,7 @@
     "changeHideState": "Ubah status sembunyikan",
     "commentHidden": "Komentar ini disembunyikan",
     "messageDeleted": "Pesan telah dihapus.",
+    "repliedToStory": "Membalas story Anda",
     "sentAttachments": "Mengirim {count, plural, one {1 lampiran} other {# lampiran}}",
     "deleteComment": "Hapus komentar",
     "deleteCommentConfirmation": "Apakah Anda yakin ingin menghapus komentar ini? Balasannya juga akan dihapus, baik dari kotak masuk Anda maupun dari Facebook. Tindakan ini tidak dapat dibatalkan.",

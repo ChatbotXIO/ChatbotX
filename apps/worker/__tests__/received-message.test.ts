@@ -187,6 +187,17 @@ vi.mock("@chatbotx.io/sdk", () => ({
   contentTypes: { enum: { text: "text", location: "location" } },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   SdkException: class SdkException extends Error {},
+  getStoryReply: (contentAttributes: unknown) => {
+    if (!contentAttributes || typeof contentAttributes !== "object") {
+      return
+    }
+    const attrs = contentAttributes as {
+      type?: string
+      story?: { id: string; url?: string }
+      storyReply?: { id: string; url?: string }
+    }
+    return attrs.type === "story_reply" ? attrs.story : attrs.storyReply
+  },
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -539,6 +550,44 @@ describe("receiveMessage — message repository branch", () => {
     )
   })
 
+  test("does not flip an outgoing story-reply echo for an already-known contact", async () => {
+    // Only a brand-new contact's outgoing story reply is corrected (see the
+    // "flips an outgoing story-reply echo..." test in the new-contact
+    // describe block). An agent genuinely replying to an existing contact's
+    // story via the native Instagram app must stay outgoing — flipping it
+    // would make story-reply automation auto-reply to the agent's own
+    // message.
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        contentAttributes: {
+          type: "story_reply",
+          story: { id: "story-1", url: "https://example.com/story-1" },
+        },
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: "outgoing",
+        senderType: "user",
+        senderId: null,
+      }),
+    )
+  })
+
   test("does NOT update lastMessageAt when isNew=false", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
@@ -750,25 +799,40 @@ describe("receiveMessage — new contact MAC gate", () => {
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
   })
 
-  test("skips getProfile for outgoing webhook echo when creating a new contact", async () => {
-    mockRunChannelHandler.mockResolvedValue({
-      message: {
-        ...baseIncomingMessage,
-        messageType: "outgoing",
-        attachments: [],
+  test("still fetches getProfile for an outgoing webhook echo when creating a new contact", async () => {
+    // A page-initiated echo (e.g. an agent replying to a story mention
+    // directly on Instagram) can be the FIRST time we see that contact.
+    // Skipping getProfile here would leave the contact without a name/avatar
+    // forever, since later inbound messages reuse the existing contactInbox
+    // and never re-fetch the profile.
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.resolve({
+            firstName: "Story Replier",
+            avatar: "https://example.com/avatar.jpg",
+          })
+        }
+        return Promise.resolve({
+          message: {
+            ...baseIncomingMessage,
+            messageType: "outgoing",
+            attachments: [],
+          },
+          contact: { sourceId: "psid-123" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+        })
       },
-      contact: { sourceId: "psid-123" },
-      postbackAction: null,
-      quickReplyAction: null,
-      ref: null,
-    })
+    )
     mockCreateNewContactWithMac.mockResolvedValue({
       ok: true,
       value: {
         newContact: {
           id: "contact-new",
           workspaceId: "ws-1",
-          firstName: null,
+          firstName: "Story Replier",
           phoneNumber: null,
           email: null,
           blockedAt: null,
@@ -785,12 +849,72 @@ describe("receiveMessage — new contact MAC gate", () => {
 
     await receiveMessage(baseProps)
 
-    // The parse call ("message"/"receiveMessage") happens; getProfile must not.
-    expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
-    expect(mockRunChannelHandler).not.toHaveBeenCalledWith(
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
       "contact",
       "getProfile",
-      expect.anything(),
+      expect.objectContaining({ data: { sourceId: "psid-123" } }),
+    )
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        firstName: "Story Replier",
+        avatar: "https://example.com/avatar.jpg",
+      }),
+    )
+  })
+
+  test("flips an outgoing story-reply echo to incoming when it creates a brand-new contact", async () => {
+    // Meta has been observed sending a real customer's first-ever story
+    // reply as an is_echo:true message with sender.id === the page's own
+    // id. A page can't have proactively DM'd a contact it never talked to,
+    // so this combination (new contact + outgoing + storyReply) must be
+    // corrected to incoming — otherwise story-reply automation never fires
+    // (see apps/worker/src/integration/worker.ts's `isFromContact` gate).
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        contentAttributes: {
+          type: "story_reply",
+          story: { id: "story-1", url: "https://example.com/story-1" },
+        },
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    const contactInbox = {
+      ...fakeContactInbox,
+      id: "ci-new",
+      contactId: "contact-new",
+    }
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          id: "contact-new",
+          workspaceId: "ws-1",
+          firstName: null,
+          phoneNumber: null,
+          email: null,
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox,
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: "incoming",
+        senderType: "contact",
+        senderId: "contact-new",
+      }),
     )
   })
 

@@ -3112,6 +3112,7 @@
     "publishVersionSuccess": "En ny version har publicerats",
     "redoHistoryCleared": "Historiken för Gör om har rensats",
     "refreshTokenSuccessfully": "Token för {feature} har uppdaterats",
+    "repliedToStory": "Svarade på din story",
     "reply": "Svara",
     "resendFeature": "Skicka {feature} igen",
     "resendFeatureDescription": "Skicka {feature} igen till de kontakter som ännu inte har fått det.",

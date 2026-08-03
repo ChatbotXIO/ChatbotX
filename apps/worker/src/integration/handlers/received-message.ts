@@ -45,6 +45,7 @@ import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
   contentTypes,
+  getStoryReply,
   type IncomingContact,
   type IncomingMessage,
   type MessageLocationEntity,
@@ -81,6 +82,22 @@ type ContactLocation = {
 type ReceivedMessageSystemFieldUpdates = {
   contactInboxTracking: ContactInboxTracking
   contactLocation: ContactLocation | null
+}
+
+const correctStoryReplyDirectionForNewContact = (
+  message: IncomingMessage | null,
+  isNewContact: boolean,
+): IncomingMessage | null => {
+  const storyReply = getStoryReply(message?.contentAttributes)
+  if (
+    message &&
+    isNewContact &&
+    message.messageType === messageTypes.enum.outgoing &&
+    storyReply
+  ) {
+    return { ...message, messageType: messageTypes.enum.incoming }
+  }
+  return message
 }
 
 export const metaReferralToContactSource = (
@@ -156,7 +173,7 @@ export const receiveMessage = async (
   }
 
   const {
-    message: incomingMessage,
+    message: rawIncomingMessage,
     contact: incomingContact,
     postbackAction: rawPostbackAction,
     quickReplyAction: rawQuickReplyAction,
@@ -178,7 +195,6 @@ export const receiveMessage = async (
     incomingContact,
     inbox,
     integrationRow,
-    skipProfileLookup: incomingMessage?.messageType === "outgoing",
     source:
       metaReferralToContactSource(referralSource) ??
       contactSources.enum.inboundMessage,
@@ -187,7 +203,14 @@ export const receiveMessage = async (
     throw new SdkException("Unable to resolve contact and conversation")
   }
   const { contactInbox, conversation, contact, isNewContact } = detected
-  const systemFieldUpdates = getReceivedMessageSystemFieldUpdates(parsedMessage)
+  const incomingMessage = correctStoryReplyDirectionForNewContact(
+    rawIncomingMessage,
+    isNewContact,
+  )
+  const systemFieldUpdates = getReceivedMessageSystemFieldUpdates({
+    ...parsedMessage,
+    message: incomingMessage,
+  })
 
   // Overwrite Contact.phoneNumber/email from message text — every inbound
   // channel. Unconditional: the customer just typed the value, so it's
@@ -779,15 +802,13 @@ export const detectContactAndConversation = async (props: {
     [x: string]: unknown
   }
   source: ContactSource
-  skipProfileLookup?: boolean
 }): Promise<{
   contactInbox: ContactInboxModel
   contact: ContactModel
   conversation: ConversationModel
   isNewContact: boolean
 }> => {
-  const { incomingContact, inbox, integrationRow, source, skipProfileLookup } =
-    props
+  const { incomingContact, inbox, integrationRow, source } = props
 
   const existingContactInbox = await db.query.contactInboxModel.findFirst({
     where: {
@@ -824,7 +845,7 @@ export const detectContactAndConversation = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
-  if (canGetUserProfileIfNeeded(inbox.channel) && !skipProfileLookup) {
+  if (canGetUserProfileIfNeeded(inbox.channel)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
         ? "instagramFacebook"

@@ -1988,6 +1988,7 @@
     "changeHideState": "Modifier l’état masqué",
     "commentHidden": "Ce commentaire a été masqué",
     "messageDeleted": "Le message a été supprimé.",
+    "repliedToStory": "A répondu à votre story",
     "sentAttachments": "{count, plural, one {1 pièce jointe envoyée} other {# pièces jointes envoyées}}",
     "deleteComment": "Supprimer le commentaire",
     "deleteCommentConfirmation": "Voulez-vous vraiment supprimer ce commentaire ? Ses réponses seront également supprimées de votre boîte de réception et de Facebook. Cette action est irréversible.",

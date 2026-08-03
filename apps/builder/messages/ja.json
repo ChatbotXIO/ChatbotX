@@ -2584,6 +2584,7 @@
     "changeHideState": "非表示状態を変更",
     "commentHidden": "このコメントは非表示になりました",
     "messageDeleted": "メッセージは削除されました。",
+    "repliedToStory": "あなたのストーリーに返信しました",
     "sentAttachments": "{count, plural, one {添付ファイル1件を送信} other {添付ファイル#件を送信}}",
     "deleteComment": "コメントを削除",
     "deleteCommentConfirmation": "このコメントを削除してもよろしいですか？返信も受信トレイとFacebookの両方から削除されます。この操作は元に戻せません。",

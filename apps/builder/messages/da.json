@@ -2597,6 +2597,7 @@
     "changeHideState": "Change hide state",
     "commentHidden": "Denne kommentar var hidden",
     "messageDeleted": "Den besked har been slettet.",
+    "repliedToStory": "Svarede på din story",
     "sentAttachments": "Sendte {count, plural, one {1 vedhæftet fil} other {# vedhæftede filer}}",
     "deleteComment": "Slet kommentar",
     "deleteCommentConfirmation": "Er du sikker du want til slet denne kommentar? Its svar vil also være slettet, both i din indbakke og på Facebook. Denne action kan ikke være undone.",

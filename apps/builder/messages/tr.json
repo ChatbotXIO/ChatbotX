@@ -2597,6 +2597,7 @@
     "changeHideState": "Gizleme durumunu değiştir",
     "commentHidden": "Bu yorum gizlendi",
     "messageDeleted": "Mesaj silindi.",
+    "repliedToStory": "Hikayenize yanıt verdi",
     "sentAttachments": "{count, plural, one {1 ek} other {# ek}} gönderildi",
     "deleteComment": "Yorumu sil",
     "deleteCommentConfirmation": "Bu yorumu silmek istediğinizden emin misiniz? Yanıtları da hem gelen kutunuzdan hem de Facebook'tan silinecektir. Bu işlem geri alınamaz.",

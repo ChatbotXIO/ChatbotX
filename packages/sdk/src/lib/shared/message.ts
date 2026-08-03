@@ -57,6 +57,7 @@ export type IncomingMessage = {
     | MessageLocationEntity
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
+    | MessageStoryReplyEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -68,6 +69,41 @@ export type MessageWhatsappFlowResponseEntity = {
   flowResponse: Record<string, unknown>
   flowToken: string | null
   decoded: ButtonPayload | null
+}
+
+/**
+ * Carried on a message that is the contact's reply to one of the workspace's
+ * Instagram/Messenger stories (Meta's `reply_to.story` webhook field), so the
+ * inbox can render "Replied to your story" context instead of showing it as
+ * a plain text message. `story.url` is Meta's CDN link and is short-lived.
+ */
+export type MessageStoryReplyEntity = {
+  type: "story_reply"
+  story: {
+    id: string
+    url?: string
+  }
+}
+
+/**
+ * Extracts the story-reply payload from a message's contentAttributes,
+ * accepting both the current `{ type: "story_reply", story }` shape and the
+ * legacy `{ storyReply }` shape some already-persisted rows still carry.
+ * Centralized so callers (worker routing, direction correction, inbox
+ * rendering) can't drift from each other on the shape check.
+ */
+export const getStoryReply = (
+  contentAttributes: unknown,
+): MessageStoryReplyEntity["story"] | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as {
+    type?: string
+    story?: MessageStoryReplyEntity["story"]
+    storyReply?: MessageStoryReplyEntity["story"]
+  }
+  return attrs.type === "story_reply" ? attrs.story : attrs.storyReply
 }
 
 export const MessageEntitySchema = z.custom<IncomingMessage>(
