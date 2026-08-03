@@ -151,6 +151,12 @@ async function postRawMessage(props: {
   message: RawWhatsappMessage
 }): Promise<ServerErrorResponse | ServerSentMessageResponse> {
   const { _type, ...messageBody } = props.message
+  console.log("postRawMessage", {
+    phoneId: props.phoneNumberId,
+    recipientId: props.recipientId,
+    message: messageBody,
+    messageRaw: JSON.stringify(messageBody, null, 2),
+  })
   const response = await props.client.$$apiFetch$$(
     `${API_URL}/${DEFAULT_API_VERSION}/${props.phoneNumberId}/messages`,
     {
@@ -170,9 +176,16 @@ async function postRawMessage(props: {
   if (!response.ok) {
     const errorBody = await response.json()
     logger.error(errorBody, `Failed to send ${_type} message`)
-    throw mapToChannelError(
-      (errorBody as { error?: unknown })?.error ?? errorBody,
-    )
+    console.log("errorBody", {
+      errorBody,
+      errorBody1: JSON.stringify(errorBody, null, 2),
+    })
+    // Pass the HTTP status alongside Meta's raw body so the mapper surfaces the
+    // real error code and detail instead of collapsing to an "unknown" (-1).
+    throw mapToChannelError({
+      httpStatus: response.status,
+      errorBody: errorBody as { error?: unknown },
+    })
   }
 
   return await response.json()
@@ -194,6 +207,11 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           continue
         }
 
+        console.log("whatsappMessage", {
+          phoneId: ctx.auth.metadata.phoneNumber.id,
+          recipientId: contact.sourceId,
+          message: whatsappMessage,
+        })
         const sendResponse = await whatsappClient.sendMessage(
           ctx.auth.metadata.phoneNumber.id,
           contact.sourceId,
@@ -267,6 +285,11 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
             message: whatsappMessage,
           })
         } else {
+          console.log("whatsappMessage", {
+            phoneId: ctx.auth.metadata.phoneNumber.id,
+            recipientId: contact.sourceId,
+            message: whatsappMessage,
+          })
           sendResponse = await whatsappClient.sendMessage(
             ctx.auth.metadata.phoneNumber.id,
             contact.sourceId,

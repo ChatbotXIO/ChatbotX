@@ -16,9 +16,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
 }))
 
-const { validateWhatsappTemplate } = await import(
-  "../src/integration/handlers/wa-template-handler"
-)
+vi.mock("@chatbotx.io/variables", () => ({
+  contactVariableService: {
+    // Echo a fixed resolved value so tests focus on parameter_name wiring.
+    replaceAll: vi.fn(() => Promise.resolve("John")),
+  },
+}))
+
+const { validateWhatsappTemplate, replaceWhatsappTemplateVariables } =
+  await import("../src/integration/handlers/wa-template-handler")
 const { db } = await import("@chatbotx.io/database/client")
 
 const mockInboxFindFirst = db.query.inboxModel.findFirst as MockInstance
@@ -90,5 +96,62 @@ describe("validateWhatsappTemplate — new contract (entities | null)", () => {
       integrationWhatsappId: "intg-42",
       status: "APPROVED",
     })
+  })
+})
+
+describe("replaceWhatsappTemplateVariables — named parameters", () => {
+  const legacyBodyParams = { body: [{ type: "text" as const, text: "{{v}}" }] }
+
+  test("attaches parameter_name from the template even when stored params lack it (NAMED)", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: legacyBodyParams,
+      variables: {} as never,
+      components: [
+        { type: "BODY", text: "Happy Birthday, {{user_name}}!" },
+      ] as never,
+    })
+
+    expect(result.body).toEqual([
+      { type: "text", text: "John", parameter_name: "user_name" },
+    ])
+  })
+
+  test("does not attach parameter_name for a POSITIONAL template ({{1}})", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: legacyBodyParams,
+      variables: {} as never,
+      components: [{ type: "BODY", text: "Hello {{1}}" }] as never,
+    })
+
+    expect(result.body).toEqual([{ type: "text", text: "John" }])
+  })
+
+  test("without components, invents no parameter_name (backward compatible)", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: legacyBodyParams,
+      variables: {} as never,
+    })
+
+    expect(result.body).toEqual([{ type: "text", text: "John" }])
+  })
+
+  test("maps each named body placeholder to its own parameter_name by position", async () => {
+    const result = await replaceWhatsappTemplateVariables({
+      templateParams: {
+        body: [
+          { type: "text" as const, text: "{{a}}" },
+          { type: "text" as const, text: "{{b}}" },
+        ],
+      },
+      variables: {} as never,
+      components: [
+        { type: "BODY", text: "{{first_name}} ordered {{order_id}}" },
+      ] as never,
+    })
+
+    expect(result.body).toEqual([
+      { type: "text", text: "John", parameter_name: "first_name" },
+      { type: "text", text: "John", parameter_name: "order_id" },
+    ])
   })
 })

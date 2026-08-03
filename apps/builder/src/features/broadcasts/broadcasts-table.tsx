@@ -375,6 +375,9 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       <ResendBroadcastDialog
         broadcast={rowAction?.row.original || null}
         onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "resend"}
       />
 

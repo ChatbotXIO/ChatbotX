@@ -130,6 +130,9 @@ export type WhatsappStatusWebhookEvent = z.infer<
 export type WhatsAppTemplateComponentParameter = {
   type: string
   text?: string
+  // NAMED-template placeholder name ({{order_id}}); Meta rejects a named
+  // template when this is missing. Absent for positional ({{1}}) templates.
+  parameter_name?: string
   image?: { link: string }
   video?: { link: string }
   document?: { link: string }

@@ -114,6 +114,9 @@ export async function processWhatsappTemplate(
     const replacedParams = await replaceWhatsappTemplateVariables({
       templateParams: template.params,
       variables,
+      // Authoritative source for NAMED vs POSITIONAL placeholders, so the send
+      // works even for broadcasts/flows saved before named-parameter support.
+      components: (validated.template.components as TemplateComponent[]) || [],
     })
 
     const contentAttributes = {
