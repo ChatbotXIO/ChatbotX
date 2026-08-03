@@ -3766,6 +3766,66 @@
       "instagramFacebookDescription": "Instagram connected via a Facebook Side. Supports public svar, private svar, hiding kommentarer, og liking kommentarer."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Automatisering af Instagram Story-svar",
+    "description": "Automatiser svar på Instagram Story-svar for dine kontakter.",
+    "create": "Opret automatisering",
+    "replies": "Svar",
+    "activated": "Automatisering aktiveret",
+    "deactivated": "Automatisering deaktiveret",
+    "trackStoryReplyOn": "Spor Story-svar på",
+    "trackStoryReplyOnDescription": "Anvend denne automatisering på svar på alle dine Stories, eller begræns den til bestemte Stories, du vælger.",
+    "reply": "Svar",
+    "replyDescription": "Send et svar til story-svarerens indbakke. Vælg AI-agent, en fast tekstskabelon (spintax understøttet), et chatbot-flow, eller deaktiver.",
+    "replyMessage": "Svarbesked",
+    "replyMessagePlaceholder": "Indtast svarbesked...",
+    "includeKeywordsType": "Svar på",
+    "includeKeywordsTypeDescription": "Vælg hvilke Story-svar denne automatisering reagerer på.",
+    "includeKeywords": "Nøgleord der skal matches",
+    "keywordsPlaceholder": "Skriv og tryk på Enter...",
+    "schedule": {
+      "title": "Angiv aktive timer",
+      "description": "Vælg et start- og sluttidspunkt. Hvis sluttidspunktet er tidligere end starttidspunktet, kører tidsplanen natten over.",
+      "startTime": "Starttid",
+      "endTime": "Sluttid",
+      "alwaysRun": "Kør altid",
+      "save": "Gem",
+      "invalidTimeRange": "Start- og sluttidspunkt skal være forskellige",
+      "timeRequired": "Vælg venligst både start- og sluttidspunkt"
+    },
+    "card": {
+      "targeting": "Målretning & svar"
+    },
+    "storyType": {
+      "all": "Alle stories",
+      "specificStories": "Specifikke stories"
+    },
+    "replyType": {
+      "text": "Tekstbesked",
+      "flow": "Flow",
+      "AIAgent": "AI-agent",
+      "none": "Intet svar"
+    },
+    "keywordsType": {
+      "all": "Alle svar",
+      "equal": "Nøjagtigt match",
+      "contain": "Indeholder"
+    },
+    "selectStories": "Vælg stories",
+    "selectPageAll": "Alle konti",
+    "chooseSpecificStories": "Vælg stories...",
+    "activeStoriesTab": "Aktive stories",
+    "storyIdTab": "Story-id",
+    "storyIdPlaceholder": "Indtast story-id'er, ét pr. linje...",
+    "noStoriesFound": "Ingen aktive stories fundet",
+    "connectionType": {
+      "title": "Vælg Instagram-forbindelsestype",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login-forbindelse. Understøtter svar via tekst, flow eller AI-agent.",
+      "instagramFacebookTitle": "Instagram Login med Facebook",
+      "instagramFacebookDescription": "Instagram forbundet via en Facebook-side. Understøtter svar via tekst, flow eller AI-agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Facebook Lead Annoncer Automatisering",
     "description": "Automate Facebook lead annoncer for din kontakter.",

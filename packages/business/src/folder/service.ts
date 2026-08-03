@@ -19,6 +19,7 @@ import {
   fbCommentAutomationModel,
   flowModel,
   folderModel,
+  igStoryAutomationModel,
   sequenceModel,
   tagModel,
   triggerModel,
@@ -254,6 +255,8 @@ class FolderService extends BaseService {
       case folderTypes.enum.fbComment:
       case folderTypes.enum.igComment:
         return fbCommentAutomationModel
+      case folderTypes.enum.igStory:
+        return igStoryAutomationModel
       default:
         throw new ChatbotXException("Invalid folder type")
     }

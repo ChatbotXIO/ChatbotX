@@ -42,6 +42,7 @@ import {
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
+import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
 import { runWaitResume } from "./handlers/wait-resume"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
@@ -84,6 +85,35 @@ async function startIntegrationWorker() {
               isNotPostbackOrQuickReply && message.senderType === "contact"
             const hasAttachment = message.attachments.length > 0
             const isLocation = message.contentType === "location"
+
+            const storyReply = (
+              message.contentAttributes as
+                | { storyReply?: { id: string; url?: string } }
+                | undefined
+            )?.storyReply
+
+            if (isFromContact && storyReply) {
+              await integrationQueue.add(
+                IntegrationJobAction.processStoryReplyAutomation,
+                {
+                  type: IntegrationJobAction.processStoryReplyAutomation,
+                  data: {
+                    workspaceId: conversation.workspaceId,
+                    conversationId: conversation.id,
+                    contactInboxId: message.contactInboxId,
+                    messageId: message.id,
+                    storyId: storyReply.id,
+                    storyUrl: storyReply.url,
+                    message: message.text ?? undefined,
+                    channelType: job.data.data.integrationType as
+                      | "instagram"
+                      | "instagramFacebook",
+                  },
+                },
+                { jobId: `story-reply-auto-${message.id}` },
+              )
+              return
+            }
 
             const routing = await resolveIncomingTextRouting({
               conversation,
@@ -234,6 +264,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.commentAIReply: {
             await processCommentAIReply(job.data.data)
+            return
+          }
+          case IntegrationJobAction.processStoryReplyAutomation: {
+            await processStoryReplyAutomation(job.data.data)
             return
           }
           case IntegrationJobAction.processLeadgen: {

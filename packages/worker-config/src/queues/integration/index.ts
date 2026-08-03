@@ -44,6 +44,7 @@ export const IntegrationJobAction = {
   processCommentAutomation: "processCommentAutomation",
   commentAIReply: "commentAIReply",
   processLeadgen: "processLeadgen",
+  processStoryReplyAutomation: "processStoryReplyAutomation",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -368,6 +369,20 @@ export type IntegrationJobCommentAIReply = {
   }
 }
 
+export type IntegrationJobProcessStoryReplyAutomation = {
+  type: typeof IntegrationJobAction.processStoryReplyAutomation
+  data: {
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    messageId: string
+    storyId: string
+    storyUrl?: string
+    message?: string
+    channelType: "instagram" | "instagramFacebook"
+  }
+}
+
 /**
  * Facebook Lead Ads: a page leadgen webhook. Carries only ids — the handler
  * resolves the page's Messenger inbox + token, fetches the lead's answers, then
@@ -410,6 +425,7 @@ export type IntegrationJobData =
   | IntegrationJobProcessCommentAutomation
   | IntegrationJobCommentAIReply
   | IntegrationJobProcessLeadgen
+  | IntegrationJobProcessStoryReplyAutomation
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"

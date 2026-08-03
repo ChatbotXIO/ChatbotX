@@ -37,6 +37,13 @@ const TOOLS_CONFIG = [
     getLink: (id: string) => `/space/${id}/ig-comments`,
   },
   {
+    id: "instagram-story",
+    labelKey: "instagramStoryAutomation.title",
+    descriptionKey: "instagramStoryAutomation.description",
+    icon: SiInstagram,
+    getLink: (id: string) => `/space/${id}/ig-stories`,
+  },
+  {
     id: "facebook-lead-ads",
     labelKey: "facebookLeadAdsAutomation.title",
     descriptionKey: "facebookLeadAdsAutomation.description",

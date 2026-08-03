@@ -13,5 +13,6 @@ export const folderTypes = z.enum([
   "emailTopic",
   "fbComment",
   "igComment",
+  "igStory",
 ])
 export type FolderType = z.infer<typeof folderTypes>

@@ -3762,6 +3762,66 @@
       "instagramFacebookDescription": "Instagram ligado através de uma Página do Facebook. Suporta respostas públicas e privadas, a ocultação de comentários e a colocação de Gosto em comentários."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Automação de resposta a Stories do Instagram",
+    "description": "Automatize respostas às respostas de Stories do Instagram para os seus contactos.",
+    "create": "Criar automação",
+    "replies": "Respostas",
+    "activated": "Automação ativada",
+    "deactivated": "Automação desativada",
+    "trackStoryReplyOn": "Monitorizar respostas de Story em",
+    "trackStoryReplyOnDescription": "Aplique esta automação a respostas em todos os seus Stories, ou restrinja-a a Stories específicos que selecionar.",
+    "reply": "Resposta",
+    "replyDescription": "Envie uma resposta para a caixa de entrada de quem respondeu ao Story. Escolha AI Agent, um modelo de texto fixo (com suporte a spintax), um fluxo de chatbot, ou desative.",
+    "replyMessage": "Mensagem de resposta",
+    "replyMessagePlaceholder": "Introduza a mensagem de resposta...",
+    "includeKeywordsType": "Responder a",
+    "includeKeywordsTypeDescription": "Escolha a quais respostas de Story esta automação responde.",
+    "includeKeywords": "Palavras-chave a corresponder",
+    "keywordsPlaceholder": "Escreva e prima Enter...",
+    "schedule": {
+      "title": "Definir horário de atividade",
+      "description": "Escolha uma hora de início e de fim. Se a hora de fim for anterior à de início, o horário decorre durante a noite.",
+      "startTime": "Hora de início",
+      "endTime": "Hora de fim",
+      "alwaysRun": "Executar sempre",
+      "save": "Guardar",
+      "invalidTimeRange": "A hora de início e de fim devem ser diferentes",
+      "timeRequired": "Selecione a hora de início e de fim"
+    },
+    "card": {
+      "targeting": "Segmentação e resposta"
+    },
+    "storyType": {
+      "all": "Todos os Stories",
+      "specificStories": "Stories específicos"
+    },
+    "replyType": {
+      "text": "Mensagem de texto",
+      "flow": "Fluxo",
+      "AIAgent": "AI Agent",
+      "none": "Sem resposta"
+    },
+    "keywordsType": {
+      "all": "Todas as respostas",
+      "equal": "Correspondência exata",
+      "contain": "Contém"
+    },
+    "selectStories": "Selecionar Stories",
+    "selectPageAll": "Todas as contas",
+    "chooseSpecificStories": "Escolher Stories...",
+    "activeStoriesTab": "Stories ativos",
+    "storyIdTab": "ID do Story",
+    "storyIdPlaceholder": "Introduza os IDs dos Stories, um por linha...",
+    "noStoriesFound": "Nenhum Story ativo encontrado",
+    "connectionType": {
+      "title": "Escolha o tipo de ligação do Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Ligação Instagram Login. Suporta resposta por texto, fluxo ou AI agent.",
+      "instagramFacebookTitle": "Instagram Login com Facebook",
+      "instagramFacebookDescription": "Instagram ligado através de uma Página do Facebook. Suporta resposta por texto, fluxo ou AI agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Automatização de anúncios de leads do Facebook",
     "description": "Automatize os anúncios de leads do Facebook para os seus contactos.",

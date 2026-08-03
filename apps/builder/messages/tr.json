@@ -3766,6 +3766,66 @@
       "instagramFacebookDescription": "Bir Facebook Sayfası üzerinden bağlanan Instagram. Genel yanıt, özel yanıt, yorumları gizleme ve yorumları beğenmeyi destekler."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Instagram Hikaye Yanıt Otomasyonu",
+    "description": "Kişileriniz için Instagram hikaye yanıtlarına verilen yanıtları otomatikleştirin.",
+    "create": "Otomasyon Oluştur",
+    "replies": "Yanıtlar",
+    "activated": "Otomasyon etkinleştirildi",
+    "deactivated": "Otomasyon devre dışı bırakıldı",
+    "trackStoryReplyOn": "Hikaye yanıtlarını şurada izle",
+    "trackStoryReplyOnDescription": "Bu otomasyonu tüm hikayelerinizdeki yanıtlara uygulayın veya seçtiğiniz belirli hikayelerle sınırlayın.",
+    "reply": "Yanıt",
+    "replyDescription": "Hikayeye yanıt verenin gelen kutusuna bir yanıt gönderin. AI Agent, sabit bir metin şablonu (spintax destekli), bir chatbot akışı seçin veya devre dışı bırakın.",
+    "replyMessage": "Yanıt mesajı",
+    "replyMessagePlaceholder": "Yanıt mesajını girin...",
+    "includeKeywordsType": "Şuna yanıt ver",
+    "includeKeywordsTypeDescription": "Bu otomasyonun hangi hikaye yanıtlarına yanıt vereceğini seçin.",
+    "includeKeywords": "Eşleştirilecek anahtar kelimeler",
+    "keywordsPlaceholder": "Yazın ve Enter'a basın...",
+    "schedule": {
+      "title": "Aktif saatleri ayarla",
+      "description": "Bir başlangıç ve bitiş saati seçin. Bitiş saati başlangıç saatinden daha erkense, program gece boyunca devam eder.",
+      "startTime": "Başlangıç saati",
+      "endTime": "Bitiş saati",
+      "alwaysRun": "Her zaman çalıştır",
+      "save": "Kaydet",
+      "invalidTimeRange": "Başlangıç ve bitiş saati farklı olmalıdır",
+      "timeRequired": "Lütfen hem başlangıç hem de bitiş saatini seçin"
+    },
+    "card": {
+      "targeting": "Hedefleme ve Yanıt"
+    },
+    "storyType": {
+      "all": "Tüm hikayeler",
+      "specificStories": "Belirli hikayeler"
+    },
+    "replyType": {
+      "text": "Metin mesajı",
+      "flow": "Akış",
+      "AIAgent": "AI Agent",
+      "none": "Yanıt yok"
+    },
+    "keywordsType": {
+      "all": "Tüm yanıtlar",
+      "equal": "Tam eşleşme",
+      "contain": "İçerir"
+    },
+    "selectStories": "Hikayeleri seç",
+    "selectPageAll": "Tüm hesaplar",
+    "chooseSpecificStories": "Hikaye seç...",
+    "activeStoriesTab": "Aktif hikayeler",
+    "storyIdTab": "Hikaye Kimliği",
+    "storyIdPlaceholder": "Hikaye kimliklerini her satıra bir tane olacak şekilde girin...",
+    "noStoriesFound": "Aktif hikaye bulunamadı",
+    "connectionType": {
+      "title": "Instagram bağlantı türünü seçin",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login bağlantısı. Metin, akış veya AI agent aracılığıyla yanıt vermeyi destekler.",
+      "instagramFacebookTitle": "Facebook ile Instagram Login",
+      "instagramFacebookDescription": "Bir Facebook Sayfası aracılığıyla bağlanan Instagram. Metin, akış veya AI agent aracılığıyla yanıt vermeyi destekler."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Facebook Potansiyel Müşteri Reklamları Otomasyonu",
     "description": "Kişileriniz için Facebook potansiyel müşteri reklamlarını otomatikleştirin.",

@@ -1987,6 +1987,66 @@
       "instagramFacebookDescription": "Instagram מחובר באמצעות דף Facebook. תומך בתשובה ציבורית, תשובה פרטית, הסתרת תגובות וסימון לייק לתגובות."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "אוטומציה למענה לסטורי באינסטגרם",
+    "description": "הפוך את המענה לתגובות על הסטורי שלך באינסטגרם לאוטומטי עבור אנשי הקשר שלך.",
+    "create": "צור אוטומציה",
+    "replies": "תגובות",
+    "activated": "האוטומציה הופעלה",
+    "deactivated": "האוטומציה הושבתה",
+    "trackStoryReplyOn": "עקוב אחר תגובות לסטורי ב",
+    "trackStoryReplyOnDescription": "החל אוטומציה זו על תגובות לכל הסטוריז שלך, או הגבל אותה לסטוריז מסוימים שתבחר.",
+    "reply": "תגובה",
+    "replyDescription": "שלח תגובה לתיבת הדואר הנכנס של מי שהגיב לסטורי. בחר סוכן AI, תבנית טקסט קבועה (עם תמיכה ב-spintax), פלואו של צ'אטבוט, או השבתה.",
+    "replyMessage": "הודעת תגובה",
+    "replyMessagePlaceholder": "הזן הודעת תגובה...",
+    "includeKeywordsType": "הגב ל",
+    "includeKeywordsTypeDescription": "בחר לאילו תגובות סטורי האוטומציה הזו מגיבה.",
+    "includeKeywords": "מילות מפתח להתאמה",
+    "keywordsPlaceholder": "הקלד ולחץ Enter...",
+    "schedule": {
+      "title": "הגדר שעות פעילות",
+      "description": "בחר שעת התחלה וסיום. אם שעת הסיום מוקדמת משעת ההתחלה, הלוח הזמנים יימשך למשך הלילה.",
+      "startTime": "שעת התחלה",
+      "endTime": "שעת סיום",
+      "alwaysRun": "פעל תמיד",
+      "save": "שמור",
+      "invalidTimeRange": "שעת ההתחלה והסיום חייבות להיות שונות",
+      "timeRequired": "נא לבחור גם שעת התחלה וגם שעת סיום"
+    },
+    "card": {
+      "targeting": "מיקוד ותגובה"
+    },
+    "storyType": {
+      "all": "כל הסטוריז",
+      "specificStories": "סטוריז ספציפיים"
+    },
+    "replyType": {
+      "text": "הודעת טקסט",
+      "flow": "פלואו",
+      "AIAgent": "סוכן AI",
+      "none": "ללא תגובה"
+    },
+    "keywordsType": {
+      "all": "כל התגובות",
+      "equal": "התאמה מדויקת",
+      "contain": "מכיל"
+    },
+    "selectStories": "בחר סטוריז",
+    "selectPageAll": "כל החשבונות",
+    "chooseSpecificStories": "בחר סטוריז...",
+    "activeStoriesTab": "סטוריז פעילים",
+    "storyIdTab": "מזהה סטורי",
+    "storyIdPlaceholder": "הזן מזהי סטורי, אחד בכל שורה...",
+    "noStoriesFound": "לא נמצאו סטוריז פעילים",
+    "connectionType": {
+      "title": "בחר את סוג החיבור לאינסטגרם",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "חיבור Instagram Login. תומך במענה באמצעות טקסט, פלואו או סוכן AI.",
+      "instagramFacebookTitle": "Instagram Login דרך פייסבוק",
+      "instagramFacebookDescription": "אינסטגרם מחובר דרך עמוד פייסבוק. תומך במענה באמצעות טקסט, פלואו או סוכן AI."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "אוטומציית מודעות לידים ב-Facebook",
     "description": "אוטומציה של מודעות לידים ב-Facebook עבור אנשי הקשר שלכם.",

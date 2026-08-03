@@ -66,6 +66,20 @@ export const instagramMessageSchema = z.object({
       payload: z.string(),
     })
     .optional(),
+  // `reply_to.mid` = reply to another DM message; `reply_to.story` = reply to
+  // a story (id/url of the story). Mutually exclusive per Meta's docs — never
+  // both set on the same message.
+  reply_to: z
+    .object({
+      mid: z.string().optional(),
+      story: z
+        .object({
+          id: z.string(),
+          url: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 })
 export type InstagramMessage = z.infer<typeof instagramMessageSchema>
 

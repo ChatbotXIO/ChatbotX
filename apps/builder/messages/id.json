@@ -3766,6 +3766,66 @@
       "instagramFacebookDescription": "Instagram terhubung melalui Halaman Facebook. Mendukung balasan publik, balasan pribadi, menyembunyikan komentar, dan menyukai komentar."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Otomatisasi Balasan Story Instagram",
+    "description": "Otomatiskan balasan untuk balasan Story Instagram bagi kontak Anda.",
+    "create": "Buat Otomatisasi",
+    "replies": "Balasan",
+    "activated": "Otomatisasi diaktifkan",
+    "deactivated": "Otomatisasi dinonaktifkan",
+    "trackStoryReplyOn": "Lacak balasan Story pada",
+    "trackStoryReplyOnDescription": "Terapkan otomatisasi ini pada balasan di semua Story Anda, atau batasi hanya untuk Story tertentu yang Anda pilih.",
+    "reply": "Balasan",
+    "replyDescription": "Kirim balasan ke kotak masuk orang yang membalas Story. Pilih AI Agent, template teks tetap (mendukung spintax), alur chatbot, atau nonaktifkan.",
+    "replyMessage": "Pesan balasan",
+    "replyMessagePlaceholder": "Masukkan pesan balasan...",
+    "includeKeywordsType": "Balas untuk",
+    "includeKeywordsTypeDescription": "Pilih balasan Story mana yang direspons oleh otomatisasi ini.",
+    "includeKeywords": "Kata kunci yang cocok",
+    "keywordsPlaceholder": "Ketik dan tekan Enter...",
+    "schedule": {
+      "title": "Atur jam aktif",
+      "description": "Pilih waktu mulai dan selesai. Jika waktu selesai lebih awal dari waktu mulai, jadwal akan berjalan semalaman.",
+      "startTime": "Waktu mulai",
+      "endTime": "Waktu selesai",
+      "alwaysRun": "Selalu berjalan",
+      "save": "Simpan",
+      "invalidTimeRange": "Waktu mulai dan selesai harus berbeda",
+      "timeRequired": "Silakan pilih waktu mulai dan selesai"
+    },
+    "card": {
+      "targeting": "Penargetan & Balasan"
+    },
+    "storyType": {
+      "all": "Semua story",
+      "specificStories": "Story tertentu"
+    },
+    "replyType": {
+      "text": "Pesan teks",
+      "flow": "Alur",
+      "AIAgent": "AI Agent",
+      "none": "Tanpa balasan"
+    },
+    "keywordsType": {
+      "all": "Semua balasan",
+      "equal": "Kecocokan persis",
+      "contain": "Mengandung"
+    },
+    "selectStories": "Pilih Story",
+    "selectPageAll": "Semua akun",
+    "chooseSpecificStories": "Pilih story...",
+    "activeStoriesTab": "Story aktif",
+    "storyIdTab": "ID Story",
+    "storyIdPlaceholder": "Masukkan ID story, satu per baris...",
+    "noStoriesFound": "Tidak ada story aktif ditemukan",
+    "connectionType": {
+      "title": "Pilih jenis koneksi Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Koneksi Instagram Login. Mendukung balasan melalui teks, alur, atau AI agent.",
+      "instagramFacebookTitle": "Instagram Login dengan Facebook",
+      "instagramFacebookDescription": "Instagram terhubung melalui Halaman Facebook. Mendukung balasan melalui teks, alur, atau AI agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Otomatisasi Iklan Prospek Facebook",
     "description": "Otomatiskan iklan prospek Facebook untuk kontak Anda.",

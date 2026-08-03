@@ -3753,6 +3753,66 @@
       "instagramFacebookDescription": "Facebookページ経由で接続されたInstagramです。公開返信、非公開返信、コメントの非表示、コメントへの「いいね！」に対応しています。"
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Instagramストーリー返信オートメーション",
+    "description": "連絡先に対するInstagramストーリーへの返信を自動化します。",
+    "create": "オートメーションを作成",
+    "replies": "返信数",
+    "activated": "オートメーションを有効化しました",
+    "deactivated": "オートメーションを無効化しました",
+    "trackStoryReplyOnDescription": "このオートメーションをすべてのストーリーへの返信に適用するか、選択した特定のストーリーに限定します。",
+    "trackStoryReplyOn": "ストーリー返信を追跡する対象",
+    "reply": "返信",
+    "replyDescription": "ストーリーに返信した相手の受信箱に返信を送信します。AIエージェント、固定のテキストテンプレート(スピンタックス対応)、チャットボットフロー、または無効を選択してください。",
+    "replyMessage": "返信メッセージ",
+    "replyMessagePlaceholder": "返信メッセージを入力...",
+    "includeKeywordsType": "返信対象",
+    "includeKeywordsTypeDescription": "このオートメーションが応答するストーリー返信を選択します。",
+    "includeKeywords": "一致させるキーワード",
+    "keywordsPlaceholder": "入力してEnterキーを押してください...",
+    "schedule": {
+      "title": "稼働時間を設定",
+      "description": "開始時刻と終了時刻を選択してください。終了時刻が開始時刻より早い場合、スケジュールは夜間をまたいで実行されます。",
+      "startTime": "開始時刻",
+      "endTime": "終了時刻",
+      "alwaysRun": "常に実行",
+      "save": "保存",
+      "invalidTimeRange": "開始時刻と終了時刻は異なる必要があります",
+      "timeRequired": "開始時刻と終了時刻の両方を選択してください"
+    },
+    "card": {
+      "targeting": "ターゲティングと返信"
+    },
+    "storyType": {
+      "all": "すべてのストーリー",
+      "specificStories": "特定のストーリー"
+    },
+    "replyType": {
+      "text": "テキストメッセージ",
+      "flow": "フロー",
+      "AIAgent": "AIエージェント",
+      "none": "返信なし"
+    },
+    "keywordsType": {
+      "all": "すべての返信",
+      "equal": "完全一致",
+      "contain": "含む"
+    },
+    "selectStories": "ストーリーを選択",
+    "selectPageAll": "すべてのアカウント",
+    "chooseSpecificStories": "ストーリーを選択...",
+    "activeStoriesTab": "アクティブなストーリー",
+    "storyIdTab": "ストーリーID",
+    "storyIdPlaceholder": "ストーリーIDを1行に1つずつ入力...",
+    "noStoriesFound": "アクティブなストーリーが見つかりません",
+    "connectionType": {
+      "title": "Instagramの接続タイプを選択",
+      "instagramTitle": "Instagramビジネス",
+      "instagramDescription": "Instagramログイン接続。テキスト、フロー、またはAIエージェントによる返信をサポートします。",
+      "instagramFacebookTitle": "Facebook経由のInstagramログイン",
+      "instagramFacebookDescription": "Facebookページ経由で接続されたInstagram。テキスト、フロー、またはAIエージェントによる返信をサポートします。"
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Facebookリード広告自動化",
     "description": "連絡先向けのFacebookリード広告処理を自動化します。",

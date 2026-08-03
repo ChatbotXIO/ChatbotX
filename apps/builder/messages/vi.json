@@ -3772,6 +3772,66 @@
       "instagramFacebookDescription": "Instagram được kết nối qua một trang Facebook. Hỗ trợ trả lời công khai, trả lời riêng tư, ẩn bình luận, và thích bình luận."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Tự động hóa trả lời Story Instagram",
+    "description": "Tự động hóa trả lời khi có người reply vào Story Instagram cho các liên hệ của bạn.",
+    "create": "Tạo tự động hóa",
+    "replies": "Phản hồi",
+    "activated": "Đã kích hoạt tự động hóa",
+    "deactivated": "Đã tắt tự động hóa",
+    "trackStoryReplyOn": "Theo dõi reply Story trên",
+    "trackStoryReplyOnDescription": "Áp dụng tự động hóa cho reply trên tất cả Story của bạn, hoặc chỉ các Story cụ thể bạn chọn.",
+    "reply": "Trả lời",
+    "replyDescription": "Gửi tin nhắn trả lời vào inbox của người reply Story. Chọn AI Agent, mẫu văn bản cố định (hỗ trợ spintax), chatbot flow, hoặc tắt.",
+    "replyMessage": "Nội dung trả lời",
+    "replyMessagePlaceholder": "Nhập nội dung trả lời...",
+    "includeKeywordsType": "Trả lời cho",
+    "includeKeywordsTypeDescription": "Chọn loại reply Story nào sẽ kích hoạt tự động hóa này.",
+    "includeKeywords": "Từ khóa cần khớp",
+    "keywordsPlaceholder": "Nhập và nhấn Enter...",
+    "schedule": {
+      "title": "Cài đặt khung giờ hoạt động",
+      "description": "Chọn giờ bắt đầu và kết thúc. Nếu giờ kết thúc sớm hơn giờ bắt đầu, khung giờ sẽ kéo dài qua đêm.",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "alwaysRun": "Luôn luôn chạy",
+      "save": "Lưu",
+      "invalidTimeRange": "Giờ bắt đầu và giờ kết thúc phải khác nhau",
+      "timeRequired": "Vui lòng chọn cả giờ bắt đầu và giờ kết thúc"
+    },
+    "card": {
+      "targeting": "Nhắm mục tiêu & Trả lời"
+    },
+    "storyType": {
+      "all": "Tất cả Story",
+      "specificStories": "Story cụ thể"
+    },
+    "replyType": {
+      "text": "Tin nhắn văn bản",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "Không trả lời"
+    },
+    "keywordsType": {
+      "all": "Tất cả reply",
+      "equal": "Khớp chính xác",
+      "contain": "Chứa"
+    },
+    "selectStories": "Chọn Story",
+    "selectPageAll": "Tất cả tài khoản",
+    "chooseSpecificStories": "Chọn Story...",
+    "activeStoriesTab": "Story đang hoạt động",
+    "storyIdTab": "Story ID",
+    "storyIdPlaceholder": "Nhập ID Story, mỗi dòng một ID...",
+    "noStoriesFound": "Không tìm thấy Story đang hoạt động",
+    "connectionType": {
+      "title": "Chọn loại kết nối Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Kết nối bằng Instagram Login. Hỗ trợ trả lời qua văn bản, flow, hoặc AI agent.",
+      "instagramFacebookTitle": "Instagram Login qua Facebook",
+      "instagramFacebookDescription": "Instagram được kết nối qua một trang Facebook. Hỗ trợ trả lời qua văn bản, flow, hoặc AI agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Tự động hóa Facebook Lead Ads",
     "description": "Tự động hóa Facebook Lead Ads cho các liên hệ của bạn.",

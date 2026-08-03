@@ -3050,6 +3050,66 @@
       "instagramFacebookDescription": "Instagram ist über eine Facebook-Seite verbunden. Unterstützt öffentliche und private Antworten, das Ausblenden und das Liken von Kommentaren."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Instagram-Story-Antwort-Automatisierung",
+    "description": "Automatisieren Sie Antworten auf Instagram-Story-Antworten für Ihre Kontakte.",
+    "create": "Automatisierung erstellen",
+    "replies": "Antworten",
+    "activated": "Automatisierung aktiviert",
+    "deactivated": "Automatisierung deaktiviert",
+    "trackStoryReplyOn": "Story-Antworten verfolgen für",
+    "trackStoryReplyOnDescription": "Wenden Sie diese Automatisierung auf Antworten auf alle Ihre Stories an, oder begrenzen Sie sie auf bestimmte Stories, die Sie auswählen.",
+    "reply": "Antwort",
+    "replyDescription": "Senden Sie eine Antwort an den Posteingang der Person, die auf die Story geantwortet hat. Wählen Sie einen KI-Agenten, eine feste Textvorlage (Spintax unterstützt), einen Chatbot-Flow oder deaktivieren Sie die Antwort.",
+    "replyMessage": "Antwortnachricht",
+    "replyMessagePlaceholder": "Antwortnachricht eingeben...",
+    "includeKeywordsType": "Antworten auf",
+    "includeKeywordsTypeDescription": "Wählen Sie, auf welche Story-Antworten diese Automatisierung reagiert.",
+    "includeKeywords": "Schlüsselwörter zum Abgleich",
+    "keywordsPlaceholder": "Eingeben und Enter drücken...",
+    "schedule": {
+      "title": "Aktive Zeiten festlegen",
+      "description": "Wählen Sie eine Start- und Endzeit. Wenn die Endzeit vor der Startzeit liegt, läuft der Zeitplan über Nacht.",
+      "startTime": "Startzeit",
+      "endTime": "Endzeit",
+      "alwaysRun": "Immer ausführen",
+      "save": "Speichern",
+      "invalidTimeRange": "Start- und Endzeit müssen unterschiedlich sein",
+      "timeRequired": "Bitte wählen Sie sowohl Start- als auch Endzeit"
+    },
+    "card": {
+      "targeting": "Ausrichtung & Antwort"
+    },
+    "storyType": {
+      "all": "Alle Stories",
+      "specificStories": "Bestimmte Stories"
+    },
+    "replyType": {
+      "text": "Textnachricht",
+      "flow": "Flow",
+      "AIAgent": "KI-Agent",
+      "none": "Keine Antwort"
+    },
+    "keywordsType": {
+      "all": "Alle Antworten",
+      "equal": "Exakte Übereinstimmung",
+      "contain": "Enthält"
+    },
+    "selectStories": "Stories auswählen",
+    "selectPageAll": "Alle Konten",
+    "chooseSpecificStories": "Stories auswählen...",
+    "activeStoriesTab": "Aktive Stories",
+    "storyIdTab": "Story-ID",
+    "storyIdPlaceholder": "Story-IDs eingeben, eine pro Zeile...",
+    "noStoriesFound": "Keine aktiven Stories gefunden",
+    "connectionType": {
+      "title": "Instagram-Verbindungstyp wählen",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram-Login-Verbindung. Unterstützt Antworten per Text, Flow oder KI-Agent.",
+      "instagramFacebookTitle": "Instagram-Login mit Facebook",
+      "instagramFacebookDescription": "Instagram, verbunden über eine Facebook-Seite. Unterstützt Antworten per Text, Flow oder KI-Agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Facebook-Lead-Ads-Automatisierung",
     "description": "Automatisieren Sie Facebook Lead Ads für Ihre Kontakte.",
