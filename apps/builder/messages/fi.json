@@ -3766,6 +3766,66 @@
       "instagramFacebookDescription": "Facebook-sivun kautta yhdistetty Instagram. Tukee julkista vastausta, yksityistä vastausta, kommenttien piilottamista ja kommenteista tykkäämistä."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Instagram-tarinavastausautomaatio",
+    "description": "Automatisoi vastaukset Instagram-tarinavastauksiin yhteystiedoillesi.",
+    "create": "Luo automaatio",
+    "replies": "Vastaukset",
+    "activated": "Automaatio aktivoitu",
+    "deactivated": "Automaatio poistettu käytöstä",
+    "trackStoryReplyOn": "Seuraa tarinavastauksia kohteessa",
+    "trackStoryReplyOnDescription": "Käytä tätä automaatiota vastauksiin kaikissa tarinoissasi, tai rajaa se valitsemiisi tiettyihin tarinoihin.",
+    "reply": "Vastaus",
+    "replyDescription": "Lähetä vastaus tarinaan vastanneen postilaatikkoon. Valitse tekoälyagentti, kiinteä tekstipohja (spintax tuettu), chatbot-vuo tai poista käytöstä.",
+    "replyMessage": "Vastausviesti",
+    "replyMessagePlaceholder": "Kirjoita vastausviesti...",
+    "includeKeywordsType": "Vastaa kohteeseen",
+    "includeKeywordsTypeDescription": "Valitse, mihin tarinavastauksiin tämä automaatio reagoi.",
+    "includeKeywords": "Täsmäytettävät avainsanat",
+    "keywordsPlaceholder": "Kirjoita ja paina Enter...",
+    "schedule": {
+      "title": "Aseta aktiiviset tunnit",
+      "description": "Valitse alkamis- ja päättymisaika. Jos päättymisaika on aiemmin kuin alkamisaika, aikataulu jatkuu yön yli.",
+      "startTime": "Alkamisaika",
+      "endTime": "Päättymisaika",
+      "alwaysRun": "Suorita aina",
+      "save": "Tallenna",
+      "invalidTimeRange": "Alkamis- ja päättymisajan on oltava erilaiset",
+      "timeRequired": "Valitse sekä alkamis- että päättymisaika"
+    },
+    "card": {
+      "targeting": "Kohdistus ja vastaus"
+    },
+    "storyType": {
+      "all": "Kaikki tarinat",
+      "specificStories": "Tietyt tarinat"
+    },
+    "replyType": {
+      "text": "Tekstiviesti",
+      "flow": "Vuo",
+      "AIAgent": "Tekoälyagentti",
+      "none": "Ei vastausta"
+    },
+    "keywordsType": {
+      "all": "Kaikki vastaukset",
+      "equal": "Täsmällinen vastaavuus",
+      "contain": "Sisältää"
+    },
+    "selectStories": "Valitse tarinat",
+    "selectPageAll": "Kaikki tilit",
+    "chooseSpecificStories": "Valitse tarinoita...",
+    "activeStoriesTab": "Aktiiviset tarinat",
+    "storyIdTab": "Tarinan tunnus",
+    "storyIdPlaceholder": "Syötä tarinatunnukset, yksi per rivi...",
+    "noStoriesFound": "Aktiivisia tarinoita ei löytynyt",
+    "connectionType": {
+      "title": "Valitse Instagram-yhteystyyppi",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login -yhteys. Tukee vastaamista tekstillä, vuolla tai tekoälyagentilla.",
+      "instagramFacebookTitle": "Instagram Login Facebookin kautta",
+      "instagramFacebookDescription": "Instagram yhdistetty Facebook-sivun kautta. Tukee vastaamista tekstillä, vuolla tai tekoälyagentilla."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Facebook-liidimainosautomaatio",
     "description": "Automatisoi Facebook-liidimainokset yhteystiedoillesi.",

@@ -6,6 +6,7 @@ export {
   getPostDetails,
   type InstagramMediaListItem,
   listInstagramMedia,
+  listInstagramStories,
 } from "./apis/post"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"

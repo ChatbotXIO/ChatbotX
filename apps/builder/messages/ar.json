@@ -4147,6 +4147,66 @@
       "instagramFacebookDescription": "إنستغرام متصل عبر صفحة فيسبوك. يدعم الرد العلني، والرد الخاص، وإخفاء التعليقات، والإعجاب بالتعليقات."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "أتمتة الرد على قصص إنستغرام",
+    "description": "أتمتة الردود على ردود قصص إنستغرام لجهات الاتصال الخاصة بك.",
+    "create": "إنشاء أتمتة",
+    "replies": "الردود",
+    "activated": "تم تفعيل الأتمتة",
+    "deactivated": "تم إيقاف الأتمتة",
+    "trackStoryReplyOn": "تتبع الرد على القصة في",
+    "trackStoryReplyOnDescription": "طبّق هذه الأتمتة على الردود في جميع قصصك، أو حدّدها بقصص معينة تختارها.",
+    "reply": "الرد",
+    "replyDescription": "إرسال رد إلى صندوق وارد الشخص الذي ردّ على القصة. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت (مع دعم spintax)، أو مسار روبوت محادثة، أو التعطيل.",
+    "replyMessage": "رسالة الرد",
+    "replyMessagePlaceholder": "أدخل رسالة الرد...",
+    "includeKeywordsType": "الرد على",
+    "includeKeywordsTypeDescription": "اختر ردود القصص التي تستجيب لها هذه الأتمتة.",
+    "includeKeywords": "الكلمات المفتاحية للمطابقة",
+    "keywordsPlaceholder": "اكتب واضغط على Enter...",
+    "schedule": {
+      "title": "تعيين ساعات النشاط",
+      "description": "اختر وقت البدء والانتهاء. إذا كان وقت الانتهاء أقبل من وقت البدء، يعمل الجدول بين عشية وضحاها.",
+      "startTime": "وقت البدء",
+      "endTime": "وقت الانتهاء",
+      "alwaysRun": "التشغيل دائمًا",
+      "save": "حفظ",
+      "invalidTimeRange": "يجب أن يختلف وقت البدء عن وقت الانتهاء",
+      "timeRequired": "يرجى تحديد وقت البدء والانتهاء"
+    },
+    "card": {
+      "targeting": "الاستهداف والرد"
+    },
+    "storyType": {
+      "all": "جميع القصص",
+      "specificStories": "قصص محددة"
+    },
+    "replyType": {
+      "text": "رسالة نصية",
+      "flow": "مسار",
+      "AIAgent": "وكيل الذكاء الاصطناعي",
+      "none": "بدون رد"
+    },
+    "keywordsType": {
+      "all": "جميع الردود",
+      "equal": "تطابق تام",
+      "contain": "يحتوي على"
+    },
+    "selectStories": "تحديد القصص",
+    "selectPageAll": "جميع الحسابات",
+    "chooseSpecificStories": "اختر قصصًا...",
+    "activeStoriesTab": "القصص النشطة",
+    "storyIdTab": "معرّف القصة",
+    "storyIdPlaceholder": "أدخل معرّفات القصص، واحدًا في كل سطر...",
+    "noStoriesFound": "لم يتم العثور على قصص نشطة",
+    "connectionType": {
+      "title": "اختر نوع اتصال إنستغرام",
+      "instagramTitle": "إنستغرام للأعمال",
+      "instagramDescription": "اتصال تسجيل الدخول عبر إنستغرام. يدعم الرد عبر النص أو المسار أو وكيل الذكاء الاصطناعي.",
+      "instagramFacebookTitle": "تسجيل الدخول إلى إنستغرام عبر فيسبوك",
+      "instagramFacebookDescription": "إنستغرام متصل عبر صفحة فيسبوك. يدعم الرد عبر النص أو المسار أو وكيل الذكاء الاصطناعي."
+    }
+  },
   "productCategories": {
     "title": "الفئات",
     "loadError": "تعذّر تحميل فئات المنتجات.",

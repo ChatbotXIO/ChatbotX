@@ -3773,6 +3773,66 @@
       "instagramFacebookDescription": "Instagram connected via a Facebook Page. Supports public reply, private reply, hiding comments, and liking comments."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Instagram Story Reply Automation",
+    "description": "Automate replies to Instagram story replies for your contacts.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "activated": "Automation activated",
+    "deactivated": "Automation deactivated",
+    "trackStoryReplyOn": "Track Story reply on",
+    "trackStoryReplyOnDescription": "Apply this automation to replies on any of your Stories, or narrow it to specific Stories you select.",
+    "reply": "Reply",
+    "replyDescription": "Send a reply to the story replier's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable.",
+    "replyMessage": "Reply message",
+    "replyMessagePlaceholder": "Enter reply message...",
+    "includeKeywordsType": "Reply to",
+    "includeKeywordsTypeDescription": "Choose which story replies this automation responds to.",
+    "includeKeywords": "Keywords to match",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "schedule": {
+      "title": "Set active hours",
+      "description": "Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight.",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "alwaysRun": "Always run",
+      "save": "Save",
+      "invalidTimeRange": "Start and end time must be different",
+      "timeRequired": "Please select both start and end time"
+    },
+    "card": {
+      "targeting": "Targeting & Reply"
+    },
+    "storyType": {
+      "all": "All stories",
+      "specificStories": "Specific stories"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All replies",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "selectStories": "Select Stories",
+    "selectPageAll": "All accounts",
+    "chooseSpecificStories": "Choose stories...",
+    "activeStoriesTab": "Active stories",
+    "storyIdTab": "Story ID",
+    "storyIdPlaceholder": "Enter story IDs, one per line...",
+    "noStoriesFound": "No active stories found",
+    "connectionType": {
+      "title": "Choose Instagram connection type",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login connection. Supports reply via text, flow, or AI agent.",
+      "instagramFacebookTitle": "Instagram Login with Facebook",
+      "instagramFacebookDescription": "Instagram connected via a Facebook Page. Supports reply via text, flow, or AI agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Facebook Lead Ads Automation",
     "description": "Automate Facebook lead ads for your contacts.",

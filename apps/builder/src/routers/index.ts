@@ -19,6 +19,7 @@ import { fbCommentsAPI } from "@/features/fb-comments/api"
 import { flowsAPI } from "@/features/flows/api"
 import { foldersAPI } from "@/features/folders/api"
 import { igCommentsAPI } from "@/features/ig-comments/api"
+import { igStoriesAPI } from "@/features/ig-stories/api"
 import { inboxesAPI } from "@/features/inboxes/api"
 import { integrationActiveCampaignAPI } from "@/features/integration-active-campaign/api"
 import { integrationDripAPI } from "@/features/integration-drip/api"
@@ -89,6 +90,7 @@ export const router = {
   savedRepliesAPI,
   fbCommentsAPI,
   igCommentsAPI,
+  igStoriesAPI,
   facebookLeadAdsAPI,
   sequencesAPI,
   aiFilesAPI,

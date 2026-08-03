@@ -147,6 +147,7 @@ const getMessageEntity = async (
 
   if (messaging.message) {
     const location = getMessageLocation(messaging.message)
+    const storyReply = messaging.message.reply_to?.story
     message = {
       sourceId: messaging.message.mid,
       messageType:
@@ -157,7 +158,7 @@ const getMessageEntity = async (
       contentType: location
         ? contentTypes.enum.location
         : contentTypes.enum.text,
-      contentAttributes: location ?? undefined,
+      contentAttributes: location ?? (storyReply ? { storyReply } : undefined),
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
     quickReplyAction = messaging.message.quick_reply?.payload ?? null

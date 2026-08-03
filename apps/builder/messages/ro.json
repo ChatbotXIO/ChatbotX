@@ -3902,6 +3902,66 @@
     "trackCommentsOn": "Urmărește comentariile la",
     "trackCommentsOnDescription": "Aplică această automatizare tuturor postărilor de pe contul tău conectat sau restrânge-o la postările specifice pe care le selectezi."
   },
+  "instagramStoryAutomation": {
+    "title": "Automatizare răspunsuri la Story-uri Instagram",
+    "description": "Automatizează răspunsurile la răspunsurile la Story-urile Instagram pentru contactele tale.",
+    "create": "Creează automatizare",
+    "replies": "Răspunsuri",
+    "activated": "Automatizare activată",
+    "deactivated": "Automatizare dezactivată",
+    "trackStoryReplyOn": "Urmărește răspunsurile la Story pe",
+    "trackStoryReplyOnDescription": "Aplică această automatizare răspunsurilor la toate Story-urile tale, sau restrânge-o la Story-uri specifice pe care le selectezi.",
+    "reply": "Răspuns",
+    "replyDescription": "Trimite un răspuns în inbox-ul persoanei care a răspuns la Story. Alege AI Agent, un șablon de text fix (spintax acceptat), un flux de chatbot, sau dezactivează.",
+    "replyMessage": "Mesaj de răspuns",
+    "replyMessagePlaceholder": "Introdu mesajul de răspuns...",
+    "includeKeywordsType": "Răspunde la",
+    "includeKeywordsTypeDescription": "Alege la ce răspunsuri de Story răspunde această automatizare.",
+    "includeKeywords": "Cuvinte cheie de potrivit",
+    "keywordsPlaceholder": "Scrie și apasă Enter...",
+    "schedule": {
+      "title": "Setează orele active",
+      "description": "Alege o oră de început și de sfârșit. Dacă ora de sfârșit este mai devreme decât ora de început, programul se derulează peste noapte.",
+      "startTime": "Ora de început",
+      "endTime": "Ora de sfârșit",
+      "alwaysRun": "Rulează întotdeauna",
+      "save": "Salvează",
+      "invalidTimeRange": "Ora de început și de sfârșit trebuie să fie diferite",
+      "timeRequired": "Selectează atât ora de început, cât și cea de sfârșit"
+    },
+    "card": {
+      "targeting": "Targetare și răspuns"
+    },
+    "storyType": {
+      "all": "Toate Story-urile",
+      "specificStories": "Story-uri specifice"
+    },
+    "replyType": {
+      "text": "Mesaj text",
+      "flow": "Flux",
+      "AIAgent": "AI Agent",
+      "none": "Fără răspuns"
+    },
+    "keywordsType": {
+      "all": "Toate răspunsurile",
+      "equal": "Potrivire exactă",
+      "contain": "Conține"
+    },
+    "selectStories": "Selectează Story-uri",
+    "selectPageAll": "Toate conturile",
+    "chooseSpecificStories": "Alege story-uri...",
+    "activeStoriesTab": "Story-uri active",
+    "storyIdTab": "ID Story",
+    "storyIdPlaceholder": "Introdu ID-urile story-urilor, unul pe linie...",
+    "noStoriesFound": "Nu s-au găsit story-uri active",
+    "connectionType": {
+      "title": "Alege tipul de conexiune Instagram",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Conexiune Instagram Login. Acceptă răspuns prin text, flux sau AI agent.",
+      "instagramFacebookTitle": "Instagram Login cu Facebook",
+      "instagramFacebookDescription": "Instagram conectat printr-o Pagină Facebook. Acceptă răspuns prin text, flux sau AI agent."
+    }
+  },
   "manageSidebar": {
     "platformGroup": "Platformă",
     "portalCustomDomain": "Domeniu personalizat",

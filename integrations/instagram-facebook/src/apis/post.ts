@@ -57,6 +57,36 @@ export const listInstagramMedia = (props: {
   })
 }
 
+/**
+ * Lists the connected Instagram Business Account's currently active stories.
+ * Same `igId`-addressed pattern as `listInstagramMedia` — the `stories` edge
+ * is separate from `media` and only ever returns what's currently live
+ * (stories expire after ~24h).
+ */
+export const listInstagramStories = (props: {
+  auth: InstagramAuthValue
+}): Promise<InstagramMediaListItem[]> => {
+  const { auth } = props
+  const version = auth.metadata.version ?? DEFAULT_API_VERSION
+  const endpoint = `${version}/${auth.metadata.igId}/stories`
+
+  return rescue(endpoint, async () => {
+    const res = await instagramGraphClient.get<
+      InstagramPaginatedResponse<InstagramMediaListItem>
+    >(endpoint, {
+      headers: {
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+      searchParams: {
+        fields:
+          "id,caption,media_type,media_url,thumbnail_url,timestamp,permalink",
+        limit: "100",
+      },
+    })
+    return res.data
+  })
+}
+
 export const getPostDetails = (props: {
   ctx: Context<InstagramAuthValue>
   input: { postId: string }

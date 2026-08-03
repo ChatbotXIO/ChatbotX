@@ -2859,6 +2859,66 @@
     "trackCommentsOn": "Spåra kommentarer på",
     "trackCommentsOnDescription": "Använd denna automatisering för alla inlägg på ditt anslutna konto eller begränsa den till specifika inlägg som du väljer."
   },
+  "instagramStoryAutomation": {
+    "title": "Automatisering av Instagram Story-svar",
+    "description": "Automatisera svar på Instagram Story-svar för dina kontakter.",
+    "create": "Skapa automatisering",
+    "replies": "Svar",
+    "activated": "Automatisering aktiverad",
+    "deactivated": "Automatisering inaktiverad",
+    "trackStoryReplyOn": "Spåra Story-svar på",
+    "trackStoryReplyOnDescription": "Använd denna automatisering på svar på alla dina Stories, eller begränsa den till specifika Stories som du väljer.",
+    "reply": "Svar",
+    "replyDescription": "Skicka ett svar till inkorgen för den som svarade på Storyn. Välj AI-agent, en fast textmall (spintax stöds), ett chatbotflöde, eller inaktivera.",
+    "replyMessage": "Svarsmeddelande",
+    "replyMessagePlaceholder": "Ange svarsmeddelande...",
+    "includeKeywordsType": "Svara på",
+    "includeKeywordsTypeDescription": "Välj vilka Story-svar denna automatisering svarar på.",
+    "includeKeywords": "Nyckelord att matcha",
+    "keywordsPlaceholder": "Skriv och tryck på Enter...",
+    "schedule": {
+      "title": "Ställ in aktiva timmar",
+      "description": "Välj en start- och sluttid. Om sluttiden är tidigare än starttiden körs schemat över natten.",
+      "startTime": "Starttid",
+      "endTime": "Sluttid",
+      "alwaysRun": "Kör alltid",
+      "save": "Spara",
+      "invalidTimeRange": "Start- och sluttid måste vara olika",
+      "timeRequired": "Välj både start- och sluttid"
+    },
+    "card": {
+      "targeting": "Målinriktning & svar"
+    },
+    "storyType": {
+      "all": "Alla stories",
+      "specificStories": "Specifika stories"
+    },
+    "replyType": {
+      "text": "Textmeddelande",
+      "flow": "Flöde",
+      "AIAgent": "AI-agent",
+      "none": "Inget svar"
+    },
+    "keywordsType": {
+      "all": "Alla svar",
+      "equal": "Exakt matchning",
+      "contain": "Innehåller"
+    },
+    "selectStories": "Välj stories",
+    "selectPageAll": "Alla konton",
+    "chooseSpecificStories": "Välj stories...",
+    "activeStoriesTab": "Aktiva stories",
+    "storyIdTab": "Story-ID",
+    "storyIdPlaceholder": "Ange story-ID:n, ett per rad...",
+    "noStoriesFound": "Inga aktiva stories hittades",
+    "connectionType": {
+      "title": "Välj typ av Instagram-anslutning",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login-anslutning. Stöder svar via text, flöde eller AI-agent.",
+      "instagramFacebookTitle": "Instagram Login med Facebook",
+      "instagramFacebookDescription": "Instagram anslutet via en Facebook-sida. Stöder svar via text, flöde eller AI-agent."
+    }
+  },
   "integrations": {
     "title": "Integrationer"
   },

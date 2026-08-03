@@ -57,6 +57,7 @@ import { flowNodeStatRelations } from "./flow-node-stat"
 import { flowRunRelations } from "./flow-run"
 import { flowVersionRelations } from "./flow-version"
 import { folderRelations } from "./folder"
+import { igStoryAutomationRelations } from "./ig-story-automation"
 import { importRelations } from "./import"
 import { inboxRelations } from "./inbox"
 import { inboxContactStatsRelations } from "./inbox-contact-stats"
@@ -149,6 +150,7 @@ export const relations = {
   ...inboxRelations,
   ...conversationParticipantRelations,
   ...folderRelations,
+  ...igStoryAutomationRelations,
   ...importRelations,
   ...fileRelations,
   ...flowRunRelations,

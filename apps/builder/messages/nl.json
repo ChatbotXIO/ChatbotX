@@ -3766,6 +3766,66 @@
       "instagramFacebookDescription": "Instagram gekoppeld via een Facebook-pagina. Ondersteunt openbare antwoorden, privéantwoorden, het verbergen van opmerkingen en het leuk vinden van opmerkingen."
     }
   },
+  "instagramStoryAutomation": {
+    "title": "Instagram Story-reactie-automatisering",
+    "description": "Automatiseer reacties op Instagram Story-reacties voor je contacten.",
+    "create": "Automatisering maken",
+    "replies": "Reacties",
+    "activated": "Automatisering geactiveerd",
+    "deactivated": "Automatisering gedeactiveerd",
+    "trackStoryReplyOn": "Story-reacties volgen op",
+    "trackStoryReplyOnDescription": "Pas deze automatisering toe op reacties op al je Stories, of beperk dit tot specifieke Stories die je selecteert.",
+    "reply": "Reactie",
+    "replyDescription": "Stuur een reactie naar de inbox van degene die op de Story heeft gereageerd. Kies AI-agent, een vaste tekstsjabloon (spintax ondersteund), een chatbotflow, of schakel uit.",
+    "replyMessage": "Reactiebericht",
+    "replyMessagePlaceholder": "Voer reactiebericht in...",
+    "includeKeywordsType": "Reageren op",
+    "includeKeywordsTypeDescription": "Kies op welke Story-reacties deze automatisering reageert.",
+    "includeKeywords": "Trefwoorden om te matchen",
+    "keywordsPlaceholder": "Typ en druk op Enter...",
+    "schedule": {
+      "title": "Actieve uren instellen",
+      "description": "Kies een start- en eindtijd. Als de eindtijd eerder is dan de starttijd, loopt het schema door tot 's nachts.",
+      "startTime": "Starttijd",
+      "endTime": "Eindtijd",
+      "alwaysRun": "Altijd actief",
+      "save": "Opslaan",
+      "invalidTimeRange": "Start- en eindtijd moeten verschillend zijn",
+      "timeRequired": "Selecteer zowel een start- als eindtijd"
+    },
+    "card": {
+      "targeting": "Targeting & reactie"
+    },
+    "storyType": {
+      "all": "Alle stories",
+      "specificStories": "Specifieke stories"
+    },
+    "replyType": {
+      "text": "Tekstbericht",
+      "flow": "Flow",
+      "AIAgent": "AI-agent",
+      "none": "Geen reactie"
+    },
+    "keywordsType": {
+      "all": "Alle reacties",
+      "equal": "Exacte overeenkomst",
+      "contain": "Bevat"
+    },
+    "selectStories": "Stories selecteren",
+    "selectPageAll": "Alle accounts",
+    "chooseSpecificStories": "Kies stories...",
+    "activeStoriesTab": "Actieve stories",
+    "storyIdTab": "Story-ID",
+    "storyIdPlaceholder": "Voer story-ID's in, één per regel...",
+    "noStoriesFound": "Geen actieve stories gevonden",
+    "connectionType": {
+      "title": "Kies het type Instagram-verbinding",
+      "instagramTitle": "Instagram Business",
+      "instagramDescription": "Instagram Login-verbinding. Ondersteunt reageren via tekst, flow of AI-agent.",
+      "instagramFacebookTitle": "Instagram Login met Facebook",
+      "instagramFacebookDescription": "Instagram verbonden via een Facebookpagina. Ondersteunt reageren via tekst, flow of AI-agent."
+    }
+  },
   "facebookLeadAdsAutomation": {
     "title": "Automatisering van Facebook-leadadvertenties",
     "description": "Automatiseer Facebook-leadadvertenties voor je contacten.",
