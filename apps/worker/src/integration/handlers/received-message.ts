@@ -123,6 +123,7 @@ export const receiveMessage = async (
   postbackAction: string | null
   quickReplyAction: string | null
   ref?: string | null
+  channelType: "instagram" | "instagramFacebook"
 }> => {
   setWebhookExecutionContext({ source: "webhook" })
 
@@ -144,12 +145,13 @@ export const receiveMessage = async (
       `No integration registered for channel: ${integrationType}`,
     )
   }
-  if (
-    integrationType === "instagram" &&
-    isInstagramViaFacebook(integrationRow)
-  ) {
+  const isFacebookConnectedInstagram =
+    integrationType === "instagram" && isInstagramViaFacebook(integrationRow)
+  if (isFacebookConnectedInstagram) {
     integration = allIntegrations.instagramFacebook ?? integration
   }
+  const channelType: "instagram" | "instagramFacebook" =
+    isFacebookConnectedInstagram ? "instagramFacebook" : "instagram"
 
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   const isWorkspaceActive = workspaceService.isActiveNow(workspace)
@@ -316,6 +318,7 @@ export const receiveMessage = async (
     postbackAction,
     quickReplyAction,
     ref,
+    channelType,
   }
 }
 

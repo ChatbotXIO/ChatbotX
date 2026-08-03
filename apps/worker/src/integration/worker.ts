@@ -68,8 +68,13 @@ async function startIntegrationWorker() {
       return await runIntegrationJobWithWebhookContext(job.data, async () => {
         switch (job.data.type) {
           case IntegrationJobAction.incomingMessage: {
-            const { message, postbackAction, quickReplyAction, conversation } =
-              await receiveMessage(job.data.data)
+            const {
+              message,
+              postbackAction,
+              quickReplyAction,
+              conversation,
+              channelType,
+            } = await receiveMessage(job.data.data)
 
             if (!message) {
               return
@@ -102,9 +107,7 @@ async function startIntegrationWorker() {
                     storyId: storyReply.id,
                     storyUrl: storyReply.url,
                     message: message.text ?? undefined,
-                    channelType: job.data.data.integrationType as
-                      | "instagram"
-                      | "instagramFacebook",
+                    channelType,
                   },
                 },
                 { jobId: `story-reply-auto-${message.id}` },
