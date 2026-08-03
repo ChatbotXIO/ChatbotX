@@ -309,7 +309,7 @@ export function FlowEditToolbar({
         <DropdownMenuTrigger className="px-1.5">
           <EllipsisIcon />
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent className="min-w-64 whitespace-nowrap">
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setAction("rename")}>
               <TypeIcon />
