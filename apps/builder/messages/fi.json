@@ -2597,6 +2597,7 @@
     "changeHideState": "Vaihda piilotustilaa",
     "commentHidden": "Tämä kommentti piilotettiin",
     "messageDeleted": "Viesti on poistettu.",
+    "repliedToStory": "Vastasi tarinaasi",
     "sentAttachments": "Lähetettiin {count, plural, one {1 liite} other {# liitettä}}",
     "deleteComment": "Poista kommentti",
     "deleteCommentConfirmation": "Haluatko varmasti poistaa tämän kommentin? Myös sen vastaukset poistetaan sekä saapuneet-kansiostasi että Facebookista. Tätä toimintoa ei voi kumota.",

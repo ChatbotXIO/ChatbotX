@@ -911,6 +911,7 @@
     "changeHideState": "שינוי מצב הסתרה",
     "commentHidden": "תגובה זו הוסתרה",
     "messageDeleted": "ההודעה נמחקה.",
+    "repliedToStory": "הגיב לסטורי שלך",
     "sentAttachments": "נשלחו {count, plural, one {קובץ מצורף אחד} other {# קבצים מצורפים}}",
     "deleteComment": "מחיקת תגובה",
     "deleteCommentConfirmation": "האם למחוק תגובה זו? גם התשובות שלה יימחקו, הן מתיבת הדואר הנכנס והן מ-Facebook. לא ניתן לבטל פעולה זו.",

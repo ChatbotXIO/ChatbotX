@@ -2343,6 +2343,7 @@
     "changeHideState": "Cambia stato di visibilità",
     "commentHidden": "Questo commento è stato nascosto",
     "messageDeleted": "Il messaggio è stato eliminato.",
+    "repliedToStory": "Ha risposto alla tua storia",
     "sentAttachments": "Inviati {count, plural, one {1 allegato} other {# allegati}}",
     "deleteComment": "Elimina commento",
     "deleteCommentConfirmation": "Vuoi davvero eliminare questo commento? Verranno eliminate anche le relative risposte, sia nella posta in arrivo sia su Facebook. Questa azione non può essere annullata.",

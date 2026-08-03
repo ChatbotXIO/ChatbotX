@@ -2584,6 +2584,7 @@
     "changeHideState": "Alterar estado de ocultação",
     "commentHidden": "Este comentário foi ocultado",
     "messageDeleted": "A mensagem foi excluída.",
+    "repliedToStory": "Respondeu ao seu story",
     "sentAttachments": "Enviou {count, plural, one {1 anexo} other {# anexos}}",
     "deleteComment": "Excluir comentário",
     "deleteCommentConfirmation": "Tem certeza de que deseja excluir este comentário? As respostas também serão excluídas, tanto da sua caixa de entrada quanto do Facebook. Esta ação não pode ser desfeita.",

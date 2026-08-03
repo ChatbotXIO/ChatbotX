@@ -2602,6 +2602,7 @@
     "changeHideState": "تغيير حالة الإخفاء",
     "commentHidden": "تم إخفاء هذا التعليق",
     "messageDeleted": "تم حذف الرسالة.",
+    "repliedToStory": "رد على قصتك",
     "sentAttachments": "تم إرسال {count, plural, one {مرفق واحد} other {# مرفقات}}",
     "deleteComment": "حذف التعليق",
     "deleteCommentConfirmation": "هل أنت متأكد من رغبتك في حذف هذا التعليق؟ ستُحذف ردوده أيضًا من صندوق الوارد ومن Facebook. لا يمكن التراجع عن هذا الإجراء.",

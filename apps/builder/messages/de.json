@@ -1959,6 +1959,7 @@
     "changeHideState": "Sichtbarkeitsstatus ändern",
     "commentHidden": "Dieser Kommentar wurde ausgeblendet",
     "messageDeleted": "Die Nachricht wurde gelöscht.",
+    "repliedToStory": "Hat auf deine Story geantwortet",
     "sentAttachments": "{count, plural, one {1 Anhang gesendet} other {# Anhänge gesendet}}",
     "deleteComment": "Kommentar löschen",
     "deleteCommentConfirmation": "Möchten Sie diesen Kommentar wirklich löschen? Seine Antworten werden ebenfalls gelöscht, sowohl in Ihrem Posteingang als auch auf Facebook. Diese Aktion kann nicht rückgängig gemacht werden.",

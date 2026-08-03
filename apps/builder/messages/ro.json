@@ -2597,6 +2597,7 @@
     "changeHideState": "Schimbă starea de ascundere",
     "commentHidden": "Acest comentariu a fost ascuns",
     "messageDeleted": "Mesajul a fost șters.",
+    "repliedToStory": "A răspuns la story-ul tău",
     "sentAttachments": "S-a trimis {count, plural, one {1 atașament} other {# atașamente}}",
     "deleteComment": "Șterge comentariul",
     "deleteCommentConfirmation": "Ești sigur că vrei să ștergi acest comentariu? Răspunsurile sale vor fi șterse și ele, atât din mesajele primite, cât și de pe Facebook. Această acțiune nu poate fi anulată.",

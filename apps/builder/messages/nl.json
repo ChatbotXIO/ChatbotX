@@ -2597,6 +2597,7 @@
     "changeHideState": "Verbergstatus wijzigen",
     "commentHidden": "Deze opmerking is verborgen",
     "messageDeleted": "Het bericht is verwijderd.",
+    "repliedToStory": "Heeft op je story gereageerd",
     "sentAttachments": "{count, plural, one {1 bijlage verzonden} other {# bijlagen verzonden}}",
     "deleteComment": "Opmerking verwijderen",
     "deleteCommentConfirmation": "Weet je zeker dat je deze opmerking wilt verwijderen? De antwoorden worden ook verwijderd, zowel uit je inbox als van Facebook. Deze actie kan niet ongedaan worden gemaakt.",

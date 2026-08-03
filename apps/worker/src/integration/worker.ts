@@ -1,6 +1,7 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { conversationService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
+import { getStoryReply } from "@chatbotx.io/sdk"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -86,11 +87,7 @@ async function startIntegrationWorker() {
             const hasAttachment = message.attachments.length > 0
             const isLocation = message.contentType === "location"
 
-            const storyReply = (
-              message.contentAttributes as
-                | { storyReply?: { id: string; url?: string } }
-                | undefined
-            )?.storyReply
+            const storyReply = getStoryReply(message.contentAttributes)
 
             if (isFromContact && storyReply) {
               await integrationQueue.add(
