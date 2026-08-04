@@ -41,6 +41,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       data: { contact, message, quickReplies },
     } = props
 
+    const messageIds: string[] = []
     try {
       const instagramMessages = [...convertMessageToInstagramMessage(message)]
       const lastMessage = instagramMessages.at(-1)
@@ -50,7 +51,10 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       }
       for (const instagramMessage of instagramMessages) {
         const payload = buildMessagePayload(contact, instagramMessage)
-        await sendInstagramMessage(ctx.auth, payload)
+        const response = await sendInstagramMessage(ctx.auth, payload)
+        if (response.message_id) {
+          messageIds.push(response.message_id)
+        }
         logger.info(`Message sent for IGSID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -59,7 +63,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
     }
 
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 
@@ -191,14 +195,18 @@ export const sendFlowStep = async (
     ctx,
     data: { contact },
   } = props
+  const messageIds: string[] = []
   try {
     for await (const instagramMessage of convertFlowStepToInstagramMessage(
       props,
     )) {
-      await sendInstagramMessage(
+      const response = await sendInstagramMessage(
         ctx.auth,
         buildMessagePayload(contact, instagramMessage),
       )
+      if (response.message_id) {
+        messageIds.push(response.message_id)
+      }
       logger.info(`Message sent for IGSID: ${contact.sourceId}`)
     }
   } catch (error) {
@@ -207,6 +215,6 @@ export const sendFlowStep = async (
   }
 
   return {
-    messageIds: [],
+    messageIds,
   }
 }
