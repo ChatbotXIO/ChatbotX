@@ -1432,6 +1432,50 @@ describe("ShardedMessageRepository.createOrUpdate — idempotent echo save", () 
     // Last-resort best-effort input content (id from makeMessage) — never throws.
     expect(result.message.id).toBe("msg-1")
   })
+
+  // Regression: an Instagram outbound message is saved first (Send API returns
+  // the mid → stored as sourceId), then Instagram echoes that same message back
+  // ~1.4s later with is_echo:true and NO metadata. The echo must be deduped
+  // against the already-saved row. It was not, because the guard read passed
+  // sinceTime === echo.createdAt, and findBySourceId's gte(createdAt, sinceTime)
+  // filter then excluded the earlier row → a duplicate row was inserted.
+  test("dedup guard read looks back past the message's own createdAt so an echo of a just-sent message is caught", async () => {
+    const sentAt = new Date("2026-08-04T08:19:29.777Z") // Row A: bot's outbound
+    const echoAt = new Date("2026-08-04T08:19:31.191Z") // Row B: echo, ~1.4s later
+    const priorRow = { ...existingRow, sourceId: "mid-2", createdAt: sentAt }
+
+    const shardDb = makeInsertShardDb([{ ...priorRow, id: "must-not-insert" }])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    // Faithfully model findBySourceId's gte(createdAt, sinceTime): the earlier
+    // row is visible only when the guard read looks back to at or before sentAt.
+    vi.spyOn(repo, "findBySourceId").mockImplementation((async (
+      _sourceId: string,
+      _conversationId: string,
+      _workspaceId: string,
+      sinceTime?: Date,
+    ) =>
+      sinceTime && sinceTime.getTime() <= sentAt.getTime()
+        ? priorRow
+        : null) as never)
+
+    const echo = makeMessage({
+      id: "echo-1",
+      sourceId: "mid-2",
+      messageType: "outgoing",
+      createdAt: echoAt,
+    })
+    const result = await repo.createOrUpdate(echo)
+
+    expect(result.isNew).toBe(false)
+    expect(result.message).toEqual(priorRow)
+    expect(shardDb.insert).not.toHaveBeenCalled()
+  })
 })
 
 describe("ShardedMessageRepository.createOrUpdateWithAttachments — idempotent echo save", () => {
@@ -1472,5 +1516,59 @@ describe("ShardedMessageRepository.createOrUpdateWithAttachments — idempotent 
     expect(result.result).toEqual(existingWithAttachments)
     expect(txChain.onConflictDoNothing).toHaveBeenCalledTimes(1)
     expect(shardDb.transaction).toHaveBeenCalledTimes(1)
+  })
+
+  // Same send→echo regression as createOrUpdate, on the attachments path: the
+  // guard read must look back far enough to see the message saved seconds ago,
+  // otherwise the echo is inserted a second time.
+  test("dedup guard read looks back past the message's own createdAt so an echo of a just-sent message is caught", async () => {
+    const sentAt = new Date("2026-08-04T08:19:29.777Z")
+    const echoAt = new Date("2026-08-04T08:19:31.191Z")
+    const priorRow = { ...existingRow, sourceId: "mid-2", createdAt: sentAt }
+
+    const txChain = {
+      values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ ...priorRow, id: "must-not-insert" }]),
+    }
+    const tx = { insert: vi.fn().mockReturnValue(txChain) }
+    const shardDb = {
+      transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+        fn(tx),
+      ),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(shardDb),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+    vi.spyOn(repo, "findBySourceId").mockImplementation((async (
+      _sourceId: string,
+      _conversationId: string,
+      _workspaceId: string,
+      sinceTime?: Date,
+    ) =>
+      sinceTime && sinceTime.getTime() <= sentAt.getTime()
+        ? priorRow
+        : null) as never)
+    vi.spyOn(repo, "findById").mockResolvedValue({
+      ...priorRow,
+      attachments: [],
+    } as never)
+
+    const echo = makeMessage({
+      id: "echo-1",
+      sourceId: "mid-2",
+      messageType: "outgoing",
+      createdAt: echoAt,
+    })
+    const result = await repo.createOrUpdateWithAttachments(echo, [])
+
+    expect(result.isNew).toBe(false)
+    expect(shardDb.transaction).not.toHaveBeenCalled()
   })
 })
