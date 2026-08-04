@@ -84,7 +84,13 @@ export const StatsContactsDialog = memo(function StatsContactsDialog(
   const dialog = <StatsContactsDialogInner {...props} />
 
   return canTag ? (
-    <TagStoreProvider workspaceId={props.workspaceId}>
+    // Only fetch tags once the dialog is actually opened. These dialogs are
+    // rendered per stats cell (many per table) and stay mounted while closed,
+    // so eager initialization fired one /tags request per closed dialog.
+    <TagStoreProvider
+      autoInitialize={props.open}
+      workspaceId={props.workspaceId}
+    >
       {dialog}
     </TagStoreProvider>
   ) : (

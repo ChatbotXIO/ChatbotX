@@ -21,10 +21,12 @@ export function ResendBroadcastDialog({
   broadcast,
   open,
   onOpenChange,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
   broadcast: BroadcastModel | null
+  onSuccess?: () => void
 }) {
   const t = useTranslations()
 
@@ -38,6 +40,7 @@ export function ResendBroadcastDialog({
       onSuccess: () => {
         toast.success(t("messages.resendSuccess"))
         onOpenChange(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

@@ -2,6 +2,7 @@
 
 import type { TemplateComponent } from "@chatbotx.io/flow-config"
 import Image from "next/image"
+import { substituteTemplateText } from "./template-preview-utils"
 
 type TemplatePreviewProps = {
   components: TemplateComponent[]
@@ -25,15 +26,7 @@ export function TemplatePreview({
       {components.map((component) => {
         if (component.type === "HEADER") {
           if (component.format === "TEXT" && component.text) {
-            let text = component.text
-            if (headerParams && headerParams.length > 0) {
-              for (const [i, param] of headerParams.entries()) {
-                if (param?.text) {
-                  text = text.replace(`{{${i + 1}}}`, param.text)
-                  text = text.replace(/\{\{[a-zA-Z_]+\}\}/g, param.text)
-                }
-              }
-            }
+            const text = substituteTemplateText(component.text, headerParams)
             return (
               <div
                 className="font-bold text-sm"
@@ -72,15 +65,7 @@ export function TemplatePreview({
           }
         }
         if (component.type === "BODY" && component.text) {
-          let text = component.text
-          if (bodyParams && bodyParams.length > 0) {
-            for (const [i, param] of bodyParams.entries()) {
-              if (param?.text) {
-                text = text.replace(`{{${i + 1}}}`, param.text)
-                text = text.replace(/\{\{[a-zA-Z_]+\}\}/g, param.text)
-              }
-            }
-          }
+          const text = substituteTemplateText(component.text, bodyParams)
           return (
             <div
               className="whitespace-pre-wrap text-sm"

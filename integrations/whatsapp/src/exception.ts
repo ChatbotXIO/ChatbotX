@@ -8,21 +8,42 @@ function asObject<T>(value: unknown): T | undefined {
   return typeof value === "object" && value !== null ? (value as T) : undefined
 }
 
-type ErrorBody = {
-  error?: {
-    code?: number
-    status?: number
-    type?: string
-    message?: string
-    error_subcode?: number | string
-    error_data?: number | string
-    error_user_title?: string
-    error_user_msg?: string
-    fbtrace_id?: string
-  }
+// Meta Cloud API nests the human-readable reason under `error_data.details`,
+// e.g. "Parameter name is missing or empty" for a (#100) named-template error.
+type MetaErrorData = { messaging_product?: string; details?: string }
+type MetaError = {
+  code?: number
+  status?: number
+  type?: string
+  message?: string
+  error_subcode?: number | string
+  error_data?: MetaErrorData | number | string
+  error_user_title?: string
+  error_user_msg?: string
+  fbtrace_id?: string
 }
+type ErrorBody = { error?: MetaError }
 type OriginShape = { httpStatus?: number; errorBody?: ErrorBody }
-type ExplicitShape = { response?: { error?: ErrorBody["error"] } }
+type ExplicitShape = { response?: { error?: MetaError } }
+
+function readErrorDetails(
+  errorData: MetaError["error_data"],
+): string | undefined {
+  return typeof errorData === "object" && errorData !== null
+    ? errorData.details
+    : undefined
+}
+
+/** True for a bare Meta error object ({ code, type, ... }) — the shape the raw
+ * send path throws directly, which the wrapper branches below do not match. */
+function isMetaError(value: MetaError | undefined): value is MetaError {
+  return (
+    value !== undefined &&
+    (value.code !== undefined ||
+      value.type !== undefined ||
+      value.error_subcode !== undefined)
+  )
+}
 
 export type ChannelErrorSource = {
   httpStatusCode: number
@@ -36,15 +57,15 @@ export type ChannelErrorSource = {
 }
 
 function parseErrorBody(
-  err: ErrorBody["error"] | undefined,
+  err: MetaError | undefined,
 ): Omit<ChannelErrorSource, "httpStatusCode"> {
   return {
     code: err?.code,
-    subCode: err?.error_subcode ?? err?.error_data,
+    subCode: err?.error_subcode ?? null,
     type: err?.type,
     message: err?.message,
     userTitle: err?.error_user_title,
-    userMessage: err?.error_user_msg,
+    userMessage: err?.error_user_msg ?? readErrorDetails(err?.error_data),
     fbtraceId: err?.fbtrace_id,
   }
 }
@@ -75,6 +96,16 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
     return {
       httpStatusCode: err.status ?? FALLBACK_HTTP_STATUS,
       ...parseErrorBody(err),
+    }
+  }
+
+  // The raw send path throws Meta's error object directly (not wrapped), so
+  // read it here rather than dropping its code/message into the fallback.
+  const bareError = asObject<MetaError>(originError)
+  if (isMetaError(bareError)) {
+    return {
+      httpStatusCode: bareError.status ?? FALLBACK_HTTP_STATUS,
+      ...parseErrorBody(bareError),
     }
   }
 

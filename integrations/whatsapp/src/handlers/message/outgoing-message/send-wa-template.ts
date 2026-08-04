@@ -163,6 +163,22 @@ function buildCarouselComponent(
   }
 }
 
+/**
+ * Builds a text parameter, echoing `parameter_name` back to Meta only when the
+ * template placeholder is named ({{order_id}}). Positional placeholders ({{1}})
+ * leave it out, so their payload shape is byte-for-byte unchanged.
+ */
+function buildTextParameter(param: {
+  text?: string
+  parameter_name?: string
+}): WhatsAppTemplateComponentParameter {
+  return {
+    type: "text",
+    text: param.text ?? "",
+    ...(param.parameter_name ? { parameter_name: param.parameter_name } : {}),
+  }
+}
+
 function buildTemplateComponents(
   params: SendWaTemplateMessageStepSchema["template"]["params"],
 ) {
@@ -171,10 +187,7 @@ function buildTemplateComponents(
   if (params.header && params.header.length > 0) {
     const headerParams = params.header.map((param) => {
       if (param.type === "text" && param.text) {
-        return {
-          type: "text",
-          text: param.text,
-        }
+        return buildTextParameter(param)
       }
       if (param.type === "image" && param.image?.link) {
         return {
@@ -220,10 +233,7 @@ function buildTemplateComponents(
   }
 
   if (params.body && params.body.length > 0) {
-    const bodyParams = params.body.map((param) => ({
-      type: "text",
-      text: param.text,
-    }))
+    const bodyParams = params.body.map((param) => buildTextParameter(param))
     components.push({
       type: "body",
       parameters: bodyParams,

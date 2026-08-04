@@ -17,7 +17,6 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useDebouncedCallback } from "use-debounce"
-import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
@@ -144,9 +143,7 @@ export default function ConversationList({
             workspaceId={workspaceId}
           />
 
-          <TagStoreProvider workspaceId={workspaceId}>
-            <ConversationFilter canViewEmailAndPhone={canViewEmailAndPhone} />
-          </TagStoreProvider>
+          <ConversationFilter canViewEmailAndPhone={canViewEmailAndPhone} />
         </div>
 
         <div className="flex-1">

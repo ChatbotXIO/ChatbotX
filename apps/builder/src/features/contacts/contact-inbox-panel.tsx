@@ -14,7 +14,6 @@ import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
 import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
 import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
-import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import type { TagResource } from "../tags/schema/resource"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
@@ -110,16 +109,14 @@ export const ContactInboxPanel = ({
       {
         keyName: t("fields.tags.label"),
         content: (
-          <TagStoreProvider workspaceId={workspaceId}>
-            <UpdateContactTagField
-              contact={contactData}
-              onSuccess={(updatedTags: TagResource[]) => {
-                setContactData({ ...contactData, tags: updatedTags })
-              }}
-              tags={contactData.tags}
-              workspaceId={workspaceId}
-            />
-          </TagStoreProvider>
+          <UpdateContactTagField
+            contact={contactData}
+            onSuccess={(updatedTags: TagResource[]) => {
+              setContactData({ ...contactData, tags: updatedTags })
+            }}
+            tags={contactData.tags}
+            workspaceId={workspaceId}
+          />
         ),
       },
       {
