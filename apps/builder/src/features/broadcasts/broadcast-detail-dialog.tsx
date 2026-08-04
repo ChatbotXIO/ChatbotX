@@ -120,6 +120,15 @@ export function BroadcastDetailDialog({
     | null
     | undefined
 
+  // Omnichannel broadcasts target every connected page, so they have no single
+  // integration; otherwise show the connected page (inbox) name it sends to.
+  const integrationValue =
+    channelValue === channelTypes.enum.omnichannel
+      ? t("fields.omnichannel.label")
+      : (broadcast.integrationWhatsapp?.name ??
+        broadcast.integrationMessenger?.name ??
+        "-")
+
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-screen overflow-y-auto sm:max-w-3xl">
@@ -142,6 +151,10 @@ export function BroadcastDetailDialog({
                   size="small"
                 />
               }
+            />
+            <DetailField
+              label={t("broadcasts.detail.integration")}
+              value={integrationValue}
             />
             <DetailField
               label={t("broadcasts.detail.subaction")}

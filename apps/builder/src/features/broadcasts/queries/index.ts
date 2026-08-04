@@ -37,6 +37,18 @@ export async function listBroadcasts(
             name: true,
           },
         },
+        integrationWhatsapp: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+        integrationMessenger: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
       },
       ...pagination,
       orderBy,

@@ -658,6 +658,150 @@ describe("broadcastService.getTemplateDetail", () => {
   })
 })
 
+describe("broadcastService.resolveTemplateBroadcastName", () => {
+  test("prefixes the whatsapp page name and scopes to the chosen integration", async () => {
+    mocks.selectRows = [
+      {
+        id: "template-1",
+        name: "order_confirmation",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        components: [],
+        integrationName: "Acme WhatsApp",
+      },
+    ]
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      templateId: "template-1",
+      integrationWhatsappId: "whatsapp-1",
+    })
+
+    expect(name).toBe("Acme WhatsApp - order_confirmation")
+    expect(mocks.selectWhere).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["WhatsappMessageTemplate.id", "template-1"] },
+        { __eq: ["IntegrationWhatsapp.workspaceId", "ws-1"] },
+        {
+          __eq: ["WhatsappMessageTemplate.integrationWhatsappId", "whatsapp-1"],
+        },
+      ],
+    })
+  })
+
+  test("prefixes the messenger page name and scopes to the chosen integration", async () => {
+    mocks.selectRows = [
+      {
+        id: "template-2",
+        name: "promo_update",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        parameterFormat: "POSITIONAL",
+        components: [],
+        integrationName: "Acme Page",
+      },
+    ]
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      templateId: "template-2",
+      integrationMessengerId: "messenger-1",
+    })
+
+    expect(name).toBe("Acme Page - promo_update")
+    expect(mocks.selectWhere).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["MessengerMessageTemplate.id", "template-2"] },
+        { __eq: ["IntegrationMessenger.workspaceId", "ws-1"] },
+        {
+          __eq: [
+            "MessengerMessageTemplate.integrationMessengerId",
+            "messenger-1",
+          ],
+        },
+      ],
+    })
+  })
+
+  test("falls back to the template name when the page name is missing", async () => {
+    mocks.selectRows = [
+      {
+        id: "template-3",
+        name: "standalone_template",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        components: [],
+        integrationName: null,
+      },
+    ]
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      templateId: "template-3",
+      integrationWhatsappId: "whatsapp-1",
+    })
+
+    expect(name).toBe("standalone_template")
+  })
+
+  test("omits the integration scope when no integration id is provided", async () => {
+    mocks.selectRows = [
+      {
+        id: "template-4",
+        name: "order_confirmation",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        components: [],
+        integrationName: "Acme WhatsApp",
+      },
+    ]
+
+    await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      templateId: "template-4",
+    })
+
+    expect(mocks.selectWhere).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["WhatsappMessageTemplate.id", "template-4"] },
+        { __eq: ["IntegrationWhatsapp.workspaceId", "ws-1"] },
+      ],
+    })
+  })
+
+  test("returns null when the template is not found in the workspace/page", async () => {
+    mocks.selectRows = []
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      templateId: "missing-template",
+      integrationWhatsappId: "whatsapp-1",
+    })
+
+    expect(name).toBeNull()
+  })
+
+  test("returns null for channels that do not support template broadcasts", async () => {
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "telegram",
+      templateId: "template-5",
+    })
+
+    expect(name).toBeNull()
+    expect(mocks.selectWhere).not.toHaveBeenCalled()
+  })
+})
+
 describe("broadcastService.forEachAudienceChunk", () => {
   test("does not invoke the chunk callback when no inboxes resolve", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue([])
