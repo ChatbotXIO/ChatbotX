@@ -45,8 +45,25 @@ const OPTION_LIST_LIMIT = 500
 const DEFAULT_PREVIEW_PER_PAGE = 20
 const MAX_PREVIEW_PER_PAGE = 50
 
+// Separates the page name from the template name in an auto-generated broadcast
+// name, e.g. "Acme WhatsApp - order_confirmation".
+const BROADCAST_NAME_SEPARATOR = " - "
+
 type ContactInboxRow = typeof contactInboxModel.$inferSelect
 type SelectOptionRow = { id: string; name: string }
+
+// Scopes a template lookup to a workspace, optionally narrowing it to the chosen
+// integration so a template can only be paired with its own page.
+type BroadcastTemplateLookup = {
+  workspaceId: string
+  templateId: string
+  integrationWhatsappId?: string | null
+  integrationMessengerId?: string | null
+}
+
+type BroadcastTemplateLoader = (
+  lookup: BroadcastTemplateLookup,
+) => Promise<BroadcastTemplateDetail | null>
 
 class BroadcastService extends BaseService {
   async listOptions(input: {
@@ -213,6 +230,105 @@ class BroadcastService extends BaseService {
     }))
   }
 
+  // One loader per template-capable channel. Each owns its own tables and the
+  // integration id it scopes by, so callers dispatch by channel without a
+  // per-channel branch and adding a channel means adding one entry here.
+  private readonly templateLoaders: Partial<
+    Record<ChannelType, BroadcastTemplateLoader>
+  > = {
+    whatsapp: (lookup) => this.loadWhatsappTemplateDetail(lookup),
+    messenger: (lookup) => this.loadMessengerTemplateDetail(lookup),
+  }
+
+  private loadTemplateDetail(
+    channel: ChannelType,
+    lookup: BroadcastTemplateLookup,
+  ): Promise<BroadcastTemplateDetail | null> {
+    const loadDetail = this.templateLoaders[channel]
+    return loadDetail ? loadDetail(lookup) : Promise.resolve(null)
+  }
+
+  private async loadWhatsappTemplateDetail(
+    lookup: BroadcastTemplateLookup,
+  ): Promise<BroadcastTemplateDetail | null> {
+    const conditions = [
+      eq(whatsappMessageTemplateModel.id, lookup.templateId),
+      eq(integrationWhatsappModel.workspaceId, lookup.workspaceId),
+    ]
+    if (lookup.integrationWhatsappId) {
+      conditions.push(
+        eq(
+          whatsappMessageTemplateModel.integrationWhatsappId,
+          lookup.integrationWhatsappId,
+        ),
+      )
+    }
+
+    const [template] = await db
+      .select({
+        id: whatsappMessageTemplateModel.id,
+        name: whatsappMessageTemplateModel.name,
+        language: whatsappMessageTemplateModel.language,
+        category: whatsappMessageTemplateModel.category,
+        status: whatsappMessageTemplateModel.status,
+        components: whatsappMessageTemplateModel.components,
+        integrationName: integrationWhatsappModel.name,
+      })
+      .from(whatsappMessageTemplateModel)
+      .innerJoin(
+        integrationWhatsappModel,
+        eq(
+          integrationWhatsappModel.id,
+          whatsappMessageTemplateModel.integrationWhatsappId,
+        ),
+      )
+      .where(and(...conditions))
+      .limit(1)
+
+    return template ? { ...template, channel: "whatsapp" } : null
+  }
+
+  private async loadMessengerTemplateDetail(
+    lookup: BroadcastTemplateLookup,
+  ): Promise<BroadcastTemplateDetail | null> {
+    const conditions = [
+      eq(messengerMessageTemplateModel.id, lookup.templateId),
+      eq(integrationMessengerModel.workspaceId, lookup.workspaceId),
+    ]
+    if (lookup.integrationMessengerId) {
+      conditions.push(
+        eq(
+          messengerMessageTemplateModel.integrationMessengerId,
+          lookup.integrationMessengerId,
+        ),
+      )
+    }
+
+    const [template] = await db
+      .select({
+        id: messengerMessageTemplateModel.id,
+        name: messengerMessageTemplateModel.name,
+        language: messengerMessageTemplateModel.language,
+        category: messengerMessageTemplateModel.category,
+        status: messengerMessageTemplateModel.status,
+        parameterFormat: messengerMessageTemplateModel.parameterFormat,
+        components: messengerMessageTemplateModel.components,
+        integrationName: integrationMessengerModel.name,
+      })
+      .from(messengerMessageTemplateModel)
+      .innerJoin(
+        integrationMessengerModel,
+        eq(
+          integrationMessengerModel.id,
+          messengerMessageTemplateModel.integrationMessengerId,
+        ),
+      )
+      .where(and(...conditions))
+      .limit(1)
+
+    return template ? { ...template, channel: "messenger" } : null
+  }
+
   async getTemplateDetail(input: {
     workspaceId: string
     broadcastId: string
@@ -232,68 +348,37 @@ class BroadcastService extends BaseService {
       return null
     }
 
-    if (broadcast.channel === "whatsapp") {
-      const [template] = await db
-        .select({
-          id: whatsappMessageTemplateModel.id,
-          name: whatsappMessageTemplateModel.name,
-          language: whatsappMessageTemplateModel.language,
-          category: whatsappMessageTemplateModel.category,
-          status: whatsappMessageTemplateModel.status,
-          components: whatsappMessageTemplateModel.components,
-          integrationName: integrationWhatsappModel.name,
-        })
-        .from(whatsappMessageTemplateModel)
-        .innerJoin(
-          integrationWhatsappModel,
-          eq(
-            integrationWhatsappModel.id,
-            whatsappMessageTemplateModel.integrationWhatsappId,
-          ),
-        )
-        .where(
-          and(
-            eq(whatsappMessageTemplateModel.id, broadcast.templateId),
-            eq(integrationWhatsappModel.workspaceId, input.workspaceId),
-          ),
-        )
-        .limit(1)
+    return this.loadTemplateDetail(broadcast.channel as ChannelType, {
+      workspaceId: input.workspaceId,
+      templateId: broadcast.templateId,
+    })
+  }
 
-      return template ? { ...template, channel: "whatsapp" } : null
+  // Builds the stored broadcast name from the chosen template, prefixed with the
+  // page name so broadcasts from different pages stay distinguishable in the
+  // list. Returns null when the template does not belong to the workspace/page,
+  // letting the caller surface a "template not found" validation error.
+  async resolveTemplateBroadcastName(input: {
+    workspaceId: string
+    channel: ChannelType
+    templateId: string
+    integrationWhatsappId?: string | null
+    integrationMessengerId?: string | null
+  }): Promise<string | null> {
+    const detail = await this.loadTemplateDetail(input.channel, {
+      workspaceId: input.workspaceId,
+      templateId: input.templateId,
+      integrationWhatsappId: input.integrationWhatsappId,
+      integrationMessengerId: input.integrationMessengerId,
+    })
+
+    if (!detail) {
+      return null
     }
 
-    if (broadcast.channel === "messenger") {
-      const [template] = await db
-        .select({
-          id: messengerMessageTemplateModel.id,
-          name: messengerMessageTemplateModel.name,
-          language: messengerMessageTemplateModel.language,
-          category: messengerMessageTemplateModel.category,
-          status: messengerMessageTemplateModel.status,
-          parameterFormat: messengerMessageTemplateModel.parameterFormat,
-          components: messengerMessageTemplateModel.components,
-          integrationName: integrationMessengerModel.name,
-        })
-        .from(messengerMessageTemplateModel)
-        .innerJoin(
-          integrationMessengerModel,
-          eq(
-            integrationMessengerModel.id,
-            messengerMessageTemplateModel.integrationMessengerId,
-          ),
-        )
-        .where(
-          and(
-            eq(messengerMessageTemplateModel.id, broadcast.templateId),
-            eq(integrationMessengerModel.workspaceId, input.workspaceId),
-          ),
-        )
-        .limit(1)
-
-      return template ? { ...template, channel: "messenger" } : null
-    }
-
-    return null
+    return detail.integrationName
+      ? `${detail.integrationName}${BROADCAST_NAME_SEPARATOR}${detail.name}`
+      : detail.name
   }
 
   async forEachAudienceChunk(

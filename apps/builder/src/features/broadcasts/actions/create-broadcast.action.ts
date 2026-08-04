@@ -1,5 +1,6 @@
 "use server"
 
+import { broadcastService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { findBroadcastChannelCapability } from "@chatbotx.io/database/partials"
 import { pruneEmailPhoneFilterConditions } from "@chatbotx.io/database/queries/contact-filter/permission"
@@ -124,45 +125,25 @@ export const createBroadcastAction = workspaceActionClient
     }
 
     if (parsedInput.templateId) {
-      if (parsedInput.channel === "messenger") {
-        const template = await db.query.messengerMessageTemplateModel.findFirst(
-          {
-            where: {
-              id: parsedInput.templateId,
-              integrationMessengerId: parsedInput.integrationMessengerId,
-              integrationMessenger: { workspaceId },
-            },
-          },
-        )
-        if (!template) {
-          return returnValidationErrors(createBroadcastRequest, {
-            _errors: ["Validation Exception"],
-            templateId: {
-              _errors: ["Template not found"],
-            },
-          })
-        }
-        broadcastName = template.name
-      } else {
-        const template = await db.query.whatsappMessageTemplateModel.findFirst({
-          where: {
-            id: parsedInput.templateId,
-            integrationWhatsapp: {
-              workspaceId,
-              id: parsedInput.integrationWhatsappId,
-            },
+      const templateBroadcastName =
+        await broadcastService.resolveTemplateBroadcastName({
+          workspaceId,
+          channel: parsedInput.channel,
+          templateId: parsedInput.templateId,
+          integrationMessengerId: parsedInput.integrationMessengerId,
+          integrationWhatsappId: parsedInput.integrationWhatsappId,
+        })
+
+      if (!templateBroadcastName) {
+        return returnValidationErrors(createBroadcastRequest, {
+          _errors: ["Validation Exception"],
+          templateId: {
+            _errors: ["Template not found"],
           },
         })
-        if (!template) {
-          return returnValidationErrors(createBroadcastRequest, {
-            _errors: ["Validation Exception"],
-            templateId: {
-              _errors: ["Template not found"],
-            },
-          })
-        }
-        broadcastName = template.name
       }
+
+      broadcastName = templateBroadcastName
     }
 
     const { buttons, ...insertValues } = parsedInput
