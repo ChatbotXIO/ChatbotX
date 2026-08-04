@@ -7,34 +7,25 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@chatbotx.io/ui/components/ui/sheet"
-import { type ReactFlowState, useReactFlow, useStore } from "@xyflow/react"
+import { useReactFlow, useStore } from "@xyflow/react"
 import { LoaderCircleIcon } from "lucide-react"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { NodeEditor } from "./editor"
 import { NodeNameEditor } from "./node-name-editor"
+import {
+  selectedNodeEqualityFn,
+  selectSelectedNode,
+} from "./selected-node-equality"
 
 type NodeDetailSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-// Select only the selected node from the store
-const selectSelectedNode = (state: ReactFlowState): FlowNode | null =>
-  (state.nodes.find((node) => node.selected) as FlowNode) || null
-
-// Keep the sheet mounted against the selected node ID so the editor does not
-// re-render from its own form writes while typing.
-const equalityFn = (a: FlowNode | null, b: FlowNode | null): boolean => {
-  if (a === b) {
-    return true
-  }
-  return a?.id === b?.id
-}
-
 export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
   // Use store selector with custom equality function
-  const activeNode = useStore(selectSelectedNode, equalityFn)
+  const activeNode = useStore(selectSelectedNode, selectedNodeEqualityFn)
   const { getNode } = useReactFlow()
 
   // Bump the editor key only on the discrete open transition so reopening a
