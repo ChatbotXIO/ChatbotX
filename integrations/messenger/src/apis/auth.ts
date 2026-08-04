@@ -255,17 +255,43 @@ export type DebugTokenData = {
   is_valid?: boolean
 }
 
+/** App access token (`APP_ID|APP_SECRET`) for the app these credentials identify. */
+export function toAppAccessToken(credentials: {
+  clientId: string
+  clientSecret: string
+}): string {
+  return `${credentials.clientId}|${credentials.clientSecret}`
+}
+
 /**
  * Inspect a token's granted scopes via `GET /debug_token`. Used to check
  * whether a page's access token carries `leads_retrieval` before offering the
- * page as a lead source. `debugAccessToken` defaults to the inspected token
- * (Facebook allows a token to debug itself).
+ * page as a lead source.
+ *
+ * Named arguments on purpose: `appAccessToken` and `version` are both plain
+ * strings, so a positional signature let callers pass the version where the app
+ * token belongs — silently, with no type error.
+ *
+ * `appAccessToken` is REQUIRED and must belong to the app that minted
+ * `inputToken` (build it with `toAppAccessToken`). Facebook does NOT let a page
+ * token inspect itself — it answers "(#100) You must provide an app access
+ * token, or a user access token that is an owner or developer of the app" — so a
+ * caller that passes the inspected token here gets no scopes back at all.
+ *
+ * It travels in the `Authorization` header, NOT as an `access_token` query
+ * param: the client logs the full request URL on any HTTP error
+ * (`lib/http-client.ts` `beforeError`), which would write the Facebook app
+ * secret into the logs in plaintext on every rate-limit or invalid-token reply.
  */
-export function debugToken(
-  inputToken: string,
-  version: string = DEFAULT_API_VERSION,
-  debugAccessToken: string = inputToken,
-): Promise<DebugTokenData> {
+export function debugToken({
+  inputToken,
+  appAccessToken,
+  version = DEFAULT_API_VERSION,
+}: {
+  inputToken: string
+  appAccessToken: string
+  version?: string
+}): Promise<DebugTokenData> {
   const endpoint = `${version}/debug_token`
 
   return rescue(endpoint, async () => {
@@ -274,7 +300,9 @@ export function debugToken(
       {
         searchParams: {
           input_token: inputToken,
-          access_token: debugAccessToken,
+        },
+        headers: {
+          Authorization: `Bearer ${appAccessToken}`,
         },
       },
     )

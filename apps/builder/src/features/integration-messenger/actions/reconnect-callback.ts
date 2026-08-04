@@ -8,6 +8,7 @@ import {
   exchangeCodeForToken,
   getFacebookUser,
   getUserPages,
+  toAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import {
   exchangeLongLivedToken,
@@ -113,12 +114,22 @@ export async function reconnectMessengerHandler(props: {
     // Re-subscribe the page to exactly the webhook fields its reconnected
     // token's scopes support (a plain reconnect would otherwise re-subscribe
     // with only the base fields and silently drop `leadgen` delivery for any
-    // Facebook Lead Ads automation on this page). Best-effort: a failed
-    // debug_token check falls back to the base subscription.
-    const debug = await debugToken(
-      pageToken,
-      props.credentialConfig.version,
-    ).catch(() => undefined)
+    // Facebook Lead Ads automation on this page). The app access token is
+    // mandatory: Facebook rejects a page token inspecting itself, which would
+    // land in the base-fields fallback below and drop `leadgen` anyway.
+    // Best-effort otherwise — a failed check falls back to the base fields, so
+    // log it rather than failing the whole reconnect.
+    const debug = await debugToken({
+      inputToken: pageToken,
+      appAccessToken: toAppAccessToken(props.credentialConfig),
+      version: props.credentialConfig.version,
+    }).catch((error) => {
+      logger.warn(
+        { err: error, pageId: integrationMessenger.pageId },
+        "Messenger debug_token failed during reconnect; subscribing base webhook fields only (leadgen delivery may be dropped)",
+      )
+      return
+    })
 
     await subscribePageToAppWebhook({
       pageId: integrationMessenger.pageId,
