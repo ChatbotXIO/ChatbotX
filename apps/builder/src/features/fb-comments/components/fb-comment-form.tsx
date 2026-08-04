@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
+import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentStore } from "@/features/ai-agents/provider/ai-agent-store-context"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import type { CreateFbCommentRequest } from "../schema/action"
@@ -245,7 +246,8 @@ export function FbCommentForm({
               required
             />
             {privateReplyType === "text" && (
-              <InputField
+              <TiptapEditorField
+                channels={["messenger"]}
                 label={t("facebookCommentAutomation.replyMessage")}
                 name="privateReply.value"
                 placeholder={t(
@@ -289,7 +291,8 @@ export function FbCommentForm({
               required
             />
             {publicReplyType === "text" && (
-              <InputField
+              <TiptapEditorField
+                channels={["messenger"]}
                 label={t("facebookCommentAutomation.replyMessage")}
                 name="publicReply.value"
                 placeholder={t(

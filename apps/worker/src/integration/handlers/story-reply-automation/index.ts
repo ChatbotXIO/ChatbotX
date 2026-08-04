@@ -14,6 +14,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { contactVariableService } from "@chatbotx.io/variables"
 import {
   ChatJobAction,
   chatQueue,
@@ -202,8 +203,24 @@ export async function processStoryReplyAutomation(
       let dispatched = false
 
       if (reply.type === "text" && reply.value) {
+        let text = reply.value
+        try {
+          const variables = await contactVariableService.getAll({
+            contactId: contactInbox.contactId,
+            contactInbox,
+          })
+          text = await contactVariableService.replaceAll({
+            text: reply.value,
+            variables,
+          })
+        } catch (err) {
+          logger.warn(
+            { err, messageId, storyId },
+            "Failed to resolve variables in reply text, sending raw text",
+          )
+        }
         await sendStoryReplyText({
-          text: reply.value,
+          text,
           conversationId,
           workspaceId,
           contactInbox,

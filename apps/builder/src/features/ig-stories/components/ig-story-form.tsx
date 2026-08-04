@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
+import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentStore } from "@/features/ai-agents/provider/ai-agent-store-context"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import type { CreateIgStoryRequest, IgStoryVariant } from "../schema/action"
@@ -148,7 +149,8 @@ export function IgStoryForm({
               required
             />
             {replyType === "text" && (
-              <InputField
+              <TiptapEditorField
+                channels={["instagram"]}
                 label={t("instagramStoryAutomation.replyMessage")}
                 name="reply.value"
                 placeholder={t(
