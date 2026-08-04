@@ -21,6 +21,7 @@ import {
   MessageShardUnavailableError,
 } from "../../../errors"
 import { logger } from "../../../logger"
+import { getSafeSinceTime } from "../../../repositories"
 import type {
   AttachmentLookupRow,
   BulkCreateAttachmentInput,
@@ -67,6 +68,11 @@ const SHARD_RANGE_CACHE_TAG = "message-shard-range"
 const SHARD_RANGE_CACHE_TTL_S = 30
 const ATTACHMENT_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 const RICH_RESPONSE_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
+// Echo dedup lookback. An outbound message we save is echoed back by the channel
+// (Instagram/Messenger) seconds later carrying the same sourceId (mid). The dedup
+// guard read must look back past the echo's own createdAt to find the already-saved
+// row; a day comfortably covers channel echo latency plus webhook redelivery.
+const ECHO_DEDUP_LOOKBACK_MS = 24 * 60 * 60 * 1000
 const LIST_INCOMING_TEXTS_BATCH_SIZE = 1000
 
 function dedupeShardsByPhysicalId<T extends { shard: { id: string } }>(
@@ -1023,7 +1029,7 @@ export class ShardedMessageRepository implements IMessageRepository {
           message.sourceId as string,
           message.conversationId,
           message.workspaceId,
-          message.createdAt,
+          getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
         )
         if (existing) {
           return { message: existing, isNew: false }
@@ -1053,7 +1059,7 @@ export class ShardedMessageRepository implements IMessageRepository {
             message.sourceId as string,
             message.conversationId,
             message.workspaceId,
-            message.createdAt,
+            getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
           )) ?? (await this.findOnWriteShardBySource(message))
         logger.info(
           {
@@ -1203,7 +1209,7 @@ export class ShardedMessageRepository implements IMessageRepository {
           message.sourceId as string,
           message.conversationId,
           message.workspaceId,
-          message.createdAt,
+          getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
         )
         return existing ? await buildExistingResult(existing) : null
       }
@@ -1241,7 +1247,7 @@ export class ShardedMessageRepository implements IMessageRepository {
             message.sourceId as string,
             message.conversationId,
             message.workspaceId,
-            message.createdAt,
+            getSafeSinceTime(message.createdAt, ECHO_DEDUP_LOOKBACK_MS),
           )) ?? (await this.findOnWriteShardBySource(message))
         logger.info(
           {
