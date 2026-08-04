@@ -26,6 +26,7 @@ import type { Resolver, SubmitHandler } from "react-hook-form"
 import { useForm, useFormContext } from "react-hook-form"
 import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
 import { BaseStepEditor } from "../base/editor"
+import { useParentStepCommit } from "../base/use-parent-step-commit"
 
 type CouponStepType =
   | typeof stepTypes.enum.setUpCoupon
@@ -33,7 +34,8 @@ type CouponStepType =
 
 export function CouponActionEditor({ parentName }: { parentName: string }) {
   const t = useTranslations()
-  const { getValues, setValue } = useFormContext()
+  const { getValues } = useFormContext()
+  const commitStep = useParentStepCommit<CouponStepSchema>(parentName)
   const current = getValues(parentName) as CouponStepSchema
   const [open, setOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<CouponStepType>(
@@ -86,8 +88,7 @@ export function CouponActionEditor({ parentName }: { parentName: string }) {
   }, [form, getValues, open, parentName])
 
   const onSubmit: SubmitHandler<CouponStepSchema> = (values) => {
-    const latest = getValues(parentName) as CouponStepSchema
-    setValue(parentName, { ...latest, ...values }, { shouldDirty: true })
+    commitStep(values)
     setOpen(false)
   }
 

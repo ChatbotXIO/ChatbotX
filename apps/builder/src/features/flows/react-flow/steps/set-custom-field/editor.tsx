@@ -24,10 +24,12 @@ import { useForm, useFormContext } from "react-hook-form"
 import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useParentStepCommit } from "../base/use-parent-step-commit"
 
 const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
-  const { setValue, getValues } = useFormContext()
+  const { getValues } = useFormContext()
+  const commitStep = useParentStepCommit<SetCustomFieldStepSchema>(parentName)
   const defaultValues: SetCustomFieldStepSchema = getValues(parentName)
 
   const [open, setOpen] = useState<boolean>(false)
@@ -54,12 +56,14 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
     selectedFieldType === "date" || selectedFieldType === "datetime"
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.inputFieldId`, values.inputFieldId)
-    setValue(`${parentName}.operation`, values.operation)
-    setValue(`${parentName}.value`, values.value)
-    // Freeze the editor's browser zone so the worker (no browser context) can
-    // anchor a naive date/datetime value and render "now" for a blank one.
-    setValue(`${parentName}.timezone`, getBrowserTimezone())
+    commitStep({
+      inputFieldId: values.inputFieldId,
+      operation: values.operation,
+      value: values.value,
+      // Freeze the editor's browser zone so the worker (no browser context) can
+      // anchor a naive date/datetime value and render "now" for a blank one.
+      timezone: getBrowserTimezone(),
+    })
 
     setOpen(false)
   }
