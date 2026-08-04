@@ -38,6 +38,7 @@ import {
 import type { z } from "zod"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
+import { useParentStepCommit } from "../base/use-parent-step-commit"
 import {
   JsonSourceProvider,
   useJsonSourceContext,
@@ -60,7 +61,8 @@ const ExternalRequestStepEditor = ({ parentName }: { parentName: string }) => {
 const ExternalRequestDialog = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const { setValue, getValues } = useFormContext()
+  const { getValues } = useFormContext()
+  const commitStep = useParentStepCommit<ExternalRequestStepSchema>(parentName)
 
   const form = useForm<
     z.input<typeof externalRequestStepSchema>,
@@ -125,11 +127,15 @@ const ExternalRequestDialog = ({ parentName }: { parentName: string }) => {
   }
 
   const onSubmit = (data: ExternalRequestStepSchema) => {
-    setValue(`${parentName}.method`, data.method)
-    setValue(`${parentName}.url`, data.url)
-    setValue(`${parentName}.headers`, data.headers)
-    setValue(`${parentName}.body`, data.body)
-    setValue(`${parentName}.mapping`, data.mapping)
+    // Only the request fields are edited here; id/stepType and success/error
+    // states stay as they are on the parent step.
+    commitStep({
+      method: data.method,
+      url: data.url,
+      headers: data.headers,
+      body: data.body,
+      mapping: data.mapping,
+    })
     setOpen(false)
   }
 

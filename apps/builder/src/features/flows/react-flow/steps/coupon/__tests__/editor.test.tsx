@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
-import { type CouponStepSchema, stepTypes } from "@chatbotx.io/flow-config"
+import {
+  type CouponStepSchema,
+  setUpCouponStepSchema,
+  stepTypes,
+} from "@chatbotx.io/flow-config"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   act,
   type ButtonHTMLAttributes,
@@ -7,8 +12,14 @@ import {
   type ReactNode,
 } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { Controller, FormProvider, useForm } from "react-hook-form"
+import {
+  Controller,
+  FormProvider,
+  type Resolver,
+  useForm,
+} from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 import { CouponActionEditor } from "../editor"
 
 const useCouponTopicOptionsMock = vi.fn()
@@ -163,6 +174,7 @@ beforeEach(() => {
   ;(
     globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
   ).IS_REACT_ACT_ENVIRONMENT = true
+  readCouponStep = null
   useCouponTopicOptionsMock.mockReset()
   useCouponTopicOptionsMock.mockImplementation(
     ({ issueableOnly }: { issueableOnly?: boolean } = {}) => ({
@@ -220,7 +232,92 @@ function Harness({
   )
 }
 
+let readCouponStep: (() => CouponStepSchema) | null = null
+
+const invalidCouponStep = {
+  id: "step-1",
+  stepType: stepTypes.enum.setUpCoupon,
+  topicId: "",
+} as CouponStepSchema
+
+const couponParentResolver = zodResolver(
+  z.object({ step: setUpCouponStepSchema }),
+) as unknown as Resolver<{ step: CouponStepSchema }>
+
+function ValidityHarness() {
+  const form = useForm<{ step: CouponStepSchema }>({
+    resolver: couponParentResolver,
+    mode: "onChange",
+    defaultValues: { step: invalidCouponStep },
+  })
+  readCouponStep = () => form.getValues("step")
+  const { isValid } = form.formState
+
+  return (
+    <FormProvider {...form}>
+      <div data-testid="outer-valid">{String(isValid)}</div>
+      <CouponActionEditor parentName="step" />
+    </FormProvider>
+  )
+}
+
+const flushCoupon = async () => {
+  await act(async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+}
+
 describe("CouponActionEditor", () => {
+  test("enables the parent form once a coupon topic is chosen and saved", async () => {
+    // Real coupon topic ids are numeric (validated by zodBigintAsString).
+    useCouponTopicOptionsMock.mockReturnValue({
+      options: [{ label: "Topic 1", value: "1" }],
+      labelById: new Map([["1", "Topic 1"]]),
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+      topics: [],
+    })
+    render(<ValidityHarness />)
+    await flushCoupon()
+
+    // The empty default topicId keeps the parent form invalid at first.
+    expect(
+      container.querySelector('[data-testid="outer-valid"]')?.textContent,
+    ).toBe("false")
+
+    const topicSelect = container.querySelector(
+      '[data-testid="combobox-topicId"]',
+    ) as HTMLSelectElement
+
+    await act(async () => {
+      topicSelect.value = "1"
+      topicSelect.dispatchEvent(new Event("change", { bubbles: true }))
+      await Promise.resolve()
+    })
+    await flushCoupon()
+
+    const submitButton = container.querySelector(
+      'form button[type="submit"]',
+    ) as HTMLButtonElement
+
+    await act(async () => {
+      submitButton.click()
+      await Promise.resolve()
+    })
+    await flushCoupon()
+
+    expect(
+      container.querySelector('[data-testid="outer-valid"]')?.textContent,
+    ).toBe("true")
+    expect(readCouponStep?.()).toEqual({
+      id: "step-1",
+      stepType: stepTypes.enum.setUpCoupon,
+      topicId: "1",
+    })
+  })
+
   test("switches schemas and preserves topicId while changing type", async () => {
     render(<Harness />)
 
