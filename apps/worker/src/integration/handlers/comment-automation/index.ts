@@ -31,6 +31,7 @@ import {
   sendPrivateReply,
 } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { contactVariableService } from "@chatbotx.io/variables"
 import {
   ChatJobAction,
   chatQueue,
@@ -250,8 +251,24 @@ async function executePublicReply(
   }
 
   if (publicReply.type === "text" && publicReply.value) {
+    let text = publicReply.value
+    try {
+      const variables = await contactVariableService.getAll({
+        contactId: ctx.contactInbox.contactId,
+        contactInbox: ctx.contactInbox,
+      })
+      text = await contactVariableService.replaceAll({
+        text: publicReply.value,
+        variables,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, commentId: ctx.commentId },
+        "Failed to resolve variables in reply text, sending raw text",
+      )
+    }
     await postPublicCommentReply({
-      text: publicReply.value,
+      text,
       commentId: ctx.commentId,
       conversationId: ctx.conversationId,
       contactInboxId: ctx.contactInboxId,
@@ -318,6 +335,7 @@ async function executePrivateReply(
     channelType: "messenger" | "instagram" | "instagramFacebook"
     conversationId: string
     contactInboxId: string
+    contactInbox: ContactInboxModel
     workspaceId: string
     delay: number
     message?: string
@@ -328,11 +346,28 @@ async function executePrivateReply(
   }
 
   if (privateReply.type === "text" && privateReply.value) {
+    let text = privateReply.value
+    try {
+      const variables = await contactVariableService.getAll({
+        contactId: ctx.contactInbox.contactId,
+        contactInbox: ctx.contactInbox,
+      })
+      text = await contactVariableService.replaceAll({
+        text: privateReply.value,
+        variables,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, commentId: ctx.commentId },
+        "Failed to resolve variables in reply text, sending raw text",
+      )
+    }
+
     if (ctx.channelType === "messenger") {
       await sendPrivateReply(
         ctx.auth as MessengerAuthValue,
         ctx.commentId,
-        privateReply.value,
+        text,
       )
     } else if (ctx.channelType === "instagram") {
       // Instagram Login sends the private DM through the me/messages endpoint,
@@ -340,7 +375,7 @@ async function executePrivateReply(
       await sendInstagramLoginPrivateReply(
         ctx.auth as InstagramAuthValue,
         ctx.commentId,
-        privateReply.value,
+        text,
       )
     } else if (ctx.channelType === "instagramFacebook") {
       // Instagram via Facebook Login sends the private DM through the
@@ -349,7 +384,7 @@ async function executePrivateReply(
       await sendInstagramFacebookPrivateReply(
         ctx.auth as InstagramFacebookAuthValue,
         ctx.commentId,
-        privateReply.value,
+        text,
       )
     }
     return
@@ -726,6 +761,7 @@ export async function processCommentAutomation(
           channelType,
           conversationId,
           contactInboxId,
+          contactInbox,
           workspaceId,
           delay,
           message,

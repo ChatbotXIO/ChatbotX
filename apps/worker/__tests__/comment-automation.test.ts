@@ -28,6 +28,8 @@ const {
   mockGenerateAIReplyText,
   mockLoggerInfo,
   mockLoggerWarn,
+  mockContactVariableGetAll,
+  mockContactVariableReplaceAll,
 } = vi.hoisted(() => ({
   mockFindContactInboxBy: vi.fn(),
   mockFindActiveAutomations: vi.fn(),
@@ -52,6 +54,8 @@ const {
   mockGenerateAIReplyText: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
+  mockContactVariableGetAll: vi.fn(),
+  mockContactVariableReplaceAll: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -92,6 +96,13 @@ vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+}))
+
+vi.mock("@chatbotx.io/variables", () => ({
+  contactVariableService: {
+    getAll: mockContactVariableGetAll,
+    replaceAll: mockContactVariableReplaceAll,
+  },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -248,6 +259,8 @@ beforeEach(() => {
   mockInsertDedup.mockResolvedValue(undefined)
   mockChatQueueAdd.mockResolvedValue(undefined)
   mockIntegrationQueueAdd.mockResolvedValue(undefined)
+  mockContactVariableGetAll.mockResolvedValue({})
+  mockContactVariableReplaceAll.mockImplementation(({ text }) => text)
 })
 
 // ---------------------------------------------------------------------------
@@ -513,6 +526,88 @@ describe("processCommentAutomation text private reply channel routing", () => {
     // Neither the Messenger nor the Instagram Login endpoint must be used.
     expect(mockSendPrivateReply).not.toHaveBeenCalled()
     expect(mockSendInstagramPrivateReply).not.toHaveBeenCalled()
+  })
+})
+
+describe("processCommentAutomation text reply variable resolution", () => {
+  test("private reply text is resolved through contactVariableService before sending", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "Hi {{contact.firstName}}" },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockContactVariableGetAll).toHaveBeenCalledWith({
+      contactId: "contact-1",
+      contactInbox: { id: "contact-inbox-1", contactId: "contact-1" },
+    })
+    expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
+      text: "Hi {{contact.firstName}}",
+      variables: {},
+    })
+    expect(mockSendPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "Hi Jane",
+    )
+  })
+
+  test("public reply text is resolved through contactVariableService before the outgoing message is created", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "Hi {{contact.firstName}}" },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockContactVariableGetAll).toHaveBeenCalledWith({
+      contactId: "contact-1",
+      contactInbox: { id: "contact-inbox-1", contactId: "contact-1" },
+    })
+    expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
+      text: "Hi {{contact.firstName}}",
+      variables: {},
+    })
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hi Jane" }),
+    )
+  })
+
+  test("private reply falls back to the raw text when variable resolution fails", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "Hi {{contact.firstName}}" },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockRejectedValue(new Error("db down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockSendPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "Hi {{contact.firstName}}",
+    )
+  })
+
+  test("public reply falls back to the raw text when variable resolution fails", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "Hi {{contact.firstName}}" },
+      }),
+    ])
+    mockContactVariableGetAll.mockRejectedValue(new Error("db down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hi {{contact.firstName}}" }),
+    )
   })
 })
 
