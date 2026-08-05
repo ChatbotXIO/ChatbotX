@@ -2892,6 +2892,7 @@
   "auth": {
     "orContinueWith": "Veya şununla devam et",
     "continueWithFacebook": "Facebook ile devam et",
+    "continueWithGoogle": "Google ile devam et",
     "dontHaveAnAccount": "Hesabınız yok mu?",
     "alreadyHaveAnAccount": "Zaten bir hesabınız var mı?",
     "signUp": "Kaydol",

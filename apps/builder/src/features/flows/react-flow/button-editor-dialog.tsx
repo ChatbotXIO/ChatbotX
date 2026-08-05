@@ -191,7 +191,7 @@ function ButtonSteps() {
             </Button>
           }
         />
-        <DropdownMenuContent>
+        <DropdownMenuContent className="w-max">
           <RecursiveDropdownMenu
             data={sendMessageEditorMenusWithButton(t)}
             onClick={onAddAction}

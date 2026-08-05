@@ -1193,6 +1193,7 @@
   "auth": {
     "orContinueWith": "או המשך באמצעות",
     "continueWithFacebook": "המשך באמצעות Facebook",
+    "continueWithGoogle": "המשך באמצעות Google",
     "dontHaveAnAccount": "אין לכם חשבון?",
     "alreadyHaveAnAccount": "כבר יש לכם חשבון?",
     "signUp": "הרשמה",

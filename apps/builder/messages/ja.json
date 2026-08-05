@@ -2879,6 +2879,7 @@
   "auth": {
     "orContinueWith": "または次の方法で続行",
     "continueWithFacebook": "Facebookで続行",
+    "continueWithGoogle": "Googleで続行",
     "dontHaveAnAccount": "アカウントをお持ちでないですか？",
     "alreadyHaveAnAccount": "すでにアカウントをお持ちですか？",
     "signUp": "新規登録",

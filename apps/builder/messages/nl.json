@@ -2892,6 +2892,7 @@
   "auth": {
     "orContinueWith": "Of ga verder met",
     "continueWithFacebook": "Doorgaan met Facebook",
+    "continueWithGoogle": "Doorgaan met Google",
     "dontHaveAnAccount": "Heb je nog geen account?",
     "alreadyHaveAnAccount": "Heb je al een account?",
     "signUp": "Registreren",

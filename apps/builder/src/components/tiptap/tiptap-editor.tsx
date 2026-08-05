@@ -13,6 +13,7 @@ import {
   toVariableMentionAttrs,
 } from "./extensions/variable-injection/mention"
 import variableInjectionSuggestion from "./extensions/variable-injection/suggestion"
+import { htmlToPlainTextWithBlocks } from "./html-to-plain-text"
 import "./tiptap-editor.css"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -22,7 +23,6 @@ import {
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
-import { htmlToText } from "html-to-text"
 import { CodeXml, Smile } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
@@ -84,7 +84,10 @@ export const TiptapEditor = ({
         return text.replace(/\xA0/g, " ")
       },
       transformPastedHTML(html) {
-        return htmlToText(html)
+        return plainTextToParagraphHtmlWithVariableMentions(
+          htmlToPlainTextWithBlocks(html),
+          promptVariableOptionsRef.current,
+        )
       },
     },
     // Don't render immediately on the server to avoid SSR issues

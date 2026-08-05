@@ -35,13 +35,13 @@ export default function AddNodeButton() {
           </ControlButton>
         }
       />
-      <PopoverContent className="w-44 p-2">
+      <PopoverContent className="w-max max-w-xs p-2">
         <div className="flex flex-col items-start">
           {Object.values(allNodesConfig).map((it, idx) => {
             const item = it?.(t)
             return item ? (
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start whitespace-nowrap"
                 key={item.type}
                 onClick={() => onClickAction(item.type)}
                 variant="ghost"

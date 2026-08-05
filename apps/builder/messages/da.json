@@ -2892,6 +2892,7 @@
   "auth": {
     "orContinueWith": "Eller fortsæt med",
     "continueWithFacebook": "Fortsæt med Facebook",
+    "continueWithGoogle": "Fortsæt med Google",
     "dontHaveAnAccount": "Don't har an konto?",
     "alreadyHaveAnAccount": "Allerede har an konto?",
     "signUp": "Log up",

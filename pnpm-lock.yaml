@@ -371,9 +371,6 @@ importers:
       react-dropzone:
         specifier: ^15.0.0
         version: 15.0.0(react@19.2.5)
-      react-google-button:
-        specifier: ^0.8.0
-        version: 0.8.0(react@19.2.5)
       react-hook-form:
         specifier: ^7.74.0
         version: 7.77.0(react@19.2.5)
@@ -9799,11 +9796,6 @@ packages:
       react: '>=16.4.0'
       react-dom: '>=16.4.0'
 
-  react-google-button@0.8.0:
-    resolution: {integrity: sha512-0u6mbDcTUmWzgXsld8FJpbrXP+zDsNQVYPIt225aBqwgJ/CdrDiep1PZOpnyntyjsejWG0TtQr6uZB4eIaXlJQ==}
-    peerDependencies:
-      react: '>= 16.8.0'
-
   react-hook-form@7.77.0:
     resolution: {integrity: sha512-Sslh9YDYc0GDlWT/lxasnIduNo4v3yyvqRGvmGKUre5AFjDs/HV9/OafHGD8d+sB2yoL4UIL9L8X9i0WlZZebg==}
     engines: {node: '>=18.0.0'}
@@ -17979,11 +17971,6 @@ snapshots:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       tslib: 2.8.1
-
-  react-google-button@0.8.0(react@19.2.5):
-    dependencies:
-      prop-types: 15.8.1
-      react: 19.2.5
 
   react-hook-form@7.77.0(react@19.2.5):
     dependencies:

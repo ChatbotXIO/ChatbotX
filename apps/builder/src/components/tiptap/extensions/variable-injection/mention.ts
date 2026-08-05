@@ -71,9 +71,14 @@ const lineToHtml = (
   }
 
   html += escapeHtml(line.slice(cursor))
-  return html || "<br>"
+  return html
 }
 
+// A blank line must become `<p></p>`, not `<p><br></p>`: ProseMirror renders
+// an empty paragraph's cursor line on its own, but a real <br> node adds its
+// own "\n" via HardBreak's renderText on top of the blockSeparator that
+// editor.getText() already inserts between blocks — doubling every blank
+// line on each save/reload round trip.
 export const plainTextToParagraphHtmlWithVariableMentions = (
   value: string,
   variableOptions: PromptVariableOption[],

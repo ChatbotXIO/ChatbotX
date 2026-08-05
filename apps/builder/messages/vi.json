@@ -2899,6 +2899,7 @@
   "auth": {
     "orContinueWith": "Hoặc tiếp tục với",
     "continueWithFacebook": "Tiếp tục với Facebook",
+    "continueWithGoogle": "Tiếp tục với Google",
     "dontHaveAnAccount": "Chưa có tài khoản?",
     "alreadyHaveAnAccount": "Đã có tài khoản?",
     "signUp": "Đăng ký",

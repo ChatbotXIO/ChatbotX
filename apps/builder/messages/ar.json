@@ -2899,6 +2899,7 @@
   "auth": {
     "orContinueWith": "أو المتابعة باستخدام",
     "continueWithFacebook": "المتابعة باستخدام Facebook",
+    "continueWithGoogle": "المتابعة باستخدام Google",
     "dontHaveAnAccount": "ليس لديك حساب؟",
     "alreadyHaveAnAccount": "لديك حساب بالفعل؟",
     "signUp": "إنشاء حساب",
