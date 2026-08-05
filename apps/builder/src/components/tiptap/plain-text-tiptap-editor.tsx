@@ -211,11 +211,11 @@ export const PlainTextTiptapEditor = ({
           : "tiptap-plain-text",
       },
       handlePaste(view, event) {
-        const clipboardText = event.clipboardData?.getData("text/plain")
         const clipboardHtml = event.clipboardData?.getData("text/html")
-        const text =
-          clipboardText ??
-          (clipboardHtml ? htmlToPlainTextWithBlocks(clipboardHtml) : "")
+        const clipboardText = event.clipboardData?.getData("text/plain")
+        const text = clipboardHtml
+          ? htmlToPlainTextWithBlocks(clipboardHtml)
+          : (clipboardText ?? "")
 
         if (!text) {
           return false
