@@ -1,6 +1,7 @@
 export * from "./ai-conversation-embedding"
 export * from "./ai-conversation-source"
 export * from "./ai-workspace-scope"
+export * from "./auth-account"
 export * from "./contact-custom-field"
 export * from "./conversation-ai-context"
 export * from "./coupon"

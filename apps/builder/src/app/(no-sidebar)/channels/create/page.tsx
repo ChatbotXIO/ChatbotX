@@ -9,7 +9,6 @@ import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { InstagramLoginSelect } from "@/features/integration-instagram/components/instagram-login-select"
 import { generateInstagramRedirectUri } from "@/features/integration-instagram/libs/oauth"
 import { generateInstagramFacebookRedirectUri } from "@/features/integration-instagram/libs/oauth-facebook"
-import { generateMessengerRedirectUri } from "@/features/integration-messenger/libs/oauth"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { generateTiktokRedirectUri } from "@/features/integration-tiktok/libs/tiktok"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
@@ -93,11 +92,13 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   if (selectedChannel === "messenger" && messenger) {
-    const redirectUri = await generateMessengerRedirectUri(
-      messenger.publicConfig,
-      workspaceId,
+    // The Facebook SSO token reuse check needs to set a cookie on a hit, which
+    // a Server Component's render can't do — hand off to a Route Handler that
+    // re-checks reuse and either redirects to the Page picker (cookie set) or
+    // falls back to the full OAuth dialog. See that route's comment.
+    redirect(
+      `/channels/create/messenger${workspaceId ? `?workspaceId=${workspaceId}` : ""}`,
     )
-    redirect(redirectUri)
   }
 
   if (selectedChannel === "instagram" && instagram) {
