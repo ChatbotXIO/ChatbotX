@@ -47,6 +47,7 @@ const createExternalWebhookWorkspaceTokenAPI = workspaceTokenAuthAPI
     z.object({
       url: z.string().trim().url(),
       event: z.string().trim().min(1).max(100),
+      provider: z.enum(["make", "n8n"]).default("make"),
     }),
   )
   .output(externalWebhookResource)
@@ -55,7 +56,7 @@ const createExternalWebhookWorkspaceTokenAPI = workspaceTokenAuthAPI
     async ({ context, input }) =>
       await externalWebhookService.register({
         workspaceId: context.workspace.id,
-        provider: "make",
+        provider: input.provider,
         event: input.event,
         url: input.url,
       }),
