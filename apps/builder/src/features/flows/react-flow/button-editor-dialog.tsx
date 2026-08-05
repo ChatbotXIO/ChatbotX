@@ -237,6 +237,7 @@ export function ButtonEditorDialog() {
   )
   const buttonPath = useStepStore((state) => state.buttonPath)
   const setButtonPath = useStepStore((state) => state.setButtonPath)
+  const buttonInitialData = useStepStore((state) => state.buttonInitialData)
   const openButtonEditorDialog = useStepStore(
     (state) => state.openButtonEditorDialog,
   )
@@ -257,25 +258,21 @@ export function ButtonEditorDialog() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
-    if (buttonPath && openButtonEditorDialog) {
+    if (buttonPath && openButtonEditorDialog && buttonInitialData) {
       const allNodes = getNodes()
       const foundNode = allNodes.find((node) => node.selected) as FlowNode
       if (foundNode) {
-        const rawData = getProperty(foundNode, buttonPath)
-
-        if (rawData) {
-          setActiveNode(foundNode)
-          form.reset(rawData as ButtonStepProps)
-          setOpenButtonEditorDialog(true)
-          return
-        }
+        setActiveNode(foundNode)
+        form.reset(buttonInitialData)
+        setOpenButtonEditorDialog(true)
+        return
       }
     }
 
     form.reset()
     setActiveNode(null)
     setOpenButtonEditorDialog(false)
-  }, [buttonPath, openButtonEditorDialog])
+  }, [buttonPath, openButtonEditorDialog, buttonInitialData])
 
   const onSave = useCallback(() => {
     if (!(activeNode && buttonPath)) {
