@@ -13,6 +13,10 @@ import { platformCredentialService } from "@chatbotx.io/business"
 import type { CredentialType } from "@chatbotx.io/database/partials"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { onUserCreated } from "./on-user-created"
+import {
+  FACEBOOK_SSO_SCOPES,
+  upgradeFacebookAccount,
+} from "./upgrade-facebook-account"
 
 /**
  * White-label social login (Google, Facebook, …).
@@ -49,31 +53,38 @@ const PROVIDER_CREDENTIAL_TYPE: Record<SocialProvider, SocialCredentialType> = {
 /**
  * One instance cache per provider, keyed by a fingerprint of the credential.
  *
- * The key folds in BOTH the client id and the client secret, so a reseller
- * rotating their OAuth secret — even keeping the same client id — resolves to a
- * fresh instance instead of signing users in with the now-stale secret captured
- * in the old instance's closure. The set of distinct credentials is small and
- * bounded (platform defaults + the resellers who registered their own), so
- * orphaned post-rotation entries stay negligible.
+ * The key folds in the client id, the client secret, AND (for Facebook) the
+ * Meta API `version`, so a reseller rotating their OAuth secret — or just
+ * bumping the API version while keeping the same clientId/secret — resolves
+ * to a fresh instance instead of reusing one whose `upgradeOAuthAccount`
+ * closure was built once with the now-stale secret/version. The set of
+ * distinct credentials is small and bounded (platform defaults + the
+ * resellers who registered their own), so orphaned post-rotation entries stay
+ * negligible.
  */
 const instancesByProvider: Record<SocialProvider, Map<string, Auth>> = {
   google: new Map(),
   facebook: new Map(),
 }
 
-/** A stable, non-reversible cache key for a credential (client id + secret). */
-function credentialKey(credential: SocialAuthCredential | null): string {
+/** A resolved credential, carrying the Meta API `version` for Facebook. */
+type FacebookAwareCredential = SocialAuthCredential & { version?: string }
+
+/** A stable, non-reversible cache key for a credential (client id + secret + version). */
+function credentialKey(credential: FacebookAwareCredential | null): string {
   if (!credential) {
     return NO_CREDENTIAL_KEY
   }
   return createHash("sha256")
-    .update(`${credential.clientId} ${credential.clientSecret}`)
+    .update(
+      `${credential.clientId} ${credential.clientSecret} ${credential.version ?? ""}`,
+    )
     .digest("hex")
 }
 
 function getAuthForCredential(
   provider: SocialProvider,
-  credential: SocialAuthCredential | null,
+  credential: FacebookAwareCredential | null,
 ): Auth {
   const cache = instancesByProvider[provider]
   const key = credentialKey(credential)
@@ -85,10 +96,26 @@ function getAuthForCredential(
   const instance = createAuth({
     socialCredentials: { [provider]: credential },
     onUserCreated,
+    // Facebook SSO requests the same Messenger-grade scopes as the channel
+    // connect flow (so the token can later be reused to list Pages) and
+    // upgrades the short-lived token it gets into a long-lived one before
+    // persisting it — see `upgrade-facebook-account.ts`.
+    ...(provider === "facebook" &&
+      credential && {
+        socialScopes: { facebook: FACEBOOK_SSO_SCOPES },
+        upgradeOAuthAccount: upgradeFacebookAccount({
+          clientId: credential.clientId,
+          clientSecret: credential.clientSecret,
+          version: credential.version ?? DEFAULT_MESSENGER_API_VERSION,
+        }),
+      }),
   })
   cache.set(key, instance)
   return instance
 }
+
+/** Fallback only reached if a resolved messenger credential is somehow missing `version` (schema requires it). */
+const DEFAULT_MESSENGER_API_VERSION = "v23.0"
 
 /**
  * The credential a tenant signs in with for `provider`: the reseller's own app
@@ -98,7 +125,7 @@ function getAuthForCredential(
 async function resolveCredentialForTenant(
   tenantId: string,
   provider: SocialProvider,
-): Promise<SocialAuthCredential | null> {
+): Promise<FacebookAwareCredential | null> {
   const type = PROVIDER_CREDENTIAL_TYPE[provider]
   const decrypted =
     tenantId === ROOT_TENANT_ID
@@ -111,7 +138,14 @@ async function resolveCredentialForTenant(
     return null
   }
 
-  return { clientId, clientSecret }
+  return {
+    clientId,
+    clientSecret,
+    version:
+      provider === "facebook"
+        ? (decrypted?.config as { version: string }).version
+        : undefined,
+  }
 }
 
 function resolveResellerCredential(

@@ -5,12 +5,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const ROOT_TENANT_ID = "1"
 const SOCIAL_PROVIDERS = ["google", "facebook"] as const
 
+const FACEBOOK_SSO_SCOPES = ["email", "public_profile", "pages_messaging"]
+
 const {
   mockCreateAuth,
   mockFindDecryptedPlatform,
   mockResolveForOwner,
   mockResolveTenantByDomain,
   mockResolveTenantOwnerId,
+  mockUpgradeFacebookAccount,
 } = vi.hoisted(() => ({
   // createAuth is mocked to a cheap stub tagged by the (provider, clientId) it
   // was built with, so we can assert which app an instance signs in with and
@@ -29,6 +32,9 @@ const {
   mockResolveForOwner: vi.fn(),
   mockResolveTenantByDomain: vi.fn(),
   mockResolveTenantOwnerId: vi.fn(),
+  // upgradeFacebookAccount(credential) returns a hook function; the mock
+  // returns a stub function so we can assert the credential it was built with.
+  mockUpgradeFacebookAccount: vi.fn(() => vi.fn()),
 }))
 
 vi.mock("@chatbotx.io/auth/server", () => ({
@@ -50,6 +56,11 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID,
+}))
+
+vi.mock("@/lib/auth/upgrade-facebook-account", () => ({
+  FACEBOOK_SSO_SCOPES,
+  upgradeFacebookAccount: mockUpgradeFacebookAccount,
 }))
 
 const credential = (clientId: string, clientSecret = "secret") => ({
@@ -197,5 +208,90 @@ describe("getSocialAuthForTenant", () => {
         socialCredentials: { google: null },
       }),
     )
+  })
+
+  test("facebook requests Messenger-grade scopes and upgrades the token, keyed to the resolved credential", async () => {
+    mockFindDecryptedPlatform.mockResolvedValue(credential("meta-app"))
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant(ROOT_TENANT_ID, "facebook")
+
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        socialCredentials: {
+          facebook: expect.objectContaining({
+            clientId: "meta-app",
+            clientSecret: "secret",
+          }),
+        },
+        socialScopes: { facebook: FACEBOOK_SSO_SCOPES },
+        upgradeOAuthAccount: expect.any(Function),
+      }),
+    )
+    expect(mockUpgradeFacebookAccount).toHaveBeenCalledWith({
+      clientId: "meta-app",
+      clientSecret: "secret",
+      version: "v1",
+    })
+  })
+
+  test("google does not get facebook-only scope/upgrade wiring", async () => {
+    mockFindDecryptedPlatform.mockResolvedValue(credential("platform-client"))
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant(ROOT_TENANT_ID, "google")
+
+    const call = mockCreateAuth.mock.calls[0]?.[0]
+    expect(call).not.toHaveProperty("socialScopes")
+    expect(call).not.toHaveProperty("upgradeOAuthAccount")
+  })
+
+  test("disabled facebook (no credential) skips scope/upgrade wiring", async () => {
+    mockFindDecryptedPlatform.mockResolvedValue(undefined)
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant(ROOT_TENANT_ID, "facebook")
+
+    const call = mockCreateAuth.mock.calls[0]?.[0]
+    expect(call).not.toHaveProperty("socialScopes")
+    expect(call).not.toHaveProperty("upgradeOAuthAccount")
+    expect(mockUpgradeFacebookAccount).not.toHaveBeenCalled()
+  })
+
+  test("a version-only credential change (same clientId/secret) busts the cache", async () => {
+    mockFindDecryptedPlatform.mockResolvedValueOnce({
+      config: {
+        clientId: "meta-app",
+        clientSecret: "secret",
+        verifyToken: "token",
+        version: "v22.0",
+      },
+    })
+    const { getSocialAuthForTenant } = await loadModule()
+
+    const first = await getSocialAuthForTenant(ROOT_TENANT_ID, "facebook")
+
+    mockFindDecryptedPlatform.mockResolvedValueOnce({
+      config: {
+        clientId: "meta-app",
+        clientSecret: "secret",
+        verifyToken: "token",
+        version: "v23.0",
+      },
+    })
+    const second = await getSocialAuthForTenant(ROOT_TENANT_ID, "facebook")
+
+    expect(first).not.toBe(second)
+    expect(mockCreateAuth).toHaveBeenCalledTimes(2)
+    expect(mockUpgradeFacebookAccount).toHaveBeenNthCalledWith(1, {
+      clientId: "meta-app",
+      clientSecret: "secret",
+      version: "v22.0",
+    })
+    expect(mockUpgradeFacebookAccount).toHaveBeenNthCalledWith(2, {
+      clientId: "meta-app",
+      clientSecret: "secret",
+      version: "v23.0",
+    })
   })
 })
