@@ -16,6 +16,7 @@ export type StepState = {
   activeFlowId: string | null
 
   buttonPath: string | null
+  buttonInitialData: ButtonStepProps | null
   updatedButtonData: UpdatedButtonData | null
   openButtonEditorDialog: boolean
 
@@ -29,6 +30,7 @@ export type StepStore = StepState & {
 
   setOpenButtonEditorDialog: (open: boolean) => void
   setButtonPath: (buttonPath: string | null) => void
+  setButtonInitialData: (buttonInitialData: ButtonStepProps | null) => void
   setOpenNodeDetailSheet: (openNodeDetailSheet: boolean) => void
   onChangeButtonData: (updatedButtonData: UpdatedButtonData | null) => void
   setButtonEditorConfig: (config: ButtonEditorConfig | null) => void
@@ -37,6 +39,7 @@ export type StepStore = StepState & {
 export const createStepStore = (initState?: Partial<StepState>) => {
   const defaultProps = {
     buttonPath: null,
+    buttonInitialData: null,
     updatedButtonData: null,
     openButtonEditorDialog: false,
 
@@ -52,6 +55,7 @@ export const createStepStore = (initState?: Partial<StepState>) => {
     setOpenButtonEditorDialog: (openButtonEditorDialog) =>
       set({ openButtonEditorDialog }),
     setButtonPath: (buttonPath) => set({ buttonPath }),
+    setButtonInitialData: (buttonInitialData) => set({ buttonInitialData }),
     setOpenNodeDetailSheet: (openNodeDetailSheet) =>
       set({ openNodeDetailSheet }),
     onChangeButtonData: (updatedButtonData: UpdatedButtonData | null) => {

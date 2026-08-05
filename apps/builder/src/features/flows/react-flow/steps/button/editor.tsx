@@ -22,8 +22,12 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
   const { parentName, editorConfig, ...rest } = props
 
   const { getValues } = useFormContext()
-  const { setButtonPath, setOpenButtonEditorDialog, setButtonEditorConfig } =
-    useStepStore((state) => state)
+  const {
+    setButtonPath,
+    setButtonInitialData,
+    setOpenButtonEditorDialog,
+    setButtonEditorConfig,
+  } = useStepStore((state) => state)
 
   const buttonData = getValues(`${parentName}`)
 
@@ -34,6 +38,7 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
         onClick={() => {
           setButtonEditorConfig(editorConfig ?? null)
           setButtonPath(`data.details.${parentName}`)
+          setButtonInitialData(buttonData)
           setOpenButtonEditorDialog(true)
         }}
         type="button"
