@@ -44,6 +44,7 @@ import {
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
+import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
@@ -268,6 +269,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.processStoryReplyAutomation: {
             await processStoryReplyAutomation(job.data.data)
+            return
+          }
+          case IntegrationJobAction.captureTemplateFlowResponse: {
+            await captureTemplateFlowResponse(job.data.data)
             return
           }
           case IntegrationJobAction.processLeadgen: {

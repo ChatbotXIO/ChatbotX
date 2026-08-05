@@ -121,6 +121,7 @@ export const receiveMessage = async (
   message: (MessageModel & { attachments: unknown[] }) | null
   conversation: ConversationModel
   postbackAction: string | null
+  templateFlowToken: string | null
   quickReplyAction: string | null
   ref?: string | null
   channelType: "instagram" | "instagramFacebook"
@@ -178,6 +179,7 @@ export const receiveMessage = async (
     message: rawIncomingMessage,
     contact: incomingContact,
     postbackAction: rawPostbackAction,
+    templateFlowToken,
     quickReplyAction: rawQuickReplyAction,
     ref,
     referralSource,
@@ -296,6 +298,27 @@ export const receiveMessage = async (
           },
         })
       }
+
+      if (templateFlowToken && isWorkspaceActive) {
+        const flowResponse = getWhatsappFlowResponse(incomingMessage)
+        if (flowResponse) {
+          await integrationQueue.add(
+            IntegrationJobAction.captureTemplateFlowResponse,
+            {
+              type: IntegrationJobAction.captureTemplateFlowResponse,
+              data: {
+                workspaceId: conversation.workspaceId,
+                conversationId: conversation,
+                contactInboxId: contactInbox,
+                messageId: createdMessage.id,
+                templateFlowToken,
+                flowResponse,
+              },
+            },
+            { jobId: `template-flow-response-${createdMessage.id}` },
+          )
+        }
+      }
     }
   }
 
@@ -316,6 +339,7 @@ export const receiveMessage = async (
     message: createdMessage,
     conversation,
     postbackAction,
+    templateFlowToken: templateFlowToken ?? null,
     quickReplyAction,
     ref,
     channelType,
@@ -331,6 +355,19 @@ const getReceivedMessageSystemFieldUpdates = (
   contactInboxTracking: getReceivedMessageContactInboxTracking(parsedMessage),
   contactLocation: parseIncomingLocation(parsedMessage.message),
 })
+
+const getWhatsappFlowResponse = (
+  message: IncomingMessage,
+): Record<string, unknown> | null => {
+  const entity = message.contentAttributes as
+    | MessageWhatsappFlowResponseEntity
+    | undefined
+  return entity?.type === "whatsapp_flow_response" &&
+    entity.flowResponse &&
+    typeof entity.flowResponse === "object"
+    ? entity.flowResponse
+    : null
+}
 
 const getReceivedMessageContactInboxTracking = (
   parsedMessage: Pick<ReceivedMessageResult, "buttonTitle" | "referral">,

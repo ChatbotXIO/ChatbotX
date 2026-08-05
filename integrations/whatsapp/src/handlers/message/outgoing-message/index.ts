@@ -296,7 +296,7 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
             whatsappMessage,
           )
         }
-
+        console.log("sendResponse", sendResponse)
         const serverError = sendResponse as ServerErrorResponse
 
         if (serverError?.error) {

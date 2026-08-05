@@ -15,6 +15,7 @@ export type IncomingMessageFragment = {
   attachments?: IncomingAttachment[]
   contentAttributes?: IncomingMessage["contentAttributes"]
   postbackAction?: string | null
+  templateFlowToken?: string | null
   buttonTitle?: string | null
   ref?: string | null
 }

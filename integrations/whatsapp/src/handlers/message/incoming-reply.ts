@@ -1,4 +1,7 @@
-import { decodeButtonPayload } from "@chatbotx.io/flow-config"
+import {
+  decodeButtonPayload,
+  isTemplateFlowToken,
+} from "@chatbotx.io/flow-config"
 import type {
   IncomingMessage,
   MessageWhatsappFlowResponseEntity,
@@ -27,6 +30,7 @@ type WhatsappInteractiveReplyType = WhatsappInteractiveReply["type"]
  */
 export type WhatsappReply = {
   postbackAction: string | null
+  templateFlowToken?: string | null
   text: string
   buttonTitle: string | null
   contentAttributes?: IncomingMessage["contentAttributes"]
@@ -86,6 +90,10 @@ const interactiveReplyReaders: InteractiveReplyReaders = {
 
     return {
       postbackAction: flowToken && decodedPayload?.buttonId ? flowToken : null,
+      templateFlowToken:
+        flowToken && !decodedPayload && isTemplateFlowToken(flowToken)
+          ? flowToken
+          : null,
       text: reply.body ?? "",
       buttonTitle: reply.body ?? null,
       contentAttributes: flowResponseEntity,

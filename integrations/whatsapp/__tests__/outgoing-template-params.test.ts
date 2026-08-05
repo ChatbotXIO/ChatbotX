@@ -1,3 +1,7 @@
+import {
+  decodeTemplateFlowToken,
+  TemplateFlowOrigin,
+} from "@chatbotx.io/flow-config"
 import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -53,6 +57,23 @@ const sendTemplate = (params: TemplateParams) =>
     },
   } as never)
 
+const sendFlowTemplate = (
+  params: TemplateParams,
+  data: Record<string, unknown>,
+) =>
+  sendFlowStep({
+    ctx,
+    data: {
+      contact,
+      ...data,
+      step: {
+        id: "11612473309626370",
+        stepType: "sendWaTemplateMessage",
+        template: { name: "feedback", language: "en", params },
+      },
+    },
+  } as never)
+
 const templatePayload = () =>
   JSON.parse((mockApiFetch.mock.calls[0][1] as RequestInit).body as string) as {
     template: {
@@ -62,6 +83,10 @@ const templatePayload = () =>
           type: string
           text?: string
           parameter_name?: string
+          action?: {
+            flow_token?: string
+            flow_action_data?: Record<string, unknown>
+          }
         }>
       }>
     }
@@ -120,6 +145,67 @@ describe("whatsapp outgoing template parameters", () => {
       { type: "text", text: "Alice", parameter_name: "first_name" },
       { type: "text", text: "A-9", parameter_name: "order_id" },
     ])
+  })
+
+  test("FLOW button generates a flow-step token and omits empty flow_action_data", async () => {
+    await sendFlowTemplate(
+      {
+        button: [
+          {
+            sub_type: "flow",
+            index: 0,
+            flowSourceId: "meta-flow-1",
+            navigateScreenId: "SCREEN_1",
+            fieldMappings: [],
+          },
+        ],
+      },
+      {
+        flowId: "11612473309626368",
+        flowVersionId: "11612473309626369",
+      },
+    )
+
+    const [param] = componentOfType("button")?.parameters ?? []
+    const token = param?.action?.flow_token
+
+    expect(token).toBeTruthy()
+    expect(param?.action).not.toHaveProperty("flow_action_data")
+    expect(decodeTemplateFlowToken(token)).toEqual({
+      origin: TemplateFlowOrigin.FlowStep,
+      flowId: "11612473309626368",
+      flowVersionId: "11612473309626369",
+      stepId: "11612473309626370",
+      buttonIndex: 0,
+    })
+  })
+
+  test("FLOW button generates a broadcast token from metadata", async () => {
+    await sendFlowTemplate(
+      {
+        button: [
+          {
+            sub_type: "flow",
+            index: 1,
+            flowSourceId: "meta-flow-1",
+            navigateScreenId: "SCREEN_1",
+            fieldMappings: [],
+          },
+        ],
+      },
+      {
+        flowId: "",
+        metadata: { broadcastId: "11612473309626371" },
+      },
+    )
+
+    const [param] = componentOfType("button")?.parameters ?? []
+
+    expect(decodeTemplateFlowToken(param?.action?.flow_token)).toEqual({
+      origin: TemplateFlowOrigin.Broadcast,
+      broadcastId: "11612473309626371",
+      buttonIndex: 1,
+    })
   })
 })
 

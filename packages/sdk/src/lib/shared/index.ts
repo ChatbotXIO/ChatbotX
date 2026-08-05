@@ -50,6 +50,7 @@ export type ReceivedMessageResult = {
   message: IncomingMessage | null
   contact: IncomingContact
   postbackAction: string | null
+  templateFlowToken?: string | null
   quickReplyAction: string | null
   ref: string | null
   referralSource?: string | null
