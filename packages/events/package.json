@@ -10,7 +10,7 @@
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
-    "lru-cache": "^11.3.5"
+    "lru-cache": "^11.5.2"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
