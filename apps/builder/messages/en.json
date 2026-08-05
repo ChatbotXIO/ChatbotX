@@ -2899,6 +2899,7 @@
   "auth": {
     "orContinueWith": "Or continue with",
     "continueWithFacebook": "Continue with Facebook",
+    "continueWithGoogle": "Continue with Google",
     "dontHaveAnAccount": "Don't have an account?",
     "alreadyHaveAnAccount": "Already have an account?",
     "signUp": "Sign up",

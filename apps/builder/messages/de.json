@@ -2250,6 +2250,7 @@
   "auth": {
     "orContinueWith": "Oder fortfahren mit",
     "continueWithFacebook": "Mit Facebook fortfahren",
+    "continueWithGoogle": "Mit Google fortfahren",
     "dontHaveAnAccount": "Noch kein Konto?",
     "alreadyHaveAnAccount": "Bereits ein Konto?",
     "signUp": "Registrieren",

@@ -2892,6 +2892,7 @@
   "auth": {
     "orContinueWith": "Atau lanjutkan dengan",
     "continueWithFacebook": "Lanjutkan dengan Facebook",
+    "continueWithGoogle": "Lanjutkan dengan Google",
     "dontHaveAnAccount": "Belum memiliki akun?",
     "alreadyHaveAnAccount": "Sudah memiliki akun?",
     "signUp": "Daftar",

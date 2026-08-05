@@ -32,6 +32,7 @@ export const UiProvider = ({
       <AnalyticsProvider> */}
         <TooltipProvider>{children}</TooltipProvider>
         <Toaster
+          closeButton
           duration={DEFAULT_TOAST_DURATION_MS}
           position="top-right"
           richColors

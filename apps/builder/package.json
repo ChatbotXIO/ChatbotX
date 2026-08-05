@@ -120,7 +120,6 @@
     "react-day-picker": "9.14.0",
     "react-dom": "19.2.5",
     "react-dropzone": "^15.0.0",
-    "react-google-button": "^0.8.0",
     "react-hook-form": "^7.74.0",
     "react-qr-code": "^2.0.21",
     "react-virtuoso": "^4.18.6",
