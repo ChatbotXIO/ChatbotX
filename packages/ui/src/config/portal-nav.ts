@@ -5,6 +5,7 @@ import {
   Layers,
   LayoutList,
   Mail,
+  Package,
   Settings,
   UserPlus,
 } from "lucide-react"
@@ -23,6 +24,7 @@ export type PortalSaasNavKey =
   | "portalUsers"
   | "portalWorkspaces"
   | "portalPlans"
+  | "portalTopUpPacks"
   | "portalUsage"
   | "portalCustomDomain"
   | "portalPaymentProcessor"
@@ -65,6 +67,12 @@ export const portalSaasNavConfigs: PortalSaasNavConfig[] = [
     pathSuffix: "/plans",
     icon: LayoutList,
     requires: "whiteLabel",
+  },
+  {
+    key: "portalTopUpPacks",
+    pathSuffix: "/top-up-packs",
+    icon: Package,
+    requires: "saasMode",
   },
   {
     key: "portalUsage",
