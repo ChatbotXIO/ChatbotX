@@ -335,6 +335,8 @@ class UserQuotaService extends BaseService {
       botMessagesUsed: 0,
       monthlyBotMessagesLimit: null,
       monthlyBotMessagesUsed: 0,
+      monthlyBotMessagesPeriodStart: null,
+      botMessagesTopUpGranted: 0,
       whiteLabel: false,
       ssoSaml: false,
       saasMode: false,

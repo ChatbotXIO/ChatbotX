@@ -5,6 +5,7 @@ import { PortalSideNav } from "@chatbotx.io/ui/components/portal/portal-side-nav
 import type { PortalPricingState } from "@chatbotx.io/ui/components/portal/pricing-nav-item"
 import {
   type PortalSaasFlags,
+  type PortalSaasNavKey,
   portalSaasNavConfigs,
 } from "@chatbotx.io/ui/config/portal-nav"
 import {
@@ -75,7 +76,7 @@ export function PortalManageSidebar({ flags, pricing }: Props) {
   const saasItems: PortalNavItem[] = portalSaasNavConfigs
     .filter((item) => flags[item.requires])
     .map((item) => ({
-      title: tManage(item.key),
+      title: tManage(item.key satisfies PortalSaasNavKey),
       url: `${PORTAL_PREFIX}${item.pathSuffix}`,
       icon: item.icon,
     }))

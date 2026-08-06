@@ -36,6 +36,21 @@ export const userQuotaModel = pgTable(
     botMessagesUsed: integer().notNull().default(0),
     monthlyBotMessagesLimit: integer(),
     monthlyBotMessagesUsed: integer().notNull().default(0),
+    // Which billing period `monthlyBotMessagesUsed` belongs to. A real DB column
+    // rather than a Redis live-hash stamp (contrast `macPeriodStart`): MAC's
+    // Redis-only stamp is safe because `reconcileMac` re-grounds from the durable,
+    // period-scoped `ContactActiveMonthly` ledger on every sync, so a lost stamp
+    // self-heals. Bot messages have no ledger and no reconcile backstop at all, so
+    // losing this stamp (e.g. a Redis flush) must not silently mis-fire or skip a
+    // reset — durable storage is required. null = never reset yet (first run).
+    monthlyBotMessagesPeriodStart: timestamp(timestampConfig),
+    // Enterprise-owned lifetime bot-message credit total, mirrored from the
+    // platform-db `TopUpGrant` ledger by `publishEntitlements`. Exists ONLY so the
+    // credit survives every one of `publishEntitlements`' from-scratch recomputes
+    // of `botMessagesLimit` (18 call sites) — enforcement never reads this column
+    // directly, it only reads the already-inflated `botMessagesLimit`. Purely
+    // auditable/display state, not a second source of truth.
+    botMessagesTopUpGranted: integer().notNull().default(0),
     whiteLabel: boolean().notNull().default(false),
     ssoSaml: boolean().notNull().default(false),
     saasMode: boolean().notNull().default(false),
