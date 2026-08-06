@@ -1,8 +1,4 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
-import {
-  coexistSyncRunModel,
-  integrationMessengerModel,
-} from "@chatbotx.io/database/schema"
+import { coexistService } from "@chatbotx.io/business"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -41,34 +37,16 @@ export const integrationMessengerCoexistAPIs = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, integrationId, enabled } = input
-
-      // Tenancy-guarded UPDATE — returning() confirms the row belonged to
-      // this workspace before we enqueue any sync.
-      const [updated] = await db
-        .update(integrationMessengerModel)
-        .set({ coexistEnabled: enabled })
-        .where(
-          and(
-            eq(integrationMessengerModel.id, integrationId),
-            eq(integrationMessengerModel.workspaceId, workspaceId),
-          ),
-        )
-        .returning({ id: integrationMessengerModel.id })
-
-      if (!updated) {
-        return { success: false }
-      }
-
-      if (enabled) {
-        await db.insert(coexistSyncRunModel).values({
-          workspaceId: input.workspaceId,
-          integrationId: input.integrationId,
-          channel: "messenger",
-          status: "init",
-          triggerSource: "popup-enable",
-        })
-      }
-
-      return { success: true }
+      return await (enabled
+        ? coexistService.enable({
+            workspaceId,
+            integrationId,
+            channel: "messenger",
+          })
+        : coexistService.disable({
+            workspaceId,
+            integrationId,
+            channel: "messenger",
+          }))
     }),
 }

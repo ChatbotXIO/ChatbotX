@@ -14,18 +14,28 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import type { SetCoexistInstagramResponse } from "@/features/integration-instagram/api/coexist"
 import type { SetCoexistMessengerResponse } from "@/features/integration-messenger/api/coexist"
 import type { SetCoexistWhatsappResponse } from "@/features/integration-whatsapp/api/coexist"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
 
 type CoexistPopupProps = {
-  channel: "whatsapp" | "messenger"
+  channel: "whatsapp" | "messenger" | "instagram"
   integrationId: string
   workspaceId: string
   onDone: () => void
 }
 
-type CoexistResponse = SetCoexistWhatsappResponse | SetCoexistMessengerResponse
+type CoexistResponse =
+  | SetCoexistWhatsappResponse
+  | SetCoexistMessengerResponse
+  | SetCoexistInstagramResponse
+
+const CHANNEL_DESCRIPTION_KEYS = {
+  whatsapp: "coexist.descriptionWhatsapp",
+  messenger: "coexist.descriptionMessenger",
+  instagram: "coexist.descriptionInstagram",
+} as const satisfies Record<CoexistPopupProps["channel"], string>
 
 const KNOWN_REASONS = [
   "already_triggered",
@@ -107,11 +117,7 @@ export function CoexistPopup({
         <DialogHeader>
           <DialogTitle className="mb-4">{t("coexist.title")}</DialogTitle>
           <DialogDescription>
-            {t(
-              channel === "whatsapp"
-                ? "coexist.descriptionWhatsapp"
-                : "coexist.descriptionMessenger",
-            )}
+            {t(CHANNEL_DESCRIPTION_KEYS[channel])}
           </DialogDescription>
         </DialogHeader>
 

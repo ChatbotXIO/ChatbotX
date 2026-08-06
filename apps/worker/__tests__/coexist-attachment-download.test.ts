@@ -15,6 +15,7 @@ const {
   mockEqFn,
   mockAndFn,
   mockBuildContext,
+  mockFindIntegrationForCoexist,
   mockGetWhatsappClient,
   mockPutObject,
   mockRetrieveMedia,
@@ -31,6 +32,7 @@ const {
   mockEqFn: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   mockAndFn: vi.fn((...args: unknown[]) => ({ __and: args })),
   mockBuildContext: vi.fn(),
+  mockFindIntegrationForCoexist: vi.fn(),
   mockGetWhatsappClient: vi.fn(),
   mockPutObject: vi.fn(),
   mockRetrieveMedia: vi.fn(),
@@ -78,6 +80,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mockBuildContext,
+  coexistService: {
+    findIntegrationForCoexist: mockFindIntegrationForCoexist,
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
@@ -135,10 +140,16 @@ const WA_DATA = {
   channel: "whatsapp" as const,
 }
 
+const IG_DATA = {
+  ...BASE_DATA,
+  channel: "instagram" as const,
+}
+
 const FAKE_INTEGRATION_ROW = {
   id: "int-001",
   inboxId: "inbox-001",
   auth: { tokens: { accessToken: "token-abc" } },
+  channel: "messenger",
 }
 
 const fakeCtx = {
@@ -182,11 +193,11 @@ const wireUpdateChain = () => {
   mockUpdateAttachment.mockResolvedValue(undefined)
 }
 
-/** Wires db.execute() to return the integration row. */
-const wireExecute = (
+/** Wires the business-layer coexist integration lookup. */
+const wireIntegrationLookup = (
   row: Record<string, unknown> | null = FAKE_INTEGRATION_ROW,
 ) => {
-  mockDbExecute.mockResolvedValue({ rows: row ? [row] : [] })
+  mockFindIntegrationForCoexist.mockResolvedValue(row)
 }
 
 /**
@@ -250,6 +261,7 @@ describe("coexistAttachmentDownload", () => {
     })
     wireUpdateChain()
     mockPutObject.mockResolvedValue(undefined)
+    mockFindIntegrationForCoexist.mockResolvedValue(FAKE_INTEGRATION_ROW)
     mockBuildContext.mockResolvedValue(fakeCtx)
     mockRetrieveMedia.mockResolvedValue({
       url: "https://example.com/media/123",
@@ -273,7 +285,7 @@ describe("coexistAttachmentDownload", () => {
       expect.stringContaining("row missing — skip"),
     )
     // Must NOT download or upload anything
-    expect(mockDbExecute).not.toHaveBeenCalled()
+    expect(mockFindIntegrationForCoexist).not.toHaveBeenCalled()
     expect(mockPutObject).not.toHaveBeenCalled()
   })
 
@@ -298,7 +310,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "https://example.com/media/file.jpg",
       mimeType: "image/jpeg",
     })
-    wireExecute()
+    wireIntegrationLookup()
 
     let capturedSignal: AbortSignal | undefined
     const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
@@ -326,7 +338,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "wa-media:media-id-xyz",
       mimeType: "image/jpeg",
     })
-    wireExecute()
+    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
 
     let capturedSignal: AbortSignal | undefined
     const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
@@ -355,7 +367,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "https://example.com/media/huge.mp4",
       mimeType: "video/mp4",
     })
-    wireExecute()
+    wireIntegrationLookup()
 
     const OVER_LIMIT = String(51 * 1024 * 1024) // 51 MB
     const fetchMock = vi.fn(() =>
@@ -375,7 +387,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "https://example.com/media/huge.mp4",
       mimeType: "video/mp4",
     })
-    wireExecute()
+    wireIntegrationLookup()
 
     const fetchMock = vi.fn(() =>
       Promise.resolve(
@@ -399,7 +411,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "wa-media:media-id-xyz",
       mimeType: "video/mp4",
     })
-    wireExecute()
+    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
 
     const OVER_LIMIT = String(51 * 1024 * 1024)
     const fetchMock = vi.fn(() =>
@@ -423,7 +435,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "https://example.com/media/photo.jpg",
       mimeType: "image/jpeg",
     })
-    wireExecute()
+    wireIntegrationLookup()
 
     const fetchMock = vi.fn(() =>
       Promise.resolve(
@@ -450,7 +462,7 @@ describe("coexistAttachmentDownload", () => {
       originPath: "wa-media:media-id-xyz",
       mimeType: "image/jpeg",
     })
-    wireExecute()
+    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
 
     const fetchMock = vi.fn(() =>
       Promise.resolve(
@@ -471,6 +483,41 @@ describe("coexistAttachmentDownload", () => {
     vi.unstubAllGlobals()
   })
 
+  it("happy path: Instagram attachment downloads with bearer token and uploads successfully", async () => {
+    wireSelectChain({
+      id: "att-001",
+      originPath: "https://example.com/instagram/photo.jpg",
+      mimeType: "image/jpeg",
+    })
+    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "instagram" })
+
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        makeFetchResponse({
+          contentType: "image/jpeg",
+          contentLength: String(1024),
+          totalBytes: 1024,
+        }),
+      ),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await coexistAttachmentDownload(IG_DATA)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/instagram/photo.jpg",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer token-abc",
+        }),
+      }),
+    )
+    expect(mockPutObject).toHaveBeenCalledOnce()
+    expect(mockUpdateAttachment).toHaveBeenCalled()
+
+    vi.unstubAllGlobals()
+  })
+
   it("no-op when originPath is already a finalized S3 path", async () => {
     wireSelectChain({
       id: "att-001",
@@ -480,7 +527,7 @@ describe("coexistAttachmentDownload", () => {
 
     await coexistAttachmentDownload(BASE_DATA)
 
-    expect(mockDbExecute).not.toHaveBeenCalled()
+    expect(mockFindIntegrationForCoexist).not.toHaveBeenCalled()
     expect(mockPutObject).not.toHaveBeenCalled()
   })
 })

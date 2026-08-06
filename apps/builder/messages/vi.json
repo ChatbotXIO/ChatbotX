@@ -2700,6 +2700,7 @@
     "title": "Đồng bộ liên hệ và lịch sử chat hiện có?",
     "descriptionWhatsapp": "Khi bật, hệ thống sẽ nhập liên hệ và tối đa 6 tháng lịch sử chat từ số WhatsApp này.",
     "descriptionMessenger": "Khi bật, hệ thống sẽ nhập liên hệ Messenger hiện có và tối đa 3 tháng lịch sử hội thoại từ Page này.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Bật đồng bộ",
     "decline": "Không đồng bộ",
     "billingNote": "Page lớn có thể mất vài giờ để hoàn tất.",

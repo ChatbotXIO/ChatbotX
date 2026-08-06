@@ -2700,6 +2700,7 @@
     "title": "Sync existing contacts and chat history?",
     "descriptionWhatsapp": "When enabled, contacts and up to 6 months of chat history will be imported from this WhatsApp number.",
     "descriptionMessenger": "When enabled, existing Messenger contacts and up to 3 months of conversation history will be imported from this Page.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Enable sync",
     "decline": "Don't sync",
     "billingNote": "Large pages may take several hours to complete.",

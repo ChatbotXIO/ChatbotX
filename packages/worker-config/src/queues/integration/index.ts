@@ -38,6 +38,7 @@ export const IntegrationJobAction = {
   coexistWhatsappBuffer: "coexistWhatsappBuffer",
   coexistWhatsappFlush: "coexistWhatsappFlush",
   coexistMessengerSync: "coexistMessengerSync",
+  coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
@@ -299,6 +300,16 @@ export type IntegrationJobCoexistMessengerSync = {
   }
 }
 
+/** Pulls historical native Instagram conversations/messages via the Graph API. */
+export type IntegrationJobCoexistInstagramSync = {
+  type: typeof IntegrationJobAction.coexistInstagramSync
+  data: {
+    runId: string
+    integrationId: string
+    workspaceId: string
+  }
+}
+
 /**
  * Downloads a Coexist attachment's bytes from the channel API (Facebook URL
  * for Messenger; WhatsApp media-id for WhatsApp — both encoded into
@@ -315,7 +326,7 @@ export type IntegrationJobCoexistAttachmentDownload = {
   data: {
     attachmentId: string
     workspaceId: string
-    channel: "messenger" | "whatsapp"
+    channel: "messenger" | "whatsapp" | "instagram"
     integrationId: string
   }
 }
@@ -432,6 +443,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistWhatsappBuffer
   | IntegrationJobCoexistWhatsappFlush
   | IntegrationJobCoexistMessengerSync
+  | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange

@@ -2693,6 +2693,7 @@
     "title": "Synkroniser existing kontakter og chat historik?",
     "descriptionWhatsapp": "Når aktiveret, kontakter og up til 6 months af chat historik vil være importeret fra denne WhatsApp nummer.",
     "descriptionMessenger": "Når aktiveret, existing Messenger kontakter og up til 3 months af samtale historik vil være importeret fra denne Page.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Aktivér synkroniser",
     "decline": "Don't synkroniser",
     "billingNote": "Large pages may take several timer til complete.",

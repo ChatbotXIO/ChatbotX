@@ -2693,6 +2693,7 @@
     "title": "Sincronizezi contactele existente și istoricul conversațiilor?",
     "descriptionWhatsapp": "Când este activată, contactele și până la 6 luni din istoricul conversațiilor vor fi importate din acest număr WhatsApp.",
     "descriptionMessenger": "Când este activată, contactele Messenger existente și până la 3 luni din istoricul conversațiilor vor fi importate din această pagină.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Activează sincronizarea",
     "decline": "Nu sincroniza",
     "billingNote": "Paginile mari pot dura câteva ore pentru a se finaliza.",

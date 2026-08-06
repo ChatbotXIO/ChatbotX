@@ -3,11 +3,9 @@
 import {
   contactInboxService,
   messageCleanupService,
-  quotaEnforcementService,
-  workspaceService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
-import { db, inArray, sql } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
 import { contactSources } from "@chatbotx.io/database/partials"
 import type {
   BulkCreateAttachmentInput,
@@ -395,7 +393,10 @@ export const bulkImportContacts = async (props: {
       })
       .from(contactInboxModel)
       .where(
-        sql`${contactInboxModel.inboxId} = ${inbox.id} AND ${contactInboxModel.sourceId} IN ${sourceIds}`,
+        and(
+          eq(contactInboxModel.inboxId, inbox.id),
+          inArray(contactInboxModel.sourceId, sourceIds),
+        ),
       )
 
     const resolved = new Map<string, ContactImportLink>()
@@ -462,7 +463,6 @@ export const bulkImportContacts = async (props: {
     const newEntries = [...dedup.entries()].filter(
       ([sourceId]) => !resolved.has(sourceId),
     )
-
     const acceptedNew = newEntries
 
     // 2. Insert Contact + ContactInbox + Conversation for acceptedNew.
@@ -526,7 +526,10 @@ export const bulkImportContacts = async (props: {
           })
           .from(contactInboxModel)
           .where(
-            sql`${contactInboxModel.inboxId} = ${inbox.id} AND ${contactInboxModel.sourceId} IN ${racedSourceIds}`,
+            and(
+              eq(contactInboxModel.inboxId, inbox.id),
+              inArray(contactInboxModel.sourceId, racedSourceIds),
+            ),
           )
         for (const w of winners) {
           insertedInboxes.push(w)
@@ -650,28 +653,17 @@ export const bulkImportContacts = async (props: {
     })
   }
 
-  // Info-only `contacts` count for the newly-created contacts in this batch.
-  // MAC is not consumed here — Coexist history sync is a passive backfill, not
-  // real-time message activity.
+  // Info-only workspace usage for newly-created contacts. Coexist is a passive
+  // historical backfill and does not consume billing quota.
   if (importedContacts > 0) {
-    const workspace = await workspaceService.find({
-      where: { id: workspaceId },
-    })
-    if (workspace) {
-      await quotaEnforcementService.incrementBy({
-        userId: workspace.ownerId,
-        metric: "contacts",
-        count: importedContacts,
+    await workspaceUsageService
+      .increment(workspaceId, "contacts", importedContacts)
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage contact increment failed",
+        )
       })
-      await workspaceUsageService
-        .increment(workspaceId, "contacts", importedContacts)
-        .catch((err) => {
-          logger.warn(
-            { err, workspaceId },
-            "workspace usage contact increment failed",
-          )
-        })
-    }
   }
 
   return {

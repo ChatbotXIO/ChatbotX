@@ -21,7 +21,6 @@ const {
   mockBulkUpdateTracking,
   mockCreateMessageRepository,
   mockWorkspaceFind,
-  mockQuotaIncrementBy,
   mockWorkspaceUsageIncrement,
 } = vi.hoisted(() => {
   const mockBulkCreate = vi.fn().mockResolvedValue([])
@@ -45,7 +44,6 @@ const {
     mockBulkUpdateTracking: vi.fn().mockResolvedValue(null),
     mockCreateMessageRepository,
     mockWorkspaceFind: vi.fn(),
-    mockQuotaIncrementBy: vi.fn().mockResolvedValue(undefined),
     mockWorkspaceUsageIncrement: vi.fn().mockResolvedValue(undefined),
   }
 })
@@ -73,6 +71,7 @@ vi.mock("@chatbotx.io/database/client", () => {
       transaction: mockTransaction,
       update: mockDbUpdate,
     },
+    and: vi.fn((...args: unknown[]) => ({ __and: args })),
     eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
     inArray: vi.fn((col: unknown, vals: unknown) => ({
       __inArray: [col, vals],
@@ -120,9 +119,6 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceService: {
     find: mockWorkspaceFind,
-  },
-  quotaEnforcementService: {
-    incrementBy: mockQuotaIncrementBy,
   },
   workspaceUsageService: {
     increment: mockWorkspaceUsageIncrement,
@@ -336,7 +332,6 @@ describe("bulkImportHistorical", () => {
       id: "workspace-1",
       ownerId: "owner-1",
     })
-    mockQuotaIncrementBy.mockResolvedValue(undefined)
     mockWorkspaceUsageIncrement.mockResolvedValue(undefined)
   })
 
@@ -387,7 +382,7 @@ describe("bulkImportHistorical", () => {
     expect(result.contactInboxIds.get("src-1")).toBe("ci-1")
   })
 
-  it("bumps the info-only contacts quota for newly-imported contacts, never MAC", async () => {
+  it("tracks workspace usage for newly-imported coexist contacts without consuming quota", async () => {
     stubNewContactsTransaction([
       {
         sourceId: "src-1",
@@ -405,14 +400,7 @@ describe("bulkImportHistorical", () => {
       batch: [{ contact: contact("src-1"), messages: [msg("m-src-1")] }],
     })
 
-    expect(mockWorkspaceFind).toHaveBeenCalledWith({
-      where: { id: workspaceId },
-    })
-    expect(mockQuotaIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "contacts",
-      count: 1,
-    })
+    expect(mockWorkspaceFind).not.toHaveBeenCalled()
     expect(mockWorkspaceUsageIncrement).toHaveBeenCalledWith(
       workspaceId,
       "contacts",
@@ -441,7 +429,6 @@ describe("bulkImportHistorical", () => {
 
     expect(result.importedContacts).toBe(0)
     expect(mockWorkspaceFind).not.toHaveBeenCalled()
-    expect(mockQuotaIncrementBy).not.toHaveBeenCalled()
     expect(mockWorkspaceUsageIncrement).not.toHaveBeenCalled()
   })
 

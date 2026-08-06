@@ -200,6 +200,7 @@ export const selectAccountAction = authActionClient
         })
 
         return {
+          integrationId,
           workspaceId,
         }
       } catch (error) {

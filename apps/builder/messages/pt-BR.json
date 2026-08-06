@@ -2680,6 +2680,7 @@
     "title": "Sincronizar contatos existentes e histórico de conversas?",
     "descriptionWhatsapp": "Quando ativado, os contatos e até 6 meses de histórico de conversas serão importados deste número do WhatsApp.",
     "descriptionMessenger": "Quando ativado, os contatos existentes do Messenger e até 3 meses de histórico de conversas serão importados desta Página.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Ativar sincronização",
     "decline": "Não sincronizar",
     "billingNote": "Páginas grandes podem levar várias horas para serem concluídas.",

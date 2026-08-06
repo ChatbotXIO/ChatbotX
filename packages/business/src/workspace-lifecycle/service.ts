@@ -33,6 +33,7 @@ import {
   removeDispatchesFromSchedule,
 } from "@chatbotx.io/sequence-scheduler/dispatch-cancel"
 import { BaseService } from "../base.service"
+import { coexistService } from "../coexist/service"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
 import { integrationClaudeService } from "../integration-claude/service"
@@ -574,6 +575,15 @@ class WorkspaceLifecycleService extends BaseService {
       }
       case channelTypes.enum.instagram: {
         if (removeIntegrationRow && inbox.integrationInstagram) {
+          if (inbox.integrationInstagram.type === "instagram") {
+            await coexistService.tearDownForIntegration({
+              workspaceId: inbox.workspaceId,
+              integrationId: inbox.integrationInstagram.id,
+              channel: "instagram",
+              currentError: "Integration disconnected",
+              tx,
+            })
+          }
           await tx
             .delete(integrationInstagramModel)
             .where(

@@ -2439,6 +2439,7 @@
     "title": "Sincronizzare i contatti esistenti e la cronologia chat?",
     "descriptionWhatsapp": "Se attivata, verranno importati da questo numero WhatsApp i contatti e fino a 6 mesi di cronologia chat.",
     "descriptionMessenger": "Se attivata, verranno importati da questa Pagina i contatti Messenger esistenti e fino a 3 mesi di cronologia delle conversazioni.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Attiva sincronizzazione",
     "decline": "Non sincronizzare",
     "billingNote": "Il completamento per le Pagine di grandi dimensioni può richiedere diverse ore.",

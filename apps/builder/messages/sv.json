@@ -554,6 +554,7 @@
     "billingNote": "Det kan ta flera timmar att slutföra synkroniseringen för stora sidor.",
     "decline": "Synkronisera inte",
     "descriptionMessenger": "När detta är aktiverat importeras befintliga Messenger-kontakter och upp till 3 månaders konversationshistorik från den här sidan.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "descriptionWhatsapp": "När detta är aktiverat importeras kontakter och upp till 6 månaders chatthistorik från det här WhatsApp-numret.",
     "enable": "Aktivera synkronisering",
     "errors": {

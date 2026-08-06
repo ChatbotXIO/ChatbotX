@@ -81,6 +81,9 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   },
   // event-bus (imported transitively) builds a Redis connection at module load.
   getRedisConnection: () => ({}),
+  // workspace/deletion-schedule.ts (imported transitively via business) reads
+  // this at module load; the mock must provide it or the import throws.
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 
 // ---- mock: auth (prevent real Better-Auth init) --------------------------
