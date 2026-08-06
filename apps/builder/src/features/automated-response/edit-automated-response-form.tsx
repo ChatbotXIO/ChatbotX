@@ -20,6 +20,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
+import { useKeywordFieldNavigation } from "./hooks/use-keyword-field-navigation"
 import { responseModes, updateAutomatedResponseRequest } from "./schema/action"
 
 type EditAutomatedResponseFormProps = {
@@ -96,6 +97,12 @@ export default function EditAutomatedResponseForm(
     name: "keywords",
   })
 
+  const handleKeywordInputKeyDown = useKeywordFieldNavigation(
+    form,
+    keywords.length,
+    () => appendKeywords({ value: "" }),
+  )
+
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
@@ -103,27 +110,32 @@ export default function EditAutomatedResponseForm(
           <Label className="flex-1" htmlFor="keywords">
             {t("fields.keywords.label")}
           </Label>
-          {keywords.map((_, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: wip
-            <div className="flex gap-2" key={index}>
-              <InputField
-                formItemClassName="w-1/2"
-                name={`keywords.${index}.value`}
-              />
-              {index === 0 ? (
-                <div className="w-12">&nbsp;</div>
-              ) : (
-                <Button
-                  onClick={() => {
-                    removeKeywords(index)
+          <div className="flex flex-col gap-2">
+            {keywords.map((_, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: wip
+              <div className="flex gap-2" key={index}>
+                <InputField
+                  formItemClassName="w-1/2"
+                  name={`keywords.${index}.value`}
+                  onKeyDown={(event) => {
+                    handleKeywordInputKeyDown(event, index)
                   }}
-                  variant="ghost"
-                >
-                  <XIcon />
-                </Button>
-              )}
-            </div>
-          ))}
+                />
+                {index === 0 ? (
+                  <div className="w-12">&nbsp;</div>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      removeKeywords(index)
+                    }}
+                    variant="ghost"
+                  >
+                    <XIcon />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
           <FormMessage />
           <div>
             <Button
