@@ -28,7 +28,9 @@ const config: IntegrationDefinition<
     throw new Error("Method is not implemented.")
   },
   disconnect(_props: WebchatAuthValue): Promise<void> {
-    throw new Error("Method is not implemented.")
+    // Webchat is a built-in channel with no external provider to disconnect;
+    // removing the inbox row is the whole teardown, so this is a no-op.
+    return Promise.resolve()
   },
 }
 

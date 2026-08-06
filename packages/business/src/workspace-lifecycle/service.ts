@@ -4,10 +4,12 @@ import {
   db,
   eq,
   inArray,
+  liftDecompressionLimit,
   sql,
 } from "@chatbotx.io/database/client"
 import { channelTypes, ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
 import {
+  attachmentModel,
   coexistSyncRunModel,
   integrationInstagramModel,
   integrationMessengerModel,
@@ -17,6 +19,7 @@ import {
   integrationWebchatModel,
   integrationWhatsappModel,
   integrationZaloModel,
+  messageModel,
   tagChannelModel,
   whatsappCoexistStagingModel,
 } from "@chatbotx.io/database/schema"
@@ -86,12 +89,17 @@ export type WorkspaceTeardownLevel = "pause" | "disconnect"
  * Table names are the physical PG identifiers (not Drizzle models) because the
  * delete is a raw `ctid IN (... LIMIT ...)` statement the query builder cannot
  * express; keep them in sync with the schema if a table is renamed.
+ *
+ * `Message` and `Attachment` are deliberately NOT here: they are compressed
+ * TimescaleDB hypertables where `ctid` is unavailable ("transparent
+ * decompression only supports tableoid system column"). They are drained
+ * separately by `deleteWorkspaceHypertableRows`, which deletes by the
+ * `conversationId` segmentby column with the decompression cap lifted — the
+ * same technique as `messageCleanupService.purgeRow`.
  */
 const HEAVY_WORKSPACE_TABLES = [
-  "Message",
   "AIConversationEmbedding",
   "AIEmbedding",
-  "Attachment",
   "Conversation",
   "TriggerExecution",
   "FlowRun",
@@ -100,10 +108,21 @@ const HEAVY_WORKSPACE_TABLES = [
 
 const HEAVY_PURGE_BATCH_SIZE = 5000
 const INTER_CHUNK_DELAY_MS = 100
+// Conversation ids deleted per hypertable transaction. Deliberately small:
+// deleting a compressed chunk decompresses its rows first, so each batch's
+// decompression footprint (DB backend memory + WAL) is bounded to ~10
+// conversations' worth of >30-day history — keeping the spike well clear of a
+// high-ingest system running alongside the purge.
+const HYPERTABLE_CONVERSATION_BATCH_SIZE = 10
 // Backstop so a single workspace with a runaway row count cannot spin forever;
 // 5000 * 2000 = 10M rows per table per purge run. Anything beyond that drains
 // on the next scheduled tick.
 const HEAVY_PURGE_MAX_BATCHES_PER_TABLE = 2000
+// Backstop for the per-conversation hypertable passes. Bounds one workspace's
+// drain per run (~10k conversations per pass) so a single very large workspace
+// cannot hold the purge distributed lock for a large fraction of the cron
+// interval; the residue drains on the next scheduled tick.
+const HYPERTABLE_MAX_CONVERSATION_BATCHES = 1000
 
 class WorkspaceLifecycleService extends BaseService {
   async disconnectWorkspaceChannels(props: {
@@ -249,6 +268,11 @@ class WorkspaceLifecycleService extends BaseService {
     const batchSize = props.batchSize ?? HEAVY_PURGE_BATCH_SIZE
     let totalDeleted = 0
 
+    // Drain the compressed hypertables (Message/Attachment) first, by
+    // conversationId, before the ctid loop deletes their parent Conversation
+    // rows. Uses the decompression-cap-lifted delete, not `ctid`.
+    totalDeleted += await this.deleteWorkspaceHypertableRows(props.workspaceId)
+
     for (const table of HEAVY_WORKSPACE_TABLES) {
       for (let batch = 0; batch < HEAVY_PURGE_MAX_BATCHES_PER_TABLE; batch++) {
         const deleted = await this.deleteHeavyBatch(
@@ -288,6 +312,88 @@ class WorkspaceLifecycleService extends BaseService {
       )
     `)
     return result.rowCount ?? 0
+  }
+
+  /**
+   * Delete a workspace's Message + Attachment rows. Both are compressed
+   * TimescaleDB hypertables (segmentby `workspaceId,conversationId`) where
+   * `ctid` is unsupported, so `deleteHeavyBatch` cannot touch them. Instead we
+   * drain them one bounded page of conversationIds at a time: deleting a page
+   * lifts the per-statement decompression cap for that transaction only, and the
+   * deleted ids drop out so the next page query walks forward to the next ones.
+   *
+   * Paging (rather than loading every conversationId up front) keeps worker
+   * memory constant — a workspace can hold millions of conversations, and
+   * materialising that whole id list in the process could exhaust its heap.
+   * Message is drained first (high volume), then any attachment-only
+   * conversations left behind. The whole workspace is being torn down, so no
+   * `createdAt` upper bound is needed.
+   */
+  private async deleteWorkspaceHypertableRows(
+    workspaceId: string,
+  ): Promise<number> {
+    const deletePage = (conversationIds: string[]) =>
+      db.transaction(async (tx) => {
+        await liftDecompressionLimit(tx)
+        const messageResult = await tx
+          .delete(messageModel)
+          .where(
+            and(
+              eq(messageModel.workspaceId, workspaceId),
+              inArray(messageModel.conversationId, conversationIds),
+            ),
+          )
+        const attachmentResult = await tx
+          .delete(attachmentModel)
+          .where(
+            and(
+              eq(attachmentModel.workspaceId, workspaceId),
+              inArray(attachmentModel.conversationId, conversationIds),
+            ),
+          )
+        return (messageResult.rowCount ?? 0) + (attachmentResult.rowCount ?? 0)
+      })
+
+    let deleted = 0
+
+    // Pass 1: discovery driven off Message (the high-volume table). Each deleted
+    // page removes those conversationIds, so re-querying with the same LIMIT
+    // walks forward until none remain. The batch cap bounds a single run; any
+    // residue drains on the next scheduled tick.
+    for (let batch = 0; batch < HYPERTABLE_MAX_CONVERSATION_BATCHES; batch++) {
+      const rows = await db
+        .selectDistinct({ conversationId: messageModel.conversationId })
+        .from(messageModel)
+        .where(eq(messageModel.workspaceId, workspaceId))
+        // Ordered so Postgres can serve each page from the (workspaceId,
+        // conversationId) index as a bounded scan instead of re-aggregating the
+        // whole workspace on every batch.
+        .orderBy(messageModel.conversationId)
+        .limit(HYPERTABLE_CONVERSATION_BATCH_SIZE)
+      if (rows.length === 0) {
+        break
+      }
+      deleted += await deletePage(rows.map((row) => row.conversationId))
+      await new Promise((resolve) => setTimeout(resolve, INTER_CHUNK_DELAY_MS))
+    }
+
+    // Pass 2: attachment-only conversations (attachments whose Message rows were
+    // already gone) that pass 1 never enumerated.
+    for (let batch = 0; batch < HYPERTABLE_MAX_CONVERSATION_BATCHES; batch++) {
+      const rows = await db
+        .selectDistinct({ conversationId: attachmentModel.conversationId })
+        .from(attachmentModel)
+        .where(eq(attachmentModel.workspaceId, workspaceId))
+        .orderBy(attachmentModel.conversationId)
+        .limit(HYPERTABLE_CONVERSATION_BATCH_SIZE)
+      if (rows.length === 0) {
+        break
+      }
+      deleted += await deletePage(rows.map((row) => row.conversationId))
+      await new Promise((resolve) => setTimeout(resolve, INTER_CHUNK_DELAY_MS))
+    }
+
+    return deleted
   }
 
   async deactivateOwnerWorkspaces(props: {
@@ -334,9 +440,14 @@ class WorkspaceLifecycleService extends BaseService {
     const removeIntegrationRow = teardownLevel === "disconnect"
 
     const finish = async (disconnect?: WorkspaceTeardownIntegration) => {
-      if (disconnect) {
+      const auth = inboxToAuth(inbox)
+      // Skip the provider call when the integration/auth row is already gone:
+      // there are no credentials to disconnect with, and passing an undefined
+      // auth crashes providers that read it (e.g. messenger/whatsapp reach into
+      // `auth.metadata`). Removing the inbox row below is still done.
+      if (disconnect && auth) {
         try {
-          await disconnect.disconnect(inboxToAuth(inbox))
+          await disconnect.disconnect(auth)
         } catch (err) {
           if (!disconnect.isRevokedTokenError?.(err)) {
             logger.error(

@@ -50,6 +50,11 @@ export type Transaction = Parameters<
 export type { PgTable } from "drizzle-orm/pg-core"
 export type DatabaseClient = typeof db | Transaction
 
+// Side-effect-free hypertable helpers (kept out of this module so they can be
+// imported without booting the connection pool). Re-exported here so callers
+// keep using the single `@chatbotx.io/database/client` entrypoint.
+export { liftDecompressionLimit } from "./timescale"
+
 export const countWithRelationsFilter = <TTable extends PgTable>(props: {
   client?: DatabaseClient
   table: TTable

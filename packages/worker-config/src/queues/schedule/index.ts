@@ -31,6 +31,17 @@ export const ScheduleJobData = {
   teardownExpiredTrial: "teardownExpiredTrial",
 } as const
 
+/**
+ * Cadence (minutes) of the `purgeWorkspaces` cron. Shared so the scheduled
+ * deletion timestamp can be rounded up to the same boundary the cron fires on,
+ * keeping the deletion time shown in the UI honest (the banner renders
+ * `scheduledDeletionAt` verbatim). The cron pattern in
+ * `apps/worker/src/schedule/handlers/register-schedules.ts` is derived from
+ * this value, so both stay in sync automatically. Keep it a divisor of 60 so
+ * the derived every-N-minutes cron pattern remains valid.
+ */
+export const PURGE_WORKSPACES_INTERVAL_MINUTES = 30
+
 export const broadcastSendJobId = (broadcastId: string) =>
   `broadcast-send-${broadcastId}`
 
