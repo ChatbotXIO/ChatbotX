@@ -55,10 +55,16 @@ vi.mock("@/features/custom-fields/custom-field-select", async () => {
   }
 })
 
-vi.mock("@chatbotx.io/ui/components/form/input-field", async () => {
+vi.mock("@/components/tiptap/plain-text-editor-field", async () => {
   const { useFormContext } = await import("react-hook-form")
   return {
-    InputField: ({ name, label }: { name: string; label?: string }) => {
+    PlainTextEditorField: ({
+      name,
+      label,
+    }: {
+      name: string
+      label?: string
+    }) => {
       const form = useFormContext()
       return (
         <Controller

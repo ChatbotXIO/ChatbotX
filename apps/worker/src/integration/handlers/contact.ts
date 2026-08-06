@@ -35,17 +35,33 @@ import type {
 import { enrollContactInSequence } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
 import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
+import { contactVariableService } from "@chatbotx.io/variables"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<SetCustomFieldStepSchema>) {
+  // The value can contain {{variable}} tokens inserted via the editor (contact
+  // fields, coupons, etc.); resolve them against this contact before persisting.
+  // Unresolvable tokens are left as-is, and a value that resolves to empty still
+  // falls through to the temporal "now" handling below.
+  const variables = await contactVariableService.getAll({
+    contactId: conversation.contactId,
+    contactInbox,
+    conversation,
+  })
+  const resolvedValue = await contactVariableService.replaceAll({
+    text: step.value,
+    variables,
+  })
+
   await contactCustomFieldService.setValueByKey({
     workspaceId: conversation.workspaceId,
     contactId: conversation.contactId,
     keyword: step.inputFieldId,
-    value: step.value,
+    value: resolvedValue,
     // The editor captured its browser zone at save time; anchor naive
     // date/datetime values to it (worker has no browser context). Lenient
     // parsing accepts flexible user input (unix ts, "23/07/2026", ...), and a

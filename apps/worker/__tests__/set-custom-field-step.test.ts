@@ -18,6 +18,17 @@ vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach: vi.fn(), enqueueDetach: vi.fn() },
 }))
 
+// The handler now resolves {{variable}} tokens in the value before persisting.
+// Mock the boundary: `getAll` returns an opaque context, `replaceAll` is an
+// identity by default so plain literals pass through unchanged; individual
+// tests override `replaceAll` to assert the resolved value is what gets stored.
+const getAllVariables = vi.fn(async () => ({}) as unknown)
+const replaceAll = vi.fn(async ({ text }: { text: string }) => text)
+
+vi.mock("@chatbotx.io/variables", () => ({
+  contactVariableService: { getAll: getAllVariables, replaceAll },
+}))
+
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: { removeContactSequencesForContact: vi.fn() },
 }))
@@ -71,6 +82,7 @@ type Step = {
 function props(step: Step, workspaceId = "ws-1", contactId = "c-1") {
   return {
     conversation: { workspaceId, contactId },
+    contactInbox: { id: "ci-1" },
     step,
   } as unknown as Parameters<typeof setContactCustomField>[0]
 }
@@ -112,6 +124,23 @@ describe("setContactCustomField", () => {
         value: "",
         fillEmptyTemporalWithNow: true,
       }),
+    )
+  })
+
+  test("resolves {{variable}} tokens in the value before persisting", async () => {
+    replaceAll.mockResolvedValueOnce("Hello Jane")
+
+    await setContactCustomField(
+      props({ inputFieldId: "greeting", value: "Hello {{first_name}}" }),
+    )
+
+    // The raw token string is handed to the resolver...
+    expect(replaceAll).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hello {{first_name}}" }),
+    )
+    // ...and the resolved output — not the raw tokens — is what gets stored.
+    expect(setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({ keyword: "greeting", value: "Hello Jane" }),
     )
   })
 
