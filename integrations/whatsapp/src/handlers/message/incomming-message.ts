@@ -99,6 +99,7 @@ const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = (
   return {
     text: reply.text,
     postbackAction: reply.postbackAction,
+    templateFlowToken: reply.templateFlowToken,
     buttonTitle: reply.buttonTitle,
     contentAttributes: reply.contentAttributes,
   }
@@ -185,6 +186,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       message,
       contact,
       postbackAction: fragment.postbackAction ?? null,
+      templateFlowToken: fragment.templateFlowToken ?? null,
       quickReplyAction: null,
       ref: fragment.ref ?? referral?.ref ?? null,
       referralSource: referral?.source ?? null,

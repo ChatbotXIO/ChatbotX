@@ -32,6 +32,7 @@ import {
   whatsappMessageTemplateModel,
 } from "@chatbotx.io/database/schema"
 import { chunkById } from "@chatbotx.io/database/utils"
+import type { WaTemplateParams } from "@chatbotx.io/flow-config"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import type {
@@ -66,6 +67,36 @@ type BroadcastTemplateLoader = (
 ) => Promise<BroadcastTemplateDetail | null>
 
 class BroadcastService extends BaseService {
+  async findByIdForResponse(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<{
+    id: string
+    integrationWhatsappId: string | null
+    templateData: WaTemplateParams | null
+  } | null> {
+    const row = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        workspaceId: input.workspaceId,
+      },
+      columns: {
+        id: true,
+        integrationWhatsappId: true,
+        templateData: true,
+      },
+    })
+
+    if (!row) {
+      return null
+    }
+
+    return {
+      ...row,
+      templateData: row.templateData as WaTemplateParams | null,
+    }
+  }
+
   async listOptions(input: {
     workspaceId: string
     channel: ChannelType

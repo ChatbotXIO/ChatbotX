@@ -6,6 +6,7 @@ import { ContactStoreProvider } from "@/features/contacts/provider/contact-store
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
+import { WhatsappFlowStoreProvider } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provider/integration-store-context"
@@ -45,21 +46,23 @@ export default async function CreateBroadcastPage({
               openaiCompatibleIntegrations={openaiCompatibleIntegrations}
               workspaceId={workspaceId}
             >
-              <InboxStoreProvider workspaceId={workspaceId}>
-                <UserStoreProvider workspaceId={workspaceId}>
-                  <SequenceStoreProvider workspaceId={workspaceId}>
-                    <ContactStoreProvider
-                      autoInitialize={false}
-                      workspaceId={workspaceId}
-                    >
-                      <CreateBroadcastForm
-                        canViewEmailAndPhone={canViewEmailAndPhone}
+              <WhatsappFlowStoreProvider workspaceId={workspaceId}>
+                <InboxStoreProvider workspaceId={workspaceId}>
+                  <UserStoreProvider workspaceId={workspaceId}>
+                    <SequenceStoreProvider workspaceId={workspaceId}>
+                      <ContactStoreProvider
+                        autoInitialize={false}
                         workspaceId={workspaceId}
-                      />
-                    </ContactStoreProvider>
-                  </SequenceStoreProvider>
-                </UserStoreProvider>
-              </InboxStoreProvider>
+                      >
+                        <CreateBroadcastForm
+                          canViewEmailAndPhone={canViewEmailAndPhone}
+                          workspaceId={workspaceId}
+                        />
+                      </ContactStoreProvider>
+                    </SequenceStoreProvider>
+                  </UserStoreProvider>
+                </InboxStoreProvider>
+              </WhatsappFlowStoreProvider>
             </FlowTemplateStoreProvider>
           </TagStoreProvider>
         </IntegrationStoreProvider>

@@ -1,9 +1,12 @@
 import type {
   ButtonSubType,
+  SendWaTemplateMessageStepSchema,
   TemplateComponent,
   TemplateComponentButton,
   TemplateComponentCard,
 } from "./send-wa-message-template"
+import { toOptionalString } from "./send-wa-message-template"
+import { stepTypes } from "./step-action"
 
 export type ParameterInfo = {
   type: "header" | "body" | "button" | "carousel" | "limited_time_offer"
@@ -12,6 +15,8 @@ export type ParameterInfo = {
   format?: string
   buttonIndex?: number
   buttonSubType?: ButtonSubType
+  flowSourceId?: string
+  navigateScreenId?: string
   cardIndex?: number
 }
 
@@ -61,6 +66,8 @@ function extractButtonParameterInfos(
         buttonIndex: buttonIdx,
         buttonSubType: "flow",
         format: "flow",
+        flowSourceId: toOptionalString(button.flow_id),
+        navigateScreenId: toOptionalString(button.navigate_screen),
         cardIndex,
       })
     } else if (buttonType === "CATALOG") {
@@ -88,6 +95,61 @@ function extractButtonParameterInfos(
 
   return params
 }
+
+type StepBearingNode = {
+  data: {
+    details: {
+      steps?: readonly unknown[]
+    }
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null
+
+const isStepBearingNode = (node: unknown): node is StepBearingNode =>
+  isRecord(node) &&
+  isRecord(node.data) &&
+  isRecord(node.data.details) &&
+  (!("steps" in node.data.details) || Array.isArray(node.data.details.steps))
+
+const getNodeSteps = (node: unknown): readonly unknown[] =>
+  isStepBearingNode(node) ? (node.data.details.steps ?? []) : []
+
+const hasStepId = (step: unknown): step is { id: string } =>
+  isRecord(step) && "id" in step && typeof step.id === "string"
+
+const isSendWaTemplateStep = (
+  step: unknown,
+): step is SendWaTemplateMessageStepSchema =>
+  typeof step === "object" &&
+  step !== null &&
+  "stepType" in step &&
+  step.stepType === stepTypes.enum.sendWaTemplateMessage
+
+function findStepInNodes<TStep>(
+  nodes: readonly unknown[],
+  predicate: (step: unknown) => step is TStep,
+): TStep | null {
+  for (const node of nodes) {
+    const found = getNodeSteps(node).find(predicate)
+    if (found) {
+      return found
+    }
+  }
+
+  return null
+}
+
+export const findSendWaTemplateStep = (
+  nodes: readonly unknown[],
+  stepId: string,
+): SendWaTemplateMessageStepSchema | null =>
+  findStepInNodes(
+    nodes,
+    (step): step is SendWaTemplateMessageStepSchema =>
+      isSendWaTemplateStep(step) && hasStepId(step) && step.id === stepId,
+  )
 
 function extractCarouselParameterInfos(
   cards: TemplateComponentCard[],

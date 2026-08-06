@@ -3077,6 +3077,7 @@
         "quickReplyPayloadPlaceholder": "Enter payload (optional)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Enter flow token",
+        "flowNotSynced": "Sync WhatsApp flows to map submitted fields.",
         "catalogProductId": "Product ID",
         "catalogProductIdPlaceholder": "Enter product retailer ID",
         "carouselCard": "Card {index}",

@@ -3077,6 +3077,7 @@
         "quickReplyPayloadPlaceholder": "Nhập payload (tùy chọn)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Nhập flow token",
+        "flowNotSynced": "Đồng bộ luồng WhatsApp để ánh xạ các trường đã gửi.",
         "catalogProductId": "ID sản phẩm",
         "catalogProductIdPlaceholder": "Nhập ID sản phẩm",
         "carouselCard": "Thẻ {index}",

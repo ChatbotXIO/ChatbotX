@@ -232,6 +232,7 @@ export function isRevokedTokenError(error: unknown): boolean {
 }
 
 export function mapToChannelError(rawError: unknown): ChannelError {
+  console.log("mapToChannelError", rawError)
   if (rawError instanceof ChannelError) {
     return rawError
   }

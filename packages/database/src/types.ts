@@ -133,6 +133,7 @@ export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect
 export type WhatsappMessageTemplateModel =
   typeof schema.whatsappMessageTemplateModel.$inferSelect
+export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect
 export type FlowAnalyticsSessionModel =
   typeof schema.flowAnalyticsSessionModel.$inferSelect
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect
