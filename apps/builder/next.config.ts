@@ -68,6 +68,15 @@ const nextConfig: NextConfig = {
           destination: `${portalUrl}/portal/api/checkout/:path*`,
         },
         {
+          // Top-up-pack checkout (buy more botMessages credit) — same public
+          // authenticated-buyer surface as /api/checkout/*, kept as its own
+          // path so it isn't mistaken for a plan checkout by anything reading
+          // the URL (the request body/session metadata is what actually
+          // disambiguates server-side, but the path stays self-describing).
+          source: "/api/top-ups/:path*",
+          destination: `${portalUrl}/portal/api/top-ups/:path*`,
+        },
+        {
           source: "/api/billing/webhook",
           destination: `${portalUrl}/portal/api/billing/webhook`,
         },

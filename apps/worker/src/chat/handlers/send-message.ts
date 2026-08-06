@@ -169,6 +169,31 @@ export async function sendMessageToChannel(
       }
     }
 
+    // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks this
+    // job type when `senderType === "bot"` (`isBotMessageQuotaReached`), but
+    // nothing previously counted it — the quota gate and the quota meter must
+    // stay structurally paired or the gate is enforced against a counter that
+    // never moves. Human-sent messages (senderType !== "bot") are unaffected.
+    if (message.senderType === "bot") {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_sent",
+        workspaceId: conversation.workspaceId,
+        contactId: contactInbox.contactId,
+        senderType: "bot",
+        occurredAt: new Date(),
+        source: contactInbox.source,
+        sourceId: contactInbox.sourceId,
+        channel: contactInbox.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "sendMessageToChannel",
+            triggerType: "message_bot_sent_channel",
+          },
+        },
+      })
+    }
+
     return { messageIds: result.messageIds }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")

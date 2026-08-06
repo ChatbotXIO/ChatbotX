@@ -271,15 +271,29 @@ export const reconcileUser = async (userId: string): Promise<void> => {
     // `periodEnd === null` marks a lifetime plan, which never resets.
     const stored = await db.query.userQuotaModel.findFirst({
       where: { userId },
-      columns: { macUsed: true, periodStart: true, periodEnd: true },
+      columns: {
+        macUsed: true,
+        periodStart: true,
+        periodEnd: true,
+        monthlyBotMessagesPeriodStart: true,
+      },
     })
+    const isLifetime = stored?.periodEnd == null
 
     await reconcileMac(
       userId,
       client,
       stored?.macUsed ?? 0,
       stored?.periodStart?.toISOString() ?? "",
-      stored?.periodEnd == null,
+      isLifetime,
+    )
+
+    await reconcileMonthlyBotMessages(
+      userId,
+      client,
+      stored?.monthlyBotMessagesPeriodStart ?? null,
+      stored?.periodStart ?? null,
+      isLifetime,
     )
 
     await userQuotaService.invalidate(userId)
@@ -389,6 +403,127 @@ const persistMacUsed = async (userId: string, value: number): Promise<void> => {
       target: userQuotaModel.userId,
       set: {
         macUsed: value,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      },
+    })
+}
+
+/** Live-counter hash field holding the running monthly-bot-messages count. */
+const MONTHLY_BOT_MESSAGES_FIELD = "monthlyBotMessages"
+
+/**
+ * Reconcile the monthly-bot-messages counter's billing-cycle reset. Unlike MAC
+ * (which is keyed off a Redis-only stamp, safe because a durable ledger
+ * backstops it), this metric has no reconcile ledger at all — losing the stamp
+ * would silently mis-fire or skip a reset on a value that (once top-up credits
+ * exist) also gates paid purchases. So the stamp is a real DB column,
+ * `UserQuota.monthlyBotMessagesPeriodStart`, not a Redis field.
+ *
+ * - Lifetime plan (`periodEnd` null) → never reset; `botMessages`/credits ride
+ *   the separate lifetime cap, and this metric simply isn't in play.
+ * - No billing anchor (`periodStart` null) → no-op.
+ * - Unstamped row (`monthlyBotMessagesPeriodStart` null; first run or a row
+ *   that predates this column) → stamp to the current `periodStart`, but do
+ *   NOT zero the counter — existing rows have accumulated an un-reset count
+ *   since forever, and zeroing on first sight would hand every existing
+ *   customer a free month. Adopt-into-current-period, mirroring the MAC
+ *   unstamped-counter rule (`resolveMacReconcileAction`).
+ * - Stamp older than `periodStart` → the billing cycle rolled over: zero the
+ *   counter and re-stamp.
+ * - Stamp equal to `periodStart` → no-op, already reconciled this period.
+ */
+export interface MonthlyBotMessagesResetAction {
+  /** Zero `UserQuota.monthlyBotMessagesUsed` and the live counter field. */
+  reset: boolean
+  /** (Re)stamp `monthlyBotMessagesPeriodStart` to `periodStart`. */
+  stamp: boolean
+}
+
+const NO_OP_MONTHLY_RESET: MonthlyBotMessagesResetAction = {
+  reset: false,
+  stamp: false,
+}
+
+export function resolveMonthlyBotMessagesReset(
+  storedPeriodStamp: Date | null,
+  periodStart: Date | null,
+  isLifetime: boolean,
+): MonthlyBotMessagesResetAction {
+  if (isLifetime || periodStart === null) {
+    return NO_OP_MONTHLY_RESET
+  }
+
+  if (storedPeriodStamp === null) {
+    return { reset: false, stamp: true }
+  }
+
+  if (storedPeriodStamp.getTime() < periodStart.getTime()) {
+    return { reset: true, stamp: true }
+  }
+
+  return NO_OP_MONTHLY_RESET
+}
+
+/**
+ * Apply {@link resolveMonthlyBotMessagesReset}'s decision. Ordering matters: the
+ * DB counter is zeroed BEFORE the live Redis field, so a crash between the two
+ * writes leaves the live count high — enforcement fails CLOSED (briefly
+ * over-blocks) rather than open (under-blocks past a paid-for cap).
+ */
+const reconcileMonthlyBotMessages = async (
+  userId: string,
+  client: CacheClient,
+  storedPeriodStamp: Date | null,
+  periodStart: Date | null,
+  isLifetime: boolean,
+): Promise<void> => {
+  const action = resolveMonthlyBotMessagesReset(
+    storedPeriodStamp,
+    periodStart,
+    isLifetime,
+  )
+
+  if (!action.stamp) {
+    return
+  }
+
+  if (action.reset) {
+    await db
+      .insert(userQuotaModel)
+      .values({
+        userId,
+        monthlyBotMessagesUsed: 0,
+        monthlyBotMessagesPeriodStart: periodStart,
+        syncedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: userQuotaModel.userId,
+        set: {
+          monthlyBotMessagesUsed: 0,
+          monthlyBotMessagesPeriodStart: periodStart,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+    await client.hset(
+      liveKeyFor(USER_QUOTA_LABEL, userId),
+      MONTHLY_BOT_MESSAGES_FIELD,
+      "0",
+    )
+    return
+  }
+
+  // Unstamped row: adopt into the current period without touching the counter.
+  await db
+    .insert(userQuotaModel)
+    .values({
+      userId,
+      monthlyBotMessagesPeriodStart: periodStart,
+      syncedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: userQuotaModel.userId,
+      set: {
+        monthlyBotMessagesPeriodStart: periodStart,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       },
     })

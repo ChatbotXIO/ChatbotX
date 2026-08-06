@@ -240,6 +240,29 @@ export async function processMessengerTemplate(
       occurredAt: new Date(),
     })
 
+    // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks
+    // `sendMessengerTemplateMessage` jobs, but nothing previously counted a
+    // successful send here — the quota gate and the quota meter must stay
+    // structurally paired or the gate is enforced against a counter that
+    // never moves.
+    emit("analytics:dashboard", {
+      eventType: "message:bot_sent",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      senderType: "bot",
+      occurredAt: new Date(),
+      source: contactInbox.source,
+      sourceId: contactInbox.sourceId,
+      channel: contactInbox.channel,
+      metadata: {
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "processMessengerTemplate",
+          triggerType: "message_bot_sent_messenger_template",
+        },
+      },
+    })
+
     const providerMessageId = result?.messageIds?.[0]
 
     if (providerMessageId) {
