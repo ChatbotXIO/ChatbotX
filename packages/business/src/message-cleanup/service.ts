@@ -5,6 +5,7 @@ import {
   db,
   eq,
   inArray,
+  liftDecompressionLimit,
   lte,
   sql,
 } from "@chatbotx.io/database/client"
@@ -210,8 +211,8 @@ class MessageCleanupService extends BaseService {
 
     // Main-DB hypertables: bound every statement by conversationId (the
     // compression segmentby column) and by the delete moment, so a re-created
-    // contact's newer rows can never be swept up. `SET LOCAL` lifts the
-    // TimescaleDB per-statement decompression cap for this transaction only.
+    // contact's newer rows can never be swept up. `liftDecompressionLimit`
+    // clears the TimescaleDB decompression cap for each transaction only.
     for (
       let i = 0;
       i < row.conversationIds.length;
@@ -222,9 +223,7 @@ class MessageCleanupService extends BaseService {
         i + CONVERSATION_DELETE_BATCH_SIZE,
       )
       await db.transaction(async (tx) => {
-        await tx.execute(
-          sql`SET LOCAL timescaledb.max_tuples_decompressed_per_dml_operation = 0`,
-        )
+        await liftDecompressionLimit(tx)
 
         const attachments = await tx
           .select({

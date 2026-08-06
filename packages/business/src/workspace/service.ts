@@ -29,6 +29,7 @@ import {
   workspaceMemberCacheTag,
   workspaceMemberService,
 } from "../workspace-member/service"
+import { nextScheduledDeletionAt } from "./deletion-schedule"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string; token: string }>
 
@@ -131,7 +132,7 @@ class WorkspaceService extends BaseService {
       id: props.id,
       tx,
       data: {
-        scheduledDeletionAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        scheduledDeletionAt: nextScheduledDeletionAt(),
       },
     })
   }
@@ -213,58 +214,77 @@ class WorkspaceService extends BaseService {
         break
       }
 
+      // Per-workspace guard: a teardown failure on one workspace must not abort
+      // the whole cron (BullMQ would retry the entire batch forever). Only
+      // workspaces that tear down cleanly are deleted below; a failed one keeps
+      // its `scheduledDeletionAt` and is retried on the next tick.
+      const succeeded: typeof claimed.rows = []
       for (const workspace of claimed.rows) {
-        await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
+        try {
+          await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
 
-        await workspaceLifecycleService
-          .disconnectWorkspaceIntegrations(workspace.id)
-          .catch((err) => {
-            logger.error(
-              { err, workspaceId: workspace.id },
-              "workspace-purge: failed to disconnect workspace integrations",
-            )
+          await workspaceLifecycleService
+            .disconnectWorkspaceIntegrations(workspace.id)
+            .catch((err) => {
+              logger.error(
+                { err, workspaceId: workspace.id },
+                "workspace-purge: failed to disconnect workspace integrations",
+              )
+            })
+
+          await workspaceLifecycleService.disconnectWorkspaceChannels({
+            integrations: props?.integrations,
+            teardownLevel: "disconnect",
+            workspaceId: workspace.id,
+            ownerId: workspace.ownerId,
           })
 
-        await workspaceLifecycleService.disconnectWorkspaceChannels({
-          integrations: props?.integrations,
-          teardownLevel: "disconnect",
-          workspaceId: workspace.id,
-          ownerId: workspace.ownerId,
-        })
-
-        // Drain high-volume child tables in small self-committing batches
-        // before the FK cascade, so no single statement deletes millions of
-        // rows under lock.
-        await workspaceLifecycleService.purgeWorkspaceHeavyData({
-          workspaceId: workspace.id,
-        })
-
-        // Best-effort: never block/roll back the purge if release fails —
-        // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
-        // for every affected owner regardless.
-        await quotaEnforcementService
-          .release({ userId: workspace.ownerId, metric: "workspaces" })
-          .catch((err) => {
-            logger.warn(
-              { err, workspaceId: workspace.id, ownerId: workspace.ownerId },
-              "workspace-purge: workspace quota release failed",
-            )
+          // Drain high-volume child tables in small self-committing batches
+          // before the FK cascade, so no single statement deletes millions of
+          // rows under lock.
+          await workspaceLifecycleService.purgeWorkspaceHeavyData({
+            workspaceId: workspace.id,
           })
+
+          // Best-effort: never block/roll back the purge if release fails —
+          // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
+          // for every affected owner regardless.
+          await quotaEnforcementService
+            .release({ userId: workspace.ownerId, metric: "workspaces" })
+            .catch((err) => {
+              logger.warn(
+                { err, workspaceId: workspace.id, ownerId: workspace.ownerId },
+                "workspace-purge: workspace quota release failed",
+              )
+            })
+
+          succeeded.push(workspace)
+        } catch (err) {
+          logger.error(
+            { err, workspaceId: workspace.id },
+            "workspace-purge: teardown failed, deferring to next run",
+          )
+        }
       }
 
-      const workspaceIds = claimed.rows.map((row) => row.id)
+      const workspaceIds = succeeded.map((row) => row.id)
       const result = await db.transaction(async (tx) => {
-        await tx
-          .delete(workspaceModel)
-          .where(inArray(workspaceModel.id, workspaceIds))
+        if (workspaceIds.length > 0) {
+          await tx
+            .delete(workspaceModel)
+            .where(inArray(workspaceModel.id, workspaceIds))
+        }
 
         return {
-          deleted: claimed.rows,
+          deleted: succeeded,
           memberUserIds: claimed.memberUserIds,
         }
       })
 
-      if (result.deleted.length === 0) {
+      // A full chunk that tore down nothing is a systemic failure (e.g. the DB
+      // is unhealthy): stop instead of spinning through maxChunks re-claiming
+      // the same rows. The next scheduled tick retries.
+      if (succeeded.length === 0) {
         break
       }
 
@@ -287,7 +307,12 @@ class WorkspaceService extends BaseService {
         "workspace-purge: workspaces purged",
       )
 
-      if (result.deleted.length < chunkSize) {
+      // Stop when this chunk claimed fewer than a full batch — no more due
+      // workspaces remain. Keyed off *claimed* (not *succeeded*) so a single
+      // failing workspace can't cut the run short while others are still due;
+      // failed ones are re-attempted on later chunks (bounded by maxChunks) and
+      // on the next tick.
+      if (claimed.rows.length < chunkSize) {
         break
       }
     }

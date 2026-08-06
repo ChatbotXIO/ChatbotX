@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   createMember: vi.fn(),
   getForUser: vi.fn(),
   invalidateCacheByTags: vi.fn(),
+  dbTransaction: vi.fn(),
+  purgeWorkspaceHeavyData: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -19,6 +21,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { userModel: { findFirst: vi.fn(async () => undefined) } },
     insert: mocks.workspaceInsert,
+    transaction: mocks.dbTransaction,
   },
   eq: vi.fn((column, value) => ({ column, value })),
   inArray: vi.fn(),
@@ -63,7 +66,7 @@ vi.mock("../../workspace-lifecycle/service", () => ({
     freezeWorkspaceRuntime: vi.fn(async () => undefined),
     disconnectWorkspaceIntegrations: vi.fn(async () => undefined),
     disconnectWorkspaceChannels: vi.fn(async () => undefined),
-    purgeWorkspaceHeavyData: vi.fn(async () => undefined),
+    purgeWorkspaceHeavyData: mocks.purgeWorkspaceHeavyData,
   },
 }))
 
@@ -86,6 +89,9 @@ beforeEach(() => {
   mocks.getForUser.mockReset()
   mocks.getForUser.mockResolvedValue(undefined)
   mocks.invalidateCacheByTags.mockReset()
+  mocks.dbTransaction.mockReset()
+  mocks.purgeWorkspaceHeavyData.mockReset()
+  mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
 
   mocks.workspaceInsert.mockReturnValue({
     values: mocks.workspaceInsertValues.mockReturnValue({
@@ -124,5 +130,36 @@ describe("WorkspaceService.create", () => {
     expect(result).toEqual({ id: "new-workspace" })
     expect(mocks.workspaceInsert).toHaveBeenCalledTimes(1)
     expect(mocks.createMember).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("WorkspaceService.purgeDueScheduled", () => {
+  test("deletes only workspaces that tear down cleanly and never aborts the run on a single failure", async () => {
+    const claimedRows = [
+      { id: "w1", ownerId: "o1", tenantId: "t1" },
+      { id: "w2", ownerId: "o2", tenantId: "t2" },
+    ]
+    const deleteWhere = vi.fn().mockResolvedValue(undefined)
+    const tx = {
+      execute: vi.fn().mockResolvedValue({ rows: claimedRows }),
+      select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
+      delete: vi.fn(() => ({ where: deleteWhere })),
+    }
+    mocks.dbTransaction.mockImplementation(
+      (callback: (tx: unknown) => unknown) => callback(tx),
+    )
+
+    // w1's teardown throws; w2 succeeds.
+    mocks.purgeWorkspaceHeavyData.mockImplementation(
+      ({ workspaceId }: { workspaceId: string }) =>
+        workspaceId === "w1"
+          ? Promise.reject(new Error("teardown boom"))
+          : Promise.resolve(0),
+    )
+
+    // Resolves (does not throw) and counts only the workspace that succeeded.
+    await expect(workspaceService.purgeDueScheduled()).resolves.toBe(1)
+    // The failed workspace keeps its row; only the clean one is deleted.
+    expect(tx.delete).toHaveBeenCalledTimes(1)
   })
 })

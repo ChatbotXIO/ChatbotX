@@ -35,9 +35,12 @@ function formatCountdown(target: string | Date | null) {
     return null
   }
 
+  // `round`, not `ceil`: scheduledDeletionAt is rounded up to the purge cron
+  // boundary, so the real distance is 24h + up to 30m (~1.01 days). `ceil` would
+  // inflate that to "2 days"; `round` keeps it at the intended "1 day".
   return formatDistanceToNowStrict(targetDate, {
     addSuffix: true,
-    roundingMethod: "ceil",
+    roundingMethod: "round",
   })
 }
 
