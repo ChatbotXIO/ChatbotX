@@ -59,9 +59,19 @@ import {
   toRouteRemovals,
 } from "./edge-routing"
 import ButtonEdge from "./edges/button-edge"
+import { findNodeAtPoint } from "./node-hit-test"
 import { hasMeaningfulNodeChange } from "./react-flow-node-change"
 import { useFlowHistoryStoreApi } from "./stores/flow-history-store-provider"
 import { useFlowHistory } from "./stores/use-flow-history"
+
+function getClientPosition(event: MouseEvent | TouchEvent) {
+  if ("changedTouches" in event) {
+    const touch = event.changedTouches[0]
+    return touch ? { x: touch.clientX, y: touch.clientY } : null
+  }
+
+  return { x: event.clientX, y: event.clientY }
+}
 
 const viewerNodeTypes = {
   [nodeTypeSchema.enum.sendMessage]: NodeViewer,
@@ -103,6 +113,7 @@ export function ReactFlowWrapper({
   const {
     addNodes,
     getNodes,
+    getIntersectingNodes,
     updateNodeData,
     updateEdge,
     getEdges,
@@ -419,7 +430,7 @@ export function ReactFlowWrapper({
 
   const onConnectEnd = useCallback(
     (
-      _event: MouseEvent | TouchEvent,
+      event: MouseEvent | TouchEvent,
       connectionState: FinalConnectionState,
     ): void => {
       const fromHandle = connectionState.fromHandle
@@ -434,12 +445,46 @@ export function ReactFlowWrapper({
       }
 
       const fromHandleId = fromHandle.id
+      // connectionState.to is pane-relative; screenToFlowPosition needs raw
+      // viewport client coordinates, so derive them from the event itself.
+      const clientPosition = getClientPosition(event)
+      const position = clientPosition
+        ? screenToFlowPosition(clientPosition)
+        : { x: 300, y: 300 }
+
+      const droppedOnNode = clientPosition
+        ? findNodeAtPoint(getIntersectingNodes, position, fromNode.id)
+        : undefined
+
+      if (droppedOnNode) {
+        takeCoalescedSnapshot()
+        setEdges((currentEdges) =>
+          replaceSourceHandleEdge(currentEdges, {
+            id: createId(),
+            source: fromNode.id,
+            target: droppedOnNode.id,
+            sourceHandle: fromHandleId,
+            targetHandle: droppedOnNode.id,
+            type: "buttonedge",
+          }),
+        )
+
+        const routableHandleId = getRoutableHandleId(fromNode.id, fromHandleId)
+        if (routableHandleId) {
+          applyButtonRoutes([
+            {
+              sourceNodeId: fromNode.id,
+              handleId: routableHandleId,
+              route: { targetNodeId: droppedOnNode.id },
+            },
+          ])
+        }
+        return
+      }
+
       const messageNodesLength = getNodes().filter(
         (node) => node.type === nodeTypeSchema.enum.sendMessage,
       ).length
-      const position = connectionState.to
-        ? screenToFlowPosition(connectionState.to)
-        : { x: 300, y: 300 }
       const newNode = sendMessageNodeDefaultFn({
         nodeProps: { position },
         dataProps: {
@@ -474,6 +519,7 @@ export function ReactFlowWrapper({
     [
       addNodes,
       getNodes,
+      getIntersectingNodes,
       setEdges,
       applyButtonRoutes,
       screenToFlowPosition,

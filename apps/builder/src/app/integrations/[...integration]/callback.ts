@@ -151,7 +151,7 @@ const lookupFacebookUser = async (
   try {
     return await fetchUser()
   } catch (error) {
-    logger.warn({ err: error }, "Failed to fetch Facebook user profile")
+    logger.info({ err: error }, "Failed to fetch Facebook user profile")
     return
   }
 }
@@ -242,7 +242,7 @@ export const handleCallback = async (
       userId,
     }))
   ) {
-    logger.warn(
+    logger.info(
       { userId, workspaceId: stateParams.workspaceId },
       "user is not a member of workspace in OAuth callback",
     )
@@ -330,7 +330,7 @@ export const handleCallback = async (
         messengerCredential.config,
         shortLivedToken,
       ).catch((error) => {
-        logger.warn(
+        logger.info(
           { err: error },
           "Messenger long-lived token exchange failed, using short-lived token",
         )
