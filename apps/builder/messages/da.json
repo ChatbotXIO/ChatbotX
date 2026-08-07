@@ -2503,6 +2503,9 @@
     "noWorkspaces": "Du don't have vilkårlig arbejdsområder yet.",
     "owner": "Owner"
   },
+  "editProfile": {
+    "title": "Rediger profil"
+  },
   "channels": {
     "title": "Kanaler",
     "duplicated": {

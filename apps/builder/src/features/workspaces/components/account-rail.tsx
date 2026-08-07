@@ -12,8 +12,11 @@ import { UsageBars } from "@/components/usage-bars"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
+import { getTenantSettings } from "@/features/tenant/utils"
+import { getUserAvatarUrl } from "@/lib/auth/avatar"
 import { buildPlanNotice, buildUsageLabels } from "@/lib/quota-metrics"
 import { resolveTrialMessage, trialMessageClassName } from "@/lib/trial-message"
+import { EditProfileDialog } from "./edit-profile-dialog"
 
 type AccountRailProps = {
   user: {
@@ -39,19 +42,23 @@ export const AccountRail = async ({
   isSuperAdmin = false,
   isPlatformAdmin = false,
 }: AccountRailProps) => {
-  const t = await getTranslations()
+  const [t, { storageUrl }] = await Promise.all([
+    getTranslations(),
+    getTenantSettings(),
+  ])
   const cloud = isCloud()
   const notice = buildPlanNotice(planStatus, trialEndsAt)
   const displayName = user.name?.trim() || user.email
   const initials = displayName.slice(0, 2).toUpperCase()
+  const avatarUrl = getUserAvatarUrl(user.image, storageUrl)
 
   const usageLabels = buildUsageLabels(t)
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-2 rounded-xl border bg-card p-6 md:w-72">
-      <div className="flex items-center gap-3">
+      <div className="relative flex items-center gap-3">
         <Avatar className="size-11">
-          <AvatarImage alt={displayName} src={user.image ?? ""} />
+          <AvatarImage alt={displayName} src={avatarUrl ?? ""} />
           <AvatarFallback className="rounded-full text-sm">
             {initials}
           </AvatarFallback>
@@ -62,6 +69,7 @@ export const AccountRail = async ({
             {user.email}
           </span>
         </div>
+        <EditProfileDialog className="absolute inset-e-0 top-0" user={user} />
       </div>
 
       {cloud && (

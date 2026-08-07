@@ -33,6 +33,8 @@ import { useState } from "react"
 import { UpgradePlanDialog } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
+import { EditProfileDialog } from "@/features/workspaces/components/edit-profile-dialog"
+import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
 
@@ -54,6 +56,7 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const t = useTranslations()
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const avatarUrl = useUserAvatarUrl(user.avatar)
 
   return (
     <SidebarMenu>
@@ -69,7 +72,7 @@ export function NavUser({
                 size="lg"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage alt={user.name} src={user.avatar} />
+                  <AvatarImage alt={user.name} src={avatarUrl ?? ""} />
                   <AvatarFallback className="rounded-lg">
                     {user.name.slice(0, 2) || "  "}
                   </AvatarFallback>
@@ -94,7 +97,7 @@ export function NavUser({
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage alt={user.name} src={user.avatar} />
+                    <AvatarImage alt={user.name} src={avatarUrl ?? ""} />
                     <AvatarFallback className="rounded-lg">
                       {user.name.slice(0, 2) || "  "}
                     </AvatarFallback>
@@ -105,6 +108,14 @@ export function NavUser({
                       {user.email}
                     </span>
                   </div>
+                  <EditProfileDialog
+                    className="ms-auto shrink-0"
+                    user={{
+                      name: user.name,
+                      email: user.email,
+                      image: user.avatar,
+                    }}
+                  />
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>

@@ -2572,6 +2572,9 @@
     "noWorkspaces": "ليس لديك أي مساحات عمل بعد.",
     "owner": "المالك"
   },
+  "editProfile": {
+    "title": "تعديل الملف الشخصي"
+  },
   "messages": {
     "moveFeature": "نقل {feature}",
     "poweredBy": "مدعوم من {name}",

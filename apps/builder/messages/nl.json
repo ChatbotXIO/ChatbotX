@@ -2503,6 +2503,9 @@
     "noWorkspaces": "Je hebt nog geen workspaces.",
     "owner": "Eigenaar"
   },
+  "editProfile": {
+    "title": "Profiel bewerken"
+  },
   "channels": {
     "title": "Kanalen",
     "duplicated": {

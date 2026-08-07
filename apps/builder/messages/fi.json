@@ -2503,6 +2503,9 @@
     "noWorkspaces": "Sinulla ei ole vielä työtiloja.",
     "owner": "Omistaja"
   },
+  "editProfile": {
+    "title": "Muokkaa profiilia"
+  },
   "channels": {
     "title": "Kanavat",
     "duplicated": {

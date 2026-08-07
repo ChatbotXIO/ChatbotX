@@ -33,6 +33,7 @@ const smartResponseDelaySecondsSchema = z
 
 export const updateWorkspaceBasicRequest = z.object({
   name: z.string().min(1).max(255),
+  logo: z.string().nullish(),
 })
 export type UpdateWorkspaceBasicRequest = z.infer<
   typeof updateWorkspaceBasicRequest

@@ -2249,6 +2249,9 @@
     "noWorkspaces": "Non hai ancora alcuna area di lavoro.",
     "owner": "Proprietario"
   },
+  "editProfile": {
+    "title": "Modifica profilo"
+  },
   "channels": {
     "title": "Canali",
     "duplicated": {

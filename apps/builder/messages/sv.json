@@ -2746,6 +2746,9 @@
     "subtitle": "Välj en arbetsyta för att fortsätta där du slutade, eller skapa en ny.",
     "welcomeBack": "Välkommen tillbaka, {name}"
   },
+  "editProfile": {
+    "title": "Redigera profil"
+  },
   "inboxTeams": {
     "title": "Inkorgsteam"
   },

@@ -106,6 +106,7 @@ describe("POST /api/presigned-upload", () => {
       fileId: "file-1",
       presignedPostUrl: "https://upload.example.com/signed",
       publicUrl: "https://cdn.example.com/workspaces/1/logo.png",
+      path: "workspaces/1/logo.png",
     })
   })
 

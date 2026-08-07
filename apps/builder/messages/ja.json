@@ -3847,6 +3847,9 @@
     "noWorkspaces": "ワークスペースはまだありません。",
     "owner": "所有者"
   },
+  "editProfile": {
+    "title": "プロフィールを編集"
+  },
   "ecommerce": {
     "title": "Eコマース",
     "description": "Eコマースストアを作成・管理します。"

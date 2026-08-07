@@ -823,6 +823,9 @@
     "noWorkspaces": "אין לכם עדיין סביבות עבודה.",
     "owner": "בעלים"
   },
+  "editProfile": {
+    "title": "עריכת פרופיל"
+  },
   "channels": {
     "title": "ערוצים",
     "duplicated": {

@@ -2503,6 +2503,9 @@
     "noWorkspaces": "Anda belum memiliki ruang kerja.",
     "owner": "Pemilik"
   },
+  "editProfile": {
+    "title": "Edit Profil"
+  },
   "channels": {
     "title": "Saluran",
     "duplicated": {

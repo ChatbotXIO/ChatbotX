@@ -108,7 +108,11 @@ export function DirectUploadButton({
               xhr.addEventListener("load", () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                   onSuccess(file)
-                  onUploadSuccess?.(filePath, file, presignedPost.publicUrl)
+                  onUploadSuccess?.(
+                    presignedPost.path,
+                    file,
+                    presignedPost.publicUrl,
+                  )
                   resolve()
                 } else {
                   const error = new Error(

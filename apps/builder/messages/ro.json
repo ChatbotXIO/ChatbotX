@@ -558,6 +558,9 @@
     "noWorkspaces": "Nu aveți încă niciun spațiu de lucru.",
     "owner": "Proprietar"
   },
+  "editProfile": {
+    "title": "Editează profilul"
+  },
   "actions": {
     "copy": "Copiază",
     "copyUrl": "Copiază adresa URL",

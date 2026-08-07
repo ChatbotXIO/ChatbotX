@@ -2567,6 +2567,9 @@
     "noWorkspaces": "Henüz hiç çalışma alanınız yok.",
     "owner": "Sahip"
   },
+  "editProfile": {
+    "title": "Profili Düzenle"
+  },
   "messages": {
     "moveFeature": "{feature} Taşı",
     "poweredBy": "{name} tarafından desteklenmektedir",

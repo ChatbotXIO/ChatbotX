@@ -56,9 +56,24 @@ export async function POST(req: NextRequest) {
           { status: 400 },
         )
       }
-      const user = await getCurrentUser()
-      if (!(user && (await isPlatformAdmin(user)))) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
+      // A user's own avatar is scoped to their own storage namespace by
+      // genericHandler (public/platform/${userId}/...), so any authenticated
+      // user may upload one without the platform-admin gate that otherwise
+      // protects workspace-less uploads (e.g. platform branding assets).
+      const isOwnAvatarUpload = input.path?.startsWith("avatar/")
+      if (isOwnAvatarUpload) {
+        if (!input.mimeType.startsWith("image/")) {
+          return NextResponse.json(
+            { error: "Avatar uploads must be an image" },
+            { status: 400 },
+          )
+        }
+      } else {
+        const user = await getCurrentUser()
+        if (!(user && (await isPlatformAdmin(user)))) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
       }
       const domain = await getDomainFromHeader()
       ;({ storageUrl } = await resolveTenantSettingsByDomain(domain))
@@ -101,6 +116,7 @@ export async function POST(req: NextRequest) {
       fileId,
       presignedPostUrl,
       publicUrl,
+      path,
     })
   } catch (error) {
     return serverErrorHandler(error)
