@@ -1194,6 +1194,8 @@
     "orContinueWith": "או המשך באמצעות",
     "continueWithFacebook": "המשך באמצעות Facebook",
     "continueWithGoogle": "המשך באמצעות Google",
+    "continueWithEmail": "המשך באמצעות אימייל",
+    "continueWithMagicLink": "המשך באמצעות קישור קסם",
     "dontHaveAnAccount": "אין לכם חשבון?",
     "alreadyHaveAnAccount": "כבר יש לכם חשבון?",
     "signUp": "הרשמה",

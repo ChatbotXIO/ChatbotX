@@ -2893,6 +2893,8 @@
     "orContinueWith": "Tai jatka käyttäen",
     "continueWithFacebook": "Jatka Facebookilla",
     "continueWithGoogle": "Jatka Googlella",
+    "continueWithEmail": "Jatka sähköpostilla",
+    "continueWithMagicLink": "Jatka taikalinkillä",
     "dontHaveAnAccount": "Eikö sinulla ole tiliä?",
     "alreadyHaveAnAccount": "Onko sinulla jo tili?",
     "signUp": "Rekisteröidy",

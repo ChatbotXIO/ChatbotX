@@ -22,7 +22,7 @@ import {
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { ChevronsUpDown, PlusCircle } from "lucide-react"
+import { ChevronDown, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
@@ -73,7 +73,7 @@ export function WorkspaceSwitcher({
                   </span>
                   {/* <span className="truncate text-xs">{activeWorkspace?.plan}</span> */}
                 </div>
-                <ChevronsUpDown className="ms-auto" />
+                <ChevronDown className="ms-auto" />
               </SidebarMenuButton>
             }
           />

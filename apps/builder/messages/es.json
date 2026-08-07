@@ -2893,6 +2893,8 @@
     "orContinueWith": "O continuar con",
     "continueWithFacebook": "Continue con Facebook",
     "continueWithGoogle": "Continuar con Google",
+    "continueWithEmail": "Continuar con correo electrónico",
+    "continueWithMagicLink": "Continuar con enlace mágico",
     "dontHaveAnAccount": "Don't tiene un cuenta?",
     "alreadyHaveAnAccount": "Already tiene un cuenta?",
     "signUp": "Registrarse",
