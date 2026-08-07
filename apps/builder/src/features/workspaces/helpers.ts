@@ -1,4 +1,5 @@
 import { SMART_RESPONSE_DELAY_OPTIONS } from "@chatbotx.io/database/partials"
+import { getPublicFileUrl } from "@chatbotx.io/utils"
 import type { useTranslations } from "next-intl"
 import { useTenantSettings } from "@/features/tenant"
 import type { WorkspaceResource } from "./schema/resource"
@@ -17,7 +18,7 @@ export function getWorkspaceLogoUrl(
   storageUrl: string,
 ): string | undefined {
   return workspace?.logo
-    ? new URL(workspace.logo, storageUrl).toString()
+    ? getPublicFileUrl(workspace.logo, storageUrl)
     : undefined
 }
 

@@ -3847,6 +3847,9 @@
     "noWorkspaces": "Você ainda não tem nenhum espaço de trabalho.",
     "owner": "Proprietário"
   },
+  "editProfile": {
+    "title": "Editar perfil"
+  },
   "ecommerce": {
     "title": "Comércio eletrônico",
     "description": "Crie e gerencie sua loja virtual."

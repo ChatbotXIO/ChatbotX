@@ -12,10 +12,13 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { AvatarUploadField } from "@/components/avatar-upload-field"
 import { SettingRow } from "@/components/setting-row"
+import { useTenantSettings } from "@/features/tenant"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
 import { updateWorkspaceBasicAction } from "./actions/update-workspace-action"
+import { getWorkspaceLogoUrl } from "./helpers"
 import { updateWorkspaceBasicRequest } from "./schema/update-workspace-schema"
 
 export function UpdateWorkspaceBasicForm({
@@ -27,6 +30,7 @@ export function UpdateWorkspaceBasicForm({
   const router = useRouter()
 
   const session = authClient.useSession()
+  const { storageUrl } = useTenantSettings()
 
   const [_, copyToClipboard] = useCopyToClipboard()
   const onCopy = (value: string) => {
@@ -58,11 +62,18 @@ export function UpdateWorkspaceBasicForm({
         mode: "onChange",
         defaultValues: {
           name: workspace.name,
+          logo: workspace.logo,
         },
       },
       errorMapProps: {},
     },
   )
+
+  const nameValue = form.watch("name")
+  const logoPath = form.watch("logo")
+  const logoUrl = getWorkspaceLogoUrl({ logo: logoPath ?? null }, storageUrl)
+  const displayName = nameValue?.trim() || workspace.name
+  const initials = displayName.slice(0, 2).toUpperCase()
 
   return (
     <Card>
@@ -106,6 +117,23 @@ export function UpdateWorkspaceBasicForm({
 
             <SettingRow description={""} label={t("fields.name.label")}>
               <InputField name="name" />
+            </SettingRow>
+
+            <SettingRow description={""} label={t("fields.logo.label")}>
+              <div className="flex items-center gap-3">
+                <AvatarUploadField
+                  alt={displayName}
+                  fallbackText={initials}
+                  onUploaded={(filePath) => {
+                    form.setValue("logo", filePath, { shouldDirty: true })
+                  }}
+                  previewUrl={logoUrl}
+                  shape="rounded"
+                  uploadLabel={t("actions.uploadFile")}
+                  uploadPath={`public/space/${workspace.id}/logos`}
+                  workspaceId={workspace.id}
+                />
+              </div>
             </SettingRow>
 
             <div className="flex justify-start">

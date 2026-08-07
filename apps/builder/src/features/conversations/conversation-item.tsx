@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
+import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
@@ -36,14 +37,17 @@ type ConversationItemProps = {
   onSelect: () => void
 }
 
-const assignedIcon = (conversation: ListConversationItemResource) => {
+const assignedIcon = (
+  conversation: ListConversationItemResource,
+  assignedAvatarUrl: string | undefined,
+) => {
   if (conversation.assignedUserId) {
     return (
       <Tooltip>
         <TooltipTrigger
           render={
             <Avatar className="size-4">
-              <AvatarImage src={conversation.assignedUser?.image ?? ""} />
+              <AvatarImage src={assignedAvatarUrl ?? ""} />
 
               <AvatarFallback className="text-[0.5rem]">
                 {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
@@ -80,6 +84,7 @@ export default function ConversationItem({
   const isActive = conversation.id === activeConversationId
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
+  const assignedAvatarUrl = useUserAvatarUrl(conversation.assignedUser?.image)
   const previewText = resolveLastMessagePreview(conversation.messages?.[0], t)
   const isUnread = Boolean(
     conversation.agentLastReadAt &&
@@ -144,7 +149,7 @@ export default function ConversationItem({
         <div className="relative">
           {contactAvatar}
           <div className="absolute start-0 bottom-0 transform">
-            {assignedIcon(conversation)}
+            {assignedIcon(conversation, assignedAvatarUrl)}
           </div>
           <div className="absolute end-0 bottom-0 transform">
             {conversation.contactInboxes?.map((contactInbox) => (

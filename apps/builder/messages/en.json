@@ -2572,6 +2572,9 @@
     "noWorkspaces": "You don't have any workspaces yet.",
     "owner": "Owner"
   },
+  "editProfile": {
+    "title": "Edit Profile"
+  },
   "messages": {
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",

@@ -2572,6 +2572,9 @@
     "noWorkspaces": "Bạn chưa có không gian làm việc nào.",
     "owner": "Chủ sở hữu"
   },
+  "editProfile": {
+    "title": "Chỉnh sửa hồ sơ"
+  },
   "messages": {
     "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",

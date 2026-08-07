@@ -2567,6 +2567,9 @@
     "noWorkspaces": "You don't tiene cualquier espacio de trabajos yet.",
     "owner": "Propietario"
   },
+  "editProfile": {
+    "title": "Editar perfil"
+  },
   "messages": {
     "moveFeature": "Mover {feature}",
     "poweredBy": "Con tecnología de {name}",

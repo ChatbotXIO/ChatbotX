@@ -2503,6 +2503,9 @@
     "noWorkspaces": "Ainda não tem espaços de trabalho.",
     "owner": "Proprietário"
   },
+  "editProfile": {
+    "title": "Editar perfil"
+  },
   "channels": {
     "title": "Canais",
     "duplicated": {

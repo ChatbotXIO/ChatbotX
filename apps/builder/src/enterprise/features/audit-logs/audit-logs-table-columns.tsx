@@ -13,7 +13,37 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import type { AuditLogResource } from "./schemas"
+
+function AuditUserCell({
+  user,
+}: {
+  user: NonNullable<AuditLogResource["user"]>
+}) {
+  const avatarUrl = useUserAvatarUrl(user.image)
+
+  return (
+    <div className="flex items-center gap-2">
+      <Avatar className="size-6">
+        <AvatarImage alt="userImage" src={avatarUrl ?? ""} />
+        <AvatarFallback>{user.name?.[0]}</AvatarFallback>
+      </Avatar>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <div className="inline-block max-w-[200px] truncate">
+              {user.name}
+            </div>
+          }
+        />
+        <TooltipContent>
+          <p>{user.name}</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  )
+}
 
 export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
   return [
@@ -25,27 +55,7 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
       cell: ({ row }) => (
         <div>
           {row.original.user ? (
-            <div className="flex items-center gap-2">
-              <Avatar className="size-6">
-                <AvatarImage
-                  alt="userImage"
-                  src={row.original.user.image || undefined}
-                />
-                <AvatarFallback>{row.original.user.name?.[0]}</AvatarFallback>
-              </Avatar>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <div className="inline-block max-w-[200px] truncate">
-                      {row.original.user.name}
-                    </div>
-                  }
-                />
-                <TooltipContent>
-                  <p>{row.original.user.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            <AuditUserCell user={row.original.user} />
           ) : null}
         </div>
       ),
