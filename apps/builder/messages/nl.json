@@ -2893,6 +2893,8 @@
     "orContinueWith": "Of ga verder met",
     "continueWithFacebook": "Doorgaan met Facebook",
     "continueWithGoogle": "Doorgaan met Google",
+    "continueWithEmail": "Doorgaan met e-mail",
+    "continueWithMagicLink": "Doorgaan met magische link",
     "dontHaveAnAccount": "Heb je nog geen account?",
     "alreadyHaveAnAccount": "Heb je al een account?",
     "signUp": "Registreren",

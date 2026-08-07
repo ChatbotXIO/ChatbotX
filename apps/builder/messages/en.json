@@ -2900,6 +2900,8 @@
     "orContinueWith": "Or continue with",
     "continueWithFacebook": "Continue with Facebook",
     "continueWithGoogle": "Continue with Google",
+    "continueWithEmail": "Continue with Email",
+    "continueWithMagicLink": "Continue with Magic Link",
     "dontHaveAnAccount": "Don't have an account?",
     "alreadyHaveAnAccount": "Already have an account?",
     "signUp": "Sign up",

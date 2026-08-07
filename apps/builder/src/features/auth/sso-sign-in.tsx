@@ -62,6 +62,20 @@ export default function SSOSignIn({ providers }: SSOSignInProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
+      {providers.includes("facebook") && (
+        <Button
+          aria-label={t("auth.continueWithFacebook")}
+          className="w-full bg-[#1877F2] text-white hover:bg-[#0F6FE5]"
+          onClick={async () => {
+            await signInWith("facebook")
+          }}
+          type="button"
+        >
+          <FacebookIcon />
+          {t("auth.continueWithFacebook")}
+        </Button>
+      )}
+
       {providers.includes("google") && (
         <Button
           aria-label={t("auth.continueWithGoogle")}
@@ -74,20 +88,6 @@ export default function SSOSignIn({ providers }: SSOSignInProps) {
         >
           <GoogleIcon />
           {t("auth.continueWithGoogle")}
-        </Button>
-      )}
-
-      {providers.includes("facebook") && (
-        <Button
-          aria-label={t("auth.continueWithFacebook")}
-          className="w-full bg-[#1877F2] text-white hover:bg-[#0F6FE5]"
-          onClick={async () => {
-            await signInWith("facebook")
-          }}
-          type="button"
-        >
-          <FacebookIcon />
-          {t("auth.continueWithFacebook")}
         </Button>
       )}
     </div>

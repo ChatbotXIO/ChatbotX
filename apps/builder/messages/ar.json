@@ -2900,6 +2900,8 @@
     "orContinueWith": "أو المتابعة باستخدام",
     "continueWithFacebook": "المتابعة باستخدام Facebook",
     "continueWithGoogle": "المتابعة باستخدام Google",
+    "continueWithEmail": "المتابعة باستخدام البريد الإلكتروني",
+    "continueWithMagicLink": "المتابعة باستخدام رابط سحري",
     "dontHaveAnAccount": "ليس لديك حساب؟",
     "alreadyHaveAnAccount": "لديك حساب بالفعل؟",
     "signUp": "إنشاء حساب",
