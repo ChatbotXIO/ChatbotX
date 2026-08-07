@@ -5,7 +5,9 @@ const {
   mockBulkImportContacts,
   mockBulkImportMessages,
   mockClaimRun,
+  mockFbLoadContext,
   mockFetchConversationMessages,
+  mockFindIntegration,
   mockFindResumeCeiling,
   mockFindRunById,
   mockListConversations,
@@ -15,6 +17,7 @@ const {
   mockQueueAdd,
   mockQueueAddBulk,
   mockResolveContact,
+  mockResolveContactProfile,
   mockToHistoricalMessage,
   mockUpdateProgress,
 } = vi.hoisted(() => ({
@@ -22,7 +25,9 @@ const {
   mockBulkImportContacts: vi.fn(),
   mockBulkImportMessages: vi.fn(),
   mockClaimRun: vi.fn(),
+  mockFbLoadContext: vi.fn(),
   mockFetchConversationMessages: vi.fn(),
+  mockFindIntegration: vi.fn(),
   mockFindResumeCeiling: vi.fn(),
   mockFindRunById: vi.fn(),
   mockListConversations: vi.fn(),
@@ -32,6 +37,7 @@ const {
   mockQueueAdd: vi.fn(),
   mockQueueAddBulk: vi.fn(),
   mockResolveContact: vi.fn(),
+  mockResolveContactProfile: vi.fn(),
   mockToHistoricalMessage: vi.fn(),
   mockUpdateProgress: vi.fn(),
 }))
@@ -39,6 +45,7 @@ const {
 vi.mock("@chatbotx.io/business", () => ({
   coexistService: {
     claimRun: mockClaimRun,
+    findIntegrationForCoexist: mockFindIntegration,
     findResumeCeiling: mockFindResumeCeiling,
     findRunById: mockFindRunById,
     markFailed: mockMarkFailed,
@@ -82,9 +89,28 @@ vi.mock("../src/integration/handlers/coexist/instagram-adapter", () => ({
     listConversations: mockListConversations,
     loadContext: mockLoadContext,
     resolveContact: mockResolveContact,
+    resolveContactProfile: mockResolveContactProfile,
     toHistoricalMessage: mockToHistoricalMessage,
   },
 }))
+
+// Provider routing imports the Facebook adapter too; stub it so the native
+// (`type: "instagram"`) path stays isolated in this suite.
+vi.mock(
+  "../src/integration/handlers/coexist/instagram-facebook-adapter",
+  () => ({
+    instagramFacebookCoexistAdapter: {
+      channel: "instagram",
+      discoverContactEnrichment: vi.fn(() => ({})),
+      fetchConversationMessages: vi.fn(),
+      getConversationUpdatedAt: vi.fn(),
+      listConversations: vi.fn(),
+      loadContext: mockFbLoadContext,
+      resolveContact: vi.fn(),
+      toHistoricalMessage: vi.fn(),
+    },
+  }),
+)
 
 const { coexistInstagramSync } = await import(
   "../src/integration/handlers/coexist/instagram-sync"
@@ -105,6 +131,11 @@ const contactLink = {
 describe("coexistInstagramSync", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Routing probe: default to the native Instagram provider for this suite.
+    mockFindIntegration.mockResolvedValue({
+      channel: "instagram",
+      type: "instagram",
+    })
     mockLoadContext.mockResolvedValue({
       inbox: { id: "inbox-1" },
       workspaceId: "workspace-1",
@@ -131,6 +162,8 @@ describe("coexistInstagramSync", () => {
       sourceId: "customer-1",
       firstName: "Customer",
     })
+    // Default: no display name resolved → keep the participant fallback.
+    mockResolveContactProfile.mockResolvedValue(null)
     mockBulkImportContacts.mockResolvedValue({
       contactInboxIds: new Map([["customer-1", contactLink]]),
       importedContacts: 1,
@@ -240,5 +273,84 @@ describe("coexistInstagramSync", () => {
       expect(call[0].fields).not.toHaveProperty("lastSyncedAt", null)
       expect(call[0].fields.lastSyncedAt ?? undefined).not.toBeNull()
     }
+  })
+
+  it("saves the contact's real name split into first/last from the user node", async () => {
+    mockResolveContactProfile.mockResolvedValue({
+      name: "Rock Phan",
+      usageSignal: null,
+    })
+    mockFetchConversationMessages.mockResolvedValue({
+      messages: [{ id: "message-1", message: "hi" }],
+    })
+    mockToHistoricalMessage.mockReturnValue({
+      sourceId: "message-1",
+      messageType: "incoming",
+      contentType: "text",
+      text: "hi",
+    })
+
+    await coexistInstagramSync(syncData)
+
+    expect(mockResolveContactProfile).toHaveBeenCalledWith({
+      context: expect.anything(),
+      sourceId: "customer-1",
+    })
+    expect(mockBulkImportContacts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contacts: [
+          expect.objectContaining({
+            sourceId: "customer-1",
+            firstName: "Rock",
+            lastName: "Phan",
+          }),
+        ],
+      }),
+    )
+  })
+
+  it("routes a Facebook-linked Instagram integration to the Facebook adapter", async () => {
+    mockFindIntegration.mockResolvedValue({
+      channel: "instagram",
+      type: "facebook",
+    })
+    // Fail fast after routing — enough to prove which adapter was selected.
+    mockFbLoadContext.mockResolvedValue(null)
+
+    await coexistInstagramSync(syncData)
+
+    expect(mockFbLoadContext).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "integration-ig-1",
+    })
+    expect(mockLoadContext).not.toHaveBeenCalled()
+  })
+
+  it("routes a native Instagram integration to the native adapter", async () => {
+    mockFindIntegration.mockResolvedValue({
+      channel: "instagram",
+      type: "instagram",
+    })
+    mockLoadContext.mockResolvedValue(null)
+
+    await coexistInstagramSync(syncData)
+
+    expect(mockLoadContext).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "integration-ig-1",
+    })
+    expect(mockFbLoadContext).not.toHaveBeenCalled()
+  })
+
+  it("fails the run when the integration cannot be resolved for routing", async () => {
+    mockFindIntegration.mockResolvedValue(null)
+
+    await coexistInstagramSync(syncData)
+
+    expect(mockLoadContext).not.toHaveBeenCalled()
+    expect(mockFbLoadContext).not.toHaveBeenCalled()
+    expect(mockMarkFailed).toHaveBeenCalledWith(
+      expect.objectContaining({ runId: "run-ig-1" }),
+    )
   })
 })

@@ -35,15 +35,17 @@ import { logger } from "../../../lib/logger"
 // `ORDER BY createdAt` for historically-imported rows.
 //
 // The low 14 bits disambiguate messages that share the same createdAt-second.
-// They are derived from a stable hash of the message `sourceId` — NOT from the
-// run — so the id is a pure function of (createdAt, sourceId). This is the key
-// difference from the old [run-partition][per-run-seq] scheme, which re-minted
-// ids every run: two DISTINCT messages at the same second in two runs sharing
-// `runId mod 1024` produced the SAME id (different sourceId → bypassed the
-// (contactInboxId, sourceId, createdAt) arbiter → hit the PK). Hashing sourceId
-// makes ids idempotent and collision-free across runs; two distinct messages
-// only clash on a rare 14-bit hash collision, resolved by the per-import probe
-// below and the bulkCreate PK retry.
+// They are derived from a stable hash of `(contactInboxId, sourceId)` — NOT the
+// run — so the id is a pure function of (createdAt, contactInboxId, sourceId).
+// Including `contactInboxId` is essential: the DB PK is (id, createdAt) but the
+// upsert arbiter is (contactInboxId, sourceId, createdAt). If the id ignored
+// contactInboxId, importing the SAME message into a DIFFERENT ContactInbox
+// (e.g. after a disconnect/reconnect mints a new ContactInbox) would re-mint
+// the old id, which the arbiter can't catch (different contactInboxId) → PK
+// collision. Keying the disambiguator on contactInboxId too keeps ids
+// idempotent per (contactInboxId, sourceId, createdAt) AND unique across
+// ContactInboxes. Two distinct messages only clash on a rare 14-bit hash
+// collision, resolved by the per-import probe below and the bulkCreate PK retry.
 
 const COEXIST_EPOCH_MS = new Date("2004-02-01").getTime()
 const COEXIST_TS_BITS = 53n
@@ -53,14 +55,18 @@ const COEXIST_DISAMBIG_MASK = (1n << COEXIST_DISAMBIG_BITS) - 1n
 const COEXIST_MAX_TS = 1n << COEXIST_TS_BITS
 const COEXIST_DISAMBIG_SPACE = 1n << COEXIST_DISAMBIG_BITS
 
-export type HistoricalIdFactory = (date: Date, sourceId: string) => string
+export type HistoricalIdFactory = (
+  date: Date,
+  sourceId: string,
+  contactInboxId: string,
+) => string
 
-// FNV-1a over `sourceId`, folded into the 14-bit disambiguator space. Pure and
-// deterministic: the same message always maps to the same starting slot.
-const hashSourceId = (sourceId: string): bigint => {
+// FNV-1a over the disambiguator key, folded into the 14-bit space. Pure and
+// deterministic: the same key always maps to the same starting slot.
+const hashKey = (key: string): bigint => {
   let hash = 2_166_136_261
-  for (let i = 0; i < sourceId.length; i++) {
-    hash ^= sourceId.charCodeAt(i)
+  for (let i = 0; i < key.length; i++) {
+    hash ^= key.charCodeAt(i)
     hash = Math.imul(hash, 16_777_619)
   }
   return BigInt(hash >>> 0) & COEXIST_DISAMBIG_MASK
@@ -73,14 +79,16 @@ export const createHistoricalIdFactory = (): HistoricalIdFactory => {
   // (re-calling for the same message) advance past the colliding slot.
   const used = new Set<bigint>()
 
-  return (date: Date, sourceId: string): string => {
+  return (date: Date, sourceId: string, contactInboxId: string): string => {
     const baseTs = BigInt(date.getTime() - COEXIST_EPOCH_MS)
     if (baseTs < 0n || baseTs >= COEXIST_MAX_TS) {
       throw new Error(
         `createHistoricalIdFactory: ${date.toISOString()} out of range`,
       )
     }
-    const start = hashSourceId(sourceId)
+    // Key on (contactInboxId, sourceId) so the same message in a different
+    // ContactInbox mints a different id — see the layout note above.
+    const start = hashKey(`${contactInboxId}:${sourceId}`)
     let ts = baseTs
     while (ts < COEXIST_MAX_TS) {
       for (let offset = 0n; offset < COEXIST_DISAMBIG_SPACE; offset++) {
@@ -132,6 +140,46 @@ const isUniqueMessagePkViolation = (err: unknown): boolean => {
     current = e.cause
   }
   return false
+}
+
+// Extracts the underlying Postgres error fields (code / constraint / detail)
+// from Drizzle's wrapped error by walking the cause chain. Used for diagnostic
+// logging so we can see exactly which constraint failed and, from `detail`, the
+// offending key value (e.g. `Key (id)=(...) already exists`).
+const describePgError = (
+  err: unknown,
+): {
+  code?: string
+  constraint?: string
+  detail?: string
+  message?: string
+} => {
+  let current: unknown = err
+  for (let depth = 0; depth < 5 && current; depth++) {
+    if (typeof current !== "object") {
+      break
+    }
+    const e = current as {
+      code?: string
+      constraint?: string
+      constraint_name?: string
+      detail?: string
+      message?: string
+      cause?: unknown
+    }
+    if (e.code) {
+      return {
+        code: e.code,
+        constraint: e.constraint ?? e.constraint_name,
+        detail: e.detail,
+        message: e.message,
+      }
+    }
+    current = e.cause
+  }
+  return {
+    message: err instanceof Error ? err.message : String(err),
+  }
 }
 
 export type HistoricalMessage = IncomingMessage & { createdAt?: Date }
@@ -760,7 +808,7 @@ export const bulkImportMessages = async (props: {
       ? msg.createdAt
       : fallbackCreatedAt
     return {
-      id: makeMessageId(createdAt, msg.sourceId),
+      id: makeMessageId(createdAt, msg.sourceId, contactInboxId),
       conversationId,
       contactInboxId,
       senderType: isOutgoing ? "user" : "contact",
@@ -792,19 +840,54 @@ export const bulkImportMessages = async (props: {
     try {
       insertedRows = await repository.bulkCreate(messageInputs)
     } catch (err) {
+      // A non-PK failure is a real error — surface the exact constraint/detail
+      // and rethrow.
       if (!isUniqueMessagePkViolation(err)) {
+        logger.error(
+          {
+            runId,
+            total: messageInputs.length,
+            pgError: describePgError(err),
+            sampleIds: messageInputs.slice(0, 5).map((m) => m.id),
+          },
+          "[coexist] Message bulkCreate failed",
+        )
         throw err
       }
+      // A PK collision is an anticipated, self-healing condition (rare 14-bit
+      // disambiguator clash with an existing row) — warn, then retry with
+      // re-minted ids. Only escalate to error if the retry also fails (below).
       logger.warn(
-        { runId, total: messageInputs.length },
+        {
+          runId,
+          total: messageInputs.length,
+          pgError: describePgError(err),
+        },
         "[coexist] Message PK collision — regenerating IDs and retrying",
       )
       const retried = messageInputs.map((input) => ({
         ...input,
         // Re-call advances past the colliding slot via the factory's used-set.
-        id: makeMessageId(input.createdAt as Date, input.sourceId ?? ""),
+        id: makeMessageId(
+          input.createdAt as Date,
+          input.sourceId ?? "",
+          contactInboxId,
+        ),
       }))
-      insertedRows = await repository.bulkCreate(retried)
+      try {
+        insertedRows = await repository.bulkCreate(retried)
+      } catch (retryErr) {
+        logger.error(
+          {
+            runId,
+            total: retried.length,
+            pgError: describePgError(retryErr),
+            sampleIds: retried.slice(0, 5).map((m) => m.id),
+          },
+          "[coexist] Message bulkCreate retry ALSO failed after re-minting IDs",
+        )
+        throw retryErr
+      }
     }
   }
 

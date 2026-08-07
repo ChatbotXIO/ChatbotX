@@ -1,4 +1,8 @@
 import { coexistService } from "@chatbotx.io/business"
+import type {
+  InboxModel,
+  IntegrationInstagramModel,
+} from "@chatbotx.io/database/types"
 import {
   IntegrationJobAction,
   type IntegrationJobCoexistInstagramSync,
@@ -16,7 +20,9 @@ import {
   type HistoricalMessage,
 } from "./bulk-historical-import"
 import { instagramCoexistAdapter } from "./instagram-adapter"
-import type { CoexistUsageSignal } from "./pull-adapter"
+import { instagramFacebookCoexistAdapter } from "./instagram-facebook-adapter"
+import { splitDisplayName } from "./instagram-normalize"
+import type { CoexistUsageSignal, PullCoexistAdapter } from "./pull-adapter"
 import { resolveUsageThrottle, sleepForUsageThrottle } from "./usage-throttle"
 
 const DEFAULT_CONCURRENCY = 3
@@ -24,11 +30,19 @@ const CHUNK_BUDGET_MS = 4 * 60 * 1000
 const MAX_USAGE_PAUSE_MS = 45_000
 const STORE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000
 
-type InstagramAdapterMessage = Awaited<
-  ReturnType<typeof instagramCoexistAdapter.fetchConversationMessages>
->["messages"][number]
+type InstagramIntegrationType = IntegrationInstagramModel["type"]
 
-export const coexistInstagramSync = async (
+// Generic pull engine shared by both Instagram coexist providers. Every
+// provider-specific concern (which Graph client/endpoint/token, how messages
+// normalize) lives behind the adapter; the run lifecycle, throttle, and bulk
+// import are identical. `Ctx` must carry the resolved inbox and `Conv` an id so
+// the engine can drive imports without knowing the provider.
+const runInstagramCoexistPull = async <
+  Ctx extends { inbox: InboxModel },
+  Conv extends { id: string },
+  Msg,
+>(
+  adapter: PullCoexistAdapter<Ctx, Conv, Msg>,
   data: IntegrationJobCoexistInstagramSync["data"],
 ): Promise<void> => {
   const { runId, integrationId, workspaceId } = data
@@ -37,7 +51,7 @@ export const coexistInstagramSync = async (
   const failRun = (currentError: string): Promise<void> =>
     coexistService.markFailed({ runId, currentError })
 
-  const initialContext = await instagramCoexistAdapter.loadContext({
+  const initialContext = await adapter.loadContext({
     workspaceId,
     integrationId,
   })
@@ -53,7 +67,7 @@ export const coexistInstagramSync = async (
     )
     return
   }
-  const context = await instagramCoexistAdapter.loadContext({
+  const context = await adapter.loadContext({
     workspaceId,
     integrationId,
   })
@@ -126,7 +140,7 @@ export const coexistInstagramSync = async (
       }
 
       await respectUsagePause()
-      const page = await instagramCoexistAdapter.listConversations({
+      const page = await adapter.listConversations({
         context,
         cursor,
       })
@@ -145,8 +159,9 @@ export const coexistInstagramSync = async (
         page.conversations.map((conversation) =>
           limit(async () => {
             await respectUsagePause()
-            const conversationUpdatedAt =
-              instagramCoexistAdapter.getConversationUpdatedAt({ conversation })
+            const conversationUpdatedAt = adapter.getConversationUpdatedAt({
+              conversation,
+            })
             if (
               conversationUpdatedAt &&
               frontier &&
@@ -166,21 +181,20 @@ export const coexistInstagramSync = async (
               let messageCursor: string | undefined
               let contactLink: ContactImportLink | null = null
               let totalMessagesSeen = 0
-              const pendingMessages: InstagramAdapterMessage[] = []
+              const pendingMessages: Msg[] = []
 
               while (true) {
                 await respectUsagePause()
-                const messagesPage =
-                  await instagramCoexistAdapter.fetchConversationMessages({
-                    context,
-                    conversationId: conversation.id,
-                    cursor: messageCursor,
-                  })
+                const messagesPage = await adapter.fetchConversationMessages({
+                  context,
+                  conversationId: conversation.id,
+                  cursor: messageCursor,
+                })
                 applyUsageThrottle(messagesPage.usageSignal)
                 pendingMessages.push(...messagesPage.messages)
 
                 if (!contactLink) {
-                  const contact = instagramCoexistAdapter.resolveContact({
+                  let contact = adapter.resolveContact({
                     context,
                     conversation,
                     messages: pendingMessages,
@@ -192,6 +206,40 @@ export const coexistInstagramSync = async (
                       return
                     }
                     continue
+                  }
+
+                  // Resolve the real display name from the user node and split
+                  // it into first/last name. Best-effort: on failure we keep the
+                  // participant-derived fallback (username). Providers whose
+                  // participants already carry `name` don't implement this.
+                  if (adapter.resolveContactProfile) {
+                    await respectUsagePause()
+                    try {
+                      const profile = await adapter.resolveContactProfile({
+                        context,
+                        sourceId: contact.sourceId,
+                      })
+                      if (profile) {
+                        // Feed the profile call's Graph usage into the throttle,
+                        // same as conversation/message pulls.
+                        applyUsageThrottle(profile.usageSignal)
+                        if (profile.name) {
+                          const { firstName, lastName } = splitDisplayName(
+                            profile.name,
+                          )
+                          contact = {
+                            ...contact,
+                            firstName: firstName ?? contact.firstName,
+                            lastName: lastName ?? contact.lastName,
+                          }
+                        }
+                      }
+                    } catch (err) {
+                      logger.warn(
+                        { err, runId, sourceId: contact.sourceId },
+                        "[coexist] Instagram contact profile resolution failed",
+                      )
+                    }
                   }
 
                   // TODO(product): coexist import consumes contact quota with no
@@ -222,13 +270,12 @@ export const coexistInstagramSync = async (
                 const historicalMessages: HistoricalMessage[] = []
                 for (const message of pendingMessages.splice(0)) {
                   totalMessagesSeen += 1
-                  const historical =
-                    instagramCoexistAdapter.toHistoricalMessage({
-                      context,
-                      message,
-                      cutoff,
-                      totalMessagesSeen,
-                    })
+                  const historical = adapter.toHistoricalMessage({
+                    context,
+                    message,
+                    cutoff,
+                    totalMessagesSeen,
+                  })
                   if (historical) {
                     historicalMessages.push(historical)
                   }
@@ -241,11 +288,10 @@ export const coexistInstagramSync = async (
                   contactId: contactLink.contactId,
                   conversationId: contactLink.conversationId,
                   messages: historicalMessages,
-                  contactEnrichment:
-                    instagramCoexistAdapter.discoverContactEnrichment({
-                      context,
-                      messages: historicalMessages,
-                    }),
+                  contactEnrichment: adapter.discoverContactEnrichment({
+                    context,
+                    messages: historicalMessages,
+                  }),
                   idFactory,
                 })
 
@@ -387,4 +433,40 @@ export const coexistInstagramSync = async (
     )
     logger.error({ err }, "[coexist] Instagram sync encountered fatal error")
   }
+}
+
+// Provider registry keyed by Instagram integration type. Each entry binds its
+// concrete adapter so the generic engine infers that adapter's own
+// Ctx/Conv/Msg. Both providers share the same coexist channel ("instagram"),
+// run rows, and job action — only the pull source differs. Adding a provider is
+// one entry here plus its adapter; there is no branching to touch.
+const instagramCoexistProvidersByType = {
+  instagram: (data: IntegrationJobCoexistInstagramSync["data"]) =>
+    runInstagramCoexistPull(instagramCoexistAdapter, data),
+  facebook: (data: IntegrationJobCoexistInstagramSync["data"]) =>
+    runInstagramCoexistPull(instagramFacebookCoexistAdapter, data),
+} satisfies Record<
+  InstagramIntegrationType,
+  (data: IntegrationJobCoexistInstagramSync["data"]) => Promise<void>
+>
+
+export const coexistInstagramSync = async (
+  data: IntegrationJobCoexistInstagramSync["data"],
+): Promise<void> => {
+  const { runId, integrationId, workspaceId } = data
+
+  const integration = await coexistService.findIntegrationForCoexist({
+    workspaceId,
+    integrationId,
+    channel: "instagram",
+  })
+  if (integration?.channel !== "instagram") {
+    await coexistService.markFailed({
+      runId,
+      currentError: "Instagram integration not found or coexist disabled",
+    })
+    return
+  }
+
+  await instagramCoexistProvidersByType[integration.type](data)
 }

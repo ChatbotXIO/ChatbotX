@@ -170,4 +170,35 @@ describe("CoexistSyncRunRepository", () => {
       }),
     ).rejects.toThrow("no active init run")
   })
+
+  test("findIntegrationForCoexist admits a Facebook-linked Instagram row without a type filter", async () => {
+    const findFirst = vi.fn().mockResolvedValue({
+      id: "ig-fb-1",
+      workspaceId: "ws-1",
+      type: "facebook",
+    })
+    const repository = new CoexistSyncRunRepository()
+
+    const row = await repository.findIntegrationForCoexist({
+      channel: "instagram",
+      workspaceId: "ws-1",
+      integrationId: "ig-fb-1",
+      tx: {
+        query: { integrationInstagramModel: { findFirst } },
+      } as never,
+    })
+
+    // Lookup must not constrain by `type` — both native ("instagram") and
+    // Facebook-linked ("facebook") rows are admitted; the worker routes by type.
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: "ig-fb-1", workspaceId: "ws-1" },
+    })
+    expect(findFirst.mock.calls[0]?.[0]?.where).not.toHaveProperty("type")
+    expect(row).toEqual({
+      id: "ig-fb-1",
+      workspaceId: "ws-1",
+      type: "facebook",
+      channel: "instagram",
+    })
+  })
 })

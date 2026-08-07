@@ -406,8 +406,11 @@ const integrationLookups = {
     workspaceId,
     integrationId,
   }: IntegrationAccessInput): Promise<CoexistIntegrationRow | null> => {
+    // Admit both Instagram types — native login (`type: "instagram"`) and
+    // Facebook-linked (`type: "facebook"`). The worker selects the matching
+    // coexist adapter by `row.type`.
     const row = await tx.query.integrationInstagramModel.findFirst({
-      where: { id: integrationId, workspaceId, type: "instagram" },
+      where: { id: integrationId, workspaceId },
     })
     return row ? { ...row, channel: "instagram" } : null
   },
@@ -458,7 +461,6 @@ const integrationUpdates = {
         and(
           eq(integrationInstagramModel.id, integrationId),
           eq(integrationInstagramModel.workspaceId, workspaceId),
-          eq(integrationInstagramModel.type, "instagram"),
         ),
       )
       .returning()

@@ -86,6 +86,17 @@ class InstagramHttpClient {
     return this.request(() => this.client.get(url, options).json<T>())
   }
 
+  getWithHeaders<T>(
+    url: string,
+    options?: GetOptions,
+  ): Promise<{ data: T; headers: Headers }> {
+    return this.request(async () => {
+      const response = await this.client.get(url, options)
+      const data = await response.json<T>()
+      return { data, headers: response.headers }
+    })
+  }
+
   post<T>(url: string, options?: PostOptions): Promise<T> {
     return this.request(() => this.client.post(url, options).json<T>())
   }
@@ -107,4 +118,14 @@ export const instagramAttachmentClient = new InstagramHttpClient({
   timeout: 60_000,
   retries: 2,
   retryDelay: 2000,
+})
+
+// Dedicated client for coexist history sync: longer timeout for the larger
+// conversation/message payloads and its own retry profile, kept separate from
+// live message traffic on `instagramGraphClient`.
+export const instagramFacebookCoexistGraphClient = new InstagramHttpClient({
+  baseUrl: "https://graph.facebook.com",
+  timeout: 60_000,
+  retries: 3,
+  retryDelay: 1000,
 })

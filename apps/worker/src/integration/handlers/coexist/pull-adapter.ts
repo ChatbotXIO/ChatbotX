@@ -56,6 +56,20 @@ export type PullCoexistAdapter<Context, Conversation, MessageDetail> = {
     conversation: Conversation
     messages: MessageDetail[]
   }): IncomingContact | null
+  // Optional: resolve a participant's real display name from the user node.
+  // Instagram's conversation participants carry only `{id, username}`, so the
+  // name is read separately here and split into first/last name downstream.
+  // Providers whose participants already include `name` (e.g. Messenger) omit
+  // this. Returns null when the profile cannot be resolved (keeps the fallback).
+  // `usageSignal` surfaces the call's Graph usage so the engine can feed it to
+  // the shared throttle, just like conversation/message pulls.
+  resolveContactProfile?(input: {
+    context: Context
+    sourceId: string
+  }): Promise<{
+    name: string | null
+    usageSignal?: CoexistUsageSignal | null
+  } | null>
   toHistoricalMessage(input: {
     context: Context
     message: MessageDetail

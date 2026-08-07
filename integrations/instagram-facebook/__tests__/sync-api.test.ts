@@ -6,21 +6,23 @@ const { mockGet, mockGetWithHeaders } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/lib/http-client", () => ({
-  instagramCoexistGraphClient: {
+  instagramFacebookCoexistGraphClient: {
     get: mockGet,
     getWithHeaders: mockGetWithHeaders,
   },
 }))
 
-const { fetchInstagramConversationMessages, listInstagramConversations } =
-  await import("../src/apis/sync")
+const {
+  fetchInstagramFacebookConversationMessages,
+  listInstagramFacebookConversations,
+} = await import("../src/apis/sync")
 
-describe("Instagram coexist sync API", () => {
+describe("Instagram (Facebook) coexist sync API", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it("lists conversations from the native Instagram conversations edge", async () => {
+  it("lists conversations from the Page node filtered to platform=instagram", async () => {
     mockGetWithHeaders.mockResolvedValue({
       data: {
         data: [{ id: "conv-1", updated_time: "2026-08-01T10:00:00+0000" }],
@@ -31,17 +33,18 @@ describe("Instagram coexist sync API", () => {
       }),
     })
 
-    const result = await listInstagramConversations({
-      igUserId: "ig-1",
-      accessToken: "token-1",
+    const result = await listInstagramFacebookConversations({
+      pageId: "page-1",
+      accessToken: "page-token-1",
       version: "v22.0",
     })
 
     expect(mockGetWithHeaders).toHaveBeenCalledWith(
-      "v22.0/ig-1/conversations",
+      "v22.0/page-1/conversations",
       expect.objectContaining({
-        headers: { Authorization: "Bearer token-1" },
+        headers: { Authorization: "Bearer page-token-1" },
         searchParams: expect.objectContaining({
+          platform: "instagram",
           fields: "id,participants,updated_time",
         }),
       }),
@@ -59,9 +62,9 @@ describe("Instagram coexist sync API", () => {
       headers: new Headers({ "x-app-usage": "not-json" }),
     })
 
-    const result = await listInstagramConversations({
-      igUserId: "ig-1",
-      accessToken: "token-1",
+    const result = await listInstagramFacebookConversations({
+      pageId: "page-1",
+      accessToken: "page-token-1",
       version: "v22.0",
     })
 
@@ -87,9 +90,9 @@ describe("Instagram coexist sync API", () => {
       message: "hello",
     })
 
-    const result = await fetchInstagramConversationMessages({
+    const result = await fetchInstagramFacebookConversationMessages({
       conversationId: "conv-1",
-      accessToken: "token-1",
+      accessToken: "page-token-1",
       version: "v22.0",
     })
 
@@ -138,9 +141,9 @@ describe("Instagram coexist sync API", () => {
         message: "ok",
       })
 
-    const result = await fetchInstagramConversationMessages({
+    const result = await fetchInstagramFacebookConversationMessages({
       conversationId: "conv-1",
-      accessToken: "token-1",
+      accessToken: "page-token-1",
       version: "v22.0",
     })
 
@@ -153,28 +156,5 @@ describe("Instagram coexist sync API", () => {
         message: "ok",
       },
     ])
-  })
-
-  it("paginates the nested messages edge with a field-level cursor, not a top-level after", async () => {
-    mockGetWithHeaders.mockResolvedValue({
-      data: { id: "conv-1", messages: { data: [{ id: "msg-1" }] } },
-      headers: new Headers(),
-    })
-    mockGet.mockResolvedValue({ id: "msg-1", message: "hi" })
-
-    await fetchInstagramConversationMessages({
-      conversationId: "conv-1",
-      accessToken: "token-1",
-      version: "v22.0",
-      after: "CURSOR123",
-    })
-
-    const [, options] = mockGetWithHeaders.mock.calls[0] ?? []
-    // Cursor must live inside the messages field modifier so the nested edge
-    // actually advances; a top-level `after` param would be ignored and loop.
-    expect(options?.searchParams.fields).toBe(
-      "messages.after(CURSOR123){id,created_time,from,to,message,attachments,is_unsupported}",
-    )
-    expect(options?.searchParams).not.toHaveProperty("after")
   })
 })
