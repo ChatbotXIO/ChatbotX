@@ -194,6 +194,18 @@ export const createMessage = async (props: {
         sendFrom: "inbox",
       },
     }),
+    ...(user && messageInput.text
+      ? [
+          chatQueue.add(ChatJobAction.checkOutboundAutomatedResponse, {
+            type: ChatJobAction.checkOutboundAutomatedResponse,
+            data: {
+              conversation,
+              contactInbox,
+              message: { id: message.id, text: messageInput.text },
+            },
+          }),
+        ]
+      : []),
   ]
 
   await Promise.allSettled(promises)

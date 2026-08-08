@@ -2935,7 +2935,18 @@
     "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig."
   },
   "keywords": {
-    "title": "Nyckelord"
+    "title": "Nyckelord",
+    "tabs": {
+      "contact": "Kontakt",
+      "page": "Sida"
+    },
+    "descriptions": {
+      "contactTitle": "Kontaktnyckelord",
+      "contact": "Svara automatiskt när en kontakt skickar ett meddelande som innehåller ett nyckelord till din arbetsyta.",
+      "pageTitle": "Sidnyckelord",
+      "page": "Svara automatiskt när du skickar ett meddelande som innehåller ett nyckelord till en kontakt."
+    },
+    "pageWarning": "Meddelandeinnehåll som innehåller ett sidnyckelord kan leda till att meddelanden skickas till kunden i en oändlig loop. Inaktivera sidnyckelordet omedelbart om du stöter på detta!"
   },
   "klaviyo": {
     "errors": {

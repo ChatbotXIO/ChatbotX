@@ -3379,7 +3379,18 @@
     "title": "Câmpuri personalizate"
   },
   "keywords": {
-    "title": "Cuvinte cheie"
+    "title": "Cuvinte cheie",
+    "tabs": {
+      "contact": "Contact",
+      "page": "Pagină"
+    },
+    "descriptions": {
+      "contactTitle": "Cuvinte-cheie de contact",
+      "contact": "Răspunde automat atunci când un contact trimite un mesaj care conține un cuvânt-cheie către workspace-ul dvs.",
+      "pageTitle": "Cuvinte-cheie de pagină",
+      "page": "Răspunde automat atunci când trimiteți un mesaj care conține un cuvânt-cheie unui contact."
+    },
+    "pageWarning": "Conținutul unui mesaj care conține un cuvânt-cheie de Pagină poate duce la trimiterea de mesaje către client într-o buclă infinită. Dezactivați imediat cuvântul-cheie de Pagină dacă întâmpinați această situație!"
   },
   "triggers": {
     "title": "Declanșatoare"

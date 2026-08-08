@@ -34,6 +34,9 @@ export default async function SharedFolderSlot(props: {
     case "automated-responses":
       folderType = folderTypes.enum.automatedResponse
       break
+    case "page-automated-responses":
+      folderType = folderTypes.enum.outboundAutomatedResponse
+      break
     case "sequences":
       folderType = folderTypes.enum.sequence
       break

@@ -10,6 +10,8 @@ export function getFolderTypeFromFeature(
   switch (featureName) {
     case "automated-responses":
       return folderTypes.enum.automatedResponse
+    case "page-automated-responses":
+      return folderTypes.enum.outboundAutomatedResponse
     case "sequences":
       return folderTypes.enum.sequence
     case "flows":

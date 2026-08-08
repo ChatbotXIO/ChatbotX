@@ -3379,7 +3379,18 @@
     "title": "Aangepaste velden"
   },
   "keywords": {
-    "title": "Trefwoorden"
+    "title": "Trefwoorden",
+    "tabs": {
+      "contact": "Contact",
+      "page": "Pagina"
+    },
+    "descriptions": {
+      "contactTitle": "Contact-trefwoorden",
+      "contact": "Reageer automatisch wanneer een contact een bericht met een trefwoord naar je workspace stuurt.",
+      "pageTitle": "Pagina-trefwoorden",
+      "page": "Reageer automatisch wanneer je een bericht met een trefwoord naar een contact stuurt."
+    },
+    "pageWarning": "Berichtinhoud met een Pagina-trefwoord kan ertoe leiden dat er berichten in een oneindige lus naar de klant worden verzonden. Schakel het Pagina-trefwoord onmiddellijk uit als dit gebeurt!"
   },
   "triggers": {
     "title": "Triggers"

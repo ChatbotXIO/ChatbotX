@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { CreateAutomatedResponseForm } from "@/features/automated-response/create-automated-response-form"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 
-export default async function CreateAutomatedResponePage({
+export default async function CreatePageAutomatedResponePage({
   params,
   searchParams,
 }: {
@@ -18,9 +18,9 @@ export default async function CreateAutomatedResponePage({
 
   return (
     <CreateAutomatedResponseForm
-      basePath="automated-responses"
+      basePath="page-automated-responses"
       folderId={folderId}
-      type="inbound"
+      type="outbound"
       workspaceId={data.workspaceId}
     />
   )

@@ -1,9 +1,15 @@
 import { sql } from "drizzle-orm"
-import { boolean, index, pgTable, text } from "drizzle-orm/pg-core"
+import { boolean, index, pgEnum, pgTable, text } from "drizzle-orm/pg-core"
+import { automatedResponseTypes } from "../partials/automated-response"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { flowModel } from "./flow"
 import { folderModel } from "./folder"
 import { workspaceModel } from "./workspace"
+
+export const automatedResponseType = pgEnum(
+  "automatedResponseType",
+  automatedResponseTypes.options as [string, ...string[]],
+)
 
 export const automatedResponseModel = pgTable(
   "AutomatedResponse",
@@ -26,6 +32,7 @@ export const automatedResponseModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    type: automatedResponseType().default("inbound").notNull(),
   },
   (table) => [
     index("AutomatedResponse_workspaceId_idx").using(

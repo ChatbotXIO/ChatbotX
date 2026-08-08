@@ -9,3 +9,5 @@ export const automatedResponseService = {
   enqueueFlowAction,
   process: processPendingMessages,
 }
+
+export { replyByOutboundAutomatedResponse } from "./process-outbound-message"

@@ -1,3 +1,4 @@
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -21,7 +22,7 @@ export const listAutomatedResponsesSearchParams = createSearchParamsCache({
 
 export type ListAutomatedResponsesRequest = Awaited<
   ReturnType<typeof listAutomatedResponsesSearchParams.parse>
-> & { workspaceId: string }
+> & { workspaceId: string; type: AutomatedResponseType }
 
 export const findAutomatedResponseRequest = z.object({
   workspaceId: zodBigintAsString(),

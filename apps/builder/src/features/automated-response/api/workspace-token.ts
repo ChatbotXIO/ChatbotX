@@ -25,6 +25,7 @@ const listKeywordsWorkspaceTokenAPI = workspaceTokenAuthAPI
   .handler(async ({ context }) => {
     const { data } = await automatedResponseService.list({
       workspaceId: context.workspace.id,
+      type: "inbound",
       page: 1,
       perPage: maxPerPage,
       sort: [{ id: "createdAt", desc: true }],

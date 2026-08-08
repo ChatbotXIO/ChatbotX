@@ -1,5 +1,3 @@
-import { trackingResponseTypes } from "@chatbotx.io/analytics"
-import { db } from "@chatbotx.io/database/client"
 import {
   createMessageRepository,
   getSafeSinceTime,
@@ -9,17 +7,9 @@ import type {
   ConversationModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { simpleQueue } from "@chatbotx.io/redis"
-import { contactVariableService } from "@chatbotx.io/variables"
-import {
-  ChatJobAction,
-  chatQueue,
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
-import { keywordMatchesText } from "./keyword-match"
+import { dispatchAutomatedResponseReply } from "./dispatch-reply"
 import { logger } from "./lib/logger"
 import { automatedResponseService } from "./utils"
 
@@ -89,80 +79,26 @@ const replyByAutomatedResponse = async (props: {
   const allAutomatedResponses = await automatedResponseService.getAll(
     conversation.workspaceId,
   )
+  const inboundAutomatedResponses = allAutomatedResponses.filter(
+    (automatedResponse) => automatedResponse.type === "inbound",
+  )
 
-  let replied = false
   for (const message of messages) {
     if (!message.text) {
       continue
     }
-    const text = message.text.toLowerCase()
-    for (const automatedResponse of allAutomatedResponses) {
-      const matched = keywordMatchesText(automatedResponse.keywords, text)
-
-      if (!matched) {
-        continue
-      }
-
-      if (automatedResponse.flowId) {
-        const flow = await db.query.flowModel.findFirst({
-          where: {
-            id: automatedResponse.flowId,
-            currentVersionId: { isNotNull: true },
-          },
-        })
-        if (flow) {
-          await integrationQueue.add(IntegrationJobAction.sendFlow, {
-            type: IntegrationJobAction.sendFlow,
-            data: {
-              conversationId: conversation.id,
-              contactInboxId: contactInbox.id,
-              flowId: flow.id,
-              trackingContext: {
-                aiProvider: "none",
-                messageId: message.id,
-                conversationId: conversation.id,
-                responseType: "automated_response",
-                startTime: Date.now(),
-                triggerType: "contact_message_in",
-                workspaceId: conversation.workspaceId,
-              },
-              origin: webhookChannelOrigin(),
-            },
-          })
-          replied = true
-          return replied
-        }
-      } else if (automatedResponse.text) {
-        const variables = await contactVariableService.getAll({
-          contactId: conversation.contactId,
-          contactInbox,
-          conversation,
-        })
-        const stepMessage = await contactVariableService.replaceAll({
-          text: automatedResponse.text,
-          variables,
-        })
-        await chatQueue.add(ChatJobAction.sendChatMessage, {
-          type: ChatJobAction.sendChatMessage,
-          data: {
-            conversation,
-            text: stepMessage,
-            trackingContext: {
-              aiProvider: "none",
-              conversationId: conversation.id,
-              messageId: message.id,
-              responseType: trackingResponseTypes.enum.automated_response,
-              startTime: Date.now(),
-              triggerType: "contact_message_int",
-              workspaceId: conversation.workspaceId,
-            },
-          },
-        })
-        replied = true
-        return replied
-      }
+    const replied = await dispatchAutomatedResponseReply({
+      conversation,
+      contactInbox,
+      messageId: message.id,
+      text: message.text,
+      rules: inboundAutomatedResponses,
+      triggerType: "contact_message_in",
+    })
+    if (replied) {
+      return true
     }
   }
 
-  return replied
+  return false
 }

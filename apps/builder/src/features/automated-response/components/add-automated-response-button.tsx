@@ -7,7 +7,13 @@ import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
 
-export function AddAutomatedResponseButton() {
+type AddAutomatedResponseButtonProps = {
+  basePath: string
+}
+
+export function AddAutomatedResponseButton({
+  basePath,
+}: AddAutomatedResponseButtonProps) {
   const workspaceId = useWorkspaceId()
 
   const searchParams = useSearchParams()
@@ -16,7 +22,7 @@ export function AddAutomatedResponseButton() {
   return (
     <Link
       className={buttonVariants({ size: "sm" })}
-      href={`/space/${workspaceId}/automated-responses/create?${searchParams.toString()}`}
+      href={`/space/${workspaceId}/${basePath}/create?${searchParams.toString()}`}
     >
       <PlusIcon />
       {t("actions.createFeature", {

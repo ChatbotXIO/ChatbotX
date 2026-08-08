@@ -3368,7 +3368,18 @@
     }
   },
   "keywords": {
-    "title": "Từ khóa"
+    "title": "Từ khóa",
+    "tabs": {
+      "contact": "Liên hệ",
+      "page": "Trang"
+    },
+    "descriptions": {
+      "contactTitle": "Từ khoá Liên hệ",
+      "contact": "Tự động phản hồi khi khách hàng gửi tin nhắn chứa từ khoá đến workspace của bạn.",
+      "pageTitle": "Từ khoá Trang",
+      "page": "Tự động phản hồi khi bạn gửi tin nhắn chứa từ khoá đến khách hàng."
+    },
+    "pageWarning": "Nội dung tin nhắn chứa từ khoá cho trang có thể dẫn đến gửi tin nhắn cho khách lặp vô hạn. Hãy huỷ kích hoạt từ khoá cho trang ngay lập tức nếu bạn gặp phải trường hợp này!"
   },
   "triggers": {
     "title": "Kích hoạt"

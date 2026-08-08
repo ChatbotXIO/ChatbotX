@@ -3390,7 +3390,18 @@
     }
   },
   "keywords": {
-    "title": "Keywords"
+    "title": "Keywords",
+    "tabs": {
+      "contact": "Contact",
+      "page": "Page"
+    },
+    "descriptions": {
+      "contactTitle": "Contact keywords",
+      "contact": "Automatically reply when a contact sends a message containing a keyword to your workspace.",
+      "pageTitle": "Page keywords",
+      "page": "Automatically reply when you send a message containing a keyword to a contact."
+    },
+    "pageWarning": "Message content containing a Page keyword can cause messages to be sent to the customer in an infinite loop. Disable the Page keyword immediately if you encounter this situation!"
   },
   "triggers": {
     "title": "Triggers"

@@ -7,6 +7,7 @@ import {
   relationsFilterToSQL,
   sql,
 } from "@chatbotx.io/database/client"
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
@@ -35,6 +36,7 @@ export type FindAutomatedResponseRequest = {
 
 export type ListAutomatedResponsesRequest = {
   workspaceId: string
+  type: AutomatedResponseType
   folderId?: string | null
   page: number
   perPage: number
@@ -56,7 +58,7 @@ class AutomatedResponseService extends BaseService {
     })
   }
 
-  async findByKeyword(
+  async findByInboundKeyword(
     workspaceId: string,
     keyword: string,
   ): Promise<AutomatedResponseModel | undefined> {
@@ -66,6 +68,7 @@ class AutomatedResponseService extends BaseService {
       .where(
         and(
           eq(automatedResponseModel.workspaceId, workspaceId),
+          eq(automatedResponseModel.type, "inbound"),
           sql`${automatedResponseModel.keywords} @> ARRAY[${keyword}]::text[]`,
         ),
       )
@@ -89,6 +92,7 @@ class AutomatedResponseService extends BaseService {
   ): Promise<PaginatedResult<AutomatedResponseModel>> {
     const where = {
       workspaceId: input.workspaceId,
+      type: input.type,
       keywords: input.keyword
         ? { ilike: likeContains(input.keyword) }
         : undefined,
@@ -122,6 +126,7 @@ class AutomatedResponseService extends BaseService {
   async create(
     workspaceId: string,
     values: {
+      type: AutomatedResponseType
       text?: string | null
       flowId?: string | null
       folderId?: string | null
@@ -140,6 +145,7 @@ class AutomatedResponseService extends BaseService {
         flowId: values.flowId,
         folderId: values.folderId,
         keywords: values.keywords,
+        type: values.type,
       })
       .returning()
     await this.invalidateCache(workspaceId)

@@ -45,6 +45,7 @@ export const ChatJobAction = {
   deleteChannelMessage: "deleteChannelMessage",
   editChannelMessage: "editChannelMessage",
   changeChannelMessageState: "changeChannelMessageState",
+  checkOutboundAutomatedResponse: "checkOutboundAutomatedResponse",
 } as const
 
 export type ChatJobSendChannelMessage = {
@@ -199,6 +200,18 @@ export type ChatJobChangeChannelMessageState = {
   }
 }
 
+export type ChatJobCheckOutboundAutomatedResponse = {
+  type: typeof ChatJobAction.checkOutboundAutomatedResponse
+  data: {
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
+    message: {
+      id: string
+      text: string
+    }
+  }
+}
+
 export type ChatJobData =
   | ChatJobSendChannelMessage
   | ChatJobSendFlowStep
@@ -211,6 +224,7 @@ export type ChatJobData =
   | ChatJobDeleteChannelMessage
   | ChatJobEditChannelMessage
   | ChatJobChangeChannelMessageState
+  | ChatJobCheckOutboundAutomatedResponse
 
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"

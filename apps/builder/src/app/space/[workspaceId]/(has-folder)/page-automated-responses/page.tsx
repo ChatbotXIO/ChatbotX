@@ -7,7 +7,7 @@ import { AutomatedResponsesTable } from "@/features/automated-response/automated
 import { listAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schema/query"
 
-export default async function AutomatedResponesPage(props: {
+export default async function PageAutomatedResponsesPage(props: {
   params: Promise<{ workspaceId: string }>
   searchParams: Promise<SearchParams>
 }) {
@@ -23,7 +23,7 @@ export default async function AutomatedResponesPage(props: {
   const promises = Promise.all([
     listAutomatedResponses({
       ...search,
-      type: "inbound",
+      type: "outbound",
       folderId,
       workspaceId,
     }),
@@ -32,9 +32,9 @@ export default async function AutomatedResponesPage(props: {
   return (
     <Suspense>
       <AutomatedResponsesTable
-        basePath="automated-responses"
+        basePath="page-automated-responses"
         promises={promises}
-        type="inbound"
+        type="outbound"
         workspaceId={workspaceId}
       />
     </Suspense>

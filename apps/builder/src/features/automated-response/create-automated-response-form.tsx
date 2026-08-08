@@ -1,5 +1,6 @@
 "use client"
 
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -25,12 +26,14 @@ import { createAutomatedResponseRequest, responseModes } from "./schema/action"
 type CreateAutomatedResponseFormProps = {
   workspaceId: string
   folderId: string | null
+  type: AutomatedResponseType
+  basePath: string
 }
 
 export function CreateAutomatedResponseForm(
   props: CreateAutomatedResponseFormProps,
 ) {
-  const { workspaceId, folderId } = props
+  const { workspaceId, folderId, type, basePath } = props
 
   const searchParams = useSearchParams()
 
@@ -45,7 +48,7 @@ export function CreateAutomatedResponseForm(
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    createAutomatedResponseAction.bind(null, workspaceId),
+    createAutomatedResponseAction.bind(null, workspaceId, type),
     zodResolver(createAutomatedResponseRequest),
     {
       actionProps: {
@@ -56,7 +59,7 @@ export function CreateAutomatedResponseForm(
             }),
           )
           router.push(
-            `/space/${workspaceId}/automated-responses?${searchParams.toString()}`,
+            `/space/${workspaceId}/${basePath}?${searchParams.toString()}`,
           )
         },
         onError: ({ error }) => {
@@ -204,9 +207,7 @@ export function CreateAutomatedResponseForm(
 
         <div className="flex justify-end gap-4">
           <Button
-            onClick={() =>
-              router.push(`/space/${workspaceId}/automated-responses`)
-            }
+            onClick={() => router.push(`/space/${workspaceId}/${basePath}`)}
             type="button"
             variant="ghost"
           >
