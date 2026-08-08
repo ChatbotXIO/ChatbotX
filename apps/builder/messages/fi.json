@@ -3379,7 +3379,18 @@
     "title": "Mukautetut kentät"
   },
   "keywords": {
-    "title": "Avainsanat"
+    "title": "Avainsanat",
+    "tabs": {
+      "contact": "Yhteystieto",
+      "page": "Sivu"
+    },
+    "descriptions": {
+      "contactTitle": "Yhteystiedon avainsanat",
+      "contact": "Vastaa automaattisesti, kun kontakti lähettää avainsanan sisältävän viestin työtilaasi.",
+      "pageTitle": "Sivun avainsanat",
+      "page": "Vastaa automaattisesti, kun lähetät avainsanan sisältävän viestin kontaktille."
+    },
+    "pageWarning": "Sivun avainsanan sisältävä viestisisältö voi johtaa viestien lähettämiseen asiakkaalle loputtomana silmukkana. Poista sivun avainsana käytöstä välittömästi, jos kohtaat tämän tilanteen!"
   },
   "triggers": {
     "title": "Käynnistimet"

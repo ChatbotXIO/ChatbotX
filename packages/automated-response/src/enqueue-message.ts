@@ -29,12 +29,15 @@ export const enqueueMessage = async (props: {
     const workspaceDelay = workspace?.smartResponseDelaySeconds
 
     if (isSmartResponseDelayOption(workspaceDelay)) {
-      const [keywordRules, aiAgent] = await Promise.all([
+      const [allAutomatedResponses, aiAgent] = await Promise.all([
         props.messageText
           ? automatedResponseService.getAll(props.workspaceId)
           : Promise.resolve([]),
         aiAgentService.findDefault(props.workspaceId),
       ])
+      const keywordRules = allAutomatedResponses.filter(
+        (rule) => rule.type === "inbound",
+      )
       const matchesKeyword = props.messageText
         ? matchesAnyKeywordRule(props.messageText, keywordRules)
         : false

@@ -1,5 +1,6 @@
 "use client"
 
+import type { FolderType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { FolderUpIcon } from "lucide-react"
@@ -13,11 +14,13 @@ import type { AutomatedResponseResource } from "./schema/resource"
 type AutomatedResponseTableToolbarActionsProps = {
   table: Table<AutomatedResponseResource>
   workspaceId: string
+  folderType: FolderType
 }
 
 export function AutomatedResponseTableToolbarActions({
   table,
   workspaceId,
+  folderType,
 }: AutomatedResponseTableToolbarActionsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -44,7 +47,7 @@ export function AutomatedResponseTableToolbarActions({
       />
       <ChangeFolderDialog
         currentFolderId={null}
-        folderType="automatedResponse"
+        folderType={folderType}
         modelIds={selectedRows.map((row) => row.original.id)}
         onOpenChange={setOpenChangeFolder}
         open={openChangeFolder}

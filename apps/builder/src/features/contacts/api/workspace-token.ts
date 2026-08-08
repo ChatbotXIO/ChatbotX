@@ -535,7 +535,7 @@ export const workspaceTokenAuthAPIs = {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
-      const autoReply = await automatedResponseService.findByKeyword(
+      const autoReply = await automatedResponseService.findByInboundKeyword(
         context.workspace.id,
         input.keyword,
       )

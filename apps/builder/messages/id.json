@@ -3379,7 +3379,18 @@
     "title": "Kolom Kustom"
   },
   "keywords": {
-    "title": "Kata Kunci"
+    "title": "Kata Kunci",
+    "tabs": {
+      "contact": "Kontak",
+      "page": "Halaman"
+    },
+    "descriptions": {
+      "contactTitle": "Kata kunci kontak",
+      "contact": "Balas otomatis saat kontak mengirim pesan yang berisi kata kunci ke workspace Anda.",
+      "pageTitle": "Kata kunci halaman",
+      "page": "Balas otomatis saat Anda mengirim pesan yang berisi kata kunci ke kontak."
+    },
+    "pageWarning": "Konten pesan yang berisi kata kunci Page dapat menyebabkan pesan terkirim ke pelanggan secara berulang tanpa henti. Segera nonaktifkan kata kunci Page jika Anda mengalami situasi ini!"
   },
   "triggers": {
     "title": "Pemicu"

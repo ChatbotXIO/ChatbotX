@@ -8,6 +8,7 @@ import {
   or,
 } from "@chatbotx.io/database/client"
 import {
+  automatedResponseTypeByFolderType,
   type FolderType,
   folderTypes,
   rootFolderId,
@@ -202,15 +203,28 @@ class FolderService extends BaseService {
     const { workspaceId, folderType, modelIds, newFolderId } = props
     const resourceModel = this.resolveResourceModel(folderType)
 
+    // automatedResponse and outboundAutomatedResponse both resolve to the
+    // same table above — scope by `type` too so a move can never smuggle an
+    // inbound rule into an outbound folder (or vice versa).
+    const expectedAutomatedResponseType =
+      automatedResponseTypeByFolderType[folderType]
+    const scopeConditions = and(
+      eq(resourceModel.workspaceId, workspaceId),
+      inArray(resourceModel.id, modelIds),
+      ...(expectedAutomatedResponseType
+        ? [
+            eq(
+              (resourceModel as typeof automatedResponseModel).type,
+              expectedAutomatedResponseType,
+            ),
+          ]
+        : []),
+    )
+
     const resources = await db
       .select({ id: resourceModel.id })
       .from(resourceModel)
-      .where(
-        and(
-          eq(resourceModel.workspaceId, workspaceId),
-          inArray(resourceModel.id, modelIds),
-        ),
-      )
+      .where(scopeConditions)
 
     if (!resources || resources.length === 0) {
       throw new ChatbotXException("Resource not found")
@@ -226,12 +240,7 @@ class FolderService extends BaseService {
     await db
       .update(resourceModel)
       .set({ folderId: resolvedFolderId })
-      .where(
-        and(
-          eq(resourceModel.workspaceId, workspaceId),
-          inArray(resourceModel.id, modelIds),
-        ),
-      )
+      .where(scopeConditions)
   }
 
   private resolveResourceModel(folderType: FolderType) {
@@ -243,6 +252,7 @@ class FolderService extends BaseService {
       case folderTypes.enum.customField:
         return customFieldModel
       case folderTypes.enum.automatedResponse:
+      case folderTypes.enum.outboundAutomatedResponse:
         return automatedResponseModel
       case folderTypes.enum.sequence:
         return sequenceModel

@@ -3379,7 +3379,18 @@
     "title": "Brugerdefineret Felter"
   },
   "keywords": {
-    "title": "Nøgleord"
+    "title": "Nøgleord",
+    "tabs": {
+      "contact": "Kontakt",
+      "page": "Side"
+    },
+    "descriptions": {
+      "contactTitle": "Kontakt-nøgleord",
+      "contact": "Svar automatisk, når en kontakt sender en besked med et nøgleord til dit workspace.",
+      "pageTitle": "Side-nøgleord",
+      "page": "Svar automatisk, når du sender en besked med et nøgleord til en kontakt."
+    },
+    "pageWarning": "Beskedindhold med et sidenøgleord kan medføre, at der sendes beskeder til kunden i en uendelig løkke. Deaktiver sidenøgleordet med det samme, hvis du oplever dette!"
   },
   "triggers": {
     "title": "Udløsere"

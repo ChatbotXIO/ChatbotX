@@ -3379,7 +3379,18 @@
     "title": "Özel Alanlar"
   },
   "keywords": {
-    "title": "Anahtar Kelimeler"
+    "title": "Anahtar Kelimeler",
+    "tabs": {
+      "contact": "Kişi",
+      "page": "Sayfa"
+    },
+    "descriptions": {
+      "contactTitle": "Kişi anahtar kelimeleri",
+      "contact": "Bir kişi çalışma alanınıza anahtar kelime içeren bir mesaj gönderdiğinde otomatik olarak yanıtla.",
+      "pageTitle": "Sayfa anahtar kelimeleri",
+      "page": "Siz bir kişiye anahtar kelime içeren bir mesaj gönderdiğinizde otomatik olarak yanıtla."
+    },
+    "pageWarning": "Sayfa anahtar kelimesi içeren mesaj içeriği, müşteriye sonsuz döngüde mesaj gönderilmesine neden olabilir. Bu durumla karşılaşırsanız Sayfa anahtar kelimesini hemen devre dışı bırakın!"
   },
   "triggers": {
     "title": "Tetikleyiciler"

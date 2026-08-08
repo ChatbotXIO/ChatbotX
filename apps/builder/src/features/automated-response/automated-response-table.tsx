@@ -1,5 +1,9 @@
 "use client"
 
+import {
+  type AutomatedResponseType,
+  automatedResponseFolderTypeByType,
+} from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -45,16 +49,22 @@ import type { AutomatedResponseResource } from "./schema/resource"
 
 type AutomatedResponseTableProps = {
   workspaceId: string
+  basePath: string
+  type: AutomatedResponseType
   promises: Promise<[Awaited<ReturnType<typeof listAutomatedResponses>>]>
 }
 
 export function AutomatedResponsesTable({
   workspaceId,
+  basePath,
+  type,
   promises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  const folderType = automatedResponseFolderTypeByType[type]
 
   const [{ data, pageCount }] = use(promises)
   const { flows: allFlows } = useFlowStore((state) => state)
@@ -103,7 +113,7 @@ export function AutomatedResponsesTable({
             <div className="max-w-[200px] truncate">
               <Link
                 className="truncate"
-                href={`/space/${workspaceId}/automated-responses/${id}/edit?${searchParams.toString()}`}
+                href={`/space/${workspaceId}/${basePath}/${id}/edit?${searchParams.toString()}`}
                 title={keywords.join(",")}
               >
                 {keywords.join(",")}
@@ -203,7 +213,7 @@ export function AutomatedResponsesTable({
               <DropdownMenuItem
                 render={
                   <Link
-                    href={`/space/${workspaceId}/automated-responses/${row.original.id}/edit`}
+                    href={`/space/${workspaceId}/${basePath}/${row.original.id}/edit`}
                   >
                     <PencilIcon />
                     {t("actions.edit")}
@@ -231,7 +241,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [workspaceId, t, allFlows, searchParams],
+    [workspaceId, basePath, t, allFlows, searchParams],
   )
 
   const { table } = useDataTable({
@@ -258,10 +268,11 @@ export function AutomatedResponsesTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <AutomatedResponseTableToolbarActions
+              folderType={folderType}
               table={table}
               workspaceId={workspaceId}
             />
-            <AddAutomatedResponseButton />
+            <AddAutomatedResponseButton basePath={basePath} />
           </DataTableToolbar>
         </DataTable>
 
@@ -280,7 +291,7 @@ export function AutomatedResponsesTable({
 
         <ChangeFolderDialog
           currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="automatedResponse"
+          folderType={folderType}
           modelIds={
             rowAction?.row.original ? [rowAction?.row.original.id] : null
           }

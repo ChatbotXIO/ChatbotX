@@ -3379,7 +3379,18 @@
     "title": "Campos personalizados"
   },
   "keywords": {
-    "title": "Palabras clave"
+    "title": "Palabras clave",
+    "tabs": {
+      "contact": "Contacto",
+      "page": "Página"
+    },
+    "descriptions": {
+      "contactTitle": "Palabras clave de contacto",
+      "contact": "Responde automáticamente cuando un contacto envía un mensaje que contiene una palabra clave a tu workspace.",
+      "pageTitle": "Palabras clave de página",
+      "page": "Responde automáticamente cuando envías un mensaje que contiene una palabra clave a un contacto."
+    },
+    "pageWarning": "El contenido de un mensaje con una palabra clave de Página puede provocar el envío de mensajes al cliente en un bucle infinito. ¡Desactiva la palabra clave de Página de inmediato si esto ocurre!"
   },
   "triggers": {
     "title": "Desencadenadores"

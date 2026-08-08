@@ -2674,7 +2674,20 @@
   },
   "auditLogs": { "title": "Audit-Protokolle" },
   "customFields": { "title": "Benutzerdefinierte Felder" },
-  "keywords": { "title": "Schlüsselwörter" },
+  "keywords": {
+    "title": "Schlüsselwörter",
+    "tabs": {
+      "contact": "Kontakt",
+      "page": "Seite"
+    },
+    "descriptions": {
+      "contactTitle": "Kontakt-Schlüsselwörter",
+      "contact": "Automatische Antwort, wenn ein Kontakt eine Nachricht mit einem Schlüsselwort an Ihren Workspace sendet.",
+      "pageTitle": "Seiten-Schlüsselwörter",
+      "page": "Automatische Antwort, wenn Sie eine Nachricht mit einem Schlüsselwort an einen Kontakt senden."
+    },
+    "pageWarning": "Nachrichteninhalte mit einem Seiten-Schlüsselwort können dazu führen, dass Nachrichten in einer Endlosschleife an den Kunden gesendet werden. Deaktivieren Sie das Seiten-Schlüsselwort sofort, wenn dies bei Ihnen auftritt!"
+  },
   "triggers": { "title": "Trigger" },
   "users": { "title": "Benutzer" },
   "sequences": {

@@ -1,6 +1,10 @@
 "use server"
 
 import { automatedResponseService, flowService } from "@chatbotx.io/business"
+import {
+  automatedResponseFolderTypeByType,
+  automatedResponseTypes,
+} from "@chatbotx.io/database/partials"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
@@ -8,11 +12,11 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import { createAutomatedResponseRequest } from "../schema/action"
 
 export const createAutomatedResponseAction = workspaceActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
+  .bindArgsSchemas([...workspaceIdrequestParams, automatedResponseTypes])
   .inputSchema(createAutomatedResponseRequest)
   .action(async (props) => {
     const {
-      bindArgsParsedInputs: [workspaceId],
+      bindArgsParsedInputs: [workspaceId, type],
       parsedInput,
     } = props
 
@@ -20,7 +24,7 @@ export const createAutomatedResponseAction = workspaceActionClient
       await ensureFolderIsExists(
         parsedInput.folderId,
         workspaceId,
-        "automatedResponse",
+        automatedResponseFolderTypeByType[type],
       )
     }
 
@@ -43,6 +47,7 @@ export const createAutomatedResponseAction = workspaceActionClient
     }
 
     await automatedResponseService.create(workspaceId, {
+      type,
       text,
       flowId,
       folderId: parsedInput.folderId,

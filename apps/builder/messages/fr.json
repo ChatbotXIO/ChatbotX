@@ -2705,7 +2705,20 @@
   },
   "auditLogs": { "title": "Journaux d’audit" },
   "customFields": { "title": "Champs personnalisés" },
-  "keywords": { "title": "Mots-clés" },
+  "keywords": {
+    "title": "Mots-clés",
+    "tabs": {
+      "contact": "Contact",
+      "page": "Page"
+    },
+    "descriptions": {
+      "contactTitle": "Mots-clés de contact",
+      "contact": "Répond automatiquement lorsqu'un contact envoie un message contenant un mot-clé à votre workspace.",
+      "pageTitle": "Mots-clés de page",
+      "page": "Répond automatiquement lorsque vous envoyez un message contenant un mot-clé à un contact."
+    },
+    "pageWarning": "Un message contenant un mot-clé de Page peut entraîner l'envoi de messages au contact en boucle infinie. Désactivez immédiatement le mot-clé de Page si cela se produit !"
+  },
   "triggers": { "title": "Déclencheurs" },
   "users": { "title": "Utilisateurs" },
   "sequences": {
