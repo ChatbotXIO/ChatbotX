@@ -284,16 +284,19 @@ export function ButtonEditorDialog() {
     updateNodeData(activeNode.id, activeNode.data)
 
     const currentButtonId = values.id as string
-    if (values.buttonType === buttonTypes.enum.startAnotherNode) {
+    // `beforeStep.stepType === startAnotherNode` covers buttonType
+    // startAnotherNode itself as well as sendMessage/performAction, which
+    // also always carry a startAnotherNode beforeStep (button.ts) — for all
+    // three, beforeStep.nodeId is a mirror of where the button's own edge
+    // leads (flow.ts skips executing it and follows the edge instead), so
+    // any of them retargeting the combobox must move the edge too.
+    if (values.beforeStep?.stepType === stepTypes.enum.startAnotherNode) {
       const targetNodeId = values.beforeStep.nodeId
 
       if (currentButtonId && targetNodeId) {
         refreshEdge(currentButtonId, activeNode.id, targetNodeId)
       }
-    } else if (
-      currentButtonId &&
-      values.beforeStep?.stepType !== stepTypes.enum.startAnotherNode
-    ) {
+    } else if (currentButtonId) {
       // Any action besides a node jump (openWebsite, startExternalFlow,
       // startExternalNode, ...) fully handles its own routing on the worker
       // side. Clear a leftover edge from a previous startAnotherNode/
