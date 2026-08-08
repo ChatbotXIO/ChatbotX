@@ -19,8 +19,8 @@ import {
   emitTagRemoved,
 } from "@chatbotx.io/events"
 import type {
+  AddContactNotesStepSchema,
   AddContactTagStepSchema,
-  AddNotesStepSchema,
   ClearCustomFieldStepSchema,
   DeleteContactStepSchema,
   MarkEmailVerifiedStepSchema,
@@ -86,10 +86,10 @@ export async function clearContactCustomField({
 export async function addContactNotes({
   conversation,
   step,
-}: ExecuteStepProps<AddNotesStepSchema>) {
+}: ExecuteStepProps<AddContactNotesStepSchema>) {
   await db.insert(contactNoteModel).values({
     contactId: conversation.contactId,
-    text: step.text,
+    text: step.content,
     id: createId(),
   })
 }
