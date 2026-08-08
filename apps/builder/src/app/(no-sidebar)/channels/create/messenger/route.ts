@@ -27,7 +27,7 @@ import {
  * guards itself since it's a public GET endpoint, not just an internal helper.
  */
 export async function GET(req: NextRequest) {
-  const workspaceId = req.nextUrl.searchParams.get("workspaceId")
+  const workspaceId = req.nextUrl.searchParams.get("workspaceId") ?? undefined
 
   if (workspaceId) {
     await requireWorkspacePermission(workspaceId, "superAdmin")
