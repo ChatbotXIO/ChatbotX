@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { selectFacebookAccountAction } from "../actions/select-account-facebook.action"
 import { selectFacebookAccountRequest } from "../schemas/action-facebook"
 
@@ -20,6 +21,11 @@ type SelectFacebookAccountsProps = {
   accounts: InstagramAccount[]
   workspaceId: string
   version?: string
+}
+
+type InstagramCoexistTrigger = {
+  integrationId: string
+  resolvedWorkspaceId: string
 }
 
 export function SelectFacebookAccounts({
@@ -30,8 +36,21 @@ export function SelectFacebookAccounts({
   const t = useTranslations()
   const router = useRouter()
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [coexist, setCoexist] = useState<InstagramCoexistTrigger | null>(null)
 
   const selected = accounts[selectedIndex]
+
+  const navigateAfterConnect = (
+    resolvedWorkspaceId: string | null | undefined,
+  ) => {
+    if (workspaceId && resolvedWorkspaceId) {
+      router.push(
+        `/space/${resolvedWorkspaceId}/settings/channels?channel=instagram`,
+      )
+    } else {
+      router.push("/")
+    }
+  }
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     selectFacebookAccountAction,
@@ -51,13 +70,14 @@ export function SelectFacebookAccounts({
       },
       actionProps: {
         onSuccess: ({ data }) => {
-          if (workspaceId) {
-            router.push(
-              `/space/${data?.workspaceId}/settings/channels?channel=instagram`,
-            )
-          } else {
-            router.push("/")
+          if (data?.integrationId && data.workspaceId) {
+            setCoexist({
+              integrationId: data.integrationId,
+              resolvedWorkspaceId: data.workspaceId,
+            })
+            return
           }
+          navigateAfterConnect(data?.workspaceId)
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -83,63 +103,77 @@ export function SelectFacebookAccounts({
   }
 
   return (
-    <Form {...form}>
-      <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <div className="hidden">
-          <InputField name="igId" type="hidden" />
-          <InputField name="pageAccessToken" type="hidden" />
-          <InputField name="igName" type="hidden" />
-          <InputField name="igUsername" type="hidden" />
-          <InputField name="pageId" type="hidden" />
-          <InputField name="version" type="hidden" />
-        </div>
+    <>
+      <Form {...form}>
+        <form className="space-y-6" onSubmit={handleSubmitWithAction}>
+          <div className="hidden">
+            <InputField name="igId" type="hidden" />
+            <InputField name="pageAccessToken" type="hidden" />
+            <InputField name="igName" type="hidden" />
+            <InputField name="igUsername" type="hidden" />
+            <InputField name="pageId" type="hidden" />
+            <InputField name="version" type="hidden" />
+          </div>
 
-        <div className="space-y-2">
-          {accounts.map((account, index) => (
-            <button
-              className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-start transition-colors ${
-                selectedIndex === index
-                  ? "border-primary bg-primary/5"
-                  : "hover:bg-muted/50"
-              }`}
-              key={account.id}
-              onClick={() => handleSelectAccount(index)}
-              type="button"
+          <div className="space-y-2">
+            {accounts.map((account, index) => (
+              <button
+                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-start transition-colors ${
+                  selectedIndex === index
+                    ? "border-primary bg-primary/5"
+                    : "hover:bg-muted/50"
+                }`}
+                key={account.id}
+                onClick={() => handleSelectAccount(index)}
+                type="button"
+              >
+                {account.profile_picture_url && (
+                  <Image
+                    alt={account.name}
+                    className="size-12 rounded-full object-cover"
+                    height={48}
+                    src={account.profile_picture_url}
+                    width={48}
+                  />
+                )}
+                <div>
+                  <p className="font-medium">{account.name}</p>
+                  <p className="text-muted-foreground text-sm">
+                    @{account.username}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Link
+              className={buttonVariants({ size: "sm", variant: "ghost" })}
+              href={`/space/${workspaceId}/settings/channels?channel=instagram`}
             >
-              {account.profile_picture_url && (
-                <Image
-                  alt={account.name}
-                  className="size-12 rounded-full object-cover"
-                  height={48}
-                  src={account.profile_picture_url}
-                  width={48}
-                />
+              {t("actions.cancel")}
+            </Link>
+            <Button disabled={form.formState.isSubmitting} type="submit">
+              {form.formState.isSubmitting && (
+                <Loader2Icon className="animate-spin" />
               )}
-              <div>
-                <p className="font-medium">{account.name}</p>
-                <p className="text-muted-foreground text-sm">
-                  @{account.username}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <Link
-            className={buttonVariants({ size: "sm", variant: "ghost" })}
-            href={`/space/${workspaceId}/settings/channels?channel=instagram`}
-          >
-            {t("actions.cancel")}
-          </Link>
-          <Button disabled={form.formState.isSubmitting} type="submit">
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
-            {t("actions.continue")}
-          </Button>
-        </div>
-      </form>
-    </Form>
+              {t("actions.continue")}
+            </Button>
+          </div>
+        </form>
+      </Form>
+      {coexist && (
+        <CoexistPopup
+          channel="instagram"
+          integrationId={coexist.integrationId}
+          onDone={() => {
+            const resolvedWorkspaceId = coexist.resolvedWorkspaceId
+            setCoexist(null)
+            navigateAfterConnect(resolvedWorkspaceId)
+          }}
+          workspaceId={coexist.resolvedWorkspaceId}
+        />
+      )}
+    </>
   )
 }

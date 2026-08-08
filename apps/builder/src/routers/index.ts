@@ -25,6 +25,7 @@ import { integrationActiveCampaignAPI } from "@/features/integration-active-camp
 import { integrationDripAPI } from "@/features/integration-drip/api"
 import { integrationFacebookAdsAPI } from "@/features/integration-facebook-ads/api"
 import { integrationGetResponseAPI } from "@/features/integration-get-response/api"
+import { integrationInstagramAPIs } from "@/features/integration-instagram/api"
 import { integrationKlaviyoAPI } from "@/features/integration-klaviyo/api"
 import { integrationMailchimpAPI } from "@/features/integration-mailchimp/api"
 import { integrationMailerLiteAPI } from "@/features/integration-mailer-lite/api"
@@ -76,6 +77,7 @@ export const router = {
   integrationFacebookAdsAPI,
   integrationDripAPI,
   integrationGetResponseAPI,
+  integrationInstagramAPIs,
   integrationKlaviyoAPI,
   integrationMailchimpAPI,
   integrationMailerLiteAPI,

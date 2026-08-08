@@ -2696,6 +2696,7 @@
     "title": "Synkronoidaanko nykyiset yhteystiedot ja keskusteluhistoria?",
     "descriptionWhatsapp": "Kun toiminto on käytössä, yhteystiedot ja enintään kuuden kuukauden keskusteluhistoria tuodaan tästä WhatsApp-numerosta.",
     "descriptionMessenger": "Kun toiminto on käytössä, nykyiset Messenger-yhteystiedot ja enintään kolmen kuukauden keskusteluhistoria tuodaan tältä sivulta.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Ota synkronointi käyttöön",
     "decline": "Älä synkronoi",
     "billingNote": "Suurten sivujen käsittely voi kestää useita tunteja.",

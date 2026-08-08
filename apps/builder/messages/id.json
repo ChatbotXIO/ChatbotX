@@ -2696,6 +2696,7 @@
     "title": "Sinkronkan kontak dan riwayat obrolan yang sudah ada?",
     "descriptionWhatsapp": "Jika diaktifkan, kontak dan riwayat obrolan hingga 6 bulan akan diimpor dari nomor WhatsApp ini.",
     "descriptionMessenger": "Jika diaktifkan, kontak Messenger dan riwayat percakapan hingga 3 bulan akan diimpor dari Halaman ini.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Aktifkan sinkronisasi",
     "decline": "Jangan sinkronkan",
     "billingNote": "Halaman besar mungkin memerlukan beberapa jam untuk selesai.",

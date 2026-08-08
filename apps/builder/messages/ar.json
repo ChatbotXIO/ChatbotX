@@ -2703,6 +2703,7 @@
     "title": "هل تريد مزامنة جهات الاتصال وسجل الدردشة الحاليين؟",
     "descriptionWhatsapp": "عند التفعيل، سيستورد ChatbotX جهات الاتصال وما يصل إلى 6 أشهر من سجل الدردشة من رقم WhatsApp هذا.",
     "descriptionMessenger": "عند التفعيل، سيستورد ChatbotX جهات اتصال Messenger الحالية وما يصل إلى 3 أشهر من سجل المحادثات من هذه الصفحة.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "تفعيل المزامنة",
     "decline": "عدم المزامنة",
     "billingNote": "قد تستغرق الصفحات الكبيرة عدة ساعات حتى تكتمل.",

@@ -2696,6 +2696,7 @@
     "title": "Mevcut kişiler ve sohbet geçmişi senkronize edilsin mi?",
     "descriptionWhatsapp": "Etkinleştirildiğinde, bu WhatsApp numarasından kişiler ve en fazla 6 aylık sohbet geçmişi içe aktarılacaktır.",
     "descriptionMessenger": "Etkinleştirildiğinde, mevcut Messenger kişileri ve bu Sayfadan en fazla 3 aylık konuşma geçmişi içe aktarılacaktır.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Senkronizasyonu etkinleştir",
     "decline": "Senkronize etme",
     "billingNote": "Büyük sayfaların tamamlanması birkaç saat sürebilir.",

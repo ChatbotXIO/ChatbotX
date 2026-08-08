@@ -2680,6 +2680,7 @@
     "title": "既存の連絡先とチャット履歴を同期しますか？",
     "descriptionWhatsapp": "有効にすると、このWhatsApp番号から連絡先と最大6か月分のチャット履歴がインポートされます。",
     "descriptionMessenger": "有効にすると、このページから既存のMessenger連絡先と最大3か月分の会話履歴がインポートされます。",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "同期を有効化",
     "decline": "同期しない",
     "billingNote": "規模の大きいページでは、完了までに数時間かかる場合があります。",

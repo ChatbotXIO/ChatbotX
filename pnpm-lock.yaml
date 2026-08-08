@@ -1097,6 +1097,9 @@ importers:
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
+      '@chatbotx.io/integration-instagram':
+        specifier: workspace:*
+        version: link:../instagram
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../../packages/logger

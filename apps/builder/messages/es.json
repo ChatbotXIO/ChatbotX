@@ -2696,6 +2696,7 @@
     "title": "Sync existing contactoos y chat history?",
     "descriptionWhatsapp": "When activado, contactoos y up un 6 months de chat history se be imported desde este WhatsApp number.",
     "descriptionMessenger": "When activado, existing Messenger contactoos y up un 3 months de conversación history se be imported desde este Página.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Activar sync",
     "decline": "No sincronizar",
     "billingNote": "Large páginas may take several horas un complete.",

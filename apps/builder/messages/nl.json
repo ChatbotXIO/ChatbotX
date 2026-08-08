@@ -2696,6 +2696,7 @@
     "title": "Bestaande contacten en chatgeschiedenis synchroniseren?",
     "descriptionWhatsapp": "Wanneer dit is ingeschakeld, worden contacten en maximaal 6 maanden chatgeschiedenis van dit WhatsApp-nummer geïmporteerd.",
     "descriptionMessenger": "Wanneer dit is ingeschakeld, worden bestaande Messenger-contacten en maximaal 3 maanden gespreksgeschiedenis van deze pagina geïmporteerd.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Synchronisatie inschakelen",
     "decline": "Niet synchroniseren",
     "billingNote": "Bij grote pagina's kan dit enkele uren duren.",

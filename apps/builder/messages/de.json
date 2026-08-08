@@ -2058,6 +2058,7 @@
     "title": "Bestehende Kontakte und Chatverlauf synchronisieren?",
     "descriptionWhatsapp": "Wenn aktiviert, werden Kontakte und bis zu 6 Monate Chatverlauf von dieser WhatsApp-Nummer importiert.",
     "descriptionMessenger": "Wenn aktiviert, werden bestehende Messenger-Kontakte und bis zu 3 Monate Unterhaltungsverlauf von dieser Seite importiert.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Synchronisierung aktivieren",
     "decline": "Nicht synchronisieren",
     "billingNote": "Bei großen Seiten kann der Vorgang mehrere Stunden dauern.",

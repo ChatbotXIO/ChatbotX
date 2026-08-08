@@ -8,8 +8,11 @@ const cancelPendingDispatchesForWorkspaceMock = vi.fn()
 const removeDispatchesFromScheduleMock = vi.fn()
 const cancelSmartDelaysForWorkspaceMock = vi.fn()
 const loggerWarnMock = vi.fn()
+const listWithIntegrationsByWorkspaceMock = vi.fn()
+const tearDownForIntegrationMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
   db: {
     transaction: transactionMock,
   },
@@ -37,7 +40,14 @@ vi.mock("../src/workspace-lifecycle/smart-delay-cleanup", () => ({
 
 vi.mock("../src/inbox/service", () => ({
   inboxService: {
-    listWithIntegrationsByWorkspace: vi.fn(),
+    disconnect: vi.fn(),
+    listWithIntegrationsByWorkspace: listWithIntegrationsByWorkspaceMock,
+  },
+}))
+
+vi.mock("../src/coexist/service", () => ({
+  coexistService: {
+    tearDownForIntegration: tearDownForIntegrationMock,
   },
 }))
 
@@ -79,6 +89,8 @@ beforeEach(() => {
     order.push("smart-delays")
     return Promise.resolve(7)
   })
+  listWithIntegrationsByWorkspaceMock.mockResolvedValue([])
+  tearDownForIntegrationMock.mockResolvedValue(undefined)
 })
 
 test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis entries after commit", async () => {
@@ -152,4 +164,72 @@ test("freezeWorkspaceRuntime does not throw when smart-delay cancellation fails"
     workspaceLifecycleService.freezeWorkspaceRuntime("workspace-1"),
   ).resolves.toBeUndefined()
   expect(loggerWarnMock).toHaveBeenCalledOnce()
+})
+
+test("disconnectWorkspaceChannels tears down active native Instagram coexist runs", async () => {
+  const deleteWhereMock = vi.fn().mockResolvedValue(undefined)
+  const deleteMock = vi.fn(() => ({ where: deleteWhereMock }))
+  const tx = { delete: deleteMock }
+  listWithIntegrationsByWorkspaceMock.mockResolvedValue([
+    {
+      id: "inbox-ig-1",
+      channel: "instagram",
+      workspaceId: "workspace-1",
+      integrationInstagram: {
+        id: "integration-ig-1",
+        auth: { tokens: { accessToken: "token" } },
+        type: "instagram",
+      },
+    },
+  ])
+
+  const { workspaceLifecycleService } = await import(
+    "../src/workspace-lifecycle/service"
+  )
+
+  await workspaceLifecycleService.disconnectWorkspaceChannels({
+    workspaceId: "workspace-1",
+    ownerId: "owner-1",
+    teardownLevel: "disconnect",
+    tx: tx as never,
+  })
+
+  expect(tearDownForIntegrationMock).toHaveBeenCalledWith({
+    workspaceId: "workspace-1",
+    integrationId: "integration-ig-1",
+    channel: "instagram",
+    currentError: "Integration disconnected",
+    tx,
+  })
+})
+
+test("disconnectWorkspaceChannels does not apply native coexist teardown to instagram-facebook", async () => {
+  const deleteWhereMock = vi.fn().mockResolvedValue(undefined)
+  const deleteMock = vi.fn(() => ({ where: deleteWhereMock }))
+  const tx = { delete: deleteMock }
+  listWithIntegrationsByWorkspaceMock.mockResolvedValue([
+    {
+      id: "inbox-igfb-1",
+      channel: "instagram",
+      workspaceId: "workspace-1",
+      integrationInstagram: {
+        id: "integration-igfb-1",
+        auth: { tokens: { accessToken: "token" } },
+        type: "facebook",
+      },
+    },
+  ])
+
+  const { workspaceLifecycleService } = await import(
+    "../src/workspace-lifecycle/service"
+  )
+
+  await workspaceLifecycleService.disconnectWorkspaceChannels({
+    workspaceId: "workspace-1",
+    ownerId: "owner-1",
+    teardownLevel: "disconnect",
+    tx: tx as never,
+  })
+
+  expect(tearDownForIntegrationMock).not.toHaveBeenCalled()
 })

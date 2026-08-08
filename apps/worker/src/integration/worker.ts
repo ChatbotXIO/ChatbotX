@@ -19,6 +19,7 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
+import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
 import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
 import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
@@ -249,6 +250,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.coexistMessengerSync: {
             await coexistMessengerSync(job.data.data)
+            return
+          }
+          case IntegrationJobAction.coexistInstagramSync: {
+            await coexistInstagramSync(job.data.data)
             return
           }
           case IntegrationJobAction.coexistAttachmentDownload: {

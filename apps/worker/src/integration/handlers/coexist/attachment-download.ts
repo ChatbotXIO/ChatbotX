@@ -1,7 +1,7 @@
 import { extname } from "node:path"
 
-import { buildContext, type IntegrationContext } from "@chatbotx.io/business"
-import { db, sql } from "@chatbotx.io/database/client"
+import { buildContext, coexistService } from "@chatbotx.io/business"
+import { db } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
   getWhatsappClient,
@@ -132,37 +132,38 @@ const readBodyWithCap = async (
   return out.buffer
 }
 
-const downloadMessengerMedia = async (
-  url: string,
-  accessToken: string,
-  fallbackMime: string,
-): Promise<DownloadedMedia> => {
-  const response = await fetch(url, {
+const downloadBearerUrlMedia = async (props: {
+  url: string
+  accessToken: string
+  fallbackMime: string
+  label: string
+}): Promise<DownloadedMedia> => {
+  const response = await fetch(props.url, {
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${props.accessToken}`,
       "User-Agent": "node",
     },
     signal: AbortSignal.timeout(30_000),
   })
   if (!(response.ok && response.body)) {
     throw new SdkException(
-      `[coexist-attachment] Messenger fetch failed: ${response.status} ${response.statusText}`,
+      `[coexist-attachment] ${props.label} fetch failed: ${response.status} ${response.statusText}`,
     )
   }
-  const bytes = await readBodyWithCap(response, "Messenger attachment")
+  const bytes = await readBodyWithCap(response, `${props.label} attachment`)
   return {
     bytes,
-    mimeType: response.headers.get("content-type") ?? fallbackMime,
+    mimeType: response.headers.get("content-type") ?? props.fallbackMime,
     size: bytes.byteLength,
   }
 }
 
 const downloadWhatsappMedia = async (
   mediaId: string,
-  ctx: IntegrationContext<WhatsappAuthValue>,
+  auth: WhatsappAuthValue,
   fallbackMime: string,
 ): Promise<DownloadedMedia> => {
-  const client = getWhatsappClient(ctx.auth)
+  const client = getWhatsappClient(auth)
   const meta = await client.retrieveMedia(mediaId)
   if (!("url" in meta && "mime_type" in meta)) {
     throw new SdkException(
@@ -171,7 +172,7 @@ const downloadWhatsappMedia = async (
   }
   const response = await fetch(meta.url, {
     headers: {
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      Authorization: `Bearer ${auth.tokens.accessToken}`,
       "User-Agent": "node",
     },
     signal: AbortSignal.timeout(30_000),
@@ -189,21 +190,52 @@ const downloadWhatsappMedia = async (
   }
 }
 
-const loadIntegrationRow = async (
-  channel: "messenger" | "whatsapp",
-  integrationId: string,
-): Promise<{ id: string; inboxId: string; auth: unknown } | null> => {
-  const table =
-    channel === "messenger" ? "IntegrationMessenger" : "IntegrationWhatsapp"
-  const result = await db.execute<{
-    id: string
-    inboxId: string
-    auth: unknown
-  }>(
-    sql`SELECT "id", "inboxId", "auth" FROM ${sql.identifier(table)} WHERE "id" = ${integrationId} LIMIT 1`,
-  )
-  return result.rows[0] ?? null
-}
+type AttachmentChannel =
+  IntegrationJobCoexistAttachmentDownload["data"]["channel"]
+type BearerTokenAuth = { tokens: { accessToken: string } }
+type AttachmentDownloadContext = { auth: BearerTokenAuth }
+
+const mediaDownloaders = {
+  messenger: async (
+    originPath: string,
+    ctx: AttachmentDownloadContext,
+    fallbackMime: string,
+  ) =>
+    downloadBearerUrlMedia({
+      url: originPath,
+      accessToken: ctx.auth.tokens.accessToken,
+      fallbackMime,
+      label: "Messenger",
+    }),
+  instagram: async (
+    originPath: string,
+    ctx: AttachmentDownloadContext,
+    fallbackMime: string,
+  ) =>
+    downloadBearerUrlMedia({
+      url: originPath,
+      accessToken: ctx.auth.tokens.accessToken,
+      fallbackMime,
+      label: "Instagram",
+    }),
+  whatsapp: async (
+    originPath: string,
+    ctx: AttachmentDownloadContext,
+    fallbackMime: string,
+  ) =>
+    downloadWhatsappMedia(
+      originPath.slice(WA_MEDIA_PREFIX.length),
+      ctx.auth as WhatsappAuthValue,
+      fallbackMime,
+    ),
+} satisfies Record<
+  AttachmentChannel,
+  (
+    originPath: string,
+    ctx: AttachmentDownloadContext,
+    fallbackMime: string,
+  ) => Promise<DownloadedMedia>
+>
 
 /**
  * Mirror a Coexist historical attachment's bytes to object storage and
@@ -232,7 +264,11 @@ export const coexistAttachmentDownload = async (
     return
   }
 
-  const integrationRow = await loadIntegrationRow(channel, integrationId)
+  const integrationRow = await coexistService.findIntegrationForCoexist({
+    workspaceId,
+    integrationId,
+    channel,
+  })
   if (!integrationRow) {
     logger.warn(
       { channel, integrationId },
@@ -251,28 +287,17 @@ export const coexistAttachmentDownload = async (
 
   let media: DownloadedMedia
   try {
-    if (channel === "whatsapp") {
-      const mediaId = row.originPath.slice(WA_MEDIA_PREFIX.length)
-      media = await downloadWhatsappMedia(
-        mediaId,
-        ctx as unknown as IntegrationContext<WhatsappAuthValue>,
-        row.mimeType,
-      )
-    } else {
-      const accessToken = (ctx.auth as { tokens: { accessToken: string } })
-        .tokens.accessToken
-      media = await downloadMessengerMedia(
-        row.originPath,
-        accessToken,
-        row.mimeType,
-      )
-    }
-  } catch (error) {
+    media = await mediaDownloaders[channel](
+      row.originPath,
+      ctx as AttachmentDownloadContext,
+      row.mimeType,
+    )
+  } catch (err) {
     logger.error(
-      { error, attachmentId, channel },
+      { err, attachmentId, channel },
       "[coexist-attachment] download failed",
     )
-    throw error
+    throw err
   }
 
   const extension = getStorageExtension(row.originPath, media.mimeType)
@@ -290,9 +315,9 @@ export const coexistAttachmentDownload = async (
       const dims = imageSize(new Uint8Array(media.bytes))
       width = dims.width
       height = dims.height
-    } catch (error) {
+    } catch (err) {
       logger.warn(
-        { error, attachmentId },
+        { err, attachmentId },
         "[coexist-attachment] imageSize failed — skipping dimensions",
       )
     }

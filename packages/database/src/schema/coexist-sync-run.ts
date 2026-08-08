@@ -29,6 +29,7 @@ import {
 export const coexistChannel = pgEnum("coexistChannel", [
   "whatsapp",
   "messenger",
+  "instagram",
 ])
 
 export const coexistRunStatus = pgEnum("coexistRunStatus", [

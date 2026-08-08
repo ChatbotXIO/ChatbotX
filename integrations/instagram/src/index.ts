@@ -8,6 +8,7 @@ export {
   listInstagramMedia,
   listInstagramStories,
 } from "./apis/post"
+export * from "./apis/sync"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export * from "./schemas"

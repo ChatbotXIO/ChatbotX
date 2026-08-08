@@ -1094,6 +1094,7 @@
     "title": "לסנכרן אנשי קשר קיימים והיסטוריית צ'אט?",
     "descriptionWhatsapp": "כאשר האפשרות מופעלת, אנשי קשר ועד 6 חודשים של היסטוריית צ'אט ייובאו ממספר WhatsApp זה.",
     "descriptionMessenger": "כאשר האפשרות מופעלת, אנשי קשר קיימים ב-Messenger ועד 3 חודשים של היסטוריית שיחות ייובאו מדף זה.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "הפעלת סנכרון",
     "decline": "ללא סנכרון",
     "billingNote": "עיבוד דפים גדולים עשוי להימשך מספר שעות.",

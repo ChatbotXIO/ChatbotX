@@ -2087,6 +2087,7 @@
     "title": "Synchroniser les contacts existants et l’historique des discussions ?",
     "descriptionWhatsapp": "Si cette option est activée, les contacts et jusqu’à 6 mois d’historique seront importés depuis ce numéro WhatsApp.",
     "descriptionMessenger": "Si cette option est activée, les contacts Messenger existants et jusqu’à 3 mois d’historique seront importés depuis cette Page.",
+    "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
     "enable": "Activer la synchronisation",
     "decline": "Ne pas synchroniser",
     "billingNote": "La synchronisation des grandes pages peut prendre plusieurs heures.",
