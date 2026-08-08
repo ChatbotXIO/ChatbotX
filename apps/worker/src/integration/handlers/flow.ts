@@ -157,19 +157,46 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
     workspaceId: conversation.workspaceId,
   })
 
-  // Process to find start node. Try to find by nodeId first, if not found, try to find by isStartNode.
-  let targetNode: FlowNode | null | undefined = null
-  if (props.nodeId) {
-    targetNode = (flowVersion.nodes as unknown as FlowNode[]).find(
-      (n) => n.id === props.nodeId,
-    )
+  const nodes = flowVersion.nodes as unknown as FlowNode[]
+
+  // A re-dispatched job continuing a button/quickReply's own multi-step chain
+  // (executeMultipleStepsGenerator's one-step-per-job loop) carries its target
+  // explicitly. Resolving by nodeId alone would land on the containing node's
+  // details instead of the button/quickReply's, and startFromStepId would
+  // never match one of the node's own step ids.
+  let details: ExecuteStepsAndQuickRepliesProps["details"]
+  let targetType: ExecuteStepsAndQuickRepliesProps["targetType"]
+  let targetId: string
+  let targetNodeId: string
+
+  if (
+    props.targetType === flowActionTargetTypes.button ||
+    props.targetType === flowActionTargetTypes.quickReply
+  ) {
+    const resolved = props.targetId
+      ? resolveFlowActionTarget(nodes, props.targetId)
+      : null
+    if (!resolved) {
+      throw new SdkException(
+        "FlowVersion does not contain the button/quickReply target",
+      )
+    }
+    details = resolved.details
+    targetType = resolved.targetType
+    targetId = resolved.details.id
+    targetNodeId = resolved.nodeId ?? props.nodeId ?? ""
   } else {
-    targetNode = (flowVersion.nodes as unknown as FlowNode[]).find(
-      (n) => n.data.isStartNode,
-    )
-  }
-  if (!targetNode) {
-    throw new SdkException("FlowVersion does not contain start node")
+    // Process to find start node. Try to find by nodeId first, if not found, try to find by isStartNode.
+    const targetNode = props.nodeId
+      ? nodes.find((n) => n.id === props.nodeId)
+      : nodes.find((n) => n.data.isStartNode)
+    if (!targetNode) {
+      throw new SdkException("FlowVersion does not contain start node")
+    }
+    details = targetNode.data.details
+    targetType = "node"
+    targetId = targetNode.id
+    targetNodeId = targetNode.id
   }
 
   try {
@@ -178,10 +205,10 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       contactInbox,
       flowVersion,
       useLatestFlowVersion,
-      details: targetNode.data.details,
-      targetType: "node",
-      targetId: targetNode.id,
-      targetNodeId: targetNode.id,
+      details,
+      targetType,
+      targetId,
+      targetNodeId,
       startFromStepId: props.startFromStepId,
       ctx: {
         variables: initVariables(),
@@ -354,6 +381,14 @@ export async function runStepsAndQuickReplies(
             ? undefined
             : flowVersion.id,
           nodeId: props.targetNodeId,
+          targetType:
+            targetType === "button" || targetType === "quickReply"
+              ? targetType
+              : undefined,
+          targetId:
+            targetType === "button" || targetType === "quickReply"
+              ? targetId
+              : undefined,
           startFromStepId: nextStep.id,
           metadata: props.metadata,
           trackingContext: props.trackingContext,
