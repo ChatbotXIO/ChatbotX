@@ -396,7 +396,8 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
   const fallbackCutoff = new Date(Date.now() - STORE_WINDOW_MS)
   // ONE factory shared across all per-conv bulkImportMessages calls in this
   // chunk — its per-import used-set probes same-ms IDs that collide across convs
-  // (H1). IDs are derived from (createdAt, sourceId), independent of runId.
+  // (H1). IDs are derived from (createdAt, contactInboxId, sourceId),
+  // independent of runId.
   const idFactory = createHistoricalIdFactory()
 
   return walkConversationsPages(
