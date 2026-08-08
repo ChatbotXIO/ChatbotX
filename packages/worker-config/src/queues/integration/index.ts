@@ -2,7 +2,10 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type {
+  FlowActionTargetType,
+  MetadataPayload,
+} from "@chatbotx.io/flow-config"
 import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
@@ -124,6 +127,15 @@ export type IntegrationJobRunFlowNode = {
     flowVersionId?: string
     nodeId?: string
     startFromStepId?: string
+    /**
+     * Set when this job resumes a button/quickReply's own multi-step chain
+     * (one step per job) rather than a node's. Without it, resolving by
+     * `nodeId` alone lands on the containing node's details instead of the
+     * button/quickReply's, and `startFromStepId` never matches — see
+     * `runFlowNode`.
+     */
+    targetType?: FlowActionTargetType
+    targetId?: string
     nodeVisits?: NodeVisits
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
