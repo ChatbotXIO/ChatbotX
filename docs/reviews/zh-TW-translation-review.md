@@ -1,0 +1,2826 @@
+# zh-TW Translation Review
+
+- Total leaf keys: 2818
+- Source locale: en
+- Target locale: zh-TW
+
+| Key | English | zh-TW |
+| --- | --- | --- |
+| actions.copy | Copy | 複製 |
+| actions.copyUrl | Copy URL | 複製 URL |
+| actions.actions | Actions | 操作 |
+| actions.add | Add | 新增 |
+| actions.addVariable | Add Variable | 新增變數 |
+| actions.addFeature | Add {feature} | 新增 {feature} |
+| actions.addFlowReply | Add flow reply | 新增流程回覆 |
+| actions.addMore | Add more | 新增更多 |
+| actions.addTag | Add Tag | 新增標籤 |
+| actions.addAction | Add Action | 新增動作 |
+| actions.addCondition | Add Condition | 新增條件 |
+| actions.addTextReply | Add text reply | 新增文字回覆 |
+| actions.markAsFollowUp | Mark as Follow Up | 標記為待後續跟進 |
+| actions.removeFromFollowUp | Remove from Follow Up | 移除 |
+| actions.markAsUnread | Mark as Unread | 標記為未讀 |
+| actions.archive | Archive | 封存 |
+| actions.unarchive | Unarchive | 取消封存 |
+| actions.archiveConversation | Archive Conversation | 封存對話 |
+| actions.assign | Assign | 指派 |
+| actions.assignConversation | Assign Conversation | 指派對話 |
+| actions.back | Back | 返回 |
+| actions.blockContact | Block Contact | 封鎖聯絡人 |
+| actions.unblockContact | Unblock Contact | 解除封鎖聯絡人 |
+| actions.undo | Undo | 撤銷 |
+| actions.redo | Redo | 重做 |
+| actions.cancel | Cancel | 取消 |
+| actions.clear | Clear | 清除 |
+| actions.clearCustomField | Clear Custom Field | 清除自訂欄位 |
+| actions.collapse | Collapse | 折疊 |
+| actions.expand | Expand | 展開 |
+| actions.confirm | Confirm | 確認 |
+| actions.connect | Connect | 連接 |
+| actions.continue | Continue | 繼續 |
+| actions.create | Create | 建立 |
+| actions.loading | Loading... | 載入中... |
+| actions.createFeature | Create {feature} | 建立 {feature} |
+| actions.delete | Delete | 刪除 |
+| actions.deleteContact | Delete Contact | 刪除聯絡人 |
+| actions.disableBot | Disable Bot | 停用機器人 |
+| actions.disconnect | Disconnect | 中斷連線 |
+| actions.download | Download | 下載 |
+| actions.edit | Edit | 編輯 |
+| actions.editFeature | Edit {feature} | 編輯 {feature} |
+| actions.enableBot | Enable Bot | 啟用機器人 |
+| actions.export | Export | 匯出 |
+| actions.getEmbedCode | Get Embed Code | 取得嵌入代碼 |
+| actions.getID | Get ID | 取得 ID |
+| actions.getTools | Get Tools | 取得工具 |
+| actions.import | Import | 匯入 |
+| actions.exportContacts | Export Contacts | 匯出聯絡人 |
+| actions.filter | Filter | 篩選條件 |
+| actions.selectFile | Select file | 選擇檔案 |
+| actions.insertLink | Insert link | 插入連結 |
+| actions.addNew | Add new | 新增 |
+| actions.send | Send | 傳送 |
+| actions.loginWithMagicLink | Login with Magic Link | 使用 Magic Link 登入 |
+| actions.manage | Manage | 管理 |
+| actions.admin | Admin | 管理員 |
+| actions.more | More | 更多 |
+| actions.moreOptions | More options | 更多選項 |
+| actions.moreSettings | More settings | 更多設定 |
+| actions.openMenu | Open menu | 開啟選單 |
+| actions.openWebchat | Open Webchat | 開啟網路聊天 |
+| actions.removeTag | Remove Tag | 移除標籤 |
+| actions.rename | Rename | 重新命名 |
+| actions.reset | Reset | 重設 |
+| actions.save | Save | 儲存 |
+| actions.selectAll | Select all | 全選 |
+| actions.selectRow | Select row | 選擇行 |
+| actions.sendFlow | Send Flow | 傳送流程 |
+| actions.sendMessage | Send Message | 傳送訊息 |
+| actions.setCustomField | Set Custom Field | 設定自訂欄位 |
+| actions.synchronize | Synchronize | 同步 |
+| actions.syncMetaCatalog | Sync Meta Catalog | 同步 Meta 目錄 |
+| actions.testNow | Test Now | 立即測試 |
+| actions.toggle | Toggle | 切換 |
+| actions.toggleTheme | Toggle theme | 切換主題 |
+| actions.transferConversationToBot | Transfer Conversation to Bot | 將對話轉移到機器人 |
+| actions.update | Update | 更新 |
+| actions.updatePayment | Update payment | 更新付款 |
+| actions.upgradePlan | Upgrade plan | 升級方案 |
+| actions.upgradeToPro | Upgrade to Pro | 升級到專業版 |
+| actions.uploadFile | Upload File | 上傳檔案 |
+| actions.view | View | 檢視 |
+| actions.viewAnalytics | View Analytics | 檢視分析 |
+| actions.duplicate | Duplicate | 重複 |
+| actions.getDraftLink | Get Draft Link | 取得草稿連結 |
+| actions.getPublishedLink | Get Published Link | 取得已發布的連結 |
+| actions.getMessengerAdsJson | Get JSON for Messenger Ads | 取得 Messenger 廣告用 JSON |
+| actions.getMessengerAdPayload | Get payload for Messenger Ad | 取得 Messenger 廣告酬載 |
+| actions.ok | OK | 好的 |
+| actions.next | Next | 下一頁 |
+| actions.prev | Prev | 上一頁 |
+| actions.moveEarlier | Move Earlier | 往前移動 |
+| actions.moveLater | Move Later | 往後移動 |
+| actions.analytics | Analytics | 分析 |
+| actions.deleteAnalytics | Delete Analytics | 刪除分析資料 |
+| actions.flowVersions | Flow Versions | 流程版本 |
+| actions.revertToPublished | Revert to Published | 還原為已發布版本 |
+| actions.search | Search | 搜尋 |
+| actions.pleaseSelect | Please select | 請選擇 |
+| actions.noRecordFound | No record found. | 找不到記錄。 |
+| actions.typeMessage | Type a message | 輸入訊息 |
+| actions.enterText | Enter text | 輸入文字 |
+| actions.enterFieldAndPressEnter | Enter {field} and press Enter | 輸入 {field} 並按 Enter |
+| actions.addAnother | Add another... | 新增另一個... |
+| actions.messagePlaceholder | Message... | 訊息... |
+| actions.signOut | Sign Out | 登出 |
+| actions.backToSignIn | Back to sign in | 返回登入 |
+| actions.connectFeature | Connect {feature} | 連接 {feature} |
+| actions.scanQRCode | Scan me with your camera | 使用相機掃描 QR Code |
+| actions.inviteFeature | Invite {feature} | 邀請 {feature} |
+| actions.joinTheTeam | Join the team | 加入團隊 |
+| actions.chooseChannel | Choose Channel | 選擇頻道 |
+| actions.chooseSubaction | Choose Subaction | 選擇子操作 |
+| actions.resend | Resend | 重新傳送 |
+| actions.publish | Publish | 發佈 |
+| actions.setStartNode | Set as Start Node | 設定為起始節點 |
+| actions.getNodeId | Get Node ID | 取得節點 ID |
+| actions.setAsDefaultAgent | Set as Default | 設定為預設值 |
+| actions.unsetDefaultAgent | Unset Default | 取消設定預設值 |
+| actions.clickToEdit | Click to edit | 點選編輯 |
+| actions.move | Move | 移動 |
+| actions.moveUp | Move up | 向上移動 |
+| actions.moveDown | Move down | 向下移動 |
+| actions.removeAssignee | Remove Assignee | 移除被指派者 |
+| actions.sendMail | Send Mail | 傳送郵件 |
+| actions.wait | Wait | 等等 |
+| actions.followUp | Follow Up | 跟進 |
+| actions.landingPage | Landing Page | 著陸頁面 |
+| actions.generate | Generate | 產生 |
+| actions.regenerate | Regenerate | 重新產生 |
+| actions.qrCode | QR Code | QR Code |
+| actions.addSequence | Add Sequence | 新增序列 |
+| actions.removeSequence | Remove Sequence | 移除序列 |
+| actions.activate | Activate | 啟用 |
+| actions.deactivate | Deactivate | 停用 |
+| actions.onFailure | On failure | 失敗時 |
+| actions.onSkip | On skip | 跳過 |
+| actions.onSuccess | On success | 成功 |
+| actions.clone | Clone | 複製 |
+| actions.remove | Remove | 移除 |
+| actions.restore | Restore | 還原 |
+| states.success | Success | 成功 |
+| states.error | Error | 錯誤 |
+| states.skip | Skip | 跳過 |
+| admins.title | Admins | 管理員 |
+| assignAdmin.assignConversation | Assign conversation | 指派對話 |
+| assignAdmin.assignedToMe | Assigned to me | 分配給我 |
+| assignAdmin.assignedTo | Assigned to {name} | 已指派給 {name} |
+| assignAdmin.unAssigned | Unassigned | 未分配 |
+| assignAdmin.user | User | 使用者 |
+| aiAgent.defaultAgent | Default Agent | 預設 AI Agent |
+| aiAgent.description | Manage and configure AI Agents to enhance your workspace's capabilities with intelligent automation and responses. | 管理與設定 AI Agent，以透過智慧自動化與回應提升工作區能力。 |
+| aiAgent.title | AI Agents | AI Agent |
+| aiAgent.name | Agents | AI Agents |
+| aiFiles.description | Give Your Agents Access to PDFs, Docs, and More | 讓您的Agent程式存取 PDF、檔案等 |
+| aiFiles.title | Knowledge | 知識 |
+| aiFiles.noEmbeddingProvider | No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek and Claude do not support embedding models. | 尚未設定嵌入提供者。AI 檔案嵌入需要 OpenAI 或 Gemini 整合；DeepSeek 和 Claude 不支援嵌入模型。 |
+| aiFunctions.description | Configure LLM functions to make your AI agent more intelligent | 設定 LLM 功能，讓您的 AI Agent 更加智能 |
+| aiFunctions.title | AI Functions | 人工智慧功能 |
+| aiMcpServers.description | Connect AI to External Systems via MCP | 透過 MCP 連接 AI 與外部系統。 |
+| aiMcpServers.title | MCP Servers | MCP 伺服器 |
+| aiMcpServers.tools.label | Available Tools | 可用工具 |
+| analytics.contacts | Contacts | 聯絡人 |
+| analytics.newContacts | New Contacts | 新聯絡人 |
+| analytics.activeContacts | Active Contacts | 活躍聯絡人 |
+| analytics.botMessagesByResult | Messages received by the bot | 訊息 |
+| analytics.botMessagesNoResponse | Received messages with no response | 收到訊息但沒有回覆 |
+| analytics.botMessagesWithResponse | Received messages with response | 收到帶有回應的訊息 |
+| analytics.aiProvider | AI Provider | 人工智慧供應商 |
+| analytics.responseCount | Response Count | 回應計數 |
+| analytics.percentage | Percentage | 百分比 |
+| analytics.responseTime | Response Time | 回應時間 |
+| analytics.firstResponseTime | First Response Time | 首次回應時間 |
+| analytics.totalContacts | Total Contacts | 聯絡人總數 |
+| analytics.averageResponseTime | Average Response Time (Minutes) | 平均回應時間（分鐘） |
+| analytics.averageResponseTimeHelp | The average time a human agent takes to reply to a customer's message. | 人工Agent回覆客戶訊息所需的平均時間。 |
+| analytics.averageFirstResponseTimeByAdmin | Average first response time by human agents (Minutes) | 人工Agent的平均首次回應時間（分鐘） |
+| analytics.averageFirstResponseTimeByAdminHelp | The average time a human agent takes to provide the initial reply to a customer's message. | 人工Agent對客戶訊息進行初步回覆所需的平均時間。 |
+| analytics.averageResponseTimeByAdmin | Average response time by human agents (Minutes) | 人工Agent的平均回應時間（分鐘） |
+| analytics.averageDurationOfConversation | Average duration of a conversation (Minutes) | 對話的平均持續時間（分鐘） |
+| analytics.averageDurationOfConversationHelp | It is the average time a conversation has been handled by a human before being moved to the bot. | 這是對話在轉移到機器人之前由人類處理的平均時間。 |
+| analytics.success | Success | 成功 |
+| analytics.fallback | Fallback | 後備 |
+| analytics.admins | Human Agents | 人類Agent |
+| analytics.messages | Messages | 訊息 |
+| analytics.conversations | Conversations | 對話 |
+| analytics.assignedConversations.title | Assigned Conversations | 分配的對話 |
+| analytics.assignedConversations.helpText | Conversations assigned from the inbox or by the bot. | 從收件匣或機器人分配的對話。 |
+| analytics.messagesSentByHumanOrBot | Messages sent by human/bot | 由真人/機器人傳送的訊息 |
+| analytics.human | Human | 人類 |
+| analytics.bot | Bot | 機器人 |
+| analytics.conversationsMovedToHumanOrBot | Conversations moved to human/bot | 對話轉移到人類/機器人 |
+| analytics.uniqueConversationsByAdmins | Unique conversations by human agents | 人工Agent的獨特對話 |
+| analytics.uniqueConversationsByAdminsHelp | Number of contacts that a human agent sent at least a single message. | 人工Agent至少傳送一則訊息的聯絡人數量。 |
+| analytics.messagesSentByAdmins | Messages sent by human agents | 由管理員傳送的訊息 |
+| analytics.messagesSentByAdminsHelp | Messages sent from the inbox. | 從收件匣傳送的訊息。 |
+| analytics.allContactsByChannel | All contacts by channel | 按頻道列出的所有聯絡人 |
+| analytics.newContactsByChannel | New contacts by channel | 按管道劃分的新聯絡人 |
+| analytics.newContactsBySource | New contacts by source | 按來源劃分的新聯絡人 |
+| analytics.assignedConversationsByAdmins | Assigned conversations by human agents | 由人工Agent分配的對話 |
+| analytics.assignedConversationsByAdminsHelp | Conversations assigned from the inbox or by the bot. | 從收件匣或機器人分配的對話。 |
+| analytics.followUpConversations | Follow up conversations | 跟進對話 |
+| analytics.followUpConversationsHelp | Conversations marked as follow-up from the inbox or by the bot. | 標記為來自收件匣或機器人的後續對話。 |
+| analytics.archivedConversations | Archived conversations | 封存的對話 |
+| analytics.blockedConversations | Blocked conversations | 阻止的對話 |
+| analytics.blockedConversationsHelp | Conversations that your account blocked. | 您的帳戶封鎖的對話。 |
+| analytics.blockedContacts | Blocked contacts | 已封鎖的聯絡人 |
+| analytics.blockedContactsHelp | Contacts don't want to receive messages from your account | 不希望再接收您帳號訊息的聯絡人 |
+| analytics.newContactsByCountry | New contacts by country | 按國家/地區劃分的新聯絡人 |
+| analytics.date | Date | 日期 |
+| analytics.total | Total | 總計 |
+| analytics.messagesSent | Messages Sent | 已傳送訊息 |
+| analytics.selectRange | Select range | 選擇範圍 |
+| analytics.dateFilterPreset | Date filter preset | 日期過濾器預設 |
+| analytics.noResults | No results. | 無結果。 |
+| analytics.noData | No data | 無資料 |
+| analytics.comingSoon | Coming soon | 即將推出 |
+| analytics.unknown | Unknown | 未知 |
+| analytics.pagination.selectedRows | {selected} of {total} row(s) selected. | 已選取 {selected} / {total} 列。 |
+| analytics.pagination.rowsPerPage | Rows per page | 每頁行數 |
+| analytics.pagination.pageOf | Page {page} of {pageCount} | 第 {page} 頁（共 {pageCount}） |
+| analytics.pagination.firstPage | Go to first page | 前往第一頁 |
+| analytics.pagination.previousPage | Go to previous page | 前往上一頁 |
+| analytics.pagination.nextPage | Go to next page | 前往下一頁 |
+| analytics.pagination.lastPage | Go to last page | 前往最後一頁 |
+| analytics.sessionsThroughTheRef | Sessions through the Ref "{ref}" per day | 每日透過 Ref「{ref}」產生的工作階段 |
+| analytics.sessionsThroughTheMagicLink | Sessions through the Magic Link "{ref}" per day | 透過 Magic Link「{ref}」產生的每日工作階段 |
+| flowAnalytics.nodes.start | Start | 開始 |
+| flowAnalytics.nodes.notFound | Node not found | 找不到節點 |
+| flowAnalytics.stats.sent | Sent | 已傳送 |
+| flowAnalytics.stats.delivered | Delivered | 已交付 |
+| flowAnalytics.stats.seen | Seen | 已看過 |
+| flowAnalytics.stats.clicked | Clicked | 已點擊 |
+| flowAnalytics.stats.waiting | Waiting | 等待 |
+| autoAssignConversation.rule.allTime | Equal conversation distribution (All time) | 平等的對話分配（所有時間） |
+| autoAssignConversation.rule.label | Assignment Rule | 分配規則 |
+| autoAssignConversation.rule.last24Hours | Equal conversation distribution (Last 24 hours) | 平等對話分佈（過去 24 小時） |
+| autoAssignConversation.rule.last8Hours | Equal conversation distribution (Last 8 hours) | 平等對話分佈（過去 8 小時） |
+| autoAssignConversation.rule.lastHour | Equal conversation distribution (Last Hour) | 平等對話分配（最後一小時） |
+| autoAssignConversation.users.label | Users | 使用者 |
+| automatedResponse.setting.description | Automated responses description | 自動回應描述 |
+| automatedResponse.setting.label | Automated Responses | 自動回應 |
+| billing.title | Billing | 計費 |
+| billing.plan.label | Plan: {plan} | 方案：{plan} |
+| billing.plan.free | Free | 免費 |
+| billing.usage.contacts | Contacts | 聯絡人 |
+| billing.usage.mac | Monthly active contacts | 每月活躍聯絡人 |
+| billing.usage.botMessages | Bot messages | 機器人訊息 |
+| billing.usage.monthlyBotMessages | Bot messages (monthly) | 每月機器人訊息 |
+| billing.usage.workspaces | Workspaces | 工作區 |
+| billing.usage.channels | Channels | 頻道 |
+| billing.usage.teamMembers | Team members | 團隊成員 |
+| billing.limitReached.workspaces | You've reached your workspace limit. Upgrade your plan to create more. | 您已達到工作區上限。請升級方案以建立更多工作區。 |
+| billing.limitReached.channels | You've reached your channel limit. Upgrade your plan to connect more. | 您已達到頻道上限。請升級方案以連接更多頻道。 |
+| billing.limitReached.teamMembers | You've reached your team member limit. Upgrade your plan to invite more. | 您已達到團隊成員上限。請升級方案以邀請更多人。 |
+| billing.limitReached.contacts | You've reached your contact limit. Upgrade your plan to add more. | 您已達到聯絡人上限。請升級方案以新增更多聯絡人。 |
+| billing.limitReached.mac | You've reached your monthly active contact limit. Upgrade your plan to reach more. | 您已達到每月活躍聯絡人上限。請升級方案以支援更多使用量。 |
+| billing.pastDue.message | Your last payment failed. Update your payment method to keep your workspace active. | 您上次付款失敗。請更新付款方式以保持工作區可用。 |
+| billing.trial.daysLeft | Trial: {days} days left | 試用期：剩下 {days} 天 |
+| billing.trial.endsTomorrow | Trial ends tomorrow | 試用期將於明天結束 |
+| billing.trial.expired | Your trial has ended — upgrade to keep your workspace active | 您的試用已結束 — 升級以保持您的工作區維持啟用狀態 |
+| billing.trial.dismiss | Dismiss | 關閉 |
+| billing.trialExpired.title | Your free trial has ended | 您的免費試用已結束 |
+| billing.trialExpired.description | Subscribe to a plan to keep using your workspaces. | 訂閱方案以繼續使用您的工作區。 |
+| billing.trialExpired.cta | View plans | 檢視方案 |
+| billing.trialExpired.bannerTitle | Trial ended | 試用結束 |
+| billing.trialExpired.bannerDescription | Creating new resources is disabled. You can still disconnect channels and schedule workspace deletion. | 已停用建立新資源。您仍然可以中斷頻道連線並安排刪除工作區。 |
+| billing.trialExpired.bannerCta | Upgrade | 升級 |
+| billing.trialExpired.createDisabled | Creating new {feature} is disabled. Upgrade to continue. | 建立新的 {feature} 已停用。升級才能繼續。 |
+| billing.macLimitReached.bannerTitle | Monthly active contact limit reached | 已達到每月活躍聯絡人限制 |
+| billing.macLimitReached.bannerDescription | Sending and receiving messages is paused until you upgrade your plan. | 傳送與接收訊息將暫停，直到您升級方案。 |
+| billing.macLimitReached.bannerCta | Upgrade | 升級 |
+| billing.macLimitReached.createDisabled | Creating new {feature} is disabled until you upgrade your plan. | 建立新的 {feature} 將被停用，直到您升級您的方案。 |
+| broadcasts.title | Broadcasts | 廣播 |
+| broadcasts.status.scheduled | Scheduled | 已安排 |
+| broadcasts.status.sent | Sent | 已傳送 |
+| broadcasts.status.sending | Sending | 正在傳送 |
+| broadcasts.status.cancelled | Cancelled | 已取消 |
+| broadcasts.stats.sent | Sent | 已傳送 |
+| broadcasts.stats.delivered | Delivered | 已交付 |
+| broadcasts.stats.seen | Seen | 已看過 |
+| broadcasts.stats.clicked | Clicked | 已點擊 |
+| broadcasts.stats.failed | Failed | 失敗 |
+| broadcasts.stats.noContacts | No contacts found | 找不到聯絡人 |
+| broadcasts.stats.pageInfo | Page {page} of {pageCount} | 第 {page} 頁（共 {pageCount}） |
+| broadcasts.stats.selectedAll | All selected | 已全選 |
+| broadcasts.stats.selectedCount | {count} selected | {count} |
+| broadcasts.stats.tagAllDialogDescription | Tags will be added to all selected contacts. | 標籤將新增到所有已選聯絡人。 |
+| broadcasts.stats.tagDialogDescription | Tags will be added to {count} contact(s). | 標籤將新增到 {count} 位聯絡人。 |
+| broadcasts.stats.tagQueued | Tagging {count} contacts in the background. | 在後台標記 {count} 聯絡人。 |
+| broadcasts.stats.loadingMore | Loading more... | 載入更多... |
+| broadcasts.stats.receivers | Receivers | 接收器 |
+| broadcasts.messengerList.title | Messenger List | Messenger 清單 |
+| broadcasts.messengerList.description | May contain promotions, and it will send only to people that subscribed to your Messenger list. | 可能包含促銷訊息，並且只會傳送給已訂閱您 Messenger 清單的人。 |
+| broadcasts.messengerActiveContacts.title | Messenger Active Contacts | Messenger 活躍聯絡人 |
+| broadcasts.messengerActiveContacts.description | May contain promotions and will only be sent to users who messaged your bot within the last 24h. | 可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。 |
+| broadcasts.messengerAccountUpdate.title | Messenger Account Update | Messenger 帳號更新 |
+| broadcasts.messengerAccountUpdate.description | Notify the user of a non-recurring change to their application or account. | 通知使用者其應用程式或帳戶發生非經常性變更。 |
+| broadcasts.messengerConfirmedEventUpdate.title | Messenger Confirmed Event Update | Messenger已確認的事件更新 |
+| broadcasts.messengerConfirmedEventUpdate.description | Send the user reminders or updates for an event they have registered for (e.g., purchased tickets). This tag may be used for upcoming events and events in progress. | 向使用者傳送他們已註冊的活動的提醒或更新（例如，購買的門票）。此標籤可用於即將發生的事件和正在進行的事件。 |
+| broadcasts.messengerPostPurchaseUpdate.title | Messenger Post Purchase Update | Messenger 購買後更新 |
+| broadcasts.messengerPostPurchaseUpdate.description | Notify the user of an update on a recent purchase. Confirmation of transaction, such as invoices or receipts, Notifications of shipment status, such as product in-transit, shipped, delivered, or delayed. | 通知使用者最近購買的更新。交易確認，例如發票或收據，出貨狀態通知，例如產品在途、已出貨、已交付或延遲。 |
+| broadcasts.allContacts.title | All Contacts | 全部聯絡人 |
+| broadcasts.allContacts.description | Send a flow to all contacts. | 向所有聯絡人傳送流。 |
+| broadcasts.receiversCount | Receivers: {count} | 接收器：{count} |
+| broadcasts.receiversLoading | Receivers: Loading... | 接收器：正在載入... |
+| broadcasts.whatsappTemplateMessage.title | Template Message | 範本訊息 |
+| broadcasts.whatsappTemplateMessage.description | Send WhatsApp template message to your contacts | 將 WhatsApp 訊息範本傳送給您的聯絡人 |
+| broadcasts.messengerTemplateMessage.title | Template Message | 範本訊息 |
+| broadcasts.messengerTemplateMessage.description | Send Messenger template message to your contacts | 將 Messenger 訊息範本傳送給您的聯絡人 |
+| broadcasts.whatsappWithin24Hours.title | Active contacts within 24 hours | 24 小時內活躍聯絡人 |
+| broadcasts.whatsappWithin24Hours.description | May contain promotions and will only be sent to users who messaged your bot within the last 24h. | 可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。 |
+| broadcasts.instagramActiveContacts.title | Instagram | Instagram |
+| broadcasts.instagramActiveContacts.description | May contain promotions and will only be sent to users who messaged your bot within the last 24h. | 可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。 |
+| broadcasts.telegramAllContacts.title | Telegram | Telegram |
+| broadcasts.telegramAllContacts.description | Use this message type if you want to send a broadcast to your Telegram contacts. | 如果您想向您的Telegram 聯絡人傳送廣播，請使用此訊息類型。 |
+| broadcasts.tiktokActiveContacts.title | TikTok | TikTok |
+| broadcasts.tiktokActiveContacts.description | May contain promotions and will only be sent to users who messaged your bot within the last 24h. TikTok broadcasts support text and images only. | 可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。TikTok 廣播僅支援文字和影像。 |
+| broadcasts.flowType.flow.title | Flow | 流程 |
+| broadcasts.flowType.flow.description | Send a flow to your contacts | 向您的聯絡人傳送串流 |
+| broadcasts.flowType.template.title | Template | 範本 |
+| broadcasts.flowType.template.description | Send a template to your contacts | 將範本傳送給您的聯絡人 |
+| broadcasts.detail.title | Broadcast detail | 廣播詳細資訊 |
+| broadcasts.detail.subaction | Subaction | 子操作 |
+| broadcasts.detail.audienceFilter | Audience filter | 受眾過濾器 |
+| broadcasts.detail.noAudienceFilter | No audience filter | 無受眾過濾器 |
+| broadcasts.detail.template | Template | 範本 |
+| broadcasts.detail.noTemplate | No template | 無範本 |
+| broadcasts.detail.integration | Integration | 整合 |
+| condition.yes | Yes | 是 |
+| condition.no | No | 否 |
+| condition.valuePlaceholder | ... | ... |
+| condition.datePlaceholder | YYYY-MM-DD | 年-月-日 |
+| condition.datetimePlaceholder | YYYY-MM-DD HH:mm | YYYY-MM-DD HH:mm |
+| condition.datetimeInvalid | Enter a date as YYYY-MM-DD HH:mm or a variable | 輸入 YYYY-MM-DD HH:mm 格式的日期或變量 |
+| condition.operator.and | All conditions | 所有條件 |
+| condition.operator.or | Any condition | 任何條件 |
+| condition.fields.locale | Language | 語言 |
+| condition.fields.language | Language | 語言 |
+| condition.fields.fullName | Full name | 全名 |
+| condition.fields.country | Country | 國家/地區 |
+| condition.fields.continent | Continent | 大陸 |
+| condition.fields.gender | Gender | 性別 |
+| condition.fields.subscribedToBroadcast | Subscribed to broadcast | 訂閱廣播 |
+| condition.fields.contactCreatedDate | Contact created date | 聯絡人建立日期 |
+| condition.fields.contactCreatedDateMinutesAgo | Contact created date (minutes ago) | 聯絡人建立日期（幾分鐘前） |
+| condition.fields.source | Source | 來源 |
+| condition.fields.conversationTransferredToHuman | Conversation transferred to human | 對話轉移到人類 |
+| condition.fields.interactedInLast24H | Interacted in last 24 hours | 過去 24 小時內的互動次數 |
+| condition.fields.interactedInLast24h | Interacted in last 24 hours | 過去 24 小時內的互動次數 |
+| condition.fields.followUp | Follow up | 跟進 |
+| condition.fields.isGuestUser | Guest user | 訪客使用者 |
+| condition.fields.existingContact | Existing contact | 現有聯絡人 |
+| condition.fields.hasContactInfo | Phone and email | 電話和電子郵件 |
+| condition.fields.currentChannel | Channel | 頻道 |
+| condition.fields.inbox | Inbox | 收件匣 |
+| condition.fields.subjectToEuRules | Subject to EU rules | 遵守歐盟規則 |
+| condition.fields.timezone | Time zone | 時區 |
+| condition.fields.hasOpportunity | Has opportunity (Open, Won, Lost) | 有機會（開放、獲勝、輸球） |
+| condition.fields.hasOpenOpportunity | Has open opportunity | 有空缺機會 |
+| condition.fields.hasWonOpportunity | Has won opportunity | 已贏得機會 |
+| condition.fields.hasLostOpportunity | Has lost opportunity | 失去了機會 |
+| condition.fields.instagramStoryReply | Message is an Instagram story reply | 訊息是 Instagram 限時動態回覆 |
+| condition.fields.followsBusinessOnInstagram | Follows business on Instagram | 關注 Instagram 上的商家 |
+| condition.fields.businessFollowsUserOnInstagram | Business follows user on Instagram | 商家在 Instagram 上關注使用者 |
+| condition.fields.verifiedAccountOnInstagram | Verified account on Instagram | Instagram 已驗證帳號 |
+| condition.fields.followerCountOnInstagram | Follower count on Instagram | Instagram 追蹤者數 |
+| condition.fields.lastSent | Last sent | 最後傳送 |
+| condition.fields.lastDelivered | Last delivered | 最後交付 |
+| condition.fields.lastSeen | Last seen | 最後出現 |
+| condition.fields.lastSeenMinutesAgo | Last seen (minutes ago) | 最後出現（分鐘前） |
+| condition.fields.lastInteraction | Last interaction | 最後一次互動 |
+| condition.fields.lastInteractionMinutesAgo | Last interaction (minutes ago) | 最後一次互動（分鐘前） |
+| condition.fields.unreplied | Unreplied | 未回覆 |
+| condition.fields.unread | Unread | 未讀 |
+| condition.fields.appliedJobs | Applied jobs | 申請的職位 |
+| condition.fields.tags | Tags | 標籤 |
+| condition.fields.customFields | Custom fields | 自訂欄位 |
+| condition.fields.phone | Phone | 電話 |
+| condition.fields.completedWhatsAppFlows | Completed WhatsApp Flows | 完成 WhatsApp 流程 |
+| condition.fields.messengerList | Messenger List | Messenger 清單 |
+| condition.fields.subscribedToDripCampaign | Subscribed to drip campaign | 訂閱滴灌活動 |
+| condition.fields.conversationAssigned | Conversation assigned | 已分配會話 |
+| condition.fields.entryPointsLinks | Entry Points Links | 入口點連結 |
+| condition.fields.sentMessage | Sent message | 已傳送訊息 |
+| condition.fields.keywordsReceived | Keywords Received | 已收到關鍵字 |
+| condition.fields.executedFlow | Executed flow | 執行流程 |
+| condition.fields.executedStep | Executed Step | 執行步驟 |
+| condition.fields.consecutiveAiFailures | Number of consecutive AI failures | AI連續失敗次數 |
+| condition.fields.questionnaireStarted | Questionnaire started | 問卷已開始 |
+| condition.fields.questionnaireInProgress | Questionnaire in progress | 問卷進行中 |
+| condition.fields.questionnaireFinished | Questionnaire finished | 問卷完成 |
+| condition.fields.couponTopic | Coupon | 優惠券 |
+| condition.fields.votedOnPoll | Voted on the poll | 已投票 |
+| condition.fields.lastComment | Last comment | 最後留言 |
+| condition.fields.commentedOnPost | Commented on Post | 曾對貼文留言 |
+| condition.fields.reactedOnPost | Reacted on post | 回覆貼文 |
+| condition.fields.lastTotalTaggedUsers | Last total tagged users | 最後標記的使用者總數 |
+| condition.fields.lastTotalNewTaggedUsers | Last total new tagged users | 最後新標記使用者總數 |
+| condition.fields.email | Email | 電子郵件 |
+| condition.fields.phoneWasVerified | Phone was Verified | 電話已驗證 |
+| condition.fields.optedInForSms | Opted in for SMS | 已同意接收簡訊 |
+| condition.fields.broadcastSent | Broadcast Sent | 廣播已傳送 |
+| condition.fields.broadcastDelivered | Broadcast Delivered | 廣播已交付 |
+| condition.fields.broadcastSeen | Broadcast Seen | 廣播已檢視 |
+| condition.fields.broadcastClicked | Broadcast Clicked | 廣播已點擊 |
+| condition.fields.broadcastFailed | Broadcast Failed | 廣播失敗 |
+| condition.fields.emailWasVerified | Email was Verified | 電子郵件已驗證 |
+| condition.fields.optedInForEmail | Opted in for Email | 選擇接收電子郵件 |
+| condition.fields.emailSent | Email Sent | 電子郵件已傳送 |
+| condition.fields.emailDelivered | Email Delivered | 電子郵件已送達 |
+| condition.fields.emailOpened | Email Opened | 電子郵件已打開 |
+| condition.fields.emailClicked | Email Clicked | 點選電子郵件 |
+| condition.fields.isWithinWorkingHours | Is within working hours | 工作時間內 |
+| condition.fields.currentDate | Current date | 目前日期 |
+| condition.fields.currentTime | Current time | 目前時間 |
+| condition.fields.currentDayOfMonth | Current day of month | 目前日期 |
+| condition.fields.currentDayOfWeek | Current day of week | 星期幾 |
+| condition.fields.currentMonth | Current month | 目前月份 |
+| condition.fields.bought | Bought | 已購買 |
+| condition.fields.boughtItems | Bought the items | 購買了項目 |
+| condition.fields.totalSpent | Total spent | 總支出 |
+| condition.fields.numberOfOrders | Number of orders | 訂單數 |
+| condition.fields.shoppingCartTotal | Shopping cart total | 購物車總數 |
+| condition.fields.shoppingCartSubtotal | Shopping cart subtotal | 購物車小計 |
+| condition.fields.shoppingCartIsEmpty | Shopping cart is empty | 購物車是空的 |
+| condition.fields.shoppingCartContainsItems | Shopping cart contains items | 購物車包含商品 |
+| condition.fields.lastSentMessageFailed | Last Sent Message Failed | 上一則傳送訊息失敗 |
+| condition.fields.lastUserInput | Last user input | 最後一次使用者輸入 |
+| condition.fields.lastUserInputType | Last user input type | 最後的使用者輸入類型 |
+| condition.fields.archived | Archived | 已封存 |
+| condition.fields.blocked | Blocked | 已阻止 |
+| condition.fields.noAdminReply | No admin reply | 無管理員回覆 |
+| condition.fields.contactCreatedAt | Contact created at | 聯絡人建立時間 |
+| condition.fields.lastUserInputTypes.text | Text | 文字 |
+| condition.fields.lastUserInputTypes.location | Location | 位置 |
+| condition.fields.lastUserInputTypes.refLink | Ref link | 參考連結 |
+| condition.fields.lastUserInputTypes.image | Image | 圖片 |
+| condition.fields.lastUserInputTypes.video | Video | 影片 |
+| condition.fields.lastUserInputTypes.audio | Audio | 音頻 |
+| condition.fields.lastUserInputTypes.gif | GIF | GIF |
+| condition.fields.lastUserInputTypes.file | File | 檔案 |
+| condition.fieldGroups.opportunity | Opportunity | 機會 |
+| condition.fieldGroups.instagram | Instagram | Instagram |
+| condition.fieldGroups.analytics | Analytics | 分析 |
+| condition.fieldGroups.facebookInstagramComment | Facebook/Instagram Comment | Facebook / Instagram 留言 |
+| condition.fieldGroups.broadcastWhatsapp | Broadcast (WhatsApp) | 廣播 (WhatsApp) |
+| condition.fieldGroups.systemTime | System Time | 系統時間 |
+| condition.fieldGroups.ecommerce | Ecommerce | 電子商務 |
+| condition.fieldGroups.systemFields | System Fields | 系統欄位 |
+| condition.fieldGroups.topicCoupon | Topic coupon | 主題優惠券 |
+| condition.fieldGroups.customFields | Custom Fields | 自訂欄位 |
+| condition.fieldGroups.email | Email | 電子郵件 |
+| condition.fieldGroups.sms | SMS | 簡訊 |
+| condition.languages.ar | Arabic | 阿拉伯語 |
+| condition.languages.de | German | 德語 |
+| condition.languages.en | English | 英語 |
+| condition.languages.es | Spanish | 西班牙語 |
+| condition.languages.fil | Filipino | 菲律賓語 |
+| condition.languages.fr | French | 法語 |
+| condition.languages.hi | Hindi | 印地語 |
+| condition.languages.id | Indonesian | 印尼語 |
+| condition.languages.it | Italian | 義大利語 |
+| condition.languages.ja | Japanese | 日語 |
+| condition.languages.km | Khmer | 高棉語 |
+| condition.languages.ko | Korean | 韓語 |
+| condition.languages.lo | Lao | 寮國 |
+| condition.languages.ms | Malay | 馬來語 |
+| condition.languages.my | Burmese | 緬甸語 |
+| condition.languages.nl | Dutch | 荷蘭語 |
+| condition.languages.pt | Portuguese | 葡萄牙語 |
+| condition.languages.ru | Russian | 俄語 |
+| condition.languages.th | Thai | 泰語 |
+| condition.languages.vi | Vietnamese | 越南語 |
+| condition.languages.zh | Chinese | 中文 |
+| condition.sources.direct | Direct | 直接 |
+| condition.sources.comments | Comments | 留言 |
+| condition.sources.ads | Ads | 廣告 |
+| condition.sources.fbLeadAd | FB Lead Ad | FB 領先廣告 |
+| condition.sources.inboundMessage | Inbound Message | 傳入訊息 |
+| condition.sources.imported | Imported | 匯入 |
+| condition.sources.api | API | API |
+| condition.sources.webchat | Webchat | 網路聊天 |
+| condition.sources.botLink | Bot Link | 機器人連結 |
+| condition.sources.chatPlugin | C. chat plugin | C.聊天外掛 |
+| channels.title | Channels | 頻道 |
+| channels.duplicated.generic | This account is already connected to another workspace. | 此帳戶已連接到另一個工作區。 |
+| channels.duplicated.instagram | This Instagram account is already connected to another workspace. | 此 Instagram 帳戶已連接到另一個工作區。 |
+| channels.duplicated.messenger | This Facebook Page is already connected to another workspace. | 此Facebook 頁面已連接到另一個工作區。 |
+| channels.duplicated.telegram | This Telegram bot is already connected to another workspace. | 此Telegram 機器人已連接到另一個工作區。 |
+| channels.duplicated.tiktok | This TikTok account is already connected to another workspace. | 此TikTok帳戶已連接到另一個工作區。 |
+| channels.duplicated.whatsapp | This WhatsApp number is already connected to another workspace. | 此 WhatsApp 號碼已連接到另一個工作區。 |
+| channels.duplicated.zalo | This Zalo OA is already connected to another workspace. | 此Zalo OA 已連接到另一個工作區。 |
+| channels.reconnect.success | Channel reconnected successfully. | 頻道重新連線成功。 |
+| channels.reconnect.errors.notFound | The channel to reconnect was not found. | 找不到要重新連接的頻道。 |
+| channels.reconnect.errors.pageNotFound | The authorized Facebook account does not have access to this Page. Log in with the correct account and grant all requested permissions. | 授權的Facebook帳戶無權存取此頁面。使用正確的帳戶登入並授予所有請求的權限。 |
+| channels.reconnect.errors.accountNotFound | The authorized account does not match the connected account. Log in with the correct account. | 授權帳戶與連結的帳戶不符。使用正確的帳號登入。 |
+| channels.reconnect.errors.cancelled | Reconnect was cancelled. Please try again and grant the requested permissions. | 重新連線已取消。請重試並授予請求的權限。 |
+| channels.reconnect.errors.failed | Reconnect failed. Please try again. | 重新連線失敗。請再試一次。 |
+| workspace.schedule.title | Set active hours | 設定活躍時間 |
+| workspace.schedule.description | Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight. | 選擇開始和結束時間。如果結束時間早於開始時間，排程將跨夜執行。 |
+| workspace.schedule.startTime | Start time | 開始時間 |
+| workspace.schedule.endTime | End time | 結束時間 |
+| workspace.schedule.alwaysRun | Always run | 永遠執行 |
+| workspace.schedule.save | Save | 儲存 |
+| workspace.schedule.invalidTimeRange | Start and end time must be different | 開始時間與結束時間必須不同 |
+| workspace.schedule.timeRequired | Please select both start and end time | 請選擇開始時間與結束時間 |
+| workspace.schedule.activated | Workspace activated | 工作區已啟用 |
+| workspace.schedule.deactivated | Workspace deactivated | 工作區已停用 |
+| workspace.schedule.activeHours | Active from {startTime} to {endTime} | 從 {startTime} 到 {endTime} 活躍 |
+| workspace.schedule.permissionRequired | Only a super admin can change workspace active hours | 只有超級管理員才能更改工作區活動時間 |
+| workspace.deletion.title | Delete workspace | 刪除工作區 |
+| workspace.deletion.description | Permanently delete this workspace. All contacts, settings, and data will be deleted 24 hours after you confirm. | 永久刪除此工作區。所有聯絡人、設定和資料將在您確認後 24 小時內刪除。 |
+| workspace.deletion.schedule | Delete workspace | 刪除工作區 |
+| workspace.deletion.confirmTitle | Delete this workspace? | 要刪除此工作區嗎？ |
+| workspace.deletion.confirmDescription | All contacts, settings, and data will be permanently deleted 24 hours after you confirm. You can undo the deletion any time before then. | 所有聯絡人、設定和資料將在您確認後 24 小時內永久刪除。您可以在此之前隨時撤銷刪除。 |
+| workspace.deletion.pending | This workspace will be deleted {countdown} ({date}). You can undo this at any time before then. | 此工作區將於 {countdown} ({date}) 刪除。在此之前您可以隨時撤銷此操作。 |
+| workspace.deletion.pendingFallback | soon | 即將推出 |
+| workspace.deletion.undone | Workspace deletion has been canceled | 已取消刪除工作區 |
+| workspace.deletion.bannerTitle | Workspace deletion scheduled | 工作區已排定刪除 |
+| workspace.deletion.bannerDescription | This workspace is scheduled for deletion. Undo the deletion below to continue using it. | 此工作區已排定刪除。撤銷下方的刪除即可繼續使用。 |
+| workspace.deletion.pendingBlockedToast | This workspace is scheduled for deletion. Contact a workspace admin to restore access. | 此工作區已排定刪除。請聯絡工作區管理員以還原存取。 |
+| workspace.deletion.navDisabledTooltip | Unavailable while workspace deletion is scheduled | 排定刪除工作區時不可用 |
+| workspace.deletion.badge | Deletion scheduled | 排定刪除 |
+| workspaces.list.title | Workspaces List | 工作區清單 |
+| workspaceToken.title | Workspace token | 工作區代幣 |
+| dialog.deleteConfirmation | Are you absolutely sure?<br>This action cannot be undone.<br>This will permanently delete your {feature} from our servers. | 你確定嗎？<br>此操作無法撤銷。<br>這將從我們的伺服器中永久刪除您的 {feature}。 |
+| fields.omnichannel.label | Omnichannel | 全通路 |
+| fields.smtp.label | SMTP | SMTP |
+| fields.messenger.label | Messenger | Messenger |
+| fields.image.label | Image | 圖片 |
+| fields.instagram.label | Instagram | Instagram |
+| fields.instagram.loginTitle | Login with Instagram | 使用 Instagram 登入 |
+| fields.instagram.loginDescription | Connect your Instagram Business account directly via Instagram OAuth. | 連接您的 Instagram，直接透過 Instagram OAuth 建立商業帳號。 |
+| fields.instagram.facebookLoginTitle | Login with Facebook | 使用 Facebook 登入 |
+| fields.instagram.facebookLoginDescription | Connect an Instagram account linked to your Facebook Page via Facebook OAuth. | 透過 Facebook OAuth 連接 Instagram 帳戶到您的 Facebook 頁面。 |
+| fields.instagram.connectViaFacebook | Connect Instagram via Facebook | 連接 Instagram 透過 Facebook |
+| fields.instagram.viaFacebookTitle | Instagram via Facebook | Instagram 透過 Facebook |
+| fields.instagram.cloneFromMessenger | Clone from Messenger | 從 Messenger 複製 |
+| fields.instagram.clonedFromMessenger | Cloned from Messenger | 已從 Messenger 複製 |
+| fields.zalo.label | Zalo OA | ZaloOA |
+| fields.telegram.label | Telegram | Telegram |
+| fields.telegram.botToken | Bot Token | 機器人代幣 |
+| fields.telegram.connectInstructions.step1 | Open <link>@BotFather</link> in Telegram. | 在Telegram中開啟<link>@BotFather</link>。 |
+| fields.telegram.connectInstructions.step2 | Send <strong>/newbot</strong> and follow the instructions. | 傳送<strong>/newbot</strong>並依照指示操作。 |
+| fields.telegram.connectInstructions.step3 | After you created the bot, you will receive the bot API token. Copy the API token and paste it below. | 建立機器人後，您將收到機器人API權杖。複製 API 權杖並將其貼到下方。 |
+| fields.matchAll.label | Match all the conditions below | 滿足以下所有條件 |
+| fields.matchAny.label | Match one of the conditions below | 符合下列條件之一 |
+| fields.condition.label | Condition | 條件 |
+| fields.actions.label | Actions | 操作 |
+| fields.tags.label | Tags | 標籤 |
+| fields.customFields.label | Custom Fields | 自訂欄位 |
+| fields.pipelines.label | Pipelines | 管道 |
+| fields.sequences.label | Sequences | 序列 |
+| fields.ecommerce.label | Ecommerce | 電子商務 |
+| fields.entryPointLink.label | Entry Point Link | 入口點連結 |
+| fields.assignedId.label | Assign To | 指派給 |
+| fields.operator.label | Operator | 運算符 |
+| fields.operator.is | Is | 是 |
+| fields.operator.isNot | Is not | 不是 |
+| fields.operator.in | In | 在 |
+| fields.operator.notIn | Not in | 不在 |
+| fields.operator.isEmpty | Has no value | 無值 |
+| fields.operator.isNotEmpty | Has any value | 有任何值 |
+| fields.operator.gt | Greater than | 大於 |
+| fields.operator.lt | Less than | 小於 |
+| fields.operator.gte | Greater than or Equal to | 大於或等於 |
+| fields.operator.lte | Less than or Equal to | 小於或等於 |
+| fields.operator.contains | Contains | 包含 |
+| fields.operator.notContains | Doesn't contain | 不包含 |
+| fields.operator.startsWith | Starts with | 開頭 |
+| fields.operator.endsWith | Ends with | 結尾為 |
+| fields.operator.isBetween | Interval | 間隔 |
+| fields.operator.notBetween | Not interval | 非區間 |
+| fields.operator.used | Used | 已使用 |
+| fields.contactFilter.allConditions | All of the following conditions | 滿足以下所有條件 |
+| fields.contactFilter.anyConditions | Any of the below conditions. | 以下任何條件。 |
+| fields.contactFilter.label | Contact filter | 聯絡人過濾器 |
+| fields.contactFilter.onlyContactsMatch | Only contacts, that match to | 僅匹配的聯絡人 |
+| fields.contactFilter.moreOptions | More Options | 更多選項 |
+| fields.contactNote.label | Contact Note | 聯絡人備註 |
+| fields.chooseTime.label | Choose time | 選擇時間 |
+| fields.notificationType.label | Notification Type | 通知類型 |
+| fields.notificationType.notifyAdmin | Notify Admin | 通知管理員 |
+| fields.notificationType.newMessageToHuman | New Message to Human | 人類新訊息 |
+| fields.notificationType.newOrder | New Order | 新訂單 |
+| fields.notificationChannel.label | Notification Channel | 通知頻道 |
+| fields.notificationChannel.messenger | Messenger | Messenger |
+| fields.notificationChannel.email | Email | 電子郵件 |
+| fields.notificationChannel.telegram | Telegram | Telegram |
+| fields.notificationChannel.browser | Browser | 瀏覽器 |
+| fields.accessToken.label | Access Token | 訪問權杖 |
+| fields.botField.label | Bot Field | 機器人欄位 |
+| fields.agent.label | Agent | Agent |
+| fields.aiAgent.label | AI Agent | AI Agent |
+| fields.aiQueuedMessages.label | AI Queued Messages | AI 排隊訊息 |
+| fields.aiFile.label | AI File | AI 檔案 |
+| fields.aiFunction.label | AI Function | 人工智慧功能 |
+| fields.aiTrigger.label | AI Trigger | 人工智慧觸發器 |
+| fields.alphanumericLength.label | Alphanumeric Length | 字母數字長度 |
+| fields.analytics.label | Analytics | 分析 |
+| fields.apiKey.label | API Key | API金鑰 |
+| fields.auth.label | Auth | 授權 |
+| fields.authorizedDomain.description | The domains or subdomains that are authorized to access your webchat. | 有權存取您的網路聊天的網域或子網域。 |
+| fields.authorizedDomain.label | Authorized Domain{plural, select, 1 {s} other {}} | 已授權網域 {plural, select, 1 {} other {}} |
+| fields.webSearchAuthorizedDomains.label | Authorized websites for Web Search tool | Web 搜尋工具的授權網站 |
+| fields.webSearchAuthorizedDomains.placeholder | example.com | example.com |
+| fields.webSearchAuthorizedDomains.tooltip | List of domains that the AI agent can access. Leave empty to allow all domains. | AI Agent可以存取的域清單。留空以允許所有網域。 |
+| fields.authToken.label | Token | 代幣 |
+| fields.authType.headers | Custom Header | 自訂標頭 |
+| fields.authType.none | None | 無 |
+| fields.authType.token | Token | 代幣 |
+| fields.automatedResponse.label | Automated Response | 自動回應 |
+| fields.avatar.label | Profile Image | 個人資料圖片 |
+| fields.reflink.label | Entry Point Link | 入口點連結 |
+| fields.qrCode.label | QR Code | QR Code |
+| fields.savePayloadToCustomField.label | Save payload to custom field | 將負載儲存到自訂欄位 |
+| fields.bot.label | Bot | 機器人 |
+| fields.botResponse.label | Bot Response | 機器人回應 |
+| fields.brandColor.description | This color is used on buttons to match your branding on the landing page, emails and webchat. | 此顏色將用於按鈕，以配合您在著陸頁面、電子郵件和網路聊天上的品牌。 |
+| fields.brandColor.label | Brand Color | 品牌顏色 |
+| fields.broadcast.label | Broadcast | 廣播 |
+| fields.trigger.label | Trigger | 觸發器 |
+| fields.webhook.label | Webhook | Webhook |
+| fields.button.label | Button | 按鈕 |
+| fields.button.whenPressed | When this button is pressed | 當按下此按鈕時 |
+| fields.buttonLabel.label | Button Label | 按鈕標籤 |
+| fields.category.label | Category | 分類 |
+| fields.completed.label | Completed | 已完成 |
+| fields.workspace.label | Workspace | 工作區 |
+| fields.workspaceId.description | Unique identifier for your workspace. | 您的工作區的唯一識別碼。 |
+| fields.workspaceId.label | Workspace ID | 工作區 ID |
+| fields.workspaceName.label | Account Name | 帳戶名稱 |
+| fields.contact.label | Contact | 聯絡人 |
+| fields.contacts.label | Contacts | 聯絡人 |
+| fields.conversation.label | Conversation | 對話 |
+| fields.conversationStarter.description | The conversation starters are used to start a conversation with a user. | 對話啟動器用於啟動與使用者的對話。 |
+| fields.conversationStarter.label | Conversation Starter{plural, select, 1 {s} other {}} | 對話起始訊息 {plural, select, 1 {} other {}} |
+| fields.conversationStarter.type.openWebsite | Open Website | 打開網站 |
+| fields.conversationStarter.type.sendFlow | Send Flow | 傳送流程 |
+| fields.conversationStarter.type.sendText | Send Text | 傳送文字 |
+| fields.createdAt.label | Created At | 建立於 |
+| fields.currentTime.label | Current Time | 目前時間 |
+| fields.customRange.label | Custom range | 自訂範圍 |
+| fields.customCss.label | Custom CSS | 自訂 CSS |
+| fields.theme.label | Theme | 主題 |
+| fields.theme.placeholder | Select a theme | 選擇主題 |
+| fields.customJS.label | Custom JS | 自訂 JS |
+| fields.customJS.placeholder | Enter custom JavaScript | 輸入自訂 JavaScript |
+| fields.customCSS.label | Custom CSS | 自訂 CSS |
+| fields.customCSS.placeholder | Enter custom CSS | 輸入自訂 CSS |
+| fields.customField.label | Custom Field | 自訂欄位 |
+| fields.customField.savePayloadTo | Save response to Custom Field | 將回應儲存到自訂欄位 |
+| fields.customField.set_value | Set value | 設定值 |
+| fields.customField.append | Append to the end | 追加到末尾 |
+| fields.customField.prepend | Prepend to the beginning | 加入到開頭 |
+| fields.customField.increase | Increase by | 增加 |
+| fields.customField.decrease | Decrease by | 減少 |
+| fields.dataCollect.label | Data Collect | 資料收集 |
+| fields.defaultReply.description | It is the default response that your workspace will send to users when the workspace doesn't know how to respond to the user message. | 這是當工作區不知道如何回應使用者訊息時，工作區會傳送給使用者的預設回應。 |
+| fields.defaultReply.label | Default Reply | 預設回覆 |
+| fields.smartResponseDelaySeconds.description | Set how long the bot waits before replying after the user’s last message. If the user sends another message, the timer resets and messages are queued into a single response. | 設定機器人在使用者最後一則訊息後，等待多久才回覆。如果使用者又傳送新訊息，計時器會重設，並將訊息併入單一回應。 |
+| fields.smartResponseDelaySeconds.label | Bot reply delay | 機器人回覆延遲 |
+| fields.smartResponseDelaySeconds.minutes | {count, plural, one {# minute} other {# minutes}} | {count, plural, one {# 分鐘} other {# 分鐘}} |
+| fields.smartResponseDelaySeconds.none | None | 無 |
+| fields.smartResponseDelaySeconds.seconds | {count, plural, one {# second} other {# seconds}} | {count, plural, one {# 秒} other {# 秒}} |
+| fields.delayType.label | Delay Type | 延遲型 |
+| fields.delayType.placeholder | Delay Type | 延遲型 |
+| fields.delayUnit.days | Days | 天 |
+| fields.delayUnit.hours | Hours | 小時 |
+| fields.delayUnit.minutes | Minutes | 分鐘 |
+| fields.delayUnit.seconds | Seconds | 秒 |
+| fields.description.label | Description | 說明 |
+| fields.description.placeholder | Enter description | 輸入描述 |
+| fields.developmentMode.description | Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot. | 您的機器人僅適用於機器人管理員。如果您正在建造機器人並且不希望非管理員使用該機器人，則啟用此選項。 |
+| fields.developmentMode.label | Development Mode | 開發模式 |
+| fields.email.label | Email | 電子郵件 |
+| fields.email.placeholder | Enter email | 輸入電子郵件 |
+| fields.embedCode.description | Copy and paste this code into your website to embed the chat widget. | 複製此程式碼並將其貼上到您的網站中以嵌入聊天小工具。 |
+| fields.embedCode.label | Embed Code | 嵌入程式碼 |
+| fields.embedCode.securityNote | Security Note | 安全說明 |
+| fields.embedCode.securityNoteDescription | This widget will only work on domains that are authorized in your webchat configuration. Make sure to add your domain to the authorized domains list. | 此小工具僅適用於您的網路聊天設定中授權的網域。確保將您的網域新增至授權網域清單。 |
+| fields.processingStatus.label | Processing Status | 處理狀態 |
+| fields.enable.label | Enable | 啟用 |
+| fields.file.label | File | 檔案 |
+| fields.link.label | Link | 連結 |
+| fields.message.label | Message | 訊息 |
+| fields.filter.label | Filter | 過濾器 |
+| fields.finalMessage.label | Final Message | 決賽訊息 |
+| fields.firstName.label | First name | 名字 |
+| fields.firstName.placeholder | Enter first name | 輸入名字 |
+| fields.countryCode.label | Country Code | 國家/地區代碼 |
+| fields.contactId.label | Contact ID | 聯絡人 ID |
+| fields.flow.label | Flow | 流程 |
+| fields.flowId.label | Flow ID | 流程 ID |
+| fields.flows.aiGenerateText | {aiName}: Generate Text | {aiName}：產生文字 |
+| fields.flows.aiGenerateImage | {aiName}: Generate Image | {aiName}：產生影像 |
+| fields.flows.aiEditImage | {aiName}: Edit Image | {aiName}：編輯影像 |
+| fields.flows.aiAnalyzeImage | {aiName}: Analyze Image | {aiName}：分析影像 |
+| fields.flows.aiExtractData | {aiName}: Extract Data | {aiName}：擷取資料 |
+| fields.flows.aiSpeechToText | {aiName}: Speech to Text | {aiName}：語音轉文字 |
+| fields.flows.aiTextToSpeech | {aiName}: Text to Speech | {aiName}：文字轉語音 |
+| fields.flows.label | Flows | 流程 |
+| fields.flows.placeholder | Select flow | 選擇流程 |
+| fields.flows.aiGenerateTextAgent | {aiName}: Generate Text Agent | {aiName}：產生文字 Agent |
+| fields.flows.aiDeleteMessageHistory | {aiName}: Delete Message History | {aiName}：刪除訊息歷史記錄 |
+| fields.steps.label | Steps | 步驟 |
+| fields.steps.placeholder | Select step | 選擇步驟 |
+| fields.folder.label | Folder | 資料夾 |
+| fields.format.label | Format | 格式 |
+| fields.framework.angular | Angular | 角度 |
+| fields.framework.ember | Ember | 餘燼 |
+| fields.framework.react | React | 反應 |
+| fields.framework.svelte | Svelte | 苗條 |
+| fields.framework.vue | Vue | Vue |
+| fields.function.label | Function | 功能 |
+| fields.gemini.label | Gemini | Gemini |
+| fields.geminiModel.label | Gemini Model | Gemini型號 |
+| fields.gender.female | Female | 女 |
+| fields.gender.label | Gender | 性別 |
+| fields.gender.male | Male | 男 |
+| fields.gender.unknown | Unknown | 未知 |
+| fields.googleSheets.label | Google Sheets | Google工作表 |
+| fields.activeCampaign.label | ActiveCampaign | ActiveCampaign |
+| fields.getResponse.label | GetResponse | 取得回應 |
+| fields.mailchimp.label | Mailchimp | Mailchimp |
+| fields.mailerLite.label | MailerLite | MailerLite |
+| fields.klaviyo.label | Klaviyo | Klaviyo |
+| fields.moosend.label | Moosend | Moosend |
+| fields.host.label | Host | 主機 |
+| fields.host.placeholder | smtp.example.com | smtp.example.com |
+| fields.hideHeader.label | Hide Header | 隱藏標題 |
+| fields.hideMessageInput.label | Hide Message Input | 隱藏訊息輸入 |
+| fields.inbox.label | Inbox | 收件匣 |
+| fields.inbox.placeholder | Select an inbox | 選擇收件匣 |
+| fields.inboxTeam.label | Inbox Team | 收件匣團隊 |
+| fields.teamMembers.label | Team Members | 團隊成員 |
+| fields.inboxTeamMember.label | Inbox Team Member | 收件匣團隊成員 |
+| fields.inputCustomField.label | Input Custom Field | 輸入自訂欄位 |
+| fields.insertLink.label | Insert link | 插入連結 |
+| fields.instructions.label | System Message (Prompt) | 系統訊息（提示） |
+| fields.isDefault.label | Mark as default | 標記為預設 |
+| fields.isRichResponse.description | Return structured JSON with messages and actions instead of plain text streaming. | 傳回包含訊息與操作的結構化 JSON，而不是純文字流。 |
+| fields.isRichResponse.label | Rich Response | 豐富回應 |
+| fields.language.description | Contacts are assigned the default language when the contact language is unknown. | 聯絡人將套用此預設語言。 |
+| fields.language.label | Language | 語言 |
+| fields.language.placeholder | Select language | 選擇語言 |
+| fields.lastName.label | Last name | 姓氏 |
+| fields.lastName.placeholder | Enter last name | 輸入姓氏 |
+| fields.last30days.label | Last 30 days | 過去 30 天 |
+| fields.last7days.label | Last 7 days | 過去 7 天 |
+| fields.lastInput.label | Last Input | 最後輸入 |
+| fields.lastUserInputTypes.text | Text | 文字 |
+| fields.lastUserInputTypes.location | Location | 位置 |
+| fields.lastUserInputTypes.refLink | Ref link | 參考連結 |
+| fields.lastUserInputTypes.image | Image | 圖片 |
+| fields.lastUserInputTypes.video | Video | 影片 |
+| fields.lastUserInputTypes.audio | Audio | 音頻 |
+| fields.lastUserInputTypes.gif | GIF | GIF |
+| fields.lastUserInputTypes.file | File | 檔案 |
+| fields.lastMonth.label | Last month | 上個月 |
+| fields.lifeTime.label | Lifetime | 生命週期 |
+| fields.locale.label | Locale | 地區設定 |
+| fields.errorLog.label | Error Log | 錯誤日誌 |
+| fields.inputType.label | Input Type | 輸入類型 |
+| fields.inputType.options.text | Text | 文字 |
+| fields.inputType.options.image | Image | 圖片 |
+| fields.inputType.options.file | File | 檔案 |
+| fields.extractFields.label | Fields to Extract | 要擷取的欄位 |
+| fields.extractFields.key.label | JSON Key | JSON金鑰 |
+| fields.extractFields.key.placeholder | e.g. email, phone, address | 例如電子郵件、電話、地址 |
+| fields.extractFields.customFieldId.label | Save to Custom Field | 儲存到自訂欄位 |
+| fields.extractFields.description.label | Description (Optional) | 描述（可選） |
+| fields.extractFields.description.placeholder | Describe what to extract | 描述要擷取的內容 |
+| fields.max.label | Maximum | 最大值 |
+| fields.maxOutputTokens.label | Max Tokens | 最大代幣數量 |
+| fields.mcpServer.label | MCP Server | MCP伺服器 |
+| fields.systemFunction.label | System Function | 系統功能 |
+| fields.systemFunction.names.connectUserToHuman | Connect user to Human | 將使用者轉接給真人 |
+| fields.systemFunction.names.documentReader | Document Reader | 文檔閱讀器 |
+| fields.systemFunction.names.imageReader | Image Reader | 影像讀取器 |
+| fields.systemFunction.names.urlContext | Url Reader | 網址閱讀器 |
+| fields.systemFunction.names.webSearch | Web search | Web 搜尋 |
+| fields.min.label | Minimum | 最小值 |
+| fields.model.label | Model | 型號 |
+| fields.name.label | Name | 名稱 |
+| fields.name.placeholder | Enter name | 輸入姓名 |
+| fields.name.searchPlaceholder | Search name... | 搜尋名稱... |
+| fields.selectUsers.label | Select users | 選擇使用者 |
+| fields.node.label | Node | 節點 |
+| fields.noResults.label | No results found | 找不到結果 |
+| fields.notes.label | Notes | 備註 |
+| fields.numericLength.label | Numeric Length | 數字長度 |
+| fields.numericValue.label | Numeric Value | 數值 |
+| fields.openai.label | OpenAI | OpenAI |
+| fields.operation.label | Operation | 操作 |
+| fields.outputCustomField.label | Output Custom Field | 輸出自訂欄位 |
+| fields.httpMethod.label | Method | 方法 |
+| fields.requestUrl.label | URL | URL |
+| fields.requestUrl.placeholder | https://api.example.com/endpoint | https://api.example.com/endpoint |
+| fields.requestHeaders.label | Headers | 標頭 |
+| fields.requestHeaders.keyPlaceholder | Header | 標頭 |
+| fields.requestHeaders.valuePlaceholder | Value | 值 |
+| fields.requestBody.label | Body | 身體 |
+| fields.requestBody.keyPlaceholder | Field | 欄位 |
+| fields.requestBody.valuePlaceholder | Value | 值 |
+| fields.bodyType.label | Body Type | 體型 |
+| fields.bodyType.options.allContactData | All Contact Data | 所有聯絡人資料 |
+| fields.bodyType.options.json | JSON | JSON |
+| fields.bodyType.options.formEncoded | Form Encoded | 表單編碼 |
+| fields.statusCode.label | Status Code | 狀態碼 |
+| fields.outputMessage.label | Output Message | 輸出訊息 |
+| fields.outputMessage.placeholder | What is the output message? | 輸出訊息是什麼？ |
+| fields.paymentHistory.label | Payment History | 付款歷史 |
+| fields.paymentMethods.label | Payment Methods | 付款方式 |
+| fields.persistentMenu.description | The persistent menus are used to start a conversation with a user. | 持久選單用於啟動與使用者的對話。 |
+| fields.persistentMenu.label | Persistent Menu{plural, select, 1 {s} other {}} | 常駐選單 {plural, select, 1 {} other {}} |
+| fields.persistentMenu.type.openWebsite | Open Website | 打開網站 |
+| fields.persistentMenu.type.sendFlow | Send Flow | 傳送流程 |
+| fields.userPersistentMenu.pageDefault | Default | 預設 |
+| fields.userPersistentMenu.label | User Persistent Menu | 使用者常駐選單 |
+| fields.phoneNumber.label | Phone number | 電話號碼 |
+| fields.phoneNumberId.label | Phone number | 電話號碼 |
+| fields.phoneNumberId.noPhoneNumbersFound | No phone numbers found for this account | 找不到此帳號的電話號碼 |
+| fields.port.label | Port | 端口 |
+| fields.port.placeholder | 587 | 587 |
+| fields.provider.label | Provider | 提供商 |
+| fields.prompt.label | Prompt | 提示 |
+| fields.prompt.placeholder | Enter prompt | 輸入提示 |
+| fields.userMessage.label | User message | 使用者訊息 |
+| fields.pageUserName.label | Page User Name | 粉絲專頁使用者名稱 |
+| fields.purpose.label | Purpose | 目的 |
+| fields.purpose.placeholder | What does this Function do? | 這個函數有什麼作用？ |
+| fields.question.label | Question | 問題 |
+| fields.question.placeholder | Are you open today? | 今天營業嗎？ |
+| fields.imageProfileUrl.label | Image Profile URL | 影像設定檔 URL |
+| fields.persona.label | Persona | 角色 |
+| fields.persona.pageDefault | Default persona | 預設角色 |
+| fields.quickReply.label | Quick Reply | 快速回覆 |
+| fields.search.placeholder | Search... | 搜尋... |
+| fields.logo.label | Logo | 標誌 |
+| fields.logoLight.label | Logo (Light) | 標誌（淺色） |
+| fields.logoDark.label | Logo (Dark) | 標誌（深色） |
+| fields.favicon.label | Favicon | 網站圖標 |
+| fields.brandName.label | Brand Name | 品牌名稱 |
+| fields.brandName.placeholder | Enter brand name | 輸入品牌名稱 |
+| fields.policyUrl.label | Privacy Policy URL | 隱私權政策 URL |
+| fields.termsOfServiceUrl.label | Terms of Service URL | 服務條款 URL |
+| fields.showLogo.label | Show Personal Logo | 顯示個人標誌 |
+| fields.quality.label | Quality | 品質 |
+| fields.quality.options.auto | Auto | 自動 |
+| fields.quality.options.hd | HD | 高清 |
+| fields.quality.options.md | Medium | 中 |
+| fields.quality.options.ld | Low | 低 |
+| fields.size.label | Size | 大小 |
+| fields.size.options.auto | Auto | 自動 |
+| fields.size.options.square1024 | Square - 1024×1024 | 正方形 - 1024×1024 |
+| fields.size.options.landscape1536x1024 | Landscape - 1536×1024 | 風景 - 1536×1024 |
+| fields.size.options.portrait1024x1536 | Portrait - 1024×1536 | 肖像 - 1024×1536 |
+| fields.size.options.dalle2_256 | 256×256 | 256×256 |
+| fields.size.options.dalle2_512 | 512×512 | 512×512 |
+| fields.size.options.dalle3_1792x1024 | 1792×1024 | 1792×1024 |
+| fields.status.label | Status | 狀態 |
+| fields.status.pending | Pending | 待定 |
+| fields.status.processing | Processing | 處理中 |
+| fields.status.completed | Completed | 已完成 |
+| fields.status.failed | Failed | 失敗 |
+| fields.status.success | Success | 成功 |
+| fields.status.error | Error | 錯誤 |
+| fields.subtitle.placeholder | Enter subtitle | 輸入字幕 |
+| fields.syncToMessenger.label | Sync to Messenger | 同步到 Messenger |
+| fields.tag.label | Tag | 標籤 |
+| fields.emailTopic.label | Email Topic | 電子郵件主題 |
+| fields.emailTopics.label | Email Topics | 電子郵件主題 |
+| fields.emailTopicSent.label | Sent | 已傳送 |
+| fields.emailTopicDelivered.label | Delivered(%) | 已交付(%) |
+| fields.emailTopicSeen.label | Seen(%) | 觀看次數(%) |
+| fields.emailTopicClicked.label | Clicked(%) | 點擊次數(%) |
+| fields.targetCountry.description | The country where most of your contacts live. | 您的大多數聯絡人居住的國家。 |
+| fields.targetCountry.label | Target Country | 目標國家/地區 |
+| fields.team.label | Team | 團隊 |
+| fields.rememberConversation.label | Remember conversation | 記住對話 |
+| fields.temperature.label | Temperature | 溫度 |
+| fields.templateMessages.label | Template Messages | 範本訊息 |
+| fields.text.label | Text | 文字 |
+| fields.text.placeholder | Enter text | 輸入文字 |
+| fields.thisMonth.label | This month | 本月 |
+| fields.timezone.description | Contacts are assigned this timezone when the contact timezone is unknown. | 聯絡人將套用此時區。 |
+| fields.timezone.label | Timezone | 時區 |
+| fields.title.placeholder | Enter title | 輸入標題 |
+| fields.today.label | Today | 今天 |
+| fields.tools.label | Tools | 工具 |
+| fields.tools.placeholder | Select tools | 選擇工具 |
+| fields.triggerFlowId.label | Trigger Flow ID | 觸發器流程 ID |
+| fields.triggerFlowId.placeholder | What flow is triggered? | 觸發什麼流程？ |
+| fields.type.label | Type | 類型 |
+| fields.type.placeholder | Select type | 選擇類型 |
+| fields.lastRead.label | Last Read | 最後閱讀 |
+| fields.assignee.label | Assignee | 被指派者 |
+| fields.modified.label | Modified | 已修改 |
+| fields.estimatedContacts.label | Estimated Contacts | 估計聯絡人 |
+| fields.scheduledAt.label | Scheduled At | 預定於 |
+| fields.channel.label | Channel | 頻道 |
+| fields.comment.label | Comment | 留言 |
+| fields.directMessage.label | Direct Message | 直接訊息 |
+| fields.updatedAt.label | Updated At | 更新於 |
+| fields.url.label | URL | URL |
+| fields.url.placeholder | Enter URL | 輸入 URL |
+| fields.userId.label | User ID | 使用者 ID |
+| fields.userId.placeholders.instagram | Instagram user ID | Instagram 使用者 ID |
+| fields.userId.placeholders.messenger | Messenger PSID | MessengerPSID |
+| fields.userId.placeholders.telegram | Telegram chat ID | Telegram 聊天 ID |
+| fields.userId.placeholders.tiktok | TikTok user ID | TikTok 使用者 ID |
+| fields.userId.placeholders.zalo | Zalo user ID | Zalo 使用者 ID |
+| fields.userTags.label | User Applied Tags | 使用者已套用標籤 |
+| fields.username.label | Username | 使用者名稱 |
+| fields.username.placeholder | user@example.com | user@example.com |
+| fields.keywords.label | Keywords | 關鍵字 |
+| fields.value.label | Value | 值 |
+| fields.wabaId.label | WABA ID | WABA ID |
+| fields.webchat.label | Webchat | 網路聊天 |
+| fields.welcomeFlowId.description | The welcome message is automatically sent when the user opens your webchat. | 當使用者開啟您的網路聊天時，會自動傳送歡迎訊息。 |
+| fields.welcomeFlowId.label | Welcome Flow | 歡迎流程 |
+| fields.whatsapp.label | WhatsApp | WhatsApp |
+| fields.sms.label | SMS | 簡訊 |
+| fields.viber.label | Viber | Viber |
+| fields.viberBm.label | Viber BM | Viber BM |
+| fields.voice.label | Voice | 語音 |
+| fields.googleBm.label | Google BM | GoogleBM |
+| fields.landingPage.label | Landing Page | 著陸頁面 |
+| fields.whatsappFlow.label | WhatsApp Flow | WhatsApp流程 |
+| fields.shortText.label | Short Text | 短文字 |
+| fields.shortText.placeholder | Enter text | 輸入文字 |
+| fields.number.label | Number | 號碼 |
+| fields.number.placeholder | Enter number | 輸入號碼 |
+| fields.date.label | Date | 日期 |
+| fields.datetime.label | Datetime | 日期時間 |
+| fields.boolean.label | Boolean | 布林值 |
+| fields.boolean.placeholder | Select true or false | 選擇 true 或 false |
+| fields.boolean.true | True | 正確 |
+| fields.boolean.false | False | 錯誤 |
+| fields.longText.label | Long Text | 長文字 |
+| fields.replyFormat.label | Reply Format | 回覆格式 |
+| fields.replyFormat.number | Number | 號碼 |
+| fields.replyFormat.text | Text | 文字 |
+| fields.replyFormat.email | Email | 電子郵件 |
+| fields.replyFormat.phone | Phone | 電話 |
+| fields.replyFormat.image | Image | 圖片 |
+| fields.replyFormat.file | File | 檔案 |
+| fields.replyFormat.link | Link | 連結 |
+| fields.replyFormat.date | Date | 日期 |
+| fields.replyFormat.datetime | Datetime | 日期時間 |
+| fields.replyFormat.location | Location | 位置 |
+| fields.replyFormat.anyInput | Any Input | 任何輸入 |
+| fields.workspaceMember.label | Workspace Member | 工作區成員 |
+| fields.yesterday.label | Yesterday | 昨天 |
+| fields.permissions.label | Permissions | 權限 |
+| fields.permissions.superAdmin | Super Admin | 超級管理員 |
+| fields.permissions.analytics | Analytics | 分析 |
+| fields.permissions.flows | Flows | 流程 |
+| fields.permissions.contacts | Contacts | 聯絡人 |
+| fields.permissions.onlyAssignedContacts | Only Assigned Contacts | 僅分配聯絡人 |
+| fields.permissions.emailAndPhone | Email and Phone | 電子郵件和電話 |
+| fields.permissions.broadcast | Broadcast | 廣播 |
+| fields.permissions.ecommerce | Ecommerce | 電子商務 |
+| fields.member.label | Member | 會員 |
+| fields.schedule.label | Schedule | 時間表 |
+| fields.schedule.now | Now | 現在 |
+| fields.schedule.scheduled | Schedule for later | 稍後安排 |
+| fields.inputFieldId.label | Input Custom Field | 輸入自訂欄位 |
+| fields.aiEditImage.inputFieldId.label | Image | 圖片 |
+| fields.inputText.label | Input Text | 輸入文字 |
+| fields.outputFieldId.label | Save result to a custom field | 將結果儲存到自訂欄位 |
+| fields.audio.label | Audio Field | 音訊欄位 |
+| fields.voiceType.label | Voice Type | 語音類型 |
+| fields.voiceType.placeholder | Select a voice type | 選擇語音類型 |
+| fields.voiceTone.label | Voice tone (Optional) | 語音（可選） |
+| fields.voiceTone.placeholder | Speak in a cheerful tone. | 用愉快的語氣說話。 |
+| fields.jsonPath.placeholder | Enter JSON path | 輸入 JSON 路徑 |
+| fields.jsonPath.targetThisRow | Fill this row from JSON | 從 JSON 填入此列 |
+| fields.jsonSource.title | Pick JSON path | 選擇 JSON 路徑 |
+| fields.jsonSource.tabs.testResponse | Test response | 測試回應 |
+| fields.jsonSource.tabs.pasteSample | Paste sample | 貼上範例 |
+| fields.jsonSource.pastePlaceholder | Paste a sample JSON response | 貼上範例 JSON 回應 |
+| fields.jsonSource.invalidJson | Invalid JSON | 無效 JSON |
+| fields.jsonSource.noTestResponse | Run Test Now to browse a live response | 立即執行測試以瀏覽即時回應 |
+| fields.jsonSource.activeTarget | Filling row {row} | 填入第 {row} 列 |
+| fields.jsonSource.showMore | Show more | 顯示更多 |
+| fields.jsonSource.showMoreCount | Show {count} more | 顯示更多（{count}） |
+| fields.spreadsheets.label | Spreadsheets | 電子表格 |
+| fields.retryMessage.label | Retry Message | 重試訊息 |
+| fields.skipButtonLabel.label | Skip Button Label | 跳過按鈕標籤 |
+| fields.autoSkipTime.label | Auto Skip Time | 自動跳過時間 |
+| fields.autoSkipFailAttempts.label | Auto Skip Fail Attempts | 自動跳過失敗嘗試 |
+| fields.autoSkip.label | Auto Skip | 自動跳過 |
+| fields.spreadsheet.label | Spreadsheet | 電子表格 |
+| fields.worksheet.label | Worksheet | 工作表 |
+| fields.source.label | Source | 來源 |
+| fields.source.placeholder | Select a source | 選擇來源 |
+| fields.password.label | Password | 密碼 |
+| fields.password.placeholder | •••••••• | •••••••• |
+| fields.passwordConfirmation.label | Re-enter password | 重新輸入密碼 |
+| fields.newPassword.label | New Password | 新密碼 |
+| fields.currentPassword.label | Current Password | 目前密碼 |
+| fields.developerAccessToken.label | API Access Token | API 存取權杖 |
+| fields.fullName.label | Full Name | 全名 |
+| fields.botFields.label | Bot Fields | 機器人欄位 |
+| fields.keyword.label | Keyword | 關鍵字 |
+| fields.keyword.searchPlaceholder | Search keyword... | 搜尋關鍵字... |
+| fields.templateId.label | WhatsApp Template | WhatsApp 範本 |
+| fields.messengerTemplateId.label | Messenger Template | Messenger 範本 |
+| fields.whatsappChannel.label | WhatsApp Channel | WhatsApp 頻道 |
+| fields.messengerChannel.label | Messenger Channel | Messenger 頻道 |
+| fields.messages.label | Messages | 訊息 |
+| fields.shortcut.label | Shortcut | 快捷方式 |
+| fields.savedReplies.label | Saved Replies | 已儲存的回覆 |
+| fields.role.label | Role | 角色 |
+| fields.plan.label | Plan | 方案 |
+| fields.price.label | Price | 價格 |
+| fields.annualPrice.label | Annual Price | 年價 |
+| fields.limitContacts.label | Maximum of Contacts | 最大聯絡人 |
+| fields.marketingFeatures.label | Marketing feature list | 行銷功能清單 |
+| fields.marketingFeatures.description | A list of product features that will be visible to customers. Displayed in pricing tables. | 客戶可見的產品功能清單。顯示在定價表中。 |
+| fields.currency.label | Currency | 貨幣 |
+| fields.clientId.label | Client ID | Client ID |
+| fields.clientSecret.label | Client Secret | 客戶端密碼 |
+| fields.verifyToken.label | Webhook Verify Token | Webhook 驗證權杖 |
+| fields.apiVersion.label | API Version | API版本 |
+| fields.configId.label | App Config ID | 應用程式設定 ID |
+| fields.systemUserId.label | System User ID | 系統使用者 ID |
+| fields.systemUserToken.label | System User Token | 系統使用者代幣 |
+| fields.businessId.label | Business ID | Business ID |
+| fields.businessName.label | Business Name | 公司名稱 |
+| fields.publishableKey.label | Publishable Key | 可發布金鑰 |
+| fields.secretKey.label | Secret Key | 金鑰 |
+| fields.freeTrial.label | Free Trial | 免費試用 |
+| fields.freeTrial.suffix | days | 天 |
+| fields.pricing.label | Pricing | 定價 |
+| fields.sequence.label | Sequence | 序列 |
+| fields.from.label | From | 來自 |
+| fields.fromAddress.label | From Address | 寄件者地址 |
+| fields.fromAddress.placeholder | noreply@example.com | noreply@example.com |
+| fields.messageTemplate.label | Message Template | 訊息範本 |
+| fields.preheader.label | Preheader | 前置頭 |
+| fields.subject.label | Subject | 主題 |
+| fields.to.label | To | 至 |
+| fields.smtpChannel.label | SMTP Channel | SMTP頻道 |
+| fields.magicLink.label | Magic Link | Magic Link |
+| fields.magicLink.nameHint | Appended after /r/{workspaceId}/ in the public tracking URL. Use letters, numbers, underscore, and hyphen only. | 在公共追蹤 URL 中附加在 /r/{workspaceId}/ 之後。僅使用字母、數字、底線和連字號。 |
+| fields.magicLink.urlHint | Use double braces in the URL, e.g. https://example.com/page?utm_campaign='{{campaign}}'. Values come from the tracking link query string. | 在URL中使用雙大括號，例如https://example.com/page?utm_campaign='{{campaign}}'. 值來自追蹤連結查詢字串。 |
+| fields.appId.label | App ID | App ID |
+| fields.appSecret.label | App Secret | 應用程式秘密 |
+| fields.webhookVerifyToken.label | Webhook Verify Token | Webhook 驗證權杖 |
+| fields.heading.label | Heading | 標題 |
+| fields.heading.placeholder | Enter heading | 輸入標題 |
+| fields.import.label | Import | 匯入 |
+| fields.import.uploading | Uploading… | 正在上傳... |
+| fields.import.fileTooLarge | The file exceeds the {size} MB limit. | 檔案超出 {size} MB 限制。 |
+| fields.import.unsupportedFileType | This file type is not supported. | 不支援此檔案類型。 |
+| fields.import.unableToReadHeaders | Unable to read the import headers. | 無法讀取匯入標頭。 |
+| fields.import.uploadError | The file could not be uploaded. | 檔案無法上傳。 |
+| fields.import.histories.title | Import history | 匯入歷史記錄 |
+| fields.import.histories.recent | Recent imports | 最近匯入 |
+| fields.import.histories.progress | Progress | 進度 |
+| fields.import.histories.success | Success | 成功 |
+| fields.import.histories.failed | Failed | 失敗 |
+| fields.import.histories.completedAt | Completed at | 完成於 |
+| fields.import.histories.errorDetails | Import errors | 匯入錯誤 |
+| fields.import.histories.row | Row {row} | 第 {row} 列 |
+| fields.line.label | Line | 線 |
+| fields.spacing.label | Spacing | 間距 |
+| fields.code.label | Code | 代碼 |
+| fields.code.placeholder | Enter code | 輸入代碼 |
+| fields.authCallbackUrl.label | Auth Callback URL | 授權回呼 URL |
+| fields.authCallbackUrl.hint | Register this exact URL as the OAuth redirect URI in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain. | 請將這個確切 URL 註冊為提供者應用程式中的 OAuth 重新導向 URI。必須使用此主機，而不是您的自訂網域，因為提供者無法存取自訂網域。 |
+| fields.signInCallbackUrl.label | Sign-in Callback URL | 登入回呼 URL |
+| fields.signInCallbackUrl.hint | Add this to your Google app's authorized redirect URIs to enable Google sign-in. | 請將此網址新增為 Google 應用程式中的授權重新導向 URI，以啟用 Google 登入。 |
+| fields.webhookUrl.label | Webhook URL | WebhookURL |
+| fields.webhookUrl.hint | Register this exact Webhook URL in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain. | 在您的提供者應用程式中註冊此確切的 Webhook URL。它必須使用此主機，而不是您的自訂網域 - 提供者無法存取自訂網域。 |
+| fields.tiktok.label | TikTok | TikTok |
+| fields.tiktok.accessToken | Access Token | 訪問權杖 |
+| fields.tiktok.openId | Open ID | 開啟ID |
+| fields.tiktok.clientId | Client ID | 客戶端ID |
+| fields.tiktok.clientSecret | Client Secret | 客戶端密碼 |
+| fields.tiktok.displayName | Display Name | 顯示名稱 |
+| fields.tiktok.connectInstructions.step1 | Create a TikTok app at <link>developers.tiktok.com</link>. | 建立TikTok應用程式位於<link>developers.tiktok.com</link>。 |
+| fields.tiktok.connectInstructions.step2 | Authorize your account and copy the <strong>access token</strong>, <strong>open ID</strong>, and <strong>client secret</strong>. | 授權您的帳號，並複製 <strong>Access Token</strong>、<strong>Open ID</strong> 與 <strong>Client Secret</strong>。 |
+| fields.tiktok.connectInstructions.step3 | Paste the credentials below to connect. | 貼上下面的憑證以進行連接。 |
+| fields.drip.label | Drip | Drip |
+| fields.sendGrid.label | SendGrid | SendGrid |
+| fields.currentVersion | Current | 目前 |
+| fields.consecutiveFailedReply.label | Consecutive Failed Replies | 連續回覆失敗 |
+| fields.currentStep.label | Current Step | 目前步驟 |
+| fields.fbChatLink.label | Facebook Inbox Link | Facebook 收件匣連結 |
+| fields.inboxLink.label | Inbox Link | 收件匣連結 |
+| fields.instagramBusinessFollowsUser.label | Instagram Business Follows User | Instagram 業務跟進使用者 |
+| fields.instagramFollowers.label | Instagram Followers | Instagram 追蹤者 |
+| fields.instagramFollowsBusiness.label | Instagram Follows Business | Instagram 專注於業務 |
+| fields.instagramUsername.label | Instagram Username | Instagram 使用者名稱 |
+| fields.instagramVerified.label | Instagram Verified | Instagram 已驗證 |
+| fields.lastAd.label | Last Ad | 最後一個廣告 |
+| fields.lastAdSourcePlatform.label | Last Ad Source Platform | 最後一個廣告來源平台 |
+| fields.lastAdSourceUrl.label | Last Ad Source URL | 最後一個廣告來源 URL |
+| fields.lastButtonTitle.label | Last Button Title | 最後一個按鈕標題 |
+| fields.lastCommentId.label | Last Comment ID | 最後留言 ID |
+| fields.lastCommentedPostText.label | Last Commented Post Text | 最後留言的貼文文字 |
+| fields.lastCtwa.label | Last CTWA | 最後CTWA |
+| fields.lastFbComment.label | Last FB comment | 最後一則 Facebook 留言 |
+| fields.lastInputFailure.label | Last Input Failure | 最後一次輸入失敗 |
+| fields.lastInteraction.label | Last Interaction | 最後一次互動 |
+| fields.lastLatitude.label | Last Latitude | 最後緯度 |
+| fields.lastLongitude.label | Last Longitude | 最後經度 |
+| fields.lastOutboundMessageAt.label | Last Outbound Message At | 最後傳出訊息時間 |
+| fields.lastPostId.label | Last Post ID | 最後發表 ID |
+| fields.lastSeen.label | Last Seen | 最後出現 |
+| fields.lastStep.label | Last Step | 最後一步 |
+| fields.me.label | My Data Link | 我的資料連結 |
+| fields.phone.label | Phone | 電話 |
+| fields.phoneAndEmail.label | Phone and email | 電話和電子郵件 |
+| fields.timezoneName.label | Timezone Name | 時區名稱 |
+| fields.totalNewTagged.label | Total New Tagged | 新標記總數 |
+| fields.totalTagged.label | Total Tagged | 標記總數 |
+| fields.userChannel.label | User Channel | 使用者頻道 |
+| fields.userExternalId.label | User External ID | 使用者外部 ID |
+| fields.userHash.label | User Hash | 使用者哈希 |
+| fields.userSource.label | User Source | 使用者來源 |
+| fields.webchatParentUrl.label | Webchat Parent URL | 網路聊天父層 URL |
+| fields.make.inviteUrl | Invite Link | 邀請連結 |
+| fields.make.inviteUrlHint | The invite link for your published Make custom app (e.g. https://eu2.make.com/app/invite/...). | 您已發佈到 Make 的自訂應用程式邀請連結（例如 https://eu2.make.com/app/invite/...）。 |
+| fields.makeEvents.label | Events | 活動 |
+| fields.makeEvents.placeholder | Type an event name and press Enter | 輸入事件名稱並按 Enter |
+| fields.makeEvents.description | Add one or more event names. When Make attaches a webhook for one of these events, data is sent to it when this step runs. | 新增一個或多個事件名稱。當 Make 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。 |
+| flows.title | Flows | 流程 |
+| flows.quickReplies.limitReached | Quick reply limit reached ({max}). | 已達到快速回覆限制 ({max})。 |
+| flows.buttons.limitReached | Button limit reached ({max}). | 已達到按鈕限制 ({max})。 |
+| flows.aiGenerateText.label | {name}: Generate Text | {name}：產生文字 |
+| flows.aiGenerateImage.label | {name}: Generate Image | {name}：產生影像 |
+| flows.aiEditImage.label | {name}: Edit Image | {name}：編輯影像 |
+| flows.aiAnalyzeImage.label | {name}: Analyze Image | {name}：分析影像 |
+| flows.aiExtractData.label | {name}: Extract Data | {name}：擷取資料 |
+| flows.openaiCompatible.empty | Connect an OpenAI-compatible provider in integration settings before using this step. | 連接相容OpenAI的提供者。 |
+| flows.openaiCompatible.integration | OpenAI-compatible provider | OpenAI相容供應商 |
+| flows.openaiCompatible.none | None | 無 |
+| flows.actions.addContactNotes | Add Contact Notes | 新增聯絡人備註 |
+| flows.actions.addContactTag | Add Contact Tag | 新增聯絡人標籤 |
+| flows.actions.aiDeleteMessageHistory | Delete Message History | 刪除訊息歷史記錄 |
+| flows.actions.aiExtractData | AI Extract Data | AI擷取資料 |
+| flows.actions.aiAnalyzeImage | AI Analyze Image | AI 分析影像 |
+| flows.actions.aiSpeechToText | AI Speech to Text | 人工智慧語音轉文字 |
+| flows.actions.aiGenerateImage | AI Generate Image | AI 產生影像 |
+| flows.actions.aiGenerateTextAgent | AI Generate Text Agent | AI產生文字Agent |
+| flows.actions.aiTextToSpeech | AI Text to Speech | 人工智慧文字轉語音 |
+| flows.actions.archiveConversation | Archive Conversation | 封存對話 |
+| flows.actions.assignConversation | Assign Conversation | 指派對話 |
+| flows.actions.autoAssignConversation | Auto Assign Conversation | 自動指派對話 |
+| flows.actions.blockContact | Block Contact | 封鎖聯絡人 |
+| flows.actions.broadcastActions | Broadcast Actions | 廣播操作 |
+| flows.actions.callApi | External API Request | 外部API 請求 |
+| flows.actions.make | Make | Make.com |
+| flows.actions.triggers | Triggers | 觸發器 |
+| flows.actions.questionnaires | Questionnaires | 問卷 |
+| flows.actions.setUpCoupon | Set up Coupon | 設定優惠券 |
+| flows.actions.markCouponUsed | Mark Coupon used | 標記優惠券 |
+| flows.actions.chooseChannel | Choose Channel | 選擇頻道 |
+| flows.actions.clearCustomField | Clear Custom Field | 清除自訂欄位 |
+| flows.actions.condition | Condition | 條件 |
+| flows.actions.contactActions | Contact Actions | 聯絡人操作 |
+| flows.actions.countCharacters | Count Characters | 計算字元數 |
+| flows.actions.deleteContact | Delete Contact | 刪除聯絡人 |
+| flows.actions.emailActions | Email Actions | 電子郵件操作 |
+| flows.actions.flowActions | Flow Actions | 流程操作 |
+| flows.actions.followConversation | Follow Conversation | 關注對話 |
+| flows.actions.formatDate | Format Date | 格式化日期 |
+| flows.actions.generateCode | Generate Code | 產生代碼 |
+| flows.actions.getDataFromJson | Get Data From JSON | 從JSON取得資料 |
+| flows.actions.inboxActions | Inbox Actions | 收件匣操作 |
+| flows.actions.markEmailVerified | Mark Email Verified | 標記電子郵件已驗證 |
+| flows.actions.activeCampaignSyncContact | Add Contact to ActiveCampaign | 將聯絡人新增到 ActiveCampaign |
+| flows.actions.facebookCustomAudience | Facebook Custom Audience | Facebook 自訂受眾 |
+| flows.actions.mailchimpAddMember | Add Contact to MailChimp | 將聯絡人新增到 MailChimp |
+| flows.actions.mailerLiteAddSubscriber | Add Contact to MailerLite | 將聯絡人新增到 MailerLite |
+| flows.actions.klaviyoSyncProfile | Add Contact to Klaviyo | 將聯絡人新增到 Klaviyo |
+| flows.actions.moosendCreateContact | Add Contact to Moosend | 將聯絡人新增到 Moosend |
+| flows.actions.dripSubscribeSubscriber | Add Contact to Drip | 將聯絡人加入 Drip |
+| flows.actions.getResponseAddContact | Add Contact to GetResponse | 將聯絡人新增到 GetResponse |
+| flows.actions.sendGridAddContact | Add Contact to SendGrid | 將聯絡人新增到 SendGrid |
+| flows.actions.messenger | Messenger | Messenger |
+| flows.actions.openWebsite | Open Website | 打開網站 |
+| flows.actions.optInEmail | Opt In Email | 選擇接收電子郵件 |
+| flows.actions.optOutEmail | Opt Out Email | 選擇退出電子郵件 |
+| flows.actions.performAction | Perform Action | 執行操作 |
+| flows.actions.removeContactTag | Remove Contact Tag | 移除聯絡人標籤 |
+| flows.actions.setMessengerUserPersistentMenu | Set User Persistent Menu | 設定使用者常駐選單 |
+| flows.actions.enableMessengerComposer | Enable Messenger Composer | 啟用 Messenger 作曲家 |
+| flows.actions.disableMessengerComposer | Disable Messenger Composer | 停用 Messenger 作曲家 |
+| flows.actions.setMessengerPersona | Set Persona | 設定角色 |
+| flows.actions.updateMessengerContactData | Update Contact Data | 更新聯絡人資料 |
+| flows.actions.sendAudio | Send Audio | 傳送音頻 |
+| flows.actions.sendCard | Send Card | 傳送卡片 |
+| flows.actions.sendExternalFlow | Start External Flow | 啟動外部流程 |
+| flows.actions.sendExternalNode | Start External Node | 啟動外部節點 |
+| flows.actions.sendFile | Send File | 傳送檔案 |
+| flows.actions.sendGif | Send Gif | 傳送 GIF |
+| flows.actions.sendImage | Send Image | 傳送影像 |
+| flows.actions.sendMessage | Send Message | 傳送訊息 |
+| flows.actions.sendNode | Start Another Node | 啟動另一個節點 |
+| flows.actions.sendText | Send Text | 傳送文字 |
+| flows.actions.sendVideo | Send Video | 傳送影片 |
+| flows.actions.sendTemplateMessage | Template Message | 範本訊息 |
+| flows.actions.whatsappOptionList | Option List | 選項清單 |
+| flows.actions.noTemplatesAvailable | No templates available | 目前沒有可用的範本 |
+| flows.actions.noFlowsAvailable | No flows available | 無可用流量 |
+| flows.actions.setCustomField | Set Custom Field | 設定自訂欄位 |
+| flows.actions.startAnotherNode | Start Another Node | 啟動另一個節點 |
+| flows.actions.startExternalFlow | Start External Flow | 啟動外部流程 |
+| flows.actions.startExternalNode | Start External Node | 啟動外部節點 |
+| flows.actions.startFlow | Start Flow | 開始流程 |
+| flows.actions.subscribeBroadcast | Subscribe Broadcast | 訂閱廣播 |
+| flows.actions.tools | Tools | 工具 |
+| flows.actions.transferConversationToBot | Transfer Conversation to Bot | 將對話轉移到機器人 |
+| flows.actions.transferConversationToHuman | Transfer Conversation to Human | 將對話轉移給人類 |
+| flows.actions.unarchiveConversation | Unarchive Conversation | 取消封存對話 |
+| flows.actions.unassignConversation | Unassign Conversation | 取消分配對話 |
+| flows.actions.unfollowConversation | Unfollow Conversation | 取消追蹤對話 |
+| flows.actions.unsubscribeBroadcast | Unsubscribe Broadcast | 退訂廣播 |
+| flows.actions.getUserData | Get User Data | 取得使用者資料 |
+| flows.actions.sendCarousel | Send Carousel | 傳送輪播 |
+| flows.actions.actions | Actions | 操作 |
+| flows.actions.findGif | Find Gif | 找 GIF |
+| flows.actions.spreadsheetGetRow | Get Row | 取得行 |
+| flows.actions.spreadsheetUpdateRow | Update Row | 更新列 |
+| flows.actions.spreadsheetSendData | Send Data | 傳送資料 |
+| flows.actions.spreadsheetGetRandomRow | Get Random Row | 取得隨機行 |
+| flows.actions.spreadsheetClearRow | Clear Row | 清除行 |
+| flows.actions.typing | Typing | 打字 |
+| flows.actions.sequenceActions | Sequence Actions | 序列操作 |
+| flows.actions.subscribeSequence | Subscribe Sequence | 訂閱序列 |
+| flows.actions.unsubscribeSequence | Unsubscribe Sequence | 退訂序列 |
+| flows.actions.splitTraffic | Split Traffic | 拆分流量 |
+| flows.actions.aiEditImage | AI Edit Image | 人工智慧編輯影像 |
+| flows.actions.whatsappFlow | WhatsApp Flow | WhatsApp流程 |
+| flows.splitTraffic.balanceHint | The total sum must equal 100%. | 總和必須等於 100%。 |
+| flows.splitTraffic.addVariation | New Variation | 新變體 |
+| flows.condition.addCase | Check New Condition | 檢查新狀況 |
+| flows.condition.caseTitle | Case {index} | 案例 {index} |
+| flows.condition.otherwise | The user doesn't match these conditions | 使用者不符合這些條件 |
+| flows.whatsappOptionList.buttonLabel | Button Label | 按鈕標籤 |
+| flows.whatsappOptionList.optionTitle | Title | 標題 |
+| flows.whatsappOptionList.optionDescription | Description | 說明 |
+| flows.whatsappOptionList.addOption | Add New | 新增新 |
+| flows.whatsappOptionList.editButtonTitle | Edit Button | 編輯按鈕 |
+| flows.whatsappOptionList.editOptionTitle | Edit Option | 編輯選項 |
+| flows.whatsappFlow.buttonLabel | Button Label | 按鈕標籤 |
+| flows.whatsappFlow.editDialogTitle | Edit WhatsApp Flow | 編輯 WhatsApp 流程 |
+| flows.whatsappFlow.selectFlow | WhatsApp Flow | WhatsApp流程 |
+| flows.whatsappFlow.selectFlowPlaceholder | Select a flow | 選擇流 |
+| flows.whatsappFlow.startScreen | Start Screen | 開始畫面 |
+| flows.whatsappFlow.selectScreenPlaceholder | Select a screen | 選擇一個螢幕 |
+| flows.whatsappFlow.fieldMappings | Save Response to Custom Fields | 將回應儲存到自訂欄位 |
+| flows.whatsappFlow.paramKey | Parameter | 參數 |
+| flows.whatsappFlow.customField | Custom Field | 自訂欄位 |
+| flows.whatsappFlow.selectCustomFieldPlaceholder | Select custom field | 選擇自訂欄位 |
+| flows.whatsappFlow.addMapping | Add Mapping | 新增對應 |
+| flows.whatsappFlow.addCustomField | Add New | 新增新 |
+| flows.sendCarousel.addSlide | Add slide | 新增幻燈片 |
+| flows.sendCarousel.removeSlide | Remove slide | 移除幻燈片 |
+| flows.sendCarousel.whatsappLinkButtonIgnored | On WhatsApp, this card's link won't work: a card with a link button cannot have other buttons. It will be sent as a reply instead. | 在WhatsApp上，此卡片的連結不起作用：帶有連結按鈕的卡片不能有其他按鈕。它將作為回復傳送。 |
+| flows.additionalSteps | Additional steps | 附加步驟 |
+| flows.delayType.datetimeCustomField | Date & Time Custom Field | 日期和時間自訂欄位 |
+| flows.delayType.datetimeCustomFieldValue | {customField} | {customField} |
+| flows.delayType.duration | Duration | 持續時間 |
+| flows.delayType.durationValue | {duration} | {duration} |
+| flows.delayType.date | Date | 日期 |
+| flows.delayType.specificDate | Specific Date | 具體日期 |
+| flows.delayType.specificDateValue | {date} | {date} |
+| flows.delayType.random | Random | 隨機 |
+| flows.formatTimezone.timezone | Account Timezone | 帳戶時區 |
+| flows.formatTimezone.contactTimezone | Contact Timezone | 聯絡人時區 |
+| flows.fields.selectTemplatePlaceholder | Choose a WhatsApp template | 選擇 WhatsApp 訊息範本 |
+| flows.fields.selectMessengerTemplatePlaceholder | Choose a Messenger template | 選擇 Messenger 訊息範本 |
+| flows.fields.preview | Preview | 預覽 |
+| flows.fields.typingSecondsLabel | Typing for (seconds) | 鍵入（秒） |
+| flows.fields.lookupColumnsLabel | Lookup Columns: | 尋找列： |
+| flows.fields.filterModeAnd | AND | 和 |
+| flows.fields.filterModeOr | OR | 或 |
+| flows.operators.append | Append to the end | 追加到末尾 |
+| flows.operators.prepend | Prepend to the start | 加入到開頭 |
+| flows.operators.set | Set to | 設定為 |
+| flows.wait.datetimeTooltip | The date and time when the flow will be triggered. | 觸發流程的日期和時間。 |
+| flows.wait.setInterval | Set Interval | 設定間隔 |
+| flows.wait.delayTypeLabel | This is a | 這是一個 |
+| flows.wait.fixed | Fixed | 已修復 |
+| flows.wait.randomized | Randomized | 隨機 |
+| flows.wait.delay | delay | 延遲 |
+| flows.wait.durationDetailPrefix | Wait | 等等 |
+| flows.wait.dateDetailPrefix | Wait until | 等到 |
+| flows.wait.customFieldDetailPrefix | Wait until | 等到 |
+| flows.wait.randomDetailPrefix | Wait between | 等待 |
+| flows.wait.randomDetailAnd | and | 和 |
+| flows.wait.intervalDetailPrefix | Active between | 活躍時間 |
+| flows.wait.offsetAdd | + | + |
+| flows.wait.offsetSubtract | - | - |
+| flows.wait.durationLabel | Duration | 持續時間 |
+| flows.wait.activeHours | Active hours | 活躍時間 |
+| flows.wait.dateTypeLabel | Date type | 日期類型 |
+| flows.wait.datetimeLabel | Date & Time | 日期和時間 |
+| flows.wait.customFieldLabel | Custom field | 自訂欄位 |
+| flows.wait.offset | Add offset | 新增偏移量 |
+| flows.wait.offsetLabel | Offset | 偏移量 |
+| flows.wait.randomRangeLabel | Random range | 隨機範圍 |
+| flows.wait.minLabel | Min | 最小值 |
+| flows.wait.maxLabel | Max | 最大 |
+| flows.wait.unitLabel | Unit | 單位 |
+| flows.wait.specific | Specific | 具體 |
+| flows.wait.dynamic | Dynamic | 動態 |
+| flows.wait.selectTimePlaceholder | Select a time | 選擇時間 |
+| flows.followUp.durationLabel | Duration | 持續時間 |
+| flows.followUp.waitAndContinue | Wait <value>{duration} {unit}</value> and continue | 等待<value>{duration}{unit}</value>並繼續 |
+| flows.followUp.cancelOnReplyHint | The follow-up won't be sent if the contact replies before the time expires. | 如果聯絡人在時間到期之前回覆，則不會傳送後續訊息。 |
+| flows.setCustomField.temporalHint | Leave it empty to save the current date/time. | 將其留空以儲存目前日期/時間。 |
+| folders.heading.title | Folders | 資料夾 |
+| gemini.autoReply.description | Enable AI auto reply to respond to users naturally with AI powered by your business data. | 啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。 |
+| gemini.autoReply.label | AI Auto Reply | 人工智慧自動回覆 |
+| gemini.connect.description | Respond to users naturally with AI powered by your business data. | 利用由您的業務資料提供支援的 AI 自然地回應使用者。 |
+| gemini.connect.label | Google Gemini | Google Gemini |
+| gemini.title | Google Gemini | Google Gemini |
+| general.title | General | 常規 |
+| facebookAds.title | Facebook Ads | Facebook 廣告 |
+| facebookAds.setting.label | Facebook Ads | Facebook 廣告 |
+| facebookAds.setting.description | Grow your business faster by connecting your Facebook Ads to your chatbot. Create custom audiences and add/remove people to custom audiences. | 將 Facebook 廣告連接到聊天機器人，以更快速拓展業務。可建立自訂受眾，並新增或移除受眾成員。 |
+| facebookAds.setting.reconnect | Reconnect | 重新連接 |
+| facebookAds.fields.subscriberShouldBe | Subscriber should be | 訂閱者應該是 |
+| facebookAds.fields.addedToCustomAudience | Added to Custom Audience | 新增至自訂受眾 |
+| facebookAds.fields.removedFromCustomAudience | Removed from Custom Audience | 從自訂受眾中刪除 |
+| facebookAds.fields.adAccount | Ad Account | 廣告帳戶 |
+| facebookAds.fields.customAudience | Custom Audience | 自訂受眾 |
+| facebookAds.fields.nothingSelected | Nothing selected | 未選擇任何內容 |
+| facebookAds.adAccounts.loading | Loading ad accounts... | 正在載入廣告帳號... |
+| facebookAds.adAccounts.error | Failed to load ad accounts. Please check your Facebook Ads connection. | 載入廣告帳號失敗。請檢查您的Facebook廣告連結。 |
+| facebookAds.customAudiences.loading | Loading custom audiences... | 正在載入自訂受眾... |
+| facebookAds.customAudiences.error | Failed to load custom audiences. Please check your Facebook Ads connection. | 無法載入自訂受眾。請檢查您的Facebook廣告連結。 |
+| facebookAds.errors.invalidAppSettings | Facebook App settings are not valid | Facebook 應用程式設定無效 |
+| googleSheets.setting.label | Google Sheets | Google工作表 |
+| googleSheets.setting.description | Google Sheets integration configuration | Google 試算表整合設定 |
+| googleSheets.header | Column Header | 列標題 |
+| googleSheets.title | Google Sheets | Google工作表 |
+| activeCampaign.title | ActiveCampaign | ActiveCampaign |
+| activeCampaign.setting.label | ActiveCampaign | ActiveCampaign |
+| activeCampaign.setting.description | This integration lets you save customers contacts from your bot to ActiveCampaign. | 此整合可讓您將機器人中的客戶聯絡人儲存到 ActiveCampaign。 |
+| activeCampaign.dialog.description | Enter the API URL and API Key from your ActiveCampaign account settings. | 輸入 ActiveCampaign 帳戶設定中的 API URL 和 API 金鑰。 |
+| activeCampaign.fields.apiUrl | API URL | APIURL |
+| activeCampaign.fields.apiUrlPlaceholder | https://youraccount.api-us1.com | https://youraccount.api-us1.com |
+| activeCampaign.fields.apiKey | API Key | API金鑰 |
+| activeCampaign.fields.operation | Operation | 操作 |
+| activeCampaign.fields.emailField | Email Field | 電子郵件欄位 |
+| activeCampaign.fields.emailTooltip | Contact field containing the email used to identify the ActiveCampaign contact. | 包含電子郵件的聯絡人欄位，用來識別 ActiveCampaign 中的聯絡人。 |
+| activeCampaign.fields.phoneField | Phone field | 電話欄位 |
+| activeCampaign.fields.phone | Phone | 電話 |
+| activeCampaign.fields.list | List | 清單 |
+| activeCampaign.fields.lists | Lists | 清單 |
+| activeCampaign.fields.tags | Tags | 標籤 |
+| activeCampaign.fields.automation | Automation | 自動化 |
+| activeCampaign.fields.customFields | Custom Fields in ActiveCampaign | 自訂欄位 |
+| activeCampaign.fields.optional | Optional | 可選 |
+| activeCampaign.fields.nothingSelected | Nothing selected | 未選擇任何內容 |
+| activeCampaign.fields.emptyField | --- | --- |
+| activeCampaign.fields.addCustomField | Add custom field | 新增自訂欄位 |
+| activeCampaign.operations.createOrUpdateContact | Create or Update Contact | 建立或更新聯絡人 |
+| activeCampaign.operations.addContactToAutomation | Add Contact to Automation | 將聯絡人加入自動化 |
+| activeCampaign.lists.loading | Loading ActiveCampaign lists... | 正在載入 ActiveCampaign 清單... |
+| activeCampaign.lists.error | Failed to load ActiveCampaign lists. Check that the integration is connected. | 無法載入 ActiveCampaign 清單。檢查整合是否已連接。 |
+| activeCampaign.lists.empty | No ActiveCampaign lists found. | 找不到 ActiveCampaign 清單。 |
+| activeCampaign.automations.loading | Loading ActiveCampaign automations... | 正在載入 ActiveCampaign 自動化... |
+| activeCampaign.automations.error | Failed to load ActiveCampaign automations. Check that the integration is connected. | 無法載入 ActiveCampaign 自動化。檢查整合是否已連接。 |
+| activeCampaign.automations.empty | No ActiveCampaign automations found. | 找不到 ActiveCampaign 自動化。 |
+| activeCampaign.tags.loading | Loading ActiveCampaign tags... | 正在載入 ActiveCampaign 標籤... |
+| activeCampaign.tags.error | Failed to load ActiveCampaign tags. Check that the integration is connected. | 無法載入 ActiveCampaign 標籤。檢查整合是否已連接。 |
+| activeCampaign.tags.empty | No ActiveCampaign tags found. | 找不到 ActiveCampaign 標籤。 |
+| activeCampaign.customFields.loading | Loading ActiveCampaign custom fields... | 正在載入 ActiveCampaign 自訂欄位... |
+| activeCampaign.customFields.error | Failed to load ActiveCampaign custom fields. Check that the integration is connected. | 無法載入 ActiveCampaign 自訂欄位。檢查整合是否已連接。 |
+| activeCampaign.customFields.empty | No ActiveCampaign custom fields found. | 找不到 ActiveCampaign 自訂欄位。 |
+| activeCampaign.errors.invalidCredentials | Invalid ActiveCampaign API URL or API Key. Please check your credentials and try again. | ActiveCampaign API URL 或 API 金鑰無效。請檢查您的憑證並重試。 |
+| getResponse.title | GetResponse | 取得回應 |
+| getResponse.setting.label | GetResponse | 取得回應 |
+| getResponse.setting.description | This integration lets you save customers contacts from your bot to GetResponse. | 此整合可讓您將機器人中的客戶聯絡人儲存到 GetResponse。 |
+| getResponse.fields.apiKey | API Key | API金鑰 |
+| getResponse.fields.list | List | 清單 |
+| getResponse.fields.listPlaceholder | Select a list | 選擇一個清單 |
+| getResponse.fields.email | Email Field | 電子郵件欄位 |
+| getResponse.fields.emailPlaceholder | Select an email field | 選擇電子郵件欄位 |
+| getResponse.fields.emailTooltip | Contact field that contains the email to identify contacts in GetResponse. | 包含電子郵件的聯絡人欄位，用來識別 GetResponse 中的聯絡人。 |
+| getResponse.fields.tags | Tags | 標籤 |
+| getResponse.fields.tagsPlaceholder | Select tags | 選擇標籤 |
+| getResponse.fields.dayOfCycle | Day of Autoresponder Cycle | 自動回覆週期日 |
+| getResponse.fields.dayOfCyclePlaceholder | 0 | 0 |
+| getResponse.fields.dayOfCycleTooltip | Move a contact to a specific day in your autoresponder cycle. Enter 0 to start at day 0. | 將聯絡人移動到自動回覆循環中的指定天數。輸入 0 代表從第 0 天開始。 |
+| getResponse.fields.optional | Optional | 可選 |
+| getResponse.campaigns.loading | Loading GetResponse lists... | 正在載入 GetResponse 清單... |
+| getResponse.campaigns.error | Failed to load GetResponse lists. Check that the integration is connected. | 無法載入 GetResponse 清單。檢查整合是否已連接。 |
+| getResponse.campaigns.empty | No GetResponse lists found. | 找不到 GetResponse 清單。 |
+| getResponse.campaigns.limited | Only the first page of GetResponse lists is shown. | 僅顯示 GetResponse 清單的第一頁。 |
+| getResponse.tags.loading | Loading GetResponse tags... | 正在載入 GetResponse 標籤... |
+| getResponse.tags.error | Failed to load GetResponse tags. Check that the integration is connected. | 無法載入 GetResponse 標籤。檢查整合是否已連接。 |
+| getResponse.tags.empty | No GetResponse tags found. | 找不到 GetResponse 標籤。 |
+| getResponse.tags.limited | Only the first page of GetResponse tags is shown. | 僅顯示 GetResponse 標籤的第一頁。 |
+| getResponse.errors.invalidApiKey | Invalid API Key. Please check your GetResponse API Key and try again. | API 金鑰無效。請檢查您的 GetResponse API 金鑰並重試。 |
+| mailchimp.title | Mailchimp | Mailchimp |
+| mailchimp.setting.label | Mailchimp | Mailchimp |
+| mailchimp.setting.description | This integration lets you save customers contacts from your bot to MailChimp. | 此整合可讓您將機器人中的客戶聯絡人儲存到MailChimp。 |
+| mailchimp.fields.audience | Audience | 觀眾 |
+| mailchimp.fields.email | Email field | 電子郵件欄位 |
+| mailchimp.fields.emailTooltip | Custom Field which contains the user's email to identify MailChimp contacts. | 自訂欄位，其中包含使用者的電子郵件以識別MailChimp 聯絡人。 |
+| mailchimp.fields.doubleOptIn | Double Opt-In | 雙重選擇加入 |
+| mailchimp.fields.doubleOptInTooltip | If yes, a confirmation email will be sent to the email before add the contact to your list. | 如果是，在將聯絡人新增至您的清單之前，將向該電子郵件地址傳送確認電子郵件。 |
+| mailchimp.fields.on | On | 開啟 |
+| mailchimp.fields.off | Off | 關閉 |
+| mailchimp.fields.optional | Optional | 可選 |
+| mailchimp.fields.tags | Tags | 標籤 |
+| mailchimp.fields.mergeFields | Custom Fields in MailChimp | MailChimp 中的自訂欄位 |
+| mailerLite.title | MailerLite | MailerLite |
+| mailerLite.setting.label | MailerLite | MailerLite |
+| mailerLite.setting.description | This integration lets you save customers contacts from your bot to MailerLite. | 此整合可讓您將機器人中的客戶聯絡人儲存到MailerLite。 |
+| mailerLite.fields.apiToken | API Token | API代幣 |
+| mailerLite.fields.group | Group | 組 |
+| mailerLite.fields.groupPlaceholder | Nothing selected | 未選擇任何內容 |
+| mailerLite.fields.email | Email Field | 電子郵件欄位 |
+| mailerLite.fields.status | Type | 類型 |
+| mailerLite.fields.customFields | Custom Fields in MailerLite (Optional) | MailerLite 中的自訂欄位（可選） |
+| mailerLite.fields.emptyField | --- | --- |
+| mailerLite.fields.providerField | Select MailerLite field | 選擇MailerLite欄位 |
+| mailerLite.fields.addMapping | Add New | 新增新 |
+| mailerLite.status.active | Subscribed | 已訂閱 |
+| mailerLite.status.unconfirmed | Unconfirmed | 未確認 |
+| mailerLite.errors.invalidApiKey | Invalid API Token. Please check your MailerLite API Token and try again. | API 權杖無效。請檢查您的 MailerLite API 權杖並重試。 |
+| klaviyo.title | Klaviyo | Klaviyo |
+| klaviyo.setting.label | Klaviyo | Klaviyo |
+| klaviyo.setting.description | This integration lets you sync customer profiles from your bot to Klaviyo. | 此整合可讓您將客戶資料從機器人同步到 Klaviyo。 |
+| klaviyo.fields.apiKey | API Key | API金鑰 |
+| klaviyo.fields.list | Klaviyo List | Klaviyo 清單 |
+| klaviyo.fields.listPlaceholder | Select a Klaviyo list | 選擇 Klaviyo 清單 |
+| klaviyo.fields.email | Email Field | 電子郵件欄位 |
+| klaviyo.fields.titleField | Title Field | 標題欄位 |
+| klaviyo.fields.titlePlaceholder | Select a field | 選擇一個欄位 |
+| klaviyo.fields.orgField | Organization Field | 組織欄位 |
+| klaviyo.fields.orgPlaceholder | Select a field | 選擇一個欄位 |
+| klaviyo.fields.customProperties | Custom Fields in Klaviyo | Klaviyo 中的自訂欄位 |
+| klaviyo.fields.emptyField | Select a contact field | 選擇聯絡人欄位 |
+| klaviyo.fields.propertyKey | Klaviyo property key | Klaviyo 屬性鍵 |
+| klaviyo.fields.addMapping | Add mapping | 新增映射 |
+| klaviyo.lists.error | Unable to load Klaviyo lists. Check that the integration is connected. | 無法載入 Klaviyo 清單。檢查整合是否已連接。 |
+| klaviyo.errors.invalidApiKey | Invalid API Key. Please check your Klaviyo API Key and try again. | API 金鑰無效。請檢查您的 Klaviyo API 金鑰並重試。 |
+| moosend.title | Moosend | Moosend |
+| moosend.setting.label | Moosend | Moosend |
+| moosend.setting.description | This integration lets you save customers contacts from your bot to Moosend. | 此整合可讓您將客戶聯絡人從機器人儲存到 Moosend。 |
+| moosend.fields.apiKey | API Key | API金鑰 |
+| moosend.fields.list | Moosend list | Moosend 清單 |
+| moosend.fields.listPlaceholder | Select a Moosend list | 選擇 Moosend 清單 |
+| moosend.fields.email | Email Field | 電子郵件欄位 |
+| moosend.lists.loading | Loading Moosend mailing lists... | 正在載入 Moosend 郵件清單... |
+| moosend.lists.empty | No Moosend mailing lists found. | 找不到 Moosend 郵件清單。 |
+| moosend.lists.error | Unable to load Moosend mailing lists. Check that the integration is connected. | 無法載入 Moosend 郵件清單。檢查整合是否已連接。 |
+| moosend.errors.invalidApiKey | Invalid API Key. Please check your Moosend API Key and try again. | API 金鑰無效。請檢查您的 Moosend API 金鑰並重試。 |
+| moosend.errors.userNotEnabled | This Moosend account is not enabled for API access. | 此 Moosend 帳戶未啟用 API 存取。 |
+| moosend.errors.connectFailed | Failed to connect Moosend. Please try again later. | 連接 Moosend 失敗。請稍後重試。 |
+| drip.title | Drip | Drip |
+| drip.setting.label | Drip | Drip |
+| drip.setting.description | This integration lets you save customers contacts from your bot to Drip. | 此整合可讓您將機器人中的客戶聯絡人儲存到 Drip。 |
+| drip.fields.apiToken | API Token | API代幣 |
+| drip.fields.account | Account | 帳戶 |
+| drip.fields.emailField | Email Field | 電子郵件欄位 |
+| drip.fields.emailTooltip | Contact field containing the email used to identify the Drip subscriber. | 包含電子郵件的聯絡人欄位，用來識別 Drip 訂閱者。 |
+| drip.fields.phone | Phone | 電話 |
+| drip.fields.tags | Tags | 標籤 |
+| drip.fields.customFields | Custom Fields in Drip | Drip 中的自訂欄位 |
+| drip.fields.optional | Optional | 可選 |
+| drip.fields.nothingSelected | Nothing selected | 未選擇任何內容 |
+| drip.fields.addCustomField | Add Custom Field | 新增自訂欄位 |
+| drip.accounts.loading | Loading Drip accounts... | 正在載入滴灌帳戶... |
+| drip.accounts.error | Failed to load Drip accounts. Check that the integration is connected. | 無法載入滴灌帳戶。檢查整合是否已連接。 |
+| drip.tags.loading | Loading Drip tags... | 正在載入滴灌標籤... |
+| drip.tags.error | Failed to load Drip tags. Check that the integration is connected. | 無法載入 Drip 標籤。檢查整合是否已連接。 |
+| drip.tags.empty | No Drip tags found. | 找不到 Drip 標籤。 |
+| drip.customFields.loading | Loading Drip custom fields... | 正在載入 Drip 自訂欄位... |
+| drip.customFields.error | Failed to load Drip custom fields. Check that the integration is connected. | 無法載入 Drip 自訂欄位。檢查整合是否已連接。 |
+| drip.customFields.empty | No Drip custom fields found. | 找不到 Drip 自訂欄位。 |
+| drip.errors.noAccount | This API Token does not have access to a Drip account. | 此API 權杖無權存取 Drip 帳戶。 |
+| sendGrid.title | SendGrid | SendGrid |
+| sendGrid.setting.label | SendGrid | SendGrid |
+| sendGrid.setting.description | This integration lets you save customer contacts from your bot to SendGrid. | 此整合可讓您將機器人中的客戶聯絡人儲存到 SendGrid。 |
+| sendGrid.scopeHelp | Create a SendGrid API key with Marketing read and write access. | 建立具有 Marketing 讀寫權限的 SendGrid API 金鑰。 |
+| sendGrid.acceptedLimitation | SendGrid accepts contact updates for asynchronous processing. Accepted updates may still fail later. | SendGrid 會接受聯絡人更新並以非同步方式處理；已接受的更新之後仍可能失敗。 |
+| sendGrid.fields.apiKey | API Key | API金鑰 |
+| sendGrid.fields.list | List | 清單 |
+| sendGrid.fields.emailField | Email field | 電子郵件欄位 |
+| sendGrid.fields.phoneField | Phone field | 電話欄位 |
+| sendGrid.fields.customFields | Custom Fields in SendGrid | 自訂欄位 |
+| sendGrid.fields.optional | Optional | 可選 |
+| sendGrid.fields.nothingSelected | Nothing selected | 未選擇任何內容 |
+| sendGrid.fields.addCustomField | Add custom field | 新增自訂欄位 |
+| sendGrid.lists.loading | Loading SendGrid lists... | 正在載入 SendGrid 清單... |
+| sendGrid.lists.error | Failed to load SendGrid lists. Check that the integration is connected. | 無法載入 SendGrid 清單。檢查整合是否已連接。 |
+| sendGrid.customFields.loading | Loading SendGrid custom fields... | 正在載入 SendGrid 自訂欄位... |
+| sendGrid.customFields.error | Failed to load SendGrid custom fields. Check that the integration is connected. | 無法載入 SendGrid 自訂欄位。檢查整合是否已連接。 |
+| sendGrid.errors.invalidApiKey | Invalid API Key. Please check your SendGrid API Key and try again. | API 金鑰無效。請檢查您的 SendGrid API 金鑰並重試。 |
+| sendGrid.errors.missingScopes | This API key must have Marketing read access. Please ensure your SendGrid API key includes Marketing permissions. | 此API 金鑰必須具有行銷讀取權限。請確保您的 SendGrid API 金鑰包含行銷權限。 |
+| make.title | Make | Make.com |
+| make.setting.label | Make | Make.com |
+| make.setting.description | Connect your Make.com account to send events from your flows and receive contact data through Make scenarios. Your workspace's Developer Access Token is copied to your clipboard when you click Connect — paste it when creating the connection in Make. | 連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。當您點擊「連接」時，系統會將此工作區的開發人員存取權杖複製到剪貼簿，請在 Make 建立連線時貼上。 |
+| make.setting.notConfigured | No Make invite link found. Please add one in Platform Settings. | 找不到邀請連結。請在平台設定新增一個。 |
+| make.setting.noWorkspaceToken | No Developer Access Token found for this workspace. Generate one in the Workspace token section above, then click Connect again. | 找不到此工作區的開發人員存取權杖。在上面的工作區權杖部分產生一個，然後再按一下連接。 |
+| integrations.title | Integrations | 整合 |
+| platformSettings.title | Platform Settings | 平台設定 |
+| platformSettings.errors.giphyApiKeyRequired | API Key is required to configure GIPHY. | GIPHY 的 API 設定需要金鑰。 |
+| platformSettings.errors.giphyApiKeyInvalid | Invalid GIPHY API key | GIPHY API 金鑰無效 |
+| home.welcomeBack | Welcome back, {name} | 歡迎回來，{name} |
+| home.subtitle | Pick a workspace to jump back in, or create a new one. | 選擇要跳回的工作區，或建立新工作區。 |
+| home.noWorkspaces | You don't have any workspaces yet. | 您還沒有任何工作區。 |
+| home.owner | Owner | 所有者 |
+| editProfile.title | Edit Profile | 編輯個人資料 |
+| messages.moveFeature | Move {feature} | 移動 {feature} |
+| messages.poweredBy | Powered by {name} | 由 {name} 提供技術支援 |
+| messages.noGiphyApiKey | No GIPHY API key found. Please add one in Platform Settings. | 找不到 GIPHY API 金鑰。請在平台設定新增一個。 |
+| messages.connectedSuccess | {feature} connected successfully | {feature} 連接成功 |
+| messages.connectFailed | Failed to connect {feature} | {feature} 連接失敗 |
+| messages.connectSuccess | Connected {feature} successfully | {feature} 連接成功 |
+| messages.refreshTokenSuccessfully | {feature} token refreshed successfully | {feature} 權杖更新成功 |
+| messages.success | Success | 成功 |
+| messages.failed | Failed | 失敗 |
+| messages.copiedToClipboard | Copied to clipboard | 已複製到剪貼簿 |
+| messages.messengerAdsJsonDescription | You will only need to generate a new JSON code if you make changes to the starting Step. Changes in other steps won't affect this JSON code. | 如果您變更起始步驟，只需要重新產生 JSON 程式碼。其他步驟的變更不會影響此 JSON 程式碼。 |
+| messages.messengerAdsNotPublished | Publish the content of this flow and try again. | 請先發佈此流程的內容並重試。 |
+| messages.messengerAdsNoStartNode | This flow has no valid starting step. Open the flow, set a starting Send Message step, then publish and try again. | 此流程沒有有效的起始步驟。開啟流程，設定起始傳送訊息步驟，然後發布並重試。 |
+| messages.messengerAdsError | Something went wrong while generating the JSON. Please try again. | 產生 JSON 時發生問題。請再試一次。 |
+| messages.messengerAdsInvalidStepType | The starting step can contain Text, Image, Card, Gallery, Video, Facebook video, Audio and File. | 起始步驟可以包含文字、圖像、卡片、圖庫、影片、Facebook 影片、音訊和檔案。 |
+| messages.messengerAdsInvalidVariable | You can't use custom fields on the 'Starting Step' due to Facebook limitations. Only first_name, last_name and full_name can be added to the message. | 由於 Facebook 限制，您無法在「起始步驟」使用自訂欄位。只能將名字、姓氏與全名加入訊息中。 |
+| messages.copyFailed | Failed to copy to clipboard | 無法複製到剪貼簿 |
+| messages.createdFailed | {feature} creation failed | {feature} 建立失敗 |
+| messages.deletedSuccess | {feature} deleted successfully | {feature} 刪除成功 |
+| messages.deleteFileComingSoon | Delete file functionality coming soon | 刪除檔案功能即將推出 |
+| messages.disconnectFeature | Disconnect {feature} | 中斷 {feature} 連線 |
+| messages.disconnectFeatureDescription | Are you sure you want to disconnect the {feature}? | 您確定要中斷 {feature} 的連線嗎？ |
+| messages.disconnectSuccess | {feature} disconnected successfully | {feature} 已中斷連線 |
+| messages.reply | Reply | 回覆 |
+| messages.viewMessage | View message | 檢視訊息 |
+| messages.changeLikeState | Change like state | 更改類似狀態 |
+| messages.changeHideState | Change hide state | 更改隱藏狀態 |
+| messages.commentHidden | This comment was hidden | 此留言已隱藏 |
+| messages.messageDeleted | The message has been deleted. | 該訊息已被刪除。 |
+| messages.repliedToStory | Replied to your story | 回覆了你的故事 |
+| messages.sentAttachments | Sent {count, plural, one {1 attachment} other {# attachments}} | 已傳送 {count, plural, one {1 個附件} other {# 個附件}} |
+| messages.deleteComment | Delete comment | 刪除留言 |
+| messages.deleteCommentConfirmation | Are you sure you want to delete this comment? Its replies will also be deleted, both in your inbox and on Facebook. This action cannot be undone. | 您確定要刪除此留言嗎？它在收件匣中的回覆與 Facebook 上的回覆也會一併刪除。此操作無法復原。 |
+| messages.deleteMessageSuccess | Message deleted | 訊息已刪除 |
+| messages.facebookComment | Facebook comment | Facebook 留言 |
+| messages.editComment | Edit comment | 編輯留言 |
+| messages.editMessageSuccess | Message updated | 訊息已更新 |
+| messages.editMessagePlaceholder | Edit your message... | 編輯您的留言... |
+| messages.saveEdit | Save | 儲存 |
+| messages.cancelEdit | Cancel | 取消 |
+| messages.failedToCopy | Failed to copy | 複製失敗 |
+| messages.failedToPreviewImage | Failed to preview image | 預覽影像失敗 |
+| messages.loadingData | Loading data... | 正在載入資料... |
+| messages.errorLoadingData | Failed to load data. Please try again. | 載入資料失敗。請再試一次。 |
+| messages.leaveEmptyToKeepSecret | Leave empty to keep the current secret | 留空以保留目前秘密 |
+| messages.needToAddSettings | You need to add settings to use this integration | 您需要新增設定才能使用此整合 |
+| messages.noDataAvailable | No data available | 無可用資料 |
+| messages.noResults | No results. | 無結果。 |
+| messages.savedSuccessfully | Saved successfully | 儲存成功 |
+| messages.syncedSuccessfully | Synced successfully | 同步成功 |
+| messages.nameAlreadyExists | {feature} name already exists | {feature} 名稱已存在 |
+| messages.unknownError | Unknown error | 未知錯誤 |
+| messages.updatedSuccess | {feature} updated successfully | {feature} 更新成功 |
+| messages.updateFileComingSoon | Update file functionality coming soon | 更新檔案功能即將推出 |
+| messages.videoError | Video error | 影片錯誤 |
+| messages.createdSuccess | {feature} created successfully | {feature} 建立成功 |
+| messages.createFeature | Create {feature} | 建立 {feature} |
+| messages.noItemsFound | No items found | 找不到項目 |
+| messages.editFeature | Edit {feature} | 編輯 {feature} |
+| messages.duplicateFeature | Duplicate {feature} | 複製 {feature} |
+| messages.duplicatedSuccess | {feature} duplicated successfully | {feature} 複製成功 |
+| messages.duplicateConfirmation | This will create a copy of your {feature}. | 這會建立 {feature} 的副本。 |
+| messages.deleteFeature | Delete {feature} | 刪除 {feature} |
+| messages.deleteConfirmation | Are you absolutely sure?<br>This action cannot be undone.<br>This will permanently delete your {feature} from our servers. | 您確定嗎？<br>此操作無法復原。<br>這將從我們的伺服器永久刪除您的 {feature}。 |
+| messages.addFeature | Add {feature} | 新增 {feature} |
+| messages.signOutConfirmation | Are you sure you want to sign out? | 您確定要退出嗎？ |
+| messages.copyInvitationUrlSuccess | Copy the link below and send to the person that you want to add as admin. | 複製以下連結並傳送給您想新增為管理員的人。 |
+| messages.noAIIntegrationFound | No AI integration found. Please connect an AI integration to use AI agents. | 找不到 AI 整合。請先連接 AI 整合以使用 AI Agent。 |
+| messages.resendFeature | Resend {feature} | 重新傳送 {feature} |
+| messages.resendFeatureDescription | Resend the {feature} to the contacts that have not received it yet. | 將 {feature} 重新傳送給尚未收到的聯絡人。 |
+| messages.resendSuccess | Resend successfully | 重新傳送成功 |
+| messages.changeDefault | Change Default | 更改預設值 |
+| messages.changeDefaultDescription | Are you sure you want to change the default AI agent? | 您確定要更改預設 AI Agent 嗎？ |
+| messages.unsetDefaultDescription | Are you sure you want to unset the default AI agent? | 您確定要取消預設 AI Agent 嗎？ |
+| messages.botIsActive | Bot is active | 機器人已啟用 |
+| messages.viewPost | View post | 檢視貼文 |
+| messages.selectConversationTitle | Select a conversation | 選擇對話 |
+| messages.selectConversationDescription | Choose a conversation from the list on the left to view messages and start chatting. | 從左側清單選擇一則對話，以檢視訊息並開始聊天。 |
+| messages.selectConversationContactTitle | No contact selected | 尚未選擇聯絡人 |
+| messages.selectConversationContactDescription | Select a conversation to view the contact's details and inbox information here. | 選擇一則對話，即可在此檢視聯絡人詳細資訊與收件匣資訊。 |
+| messages.archiveFeature | Archive {feature} | 封存 {feature} |
+| messages.archiveFeatureDescription | Are you sure you want to archive the {feature}? | 您確定要封存 {feature} 嗎？ |
+| messages.disableFeature | Disable {feature} | 停用 {feature} |
+| messages.disableFeatureDescription | Are you sure you want to disable the {feature}? | 您確定要停用 {feature} 嗎？ |
+| messages.enableFeature | Enable {feature} | 啟用 {feature} |
+| messages.enableFeatureDescription | Are you sure you want to enable the {feature}? | 您確定要啟用 {feature} 嗎？ |
+| messages.exportedSuccess | {feature} exported successfully | {feature} 匯出成功 |
+| messages.createSuccess | {feature} created successfully | {feature} 建立成功 |
+| messages.deleteFailed | Failed to delete {feature} | 刪除 {feature} 失敗 |
+| messages.deleteSuccess | {feature} deleted successfully | {feature} 刪除成功 |
+| messages.error | Error | 錯誤 |
+| messages.moveFolderDescription | Move {feature} to folder | 移動 {feature} 到資料夾 |
+| messages.noData | No data | 無資料 |
+| messages.featureNotFound | {feature} not found | {feature} 找不到 |
+| messages.enableSuccess | {feature} enabled successfully | {feature} 啟用成功 |
+| messages.userInactive | User has been inactive more than 7 days | 使用者已閒置超過 7 天 |
+| messages.messagingWindowClosed | The message can not be send outside the allowed window | 訊息無法在允許的視窗之外傳送 |
+| messages.sendHumanAgentTag | Send one message with HUMAN_AGENT tag | 傳送一封帶有 HUMAN_AGENT 標籤的訊息 |
+| messages.warning | Warning! | 警告！ |
+| messages.humanAgentWarningDescription | You may respond to a user's message within 7 days only when the issue cannot reasonably be resolved within 24 hours. Examples include weekends, holidays, or cases that require more than one day to complete. Do not use this option for any other reason, as it could put your Facebook Page or Instagram account at risk. If you're not sure, do not continue. | 只有在問題無法於 24 小時內合理解決時，您才可以在 7 天內回覆使用者的訊息。例如週末、假日，或需要超過一天才能完成的案例。請勿因其他原因使用此選項，否則可能讓您的 Facebook 粉專或 Instagram 帳號面臨風險。如果您不確定，請不要繼續。 |
+| messages.humanAgentWindowExpired | Messaging window expired. The contact must message first to reopen the conversation. | 訊息傳遞視窗已過期。聯絡人必須先傳送訊息才能重新開始對話。 |
+| messages.restoreVersionSuccess | Flow restored to selected version | 流程已還原為所選版本 |
+| messages.revertToPublishedSuccess | Draft reverted to the published version | 草稿已還原為已發布版本 |
+| messages.revertToPublishedConfirmTitle | Revert to published version? | 要還原為已發布版本嗎？ |
+| messages.revertToPublishedConfirmDescription | This will discard the current draft changes and restore the published flow content. | 這會捨棄目前草稿變更，並還原為已發布的流程內容。 |
+| messages.noVersionsFound | No published versions found | 找不到已發布的版本 |
+| messages.publishVersionSuccess | A new version has been published | 新版本已發布 |
+| messages.flowConfigIncomplete | Some configurations are incomplete | 部分設定不完整 |
+| messages.whatsappCarouselButtonsMismatch | On WhatsApp, a carousel needs the same buttons on every card: either a single link button on each card, or the same number of reply buttons on each card | 在 WhatsApp 上，輪播需要在每張卡片上使用相同的按鈕：每張卡片上有一個連結按鈕，或每張卡片上有相同數量的回應按鈕 |
+| messages.whatsappCarouselLinkButtonNotAlone | On WhatsApp, a carousel card with a link button cannot have any other buttons. Remove the other buttons on that card, or change the link button to another action. | 在 WhatsApp 中，帶有連結按鈕的輪播卡片不能同時包含其他按鈕。請移除此卡片上的其他按鈕，或將連結按鈕改成其他動作。 |
+| messages.duplicateNodeError | Could not duplicate the block. Please try again. | 無法複製該區塊。請再試一次。 |
+| messages.deleteNodeError | Could not delete the block. Please try again. | 無法刪除該區塊。請再試一次。 |
+| messages.redoHistoryCleared | Redo history cleared | 重做歷史記錄已清除 |
+| messages.historyDepth | ({count}) | ({count}) |
+| instagram.description | This integration lets you create Instagram bots. | 此整合可讓您建立Instagram 機器人。 |
+| instagram.selectInstagramAccount | Select Instagram Account | 選擇Instagram 帳戶 |
+| instagram.iceBreakers | Ice Breakers | 破冰船 |
+| instagram.iceBreakersDescription | Ice breakers provide a way for users to start a conversation with your bot by showing a list of frequently asked questions. | 破冰活動透過顯示常見問題清單為使用者提供了一種與您的機器人開始對話的方式。 |
+| instagram.reconnect | Reconnect | 重新連接 |
+| instagram.title | Instagram | Instagram |
+| coexist.title | Sync existing contacts and chat history? | 同步現有聯絡人和聊天記錄？ |
+| coexist.descriptionWhatsapp | When enabled, contacts and up to 6 months of chat history will be imported from this WhatsApp number. | 啟用後，將從該WhatsApp號碼匯入聯絡人和最多 6 個月的聊天記錄。 |
+| coexist.descriptionMessenger | When enabled, existing Messenger contacts and up to 3 months of conversation history will be imported from this Page. | 啟用後，將從該頁面匯入現有的 Messenger 聯絡人和最多 3 個月的對話歷史記錄。 |
+| coexist.descriptionInstagram | When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account. | 啟用後，將從該 Instagram 帳戶匯入現有的 Instagram 聯絡人和最多 3 個月的對話記錄。 |
+| coexist.enable | Enable sync | 啟用同步 |
+| coexist.decline | Don't sync | 不同步 |
+| coexist.billingNote | Large pages may take several hours to complete. | 大頁面可能需要幾個小時才能完成。 |
+| coexist.toggleLabel | Sync existing contacts and chat history | 同步現有聯絡人與聊天記錄 |
+| coexist.toggleHelper | Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect. | 僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接。 |
+| coexist.toggleHelperMessenger | Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect the Messenger page. | 僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接Messenger頁面。 |
+| coexist.toggleHelperWhatsapp | Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect the WhatsApp number. | 僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則，請斷開並重新連接WhatsApp號碼。 |
+| coexist.success.enabled | Sync started. Historical contacts and messages will appear shortly. | 同步已開始。歷史聯絡人和訊息很快就會出現。 |
+| coexist.success.disabled | Sync disabled. | 同步已停用。 |
+| coexist.errors.alreadyTriggered | Sync was already triggered for this number. Please wait for Meta to deliver the historical data. | 此號碼已觸發同步。請等待Meta傳送歷史資料。 |
+| coexist.errors.windowExpired | The 24-hour sync window has expired. Please disconnect and reconnect this number to sync again. | 24 小時同步視窗已過期。請中斷並重新連接此號碼以再次同步。 |
+| coexist.errors.notEligible | This number is not eligible for historical sync. | 此號碼不符合歷史同步條件。 |
+| coexist.errors.triggerFailed | Could not start the sync. Please try again later. | 無法啟動同步。請稍後重試。 |
+| coexist.errors.unknown | Could not enable sync. Please try again later. | 無法啟用同步。請稍後重試。 |
+| messenger.description | This integration lets you create Messenger bots. | 此整合可讓您建立Messenger 機器人。 |
+| messenger.welcomeMessage | Welcome Message | 歡迎訊息 |
+| messenger.welcomeMessageDescription | This is the first message the user will receive from your Bot. This message is sent when the user interacts for the first time with the Bot by clicking on the 'Get Started' button. | 這是使用者將從您的機器人收到的第一則訊息。當使用者透過點擊「開始」按鈕第一次與機器人互動時，會傳送此訊息。 |
+| messenger.conversationStarters | Conversation Starters | 對話起始訊息 |
+| messenger.conversationStartersDescription | Conversation Starters provide a way for users to start a conversation with your business with a list of frequently asked questions. | 對話起始訊息可讓使用者透過常見問題清單與您的商家展開對話。 |
+| messenger.persistentMenu | Persistent Menu | 常駐選單 |
+| messenger.persistentMenuDescription | The menu can be configured to help users to more easily discover and access your Bot features. The menu is always available to users. This menu should contain the top-level actions that users can use it at any time. Having a menu easily communicates the basic capabilities of your bot for beginners and returned users. | 可以設定選單，幫助使用者更輕鬆地發現和存取您的機器人功能。此選單會持續顯示給使用者，並應包含他們隨時都能使用的主要操作。選單也能讓初次使用者與回訪使用者更容易理解機器人的核心功能。 |
+| messenger.dynamicPersistentMenu | Dynamic Persistent Menu | 動態常駐選單 |
+| messenger.dynamicPersistentMenuDescription | Allows you to dynamically change the persistent menu at any time at the user level. | 允許您在使用者層級隨時動態變更持久性選單。 |
+| messenger.botProfile | Bot Profile | 機器人個人資料 |
+| messenger.botProfileDescription | This setting allows you to set a different name and image for your bot | 此設定可讓您為機器人設定不同的名稱和影像 |
+| messenger.personas | Personas | 角色 |
+| messenger.personasDescription | This setting allows you to set a different name and image for your bot | 此設定可讓您為機器人設定不同的名稱和影像 |
+| messenger.defaultPersona | Default Persona | 預設角色 |
+| messenger.reconnect | Reconnect | 重新連接 |
+| messenger.reconnectDescription | Always reconnect your bot if your Messenger bot is not responding, or if you are seem any permission error on the error log. | 請務必重新連接您的機器人。 |
+| messenger.selectFacebookPage | Select Facebook Page | 選擇Facebook 頁 |
+| messenger.selectPage.noPagesTitle | No Facebook Pages found | 找不到Facebook 頁面 |
+| messenger.selectPage.noPagesDescription | Pages inside a Business Manager require Business Manager access during connection. Reconnect Messenger and grant all requested permissions. | 商務管理平台內的頁面需要在連線期間存取商務管理平台。重新連線Messenger並授予所有請求的權限。 |
+| messenger.selectPage.bmLookupFailedTitle | Business Manager pages may be missing | 業務管理平台頁面可能遺失 |
+| messenger.selectPage.bmLookupFailedDescription | Reconnect Messenger and grant Business Manager access so pages managed through a Business Manager can be listed. | 重新連接Messenger 並授予商務管理平台存取權限，以便可以列出透過商務管理平台管理的頁面。 |
+| messenger.selectPage.alreadyConnectedNote | This page is already connected | 該頁面已連接 |
+| messenger.selectPage.notAdminNote | Full admin permission on the page is required to connect | 需要頁面的完全管理員權限才能連接 |
+| messenger.selectPage.tryAgain | Try reconnecting | 嘗試重新連接 |
+| messenger.title | Facebook Messenger | Facebook Messenger |
+| messenger.tabs.generalSettings | General Settings | 一般設定 |
+| messenger.tabs.messageTemplates | Message Templates | 訊息範本 |
+| messenger.messageTemplate.params.postbackPayload | Button Payload | 按鈕負載 |
+| messenger.messageTemplate.params.postbackPayloadPlaceholder | Enter payload (optional) | 輸入酬載（選填） |
+| messenger.messageTemplate.create.trigger | Create new template | 建立新範本 |
+| messenger.messageTemplate.create.header | Header | 標頭 |
+| messenger.messageTemplate.create.headerType | Header Type | 標頭類型 |
+| messenger.messageTemplate.create.none | None | 無 |
+| messenger.messageTemplate.create.text | Text | 文字 |
+| messenger.messageTemplate.create.textAndImage | Text + Image | 文字+圖片 |
+| messenger.messageTemplate.create.image | Image | 圖片 |
+| messenger.messageTemplate.create.imageHint | PNG, JPG, or GIF. The image is uploaded before submission. | PNG、JPG 或 GIF。圖片是在提交之前上傳的。 |
+| messenger.messageTemplate.create.noImageSelected | No image selected | 未選擇影像 |
+| messenger.messageTemplate.create.body | Body | 身體 |
+| messenger.messageTemplate.create.buttons | Buttons | 按鈕 |
+| messenger.messageTemplate.create.addButton | Add Button | 新增按鈕 |
+| messenger.messageTemplate.create.addVariable | Add Variable | 新增變數 |
+| messenger.messageTemplate.create.buttonText | Button Text | 按鈕文字 |
+| messenger.messageTemplate.create.buttonType | Button Type | 按鈕類型 |
+| messenger.messageTemplate.create.visitWebsite | Visit Website | 訪問網站 |
+| messenger.messageTemplate.create.callPhoneNumber | Call Phone Number | 撥打電話號碼 |
+| messenger.messageTemplate.create.postback | Button | 按鈕 |
+| messenger.messageTemplate.clone.title | Clone Message Template | 複製訊息範本 |
+| messenger.messageTemplate.clone.titleWithName | Clone Message Template: {name} | 複製訊息範本：{name} |
+| messenger.messageTemplate.clone.channelsLabel | Target Channels | 目標頻道 |
+| messenger.messageTemplate.clone.channelsPlaceholder | Select channels | 選擇頻道 |
+| messenger.messageTemplate.clone.succeededCount | {count} channel(s) cloned successfully | {count} 頻道已成功複製 |
+| messenger.messageTemplate.clone.failedCount | {count} channel(s) failed to clone | {count} 個頻道複製失敗 |
+| messenger.messageTemplate.clone.partialSuccess | Cloned to {succeeded} channel(s); {failed} channel(s) failed | 已複製到 {succeeded} 個頻道；{failed} 個頻道失敗 |
+| messenger.messageTemplate.clone.result.title | Clone Results | 複製結果 |
+| messenger.messageTemplate.clone.result.succeededTitle | Succeeded | 成功 |
+| messenger.messageTemplate.clone.result.close | Close | 關閉 |
+| messenger.tagSync.title | Tag Sync | 標籤同步 |
+| messenger.tagSync.description | Two-way sync of tags between this workspace and the connected channel. | 在此工作區與已連接頻道之間雙向同步標籤。 |
+| messenger.tagSync.toggleSuccess | Tag sync setting updated. | 標籤同步設定已更新。 |
+| messenger.tagSync.enabledSince | Enabled since {date} | 自 {date} 啟用 |
+| messenger.tagSync.disabled | Disabled | 已停用 |
+| messenger.tagSync.labelSync | Sync tags | 同步標籤 |
+| messenger.tagSync.on | On | 開啟 |
+| messenger.tagSync.off | Off | 關閉 |
+| messenger.tagSync.termsRequired | Page admin must accept the Facebook Page Contact Terms: | 頁面管理員必須接受Facebook頁聯絡人條款： |
+| omnichannel.title | Omnichannel | 全通路 |
+| openai.connect.description | Respond to users naturally with AI powered by your business data. | 利用由您的業務資料提供支援的 AI 自然地回應使用者。 |
+| openai.title | OpenAI | OpenAI |
+| claude.autoReply.description | Enable AI auto reply to respond to users naturally with AI powered by your business data. | 啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。 |
+| claude.autoReply.label | AI Auto Reply | 人工智慧自動回覆 |
+| claude.connect.description | Respond to users naturally with AI powered by your business data. | 利用由您的業務資料提供支援的 AI 自然地回應使用者。 |
+| claude.connect.label | Claude AI | Claude人工智慧 |
+| claude.title | Claude AI | Claude人工智慧 |
+| deepseek.autoReply.description | Enable AI auto reply to respond to users naturally with AI powered by your business data. | 啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。 |
+| deepseek.autoReply.label | AI Auto Reply | 人工智慧自動回覆 |
+| deepseek.connect.description | Respond to users naturally with AI powered by your business data. | 利用由您的業務資料提供支援的 AI 自然地回應使用者。 |
+| deepseek.connect.label | DeepSeek | DeepSeek |
+| deepseek.title | DeepSeek | DeepSeek |
+| openrouter.autoReply.description | Enable AI auto reply powered by OpenRouter. | 啟用由 OpenRouter 提供支援的 AI 自動回覆。 |
+| openrouter.autoReply.label | AI Auto Reply | 人工智慧自動回覆 |
+| openrouter.connect.description | Access 300+ AI models through a single API key. | 透過單一API金鑰存取 300 多個 AI 模型。 |
+| openrouter.connect.label | OpenRouter | 開放路由器 |
+| openrouter.title | OpenRouter | 開放路由器 |
+| openaiCompatible.addProvider | Add AI Provider | 新增人工智慧供應商 |
+| openaiCompatible.addProviderModel | Add {name} | 新增 {name} |
+| openaiCompatible.apiKeyKeepExisting | Leave blank to keep the existing API key. | 留空以保留現有的API 金鑰。 |
+| openaiCompatible.autoReply.description | Allow this provider to be used for automated AI replies. | 允許此提供者用於自動 AI 回覆。 |
+| openaiCompatible.autoReply.label | AI Auto Reply | 人工智慧自動回覆 |
+| openaiCompatible.connect.description | Connect OpenAI-compatible providers for AI Agent fallback models. | 連接 OpenAI AI Agent 後備模型的相容提供者。 |
+| openaiCompatible.connect.label | OpenAI-compatible providers | OpenAI相容供應商 |
+| openaiCompatible.empty | No OpenAI-compatible providers configured. | 尚未設定 OpenAI 相容提供者。 |
+| openaiCompatible.fields.baseURL | Base URL | 基礎URL |
+| openaiCompatible.fields.defaultModel | Default model | 預設模型 |
+| openaiCompatible.fields.enabled | Enabled | 已啟用 |
+| openaiCompatible.provider | AI Provider | 人工智慧供應商 |
+| openaiCompatible.title | OpenAI Compatible | OpenAI相容 |
+| openaiCompatible.validation.invalidBaseURL | Base URL is invalid or not allowed. | 基礎URL 無效或不允許。 |
+| openaiCompatible.validation.presetAlreadyConnected | This preset is already connected for this workspace. | 此預設已為此工作區連線。 |
+| settings.title | Settings | 設定 |
+| settings.agents.description | AI Agents description | AI Agent描述 |
+| settings.agents.title | AI Agents | AI Agent |
+| settings.aiTriggers.description | AI Triggers description | 人工智慧觸發器描述 |
+| settings.aiTriggers.title | AI Triggers | 人工智慧觸發器 |
+| settings.automatedResponses.title | Keywords | 關鍵字 |
+| settings.openai.description | OpenAI integration description | OpenAI 整合說明 |
+| settings.openai.title | OpenAI Integration | OpenAI整合 |
+| settings.claude.description | Claude integration description | Claude 整合說明 |
+| settings.claude.title | Claude Integration | Claude整合 |
+| settings.deepseek.description | DeepSeek integration description | DeepSeek 整合說明 |
+| settings.deepseek.title | DeepSeek Integration | DeepSeek整合 |
+| auth.orContinueWith | Or continue with | 或繼續使用 |
+| auth.continueWithFacebook | Continue with Facebook | 繼續使用 Facebook |
+| auth.continueWithGoogle | Continue with Google | 繼續使用 Google |
+| auth.continueWithEmail | Continue with Email | 繼續使用電子郵件 |
+| auth.continueWithMagicLink | Continue with Magic Link | 繼續使用 Magic Link |
+| auth.dontHaveAnAccount | Don't have an account? | 還沒有帳號？ |
+| auth.alreadyHaveAnAccount | Already have an account? | 已經有帳號了？ |
+| auth.signUp | Sign up | 註冊 |
+| auth.acceptTermsAndPolicy | By clicking continue, you agree to our | 點選繼續即表示您同意我們的 |
+| auth.and | and | 和 |
+| auth.privacyPolicy | Privacy Policy | 隱私權政策 |
+| auth.termsOfService | Terms of Service | 服務條款 |
+| auth.signInTitle | Sign in to {name} | 登入 {name} |
+| auth.forgotPasswordTitle | Forgot your password? | 忘記密碼？ |
+| auth.forgotPasswordDescription | No worries! We'll send you a link with instructions on how to reset your password. | 別擔心！我們會寄送一封電子郵件給您，內含重設密碼的說明。 |
+| auth.checkYourEmail | Check your email | 檢查您的電子郵件 |
+| auth.magicLinkSent | We sent verification URL to your email | 我們已將驗證 URL 寄送到您的電子郵件 |
+| auth.magicLinkSentDescription | Click the link in your email to continue. | 點選電子郵件中的連結繼續。 |
+| auth.didNotReceiveEmail | Didn't receive the email? Check your spam folder. | 沒有收到電子郵件？請檢查垃圾郵件資料夾。 |
+| auth.trySigningInAgain | You can also try signing in again with a different email. | 您也可以嘗試改用其他電子郵件再次登入。 |
+| auth.signIn | Sign in | 登入 |
+| auth.signUpSuccess | Signed up successfully. Please check your email for verification. | 註冊成功。請檢查您的電子郵件以進行驗證。 |
+| auth.forgotPassword | Forgot password? | 忘記密碼？ |
+| auth.rememberedPassword | Remembered your password? | 還記得您的密碼嗎？ |
+| auth.forgotPasswordEmailSent | We've sent you an email with instructions to reset your password. | 我們已向您傳送了一封電子郵件，其中包含重設密碼的說明。 |
+| auth.magicLinkSentTitle | Magic link sent | Magic Link 已寄出 |
+| auth.passwordResetSuccess | Password reset successfully | 密碼已重設 |
+| auth.resetPasswordTitle | Reset your password | 重設您的密碼 |
+| auth.resetPasswordDescription | Enter your new password below. | 在下方輸入您的新密碼。 |
+| auth.signUpTitle | Sign up to {name} | 註冊 {name} |
+| auth.changePasswordTitle | Change your password | 更改密碼 |
+| auth.changePasswordDescription | Set a new password before continuing. | 在繼續之前設定新密碼。 |
+| auth.passwordChangeSuccess | Password changed | 密碼已更改 |
+| emailTopics.title | Email Topics | 電子郵件主題 |
+| tags.title | Tags | 標籤 |
+| texts.or | or | 或 |
+| theme.dark | Dark | 黑暗 |
+| theme.light | Light | 光 |
+| theme.system | System | 系統 |
+| validation.maxSize | File size exceeds maximum limit | 檔案大小超出上限 |
+| validation.maxItemsReached | Maximum {max} {feature} allowed per workspace | 最大 {max}{feature} |
+| validation.invalidApiKey | Invalid API key | API 金鑰無效 |
+| validation.maxMustBeGreaterThanMin | {maxField} must be greater than or equal to {minField} | {maxField} 必須大於或等於 {minField} |
+| webchat.chatUnavailable | This chat is currently unavailable. | 此聊天目前不可用。 |
+| webchat.description | Let your customers get instant automated responses from your business directly from your website | 讓您的客戶直接從您的網站獲得來自您企業的即時自動回覆 |
+| webchat.rateLimitExceeded | Too many requests. Please try again in a moment. | 請求過多。請稍後重試。 |
+| webchat.title | Web Chat | 網路聊天 |
+| webchat.workspaceUnavailable | This workspace is no longer available. | 此工作區不再可用。 |
+| webchat.unauthorizedDomain.description | This website is not authorized to load this chat widget. | 本網站無權載入此聊天小工具。 |
+| webchat.unauthorizedDomain.title | Webchat unavailable | 網路聊天不可用 |
+| whatsapp.category.marketing.description | Marketing category description | 行銷類別描述 |
+| whatsapp.category.marketing.label | Marketing | 行銷 |
+| whatsapp.category.utility.description | Utility category description | 實用程式類別說明 |
+| whatsapp.category.utility.label | Utility | 實用程式 |
+| whatsapp.commands.description | These are special keywords that tell the WhatsApp bot what to do | 這些是特殊關鍵字，告訴WhatsApp 機器人要做什麼 |
+| whatsapp.commands.label | Commands | 命令 |
+| whatsapp.autoConnect.inProgress | Connecting… | 正在連接... |
+| whatsapp.connectExisting | Connect an existing WhatsApp Business Account | 連接現有的 WhatsApp Business 帳號 |
+| whatsapp.embeddedSignupDone | Signup complete — you can close this tab. | 註冊完成 — 您可以關閉此標籤。 |
+| whatsapp.embeddedSignupPopupBlocked | Please allow pop-ups for this site, then try again. | 請允許此網站彈出窗口，然後再試一次。 |
+| whatsapp.fillRequiredFields | Please fill in all required fields | 請填寫所有必填欄位 |
+| whatsapp.continueManualConnect | Continue — manual connect | 繼續 — 手動連接 |
+| whatsapp.icebreakers.description | These are common questions that people can easily ask you. | 這些是人們可以輕鬆問您的常見問題。 |
+| whatsapp.icebreakers.label | Icebreakers | 破冰船 |
+| whatsapp.manualConnect | Manual connect using System User Access token. | 使用系統使用者 Access Token 手動連接。 |
+| whatsapp.manualOnboarding.title | Your Whatsapp inbox is ready! | 您的 WhatsApp 收件匣已準備好！ |
+| whatsapp.manualOnboarding.description | Configure the webhook URL and verification token in your Meta App. Use the values below. | 在您的 Meta 應用程式中設定 webhook URL 和驗證權杖。使用下面的值。 |
+| whatsapp.manualOnboarding.webhookUrl | Webhook URL | Webhook URL |
+| whatsapp.manualOnboarding.verifyToken | Webhook verification token | Webhook 驗證權杖 |
+| whatsapp.manualOnboarding.qrCodeHint | Scan the QR code to open the webhook URL | 掃描 QR Code 以開啟 webhook URL |
+| whatsapp.manualOnboarding.moreSettings | More settings | 更多設定 |
+| whatsapp.manualOnboarding.goToInbox | Take me there | 帶我去那裡 |
+| whatsapp.phoneVerification.title | Verify WhatsApp phone number | 驗證WhatsApp電話號碼 |
+| whatsapp.phoneVerification.description | Request a verification code from Meta, enter the code here, and the phone number will be registered automatically. | 向Meta要求驗證碼，在此輸入驗證碼，電話號碼將自動註冊。 |
+| whatsapp.phoneVerification.errorTitle | Phone number verification required | 需要電話號碼驗證 |
+| whatsapp.phoneVerification.methods.sms | SMS | 簡訊 |
+| whatsapp.phoneVerification.methods.voice | Voice call | 語音通話 |
+| whatsapp.phoneVerification.actions.sendCode | Send code | 傳送代碼 |
+| whatsapp.phoneVerification.actions.resendIn | Resend in {seconds}s | 在 {seconds} 內重新傳送 |
+| whatsapp.phoneVerification.actions.verify | Verify and register | 驗證並註冊 |
+| whatsapp.phoneVerification.fields.code.label | Verification code | 驗證碼 |
+| whatsapp.phoneVerification.fields.code.placeholder | Enter Meta OTP | 輸入Meta OTP |
+| whatsapp.phoneVerification.messages.codeSent | Verification code sent by {method}. | {method} 傳送的驗證碼。 |
+| whatsapp.phoneVerification.messages.cooldown | Please wait {seconds}s before requesting another code. | 請等待 {seconds}，然後再要求另一個代碼。 |
+| whatsapp.phoneVerification.messages.verified | Phone number verified and registered successfully. | 電話號碼已驗證並註冊成功。 |
+| whatsapp.phoneVerification.errors.integrationNotFound | WhatsApp integration not found. | WhatsApp 找不到整合。 |
+| whatsapp.phoneVerification.errors.codeNotSent | WhatsApp verification code could not be sent. | WhatsApp驗證碼無法傳送。 |
+| whatsapp.phoneVerification.errors.codeNotVerified | WhatsApp verification code could not be verified. | WhatsApp驗證碼無法驗證。 |
+| whatsapp.phoneVerification.errors.registrationFailed | WhatsApp phone number verification failed. | WhatsApp 電話號碼驗證失敗。 |
+| whatsapp.connect.errors.accessTokenRequired | WhatsApp access token is required. | 必須提供 WhatsApp Access Token。 |
+| whatsapp.connect.errors.appSettingsNotFound | WhatsApp app settings were not found. | WhatsApp應用程式設定。 |
+| whatsapp.connect.errors.failedToPersistIntegration | Failed to save the WhatsApp integration. | 無法儲存WhatsApp 整合。 |
+| whatsapp.connect.errors.noPhoneNumberFound | No WhatsApp phone number was found. | 找不到 WhatsApp 電話號碼。 |
+| whatsapp.connect.errors.noPhoneNumbersFound | No phone numbers were found for this WhatsApp Business Account. | 找不到此 WhatsApp 企業帳戶的電話號碼。 |
+| whatsapp.connect.errors.phoneNumberNotFound | Selected WhatsApp phone number was not found. | 所選WhatsApp 電話號碼找不到。 |
+| whatsapp.connect.errors.unableToVerifyToken | Unable to verify the WhatsApp token. | 無法驗證WhatsApp 權杖。 |
+| whatsapp.connect.errors.wabaMismatch | Selected WhatsApp Business Account does not match the authorization. | 所選WhatsApp 企業帳戶與授權不符。 |
+| whatsapp.connect.errors.wabaResolveFailed | Could not resolve the WhatsApp Business Account from the authorization. | 無法從授權解析WhatsApp 企業帳號。 |
+| whatsapp.marketingMessageLite | Marketing Message Lite | 行銷訊息 Lite |
+| whatsapp.messageTemplate.carouselImage.label | Carousel Image | 輪播影像 |
+| whatsapp.messageTemplate.carouselVideo.label | Carousel Video | 輪播影片 |
+| whatsapp.messageTemplate.document.label | Document | 文檔 |
+| whatsapp.messageTemplate.image.label | Image | 圖片 |
+| whatsapp.messageTemplate.location.label | Location | 位置 |
+| whatsapp.messageTemplate.text.label | Text | 文字 |
+| whatsapp.messageTemplate.video.label | Video | 影片 |
+| whatsapp.messageTemplate.viewCatalog.label | View Catalog | 檢視目錄 |
+| whatsapp.messageTemplate.viewProduct.label | View Product | 檢視產品 |
+| whatsapp.messageTemplate.params.couponCode | Coupon Code | 優惠券代碼 |
+| whatsapp.messageTemplate.params.couponCodePlaceholder | Enter coupon code | 輸入優惠券代碼 |
+| whatsapp.messageTemplate.params.quickReplyPayload | Quick Reply Payload | 快速回覆負載 |
+| whatsapp.messageTemplate.params.quickReplyPayloadPlaceholder | Enter payload (optional) | 輸入酬載（選填） |
+| whatsapp.messageTemplate.params.flowToken | Flow Token | 流程代幣 |
+| whatsapp.messageTemplate.params.flowTokenPlaceholder | Enter flow token | 輸入流權杖 |
+| whatsapp.messageTemplate.params.flowNotSynced | Sync WhatsApp flows to map submitted fields. | 同步WhatsApp 流以映射提交的欄位。 |
+| whatsapp.messageTemplate.params.catalogProductId | Product ID | 產品ID |
+| whatsapp.messageTemplate.params.catalogProductIdPlaceholder | Enter product retailer ID | 輸入產品零售商ID |
+| whatsapp.messageTemplate.params.carouselCard | Card {index} | 卡 {index} |
+| whatsapp.messageTemplate.params.limitedTimeOffer | Offer Expiration Time | 優惠到期時間 |
+| whatsapp.messageTemplate.params.limitedTimeOfferPlaceholder | Enter expiration time in milliseconds | 輸入過期時間（以毫秒為單位） |
+| whatsapp.messageTemplate.params.limitedTimeOfferHelp | Unix timestamp in milliseconds when the offer expires | 優惠到期時的 Unix 時間戳記（以毫秒為單位） |
+| whatsapp.messageTemplate.params.location | Location | 位置 |
+| whatsapp.messageTemplate.params.latitude | Latitude | 緯度 |
+| whatsapp.messageTemplate.params.longitude | Longitude | 經度 |
+| whatsapp.messageTemplate.params.locationName | Location name (optional) | 位置名稱（可選） |
+| whatsapp.messageTemplate.params.locationAddress | Address (optional) | 地址（可選） |
+| whatsapp.messageTemplate.params.enterFormatUrl | Enter {format} URL | 輸入 {format} URL |
+| whatsapp.sampleBodyCardContent.label | Sample body card content | 身體卡內容範例 |
+| whatsapp.sampleBodyContent.label | Sample body content | 範例正文內容 |
+| whatsapp.sampleHeaderContent.label | Sample header content | 範例標題內容 |
+| whatsapp.showFooter.label | Show footer | 顯示頁尾 |
+| whatsapp.showHeader.label | Show header | 顯示標題 |
+| whatsapp.tabs.accountHealths | Account Health | 帳戶健康狀況 |
+| whatsapp.tabs.automation | Automation | 自動化 |
+| whatsapp.tabs.ecommerce | Ecommerce | 電子商務 |
+| whatsapp.tabs.flows | Flows | 流程 |
+| whatsapp.tabs.messageTemplates | Message Templates | 訊息範本 |
+| whatsapp.tabs.profile | Profile | 簡介 |
+| whatsapp.tabs.usefulLinks | Useful Links | 有用連結 |
+| whatsapp.accountHealths.title | Manage your WhatsApp account | 管理您的WhatsApp帳戶 |
+| whatsapp.accountHealths.description | Review your WhatsApp account status, messaging limits, and quality. Update settings or resolve issues if needed | 檢查您的WhatsApp 帳戶狀態、訊息限制和品質。更新設定或解決問題（如果需要） |
+| whatsapp.accountHealths.goToBusinessManager | Go to Meta Business Manager | 前往Meta業務經理 |
+| whatsapp.accountHealths.unavailable.title | Account health is temporarily unavailable | 帳戶運作狀況暫時無法使用 |
+| whatsapp.accountHealths.unavailable.description | We could not load this WhatsApp phone number from Meta right now. Other recovery actions on this page are still available. | 我們現在無法從 Meta 載入此 WhatsApp 電話號碼。此頁面上的其他復原操作仍然可用。 |
+| whatsapp.accountHealths.fields.displayPhoneNumber.label | Display phone number | 顯示電話號碼 |
+| whatsapp.accountHealths.fields.displayPhoneNumber.tooltip | The phone number shown to customers when they message your business. | 客戶向您的企業傳送訊息時顯示的電話號碼。 |
+| whatsapp.accountHealths.fields.businessName.label | Business name | 公司名稱 |
+| whatsapp.accountHealths.fields.businessName.tooltip | The verified WhatsApp business display name. | 已驗證的WhatsApp 商家顯示名稱。 |
+| whatsapp.accountHealths.fields.displayNameStatus.label | Display name status | 顯示名稱狀態 |
+| whatsapp.accountHealths.fields.displayNameStatus.tooltip | Approval status of your WhatsApp business display name. | 您的WhatsApp 商家顯示名稱的核准狀態。 |
+| whatsapp.accountHealths.fields.qualityRating.label | Quality rating | 品質評級 |
+| whatsapp.accountHealths.fields.qualityRating.tooltip | Quality rating based on customer feedback over the last 7 days. | 基於過去 7 天客戶回饋的品質評級。 |
+| whatsapp.accountHealths.fields.messagingLimitTier.label | Messaging limit tier | 訊息傳遞限制層 |
+| whatsapp.accountHealths.fields.messagingLimitTier.tooltip | Maximum number of unique customers your business can message in a 24-hour rolling window. | 您的企業可以在 24 小時滾動視窗中傳送訊息的唯一客戶的最大數量。 |
+| whatsapp.accountHealths.fields.accountMode.label | Account mode | 帳戶模式 |
+| whatsapp.accountHealths.fields.accountMode.tooltip | Whether the WhatsApp Business Account is live or in sandbox mode. | WhatsApp 企業帳戶是否處於活動狀態或沙盒模式。 |
+| whatsapp.accountHealths.fields.marketingMessages.label | Marketing Messages (MM Lite) | 行銷訊息（MM Lite） |
+| whatsapp.accountHealths.fields.marketingMessages.tooltip | Onboarding status of the WhatsApp Business Account into Marketing Messages Lite API. | WhatsApp 企業帳戶進入行銷訊息 Lite API 的入職狀態。 |
+| whatsapp.accountHealths.fields.marketingMessages.status.INELIGIBLE_ON_BEHALF_OF_WABA | Ineligible: OBO model | 不符合條件：OBO 型號 |
+| whatsapp.accountHealths.fields.marketingMessages.status.INELIGIBLE_INACTIVE_OR_RESTRICTED | Ineligible: inactive or restricted | 不符合條件：不活躍或受限 |
+| whatsapp.accountHealths.fields.marketingMessages.status.INELIGIBLE_COUNTRY_NOT_SUPPORTED | Ineligible: country not supported | 不符合資格：不支援的國家/地區 |
+| whatsapp.accountHealths.fields.marketingMessages.status.INELIGIBLE_USING_WHATSAPP_BUSINESS_APP | Ineligible: using WhatsApp Business app | 不符合條件：使用 WhatsApp 商務應用 |
+| whatsapp.accountHealths.fields.marketingMessages.status.ELIGIBLE | Eligible | 符合條件 |
+| whatsapp.accountHealths.fields.marketingMessages.status.PENDING_VALID_PAYMENT_METHOD | Pending valid payment method | 等待有效的付款方式 |
+| whatsapp.accountHealths.fields.marketingMessages.status.PENDING_INTERNAL_SETUP | Pending internal setup | 待內部設定 |
+| whatsapp.accountHealths.fields.marketingMessages.status.ONBOARDED | Onboarded | 已上線 |
+| whatsapp.accountHealths.fields.marketingMessages.description.INELIGIBLE_ON_BEHALF_OF_WABA | The WhatsApp Business Account uses the OBO model, which is not supported. You must first transfer ownership of the WABA to the customer or onboard using the Intent API. | WhatsApp 企業帳戶使用 OBO 模型，不支援。您必須先使用意圖API將 WABA 的所有權轉讓給客戶或船上。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.INELIGIBLE_INACTIVE_OR_RESTRICTED | The WhatsApp Business Account is inactive or restricted from messaging due to a policy enforcement issue. | WhatsApp 企業帳戶處於非活動狀態或因策略執行問題而無法傳送訊息。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.INELIGIBLE_COUNTRY_NOT_SUPPORTED | The WhatsApp Business Account is in a region that does not support the MM Lite API. | WhatsApp 企業帳戶所在區域不支援 MM Lite API。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.INELIGIBLE_USING_WHATSAPP_BUSINESS_APP | The WhatsApp Business phone number is being used within the WhatsApp Business app. | WhatsApp 企業電話號碼正在WhatsApp 企業應用程式中使用。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.ELIGIBLE | The WhatsApp Business Account is eligible to onboard and use the MM Lite API. | WhatsApp 企業帳戶有資格加入並使用 MM Lite API。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.PENDING_VALID_PAYMENT_METHOD | The WhatsApp Business Account requires setting up a valid payment method. | WhatsApp 企業帳戶需要設定有效的付款方式。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.PENDING_INTERNAL_SETUP | The WhatsApp Business Account is being configured to use the MM Lite API and requires no further action from the business customer or partner. The automated setup process is estimated to take less than ten minutes. Subscribe to the account_update webhook and listen for the AD_ACCOUNT_LINKED event. Submit a support ticket if the setup process takes more than ten minutes and you have not received a webhook. | WhatsApp 企業帳戶正在設定為使用 MM Lite API，無需企業客戶或合作夥伴採取進一步操作。自動設定過程預計需要不到十分鐘。訂閱 account_update Webhook 並偵聽 AD_ACCOUNT_LINKED 事件。如果設定過程需要十分鐘以上且您尚未收到 Webhook，請提交支援票證。 |
+| whatsapp.accountHealths.fields.marketingMessages.description.ONBOARDED | The WhatsApp Business Account has successfully onboarded and is ready to use the MM Lite API. | WhatsApp 企業帳戶已成功註冊並準備好使用 MM Lite API。 |
+| whatsapp.accountHealths.fields.webhookConfiguration.label | Webhook Configuration | Webhook設定 |
+| whatsapp.accountHealths.fields.webhookConfiguration.tooltip | Status of the webhook configured to receive WhatsApp events. | 設定為接收 WhatsApp 事件的 Webhook 的狀態。 |
+| whatsapp.accountHealths.fields.webhookConfiguration.configured | Webhook configured successfully | Webhook設定成功 |
+| whatsapp.accountHealths.fields.webhookConfiguration.notConfigured | Webhook not configured | Webhook 未設定 |
+| whatsapp.accountHealths.fields.phoneNumberHealth.label | Phone Number Health | 電話號碼健康狀況 |
+| whatsapp.accountHealths.fields.phoneNumberHealth.tooltip | Whether this phone number can send messages and any issues affecting it. | 此電話號碼是否可以傳送訊息以及任何影響它的問題。 |
+| whatsapp.accountHealths.fields.phoneNumberHealth.headline | Phone Number - {status} | 電話號碼 - {status} |
+| whatsapp.accountHealths.fields.wabaHealth.label | WhatsApp Business Account Health | WhatsApp 企業帳戶健康狀況 |
+| whatsapp.accountHealths.fields.wabaHealth.tooltip | Whether the WhatsApp Business Account can send messages and any issues affecting it. | WhatsApp 企業帳戶是否可以傳送訊息以及影響它的任何問題。 |
+| whatsapp.accountHealths.fields.wabaHealth.headline | WhatsApp Business Account (WABA ID: {id}) - {status} | WhatsApp 企業帳戶（WABA ID：{id}）- {status} |
+| whatsapp.accountHealths.fields.wabaHealth.headlineNoId | WhatsApp Business Account - {status} | WhatsApp 企業帳戶 - {status} |
+| whatsapp.accountHealths.messagingLimitTier.TIER_50 | 50 customers per 24h | 每 24 小時 50 位顧客 |
+| whatsapp.accountHealths.messagingLimitTier.TIER_250 | 250 customers per 24h | 每 24 小時 250 位顧客 |
+| whatsapp.accountHealths.messagingLimitTier.TIER_1K | 1,000 customers per 24h | 每 24 小時 1,000 名顧客 |
+| whatsapp.accountHealths.messagingLimitTier.TIER_10K | 10,000 customers per 24h | 每 24 小時 10,000 個客戶 |
+| whatsapp.accountHealths.messagingLimitTier.TIER_100K | 100,000 customers per 24h | 每 24 小時 10 萬名客戶 |
+| whatsapp.accountHealths.messagingLimitTier.TIER_UNLIMITED | Unlimited customers per 24h | 每 24 小時無限客戶 |
+| whatsapp.accountHealths.messagingLimitTier.UNKNOWN | Unknown | 未知 |
+| whatsapp.accountHealths.displayNameStatus.APPROVED | Approved | 已批准 |
+| whatsapp.accountHealths.displayNameStatus.AVAILABLE_WITHOUT_REVIEW | Available Without Review | 無需審核即可使用 |
+| whatsapp.accountHealths.displayNameStatus.DECLINED | Declined | 已拒絕 |
+| whatsapp.accountHealths.displayNameStatus.EXPIRED | Expired | 已過期 |
+| whatsapp.accountHealths.displayNameStatus.NONE | None | 無 |
+| whatsapp.accountHealths.displayNameStatus.PENDING_REVIEW | Pending Review | 待審核 |
+| whatsapp.accountHealths.accountMode.LIVE | Live | 直播 |
+| whatsapp.accountHealths.accountMode.SANDBOX | Sandbox | 沙箱 |
+| whatsapp.accountHealths.canSendMessage.AVAILABLE | AVAILABLE | 可用 |
+| whatsapp.accountHealths.canSendMessage.LIMITED | LIMITED | 有限公司 |
+| whatsapp.accountHealths.canSendMessage.BLOCKED | BLOCKED | 已阻止 |
+| whatsapp.accountHealths.canSendMessage.UNKNOWN | UNKNOWN | 未知 |
+| whatsapp.accountHealths.health.label | Business Status | 業務狀況 |
+| whatsapp.accountHealths.health.tooltip | Overview of your WhatsApp account health and messaging capability. | 您的WhatsApp帳戶健康狀況和訊息傳遞功能的概述。 |
+| whatsapp.accountHealths.health.blockedMessage | Your phone number has been blocked from sending messages. | 您的電話號碼已被阻止傳送訊息。 |
+| whatsapp.accountHealths.health.problem | Problem: | 問題： |
+| whatsapp.accountHealths.health.possibleSolution | Possible solution: | 可能的解決方案： |
+| whatsapp.accountHealths.health.noIssues | No issues detected | 未偵測到問題 |
+| whatsapp.accountHealths.health.entityHeadline | {type} (ID: {id}) | {type}（ID：{id}） |
+| whatsapp.accountHealths.health.entityHeadlineNoId | {type} | {type} |
+| whatsapp.accountHealths.health.entityTooltip | Whether this {type} can send messages and any issues affecting it. | 此 {type} 是否可以傳送訊息以及影響它的任何問題。 |
+| whatsapp.accountHealths.health.entityTypes.PHONE_NUMBER | Phone Number | 電話號碼 |
+| whatsapp.accountHealths.health.entityTypes.WABA | WhatsApp Business Account | WhatsApp 企業帳戶 |
+| whatsapp.accountHealths.health.entityTypes.BUSINESS | Business | 業務 |
+| whatsapp.accountHealths.health.entityTypes.MESSAGE_TEMPLATE | Message Template | 訊息範本 |
+| whatsapp.accountHealths.health.entityTypes.APP | App | 應用程式 |
+| whatsapp.templateFooter.label | Template Footer | 範本頁腳 |
+| whatsapp.templateHeader.label | Template Header | 範本標頭 |
+| whatsapp.transferPhoneNumber | Transfer phone from another Whatsapp provider | 從其他 Whatsapp 供應商轉接電話 |
+| whatsapp.signupSessionExpired | Your WhatsApp signup session has expired. Please start the connection again. | 您的WhatsApp註冊會話已過期。請重新開始連線。 |
+| zalo.title | Zalo OA | ZaloOA |
+| zalo.refreshPermissions | Refresh permissions | 刷新權限 |
+| zalo.duplicated | This Zalo OA account has already been connected to another workspace. | 此Zalo OA 帳戶已連接到另一個工作區。 |
+| zalo.tagSync.title | Tag Sync | 標籤同步 |
+| zalo.tagSync.description | Mirror local tag assignments to this Zalo OA. | 將本地標記分配鏡像到此Zalo OA。 |
+| zalo.tagSync.toggleSuccess | Tag sync setting updated. | 標籤同步設定已更新。 |
+| zalo.tagSync.enabledSince | Enabled since {date} | 自 {date} 啟用 |
+| zalo.tagSync.disabled | Disabled | 已停用 |
+| telegram.description | This integration lets you create Telegram bots. | 此整合可讓您建立Telegram 機器人。 |
+| telegram.title | Telegram | Telegram |
+| invitation.chatbotInvitationDescription1 | Join {chatbotName} | 加入 {chatbotName} |
+| invitation.chatbotInvitationDescription2 | {userName} has invited you to join {chatbotName}. | {userName} 邀請您加入 {chatbotName}。 |
+| invitation.invalidInvitation | This invitation is invalid or has expired. | 此邀請無效或已過期。 |
+| invitation.workspaceUnavailable | This workspace is no longer available. | 此工作區不再可用。 |
+| inboxTeams.title | Inbox Teams | 收件匣團隊 |
+| userPersistentMenus.title | User Persistent Menus | 使用者常駐選單 |
+| webhooks.title | Webhooks | Webhook |
+| reflinks.title | Entry Point Links | 入口點連結 |
+| reflinks.description | Keyword links that start flows and capture ref payloads from channels. | 啟動流程並從頻道擷取引用 payload 的關鍵字連結。 |
+| qrCodes.title | QR Codes | QR Code |
+| qrCodes.description | Create QR codes that link to your chatbot flows. | 建立連結到聊天機器人流程的 QR 程式碼。 |
+| magicLinks.title | Magic Links | Magic Link |
+| magicLinks.description | Create deep links that redirect to your URL with query parameters. | 建立可透過查詢參數重新導向到您 URL 的深層連結。 |
+| QRCode.title | QR Code | QR Code |
+| QRCode.description | Share this code so people open your tracking link. | 分享此程式碼，以便人們打開您的追蹤連結。 |
+| trigger.when | When this happens | 當發生這種情況時 |
+| trigger.conditions.tagApplied | Tag Applied | 標籤已應用 |
+| trigger.conditions.tagRemoved | Tag Removed | 標籤已刪除 |
+| trigger.conditions.dateTimeBasedTrigger | DateTime Based Trigger | 依據日期時間觸發器 |
+| trigger.conditions.customFieldValueChanged | Custom Field Changed | 自訂欄位已更改 |
+| trigger.conditions.contactInfoUpdated | Phone or email updated | 電話或電子郵件已更新 |
+| trigger.conditions.conversationTransferredToHuman | Conversation transferred to human | 對話轉移到人類 |
+| trigger.conditions.conversationTransferredToBot | Conversation transferred to bot | 對話已轉移到機器人 |
+| trigger.conditions.newContact | New Contact | 新聯絡人 |
+| trigger.conditions.contactUnsubscribedFormBroadcast | Contact Unsubscribed From Broadcast | 聯絡人取消訂閱廣播 |
+| trigger.conditions.archived | Archived | 已封存 |
+| trigger.conditions.followUp | Follow Up | 跟進 |
+| trigger.conditions.conversationAssigned | Conversation Assigned | 分配的對話 |
+| trigger.conditions.conversationUnassigned | Conversation Unassigned | 會話未分配 |
+| trigger.conditions.incomingCall | Incoming Call | 來電 |
+| trigger.conditions.missedAudioCall | Missed Audio Call | 錯過的音訊通話 |
+| trigger.conditions.callEnded | Call Ended | 通話結束 |
+| trigger.conditions.ticketCreated | Ticket Created | 工單已建立 |
+| trigger.conditions.ticketMovedToStage | Ticket Moved To Stage | 門票已移至舞台 |
+| trigger.conditions.ticketValueChanged | Ticket Value Changed | 票價已更改 |
+| trigger.conditions.ticketStatusChanged | Ticket Status Changed | 票證狀態已更改 |
+| trigger.conditions.ticketPriorityChanged | Ticket Priority Changed | 票證優先權已更改 |
+| trigger.conditions.subscribedToSequence | Subscribed To Sequence | 訂閱序列 |
+| trigger.conditions.unsubscribedFromSequence | Unsubscribed From Sequence | 取消訂閱序列 |
+| trigger.conditions.WhatsappShoppingCartSent | Whatsapp Shopping Cart Sent | Whatsapp 購物車已傳送 |
+| trigger.conditions.userAskedAboutProduct | User Asked About Product | 使用者詢問產品 |
+| trigger.conditions.cartAbandoned | Cart Abandoned | 購物車被遺棄 |
+| trigger.conditions.newOrder | New Order | 新訂單 |
+| trigger.conditions.orderAccepted | Order Accepted | 訂單已接受 |
+| trigger.conditions.orderShipped | Order Shipped | 訂單已出貨 |
+| trigger.conditions.orderConcluded | Order Concluded | 訂單已完成 |
+| trigger.conditions.orderCancelled | Order Cancelled | 訂單已取消 |
+| trigger.conditions.categoryAddedToCart | Category Added To Cart | 分類加入購物車 |
+| trigger.conditions.productAddedToCart | Product Added To Cart | 產品已加入購物車 |
+| trigger.conditions.productRemovedFromCart | Product Removed From Cart | 產品已從購物車中刪除 |
+| trigger.conditions.productOrdered | Product Ordered | 已訂購產品 |
+| trigger.conditions.contactReferredANewContact | Contact Referred A New Contact | 聯絡人推薦了新聯絡人 |
+| trigger.conditions.contactReferredExistingContact | Contact Referred Existing Contact | 聯絡人引用現有聯絡人 |
+| trigger.actions.addTag | Add Tag | 新增標籤 |
+| trigger.actions.removeTag | Remove Tag | 移除標籤 |
+| trigger.actions.setCustomField | Set Custom Field | 設定自訂欄位 |
+| trigger.actions.clearCustomField | Clear Custom Field | 清除自訂欄位 |
+| trigger.actions.startAnotherFlow | Start Another Flow | 開始另一個流程 |
+| trigger.actions.notifyAdmins | Notify Admins | 通知管理員 |
+| trigger.actions.transferConversationToHuman | Transfer Conversation to Human | 將對話轉移給人類 |
+| trigger.triggerGoesOff | Trigger goes off | 觸發器熄滅 |
+| trigger.before | Before | 之前 |
+| trigger.after | After | 之後 |
+| trigger.atTheDayOf | At the day of | 當天 |
+| trigger.day | Day | 日 |
+| trigger.hour | Hour | 小時 |
+| trigger.minute | Minute | 分鐘 |
+| trigger.at | At | 在 |
+| errorLogs.title | Error Logs | 錯誤日誌 |
+| developerAccessToken.title | API Access Token | API 存取權杖 |
+| developerAccessToken.description | Generate a token to allow your workspace to access the public APIs. Keep this token secret and do not share it with anyone. | 產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。 |
+| contacts.title | Contacts | 聯絡人 |
+| contacts.exportPreparing | Preparing your export… | 準備匯出... |
+| contacts.exportPreparingDescription | We're generating your CSV file. This may take a moment. | 我們正在產生您的CSV 檔案。這可能需要一些時間。 |
+| contacts.exportReadyTitle | Your export is ready | 您的匯出已準備就緒 |
+| contacts.exportReadyDescription | Copy the link below or download the file directly. | 複製以下連結或直接下載檔案。 |
+| contacts.exportDownloadCount | Download ({count}) | 下載 ({count}) |
+| contacts.exportFailed | Export failed. Please try again. | 匯出失敗。請再試一次。 |
+| contacts.copyLink | Copy link | 複製連結 |
+| contacts.linkCopied | Link copied to clipboard | 連結已複製到剪貼簿 |
+| contacts.countExact | {count} contacts | {count} 聯絡人 |
+| contacts.countCapped | {count}+ contacts | {count}+ 聯絡人 |
+| contacts.exportAllNotice | All contacts matching the current filter will be exported. | 與目前過濾器相符的所有聯絡人都會被匯出。 |
+| contacts.exportTakingLong | Export is taking longer than expected | 匯出花費的時間比預期長 |
+| contacts.exportTakingLongDescription | The export is still processing. You can close this dialog and check back in a few minutes from the export history. | 匯出仍在處理中。您可以關閉此對話框，並在幾分鐘後返回檢視匯出歷史記錄。 |
+| auditLogs.title | Audit Logs | 審核日誌 |
+| customFields.title | Custom Fields | 自訂欄位 |
+| customFields.variables.rawGroup | Raw custom fields | 原始自訂欄位 |
+| keywords.title | Keywords | 關鍵字 |
+| keywords.tabs.contact | Contact | 聯絡人 |
+| keywords.tabs.page | Page | 頁 |
+| keywords.descriptions.contactTitle | Contact keywords | 聯絡人關鍵字 |
+| keywords.descriptions.contact | Automatically reply when a contact sends a message containing a keyword to your workspace. | 當聯絡人傳送包含關鍵字的訊息給您的工作區時自動回覆。 |
+| keywords.descriptions.pageTitle | Page keywords | 頁面關鍵字 |
+| keywords.descriptions.page | Automatically reply when you send a message containing a keyword to a contact. | 當您傳送包含關鍵字的訊息給聯絡人時自動回覆。 |
+| keywords.pageWarning | Message content containing a Page keyword can cause messages to be sent to the customer in an infinite loop. Disable the Page keyword immediately if you encounter this situation! | 訊息包含 Page 關鍵字的內容可能會導致訊息無限循環地傳送給客戶。遇到這種情況請立即停用Page關鍵字！ |
+| triggers.title | Triggers | 觸發器 |
+| users.title | Users | 使用者 |
+| sequences.title | Sequences | 序列 |
+| sequences.subscribers | Subscibers | 訂閱者 |
+| sequences.step | Message | 訊息 |
+| sequences.addStep | Add Message | 新增訊息 |
+| sequences.addFirstStep | Add First Message | 新增第一個訊息 |
+| sequences.noSteps | No messages yet. Add your first message to get started. | 還沒有訊息。新增您的第一個開始訊息。 |
+| sequences.selectFlow | Select Flow | 選擇流程 |
+| sequences.confirmDeleteStep | Are you sure you want to delete this message? | 您確定要刪除此訊息嗎？ |
+| sequences.delayUnits.immediate | Immediately | 立即 |
+| sequences.delayUnits.minutes | Minutes | 分鐘 |
+| sequences.delayUnits.hours | Hours | 小時 |
+| sequences.delayUnits.days | Days | 天 |
+| sequences.delayUnits.specificTime | Specific Time | 具體時間 |
+| sequences.timeValidation | Message time must be after the previous message | 訊息時間必須晚於上一則訊息 |
+| sequences.validation.exception | Validation Exception | 驗證異常 |
+| sequences.validation.nameExists | Sequence name already exists | 序列名稱已存在 |
+| sequences.sendLabel | Send | 傳送 |
+| sequences.selectFlowFirst | Please select a flow before activating the message | 請在啟動訊息前選擇流程 |
+| sequences.invalidTimeRange | Start time must be before end time | 開始時間必須早於結束時間 |
+| sequences.schedule | Schedule | 時間表 |
+| sequences.scheduleDescription | Set up when messages should be sent | 設定何時傳送訊息 |
+| sequences.sendTime | Send time | 傳送時間 |
+| sequences.sendTimeDescription | Messages will only be sent during this time range | 訊息只會在此時間範圍內傳送 |
+| sequences.timezone | Timezone | 時區 |
+| sequences.timezoneDescription | All times are in your chatbot's timezone | 所有時間均以您的聊天機器人的時區為準 |
+| sequences.enableSchedule | Enable schedule | 啟用時間表 |
+| sequences.startTime | Start time | 開始時間 |
+| sequences.endTime | End time | 結束時間 |
+| sequences.allDay | All day | 全天 |
+| sequences.customTime | Custom time | 自訂時間 |
+| sequences.enrollmentSettings | Enrollment Settings | 註冊設定 |
+| sequences.enrollmentDescription | Control how contacts are enrolled in this sequence | 控制如何依此順序註冊聯絡人 |
+| sequences.allowReEnrollment | Allow re-enrollment | 允許重新註冊 |
+| sequences.allowReEnrollmentDescription | Contacts can be enrolled multiple times | 聯絡人可多次註冊 |
+| sequences.skipWeekends | Skip weekends | 跳過週末 |
+| sequences.skipWeekendsDescription | Don't send messages on Saturday and Sunday | 週六週日不要傳送訊息 |
+| sequences.unenrollOnReply | Unenroll on reply | 回覆後取消註冊 |
+| sequences.unenrollOnReplyDescription | Remove contact from sequence when they reply | 移除回覆時的聯絡人順序 |
+| sequences.performance | Performance | 性能 |
+| sequences.enrolled | Enrolled | 已註冊 |
+| sequences.completed | Completed | 已完成 |
+| sequences.openRate | Open rate | 開啟率 |
+| sequences.clickRate | Click rate | 點擊率 |
+| sequences.replyRate | Reply rate | 回覆率 |
+| sequences.unsubscribeRate | Unsubscribe rate | 退訂率 |
+| sequences.overview | Overview | 概述 |
+| sequences.analytics | Analytics | 分析 |
+| sequences.stats.sent | Sent | 已傳送 |
+| sequences.stats.delivered | Delivered | 已交付 |
+| sequences.stats.seen | Seen | 已看過 |
+| sequences.stats.clicked | Clicked | 已點擊 |
+| sequences.stats.failed | Failed | 失敗 |
+| sequences.stats.noContacts | No contacts found | 找不到聯絡人 |
+| sequences.stats.pageInfo | Page {page} of {pageCount} | 第 {page} 頁（共 {pageCount}） |
+| sequences.stats.selectedAll | All selected | 已全選 |
+| sequences.stats.selectedCount | {count} selected | {count} |
+| sequences.stats.tagAllDialogDescription | Tags will be added to all selected contacts. | 標籤將會加入所有選定的聯絡人。 |
+| sequences.stats.tagDialogDescription | Tags will be added to {count} contact(s). | 標籤將會加入到 {count} 聯絡人。 |
+| sequences.stats.tagQueued | Tagging {count} contacts in the background. | 在後台標記 {count} 聯絡人。 |
+| sequences.stats.loadingMore | Loading more... | 載入更多... |
+| sequences.settings | Settings | 設定 |
+| sequences.flow | Flow | 流程 |
+| sequences.active | Active | 活動 |
+| sequences.messageSentAtLeast | This message will be sent at least | 此訊息最少會在以下時間後傳送 |
+| sequences.afterPreviousMessage | after the previous message (day = 24h) | （天 = 24 小時） |
+| sequences.anyTime | Any time | 任何時間 |
+| sequences.setTimeRange | Set time range | 設定時間範圍 |
+| sequences.selectDays | Select days | 選擇日期 |
+| sequences.allDays | All Days | 全天 |
+| sequences.deselectAll | Deselect All | 取消全選 |
+| sequences.monday | Monday | 星期一 |
+| sequences.tuesday | Tuesday | 星期二 |
+| sequences.wednesday | Wednesday | 星期三 |
+| sequences.thursday | Thursday | 星期四 |
+| sequences.friday | Friday | 週五 |
+| sequences.saturday | Saturday | 星期六 |
+| sequences.sunday | Sunday | 週日 |
+| sequences.afterText | After | 之後 |
+| tools.title | Tools | 工具 |
+| aiProviders.openai | OpenAI | OpenAI |
+| aiProviders.gemini | Gemini | Gemini |
+| aiProviders.claude | Claude | Claude |
+| aiProviders.deepseek | DeepSeek | DeepSeek |
+| aiProviders.openrouter | OpenRouter | 開放路由器 |
+| aiProviders.openaiCompatible | OpenAI Compatible | OpenAI相容 |
+| smtp.setting.description | Send emails using your SMTP server. | 使用您的SMTP 伺服器傳送電子郵件。 |
+| smtp.setting.label | (Email) SMTP | （電子郵件）SMTP |
+| smtp.errors.connectionFailed | Cannot connect to SMTP server. Please check your credentials and try again. | 無法連接到SMTP 伺服器。請檢查您的憑證並重試。 |
+| botSimulator.title | Bot Simulator | 機器人模擬器 |
+| botSimulator.description | Simulate your bot's behavior in a real-time environment. | 在即時環境中模擬機器人的行為。 |
+| pollManager.title | Poll Manager | 投票管理器 |
+| pollManager.description | Create and manage polls for your contacts. | 建立並管理您的聯絡人的投票。 |
+| placesNearMe.title | Places Near Me | 我附近的地方 |
+| placesNearMe.description | Find places near your contacts. | 尋找您的聯絡人附近的地點。 |
+| questionnaires.title | Questionnaires | 問卷 |
+| questionnaires.description | Create and manage questionnaires for your contacts. | 建立並管理您的聯絡人的問卷。 |
+| questionnaires.singular | Questionnaire | 問卷 |
+| questionnaires.submission | Submission | 提交 |
+| questionnaires.addNew | Add New | 新增新 |
+| questionnaires.applicants | Applicants | 申請人 |
+| questionnaires.generalSettings | General settings | 常規設定 |
+| questionnaires.triggerFlow | Trigger the flow by completing the questionnaire | 觸發器完成問卷的流程 |
+| questionnaires.enableScore | Give points for each question answered. | 為回答的每個問題評分。 |
+| questionnaires.enableRetryMessages | Customize retry messages in case of reply failure. | 自訂回覆失敗時的重試訊息。 |
+| questionnaires.enableCustomFieldMapping | Save data to custom fields. | 儲存資料到自訂欄位。 |
+| questionnaires.question | Question | 問題 |
+| questionnaires.activeQuestion | Active | 活動 |
+| questionnaires.questionImage | Question image | 問題圖片 |
+| questionnaires.questionImageHint | Optional image sent with this question. | 與此問題一起傳送的選用影像。 |
+| questionnaires.responseType | Response Type | 回應類型 |
+| questionnaires.points | Points | 積分 |
+| questionnaires.retryMessage | Retry message if the reply is invalid | 若回覆無效則重試訊息 |
+| questionnaires.defaultRetryMessages.text | What you've entered is not a valid text. Please try again | 您輸入的內容無效。請重試 |
+| questionnaires.defaultRetryMessages.number | What you've entered is not a valid number. Please try again | 您輸入的數字無效。請重試 |
+| questionnaires.defaultRetryMessages.email | What you've entered is not a valid email. Please try again | 您輸入的電子郵件地址無效。請重試 |
+| questionnaires.defaultRetryMessages.phone | What you've entered is not a valid phone number. Please try again | 您輸入的電話號碼無效。請重試 |
+| questionnaires.defaultRetryMessages.multipleChoice | What you've entered is not a valid option. Please try again | 您輸入的選項無效。請重試 |
+| questionnaires.customField | Save response to a custom or system field | 儲存對自訂或系統欄位的回應 |
+| questionnaires.options | Options | 選項 |
+| questionnaires.mode | Mode | 模式 |
+| questionnaires.completed | Completed | 已完成 |
+| questionnaires.completionRate | Completion rate | 完成率 |
+| questionnaires.date | Date | 日期 |
+| questionnaires.inbox | Inbox | 收件匣 |
+| questionnaires.unknownContact | Unknown contact | 未知聯絡人 |
+| questionnaires.noAnswers | No answers | 無答案 |
+| questionnaires.responseTypes.text | Text | 文字 |
+| questionnaires.responseTypes.number | Number | 號碼 |
+| questionnaires.responseTypes.email | Email | 電子郵件 |
+| questionnaires.responseTypes.phone | Phone | 電話 |
+| questionnaires.responseTypes.multipleChoice | Multiple choice | 多項選擇 |
+| questionnaires.flowModes.start | Start questionnaire | 開始問卷 |
+| questionnaires.flowModes.end | End questionnaire | 結束問卷 |
+| questionnaires.flowModes.deleteApplicant | Delete applicant | 刪除申請人 |
+| questionnaires.dialogDescriptions.create | Name the questionnaire before adding questions. | 在新增問題之前為問卷命名。 |
+| questionnaires.dialogDescriptions.rename | Update the questionnaire name shown in lists and flows. | 更新清單和流程中顯示的問卷名稱。 |
+| questionnaires.dialogDescriptions.flowStep | Choose how this flow step interacts with a questionnaire. | 選擇此流程步驟如何與問卷互動。 |
+| questionnaires.status.inProgress | In progress | 進行中 |
+| questionnaires.status.completed | Completed | 已完成 |
+| questionnaires.status.cancelled | Cancelled | 已取消 |
+| questionnaires.status.failed | Failed | 失敗 |
+| questionnaires.status.timeout | Timeout | 超時 |
+| facebookCommentAutomation.title | Facebook Comment Automation | Facebook 留言自動化 |
+| facebookCommentAutomation.description | Automate Facebook comments for your contacts. | 自動處理聯絡人在 Facebook 貼文下的留言。 |
+| facebookCommentAutomation.create | Create Automation | 建立自動化 |
+| facebookCommentAutomation.replies | Replies | 回覆 |
+| facebookCommentAutomation.activated | Automation activated | 自動化已啟用 |
+| facebookCommentAutomation.deactivated | Automation deactivated | 自動化已停用 |
+| facebookCommentAutomation.trackCommentsOn | Track comments on | 追蹤留言的對象 |
+| facebookCommentAutomation.trackCommentsOnDescription | Apply this automation to all posts on your Page, or narrow it to specific posts you select. | 可套用到粉絲專頁上的所有貼文，或縮小範圍到您指定的特定貼文。 |
+| facebookCommentAutomation.privateReply | Private reply (inbox) | 私訊回覆（收件匣） |
+| facebookCommentAutomation.privateReplyDescription | Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable. | 將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。 |
+| facebookCommentAutomation.publicReply | Public reply to comment | 公開回覆留言 |
+| facebookCommentAutomation.publicReplyDescription | Post a public reply directly under the comment. Supports up to 10 text templates (spintax supported), AI Agent, a chatbot flow, or no reply. | 直接在留言下方發表公開回覆。支援最多 10 個文字範本（支援 spintax）、AI Agent、聊天機器人流程，或不回覆。 |
+| facebookCommentAutomation.replyMessage | Reply message | 回覆訊息 |
+| facebookCommentAutomation.replyMessagePlaceholder | Enter reply message... | 輸入回覆訊息... |
+| facebookCommentAutomation.includeKeywordsType | Reply to | 回覆對象 |
+| facebookCommentAutomation.includeKeywordsTypeDescription | Choose which comments this automation responds to. | 選擇此自動化要回應哪些留言。 |
+| facebookCommentAutomation.includeKeywords | Keywords to match | 要比對的關鍵字 |
+| facebookCommentAutomation.excludeKeywords | Exclude comments with these keywords | 排除包含這些關鍵字的留言 |
+| facebookCommentAutomation.excludeKeywordsDescription | Comments containing any of these keywords will be ignored by both inbox and public reply automation. | 若留言包含任一關鍵字，收件匣回覆與公開回覆自動化都會忽略該留言。 |
+| facebookCommentAutomation.keywordsPlaceholder | Type and press Enter... | 輸入後按 Enter... |
+| facebookCommentAutomation.replyAfter | Reply after | 回覆時間 |
+| facebookCommentAutomation.replyAfterValue | Value | 時間值 |
+| facebookCommentAutomation.schedule.title | Set active hours | 設定啟用時段 |
+| facebookCommentAutomation.schedule.description | Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight. | 選擇開始與結束時間。若結束時間早於開始時間，排程將跨夜執行。 |
+| facebookCommentAutomation.schedule.startTime | Start time | 開始時間 |
+| facebookCommentAutomation.schedule.endTime | End time | 結束時間 |
+| facebookCommentAutomation.schedule.alwaysRun | Always run | 永遠執行 |
+| facebookCommentAutomation.schedule.save | Save | 儲存 |
+| facebookCommentAutomation.schedule.invalidTimeRange | Start and end time must be different | 開始時間與結束時間必須不同 |
+| facebookCommentAutomation.schedule.timeRequired | Please select both start and end time | 請同時選擇開始時間與結束時間 |
+| facebookCommentAutomation.card.targeting | Targeting & Reply | 目標與回覆 |
+| facebookCommentAutomation.card.filters | Filters & Options | 篩選條件與選項 |
+| facebookCommentAutomation.card.replyTiming | Reply Timing | 回覆時機 |
+| facebookCommentAutomation.card.hideComments | Hide Comments | 隱藏留言 |
+| facebookCommentAutomation.postType.all | All posts | 所有貼文 |
+| facebookCommentAutomation.postType.published | Published posts | 已發佈貼文 |
+| facebookCommentAutomation.postType.ads | Ads posts | 廣告貼文 |
+| facebookCommentAutomation.postType.reels | Reels | Reels |
+| facebookCommentAutomation.postType.specificPosts | Specific posts | 指定貼文 |
+| facebookCommentAutomation.replyType.text | Text message | 文字訊息 |
+| facebookCommentAutomation.replyType.flow | Flow | 流程 |
+| facebookCommentAutomation.replyType.AIAgent | AI Agent | AI Agent |
+| facebookCommentAutomation.replyType.none | No reply | 不回覆 |
+| facebookCommentAutomation.keywordsType.all | All comments | 所有留言 |
+| facebookCommentAutomation.keywordsType.equal | Exact match | 完全符合 |
+| facebookCommentAutomation.keywordsType.contain | Contains | 包含 |
+| facebookCommentAutomation.replyAfterType.immediately | Immediately | 立即 |
+| facebookCommentAutomation.replyAfterType.seconds | After X seconds | X 秒後 |
+| facebookCommentAutomation.replyAfterType.minutes | After X minutes | X 分鐘後 |
+| facebookCommentAutomation.replyAfterType.hours | After X hours | X 小時後 |
+| facebookCommentAutomation.replyAfterType.randomWithin3Minutes | Random within 3 minutes | 3 分鐘內隨機 |
+| facebookCommentAutomation.replyAfterType.randomWithin5Minutes | Random within 5 minutes | 5 分鐘內隨機 |
+| facebookCommentAutomation.replyAfterType.randomWithin10Minutes | Random within 10 minutes | 10 分鐘內隨機 |
+| facebookCommentAutomation.replyAfterType.randomWithin20Minutes | Random within 20 minutes | 20 分鐘內隨機 |
+| facebookCommentAutomation.replyAfterType.randomWithin30Minutes | Random within 30 minutes | 30 分鐘內隨機 |
+| facebookCommentAutomation.replyAfterType.randomWithin60Minutes | Random within 60 minutes | 60 分鐘內隨機 |
+| facebookCommentAutomation.options.replyToNewContactsOnly | Only reply to new contacts | 僅回覆新聯絡人 |
+| facebookCommentAutomation.options.replyToNewContactsOnlyDescription | Only auto-reply to people who have never been a contact in your workspace before. | 僅自動回覆過去從未成為此工作區聯絡人的人。 |
+| facebookCommentAutomation.options.replyOncePerUserPerPost | Reply only once to each user per post | 每則貼文對每位使用者只回覆一次 |
+| facebookCommentAutomation.options.replyOncePerUserPerPostDescription | Each user will receive at most one automated reply per post. | 每位使用者在每則貼文下最多只會收到一次自動回覆。 |
+| facebookCommentAutomation.options.likeUserComment | Like the user comment | 對使用者留言按讚 |
+| facebookCommentAutomation.options.likeUserCommentDescription | Automatically react with a like to the commenter's comment. | 自動對留言者的留言按讚。 |
+| facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPosts | Reply to users who commented on other posts | 回覆曾在其他貼文留言的使用者 |
+| facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPostsDescription | Continue replying to users who have already commented on your other posts. | 若使用者曾在您其他貼文下留言，仍持續對其回覆。 |
+| facebookCommentAutomation.options.ignoreCommentReplies | Don't reply to replies to comments | 忽略留言底下的回覆 |
+| facebookCommentAutomation.options.ignoreCommentRepliesDescription | Skip automation for comments that are replies to other comments, not top-level comments. | 若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。 |
+| facebookCommentAutomation.options.trackUserTags | Track if a user tags other users | 追蹤使用者是否標記其他人 |
+| facebookCommentAutomation.options.trackUserTagsDescription | Trigger automation when a user tags or mentions another user in their comment. | 當使用者在留言中標記或提及其他使用者時，觸發此自動化。 |
+| facebookCommentAutomation.hideComments.all | Hide all comments | 隱藏所有留言 |
+| facebookCommentAutomation.hideComments.hasPhoneNumber | Contains phone number | 包含電話號碼 |
+| facebookCommentAutomation.hideComments.hasImage | Contains image | 包含圖片 |
+| facebookCommentAutomation.hideComments.hasVideo | Contains video | 包含影片 |
+| facebookCommentAutomation.hideComments.hasLink | Contains link | 包含連結 |
+| facebookCommentAutomation.hideComments.hasKeywords | Contains keywords | 包含關鍵字 |
+| facebookCommentAutomation.hideComments.keywords | Keywords | 關鍵字 |
+| facebookCommentAutomation.hideComments.showCommentsAfter | Show comments after | 多久後重新顯示留言 |
+| facebookCommentAutomation.showCommentsAfter.none | Never | 永不 |
+| facebookCommentAutomation.selectPosts | Select Posts | 選擇貼文 |
+| facebookCommentAutomation.selectPageAll | All pages | 所有粉絲專頁 |
+| facebookCommentAutomation.chooseSpecificPosts | Choose posts... | 選擇貼文... |
+| facebookCommentAutomation.postIdTab | Post ID | 貼文 ID |
+| facebookCommentAutomation.postIdPlaceholder | Enter post IDs, one per line... | 輸入貼文 ID，每行一筆... |
+| facebookCommentAutomation.noPostsFound | No posts found | 找不到貼文 |
+| instagramCommentAutomation.title | Instagram Comment Automation | Instagram 留言自動化 |
+| instagramCommentAutomation.description | Automate Instagram comments for your contacts. | 自動處理聯絡人在 Instagram 貼文下的留言。 |
+| instagramCommentAutomation.create | Create Automation | 建立自動化 |
+| instagramCommentAutomation.replies | Replies | 回覆 |
+| instagramCommentAutomation.activated | Automation activated | 自動化已啟用 |
+| instagramCommentAutomation.deactivated | Automation deactivated | 自動化已停用 |
+| instagramCommentAutomation.trackCommentsOn | Track comments on | 追蹤留言的對象 |
+| instagramCommentAutomation.trackCommentsOnDescription | Apply this automation to all posts on your connected account, or narrow it to specific posts you select. | 可套用到已連接帳號上的所有貼文，或縮小範圍到您指定的特定貼文。 |
+| instagramCommentAutomation.privateReply | Private reply (inbox) | 私訊回覆（收件匣） |
+| instagramCommentAutomation.privateReplyDescription | Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable. | 將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。 |
+| instagramCommentAutomation.publicReply | Public reply to comment | 公開回覆留言 |
+| instagramCommentAutomation.publicReplyDescription | Post a public reply directly under the comment. Supports up to 10 text templates (spintax supported), AI Agent, a chatbot flow, or no reply. | 直接在留言下方發表公開回覆。支援最多 10 個文字範本（支援 spintax）、AI Agent、聊天機器人流程，或不回覆。 |
+| instagramCommentAutomation.replyMessage | Reply message | 回覆訊息 |
+| instagramCommentAutomation.replyMessagePlaceholder | Enter reply message... | 輸入回覆訊息... |
+| instagramCommentAutomation.includeKeywordsType | Reply to | 回覆對象 |
+| instagramCommentAutomation.includeKeywordsTypeDescription | Choose which comments this automation responds to. | 選擇此自動化要回應哪些留言。 |
+| instagramCommentAutomation.includeKeywords | Keywords to match | 要比對的關鍵字 |
+| instagramCommentAutomation.excludeKeywords | Exclude comments with these keywords | 排除包含這些關鍵字的留言 |
+| instagramCommentAutomation.excludeKeywordsDescription | Comments containing any of these keywords will be ignored by both inbox and public reply automation. | 若留言包含任一關鍵字，收件匣回覆與公開回覆自動化都會忽略該留言。 |
+| instagramCommentAutomation.keywordsPlaceholder | Type and press Enter... | 輸入後按 Enter... |
+| instagramCommentAutomation.replyAfter | Reply after | 回覆時間 |
+| instagramCommentAutomation.replyAfterValue | Value | 時間值 |
+| instagramCommentAutomation.schedule.title | Set active hours | 設定啟用時段 |
+| instagramCommentAutomation.schedule.description | Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight. | 選擇開始與結束時間。若結束時間早於開始時間，排程將跨夜執行。 |
+| instagramCommentAutomation.schedule.startTime | Start time | 開始時間 |
+| instagramCommentAutomation.schedule.endTime | End time | 結束時間 |
+| instagramCommentAutomation.schedule.alwaysRun | Always run | 永遠執行 |
+| instagramCommentAutomation.schedule.save | Save | 儲存 |
+| instagramCommentAutomation.schedule.invalidTimeRange | Start and end time must be different | 開始時間與結束時間必須不同 |
+| instagramCommentAutomation.schedule.timeRequired | Please select both start and end time | 請同時選擇開始時間與結束時間 |
+| instagramCommentAutomation.card.targeting | Targeting & Reply | 目標與回覆 |
+| instagramCommentAutomation.card.filters | Filters & Options | 篩選條件與選項 |
+| instagramCommentAutomation.card.replyTiming | Reply Timing | 回覆時機 |
+| instagramCommentAutomation.card.hideComments | Hide Comments | 隱藏留言 |
+| instagramCommentAutomation.postType.all | All posts | 所有貼文 |
+| instagramCommentAutomation.postType.published | Published posts | 已發佈貼文 |
+| instagramCommentAutomation.postType.reels | Reels | Reels |
+| instagramCommentAutomation.postType.specificPosts | Specific posts | 指定貼文 |
+| instagramCommentAutomation.replyType.text | Text message | 文字訊息 |
+| instagramCommentAutomation.replyType.flow | Flow | 流程 |
+| instagramCommentAutomation.replyType.AIAgent | AI Agent | AI Agent |
+| instagramCommentAutomation.replyType.none | No reply | 不回覆 |
+| instagramCommentAutomation.keywordsType.all | All comments | 所有留言 |
+| instagramCommentAutomation.keywordsType.equal | Exact match | 完全符合 |
+| instagramCommentAutomation.keywordsType.contain | Contains | 包含 |
+| instagramCommentAutomation.replyAfterType.immediately | Immediately | 立即 |
+| instagramCommentAutomation.replyAfterType.seconds | After X seconds | X 秒後 |
+| instagramCommentAutomation.replyAfterType.minutes | After X minutes | X 分鐘後 |
+| instagramCommentAutomation.replyAfterType.hours | After X hours | X 小時後 |
+| instagramCommentAutomation.replyAfterType.randomWithin3Minutes | Random within 3 minutes | 3 分鐘內隨機 |
+| instagramCommentAutomation.replyAfterType.randomWithin5Minutes | Random within 5 minutes | 5 分鐘內隨機 |
+| instagramCommentAutomation.replyAfterType.randomWithin10Minutes | Random within 10 minutes | 10 分鐘內隨機 |
+| instagramCommentAutomation.replyAfterType.randomWithin20Minutes | Random within 20 minutes | 20 分鐘內隨機 |
+| instagramCommentAutomation.replyAfterType.randomWithin30Minutes | Random within 30 minutes | 30 分鐘內隨機 |
+| instagramCommentAutomation.replyAfterType.randomWithin60Minutes | Random within 60 minutes | 60 分鐘內隨機 |
+| instagramCommentAutomation.options.replyToNewContactsOnly | Only reply to new contacts | 僅回覆新聯絡人 |
+| instagramCommentAutomation.options.replyToNewContactsOnlyDescription | Only auto-reply to people who have never been a contact in your workspace before. | 僅自動回覆過去從未成為此工作區聯絡人的人。 |
+| instagramCommentAutomation.options.replyOncePerUserPerPost | Reply only once to each user per post | 每則貼文對每位使用者只回覆一次 |
+| instagramCommentAutomation.options.replyOncePerUserPerPostDescription | Each user will receive at most one automated reply per post. | 每位使用者在每則貼文下最多只會收到一次自動回覆。 |
+| instagramCommentAutomation.options.likeUserComment | Like the user comment | 對使用者留言按讚 |
+| instagramCommentAutomation.options.likeUserCommentDescription | Automatically react with a like to the commenter's comment. | 自動對留言者的留言按讚。 |
+| instagramCommentAutomation.options.replyToUsersWhoCommentedOnOtherPosts | Reply to users who commented on other posts | 回覆曾在其他貼文留言的使用者 |
+| instagramCommentAutomation.options.replyToUsersWhoCommentedOnOtherPostsDescription | Continue replying to users who have already commented on your other posts. | 若使用者曾在您其他貼文下留言，仍持續對其回覆。 |
+| instagramCommentAutomation.options.ignoreCommentReplies | Don't reply to replies to comments | 忽略留言底下的回覆 |
+| instagramCommentAutomation.options.ignoreCommentRepliesDescription | Skip automation for comments that are replies to other comments, not top-level comments. | 若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。 |
+| instagramCommentAutomation.hideComments.all | Hide all comments | 隱藏所有留言 |
+| instagramCommentAutomation.hideComments.hasPhoneNumber | Contains phone number | 包含電話號碼 |
+| instagramCommentAutomation.hideComments.hasLink | Contains link | 包含連結 |
+| instagramCommentAutomation.hideComments.hasKeywords | Contains keywords | 包含關鍵字 |
+| instagramCommentAutomation.hideComments.keywords | Keywords | 關鍵字 |
+| instagramCommentAutomation.hideComments.showCommentsAfter | Show comments after | 多久後重新顯示留言 |
+| instagramCommentAutomation.showCommentsAfter.none | Never | 永不 |
+| instagramCommentAutomation.selectPosts | Select Posts | 選擇貼文 |
+| instagramCommentAutomation.selectPageAll | All accounts | 所有帳號 |
+| instagramCommentAutomation.chooseSpecificPosts | Choose posts... | 選擇貼文... |
+| instagramCommentAutomation.postIdTab | Post ID | 貼文 ID |
+| instagramCommentAutomation.postIdPlaceholder | Enter post IDs, one per line... | 輸入貼文 ID，每行一筆... |
+| instagramCommentAutomation.noPostsFound | No posts found | 找不到貼文 |
+| instagramCommentAutomation.connectionType.title | Choose Instagram connection type | 選擇 Instagram 連接類型 |
+| instagramCommentAutomation.connectionType.instagramTitle | Instagram Business | Instagram 商業帳號 |
+| instagramCommentAutomation.connectionType.instagramDescription | Instagram Login connection. Supports public reply, private reply, and hiding comments. Liking comments is not supported. | 使用 Instagram Login 連接。支援公開回覆、私訊回覆與隱藏留言，不支援對留言按讚。 |
+| instagramCommentAutomation.connectionType.instagramFacebookTitle | Instagram Login with Facebook | 使用 Facebook 登入的 Instagram |
+| instagramCommentAutomation.connectionType.instagramFacebookDescription | Instagram connected via a Facebook Page. Supports public reply, private reply, hiding comments, and liking comments. | 透過 Facebook 粉絲專頁連接的 Instagram。支援公開回覆、私訊回覆、隱藏留言與對留言按讚。 |
+| instagramStoryAutomation.title | Instagram Story Reply Automation | Instagram 限時動態回覆自動化 |
+| instagramStoryAutomation.description | Automate replies to Instagram story replies for your contacts. | 自動回覆聯絡人對 Instagram 限時動態的回覆。 |
+| instagramStoryAutomation.create | Create Automation | 建立自動化 |
+| instagramStoryAutomation.replies | Replies | 回覆 |
+| instagramStoryAutomation.activated | Automation activated | 自動化已啟用 |
+| instagramStoryAutomation.deactivated | Automation deactivated | 自動化已停用 |
+| instagramStoryAutomation.trackStoryReplyOn | Track Story reply on | 追蹤限時動態回覆的對象 |
+| instagramStoryAutomation.trackStoryReplyOnDescription | Apply this automation to replies on any of your Stories, or narrow it to specific Stories you select. | 可套用到您所有限時動態的回覆，或縮小範圍到您指定的特定限時動態。 |
+| instagramStoryAutomation.reply | Reply | 回覆 |
+| instagramStoryAutomation.replyDescription | Send a reply to the story replier's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable. | 將回覆傳送到限時動態回覆者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。 |
+| instagramStoryAutomation.replyMessage | Reply message | 回覆訊息 |
+| instagramStoryAutomation.replyMessagePlaceholder | Enter reply message... | 輸入回覆訊息... |
+| instagramStoryAutomation.includeKeywordsType | Reply to | 回覆對象 |
+| instagramStoryAutomation.includeKeywordsTypeDescription | Choose which story replies this automation responds to. | 選擇此自動化要回應哪些限時動態回覆。 |
+| instagramStoryAutomation.includeKeywords | Keywords to match | 要比對的關鍵字 |
+| instagramStoryAutomation.keywordsPlaceholder | Type and press Enter... | 輸入後按 Enter... |
+| instagramStoryAutomation.schedule.title | Set active hours | 設定啟用時段 |
+| instagramStoryAutomation.schedule.description | Choose a start and end time. If the end time is earlier than the start time, the schedule runs overnight. | 選擇開始與結束時間。若結束時間早於開始時間，排程將跨夜執行。 |
+| instagramStoryAutomation.schedule.startTime | Start time | 開始時間 |
+| instagramStoryAutomation.schedule.endTime | End time | 結束時間 |
+| instagramStoryAutomation.schedule.alwaysRun | Always run | 永遠執行 |
+| instagramStoryAutomation.schedule.save | Save | 儲存 |
+| instagramStoryAutomation.schedule.invalidTimeRange | Start and end time must be different | 開始時間與結束時間必須不同 |
+| instagramStoryAutomation.schedule.timeRequired | Please select both start and end time | 請同時選擇開始時間與結束時間 |
+| instagramStoryAutomation.card.targeting | Targeting & Reply | 目標與回覆 |
+| instagramStoryAutomation.storyType.all | All stories | 所有限時動態 |
+| instagramStoryAutomation.storyType.specificStories | Specific stories | 指定限時動態 |
+| instagramStoryAutomation.replyType.text | Text message | 文字訊息 |
+| instagramStoryAutomation.replyType.flow | Flow | 流程 |
+| instagramStoryAutomation.replyType.AIAgent | AI Agent | AI Agent |
+| instagramStoryAutomation.replyType.none | No reply | 不回覆 |
+| instagramStoryAutomation.keywordsType.all | All replies | 所有回覆 |
+| instagramStoryAutomation.keywordsType.equal | Exact match | 完全符合 |
+| instagramStoryAutomation.keywordsType.contain | Contains | 包含 |
+| instagramStoryAutomation.selectStories | Select Stories | 選擇限時動態 |
+| instagramStoryAutomation.selectPageAll | All accounts | 所有帳號 |
+| instagramStoryAutomation.chooseSpecificStories | Choose stories... | 選擇限時動態... |
+| instagramStoryAutomation.activeStoriesTab | Active stories | 目前限時動態 |
+| instagramStoryAutomation.storyIdTab | Story ID | 限時動態 ID |
+| instagramStoryAutomation.storyIdPlaceholder | Enter story IDs, one per line... | 輸入限時動態 ID，每行一筆... |
+| instagramStoryAutomation.noStoriesFound | No active stories found | 找不到目前的限時動態 |
+| instagramStoryAutomation.connectionType.title | Choose Instagram connection type | 選擇 Instagram 連接類型 |
+| instagramStoryAutomation.connectionType.instagramTitle | Instagram Business | Instagram 商業帳號 |
+| instagramStoryAutomation.connectionType.instagramDescription | Instagram Login connection. Supports reply via text, flow, or AI agent. | 使用 Instagram Login 連接。支援透過文字訊息、流程或 AI Agent 回覆。 |
+| instagramStoryAutomation.connectionType.instagramFacebookTitle | Instagram Login with Facebook | 使用 Facebook 登入的 Instagram |
+| instagramStoryAutomation.connectionType.instagramFacebookDescription | Instagram connected via a Facebook Page. Supports reply via text, flow, or AI agent. | 透過 Facebook 粉絲專頁連接的 Instagram。支援透過文字訊息、流程或 AI Agent 回覆。 |
+| facebookLeadAdsAutomation.title | Facebook Lead Ads Automation | Facebook 引導廣告自動化 |
+| facebookLeadAdsAutomation.description | Automate Facebook lead ads for your contacts. | 自動為您的聯絡人投放 Facebook 潛在客戶廣告。 |
+| facebookLeadAdsAutomation.create | Create New | 建立新 |
+| facebookLeadAdsAutomation.leads | Leads | 線索 |
+| facebookLeadAdsAutomation.facebookPage | Facebook Page | Facebook 頁 |
+| facebookLeadAdsAutomation.leadForm | Lead Form | 潛在客戶表格 |
+| facebookLeadAdsAutomation.allForms | All forms | 所有表格 |
+| facebookLeadAdsAutomation.allFormsNote | Leads from every form on this page will be captured. Standard fields (email, phone, name, gender) are saved to matching contact fields automatically. | 此頁面上每個表單的潛在客戶都將被捕獲。標準欄位（電子郵件、電話、姓名、性別）會自動儲存到符合的聯絡人欄位。 |
+| facebookLeadAdsAutomation.leadData | Lead Data | 潛在客戶資料 |
+| facebookLeadAdsAutomation.whatFlow | What flow is triggered | 觸發什麼流程 |
+| facebookLeadAdsAutomation.none | None | 無 |
+| facebookLeadAdsAutomation.addNewPage | Add New | 新增新 |
+| facebookLeadAdsAutomation.noEligiblePages | No eligible pages. Use "Add New" to grant lead access. | 沒有符合條件的頁面。使用「新增新建」授予潛在客戶存取權限。 |
+| facebookLeadAdsAutomation.duplicateError | An automation already exists for this page and form. | 此頁面和表單已存在自動化。 |
+| facebookLeadAdsAutomation.subscribeError | Could not subscribe this page to Facebook lead notifications, so the automation was not created. Reconnect the page with "Add New" and try again. | 無法將此頁面訂閱至 Facebook 潛在客戶通知，因此未建立自動化。使用「新增 New」重新連接頁面並重試。 |
+| ecommerce.title | Ecommerce | 電子商務 |
+| ecommerce.description | Create and manage your ecommerce store. | 建立並管理您的電子商務商店。 |
+| appointmentScheduling.title | Appointment Scheduling | 預約安排 |
+| appointmentScheduling.description | Create and manage your appointment scheduling. | 建立並管理您的預約安排。 |
+| templates.title | Templates | 範本 |
+| templates.description | Create and manage your templates. | 建立並管理您的範本。 |
+| qrCodeGenerator.title | QR Code Generator | QR Code 產生器 |
+| qrCodeGenerator.description | Create and manage your QR codes. | 建立並管理您的 QR Code。 |
+| platformAdmin.platformCredentials.title | Platform Credentials | 平台憑證 |
+| platformAdmin.platformCredentials.description | Global default developer apps used by all workspaces that don't have their own white-label credentials. | 沒有自己的白標籤憑證的所有工作區所使用的全域預設開發人員應用程式。 |
+| platformAdmin.helpItems.title | Help Links | 幫助連結 |
+| platformAdmin.helpItems.description | Help links shown in the sidebar for all workspaces that don't belong to a white-label tenant. | 側邊欄中顯示的說明連結適用於所有不屬於白標籤租使用者的工作區。 |
+| platformAdmin.queues.title | Queues | 佇列 |
+| platformCredentials.title | Platform Credentials | 平台憑證 |
+| platformCredentials.usingPlatformDefault | Using platform default | 使用平台預設值 |
+| platformCredentials.usingPlatformDefaultHint | This channel works out of the box with the platform's shared app. Add your own settings anytime to override it. | 此頻道可使用平台的共用應用程式。您隨時可以新增自己的設定來覆蓋它。 |
+| platformCredentials.notConfigured | Not set up yet | 尚未設定 |
+| platformCredentials.notConfiguredHint | Add your settings to start using this integration. | 新增您的設定以開始使用此整合。 |
+| platformBranding.title | Platform Branding | 平台品牌 |
+| platformBranding.sections.identity.title | Brand Identity | 品牌標識 |
+| platformBranding.sections.identity.description | Name and color theme shown across the platform | 整個平台顯示的名稱和顏色主題 |
+| platformBranding.sections.assets.title | Visual Assets | 視覺資產 |
+| platformBranding.sections.assets.description | Logos and favicon displayed in the browser and UI | 瀏覽器和 UI 中顯示的徽標和圖標 |
+| platformBranding.sections.legal.title | Legal Links | 法律連結 |
+| platformBranding.sections.legal.description | Links shown in footers and consent flows | 頁腳和同意流程中顯示的連結 |
+| platformBranding.sections.advanced.title | Advanced | 高級 |
+| platformBranding.sections.advanced.description | Inject custom CSS or JavaScript into every page | 將自訂 CSS 或 JavaScript 注入每個頁面 |
+| platformChannels.title | Allowed Channels | 允許頻道 |
+| platformChannels.description | Choose which channel types workspaces in this tenant can create. | 選擇此租使用者中的工作區可以建立哪些頻道類型。 |
+| platformChannels.hint | Leave every channel unchecked to allow all channels. | 取消選取每個頻道以允許所有頻道。 |
+| platformEmailTemplates.title | Email Templates | 電子郵件範本 |
+| platformEmailTemplates.description | Leave subject and body blank to use the system default template. | 將主旨與內文留空即可使用系統預設範本。 |
+| platformEmailTemplates.sections.signup.title | Signup Verification Email | 註冊驗證電子郵件 |
+| platformEmailTemplates.sections.signup.description | Sent when a new user registers an account | 新使用者註冊帳戶時傳送 |
+| platformEmailTemplates.sections.forgotPassword.title | Forgot Password Email | 忘記密碼電子郵件 |
+| platformEmailTemplates.sections.forgotPassword.description | Sent when a user requests a password reset | 當使用者要求重設密碼時傳送 |
+| platformEmailTemplates.sections.magicLink.title | Magic Link Sign-in Email | Magic Link 登入電子郵件 |
+| platformEmailTemplates.sections.magicLink.description | Sent when a user requests a magic link to sign in | 當使用者要求魔術連結登入時傳送 |
+| platformEmailTemplates.sections.accountCredentials.title | Sub-account Credentials Email | 子帳戶憑證電子郵件 |
+| platformEmailTemplates.sections.accountCredentials.description | Sent when a reseller provisions a new sub-account | 當經銷商設定新的子帳戶時傳送 |
+| platformEmailTemplates.fields.subject.label | Subject | 主題 |
+| platformEmailTemplates.fields.subject.placeholder | Leave blank to use the default subject | 留空以使用預設主題 |
+| platformEmailTemplates.fields.body.label | HTML Body | HTML 正文 |
+| platformEmailTemplates.fields.body.placeholder | Leave blank to use the default template | 留空以使用預設範本 |
+| platformEmailTemplates.status.custom | Custom | 自訂 |
+| platformEmailTemplates.status.default | Default | 預設 |
+| platformEmailTemplates.availableVariables | Available variables | 可用變數 |
+| platformEmailTemplates.preview.title | Preview | 預覽 |
+| platformEmailTemplates.preview.empty | Enter template body to see a preview | 輸入範本內容以檢視預覽 |
+| manageSidebar.platformGroup | Platform | 平台 |
+| manageSidebar.toolsGroup | Tools | 工具 |
+| manageSidebar.saasGroup | SaaS | SaaS |
+| manageSidebar.portalUsers | Sub-accounts | 子帳戶 |
+| manageSidebar.portalWorkspaces | Workspaces | 工作區 |
+| manageSidebar.portalPlans | Plans | 方案 |
+| manageSidebar.portalTopUpPacks | Top-up packs | 儲值包 |
+| manageSidebar.portalUsage | Usage | 用法 |
+| manageSidebar.portalCustomDomain | Custom Domain | 自訂網域 |
+| manageSidebar.portalPaymentProcessor | Payment Processor | 支付處理器 |
+| manageSidebar.portalSmtp | SMTP Settings | SMTP設定 |
+| manageSidebar.portalPricingPage | Pricing | 定價 |
+| unsubscribePage.title | You have been unsubscribed. | 您已取消訂閱。 |
+| unsubscribePage.description | You will no longer receive emails from this sender. | 您將不會再收到來自該寄件者的電子郵件。 |
+| unsubscribePage.invalidTitle | Invalid unsubscribe link. | 取消訂閱連結無效。 |
+| unsubscribePage.invalidDescription | This link is invalid or has expired. | 此連結無效或已過期。 |
+| unsubscribePage.unavailableTitle | Unsubscribe unavailable. | 無法取消訂閱。 |
+| unsubscribePage.unavailableDescription | This workspace is no longer available. | 此工作區不再可用。 |
+| extensionsMe.actions.delete | Delete My Data | 刪除我的資料 |
+| extensionsMe.actions.download | Download My Data | 下載我的資料 |
+| extensionsMe.deleteDialog.title | Delete your data? | 刪除你的資料？ |
+| extensionsMe.deleteDialog.description | This permanently deletes your profile contact details, tags, custom fields, attachments, and all messages for this contact record. | 這將永久刪除您的個人資料聯絡人詳細資料、標籤、自訂欄位、附件以及該聯絡人記錄的所有訊息。 |
+| extensionsMe.empty.customFields | No custom fields | 無自訂欄位 |
+| extensionsMe.empty.tags | No tags | 無標籤 |
+| extensionsMe.fields.email | Email | 電子郵件 |
+| extensionsMe.fields.gender | Gender | 性別 |
+| extensionsMe.fields.locale | Locale | 地區設定 |
+| extensionsMe.fields.phone | Phone | 電話 |
+| extensionsMe.fields.timezone | Time | 時間 |
+| extensionsMe.sections.customFields | Custom Fields | 自訂欄位 |
+| extensionsMe.sections.tags | User Tags | 使用者標籤 |
+| extensionsMe.unknown | Unknown | 未知 |
+| orders.title | Orders | 訂單 |
+| products.title | Products | 產品 |
+| products.create.title | Create Product | 建立產品 |
+| products.edit.title | Edit Product | 編輯產品 |
+| products.sections.pricing | Pricing | 定價 |
+| products.sections.images | Images | 圖片 |
+| products.sections.inventory | Inventory | 庫存 |
+| products.sections.variants | Variants | 變體 |
+| products.sections.addons | Add-ons | 新增-on |
+| products.sections.tags | Tags | 標籤 |
+| products.sections.moreOptions | More Options | 更多選項 |
+| products.fields.shortDescription.label | Short Description | 簡短說明 |
+| products.fields.longDescription.label | Long Description | 詳細說明 |
+| products.fields.price.label | Price | 價格 |
+| products.fields.taxes.label | Taxes (0-100%) | 稅費（0-100%） |
+| products.fields.discount.label | Discount (0-100%) | 折扣（0-100%） |
+| products.fields.currency.label | Currency | 貨幣 |
+| products.fields.productUrl.label | Product URL | 產品URL |
+| products.fields.productUrl.placeholder | https://store.example.com/products/123 | https://store.example.com/products/123 |
+| products.fields.productUrl.description | The page customers open from Messenger Shopping. Products without a URL are skipped when syncing to Meta Catalog. | 顧客從Messenger 購物開啟的頁面。同步到 Meta 目錄時，會跳過沒有 URL 的產品。 |
+| products.fields.sku.label | SKU | SKU |
+| products.fields.sku.placeholder | Optional | 可選 |
+| products.fields.inventoryPolicy.label | Inventory policy | 庫存政策 |
+| products.fields.inventoryQuantity.label | Quantity | 數量 |
+| products.fields.allowOutOfStockPurchase.label | Allow customers to purchase this product when it's out of stock | 允許顧客在缺貨時購買該產品 |
+| products.fields.vendor.label | Vendor | 供應商 |
+| products.fields.rank.label | Rank | 排名 |
+| products.fields.category.label | Category | 分類 |
+| products.fields.category.placeholder | Uncategorized | 未分類 |
+| products.fields.subcategory.label | Subcategory | 子類別 |
+| products.fields.subcategory.placeholder | None | 無 |
+| products.fields.isSearchable.label | This product is searchable inside the bot | 該產品可在機器人內搜尋 |
+| products.fields.allowSpecialRequest.label | Allow the user to request a special request (attach notes) | 允許使用者提出特殊請求（附註） |
+| products.fields.isActive.label | Active | 活動 |
+| products.fields.isAddonOnly.label | Use this product only as an addon for others products | 僅將此產品作為其他產品的外掛使用 |
+| products.fields.optionName.label | Option Name | 選項名稱 |
+| products.fields.optionValue.label | Option Value | 選項值 |
+| products.fields.variant.label | Variant | 變體 |
+| products.fields.addImageFromLink | Add Image | 新增圖片 |
+| products.fields.uploadImage | Upload Image | 上傳圖片 |
+| products.fields.tagsDescription | Tags are searchable. | 標籤可搜尋。 |
+| products.fields.addonsDescription | Add products that clients can buy as an add-on. You can also give free products here. For example, a restaurant may give free drinks options here. You must create a product before you use it as add-on. | 新增顧客可以作為附加產品購買的產品。您也可以在這裡提供免費產品。例如，餐廳可能會在這裡提供免費飲料選擇。您必須先建立一個產品，然後才能將其用作附加元件。 |
+| products.fields.addonName.label | Name | 名稱 |
+| products.fields.addonName.placeholder | name | 名稱 |
+| products.fields.addonMaxSelections.label | Max selections | 最大選擇數 |
+| products.fields.addonProducts.label | Products | 產品 |
+| products.fields.addonProducts.placeholder | Select products... | 選擇產品... |
+| products.fields.variantsDescription | Add variants if this product comes in multiple versions, like different sizes or colors | 新增變體，如果該產品有多個版本，例如不同的尺寸或顏色 |
+| products.fields.metaCatalogId.label | Meta Catalog ID | Meta目錄ID |
+| products.inventoryPolicy.dont_track | Don't track inventory | 不追蹤庫存 |
+| products.inventoryPolicy.track | Track inventory | 追蹤庫存 |
+| tiktok.title | TikTok | TikTok |
+| tiktok.description | Connect your TikTok account to reply to direct messages. | 連接您的 TikTok 帳號用於回覆私訊。 |
+| tiktok.refreshToken | Refresh Token | 刷新權杖 |
+| coupons.title | Coupons | 優惠券 |
+| coupons.description | Manage campaign coupon topics, imports, exports, and flow-ready coupon codes. | 管理活動優惠券主題、匯入、匯出和流程就緒優惠券代碼。 |
+| coupons.singular | Coupon | 優惠券 |
+| coupons.topicCouponsTitle | Topic Coupons | 主題優惠券 |
+| coupons.tabs.topicCoupon | Topic Coupon | 主題優惠券 |
+| coupons.tabs.coupon | Coupon | 優惠券 |
+| coupons.tabs.listTopic | List Topic | 清單主題 |
+| coupons.tabs.archive | Archive | 封存 |
+| coupons.topic.create | Create New | 建立新 |
+| coupons.topic.edit | Edit topic | 編輯主題 |
+| coupons.actions.import | Import coupons | 匯入優惠券 |
+| coupons.actions.export | Download Coupon List | 下載優惠券清單 |
+| coupons.actions.downloadImportTemplate | Download import template | 下載匯入範本 |
+| coupons.fields.topic | Topic | 主題 |
+| coupons.fields.selectTopic | Select topic | 選擇主題 |
+| coupons.fields.importCsvOnly | Click or drag .csv file to this area to upload | 點選或拖曳.csv檔案到此區域即可上傳 |
+| coupons.fields.allTopics | All topics | 所有主題 |
+| coupons.fields.couponCount | Coupons | 優惠券 |
+| coupons.fields.validity | Validity period | 有效期限 |
+| coupons.fields.unlimited | Unlimited | 無限制 |
+| coupons.fields.code | Code | 代碼 |
+| coupons.fields.issueStatus | Status | 狀態 |
+| coupons.fields.usageStatus | Usage | 用法 |
+| coupons.fields.allIssueStatuses | All statuses | 所有狀態 |
+| coupons.fields.allUsageStatuses | All usage | 所有使用情況 |
+| coupons.fields.searchCode | Search code | 搜尋代碼 |
+| coupons.issueStatuses.published | Published | 已發布 |
+| coupons.issueStatuses.unpublished | Unpublished | 未發布 |
+| coupons.usageStatuses.used | Used | 已使用 |
+| coupons.usageStatuses.notUsed | Not used yet | 尚未使用 |
+| coupons.variables.group | Coupons | 優惠券 |
+| coupons.messages.topicSaved | Coupon topic saved. | 優惠券主題已儲存。 |
+| coupons.messages.editLocked | Name and description are locked after coupons have been created or imported. | 建立或匯入優惠券後，名稱和描述將被鎖定。 |
+| coupons.messages.archiveTitle | Archive coupon topic | 封存優惠券主題 |
+| coupons.messages.archiveConfirm | Archive "{name}"? It will move to the Archive list. | 封存「{name}」？它將移至封存清單。 |
+| coupons.messages.archiveBulkConfirm | Archive {count} selected topics? They will move to the Archive list. | 要封存 {count} 個已選主題嗎？它們將移至封存清單。 |
+| coupons.messages.restoreTitle | Restore coupon topic | 還原優惠券主題 |
+| coupons.messages.unarchiveConfirm | Restore "{name}"? It will move back to the Topic list. | 還原「{name}」？它將移回主題清單。 |
+| coupons.messages.unarchiveBulkConfirm | Restore {count} selected topics? They will move back to the Topic list. | 還原 {count} 所選主題？他們將移回到主題清單。 |
+| coupons.messages.deleteTitle | Delete coupon topic | 刪除優惠券主題 |
+| coupons.messages.deleteConfirm | Delete this archived topic? Coupon history is preserved. | 刪除這個封存主題？優惠券歷史記錄已保留。 |
+| coupons.messages.empty | No coupons found. | 找不到優惠券。 |
+| coupons.messages.importStarted | Coupon import started. | 優惠券匯入已開始。 |
+| coupons.messages.exportStarted | Coupon export started. | 優惠券匯出開始。 |
+| coupons.messages.exportFailed | Coupon export failed. | 優惠券匯出失敗。 |
+| coupons.messages.exportCount | {count} coupon rows will be exported. | {count} 優惠券行。 |
+| productCategories.title | Categories | 分類 |
+| productCategories.loadError | Unable to load product categories. | 無法載入產品類別。 |
+| productCategories.all | All products | 所有產品 |
+| productCategories.create | Create category | 建立類別 |
+| productCategories.edit | Rename category | 重新命名類別 |
+| productCategories.name | Category name | 分類名稱 |
+| productCategories.namePlaceholder | e.g. Summer collection | 例如夏季系列 |
+| productCategories.parent | Parent category | 父類別 |
+| productCategories.noParent | None (top level) | 無（頂層） |
+| productCategories.save | Save | 儲存 |
+| productCategories.created | Category created. | 分類。 |
+| productCategories.updated | Category updated. | 分類已更新。 |
+| productCategories.deleted | Category deleted. | 分類已刪除。 |
+| productCategories.saveError | Unable to save this category. | 無法儲存此類別。 |
+| productCategories.deleteError | Unable to delete this category. | 無法刪除此類別。 |
+| productCategories.delete | Delete | 刪除 |
+| productCategories.cancel | Cancel | 取消 |
+| productCategories.actions | Category actions | 分類操作 |
+| productCategories.deleteTitle | Delete “{name}”? | 刪除「{name}」？ |
+| productCategories.deleteDescription | {count, plural, =0 {No products are assigned to this category.} one {# product will move to Uncategorized.} other {# products will move to Uncategorized.}} | {count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}} |
+| productCategories.createSub | Create subcategory | 建立子類別 |
+| productCategories.empty | No categories yet. Create one to group your products. | 尚無分類。請建立分類以整理您的商品。 |
+| productCategories.columns.name | Name | 名稱 |
+| productCategories.columns.products | Products | 產品 |
+| productCategories.columns.subcategories | Subcategories | 子類別 |
+| productCategories.expand | Show subcategories | 顯示子類別 |
+| productCategories.collapse | Hide subcategories | 隱藏子類別 |
+| productCategories.productCount | {count, plural, =0 {No products} one {# product} other {# products}} | {count, plural, =0 {沒有商品} one {# 項商品} other {# 項商品}} |
+| productCategories.deleteChildrenWarning | {count, plural, one {Its # subcategory will be deleted too.} other {Its # subcategories will be deleted too.}} | {count, plural, one {其 # 個子分類也會一併刪除。} other {其 # 個子分類也會一併刪除。}} |
+| productImport.title | Import | 匯入 |
+| productImport.mapColumns | Column mapping | 列映射 |
+| productImport.mapColumnsHint | Match each product field to a column from your file. Leave a field unmapped to skip it. | 將每個產品欄位與檔案中的欄位相符。保留某個欄位未映射以跳過它。 |
+| productImport.downloadTemplate | Download template | 下載範本 |
+| productImport.upload | Upload a .csv or .xlsx file | 上傳 .csv 或 .xlsx 檔案 |
+| productImport.confirm | Start import | 開始匯入 |
+| productImport.started | Product import started. | 產品匯入已開始。 |
+| productImport.error | Product import failed. | 產品匯入失敗。 |
+| productImport.notMapped | Not mapped | 未映射 |
+| productImport.createMissingCategories | Create categories that do not exist | 建立不存在的類別 |
+| productImport.fields.name | Product name | 產品名稱 |
+| productImport.fields.sku | SKU | SKU |
+| productImport.fields.price | Price | 價格 |
+| productImport.fields.discount | Discount | 折扣 |
+| productImport.fields.shortDescription | Short description | 簡短說明 |
+| productImport.fields.category | Category | 分類 |
+| productImport.fields.vendor | Vendor | 供應商 |
+| productImport.fields.inventoryQuantity | Inventory quantity | 庫存數量 |
+| productImport.fields.imageUrl | Image URL | 圖片URL |
+| productImport.fields.productUrl | Product URL | 產品URL |
+| productImport.template.sheetName | Products | 產品 |
+| productImport.template.name | Product name | 產品名稱 |
+| productImport.template.sku | SKU | SKU |
+| productImport.template.price | Price | 價格 |
+| productImport.template.discount | Discount | 折扣 |
+| productImport.template.shortDescription | Short description | 簡短說明 |
+| productImport.template.category | Category | 分類 |
+| productImport.template.vendor | Vendor | 供應商 |
+| productImport.template.inventoryQuantity | Inventory quantity | 庫存數量 |
+| productImport.template.imageUrl | Image URL | 圖片URL |
+| productImport.template.productUrl | Product URL | 產品URL |
+| productImport.template.exampleOne.name | Classic T-shirt | 經典T卹 |
+| productImport.template.exampleOne.description | Soft cotton T-shirt | 柔軟棉質T卹 |
+| productImport.template.exampleOne.category | Clothing | 服裝 |
+| productImport.template.exampleOne.vendor | Example Brand | 範例品牌 |
+| productImport.template.exampleTwo.name | Canvas tote | 帆布手提包 |
+| productImport.template.exampleTwo.description | Reusable canvas tote bag | 可重複使用的帆布手提袋 |
+| productImport.template.exampleTwo.category | Accessories | 配件 |
+| productImport.template.exampleTwo.vendor | Example Brand | 範例品牌 |
+| metaCatalog.title | Sync Meta Catalog | 同步Meta 目錄 |
+| metaCatalog.connect | Connect Meta | 連接Meta |
+| metaCatalog.connectDescription | Connect a Meta Business account to push your products to an existing catalog. | 連接 Meta 企業帳戶，用於將您的產品推送到現有目錄。 |
+| metaCatalog.tabs.sync | Sync to Meta | 同步到Meta |
+| metaCatalog.tabs.import | Sync from Meta | 從Meta同步 |
+| metaCatalog.tabs.history | History | 歷史 |
+| metaCatalog.tabs.connection | Connection | 連接 |
+| metaCatalog.catalogId | Meta Catalog ID | Meta目錄ID |
+| metaCatalog.catalogIdPlaceholder | Enter a Catalog ID from Commerce Manager | 從 Commerce Manager 輸入目錄 ID |
+| metaCatalog.createCatalog.trigger | Create a new catalog | 建立新目錄 |
+| metaCatalog.createCatalog.description | An empty commerce catalog will be created in your Business Manager and used for this workspace. | 將在您的商務管理平台中建立一個空的商務目錄並用於此工作區。 |
+| metaCatalog.createCatalog.business | Business Manager | 業務經理 |
+| metaCatalog.createCatalog.businessPlaceholder | Select a Business Manager | 選擇業務經理 |
+| metaCatalog.createCatalog.noBusinesses | This Meta account does not manage any Business Manager, so a catalog cannot be created here. | 此Meta帳號不管理任何商務管理平台，因此無法在此建立目錄。 |
+| metaCatalog.createCatalog.name | Catalog name | 目錄名稱 |
+| metaCatalog.createCatalog.confirm | Create catalog | 建立目錄 |
+| metaCatalog.createCatalog.created | Catalog created. | 已建立目錄。 |
+| metaCatalog.createCatalog.errors.businesses | Unable to load your Business Managers. | 無法載入您的業務管理平台。 |
+| metaCatalog.createCatalog.errors.create | Unable to create the catalog. | 無法建立目錄。 |
+| metaCatalog.importDescription | Pull products from a Meta catalog into your workspace. Find the ID in Commerce Manager. | 將產品從Meta目錄拉入您的工作區。在商務管理器中找到ID。 |
+| metaCatalog.importCatalogAction | Import | 匯入 |
+| metaCatalog.importProgress | Importing Meta products: {imported}/{total} | 匯入 Meta 產品：{imported}/{total} |
+| metaCatalog.importQueued | Waiting for the import to start… | 等待匯入開始... |
+| metaCatalog.importResult | Imported {imported} of {total} Meta products | 進口 {imported}（共 {total} Meta）產品 |
+| metaCatalog.retryImport | Retry import | 重新匯入 |
+| metaCatalog.syncNow | Sync now | 立即同步 |
+| metaCatalog.syncSelectionRequired | Select the products you want to push, then run the sync. | 選擇要推送的產品，然後執行同步。 |
+| metaCatalog.syncSelectionCount | {count} selected products will be pushed to Meta Catalog. | {count} 選定的產品將被推送到Meta 目錄。 |
+| metaCatalog.connectionInfo.heading | Connected Meta catalog | 已連接 Meta 目錄 |
+| metaCatalog.connectionInfo.noCatalog | No catalog selected yet | 尚未選擇目錄 |
+| metaCatalog.connectionInfo.lastCatalogId | Last Meta Catalog ID | 最後一個Meta目錄ID |
+| metaCatalog.connectionInfo.businessId | Business ID | 業務ID |
+| metaCatalog.connectionInfo.authMode | Authorization | 授權 |
+| metaCatalog.connectionInfo.tokenExpiresAt | Token expires | 權杖過期 |
+| metaCatalog.connectionInfo.lastImportedAt | Last import | 上次匯入 |
+| metaCatalog.connectionInfo.unknown | Not available | 不可用 |
+| metaCatalog.connectionInfo.never | Never | 從不 |
+| metaCatalog.connectionInfo.noExpiry | Does not expire | 不會過期 |
+| metaCatalog.connectionInfo.authModes.oauth | OAuth | OAuth |
+| metaCatalog.connectionInfo.authModes.fbe | Facebook Business Extension | Facebook 業務擴展 |
+| metaCatalog.connectionInfo.connectionStatuses.active | Active | 活動 |
+| metaCatalog.connectionInfo.connectionStatuses.invalid | Needs reconnect | 需要重新連接 |
+| metaCatalog.disconnect | Disconnect | 中斷連線 |
+| metaCatalog.reconnect | Reconnect | 重新連接 |
+| metaCatalog.reconnectWarning | The Meta token is invalid or expires within seven days. | Meta 權杖無效或在 7 天內過期。 |
+| metaCatalog.requirements.intro | Products synced to Messenger Shopping must meet these requirements: | 同步到Messenger 購物的產品必須符合以下要求： |
+| metaCatalog.requirements.description.label | Detailed description | 詳細說明 |
+| metaCatalog.requirements.description.value | Beyond the title, cover specifications, materials, use cases, and standout features. | 除了標題之外，還包括規格、材質、用例和突出功能。 |
+| metaCatalog.requirements.image.label | Product image | 產品圖片 |
+| metaCatalog.requirements.image.value | High resolution of at least 500px × 500px, file size up to 8MB. | 高解析度至少500px × 500px，檔案大小最大8MB。 |
+| metaCatalog.requirements.video.label | Product video | 產品影片 |
+| metaCatalog.requirements.video.value | File size up to 200MB. | 檔案大小最大 200MB。 |
+| metaCatalog.requirements.price.label | Price | 價格 |
+| metaCatalog.requirements.price.value | Every product must carry a price. | 每個產品都必須標明價格。 |
+| metaCatalog.requirements.minimumItems | Publish at least 6 items so customers have enough to choose from. | 發佈至少 6 種商品，以便顧客有足夠的選擇。 |
+| metaCatalog.historyEmpty | No sync or import has run yet. | 尚未執行同步或匯入。 |
+| metaCatalog.historyFailures | {failed} failed · {skipped} skipped | {failed} 失敗 · {skipped} 已跳過 |
+| metaCatalog.historyCatalog | Catalog {id} | 目錄 {id} |
+| metaCatalog.diagnostics | Error and skipped-item details | 錯誤與略過項目的詳細資訊 |
+| metaCatalog.itemError | Item {id}: {reason} | 項目 {id}：{reason} |
+| metaCatalog.itemSkipped | Item {id}: skipped — {reason} | 項目 {id}：已跳過 — {reason} |
+| metaCatalog.skipReasons.missingImage | missing image | 缺少影像 |
+| metaCatalog.skipReasons.missingDescription | missing description | 缺少描述 |
+| metaCatalog.skipReasons.missingStoreUrl | store URL is not configured | 尚未設定商店 URL |
+| metaCatalog.skipReasons.hasVariants | variants are not supported yet | 變體 |
+| metaCatalog.statuses.queued | Queued | 已排隊 |
+| metaCatalog.statuses.running | Running | 執行 |
+| metaCatalog.statuses.succeeded | Succeeded | 成功 |
+| metaCatalog.statuses.partial | Partially completed | 部分完成 |
+| metaCatalog.statuses.failed | Failed | 失敗 |
+| metaCatalog.directions.push | Pushed to Meta | 推至Meta |
+| metaCatalog.directions.import | Imported from Meta | 從Meta匯入 |
+| metaCatalog.messages.catalogSelected | Catalog import started. | 目錄匯入已開始。 |
+| metaCatalog.messages.syncStarted | Meta Catalog sync started. | Meta 目錄同步已開始。 |
+| metaCatalog.messages.disconnected | Meta Catalog disconnected. | Meta 目錄已斷開連接。 |
+| metaCatalog.errors.load | Unable to load Meta Catalog settings. | 無法載入Meta 目錄設定。 |
+| metaCatalog.errors.connect | Unable to connect Meta Catalog. | 無法連接Meta 目錄。 |
+| metaCatalog.errors.catalog | Unable to select this catalog. | 無法選擇此目錄。 |
+| metaCatalog.errors.sync | Unable to start catalog sync. | 無法啟動目錄同步。 |
+| metaCatalog.errors.disconnect | Unable to disconnect Meta Catalog. | 無法斷開Meta 目錄。 |
+| metaCatalog.errors.invalidAppSettings | Meta app settings are not configured. | Meta 未設定應用程式設定。 |
+| metaCatalog.errors.emptyScope | The selected sync scope has no products. | 所選同步範圍沒有產品。 |
+| metaCatalog.errors.alreadyRunning | A Meta Catalog sync or import is already running. Wait for it to finish. | Meta 目錄同步或匯入已在運作。等待它完成。 |
+| metaCatalog.errors.queueImport | Unable to queue the Meta Catalog import. | 無法對 Meta 目錄匯入進行排隊。 |
+| metaCatalog.errors.queueSync | Unable to queue the Meta Catalog sync. | 無法對 Meta 目錄同步進行排隊。 |
+| helpMenu.title | Help | 幫助 |
+| helpMenu.ariaLabel | Open help menu | 開啟幫助選單 |
+| helpItems.title | Help Links | 幫助連結 |
+| helpItems.addTitle | Add Help Link | 新增幫助連結 |
+| helpItems.editTitle | Edit Help Link | 編輯幫助連結 |
+| helpItems.addButton | Add Link | 新增連結 |
+| helpItems.empty | No help links configured yet. | 尚未設定幫助連結。 |
+| helpItems.fields.name | Name | 名稱 |
+| helpItems.fields.namePlaceholder | e.g. Documentation | 例如文檔 |
+| helpItems.fields.url | URL | URL |
+| helpItems.fields.urlPlaceholder | https://docs.example.com | https://docs.example.com |
+| helpItems.fields.icon | Icon | 圖標 |
+| helpItems.fields.iconPlaceholder | e.g. book-open, star, circle-question-mark | 例如打開的書、星星、圓圈問號 |
+| helpItems.fields.position | Order | 訂單 |
+| helpItems.fields.iconSearchLink | Browse Lucide icons → | 瀏覽 Lucide 圖示 → |
