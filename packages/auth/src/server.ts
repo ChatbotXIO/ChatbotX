@@ -468,6 +468,22 @@ export function createAuth(config: AuthConfig) {
       // better-auth's `parseGenericState`) plus the origin allowlist in
       // `oauth-referer.ts`, so the cookie check is safe to skip here.
       skipStateCookieCheck: true,
+      accountLinking: {
+        enabled: true,
+        // Trust our own social providers' email claims. Google's id token
+        // always carries an accurate `email_verified`, but Facebook's Graph
+        // API never returns one at all — better-auth's link-account guard
+        // then falls back to treating the email as unverified and refuses to
+        // link, so ANY existing account (password, magic link, or the other
+        // social provider) sharing that email hits "account not linked" on
+        // every Facebook sign-in. Both providers gate signup on owning the
+        // mailbox, so trusting them here is safe; `requireLocalEmailVerified`
+        // (default true, left untouched below) still requires the *local*
+        // side of the match to be a verified account before linking, which is
+        // what keeps this from being an account-takeover vector via an
+        // unverified placeholder signup.
+        trustedProviders: [...SOCIAL_PROVIDERS],
+      },
       additionalFields: {
         tenantId: {
           type: "string",
