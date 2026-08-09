@@ -718,7 +718,8 @@
     "assignConversation": "Atribuie conversația",
     "assignedToMe": "Atribuită mie",
     "assignedTo": "Atribuită lui {name}",
-    "unAssigned": "Neatribuită"
+    "unAssigned": "Neatribuită",
+    "user": "Utilizator"
   },
   "aiAgent": {
     "defaultAgent": "Agent implicit",

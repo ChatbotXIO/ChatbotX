@@ -156,7 +156,8 @@
     "assignConversation": "会話を割り当て",
     "assignedToMe": "自分に割り当て済み",
     "assignedTo": "{name}に割り当て済み",
-    "unAssigned": "未割り当て"
+    "unAssigned": "未割り当て",
+    "user": "ユーザー"
   },
   "aiAgent": {
     "defaultAgent": "デフォルトエージェント",

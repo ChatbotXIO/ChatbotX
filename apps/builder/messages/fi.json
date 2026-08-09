@@ -156,7 +156,8 @@
     "assignConversation": "Määritä keskustelu",
     "assignedToMe": "Määritetty minulle",
     "assignedTo": "Määritetty käyttäjälle {name}",
-    "unAssigned": "Ei määritetty"
+    "unAssigned": "Ei määritetty",
+    "user": "Käyttäjä"
   },
   "aiAgent": {
     "defaultAgent": "Oletusagentti",
