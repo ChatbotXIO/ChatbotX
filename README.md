@@ -75,7 +75,7 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=b1NUlA-fIzw" target="_blank">
-    <img alt="ChatbotX Omnichannel" src=".github/assets/readme/chatbotx-hero.png">
+    <img alt="ChatbotX Omnichannel" src=".github/assets/readme/chatbotx-hero.png?v=1786238500653">
   </a>
 </p>
 
