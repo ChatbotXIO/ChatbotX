@@ -28,6 +28,8 @@
   <a href="https://chatbotx.io/docs" rel="dofollow">Docs</a>
   |
   <a href="https://discord.chatbotx.io/">Discord</a>
+  |
+  <a href="https://www.g2.com/products/chatbotx/take_survey" target="_blank" rel="dofollow">View G2 Reviews</a>
 </p>
 
 <p align="center">
@@ -73,7 +75,7 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=b1NUlA-fIzw" target="_blank">
-    <img alt="ChatbotX Omnichannel" src=".github/assets/readme/chatbotx-hero.png">
+    <img alt="ChatbotX Omnichannel" src=".github/assets/readme/chatbotx-hero.png?v=1786238500653">
   </a>
 </p>
 
@@ -92,13 +94,14 @@
 - **A/B Testing:** Test and optimize different message flows
 - **Triggers:** Execute actions based on events within your bot
 - **Webhooks & HTTP:** Integrate external APIs directly into your flows
-- **Growth Tools:** Generate conversation starter links for each platform
+- **Growth Tools:** Create engaging minigames and interactive experiences
 - **Analytics:** Track performance metrics, user engagement, and campaign results
 - **APIs, CLI, and MCP:** Build advanced agent workflows with MCP-compatible clients
 
-| ![Omnichannel Team Inbox](https://github.com/user-attachments/assets/daa23e91-7ba5-4093-8605-e77cddebe35c) | ![Smart Contact Import](https://github.com/user-attachments/assets/6a4a6c7d-5a77-4f3c-900b-d87cb849e589) |
-| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| ![Visual Flow Builder](https://github.com/user-attachments/assets/6f0448ad-0f32-4065-9e2a-f41b5354a68f)    | ![Built-in AI Agents](https://github.com/user-attachments/assets/365167c6-b4d9-498a-8b8c-a5079b82edbf)   |
+| ![AI Agents and Flows](.github/assets/readme/1-ai-agents-and-flows.webp) | ![Live Chat and Team](.github/assets/readme/2-live-chat-and-team.webp) |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| ![Broadcast and Sequence](.github/assets/readme/3-broadcast-and-sequence.webp) | ![Growth Tools](.github/assets/readme/4-growth-tools.webp) |
+| ![Import Contacts](.github/assets/readme/5-import-contacts.webp) | ![OpenClaw and Hermes](.github/assets/readme/6-openclaw-hermes.webp) |
 
 ## Why ChatbotX?
 
@@ -215,3 +218,9 @@ We're also working hard to bring open-source mobile apps to **iOS and Android** 
 ## License
 
 ChatbotX' Community Edition is released as open source under the [MIT License](https://github.com/ChatbotXIO/ChatbotX/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/ChatbotXIO/ChatbotX/blob/main/apps/builder/src/enterprise/LICENSE)
+
+<br /><br /><br />
+
+<p align="center">
+  <a href="https://www.g2.com/products/chatbotx/take_survey" target="_blank" rel="dofollow"><img alt="g2" src="https://github.com/user-attachments/assets/892cb74c-0b49-4589-b2f5-fbdbf7a98f66" /></a>
+</p>
