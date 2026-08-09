@@ -154,7 +154,7 @@ export function NavUser({
             )}
             <DropdownMenuGroup>
               <DropdownMenuItem closeOnClick={false}>
-                Language
+                {t("fields.language.label")}
                 <LangSelector />
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -164,7 +164,7 @@ export function NavUser({
                 className="justify-between"
                 closeOnClick={false}
               >
-                Theme
+                {t("fields.theme.label")}
                 <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>

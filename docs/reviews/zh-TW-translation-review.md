@@ -41,7 +41,7 @@
 | actions.continue | Continue | 繼續 |
 | actions.create | Create | 建立 |
 | actions.loading | Loading... | 載入中... |
-| actions.createFeature | Create {feature} | 建立 {feature} |
+| actions.createFeature | Create {feature} | 建立{feature} |
 | actions.delete | Delete | 刪除 |
 | actions.deleteContact | Delete Contact | 刪除聯絡人 |
 | actions.disableBot | Disable Bot | 停用機器人 |
@@ -173,7 +173,7 @@
 | analytics.contacts | Contacts | 聯絡人 |
 | analytics.newContacts | New Contacts | 新聯絡人 |
 | analytics.activeContacts | Active Contacts | 活躍聯絡人 |
-| analytics.botMessagesByResult | Messages received by the bot | 訊息 |
+| analytics.botMessagesByResult | Messages received by the bot | 機器人收到的訊息 |
 | analytics.botMessagesNoResponse | Received messages with no response | 收到訊息但沒有回覆 |
 | analytics.botMessagesWithResponse | Received messages with response | 收到帶有回應的訊息 |
 | analytics.aiProvider | AI Provider | 人工智慧供應商 |
@@ -183,31 +183,31 @@
 | analytics.firstResponseTime | First Response Time | 首次回應時間 |
 | analytics.totalContacts | Total Contacts | 聯絡人總數 |
 | analytics.averageResponseTime | Average Response Time (Minutes) | 平均回應時間（分鐘） |
-| analytics.averageResponseTimeHelp | The average time a human agent takes to reply to a customer's message. | 人工Agent回覆客戶訊息所需的平均時間。 |
-| analytics.averageFirstResponseTimeByAdmin | Average first response time by human agents (Minutes) | 人工Agent的平均首次回應時間（分鐘） |
-| analytics.averageFirstResponseTimeByAdminHelp | The average time a human agent takes to provide the initial reply to a customer's message. | 人工Agent對客戶訊息進行初步回覆所需的平均時間。 |
-| analytics.averageResponseTimeByAdmin | Average response time by human agents (Minutes) | 人工Agent的平均回應時間（分鐘） |
+| analytics.averageResponseTimeHelp | The average time a human agent takes to reply to a customer's message. | 真人客服回覆客戶訊息所需的平均時間。 |
+| analytics.averageFirstResponseTimeByAdmin | Average first response time by human agents (Minutes) | 真人客服的平均首次回應時間（分鐘） |
+| analytics.averageFirstResponseTimeByAdminHelp | The average time a human agent takes to provide the initial reply to a customer's message. | 真人客服對客戶訊息進行初步回覆所需的平均時間。 |
+| analytics.averageResponseTimeByAdmin | Average response time by human agents (Minutes) | 真人客服的平均回應時間（分鐘） |
 | analytics.averageDurationOfConversation | Average duration of a conversation (Minutes) | 對話的平均持續時間（分鐘） |
 | analytics.averageDurationOfConversationHelp | It is the average time a conversation has been handled by a human before being moved to the bot. | 這是對話在轉移到機器人之前由人類處理的平均時間。 |
 | analytics.success | Success | 成功 |
-| analytics.fallback | Fallback | 後備 |
-| analytics.admins | Human Agents | 人類Agent |
+| analytics.fallback | Fallback | 預設回覆 |
+| analytics.admins | Human Agents | 真人客服 |
 | analytics.messages | Messages | 訊息 |
 | analytics.conversations | Conversations | 對話 |
-| analytics.assignedConversations.title | Assigned Conversations | 分配的對話 |
+| analytics.assignedConversations.title | Assigned Conversations | 已指派的對話 |
 | analytics.assignedConversations.helpText | Conversations assigned from the inbox or by the bot. | 從收件匣或機器人分配的對話。 |
-| analytics.messagesSentByHumanOrBot | Messages sent by human/bot | 由真人/機器人傳送的訊息 |
-| analytics.human | Human | 人類 |
+| analytics.messagesSentByHumanOrBot | Messages sent by human/bot | 真人客服／機器人傳送的訊息 |
+| analytics.human | Human | 真人客服 |
 | analytics.bot | Bot | 機器人 |
-| analytics.conversationsMovedToHumanOrBot | Conversations moved to human/bot | 對話轉移到人類/機器人 |
-| analytics.uniqueConversationsByAdmins | Unique conversations by human agents | 人工Agent的獨特對話 |
-| analytics.uniqueConversationsByAdminsHelp | Number of contacts that a human agent sent at least a single message. | 人工Agent至少傳送一則訊息的聯絡人數量。 |
-| analytics.messagesSentByAdmins | Messages sent by human agents | 由管理員傳送的訊息 |
+| analytics.conversationsMovedToHumanOrBot | Conversations moved to human/bot | 轉交給真人客服／機器人的對話 |
+| analytics.uniqueConversationsByAdmins | Unique conversations by human agents | 真人客服的不重複對話 |
+| analytics.uniqueConversationsByAdminsHelp | Number of contacts that a human agent sent at least a single message. | 真人客服至少傳送一則訊息的聯絡人數量。 |
+| analytics.messagesSentByAdmins | Messages sent by human agents | 真人客服傳送的訊息 |
 | analytics.messagesSentByAdminsHelp | Messages sent from the inbox. | 從收件匣傳送的訊息。 |
-| analytics.allContactsByChannel | All contacts by channel | 按頻道列出的所有聯絡人 |
-| analytics.newContactsByChannel | New contacts by channel | 按管道劃分的新聯絡人 |
-| analytics.newContactsBySource | New contacts by source | 按來源劃分的新聯絡人 |
-| analytics.assignedConversationsByAdmins | Assigned conversations by human agents | 由人工Agent分配的對話 |
+| analytics.allContactsByChannel | All contacts by channel | 依頻道分類的所有聯絡人 |
+| analytics.newContactsByChannel | New contacts by channel | 依頻道分類的新聯絡人 |
+| analytics.newContactsBySource | New contacts by source | 依來源分類的新聯絡人 |
+| analytics.assignedConversationsByAdmins | Assigned conversations by human agents | 真人客服已指派的對話 |
 | analytics.assignedConversationsByAdminsHelp | Conversations assigned from the inbox or by the bot. | 從收件匣或機器人分配的對話。 |
 | analytics.followUpConversations | Follow up conversations | 跟進對話 |
 | analytics.followUpConversationsHelp | Conversations marked as follow-up from the inbox or by the bot. | 標記為來自收件匣或機器人的後續對話。 |
@@ -216,7 +216,7 @@
 | analytics.blockedConversationsHelp | Conversations that your account blocked. | 您的帳戶封鎖的對話。 |
 | analytics.blockedContacts | Blocked contacts | 已封鎖的聯絡人 |
 | analytics.blockedContactsHelp | Contacts don't want to receive messages from your account | 不希望再接收您帳號訊息的聯絡人 |
-| analytics.newContactsByCountry | New contacts by country | 按國家/地區劃分的新聯絡人 |
+| analytics.newContactsByCountry | New contacts by country | 依國家／地區分類的新聯絡人 |
 | analytics.date | Date | 日期 |
 | analytics.total | Total | 總計 |
 | analytics.messagesSent | Messages Sent | 已傳送訊息 |
@@ -227,7 +227,7 @@
 | analytics.comingSoon | Coming soon | 即將推出 |
 | analytics.unknown | Unknown | 未知 |
 | analytics.pagination.selectedRows | {selected} of {total} row(s) selected. | 已選取 {selected} / {total} 列。 |
-| analytics.pagination.rowsPerPage | Rows per page | 每頁行數 |
+| analytics.pagination.rowsPerPage | Rows per page | 每頁列數 |
 | analytics.pagination.pageOf | Page {page} of {pageCount} | 第 {page} 頁（共 {pageCount}） |
 | analytics.pagination.firstPage | Go to first page | 前往第一頁 |
 | analytics.pagination.previousPage | Go to previous page | 前往上一頁 |
