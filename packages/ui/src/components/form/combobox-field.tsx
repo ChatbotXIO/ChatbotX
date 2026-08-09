@@ -132,7 +132,7 @@ export function ComboboxField<T extends FieldValues>({
                   role="combobox"
                   variant="outline"
                 >
-                  <span className="truncate">
+                  <span className="min-w-0 truncate">
                     {selectedLabel || placeholder || "Please select..."}
                   </span>
                   <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />

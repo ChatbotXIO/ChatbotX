@@ -44,7 +44,7 @@ export function FlowSelectorSimple({
   return (
     <Form {...form}>
       <ComboboxField
-        className={cn("flex-1", showError && "border-destructive")}
+        className={cn("max-w-32 flex-1", showError && "border-destructive")}
         emptyText={t("actions.noRecordFound")}
         name="flowId"
         options={flowOptions}
