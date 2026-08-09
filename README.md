@@ -94,7 +94,7 @@
 - **A/B Testing:** Test and optimize different message flows
 - **Triggers:** Execute actions based on events within your bot
 - **Webhooks & HTTP:** Integrate external APIs directly into your flows
-- **Growth Tools:** Generate conversation starter links for each platform
+- **Growth Tools:** Create engaging minigames and interactive experiences
 - **Analytics:** Track performance metrics, user engagement, and campaign results
 - **APIs, CLI, and MCP:** Build advanced agent workflows with MCP-compatible clients
 
