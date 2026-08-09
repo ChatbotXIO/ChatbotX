@@ -1253,7 +1253,8 @@
     "assignConversation": "Assegna conversazione",
     "assignedToMe": "Assegnata a me",
     "assignedTo": "Assegnata a {name}",
-    "unAssigned": "Non assegnata"
+    "unAssigned": "Non assegnata",
+    "user": "Utente"
   },
   "aiAgent": {
     "defaultAgent": "Agente predefinito",

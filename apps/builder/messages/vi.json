@@ -156,7 +156,8 @@
     "assignConversation": "Gán cuộc trò chuyện",
     "assignedToMe": "Đã gán cho tôi",
     "assignedTo": "Đã gán cho {name}",
-    "unAssigned": "Chưa gán"
+    "unAssigned": "Chưa gán",
+    "user": "Người dùng"
   },
   "aiAgent": {
     "defaultAgent": "Agent mặc định",

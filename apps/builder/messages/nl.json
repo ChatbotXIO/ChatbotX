@@ -156,7 +156,8 @@
     "assignConversation": "Gesprek toewijzen",
     "assignedToMe": "Aan mij toegewezen",
     "assignedTo": "Toegewezen aan {name}",
-    "unAssigned": "Niet toegewezen"
+    "unAssigned": "Niet toegewezen",
+    "user": "Gebruiker"
   },
   "aiAgent": {
     "defaultAgent": "Standaardagent",

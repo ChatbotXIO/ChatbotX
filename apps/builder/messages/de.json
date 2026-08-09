@@ -150,7 +150,8 @@
     "assignConversation": "Unterhaltung zuweisen",
     "assignedToMe": "Mir zugewiesen",
     "assignedTo": "{name} zugewiesen",
-    "unAssigned": "Nicht zugewiesen"
+    "unAssigned": "Nicht zugewiesen",
+    "user": "Benutzer"
   },
   "aiAgent": {
     "defaultAgent": "Standard-Agent",

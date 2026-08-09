@@ -156,7 +156,8 @@
     "assignConversation": "Tetapkan percakapan",
     "assignedToMe": "Ditugaskan kepada saya",
     "assignedTo": "Ditugaskan kepada {name}",
-    "unAssigned": "Belum ditugaskan"
+    "unAssigned": "Belum ditugaskan",
+    "user": "Pengguna"
   },
   "aiAgent": {
     "defaultAgent": "Agen Default",

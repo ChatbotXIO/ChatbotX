@@ -156,7 +156,8 @@
     "assignConversation": "Asignar conversación",
     "assignedToMe": "Asignada a mí",
     "assignedTo": "Asignada a {name}",
-    "unAssigned": "Sin asignar"
+    "unAssigned": "Sin asignar",
+    "user": "Usuario"
   },
   "aiAgent": {
     "defaultAgent": "Agente predeterminado",

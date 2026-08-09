@@ -40,8 +40,14 @@ type ConversationItemProps = {
 const assignedIcon = (
   conversation: ListConversationItemResource,
   assignedAvatarUrl: string | undefined,
+  t: ReturnType<typeof useTranslations>,
 ) => {
   if (conversation.assignedUserId) {
+    const assignedUserName =
+      conversation.assignedUser?.name ||
+      conversation.assignedUser?.email ||
+      t("assignAdmin.user")
+
     return (
       <Tooltip>
         <TooltipTrigger
@@ -56,18 +62,28 @@ const assignedIcon = (
           }
         />
         <TooltipContent align="center" side="bottom">
-          {conversation.assignedUser?.name ||
-            conversation.assignedUser?.email ||
-            "User"}
+          {t("assignAdmin.assignedTo", { name: assignedUserName })}
         </TooltipContent>
       </Tooltip>
     )
   }
   if (conversation.assignedInboxTeamId) {
     return (
-      <div className="overflow-hidden rounded-full border border-zinc-600 bg-secondary">
-        <UsersRoundIcon size={16} strokeWidth={1} />
-      </div>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <div className="overflow-hidden rounded-full border border-zinc-600 bg-secondary">
+              <UsersRoundIcon size={16} strokeWidth={1} />
+            </div>
+          }
+        />
+        <TooltipContent align="center" side="bottom">
+          {t("assignAdmin.assignedTo", {
+            name:
+              conversation.assignedInboxTeam?.name ?? t("fields.team.label"),
+          })}
+        </TooltipContent>
+      </Tooltip>
     )
   }
   return
@@ -149,7 +165,7 @@ export default function ConversationItem({
         <div className="relative">
           {contactAvatar}
           <div className="absolute start-0 bottom-0 transform">
-            {assignedIcon(conversation, assignedAvatarUrl)}
+            {assignedIcon(conversation, assignedAvatarUrl, t)}
           </div>
           <div className="absolute end-0 bottom-0 transform">
             {conversation.contactInboxes?.map((contactInbox) => (

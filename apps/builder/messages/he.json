@@ -156,7 +156,8 @@
     "assignConversation": "הקצאת שיחה",
     "assignedToMe": "הוקצה לי",
     "assignedTo": "הוקצה אל {name}",
-    "unAssigned": "לא הוקצה"
+    "unAssigned": "לא הוקצה",
+    "user": "משתמש"
   },
   "aiAgent": {
     "defaultAgent": "סוכן ברירת מחדל",

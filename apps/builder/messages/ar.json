@@ -156,7 +156,8 @@
     "assignConversation": "إسناد المحادثة",
     "assignedToMe": "مسندة إليّ",
     "assignedTo": "مسندة إلى {name}",
-    "unAssigned": "غير مسندة"
+    "unAssigned": "غير مسندة",
+    "user": "مستخدم"
   },
   "aiAgent": {
     "defaultAgent": "الوكيل الافتراضي",

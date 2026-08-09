@@ -316,7 +316,8 @@
     "assignConversation": "Tilldela konversation",
     "assignedTo": "Tilldelad till {name}",
     "assignedToMe": "Tilldelad till mig",
-    "unAssigned": "Ej tilldelad"
+    "unAssigned": "Ej tilldelad",
+    "user": "Användare"
   },
   "auditLogs": {
     "title": "Granskningsloggar"

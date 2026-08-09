@@ -156,7 +156,8 @@
     "assignConversation": "Tildel samtale",
     "assignedToMe": "Tildelt mig",
     "assignedTo": "Tildelt til {name}",
-    "unAssigned": "Ikke tildelt"
+    "unAssigned": "Ikke tildelt",
+    "user": "Bruger"
   },
   "aiAgent": {
     "defaultAgent": "Standardagent",

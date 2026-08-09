@@ -156,7 +156,8 @@
     "assignConversation": "Görüşmeyi ata",
     "assignedToMe": "Bana atandı",
     "assignedTo": "{name} adlı kişiye atandı",
-    "unAssigned": "Atanmamış"
+    "unAssigned": "Atanmamış",
+    "user": "Kullanıcı"
   },
   "aiAgent": {
     "defaultAgent": "Varsayılan Temsilci",
