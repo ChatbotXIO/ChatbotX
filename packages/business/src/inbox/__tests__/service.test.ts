@@ -1,3 +1,4 @@
+import { inboxModel } from "@chatbotx.io/database/schema"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { ChatbotXException } from "../../errors"
 
@@ -9,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   inboxUpdateWhere: vi.fn(),
   inboxInsert: vi.fn(),
   inboxInsertValues: vi.fn(),
-  count: vi.fn(),
+  countWithRelationsFilter: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -20,12 +21,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
         findFirst: mocks.inboxFindFirst,
       },
     },
-    $count: mocks.count,
     update: mocks.inboxUpdate,
     insert: mocks.inboxInsert,
   },
   eq: vi.fn((column, value) => ({ column, value })),
-  relationsFilterToSQL: vi.fn((_, where) => where),
+  countWithRelationsFilter: mocks.countWithRelationsFilter,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -77,7 +77,7 @@ beforeEach(() => {
   mocks.inboxUpdateWhere.mockReset()
   mocks.inboxInsert.mockReset()
   mocks.inboxInsertValues.mockReset()
-  mocks.count.mockReset()
+  mocks.countWithRelationsFilter.mockReset()
   quotaEnforcementService.tryConsume.mockReset()
   quotaEnforcementService.release.mockReset()
   quotaEnforcementService.release.mockResolvedValue(undefined)
@@ -261,25 +261,58 @@ describe("InboxService.create", () => {
 })
 
 describe("InboxService.list", () => {
-  test("includes connected inboxes and excludes disconnected inboxes", async () => {
-    mocks.inboxFindMany.mockResolvedValue([{ id: "connected-inbox" }])
-    mocks.count.mockResolvedValue(1)
+  const integrationExistsOr = [
+    { integrationWhatsapp: true },
+    { integrationWebchat: true },
+    { integrationMessenger: true },
+    { integrationInstagram: true },
+    { integrationZalo: true },
+    { integrationTelegram: true },
+    { integrationSmtp: true },
+    { integrationTiktok: true },
+  ]
+
+  test("filters by integration existence, not by status", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "integration-backed-inbox" }])
+    mocks.countWithRelationsFilter.mockResolvedValue(1)
 
     const result = await inboxService.list({ workspaceId: "workspace-1" })
 
     expect(result).toEqual({
-      data: [{ id: "connected-inbox" }],
+      data: [{ id: "integration-backed-inbox" }],
       pageCount: 1,
     })
+    const expectedWhere = {
+      workspaceId: "workspace-1",
+      OR: integrationExistsOr,
+    }
     expect(mocks.inboxFindMany).toHaveBeenCalledWith({
       limit: 20,
       offset: 0,
-      where: {
-        workspaceId: "workspace-1",
-        status: "connected",
-      },
+      where: expectedWhere,
       with: undefined,
     })
-    expect(mocks.count).toHaveBeenCalledTimes(1)
+    expect(mocks.countWithRelationsFilter).toHaveBeenCalledWith({
+      table: inboxModel,
+      tsName: "inboxModel",
+      where: expectedWhere,
+    })
+  })
+
+  test("loads integrations when includes=integration is requested", async () => {
+    mocks.inboxFindMany.mockResolvedValue([])
+    mocks.countWithRelationsFilter.mockResolvedValue(0)
+
+    await inboxService.list({
+      workspaceId: "workspace-1",
+      includes: ["integration"],
+    })
+
+    const call = mocks.inboxFindMany.mock.calls[0][0]
+    expect(call.with).toBeDefined()
+    expect(call.where).toEqual({
+      workspaceId: "workspace-1",
+      OR: integrationExistsOr,
+    })
   })
 })

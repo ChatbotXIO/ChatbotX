@@ -13,7 +13,7 @@ export const inboxesWorkspaceTokenAPIs = {
       path: "/v1/inboxes",
       summary: "List inboxes",
       description:
-        "List connected inboxes with their internal IDs. Use `id` as the `inboxId` parameter when sending messages or flows to a contact.",
+        "List inboxes with their internal IDs, including ones with a lapsed connection whose integration is still configured (check the `status` field to filter). Use `id` as the `inboxId` parameter when sending messages or flows to a contact.",
       tags: ["Channels"],
     })
     .input(publishInboxesRequest)

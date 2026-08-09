@@ -1,10 +1,10 @@
 import {
   and,
+  countWithRelationsFilter,
   type DatabaseClient,
   db,
   eq,
   ne,
-  relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import {
   type ChannelType,
@@ -40,24 +40,42 @@ class InboxService extends BaseService {
   }
 
   async list(input: ListInboxesRequest): Promise<ListInboxesResponse> {
+    // Match Settings > Channels, which lists Integration<Channel> rows directly:
+    // return every inbox that still has a backing integration row, regardless of
+    // Inbox.status. A `disconnected` inbox whose integration was deleted (a user
+    // "Disconnect") stays hidden; one left behind by token markOffline or tenant
+    // pause (integration intact) shows. The `{ relation: true }` shorthand renders
+    // EXISTS per relation — keep in sync with InboxService.withIntegrations. Counting
+    // goes through countWithRelationsFilter (not a bare relationsFilterToSQL + $count)
+    // because relation-keyed filters need the real relations graph — see client.ts.
     const where = {
       workspaceId: input.workspaceId,
-      status: inboxStatuses.enum.connected,
+      OR: [
+        { integrationWhatsapp: true },
+        { integrationWebchat: true },
+        { integrationMessenger: true },
+        { integrationInstagram: true },
+        { integrationZalo: true },
+        { integrationTelegram: true },
+        { integrationSmtp: true },
+        { integrationTiktok: true },
+      ],
     }
 
     const pagination = getPaginationWithDefaults(input)
     const [data, totalRows] = await Promise.all([
       db.query.inboxModel.findMany({
         ...pagination,
-        where: {
-          workspaceId: input.workspaceId,
-          status: inboxStatuses.enum.connected,
-        },
+        where,
         with: input.includes?.includes("integration")
           ? InboxService.withIntegrations
           : undefined,
       }),
-      db.$count(inboxModel, relationsFilterToSQL(inboxModel, where)),
+      countWithRelationsFilter({
+        table: inboxModel,
+        tsName: "inboxModel",
+        where,
+      }),
     ])
 
     const limit = input.perPage ?? 10
