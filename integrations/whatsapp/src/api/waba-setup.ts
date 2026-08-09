@@ -3,7 +3,7 @@ import {
   ChannelErrorCategory,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
-import ky, { HTTPError } from "ky"
+import ky from "ky"
 import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue, WhatsappException } from "../exception"
@@ -73,29 +73,7 @@ export function shareCreditLine({
         },
       )
     } catch (error) {
-      if (error instanceof HTTPError) {
-        const response = error.data
-        if (
-          response.error?.code === -1 &&
-          response.error?.error_subcode === 1_752_244
-        ) {
-          logger.info(
-            "Credit line sharing skipped: same business owns both WABA and credit line",
-          )
-          return
-        }
-
-        if (
-          response.error?.code === -1 &&
-          response.error?.error_subcode === 1_752_294
-        ) {
-          logger.warn(
-            "Credit line sharing not allowed: violates Facebook invoicing policy",
-          )
-          return
-        }
-      }
-      throw error
+      logger.info({ error }, "Failed to share credit line")
     }
   })
 }
