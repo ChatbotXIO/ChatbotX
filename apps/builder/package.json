@@ -20,6 +20,7 @@
     "@bull-board/api": "^8.1.2",
     "@bull-board/hono": "^8.1.2",
     "@bull-board/ui": "^8.1.2",
+    "@chatbotx.io/account-ui": "workspace:*",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",

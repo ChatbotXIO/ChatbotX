@@ -1,6 +1,11 @@
 import type { useTranslations } from "next-intl"
 import type { getTranslations } from "next-intl/server"
-import type { TrialInfo, TrialLevel } from "@/lib/quota-metrics"
+import type { TrialInfo } from "@/lib/quota-metrics"
+
+// Re-exported so existing importers (`NavUsage`, `AccountRail`) don't need to
+// change their import path. The escalating-urgency classes now live in
+// `@chatbotx.io/account-ui`, shared with the enterprise portal's trial notice.
+export { trialMessageClassName } from "@chatbotx.io/account-ui/lib/plan-notice"
 
 /**
  * next-intl produces the same translator shape from the client `useTranslations`
@@ -24,19 +29,4 @@ export function resolveTrialMessage(trial: TrialInfo, t: Translator): string {
     return t("billing.trial.endsTomorrow")
   }
   return t("billing.trial.daysLeft", { days: trial.daysRemaining })
-}
-
-/**
- * Text classes that escalate the trial notice as the trial runs out, so the
- * sidebar and account rail highlight urgency identically. `info` stays muted;
- * `warning` (≤3 days) turns amber; `expired` turns destructive.
- */
-const TRIAL_MESSAGE_CLASS: Record<TrialLevel, string> = {
-  info: "text-muted-foreground",
-  warning: "font-medium text-amber-600 dark:text-amber-500",
-  expired: "font-medium text-destructive",
-}
-
-export function trialMessageClassName(level: TrialLevel): string {
-  return TRIAL_MESSAGE_CLASS[level]
 }

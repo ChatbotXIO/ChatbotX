@@ -1,5 +1,20 @@
 import { planStatuses } from "@chatbotx.io/database/partials"
 
+// Re-exported so existing importers (`NavUsage`, `UsageRing`, `AccountRail`,
+// `layout.tsx`) don't need to change their import path. The implementation
+// now lives in `@chatbotx.io/account-ui`, shared with the enterprise portal's
+// account rail, so the trial-countdown arithmetic can never drift between
+// the two apps again. `trialMessageClassName` stays re-exported from
+// `./trial-message`, which already wraps the package.
+export {
+  buildPlanNotice,
+  buildTrialInfo,
+  type PlanNotice,
+  quotaUsageState,
+  type TrialInfo,
+  type TrialLevel,
+} from "@chatbotx.io/account-ui/lib/plan-notice"
+
 export type QuotaMetricKey =
   | "contacts"
   | "mac"
@@ -33,25 +48,6 @@ type UsageSummary = Partial<
     { used: number; limit: number | null; workspaceUsed?: number }
   >
 >
-
-/**
- * Derives the presentational state for a single quota metric: the clamped
- * fill percentage and whether usage has reached the limit. Shared by the
- * sidebar usage bars and the circular usage ring so they can never diverge.
- */
-export function quotaUsageState(
-  used: number,
-  limit: number,
-): { pct: number; isOverLimit: boolean } {
-  // A non-positive limit means no allowance is configured (e.g. a feature the
-  // plan hard-disables). Any usage is then at/over capacity, so render a full
-  // bar rather than the contradictory "0% filled but over limit" state.
-  if (limit <= 0) {
-    return { pct: 100, isOverLimit: true }
-  }
-  const pct = Math.min(100, Math.round((used / limit) * 100))
-  return { pct, isOverLimit: used >= limit }
-}
 
 /**
  * Picks the metric to headline in the sidebar usage ring, by fixed precedence:
@@ -199,7 +195,6 @@ export function buildUsageLabels(
   }
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
 /**
  * Trial `planStatus` value, shared with the access gate
  * (`userQuotaService.getAccessStateFromQuota`) and the `layout.tsx` banner wiring
@@ -207,81 +202,3 @@ const DAY_MS = 24 * 60 * 60 * 1000
  */
 const TRIAL_STATUS = planStatuses.enum.trial
 const ACTIVE_STATUS = planStatuses.enum.active
-/** At or below this many days remaining the banner escalates to a warning. */
-const URGENT_THRESHOLD_DAYS = 3
-
-export type TrialLevel = "info" | "warning" | "expired"
-
-export interface TrialInfo {
-  /** Whole days until the trial ends; `<= 0` once the end date has passed. */
-  daysRemaining: number
-  level: TrialLevel
-}
-
-function resolveTrialLevel(daysRemaining: number): TrialLevel {
-  if (daysRemaining <= 0) {
-    return "expired"
-  }
-  if (daysRemaining <= URGENT_THRESHOLD_DAYS) {
-    return "warning"
-  }
-  return "info"
-}
-
-/**
- * Derives trial display state from the plan fields the billing portal already
- * syncs onto `UserQuota`. Returns `null` whenever the user is not on a trial, so
- * callers can render nothing. Pure and `now`-injectable for testing.
- */
-export function buildTrialInfo(
-  planStatus: string | null,
-  trialEndsAt: string | null,
-  now: number = Date.now(),
-): TrialInfo | null {
-  if (planStatus !== TRIAL_STATUS || !trialEndsAt) {
-    return null
-  }
-
-  const end = new Date(trialEndsAt).getTime()
-  if (Number.isNaN(end)) {
-    return null
-  }
-
-  const daysRemaining = Math.ceil((end - now) / DAY_MS)
-  return { daysRemaining, level: resolveTrialLevel(daysRemaining) }
-}
-
-/** `planStatus` value the billing portal writes when a charge is in dunning. */
-const PAST_DUE_STATUS = planStatuses.enum.past_due
-
-/**
- * Discriminated banner state derived from the plan fields on `UserQuota`. The
- * plan-status banner renders from this:
- *  - `trial`   → escalating trial countdown (carries {@link TrialInfo}).
- *  - `pastDue` → persistent "update payment" warning (no countdown).
- *  - `null`    → nothing to show (active / free-folded-into-active / unknown).
- * Expired-trial flows through the `trial` branch (its level becomes "expired").
- */
-export type PlanNotice =
-  | { kind: "trial"; info: TrialInfo }
-  | { kind: "pastDue" }
-
-/**
- * Single entry point the banner uses to decide what (if anything) to show.
- * Keys off the shared `planStatuses` constants so it can never drift from the
- * access gate. Pure and `now`-injectable for testing.
- */
-export function buildPlanNotice(
-  planStatus: string | null,
-  trialEndsAt: string | null,
-  now: number = Date.now(),
-): PlanNotice | null {
-  const trial = buildTrialInfo(planStatus, trialEndsAt, now)
-  if (trial) {
-    return { kind: "trial", info: trial }
-  }
-  if (planStatus === PAST_DUE_STATUS) {
-    return { kind: "pastDue" }
-  }
-  return null
-}
