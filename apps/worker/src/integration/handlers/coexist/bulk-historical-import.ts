@@ -5,7 +5,14 @@ import {
   messageCleanupService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
-import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  describeDatabaseError,
+  eq,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import { contactSources } from "@chatbotx.io/database/partials"
 import type {
   BulkCreateAttachmentInput,
@@ -140,46 +147,6 @@ const isUniqueMessagePkViolation = (err: unknown): boolean => {
     current = e.cause
   }
   return false
-}
-
-// Extracts the underlying Postgres error fields (code / constraint / detail)
-// from Drizzle's wrapped error by walking the cause chain. Used for diagnostic
-// logging so we can see exactly which constraint failed and, from `detail`, the
-// offending key value (e.g. `Key (id)=(...) already exists`).
-const describePgError = (
-  err: unknown,
-): {
-  code?: string
-  constraint?: string
-  detail?: string
-  message?: string
-} => {
-  let current: unknown = err
-  for (let depth = 0; depth < 5 && current; depth++) {
-    if (typeof current !== "object") {
-      break
-    }
-    const e = current as {
-      code?: string
-      constraint?: string
-      constraint_name?: string
-      detail?: string
-      message?: string
-      cause?: unknown
-    }
-    if (e.code) {
-      return {
-        code: e.code,
-        constraint: e.constraint ?? e.constraint_name,
-        detail: e.detail,
-        message: e.message,
-      }
-    }
-    current = e.cause
-  }
-  return {
-    message: err instanceof Error ? err.message : String(err),
-  }
 }
 
 export type HistoricalMessage = IncomingMessage & { createdAt?: Date }
@@ -847,7 +814,7 @@ export const bulkImportMessages = async (props: {
           {
             runId,
             total: messageInputs.length,
-            pgError: describePgError(err),
+            dbCause: describeDatabaseError(err),
             sampleIds: messageInputs.slice(0, 5).map((m) => m.id),
           },
           "[coexist] Message bulkCreate failed",
@@ -861,7 +828,7 @@ export const bulkImportMessages = async (props: {
         {
           runId,
           total: messageInputs.length,
-          pgError: describePgError(err),
+          dbCause: describeDatabaseError(err),
         },
         "[coexist] Message PK collision — regenerating IDs and retrying",
       )
@@ -881,7 +848,7 @@ export const bulkImportMessages = async (props: {
           {
             runId,
             total: retried.length,
-            pgError: describePgError(retryErr),
+            dbCause: describeDatabaseError(retryErr),
             sampleIds: retried.slice(0, 5).map((m) => m.id),
           },
           "[coexist] Message bulkCreate retry ALSO failed after re-minting IDs",
