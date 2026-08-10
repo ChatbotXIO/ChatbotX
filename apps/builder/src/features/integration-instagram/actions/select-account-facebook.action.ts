@@ -3,9 +3,9 @@
 import {
   buildContext,
   connectChannelIntegration,
+  instagramIntegrationService,
   platformCredentialService,
   resolveTenantSettings,
-  updateInstagramIntegrationUserInfo,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -170,7 +170,7 @@ export const selectFacebookAccountAction = authActionClient
           userAccessToken: pendingAuth?.userToken,
           avatarUrl: pendingAuth?.userAvatarUrl,
           persist: (userInfo) =>
-            updateInstagramIntegrationUserInfo({
+            instagramIntegrationService.updateUserInfo({
               id: integrationRow.id,
               workspaceId: workspaceId as string,
               userInfo,

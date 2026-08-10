@@ -11,6 +11,7 @@ import {
 } from "./apis/message-templates"
 import {
   deleteMessengerProfileFields,
+  exchangeLongLivedToken,
   syncPersonas,
   unsubscribePageFromAppWebhook,
 } from "./apis/page"
@@ -94,6 +95,23 @@ const config: IntegrationDefinition<
       appAccessToken: `${auth.clientId}|${auth.clientSecret}`,
       version: auth.metadata.version,
     })
+  },
+  refreshAuth: async ({ auth }) => {
+    const accessToken = await exchangeLongLivedToken(
+      {
+        clientId: auth.clientId,
+        clientSecret: auth.clientSecret,
+        version: auth.metadata.version,
+      },
+      auth.tokens.accessToken,
+    )
+    return {
+      ...auth,
+      tokens: {
+        ...auth.tokens,
+        accessToken,
+      },
+    }
   },
 }
 

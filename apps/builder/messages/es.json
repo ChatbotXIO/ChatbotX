@@ -616,6 +616,16 @@
         "cancelled": "ReConectar was cancelled. Por favor, try again y grant el requested permisos.",
         "failed": "ReConectar ftodosó. Por favor, try again."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgente",
+      "description": "Los siguientes canales no pudieron renovar automáticamente su token de acceso. Vuelve a conectarlos para seguir enviando y recibiendo mensajes.",
+      "cta": "Volver a conectar"
+    },
+    "refreshAllTokens": {
+      "button": "Actualizar todos los permisos",
+      "resultSuccess": "Se actualizaron {refreshed} canal(es).",
+      "resultWithFailures": "Se actualizaron {refreshed} canal(es), {failed} fallaron."
     }
   },
   "workspace": {

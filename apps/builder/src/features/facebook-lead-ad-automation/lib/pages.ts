@@ -1,9 +1,6 @@
 import "server-only"
 
-import {
-  findMessengerIntegrationByPageId,
-  findMessengerIntegrationsByWorkspaceId,
-} from "@chatbotx.io/business"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import {
   debugToken,
   hasLeadsRetrieval,
@@ -68,7 +65,8 @@ async function isTokenLeadEligible(auth: MessengerAuthValue): Promise<boolean> {
 export async function listEligibleLeadAdsPages(
   workspaceId: string,
 ): Promise<LeadAdsPage[]> {
-  const integrations = await findMessengerIntegrationsByWorkspaceId(workspaceId)
+  const integrations =
+    await messengerIntegrationService.findByWorkspaceId(workspaceId)
   const results = await Promise.allSettled(
     integrations.map(async (integration) => ({
       pageId: integration.pageId,
@@ -89,7 +87,7 @@ export async function listPageLeadForms(
   workspaceId: string,
   pageId: string,
 ): Promise<LeadgenForm[]> {
-  const integration = await findMessengerIntegrationByPageId({
+  const integration = await messengerIntegrationService.findByPageId({
     workspaceId,
     pageId,
   })
@@ -111,7 +109,8 @@ export async function listPageLeadForms(
 export async function enableLeadgenForWorkspacePages(
   workspaceId: string,
 ): Promise<void> {
-  const integrations = await findMessengerIntegrationsByWorkspaceId(workspaceId)
+  const integrations =
+    await messengerIntegrationService.findByWorkspaceId(workspaceId)
   await Promise.allSettled(
     integrations.map(async (integration) => {
       const auth = integration.auth as MessengerAuthValue
@@ -138,7 +137,7 @@ export async function subscribePageLeadgen(
   workspaceId: string,
   pageId: string,
 ): Promise<void> {
-  const integration = await findMessengerIntegrationByPageId({
+  const integration = await messengerIntegrationService.findByPageId({
     workspaceId,
     pageId,
   })

@@ -39,6 +39,7 @@ export const integrationZaloModel = pgTable(
       onUpdate: "cascade",
     }),
     syncTagEnabledAt: timestamp(timestampConfig),
+    tokenRefreshError: text(),
   },
   (table) => [
     index("IntegrationZalo_workspaceId_idx").using(

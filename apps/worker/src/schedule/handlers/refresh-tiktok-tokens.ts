@@ -1,9 +1,7 @@
-import { zaloIntegrationService } from "@chatbotx.io/business"
-import {
-  calculateExpiresAt,
-  refreshAccessToken,
-  type ZaloAuthValue,
-} from "@chatbotx.io/integration-zalo"
+import { tiktokIntegrationService } from "@chatbotx.io/business"
+import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
+import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
+import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import { distributedLock } from "@chatbotx.io/redis"
 import { logger } from "../../lib/logger"
 
@@ -15,39 +13,42 @@ async function refreshOne(integration: {
   workspaceId: string
 }): Promise<void> {
   await distributedLock.runExclusive({
-    key: `auth:refresh:zalo:${integration.id}`,
+    key: `auth:refresh:tiktok:${integration.id}`,
     timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
     fn: async () => {
       try {
-        const current = await zaloIntegrationService.findById({
+        const current = await tiktokIntegrationService.findById({
           id: integration.id,
           workspaceId: integration.workspaceId,
         })
-        const auth = current.auth as ZaloAuthValue
+        const auth = current.auth as TiktokAuthValue
         if (!auth.tokens.refreshToken) {
           logger.warn(
-            `[refreshZaloTokens] id=${integration.id} skipped: no refreshToken`,
+            `[refreshTiktokTokens] id=${integration.id} skipped: no refreshToken`,
           )
           return
         }
 
         const newTokens = await refreshAccessToken(
-          auth,
+          { clientId: auth.clientId, clientSecret: auth.clientSecret },
           auth.tokens.refreshToken,
         )
 
-        await zaloIntegrationService.updateAuth(integration.id, {
+        await tiktokIntegrationService.updateAuth(integration.id, {
           ...auth,
           tokens: {
             ...auth.tokens,
             accessToken: newTokens.access_token,
             refreshToken: newTokens.refresh_token,
-            expiresAt: calculateExpiresAt(newTokens.expires_in),
+            ...buildTokenTimestamps(
+              newTokens.expires_in,
+              newTokens.refresh_expires_in,
+            ),
           },
         })
       } catch (error) {
-        logger.error(error, `[refreshZaloTokens] id=${integration.id} failed`)
-        await zaloIntegrationService.markTokenRefreshError(
+        logger.error(error, `[refreshTiktokTokens] id=${integration.id} failed`)
+        await tiktokIntegrationService.markTokenRefreshError(
           integration.id,
           error instanceof Error ? error.message : String(error),
         )
@@ -56,8 +57,8 @@ async function refreshOne(integration: {
   })
 }
 
-export async function refreshZaloTokens(): Promise<void> {
-  const integrations = await zaloIntegrationService.findAll()
+export async function refreshTiktokTokens(): Promise<void> {
+  const integrations = await tiktokIntegrationService.findAll()
 
   for (let i = 0; i < integrations.length; i += BATCH_SIZE) {
     const batch = integrations.slice(i, i + BATCH_SIZE)

@@ -70,10 +70,14 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  findMessengerIntegrationByIdForWorkspace: mockFindMessengerIntegration,
-  updateMessengerIntegrationAuth: mockUpdateMessengerIntegrationAuth,
-  findInstagramIntegrationByIdForWorkspace: mockFindInstagramIntegration,
-  updateInstagramIntegrationAuth: mockUpdateInstagramIntegrationAuth,
+  messengerIntegrationService: {
+    findByIdForWorkspace: mockFindMessengerIntegration,
+    updateAuth: mockUpdateMessengerIntegrationAuth,
+  },
+  instagramIntegrationService: {
+    findByIdForWorkspace: mockFindInstagramIntegration,
+    updateAuth: mockUpdateInstagramIntegrationAuth,
+  },
   integrationFacebookAdsService: { upsert: mockUpsertFacebookAds },
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   workspaceMemberService: { isMember: mockIsMember },

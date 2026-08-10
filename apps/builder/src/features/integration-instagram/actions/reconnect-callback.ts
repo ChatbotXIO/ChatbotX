@@ -1,7 +1,4 @@
-import {
-  findInstagramIntegrationByIdForWorkspace,
-  updateInstagramIntegrationAuth,
-} from "@chatbotx.io/business"
+import { instagramIntegrationService } from "@chatbotx.io/business"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   getInstagramAccount,
@@ -33,10 +30,11 @@ export async function reconnectInstagramHandler(props: {
   integrationId: string
   userToken: string
 }): Promise<ReconnectResult> {
-  const integrationInstagram = await findInstagramIntegrationByIdForWorkspace({
-    id: props.integrationId,
-    workspaceId: props.workspaceId,
-  })
+  const integrationInstagram =
+    await instagramIntegrationService.findByIdForWorkspace({
+      id: props.integrationId,
+      workspaceId: props.workspaceId,
+    })
   if (integrationInstagram?.type !== "instagram") {
     return { status: "error", reason: "notFound" }
   }
@@ -78,7 +76,7 @@ export async function reconnectInstagramHandler(props: {
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
     // still holds the stale token.
-    await updateInstagramIntegrationAuth({
+    await instagramIntegrationService.updateAuth({
       id: integrationInstagram.id,
       workspaceId: props.workspaceId,
       auth,
@@ -113,10 +111,11 @@ export async function reconnectInstagramFacebookHandler(props: {
   integrationId: string
   userToken: string
 }): Promise<ReconnectResult> {
-  const integrationInstagram = await findInstagramIntegrationByIdForWorkspace({
-    id: props.integrationId,
-    workspaceId: props.workspaceId,
-  })
+  const integrationInstagram =
+    await instagramIntegrationService.findByIdForWorkspace({
+      id: props.integrationId,
+      workspaceId: props.workspaceId,
+    })
   if (integrationInstagram?.type !== "facebook") {
     return { status: "error", reason: "notFound" }
   }
@@ -161,7 +160,7 @@ export async function reconnectInstagramFacebookHandler(props: {
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook bound to the new page while the
     // stored row still points at the old one.
-    await updateInstagramIntegrationAuth({
+    await instagramIntegrationService.updateAuth({
       id: integrationInstagram.id,
       workspaceId: props.workspaceId,
       auth,

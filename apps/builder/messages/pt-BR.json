@@ -2513,6 +2513,16 @@
         "cancelled": "A reconexão foi cancelada. Tente novamente e conceda as permissões solicitadas.",
         "failed": "Falha ao reconectar. Tente novamente."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgente",
+      "description": "Os canais abaixo não conseguiram renovar automaticamente o token de acesso. Reconecte-os para continuar enviando e recebendo mensagens.",
+      "cta": "Reconectar"
+    },
+    "refreshAllTokens": {
+      "button": "Atualizar todas as permissões",
+      "resultSuccess": "{refreshed} canal(is) atualizado(s).",
+      "resultWithFailures": "{refreshed} canal(is) atualizado(s), {failed} com falha."
     }
   },
   "workspace": {

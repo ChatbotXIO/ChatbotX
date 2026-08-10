@@ -2275,6 +2275,16 @@
         "cancelled": "La riconnessione è stata annullata. Riprova e concedi le autorizzazioni richieste.",
         "failed": "Riconnessione non riuscita. Riprova."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgente",
+      "description": "I seguenti canali non sono riusciti ad aggiornare automaticamente il token di accesso. Ricollegali per continuare a inviare e ricevere messaggi.",
+      "cta": "Ricollega"
+    },
+    "refreshAllTokens": {
+      "button": "Aggiorna tutte le autorizzazioni",
+      "resultSuccess": "Aggiornati {refreshed} canale/i.",
+      "resultWithFailures": "Aggiornati {refreshed} canale/i, {failed} non riusciti."
     }
   },
   "workspace": {

@@ -616,6 +616,16 @@
         "cancelled": "Yeniden bağlanma iptal edildi. Lütfen tekrar deneyin ve istenen izinleri verin.",
         "failed": "Yeniden bağlanma başarısız oldu. Lütfen tekrar deneyin."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Acil",
+      "description": "Aşağıdaki kanallar erişim tokenlarını otomatik olarak yenileyemedi. Mesaj göndermeye ve almaya devam etmek için yeniden bağlanın.",
+      "cta": "Yeniden Bağlan"
+    },
+    "refreshAllTokens": {
+      "button": "Tüm izinleri yenile",
+      "resultSuccess": "{refreshed} kanal yenilendi.",
+      "resultWithFailures": "{refreshed} kanal yenilendi, {failed} başarısız oldu."
     }
   },
   "workspace": {

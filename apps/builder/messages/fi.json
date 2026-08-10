@@ -2529,6 +2529,16 @@
         "cancelled": "Uudelleen yhdistäminen peruutettiin. Yritä uudelleen ja myönnä pyydetyt oikeudet.",
         "failed": "Uudelleen yhdistäminen epäonnistui. Yritä uudelleen."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Kiireellinen",
+      "description": "Seuraavien kanavien käyttöoikeustunnusta ei voitu päivittää automaattisesti. Yhdistä ne uudelleen jatkaaksesi viestien lähettämistä ja vastaanottamista.",
+      "cta": "Yhdistä uudelleen"
+    },
+    "refreshAllTokens": {
+      "button": "Päivitä kaikki käyttöoikeudet",
+      "resultSuccess": "Päivitettiin {refreshed} kanava(a).",
+      "resultWithFailures": "Päivitettiin {refreshed} kanava(a), {failed} epäonnistui."
     }
   },
   "workspace": {

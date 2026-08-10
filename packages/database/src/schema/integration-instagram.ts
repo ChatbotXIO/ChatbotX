@@ -61,6 +61,7 @@ export const integrationInstagramModel = pgTable(
       .$type<"instagram" | "facebook">()
       .default("instagram")
       .notNull(),
+    tokenRefreshError: text(),
   },
   (table) => [
     index("IntegrationInstagram_workspaceId_idx").using(

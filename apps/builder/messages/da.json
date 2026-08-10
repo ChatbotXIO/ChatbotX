@@ -2529,6 +2529,16 @@
         "cancelled": "Forbind igen var annulleret. Prøv igen og grant den requested tilladelser.",
         "failed": "Forbind igen mislykkedes. Prøv igen."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Vigtigt",
+      "description": "Følgende kanaler kunne ikke opdatere deres adgangstoken automatisk. Genopret forbindelsen for at fortsætte med at sende og modtage beskeder.",
+      "cta": "Forbind igen"
+    },
+    "refreshAllTokens": {
+      "button": "Opdater alle tilladelser",
+      "resultSuccess": "Opdaterede {refreshed} kanal(er).",
+      "resultWithFailures": "Opdaterede {refreshed} kanal(er), {failed} mislykkedes."
     }
   },
   "workspace": {

@@ -849,6 +849,16 @@
         "cancelled": "החיבור מחדש בוטל. נסו שוב והעניקו את ההרשאות המבוקשות.",
         "failed": "החיבור מחדש נכשל. נסו שוב."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "דחוף",
+      "description": "הערוצים הבאים לא הצליחו לרענן את אסימון הגישה שלהם באופן אוטומטי. התחבר מחדש כדי להמשיך לשלוח ולקבל הודעות.",
+      "cta": "חיבור מחדש"
+    },
+    "refreshAllTokens": {
+      "button": "רענון כל ההרשאות",
+      "resultSuccess": "רוענן {refreshed} ערוצים.",
+      "resultWithFailures": "רוענן {refreshed} ערוצים, {failed} נכשלו."
     }
   },
   "workspace": {

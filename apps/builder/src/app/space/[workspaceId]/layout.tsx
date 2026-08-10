@@ -1,4 +1,5 @@
 import {
+  integrationService,
   isPlatformAdmin,
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
@@ -18,6 +19,7 @@ import { ExpiredBanner } from "@/components/expired-banner"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { RefreshOnNavigation } from "@/components/refresh-on-navigation"
 import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
+import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { isCloud } from "@/env"
 import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
@@ -66,16 +68,20 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const [{ blocked, blockReason, quota, trialEndsAt }, usage] =
-    await Promise.all([
-      resolveWorkspaceBlockState(targetWorkspaceMember.workspace.ownerId),
-      cloud
-        ? quotaEnforcementService.getWorkspaceUsageSummary({
-            userId: targetWorkspaceMember.workspace.ownerId,
-            workspaceId,
-          })
-        : null,
-    ])
+  const [
+    { blocked, blockReason, quota, trialEndsAt },
+    usage,
+    tokenRefreshErrors,
+  ] = await Promise.all([
+    resolveWorkspaceBlockState(targetWorkspaceMember.workspace.ownerId),
+    cloud
+      ? quotaEnforcementService.getWorkspaceUsageSummary({
+          userId: targetWorkspaceMember.workspace.ownerId,
+          workspaceId,
+        })
+      : null,
+    integrationService.findTokenRefreshErrorsByWorkspaceId(workspaceId),
+  ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
     targetWorkspaceMember.workspace,
@@ -125,6 +131,10 @@ export default async function WorkspaceLayout({
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}
           <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
+          <TokenRefreshErrorDialog
+            errors={tokenRefreshErrors}
+            workspaceId={workspaceId}
+          />
           <CouponTopicStoreProvider
             autoInitialize={false}
             workspaceId={workspaceId}

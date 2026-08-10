@@ -617,6 +617,16 @@
         "cancelled": "Reconnect was cancelled. Please try again and grant the requested permissions.",
         "failed": "Reconnect failed. Please try again."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgent",
+      "description": "The channels below failed to automatically refresh their access token. Reconnect them to keep sending and receiving messages.",
+      "cta": "Reconnect"
+    },
+    "refreshAllTokens": {
+      "button": "Refresh All Permissions",
+      "resultSuccess": "Refreshed {refreshed} channel(s).",
+      "resultWithFailures": "Refreshed {refreshed} channel(s), {failed} failed."
     }
   },
   "workspace": {

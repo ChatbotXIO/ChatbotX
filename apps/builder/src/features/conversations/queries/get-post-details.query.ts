@@ -1,7 +1,7 @@
 import {
   buildContext,
-  findInstagramIntegrationByInboxId,
-  findMessengerIntegrationByInboxId,
+  instagramIntegrationService,
+  messengerIntegrationService,
 } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
@@ -25,7 +25,8 @@ export function getPostDetailsQuery(
     getPostDetailsCacheKey(inboxId, postId),
     async (): Promise<PostDetails> => {
       if (channel === "instagram") {
-        const integration = await findInstagramIntegrationByInboxId(inboxId)
+        const integration =
+          await instagramIntegrationService.findByInboxId(inboxId)
         const ctx = await buildContext({
           workspaceId: integration.workspaceId,
           integrationType: "instagram",
@@ -53,7 +54,8 @@ export function getPostDetailsQuery(
         }
       }
 
-      const integration = await findMessengerIntegrationByInboxId(inboxId)
+      const integration =
+        await messengerIntegrationService.findByInboxId(inboxId)
       const ctx = await buildContext({
         workspaceId: integration.workspaceId,
         integrationType: "messenger",

@@ -2529,6 +2529,16 @@
         "cancelled": "Reconectarea a fost anulată. Încearcă din nou și acordă permisiunile solicitate.",
         "failed": "Reconectarea a eșuat. Te rugăm să încerci din nou."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgent",
+      "description": "Următoarele canale nu au reușit să își reînnoiască automat tokenul de acces. Reconectează-le pentru a continua să trimiți și să primești mesaje.",
+      "cta": "Reconectează"
+    },
+    "refreshAllTokens": {
+      "button": "Reîmprospătează toate permisiunile",
+      "resultSuccess": "{refreshed} canal(e) reîmprospătat(e).",
+      "resultWithFailures": "{refreshed} canal(e) reîmprospătat(e), {failed} eșuat(e)."
     }
   },
   "workspace": {

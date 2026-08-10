@@ -59,7 +59,11 @@ export async function connectTiktokHandler({
             })
             .onConflictDoUpdate({
               target: [integrationTiktokModel.openId],
-              set: { auth: authValue, name: displayName },
+              set: {
+                auth: authValue,
+                name: displayName,
+                tokenRefreshError: null,
+              },
             })
         },
       })

@@ -1,7 +1,7 @@
 "use server"
 
 import {
-  findInstagramIntegrationByIdForWorkspace,
+  instagramIntegrationService,
   platformCredentialService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -33,7 +33,7 @@ export const reconnectInstagramAction = workspaceActionClient
       ctx: { workspace: WorkspaceModel }
     }) => {
       const integrationInstagram =
-        await findInstagramIntegrationByIdForWorkspace({
+        await instagramIntegrationService.findByIdForWorkspace({
           id: integrationId,
           workspaceId,
         })

@@ -542,7 +542,17 @@
       },
       "success": "Kanalen har återanslutits."
     },
-    "title": "Kanaler"
+    "title": "Kanaler",
+    "tokenRefreshErrorDialog": {
+      "title": "Brådskande",
+      "description": "Följande kanaler kunde inte uppdatera sin åtkomsttoken automatiskt. Anslut dem igen för att fortsätta skicka och ta emot meddelanden.",
+      "cta": "Återanslut"
+    },
+    "refreshAllTokens": {
+      "button": "Uppdatera alla behörigheter",
+      "resultSuccess": "Uppdaterade {refreshed} kanal(er).",
+      "resultWithFailures": "Uppdaterade {refreshed} kanal(er), {failed} misslyckades."
+    }
   },
   "claude": {
     "autoReply": {

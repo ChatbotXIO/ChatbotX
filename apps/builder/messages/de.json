@@ -1897,6 +1897,16 @@
         "cancelled": "Die erneute Verbindung wurde abgebrochen. Versuchen Sie es erneut und erteilen Sie die angeforderten Berechtigungen.",
         "failed": "Erneute Verbindung fehlgeschlagen. Versuchen Sie es erneut."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Dringend",
+      "description": "Bei den folgenden Kanälen konnte das Zugriffstoken nicht automatisch aktualisiert werden. Bitte verbinde sie erneut, um weiterhin Nachrichten senden und empfangen zu können.",
+      "cta": "Erneut verbinden"
+    },
+    "refreshAllTokens": {
+      "button": "Alle Berechtigungen aktualisieren",
+      "resultSuccess": "{refreshed} Kanal/Kanäle aktualisiert.",
+      "resultWithFailures": "{refreshed} Kanal/Kanäle aktualisiert, {failed} fehlgeschlagen."
     }
   },
   "workspace": {

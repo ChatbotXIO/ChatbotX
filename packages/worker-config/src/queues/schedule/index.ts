@@ -27,6 +27,10 @@ export const ScheduleJobData = {
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
   refreshZaloTokens: "refreshZaloTokens",
+  refreshTiktokTokens: "refreshTiktokTokens",
+  refreshInstagramTokens: "refreshInstagramTokens",
+  refreshMessengerTokens: "refreshMessengerTokens",
+  refreshInstagramFacebookTokens: "refreshInstagramFacebookTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
 } as const
@@ -154,6 +158,26 @@ export type ScheduleJobRefreshZaloTokens = {
   data: Record<string, never>
 }
 
+export type ScheduleJobRefreshTiktokTokens = {
+  type: typeof ScheduleJobData.refreshTiktokTokens
+  data: Record<string, never>
+}
+
+export type ScheduleJobRefreshInstagramTokens = {
+  type: typeof ScheduleJobData.refreshInstagramTokens
+  data: Record<string, never>
+}
+
+export type ScheduleJobRefreshMessengerTokens = {
+  type: typeof ScheduleJobData.refreshMessengerTokens
+  data: Record<string, never>
+}
+
+export type ScheduleJobRefreshInstagramFacebookTokens = {
+  type: typeof ScheduleJobData.refreshInstagramFacebookTokens
+  data: Record<string, never>
+}
+
 export type ScheduleJobUnsubscribeExpiredTrials = {
   type: typeof ScheduleJobData.unsubscribeExpiredTrials
   data: { cursor?: string }
@@ -185,6 +209,10 @@ export type ScheduleJobData =
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
   | ScheduleJobRefreshZaloTokens
+  | ScheduleJobRefreshTiktokTokens
+  | ScheduleJobRefreshInstagramTokens
+  | ScheduleJobRefreshMessengerTokens
+  | ScheduleJobRefreshInstagramFacebookTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
 

@@ -1,7 +1,4 @@
-import {
-  findMessengerIntegrationByIdForWorkspace,
-  updateMessengerIntegrationAuth,
-} from "@chatbotx.io/business"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   debugToken,
@@ -34,10 +31,11 @@ export async function reconnectMessengerHandler(props: {
   code: string
   callbackUrl: string
 }): Promise<ReconnectResult> {
-  const integrationMessenger = await findMessengerIntegrationByIdForWorkspace({
-    id: props.integrationId,
-    workspaceId: props.workspaceId,
-  })
+  const integrationMessenger =
+    await messengerIntegrationService.findByIdForWorkspace({
+      id: props.integrationId,
+      workspaceId: props.workspaceId,
+    })
   if (!integrationMessenger) {
     return { status: "error", reason: "notFound" }
   }
@@ -103,7 +101,7 @@ export async function reconnectMessengerHandler(props: {
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
     // still holds the stale token.
-    await updateMessengerIntegrationAuth({
+    await messengerIntegrationService.updateAuth({
       id: integrationMessenger.id,
       workspaceId: props.workspaceId,
       auth,

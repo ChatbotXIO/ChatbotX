@@ -59,6 +59,7 @@ export const integrationMessengerModel = pgTable(
       onUpdate: "cascade",
     }),
     syncTagEnabledAt: timestamp(timestampConfig),
+    tokenRefreshError: text(),
   },
   (table) => [
     index("IntegrationMessenger_workspaceId_idx").using(
