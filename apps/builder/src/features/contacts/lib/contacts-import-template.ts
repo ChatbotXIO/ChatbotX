@@ -44,6 +44,28 @@ const resolveColumnLabel = (
   )
 }
 
+// A single filled-in row so users see the expected format for each column
+// rather than an empty template.
+const TEMPLATE_EXAMPLE_ROW: Record<
+  TemplateLocale,
+  Record<ContactsImportTemplateColumn, string>
+> = {
+  en: {
+    contactId: "1234567890",
+    phoneNumber: "+14155550100",
+    email: "john.doe@example.com",
+    firstName: "John",
+    lastName: "Doe",
+  },
+  vi: {
+    contactId: "1234567890",
+    phoneNumber: "+84155550100",
+    email: "an.nguyen@example.com",
+    firstName: "An",
+    lastName: "Nguyễn",
+  },
+}
+
 // Always quotes and doubles embedded quotes, mirroring the `escapeCsvValue`
 // convention used by the worker's CSV export handlers
 // (apps/worker/src/default/handlers/export-contacts.ts and export-coupons.ts).
@@ -52,16 +74,27 @@ const resolveColumnLabel = (
 const escapeCsvValue = (value: string): string =>
   `"${value.replace(/"/g, '""')}"`
 
+const buildCsvRow = (values: readonly string[]): string =>
+  values.map(escapeCsvValue).join(",")
+
 /**
- * Builds the contacts-import CSV template: a single localized header row
- * covering every channel's import columns, prefixed with a UTF-8 BOM so
- * spreadsheet apps (Excel, Sheets) render non-ASCII labels correctly.
+ * Builds the contacts-import CSV template: a localized header row covering
+ * every channel's import columns followed by one example data row, prefixed
+ * with a UTF-8 BOM so spreadsheet apps (Excel, Sheets) render non-ASCII
+ * labels correctly.
  */
 export const buildContactsImportTemplateCsv = (language: string): string => {
   const locale = resolveTemplateLocale(language)
-  const headerRow = CONTACTS_IMPORT_TEMPLATE_COLUMNS.map((column) =>
-    escapeCsvValue(resolveColumnLabel(locale, column)),
-  ).join(",")
+  const example = TEMPLATE_EXAMPLE_ROW[locale]
 
-  return `﻿${headerRow}\n`
+  const headerRow = buildCsvRow(
+    CONTACTS_IMPORT_TEMPLATE_COLUMNS.map((column) =>
+      resolveColumnLabel(locale, column),
+    ),
+  )
+  const exampleRow = buildCsvRow(
+    CONTACTS_IMPORT_TEMPLATE_COLUMNS.map((column) => example[column]),
+  )
+
+  return `﻿${headerRow}\n${exampleRow}\n`
 }

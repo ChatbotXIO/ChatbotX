@@ -2,9 +2,11 @@
 
 import {
   channelTypes,
+  contactImportFields,
   importTypes,
   uploadTypes,
 } from "@chatbotx.io/database/partials"
+import { matchContactImportHeaders } from "@chatbotx.io/imports"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import {
@@ -111,6 +113,18 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
     }
   }, [timezone, form.setValue])
 
+  // Set the column mapping from a file's headers. Done in the same event
+  // handler that updates `csvHeaders` (never a later effect) so each Select
+  // sees its new value and new options in one commit — otherwise Base UI
+  // Select briefly holds the previous file's value against the new options,
+  // fires `onValueChange(null)`, and overwrites the mapping with null.
+  const applyHeaderMapping = (headers: string[]) => {
+    const columnByField = matchContactImportHeaders(headers)
+    for (const field of contactImportFields.options) {
+      form.setValue(field, columnByField[field], { shouldValidate: true })
+    }
+  }
+
   return (
     <>
       <div className="flex justify-end gap-4">
@@ -134,10 +148,12 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
         onCleared={() => {
           setFileId("")
           setCsvHeaders([])
+          applyHeaderMapping([])
         }}
         onUploaded={(result, headers) => {
           setFileId(result.fileId)
           setCsvHeaders(headers)
+          applyHeaderMapping(headers)
         }}
         onUploadingChange={setIsUploading}
         subType={importTypes.enum.contacts}
@@ -264,8 +280,13 @@ function HeaderConnectField({
   return (
     <div className="flex items-center gap-4">
       <div className="flex-1">
+        {/* Remount the Select when the header set changes so it re-renders
+            from the current form value instead of keeping the previous file's
+            label (Base UI Select does not clear a stale label when its options
+            change out from under it). */}
         <SelectField
           allowClear={allowClear}
+          key={csvHeaders.join("")}
           name={name}
           options={csvHeaders.map((col) => ({ label: col, value: col }))}
         />
