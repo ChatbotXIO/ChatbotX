@@ -42,11 +42,15 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   const platformOwnerId = await resolvePlatformOwnerId({ userId, workspaceId })
 
   // Two-tier channel-visibility policy (platform admin + white-label owner).
-  // Pure UI gate — checked before every create branch, including the
-  // self-serve telegram/webchat ones that used to bypass all checks, so a
-  // hidden channel can't be created via a direct `?channel=` deep link
-  // either. Never consulted by webhooks/outbound send/`Inbox` itself, so an
-  // already-connected inbox of a hidden channel keeps working unaffected.
+  // Pure UI gate — checked before every create branch (including the
+  // self-serve telegram/webchat ones) so this page never *renders* the entry
+  // point for a hidden channel, even via a direct `?channel=` deep link. This
+  // is UI visibility, not authorization: the underlying connect actions
+  // (e.g. `connectTelegramAction`) deliberately do not re-check the policy,
+  // so a hidden channel remains creatable by invoking its action directly —
+  // hiding is a hint, never an access control. Never consulted by
+  // webhooks/outbound send/`Inbox` itself, so an already-connected inbox of a
+  // hidden channel keeps working unaffected.
   const visibleChannels =
     await tenantService.resolveVisibleChannels(platformOwnerId)
   const isVisible = (channel: ChannelType) => visibleChannels.includes(channel)

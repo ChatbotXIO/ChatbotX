@@ -94,9 +94,13 @@ export function PlatformChannelsSettings({
   })
 
   const toggleChannel = (channel: ChannelType, checked: boolean) => {
+    // `useWatch` can return `undefined` for the field before RHF applies
+    // `defaultValues` on the first render — guard the spread/filter so a
+    // click in that window can't throw.
+    const current = selectedHidden ?? []
     const next = checked
-      ? [...selectedHidden, channel]
-      : selectedHidden.filter((value) => value !== channel)
+      ? [...current, channel]
+      : current.filter((value) => value !== channel)
     form.setValue("hiddenChannels", next, { shouldDirty: true })
   }
 

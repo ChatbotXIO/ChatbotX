@@ -151,6 +151,69 @@ reseller's own domain.
 branding. The root tenant carries null branding and a suspended tenant falls back to
 defaults, so platform workspaces always render defaults.
 
+## Channel-visibility policy
+
+A two-tier policy controls **which channel types a user may create** (`Tenant.hiddenChannels`,
+a `ChannelType[]` column). It is a **pure UI-visibility gate — not authorization**: it only
+governs whether the create UI *renders* a channel's entry point. It is never consulted by
+webhook handling, outbound send, or `Inbox` itself, so a channel a user already connected
+keeps working even after it is hidden. Hiding only blocks *new* creation.
+
+### The two tiers
+
+| Tier | Set by | Scope | Where |
+|------|--------|-------|-------|
+| Platform | SaaS operator | Ceiling for **every** tenant | root tenant's `hiddenChannels`, edited at `/admin/platform-channels` (superAdmin route) |
+| Reseller | White-label owner | Narrows further, **only for their own users** | reseller tenant's `hiddenChannels`, edited at `/manage/platform-channels` (active-tenant-owner route) |
+
+The two hidden sets are **unioned, never overridden** — a reseller can only narrow what the
+platform already allows, never widen it. The `/manage` UI renders platform-hidden channels as
+disabled + checked with a tooltip so a reseller cannot un-hide them.
+
+### Resolution
+
+`tenantService.resolveVisibleChannels(ownerId)`
+(`packages/business/src/enterprise/tenant/service.ts`) returns the creatable channels:
+
+```
+CREATABLE_CHANNELS
+  minus root tenant's hiddenChannels
+  minus owned tenant's hiddenChannels  (only when owned.status === "active")
+```
+
+A suspended reseller tenant contributes **nothing** to the hidden set — its policy is ignored
+until reactivated (the `/manage` route is itself blocked for non-active tenants, so a suspended
+reseller can never reach the toggles). A plain platform user with no owned tenant sees whatever
+the platform allows.
+
+The `ownerId` passed in must be the **tenant-aware owner**, resolved by
+`resolvePlatformOwnerId` / `resolveOwnerForWorkspace`
+(`apps/builder/src/lib/platform-credential-owner.ts`) — host (custom domain) wins over an
+explicit `workspaceId`, the same owner used to resolve platform OAuth credentials. Pass anything
+else and the policy silently falls back to platform-global.
+
+### Enforcement surfaces
+
+- **Create picker** (`app/(no-sidebar)/channels/create/page.tsx`) — gates every create branch
+  on `resolveVisibleChannels` before rendering, including the self-serve telegram/webchat ones,
+  so a hidden channel's entry point never renders even via a `?channel=` deep link.
+- **Settings accordion** (`.../settings/channels/layout.tsx`) — narrows the row list to visible
+  channels, **grandfathering** any channel the workspace already has a connected inbox for
+  (`inboxService.distinctConnectedChannels`) so hiding never makes an existing connection vanish.
+- **Per-slot pages** — each `@<channel>/page.tsx` re-checks via
+  `resolveChannelCreatable(workspaceId, channel)` (`app/.../webchats/create/page.tsx` too),
+  since Next.js parallel routes cannot thread the layout's flag into opaque slots.
+
+Channels that are `manageable` but not `creatable` (currently only `smtp`) sit **outside** the
+policy entirely — `resolveVisibleChannels` only ever filters `CREATABLE_CHANNELS`, so those rows
+always show.
+
+> **Design note:** because hiding is UI visibility and not access control, the underlying connect
+> **actions** (e.g. `connectTelegramAction`) deliberately do **not** re-check the policy. A channel
+> remains creatable by invoking its server action directly; the gate exists only to shape the UI.
+> If a channel ever needs true creation-blocking, that is an authorization change (add the check to
+> the action), not a visibility change.
+
 ## Quota enforcement
 
 Quota is tracked in `UserQuota` rows only — there is no separate tenant-level counter table.
