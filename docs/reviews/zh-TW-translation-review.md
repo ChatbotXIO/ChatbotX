@@ -1,6 +1,6 @@
 # zh-TW Translation Review
 
-- Total leaf keys: 2818
+- Total leaf keys: 2820
 - Source locale: en
 - Target locale: zh-TW
 
@@ -27,6 +27,8 @@
 | actions.assign | Assign | 指派 |
 | actions.assignConversation | Assign Conversation | 指派對話 |
 | actions.back | Back | 返回 |
+| actions.billing | Billing | 帳務 |
+| actions.redeem | Redeem | 兌換 |
 | actions.blockContact | Block Contact | 封鎖聯絡人 |
 | actions.unblockContact | Unblock Contact | 解除封鎖聯絡人 |
 | actions.undo | Undo | 撤銷 |

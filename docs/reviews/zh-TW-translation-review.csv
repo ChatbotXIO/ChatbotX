@@ -20,6 +20,8 @@ actions.archiveConversation,Archive Conversation,封存對話
 actions.assign,Assign,指派
 actions.assignConversation,Assign Conversation,指派對話
 actions.back,Back,返回
+actions.billing,Billing,帳務
+actions.redeem,Redeem,兌換
 actions.blockContact,Block Contact,封鎖聯絡人
 actions.unblockContact,Unblock Contact,解除封鎖聯絡人
 actions.undo,Undo,撤銷
