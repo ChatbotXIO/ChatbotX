@@ -1,0 +1,4438 @@
+{
+  "fields": {
+    "authorizedDomain": {
+      "label": "已授權網域 {plural, select, 1 {} other {}}",
+      "description": "有權存取您的網路聊天的網域或子網域。"
+    },
+    "conversationStarter": {
+      "label": "對話起始訊息 {plural, select, 1 {} other {}}",
+      "description": "對話啟動器用於啟動與使用者的對話。",
+      "type": {
+        "openWebsite": "打開網站",
+        "sendFlow": "傳送流程",
+        "sendText": "傳送文字"
+      }
+    },
+    "smartResponseDelaySeconds": {
+      "minutes": "{count, plural, one {# 分鐘} other {# 分鐘}}",
+      "seconds": "{count, plural, one {# 秒} other {# 秒}}",
+      "description": "設定機器人在使用者最後一則訊息後，等待多久才回覆。如果使用者又傳送新訊息，計時器會重設，並將訊息併入單一回應。",
+      "label": "機器人回覆延遲",
+      "none": "無"
+    },
+    "persistentMenu": {
+      "label": "常駐選單 {plural, select, 1 {} other {}}",
+      "description": "持久選單用於啟動與使用者的對話。",
+      "type": {
+        "openWebsite": "打開網站",
+        "sendFlow": "傳送流程"
+      }
+    },
+    "omnichannel": {
+      "label": "全通路"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "圖片"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "loginTitle": "使用 Instagram 登入",
+      "loginDescription": "連接您的 Instagram，直接透過 Instagram OAuth 建立商業帳號。",
+      "facebookLoginTitle": "使用 Facebook 登入",
+      "facebookLoginDescription": "透過 Facebook OAuth 連接 Instagram 帳戶到您的 Facebook 頁面。",
+      "connectViaFacebook": "連接 Instagram 透過 Facebook",
+      "viaFacebookTitle": "Instagram 透過 Facebook",
+      "cloneFromMessenger": "從 Messenger 複製",
+      "clonedFromMessenger": "已從 Messenger 複製"
+    },
+    "zalo": {
+      "label": "ZaloOA"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "botToken": "機器人代幣",
+      "connectInstructions": {
+        "step1": "在Telegram中開啟<link>@BotFather</link>。",
+        "step2": "傳送<strong>/newbot</strong>並依照指示操作。",
+        "step3": "建立機器人後，您將收到機器人API權杖。複製 API 權杖並將其貼到下方。"
+      }
+    },
+    "matchAll": {
+      "label": "滿足以下所有條件"
+    },
+    "matchAny": {
+      "label": "符合下列條件之一"
+    },
+    "condition": {
+      "label": "條件"
+    },
+    "actions": {
+      "label": "操作"
+    },
+    "tags": {
+      "label": "標籤"
+    },
+    "customFields": {
+      "label": "自訂欄位"
+    },
+    "pipelines": {
+      "label": "管道"
+    },
+    "sequences": {
+      "label": "序列"
+    },
+    "ecommerce": {
+      "label": "電子商務"
+    },
+    "entryPointLink": {
+      "label": "入口點連結"
+    },
+    "assignedId": {
+      "label": "指派給"
+    },
+    "operator": {
+      "label": "運算符",
+      "is": "是",
+      "isNot": "不是",
+      "in": "在",
+      "notIn": "不在",
+      "isEmpty": "無值",
+      "isNotEmpty": "有任何值",
+      "gt": "大於",
+      "lt": "小於",
+      "gte": "大於或等於",
+      "lte": "小於或等於",
+      "contains": "包含",
+      "notContains": "不包含",
+      "startsWith": "開頭",
+      "endsWith": "結尾為",
+      "isBetween": "間隔",
+      "notBetween": "非區間",
+      "used": "已使用"
+    },
+    "contactFilter": {
+      "allConditions": "滿足以下所有條件",
+      "anyConditions": "以下任何條件。",
+      "label": "聯絡人過濾器",
+      "onlyContactsMatch": "僅匹配的聯絡人",
+      "moreOptions": "更多選項"
+    },
+    "contactNote": {
+      "label": "聯絡人備註"
+    },
+    "chooseTime": {
+      "label": "選擇時間"
+    },
+    "notificationType": {
+      "label": "通知類型",
+      "notifyAdmin": "通知管理員",
+      "newMessageToHuman": "人類新訊息",
+      "newOrder": "新訂單"
+    },
+    "notificationChannel": {
+      "label": "通知頻道",
+      "messenger": "Messenger",
+      "email": "電子郵件",
+      "telegram": "Telegram",
+      "browser": "瀏覽器"
+    },
+    "accessToken": {
+      "label": "訪問權杖"
+    },
+    "botField": {
+      "label": "機器人欄位"
+    },
+    "agent": {
+      "label": "Agent"
+    },
+    "aiAgent": {
+      "label": "AI Agent"
+    },
+    "aiQueuedMessages": {
+      "label": "AI 排隊訊息"
+    },
+    "aiFile": {
+      "label": "AI 檔案"
+    },
+    "aiFunction": {
+      "label": "人工智慧功能"
+    },
+    "aiTrigger": {
+      "label": "人工智慧觸發器"
+    },
+    "alphanumericLength": {
+      "label": "字母數字長度"
+    },
+    "analytics": {
+      "label": "分析"
+    },
+    "apiKey": {
+      "label": "API金鑰"
+    },
+    "auth": {
+      "label": "授權"
+    },
+    "webSearchAuthorizedDomains": {
+      "label": "Web 搜尋工具的授權網站",
+      "placeholder": "example.com",
+      "tooltip": "AI Agent可以存取的域清單。留空以允許所有網域。"
+    },
+    "authToken": {
+      "label": "代幣"
+    },
+    "authType": {
+      "headers": "自訂標頭",
+      "none": "無",
+      "token": "代幣"
+    },
+    "automatedResponse": {
+      "label": "自動回應"
+    },
+    "avatar": {
+      "label": "個人資料圖片"
+    },
+    "reflink": {
+      "label": "入口點連結"
+    },
+    "qrCode": {
+      "label": "QR Code"
+    },
+    "savePayloadToCustomField": {
+      "label": "將負載儲存到自訂欄位"
+    },
+    "bot": {
+      "label": "機器人"
+    },
+    "botResponse": {
+      "label": "機器人回應"
+    },
+    "brandColor": {
+      "description": "此顏色將用於按鈕，以配合您在著陸頁面、電子郵件和網路聊天上的品牌。",
+      "label": "品牌顏色"
+    },
+    "broadcast": {
+      "label": "廣播"
+    },
+    "trigger": {
+      "label": "觸發器"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
+    "button": {
+      "label": "按鈕",
+      "whenPressed": "當按下此按鈕時"
+    },
+    "buttonLabel": {
+      "label": "按鈕標籤"
+    },
+    "category": {
+      "label": "分類"
+    },
+    "completed": {
+      "label": "已完成"
+    },
+    "workspace": {
+      "label": "工作區"
+    },
+    "workspaceId": {
+      "description": "您的工作區的唯一識別碼。",
+      "label": "工作區 ID"
+    },
+    "workspaceName": {
+      "label": "帳戶名稱"
+    },
+    "contact": {
+      "label": "聯絡人"
+    },
+    "contacts": {
+      "label": "聯絡人"
+    },
+    "conversation": {
+      "label": "對話"
+    },
+    "createdAt": {
+      "label": "建立於"
+    },
+    "currentTime": {
+      "label": "目前時間"
+    },
+    "customRange": {
+      "label": "自訂範圍"
+    },
+    "customCss": {
+      "label": "自訂 CSS"
+    },
+    "theme": {
+      "label": "主題",
+      "placeholder": "選擇主題"
+    },
+    "customJS": {
+      "label": "自訂 JS",
+      "placeholder": "輸入自訂 JavaScript"
+    },
+    "customCSS": {
+      "label": "自訂 CSS",
+      "placeholder": "輸入自訂 CSS"
+    },
+    "customField": {
+      "label": "自訂欄位",
+      "savePayloadTo": "將回應儲存到自訂欄位",
+      "set_value": "設定值",
+      "append": "追加到末尾",
+      "prepend": "加入到開頭",
+      "increase": "增加",
+      "decrease": "減少"
+    },
+    "dataCollect": {
+      "label": "資料收集"
+    },
+    "defaultReply": {
+      "description": "這是當工作區不知道如何回應使用者訊息時，工作區會傳送給使用者的預設回應。",
+      "label": "預設回覆"
+    },
+    "delayType": {
+      "label": "延遲型",
+      "placeholder": "延遲型"
+    },
+    "delayUnit": {
+      "days": "天",
+      "hours": "小時",
+      "minutes": "分鐘",
+      "seconds": "秒"
+    },
+    "description": {
+      "label": "說明",
+      "placeholder": "輸入描述"
+    },
+    "developmentMode": {
+      "description": "您的機器人僅適用於機器人管理員。如果您正在建造機器人並且不希望非管理員使用該機器人，則啟用此選項。",
+      "label": "開發模式"
+    },
+    "email": {
+      "label": "電子郵件",
+      "placeholder": "輸入電子郵件"
+    },
+    "embedCode": {
+      "description": "複製此程式碼並將其貼上到您的網站中以嵌入聊天小工具。",
+      "label": "嵌入程式碼",
+      "securityNote": "安全說明",
+      "securityNoteDescription": "此小工具僅適用於您的網路聊天設定中授權的網域。確保將您的網域新增至授權網域清單。"
+    },
+    "processingStatus": {
+      "label": "處理狀態"
+    },
+    "enable": {
+      "label": "啟用"
+    },
+    "file": {
+      "label": "檔案"
+    },
+    "link": {
+      "label": "連結"
+    },
+    "message": {
+      "label": "訊息"
+    },
+    "filter": {
+      "label": "過濾器"
+    },
+    "finalMessage": {
+      "label": "決賽訊息"
+    },
+    "firstName": {
+      "label": "名字",
+      "placeholder": "輸入名字"
+    },
+    "countryCode": {
+      "label": "國家/地區代碼"
+    },
+    "contactId": {
+      "label": "聯絡人 ID"
+    },
+    "flow": {
+      "label": "流程"
+    },
+    "flowId": {
+      "label": "流程 ID"
+    },
+    "flows": {
+      "aiGenerateText": "{aiName}：產生文字",
+      "aiGenerateImage": "{aiName}：產生影像",
+      "aiEditImage": "{aiName}：編輯影像",
+      "aiAnalyzeImage": "{aiName}：分析影像",
+      "aiExtractData": "{aiName}：擷取資料",
+      "aiSpeechToText": "{aiName}：語音轉文字",
+      "aiTextToSpeech": "{aiName}：文字轉語音",
+      "label": "流程",
+      "placeholder": "選擇流程",
+      "aiGenerateTextAgent": "{aiName}：產生文字 Agent",
+      "aiDeleteMessageHistory": "{aiName}：刪除訊息歷史記錄"
+    },
+    "steps": {
+      "label": "步驟",
+      "placeholder": "選擇步驟"
+    },
+    "folder": {
+      "label": "資料夾"
+    },
+    "format": {
+      "label": "格式"
+    },
+    "framework": {
+      "angular": "角度",
+      "ember": "餘燼",
+      "react": "反應",
+      "svelte": "苗條",
+      "vue": "Vue"
+    },
+    "function": {
+      "label": "功能"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Gemini型號"
+    },
+    "gender": {
+      "female": "女",
+      "label": "性別",
+      "male": "男",
+      "unknown": "未知"
+    },
+    "googleSheets": {
+      "label": "Google工作表"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "取得回應"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "主機",
+      "placeholder": "smtp.example.com"
+    },
+    "hideHeader": {
+      "label": "隱藏標題"
+    },
+    "hideMessageInput": {
+      "label": "隱藏訊息輸入"
+    },
+    "inbox": {
+      "label": "收件匣",
+      "placeholder": "選擇收件匣"
+    },
+    "inboxTeam": {
+      "label": "收件匣團隊"
+    },
+    "teamMembers": {
+      "label": "團隊成員"
+    },
+    "inboxTeamMember": {
+      "label": "收件匣團隊成員"
+    },
+    "inputCustomField": {
+      "label": "輸入自訂欄位"
+    },
+    "insertLink": {
+      "label": "插入連結"
+    },
+    "instructions": {
+      "label": "系統訊息（提示）"
+    },
+    "isDefault": {
+      "label": "標記為預設"
+    },
+    "isRichResponse": {
+      "description": "傳回包含訊息與操作的結構化 JSON，而不是純文字流。",
+      "label": "豐富回應"
+    },
+    "language": {
+      "description": "聯絡人將套用此預設語言。",
+      "label": "語言",
+      "placeholder": "選擇語言"
+    },
+    "lastName": {
+      "label": "姓氏",
+      "placeholder": "輸入姓氏"
+    },
+    "last30days": {
+      "label": "過去 30 天"
+    },
+    "last7days": {
+      "label": "過去 7 天"
+    },
+    "lastInput": {
+      "label": "最後輸入"
+    },
+    "lastUserInputTypes": {
+      "text": "文字",
+      "location": "位置",
+      "refLink": "參考連結",
+      "image": "圖片",
+      "video": "影片",
+      "audio": "音頻",
+      "gif": "GIF",
+      "file": "檔案"
+    },
+    "lastMonth": {
+      "label": "上個月"
+    },
+    "lifeTime": {
+      "label": "生命週期"
+    },
+    "locale": {
+      "label": "地區設定"
+    },
+    "errorLog": {
+      "label": "錯誤日誌"
+    },
+    "inputType": {
+      "label": "輸入類型",
+      "options": {
+        "text": "文字",
+        "image": "圖片",
+        "file": "檔案"
+      }
+    },
+    "extractFields": {
+      "label": "要擷取的欄位",
+      "key": {
+        "label": "JSON金鑰",
+        "placeholder": "例如電子郵件、電話、地址"
+      },
+      "customFieldId": {
+        "label": "儲存到自訂欄位"
+      },
+      "description": {
+        "label": "描述（可選）",
+        "placeholder": "描述要擷取的內容"
+      }
+    },
+    "max": {
+      "label": "最大值"
+    },
+    "maxOutputTokens": {
+      "label": "最大代幣數量"
+    },
+    "mcpServer": {
+      "label": "MCP伺服器"
+    },
+    "systemFunction": {
+      "label": "系統功能",
+      "names": {
+        "connectUserToHuman": "將使用者轉接給真人",
+        "documentReader": "文檔閱讀器",
+        "imageReader": "影像讀取器",
+        "urlContext": "網址閱讀器",
+        "webSearch": "Web 搜尋"
+      }
+    },
+    "min": {
+      "label": "最小值"
+    },
+    "model": {
+      "label": "型號"
+    },
+    "name": {
+      "label": "名稱",
+      "placeholder": "輸入姓名",
+      "searchPlaceholder": "搜尋名稱..."
+    },
+    "selectUsers": {
+      "label": "選擇使用者"
+    },
+    "node": {
+      "label": "節點"
+    },
+    "noResults": {
+      "label": "找不到結果"
+    },
+    "notes": {
+      "label": "備註"
+    },
+    "numericLength": {
+      "label": "數字長度"
+    },
+    "numericValue": {
+      "label": "數值"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "操作"
+    },
+    "outputCustomField": {
+      "label": "輸出自訂欄位"
+    },
+    "httpMethod": {
+      "label": "方法"
+    },
+    "requestUrl": {
+      "label": "URL",
+      "placeholder": "https://api.example.com/endpoint"
+    },
+    "requestHeaders": {
+      "label": "標頭",
+      "keyPlaceholder": "標頭",
+      "valuePlaceholder": "值"
+    },
+    "requestBody": {
+      "label": "身體",
+      "keyPlaceholder": "欄位",
+      "valuePlaceholder": "值"
+    },
+    "bodyType": {
+      "label": "體型",
+      "options": {
+        "allContactData": "所有聯絡人資料",
+        "json": "JSON",
+        "formEncoded": "表單編碼"
+      }
+    },
+    "statusCode": {
+      "label": "狀態碼"
+    },
+    "outputMessage": {
+      "label": "輸出訊息",
+      "placeholder": "輸出訊息是什麼？"
+    },
+    "paymentHistory": {
+      "label": "付款歷史"
+    },
+    "paymentMethods": {
+      "label": "付款方式"
+    },
+    "userPersistentMenu": {
+      "pageDefault": "預設",
+      "label": "使用者常駐選單"
+    },
+    "phoneNumber": {
+      "label": "電話號碼"
+    },
+    "phoneNumberId": {
+      "label": "電話號碼",
+      "noPhoneNumbersFound": "找不到此帳號的電話號碼"
+    },
+    "port": {
+      "label": "端口",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "提供商"
+    },
+    "prompt": {
+      "label": "提示",
+      "placeholder": "輸入提示"
+    },
+    "userMessage": {
+      "label": "使用者訊息"
+    },
+    "pageUserName": {
+      "label": "粉絲專頁使用者名稱"
+    },
+    "purpose": {
+      "label": "目的",
+      "placeholder": "這個函數有什麼作用？"
+    },
+    "question": {
+      "label": "問題",
+      "placeholder": "今天營業嗎？"
+    },
+    "imageProfileUrl": {
+      "label": "影像設定檔 URL"
+    },
+    "persona": {
+      "label": "角色",
+      "pageDefault": "預設角色"
+    },
+    "quickReply": {
+      "label": "快速回覆"
+    },
+    "search": {
+      "placeholder": "搜尋..."
+    },
+    "logo": {
+      "label": "標誌"
+    },
+    "logoLight": {
+      "label": "標誌（淺色）"
+    },
+    "logoDark": {
+      "label": "標誌（深色）"
+    },
+    "favicon": {
+      "label": "網站圖標"
+    },
+    "brandName": {
+      "label": "品牌名稱",
+      "placeholder": "輸入品牌名稱"
+    },
+    "policyUrl": {
+      "label": "隱私權政策 URL"
+    },
+    "termsOfServiceUrl": {
+      "label": "服務條款 URL"
+    },
+    "showLogo": {
+      "label": "顯示個人標誌"
+    },
+    "quality": {
+      "label": "品質",
+      "options": {
+        "auto": "自動",
+        "hd": "高清",
+        "md": "中",
+        "ld": "低"
+      }
+    },
+    "size": {
+      "label": "大小",
+      "options": {
+        "auto": "自動",
+        "square1024": "正方形 - 1024×1024",
+        "landscape1536x1024": "風景 - 1536×1024",
+        "portrait1024x1536": "肖像 - 1024×1536",
+        "dalle2_256": "256×256",
+        "dalle2_512": "512×512",
+        "dalle3_1792x1024": "1792×1024"
+      }
+    },
+    "status": {
+      "label": "狀態",
+      "pending": "待定",
+      "processing": "處理中",
+      "completed": "已完成",
+      "failed": "失敗",
+      "success": "成功",
+      "error": "錯誤"
+    },
+    "subtitle": {
+      "placeholder": "輸入字幕"
+    },
+    "syncToMessenger": {
+      "label": "同步到 Messenger"
+    },
+    "tag": {
+      "label": "標籤"
+    },
+    "emailTopic": {
+      "label": "電子郵件主題"
+    },
+    "emailTopics": {
+      "label": "電子郵件主題"
+    },
+    "emailTopicSent": {
+      "label": "已傳送"
+    },
+    "emailTopicDelivered": {
+      "label": "已交付(%)"
+    },
+    "emailTopicSeen": {
+      "label": "觀看次數(%)"
+    },
+    "emailTopicClicked": {
+      "label": "點擊次數(%)"
+    },
+    "targetCountry": {
+      "description": "您的大多數聯絡人居住的國家。",
+      "label": "目標國家/地區"
+    },
+    "team": {
+      "label": "團隊"
+    },
+    "rememberConversation": {
+      "label": "記住對話"
+    },
+    "temperature": {
+      "label": "溫度"
+    },
+    "templateMessages": {
+      "label": "範本訊息"
+    },
+    "text": {
+      "label": "文字",
+      "placeholder": "輸入文字"
+    },
+    "thisMonth": {
+      "label": "本月"
+    },
+    "timezone": {
+      "description": "聯絡人將套用此時區。",
+      "label": "時區"
+    },
+    "title": {
+      "placeholder": "輸入標題"
+    },
+    "today": {
+      "label": "今天"
+    },
+    "tools": {
+      "label": "工具",
+      "placeholder": "選擇工具"
+    },
+    "triggerFlowId": {
+      "label": "觸發器流程 ID",
+      "placeholder": "觸發什麼流程？"
+    },
+    "type": {
+      "label": "類型",
+      "placeholder": "選擇類型"
+    },
+    "lastRead": {
+      "label": "最後閱讀"
+    },
+    "assignee": {
+      "label": "被指派者"
+    },
+    "modified": {
+      "label": "已修改"
+    },
+    "estimatedContacts": {
+      "label": "估計聯絡人"
+    },
+    "scheduledAt": {
+      "label": "預定於"
+    },
+    "channel": {
+      "label": "頻道"
+    },
+    "comment": {
+      "label": "留言"
+    },
+    "directMessage": {
+      "label": "直接訊息"
+    },
+    "updatedAt": {
+      "label": "更新於"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "輸入 URL"
+    },
+    "userId": {
+      "label": "使用者 ID",
+      "placeholders": {
+        "instagram": "Instagram 使用者 ID",
+        "messenger": "MessengerPSID",
+        "telegram": "Telegram 聊天 ID",
+        "tiktok": "TikTok 使用者 ID",
+        "zalo": "Zalo 使用者 ID"
+      }
+    },
+    "userTags": {
+      "label": "使用者已套用標籤"
+    },
+    "username": {
+      "label": "使用者名稱",
+      "placeholder": "user@example.com"
+    },
+    "keywords": {
+      "label": "關鍵字"
+    },
+    "value": {
+      "label": "值"
+    },
+    "wabaId": {
+      "label": "WABA ID"
+    },
+    "webchat": {
+      "label": "網路聊天"
+    },
+    "welcomeFlowId": {
+      "description": "當使用者開啟您的網路聊天時，會自動傳送歡迎訊息。",
+      "label": "歡迎流程"
+    },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "簡訊"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "語音"
+    },
+    "googleBm": {
+      "label": "GoogleBM"
+    },
+    "landingPage": {
+      "label": "著陸頁面"
+    },
+    "whatsappFlow": {
+      "label": "WhatsApp流程"
+    },
+    "shortText": {
+      "label": "短文字",
+      "placeholder": "輸入文字"
+    },
+    "number": {
+      "label": "號碼",
+      "placeholder": "輸入號碼"
+    },
+    "date": {
+      "label": "日期"
+    },
+    "datetime": {
+      "label": "日期時間"
+    },
+    "boolean": {
+      "label": "布林值",
+      "placeholder": "選擇 true 或 false",
+      "true": "正確",
+      "false": "錯誤"
+    },
+    "longText": {
+      "label": "長文字"
+    },
+    "replyFormat": {
+      "label": "回覆格式",
+      "number": "號碼",
+      "text": "文字",
+      "email": "電子郵件",
+      "phone": "電話",
+      "image": "圖片",
+      "file": "檔案",
+      "link": "連結",
+      "date": "日期",
+      "datetime": "日期時間",
+      "location": "位置",
+      "anyInput": "任何輸入"
+    },
+    "workspaceMember": {
+      "label": "工作區成員"
+    },
+    "yesterday": {
+      "label": "昨天"
+    },
+    "permissions": {
+      "label": "權限",
+      "superAdmin": "超級管理員",
+      "analytics": "分析",
+      "flows": "流程",
+      "contacts": "聯絡人",
+      "onlyAssignedContacts": "僅分配聯絡人",
+      "emailAndPhone": "電子郵件和電話",
+      "broadcast": "廣播",
+      "ecommerce": "電子商務"
+    },
+    "member": {
+      "label": "會員"
+    },
+    "schedule": {
+      "label": "時間表",
+      "now": "現在",
+      "scheduled": "稍後安排"
+    },
+    "inputFieldId": {
+      "label": "輸入自訂欄位"
+    },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "圖片"
+      }
+    },
+    "inputText": {
+      "label": "輸入文字"
+    },
+    "outputFieldId": {
+      "label": "將結果儲存到自訂欄位"
+    },
+    "audio": {
+      "label": "音訊欄位"
+    },
+    "voiceType": {
+      "label": "語音類型",
+      "placeholder": "選擇語音類型"
+    },
+    "voiceTone": {
+      "label": "語音（可選）",
+      "placeholder": "用愉快的語氣說話。"
+    },
+    "jsonPath": {
+      "placeholder": "輸入 JSON 路徑",
+      "targetThisRow": "從 JSON 填入此列"
+    },
+    "jsonSource": {
+      "title": "選擇 JSON 路徑",
+      "tabs": {
+        "testResponse": "測試回應",
+        "pasteSample": "貼上範例"
+      },
+      "pastePlaceholder": "貼上範例 JSON 回應",
+      "invalidJson": "無效 JSON",
+      "noTestResponse": "立即執行測試以瀏覽即時回應",
+      "activeTarget": "填入第 {row} 列",
+      "showMore": "顯示更多",
+      "showMoreCount": "顯示更多（{count}）"
+    },
+    "spreadsheets": {
+      "label": "電子表格"
+    },
+    "retryMessage": {
+      "label": "重試訊息"
+    },
+    "skipButtonLabel": {
+      "label": "跳過按鈕標籤"
+    },
+    "autoSkipTime": {
+      "label": "自動跳過時間"
+    },
+    "autoSkipFailAttempts": {
+      "label": "自動跳過失敗嘗試"
+    },
+    "autoSkip": {
+      "label": "自動跳過"
+    },
+    "spreadsheet": {
+      "label": "電子表格"
+    },
+    "worksheet": {
+      "label": "工作表"
+    },
+    "source": {
+      "label": "來源",
+      "placeholder": "選擇來源"
+    },
+    "password": {
+      "label": "密碼",
+      "placeholder": "••••••••"
+    },
+    "passwordConfirmation": {
+      "label": "重新輸入密碼"
+    },
+    "newPassword": {
+      "label": "新密碼"
+    },
+    "currentPassword": {
+      "label": "目前密碼"
+    },
+    "developerAccessToken": {
+      "label": "API 存取權杖"
+    },
+    "fullName": {
+      "label": "全名"
+    },
+    "botFields": {
+      "label": "機器人欄位"
+    },
+    "keyword": {
+      "label": "關鍵字",
+      "searchPlaceholder": "搜尋關鍵字..."
+    },
+    "templateId": {
+      "label": "WhatsApp 範本"
+    },
+    "messengerTemplateId": {
+      "label": "Messenger 範本"
+    },
+    "whatsappChannel": {
+      "label": "WhatsApp 頻道"
+    },
+    "messengerChannel": {
+      "label": "Messenger 頻道"
+    },
+    "messages": {
+      "label": "訊息"
+    },
+    "shortcut": {
+      "label": "快捷方式"
+    },
+    "savedReplies": {
+      "label": "已儲存的回覆"
+    },
+    "role": {
+      "label": "角色"
+    },
+    "plan": {
+      "label": "方案"
+    },
+    "price": {
+      "label": "價格"
+    },
+    "annualPrice": {
+      "label": "年價"
+    },
+    "limitContacts": {
+      "label": "最大聯絡人"
+    },
+    "marketingFeatures": {
+      "label": "行銷功能清單",
+      "description": "客戶可見的產品功能清單。顯示在定價表中。"
+    },
+    "currency": {
+      "label": "貨幣"
+    },
+    "clientId": {
+      "label": "Client ID"
+    },
+    "clientSecret": {
+      "label": "客戶端密碼"
+    },
+    "verifyToken": {
+      "label": "Webhook 驗證權杖"
+    },
+    "apiVersion": {
+      "label": "API版本"
+    },
+    "configId": {
+      "label": "應用程式設定 ID"
+    },
+    "systemUserId": {
+      "label": "系統使用者 ID"
+    },
+    "systemUserToken": {
+      "label": "系統使用者代幣"
+    },
+    "businessId": {
+      "label": "Business ID"
+    },
+    "businessName": {
+      "label": "公司名稱"
+    },
+    "publishableKey": {
+      "label": "可發布金鑰"
+    },
+    "secretKey": {
+      "label": "金鑰"
+    },
+    "freeTrial": {
+      "label": "免費試用",
+      "suffix": "天"
+    },
+    "pricing": {
+      "label": "定價"
+    },
+    "sequence": {
+      "label": "序列"
+    },
+    "from": {
+      "label": "來自"
+    },
+    "fromAddress": {
+      "label": "寄件者地址",
+      "placeholder": "noreply@example.com"
+    },
+    "messageTemplate": {
+      "label": "訊息範本"
+    },
+    "preheader": {
+      "label": "前置頭"
+    },
+    "subject": {
+      "label": "主題"
+    },
+    "to": {
+      "label": "至"
+    },
+    "smtpChannel": {
+      "label": "SMTP頻道"
+    },
+    "magicLink": {
+      "label": "Magic Link",
+      "nameHint": "在公共追蹤 URL 中附加在 /r/{workspaceId}/ 之後。僅使用字母、數字、底線和連字號。",
+      "urlHint": "在URL中使用雙大括號，例如https://example.com/page?utm_campaign='{{campaign}}'. 值來自追蹤連結查詢字串。"
+    },
+    "appId": {
+      "label": "App ID"
+    },
+    "appSecret": {
+      "label": "應用程式秘密"
+    },
+    "webhookVerifyToken": {
+      "label": "Webhook 驗證權杖"
+    },
+    "heading": {
+      "label": "標題",
+      "placeholder": "輸入標題"
+    },
+    "import": {
+      "label": "匯入",
+      "uploading": "正在上傳...",
+      "fileTooLarge": "檔案超出 {size} MB 限制。",
+      "unsupportedFileType": "不支援此檔案類型。",
+      "unableToReadHeaders": "無法讀取匯入標頭。",
+      "uploadError": "檔案無法上傳。",
+      "histories": {
+        "title": "匯入歷史記錄",
+        "recent": "最近匯入",
+        "progress": "進度",
+        "success": "成功",
+        "failed": "失敗",
+        "completedAt": "完成於",
+        "errorDetails": "匯入錯誤",
+        "row": "第 {row} 列"
+      }
+    },
+    "line": {
+      "label": "線"
+    },
+    "spacing": {
+      "label": "間距"
+    },
+    "code": {
+      "label": "代碼",
+      "placeholder": "輸入代碼"
+    },
+    "authCallbackUrl": {
+      "label": "授權回呼 URL",
+      "hint": "請將這個確切 URL 註冊為提供者應用程式中的 OAuth 重新導向 URI。必須使用此主機，而不是您的自訂網域，因為提供者無法存取自訂網域。"
+    },
+    "signInCallbackUrl": {
+      "label": "登入回呼 URL",
+      "hint": "請將此網址新增為 Google 應用程式中的授權重新導向 URI，以啟用 Google 登入。"
+    },
+    "webhookUrl": {
+      "label": "WebhookURL",
+      "hint": "在您的提供者應用程式中註冊此確切的 Webhook URL。它必須使用此主機，而不是您的自訂網域 - 提供者無法存取自訂網域。"
+    },
+    "tiktok": {
+      "label": "TikTok",
+      "accessToken": "訪問權杖",
+      "openId": "開啟ID",
+      "clientId": "客戶端ID",
+      "clientSecret": "客戶端密碼",
+      "displayName": "顯示名稱",
+      "connectInstructions": {
+        "step1": "建立TikTok應用程式位於<link>developers.tiktok.com</link>。",
+        "step2": "授權您的帳號，並複製 <strong>Access Token</strong>、<strong>Open ID</strong> 與 <strong>Client Secret</strong>。",
+        "step3": "貼上下面的憑證以進行連接。"
+      }
+    },
+    "drip": {
+      "label": "Drip"
+    },
+    "sendGrid": {
+      "label": "SendGrid"
+    },
+    "currentVersion": "目前",
+    "consecutiveFailedReply": {
+      "label": "連續回覆失敗"
+    },
+    "currentStep": {
+      "label": "目前步驟"
+    },
+    "fbChatLink": {
+      "label": "Facebook 收件匣連結"
+    },
+    "inboxLink": {
+      "label": "收件匣連結"
+    },
+    "instagramBusinessFollowsUser": {
+      "label": "Instagram 業務跟進使用者"
+    },
+    "instagramFollowers": {
+      "label": "Instagram 追蹤者"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Instagram 專注於業務"
+    },
+    "instagramUsername": {
+      "label": "Instagram 使用者名稱"
+    },
+    "instagramVerified": {
+      "label": "Instagram 已驗證"
+    },
+    "lastAd": {
+      "label": "最後一個廣告"
+    },
+    "lastAdSourcePlatform": {
+      "label": "最後一個廣告來源平台"
+    },
+    "lastAdSourceUrl": {
+      "label": "最後一個廣告來源 URL"
+    },
+    "lastButtonTitle": {
+      "label": "最後一個按鈕標題"
+    },
+    "lastCommentId": {
+      "label": "最後留言 ID"
+    },
+    "lastCommentedPostText": {
+      "label": "最後留言的貼文文字"
+    },
+    "lastCtwa": {
+      "label": "最後CTWA"
+    },
+    "lastFbComment": {
+      "label": "最後一則 Facebook 留言"
+    },
+    "lastInputFailure": {
+      "label": "最後一次輸入失敗"
+    },
+    "lastInteraction": {
+      "label": "最後一次互動"
+    },
+    "lastLatitude": {
+      "label": "最後緯度"
+    },
+    "lastLongitude": {
+      "label": "最後經度"
+    },
+    "lastOutboundMessageAt": {
+      "label": "最後傳出訊息時間"
+    },
+    "lastPostId": {
+      "label": "最後發表 ID"
+    },
+    "lastSeen": {
+      "label": "最後出現"
+    },
+    "lastStep": {
+      "label": "最後一步"
+    },
+    "me": {
+      "label": "我的資料連結"
+    },
+    "phone": {
+      "label": "電話"
+    },
+    "phoneAndEmail": {
+      "label": "電話和電子郵件"
+    },
+    "timezoneName": {
+      "label": "時區名稱"
+    },
+    "totalNewTagged": {
+      "label": "新標記總數"
+    },
+    "totalTagged": {
+      "label": "標記總數"
+    },
+    "userChannel": {
+      "label": "使用者頻道"
+    },
+    "userExternalId": {
+      "label": "使用者外部 ID"
+    },
+    "userHash": {
+      "label": "使用者哈希"
+    },
+    "userSource": {
+      "label": "使用者來源"
+    },
+    "webchatParentUrl": {
+      "label": "網路聊天父層 URL"
+    },
+    "make": {
+      "inviteUrl": "邀請連結",
+      "inviteUrlHint": "您已發佈到 Make 的自訂應用程式邀請連結（例如 https://eu2.make.com/app/invite/...）。"
+    },
+    "makeEvents": {
+      "label": "活動",
+      "placeholder": "輸入事件名稱並按 Enter",
+      "description": "新增一個或多個事件名稱。當 Make 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
+    }
+  },
+  "messages": {
+    "sentAttachments": "已傳送 {count, plural, one {1 個附件} other {# 個附件}}",
+    "moveFeature": "移動 {feature}",
+    "poweredBy": "由 {name} 提供技術支援",
+    "noGiphyApiKey": "找不到 GIPHY API 金鑰。請在平台設定新增一個。",
+    "connectedSuccess": "{feature} 連接成功",
+    "connectFailed": "{feature} 連接失敗",
+    "connectSuccess": "{feature} 連接成功",
+    "refreshTokenSuccessfully": "{feature} 權杖更新成功",
+    "success": "成功",
+    "failed": "失敗",
+    "copiedToClipboard": "已複製到剪貼簿",
+    "messengerAdsJsonDescription": "如果您變更起始步驟，只需要重新產生 JSON 程式碼。其他步驟的變更不會影響此 JSON 程式碼。",
+    "messengerAdsNotPublished": "請先發佈此流程的內容並重試。",
+    "messengerAdsNoStartNode": "此流程沒有有效的起始步驟。開啟流程，設定起始傳送訊息步驟，然後發布並重試。",
+    "messengerAdsError": "產生 JSON 時發生問題。請再試一次。",
+    "messengerAdsInvalidStepType": "起始步驟可以包含文字、圖像、卡片、圖庫、影片、Facebook 影片、音訊和檔案。",
+    "messengerAdsInvalidVariable": "由於 Facebook 限制，您無法在「起始步驟」使用自訂欄位。只能將名字、姓氏與全名加入訊息中。",
+    "copyFailed": "無法複製到剪貼簿",
+    "createdFailed": "{feature} 建立失敗",
+    "deletedSuccess": "{feature} 刪除成功",
+    "deleteFileComingSoon": "刪除檔案功能即將推出",
+    "disconnectFeature": "中斷 {feature} 連線",
+    "disconnectFeatureDescription": "您確定要中斷 {feature} 的連線嗎？",
+    "disconnectSuccess": "{feature} 已中斷連線",
+    "reply": "回覆",
+    "viewMessage": "檢視訊息",
+    "changeLikeState": "更改類似狀態",
+    "changeHideState": "更改隱藏狀態",
+    "commentHidden": "此留言已隱藏",
+    "messageDeleted": "該訊息已被刪除。",
+    "repliedToStory": "回覆了你的故事",
+    "deleteComment": "刪除留言",
+    "deleteCommentConfirmation": "您確定要刪除此留言嗎？它在收件匣中的回覆與 Facebook 上的回覆也會一併刪除。此操作無法復原。",
+    "deleteMessageSuccess": "訊息已刪除",
+    "facebookComment": "Facebook 留言",
+    "editComment": "編輯留言",
+    "editMessageSuccess": "訊息已更新",
+    "editMessagePlaceholder": "編輯您的留言...",
+    "saveEdit": "儲存",
+    "cancelEdit": "取消",
+    "failedToCopy": "複製失敗",
+    "failedToPreviewImage": "預覽影像失敗",
+    "loadingData": "正在載入資料...",
+    "errorLoadingData": "載入資料失敗。請再試一次。",
+    "leaveEmptyToKeepSecret": "留空以保留目前秘密",
+    "needToAddSettings": "您需要新增設定才能使用此整合",
+    "noDataAvailable": "無可用資料",
+    "noResults": "無結果。",
+    "savedSuccessfully": "儲存成功",
+    "syncedSuccessfully": "同步成功",
+    "nameAlreadyExists": "{feature} 名稱已存在",
+    "unknownError": "未知錯誤",
+    "updatedSuccess": "{feature} 更新成功",
+    "updateFileComingSoon": "更新檔案功能即將推出",
+    "videoError": "影片錯誤",
+    "createdSuccess": "{feature} 建立成功",
+    "createFeature": "建立 {feature}",
+    "noItemsFound": "找不到項目",
+    "editFeature": "編輯 {feature}",
+    "duplicateFeature": "複製 {feature}",
+    "duplicatedSuccess": "{feature} 複製成功",
+    "duplicateConfirmation": "這會建立 {feature} 的副本。",
+    "deleteFeature": "刪除 {feature}",
+    "deleteConfirmation": "您確定嗎？\n此操作無法復原。\n這將從我們的伺服器永久刪除您的 {feature}。",
+    "addFeature": "新增 {feature}",
+    "signOutConfirmation": "您確定要退出嗎？",
+    "copyInvitationUrlSuccess": "複製以下連結並傳送給您想新增為管理員的人。",
+    "noAIIntegrationFound": "找不到 AI 整合。請先連接 AI 整合以使用 AI Agent。",
+    "resendFeature": "重新傳送 {feature}",
+    "resendFeatureDescription": "將 {feature} 重新傳送給尚未收到的聯絡人。",
+    "resendSuccess": "重新傳送成功",
+    "changeDefault": "更改預設值",
+    "changeDefaultDescription": "您確定要更改預設 AI Agent 嗎？",
+    "unsetDefaultDescription": "您確定要取消預設 AI Agent 嗎？",
+    "botIsActive": "機器人已啟用",
+    "viewPost": "檢視貼文",
+    "selectConversationTitle": "選擇對話",
+    "selectConversationDescription": "從左側清單選擇一則對話，以檢視訊息並開始聊天。",
+    "selectConversationContactTitle": "尚未選擇聯絡人",
+    "selectConversationContactDescription": "選擇一則對話，即可在此檢視聯絡人詳細資訊與收件匣資訊。",
+    "archiveFeature": "封存 {feature}",
+    "archiveFeatureDescription": "您確定要封存 {feature} 嗎？",
+    "disableFeature": "停用 {feature}",
+    "disableFeatureDescription": "您確定要停用 {feature} 嗎？",
+    "enableFeature": "啟用 {feature}",
+    "enableFeatureDescription": "您確定要啟用 {feature} 嗎？",
+    "exportedSuccess": "{feature} 匯出成功",
+    "createSuccess": "{feature} 建立成功",
+    "deleteFailed": "刪除 {feature} 失敗",
+    "deleteSuccess": "{feature} 刪除成功",
+    "error": "錯誤",
+    "moveFolderDescription": "移動 {feature} 到資料夾",
+    "noData": "無資料",
+    "featureNotFound": "{feature} 找不到",
+    "enableSuccess": "{feature} 啟用成功",
+    "userInactive": "使用者已閒置超過 7 天",
+    "messagingWindowClosed": "訊息無法在允許的視窗之外傳送",
+    "sendHumanAgentTag": "傳送一封帶有 HUMAN_AGENT 標籤的訊息",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "只有在問題無法於 24 小時內合理解決時，您才可以在 7 天內回覆使用者的訊息。例如週末、假日，或需要超過一天才能完成的案例。請勿因其他原因使用此選項，否則可能讓您的 Facebook 粉專或 Instagram 帳號面臨風險。如果您不確定，請不要繼續。",
+    "humanAgentWindowExpired": "訊息傳遞視窗已過期。聯絡人必須先傳送訊息才能重新開始對話。",
+    "restoreVersionSuccess": "流程已還原為所選版本",
+    "revertToPublishedSuccess": "草稿已還原為已發布版本",
+    "revertToPublishedConfirmTitle": "要還原為已發布版本嗎？",
+    "revertToPublishedConfirmDescription": "這會捨棄目前草稿變更，並還原為已發布的流程內容。",
+    "noVersionsFound": "找不到已發布的版本",
+    "publishVersionSuccess": "新版本已發布",
+    "flowConfigIncomplete": "部分設定不完整",
+    "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，輪播需要在每張卡片上使用相同的按鈕：每張卡片上有一個連結按鈕，或每張卡片上有相同數量的回應按鈕",
+    "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，帶有連結按鈕的輪播卡片不能同時包含其他按鈕。請移除此卡片上的其他按鈕，或將連結按鈕改成其他動作。",
+    "duplicateNodeError": "無法複製該區塊。請再試一次。",
+    "deleteNodeError": "無法刪除該區塊。請再試一次。",
+    "redoHistoryCleared": "重做歷史記錄已清除",
+    "historyDepth": "({count})"
+  },
+  "productCategories": {
+    "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
+    "productCount": "{count, plural, =0 {沒有商品} one {# 項商品} other {# 項商品}}",
+    "deleteChildrenWarning": "{count, plural, one {其 # 個子分類也會一併刪除。} other {其 # 個子分類也會一併刪除。}}",
+    "title": "分類",
+    "loadError": "無法載入產品類別。",
+    "all": "所有產品",
+    "create": "建立類別",
+    "edit": "重新命名類別",
+    "name": "分類名稱",
+    "namePlaceholder": "例如夏季系列",
+    "parent": "父類別",
+    "noParent": "無（頂層）",
+    "save": "儲存",
+    "created": "分類。",
+    "updated": "分類已更新。",
+    "deleted": "分類已刪除。",
+    "saveError": "無法儲存此類別。",
+    "deleteError": "無法刪除此類別。",
+    "delete": "刪除",
+    "cancel": "取消",
+    "actions": "分類操作",
+    "deleteTitle": "刪除「{name}」？",
+    "createSub": "建立子類別",
+    "empty": "尚無分類。請建立分類以整理您的商品。",
+    "columns": {
+      "name": "名稱",
+      "products": "產品",
+      "subcategories": "子類別"
+    },
+    "expand": "顯示子類別",
+    "collapse": "隱藏子類別"
+  },
+  "actions": {
+    "copy": "複製",
+    "copyUrl": "複製 URL",
+    "actions": "操作",
+    "add": "新增",
+    "addVariable": "新增變數",
+    "addFeature": "新增 {feature}",
+    "addFlowReply": "新增流程回覆",
+    "addMore": "新增更多",
+    "addTag": "新增標籤",
+    "addAction": "新增動作",
+    "addCondition": "新增條件",
+    "addTextReply": "新增文字回覆",
+    "markAsFollowUp": "標記為待後續跟進",
+    "removeFromFollowUp": "移除",
+    "markAsUnread": "標記為未讀",
+    "archive": "封存",
+    "unarchive": "取消封存",
+    "archiveConversation": "封存對話",
+    "assign": "指派",
+    "assignConversation": "指派對話",
+    "back": "返回",
+    "billing": "帳務",
+    "redeem": "兌換",
+    "blockContact": "封鎖聯絡人",
+    "unblockContact": "解除封鎖聯絡人",
+    "undo": "撤銷",
+    "redo": "重做",
+    "cancel": "取消",
+    "clear": "清除",
+    "clearCustomField": "清除自訂欄位",
+    "collapse": "折疊",
+    "expand": "展開",
+    "confirm": "確認",
+    "connect": "連接",
+    "continue": "繼續",
+    "create": "建立",
+    "loading": "載入中...",
+    "createFeature": "建立{feature}",
+    "delete": "刪除",
+    "deleteContact": "刪除聯絡人",
+    "disableBot": "停用機器人",
+    "disconnect": "中斷連線",
+    "download": "下載",
+    "edit": "編輯",
+    "editFeature": "編輯 {feature}",
+    "enableBot": "啟用機器人",
+    "export": "匯出",
+    "getEmbedCode": "取得嵌入代碼",
+    "getID": "取得 ID",
+    "getTools": "取得工具",
+    "import": "匯入",
+    "exportContacts": "匯出聯絡人",
+    "filter": "篩選條件",
+    "selectFile": "選擇檔案",
+    "insertLink": "插入連結",
+    "addNew": "新增",
+    "send": "傳送",
+    "loginWithMagicLink": "使用 Magic Link 登入",
+    "manage": "管理",
+    "admin": "管理員",
+    "more": "更多",
+    "moreOptions": "更多選項",
+    "moreSettings": "更多設定",
+    "openMenu": "開啟選單",
+    "openWebchat": "開啟網路聊天",
+    "removeTag": "移除標籤",
+    "rename": "重新命名",
+    "reset": "重設",
+    "save": "儲存",
+    "selectAll": "全選",
+    "selectRow": "選擇行",
+    "sendFlow": "傳送流程",
+    "sendMessage": "傳送訊息",
+    "setCustomField": "設定自訂欄位",
+    "synchronize": "同步",
+    "syncMetaCatalog": "同步 Meta 目錄",
+    "testNow": "立即測試",
+    "toggle": "切換",
+    "toggleTheme": "切換主題",
+    "transferConversationToBot": "將對話轉移到機器人",
+    "update": "更新",
+    "updatePayment": "更新付款",
+    "upgradePlan": "升級方案",
+    "upgradeToPro": "升級到專業版",
+    "uploadFile": "上傳檔案",
+    "view": "檢視",
+    "viewAnalytics": "檢視分析",
+    "duplicate": "重複",
+    "getDraftLink": "取得草稿連結",
+    "getPublishedLink": "取得已發布的連結",
+    "getMessengerAdsJson": "取得 Messenger 廣告用 JSON",
+    "getMessengerAdPayload": "取得 Messenger 廣告酬載",
+    "ok": "好的",
+    "next": "下一頁",
+    "prev": "上一頁",
+    "moveEarlier": "往前移動",
+    "moveLater": "往後移動",
+    "analytics": "分析",
+    "deleteAnalytics": "刪除分析資料",
+    "flowVersions": "流程版本",
+    "revertToPublished": "還原為已發布版本",
+    "search": "搜尋",
+    "pleaseSelect": "請選擇",
+    "noRecordFound": "找不到記錄。",
+    "typeMessage": "輸入訊息",
+    "enterText": "輸入文字",
+    "enterFieldAndPressEnter": "輸入 {field} 並按 Enter",
+    "addAnother": "新增另一個...",
+    "messagePlaceholder": "訊息...",
+    "signOut": "登出",
+    "backToSignIn": "返回登入",
+    "connectFeature": "連接 {feature}",
+    "scanQRCode": "使用相機掃描 QR Code",
+    "inviteFeature": "邀請 {feature}",
+    "joinTheTeam": "加入團隊",
+    "chooseChannel": "選擇頻道",
+    "chooseSubaction": "選擇子操作",
+    "resend": "重新傳送",
+    "publish": "發佈",
+    "setStartNode": "設定為起始節點",
+    "getNodeId": "取得節點 ID",
+    "setAsDefaultAgent": "設定為預設值",
+    "unsetDefaultAgent": "取消設定預設值",
+    "clickToEdit": "點選編輯",
+    "move": "移動",
+    "moveUp": "向上移動",
+    "moveDown": "向下移動",
+    "removeAssignee": "移除被指派者",
+    "sendMail": "傳送郵件",
+    "wait": "等等",
+    "followUp": "跟進",
+    "landingPage": "著陸頁面",
+    "generate": "產生",
+    "regenerate": "重新產生",
+    "qrCode": "QR Code",
+    "addSequence": "新增序列",
+    "removeSequence": "移除序列",
+    "activate": "啟用",
+    "deactivate": "停用",
+    "onFailure": "失敗時",
+    "onSkip": "跳過",
+    "onSuccess": "成功",
+    "clone": "複製",
+    "remove": "移除",
+    "restore": "還原"
+  },
+  "states": {
+    "success": "成功",
+    "error": "錯誤",
+    "skip": "跳過"
+  },
+  "admins": {
+    "title": "管理員"
+  },
+  "assignAdmin": {
+    "assignConversation": "指派對話",
+    "assignedToMe": "分配給我",
+    "assignedTo": "已指派給 {name}",
+    "unAssigned": "未分配",
+    "user": "使用者"
+  },
+  "aiAgent": {
+    "defaultAgent": "預設 AI Agent",
+    "description": "管理與設定 AI Agent，以透過智慧自動化與回應提升工作區能力。",
+    "title": "AI Agent",
+    "name": "AI Agents"
+  },
+  "aiFiles": {
+    "description": "讓您的Agent程式存取 PDF、檔案等",
+    "title": "知識",
+    "noEmbeddingProvider": "尚未設定嵌入提供者。AI 檔案嵌入需要 OpenAI 或 Gemini 整合；DeepSeek 和 Claude 不支援嵌入模型。"
+  },
+  "aiFunctions": {
+    "description": "設定 LLM 功能，讓您的 AI Agent 更加智能",
+    "title": "人工智慧功能"
+  },
+  "aiMcpServers": {
+    "description": "透過 MCP 連接 AI 與外部系統。",
+    "title": "MCP 伺服器",
+    "tools": {
+      "label": "可用工具"
+    }
+  },
+  "analytics": {
+    "contacts": "聯絡人",
+    "newContacts": "新聯絡人",
+    "activeContacts": "活躍聯絡人",
+    "botMessagesByResult": "機器人收到的訊息",
+    "botMessagesNoResponse": "收到訊息但沒有回覆",
+    "botMessagesWithResponse": "收到帶有回應的訊息",
+    "aiProvider": "人工智慧供應商",
+    "responseCount": "回應計數",
+    "percentage": "百分比",
+    "responseTime": "回應時間",
+    "firstResponseTime": "首次回應時間",
+    "totalContacts": "聯絡人總數",
+    "averageResponseTime": "平均回應時間（分鐘）",
+    "averageResponseTimeHelp": "真人客服回覆客戶訊息所需的平均時間。",
+    "averageFirstResponseTimeByAdmin": "真人客服的平均首次回應時間（分鐘）",
+    "averageFirstResponseTimeByAdminHelp": "真人客服對客戶訊息進行初步回覆所需的平均時間。",
+    "averageResponseTimeByAdmin": "真人客服的平均回應時間（分鐘）",
+    "averageDurationOfConversation": "對話的平均持續時間（分鐘）",
+    "averageDurationOfConversationHelp": "這是對話在轉移到機器人之前由人類處理的平均時間。",
+    "success": "成功",
+    "fallback": "預設回覆",
+    "admins": "真人客服",
+    "messages": "訊息",
+    "conversations": "對話",
+    "assignedConversations": {
+      "title": "已指派的對話",
+      "helpText": "從收件匣或機器人分配的對話。"
+    },
+    "messagesSentByHumanOrBot": "真人客服／機器人傳送的訊息",
+    "human": "真人客服",
+    "bot": "機器人",
+    "conversationsMovedToHumanOrBot": "轉交給真人客服／機器人的對話",
+    "uniqueConversationsByAdmins": "真人客服的不重複對話",
+    "uniqueConversationsByAdminsHelp": "真人客服至少傳送一則訊息的聯絡人數量。",
+    "messagesSentByAdmins": "真人客服傳送的訊息",
+    "messagesSentByAdminsHelp": "從收件匣傳送的訊息。",
+    "allContactsByChannel": "依頻道分類的所有聯絡人",
+    "newContactsByChannel": "依頻道分類的新聯絡人",
+    "newContactsBySource": "依來源分類的新聯絡人",
+    "assignedConversationsByAdmins": "真人客服已指派的對話",
+    "assignedConversationsByAdminsHelp": "從收件匣或機器人分配的對話。",
+    "followUpConversations": "跟進對話",
+    "followUpConversationsHelp": "標記為來自收件匣或機器人的後續對話。",
+    "archivedConversations": "封存的對話",
+    "blockedConversations": "阻止的對話",
+    "blockedConversationsHelp": "您的帳戶封鎖的對話。",
+    "blockedContacts": "已封鎖的聯絡人",
+    "blockedContactsHelp": "不希望再接收您帳號訊息的聯絡人",
+    "newContactsByCountry": "依國家／地區分類的新聯絡人",
+    "date": "日期",
+    "total": "總計",
+    "messagesSent": "已傳送訊息",
+    "selectRange": "選擇範圍",
+    "dateFilterPreset": "日期過濾器預設",
+    "noResults": "無結果。",
+    "noData": "無資料",
+    "comingSoon": "即將推出",
+    "unknown": "未知",
+    "pagination": {
+      "selectedRows": "已選取 {selected} / {total} 列。",
+      "rowsPerPage": "每頁列數",
+      "pageOf": "第 {page} 頁（共 {pageCount}）",
+      "firstPage": "前往第一頁",
+      "previousPage": "前往上一頁",
+      "nextPage": "前往下一頁",
+      "lastPage": "前往最後一頁"
+    },
+    "sessionsThroughTheRef": "每日透過 Ref「{ref}」產生的工作階段",
+    "sessionsThroughTheMagicLink": "透過 Magic Link「{ref}」產生的每日工作階段"
+  },
+  "flowAnalytics": {
+    "nodes": {
+      "start": "開始",
+      "notFound": "找不到節點"
+    },
+    "stats": {
+      "sent": "已傳送",
+      "delivered": "已交付",
+      "seen": "已看過",
+      "clicked": "已點擊",
+      "waiting": "等待"
+    }
+  },
+  "autoAssignConversation": {
+    "rule": {
+      "allTime": "平等的對話分配（所有時間）",
+      "label": "分配規則",
+      "last24Hours": "平等對話分佈（過去 24 小時）",
+      "last8Hours": "平等對話分佈（過去 8 小時）",
+      "lastHour": "平等對話分配（最後一小時）"
+    },
+    "users": {
+      "label": "使用者"
+    }
+  },
+  "automatedResponse": {
+    "setting": {
+      "description": "自動回應描述",
+      "label": "自動回應"
+    }
+  },
+  "billing": {
+    "title": "計費",
+    "plan": {
+      "label": "方案：{plan}",
+      "free": "免費"
+    },
+    "usage": {
+      "contacts": "聯絡人",
+      "mac": "每月活躍聯絡人",
+      "botMessages": "機器人訊息",
+      "monthlyBotMessages": "每月機器人訊息",
+      "workspaces": "工作區",
+      "channels": "頻道",
+      "teamMembers": "團隊成員"
+    },
+    "limitReached": {
+      "workspaces": "您已達到工作區上限。請升級方案以建立更多工作區。",
+      "channels": "您已達到頻道上限。請升級方案以連接更多頻道。",
+      "teamMembers": "您已達到團隊成員上限。請升級方案以邀請更多人。",
+      "contacts": "您已達到聯絡人上限。請升級方案以新增更多聯絡人。",
+      "mac": "您已達到每月活躍聯絡人上限。請升級方案以支援更多使用量。"
+    },
+    "pastDue": {
+      "message": "您上次付款失敗。請更新付款方式以保持工作區可用。"
+    },
+    "trial": {
+      "daysLeft": "試用期：剩下 {days} 天",
+      "endsTomorrow": "試用期將於明天結束",
+      "expired": "您的試用已結束 — 升級以保持您的工作區維持啟用狀態",
+      "dismiss": "關閉"
+    },
+    "trialExpired": {
+      "title": "您的免費試用已結束",
+      "description": "訂閱方案以繼續使用您的工作區。",
+      "cta": "檢視方案",
+      "bannerTitle": "試用結束",
+      "bannerDescription": "已停用建立新資源。您仍然可以中斷頻道連線並安排刪除工作區。",
+      "bannerCta": "升級",
+      "createDisabled": "建立新的 {feature} 已停用。升級才能繼續。"
+    },
+    "macLimitReached": {
+      "bannerTitle": "已達到每月活躍聯絡人限制",
+      "bannerDescription": "傳送與接收訊息將暫停，直到您升級方案。",
+      "bannerCta": "升級",
+      "createDisabled": "建立新的 {feature} 將被停用，直到您升級您的方案。"
+    }
+  },
+  "broadcasts": {
+    "title": "廣播",
+    "status": {
+      "scheduled": "已安排",
+      "sent": "已傳送",
+      "sending": "正在傳送",
+      "cancelled": "已取消"
+    },
+    "stats": {
+      "sent": "已傳送",
+      "delivered": "已交付",
+      "seen": "已看過",
+      "clicked": "已點擊",
+      "failed": "失敗",
+      "noContacts": "找不到聯絡人",
+      "pageInfo": "第 {page} 頁（共 {pageCount}）",
+      "selectedAll": "已全選",
+      "selectedCount": "{count}",
+      "tagAllDialogDescription": "標籤將新增到所有已選聯絡人。",
+      "tagDialogDescription": "標籤將新增到 {count} 位聯絡人。",
+      "tagQueued": "在後台標記 {count} 聯絡人。",
+      "loadingMore": "載入更多...",
+      "receivers": "接收器"
+    },
+    "messengerList": {
+      "title": "Messenger 清單",
+      "description": "可能包含促銷訊息，並且只會傳送給已訂閱您 Messenger 清單的人。"
+    },
+    "messengerActiveContacts": {
+      "title": "Messenger 活躍聯絡人",
+      "description": "可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。"
+    },
+    "messengerAccountUpdate": {
+      "title": "Messenger 帳號更新",
+      "description": "通知使用者其應用程式或帳戶發生非經常性變更。"
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Messenger已確認的事件更新",
+      "description": "向使用者傳送他們已註冊的活動的提醒或更新（例如，購買的門票）。此標籤可用於即將發生的事件和正在進行的事件。"
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Messenger 購買後更新",
+      "description": "通知使用者最近購買的更新。交易確認，例如發票或收據，出貨狀態通知，例如產品在途、已出貨、已交付或延遲。"
+    },
+    "allContacts": {
+      "title": "全部聯絡人",
+      "description": "向所有聯絡人傳送流。"
+    },
+    "receiversCount": "接收器：{count}",
+    "receiversLoading": "接收器：正在載入...",
+    "whatsappTemplateMessage": {
+      "title": "範本訊息",
+      "description": "將 WhatsApp 訊息範本傳送給您的聯絡人"
+    },
+    "messengerTemplateMessage": {
+      "title": "範本訊息",
+      "description": "將 Messenger 訊息範本傳送給您的聯絡人"
+    },
+    "whatsappWithin24Hours": {
+      "title": "24 小時內活躍聯絡人",
+      "description": "可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。"
+    },
+    "instagramActiveContacts": {
+      "title": "Instagram",
+      "description": "可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。"
+    },
+    "telegramAllContacts": {
+      "title": "Telegram",
+      "description": "如果您想向您的Telegram 聯絡人傳送廣播，請使用此訊息類型。"
+    },
+    "tiktokActiveContacts": {
+      "title": "TikTok",
+      "description": "可能包含促銷訊息，並且只會傳送給過去 24 小時內向您的機器人傳送訊息的使用者。TikTok 廣播僅支援文字和影像。"
+    },
+    "flowType": {
+      "flow": {
+        "title": "流程",
+        "description": "向您的聯絡人傳送串流"
+      },
+      "template": {
+        "title": "範本",
+        "description": "將範本傳送給您的聯絡人"
+      }
+    },
+    "detail": {
+      "title": "廣播詳細資訊",
+      "subaction": "子操作",
+      "audienceFilter": "受眾過濾器",
+      "noAudienceFilter": "無受眾過濾器",
+      "template": "範本",
+      "noTemplate": "無範本",
+      "integration": "整合"
+    }
+  },
+  "condition": {
+    "yes": "是",
+    "no": "否",
+    "valuePlaceholder": "...",
+    "datePlaceholder": "年-月-日",
+    "datetimePlaceholder": "YYYY-MM-DD HH:mm",
+    "datetimeInvalid": "輸入 YYYY-MM-DD HH:mm 格式的日期或變量",
+    "operator": {
+      "and": "所有條件",
+      "or": "任何條件"
+    },
+    "fields": {
+      "locale": "語言",
+      "language": "語言",
+      "fullName": "全名",
+      "country": "國家/地區",
+      "continent": "大陸",
+      "gender": "性別",
+      "subscribedToBroadcast": "訂閱廣播",
+      "contactCreatedDate": "聯絡人建立日期",
+      "contactCreatedDateMinutesAgo": "聯絡人建立日期（幾分鐘前）",
+      "source": "來源",
+      "conversationTransferredToHuman": "對話轉移到人類",
+      "interactedInLast24H": "過去 24 小時內的互動次數",
+      "interactedInLast24h": "過去 24 小時內的互動次數",
+      "followUp": "跟進",
+      "isGuestUser": "訪客使用者",
+      "existingContact": "現有聯絡人",
+      "hasContactInfo": "電話和電子郵件",
+      "currentChannel": "頻道",
+      "inbox": "收件匣",
+      "subjectToEuRules": "遵守歐盟規則",
+      "timezone": "時區",
+      "hasOpportunity": "有機會（開放、獲勝、輸球）",
+      "hasOpenOpportunity": "有空缺機會",
+      "hasWonOpportunity": "已贏得機會",
+      "hasLostOpportunity": "失去了機會",
+      "instagramStoryReply": "訊息是 Instagram 限時動態回覆",
+      "followsBusinessOnInstagram": "關注 Instagram 上的商家",
+      "businessFollowsUserOnInstagram": "商家在 Instagram 上關注使用者",
+      "verifiedAccountOnInstagram": "Instagram 已驗證帳號",
+      "followerCountOnInstagram": "Instagram 追蹤者數",
+      "lastSent": "最後傳送",
+      "lastDelivered": "最後交付",
+      "lastSeen": "最後出現",
+      "lastSeenMinutesAgo": "最後出現（分鐘前）",
+      "lastInteraction": "最後一次互動",
+      "lastInteractionMinutesAgo": "最後一次互動（分鐘前）",
+      "unreplied": "未回覆",
+      "unread": "未讀",
+      "appliedJobs": "申請的職位",
+      "tags": "標籤",
+      "customFields": "自訂欄位",
+      "phone": "電話",
+      "completedWhatsAppFlows": "完成 WhatsApp 流程",
+      "messengerList": "Messenger 清單",
+      "subscribedToDripCampaign": "訂閱滴灌活動",
+      "conversationAssigned": "已分配會話",
+      "entryPointsLinks": "入口點連結",
+      "sentMessage": "已傳送訊息",
+      "keywordsReceived": "已收到關鍵字",
+      "executedFlow": "執行流程",
+      "executedStep": "執行步驟",
+      "consecutiveAiFailures": "AI連續失敗次數",
+      "questionnaireStarted": "問卷已開始",
+      "questionnaireInProgress": "問卷進行中",
+      "questionnaireFinished": "問卷完成",
+      "couponTopic": "優惠券",
+      "votedOnPoll": "已投票",
+      "lastComment": "最後留言",
+      "commentedOnPost": "曾對貼文留言",
+      "reactedOnPost": "回覆貼文",
+      "lastTotalTaggedUsers": "最後標記的使用者總數",
+      "lastTotalNewTaggedUsers": "最後新標記使用者總數",
+      "email": "電子郵件",
+      "phoneWasVerified": "電話已驗證",
+      "optedInForSms": "已同意接收簡訊",
+      "broadcastSent": "廣播已傳送",
+      "broadcastDelivered": "廣播已交付",
+      "broadcastSeen": "廣播已檢視",
+      "broadcastClicked": "廣播已點擊",
+      "broadcastFailed": "廣播失敗",
+      "emailWasVerified": "電子郵件已驗證",
+      "optedInForEmail": "選擇接收電子郵件",
+      "emailSent": "電子郵件已傳送",
+      "emailDelivered": "電子郵件已送達",
+      "emailOpened": "電子郵件已打開",
+      "emailClicked": "點選電子郵件",
+      "isWithinWorkingHours": "工作時間內",
+      "currentDate": "目前日期",
+      "currentTime": "目前時間",
+      "currentDayOfMonth": "目前日期",
+      "currentDayOfWeek": "星期幾",
+      "currentMonth": "目前月份",
+      "bought": "已購買",
+      "boughtItems": "購買了項目",
+      "totalSpent": "總支出",
+      "numberOfOrders": "訂單數",
+      "shoppingCartTotal": "購物車總數",
+      "shoppingCartSubtotal": "購物車小計",
+      "shoppingCartIsEmpty": "購物車是空的",
+      "shoppingCartContainsItems": "購物車包含商品",
+      "lastSentMessageFailed": "上一則傳送訊息失敗",
+      "lastUserInput": "最後一次使用者輸入",
+      "lastUserInputType": "最後的使用者輸入類型",
+      "archived": "已封存",
+      "blocked": "已阻止",
+      "noAdminReply": "無管理員回覆",
+      "contactCreatedAt": "聯絡人建立時間",
+      "lastUserInputTypes": {
+        "text": "文字",
+        "location": "位置",
+        "refLink": "參考連結",
+        "image": "圖片",
+        "video": "影片",
+        "audio": "音頻",
+        "gif": "GIF",
+        "file": "檔案"
+      }
+    },
+    "fieldGroups": {
+      "opportunity": "機會",
+      "instagram": "Instagram",
+      "analytics": "分析",
+      "facebookInstagramComment": "Facebook / Instagram 留言",
+      "broadcastWhatsapp": "廣播 (WhatsApp)",
+      "systemTime": "系統時間",
+      "ecommerce": "電子商務",
+      "systemFields": "系統欄位",
+      "topicCoupon": "主題優惠券",
+      "customFields": "自訂欄位",
+      "email": "電子郵件",
+      "sms": "簡訊"
+    },
+    "languages": {
+      "ar": "阿拉伯語",
+      "de": "德語",
+      "en": "英語",
+      "es": "西班牙語",
+      "fil": "菲律賓語",
+      "fr": "法語",
+      "hi": "印地語",
+      "id": "印尼語",
+      "it": "義大利語",
+      "ja": "日語",
+      "km": "高棉語",
+      "ko": "韓語",
+      "lo": "寮國",
+      "ms": "馬來語",
+      "my": "緬甸語",
+      "nl": "荷蘭語",
+      "pt": "葡萄牙語",
+      "ru": "俄語",
+      "th": "泰語",
+      "vi": "越南語",
+      "zh": "中文"
+    },
+    "sources": {
+      "direct": "直接",
+      "comments": "留言",
+      "ads": "廣告",
+      "fbLeadAd": "FB 領先廣告",
+      "inboundMessage": "傳入訊息",
+      "imported": "匯入",
+      "api": "API",
+      "webchat": "網路聊天",
+      "botLink": "機器人連結",
+      "chatPlugin": "C.聊天外掛"
+    }
+  },
+  "channels": {
+    "title": "頻道",
+    "duplicated": {
+      "generic": "此帳戶已連接到另一個工作區。",
+      "instagram": "此 Instagram 帳戶已連接到另一個工作區。",
+      "messenger": "此Facebook 頁面已連接到另一個工作區。",
+      "telegram": "此Telegram 機器人已連接到另一個工作區。",
+      "tiktok": "此TikTok帳戶已連接到另一個工作區。",
+      "whatsapp": "此 WhatsApp 號碼已連接到另一個工作區。",
+      "zalo": "此Zalo OA 已連接到另一個工作區。"
+    },
+    "reconnect": {
+      "success": "頻道重新連線成功。",
+      "errors": {
+        "notFound": "找不到要重新連接的頻道。",
+        "pageNotFound": "授權的Facebook帳戶無權存取此頁面。使用正確的帳戶登入並授予所有請求的權限。",
+        "accountNotFound": "授權帳戶與連結的帳戶不符。使用正確的帳號登入。",
+        "cancelled": "重新連線已取消。請重試並授予請求的權限。",
+        "failed": "重新連線失敗。請再試一次。"
+      }
+    }
+  },
+  "workspace": {
+    "schedule": {
+      "title": "設定活躍時間",
+      "description": "選擇開始和結束時間。如果結束時間早於開始時間，排程將跨夜執行。",
+      "startTime": "開始時間",
+      "endTime": "結束時間",
+      "alwaysRun": "永遠執行",
+      "save": "儲存",
+      "invalidTimeRange": "開始時間與結束時間必須不同",
+      "timeRequired": "請選擇開始時間與結束時間",
+      "activated": "工作區已啟用",
+      "deactivated": "工作區已停用",
+      "activeHours": "從 {startTime} 到 {endTime} 活躍",
+      "permissionRequired": "只有超級管理員才能更改工作區活動時間"
+    },
+    "deletion": {
+      "title": "刪除工作區",
+      "description": "永久刪除此工作區。所有聯絡人、設定和資料將在您確認後 24 小時內刪除。",
+      "schedule": "刪除工作區",
+      "confirmTitle": "要刪除此工作區嗎？",
+      "confirmDescription": "所有聯絡人、設定和資料將在您確認後 24 小時內永久刪除。您可以在此之前隨時撤銷刪除。",
+      "pending": "此工作區將於 {countdown} ({date}) 刪除。在此之前您可以隨時撤銷此操作。",
+      "pendingFallback": "即將推出",
+      "undone": "已取消刪除工作區",
+      "bannerTitle": "工作區已排定刪除",
+      "bannerDescription": "此工作區已排定刪除。撤銷下方的刪除即可繼續使用。",
+      "pendingBlockedToast": "此工作區已排定刪除。請聯絡工作區管理員以還原存取。",
+      "navDisabledTooltip": "排定刪除工作區時不可用",
+      "badge": "排定刪除"
+    }
+  },
+  "workspaces": {
+    "list": {
+      "title": "工作區清單"
+    }
+  },
+  "workspaceToken": {
+    "title": "工作區代幣"
+  },
+  "dialog": {
+    "deleteConfirmation": "你確定嗎？\n此操作無法撤銷。\n這將從我們的伺服器中永久刪除您的 {feature}。"
+  },
+  "flows": {
+    "title": "流程",
+    "quickReplies": {
+      "limitReached": "已達到快速回覆限制 ({max})。"
+    },
+    "buttons": {
+      "limitReached": "已達到按鈕限制 ({max})。"
+    },
+    "aiGenerateText": {
+      "label": "{name}：產生文字"
+    },
+    "aiGenerateImage": {
+      "label": "{name}：產生影像"
+    },
+    "aiEditImage": {
+      "label": "{name}：編輯影像"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}：分析影像"
+    },
+    "aiExtractData": {
+      "label": "{name}：擷取資料"
+    },
+    "openaiCompatible": {
+      "empty": "連接相容OpenAI的提供者。",
+      "integration": "OpenAI相容供應商",
+      "none": "無"
+    },
+    "actions": {
+      "addContactNotes": "新增聯絡人備註",
+      "addContactTag": "新增聯絡人標籤",
+      "aiDeleteMessageHistory": "刪除訊息歷史記錄",
+      "aiExtractData": "AI擷取資料",
+      "aiAnalyzeImage": "AI 分析影像",
+      "aiSpeechToText": "人工智慧語音轉文字",
+      "aiGenerateImage": "AI 產生影像",
+      "aiGenerateTextAgent": "AI產生文字Agent",
+      "aiTextToSpeech": "人工智慧文字轉語音",
+      "archiveConversation": "封存對話",
+      "assignConversation": "指派對話",
+      "autoAssignConversation": "自動指派對話",
+      "blockContact": "封鎖聯絡人",
+      "broadcastActions": "廣播操作",
+      "callApi": "外部API 請求",
+      "make": "Make.com",
+      "triggers": "觸發器",
+      "questionnaires": "問卷",
+      "setUpCoupon": "設定優惠券",
+      "markCouponUsed": "標記優惠券",
+      "chooseChannel": "選擇頻道",
+      "clearCustomField": "清除自訂欄位",
+      "condition": "條件",
+      "contactActions": "聯絡人操作",
+      "countCharacters": "計算字元數",
+      "deleteContact": "刪除聯絡人",
+      "emailActions": "電子郵件操作",
+      "flowActions": "流程操作",
+      "followConversation": "關注對話",
+      "formatDate": "格式化日期",
+      "generateCode": "產生代碼",
+      "getDataFromJson": "從JSON取得資料",
+      "inboxActions": "收件匣操作",
+      "markEmailVerified": "標記電子郵件已驗證",
+      "activeCampaignSyncContact": "將聯絡人新增到 ActiveCampaign",
+      "facebookCustomAudience": "Facebook 自訂受眾",
+      "mailchimpAddMember": "將聯絡人新增到 MailChimp",
+      "mailerLiteAddSubscriber": "將聯絡人新增到 MailerLite",
+      "klaviyoSyncProfile": "將聯絡人新增到 Klaviyo",
+      "moosendCreateContact": "將聯絡人新增到 Moosend",
+      "dripSubscribeSubscriber": "將聯絡人加入 Drip",
+      "getResponseAddContact": "將聯絡人新增到 GetResponse",
+      "sendGridAddContact": "將聯絡人新增到 SendGrid",
+      "messenger": "Messenger",
+      "openWebsite": "打開網站",
+      "optInEmail": "選擇接收電子郵件",
+      "optOutEmail": "選擇退出電子郵件",
+      "performAction": "執行操作",
+      "removeContactTag": "移除聯絡人標籤",
+      "setMessengerUserPersistentMenu": "設定使用者常駐選單",
+      "enableMessengerComposer": "啟用 Messenger 作曲家",
+      "disableMessengerComposer": "停用 Messenger 作曲家",
+      "setMessengerPersona": "設定角色",
+      "updateMessengerContactData": "更新聯絡人資料",
+      "sendAudio": "傳送音頻",
+      "sendCard": "傳送卡片",
+      "sendExternalFlow": "啟動外部流程",
+      "sendExternalNode": "啟動外部節點",
+      "sendFile": "傳送檔案",
+      "sendGif": "傳送 GIF",
+      "sendImage": "傳送影像",
+      "sendMessage": "傳送訊息",
+      "sendNode": "啟動另一個節點",
+      "sendText": "傳送文字",
+      "sendVideo": "傳送影片",
+      "sendTemplateMessage": "範本訊息",
+      "whatsappOptionList": "選項清單",
+      "noTemplatesAvailable": "目前沒有可用的範本",
+      "noFlowsAvailable": "無可用流量",
+      "setCustomField": "設定自訂欄位",
+      "startAnotherNode": "啟動另一個節點",
+      "startExternalFlow": "啟動外部流程",
+      "startExternalNode": "啟動外部節點",
+      "startFlow": "開始流程",
+      "subscribeBroadcast": "訂閱廣播",
+      "tools": "工具",
+      "transferConversationToBot": "將對話轉移到機器人",
+      "transferConversationToHuman": "將對話轉移給人類",
+      "unarchiveConversation": "取消封存對話",
+      "unassignConversation": "取消分配對話",
+      "unfollowConversation": "取消追蹤對話",
+      "unsubscribeBroadcast": "退訂廣播",
+      "getUserData": "取得使用者資料",
+      "sendCarousel": "傳送輪播",
+      "actions": "操作",
+      "findGif": "找 GIF",
+      "spreadsheetGetRow": "取得行",
+      "spreadsheetUpdateRow": "更新列",
+      "spreadsheetSendData": "傳送資料",
+      "spreadsheetGetRandomRow": "取得隨機行",
+      "spreadsheetClearRow": "清除行",
+      "typing": "打字",
+      "sequenceActions": "序列操作",
+      "subscribeSequence": "訂閱序列",
+      "unsubscribeSequence": "退訂序列",
+      "splitTraffic": "拆分流量",
+      "aiEditImage": "人工智慧編輯影像",
+      "whatsappFlow": "WhatsApp流程"
+    },
+    "splitTraffic": {
+      "balanceHint": "總和必須等於 100%。",
+      "addVariation": "新變體"
+    },
+    "condition": {
+      "addCase": "檢查新狀況",
+      "caseTitle": "案例 {index}",
+      "otherwise": "使用者不符合這些條件"
+    },
+    "whatsappOptionList": {
+      "buttonLabel": "按鈕標籤",
+      "optionTitle": "標題",
+      "optionDescription": "說明",
+      "addOption": "新增新",
+      "editButtonTitle": "編輯按鈕",
+      "editOptionTitle": "編輯選項"
+    },
+    "whatsappFlow": {
+      "buttonLabel": "按鈕標籤",
+      "editDialogTitle": "編輯 WhatsApp 流程",
+      "selectFlow": "WhatsApp流程",
+      "selectFlowPlaceholder": "選擇流",
+      "startScreen": "開始畫面",
+      "selectScreenPlaceholder": "選擇一個螢幕",
+      "fieldMappings": "將回應儲存到自訂欄位",
+      "paramKey": "參數",
+      "customField": "自訂欄位",
+      "selectCustomFieldPlaceholder": "選擇自訂欄位",
+      "addMapping": "新增對應",
+      "addCustomField": "新增新"
+    },
+    "sendCarousel": {
+      "addSlide": "新增幻燈片",
+      "removeSlide": "移除幻燈片",
+      "whatsappLinkButtonIgnored": "在WhatsApp上，此卡片的連結不起作用：帶有連結按鈕的卡片不能有其他按鈕。它將作為回復傳送。"
+    },
+    "additionalSteps": "附加步驟",
+    "delayType": {
+      "datetimeCustomField": "日期和時間自訂欄位",
+      "datetimeCustomFieldValue": "{customField}",
+      "duration": "持續時間",
+      "durationValue": "{duration}",
+      "date": "日期",
+      "specificDate": "具體日期",
+      "specificDateValue": "{date}",
+      "random": "隨機"
+    },
+    "formatTimezone": {
+      "timezone": "帳戶時區",
+      "contactTimezone": "聯絡人時區"
+    },
+    "fields": {
+      "selectTemplatePlaceholder": "選擇 WhatsApp 訊息範本",
+      "selectMessengerTemplatePlaceholder": "選擇 Messenger 訊息範本",
+      "preview": "預覽",
+      "typingSecondsLabel": "鍵入（秒）",
+      "lookupColumnsLabel": "尋找列：",
+      "filterModeAnd": "和",
+      "filterModeOr": "或"
+    },
+    "operators": {
+      "append": "追加到末尾",
+      "prepend": "加入到開頭",
+      "set": "設定為"
+    },
+    "wait": {
+      "datetimeTooltip": "觸發流程的日期和時間。",
+      "setInterval": "設定間隔",
+      "delayTypeLabel": "這是一個",
+      "fixed": "已修復",
+      "randomized": "隨機",
+      "delay": "延遲",
+      "durationDetailPrefix": "等等",
+      "dateDetailPrefix": "等到",
+      "customFieldDetailPrefix": "等到",
+      "randomDetailPrefix": "等待",
+      "randomDetailAnd": "和",
+      "intervalDetailPrefix": "活躍時間",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "持續時間",
+      "activeHours": "活躍時間",
+      "dateTypeLabel": "日期類型",
+      "datetimeLabel": "日期和時間",
+      "customFieldLabel": "自訂欄位",
+      "offset": "新增偏移量",
+      "offsetLabel": "偏移量",
+      "randomRangeLabel": "隨機範圍",
+      "minLabel": "最小值",
+      "maxLabel": "最大",
+      "unitLabel": "單位",
+      "specific": "具體",
+      "dynamic": "動態",
+      "selectTimePlaceholder": "選擇時間"
+    },
+    "followUp": {
+      "durationLabel": "持續時間",
+      "waitAndContinue": "等待<value>{duration}{unit}</value>並繼續",
+      "cancelOnReplyHint": "如果聯絡人在時間到期之前回覆，則不會傳送後續訊息。"
+    },
+    "setCustomField": {
+      "temporalHint": "將其留空以儲存目前日期/時間。"
+    }
+  },
+  "folders": {
+    "heading": {
+      "title": "資料夾"
+    }
+  },
+  "gemini": {
+    "autoReply": {
+      "description": "啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。",
+      "label": "人工智慧自動回覆"
+    },
+    "connect": {
+      "description": "利用由您的業務資料提供支援的 AI 自然地回應使用者。",
+      "label": "Google Gemini"
+    },
+    "title": "Google Gemini"
+  },
+  "general": {
+    "title": "常規"
+  },
+  "facebookAds": {
+    "title": "Facebook 廣告",
+    "setting": {
+      "label": "Facebook 廣告",
+      "description": "將 Facebook 廣告連接到聊天機器人，以更快速拓展業務。可建立自訂受眾，並新增或移除受眾成員。",
+      "reconnect": "重新連接"
+    },
+    "fields": {
+      "subscriberShouldBe": "訂閱者應該是",
+      "addedToCustomAudience": "新增至自訂受眾",
+      "removedFromCustomAudience": "從自訂受眾中刪除",
+      "adAccount": "廣告帳戶",
+      "customAudience": "自訂受眾",
+      "nothingSelected": "未選擇任何內容"
+    },
+    "adAccounts": {
+      "loading": "正在載入廣告帳號...",
+      "error": "載入廣告帳號失敗。請檢查您的Facebook廣告連結。"
+    },
+    "customAudiences": {
+      "loading": "正在載入自訂受眾...",
+      "error": "無法載入自訂受眾。請檢查您的Facebook廣告連結。"
+    },
+    "errors": {
+      "invalidAppSettings": "Facebook 應用程式設定無效"
+    }
+  },
+  "googleSheets": {
+    "setting": {
+      "label": "Google工作表",
+      "description": "Google 試算表整合設定"
+    },
+    "header": "列標題",
+    "title": "Google工作表"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "此整合可讓您將機器人中的客戶聯絡人儲存到 ActiveCampaign。"
+    },
+    "dialog": {
+      "description": "輸入 ActiveCampaign 帳戶設定中的 API URL 和 API 金鑰。"
+    },
+    "fields": {
+      "apiUrl": "APIURL",
+      "apiUrlPlaceholder": "https://youraccount.api-us1.com",
+      "apiKey": "API金鑰",
+      "operation": "操作",
+      "emailField": "電子郵件欄位",
+      "emailTooltip": "包含電子郵件的聯絡人欄位，用來識別 ActiveCampaign 中的聯絡人。",
+      "phoneField": "電話欄位",
+      "phone": "電話",
+      "list": "清單",
+      "lists": "清單",
+      "tags": "標籤",
+      "automation": "自動化",
+      "customFields": "自訂欄位",
+      "optional": "可選",
+      "nothingSelected": "未選擇任何內容",
+      "emptyField": "---",
+      "addCustomField": "新增自訂欄位"
+    },
+    "operations": {
+      "createOrUpdateContact": "建立或更新聯絡人",
+      "addContactToAutomation": "將聯絡人加入自動化"
+    },
+    "lists": {
+      "loading": "正在載入 ActiveCampaign 清單...",
+      "error": "無法載入 ActiveCampaign 清單。檢查整合是否已連接。",
+      "empty": "找不到 ActiveCampaign 清單。"
+    },
+    "automations": {
+      "loading": "正在載入 ActiveCampaign 自動化...",
+      "error": "無法載入 ActiveCampaign 自動化。檢查整合是否已連接。",
+      "empty": "找不到 ActiveCampaign 自動化。"
+    },
+    "tags": {
+      "loading": "正在載入 ActiveCampaign 標籤...",
+      "error": "無法載入 ActiveCampaign 標籤。檢查整合是否已連接。",
+      "empty": "找不到 ActiveCampaign 標籤。"
+    },
+    "customFields": {
+      "loading": "正在載入 ActiveCampaign 自訂欄位...",
+      "error": "無法載入 ActiveCampaign 自訂欄位。檢查整合是否已連接。",
+      "empty": "找不到 ActiveCampaign 自訂欄位。"
+    },
+    "errors": {
+      "invalidCredentials": "ActiveCampaign API URL 或 API 金鑰無效。請檢查您的憑證並重試。"
+    }
+  },
+  "getResponse": {
+    "title": "取得回應",
+    "setting": {
+      "label": "取得回應",
+      "description": "此整合可讓您將機器人中的客戶聯絡人儲存到 GetResponse。"
+    },
+    "fields": {
+      "apiKey": "API金鑰",
+      "list": "清單",
+      "listPlaceholder": "選擇一個清單",
+      "email": "電子郵件欄位",
+      "emailPlaceholder": "選擇電子郵件欄位",
+      "emailTooltip": "包含電子郵件的聯絡人欄位，用來識別 GetResponse 中的聯絡人。",
+      "tags": "標籤",
+      "tagsPlaceholder": "選擇標籤",
+      "dayOfCycle": "自動回覆週期日",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "將聯絡人移動到自動回覆循環中的指定天數。輸入 0 代表從第 0 天開始。",
+      "optional": "可選"
+    },
+    "campaigns": {
+      "loading": "正在載入 GetResponse 清單...",
+      "error": "無法載入 GetResponse 清單。檢查整合是否已連接。",
+      "empty": "找不到 GetResponse 清單。",
+      "limited": "僅顯示 GetResponse 清單的第一頁。"
+    },
+    "tags": {
+      "loading": "正在載入 GetResponse 標籤...",
+      "error": "無法載入 GetResponse 標籤。檢查整合是否已連接。",
+      "empty": "找不到 GetResponse 標籤。",
+      "limited": "僅顯示 GetResponse 標籤的第一頁。"
+    },
+    "errors": {
+      "invalidApiKey": "API 金鑰無效。請檢查您的 GetResponse API 金鑰並重試。"
+    }
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "此整合可讓您將機器人中的客戶聯絡人儲存到MailChimp。"
+    },
+    "fields": {
+      "audience": "觀眾",
+      "email": "電子郵件欄位",
+      "emailTooltip": "自訂欄位，其中包含使用者的電子郵件以識別MailChimp 聯絡人。",
+      "doubleOptIn": "雙重選擇加入",
+      "doubleOptInTooltip": "如果是，在將聯絡人新增至您的清單之前，將向該電子郵件地址傳送確認電子郵件。",
+      "on": "開啟",
+      "off": "關閉",
+      "optional": "可選",
+      "tags": "標籤",
+      "mergeFields": "MailChimp 中的自訂欄位"
+    }
+  },
+  "mailerLite": {
+    "title": "MailerLite",
+    "setting": {
+      "label": "MailerLite",
+      "description": "此整合可讓您將機器人中的客戶聯絡人儲存到MailerLite。"
+    },
+    "fields": {
+      "apiToken": "API代幣",
+      "group": "組",
+      "groupPlaceholder": "未選擇任何內容",
+      "email": "電子郵件欄位",
+      "status": "類型",
+      "customFields": "MailerLite 中的自訂欄位（可選）",
+      "emptyField": "---",
+      "providerField": "選擇MailerLite欄位",
+      "addMapping": "新增新"
+    },
+    "status": {
+      "active": "已訂閱",
+      "unconfirmed": "未確認"
+    },
+    "errors": {
+      "invalidApiKey": "API 權杖無效。請檢查您的 MailerLite API 權杖並重試。"
+    }
+  },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "此整合可讓您將客戶資料從機器人同步到 Klaviyo。"
+    },
+    "fields": {
+      "apiKey": "API金鑰",
+      "list": "Klaviyo 清單",
+      "listPlaceholder": "選擇 Klaviyo 清單",
+      "email": "電子郵件欄位",
+      "titleField": "標題欄位",
+      "titlePlaceholder": "選擇一個欄位",
+      "orgField": "組織欄位",
+      "orgPlaceholder": "選擇一個欄位",
+      "customProperties": "Klaviyo 中的自訂欄位",
+      "emptyField": "選擇聯絡人欄位",
+      "propertyKey": "Klaviyo 屬性鍵",
+      "addMapping": "新增映射"
+    },
+    "lists": {
+      "error": "無法載入 Klaviyo 清單。檢查整合是否已連接。"
+    },
+    "errors": {
+      "invalidApiKey": "API 金鑰無效。請檢查您的 Klaviyo API 金鑰並重試。"
+    }
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "此整合可讓您將客戶聯絡人從機器人儲存到 Moosend。"
+    },
+    "fields": {
+      "apiKey": "API金鑰",
+      "list": "Moosend 清單",
+      "listPlaceholder": "選擇 Moosend 清單",
+      "email": "電子郵件欄位"
+    },
+    "lists": {
+      "loading": "正在載入 Moosend 郵件清單...",
+      "empty": "找不到 Moosend 郵件清單。",
+      "error": "無法載入 Moosend 郵件清單。檢查整合是否已連接。"
+    },
+    "errors": {
+      "invalidApiKey": "API 金鑰無效。請檢查您的 Moosend API 金鑰並重試。",
+      "userNotEnabled": "此 Moosend 帳戶未啟用 API 存取。",
+      "connectFailed": "連接 Moosend 失敗。請稍後重試。"
+    }
+  },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "此整合可讓您將機器人中的客戶聯絡人儲存到 Drip。"
+    },
+    "fields": {
+      "apiToken": "API代幣",
+      "account": "帳戶",
+      "emailField": "電子郵件欄位",
+      "emailTooltip": "包含電子郵件的聯絡人欄位，用來識別 Drip 訂閱者。",
+      "phone": "電話",
+      "tags": "標籤",
+      "customFields": "Drip 中的自訂欄位",
+      "optional": "可選",
+      "nothingSelected": "未選擇任何內容",
+      "addCustomField": "新增自訂欄位"
+    },
+    "accounts": {
+      "loading": "正在載入滴灌帳戶...",
+      "error": "無法載入滴灌帳戶。檢查整合是否已連接。"
+    },
+    "tags": {
+      "loading": "正在載入滴灌標籤...",
+      "error": "無法載入 Drip 標籤。檢查整合是否已連接。",
+      "empty": "找不到 Drip 標籤。"
+    },
+    "customFields": {
+      "loading": "正在載入 Drip 自訂欄位...",
+      "error": "無法載入 Drip 自訂欄位。檢查整合是否已連接。",
+      "empty": "找不到 Drip 自訂欄位。"
+    },
+    "errors": {
+      "noAccount": "此API 權杖無權存取 Drip 帳戶。"
+    }
+  },
+  "sendGrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "此整合可讓您將機器人中的客戶聯絡人儲存到 SendGrid。"
+    },
+    "scopeHelp": "建立具有 Marketing 讀寫權限的 SendGrid API 金鑰。",
+    "acceptedLimitation": "SendGrid 會接受聯絡人更新並以非同步方式處理；已接受的更新之後仍可能失敗。",
+    "fields": {
+      "apiKey": "API金鑰",
+      "list": "清單",
+      "emailField": "電子郵件欄位",
+      "phoneField": "電話欄位",
+      "customFields": "自訂欄位",
+      "optional": "可選",
+      "nothingSelected": "未選擇任何內容",
+      "addCustomField": "新增自訂欄位"
+    },
+    "lists": {
+      "loading": "正在載入 SendGrid 清單...",
+      "error": "無法載入 SendGrid 清單。檢查整合是否已連接。"
+    },
+    "customFields": {
+      "loading": "正在載入 SendGrid 自訂欄位...",
+      "error": "無法載入 SendGrid 自訂欄位。檢查整合是否已連接。"
+    },
+    "errors": {
+      "invalidApiKey": "API 金鑰無效。請檢查您的 SendGrid API 金鑰並重試。",
+      "missingScopes": "此API 金鑰必須具有行銷讀取權限。請確保您的 SendGrid API 金鑰包含行銷權限。"
+    }
+  },
+  "make": {
+    "title": "Make.com",
+    "setting": {
+      "label": "Make.com",
+      "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。當您點擊「連接」時，系統會將此工作區的開發人員存取權杖複製到剪貼簿，請在 Make 建立連線時貼上。",
+      "notConfigured": "找不到邀請連結。請在平台設定新增一個。",
+      "noWorkspaceToken": "找不到此工作區的開發人員存取權杖。在上面的工作區權杖部分產生一個，然後再按一下連接。"
+    }
+  },
+  "integrations": {
+    "title": "整合"
+  },
+  "platformSettings": {
+    "title": "平台設定",
+    "errors": {
+      "giphyApiKeyRequired": "GIPHY 的 API 設定需要金鑰。",
+      "giphyApiKeyInvalid": "GIPHY API 金鑰無效"
+    }
+  },
+  "home": {
+    "welcomeBack": "歡迎回來，{name}",
+    "subtitle": "選擇要跳回的工作區，或建立新工作區。",
+    "noWorkspaces": "您還沒有任何工作區。",
+    "owner": "所有者"
+  },
+  "editProfile": {
+    "title": "編輯個人資料"
+  },
+  "instagram": {
+    "description": "此整合可讓您建立Instagram 機器人。",
+    "selectInstagramAccount": "選擇Instagram 帳戶",
+    "iceBreakers": "破冰船",
+    "iceBreakersDescription": "破冰活動透過顯示常見問題清單為使用者提供了一種與您的機器人開始對話的方式。",
+    "reconnect": "重新連接",
+    "title": "Instagram"
+  },
+  "coexist": {
+    "title": "同步現有聯絡人和聊天記錄？",
+    "descriptionWhatsapp": "啟用後，將從該WhatsApp號碼匯入聯絡人和最多 6 個月的聊天記錄。",
+    "descriptionMessenger": "啟用後，將從該頁面匯入現有的 Messenger 聯絡人和最多 3 個月的對話歷史記錄。",
+    "descriptionInstagram": "啟用後，將從該 Instagram 帳戶匯入現有的 Instagram 聯絡人和最多 3 個月的對話記錄。",
+    "enable": "啟用同步",
+    "decline": "不同步",
+    "billingNote": "大頁面可能需要幾個小時才能完成。",
+    "toggleLabel": "同步現有聯絡人與聊天記錄",
+    "toggleHelper": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接。",
+    "toggleHelperMessenger": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接Messenger頁面。",
+    "toggleHelperWhatsapp": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則，請斷開並重新連接WhatsApp號碼。",
+    "success": {
+      "enabled": "同步已開始。歷史聯絡人和訊息很快就會出現。",
+      "disabled": "同步已停用。"
+    },
+    "errors": {
+      "alreadyTriggered": "此號碼已觸發同步。請等待Meta傳送歷史資料。",
+      "windowExpired": "24 小時同步視窗已過期。請中斷並重新連接此號碼以再次同步。",
+      "notEligible": "此號碼不符合歷史同步條件。",
+      "triggerFailed": "無法啟動同步。請稍後重試。",
+      "unknown": "無法啟用同步。請稍後重試。"
+    }
+  },
+  "messenger": {
+    "description": "此整合可讓您建立Messenger 機器人。",
+    "welcomeMessage": "歡迎訊息",
+    "welcomeMessageDescription": "這是使用者將從您的機器人收到的第一則訊息。當使用者透過點擊「開始」按鈕第一次與機器人互動時，會傳送此訊息。",
+    "conversationStarters": "對話起始訊息",
+    "conversationStartersDescription": "對話起始訊息可讓使用者透過常見問題清單與您的商家展開對話。",
+    "persistentMenu": "常駐選單",
+    "persistentMenuDescription": "可以設定選單，幫助使用者更輕鬆地發現和存取您的機器人功能。此選單會持續顯示給使用者，並應包含他們隨時都能使用的主要操作。選單也能讓初次使用者與回訪使用者更容易理解機器人的核心功能。",
+    "dynamicPersistentMenu": "動態常駐選單",
+    "dynamicPersistentMenuDescription": "允許您在使用者層級隨時動態變更持久性選單。",
+    "botProfile": "機器人個人資料",
+    "botProfileDescription": "此設定可讓您為機器人設定不同的名稱和影像",
+    "personas": "角色",
+    "personasDescription": "此設定可讓您為機器人設定不同的名稱和影像",
+    "defaultPersona": "預設角色",
+    "reconnect": "重新連接",
+    "reconnectDescription": "請務必重新連接您的機器人。",
+    "selectFacebookPage": "選擇Facebook 頁",
+    "selectPage": {
+      "noPagesTitle": "找不到Facebook 頁面",
+      "noPagesDescription": "商務管理平台內的頁面需要在連線期間存取商務管理平台。重新連線Messenger並授予所有請求的權限。",
+      "bmLookupFailedTitle": "業務管理平台頁面可能遺失",
+      "bmLookupFailedDescription": "重新連接Messenger 並授予商務管理平台存取權限，以便可以列出透過商務管理平台管理的頁面。",
+      "alreadyConnectedNote": "該頁面已連接",
+      "notAdminNote": "需要頁面的完全管理員權限才能連接",
+      "tryAgain": "嘗試重新連接"
+    },
+    "title": "Facebook Messenger",
+    "tabs": {
+      "generalSettings": "一般設定",
+      "messageTemplates": "訊息範本"
+    },
+    "messageTemplate": {
+      "params": {
+        "postbackPayload": "按鈕負載",
+        "postbackPayloadPlaceholder": "輸入酬載（選填）"
+      },
+      "create": {
+        "trigger": "建立新範本",
+        "header": "標頭",
+        "headerType": "標頭類型",
+        "none": "無",
+        "text": "文字",
+        "textAndImage": "文字+圖片",
+        "image": "圖片",
+        "imageHint": "PNG、JPG 或 GIF。圖片是在提交之前上傳的。",
+        "noImageSelected": "未選擇影像",
+        "body": "身體",
+        "buttons": "按鈕",
+        "addButton": "新增按鈕",
+        "addVariable": "新增變數",
+        "buttonText": "按鈕文字",
+        "buttonType": "按鈕類型",
+        "visitWebsite": "訪問網站",
+        "callPhoneNumber": "撥打電話號碼",
+        "postback": "按鈕"
+      },
+      "clone": {
+        "title": "複製訊息範本",
+        "titleWithName": "複製訊息範本：{name}",
+        "channelsLabel": "目標頻道",
+        "channelsPlaceholder": "選擇頻道",
+        "succeededCount": "{count} 頻道已成功複製",
+        "failedCount": "{count} 個頻道複製失敗",
+        "partialSuccess": "已複製到 {succeeded} 個頻道；{failed} 個頻道失敗",
+        "result": {
+          "title": "複製結果",
+          "succeededTitle": "成功",
+          "close": "關閉"
+        }
+      }
+    },
+    "tagSync": {
+      "title": "標籤同步",
+      "description": "在此工作區與已連接頻道之間雙向同步標籤。",
+      "toggleSuccess": "標籤同步設定已更新。",
+      "enabledSince": "自 {date} 啟用",
+      "disabled": "已停用",
+      "labelSync": "同步標籤",
+      "on": "開啟",
+      "off": "關閉",
+      "termsRequired": "頁面管理員必須接受Facebook頁聯絡人條款："
+    }
+  },
+  "omnichannel": {
+    "title": "全通路"
+  },
+  "openai": {
+    "connect": {
+      "description": "利用由您的業務資料提供支援的 AI 自然地回應使用者。"
+    },
+    "title": "OpenAI"
+  },
+  "claude": {
+    "autoReply": {
+      "description": "啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。",
+      "label": "人工智慧自動回覆"
+    },
+    "connect": {
+      "description": "利用由您的業務資料提供支援的 AI 自然地回應使用者。",
+      "label": "Claude人工智慧"
+    },
+    "title": "Claude人工智慧"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。",
+      "label": "人工智慧自動回覆"
+    },
+    "connect": {
+      "description": "利用由您的業務資料提供支援的 AI 自然地回應使用者。",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
+  "openrouter": {
+    "autoReply": {
+      "description": "啟用由 OpenRouter 提供支援的 AI 自動回覆。",
+      "label": "人工智慧自動回覆"
+    },
+    "connect": {
+      "description": "透過單一API金鑰存取 300 多個 AI 模型。",
+      "label": "開放路由器"
+    },
+    "title": "開放路由器"
+  },
+  "openaiCompatible": {
+    "addProvider": "新增人工智慧供應商",
+    "addProviderModel": "新增 {name}",
+    "apiKeyKeepExisting": "留空以保留現有的API 金鑰。",
+    "autoReply": {
+      "description": "允許此提供者用於自動 AI 回覆。",
+      "label": "人工智慧自動回覆"
+    },
+    "connect": {
+      "description": "連接 OpenAI AI Agent 後備模型的相容提供者。",
+      "label": "OpenAI相容供應商"
+    },
+    "empty": "尚未設定 OpenAI 相容提供者。",
+    "fields": {
+      "baseURL": "基礎URL",
+      "defaultModel": "預設模型",
+      "enabled": "已啟用"
+    },
+    "provider": "人工智慧供應商",
+    "title": "OpenAI相容",
+    "validation": {
+      "invalidBaseURL": "基礎URL 無效或不允許。",
+      "presetAlreadyConnected": "此預設已為此工作區連線。"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "agents": {
+      "description": "AI Agent描述",
+      "title": "AI Agent"
+    },
+    "aiTriggers": {
+      "description": "人工智慧觸發器描述",
+      "title": "人工智慧觸發器"
+    },
+    "automatedResponses": {
+      "title": "關鍵字"
+    },
+    "openai": {
+      "description": "OpenAI 整合說明",
+      "title": "OpenAI整合"
+    },
+    "claude": {
+      "description": "Claude 整合說明",
+      "title": "Claude整合"
+    },
+    "deepseek": {
+      "description": "DeepSeek 整合說明",
+      "title": "DeepSeek整合"
+    }
+  },
+  "auth": {
+    "orContinueWith": "或繼續使用",
+    "continueWithFacebook": "繼續使用 Facebook",
+    "continueWithGoogle": "繼續使用 Google",
+    "continueWithEmail": "繼續使用電子郵件",
+    "continueWithMagicLink": "繼續使用 Magic Link",
+    "dontHaveAnAccount": "還沒有帳號？",
+    "alreadyHaveAnAccount": "已經有帳號了？",
+    "signUp": "註冊",
+    "acceptTermsAndPolicy": "點選繼續即表示您同意我們的",
+    "and": "和",
+    "privacyPolicy": "隱私權政策",
+    "termsOfService": "服務條款",
+    "signInTitle": "登入 {name}",
+    "forgotPasswordTitle": "忘記密碼？",
+    "forgotPasswordDescription": "別擔心！我們會寄送一封電子郵件給您，內含重設密碼的說明。",
+    "checkYourEmail": "檢查您的電子郵件",
+    "magicLinkSent": "我們已將驗證 URL 寄送到您的電子郵件",
+    "magicLinkSentDescription": "點選電子郵件中的連結繼續。",
+    "didNotReceiveEmail": "沒有收到電子郵件？請檢查垃圾郵件資料夾。",
+    "trySigningInAgain": "您也可以嘗試改用其他電子郵件再次登入。",
+    "signIn": "登入",
+    "signUpSuccess": "註冊成功。請檢查您的電子郵件以進行驗證。",
+    "forgotPassword": "忘記密碼？",
+    "rememberedPassword": "還記得您的密碼嗎？",
+    "forgotPasswordEmailSent": "我們已向您傳送了一封電子郵件，其中包含重設密碼的說明。",
+    "magicLinkSentTitle": "Magic Link 已寄出",
+    "passwordResetSuccess": "密碼已重設",
+    "resetPasswordTitle": "重設您的密碼",
+    "resetPasswordDescription": "在下方輸入您的新密碼。",
+    "signUpTitle": "註冊 {name}",
+    "changePasswordTitle": "更改密碼",
+    "changePasswordDescription": "在繼續之前設定新密碼。",
+    "passwordChangeSuccess": "密碼已更改"
+  },
+  "emailTopics": {
+    "title": "電子郵件主題"
+  },
+  "tags": {
+    "title": "標籤"
+  },
+  "texts": {
+    "or": "或"
+  },
+  "theme": {
+    "dark": "黑暗",
+    "light": "光",
+    "system": "系統"
+  },
+  "validation": {
+    "maxSize": "檔案大小超出上限",
+    "maxItemsReached": "最大 {max}{feature}",
+    "invalidApiKey": "API 金鑰無效",
+    "maxMustBeGreaterThanMin": "{maxField} 必須大於或等於 {minField}"
+  },
+  "webchat": {
+    "chatUnavailable": "此聊天目前不可用。",
+    "description": "讓您的客戶直接從您的網站獲得來自您企業的即時自動回覆",
+    "rateLimitExceeded": "請求過多。請稍後重試。",
+    "title": "網路聊天",
+    "workspaceUnavailable": "此工作區不再可用。",
+    "unauthorizedDomain": {
+      "description": "本網站無權載入此聊天小工具。",
+      "title": "網路聊天不可用"
+    }
+  },
+  "whatsapp": {
+    "category": {
+      "marketing": {
+        "description": "行銷類別描述",
+        "label": "行銷"
+      },
+      "utility": {
+        "description": "實用程式類別說明",
+        "label": "實用程式"
+      }
+    },
+    "commands": {
+      "description": "這些是特殊關鍵字，告訴WhatsApp 機器人要做什麼",
+      "label": "命令"
+    },
+    "autoConnect": {
+      "inProgress": "正在連接..."
+    },
+    "connectExisting": "連接現有的 WhatsApp Business 帳號",
+    "embeddedSignupDone": "註冊完成 — 您可以關閉此標籤。",
+    "embeddedSignupPopupBlocked": "請允許此網站彈出窗口，然後再試一次。",
+    "fillRequiredFields": "請填寫所有必填欄位",
+    "continueManualConnect": "繼續 — 手動連接",
+    "icebreakers": {
+      "description": "這些是人們可以輕鬆問您的常見問題。",
+      "label": "破冰船"
+    },
+    "manualConnect": "使用系統使用者 Access Token 手動連接。",
+    "manualOnboarding": {
+      "title": "您的 WhatsApp 收件匣已準備好！",
+      "description": "在您的 Meta 應用程式中設定 webhook URL 和驗證權杖。使用下面的值。",
+      "webhookUrl": "Webhook URL",
+      "verifyToken": "Webhook 驗證權杖",
+      "qrCodeHint": "掃描 QR Code 以開啟 webhook URL",
+      "moreSettings": "更多設定",
+      "goToInbox": "帶我去那裡"
+    },
+    "phoneVerification": {
+      "title": "驗證WhatsApp電話號碼",
+      "description": "向Meta要求驗證碼，在此輸入驗證碼，電話號碼將自動註冊。",
+      "errorTitle": "需要電話號碼驗證",
+      "methods": {
+        "sms": "簡訊",
+        "voice": "語音通話"
+      },
+      "actions": {
+        "sendCode": "傳送代碼",
+        "resendIn": "在 {seconds} 內重新傳送",
+        "verify": "驗證並註冊"
+      },
+      "fields": {
+        "code": {
+          "label": "驗證碼",
+          "placeholder": "輸入Meta OTP"
+        }
+      },
+      "messages": {
+        "codeSent": "{method} 傳送的驗證碼。",
+        "cooldown": "請等待 {seconds}，然後再要求另一個代碼。",
+        "verified": "電話號碼已驗證並註冊成功。"
+      },
+      "errors": {
+        "integrationNotFound": "WhatsApp 找不到整合。",
+        "codeNotSent": "WhatsApp驗證碼無法傳送。",
+        "codeNotVerified": "WhatsApp驗證碼無法驗證。",
+        "registrationFailed": "WhatsApp 電話號碼驗證失敗。"
+      }
+    },
+    "connect": {
+      "errors": {
+        "accessTokenRequired": "必須提供 WhatsApp Access Token。",
+        "appSettingsNotFound": "WhatsApp應用程式設定。",
+        "failedToPersistIntegration": "無法儲存WhatsApp 整合。",
+        "noPhoneNumberFound": "找不到 WhatsApp 電話號碼。",
+        "noPhoneNumbersFound": "找不到此 WhatsApp 企業帳戶的電話號碼。",
+        "phoneNumberNotFound": "所選WhatsApp 電話號碼找不到。",
+        "unableToVerifyToken": "無法驗證WhatsApp 權杖。",
+        "wabaMismatch": "所選WhatsApp 企業帳戶與授權不符。",
+        "wabaResolveFailed": "無法從授權解析WhatsApp 企業帳號。"
+      }
+    },
+    "marketingMessageLite": "行銷訊息 Lite",
+    "messageTemplate": {
+      "carouselImage": {
+        "label": "輪播影像"
+      },
+      "carouselVideo": {
+        "label": "輪播影片"
+      },
+      "document": {
+        "label": "文檔"
+      },
+      "image": {
+        "label": "圖片"
+      },
+      "location": {
+        "label": "位置"
+      },
+      "text": {
+        "label": "文字"
+      },
+      "video": {
+        "label": "影片"
+      },
+      "viewCatalog": {
+        "label": "檢視目錄"
+      },
+      "viewProduct": {
+        "label": "檢視產品"
+      },
+      "params": {
+        "couponCode": "優惠券代碼",
+        "couponCodePlaceholder": "輸入優惠券代碼",
+        "quickReplyPayload": "快速回覆負載",
+        "quickReplyPayloadPlaceholder": "輸入酬載（選填）",
+        "flowToken": "流程代幣",
+        "flowTokenPlaceholder": "輸入流權杖",
+        "flowNotSynced": "同步WhatsApp 流以映射提交的欄位。",
+        "catalogProductId": "產品ID",
+        "catalogProductIdPlaceholder": "輸入產品零售商ID",
+        "carouselCard": "卡 {index}",
+        "limitedTimeOffer": "優惠到期時間",
+        "limitedTimeOfferPlaceholder": "輸入過期時間（以毫秒為單位）",
+        "limitedTimeOfferHelp": "優惠到期時的 Unix 時間戳記（以毫秒為單位）",
+        "location": "位置",
+        "latitude": "緯度",
+        "longitude": "經度",
+        "locationName": "位置名稱（可選）",
+        "locationAddress": "地址（可選）",
+        "enterFormatUrl": "輸入 {format} URL"
+      }
+    },
+    "sampleBodyCardContent": {
+      "label": "身體卡內容範例"
+    },
+    "sampleBodyContent": {
+      "label": "範例正文內容"
+    },
+    "sampleHeaderContent": {
+      "label": "範例標題內容"
+    },
+    "showFooter": {
+      "label": "顯示頁尾"
+    },
+    "showHeader": {
+      "label": "顯示標題"
+    },
+    "tabs": {
+      "accountHealths": "帳戶健康狀況",
+      "automation": "自動化",
+      "ecommerce": "電子商務",
+      "flows": "流程",
+      "messageTemplates": "訊息範本",
+      "profile": "簡介",
+      "usefulLinks": "有用連結"
+    },
+    "accountHealths": {
+      "title": "管理您的WhatsApp帳戶",
+      "description": "檢查您的WhatsApp 帳戶狀態、訊息限制和品質。更新設定或解決問題（如果需要）",
+      "goToBusinessManager": "前往Meta業務經理",
+      "unavailable": {
+        "title": "帳戶運作狀況暫時無法使用",
+        "description": "我們現在無法從 Meta 載入此 WhatsApp 電話號碼。此頁面上的其他復原操作仍然可用。"
+      },
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "顯示電話號碼",
+          "tooltip": "客戶向您的企業傳送訊息時顯示的電話號碼。"
+        },
+        "businessName": {
+          "label": "公司名稱",
+          "tooltip": "已驗證的WhatsApp 商家顯示名稱。"
+        },
+        "displayNameStatus": {
+          "label": "顯示名稱狀態",
+          "tooltip": "您的WhatsApp 商家顯示名稱的核准狀態。"
+        },
+        "qualityRating": {
+          "label": "品質評級",
+          "tooltip": "基於過去 7 天客戶回饋的品質評級。"
+        },
+        "messagingLimitTier": {
+          "label": "訊息傳遞限制層",
+          "tooltip": "您的企業可以在 24 小時滾動視窗中傳送訊息的唯一客戶的最大數量。"
+        },
+        "accountMode": {
+          "label": "帳戶模式",
+          "tooltip": "WhatsApp 企業帳戶是否處於活動狀態或沙盒模式。"
+        },
+        "marketingMessages": {
+          "label": "行銷訊息（MM Lite）",
+          "tooltip": "WhatsApp 企業帳戶進入行銷訊息 Lite API 的入職狀態。",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "不符合條件：OBO 型號",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "不符合條件：不活躍或受限",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "不符合資格：不支援的國家/地區",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "不符合條件：使用 WhatsApp 商務應用",
+            "ELIGIBLE": "符合條件",
+            "PENDING_VALID_PAYMENT_METHOD": "等待有效的付款方式",
+            "PENDING_INTERNAL_SETUP": "待內部設定",
+            "ONBOARDED": "已上線"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "WhatsApp 企業帳戶使用 OBO 模型，不支援。您必須先使用意圖API將 WABA 的所有權轉讓給客戶或船上。",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "WhatsApp 企業帳戶處於非活動狀態或因策略執行問題而無法傳送訊息。",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "WhatsApp 企業帳戶所在區域不支援 MM Lite API。",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "WhatsApp 企業電話號碼正在WhatsApp 企業應用程式中使用。",
+            "ELIGIBLE": "WhatsApp 企業帳戶有資格加入並使用 MM Lite API。",
+            "PENDING_VALID_PAYMENT_METHOD": "WhatsApp 企業帳戶需要設定有效的付款方式。",
+            "PENDING_INTERNAL_SETUP": "WhatsApp 企業帳戶正在設定為使用 MM Lite API，無需企業客戶或合作夥伴採取進一步操作。自動設定過程預計需要不到十分鐘。訂閱 account_update Webhook 並偵聽 AD_ACCOUNT_LINKED 事件。如果設定過程需要十分鐘以上且您尚未收到 Webhook，請提交支援票證。",
+            "ONBOARDED": "WhatsApp 企業帳戶已成功註冊並準備好使用 MM Lite API。"
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Webhook設定",
+          "tooltip": "設定為接收 WhatsApp 事件的 Webhook 的狀態。",
+          "configured": "Webhook設定成功",
+          "notConfigured": "Webhook 未設定"
+        },
+        "phoneNumberHealth": {
+          "label": "電話號碼健康狀況",
+          "tooltip": "此電話號碼是否可以傳送訊息以及任何影響它的問題。",
+          "headline": "電話號碼 - {status}"
+        },
+        "wabaHealth": {
+          "label": "WhatsApp 企業帳戶健康狀況",
+          "tooltip": "WhatsApp 企業帳戶是否可以傳送訊息以及影響它的任何問題。",
+          "headline": "WhatsApp 企業帳戶（WABA ID：{id}）- {status}",
+          "headlineNoId": "WhatsApp 企業帳戶 - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "每 24 小時 50 位顧客",
+        "TIER_250": "每 24 小時 250 位顧客",
+        "TIER_1K": "每 24 小時 1,000 名顧客",
+        "TIER_10K": "每 24 小時 10,000 個客戶",
+        "TIER_100K": "每 24 小時 10 萬名客戶",
+        "TIER_UNLIMITED": "每 24 小時無限客戶",
+        "UNKNOWN": "未知"
+      },
+      "displayNameStatus": {
+        "APPROVED": "已批准",
+        "AVAILABLE_WITHOUT_REVIEW": "無需審核即可使用",
+        "DECLINED": "已拒絕",
+        "EXPIRED": "已過期",
+        "NONE": "無",
+        "PENDING_REVIEW": "待審核"
+      },
+      "accountMode": {
+        "LIVE": "直播",
+        "SANDBOX": "沙箱"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "可用",
+        "LIMITED": "有限公司",
+        "BLOCKED": "已阻止",
+        "UNKNOWN": "未知"
+      },
+      "health": {
+        "label": "業務狀況",
+        "tooltip": "您的WhatsApp帳戶健康狀況和訊息傳遞功能的概述。",
+        "blockedMessage": "您的電話號碼已被阻止傳送訊息。",
+        "problem": "問題：",
+        "possibleSolution": "可能的解決方案：",
+        "noIssues": "未偵測到問題",
+        "entityHeadline": "{type}（ID：{id}）",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "此 {type} 是否可以傳送訊息以及影響它的任何問題。",
+        "entityTypes": {
+          "PHONE_NUMBER": "電話號碼",
+          "WABA": "WhatsApp 企業帳戶",
+          "BUSINESS": "業務",
+          "MESSAGE_TEMPLATE": "訊息範本",
+          "APP": "應用程式"
+        }
+      }
+    },
+    "templateFooter": {
+      "label": "範本頁腳"
+    },
+    "templateHeader": {
+      "label": "範本標頭"
+    },
+    "transferPhoneNumber": "從其他 Whatsapp 供應商轉接電話",
+    "signupSessionExpired": "您的WhatsApp註冊會話已過期。請重新開始連線。"
+  },
+  "zalo": {
+    "title": "ZaloOA",
+    "refreshPermissions": "刷新權限",
+    "duplicated": "此Zalo OA 帳戶已連接到另一個工作區。",
+    "tagSync": {
+      "title": "標籤同步",
+      "description": "將本地標記分配鏡像到此Zalo OA。",
+      "toggleSuccess": "標籤同步設定已更新。",
+      "enabledSince": "自 {date} 啟用",
+      "disabled": "已停用"
+    }
+  },
+  "telegram": {
+    "description": "此整合可讓您建立Telegram 機器人。",
+    "title": "Telegram"
+  },
+  "invitation": {
+    "chatbotInvitationDescription1": "加入 {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} 邀請您加入 {chatbotName}。",
+    "invalidInvitation": "此邀請無效或已過期。",
+    "workspaceUnavailable": "此工作區不再可用。"
+  },
+  "inboxTeams": {
+    "title": "收件匣團隊"
+  },
+  "userPersistentMenus": {
+    "title": "使用者常駐選單"
+  },
+  "webhooks": {
+    "title": "Webhook"
+  },
+  "reflinks": {
+    "title": "入口點連結",
+    "description": "啟動流程並從頻道擷取引用 payload 的關鍵字連結。"
+  },
+  "qrCodes": {
+    "title": "QR Code",
+    "description": "建立連結到聊天機器人流程的 QR 程式碼。"
+  },
+  "magicLinks": {
+    "title": "Magic Link",
+    "description": "建立可透過查詢參數重新導向到您 URL 的深層連結。"
+  },
+  "QRCode": {
+    "title": "QR Code",
+    "description": "分享此程式碼，以便人們打開您的追蹤連結。"
+  },
+  "trigger": {
+    "when": "當發生這種情況時",
+    "conditions": {
+      "tagApplied": "標籤已應用",
+      "tagRemoved": "標籤已刪除",
+      "dateTimeBasedTrigger": "依據日期時間觸發器",
+      "customFieldValueChanged": "自訂欄位已更改",
+      "contactInfoUpdated": "電話或電子郵件已更新",
+      "conversationTransferredToHuman": "對話轉移到人類",
+      "conversationTransferredToBot": "對話已轉移到機器人",
+      "newContact": "新聯絡人",
+      "contactUnsubscribedFormBroadcast": "聯絡人取消訂閱廣播",
+      "archived": "已封存",
+      "followUp": "跟進",
+      "conversationAssigned": "分配的對話",
+      "conversationUnassigned": "會話未分配",
+      "incomingCall": "來電",
+      "missedAudioCall": "錯過的音訊通話",
+      "callEnded": "通話結束",
+      "ticketCreated": "工單已建立",
+      "ticketMovedToStage": "門票已移至舞台",
+      "ticketValueChanged": "票價已更改",
+      "ticketStatusChanged": "票證狀態已更改",
+      "ticketPriorityChanged": "票證優先權已更改",
+      "subscribedToSequence": "訂閱序列",
+      "unsubscribedFromSequence": "取消訂閱序列",
+      "WhatsappShoppingCartSent": "Whatsapp 購物車已傳送",
+      "userAskedAboutProduct": "使用者詢問產品",
+      "cartAbandoned": "購物車被遺棄",
+      "newOrder": "新訂單",
+      "orderAccepted": "訂單已接受",
+      "orderShipped": "訂單已出貨",
+      "orderConcluded": "訂單已完成",
+      "orderCancelled": "訂單已取消",
+      "categoryAddedToCart": "分類加入購物車",
+      "productAddedToCart": "產品已加入購物車",
+      "productRemovedFromCart": "產品已從購物車中刪除",
+      "productOrdered": "已訂購產品",
+      "contactReferredANewContact": "聯絡人推薦了新聯絡人",
+      "contactReferredExistingContact": "聯絡人引用現有聯絡人"
+    },
+    "actions": {
+      "addTag": "新增標籤",
+      "removeTag": "移除標籤",
+      "setCustomField": "設定自訂欄位",
+      "clearCustomField": "清除自訂欄位",
+      "startAnotherFlow": "開始另一個流程",
+      "notifyAdmins": "通知管理員",
+      "transferConversationToHuman": "將對話轉移給人類"
+    },
+    "triggerGoesOff": "觸發器熄滅",
+    "before": "之前",
+    "after": "之後",
+    "atTheDayOf": "當天",
+    "day": "日",
+    "hour": "小時",
+    "minute": "分鐘",
+    "at": "在"
+  },
+  "errorLogs": {
+    "title": "錯誤日誌"
+  },
+  "developerAccessToken": {
+    "title": "API 存取權杖",
+    "description": "產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。"
+  },
+  "contacts": {
+    "title": "聯絡人",
+    "exportPreparing": "準備匯出...",
+    "exportPreparingDescription": "我們正在產生您的CSV 檔案。這可能需要一些時間。",
+    "exportReadyTitle": "您的匯出已準備就緒",
+    "exportReadyDescription": "複製以下連結或直接下載檔案。",
+    "exportDownloadCount": "下載 ({count})",
+    "exportFailed": "匯出失敗。請再試一次。",
+    "copyLink": "複製連結",
+    "linkCopied": "連結已複製到剪貼簿",
+    "countExact": "{count} 聯絡人",
+    "countCapped": "{count}+ 聯絡人",
+    "exportAllNotice": "與目前過濾器相符的所有聯絡人都會被匯出。",
+    "exportTakingLong": "匯出花費的時間比預期長",
+    "exportTakingLongDescription": "匯出仍在處理中。您可以關閉此對話框，並在幾分鐘後返回檢視匯出歷史記錄。"
+  },
+  "auditLogs": {
+    "title": "審核日誌"
+  },
+  "customFields": {
+    "title": "自訂欄位",
+    "variables": {
+      "rawGroup": "原始自訂欄位"
+    }
+  },
+  "keywords": {
+    "title": "關鍵字",
+    "tabs": {
+      "contact": "聯絡人",
+      "page": "頁"
+    },
+    "descriptions": {
+      "contactTitle": "聯絡人關鍵字",
+      "contact": "當聯絡人傳送包含關鍵字的訊息給您的工作區時自動回覆。",
+      "pageTitle": "頁面關鍵字",
+      "page": "當您傳送包含關鍵字的訊息給聯絡人時自動回覆。"
+    },
+    "pageWarning": "訊息包含 Page 關鍵字的內容可能會導致訊息無限循環地傳送給客戶。遇到這種情況請立即停用Page關鍵字！"
+  },
+  "triggers": {
+    "title": "觸發器"
+  },
+  "users": {
+    "title": "使用者"
+  },
+  "sequences": {
+    "title": "序列",
+    "subscribers": "訂閱者",
+    "step": "訊息",
+    "addStep": "新增訊息",
+    "addFirstStep": "新增第一個訊息",
+    "noSteps": "還沒有訊息。新增您的第一個開始訊息。",
+    "selectFlow": "選擇流程",
+    "confirmDeleteStep": "您確定要刪除此訊息嗎？",
+    "delayUnits": {
+      "immediate": "立即",
+      "minutes": "分鐘",
+      "hours": "小時",
+      "days": "天",
+      "specificTime": "具體時間"
+    },
+    "timeValidation": "訊息時間必須晚於上一則訊息",
+    "validation": {
+      "exception": "驗證異常",
+      "nameExists": "序列名稱已存在"
+    },
+    "sendLabel": "傳送",
+    "selectFlowFirst": "請在啟動訊息前選擇流程",
+    "invalidTimeRange": "開始時間必須早於結束時間",
+    "schedule": "時間表",
+    "scheduleDescription": "設定何時傳送訊息",
+    "sendTime": "傳送時間",
+    "sendTimeDescription": "訊息只會在此時間範圍內傳送",
+    "timezone": "時區",
+    "timezoneDescription": "所有時間均以您的聊天機器人的時區為準",
+    "enableSchedule": "啟用時間表",
+    "startTime": "開始時間",
+    "endTime": "結束時間",
+    "allDay": "全天",
+    "customTime": "自訂時間",
+    "enrollmentSettings": "註冊設定",
+    "enrollmentDescription": "控制如何依此順序註冊聯絡人",
+    "allowReEnrollment": "允許重新註冊",
+    "allowReEnrollmentDescription": "聯絡人可多次註冊",
+    "skipWeekends": "跳過週末",
+    "skipWeekendsDescription": "週六週日不要傳送訊息",
+    "unenrollOnReply": "回覆後取消註冊",
+    "unenrollOnReplyDescription": "移除回覆時的聯絡人順序",
+    "performance": "性能",
+    "enrolled": "已註冊",
+    "completed": "已完成",
+    "openRate": "開啟率",
+    "clickRate": "點擊率",
+    "replyRate": "回覆率",
+    "unsubscribeRate": "退訂率",
+    "overview": "概述",
+    "analytics": "分析",
+    "stats": {
+      "sent": "已傳送",
+      "delivered": "已交付",
+      "seen": "已看過",
+      "clicked": "已點擊",
+      "failed": "失敗",
+      "noContacts": "找不到聯絡人",
+      "pageInfo": "第 {page} 頁（共 {pageCount}）",
+      "selectedAll": "已全選",
+      "selectedCount": "{count}",
+      "tagAllDialogDescription": "標籤將會加入所有選定的聯絡人。",
+      "tagDialogDescription": "標籤將會加入到 {count} 聯絡人。",
+      "tagQueued": "在後台標記 {count} 聯絡人。",
+      "loadingMore": "載入更多..."
+    },
+    "settings": "設定",
+    "flow": "流程",
+    "active": "活動",
+    "messageSentAtLeast": "此訊息最少會在以下時間後傳送",
+    "afterPreviousMessage": "（天 = 24 小時）",
+    "anyTime": "任何時間",
+    "setTimeRange": "設定時間範圍",
+    "selectDays": "選擇日期",
+    "allDays": "全天",
+    "deselectAll": "取消全選",
+    "monday": "星期一",
+    "tuesday": "星期二",
+    "wednesday": "星期三",
+    "thursday": "星期四",
+    "friday": "週五",
+    "saturday": "星期六",
+    "sunday": "週日",
+    "afterText": "之後"
+  },
+  "tools": {
+    "title": "工具"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek",
+    "openrouter": "開放路由器",
+    "openaiCompatible": "OpenAI相容"
+  },
+  "smtp": {
+    "setting": {
+      "description": "使用您的SMTP 伺服器傳送電子郵件。",
+      "label": "（電子郵件）SMTP"
+    },
+    "errors": {
+      "connectionFailed": "無法連接到SMTP 伺服器。請檢查您的憑證並重試。"
+    }
+  },
+  "botSimulator": {
+    "title": "機器人模擬器",
+    "description": "在即時環境中模擬機器人的行為。"
+  },
+  "pollManager": {
+    "title": "投票管理器",
+    "description": "建立並管理您的聯絡人的投票。"
+  },
+  "placesNearMe": {
+    "title": "我附近的地方",
+    "description": "尋找您的聯絡人附近的地點。"
+  },
+  "questionnaires": {
+    "title": "問卷",
+    "description": "建立並管理您的聯絡人的問卷。",
+    "singular": "問卷",
+    "submission": "提交",
+    "addNew": "新增新",
+    "applicants": "申請人",
+    "generalSettings": "常規設定",
+    "triggerFlow": "觸發器完成問卷的流程",
+    "enableScore": "為回答的每個問題評分。",
+    "enableRetryMessages": "自訂回覆失敗時的重試訊息。",
+    "enableCustomFieldMapping": "儲存資料到自訂欄位。",
+    "question": "問題",
+    "activeQuestion": "活動",
+    "questionImage": "問題圖片",
+    "questionImageHint": "與此問題一起傳送的選用影像。",
+    "responseType": "回應類型",
+    "points": "積分",
+    "retryMessage": "若回覆無效則重試訊息",
+    "defaultRetryMessages": {
+      "text": "您輸入的內容無效。請重試",
+      "number": "您輸入的數字無效。請重試",
+      "email": "您輸入的電子郵件地址無效。請重試",
+      "phone": "您輸入的電話號碼無效。請重試",
+      "multipleChoice": "您輸入的選項無效。請重試"
+    },
+    "customField": "儲存對自訂或系統欄位的回應",
+    "options": "選項",
+    "mode": "模式",
+    "completed": "已完成",
+    "completionRate": "完成率",
+    "date": "日期",
+    "inbox": "收件匣",
+    "unknownContact": "未知聯絡人",
+    "noAnswers": "無答案",
+    "responseTypes": {
+      "text": "文字",
+      "number": "號碼",
+      "email": "電子郵件",
+      "phone": "電話",
+      "multipleChoice": "多項選擇"
+    },
+    "flowModes": {
+      "start": "開始問卷",
+      "end": "結束問卷",
+      "deleteApplicant": "刪除申請人"
+    },
+    "dialogDescriptions": {
+      "create": "在新增問題之前為問卷命名。",
+      "rename": "更新清單和流程中顯示的問卷名稱。",
+      "flowStep": "選擇此流程步驟如何與問卷互動。"
+    },
+    "status": {
+      "inProgress": "進行中",
+      "completed": "已完成",
+      "cancelled": "已取消",
+      "failed": "失敗",
+      "timeout": "超時"
+    }
+  },
+  "facebookCommentAutomation": {
+    "title": "Facebook 留言自動化",
+    "description": "自動處理聯絡人在 Facebook 貼文下的留言。",
+    "create": "建立自動化",
+    "replies": "回覆",
+    "activated": "自動化已啟用",
+    "deactivated": "自動化已停用",
+    "trackCommentsOn": "追蹤留言的對象",
+    "trackCommentsOnDescription": "可套用到粉絲專頁上的所有貼文，或縮小範圍到您指定的特定貼文。",
+    "privateReply": "私訊回覆（收件匣）",
+    "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。",
+    "publicReply": "公開回覆留言",
+    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本（支援 spintax）、AI Agent、聊天機器人流程，或不回覆。",
+    "replyMessage": "回覆訊息",
+    "replyMessagePlaceholder": "輸入回覆訊息...",
+    "includeKeywordsType": "回覆對象",
+    "includeKeywordsTypeDescription": "選擇此自動化要回應哪些留言。",
+    "includeKeywords": "要比對的關鍵字",
+    "excludeKeywords": "排除包含這些關鍵字的留言",
+    "excludeKeywordsDescription": "若留言包含任一關鍵字，收件匣回覆與公開回覆自動化都會忽略該留言。",
+    "keywordsPlaceholder": "輸入後按 Enter...",
+    "replyAfter": "回覆時間",
+    "replyAfterValue": "時間值",
+    "schedule": {
+      "title": "設定啟用時段",
+      "description": "選擇開始與結束時間。若結束時間早於開始時間，排程將跨夜執行。",
+      "startTime": "開始時間",
+      "endTime": "結束時間",
+      "alwaysRun": "永遠執行",
+      "save": "儲存",
+      "invalidTimeRange": "開始時間與結束時間必須不同",
+      "timeRequired": "請同時選擇開始時間與結束時間"
+    },
+    "card": {
+      "targeting": "目標與回覆",
+      "filters": "篩選條件與選項",
+      "replyTiming": "回覆時機",
+      "hideComments": "隱藏留言"
+    },
+    "postType": {
+      "all": "所有貼文",
+      "published": "已發佈貼文",
+      "ads": "廣告貼文",
+      "reels": "Reels",
+      "specificPosts": "指定貼文"
+    },
+    "replyType": {
+      "text": "文字訊息",
+      "flow": "流程",
+      "AIAgent": "AI Agent",
+      "none": "不回覆"
+    },
+    "keywordsType": {
+      "all": "所有留言",
+      "equal": "完全符合",
+      "contain": "包含"
+    },
+    "replyAfterType": {
+      "immediately": "立即",
+      "seconds": "X 秒後",
+      "minutes": "X 分鐘後",
+      "hours": "X 小時後",
+      "randomWithin3Minutes": "3 分鐘內隨機",
+      "randomWithin5Minutes": "5 分鐘內隨機",
+      "randomWithin10Minutes": "10 分鐘內隨機",
+      "randomWithin20Minutes": "20 分鐘內隨機",
+      "randomWithin30Minutes": "30 分鐘內隨機",
+      "randomWithin60Minutes": "60 分鐘內隨機"
+    },
+    "options": {
+      "replyToNewContactsOnly": "僅回覆新聯絡人",
+      "replyToNewContactsOnlyDescription": "僅自動回覆過去從未成為此工作區聯絡人的人。",
+      "replyOncePerUserPerPost": "每則貼文對每位使用者只回覆一次",
+      "replyOncePerUserPerPostDescription": "每位使用者在每則貼文下最多只會收到一次自動回覆。",
+      "likeUserComment": "對使用者留言按讚",
+      "likeUserCommentDescription": "自動對留言者的留言按讚。",
+      "replyToUsersWhoCommentedOnOtherPosts": "回覆曾在其他貼文留言的使用者",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "若使用者曾在您其他貼文下留言，仍持續對其回覆。",
+      "ignoreCommentReplies": "忽略留言底下的回覆",
+      "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。",
+      "trackUserTags": "追蹤使用者是否標記其他人",
+      "trackUserTagsDescription": "當使用者在留言中標記或提及其他使用者時，觸發此自動化。"
+    },
+    "hideComments": {
+      "all": "隱藏所有留言",
+      "hasPhoneNumber": "包含電話號碼",
+      "hasImage": "包含圖片",
+      "hasVideo": "包含影片",
+      "hasLink": "包含連結",
+      "hasKeywords": "包含關鍵字",
+      "keywords": "關鍵字",
+      "showCommentsAfter": "多久後重新顯示留言"
+    },
+    "showCommentsAfter": {
+      "none": "永不"
+    },
+    "selectPosts": "選擇貼文",
+    "selectPageAll": "所有粉絲專頁",
+    "chooseSpecificPosts": "選擇貼文...",
+    "postIdTab": "貼文 ID",
+    "postIdPlaceholder": "輸入貼文 ID，每行一筆...",
+    "noPostsFound": "找不到貼文"
+  },
+  "instagramCommentAutomation": {
+    "title": "Instagram 留言自動化",
+    "description": "自動處理聯絡人在 Instagram 貼文下的留言。",
+    "create": "建立自動化",
+    "replies": "回覆",
+    "activated": "自動化已啟用",
+    "deactivated": "自動化已停用",
+    "trackCommentsOn": "追蹤留言的對象",
+    "trackCommentsOnDescription": "可套用到已連接帳號上的所有貼文，或縮小範圍到您指定的特定貼文。",
+    "privateReply": "私訊回覆（收件匣）",
+    "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。",
+    "publicReply": "公開回覆留言",
+    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本（支援 spintax）、AI Agent、聊天機器人流程，或不回覆。",
+    "replyMessage": "回覆訊息",
+    "replyMessagePlaceholder": "輸入回覆訊息...",
+    "includeKeywordsType": "回覆對象",
+    "includeKeywordsTypeDescription": "選擇此自動化要回應哪些留言。",
+    "includeKeywords": "要比對的關鍵字",
+    "excludeKeywords": "排除包含這些關鍵字的留言",
+    "excludeKeywordsDescription": "若留言包含任一關鍵字，收件匣回覆與公開回覆自動化都會忽略該留言。",
+    "keywordsPlaceholder": "輸入後按 Enter...",
+    "replyAfter": "回覆時間",
+    "replyAfterValue": "時間值",
+    "schedule": {
+      "title": "設定啟用時段",
+      "description": "選擇開始與結束時間。若結束時間早於開始時間，排程將跨夜執行。",
+      "startTime": "開始時間",
+      "endTime": "結束時間",
+      "alwaysRun": "永遠執行",
+      "save": "儲存",
+      "invalidTimeRange": "開始時間與結束時間必須不同",
+      "timeRequired": "請同時選擇開始時間與結束時間"
+    },
+    "card": {
+      "targeting": "目標與回覆",
+      "filters": "篩選條件與選項",
+      "replyTiming": "回覆時機",
+      "hideComments": "隱藏留言"
+    },
+    "postType": {
+      "all": "所有貼文",
+      "published": "已發佈貼文",
+      "reels": "Reels",
+      "specificPosts": "指定貼文"
+    },
+    "replyType": {
+      "text": "文字訊息",
+      "flow": "流程",
+      "AIAgent": "AI Agent",
+      "none": "不回覆"
+    },
+    "keywordsType": {
+      "all": "所有留言",
+      "equal": "完全符合",
+      "contain": "包含"
+    },
+    "replyAfterType": {
+      "immediately": "立即",
+      "seconds": "X 秒後",
+      "minutes": "X 分鐘後",
+      "hours": "X 小時後",
+      "randomWithin3Minutes": "3 分鐘內隨機",
+      "randomWithin5Minutes": "5 分鐘內隨機",
+      "randomWithin10Minutes": "10 分鐘內隨機",
+      "randomWithin20Minutes": "20 分鐘內隨機",
+      "randomWithin30Minutes": "30 分鐘內隨機",
+      "randomWithin60Minutes": "60 分鐘內隨機"
+    },
+    "options": {
+      "replyToNewContactsOnly": "僅回覆新聯絡人",
+      "replyToNewContactsOnlyDescription": "僅自動回覆過去從未成為此工作區聯絡人的人。",
+      "replyOncePerUserPerPost": "每則貼文對每位使用者只回覆一次",
+      "replyOncePerUserPerPostDescription": "每位使用者在每則貼文下最多只會收到一次自動回覆。",
+      "likeUserComment": "對使用者留言按讚",
+      "likeUserCommentDescription": "自動對留言者的留言按讚。",
+      "replyToUsersWhoCommentedOnOtherPosts": "回覆曾在其他貼文留言的使用者",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "若使用者曾在您其他貼文下留言，仍持續對其回覆。",
+      "ignoreCommentReplies": "忽略留言底下的回覆",
+      "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。"
+    },
+    "hideComments": {
+      "all": "隱藏所有留言",
+      "hasPhoneNumber": "包含電話號碼",
+      "hasLink": "包含連結",
+      "hasKeywords": "包含關鍵字",
+      "keywords": "關鍵字",
+      "showCommentsAfter": "多久後重新顯示留言"
+    },
+    "showCommentsAfter": {
+      "none": "永不"
+    },
+    "selectPosts": "選擇貼文",
+    "selectPageAll": "所有帳號",
+    "chooseSpecificPosts": "選擇貼文...",
+    "postIdTab": "貼文 ID",
+    "postIdPlaceholder": "輸入貼文 ID，每行一筆...",
+    "noPostsFound": "找不到貼文",
+    "connectionType": {
+      "title": "選擇 Instagram 連接類型",
+      "instagramTitle": "Instagram 商業帳號",
+      "instagramDescription": "使用 Instagram Login 連接。支援公開回覆、私訊回覆與隱藏留言，不支援對留言按讚。",
+      "instagramFacebookTitle": "使用 Facebook 登入的 Instagram",
+      "instagramFacebookDescription": "透過 Facebook 粉絲專頁連接的 Instagram。支援公開回覆、私訊回覆、隱藏留言與對留言按讚。"
+    }
+  },
+  "instagramStoryAutomation": {
+    "title": "Instagram 限時動態回覆自動化",
+    "description": "自動回覆聯絡人對 Instagram 限時動態的回覆。",
+    "create": "建立自動化",
+    "replies": "回覆",
+    "activated": "自動化已啟用",
+    "deactivated": "自動化已停用",
+    "trackStoryReplyOn": "追蹤限時動態回覆的對象",
+    "trackStoryReplyOnDescription": "可套用到您所有限時動態的回覆，或縮小範圍到您指定的特定限時動態。",
+    "reply": "回覆",
+    "replyDescription": "將回覆傳送到限時動態回覆者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。",
+    "replyMessage": "回覆訊息",
+    "replyMessagePlaceholder": "輸入回覆訊息...",
+    "includeKeywordsType": "回覆對象",
+    "includeKeywordsTypeDescription": "選擇此自動化要回應哪些限時動態回覆。",
+    "includeKeywords": "要比對的關鍵字",
+    "keywordsPlaceholder": "輸入後按 Enter...",
+    "schedule": {
+      "title": "設定啟用時段",
+      "description": "選擇開始與結束時間。若結束時間早於開始時間，排程將跨夜執行。",
+      "startTime": "開始時間",
+      "endTime": "結束時間",
+      "alwaysRun": "永遠執行",
+      "save": "儲存",
+      "invalidTimeRange": "開始時間與結束時間必須不同",
+      "timeRequired": "請同時選擇開始時間與結束時間"
+    },
+    "card": {
+      "targeting": "目標與回覆"
+    },
+    "storyType": {
+      "all": "所有限時動態",
+      "specificStories": "指定限時動態"
+    },
+    "replyType": {
+      "text": "文字訊息",
+      "flow": "流程",
+      "AIAgent": "AI Agent",
+      "none": "不回覆"
+    },
+    "keywordsType": {
+      "all": "所有回覆",
+      "equal": "完全符合",
+      "contain": "包含"
+    },
+    "selectStories": "選擇限時動態",
+    "selectPageAll": "所有帳號",
+    "chooseSpecificStories": "選擇限時動態...",
+    "activeStoriesTab": "目前限時動態",
+    "storyIdTab": "限時動態 ID",
+    "storyIdPlaceholder": "輸入限時動態 ID，每行一筆...",
+    "noStoriesFound": "找不到目前的限時動態",
+    "connectionType": {
+      "title": "選擇 Instagram 連接類型",
+      "instagramTitle": "Instagram 商業帳號",
+      "instagramDescription": "使用 Instagram Login 連接。支援透過文字訊息、流程或 AI Agent 回覆。",
+      "instagramFacebookTitle": "使用 Facebook 登入的 Instagram",
+      "instagramFacebookDescription": "透過 Facebook 粉絲專頁連接的 Instagram。支援透過文字訊息、流程或 AI Agent 回覆。"
+    }
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Facebook 引導廣告自動化",
+    "description": "自動為您的聯絡人投放 Facebook 潛在客戶廣告。",
+    "create": "建立新",
+    "leads": "線索",
+    "facebookPage": "Facebook 頁",
+    "leadForm": "潛在客戶表格",
+    "allForms": "所有表格",
+    "allFormsNote": "此頁面上每個表單的潛在客戶都將被捕獲。標準欄位（電子郵件、電話、姓名、性別）會自動儲存到符合的聯絡人欄位。",
+    "leadData": "潛在客戶資料",
+    "whatFlow": "觸發什麼流程",
+    "none": "無",
+    "addNewPage": "新增新",
+    "noEligiblePages": "沒有符合條件的頁面。使用「新增新建」授予潛在客戶存取權限。",
+    "duplicateError": "此頁面和表單已存在自動化。",
+    "subscribeError": "無法將此頁面訂閱至 Facebook 潛在客戶通知，因此未建立自動化。使用「新增 New」重新連接頁面並重試。"
+  },
+  "ecommerce": {
+    "title": "電子商務",
+    "description": "建立並管理您的電子商務商店。"
+  },
+  "appointmentScheduling": {
+    "title": "預約安排",
+    "description": "建立並管理您的預約安排。"
+  },
+  "templates": {
+    "title": "範本",
+    "description": "建立並管理您的範本。"
+  },
+  "qrCodeGenerator": {
+    "title": "QR Code 產生器",
+    "description": "建立並管理您的 QR Code。"
+  },
+  "platformAdmin": {
+    "platformCredentials": {
+      "title": "平台憑證",
+      "description": "沒有自己的白標籤憑證的所有工作區所使用的全域預設開發人員應用程式。"
+    },
+    "helpItems": {
+      "title": "幫助連結",
+      "description": "側邊欄中顯示的說明連結適用於所有不屬於白標籤租使用者的工作區。"
+    },
+    "queues": {
+      "title": "佇列"
+    }
+  },
+  "platformCredentials": {
+    "title": "平台憑證",
+    "usingPlatformDefault": "使用平台預設值",
+    "usingPlatformDefaultHint": "此頻道可使用平台的共用應用程式。您隨時可以新增自己的設定來覆蓋它。",
+    "notConfigured": "尚未設定",
+    "notConfiguredHint": "新增您的設定以開始使用此整合。"
+  },
+  "platformBranding": {
+    "title": "平台品牌",
+    "sections": {
+      "identity": {
+        "title": "品牌標識",
+        "description": "整個平台顯示的名稱和顏色主題"
+      },
+      "assets": {
+        "title": "視覺資產",
+        "description": "瀏覽器和 UI 中顯示的徽標和圖標"
+      },
+      "legal": {
+        "title": "法律連結",
+        "description": "頁腳和同意流程中顯示的連結"
+      },
+      "advanced": {
+        "title": "高級",
+        "description": "將自訂 CSS 或 JavaScript 注入每個頁面"
+      }
+    }
+  },
+  "platformChannels": {
+    "title": "允許頻道",
+    "description": "選擇此租使用者中的工作區可以建立哪些頻道類型。",
+    "hint": "取消選取每個頻道以允許所有頻道。"
+  },
+  "platformEmailTemplates": {
+    "title": "電子郵件範本",
+    "description": "將主旨與內文留空即可使用系統預設範本。",
+    "sections": {
+      "signup": {
+        "title": "註冊驗證電子郵件",
+        "description": "新使用者註冊帳戶時傳送"
+      },
+      "forgotPassword": {
+        "title": "忘記密碼電子郵件",
+        "description": "當使用者要求重設密碼時傳送"
+      },
+      "magicLink": {
+        "title": "Magic Link 登入電子郵件",
+        "description": "當使用者要求魔術連結登入時傳送"
+      },
+      "accountCredentials": {
+        "title": "子帳戶憑證電子郵件",
+        "description": "當經銷商設定新的子帳戶時傳送"
+      }
+    },
+    "fields": {
+      "subject": {
+        "label": "主題",
+        "placeholder": "留空以使用預設主題"
+      },
+      "body": {
+        "label": "HTML 正文",
+        "placeholder": "留空以使用預設範本"
+      }
+    },
+    "status": {
+      "custom": "自訂",
+      "default": "預設"
+    },
+    "availableVariables": "可用變數",
+    "preview": {
+      "title": "預覽",
+      "empty": "輸入範本內容以檢視預覽"
+    }
+  },
+  "manageSidebar": {
+    "platformGroup": "平台",
+    "toolsGroup": "工具",
+    "saasGroup": "SaaS",
+    "portalUsers": "子帳戶",
+    "portalWorkspaces": "工作區",
+    "portalPlans": "方案",
+    "portalTopUpPacks": "儲值包",
+    "portalUsage": "用法",
+    "portalCustomDomain": "自訂網域",
+    "portalPaymentProcessor": "支付處理器",
+    "portalSmtp": "SMTP設定",
+    "portalPricingPage": "定價"
+  },
+  "unsubscribePage": {
+    "title": "您已取消訂閱。",
+    "description": "您將不會再收到來自該寄件者的電子郵件。",
+    "invalidTitle": "取消訂閱連結無效。",
+    "invalidDescription": "此連結無效或已過期。",
+    "unavailableTitle": "無法取消訂閱。",
+    "unavailableDescription": "此工作區不再可用。"
+  },
+  "extensionsMe": {
+    "actions": {
+      "delete": "刪除我的資料",
+      "download": "下載我的資料"
+    },
+    "deleteDialog": {
+      "title": "刪除你的資料？",
+      "description": "這將永久刪除您的個人資料聯絡人詳細資料、標籤、自訂欄位、附件以及該聯絡人記錄的所有訊息。"
+    },
+    "empty": {
+      "customFields": "無自訂欄位",
+      "tags": "無標籤"
+    },
+    "fields": {
+      "email": "電子郵件",
+      "gender": "性別",
+      "locale": "地區設定",
+      "phone": "電話",
+      "timezone": "時間"
+    },
+    "sections": {
+      "customFields": "自訂欄位",
+      "tags": "使用者標籤"
+    },
+    "unknown": "未知"
+  },
+  "orders": {
+    "title": "訂單"
+  },
+  "products": {
+    "title": "產品",
+    "create": {
+      "title": "建立產品"
+    },
+    "edit": {
+      "title": "編輯產品"
+    },
+    "sections": {
+      "pricing": "定價",
+      "images": "圖片",
+      "inventory": "庫存",
+      "variants": "變體",
+      "addons": "新增-on",
+      "tags": "標籤",
+      "moreOptions": "更多選項"
+    },
+    "fields": {
+      "shortDescription": {
+        "label": "簡短說明"
+      },
+      "longDescription": {
+        "label": "詳細說明"
+      },
+      "price": {
+        "label": "價格"
+      },
+      "taxes": {
+        "label": "稅費（0-100%）"
+      },
+      "discount": {
+        "label": "折扣（0-100%）"
+      },
+      "currency": {
+        "label": "貨幣"
+      },
+      "productUrl": {
+        "label": "產品URL",
+        "placeholder": "https://store.example.com/products/123",
+        "description": "顧客從Messenger 購物開啟的頁面。同步到 Meta 目錄時，會跳過沒有 URL 的產品。"
+      },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "可選"
+      },
+      "inventoryPolicy": {
+        "label": "庫存政策"
+      },
+      "inventoryQuantity": {
+        "label": "數量"
+      },
+      "allowOutOfStockPurchase": {
+        "label": "允許顧客在缺貨時購買該產品"
+      },
+      "vendor": {
+        "label": "供應商"
+      },
+      "rank": {
+        "label": "排名"
+      },
+      "category": {
+        "label": "分類",
+        "placeholder": "未分類"
+      },
+      "subcategory": {
+        "label": "子類別",
+        "placeholder": "無"
+      },
+      "isSearchable": {
+        "label": "該產品可在機器人內搜尋"
+      },
+      "allowSpecialRequest": {
+        "label": "允許使用者提出特殊請求（附註）"
+      },
+      "isActive": {
+        "label": "活動"
+      },
+      "isAddonOnly": {
+        "label": "僅將此產品作為其他產品的外掛使用"
+      },
+      "optionName": {
+        "label": "選項名稱"
+      },
+      "optionValue": {
+        "label": "選項值"
+      },
+      "variant": {
+        "label": "變體"
+      },
+      "addImageFromLink": "新增圖片",
+      "uploadImage": "上傳圖片",
+      "tagsDescription": "標籤可搜尋。",
+      "addonsDescription": "新增顧客可以作為附加產品購買的產品。您也可以在這裡提供免費產品。例如，餐廳可能會在這裡提供免費飲料選擇。您必須先建立一個產品，然後才能將其用作附加元件。",
+      "addonName": {
+        "label": "名稱",
+        "placeholder": "名稱"
+      },
+      "addonMaxSelections": {
+        "label": "最大選擇數"
+      },
+      "addonProducts": {
+        "label": "產品",
+        "placeholder": "選擇產品..."
+      },
+      "variantsDescription": "新增變體，如果該產品有多個版本，例如不同的尺寸或顏色",
+      "metaCatalogId": {
+        "label": "Meta目錄ID"
+      }
+    },
+    "inventoryPolicy": {
+      "dont_track": "不追蹤庫存",
+      "track": "追蹤庫存"
+    }
+  },
+  "tiktok": {
+    "title": "TikTok",
+    "description": "連接您的 TikTok 帳號用於回覆私訊。",
+    "refreshToken": "刷新權杖"
+  },
+  "coupons": {
+    "title": "優惠券",
+    "description": "管理活動優惠券主題、匯入、匯出和流程就緒優惠券代碼。",
+    "singular": "優惠券",
+    "topicCouponsTitle": "主題優惠券",
+    "tabs": {
+      "topicCoupon": "主題優惠券",
+      "coupon": "優惠券",
+      "listTopic": "清單主題",
+      "archive": "封存"
+    },
+    "topic": {
+      "create": "建立新",
+      "edit": "編輯主題"
+    },
+    "actions": {
+      "import": "匯入優惠券",
+      "export": "下載優惠券清單",
+      "downloadImportTemplate": "下載匯入範本"
+    },
+    "fields": {
+      "topic": "主題",
+      "selectTopic": "選擇主題",
+      "importCsvOnly": "點選或拖曳.csv檔案到此區域即可上傳",
+      "allTopics": "所有主題",
+      "couponCount": "優惠券",
+      "validity": "有效期限",
+      "unlimited": "無限制",
+      "code": "代碼",
+      "issueStatus": "狀態",
+      "usageStatus": "用法",
+      "allIssueStatuses": "所有狀態",
+      "allUsageStatuses": "所有使用情況",
+      "searchCode": "搜尋代碼"
+    },
+    "issueStatuses": {
+      "published": "已發布",
+      "unpublished": "未發布"
+    },
+    "usageStatuses": {
+      "used": "已使用",
+      "notUsed": "尚未使用"
+    },
+    "variables": {
+      "group": "優惠券"
+    },
+    "messages": {
+      "topicSaved": "優惠券主題已儲存。",
+      "editLocked": "建立或匯入優惠券後，名稱和描述將被鎖定。",
+      "archiveTitle": "封存優惠券主題",
+      "archiveConfirm": "封存「{name}」？它將移至封存清單。",
+      "archiveBulkConfirm": "要封存 {count} 個已選主題嗎？它們將移至封存清單。",
+      "restoreTitle": "還原優惠券主題",
+      "unarchiveConfirm": "還原「{name}」？它將移回主題清單。",
+      "unarchiveBulkConfirm": "還原 {count} 所選主題？他們將移回到主題清單。",
+      "deleteTitle": "刪除優惠券主題",
+      "deleteConfirm": "刪除這個封存主題？優惠券歷史記錄已保留。",
+      "empty": "找不到優惠券。",
+      "importStarted": "優惠券匯入已開始。",
+      "exportStarted": "優惠券匯出開始。",
+      "exportFailed": "優惠券匯出失敗。",
+      "exportCount": "{count} 優惠券行。"
+    }
+  },
+  "productImport": {
+    "title": "匯入",
+    "mapColumns": "列映射",
+    "mapColumnsHint": "將每個產品欄位與檔案中的欄位相符。保留某個欄位未映射以跳過它。",
+    "downloadTemplate": "下載範本",
+    "upload": "上傳 .csv 或 .xlsx 檔案",
+    "confirm": "開始匯入",
+    "started": "產品匯入已開始。",
+    "error": "產品匯入失敗。",
+    "notMapped": "未映射",
+    "createMissingCategories": "建立不存在的類別",
+    "fields": {
+      "name": "產品名稱",
+      "sku": "SKU",
+      "price": "價格",
+      "discount": "折扣",
+      "shortDescription": "簡短說明",
+      "category": "分類",
+      "vendor": "供應商",
+      "inventoryQuantity": "庫存數量",
+      "imageUrl": "圖片URL",
+      "productUrl": "產品URL"
+    },
+    "template": {
+      "sheetName": "產品",
+      "name": "產品名稱",
+      "sku": "SKU",
+      "price": "價格",
+      "discount": "折扣",
+      "shortDescription": "簡短說明",
+      "category": "分類",
+      "vendor": "供應商",
+      "inventoryQuantity": "庫存數量",
+      "imageUrl": "圖片URL",
+      "productUrl": "產品URL",
+      "exampleOne": {
+        "name": "經典T卹",
+        "description": "柔軟棉質T卹",
+        "category": "服裝",
+        "vendor": "範例品牌"
+      },
+      "exampleTwo": {
+        "name": "帆布手提包",
+        "description": "可重複使用的帆布手提袋",
+        "category": "配件",
+        "vendor": "範例品牌"
+      }
+    }
+  },
+  "metaCatalog": {
+    "title": "同步Meta 目錄",
+    "connect": "連接Meta",
+    "connectDescription": "連接 Meta 企業帳戶，用於將您的產品推送到現有目錄。",
+    "tabs": {
+      "sync": "同步到Meta",
+      "import": "從Meta同步",
+      "history": "歷史",
+      "connection": "連接"
+    },
+    "catalogId": "Meta目錄ID",
+    "catalogIdPlaceholder": "從 Commerce Manager 輸入目錄 ID",
+    "createCatalog": {
+      "trigger": "建立新目錄",
+      "description": "將在您的商務管理平台中建立一個空的商務目錄並用於此工作區。",
+      "business": "業務經理",
+      "businessPlaceholder": "選擇業務經理",
+      "noBusinesses": "此Meta帳號不管理任何商務管理平台，因此無法在此建立目錄。",
+      "name": "目錄名稱",
+      "confirm": "建立目錄",
+      "created": "已建立目錄。",
+      "errors": {
+        "businesses": "無法載入您的業務管理平台。",
+        "create": "無法建立目錄。"
+      }
+    },
+    "importDescription": "將產品從Meta目錄拉入您的工作區。在商務管理器中找到ID。",
+    "importCatalogAction": "匯入",
+    "importProgress": "匯入 Meta 產品：{imported}/{total}",
+    "importQueued": "等待匯入開始...",
+    "importResult": "進口 {imported}（共 {total} Meta）產品",
+    "retryImport": "重新匯入",
+    "syncNow": "立即同步",
+    "syncSelectionRequired": "選擇要推送的產品，然後執行同步。",
+    "syncSelectionCount": "{count} 選定的產品將被推送到Meta 目錄。",
+    "connectionInfo": {
+      "heading": "已連接 Meta 目錄",
+      "noCatalog": "尚未選擇目錄",
+      "lastCatalogId": "最後一個Meta目錄ID",
+      "businessId": "業務ID",
+      "authMode": "授權",
+      "tokenExpiresAt": "權杖過期",
+      "lastImportedAt": "上次匯入",
+      "unknown": "不可用",
+      "never": "從不",
+      "noExpiry": "不會過期",
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook 業務擴展"
+      },
+      "connectionStatuses": {
+        "active": "活動",
+        "invalid": "需要重新連接"
+      }
+    },
+    "disconnect": "中斷連線",
+    "reconnect": "重新連接",
+    "reconnectWarning": "Meta 權杖無效或在 7 天內過期。",
+    "requirements": {
+      "intro": "同步到Messenger 購物的產品必須符合以下要求：",
+      "description": {
+        "label": "詳細說明",
+        "value": "除了標題之外，還包括規格、材質、用例和突出功能。"
+      },
+      "image": {
+        "label": "產品圖片",
+        "value": "高解析度至少500px × 500px，檔案大小最大8MB。"
+      },
+      "video": {
+        "label": "產品影片",
+        "value": "檔案大小最大 200MB。"
+      },
+      "price": {
+        "label": "價格",
+        "value": "每個產品都必須標明價格。"
+      },
+      "minimumItems": "發佈至少 6 種商品，以便顧客有足夠的選擇。"
+    },
+    "historyEmpty": "尚未執行同步或匯入。",
+    "historyFailures": "{failed} 失敗 · {skipped} 已跳過",
+    "historyCatalog": "目錄 {id}",
+    "diagnostics": "錯誤與略過項目的詳細資訊",
+    "itemError": "項目 {id}：{reason}",
+    "itemSkipped": "項目 {id}：已跳過 — {reason}",
+    "skipReasons": {
+      "missingImage": "缺少影像",
+      "missingDescription": "缺少描述",
+      "missingStoreUrl": "尚未設定商店 URL",
+      "hasVariants": "變體"
+    },
+    "statuses": {
+      "queued": "已排隊",
+      "running": "執行",
+      "succeeded": "成功",
+      "partial": "部分完成",
+      "failed": "失敗"
+    },
+    "directions": {
+      "push": "推至Meta",
+      "import": "從Meta匯入"
+    },
+    "messages": {
+      "catalogSelected": "目錄匯入已開始。",
+      "syncStarted": "Meta 目錄同步已開始。",
+      "disconnected": "Meta 目錄已斷開連接。"
+    },
+    "errors": {
+      "load": "無法載入Meta 目錄設定。",
+      "connect": "無法連接Meta 目錄。",
+      "catalog": "無法選擇此目錄。",
+      "sync": "無法啟動目錄同步。",
+      "disconnect": "無法斷開Meta 目錄。",
+      "invalidAppSettings": "Meta 未設定應用程式設定。",
+      "emptyScope": "所選同步範圍沒有產品。",
+      "alreadyRunning": "Meta 目錄同步或匯入已在運作。等待它完成。",
+      "queueImport": "無法對 Meta 目錄匯入進行排隊。",
+      "queueSync": "無法對 Meta 目錄同步進行排隊。"
+    }
+  },
+  "helpMenu": {
+    "title": "幫助",
+    "ariaLabel": "開啟幫助選單"
+  },
+  "helpItems": {
+    "title": "幫助連結",
+    "addTitle": "新增幫助連結",
+    "editTitle": "編輯幫助連結",
+    "addButton": "新增連結",
+    "empty": "尚未設定幫助連結。",
+    "fields": {
+      "name": "名稱",
+      "namePlaceholder": "例如文檔",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.example.com",
+      "icon": "圖標",
+      "iconPlaceholder": "例如打開的書、星星、圓圈問號",
+      "position": "訂單",
+      "iconSearchLink": "瀏覽 Lucide 圖示 →"
+    }
+  }
+}

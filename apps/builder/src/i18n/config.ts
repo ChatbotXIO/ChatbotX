@@ -17,6 +17,7 @@ export const locales = [
   "sv",
   "tr",
   "vi",
+  "zh-TW",
 ] as const
 
 export type Locale = (typeof locales)[number]
@@ -44,6 +45,7 @@ export const localeMeta: Record<
   sv: { nativeLabel: "Svenska", dir: "ltr" },
   tr: { nativeLabel: "Türkçe", dir: "ltr" },
   vi: { nativeLabel: "Tiếng Việt", dir: "ltr" },
+  "zh-TW": { nativeLabel: "繁體中文", dir: "ltr" },
 }
 
 export function isLocale(value: string): value is Locale {
@@ -54,19 +56,46 @@ export function resolveLocale(value: string | undefined): Locale {
   if (!value) {
     return defaultLocale
   }
-  if (isLocale(value)) {
-    return value
+
+  const normalizedValue = value.trim()
+  if (isLocale(normalizedValue)) {
+    return normalizedValue
   }
 
-  const language = value.split("-")[0]
+  const normalizedLower = normalizedValue.toLowerCase()
+  const language = normalizedLower.split("-")[0]
   if (!language) {
     return defaultLocale
   }
   if (language === "pt") {
     return "pt-BR"
   }
+  if (
+    normalizedLower === "zh-hant" ||
+    normalizedLower.startsWith("zh-hant-") ||
+    normalizedLower === "zh-hk" ||
+    normalizedLower.startsWith("zh-hk-") ||
+    normalizedLower === "zh-mo" ||
+    normalizedLower.startsWith("zh-mo-") ||
+    normalizedLower === "zh-tw" ||
+    normalizedLower.startsWith("zh-tw-")
+  ) {
+    return "zh-TW"
+  }
+  if (
+    normalizedLower === "zh-cn" ||
+    normalizedLower.startsWith("zh-cn-") ||
+    normalizedLower === "zh-hans" ||
+    normalizedLower.startsWith("zh-hans-")
+  ) {
+    return defaultLocale
+  }
+  if (language === "zh") {
+    return defaultLocale
+  }
 
   return (
-    locales.find((locale) => locale.split("-")[0] === language) ?? defaultLocale
+    locales.find((locale) => locale.toLowerCase().split("-")[0] === language) ??
+    defaultLocale
   )
 }
