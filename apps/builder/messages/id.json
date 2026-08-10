@@ -2529,6 +2529,16 @@
         "cancelled": "Penyambungan ulang dibatalkan. Coba lagi dan berikan izin yang diminta.",
         "failed": "Gagal menghubungkan kembali. Silakan coba lagi."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Mendesak",
+      "description": "Channel berikut gagal memperbarui token akses secara otomatis. Silakan hubungkan ulang agar dapat terus mengirim dan menerima pesan.",
+      "cta": "Hubungkan kembali"
+    },
+    "refreshAllTokens": {
+      "button": "Perbarui semua izin",
+      "resultSuccess": "Berhasil menyegarkan {refreshed} channel.",
+      "resultWithFailures": "Berhasil menyegarkan {refreshed} channel, {failed} gagal."
     }
   },
   "workspace": {

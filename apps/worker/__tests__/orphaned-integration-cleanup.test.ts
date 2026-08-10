@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  instagramIntegrationExistsByPageId: mocks.instagramIntegrationExistsByPageId,
+  instagramIntegrationService: {
+    existsByPageId: mocks.instagramIntegrationExistsByPageId,
+  },
   platformCredentialService: {
     resolvePlatformAppAccessToken: mocks.resolvePlatformAppAccessToken,
   },

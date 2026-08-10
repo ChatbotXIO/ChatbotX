@@ -39,10 +39,14 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  findMessengerIntegrationByIdForWorkspace: mockFindMessengerIntegration,
-  updateMessengerIntegrationAuth: mockUpdateMessengerIntegrationAuth,
-  findInstagramIntegrationByIdForWorkspace: mockFindInstagramIntegration,
-  updateInstagramIntegrationAuth: mockUpdateInstagramIntegrationAuth,
+  messengerIntegrationService: {
+    findByIdForWorkspace: mockFindMessengerIntegration,
+    updateAuth: mockUpdateMessengerIntegrationAuth,
+  },
+  instagramIntegrationService: {
+    findByIdForWorkspace: mockFindInstagramIntegration,
+    updateAuth: mockUpdateInstagramIntegrationAuth,
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({

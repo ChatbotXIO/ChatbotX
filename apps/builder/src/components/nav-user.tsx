@@ -20,13 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import {
-  ChevronsUpDown,
-  CreditCard,
-  Crown,
-  Settings2,
-  ShieldCheck,
-} from "lucide-react"
+import { CreditCard, Crown, Settings2, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -34,6 +28,7 @@ import { UpgradePlanDialog } from "@/enterprise/features/billing/upgrade-plan-di
 import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
 import { EditProfileDialog } from "@/features/workspaces/components/edit-profile-dialog"
+import { RefreshAllChannelTokensButton } from "@/features/workspaces/components/refresh-all-channel-tokens-button"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
@@ -83,7 +78,6 @@ export function NavUser({
                     {user.email}
                   </span>
                 </div>
-                <ChevronsUpDown className="ms-auto size-4" />
               </SidebarMenuButton>
             }
           />
@@ -207,6 +201,7 @@ export function NavUser({
                 <DropdownMenuSeparator />
               </>
             )}
+            <DropdownMenuItem render={<RefreshAllChannelTokensButton />} />
             <DropdownMenuItem render={<SignOut />} />
           </DropdownMenuContent>
         </DropdownMenu>

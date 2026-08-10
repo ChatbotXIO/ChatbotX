@@ -31,7 +31,9 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  findConnectedMessengerPageIds: mockFindConnectedMessengerPageIds,
+  messengerIntegrationService: {
+    findConnectedPageIds: mockFindConnectedMessengerPageIds,
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({

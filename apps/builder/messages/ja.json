@@ -2513,6 +2513,16 @@
         "cancelled": "再接続がキャンセルされました。もう一度試し、要求された権限を許可してください。",
         "failed": "再接続に失敗しました。もう一度お試しください。"
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "緊急",
+      "description": "以下のチャンネルはアクセストークンの自動更新に失敗しました。メッセージの送受信を続けるには再接続してください。",
+      "cta": "再接続"
+    },
+    "refreshAllTokens": {
+      "button": "すべての権限を更新",
+      "resultSuccess": "{refreshed} 件のチャネルを更新しました。",
+      "resultWithFailures": "{refreshed} 件のチャネルを更新しました。{failed} 件は失敗しました。"
     }
   },
   "workspace": {

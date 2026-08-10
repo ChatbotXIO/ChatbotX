@@ -49,13 +49,13 @@ describe("Meta sibling integration service helpers", () => {
   })
 
   test("messengerIntegrationExistsForPage returns true when a row is found", async () => {
-    const { messengerIntegrationExistsForPage } = await import(
+    const { messengerIntegrationService } = await import(
       "../src/integration-messenger/service"
     )
     mocks.limit.mockResolvedValueOnce([{ id: "messenger-1" }])
 
     await expect(
-      messengerIntegrationExistsForPage({
+      messengerIntegrationService.existsForPage({
         pageId: "page-1",
         clientId: "client-1",
       }),
@@ -66,12 +66,12 @@ describe("Meta sibling integration service helpers", () => {
   })
 
   test("instagramIntegrationExistsForPage filters by page id and client id", async () => {
-    const { instagramIntegrationExistsForPage } = await import(
+    const { instagramIntegrationService } = await import(
       "../src/integration-instagram/service"
     )
 
     await expect(
-      instagramIntegrationExistsForPage({
+      instagramIntegrationService.existsForPage({
         pageId: "page-2",
         clientId: "client-2",
       }),
@@ -82,11 +82,11 @@ describe("Meta sibling integration service helpers", () => {
   })
 
   test("instagramIntegrationExistsByPageId omits the client id filter", async () => {
-    const { instagramIntegrationExistsByPageId } = await import(
+    const { instagramIntegrationService } = await import(
       "../src/integration-instagram/service"
     )
 
-    await instagramIntegrationExistsByPageId("page-3")
+    await instagramIntegrationService.existsByPageId("page-3")
 
     const condition = mocks.where.mock.calls[0]?.[0] as { and: unknown[] }
     expect(JSON.stringify(condition)).toContain("page-3")

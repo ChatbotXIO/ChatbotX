@@ -3,10 +3,10 @@
 import {
   buildContext,
   connectChannelIntegration,
+  messengerIntegrationService,
   platformCredentialService,
   resolveTenantSettings,
   tagSyncService,
-  updateMessengerIntegrationUserInfo,
   userQuotaService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -227,7 +227,7 @@ export const selectPageAction = authActionClient
           userAccessToken: pendingAuth?.userToken,
           avatarUrl: pendingAuth?.userAvatarUrl,
           persist: (userInfo) =>
-            updateMessengerIntegrationUserInfo({
+            messengerIntegrationService.updateUserInfo({
               id: integrationId,
               workspaceId: workspaceId as string,
               userInfo,

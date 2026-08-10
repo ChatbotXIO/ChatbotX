@@ -1,4 +1,4 @@
-import { findConnectedMessengerPageIds } from "@chatbotx.io/business"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import { getUserPages } from "@chatbotx.io/integration-messenger"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
@@ -39,7 +39,9 @@ export default async function MessengerSelectPage() {
   )
 
   const connectedPageIds = new Set(
-    await findConnectedMessengerPageIds(pages.map((page) => page.id)),
+    await messengerIntegrationService.findConnectedPageIds(
+      pages.map((page) => page.id),
+    ),
   )
   const pickerPages: PickerFacebookPage[] = pages
     .map((page) => ({

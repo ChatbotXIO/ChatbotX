@@ -27,6 +27,10 @@ import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
+import { refreshInstagramFacebookTokens } from "./handlers/refresh-instagram-facebook-tokens"
+import { refreshInstagramTokens } from "./handlers/refresh-instagram-tokens"
+import { refreshMessengerTokens } from "./handlers/refresh-messenger-tokens"
+import { refreshTiktokTokens } from "./handlers/refresh-tiktok-tokens"
 import { refreshZaloTokens } from "./handlers/refresh-zalo-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
@@ -132,6 +136,22 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.refreshZaloTokens:
           await refreshZaloTokens()
+          return
+
+        case ScheduleJobData.refreshTiktokTokens:
+          await refreshTiktokTokens()
+          return
+
+        case ScheduleJobData.refreshInstagramTokens:
+          await refreshInstagramTokens()
+          return
+
+        case ScheduleJobData.refreshMessengerTokens:
+          await refreshMessengerTokens()
+          return
+
+        case ScheduleJobData.refreshInstagramFacebookTokens:
+          await refreshInstagramFacebookTokens()
           return
 
         case ScheduleJobData.unsubscribeExpiredTrials:

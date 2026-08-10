@@ -1,5 +1,5 @@
 import {
-  instagramIntegrationExistsByPageId,
+  instagramIntegrationService,
   type MetaAppCredentialType,
   platformCredentialService,
 } from "@chatbotx.io/business"
@@ -55,7 +55,8 @@ const ORPHAN_CLEANUP_STRATEGIES: Partial<
 > = {
   [integrationTypes.enum.messenger]: {
     credentialType: integrationTypes.enum.messenger,
-    hasSurvivingSibling: (pageId) => instagramIntegrationExistsByPageId(pageId),
+    hasSurvivingSibling: (pageId) =>
+      instagramIntegrationService.existsByPageId(pageId),
     unsubscribe: ({ identifier, appAccessToken }) =>
       unsubscribePageFromAppWebhook({ pageId: identifier, appAccessToken }),
   },

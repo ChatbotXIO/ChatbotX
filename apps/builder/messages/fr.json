@@ -1926,6 +1926,16 @@
         "cancelled": "La reconnexion a été annulée. Réessayez et accordez les autorisations demandées.",
         "failed": "Échec de la reconnexion. Veuillez réessayer."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgent",
+      "description": "Les canaux suivants n'ont pas pu actualiser automatiquement leur jeton d'accès. Reconnectez-les pour continuer à envoyer et recevoir des messages.",
+      "cta": "Reconnecter"
+    },
+    "refreshAllTokens": {
+      "button": "Actualiser toutes les autorisations",
+      "resultSuccess": "{refreshed} canal/canaux actualisé(s).",
+      "resultWithFailures": "{refreshed} canal/canaux actualisé(s), {failed} en échec."
     }
   },
   "workspace": {

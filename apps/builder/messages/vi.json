@@ -617,6 +617,16 @@
         "cancelled": "Kết nối lại đã bị huỷ. Vui lòng thử lại và cấp các quyền được yêu cầu.",
         "failed": "Kết nối lại thất bại. Vui lòng thử lại."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Khẩn cấp",
+      "description": "Các channel dưới đây đã tự động làm mới access token bị lỗi. Vui lòng kết nối lại để tiếp tục gửi và nhận tin nhắn.",
+      "cta": "Kết nối lại"
+    },
+    "refreshAllTokens": {
+      "button": "Làm mới tất cả quyền",
+      "resultSuccess": "Đã làm mới {refreshed} channel.",
+      "resultWithFailures": "Đã làm mới {refreshed} channel, {failed} bị lỗi."
     }
   },
   "workspace": {

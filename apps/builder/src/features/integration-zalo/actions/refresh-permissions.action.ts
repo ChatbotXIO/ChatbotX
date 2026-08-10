@@ -1,12 +1,12 @@
 "use server"
 
+import { zaloIntegrationService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationZaloModel } from "@chatbotx.io/database/schema"
 import {
   integration as integrationZalo,
   type ZaloAuthValue,
 } from "@chatbotx.io/integration-zalo"
+import { distributedLock } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -21,30 +21,40 @@ export const refreshZaloPermissionsAction = workspaceActionClient
     await refreshZaloPermissions({ workspaceId, id })
   })
 
+const REFRESH_LOCK_TIMEOUT_SECONDS = 10
+
 const refreshZaloPermissions = async (ctx: {
   workspaceId: string
   id: string
 }) => {
-  const integrationZaloRow = await findOrFail({
-    table: integrationZaloModel,
-    where: { id: ctx.id, workspaceId: ctx.workspaceId },
-    message: "Integration Zalo not found",
+  await distributedLock.runExclusive({
+    key: `auth:refresh:zalo:${ctx.id}`,
+    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
+    fn: async () => {
+      const integrationZaloRow = await zaloIntegrationService.findById({
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+      })
+
+      const auth = integrationZaloRow.auth as ZaloAuthValue
+
+      try {
+        if (!integrationZalo.refreshAuth) {
+          throw new ChatbotXException(
+            "Zalo integration does not support refresh",
+          )
+        }
+        const updatedAuth = await integrationZalo.refreshAuth({ auth })
+
+        await zaloIntegrationService.updateAuth(ctx.id, updatedAuth)
+      } catch (error) {
+        logger.error(error, "Failed to refresh Zalo permissions")
+        await zaloIntegrationService.markTokenRefreshError(
+          ctx.id,
+          error instanceof Error ? error.message : String(error),
+        )
+        throw new ChatbotXException("Failed to refresh Zalo permissions")
+      }
+    },
   })
-
-  const auth = integrationZaloRow.auth as ZaloAuthValue
-
-  try {
-    if (!integrationZalo.refreshAuth) {
-      throw new ChatbotXException("Zalo integration does not support refresh")
-    }
-    const updatedAuth = await integrationZalo.refreshAuth({ auth })
-
-    await db
-      .update(integrationZaloModel)
-      .set({ auth: updatedAuth })
-      .where(eq(integrationZaloModel.id, ctx.id))
-  } catch (error) {
-    logger.error(error, "Failed to refresh Zalo permissions")
-    throw new ChatbotXException("Failed to refresh Zalo permissions")
-  }
 }

@@ -23,6 +23,7 @@ import { getUserAvatarUrl } from "@/lib/auth/avatar"
 import { buildPlanNotice, buildUsageLabels } from "@/lib/quota-metrics"
 import { resolveTrialMessage, trialMessageClassName } from "@/lib/trial-message"
 import { EditProfileDialog } from "./edit-profile-dialog"
+import { RefreshAllChannelTokensButton } from "./refresh-all-channel-tokens-button"
 
 type AccountRailProps = {
   user: {
@@ -175,7 +176,8 @@ export const AccountRail = async ({
         </div>
       </div>
 
-      <div className="border-t p-6 pt-4">
+      <div className="flex flex-col gap-2 border-t p-6 pt-4">
+        <RefreshAllChannelTokensButton />
         <SignOut />
       </div>
     </aside>

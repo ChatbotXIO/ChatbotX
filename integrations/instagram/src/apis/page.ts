@@ -27,22 +27,24 @@ export const INSTAGRAM_SUBSCRIBE_FIELDS = [
   "comments",
 ]
 
-export const refreshLongLivedToken = (accessToken: string): Promise<string> => {
+export type InstagramRefreshTokenResponse = {
+  access_token: string
+  expires_in: number
+}
+
+export const refreshLongLivedToken = (
+  accessToken: string,
+): Promise<InstagramRefreshTokenResponse> => {
   const endpoint = "refresh_access_token"
 
-  return rescue(endpoint, async () => {
-    const res: { access_token: string } = await instagramBusinessClient.get(
-      endpoint,
-      {
-        searchParams: {
-          grant_type: "ig_refresh_token",
-          access_token: accessToken,
-        },
+  return rescue(endpoint, () =>
+    instagramBusinessClient.get<InstagramRefreshTokenResponse>(endpoint, {
+      searchParams: {
+        grant_type: "ig_refresh_token",
+        access_token: accessToken,
       },
-    )
-
-    return res.access_token
-  })
+    }),
+  )
 }
 
 export const getInstagramProfilePictureUrl = async (props: {

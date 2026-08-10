@@ -56,8 +56,9 @@ vi.mock("@/lib/log", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  findMessengerIntegrationsByWorkspaceId:
-    mocks.findMessengerIntegrationsByWorkspaceId,
+  messengerIntegrationService: {
+    findByWorkspaceId: mocks.findMessengerIntegrationsByWorkspaceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/post", () => ({

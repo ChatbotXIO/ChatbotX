@@ -4,3 +4,6 @@
  */
 export const workspaceSettingsGeneralPath = (workspaceId: string): string =>
   `/space/${workspaceId}/settings/general`
+
+export const workspaceSettingsChannelsPath = (workspaceId: string): string =>
+  `/space/${workspaceId}/settings/channels`

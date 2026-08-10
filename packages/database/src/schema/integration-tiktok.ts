@@ -22,6 +22,7 @@ export const integrationTiktokModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
+    tokenRefreshError: text(),
   },
   (table) => [
     index("IntegrationTiktok_workspaceId_idx").using(

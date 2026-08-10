@@ -1,7 +1,7 @@
 import {
   coexistService,
   inboxService,
-  instagramIntegrationExistsForPage,
+  instagramIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
@@ -36,12 +36,11 @@ export const disconnectMessenger = async (ctx: {
 
   const authValue = integrationMessenger.auth as MessengerAuthValue
 
-  const hasSharedInstagramIntegration = await instagramIntegrationExistsForPage(
-    {
+  const hasSharedInstagramIntegration =
+    await instagramIntegrationService.existsForPage({
       pageId: authValue.metadata.pageId,
       clientId: authValue.clientId,
-    },
-  )
+    })
 
   if (hasSharedInstagramIntegration) {
     try {

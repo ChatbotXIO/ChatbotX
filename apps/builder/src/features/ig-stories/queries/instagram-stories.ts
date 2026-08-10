@@ -1,4 +1,4 @@
-import { findInstagramIntegrationsByWorkspaceId } from "@chatbotx.io/business"
+import { instagramIntegrationService } from "@chatbotx.io/business"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import {
   type InstagramAuthValue,
@@ -68,7 +68,7 @@ async function collectInstagramStories(
 }
 
 export async function listInstagramLoginStories(workspaceId: string) {
-  const integrations = await findInstagramIntegrationsByWorkspaceId(
+  const integrations = await instagramIntegrationService.findByWorkspaceId(
     workspaceId,
     "instagram",
   )
@@ -80,7 +80,7 @@ export async function listInstagramLoginStories(workspaceId: string) {
 }
 
 export async function listInstagramFacebookStories(workspaceId: string) {
-  const integrations = await findInstagramIntegrationsByWorkspaceId(
+  const integrations = await instagramIntegrationService.findByWorkspaceId(
     workspaceId,
     "facebook",
   )

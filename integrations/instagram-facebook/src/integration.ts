@@ -3,7 +3,10 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { unsubscribePageFromInstagramWebhook } from "./apis/page"
+import {
+  exchangeLongLivedToken,
+  unsubscribePageFromInstagramWebhook,
+} from "./apis/page"
 import { getPostDetails } from "./apis/post"
 import { InstagramAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
@@ -55,6 +58,23 @@ const config: IntegrationDefinition<
       appAccessToken: `${auth.clientId}|${auth.clientSecret}`,
       version: auth.metadata.version,
     })
+  },
+  refreshAuth: async ({ auth }) => {
+    const accessToken = await exchangeLongLivedToken(
+      {
+        clientId: auth.clientId,
+        clientSecret: auth.clientSecret,
+        version: auth.metadata.version,
+      },
+      auth.tokens.accessToken,
+    )
+    return {
+      ...auth,
+      tokens: {
+        ...auth.tokens,
+        accessToken,
+      },
+    }
   },
 }
 

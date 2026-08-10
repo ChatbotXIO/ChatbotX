@@ -1,11 +1,11 @@
 "use server"
 
+import { tiktokIntegrationService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
+import { distributedLock } from "@chatbotx.io/redis"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -25,44 +25,52 @@ export const refreshTiktokTokenAction = workspaceActionClient
     },
   )
 
+const REFRESH_LOCK_TIMEOUT_SECONDS = 10
+
 const refreshTiktokToken = async (ctx: { workspaceId: string; id: string }) => {
-  const integrationTiktok = await findOrFail({
-    table: integrationTiktokModel,
-    where: { id: ctx.id, workspaceId: ctx.workspaceId },
-    message: "Integration TikTok not found",
+  await distributedLock.runExclusive({
+    key: `auth:refresh:tiktok:${ctx.id}`,
+    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
+    fn: async () => {
+      const integrationTiktok = await tiktokIntegrationService.findById({
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+      })
+
+      const auth = integrationTiktok.auth as TiktokAuthValue
+
+      if (!auth.tokens.refreshToken) {
+        throw new ChatbotXException("TikTok refresh token not available")
+      }
+
+      try {
+        const newTokens = await refreshAccessToken(
+          { clientId: auth.clientId, clientSecret: auth.clientSecret },
+          auth.tokens.refreshToken,
+        )
+
+        const updatedAuth: TiktokAuthValue = {
+          ...auth,
+          tokens: {
+            ...auth.tokens,
+            accessToken: newTokens.access_token,
+            refreshToken: newTokens.refresh_token,
+            ...buildTokenTimestamps(
+              newTokens.expires_in,
+              newTokens.refresh_expires_in,
+            ),
+          },
+        }
+
+        await tiktokIntegrationService.updateAuth(ctx.id, updatedAuth)
+      } catch (error) {
+        logger.error(error, "Failed to refresh TikTok token")
+        await tiktokIntegrationService.markTokenRefreshError(
+          ctx.id,
+          error instanceof Error ? error.message : String(error),
+        )
+        throw new ChatbotXException("Failed to refresh TikTok token")
+      }
+    },
   })
-
-  const auth = integrationTiktok.auth as TiktokAuthValue
-
-  if (!auth.tokens.refreshToken) {
-    throw new ChatbotXException("TikTok refresh token not available")
-  }
-
-  try {
-    const newTokens = await refreshAccessToken(
-      { clientId: auth.clientId, clientSecret: auth.clientSecret },
-      auth.tokens.refreshToken,
-    )
-
-    const updatedAuth: TiktokAuthValue = {
-      ...auth,
-      tokens: {
-        ...auth.tokens,
-        accessToken: newTokens.access_token,
-        refreshToken: newTokens.refresh_token,
-        ...buildTokenTimestamps(
-          newTokens.expires_in,
-          newTokens.refresh_expires_in,
-        ),
-      },
-    }
-
-    await db
-      .update(integrationTiktokModel)
-      .set({ auth: updatedAuth })
-      .where(eq(integrationTiktokModel.id, ctx.id))
-  } catch (error) {
-    logger.error(error, "Failed to refresh TikTok token")
-    throw new ChatbotXException("Failed to refresh TikTok token")
-  }
 }

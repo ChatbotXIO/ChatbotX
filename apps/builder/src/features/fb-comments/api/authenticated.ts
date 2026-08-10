@@ -1,4 +1,4 @@
-import { findMessengerIntegrationsByWorkspaceId } from "@chatbotx.io/business"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import {
   type FacebookPostListItem,
   listAdsPosts,
@@ -112,7 +112,7 @@ export const fbCommentsPrivateAPI = {
       }),
     )
     .handler(async ({ input }) => {
-      const integrations = await findMessengerIntegrationsByWorkspaceId(
+      const integrations = await messengerIntegrationService.findByWorkspaceId(
         input.workspaceId,
       )
 

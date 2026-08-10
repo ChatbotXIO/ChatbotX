@@ -2529,6 +2529,16 @@
         "cancelled": "Opnieuw koppelen is geannuleerd. Probeer het opnieuw en verleen de gevraagde machtigingen.",
         "failed": "Opnieuw koppelen is mislukt. Probeer het opnieuw."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgent",
+      "description": "De volgende kanalen konden hun toegangstoken niet automatisch vernieuwen. Verbind ze opnieuw om berichten te kunnen blijven verzenden en ontvangen.",
+      "cta": "Opnieuw koppelen"
+    },
+    "refreshAllTokens": {
+      "button": "Alle machtigingen vernieuwen",
+      "resultSuccess": "{refreshed} kanaal/kanalen vernieuwd.",
+      "resultWithFailures": "{refreshed} kanaal/kanalen vernieuwd, {failed} mislukt."
     }
   },
   "workspace": {

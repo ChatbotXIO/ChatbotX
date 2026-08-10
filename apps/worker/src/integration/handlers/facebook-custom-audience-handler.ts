@@ -1,8 +1,8 @@
 import {
   buildContext,
   contactService,
-  findMessengerIntegrationByInboxId,
   integrationFacebookAdsService,
+  messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
@@ -55,9 +55,9 @@ export const handleFacebookCustomAudience = async (
     let pageId: string | null = null
     if (contactInbox.channel === "messenger") {
       psid = contactInbox.sourceId
-      const messengerIntegration = await findMessengerIntegrationByInboxId(
-        contactInbox.inboxId,
-      ).catch(() => null)
+      const messengerIntegration = await messengerIntegrationService
+        .findByInboxId(contactInbox.inboxId)
+        .catch(() => null)
       pageId = messengerIntegration?.pageId ?? null
     }
 

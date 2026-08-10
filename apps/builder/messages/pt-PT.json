@@ -2529,6 +2529,16 @@
         "cancelled": "A nova ligação foi cancelada. Tente novamente e conceda as permissões solicitadas.",
         "failed": "Não foi possível ligar novamente. Tente novamente."
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "Urgente",
+      "description": "Os seguintes canais não conseguiram renovar automaticamente o token de acesso. Volte a ligá-los para continuar a enviar e receber mensagens.",
+      "cta": "Ligar novamente"
+    },
+    "refreshAllTokens": {
+      "button": "Atualizar todas as permissões",
+      "resultSuccess": "{refreshed} canal(is) atualizado(s).",
+      "resultWithFailures": "{refreshed} canal(is) atualizado(s), {failed} com falha."
     }
   },
   "workspace": {

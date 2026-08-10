@@ -1,7 +1,7 @@
 import {
   coexistService,
   inboxService,
-  messengerIntegrationExistsForPage,
+  messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
@@ -35,10 +35,11 @@ export const disconnectInstagram = async (ctx: {
 
   try {
     if (isFacebook) {
-      const hasMessengerSibling = await messengerIntegrationExistsForPage({
-        pageId: authValue.metadata.pageId,
-        clientId: authValue.clientId,
-      })
+      const hasMessengerSibling =
+        await messengerIntegrationService.existsForPage({
+          pageId: authValue.metadata.pageId,
+          clientId: authValue.clientId,
+        })
 
       if (!hasMessengerSibling) {
         await integrations.instagramFacebook.disconnect(authValue)

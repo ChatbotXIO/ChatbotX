@@ -36,8 +36,8 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@chatbotx.io/business", () => ({
   inboxService: { disconnect: mocks.inboxDisconnect },
-  instagramIntegrationExistsForPage: mocks.instagramExists,
-  messengerIntegrationExistsForPage: mocks.messengerExists,
+  instagramIntegrationService: { existsForPage: mocks.instagramExists },
+  messengerIntegrationService: { existsForPage: mocks.messengerExists },
   workspaceService: { findById: mocks.workspaceFindById },
 }))
 

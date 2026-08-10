@@ -1,7 +1,7 @@
 "use server"
 
 import {
-  findMessengerIntegrationByIdForWorkspace,
+  messengerIntegrationService,
   platformCredentialService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -31,7 +31,7 @@ export const reconnectMessengerAction = workspaceActionClient
       ctx: { workspace: WorkspaceModel }
     }) => {
       const integrationMessenger =
-        await findMessengerIntegrationByIdForWorkspace({
+        await messengerIntegrationService.findByIdForWorkspace({
           id: integrationId,
           workspaceId,
         })

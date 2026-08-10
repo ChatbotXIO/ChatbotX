@@ -13,8 +13,9 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  findInstagramIntegrationsByWorkspaceId:
-    mockFindInstagramIntegrationsByWorkspaceId,
+  instagramIntegrationService: {
+    findByWorkspaceId: mockFindInstagramIntegrationsByWorkspaceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({

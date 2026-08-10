@@ -17,7 +17,7 @@ const state = {
 
 const runAction = vi.fn(async () => undefined)
 const markInvalid = vi.fn(async () => undefined)
-const findMessengerIntegrationByInboxId = vi.fn(async () => ({
+const findByInboxId = vi.fn(async () => ({
   pageId: "page-99",
 }))
 const errorLog = vi.fn()
@@ -30,7 +30,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     findByIdOrFail: vi.fn(async () => state.contact),
   },
-  findMessengerIntegrationByInboxId,
+  messengerIntegrationService: { findByInboxId },
   integrationFacebookAdsService: {
     findByWorkspaceIdOrFail: vi.fn(async () => ({ auth: "encrypted" })),
     markInvalid,
@@ -89,7 +89,7 @@ const createProps = (channel = "messenger") =>
 beforeEach(() => {
   vi.clearAllMocks()
   runAction.mockResolvedValue(undefined)
-  findMessengerIntegrationByInboxId.mockResolvedValue({ pageId: "page-99" })
+  findByInboxId.mockResolvedValue({ pageId: "page-99" })
 })
 
 describe("handleFacebookCustomAudience", () => {
@@ -120,7 +120,7 @@ describe("handleFacebookCustomAudience", () => {
   test("omits messenger identity for non-messenger conversations", async () => {
     await handleFacebookCustomAudience(createProps("whatsapp"))
 
-    expect(findMessengerIntegrationByInboxId).not.toHaveBeenCalled()
+    expect(findByInboxId).not.toHaveBeenCalled()
     expect(runAction).toHaveBeenCalledWith(
       "syncAudienceUser",
       expect.objectContaining({
