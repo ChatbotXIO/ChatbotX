@@ -81,6 +81,24 @@ vi.mock("@chatbotx.io/database/client", () => ({
     execute: mockDbExecute,
     query: {},
   },
+  describeDatabaseError: vi.fn((error: unknown) => {
+    const cause = error instanceof Error ? error.cause : undefined
+    if (typeof cause === "object" && cause !== null && "code" in cause) {
+      const dbCause = cause as {
+        code?: string
+        constraint?: string
+        detail?: string
+        message?: string
+      }
+      return {
+        code: dbCause.code,
+        constraint: dbCause.constraint,
+        detail: dbCause.detail,
+        message: dbCause.message,
+      }
+    }
+    return { message: error instanceof Error ? error.message : String(error) }
+  }),
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   inArray: vi.fn(),
   sql: Object.assign(

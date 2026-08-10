@@ -57,6 +57,11 @@ export const distributedStoreFactory = (
     }
   },
 
+  async exists(key: string): Promise<boolean> {
+    const redisClient = await getRedisClient()
+    return (await redisClient.exists(key)) > 0
+  },
+
   async getAll<T>(keys: string[]): Promise<Record<string, T | null>> {
     const redisClient = await getRedisClient()
     const values = await redisClient.mget(keys)

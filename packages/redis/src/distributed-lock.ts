@@ -23,15 +23,17 @@ export const distributedLockFactory = (
     runExclusive: async <T>({
       key,
       timeoutInSeconds,
+      retryTimeoutInSeconds,
       fn,
     }: RunExclusiveParams<T>): Promise<T> => {
       const timeout = timeoutInSeconds * 1000
+      const retryTimeout = (retryTimeoutInSeconds ?? timeoutInSeconds) * 1000
       const adapter = await getOrCreateRedisAdapter()
       const redLock = createRedlock({
         adapters: [adapter],
         key,
         ttl: timeout,
-        retryAttempts: Math.ceil(timeout / 200),
+        retryAttempts: Math.ceil(retryTimeout / 200),
         retryDelay: 200,
         clockDriftFactor: 0.01,
       })
@@ -50,5 +52,6 @@ export const distributedLockFactory = (
 type RunExclusiveParams<T> = {
   key: string
   timeoutInSeconds: number
+  retryTimeoutInSeconds?: number
   fn: () => Promise<T>
 }
