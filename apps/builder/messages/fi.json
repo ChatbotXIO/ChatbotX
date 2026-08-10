@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "Sallitut kanavat",
-    "description": "Valitse kanavatyypit, joita tämän vuokralaisen työtilat voivat luoda.",
-    "hint": "Salli kaikki kanavat jättämällä kaikki kanavat valitsematta."
+    "title": "Piilotetut kanavat",
+    "description": "Valitse kanava estääksesi tämän vuokralaisen työtiloja luomasta sitä.",
+    "hint": "Salli kaikki kanavat jättämällä kaikki kanavat valitsematta.",
+    "hiddenByPlatform": "Alustan ylläpitäjä on piilottanut tämän kanavan — et voi ottaa sitä uudelleen käyttöön."
   },
   "platformEmailTemplates": {
     "title": "Sähköpostimallit",

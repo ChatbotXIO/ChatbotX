@@ -11,8 +11,10 @@ import {
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 
 type AddInstagramDialogProps = {
+  canCreate?: boolean
   workspaceId?: string | null
   defaultOpen?: boolean
   open?: boolean
@@ -113,6 +115,7 @@ function DialogBody({ workspaceId }: { workspaceId?: string | null }) {
 }
 
 export function AddInstagramDialog({
+  canCreate = true,
   workspaceId,
   defaultOpen,
   open,
@@ -136,6 +139,12 @@ export function AddInstagramDialog({
           <DialogBody workspaceId={workspaceId} />
         </DialogContent>
       </Dialog>
+    )
+  }
+
+  if (!canCreate) {
+    return (
+      <AddChannelButton canCreate={false} label={t("fields.instagram.label")} />
     )
   }
 

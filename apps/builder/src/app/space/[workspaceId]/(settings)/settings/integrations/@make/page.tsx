@@ -5,6 +5,7 @@ import {
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { ManageMake } from "@/features/integration-make/components/manage-make"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 
 export default async function SettingIntegrationMakePage(props: {
   params: Promise<{ workspaceId: string }>
@@ -15,9 +16,9 @@ export default async function SettingIntegrationMakePage(props: {
   }
 
   const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  const credential = workspace?.ownerId
+  const credential = workspace
     ? await platformCredentialService.resolveForOwner({
-        ownerId: workspace.ownerId,
+        ownerId: await resolveOwnerForWorkspace(workspace),
         type: "make",
       })
     : undefined

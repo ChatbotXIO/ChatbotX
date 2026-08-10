@@ -9,6 +9,7 @@ import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectGoogleSheetsSchema,
@@ -30,7 +31,7 @@ export const connectGoogleSheets = workspaceActionClient
       parsedInput: ConnectGoogleSheetsSchema
     }) => {
       const googleCredential = await platformCredentialService.resolveForOwner({
-        ownerId: ctx.workspace.ownerId,
+        ownerId: await resolveOwnerForWorkspace(ctx.workspace),
         type: "google",
       })
       if (!googleCredential) {

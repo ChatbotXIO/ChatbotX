@@ -11,6 +11,7 @@ export default async function GeneralPage(props: {
   if (!workspaceId) {
     return notFound()
   }
+
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
   if (!userAndWorkspace) {
     return notFound()

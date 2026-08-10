@@ -3669,9 +3669,10 @@
     }
   },
   "platformChannels": {
-    "title": "Canali consentiti",
-    "description": "Scegli quali tipi di canale possono creare le aree di lavoro di questo tenant.",
-    "hint": "Lascia tutti i canali deselezionati per consentirli tutti."
+    "title": "Canali nascosti",
+    "description": "Seleziona un canale per impedire alle aree di lavoro di questo tenant di crearlo.",
+    "hint": "Lascia tutti i canali deselezionati per consentirli tutti.",
+    "hiddenByPlatform": "Nascosto dall'amministratore della piattaforma: non puoi riattivare questo canale."
   },
   "platformEmailTemplates": {
     "title": "Modelli e-mail",

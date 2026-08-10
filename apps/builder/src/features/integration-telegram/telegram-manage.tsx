@@ -12,17 +12,23 @@ import {
 import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import { TelegramConnect } from "./components/telegram-connect"
 import { TelegramDisconnect } from "./components/telegram-disconnect"
 import type { listIntegrationTelegrams } from "./queries"
 
 type TelegramManageProps = {
+  canCreate?: boolean
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listIntegrationTelegrams>>]>
 }
 
-export function TelegramManage({ workspaceId, promises }: TelegramManageProps) {
+export function TelegramManage({
+  canCreate = true,
+  workspaceId,
+  promises,
+}: TelegramManageProps) {
   const [{ data: integrationTelegrams }] = use(promises)
   const t = useTranslations()
 
@@ -31,12 +37,20 @@ export function TelegramManage({ workspaceId, promises }: TelegramManageProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <TelegramConnect workspaceId={workspaceId}>
-          <Button size="sm" variant="secondary">
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", { feature: t("fields.telegram.label") })}
-          </Button>
-        </TelegramConnect>
+        <AddChannelButton
+          canCreate={canCreate}
+          label={t("fields.telegram.label")}
+          render={
+            <TelegramConnect workspaceId={workspaceId}>
+              <Button size="sm" variant="secondary">
+                <PlusCircleIcon className="h-4 w-4" />
+                {t("actions.addFeature", {
+                  feature: t("fields.telegram.label"),
+                })}
+              </Button>
+            </TelegramConnect>
+          }
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border">

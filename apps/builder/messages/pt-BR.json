@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "Canais permitidos",
-    "description": "Escolha quais tipos de canal os espaços de trabalho deste locatário podem criar.",
-    "hint": "Deixe todos os canais desmarcados para permitir todos eles."
+    "title": "Canais ocultos",
+    "description": "Marque um canal para impedir que os espaços de trabalho deste locatário o criem.",
+    "hint": "Deixe todos os canais desmarcados para permitir todos eles.",
+    "hiddenByPlatform": "Ocultado pelo administrador da plataforma — você não pode reativar este canal."
   },
   "platformEmailTemplates": {
     "title": "Modelos de e-mail",

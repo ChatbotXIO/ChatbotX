@@ -1,4 +1,9 @@
 import { db, eq } from "@chatbotx.io/database/client"
+import {
+  type ChannelType,
+  CREATABLE_CHANNELS,
+  ROOT_TENANT_ID,
+} from "@chatbotx.io/database/partials"
 import { tenantModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import type { EmailTemplate } from "../../platform/settings"
@@ -13,6 +18,7 @@ type TenantBrandingData = {
   customJs?: string | null
   faviconPath?: string | null
   forgotPasswordEmailTemplate?: EmailTemplate | null
+  hiddenChannels?: ChannelType[] | null
   logoDarkPath?: string | null
   logoLightPath?: string | null
   magicLinkEmailTemplate?: EmailTemplate | null
@@ -23,6 +29,9 @@ type TenantBrandingData = {
   termsOfServiceUrl?: string | null
   theme?: string | null
 }
+
+/** Tag shared by `findByOwner`'s cache entry and every write that must bust it. */
+const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
 
 /**
  * Read/write access to the `Tenant` row (identity + lifecycle + branding). A
@@ -42,14 +51,46 @@ export const tenantService = {
     )
   },
 
+  /**
+   * Channel types `ownerId` is allowed to create, after applying both tiers
+   * of channel-visibility policy:
+   *   - the platform (root tenant) hides channels for every tenant;
+   *   - the owner's own tenant (if any, and only while `active`) can hide
+   *     additional channels for their own users.
+   * The two hidden sets are unioned, never overridden — a reseller can only
+   * narrow what the platform already allows, never widen it. `ownerId` may be
+   * a plain platform user (no owned tenant): they see whatever the platform
+   * allows.
+   *
+   * Pure UI-visibility policy: never consulted by webhook handling, outbound
+   * send, or `Inbox` itself, so a channel a user already connected keeps
+   * working unaffected — hiding only blocks *new* creation.
+   */
+  async resolveVisibleChannels(ownerId: string): Promise<ChannelType[]> {
+    const [root, owned] = await Promise.all([
+      this.findById(ROOT_TENANT_ID),
+      this.findByOwner(ownerId),
+    ])
+
+    const platformHidden = new Set(root?.hiddenChannels ?? [])
+    const resellerHidden = new Set(
+      owned?.status === "active" ? (owned.hiddenChannels ?? []) : [],
+    )
+
+    return CREATABLE_CHANNELS.filter(
+      (channel) =>
+        !(platformHidden.has(channel) || resellerHidden.has(channel)),
+    )
+  },
+
   findByOwner(ownerId: string) {
     return withCache(
-      `tenant2:owner:${ownerId}`,
+      ownerCacheTag(ownerId),
       () =>
         db.query.tenantModel.findFirst({
           where: { ownerId },
         }),
-      { tags: [`tenant2:owner:${ownerId}`] },
+      { tags: [ownerCacheTag(ownerId)] },
     )
   },
 
@@ -76,7 +117,7 @@ export const tenantService = {
       .values({ ownerId })
       .onConflictDoNothing({ target: tenantModel.ownerId })
       .returning({ id: tenantModel.id })
-    await invalidateCacheByTags([`tenant:owner:${ownerId}`])
+    await invalidateCacheByTags([ownerCacheTag(ownerId)])
     if (created) {
       return created.id
     }
@@ -148,7 +189,7 @@ export const tenantService = {
     if (updated) {
       await invalidateCacheByTags([
         `tenant:${updated.id}`,
-        `tenant:owner:${ownerId}`,
+        ownerCacheTag(ownerId),
       ])
     }
   },
@@ -175,7 +216,7 @@ export const tenantService = {
     if (updated) {
       await invalidateCacheByTags([
         `tenant:${updated.id}`,
-        `tenant:owner:${ownerId}`,
+        ownerCacheTag(ownerId),
       ])
     }
   },

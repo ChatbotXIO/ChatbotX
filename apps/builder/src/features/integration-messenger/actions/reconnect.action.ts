@@ -11,6 +11,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
@@ -40,7 +41,7 @@ export const reconnectMessengerAction = workspaceActionClient
 
       const messengerCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: ctx.workspace.ownerId,
+          ownerId: await resolveOwnerForWorkspace(ctx.workspace),
           type: "messenger",
         })
       if (!messengerCredential) {

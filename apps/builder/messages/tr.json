@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "İzin Verilen Kanallar",
-    "description": "Bu kiracıdaki çalışma alanlarının hangi kanal türlerini oluşturabileceğini seçin.",
-    "hint": "Tüm kanalların izin verilmesi için hiçbirini işaretlemeyin."
+    "title": "Gizlenen Kanallar",
+    "description": "Bu kiracıdaki çalışma alanlarının bir kanalı oluşturmasını engellemek için işaretleyin.",
+    "hint": "Tüm kanalların izin verilmesi için hiçbirini işaretlemeyin.",
+    "hiddenByPlatform": "Platform yöneticisi tarafından gizlendi — bu kanalı yeniden etkinleştiremezsiniz."
   },
   "platformEmailTemplates": {
     "title": "E-posta Şablonları",

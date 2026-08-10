@@ -22,6 +22,7 @@ import { z } from "zod"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import {
   workspaceActionClient,
   workspaceActionClientAllowExpired,
@@ -32,7 +33,7 @@ export const connectMetaCatalogAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .action(async ({ ctx, bindArgsParsedInputs: [workspaceId] }) => {
     const credential = await platformCredentialService.resolveForOwner({
-      ownerId: ctx.workspace.ownerId,
+      ownerId: await resolveOwnerForWorkspace(ctx.workspace),
       type: "messenger",
     })
     if (!credential) {

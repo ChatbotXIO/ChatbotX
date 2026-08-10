@@ -4155,9 +4155,10 @@
     "title": "Branding platformă"
   },
   "platformChannels": {
-    "description": "Alege ce tipuri de canale pot crea spațiile de lucru din acest tenant.",
+    "description": "Bifează un canal pentru a împiedica spațiile de lucru din acest tenant să îl creeze.",
     "hint": "Lasă toate canalele nebifate pentru a permite toate canalele.",
-    "title": "Canale permise"
+    "title": "Canale ascunse",
+    "hiddenByPlatform": "Ascuns de administratorul platformei — nu poți reactiva acest canal."
   },
   "platformCredentials": {
     "notConfigured": "Nu este configurat încă",

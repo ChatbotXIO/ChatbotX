@@ -6,6 +6,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationZalo } from "@/features/integration-zalo/queries"
 import { ZaloManage } from "@/features/integration-zalo/zalo-manage"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelZaloPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -20,7 +22,7 @@ export default async function SettingChannelZaloPage(props: {
     return notFound()
   }
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
+    ownerId: await resolveOwnerForWorkspace(workspace),
     type: "zalo",
   })
   const hasZaloSettings = Boolean(credential?.publicConfig.clientId)
@@ -30,9 +32,11 @@ export default async function SettingChannelZaloPage(props: {
       where: { workspaceId },
     }),
   ])
+  const canCreate = await resolveChannelCreatable(workspaceId, "zalo")
 
   return (
     <ZaloManage
+      canCreate={canCreate}
       isEnabled={hasZaloSettings}
       promises={promises}
       workspaceId={workspaceId}

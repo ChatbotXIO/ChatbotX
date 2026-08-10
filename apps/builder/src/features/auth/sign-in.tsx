@@ -75,25 +75,27 @@ export const SignInForm = ({
                   </>
                 )}
 
-                <Button
-                  className="w-full"
-                  onClick={() => setActiveMethod("email")}
-                  type="button"
-                  variant="outline"
-                >
-                  <MailIcon />
-                  {t("auth.continueWithEmail")}
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    className="w-full"
+                    onClick={() => setActiveMethod("email")}
+                    type="button"
+                    variant="outline"
+                  >
+                    <MailIcon />
+                    {t("auth.continueWithEmail")}
+                  </Button>
 
-                <Button
-                  className="w-full"
-                  onClick={() => setActiveMethod("magicLink")}
-                  type="button"
-                  variant="outline"
-                >
-                  <LinkIcon />
-                  {t("auth.continueWithMagicLink")}
-                </Button>
+                  <Button
+                    className="w-full"
+                    onClick={() => setActiveMethod("magicLink")}
+                    type="button"
+                    variant="outline"
+                  >
+                    <LinkIcon />
+                    {t("auth.continueWithMagicLink")}
+                  </Button>
+                </div>
               </>
             )}
 

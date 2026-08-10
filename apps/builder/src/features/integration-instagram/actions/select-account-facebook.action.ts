@@ -31,6 +31,7 @@ import {
 } from "@/lib/facebook-pending-auth"
 import { persistIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
+import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { authActionClient } from "@/lib/safe-action"
 import {
   type SelectFacebookAccountRequest,
@@ -50,13 +51,10 @@ export const selectFacebookAccountAction = authActionClient
       try {
         let workspaceId = parsedInput.workspaceId
 
-        const ownerId = parsedInput.workspaceId
-          ? ((
-              await workspaceService.find({
-                where: { id: parsedInput.workspaceId },
-              })
-            )?.ownerId ?? ctx.user.id)
-          : ctx.user.id
+        const ownerId = await resolvePlatformOwnerId({
+          userId: ctx.user.id,
+          workspaceId: parsedInput.workspaceId,
+        })
 
         const instagramCredential =
           await platformCredentialService.resolveForOwner({

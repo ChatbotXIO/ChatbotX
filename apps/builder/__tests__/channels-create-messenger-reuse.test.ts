@@ -59,6 +59,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+vi.mock("@/lib/platform-credential-owner", () => ({
+  resolvePlatformOwnerId: vi.fn(async () => "owner-1"),
+}))
+
 vi.mock("@/lib/auth/require-workspace-permission", () => ({
   requireWorkspacePermission: mockRequireWorkspacePermission,
 }))

@@ -17,6 +17,7 @@ import {
   FB_MESSENGER_PENDING_AUTH_COOKIE,
   FB_PENDING_AUTH_MAX_AGE,
 } from "@/lib/facebook-pending-auth"
+import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 
 /**
  * Reached only via a redirect from `/channels/create?channel=messenger`
@@ -38,10 +39,7 @@ export async function GET(req: NextRequest) {
     return notFound()
   }
 
-  const platformOwnerId = workspaceId
-    ? ((await workspaceService.find({ where: { id: workspaceId } }))?.ownerId ??
-      userId)
-    : userId
+  const platformOwnerId = await resolvePlatformOwnerId({ userId, workspaceId })
 
   const messenger = await platformCredentialService.resolveForOwner({
     ownerId: platformOwnerId,

@@ -161,9 +161,10 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: invalidateCacheByTagsMock,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: createIdMock,
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return { ...actual, createId: createIdMock }
+})
 
 // Vitest resolves `next-intl/server` to next-intl's react-client build, whose
 // `getTranslations` throws outright. The connect action reads from the root

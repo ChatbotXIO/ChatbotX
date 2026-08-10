@@ -53,6 +53,12 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+vi.mock("@/lib/platform-credential-owner", () => ({
+  resolveOwnerForWorkspace: vi.fn(
+    async (workspace: { ownerId: string }) => workspace.ownerId,
+  ),
+}))
+
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
 }))
