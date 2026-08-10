@@ -32,9 +32,12 @@ import {
 import { nextScheduledDeletionAt } from "./deletion-schedule"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string; token: string }>
+type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
 
 const stableKey = (where: WorkspaceWhere) =>
   JSON.stringify(Object.fromEntries(Object.entries(where).sort()))
+
+const PURGE_WORKSPACE_TEARDOWN_CONCURRENCY = 5
 
 class WorkspaceService extends BaseService {
   async findOrFail(props: {
@@ -218,54 +221,13 @@ class WorkspaceService extends BaseService {
       // the whole cron (BullMQ would retry the entire batch forever). Only
       // workspaces that tear down cleanly are deleted below; a failed one keeps
       // its `scheduledDeletionAt` and is retried on the next tick.
-      const succeeded: typeof claimed.rows = []
-      for (const workspace of claimed.rows) {
-        try {
-          await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
-
-          await workspaceLifecycleService
-            .disconnectWorkspaceIntegrations(workspace.id)
-            .catch((err) => {
-              logger.error(
-                { err, workspaceId: workspace.id },
-                "workspace-purge: failed to disconnect workspace integrations",
-              )
-            })
-
-          await workspaceLifecycleService.disconnectWorkspaceChannels({
-            integrations: props?.integrations,
-            teardownLevel: "disconnect",
-            workspaceId: workspace.id,
-            ownerId: workspace.ownerId,
-          })
-
-          // Drain high-volume child tables in small self-committing batches
-          // before the FK cascade, so no single statement deletes millions of
-          // rows under lock.
-          await workspaceLifecycleService.purgeWorkspaceHeavyData({
-            workspaceId: workspace.id,
-          })
-
-          // Best-effort: never block/roll back the purge if release fails —
-          // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
-          // for every affected owner regardless.
-          await quotaEnforcementService
-            .release({ userId: workspace.ownerId, metric: "workspaces" })
-            .catch((err) => {
-              logger.warn(
-                { err, workspaceId: workspace.id, ownerId: workspace.ownerId },
-                "workspace-purge: workspace quota release failed",
-              )
-            })
-
-          succeeded.push(workspace)
-        } catch (err) {
-          logger.error(
-            { err, workspaceId: workspace.id },
-            "workspace-purge: teardown failed, deferring to next run",
-          )
-        }
-      }
+      const teardownResults = await mapWithConcurrency(
+        claimed.rows,
+        PURGE_WORKSPACE_TEARDOWN_CONCURRENCY,
+        async (workspace) =>
+          await this.teardownDueWorkspace(workspace, props?.integrations),
+      )
+      const succeeded = teardownResults.filter(isNonNull)
 
       const workspaceIds = succeeded.map((row) => row.id)
       const result = await db.transaction(async (tx) => {
@@ -331,6 +293,57 @@ class WorkspaceService extends BaseService {
     )
 
     return totalDeleted
+  }
+
+  private async teardownDueWorkspace(
+    workspace: DueWorkspace,
+    integrations?: WorkspaceTeardownIntegrations,
+  ): Promise<DueWorkspace | null> {
+    try {
+      await workspaceLifecycleService.freezeWorkspaceRuntime(workspace.id)
+
+      await workspaceLifecycleService
+        .disconnectWorkspaceIntegrations(workspace.id)
+        .catch((err) => {
+          logger.error(
+            { err, workspaceId: workspace.id },
+            "workspace-purge: failed to disconnect workspace integrations",
+          )
+        })
+
+      await workspaceLifecycleService.disconnectWorkspaceChannels({
+        integrations,
+        teardownLevel: "disconnect",
+        workspaceId: workspace.id,
+        ownerId: workspace.ownerId,
+      })
+
+      // Drain high-volume child tables in small self-committing batches before
+      // the FK cascade, so no single statement deletes millions of rows under lock.
+      await workspaceLifecycleService.purgeWorkspaceHeavyData({
+        workspaceId: workspace.id,
+      })
+
+      // Best-effort: never block/roll back the purge if release fails —
+      // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
+      // for every affected owner regardless.
+      await quotaEnforcementService
+        .release({ userId: workspace.ownerId, metric: "workspaces" })
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId: workspace.id, ownerId: workspace.ownerId },
+            "workspace-purge: workspace quota release failed",
+          )
+        })
+
+      return workspace
+    } catch (err) {
+      logger.error(
+        { err, workspaceId: workspace.id },
+        "workspace-purge: teardown failed, deferring to next run",
+      )
+      return null
+    }
   }
 
   /**
@@ -454,3 +467,30 @@ class WorkspaceService extends BaseService {
 }
 
 export const workspaceService = new WorkspaceService()
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex
+        nextIndex += 1
+        results[currentIndex] = await mapper(items[currentIndex] as T)
+      }
+    },
+  )
+
+  await Promise.all(workers)
+  return results
+}
+
+function isNonNull<T>(value: T | null): value is T {
+  return value !== null
+}
