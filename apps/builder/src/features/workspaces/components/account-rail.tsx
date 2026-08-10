@@ -77,14 +77,12 @@ export const AccountRail = async ({
 
   return (
     // `md:top-8` must match the host page's row padding (page.tsx's
-    // `py-8`, i.e. 2rem), and the calc subtrahend must be 2 x that value
-    // (top inset + matching bottom inset) — same coupling rule as the
-    // portal's twin rail. `md:max-h-` (not `md:h-`): the plan/usage block
-    // below is wrapped in `cloud && (...)`, so on self-hosted/community the
-    // rail's real content is just a header plus one or two links — a fixed
-    // height would render that as a mostly-empty tall card. `max-h` still
-    // scrolls when content overflows and still supports sticky.
-    <aside className="flex w-full shrink-0 flex-col rounded-xl border bg-card md:sticky md:top-8 md:max-h-[calc(100vh-4rem)] md:w-72">
+    // `py-8`, i.e. 2rem), and the calc subtrahend must be 2x that value
+    // (top inset + matching bottom inset). `md:h-` (not `md:max-h-`) is
+    // deliberate: the rail is always full column height, sticky, and
+    // scrolls internally once content overflows — do not swap this back
+    // to `max-h`.
+    <aside className="flex w-full shrink-0 flex-col rounded-xl border bg-card md:sticky md:top-8 md:h-[calc(100vh-4rem)] md:w-72">
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-6 md:pb-2">
         <div className="relative flex items-center gap-3">
           <Avatar className="size-11">

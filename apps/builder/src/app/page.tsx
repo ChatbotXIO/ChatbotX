@@ -94,7 +94,6 @@ export default async function MainPage() {
           superAdminWorkspaceIds={superAdminWorkspaceIds}
           user={userInfo}
           workspaces={allWorkspaces}
-          workspacesLimit={usageSummary?.workspaces.limit ?? null}
         />
       </div>
     </div>

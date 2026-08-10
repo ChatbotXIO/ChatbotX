@@ -27,7 +27,6 @@ type WorkspacesListProps = {
     image: string | null
   }
   workspaces: WorkspaceResource[]
-  workspacesLimit?: number | null
   isAtLimit?: boolean
   blocked?: boolean
   /** Why creation is blocked; picks the create-card copy. Defaults to the plan/trial message. */
@@ -188,7 +187,6 @@ const WorkspaceCard = ({
 const WorkspacesList = async ({
   user,
   workspaces,
-  workspacesLimit,
   isAtLimit = false,
   blocked = false,
   reason,
@@ -205,33 +203,31 @@ const WorkspacesList = async ({
   const ownerLabel = t("home.owner")
 
   const usedCount = workspaces.length
-  const hasLimit = typeof workspacesLimit === "number"
   const greetingName = user.name?.trim() || user.email
   const hasWorkspaces = workspaces.length > 0
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col">
-      <header className="flex flex-col gap-1">
+    // `4rem` is 2x the host page's `py-8` (top inset + matching bottom
+    // inset), so it must move with that padding — same coupling rule as
+    // the rail's fixed height in `account-rail.tsx`. This column uses
+    // `max-h`, not `h`: a user with only a couple of workspaces should get
+    // a naturally short column, not a tall mostly-empty one; `max-h` still
+    // clips and scrolls once content actually overflows.
+    <main className="flex min-w-0 flex-1 flex-col md:max-h-[calc(100vh-4rem)]">
+      <header className="flex shrink-0 flex-col gap-1">
         <h1 className="font-semibold text-2xl tracking-tight">
           {t("home.welcomeBack", { name: greetingName })}
         </h1>
         <p className="text-muted-foreground text-sm">{t("home.subtitle")}</p>
       </header>
 
-      <div className="mt-8 flex items-baseline gap-3">
+      <div className="mt-8 flex shrink-0 items-baseline gap-3">
         <h2 className="font-semibold text-base">
           {t("billing.usage.workspaces")}
         </h2>
-        {hasLimit && (
-          <span
-            className={cn(
-              "font-medium text-muted-foreground text-sm tabular-nums",
-              isAtLimit && "text-destructive",
-            )}
-          >
-            {`${usedCount} / ${workspacesLimit}`}
-          </span>
-        )}
+        <span className="font-medium text-muted-foreground text-sm tabular-nums">
+          {usedCount}
+        </span>
         {isAtLimit && isCloud() && (
           <UpgradePlanButton className="ms-auto" size="sm" variant="outline">
             <CrownIcon aria-hidden className="size-3.5" />
@@ -240,42 +236,54 @@ const WorkspacesList = async ({
         )}
       </div>
 
-      {hasWorkspaces || showCreateCard ? (
-        <ul className="mt-5 flex list-none flex-wrap gap-5 p-0">
-          {showCreateCard && (
-            <li className="list-none">
-              <CreateWorkspaceCard
-                disabled={isAtLimit || blocked}
-                disabledReason={
-                  blocked
-                    ? t(
-                        reason === "mac"
-                          ? "billing.macLimitReached.createDisabled"
-                          : "billing.trialExpired.createDisabled",
-                        { feature: t("fields.workspace.label") },
-                      )
-                    : t("billing.limitReached.workspaces")
-                }
-                label={createLabel}
-              />
-            </li>
-          )}
-          {workspaces.map((workspace) => (
-            <li className="list-none" key={workspace.id}>
-              <WorkspaceCard
-                canManageStatus={superAdminIds.has(workspace.id)}
-                ownerLabel={ownerIds.has(workspace.id) ? ownerLabel : undefined}
-                t={t}
-                workspace={workspace}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-5 text-muted-foreground text-sm">
-          {t("home.noWorkspaces")}
-        </p>
-      )}
+      {/*
+        The scrollport for the card grid, kept independent from the header
+        blocks above. `min-h-0` is required for this `flex-1` child to
+        actually shrink and scroll instead of pushing past the `<main>`'s
+        `max-h` — same requirement as the rail's own scrolling body in
+        `account-rail.tsx`. `overscroll-contain` stops scroll-chaining into
+        the document once the grid bottoms out.
+      */}
+      <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {hasWorkspaces || showCreateCard ? (
+          <ul className="flex list-none flex-wrap gap-5 p-0 pb-1">
+            {showCreateCard && (
+              <li className="list-none">
+                <CreateWorkspaceCard
+                  disabled={isAtLimit || blocked}
+                  disabledReason={
+                    blocked
+                      ? t(
+                          reason === "mac"
+                            ? "billing.macLimitReached.createDisabled"
+                            : "billing.trialExpired.createDisabled",
+                          { feature: t("fields.workspace.label") },
+                        )
+                      : t("billing.limitReached.workspaces")
+                  }
+                  label={createLabel}
+                />
+              </li>
+            )}
+            {workspaces.map((workspace) => (
+              <li className="list-none" key={workspace.id}>
+                <WorkspaceCard
+                  canManageStatus={superAdminIds.has(workspace.id)}
+                  ownerLabel={
+                    ownerIds.has(workspace.id) ? ownerLabel : undefined
+                  }
+                  t={t}
+                  workspace={workspace}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t("home.noWorkspaces")}
+          </p>
+        )}
+      </div>
     </main>
   )
 }

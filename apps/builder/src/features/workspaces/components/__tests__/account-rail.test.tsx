@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import React, { act } from "react"
+import type React from "react"
+import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import {
   afterEach,
@@ -55,8 +56,6 @@ vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
   ),
 }))
 
-Object.assign(globalThis, { React })
-
 const BASE_USER = { name: "Jane Doe", email: "jane@example.test", image: null }
 
 describe("account rail", () => {
@@ -104,45 +103,33 @@ describe("account rail", () => {
     )
   }
 
-  it("renders the billing link in both cloud and community editions", async () => {
+  it("renders the billing link on community edition", async () => {
     await render({ cloud: false })
     expect(findLink("/portal/billing")?.textContent).toContain("Billing")
+  })
 
-    act(() => root.unmount())
-    container.remove()
-    container = document.createElement("div")
-    document.body.append(container)
-    root = createRoot(container)
-
+  it("renders the billing link on cloud edition", async () => {
     await render({ cloud: true })
     expect(findLink("/portal/billing")?.textContent).toContain("Billing")
   })
 
-  it("renders the redeem link only in platform context", async () => {
+  it("renders the redeem link in platform context", async () => {
     await render({ isPlatformContext: true })
     expect(findLink("/portal/redeem")?.textContent).toContain("Redeem")
+  })
 
-    act(() => root.unmount())
-    container.remove()
-    container = document.createElement("div")
-    document.body.append(container)
-    root = createRoot(container)
-
+  it("hides the redeem link outside platform context", async () => {
     await render({ isPlatformContext: false })
     expect(findLink("/portal/redeem")).toBeUndefined()
   })
 
-  it("renders admin iff isSuperAdmin, manage iff cloud && isPlatformAdmin", async () => {
+  it("renders admin but hides manage on community edition", async () => {
     await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: false })
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/manage")).toBeUndefined()
+  })
 
-    act(() => root.unmount())
-    container.remove()
-    container = document.createElement("div")
-    document.body.append(container)
-    root = createRoot(container)
-
+  it("renders admin and manage on cloud edition", async () => {
     await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: true })
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/manage")?.textContent).toContain("Manage")
