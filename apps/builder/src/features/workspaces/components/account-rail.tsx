@@ -76,15 +76,15 @@ export const AccountRail = async ({
   const usageLabels = buildUsageLabels(t)
 
   return (
-    // `md:top-16` / `8rem` (not the portal's `top-8` / `4rem`): the inset
-    // must match the host page's top padding. This page uses `md:py-16`
-    // (4rem), so top-N must equal that padding and the calc subtrahend must
-    // be 2 x N. `md:max-h-` (not `md:h-`): the plan/usage block below is
-    // wrapped in `cloud && (...)`, so on self-hosted/community the rail's
-    // real content is just a header plus one or two links — a fixed height
-    // would render that as a mostly-empty tall card. `max-h` still scrolls
-    // when content overflows and still supports sticky.
-    <aside className="flex w-full shrink-0 flex-col rounded-xl border bg-card md:sticky md:top-16 md:max-h-[calc(100vh-8rem)] md:w-72">
+    // `md:top-8` must match the host page's row padding (page.tsx's
+    // `py-8`, i.e. 2rem), and the calc subtrahend must be 2 x that value
+    // (top inset + matching bottom inset) — same coupling rule as the
+    // portal's twin rail. `md:max-h-` (not `md:h-`): the plan/usage block
+    // below is wrapped in `cloud && (...)`, so on self-hosted/community the
+    // rail's real content is just a header plus one or two links — a fixed
+    // height would render that as a mostly-empty tall card. `max-h` still
+    // scrolls when content overflows and still supports sticky.
+    <aside className="flex w-full shrink-0 flex-col rounded-xl border bg-card md:sticky md:top-8 md:max-h-[calc(100vh-4rem)] md:w-72">
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-6 md:pb-2">
         <div className="relative flex items-center gap-3">
           <Avatar className="size-11">

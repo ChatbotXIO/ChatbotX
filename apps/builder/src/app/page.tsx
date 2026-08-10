@@ -71,10 +71,10 @@ export default async function MainPage() {
   const userInfo = { name: user.name, email: user.email, image: user.image }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:py-16">
+    <div className="mx-auto w-full max-w-6xl px-6">
       <WorkspaceDeletionPendingToast />
       <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
-      <div className="flex flex-col gap-8 md:flex-row md:items-start">
+      <div className="flex flex-col gap-8 py-8 md:flex-row md:items-start">
         <AccountRail
           isPlatformAdmin={platformAdmin}
           isPlatformContext={isPlatformContext}
