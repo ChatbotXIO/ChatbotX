@@ -4,6 +4,7 @@ import { ChatbotXException } from "../../errors"
 const mocks = vi.hoisted(() => ({
   workspaceInsert: vi.fn(),
   workspaceInsertValues: vi.fn(),
+  workspaceDelete: vi.fn(),
   tryConsume: vi.fn(),
   createMember: vi.fn(),
   getForUser: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { userModel: { findFirst: vi.fn(async () => undefined) } },
     insert: mocks.workspaceInsert,
+    delete: mocks.workspaceDelete,
     transaction: mocks.dbTransaction,
   },
   eq: vi.fn((column, value) => ({ column, value })),
@@ -83,6 +85,7 @@ const { workspaceService } = await import("../service")
 beforeEach(() => {
   mocks.workspaceInsert.mockReset()
   mocks.workspaceInsertValues.mockReset()
+  mocks.workspaceDelete.mockReset()
   mocks.tryConsume.mockReset()
   mocks.createMember.mockReset()
   mocks.createMember.mockResolvedValue(undefined)
@@ -97,6 +100,9 @@ beforeEach(() => {
     values: mocks.workspaceInsertValues.mockReturnValue({
       returning: vi.fn().mockResolvedValue([{ id: "new-workspace" }]),
     }),
+  })
+  mocks.workspaceDelete.mockReturnValue({
+    where: vi.fn().mockResolvedValue(undefined),
   })
 })
 
@@ -139,11 +145,9 @@ describe("WorkspaceService.purgeDueScheduled", () => {
       { id: "w1", ownerId: "o1", tenantId: "t1" },
       { id: "w2", ownerId: "o2", tenantId: "t2" },
     ]
-    const deleteWhere = vi.fn().mockResolvedValue(undefined)
     const tx = {
       execute: vi.fn().mockResolvedValue({ rows: claimedRows }),
       select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
-      delete: vi.fn(() => ({ where: deleteWhere })),
     }
     mocks.dbTransaction.mockImplementation(
       (callback: (tx: unknown) => unknown) => callback(tx),
@@ -160,7 +164,7 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     // Resolves (does not throw) and counts only the workspace that succeeded.
     await expect(workspaceService.purgeDueScheduled()).resolves.toBe(1)
     // The failed workspace keeps its row; only the clean one is deleted.
-    expect(tx.delete).toHaveBeenCalledTimes(1)
+    expect(mocks.workspaceDelete).toHaveBeenCalledTimes(1)
   })
 
   test("tears down up to five claimed workspaces concurrently", async () => {
@@ -169,11 +173,9 @@ describe("WorkspaceService.purgeDueScheduled", () => {
       ownerId: `o${index + 1}`,
       tenantId: `t${index + 1}`,
     }))
-    const deleteWhere = vi.fn().mockResolvedValue(undefined)
     const tx = {
       execute: vi.fn().mockResolvedValue({ rows: claimedRows }),
       select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
-      delete: vi.fn(() => ({ where: deleteWhere })),
     }
     mocks.dbTransaction.mockImplementation(
       (callback: (tx: unknown) => unknown) => callback(tx),
@@ -195,5 +197,6 @@ describe("WorkspaceService.purgeDueScheduled", () => {
 
     expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledTimes(6)
     expect(maxActive).toBe(5)
+    expect(mocks.workspaceDelete).toHaveBeenCalledTimes(6)
   })
 })

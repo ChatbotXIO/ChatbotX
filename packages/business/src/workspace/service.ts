@@ -227,31 +227,17 @@ class WorkspaceService extends BaseService {
         async (workspace) =>
           await this.teardownDueWorkspace(workspace, props?.integrations),
       )
-      const succeeded = teardownResults.filter(isNonNull)
-
-      const workspaceIds = succeeded.map((row) => row.id)
-      const result = await db.transaction(async (tx) => {
-        if (workspaceIds.length > 0) {
-          await tx
-            .delete(workspaceModel)
-            .where(inArray(workspaceModel.id, workspaceIds))
-        }
-
-        return {
-          deleted: succeeded,
-          memberUserIds: claimed.memberUserIds,
-        }
-      })
+      const deleted = teardownResults.filter(isNonNull)
 
       // A full chunk that tore down nothing is a systemic failure (e.g. the DB
       // is unhealthy): stop instead of spinning through maxChunks re-claiming
       // the same rows. The next scheduled tick retries.
-      if (succeeded.length === 0) {
+      if (deleted.length === 0) {
         break
       }
 
-      totalDeleted += result.deleted.length
-      for (const workspace of result.deleted) {
+      totalDeleted += deleted.length
+      for (const workspace of deleted) {
         reconciles.set(`${workspace.ownerId}:${workspace.tenantId}`, {
           ownerId: workspace.ownerId,
           tenantId: workspace.tenantId,
@@ -259,13 +245,13 @@ class WorkspaceService extends BaseService {
       }
 
       const cacheTags = [
-        ...result.deleted.map((workspace) => `workspaces:${workspace.id}`),
-        ...result.memberUserIds.map(workspaceMemberCacheTag),
+        ...deleted.map((workspace) => `workspaces:${workspace.id}`),
+        ...claimed.memberUserIds.map(workspaceMemberCacheTag),
       ]
       await this.invalidateCacheTags(cacheTags)
 
       logger.info(
-        { deleted: result.deleted.length },
+        { deleted: deleted.length },
         "workspace-purge: workspaces purged",
       )
 
@@ -335,6 +321,8 @@ class WorkspaceService extends BaseService {
             "workspace-purge: workspace quota release failed",
           )
         })
+
+      await db.delete(workspaceModel).where(eq(workspaceModel.id, workspace.id))
 
       return workspace
     } catch (err) {
