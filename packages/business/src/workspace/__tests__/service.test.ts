@@ -162,4 +162,38 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     // The failed workspace keeps its row; only the clean one is deleted.
     expect(tx.delete).toHaveBeenCalledTimes(1)
   })
+
+  test("tears down up to five claimed workspaces concurrently", async () => {
+    const claimedRows = Array.from({ length: 6 }, (_, index) => ({
+      id: `w${index + 1}`,
+      ownerId: `o${index + 1}`,
+      tenantId: `t${index + 1}`,
+    }))
+    const deleteWhere = vi.fn().mockResolvedValue(undefined)
+    const tx = {
+      execute: vi.fn().mockResolvedValue({ rows: claimedRows }),
+      select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
+      delete: vi.fn(() => ({ where: deleteWhere })),
+    }
+    mocks.dbTransaction.mockImplementation(
+      (callback: (tx: unknown) => unknown) => callback(tx),
+    )
+
+    let active = 0
+    let maxActive = 0
+    mocks.purgeWorkspaceHeavyData.mockImplementation(async () => {
+      active += 1
+      maxActive = Math.max(maxActive, active)
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      active -= 1
+      return 0
+    })
+
+    await expect(
+      workspaceService.purgeDueScheduled({ chunkSize: 6, maxChunks: 1 }),
+    ).resolves.toBe(6)
+
+    expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledTimes(6)
+    expect(maxActive).toBe(5)
+  })
 })
