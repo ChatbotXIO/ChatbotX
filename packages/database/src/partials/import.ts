@@ -17,6 +17,15 @@ export type ImportStatus = z.infer<typeof importStatuses>
 
 const bigintAsStringSchema = z.string().regex(/^\d+$/)
 
+export const contactImportFields = z.enum([
+  "contactId",
+  "phoneNumber",
+  "email",
+  "firstName",
+  "lastName",
+])
+export type ContactImportField = z.infer<typeof contactImportFields>
+
 export const contactImportColumnMapSchema = z
   .object({
     contactId: z.string().optional(),
