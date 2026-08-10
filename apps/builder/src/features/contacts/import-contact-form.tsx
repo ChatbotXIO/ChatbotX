@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
   ArrowRightIcon,
+  DownloadIcon,
   HistoryIcon,
   Loader2Icon,
   Trash2Icon,
@@ -112,7 +113,15 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
 
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
+        <a
+          className="inline-flex items-center gap-1 text-blue-600 text-sm hover:underline"
+          download
+          href={`/space/${workspaceId}/contacts/import/template`}
+        >
+          <DownloadIcon size={16} />
+          {t("actions.downloadTemplate")}
+        </a>
         <Link
           className="inline-flex items-center gap-1 text-blue-600 text-sm hover:underline"
           href={`/space/${workspaceId}/contacts/import/histories`}
