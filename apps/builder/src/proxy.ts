@@ -21,6 +21,7 @@ const publicRoutes = [
   "/unsubscribe",
   "/email-topic",
   "/extensions",
+  "/portal/redeem",
 ]
 const signinPath = "/auth/sign-in"
 
@@ -51,6 +52,7 @@ export async function proxy(request: NextRequest) {
   // await logRequest(request)
 
   const { pathname, search } = request.nextUrl
+
   if (isPublicRoute(pathname)) {
     return attachProxyUrl(request)
   }

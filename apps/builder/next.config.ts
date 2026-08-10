@@ -40,7 +40,8 @@ const nextConfig: NextConfig = {
       return alwaysRewrites
     }
 
-    // Local dev: production routes /ws, /storage, and /manage/* via load balancer / Caddy
+    // Local dev: production routes /ws, /storage, /manage/*, and /portal/*
+    // via load balancer / Caddy
     const wsUrl = env.NEXT_PUBLIC_INTERNAL_WS_URL
     const s3Bucket = process.env.S3_BUCKET ?? "chatbotx"
     const s3Endpoint = process.env.S3_ENDPOINT ?? "http://localhost:9000"
