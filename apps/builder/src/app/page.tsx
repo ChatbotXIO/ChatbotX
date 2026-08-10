@@ -1,9 +1,11 @@
+import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import {
   isPlatformAdmin,
   isSuperAdmin,
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
+import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { notFound } from "next/navigation"
 import { ExpiredBanner } from "@/components/expired-banner"
 import { WorkspaceDeletionPendingToast } from "@/components/workspace-deletion-pending-toast"
@@ -13,6 +15,7 @@ import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
+import { getDomainFromHeader } from "@/lib/domain"
 import {
   buildQuotaMetrics,
   resolveBlockReason,
@@ -34,12 +37,19 @@ export default async function MainPage() {
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
-  const [usageSummary, atLimit, quota, platformAdmin] = await Promise.all([
-    cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
-    cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
-    cloud ? userQuotaService.getForUser(user.id) : null,
-    isPlatformAdmin(user),
-  ])
+  const domain = await getDomainFromHeader()
+  const [usageSummary, atLimit, quota, platformAdmin, tenantId] =
+    await Promise.all([
+      cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
+      cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
+      cloud ? userQuotaService.getForUser(user.id) : null,
+      isPlatformAdmin(user),
+      resolveTenantByDomain(domain),
+    ])
+  // "Served with platform identity" — not the same claim as user.tenantId,
+  // which the session never carries (see SessionUser in lib/auth/utils.ts).
+  // Gates the Redeem link: /portal/redeem 404s on non-platform hosts.
+  const isPlatformContext = tenantId === ROOT_TENANT_ID
 
   const ownerWorkspaceIds = allWorkspaceMembers
     .filter((member) => member.role === "owner")
@@ -64,9 +74,10 @@ export default async function MainPage() {
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:py-16">
       <WorkspaceDeletionPendingToast />
       <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
-      <div className="flex flex-col gap-8 md:flex-row">
+      <div className="flex flex-col gap-8 md:flex-row md:items-start">
         <AccountRail
           isPlatformAdmin={platformAdmin}
+          isPlatformContext={isPlatformContext}
           isSuperAdmin={isSuperAdmin(user)}
           metrics={buildQuotaMetrics(usageSummary)}
           planName={quota?.planName ?? null}
