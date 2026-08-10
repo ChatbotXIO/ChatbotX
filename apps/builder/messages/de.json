@@ -3207,9 +3207,10 @@
     }
   },
   "platformChannels": {
-    "title": "Zulässige Kanäle",
-    "description": "Wählen Sie, welche Kanaltypen Arbeitsbereiche dieses Mandanten erstellen können.",
-    "hint": "Lassen Sie alle Kanäle deaktiviert, um sämtliche Kanäle zuzulassen."
+    "title": "Ausgeblendete Kanäle",
+    "description": "Aktivieren Sie einen Kanal, um zu verhindern, dass Arbeitsbereiche dieses Mandanten ihn erstellen.",
+    "hint": "Lassen Sie alle Kanäle deaktiviert, um sämtliche Kanäle zuzulassen.",
+    "hiddenByPlatform": "Vom Plattform-Administrator ausgeblendet — Sie können diesen Kanal nicht wieder aktivieren."
   },
   "platformEmailTemplates": {
     "title": "E-Mail-Vorlagen",

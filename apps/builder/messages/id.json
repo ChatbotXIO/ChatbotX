@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "Saluran yang Diizinkan",
-    "description": "Pilih jenis saluran yang dapat dibuat oleh ruang kerja dalam tenant ini.",
-    "hint": "Biarkan semua saluran tidak dicentang untuk mengizinkan semua saluran."
+    "title": "Saluran yang Disembunyikan",
+    "description": "Centang saluran untuk mencegah ruang kerja dalam tenant ini membuatnya.",
+    "hint": "Biarkan semua saluran tidak dicentang untuk mengizinkan semua saluran.",
+    "hiddenByPlatform": "Disembunyikan oleh admin platform — Anda tidak dapat mengaktifkan kembali saluran ini."
   },
   "platformEmailTemplates": {
     "title": "Templat Email",

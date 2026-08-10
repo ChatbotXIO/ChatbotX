@@ -8,7 +8,14 @@ import type { ChannelType } from "@chatbotx.io/utils/channel"
  * Re-exported here because this has long been the import site for the rest of
  * the repo; both paths resolve to the same enum.
  */
-export { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
+export {
+  CHANNEL_CAPABILITIES,
+  type ChannelCapability,
+  type ChannelType,
+  CREATABLE_CHANNELS,
+  channelTypes,
+  MANAGEABLE_CHANNELS,
+} from "@chatbotx.io/utils/channel"
 
 // A contact's DM conversation is normally stored with a null `sourceId`
 // (`sourceId` is reserved for comment threads, keyed by the post id). TikTok is

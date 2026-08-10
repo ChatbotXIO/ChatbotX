@@ -13,6 +13,7 @@ import {
   Grid2x2PlusIcon,
   MailIcon,
   PaletteIcon,
+  RadioTowerIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
@@ -55,6 +56,11 @@ export function PortalManageSidebar({ flags, pricing }: Props) {
       title: t("platformCredentials.title"),
       url: "/manage/platform-credentials",
       icon: Grid2x2PlusIcon,
+    },
+    {
+      title: t("channels.title"),
+      url: "/manage/platform-channels",
+      icon: RadioTowerIcon,
     },
     {
       title: t("platformBranding.title"),

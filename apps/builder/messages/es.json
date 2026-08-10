@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "Todosowed Canales",
-    "description": "Elegir which canal types workspaces en este tenant puede create.",
-    "hint": "Leave every canal unchecked un todosow todos canales."
+    "title": "Canales ocultos",
+    "description": "Marca un canal para impedir que los espacios de trabajo de este tenant lo creen.",
+    "hint": "Deja todos los canales sin marcar para permitir todos los canales.",
+    "hiddenByPlatform": "Oculto por el administrador de la plataforma; no puedes volver a habilitar este canal."
   },
   "platformEmailTemplates": {
     "title": "Correo Plantillas",

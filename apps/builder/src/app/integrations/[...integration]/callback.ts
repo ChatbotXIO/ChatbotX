@@ -63,6 +63,7 @@ import {
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
@@ -252,13 +253,18 @@ export const handleCallback = async (
   const safeReferer = await sanitizeReferer(stateParams.referer)
   const code = url.searchParams.get("code") ?? ""
 
+  // Resolved once and reused across every case below: a sub-account's
+  // workspace must use its reseller's app, not fall through to the platform
+  // default just because the sub-account itself owns no tenant.
+  const platformOwnerId = await resolveOwnerForWorkspace(workspace)
+
   let authResult: AuthValue
   let googleSheetsAuth: Oauth2AuthValue | null = null
   switch (integrationType) {
     case "messenger": {
       const messengerCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: workspace.ownerId,
+          ownerId: platformOwnerId,
           type: "messenger",
         })
       if (!messengerCredential) {
@@ -366,7 +372,7 @@ export const handleCallback = async (
     case "instagram": {
       const instagramCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: workspace.ownerId,
+          ownerId: platformOwnerId,
           type: "instagram",
         })
       if (!instagramCredential) {
@@ -418,7 +424,7 @@ export const handleCallback = async (
     case "instagramFacebook": {
       const instagramFacebookCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: workspace.ownerId,
+          ownerId: platformOwnerId,
           type: "instagramFacebook",
         })
       if (!instagramFacebookCredential) {
@@ -476,7 +482,7 @@ export const handleCallback = async (
 
     case "tiktok": {
       const tiktokCredential = await platformCredentialService.resolveForOwner({
-        ownerId: workspace.ownerId,
+        ownerId: platformOwnerId,
         type: "tiktok",
       })
       if (!tiktokCredential) {
@@ -501,7 +507,7 @@ export const handleCallback = async (
 
     case "zalo": {
       const zaloCredential = await platformCredentialService.resolveForOwner({
-        ownerId: workspace.ownerId,
+        ownerId: platformOwnerId,
         type: "zalo",
       })
       if (!zaloCredential) {
@@ -522,7 +528,7 @@ export const handleCallback = async (
       // requested scopes differ (see `connect.action.ts`).
       const facebookAdsCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: workspace.ownerId,
+          ownerId: platformOwnerId,
           type: "messenger",
         })
       if (!facebookAdsCredential) {
@@ -547,7 +553,7 @@ export const handleCallback = async (
 
     case "googleSheets": {
       const googleCredential = await platformCredentialService.resolveForOwner({
-        ownerId: workspace.ownerId,
+        ownerId: platformOwnerId,
         type: "google",
       })
       if (!googleCredential) {

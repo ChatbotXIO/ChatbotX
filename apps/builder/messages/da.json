@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "Allowed Kanaler",
-    "description": "Choose which kanal types arbejdsområder i denne tenant kan opret.",
-    "hint": "Leave every kanal unchecked til allow alle kanaler."
+    "title": "Skjulte kanaler",
+    "description": "Markér en kanal for at forhindre arbejdsområder i denne tenant i at oprette den.",
+    "hint": "Lad alle kanaler være umarkerede for at tillade alle kanaler.",
+    "hiddenByPlatform": "Skjult af platformadministratoren — du kan ikke genaktivere denne kanal."
   },
   "platformEmailTemplates": {
     "title": "E-mail Skabeloner",

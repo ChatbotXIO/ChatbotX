@@ -56,9 +56,26 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),
   },
+  tenantService: {
+    resolveVisibleChannels: vi.fn(async () => [
+      "instagram",
+      "messenger",
+      "smtp",
+      "telegram",
+      "tiktok",
+      "webchat",
+      "whatsapp",
+      "zalo",
+    ]),
+  },
   workspaceService: {
     find: vi.fn(async () => ({ ownerId: "owner-1" })),
   },
+}))
+
+vi.mock("@/lib/platform-credential-owner", () => ({
+  resolvePlatformOwnerId: vi.fn(async () => "owner-1"),
+  resolveOwnerForWorkspace: vi.fn(async () => "owner-1"),
 }))
 
 vi.mock("@/features/inboxes/components/inbox-card-list", () => ({

@@ -1,3 +1,4 @@
+import type { ChannelType } from "@chatbotx.io/utils/channel"
 import {
   type AnyPgColumn,
   jsonb,
@@ -57,6 +58,14 @@ export const tenantModel = pgTable(
       subject?: string
       body?: string
     }>(),
+    // Channel types this tenant's owner has opted to hide from the "create
+    // channel" picker and settings accordion for their users. `null`/`[]` =
+    // hide nothing (opt-out default, zero regression on rollout). Purely a
+    // creation-time UI policy — never consulted by webhooks, outbound send,
+    // or `Inbox` itself, so toggling this never affects already-connected
+    // channels. See `resolveVisibleChannels` in
+    // `packages/business/src/enterprise/tenant/service.ts`.
+    hiddenChannels: jsonb().$type<ChannelType[]>(),
   },
   (table) => [uniqueIndex("Tenant_ownerId_key").on(table.ownerId)],
 )

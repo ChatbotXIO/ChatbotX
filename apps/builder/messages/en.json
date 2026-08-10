@@ -3934,9 +3934,10 @@
     }
   },
   "platformChannels": {
-    "title": "Allowed Channels",
-    "description": "Choose which channel types workspaces in this tenant can create.",
-    "hint": "Leave every channel unchecked to allow all channels."
+    "title": "Hidden Channels",
+    "description": "Check a channel to stop workspaces in this tenant from creating it.",
+    "hint": "Leave every channel unchecked to allow all channels.",
+    "hiddenByPlatform": "Hidden by the platform admin — you can't re-enable this channel."
   },
   "platformEmailTemplates": {
     "title": "Email Templates",

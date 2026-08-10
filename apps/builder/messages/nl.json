@@ -3923,9 +3923,10 @@
     }
   },
   "platformChannels": {
-    "title": "Toegestane kanalen",
-    "description": "Kies welke kanaaltypen werkruimten in deze tenant kunnen maken.",
-    "hint": "Laat alle kanalen uitgevinkt om alle kanalen toe te staan."
+    "title": "Verborgen kanalen",
+    "description": "Vink een kanaal aan om te voorkomen dat werkruimten in deze tenant het kunnen maken.",
+    "hint": "Laat alle kanalen uitgevinkt om alle kanalen toe te staan.",
+    "hiddenByPlatform": "Verborgen door de platformbeheerder — je kunt dit kanaal niet opnieuw inschakelen."
   },
   "platformEmailTemplates": {
     "title": "E-mailsjablonen",

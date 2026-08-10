@@ -101,6 +101,30 @@ class InboxService extends BaseService {
     })
   }
 
+  /**
+   * Distinct channel types the workspace has a connected inbox for. Used to
+   * grandfather already-connected channels back into the settings accordion
+   * even when a platform admin / white-label owner has since hidden that
+   * channel from *new* creation — hiding must never make an existing
+   * connection disappear from the UI.
+   */
+  async distinctConnectedChannels(workspaceId: string): Promise<ChannelType[]> {
+    const rows = await db
+      .selectDistinct({ channel: inboxModel.channel })
+      .from(inboxModel)
+      .where(
+        and(
+          eq(inboxModel.workspaceId, workspaceId),
+          eq(inboxModel.status, inboxStatuses.enum.connected),
+        ),
+      )
+    return rows
+      .map((row) => row.channel)
+      .filter((channel): channel is ChannelType =>
+        channelTypes.options.includes(channel as ChannelType),
+      )
+  }
+
   async resolveBroadcastInboxIds(input: {
     workspaceId: string
     channels?: ChannelType[] | null

@@ -15,10 +15,14 @@ import { DeleteWebchatDialog } from "./dialogs/delete-webchat-dialog"
 import type { listIntegrationWebchats } from "./queries"
 
 type WebchatTableProps = {
+  canCreate?: boolean
   promises: Promise<[Awaited<ReturnType<typeof listIntegrationWebchats>>]>
 }
 
-export function WebchatTable({ promises }: WebchatTableProps) {
+export function WebchatTable({
+  canCreate = true,
+  promises,
+}: WebchatTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const workspaceId = useWorkspaceId()
   const router = useRouter()
@@ -46,6 +50,7 @@ export function WebchatTable({ promises }: WebchatTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <WebchatTableToolbarActions
+            canCreate={canCreate}
             onOpenChange={() => setRowAction(null)}
             table={table}
             workspaceId={workspaceId}

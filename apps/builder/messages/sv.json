@@ -3477,9 +3477,10 @@
     "title": "Plattformens varumärke"
   },
   "platformChannels": {
-    "description": "Välj vilka kanaltyper som arbetsytor i den här klienten kan skapa.",
+    "description": "Markera en kanal för att förhindra att arbetsytor i den här klienten skapar den.",
     "hint": "Lämna alla kanaler omarkerade för att tillåta samtliga kanaler.",
-    "title": "Tillåtna kanaler"
+    "title": "Dolda kanaler",
+    "hiddenByPlatform": "Dold av plattformsadministratören — du kan inte återaktivera den här kanalen."
   },
   "platformCredentials": {
     "notConfigured": "Inte konfigurerad ännu",

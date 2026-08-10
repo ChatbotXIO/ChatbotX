@@ -9,6 +9,7 @@ import { getTranslations } from "next-intl/server"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const connectLeadAdsAction = workspaceActionClient
@@ -23,7 +24,7 @@ export const connectLeadAdsAction = workspaceActionClient
       // only differs in the requested scopes (leads_retrieval + page scopes).
       const messengerCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: ctx.workspace.ownerId,
+          ownerId: await resolveOwnerForWorkspace(ctx.workspace),
           type: "messenger",
         })
       if (!messengerCredential) {

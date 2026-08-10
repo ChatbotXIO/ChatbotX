@@ -6,6 +6,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationWhatsapps } from "@/features/integration-whatsapp/queries"
 import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelWhatsappPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -20,7 +22,7 @@ export default async function SettingChannelWhatsappPage(props: {
     return notFound()
   }
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
+    ownerId: await resolveOwnerForWorkspace(workspace),
     type: "whatsapp",
   })
 
@@ -31,9 +33,11 @@ export default async function SettingChannelWhatsappPage(props: {
       workspaceId,
     }),
   ])
+  const canCreate = await resolveChannelCreatable(workspaceId, "whatsapp")
 
   return (
     <WhatsappManage
+      canCreate={canCreate}
       isEnabled={hasWhatsappSettings}
       promises={promises}
       workspaceId={workspaceId}

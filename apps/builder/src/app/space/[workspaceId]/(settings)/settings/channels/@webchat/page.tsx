@@ -5,6 +5,7 @@ import { listIntegrationWebchats } from "@/features/integration-webchat/queries"
 import { listIntegrationWebchatsRequest } from "@/features/integration-webchat/schema/query"
 import { WebchatTable } from "@/features/integration-webchat/webchat-table"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelWebchatPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -24,10 +25,11 @@ export default async function SettingChannelWebchatPage(props: {
       workspaceId: data.workspaceId,
     }),
   ])
+  const canCreate = await resolveChannelCreatable(data.workspaceId, "webchat")
 
   return (
     <Suspense>
-      <WebchatTable promises={promises} />
+      <WebchatTable canCreate={canCreate} promises={promises} />
     </Suspense>
   )
 }

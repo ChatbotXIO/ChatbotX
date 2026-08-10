@@ -6,6 +6,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationTiktoks } from "@/features/integration-tiktok/queries"
 import { TiktokManage } from "@/features/integration-tiktok/tiktok-manage"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelTiktokPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -21,7 +23,7 @@ export default async function SettingChannelTiktokPage(props: {
   }
 
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
+    ownerId: await resolveOwnerForWorkspace(workspace),
     type: "tiktok",
   })
   const isEnabled = Boolean(credential?.publicConfig.clientId)
@@ -31,9 +33,11 @@ export default async function SettingChannelTiktokPage(props: {
       where: { workspaceId },
     }),
   ])
+  const canCreate = await resolveChannelCreatable(workspaceId, "tiktok")
 
   return (
     <TiktokManage
+      canCreate={canCreate}
       isEnabled={isEnabled}
       promises={promises}
       workspaceId={workspaceId}

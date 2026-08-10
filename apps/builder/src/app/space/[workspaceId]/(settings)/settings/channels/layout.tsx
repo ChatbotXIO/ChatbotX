@@ -1,17 +1,19 @@
-"use client"
-
-import type { ChannelType } from "@chatbotx.io/database/partials"
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@chatbotx.io/ui/components/ui/accordion"
-import { useSearchParams } from "next/navigation"
+  inboxService,
+  tenantService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import {
+  CREATABLE_CHANNELS,
+  MANAGEABLE_CHANNELS,
+} from "@chatbotx.io/database/partials"
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
-import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { ChannelsAccordion } from "./channels-accordion"
 
-type SettingsChannelsPageProps = {
+type SettingsChannelsLayoutProps = {
   readonly children?: ReactNode
   readonly whatsapp?: ReactNode
   readonly messenger?: ReactNode
@@ -21,80 +23,48 @@ type SettingsChannelsPageProps = {
   readonly tiktok?: ReactNode
   readonly webchat?: ReactNode
   readonly smtp?: ReactNode
+  readonly params: Promise<{ workspaceId: string }>
 }
 
-type IntegrationItem = {
-  readonly value: ChannelType
-  readonly content: ReactNode
-}
+export default async function SettingsChannelsLayout(
+  props: SettingsChannelsLayoutProps,
+) {
+  const { params, ...slots } = props
+  const workspaceId = getIdFromParams(await params, "workspaceId")
+  if (!workspaceId) {
+    return notFound()
+  }
 
-export default function SettingsChannelsPage({
-  whatsapp,
-  messenger,
-  instagram,
-  zalo,
-  telegram,
-  tiktok,
-  webchat,
-  smtp,
-}: SettingsChannelsPageProps) {
-  const queriesParams = useSearchParams()
-  const selectedChannel = queriesParams.get("channel") ?? ""
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  if (!workspace) {
+    return notFound()
+  }
 
-  const integrationItems: IntegrationItem[] = [
-    {
-      value: "whatsapp",
-      content: whatsapp,
-    },
-    {
-      value: "messenger",
-      content: messenger,
-    },
-    {
-      value: "instagram",
-      content: instagram,
-    },
-    {
-      value: "zalo",
-      content: zalo,
-    },
-    {
-      value: "telegram",
-      content: telegram,
-    },
-    {
-      value: "tiktok",
-      content: tiktok,
-    },
-    {
-      value: "webchat",
-      content: webchat,
-    },
-    {
-      value: "smtp",
-      content: smtp,
-    },
-  ]
-
-  return (
-    <Accordion
-      className="w-full"
-      defaultValue={selectedChannel ? [selectedChannel] : []}
-    >
-      {integrationItems.map((integration) => (
-        <AccordionItem
-          className="transition-all hover:data-[state=open]:rounded-none"
-          key={integration.value}
-          value={integration.value}
-        >
-          <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-muted hover:no-underline data-[state=open]:bg-muted">
-            <InboxIcon channel={integration.value} />
-          </AccordionTrigger>
-          <AccordionContent className="p-4">
-            {integration.content}
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+  // Channel-visibility policy narrows the accordion to what this workspace's
+  // owner is currently allowed to *create*. Grandfathering: a channel the
+  // workspace already has a connected inbox for keeps its row regardless —
+  // hiding a channel from creation must never make an existing connection
+  // disappear from the settings UI. See AGENTS.md invariant on grandfathering
+  // and `tenantService.resolveVisibleChannels`.
+  //
+  // Channels that are `manageable` but not `creatable` (currently only
+  // `smtp`) sit outside the create-picker entirely, so channel-visibility
+  // policy — which only ever narrows `CREATABLE_CHANNELS` — has no opinion on
+  // them. They must always keep their settings row regardless of any hidden
+  // list, otherwise a workspace with no existing inbox for that channel could
+  // never see it to create its first one.
+  const [creatable, connected] = await Promise.all([
+    resolveOwnerForWorkspace(workspace).then((ownerId) =>
+      tenantService.resolveVisibleChannels(ownerId),
+    ),
+    inboxService.distinctConnectedChannels(workspaceId),
+  ])
+  const visibleChannels = MANAGEABLE_CHANNELS.filter(
+    (channel) =>
+      !CREATABLE_CHANNELS.includes(channel) ||
+      creatable.includes(channel) ||
+      connected.includes(channel),
   )
+
+  return <ChannelsAccordion {...slots} visibleChannels={visibleChannels} />
 }

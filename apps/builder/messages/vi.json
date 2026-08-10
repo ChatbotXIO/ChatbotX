@@ -3934,9 +3934,10 @@
     }
   },
   "platformChannels": {
-    "title": "Kênh được phép",
-    "description": "Chọn các loại kênh mà workspace trong tenant này có thể tạo.",
-    "hint": "Bỏ chọn tất cả kênh để cho phép mọi kênh."
+    "title": "Kênh bị ẩn",
+    "description": "Chọn kênh để chặn các workspace trong tenant này tạo kênh đó.",
+    "hint": "Bỏ chọn tất cả kênh để cho phép mọi kênh.",
+    "hiddenByPlatform": "Đã bị platform admin ẩn — bạn không thể tự bật lại kênh này."
   },
   "platformEmailTemplates": {
     "title": "Email Templates",

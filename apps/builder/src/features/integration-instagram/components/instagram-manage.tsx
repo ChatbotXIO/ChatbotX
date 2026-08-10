@@ -21,12 +21,14 @@ import { InstagramDisconnect } from "./instagram-disconnect"
 import { InstagramReconnect } from "./instagram-reconnect"
 
 type InstagramManageProps = {
+  canCreate?: boolean
   publicConfig: InstagramCredentialPublic | null
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listIntegrationInstagrams>>]>
 }
 
 export function InstagramManage({
+  canCreate = true,
   publicConfig,
   workspaceId,
   promises,
@@ -50,7 +52,7 @@ export function InstagramManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <AddInstagramDialog workspaceId={workspaceId} />
+        <AddInstagramDialog canCreate={canCreate} workspaceId={workspaceId} />
       </div>
 
       <div className="overflow-hidden rounded-md border">

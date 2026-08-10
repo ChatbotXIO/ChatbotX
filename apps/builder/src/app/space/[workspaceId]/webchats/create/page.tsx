@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { CreateWebchatForm } from "@/features/integration-webchat/components/create-webchat-form"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function CreateWebchatPage({
   params,
@@ -15,6 +16,9 @@ export default async function CreateWebchatPage({
     return notFound()
   }
   await requireWorkspacePermission(workspaceId, "superAdmin")
+  if (!(await resolveChannelCreatable(workspaceId, "webchat"))) {
+    return notFound()
+  }
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

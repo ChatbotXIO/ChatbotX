@@ -12,6 +12,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
@@ -44,7 +45,7 @@ export const reconnectInstagramAction = workspaceActionClient
         integrationInstagram.type === "facebook"
       const instagramCredential =
         await platformCredentialService.resolveForOwner({
-          ownerId: ctx.workspace.ownerId,
+          ownerId: await resolveOwnerForWorkspace(ctx.workspace),
           type: connectedWithFacebookLogin ? "instagramFacebook" : "instagram",
         })
       if (!instagramCredential) {

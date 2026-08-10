@@ -49,6 +49,7 @@ import { getTranslations } from "next-intl/server"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
+import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { authActionClient } from "@/lib/safe-action"
 import {
   isCoexistOnboardingIntent,
@@ -766,13 +767,10 @@ export const connectWhatsappAction = authActionClient
       }
 
       try {
-        const ownerId = parsedInput.workspaceId
-          ? ((
-              await workspaceService.find({
-                where: { id: parsedInput.workspaceId },
-              })
-            )?.ownerId ?? ctx.user.id)
-          : ctx.user.id
+        const ownerId = await resolvePlatformOwnerId({
+          userId: ctx.user.id,
+          workspaceId: parsedInput.workspaceId,
+        })
         const whatsappCredential =
           await platformCredentialService.resolveForOwner({
             ownerId,

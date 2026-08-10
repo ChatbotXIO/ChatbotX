@@ -21,7 +21,22 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
-  workspaceService: { find: vi.fn(async () => ({ ownerId: "owner-1" })) },
+  tenantService: {
+    resolveVisibleChannels: vi.fn(async () => [
+      "instagram",
+      "messenger",
+      "smtp",
+      "telegram",
+      "tiktok",
+      "webchat",
+      "whatsapp",
+      "zalo",
+    ]),
+  },
+}))
+
+vi.mock("@/lib/platform-credential-owner", () => ({
+  resolvePlatformOwnerId: vi.fn(async () => "owner-1"),
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {

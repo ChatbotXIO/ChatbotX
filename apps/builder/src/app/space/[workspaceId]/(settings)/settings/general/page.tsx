@@ -9,10 +9,12 @@ export default async function GeneralPage(props: {
 }) {
   const workspaceId = getIdFromParams(await props.params, "workspaceId")
   if (!workspaceId) {
+    console.log("workspaceId is not found")
     return notFound()
   }
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
   if (!userAndWorkspace) {
+    console.log("userAndWorkspace is not found")
     return notFound()
   }
 

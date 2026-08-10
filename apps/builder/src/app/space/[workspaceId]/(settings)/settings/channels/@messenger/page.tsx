@@ -6,6 +6,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { listIntegrationMessengers } from "@/features/integration-messenger/queries"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelMessengerPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -20,7 +22,7 @@ export default async function SettingChannelMessengerPage(props: {
     return notFound()
   }
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
+    ownerId: await resolveOwnerForWorkspace(workspace),
     type: "messenger",
   })
 
@@ -29,9 +31,11 @@ export default async function SettingChannelMessengerPage(props: {
       workspaceId,
     }),
   ])
+  const canCreate = await resolveChannelCreatable(workspaceId, "messenger")
 
   return (
     <MessengerManage
+      canCreate={canCreate}
       promises={promises}
       publicConfig={credential?.publicConfig ?? null}
       workspaceId={workspaceId}
