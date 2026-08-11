@@ -5,7 +5,6 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { redirect } from "next/navigation"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -13,7 +12,6 @@ import {
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
-import { workspaceSettingsGeneralPath } from "@/lib/workspace/settings-paths"
 
 export const scheduleWorkspaceDeletionAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -44,7 +42,5 @@ export const scheduleWorkspaceDeletionAction = workspaceActionClientAllowExpired
       })
 
       await workspaceLifecycleService.freezeWorkspaceRuntime(workspaceId)
-
-      redirect(workspaceSettingsGeneralPath(workspaceId))
     },
   )

@@ -6,9 +6,6 @@ const mockGetCurrentUserAndTargetWorkspace = vi.fn()
 const mockHasWorkspacePermission = vi.fn()
 const mockScheduleDeletion = vi.fn()
 const mockFreezeWorkspaceRuntime = vi.fn()
-const mockRedirect = vi.fn(() => {
-  throw new Error("redirect")
-})
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -18,10 +15,6 @@ vi.mock("@/lib/safe-action", () => {
     workspaceActionClientAllowExpired: chain,
   }
 })
-
-vi.mock("next/navigation", () => ({
-  redirect: mockRedirect,
-}))
 
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: mockGetCurrentUserAndTargetWorkspace,
@@ -56,16 +49,13 @@ beforeEach(() => {
   mockFreezeWorkspaceRuntime.mockResolvedValue(undefined)
 })
 
-test("schedules deletion then freezes the workspace runtime before redirecting", async () => {
-  await expect(
-    (scheduleWorkspaceDeletionAction as (props: unknown) => Promise<unknown>)({
-      bindArgsParsedInputs: ["workspace-1"],
-    }),
-  ).rejects.toThrow("redirect")
+test("schedules deletion then freezes the workspace runtime", async () => {
+  await (
+    scheduleWorkspaceDeletionAction as (props: unknown) => Promise<unknown>
+  )({
+    bindArgsParsedInputs: ["workspace-1"],
+  })
 
   expect(mockScheduleDeletion).toHaveBeenCalledWith({ id: "workspace-1" })
   expect(mockFreezeWorkspaceRuntime).toHaveBeenCalledWith("workspace-1")
-  expect(mockRedirect).toHaveBeenCalledWith(
-    "/space/workspace-1/settings/general",
-  )
 })
