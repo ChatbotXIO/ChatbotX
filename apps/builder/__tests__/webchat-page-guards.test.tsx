@@ -47,6 +47,12 @@ vi.mock("@/lib/domain", () => ({
   getDomainFromHeader: mockGetDomainFromHeader,
 }))
 
+vi.mock("@/features/tenant/utils", () => ({
+  getTenantSettings: vi.fn().mockResolvedValue({
+    storageUrl: "https://storage.example.com/",
+  }),
+}))
+
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn((namespace?: string) => {
     const messages: Record<string, string> = {

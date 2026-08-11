@@ -396,6 +396,7 @@
     },
     "plan": {
       "free": "Kostnadsfritt",
+      "currentLabel": "Nuvarande abonnemang",
       "label": "Abonnemang: {plan}"
     },
     "title": "Fakturering",

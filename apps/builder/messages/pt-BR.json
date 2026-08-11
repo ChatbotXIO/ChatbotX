@@ -289,6 +289,7 @@
     "title": "Faturamento",
     "plan": {
       "label": "Plano: {plan}",
+      "currentLabel": "Plano atual",
       "free": "Grátis"
     },
     "usage": {

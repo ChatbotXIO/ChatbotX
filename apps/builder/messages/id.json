@@ -289,6 +289,7 @@
     "title": "Penagihan",
     "plan": {
       "label": "Paket: {plan}",
+      "currentLabel": "Paket saat ini",
       "free": "Gratis"
     },
     "usage": {

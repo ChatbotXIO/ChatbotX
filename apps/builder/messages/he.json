@@ -3934,6 +3934,7 @@
     "title": "חיוב",
     "plan": {
       "label": "תוכנית: {plan}",
+      "currentLabel": "התוכנית הנוכחית",
       "free": "חינם"
     },
     "usage": {

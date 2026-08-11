@@ -1789,6 +1789,7 @@
     "title": "計費",
     "plan": {
       "label": "方案：{plan}",
+      "currentLabel": "目前方案",
       "free": "免費"
     },
     "usage": {

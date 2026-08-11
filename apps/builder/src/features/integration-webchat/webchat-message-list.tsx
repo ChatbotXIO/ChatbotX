@@ -1,6 +1,12 @@
 "use client"
 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@chatbotx.io/ui/components/ui/avatar"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { BotIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import {
   type GridComponents,
@@ -25,6 +31,7 @@ export function WebchatMessageList() {
     guestConversationId,
     sendPostback,
     isTyping,
+    workspaceLogoUrl,
   } = useGuestSessionStore((state) => state)
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
@@ -65,9 +72,10 @@ export function WebchatMessageList() {
         initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, item) =>
           item.id === TYPING_INDICATOR_ID ? (
-            <TypingIndicator />
+            <TypingIndicator avatarUrl={workspaceLogoUrl} />
           ) : (
             <MessageItem
+              avatarUrl={workspaceLogoUrl}
               guestDisplay={true}
               key={item.id}
               message={item as MessageResourceWithRelations}
@@ -96,8 +104,16 @@ const MessageComponentHeader: GridComponents["Header"] = () => {
   ) : null
 }
 
-const TypingIndicator = () => (
+const TypingIndicator = ({ avatarUrl }: { avatarUrl?: string }) => (
   <MessageBubble variant="left">
+    {avatarUrl && (
+      <Avatar className="mt-auto size-6 self-start">
+        <AvatarImage alt="" src={avatarUrl} />
+        <AvatarFallback>
+          <BotIcon aria-hidden className="size-3.5" />
+        </AvatarFallback>
+      </Avatar>
+    )}
     <div className="mx-3 flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-4 py-3">
       <span
         aria-hidden

@@ -289,6 +289,7 @@
     "title": "Faturalandırma",
     "plan": {
       "label": "Plan: {plan}",
+      "currentLabel": "Mevcut plan",
       "free": "Ücretsiz"
     },
     "usage": {

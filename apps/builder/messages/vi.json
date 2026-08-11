@@ -290,6 +290,7 @@
     "title": "Thanh toán",
     "plan": {
       "label": "Gói: {plan}",
+      "currentLabel": "Gói hiện tại",
       "free": "Miễn phí"
     },
     "usage": {

@@ -290,6 +290,7 @@
     "title": "Billing",
     "plan": {
       "label": "Plan: {plan}",
+      "currentLabel": "Current plan",
       "free": "Free"
     },
     "usage": {

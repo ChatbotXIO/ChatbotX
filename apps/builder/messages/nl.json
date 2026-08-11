@@ -289,6 +289,7 @@
     "title": "Facturering",
     "plan": {
       "label": "Abonnement: {plan}",
+      "currentLabel": "Huidig abonnement",
       "free": "Gratis"
     },
     "usage": {
