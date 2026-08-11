@@ -16,6 +16,7 @@ export const integrationWhatsappResource = createSelectSchema(
   name: true,
   inboxId: true,
   displayPhoneNumber: true,
+  tokenRefreshError: true,
 })
 
 export type IntegrationWhatsappResource = z.infer<

@@ -13,6 +13,7 @@ import {
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import type { listIntegrationInstagrams } from "../queries"
@@ -66,7 +67,16 @@ export function InstagramManage({
           <TableBody>
             {integrationInstagrams.map((integrationInstagram) => (
               <TableRow key={integrationInstagram.id}>
-                <TableCell>{integrationInstagram.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {integrationInstagram.tokenRefreshError && (
+                      <TokenRefreshErrorIcon
+                        message={integrationInstagram.tokenRefreshError}
+                      />
+                    )}
+                    {integrationInstagram.name}
+                  </div>
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <InstagramReconnect
                     integrationInstagram={integrationInstagram}

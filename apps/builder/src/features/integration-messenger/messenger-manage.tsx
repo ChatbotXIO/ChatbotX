@@ -13,6 +13,7 @@ import {
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
@@ -69,7 +70,16 @@ export function MessengerManage({
           <TableBody>
             {integrationMessengers.map((integrationMessenger) => (
               <TableRow key={integrationMessenger.id}>
-                <TableCell>{integrationMessenger.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {integrationMessenger.tokenRefreshError && (
+                      <TokenRefreshErrorIcon
+                        message={integrationMessenger.tokenRefreshError}
+                      />
+                    )}
+                    {integrationMessenger.name}
+                  </div>
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <MessengerReconnect
                     integrationMessenger={integrationMessenger}

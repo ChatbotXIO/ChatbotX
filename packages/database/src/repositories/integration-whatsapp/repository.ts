@@ -126,7 +126,34 @@ class IntegrationWhatsappRepository {
     return new Set(rows.map((row) => row.phoneNumberId))
   }
 
-  async findWorkspaceIntegration(
+  findAllForTokenRefresh(tx: DatabaseClient = db) {
+    return tx
+      .select({
+        id: integrationWhatsappModel.id,
+        workspaceId: integrationWhatsappModel.workspaceId,
+        auth: integrationWhatsappModel.auth,
+      })
+      .from(integrationWhatsappModel)
+  }
+
+  findForTokenRefreshByWorkspaceIds(
+    workspaceIds: string[],
+    tx: DatabaseClient = db,
+  ) {
+    if (workspaceIds.length === 0) {
+      return Promise.resolve([])
+    }
+    return tx
+      .select({
+        id: integrationWhatsappModel.id,
+        workspaceId: integrationWhatsappModel.workspaceId,
+        auth: integrationWhatsappModel.auth,
+      })
+      .from(integrationWhatsappModel)
+      .where(inArray(integrationWhatsappModel.workspaceId, workspaceIds))
+  }
+
+  async findByIdForWorkspace(
     input: WorkspaceIntegrationRef,
     tx: DatabaseClient = db,
   ): Promise<IntegrationWhatsappModel | null> {
@@ -137,6 +164,31 @@ class IntegrationWhatsappRepository {
       .limit(1)
 
     return row ?? null
+  }
+
+  /**
+   * Replace the stored OAuth credentials after a token refresh. Scoped by
+   * workspace so a forged integration id can never touch another tenant's row.
+   */
+  async updateAuth(
+    input: WorkspaceIntegrationRef & { auth: Record<string, unknown> },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ auth: input.auth, tokenRefreshError: null })
+      .where(workspaceIntegrationFilter(input))
+  }
+
+  async markTokenRefreshError(
+    id: string,
+    error: string,
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ tokenRefreshError: error })
+      .where(eq(integrationWhatsappModel.id, id))
   }
 
   async findVerificationCodeRequestedAt(

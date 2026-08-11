@@ -229,70 +229,14 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.refreshZaloTokens,
+    ScheduleJobData.refreshChannelTokens,
     {
       pattern: "0 2 * * *",
     },
     {
-      name: ScheduleJobData.refreshZaloTokens,
+      name: ScheduleJobData.refreshChannelTokens,
       data: {
-        type: ScheduleJobData.refreshZaloTokens,
-        data: {},
-      },
-    },
-  )
-
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.refreshTiktokTokens,
-    {
-      pattern: "15 2 * * *",
-    },
-    {
-      name: ScheduleJobData.refreshTiktokTokens,
-      data: {
-        type: ScheduleJobData.refreshTiktokTokens,
-        data: {},
-      },
-    },
-  )
-
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.refreshInstagramTokens,
-    {
-      pattern: "30 2 * * *",
-    },
-    {
-      name: ScheduleJobData.refreshInstagramTokens,
-      data: {
-        type: ScheduleJobData.refreshInstagramTokens,
-        data: {},
-      },
-    },
-  )
-
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.refreshMessengerTokens,
-    {
-      pattern: "45 2 * * *",
-    },
-    {
-      name: ScheduleJobData.refreshMessengerTokens,
-      data: {
-        type: ScheduleJobData.refreshMessengerTokens,
-        data: {},
-      },
-    },
-  )
-
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.refreshInstagramFacebookTokens,
-    {
-      pattern: "5 3 * * *",
-    },
-    {
-      name: ScheduleJobData.refreshInstagramFacebookTokens,
-      data: {
-        type: ScheduleJobData.refreshInstagramFacebookTokens,
+        type: ScheduleJobData.refreshChannelTokens,
         data: {},
       },
     },

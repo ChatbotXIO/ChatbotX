@@ -57,6 +57,27 @@ export const exchangeAccessToken = (
   )
 }
 
+export const exchangeLongLivedToken = (
+  settings: { clientId: string; clientSecret: string },
+  accessToken: string,
+): Promise<string> =>
+  rescue(async () => {
+    const result = await ky
+      .get<ExchangeAccessTokenResponse>(
+        `${API_URL}/${DEFAULT_API_VERSION}/oauth/access_token`,
+        {
+          searchParams: {
+            grant_type: "fb_exchange_token",
+            client_id: settings.clientId,
+            client_secret: settings.clientSecret,
+            fb_exchange_token: accessToken,
+          },
+        },
+      )
+      .json()
+    return result.access_token
+  })
+
 export async function debugToken(
   accessToken: string,
   debugAccessToken = accessToken,

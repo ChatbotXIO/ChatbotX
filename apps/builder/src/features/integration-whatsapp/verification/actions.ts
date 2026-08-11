@@ -88,12 +88,10 @@ async function getWorkspaceIntegration(input: {
   integrationId: string
   notFoundMessage: string
 }) {
-  const integration = await integrationWhatsappService.findWorkspaceIntegration(
-    {
-      id: input.integrationId,
-      workspaceId: input.workspaceId,
-    },
-  )
+  const integration = await integrationWhatsappService.findByIdForWorkspace({
+    id: input.integrationId,
+    workspaceId: input.workspaceId,
+  })
 
   if (!integration) {
     throw new ChatbotXException(input.notFoundMessage)

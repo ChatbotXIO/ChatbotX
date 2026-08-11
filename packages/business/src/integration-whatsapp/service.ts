@@ -228,10 +228,34 @@ class IntegrationWhatsappService extends BaseService {
     })
   }
 
-  findWorkspaceIntegration(
+  findByIdForWorkspace(
     input: FindWorkspaceIntegrationInput,
   ): Promise<IntegrationWhatsappModel | null> {
-    return integrationWhatsappRepository.findWorkspaceIntegration(input)
+    return integrationWhatsappRepository.findByIdForWorkspace(input)
+  }
+
+  findAllForTokenRefresh() {
+    return integrationWhatsappRepository.findAllForTokenRefresh()
+  }
+
+  findForTokenRefreshByWorkspaceIds(workspaceIds: string[]) {
+    return integrationWhatsappRepository.findForTokenRefreshByWorkspaceIds(
+      workspaceIds,
+    )
+  }
+
+  /**
+   * Replace the stored OAuth credentials after a token refresh. Scoped by
+   * workspace so a forged integration id can never touch another tenant's row.
+   */
+  updateAuth(
+    input: FindWorkspaceIntegrationInput & { auth: Record<string, unknown> },
+  ): Promise<void> {
+    return integrationWhatsappRepository.updateAuth(input)
+  }
+
+  markTokenRefreshError(id: string, error: string): Promise<void> {
+    return integrationWhatsappRepository.markTokenRefreshError(id, error)
   }
 
   /**

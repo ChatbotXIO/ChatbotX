@@ -12,6 +12,7 @@ import {
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import type { listIntegrationWhatsapps } from "./queries"
@@ -66,7 +67,16 @@ export function WhatsappManage({
           <TableBody>
             {integrationWhatsapps.map((integrationWhatsapp) => (
               <TableRow key={integrationWhatsapp.id}>
-                <TableCell>{integrationWhatsapp.inbox?.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {integrationWhatsapp.tokenRefreshError && (
+                      <TokenRefreshErrorIcon
+                        message={integrationWhatsapp.tokenRefreshError}
+                      />
+                    )}
+                    {integrationWhatsapp.inbox?.name}
+                  </div>
+                </TableCell>
                 <TableCell className="flex w-[200px] justify-end gap-2">
                   <Button size="sm" variant="secondary">
                     <Link

@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "9d810992-498d-4c59-bb8c-72debb5cbedc",
-  "prevIds": ["97b85b04-2745-4f90-bde9-54c43794a33d"],
+  "id": "9dfc0c5b-fe4d-4460-a095-d233d1d0529a",
+  "prevIds": ["1ffed4d9-b68f-49d7-923d-b43c480f4ba0"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -105,6 +105,12 @@
       "schema": "public"
     },
     {
+      "values": ["inbound", "outbound"],
+      "name": "automatedResponseType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["now", "future"],
       "name": "broadcastScheduleType",
       "entityType": "enums",
@@ -117,7 +123,7 @@
       "schema": "public"
     },
     {
-      "values": ["whatsapp", "messenger"],
+      "values": ["whatsapp", "messenger", "instagram"],
       "name": "coexistChannel",
       "entityType": "enums",
       "schema": "public"
@@ -189,7 +195,7 @@
       "schema": "public"
     },
     {
-      "values": ["messenger", "instagram"],
+      "values": ["messenger", "instagram", "instagramFacebook"],
       "name": "fbCommentAutomationType",
       "entityType": "enums",
       "schema": "public"
@@ -216,9 +222,18 @@
         "webhook",
         "sequence",
         "emailTopic",
-        "fbComment"
+        "fbComment",
+        "igComment",
+        "igStory",
+        "outboundAutomatedResponse"
       ],
       "name": "folderType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["instagram", "instagramFacebook"],
+      "name": "igStoryAutomationType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -765,6 +780,12 @@
     {
       "isRlsEnabled": false,
       "name": "Folder",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "IgStoryAutomation",
       "entityType": "tables",
       "schema": "public"
     },
@@ -4964,6 +4985,19 @@
       "table": "AutomatedResponse"
     },
     {
+      "type": "automatedResponseType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'inbound'",
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomatedResponse"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -8532,6 +8566,19 @@
       "table": "Tenant"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "hiddenChannels",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tenant"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -8865,6 +8912,32 @@
       "generated": null,
       "identity": null,
       "name": "monthlyBotMessagesUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "monthlyBotMessagesPeriodStart",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "botMessagesTopUpGranted",
       "entityType": "columns",
       "schema": "public",
       "table": "UserQuota"
@@ -10843,6 +10916,188 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "igStoryAutomationType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isActive",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startTime",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endTime",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "repliesCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{\"type\":\"all\",\"value\":[]}'",
+      "generated": null,
+      "identity": null,
+      "name": "story",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{\"type\":\"none\",\"value\":null}'",
+      "generated": null,
+      "identity": null,
+      "name": "reply",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{\"type\":\"all\",\"value\":[]}'",
+      "generated": null,
+      "identity": null,
+      "name": "includeKeywords",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "Import"
     },
     {
@@ -12367,6 +12622,19 @@
       "table": "IntegrationInstagram"
     },
     {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "coexistEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -12440,6 +12708,19 @@
       "generated": null,
       "identity": null,
       "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenRefreshError",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationInstagram"
@@ -12887,6 +13168,19 @@
       "table": "IntegrationMessenger"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenRefreshError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -12993,7 +13287,7 @@
     {
       "type": "jsonb",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -13038,6 +13332,19 @@
       "generated": null,
       "identity": null,
       "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMetaCatalog"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationMetaCatalog"
@@ -14109,6 +14416,19 @@
       "table": "IntegrationTiktok"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenRefreshError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -14538,6 +14858,19 @@
       "table": "IntegrationWhatsapp"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenRefreshError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -14689,6 +15022,19 @@
       "generated": null,
       "identity": null,
       "name": "syncTagEnabledAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationZalo"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenRefreshError",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationZalo"
@@ -15690,6 +16036,19 @@
       "generated": null,
       "identity": null,
       "name": "handles",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCatalogSyncRun"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "submissionLeaseId",
       "entityType": "columns",
       "schema": "public",
       "table": "MetaCatalogSyncRun"
@@ -23933,6 +24292,48 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IgStoryAutomation_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "folderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IgStoryAutomation_folderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         },
         {
           "value": "status",
@@ -24802,6 +25203,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "IntegrationMetaCatalog_workspaceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationMetaCatalog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "deletedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationMetaCatalog_deletedAt_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationMetaCatalog"
@@ -29419,6 +29841,32 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "IgStoryAutomation_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["folderId"],
+      "schemaTo": "public",
+      "tableTo": "Folder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "IgStoryAutomation_folderId_Folder_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IgStoryAutomation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "Import_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -31861,6 +32309,14 @@
       "name": "Folder_pkey",
       "schema": "public",
       "table": "Folder",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "IgStoryAutomation_pkey",
+      "schema": "public",
+      "table": "IgStoryAutomation",
       "entityType": "pks"
     },
     {
