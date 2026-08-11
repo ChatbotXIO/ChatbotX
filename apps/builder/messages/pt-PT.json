@@ -762,7 +762,6 @@
     },
     "authType": {
       "headers": "Cabeçalho personalizado",
-      "none": "Nenhum",
       "token": "Token"
     },
     "automatedResponse": {
@@ -884,7 +883,6 @@
       "description": "Defina quanto tempo o bot aguarda antes de responder após a última mensagem do utilizador. Se o utilizador enviar outra mensagem, o temporizador é reiniciado e as mensagens são agrupadas numa única resposta.",
       "label": "Atraso da resposta do bot",
       "minutes": "{count, plural, one {# minuto} other {# minutos}}",
-      "none": "Nenhum",
       "seconds": "{count, plural, one {# segundo} other {# segundos}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "Ligue um fornecedor compatível com OpenAI nas definições de integração antes de utilizar este passo.",
-      "integration": "Fornecedor compatível com OpenAI",
-      "none": "Nenhum"
+      "integration": "Fornecedor compatível com OpenAI"
     },
     "actions": {
       "addContactNotes": "Adicionar notas ao contacto",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",
     "deleteNodeError": "Não foi possível eliminar o bloco. Tente novamente.",
     "redoHistoryCleared": "Histórico de refazer limpo",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Nenhum"
   },
   "instagram": {
     "description": "Esta integração permite-lhe criar bots do Instagram.",
@@ -3866,7 +3864,6 @@
     "allFormsNote": "Os leads de todos os formulários desta página serão capturados. Os campos padrão (e-mail, telefone, nome e género) são guardados automaticamente nos campos correspondentes do contacto.",
     "leadData": "Dados do lead",
     "whatFlow": "Fluxo acionado",
-    "none": "Nenhum",
     "addNewPage": "Adicionar novo",
     "noEligiblePages": "Não existem páginas elegíveis. Utilize «Adicionar novo» para conceder acesso aos leads.",
     "duplicateError": "Já existe uma automatização para esta página e este formulário.",

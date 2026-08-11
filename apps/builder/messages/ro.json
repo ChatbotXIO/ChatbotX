@@ -24,8 +24,7 @@
     },
     "openaiCompatible": {
       "empty": "Conectați un furnizor compatibil cu OpenAI în setările integrării înainte de a utiliza acest pas.",
-      "integration": "Furnizor compatibil cu OpenAI",
-      "none": "Niciunul"
+      "integration": "Furnizor compatibil cu OpenAI"
     },
     "actions": {
       "addContactNotes": "Adaugă note despre contact",
@@ -1324,7 +1323,6 @@
     },
     "authType": {
       "headers": "Antet personalizat",
-      "none": "Niciunul",
       "token": "Token"
     },
     "automatedResponse": {
@@ -1446,7 +1444,6 @@
       "description": "Setează cât timp așteaptă botul înainte de a răspunde după ultimul mesaj al utilizatorului. Dacă utilizatorul trimite alt mesaj, temporizatorul se resetează, iar mesajele sunt grupate într-un singur răspuns.",
       "label": "Întârzierea răspunsului botului",
       "minutes": "{count, plural, one {# minut} other {# minute}}",
-      "none": "Niciuna",
       "seconds": "{count, plural, one {# secundă} other {# secunde}}"
     },
     "delayType": {
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
     "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
     "redoHistoryCleared": "Istoricul de refacere a fost șters",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Niciuna"
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -3804,7 +3802,6 @@
     "leadForm": "Formular lead",
     "leads": "Lead-uri",
     "noEligiblePages": "Nicio pagină eligibilă. Folosește „Adaugă nouă” pentru a acorda acces la lead-uri.",
-    "none": "Niciuna",
     "subscribeError": "Nu s-a putut abona această pagină la notificările Facebook pentru lead-uri, astfel automatizarea nu a fost creată. Reconectează pagina cu „Adaugă nouă” și încearcă din nou.",
     "title": "Automatizare reclame pentru lead-uri Facebook",
     "whatFlow": "Ce flux este declanșat"

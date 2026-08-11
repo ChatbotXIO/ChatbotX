@@ -61,7 +61,7 @@ export function AIMcpServersCreate({
   const authOptions = useMemo(
     () => [
       {
-        label: t("fields.authType.none"),
+        label: t("messages.none"),
         value: aiMcpServerAuthTypes.enum.none,
       },
       {

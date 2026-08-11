@@ -64,7 +64,7 @@ export function OpenaiCompatibleModelFields({
     <div className="space-y-4">
       <SelectField
         allowClear
-        clearLabel={t("flows.openaiCompatible.none")}
+        clearLabel={t("messages.none")}
         label={t("flows.openaiCompatible.integration")}
         name={integrationName}
         options={integrationOptions}

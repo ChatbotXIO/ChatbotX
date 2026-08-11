@@ -159,8 +159,11 @@ export function UpdateMessengerForm({
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <ComboboxField
+          allowClear
+          clearLabel={t("messages.none")}
           description={t("fields.welcomeFlowId.description")}
           emptyText={t("actions.noRecordFound")}
+          emptyValue={null}
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}

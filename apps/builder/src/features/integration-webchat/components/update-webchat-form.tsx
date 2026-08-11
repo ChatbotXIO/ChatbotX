@@ -143,6 +143,8 @@ export function UpdateWebchatForm({
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <InputField label="Name" name="name" required />
         <ComboboxField
+          allowClear
+          clearLabel={t("messages.none")}
           description={t("fields.welcomeFlowId.description")}
           emptyText={t("actions.noRecordFound")}
           label={t("fields.welcomeFlowId.label")}

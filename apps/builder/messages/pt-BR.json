@@ -762,7 +762,6 @@
     },
     "authType": {
       "headers": "Cabeçalho personalizado",
-      "none": "Nenhum",
       "token": "Token"
     },
     "automatedResponse": {
@@ -884,7 +883,6 @@
       "description": "Defina quanto tempo o bot aguarda antes de responder após a última mensagem do usuário. Se o usuário enviar outra mensagem, o cronômetro será reiniciado e as mensagens serão agrupadas em uma única resposta.",
       "label": "Atraso da resposta do bot",
       "minutes": "{count, plural, one {# minuto} other {# minutos}}",
-      "none": "Nenhum",
       "seconds": "{count, plural, one {# segundo} other {# segundos}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "Conecte um provedor compatível com a OpenAI nas configurações de integração antes de usar esta etapa.",
-      "integration": "Provedor compatível com a OpenAI",
-      "none": "Nenhum"
+      "integration": "Provedor compatível com a OpenAI"
     },
     "actions": {
       "addContactNotes": "Adicionar notas ao contato",
@@ -2680,7 +2677,8 @@
     "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",
     "deleteNodeError": "Não foi possível excluir o bloco. Tente novamente.",
     "redoHistoryCleared": "Histórico de refazer limpo",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Nenhum"
   },
   "instagram": {
     "description": "Esta integração permite criar bots do Instagram.",
@@ -3829,7 +3827,6 @@
     "allFormsNote": "Os cadastros de todos os formulários desta página serão capturados. Os campos padrão (e-mail, telefone, nome e gênero) são salvos automaticamente nos campos correspondentes do contato.",
     "leadData": "Dados do cadastro",
     "whatFlow": "Qual fluxo é acionado",
-    "none": "Nenhum",
     "addNewPage": "Adicionar nova",
     "noEligiblePages": "Nenhuma página qualificada. Use \"Adicionar nova\" para conceder acesso aos cadastros.",
     "duplicateError": "Já existe uma automação para esta página e formulário.",

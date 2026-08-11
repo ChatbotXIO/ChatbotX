@@ -1075,7 +1075,6 @@
     "leadForm": "Leadformulär",
     "leads": "Leads",
     "noEligiblePages": "Inga kvalificerade sidor. Använd ”Lägg till ny” för att bevilja leadåtkomst.",
-    "none": "Inget",
     "subscribeError": "Det gick inte att prenumerera på Facebooks leadaviseringar för den här sidan, så automatiseringen skapades inte. Återanslut sidan med ”Lägg till ny” och försök igen.",
     "title": "Automatisering av Facebook-leadannonser",
     "whatFlow": "Vilket flöde utlöses"
@@ -1155,7 +1154,6 @@
     },
     "authType": {
       "headers": "Anpassat huvud",
-      "none": "Ingen",
       "token": "Token"
     },
     "authorizedDomain": {
@@ -2141,7 +2139,6 @@
       "description": "Ange hur länge boten väntar med att svara efter användarens senaste meddelande. Om användaren skickar ett nytt meddelande återställs timern och meddelandena köas till ett enda svar.",
       "label": "Fördröjning av botsvar",
       "minutes": "{count, plural, one {# minut} other {# minuter}}",
-      "none": "Ingen",
       "seconds": "{count, plural, one {# sekund} other {# sekunder}}"
     },
     "sms": {
@@ -2599,8 +2596,7 @@
     },
     "openaiCompatible": {
       "empty": "Anslut en OpenAI-kompatibel leverantör i integrationsinställningarna innan du använder det här steget.",
-      "integration": "OpenAI-kompatibel leverantör",
-      "none": "Ingen"
+      "integration": "OpenAI-kompatibel leverantör"
     },
     "operators": {
       "append": "Lägg till i slutet",
@@ -3173,7 +3169,8 @@
     "videoError": "Videofel",
     "viewMessage": "Visa meddelande",
     "viewPost": "Visa inlägg",
-    "warning": "Varning!"
+    "warning": "Varning!",
+    "none": "Ingen"
   },
   "messenger": {
     "botProfile": "Botprofil",

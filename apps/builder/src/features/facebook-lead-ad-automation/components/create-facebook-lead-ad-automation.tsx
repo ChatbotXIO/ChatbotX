@@ -63,7 +63,7 @@ export function CreateFacebookLeadAdAutomationForm({
   const [loadingForms, setLoadingForms] = useState(false)
 
   const flowOptions: SelectOption[] = [
-    { label: t("facebookLeadAdsAutomation.none"), value: "" },
+    { label: t("messages.none"), value: "" },
     ...useFlowSelectOptions(),
   ]
 
@@ -252,7 +252,7 @@ export function CreateFacebookLeadAdAutomationForm({
                 label={t("facebookLeadAdsAutomation.whatFlow")}
                 name="flowId"
                 options={flowOptions}
-                placeholder={t("facebookLeadAdsAutomation.none")}
+                placeholder={t("messages.none")}
                 popoverClassName="w-[var(--anchor-width)]"
               />
             ) : null}

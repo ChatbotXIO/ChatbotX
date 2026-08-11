@@ -762,7 +762,6 @@
     },
     "authType": {
       "headers": "Mukautettu otsake",
-      "none": "Ei mitään",
       "token": "Tunnus"
     },
     "automatedResponse": {
@@ -884,7 +883,6 @@
       "description": "Määritä, kuinka kauan botti odottaa ennen vastaamista käyttäjän viimeisimmän viestin jälkeen. Jos käyttäjä lähettää uuden viestin, ajastin nollautuu ja viestit kootaan yhdeksi vastaukseksi.",
       "label": "Botin vastausviive",
       "minutes": "{count, plural, one {# minuutti} other {# minuuttia}}",
-      "none": "Ei mitään",
       "seconds": "{count, plural, one {# sekunti} other {# sekuntia}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "Yhdistä OpenAI-yhteensopiva palveluntarjoaja integraatioasetuksissa ennen tämän vaiheen käyttöä.",
-      "integration": "OpenAI-yhteensopiva palveluntarjoaja",
-      "none": "Ei mitään"
+      "integration": "OpenAI-yhteensopiva palveluntarjoaja"
     },
     "actions": {
       "addContactNotes": "Lisää yhteystiedon muistiinpanoja",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",
     "deleteNodeError": "Lohkoa ei voitu poistaa. Yritä uudelleen.",
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Ei mitään"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -3870,7 +3868,6 @@
     "allFormsNote": "Kaikkien tämän sivun lomakkeiden liidit tallennetaan. Vakiokentät (sähköposti, puhelin, nimi, sukupuoli) tallennetaan automaattisesti vastaaviin yhteystietokenttiin.",
     "leadData": "Liiditiedot",
     "whatFlow": "Käynnistettävä flow",
-    "none": "Ei mitään",
     "addNewPage": "Lisää uusi",
     "noEligiblePages": "Sopivia sivuja ei ole. Myönnä liidien käyttöoikeus valitsemalla Lisää uusi.",
     "duplicateError": "Tälle sivulle ja lomakkeelle on jo olemassa automaatio.",

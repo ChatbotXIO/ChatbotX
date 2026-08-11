@@ -77,7 +77,10 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.defaultReply.label")}
             >
               <ComboboxField
+                allowClear
+                clearLabel={t("messages.none")}
                 emptyText={t("actions.noRecordFound")}
+                emptyValue={null}
                 name="defaultReply"
                 options={flowOptions}
                 placeholder={t("actions.pleaseSelect")}
