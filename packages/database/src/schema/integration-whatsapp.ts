@@ -63,6 +63,7 @@ export const integrationWhatsappModel = pgTable(
       .default("pending_verification"),
     registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
     verificationCodeRequestedAt: timestamp(timestampConfig),
+    tokenRefreshError: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

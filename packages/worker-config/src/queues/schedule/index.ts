@@ -26,11 +26,7 @@ export const ScheduleJobData = {
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
-  refreshZaloTokens: "refreshZaloTokens",
-  refreshTiktokTokens: "refreshTiktokTokens",
-  refreshInstagramTokens: "refreshInstagramTokens",
-  refreshMessengerTokens: "refreshMessengerTokens",
-  refreshInstagramFacebookTokens: "refreshInstagramFacebookTokens",
+  refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
 } as const
@@ -153,28 +149,8 @@ export type ScheduleJobPurgeWorkspaces = {
   data: Record<string, never>
 }
 
-export type ScheduleJobRefreshZaloTokens = {
-  type: typeof ScheduleJobData.refreshZaloTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshTiktokTokens = {
-  type: typeof ScheduleJobData.refreshTiktokTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshInstagramTokens = {
-  type: typeof ScheduleJobData.refreshInstagramTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshMessengerTokens = {
-  type: typeof ScheduleJobData.refreshMessengerTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshInstagramFacebookTokens = {
-  type: typeof ScheduleJobData.refreshInstagramFacebookTokens
+export type ScheduleJobRefreshChannelTokens = {
+  type: typeof ScheduleJobData.refreshChannelTokens
   data: Record<string, never>
 }
 
@@ -208,11 +184,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
-  | ScheduleJobRefreshZaloTokens
-  | ScheduleJobRefreshTiktokTokens
-  | ScheduleJobRefreshInstagramTokens
-  | ScheduleJobRefreshMessengerTokens
-  | ScheduleJobRefreshInstagramFacebookTokens
+  | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
 

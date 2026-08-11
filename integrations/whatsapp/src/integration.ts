@@ -4,6 +4,7 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { exchangeLongLivedToken } from "./api/auth"
 import { getFlowAssets } from "./api/flow"
 import {
   findConversationalAutomation,
@@ -64,6 +65,19 @@ const config: IntegrationDefinition<
   },
   disconnect: async (auth: WhatsappAuthValue): Promise<void> => {
     await unsubscribeWebhook({ auth })
+  },
+  refreshAuth: async ({ auth }) => {
+    const accessToken = await exchangeLongLivedToken(
+      { clientId: auth.clientId, clientSecret: auth.clientSecret },
+      auth.tokens.accessToken,
+    )
+    return {
+      ...auth,
+      tokens: {
+        ...auth.tokens,
+        accessToken,
+      },
+    }
   },
 }
 
