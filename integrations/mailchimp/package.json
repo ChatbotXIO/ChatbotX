@@ -6,7 +6,7 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "@noble/hashes": "^2.2.0",
+    "@noble/hashes": "^2.3.0",
     "ky": "^2.0.2",
     "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"
