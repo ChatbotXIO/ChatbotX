@@ -105,13 +105,22 @@ export const AccountRail = async ({
 
         {cloud && (
           <div className="flex flex-col gap-4 border-t pt-5">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                {t("billing.plan.label", {
-                  plan: planName ?? t("billing.plan.free"),
-                })}
-              </span>
-              <UpgradePlanButton size="sm" variant="outline">
+            <div className="flex flex-col gap-3">
+              <div className="grid gap-0.5">
+                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                  {t("billing.plan.currentLabel")}
+                </span>
+                {/*
+                  `wrap-break-word` rather than `truncate`: the rail is only
+                  18rem wide and a plan name is the one string here the user
+                  must be able to read in full, so it wraps to a second line
+                  instead of being clipped with an ellipsis.
+                */}
+                <span className="wrap-break-word font-semibold text-base leading-tight">
+                  {planName ?? t("billing.plan.free")}
+                </span>
+              </div>
+              <UpgradePlanButton className="w-full" size="sm" variant="outline">
                 <CrownIcon aria-hidden className="size-3.5" />
                 {t("actions.upgradePlan")}
               </UpgradePlanButton>

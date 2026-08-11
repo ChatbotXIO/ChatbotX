@@ -20,7 +20,7 @@ export const createWebchatRequest = z.object({
   hideHeader: z.boolean().default(false),
   showLogo: z.boolean().default(true),
   hideMessageInput: z.boolean().default(false),
-  customCss: z.string().optional(),
+  customCss: z.string().max(20_000).optional(),
   enable: z.boolean().default(true),
 })
 export type CreateWebchatRequest = z.infer<typeof createWebchatRequest>

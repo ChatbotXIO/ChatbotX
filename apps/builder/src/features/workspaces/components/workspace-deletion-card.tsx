@@ -16,11 +16,9 @@ import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import { formatDistanceToNowStrict } from "date-fns"
 import { AlertTriangleIcon, Loader2Icon, Trash2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
 import { safeActionErrorHandler } from "@/lib/errors/safe-action-error-handler"
 import { cancelWorkspaceDeletionAction } from "../actions/cancel-workspace-deletion-action"
 import { scheduleWorkspaceDeletionAction } from "../actions/schedule-workspace-deletion-action"
@@ -73,7 +71,6 @@ export function WorkspaceDeletionCard({
 }) {
   const t = useTranslations()
   const locale = useLocale()
-  const router = useRouter()
   const countdown = useCountdown(workspace.scheduledDeletionAt)
   const deletionDate = formatDate(workspace.scheduledDeletionAt ?? undefined, {
     hour: "numeric",
@@ -81,9 +78,14 @@ export function WorkspaceDeletionCard({
     locale,
   })
 
+  const reloadPage = () => {
+    window.location.reload()
+  }
+
   const { execute: scheduleDeletion, isPending: isScheduling } = useAction(
     scheduleWorkspaceDeletionAction.bind(null, workspace.id),
     {
+      onSuccess: reloadPage,
       onError: safeActionErrorHandler,
     },
   )
@@ -91,10 +93,7 @@ export function WorkspaceDeletionCard({
   const { execute: cancelDeletion, isPending: isCancelling } = useAction(
     cancelWorkspaceDeletionAction.bind(null, workspace.id),
     {
-      onSuccess: () => {
-        toast.success(t("workspace.deletion.undone"))
-        router.refresh()
-      },
+      onSuccess: reloadPage,
       onError: safeActionErrorHandler,
     },
   )

@@ -15,9 +15,12 @@ import {
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { CustomWidgetStyle } from "@/features/integration-webchat/lib/widget-css"
 import { GuestSessionStoreProvider } from "@/features/integration-webchat/providers/store/guest-session-provider"
 import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
 import { WebchatWrapper } from "@/features/integration-webchat/webchat-wrapper"
+import { getTenantSettings } from "@/features/tenant/utils"
+import { getWorkspaceLogoUrl } from "@/features/workspaces/helpers"
 import { getDomainFromHeader } from "@/lib/domain"
 
 type WebchatPageProps = {
@@ -120,12 +123,23 @@ export default async function WebchatPage(props: WebchatPageProps) {
     workspaceId: targetWebchat.workspaceId,
   })
 
+  // Gated server-side so a showLogo=false widget never even receives a URL,
+  // rather than shipping one and relying on the client to hide it.
+  const { storageUrl } = await getTenantSettings()
+  const workspaceLogoUrl = targetWebchat.showLogo
+    ? getWorkspaceLogoUrl(workspace, storageUrl)
+    : undefined
+
   return (
     <GuestSessionStoreProvider
       accessToken={accessToken}
       config={toWebchatClientConfig(targetWebchat)}
       serverGuestConversationId={guestConversationId}
+      workspaceLogoUrl={workspaceLogoUrl}
     >
+      {targetWebchat.customCss && (
+        <CustomWidgetStyle css={targetWebchat.customCss} />
+      )}
       <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
     </GuestSessionStoreProvider>
   )

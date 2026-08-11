@@ -20,6 +20,7 @@ const translations: Record<string, string> = {
   "actions.redeem": "Redeem",
   "actions.upgradePlan": "Upgrade plan",
   "billing.plan.free": "Free",
+  "billing.plan.currentLabel": "Current plan",
 }
 
 function translate(key: string, values?: { plan?: string }): string {
@@ -48,6 +49,14 @@ vi.mock("@/features/auth/sign-out", () => ({
 
 vi.mock("../edit-profile-dialog", () => ({
   EditProfileDialog: () => null,
+}))
+
+// Severs the server-action import chain (refresh action → @/lib/safe-action →
+// @chatbotx.io/business → database/client), which otherwise touches a
+// server-only env var at import time and crashes the whole file before any
+// test body runs.
+vi.mock("../refresh-all-channel-tokens-button", () => ({
+  RefreshAllChannelTokensButton: () => null,
 }))
 
 vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
@@ -82,6 +91,7 @@ describe("account rail", () => {
       isPlatformAdmin: boolean
       isPlatformContext: boolean
       cloud: boolean
+      planName: string | null
     }> = {},
   ) {
     isCloud.mockReturnValue(props.cloud ?? false)
@@ -91,6 +101,7 @@ describe("account rail", () => {
       isSuperAdmin: props.isSuperAdmin,
       isPlatformAdmin: props.isPlatformAdmin,
       isPlatformContext: props.isPlatformContext,
+      planName: props.planName,
     })
     act(() => {
       root.render(element)
@@ -101,6 +112,10 @@ describe("account rail", () => {
     return Array.from(container.querySelectorAll("a")).find(
       (a) => a.getAttribute("href") === href,
     )
+  }
+
+  function planNameText() {
+    return container.textContent ?? ""
   }
 
   it("renders the billing link on community edition", async () => {
@@ -149,5 +164,21 @@ describe("account rail", () => {
       (el) => el.classList.contains("mt-auto"),
     ).length
     expect(mtAutoCount).toBe(1)
+  })
+
+  it("renders the current plan label and name on cloud edition", async () => {
+    await render({ cloud: true, planName: "Pro" })
+
+    const text = planNameText()
+    expect(text).toContain("Current plan")
+    expect(text).toContain("Pro")
+  })
+
+  it("falls back to the free plan label when no plan name is set", async () => {
+    await render({ cloud: true, planName: null })
+
+    const text = planNameText()
+    expect(text).toContain("Current plan")
+    expect(text).toContain("Free")
   })
 })

@@ -851,6 +851,7 @@
     "title": "Facturare",
     "plan": {
       "label": "Plan: {plan}",
+      "currentLabel": "Plan curent",
       "free": "Gratuit"
     },
     "usage": {

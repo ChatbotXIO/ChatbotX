@@ -289,6 +289,7 @@
     "title": "Fakturering",
     "plan": {
       "label": "Plan: {plan}",
+      "currentLabel": "Nuværende plan",
       "free": "Gratis"
     },
     "usage": {

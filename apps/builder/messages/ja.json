@@ -289,6 +289,7 @@
     "title": "請求",
     "plan": {
       "label": "プラン：{plan}",
+      "currentLabel": "現在のプラン",
       "free": "無料"
     },
     "usage": {

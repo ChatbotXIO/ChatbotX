@@ -274,7 +274,11 @@
   },
   "billing": {
     "title": "Abrechnung",
-    "plan": { "label": "Tarif: {plan}", "free": "Kostenlos" },
+    "plan": {
+      "label": "Tarif: {plan}",
+      "currentLabel": "Aktueller Tarif",
+      "free": "Kostenlos"
+    },
     "usage": {
       "contacts": "Kontakte",
       "mac": "Monatlich aktive Kontakte",
