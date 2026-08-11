@@ -33,7 +33,7 @@ export function LeadDataMapping({
   // A leading "None" option makes each row clearable back to unmapped —
   // ComboboxField never toggles a selection off on its own.
   const targetOptions: SelectOption[] = [
-    { label: t("facebookLeadAdsAutomation.none"), value: "" },
+    { label: t("messages.none"), value: "" },
     ...useCustomFieldSelectOptions({
       includeReserved: true,
       reservedFieldIds: RESERVED_TARGETS,
@@ -74,7 +74,7 @@ export function LeadDataMapping({
               emptyText={t("actions.noRecordFound")}
               name={`fieldMapping.${index}.target`}
               options={targetOptions}
-              placeholder={t("facebookLeadAdsAutomation.none")}
+              placeholder={t("messages.none")}
               popoverClassName="w-[var(--anchor-width)]"
             />
           </div>

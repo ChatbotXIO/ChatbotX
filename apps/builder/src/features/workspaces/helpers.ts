@@ -49,7 +49,7 @@ export function getSmartResponseDelaySelectOptions(
   return [
     {
       value: SMART_RESPONSE_DELAY_NONE_VALUE,
-      label: t("fields.smartResponseDelaySeconds.none"),
+      label: t("messages.none"),
     },
     ...SMART_RESPONSE_DELAY_OPTIONS.map((delaySeconds) => ({
       value: String(delaySeconds),

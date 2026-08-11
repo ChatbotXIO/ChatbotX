@@ -292,8 +292,7 @@
     },
     "openaiCompatible": {
       "empty": "חברו ספק תואם OpenAI בהגדרות השילובים לפני השימוש בשלב זה.",
-      "integration": "ספק תואם OpenAI",
-      "none": "ללא"
+      "integration": "ספק תואם OpenAI"
     },
     "actions": {
       "addContactNotes": "הוספת הערות לאיש קשר",
@@ -1009,7 +1008,8 @@
     "duplicateNodeError": "לא ניתן היה לשכפל את הבלוק. נסו שוב.",
     "deleteNodeError": "לא ניתן היה למחוק את הבלוק. נסו שוב.",
     "redoHistoryCleared": "היסטוריית הביצוע מחדש נוקתה",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "ללא"
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -2092,7 +2092,6 @@
     "allFormsNote": "לידים מכל טופס בדף זה יילכדו. שדות רגילים (דוא\"ל, טלפון, שם, מגדר) נשמרים אוטומטית בשדות המתאימים של איש הקשר.",
     "leadData": "נתוני ליד",
     "whatFlow": "איזה תהליך מופעל",
-    "none": "ללא",
     "addNewPage": "הוספת חדש",
     "noEligiblePages": "אין דפים זכאים. השתמשו ב\"הוספת חדש\" כדי להעניק גישה ללידים.",
     "duplicateError": "כבר קיימת אוטומציה עבור דף וטופס אלה.",
@@ -2744,7 +2743,6 @@
     },
     "authType": {
       "headers": "כותרת מותאמת אישית",
-      "none": "ללא",
       "token": "אסימון"
     },
     "automatedResponse": {
@@ -2866,7 +2864,6 @@
       "description": "הגדירו כמה זמן הבוט ימתין לפני שישיב לאחר ההודעה האחרונה של המשתמש. אם המשתמש שולח הודעה נוספת, הטיימר מתאפס וההודעות מצורפות לתגובה אחת.",
       "label": "השהיית תגובת הבוט",
       "minutes": "{count, plural, one {דקה אחת} other {# דקות}}",
-      "none": "ללא",
       "seconds": "{count, plural, one {שנייה אחת} other {# שניות}}"
     },
     "delayType": {

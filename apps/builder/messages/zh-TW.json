@@ -17,8 +17,7 @@
       "minutes": "{count, plural, one {# 分鐘} other {# 分鐘}}",
       "seconds": "{count, plural, one {# 秒} other {# 秒}}",
       "description": "設定機器人在使用者最後一則訊息後，等待多久才回覆。如果使用者又傳送新訊息，計時器會重設，並將訊息併入單一回應。",
-      "label": "機器人回覆延遲",
-      "none": "無"
+      "label": "機器人回覆延遲"
     },
     "persistentMenu": {
       "label": "常駐選單 {plural, select, 1 {} other {}}",
@@ -188,7 +187,6 @@
     },
     "authType": {
       "headers": "自訂標頭",
-      "none": "無",
       "token": "代幣"
     },
     "automatedResponse": {
@@ -1464,7 +1462,8 @@
     "duplicateNodeError": "無法複製該區塊。請再試一次。",
     "deleteNodeError": "無法刪除該區塊。請再試一次。",
     "redoHistoryCleared": "重做歷史記錄已清除",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "無"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2186,8 +2185,7 @@
     },
     "openaiCompatible": {
       "empty": "連接相容OpenAI的提供者。",
-      "integration": "OpenAI相容供應商",
-      "none": "無"
+      "integration": "OpenAI相容供應商"
     },
     "actions": {
       "addContactNotes": "新增聯絡人備註",
@@ -3904,7 +3902,6 @@
     "allFormsNote": "此頁面上每個表單的潛在客戶都將被捕獲。標準欄位（電子郵件、電話、姓名、性別）會自動儲存到符合的聯絡人欄位。",
     "leadData": "潛在客戶資料",
     "whatFlow": "觸發什麼流程",
-    "none": "無",
     "addNewPage": "新增新",
     "noEligiblePages": "沒有符合條件的頁面。使用「新增新建」授予潛在客戶存取權限。",
     "duplicateError": "此頁面和表單已存在自動化。",

@@ -684,7 +684,6 @@
     "authToken": { "label": "Token" },
     "authType": {
       "headers": "Benutzerdefinierter Header",
-      "none": "Keine",
       "token": "Token"
     },
     "automatedResponse": { "label": "Automatisierte Antwort" },
@@ -759,7 +758,6 @@
       "description": "Legen Sie fest, wie lange der Bot nach der letzten Nachricht des Benutzers wartet, bevor er antwortet. Sendet der Benutzer eine weitere Nachricht, wird der Timer zurückgesetzt und die Nachrichten werden zu einer einzigen Antwort zusammengefasst.",
       "label": "Antwortverzögerung des Bots",
       "minutes": "{count, plural, one {# Minute} other {# Minuten}}",
-      "none": "Keine",
       "seconds": "{count, plural, one {# Sekunde} other {# Sekunden}}"
     },
     "delayType": {
@@ -1355,8 +1353,7 @@
     "aiExtractData": { "label": "{name}: Daten extrahieren" },
     "openaiCompatible": {
       "empty": "Verbinden Sie in den Integrationseinstellungen einen OpenAI-kompatiblen Anbieter, bevor Sie diesen Schritt verwenden.",
-      "integration": "OpenAI-kompatibler Anbieter",
-      "none": "Keiner"
+      "integration": "OpenAI-kompatibler Anbieter"
     },
     "actions": {
       "addContactNotes": "Kontaktnotizen hinzufügen",
@@ -2061,7 +2058,8 @@
     "duplicateNodeError": "Der Block konnte nicht dupliziert werden. Versuchen Sie es erneut.",
     "deleteNodeError": "Der Block konnte nicht gelöscht werden. Versuchen Sie es erneut.",
     "redoHistoryCleared": "Wiederholungsverlauf gelöscht",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Keine"
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",
@@ -3159,7 +3157,6 @@
     "allFormsNote": "Leads aus jedem Formular auf dieser Seite werden erfasst. Standardfelder (E-Mail, Telefon, Name, Geschlecht) werden automatisch in den passenden Kontaktfeldern gespeichert.",
     "leadData": "Lead-Daten",
     "whatFlow": "Welcher Flow wird ausgelöst",
-    "none": "Keiner",
     "addNewPage": "Neu hinzufügen",
     "noEligiblePages": "Keine berechtigten Seiten. Verwenden Sie „Neu hinzufügen“, um Lead-Zugriff zu gewähren.",
     "duplicateError": "Für diese Seite und dieses Formular ist bereits eine Automatisierung vorhanden.",

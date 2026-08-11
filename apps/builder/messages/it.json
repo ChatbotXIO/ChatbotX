@@ -102,7 +102,6 @@
     "authToken": { "label": "Token" },
     "authType": {
       "headers": "Intestazione personalizzata",
-      "none": "Nessuna",
       "token": "Token"
     },
     "automatedResponse": { "label": "Risposta automatica" },
@@ -177,7 +176,6 @@
       "description": "Imposta il tempo di attesa del bot prima di rispondere dopo l'ultimo messaggio dell'utente. Se l'utente invia un altro messaggio, il timer si azzera e i messaggi vengono accodati in un'unica risposta.",
       "label": "Ritardo della risposta del bot",
       "minutes": "{count, plural, one {# minuto} other {# minuti}}",
-      "none": "Nessuno",
       "seconds": "{count, plural, one {# secondo} other {# secondi}}"
     },
     "delayType": {
@@ -1719,8 +1717,7 @@
     },
     "openaiCompatible": {
       "empty": "Collega un provider compatibile con OpenAI nelle impostazioni delle integrazioni prima di usare questo passaggio.",
-      "integration": "Provider compatibile con OpenAI",
-      "none": "Nessuno"
+      "integration": "Provider compatibile con OpenAI"
     },
     "actions": {
       "addContactNotes": "Aggiungi note al contatto",
@@ -2442,7 +2439,8 @@
     "duplicateNodeError": "Impossibile duplicare il blocco. Riprova.",
     "deleteNodeError": "Impossibile eliminare il blocco. Riprova.",
     "redoHistoryCleared": "Cronologia delle operazioni ripetibili cancellata",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Nessuno"
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",
@@ -3616,7 +3614,6 @@
     "allFormsNote": "Verranno acquisiti i contatti provenienti da ogni modulo di questa pagina. I campi standard (e-mail, telefono, nome, genere) vengono salvati automaticamente nei campi corrispondenti del contatto.",
     "leadData": "Dati del contatto acquisito",
     "whatFlow": "Quale flusso viene attivato",
-    "none": "Nessuno",
     "addNewPage": "Aggiungi",
     "noEligiblePages": "Nessuna pagina idonea. Usa \"Aggiungi\" per concedere l'accesso ai contatti acquisiti.",
     "duplicateError": "Esiste già un'automazione per questa pagina e questo modulo.",

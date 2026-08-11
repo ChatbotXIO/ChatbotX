@@ -592,7 +592,6 @@
     },
     "authType": {
       "headers": "Aangepaste header",
-      "none": "Geen",
       "token": "Token"
     },
     "automatedResponse": {
@@ -714,7 +713,6 @@
       "description": "Stel in hoelang de bot na het laatste bericht van de gebruiker wacht voordat hij antwoordt. Als de gebruiker nog een bericht stuurt, wordt de timer opnieuw gestart en worden de berichten in één antwoord samengevoegd.",
       "label": "Vertraging van botantwoord",
       "minutes": "{count, plural, one {# minuut} other {# minuten}}",
-      "none": "Geen",
       "seconds": "{count, plural, one {# seconde} other {# seconden}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "Koppel een OpenAI-compatibele provider in de integratie-instellingen voordat je deze stap gebruikt.",
-      "integration": "OpenAI-compatibele provider",
-      "none": "Geen"
+      "integration": "OpenAI-compatibele provider"
     },
     "actions": {
       "addContactNotes": "Contactnotities toevoegen",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Het blok kon niet worden gedupliceerd. Probeer het opnieuw.",
     "deleteNodeError": "Het blok kon niet worden verwijderd. Probeer het opnieuw.",
     "redoHistoryCleared": "Geschiedenis voor opnieuw uitvoeren gewist",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Geen"
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
@@ -3870,7 +3868,6 @@
     "allFormsNote": "Leads uit elk formulier op deze pagina worden vastgelegd. Standaardvelden (e-mail, telefoonnummer, naam en geslacht) worden automatisch in de overeenkomstige contactvelden opgeslagen.",
     "leadData": "Leadgegevens",
     "whatFlow": "Welke flow wordt geactiveerd",
-    "none": "Geen",
     "addNewPage": "Nieuwe toevoegen",
     "noEligiblePages": "Geen geschikte pagina's. Gebruik 'Nieuwe toevoegen' om toegang tot leads te verlenen.",
     "duplicateError": "Er bestaat al een automatisering voor deze pagina en dit formulier.",

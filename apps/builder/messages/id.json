@@ -762,7 +762,6 @@
     },
     "authType": {
       "headers": "Kustom Header",
-      "none": "Tidak ada",
       "token": "Token"
     },
     "automatedResponse": {
@@ -884,7 +883,6 @@
       "description": "Atur berapa lama bot menunggu sebelum membalas setelah pesan terakhir pengguna. Jika pengguna mengirim pesan lain, waktu akan diatur ulang dan pesan-pesan akan diantrekan menjadi satu respons.",
       "label": "Bot balasan delay",
       "minutes": "{count, plural, one {# menit} other {# menit}}",
-      "none": "Tidak ada",
       "seconds": "{count, plural, one {# detik} other {# detik}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "Hubungkan penyedia yang kompatibel dengan OpenAI di pengaturan integrasi sebelum menggunakan langkah ini.",
-      "integration": "Penyedia yang kompatibel dengan OpenAI",
-      "none": "Tidak ada"
+      "integration": "Penyedia yang kompatibel dengan OpenAI"
     },
     "actions": {
       "addContactNotes": "Tambah Catatan Kontak",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",
     "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
     "redoHistoryCleared": "Riwayat pengulangan dihapus",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Tidak ada"
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -3870,7 +3868,6 @@
     "allFormsNote": "Prospek dari setiap formulir di halaman ini akan diambil. Kolom standar (email, telepon, nama, jenis kelamin) otomatis disimpan ke kolom kontak yang sesuai.",
     "leadData": "Data Prospek",
     "whatFlow": "Alur yang dipicu",
-    "none": "Tidak Ada",
     "addNewPage": "Tambahkan Baru",
     "noEligiblePages": "Tidak ada halaman yang memenuhi syarat. Gunakan \"Tambahkan Baru\" untuk memberikan akses prospek.",
     "duplicateError": "Otomatisasi untuk halaman dan formulir ini sudah ada.",

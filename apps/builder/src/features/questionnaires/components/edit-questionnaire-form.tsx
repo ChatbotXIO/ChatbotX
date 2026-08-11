@@ -97,7 +97,7 @@ export function EditQuestionnaireForm({
   const triggerFlowOptions = useMemo(
     () => [
       {
-        label: t("fields.authType.none"),
+        label: t("messages.none"),
         value: noQuestionnaireTriggerFlowValue,
       },
       ...flowOptions,

@@ -762,7 +762,6 @@
     },
     "authType": {
       "headers": "カスタムヘッダー",
-      "none": "なし",
       "token": "トークン"
     },
     "automatedResponse": {
@@ -884,7 +883,6 @@
       "description": "ユーザーの最後のメッセージからボットが返信するまでの待機時間を設定します。ユーザーが別のメッセージを送信するとタイマーがリセットされ、メッセージが1つの応答にまとめられます。",
       "label": "ボットの返信遅延",
       "minutes": "{count, plural, one {#分} other {#分}}",
-      "none": "なし",
       "seconds": "{count, plural, one {#秒} other {#秒}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "このステップを使用する前に、連携設定でOpenAI互換プロバイダーを接続してください。",
-      "integration": "OpenAI互換プロバイダー",
-      "none": "なし"
+      "integration": "OpenAI互換プロバイダー"
     },
     "actions": {
       "addContactNotes": "連絡先メモを追加",
@@ -2680,7 +2677,8 @@
     "duplicateNodeError": "ブロックを複製できませんでした。もう一度お試しください。",
     "deleteNodeError": "ブロックを削除できませんでした。もう一度お試しください。",
     "redoHistoryCleared": "やり直し履歴を消去しました",
-    "historyDepth": "（{count}）"
+    "historyDepth": "（{count}）",
+    "none": "なし"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -3854,7 +3852,6 @@
     "allFormsNote": "このページのすべてのフォームからリードを取得します。標準フィールド（メール、電話番号、名前、性別）は、対応する連絡先フィールドに自動的に保存されます。",
     "leadData": "リードデータ",
     "whatFlow": "開始するフロー",
-    "none": "なし",
     "addNewPage": "新規追加",
     "noEligiblePages": "利用可能なページがありません。「新規追加」からリードへのアクセスを許可してください。",
     "duplicateError": "このページとフォームの自動化はすでに存在します。",

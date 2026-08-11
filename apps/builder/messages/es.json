@@ -836,7 +836,6 @@
     },
     "authType": {
       "headers": "Cabecera personalizada",
-      "none": "Ninguno",
       "token": "Token"
     },
     "automatedResponse": {
@@ -958,7 +957,6 @@
       "description": "Define cuánto espera el bot antes de responder tras el último mensaje del usuario. Si el usuario envía otro mensaje, el temporizador se reinicia y los mensajes se agrupan en una única respuesta.",
       "label": "Retraso de respuesta del bot",
       "minutes": "{count, plural, one {# minuto} other {# minutos}}",
-      "none": "Ninguno",
       "seconds": "{count, plural, one {# segundo} other {# segundos}}"
     },
     "delayType": {
@@ -2047,8 +2045,7 @@
     },
     "openaiCompatible": {
       "empty": "Conectar un AbrirAI-compatible provider en integración ajustes antes using este step.",
-      "integration": "AbrirAI-compatible provider",
-      "none": "Ninguno"
+      "integration": "AbrirAI-compatible provider"
     },
     "actions": {
       "addContactNotes": "Añadir Contacto Notes",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Could not duplicate el block. Por favor, try again.",
     "deleteNodeError": "Could not Eliminar el block. Por favor, try again.",
     "redoHistoryCleared": "Se borró el historial de rehacer",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Ninguno"
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",
@@ -3870,7 +3868,6 @@
     "allFormsNote": "Leads desde every form en este página se be captured. Standard campos (correo, teléfono, nombre, gender) son saved un matching contacto campos automáticamente.",
     "leadData": "Lead Datos",
     "whatFlow": "What flujo es desencadenadored",
-    "none": "Ninguno",
     "addNewPage": "Añadir Nuevo",
     "noEligiblePages": "No eligible páginas. Use \"Añadir Nuevo\" un grant lead access.",
     "duplicateError": "An automatización ya existe para este página y form.",

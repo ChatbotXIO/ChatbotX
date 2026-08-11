@@ -832,7 +832,6 @@
     },
     "authType": {
       "headers": "Header tùy chỉnh",
-      "none": "Không có",
       "token": "Token"
     },
     "automatedResponse": {
@@ -951,7 +950,6 @@
       "description": "Đặt thời gian bot chờ trước khi trả lời sau khi người dùng gửi tin nhắn cuối cùng. Nếu người dùng gửi tin nhắn khác, bộ đếm sẽ được đặt lại và các tin nhắn được xếp hàng thành một phản hồi duy nhất.",
       "label": "Trì hoãn phản hồi bot",
       "minutes": "{count, plural, one {# phút} other {# phút}}",
-      "none": "Không",
       "seconds": "{count, plural, one {# giây} other {# giây}}"
     },
     "delayType": {
@@ -2048,8 +2046,7 @@
     },
     "openaiCompatible": {
       "empty": "Hãy kết nối provider tương thích OpenAI trong phần cài đặt tích hợp trước khi dùng bước này.",
-      "integration": "Provider tương thích OpenAI",
-      "none": "Không có"
+      "integration": "Provider tương thích OpenAI"
     },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",
@@ -2704,7 +2701,8 @@
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",
     "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại.",
     "redoHistoryCleared": "Đã xoá lịch sử làm lại",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Không có"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
@@ -3878,7 +3876,6 @@
     "allFormsNote": "Lead từ mọi biểu mẫu của trang này sẽ được thu thập. Các trường tiêu chuẩn (email, số điện thoại, tên, giới tính) được lưu tự động vào trường liên hệ tương ứng.",
     "leadData": "Dữ liệu Lead",
     "whatFlow": "Kịch bản được kích hoạt",
-    "none": "Không có",
     "addNewPage": "Thêm mới",
     "noEligiblePages": "Không có trang phù hợp. Dùng \"Thêm mới\" để cấp quyền truy cập lead.",
     "duplicateError": "Đã tồn tại một automation cho trang và biểu mẫu này.",

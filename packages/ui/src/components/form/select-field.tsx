@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select"
+import { CLEAR_VALUE } from "./constants"
 import { FormFieldWrapper } from "./field-wrapper"
 
 export type SingleSelectOption = {
@@ -40,8 +41,6 @@ export type SelectFieldProps<T extends FieldValues> = React.ComponentProps<
   triggerValueChange?: (value?: string) => void
   disableValues?: string[]
 } & React.ComponentProps<typeof Select>
-
-const CLEAR_VALUE = "__clear__"
 
 const SelectClear = ({
   children,

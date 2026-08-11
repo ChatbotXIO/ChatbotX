@@ -762,7 +762,6 @@
     },
     "authType": {
       "headers": "Brugerdefineret Overskrift",
-      "none": "Ingen",
       "token": "Token"
     },
     "automatedResponse": {
@@ -884,7 +883,6 @@
       "description": "Set how long den bot waits før replying efter den bruger’s seneste besked. Hvis den bruger sends another besked, den timer resets og beskeder er queued into a single svar.",
       "label": "Bot svar forsinkelse",
       "minutes": "{count, plural, one {# minut} other {# minutter}}",
-      "none": "Ingen",
       "seconds": "{count, plural, one {# sekund} other {# sekunder}}"
     },
     "delayType": {
@@ -1973,8 +1971,7 @@
     },
     "openaiCompatible": {
       "empty": "Forbind en OpenAI-compatible udbyder i integration indstillinger before using denne trin.",
-      "integration": "OpenAI-compatible udbyder",
-      "none": "Ingen"
+      "integration": "OpenAI-compatible udbyder"
     },
     "actions": {
       "addContactNotes": "Tilføj Kontakt Notes",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",
     "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
     "redoHistoryCleared": "Gentag historik cleared",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Ingen"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -3870,7 +3868,6 @@
     "allFormsNote": "Leads fra every form på denne side vil være captured. Standard felter (e-mail, telefon, navn, køn) er saved til matching kontakt felter automatically.",
     "leadData": "Lead Data",
     "whatFlow": "What flow er triggered",
-    "none": "Ingen",
     "addNewPage": "Tilføj Ny",
     "noEligiblePages": "Ingen eligible sider. Use \"Tilføj Ny\" til grant lead access.",
     "duplicateError": "An automatisering already exists for denne side og form.",

@@ -836,7 +836,6 @@
     },
     "authType": {
       "headers": "Özel Üstbilgi",
-      "none": "Yok",
       "token": "Jeton"
     },
     "automatedResponse": {
@@ -958,7 +957,6 @@
       "description": "Kullanıcının son mesajından sonra botun yanıtlamadan önce ne kadar bekleyeceğini ayarlayın. Kullanıcı başka bir mesaj gönderirse zamanlayıcı sıfırlanır ve mesajlar tek bir yanıt için kuyruğa alınır.",
       "label": "Bot yanıt gecikmesi",
       "minutes": "{count, plural, one {# dakika} other {# dakika}}",
-      "none": "Yok",
       "seconds": "{count, plural, one {# saniye} other {# saniye}}"
     },
     "delayType": {
@@ -2047,8 +2045,7 @@
     },
     "openaiCompatible": {
       "empty": "Bu adımı kullanmadan önce entegrasyon ayarlarında OpenAI uyumlu bir sağlayıcı bağlayın.",
-      "integration": "OpenAI uyumlu sağlayıcı",
-      "none": "Yok"
+      "integration": "OpenAI uyumlu sağlayıcı"
     },
     "actions": {
       "addContactNotes": "Kişi Notu Ekle",
@@ -2696,7 +2693,8 @@
     "duplicateNodeError": "Blok çoğaltılamadı. Lütfen tekrar deneyin.",
     "deleteNodeError": "Blok silinemedi. Lütfen tekrar deneyin.",
     "redoHistoryCleared": "Yinele geçmişi temizlendi",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Yok"
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -3870,7 +3868,6 @@
     "allFormsNote": "Bu sayfadaki her formdan gelen potansiyel müşteriler yakalanacaktır. Standart alanlar (e-posta, telefon, ad, cinsiyet) eşleşen kişi alanlarına otomatik olarak kaydedilir.",
     "leadData": "Potansiyel Müşteri Verisi",
     "whatFlow": "Hangi akış tetiklenecek",
-    "none": "Yok",
     "addNewPage": "Yeni Ekle",
     "noEligiblePages": "Uygun sayfa yok. Potansiyel müşteri erişimi vermek için \"Yeni Ekle\"yi kullanın.",
     "duplicateError": "Bu sayfa ve form için zaten bir otomasyon mevcut.",
