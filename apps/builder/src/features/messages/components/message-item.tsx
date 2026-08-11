@@ -118,7 +118,7 @@ export const MessageItem = (props: MessageItemProps) => {
       variant={variant}
     >
       {variant === "left" && avatarUrl && (
-        <Avatar className="mt-auto size-6 self-start">
+        <Avatar className="mt-2 size-7 self-start">
           <AvatarImage alt="" src={avatarUrl} />
           <AvatarFallback>
             <BotIcon aria-hidden className="size-3.5" />

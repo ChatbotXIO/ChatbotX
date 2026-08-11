@@ -121,7 +121,7 @@ export const AccountRail = async ({
                 </span>
               </div>
               <UpgradePlanButton className="w-full" size="sm" variant="outline">
-                <CrownIcon aria-hidden className="size-3.5" />
+                <CrownIcon aria-hidden className="size-4" />
                 {t("actions.upgradePlan")}
               </UpgradePlanButton>
             </div>
