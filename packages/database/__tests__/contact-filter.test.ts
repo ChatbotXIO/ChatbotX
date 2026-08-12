@@ -2277,6 +2277,108 @@ describe("applyContactFilter — contactInbox relation fields", () => {
   })
 })
 
+describe("applyContactFilter — CTWA fields", () => {
+  test("renders fromCtwaAd true/false as EXISTS / NOT EXISTS on ContactInbox.referral", () => {
+    const positive = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fromCtwaAd",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(positive.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
+    )
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' <> ''`,
+    )
+
+    const negative = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fromCtwaAd",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(negative.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "fromCtwaAd", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("renders ctwaConversion in/notIn as EXISTS/NOT EXISTS joining AdsConversionEvent through ContactInbox", () => {
+    const inQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "ctwaConversion",
+            operator: operatorTypes.enum.in,
+            value: ["lead", "purchase"],
+          },
+        ],
+      }),
+    )
+    expect(inQuery.sql).toContain('EXISTS (SELECT 1 FROM "AdsConversionEvent"')
+    expect(inQuery.sql).toContain(
+      'INNER JOIN "ContactInbox" ON "ContactInbox"."id" = "AdsConversionEvent"."contactInboxId"',
+    )
+    expect(inQuery.sql).toContain('"ContactInbox"."contactId" =')
+    expect(inQuery.sql).toContain('"AdsConversionEvent"."eventType" in')
+    expect(inQuery.params).toEqual(expect.arrayContaining(["lead", "purchase"]))
+
+    const notInQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "ctwaConversion",
+            operator: operatorTypes.enum.notIn,
+            value: ["lead"],
+          },
+        ],
+      }),
+    )
+    expect(notInQuery.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "AdsConversionEvent"',
+    )
+    expect(notInQuery.sql).toContain('"AdsConversionEvent"."eventType" in')
+  })
+
+  test("renders ctwaConversion isEmpty as NOT EXISTS with no eventType predicate", () => {
+    const emptyQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "ctwaConversion", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(emptyQuery.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "AdsConversionEvent"',
+    )
+    expect(emptyQuery.sql).not.toContain('"AdsConversionEvent"."eventType"')
+  })
+})
+
 describe("applyContactFilter — tags relation", () => {
   test.each([
     [operatorTypes.enum.in, "in"],

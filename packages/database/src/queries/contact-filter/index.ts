@@ -482,6 +482,14 @@ function buildConditionWhere(
         value,
       )
 
+    case "fromCtwaAd":
+      return buildExistsBooleanWhere(
+        contactInboxExists,
+        sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL AND ${contactInboxModel.referral}->>'ctwaClid' <> ''`,
+        operator,
+        value,
+      )
+
     case "tags":
     case "source":
     case "currentChannel":
@@ -494,6 +502,7 @@ function buildConditionWhere(
     case "broadcastFailed":
     case "subscribedToDripCampaign":
     case "entryPointsLinks":
+    case "ctwaConversion":
       return buildRelationSetWhere(field, operator, value)
 
     case "questionnaireStarted":

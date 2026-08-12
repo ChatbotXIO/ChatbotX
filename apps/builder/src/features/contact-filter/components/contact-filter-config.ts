@@ -74,6 +74,7 @@ export type ContactFilterFieldGroup =
   | "systemFields"
   | "topicCoupon"
   | "customFields"
+  | "ctwaAds"
 
 type GroupedContactFilterFieldGroup = Exclude<
   ContactFilterFieldGroup,
@@ -256,6 +257,17 @@ const resolveContactFilterOptions = (
       return ctx.reflinkOptions
     case "assignees":
       return ctx.assigneeOptions
+    case "ctwaConversionTypes":
+      return [
+        {
+          label: ctx.t("condition.fields.ctwaConversionTypes.lead"),
+          value: "lead",
+        },
+        {
+          label: ctx.t("condition.fields.ctwaConversionTypes.purchase"),
+          value: "purchase",
+        },
+      ]
     default: {
       const _exhaustive: never = optionSource
       return _exhaustive
@@ -351,6 +363,7 @@ const CONTACT_FILTER_GROUP_FIELDS = {
   // group "topicCoupon" set directly (see couponTopicConfigs below).
   topicCoupon: [],
   customFields: ["customFields"],
+  ctwaAds: ["fromCtwaAd", "ctwaConversion"],
 } as const satisfies Record<
   GroupedContactFilterFieldGroup,
   readonly ContactFilterField[]

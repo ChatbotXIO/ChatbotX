@@ -540,6 +540,8 @@
       "blocked": "Đã chặn",
       "noAdminReply": "Không có phản hồi quản trị viên",
       "contactCreatedAt": "Ngày tạo liên hệ",
+      "fromCtwaAd": "Đến từ quảng cáo Click to WhatsApp",
+      "ctwaConversion": "Chuyển đổi CTWA",
       "lastUserInputTypes": {
         "text": "Văn bản",
         "location": "Vị trí",
@@ -549,6 +551,10 @@
         "audio": "Âm thanh",
         "gif": "GIF",
         "file": "Tệp"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Khách hàng tiềm năng",
+        "purchase": "Mua hàng"
       }
     },
     "fieldGroups": {
@@ -563,7 +569,8 @@
       "topicCoupon": "Topic coupon",
       "customFields": "Trường tùy chỉnh",
       "email": "Email",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Quảng cáo Click to WhatsApp"
     },
     "languages": {
       "ar": "Tiếng Ả Rập",

@@ -111,12 +111,14 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   unread: BOOLEAN_OPERATORS,
   emailWasVerified: NON_NULLABLE_BOOLEAN_OPERATORS,
   optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
+  fromCtwaAd: BOOLEAN_OPERATORS,
 
   fullName: TEXT_FREE_OPERATORS,
   lastComment: TEXT_FREE_OPERATORS,
   email: TEXT_FREE_OPERATORS,
   phone: TEXT_FREE_OPERATORS,
   hasContactInfo: PRESENCE_SET_OPERATORS,
+  ctwaConversion: PRESENCE_SET_OPERATORS,
   lastUserInput: TEXT_FREE_OPERATORS,
   timezone: BASE_OPERATORS,
 

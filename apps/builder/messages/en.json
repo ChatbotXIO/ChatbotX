@@ -540,6 +540,8 @@
       "blocked": "Blocked",
       "noAdminReply": "No admin reply",
       "contactCreatedAt": "Contact created at",
+      "fromCtwaAd": "From Click to WhatsApp ad",
+      "ctwaConversion": "CTWA conversion",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Location",
@@ -549,6 +551,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Purchase"
       }
     },
     "fieldGroups": {
@@ -563,7 +569,8 @@
       "topicCoupon": "Topic coupon",
       "customFields": "Custom Fields",
       "email": "Email",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp Ads"
     },
     "languages": {
       "ar": "Arabic",

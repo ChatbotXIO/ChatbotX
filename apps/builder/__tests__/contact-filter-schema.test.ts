@@ -461,6 +461,76 @@ describe("contact filter union schemas", () => {
   })
 })
 
+describe("CTWA fields", () => {
+  test("accepts fromCtwaAd boolean conditions", () => {
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "fromCtwaAd",
+        operator: operatorTypes.enum.eq,
+        value: "true",
+      }).success,
+    ).toBe(true)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "fromCtwaAd",
+        operator: operatorTypes.enum.isEmpty,
+      }).success,
+    ).toBe(true)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "fromCtwaAd",
+        operator: operatorTypes.enum.contains,
+        value: "true",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("accepts ctwaConversion in/notIn/isEmpty conditions", () => {
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "ctwaConversion",
+        operator: operatorTypes.enum.in,
+        value: ["lead"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "ctwaConversion",
+        operator: operatorTypes.enum.notIn,
+        value: ["purchase"],
+      }).success,
+    ).toBe(true)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "ctwaConversion",
+        operator: operatorTypes.enum.isEmpty,
+      }).success,
+    ).toBe(true)
+  })
+
+  test("rejects disallowed operators for ctwaConversion", () => {
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "ctwaConversion",
+        operator: operatorTypes.enum.contains,
+        value: "lead",
+      }).success,
+    ).toBe(false)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "ctwaConversion",
+        operator: operatorTypes.enum.eq,
+        value: ["lead"],
+      }).success,
+    ).toBe(false)
+  })
+})
+
 describe("listContactsRequest contactFilter preprocess", () => {
   const criteria = {
     operator: "and" as const,
