@@ -47,7 +47,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -174,11 +174,13 @@ function DeliveryCount({
   value: number
   tone?: string
 }) {
+  const locale = useLocale()
+
   return (
     <div>
       <div className="text-muted-foreground text-sm">{label}</div>
       <div className={`mt-1 font-semibold text-2xl ${tone ?? ""}`}>
-        {value.toLocaleString()}
+        {value.toLocaleString(locale)}
       </div>
     </div>
   )
@@ -188,11 +190,13 @@ function buildConnectAccountsHref(workspaceId: string) {
   return `/space/${workspaceId}/ads/connect-accounts`
 }
 
-function formatMoney(value: number | null): string {
+// Formatters take the next-intl locale explicitly: it is identical on the
+// server render and client hydration, unlike the Intl default locale.
+function formatMoney(locale: string, value: number | null): string {
   if (value === null) {
     return "-"
   }
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
@@ -203,8 +207,8 @@ function formatRoas(value: number | null): string {
   return value === null ? "-" : `${value.toFixed(2)}x`
 }
 
-function formatCount(value: number | null): string {
-  return value === null ? "-" : value.toLocaleString()
+function formatCount(locale: string, value: number | null): string {
+  return value === null ? "-" : value.toLocaleString(locale)
 }
 
 const PERCENT_MULTIPLIER = 100
@@ -505,6 +509,7 @@ export function AdsAnalyticsView({
   workspaceId,
 }: AdsAnalyticsViewProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const [data, delivery, timeseries] = use(promises)
   const router = useRouter()
   const [retargetDialog, setRetargetDialog] =
@@ -557,7 +562,7 @@ export function AdsAnalyticsView({
                 label={t("ads.analytics.conversationsStarted")}
                 percentage={null}
                 tone="bg-blue-600"
-                value={data.totals.conversations.toLocaleString()}
+                value={data.totals.conversations.toLocaleString(locale)}
               />
               <FunnelStage
                 clipPath={FUNNEL_CLIP_PATHS[1]}
@@ -567,7 +572,7 @@ export function AdsAnalyticsView({
                   data.totals.conversations,
                 )}
                 tone="bg-slate-700"
-                value={data.totals.leads.toLocaleString()}
+                value={data.totals.leads.toLocaleString(locale)}
               />
               <FunnelStage
                 clipPath={FUNNEL_CLIP_PATHS[2]}
@@ -577,7 +582,7 @@ export function AdsAnalyticsView({
                   data.totals.conversations,
                 )}
                 tone="bg-emerald-600"
-                value={data.totals.purchases.toLocaleString()}
+                value={data.totals.purchases.toLocaleString(locale)}
               />
             </div>
           </CardContent>
@@ -591,20 +596,20 @@ export function AdsAnalyticsView({
                 : undefined
             }
             label={t("ads.analytics.adSpend")}
-            value={formatMoney(data.totals.spend)}
+            value={formatMoney(locale, data.totals.spend)}
           />
           <CostTile
             label={t("ads.analytics.costPerLead")}
-            value={formatMoney(data.totals.costPerLead)}
+            value={formatMoney(locale, data.totals.costPerLead)}
           />
           <CostTile
             label={t("ads.analytics.costPerPurchase")}
-            value={formatMoney(data.totals.costPerPurchase)}
+            value={formatMoney(locale, data.totals.costPerPurchase)}
           />
           <CostTile
             info={t("ads.analytics.revenueCurrencyNote")}
             label={t("ads.analytics.revenue")}
-            value={formatMoney(data.totals.revenue)}
+            value={formatMoney(locale, data.totals.revenue)}
           />
           <CostTile
             label={t("ads.analytics.roas")}
@@ -616,16 +621,16 @@ export function AdsAnalyticsView({
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <CostTile
           label={t("ads.analytics.impressions")}
-          value={formatCount(data.totals.impressions)}
+          value={formatCount(locale, data.totals.impressions)}
         />
         <CostTile
           label={t("ads.analytics.clicks")}
-          value={formatCount(data.totals.clicks)}
+          value={formatCount(locale, data.totals.clicks)}
         />
         <CostTile
           info={t("ads.analytics.costCurrencyNote")}
           label={t("ads.analytics.cpc")}
-          value={formatMoney(data.totals.cpc)}
+          value={formatMoney(locale, data.totals.cpc)}
         />
         <CostTile
           label={t("ads.analytics.ctr")}
@@ -634,12 +639,12 @@ export function AdsAnalyticsView({
         <CostTile
           info={t("ads.analytics.costCurrencyNote")}
           label={t("ads.analytics.cpm")}
-          value={formatMoney(data.totals.cpm)}
+          value={formatMoney(locale, data.totals.cpm)}
         />
         <CostTile
           info={t("ads.analytics.costCurrencyNote")}
           label={t("ads.analytics.costPerConversation")}
-          value={formatMoney(data.totals.costPerConversation)}
+          value={formatMoney(locale, data.totals.costPerConversation)}
         />
       </div>
 
@@ -753,14 +758,16 @@ export function AdsAnalyticsView({
                     <TableCell className="font-medium">
                       {ad.adName ?? ad.adId ?? t("ads.analytics.unattributed")}
                     </TableCell>
-                    <TableCell>{formatMoney(ad.spend)}</TableCell>
-                    <TableCell>{ad.purchases.toLocaleString()}</TableCell>
-                    <TableCell>{formatMoney(ad.revenue)}</TableCell>
-                    <TableCell>{formatMoney(ad.costPerPurchase)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.spend)}</TableCell>
+                    <TableCell>{ad.purchases.toLocaleString(locale)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.revenue)}</TableCell>
+                    <TableCell>
+                      {formatMoney(locale, ad.costPerPurchase)}
+                    </TableCell>
                     <TableCell>{formatRoas(ad.roas)}</TableCell>
-                    <TableCell>{ad.leads.toLocaleString()}</TableCell>
-                    <TableCell>{formatMoney(ad.costPerLead)}</TableCell>
-                    <TableCell>{formatMoney(ad.cpc)}</TableCell>
+                    <TableCell>{ad.leads.toLocaleString(locale)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.costPerLead)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.cpc)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger
