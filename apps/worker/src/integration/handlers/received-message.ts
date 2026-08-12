@@ -875,13 +875,17 @@ export const receiveComment = async (
     workspaceId: inbox.workspaceId,
   })
 
-  await saveAndBroadcastMessage({
+  const { isNew: isNewComment } = await saveAndBroadcastMessage({
     inbox,
     contactInbox,
     conversation,
     incomingMessage,
     storageUrl,
   })
+
+  if (!isNewComment) {
+    return
+  }
 
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   if (!workspaceService.isActiveNow(workspace)) {
@@ -914,7 +918,9 @@ export const receiveComment = async (
         createdTime: commentData.createdTime,
       },
     },
-    { jobId: processCommentAutomationJobId },
+    integrationType === "threads"
+      ? { jobId: processCommentAutomationJobId, attempts: 1 }
+      : { jobId: processCommentAutomationJobId },
   )
 }
 

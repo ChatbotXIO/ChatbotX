@@ -139,10 +139,17 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
   subscribePageToAppWebhook: mockSubscribePageToAppWebhook,
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
-  AuthType: { oauth2: "oauth2", custom: "custom" },
-  SdkException: class SdkException extends Error {},
-}))
+// Spread the real module: the Threads integration reaches this test through
+// the reconnect route's import graph and needs `Integration` (and any other
+// transitive export) to survive the mock.
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
+  return {
+    ...actual,
+    AuthType: { ...actual.AuthType, oauth2: "oauth2", custom: "custom" },
+    SdkException: class SdkException extends Error {},
+  }
+})
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()

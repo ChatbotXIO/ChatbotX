@@ -21,13 +21,20 @@ import {
   matchPost,
   willSendReply,
 } from "./automation-matching"
-import type { CommentAutomationChannelType } from "./channel-type"
+import {
+  type CommentAutomationChannelType,
+  supportsCommentLike,
+} from "./channel-type"
 import {
   createAttachmentInfoResolver,
   needsAttachmentInfo,
 } from "./comment-attachment"
-import { applyHideComments } from "./hide-comments"
-import { executePrivateReply } from "./private-reply"
+import {
+  applyHideComments,
+  hasHideCommentAction,
+  supportsHideComments,
+} from "./hide-comments"
+import { executePrivateReply, supportsPrivateReply } from "./private-reply"
 import { executePublicReply } from "./public-reply"
 
 export { isCommentReply } from "./automation-matching"
@@ -217,46 +224,75 @@ export async function processCommentAutomation(
         const messageRef = { id: dbMessage.id, createdAt: dbMessage.createdAt }
 
         if (automation.options.likeUserComment) {
-          chatQueue
-            .add(ChatJobAction.changeChannelMessageState, {
-              type: ChatJobAction.changeChannelMessageState,
-              data: {
-                conversation: conversationRef,
-                contactInbox,
-                message: messageRef,
-                liked: true,
-              },
+          if (supportsCommentLike(channelType)) {
+            chatQueue
+              .add(ChatJobAction.changeChannelMessageState, {
+                type: ChatJobAction.changeChannelMessageState,
+                data: {
+                  conversation: conversationRef,
+                  contactInbox,
+                  message: messageRef,
+                  liked: true,
+                },
+              })
+              .catch((err: unknown) =>
+                logger.error(
+                  { err, automationId: automation.id, commentId },
+                  "Failed to like comment",
+                ),
+              )
+          } else {
+            logUnsupportedCapability({
+              automationId: automation.id,
+              commentId,
+              capability: "like comment unsupported",
             })
-            .catch((err: unknown) =>
-              logger.error(
-                { err, automationId: automation.id, commentId },
-                "Failed to like comment",
-              ),
-            )
+          }
         }
 
-        const { hasImage, hasVideo } = needsAttachmentInfo(
-          automation.hideComments,
-        )
-          ? await resolveAttachmentInfo()
-          : { hasImage: false, hasVideo: false }
+        if (hasHideCommentAction(automation.hideComments)) {
+          if (supportsHideComments(channelType)) {
+            const { hasImage, hasVideo } = needsAttachmentInfo(
+              automation.hideComments,
+            )
+              ? await resolveAttachmentInfo()
+              : { hasImage: false, hasVideo: false }
 
-        applyHideComments(automation.hideComments, commentId, message, {
-          conversation: conversationRef,
-          contactInbox,
-          messageId: dbMessage.id,
-          messageCreatedAt: dbMessage.createdAt,
-          hasImage,
-          hasVideo,
-        }).catch((err: unknown) =>
-          logger.error(
-            { err, automationId: automation.id, commentId },
-            "Failed to apply hide comments",
-          ),
-        )
+            applyHideComments(automation.hideComments, commentId, message, {
+              conversation: conversationRef,
+              contactInbox,
+              messageId: dbMessage.id,
+              messageCreatedAt: dbMessage.createdAt,
+              hasImage,
+              hasVideo,
+            }).catch((err: unknown) =>
+              logger.error(
+                { err, automationId: automation.id, commentId },
+                "Failed to apply hide comments",
+              ),
+            )
+          } else {
+            if (needsAttachmentInfo(automation.hideComments)) {
+              logUnsupportedCapability({
+                automationId: automation.id,
+                commentId,
+                capability: "attachment lookup unsupported",
+              })
+            }
+            logUnsupportedCapability({
+              automationId: automation.id,
+              commentId,
+              capability: "hide or unhide comment unsupported",
+            })
+          }
+        }
       }
 
       let dispatchFailed = false
+      // Tracks whether a reply actually went out, as opposed to merely being
+      // configured. Only consulted when a configured reply was skipped for
+      // lack of channel support (see `privateReplySkipped` below).
+      let dispatchedReply = false
 
       try {
         await executePublicReply(automation.publicReply, {
@@ -274,6 +310,9 @@ export async function processCommentAutomation(
           parentMessageId,
           parentMessageCreatedAt,
         })
+        if (willSendReply(automation.publicReply)) {
+          dispatchedReply = true
+        }
       } catch (err) {
         logger.error(
           { err, automationId: automation.id, commentId },
@@ -284,27 +323,44 @@ export async function processCommentAutomation(
         }
       }
 
-      try {
-        await executePrivateReply(automation.privateReply, {
-          auth,
-          integrationType,
-          integrationIdentifier,
+      // A private reply configured on a channel without a private-reply API
+      // (Threads) can never be delivered — report it instead of dispatching.
+      const privateReplySkipped =
+        willSendReply(automation.privateReply) &&
+        !supportsPrivateReply(channelType)
+
+      if (privateReplySkipped) {
+        logUnsupportedCapability({
+          automationId: automation.id,
           commentId,
-          channelType,
-          conversationId,
-          contactInboxId,
-          contactInbox,
-          workspaceId,
-          delay,
-          message,
+          capability: "private reply unsupported",
         })
-      } catch (err) {
-        logger.error(
-          { err, automationId: automation.id, commentId },
-          "Failed to send private reply",
-        )
-        if (willSendReply(automation.privateReply)) {
-          dispatchFailed = true
+      } else {
+        try {
+          await executePrivateReply(automation.privateReply, {
+            auth,
+            integrationType,
+            integrationIdentifier,
+            commentId,
+            channelType,
+            conversationId,
+            contactInboxId,
+            contactInbox,
+            workspaceId,
+            delay,
+            message,
+          })
+          if (willSendReply(automation.privateReply)) {
+            dispatchedReply = true
+          }
+        } catch (err) {
+          logger.error(
+            { err, automationId: automation.id, commentId },
+            "Failed to send private reply",
+          )
+          if (willSendReply(automation.privateReply)) {
+            dispatchFailed = true
+          }
         }
       }
 
@@ -315,17 +371,27 @@ export async function processCommentAutomation(
       // requires threading the dedup write into the async job itself for
       // every async-dispatch reply type, which is out of scope for now.
       if (!dispatchFailed) {
-        await fbCommentAutomationService.insertDedup({
-          automationId: automation.id,
-          contactId: contactInbox.contactId,
-          postId,
-          workspaceId,
-        })
+        // A reply the channel cannot deliver must not consume the
+        // once-per-user-per-post dedup slot or bump the replies counter —
+        // nothing was sent. When no configured reply was skipped this way the
+        // accounting is unchanged: dedup always, count whenever a reply was
+        // configured.
+        const countableReply = privateReplySkipped
+          ? dispatchedReply
+          : willSendReply(automation.publicReply) ||
+            willSendReply(automation.privateReply)
+        const shouldWriteDedup = privateReplySkipped ? dispatchedReply : true
 
-        if (
-          willSendReply(automation.publicReply) ||
-          willSendReply(automation.privateReply)
-        ) {
+        if (shouldWriteDedup) {
+          await fbCommentAutomationService.insertDedup({
+            automationId: automation.id,
+            contactId: contactInbox.contactId,
+            postId,
+            workspaceId,
+          })
+        }
+
+        if (countableReply) {
           await fbCommentAutomationService.incrementRepliesCount(automation.id)
         }
       }
@@ -336,6 +402,27 @@ export async function processCommentAutomation(
       )
     }
   }
+}
+
+/**
+ * A channel-level capability the automation asked for but the channel does not
+ * have (Threads has no like/hide/private-reply APIs). Logged per automation so
+ * a silently partial run is still traceable, and deliberately not an error:
+ * the rest of the automation still runs.
+ */
+const logUnsupportedCapability = ({
+  automationId,
+  commentId,
+  capability,
+}: {
+  automationId: string
+  commentId: string
+  capability: string
+}) => {
+  logger.info(
+    { automationId, commentId, capability },
+    "Comment automation capability unsupported",
+  )
 }
 
 const logAutomationSkipped = ({

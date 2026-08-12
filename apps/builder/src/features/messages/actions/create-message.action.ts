@@ -181,19 +181,25 @@ export const createMessage = async (props: {
         },
       },
     }),
-    chatQueue.add(ChatJobAction.sendChannelMessage, {
-      type: ChatJobAction.sendChannelMessage,
-      data: {
-        conversation,
-        contactInbox,
-        message: {
-          ...messageWithAttachments,
-          clientId: parsedInput.clientId,
-          parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
+    chatQueue.add(
+      ChatJobAction.sendChannelMessage,
+      {
+        type: ChatJobAction.sendChannelMessage,
+        data: {
+          conversation,
+          contactInbox,
+          message: {
+            ...messageWithAttachments,
+            clientId: parsedInput.clientId,
+            parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
+          },
+          sendFrom: "inbox",
         },
-        sendFrom: "inbox",
       },
-    }),
+      ...(contactInbox.channel === "threads" && message.type === "comment"
+        ? [{ attempts: 1 }]
+        : []),
+    ),
     ...(user && messageInput.text
       ? [
           chatQueue.add(ChatJobAction.checkOutboundAutomatedResponse, {

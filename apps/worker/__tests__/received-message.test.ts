@@ -280,6 +280,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
     runRef: "runRef",
+    processCommentAutomation: "processCommentAutomation",
   },
   integrationQueue: {
     add: mockIntegrationQueueAdd,
@@ -1676,6 +1677,106 @@ describe("contact source taxonomy", () => {
         .mocked(allIntegrations.messenger?.runAction)
         .mock.calls.some(([action]) => action === "getPostDetails"),
     ).toBe(false)
+  })
+
+  test("does not enqueue comment automation for duplicate comments when save result isNew=false", async () => {
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-dup-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello again",
+        postId: "post-1",
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("enqueues comment automation for new comments when save result isNew=true", async () => {
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-new-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      {
+        type: "processCommentAutomation",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-new",
+          commentId: "comment-new-1",
+          postId: "post-1",
+          parentId: undefined,
+          fromId: "commenter-1",
+          message: "hello",
+          createdTime: 1_783_674_105,
+        },
+      },
+      { jobId: "comment-auto-comment-new-1" },
+    )
+  })
+
+  test("uses attempts=1 when enqueueing Threads comment automation", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello from threads",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      {
+        type: "processCommentAutomation",
+        data: {
+          integrationType: "threads",
+          integrationIdentifier: "inbox-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-new",
+          commentId: "comment-threads-1",
+          postId: "post-1",
+          parentId: undefined,
+          fromId: "commenter-1",
+          message: "hello from threads",
+          createdTime: 1_783_674_105,
+        },
+      },
+      { jobId: "comment-auto-comment-threads-1", attempts: 1 },
+    )
   })
 })
 

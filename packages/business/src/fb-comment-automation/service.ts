@@ -1,4 +1,13 @@
-import { and, db, eq, ne, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  ne,
+  relationsFilterToSQL,
+  sql,
+} from "@chatbotx.io/database/client"
+import { fbCommentAutomationTypes } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   fbCommentAutomationModel,
@@ -8,10 +17,124 @@ import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
 
+type ThreadsCommentAutomationReply =
+  | { type: "none"; value: null }
+  | { type: "text" | "flow" | "AIAgent"; value: string }
+
+type ThreadsCommentAutomationPost = {
+  type: "all" | "postIds"
+  value: string[]
+}
+
+type ThreadsCommentAutomationIncludeKeywords = {
+  type: "all" | "equal" | "contain"
+  value: string[]
+}
+
+type ThreadsCommentAutomationOptions = {
+  replyToNewContactsOnly: boolean
+  replyOncePerUserPerPost: boolean
+  likeUserComment?: false
+  replyToUsersWhoCommentedOnOtherPosts: boolean
+  ignoreCommentReplies: boolean
+  trackUserTags?: false
+}
+
+type ThreadsCommentAutomationReplyAfter = {
+  type:
+    | "immediately"
+    | "seconds"
+    | "minutes"
+    | "hours"
+    | "randomWithin3Minutes"
+    | "randomWithin5Minutes"
+    | "randomWithin10Minutes"
+    | "randomWithin20Minutes"
+    | "randomWithin30Minutes"
+    | "randomWithin60Minutes"
+  value: number
+}
+
+type CreateThreadsCommentAutomationInput = {
+  name: string
+  post: ThreadsCommentAutomationPost
+  publicReply: ThreadsCommentAutomationReply
+  includeKeywords: ThreadsCommentAutomationIncludeKeywords
+  excludeKeywords: string[]
+  options: ThreadsCommentAutomationOptions
+  replyAfter: ThreadsCommentAutomationReplyAfter
+  isActive?: boolean
+}
+
+type UpdateThreadsCommentAutomationInput = Partial<
+  Omit<CreateThreadsCommentAutomationInput, "isActive">
+> & {
+  options?: ThreadsCommentAutomationOptions
+  isActive?: boolean
+}
+
 class FbCommentAutomationService extends BaseService {
+  private readonly threadsType = fbCommentAutomationTypes.enum.threads
+
+  private readonly threadsDefaults = {
+    privateReply: { type: "none", value: null } as {
+      type: "none"
+      value: null
+    },
+    options: {
+      replyToNewContactsOnly: false,
+      replyOncePerUserPerPost: false,
+      likeUserComment: false,
+      replyToUsersWhoCommentedOnOtherPosts: true,
+      ignoreCommentReplies: true,
+      trackUserTags: false,
+    } as {
+      replyToNewContactsOnly: boolean
+      replyOncePerUserPerPost: boolean
+      likeUserComment: false
+      replyToUsersWhoCommentedOnOtherPosts: boolean
+      ignoreCommentReplies: boolean
+      trackUserTags: false
+    },
+    hideComments: {
+      all: false,
+      hasPhoneNumber: false,
+      hasImage: false,
+      hasVideo: false,
+      hasLink: false,
+      hasKeywords: false,
+      keywords: [] as string[],
+      showCommentsAfter: "none",
+    } as {
+      all: false
+      hasPhoneNumber: false
+      hasImage: false
+      hasVideo: false
+      hasLink: false
+      hasKeywords: false
+      keywords: string[]
+      showCommentsAfter: "none"
+    },
+    replyAfter: { type: "immediately", value: 0 } as {
+      type: "immediately"
+      value: number
+    },
+  }
+
+  private buildThreadsOptions(input?: ThreadsCommentAutomationOptions) {
+    return {
+      ...this.threadsDefaults.options,
+      replyToNewContactsOnly: input?.replyToNewContactsOnly ?? false,
+      replyOncePerUserPerPost: input?.replyOncePerUserPerPost ?? false,
+      replyToUsersWhoCommentedOnOtherPosts:
+        input?.replyToUsersWhoCommentedOnOtherPosts ?? true,
+      ignoreCommentReplies: input?.ignoreCommentReplies ?? true,
+    }
+  }
+
   findActiveAutomations(props: {
     workspaceId: string
-    channelType: "messenger" | "instagram" | "instagramFacebook"
+    channelType: "messenger" | "instagram" | "instagramFacebook" | "threads"
   }) {
     return db.query.fbCommentAutomationModel.findMany({
       where: {
@@ -35,6 +158,7 @@ class FbCommentAutomationService extends BaseService {
     if (startTime <= endTime) {
       return currentTime >= startTime && currentTime <= endTime
     }
+
     // Overnight window (endTime is earlier than startTime, e.g. 22:00-06:00).
     return currentTime >= startTime || currentTime <= endTime
   }
@@ -98,6 +222,166 @@ class FbCommentAutomationService extends BaseService {
         repliesCount: sql`${fbCommentAutomationModel.repliesCount} + 1`,
       })
       .where(eq(fbCommentAutomationModel.id, automationId))
+  }
+
+  async listThreadsAutomations(props: {
+    workspaceId: string
+    name?: string
+    isActive?: boolean
+    limit: number
+    offset: number
+    orderBy?: Record<string, unknown>
+    tx?: DatabaseClient
+  }) {
+    const {
+      workspaceId,
+      name,
+      isActive,
+      limit,
+      offset,
+      orderBy = { createdAt: "desc" },
+      tx = db,
+    } = props
+    const where = {
+      workspaceId,
+      type: this.threadsType,
+      isActive,
+      name: name
+        ? {
+            ilike: `%${name}%`,
+          }
+        : undefined,
+    }
+
+    const [data, total] = await Promise.all([
+      tx.query.fbCommentAutomationModel.findMany({
+        where,
+        orderBy,
+        limit,
+        offset,
+      }),
+      tx.$count(
+        fbCommentAutomationModel,
+        relationsFilterToSQL(fbCommentAutomationModel, where),
+      ),
+    ])
+
+    return {
+      data,
+      total,
+    }
+  }
+
+  getThreadsAutomation(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, tx = db } = props
+    return tx.query.fbCommentAutomationModel.findFirst({
+      where: {
+        workspaceId,
+        type: this.threadsType,
+        id,
+      },
+    })
+  }
+
+  async createThreadsAutomation(props: {
+    workspaceId: string
+    data: CreateThreadsCommentAutomationInput
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, data, tx = db } = props
+    const [record] = await tx
+      .insert(fbCommentAutomationModel)
+      .values({
+        id: createId(),
+        workspaceId,
+        type: this.threadsType,
+        isActive: data.isActive ?? true,
+        name: data.name,
+        post: data.post,
+        privateReply: this.threadsDefaults.privateReply,
+        publicReply: data.publicReply,
+        includeKeywords: data.includeKeywords,
+        excludeKeywords: data.excludeKeywords,
+        options: this.buildThreadsOptions(data.options),
+        hideComments: this.threadsDefaults.hideComments,
+        replyAfter: data.replyAfter ?? this.threadsDefaults.replyAfter,
+      })
+      .returning()
+
+    return record
+  }
+
+  async updateThreadsAutomation(props: {
+    workspaceId: string
+    id: string
+    data: UpdateThreadsCommentAutomationInput
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, data, tx = db } = props
+    const values: Record<string, unknown> = {}
+
+    if (data.name !== undefined) {
+      values.name = data.name
+    }
+    if (data.isActive !== undefined) {
+      values.isActive = data.isActive
+    }
+    if (data.post !== undefined) {
+      values.post = data.post
+    }
+    if (data.publicReply !== undefined) {
+      values.publicReply = data.publicReply
+    }
+    if (data.includeKeywords !== undefined) {
+      values.includeKeywords = data.includeKeywords
+    }
+    if (data.excludeKeywords !== undefined) {
+      values.excludeKeywords = data.excludeKeywords
+    }
+    if (data.options !== undefined) {
+      values.options = this.buildThreadsOptions(data.options)
+    }
+    if (data.replyAfter !== undefined) {
+      values.replyAfter = data.replyAfter
+    }
+
+    const [record] = await tx
+      .update(fbCommentAutomationModel)
+      .set(values)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.id, id),
+          eq(fbCommentAutomationModel.workspaceId, workspaceId),
+          eq(fbCommentAutomationModel.type, this.threadsType),
+        ),
+      )
+      .returning()
+
+    return record
+  }
+
+  async deleteThreadsAutomation(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, tx = db } = props
+    const [record] = await tx
+      .delete(fbCommentAutomationModel)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.id, id),
+          eq(fbCommentAutomationModel.workspaceId, workspaceId),
+          eq(fbCommentAutomationModel.type, this.threadsType),
+        ),
+      )
+      .returning({ id: fbCommentAutomationModel.id })
+
+    return record ?? null
   }
 }
 

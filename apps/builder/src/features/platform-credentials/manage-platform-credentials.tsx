@@ -12,6 +12,7 @@ import { MakeSettings } from "./make/make-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"
 import { CredentialScopeProvider } from "./provider/credential-scope-context"
 import type { CredentialScope } from "./scope"
+import { ThreadsSettings } from "./threads/threads-settings"
 import { TiktokSettings } from "./tiktok/tiktok-settings"
 import { WhatsappSettings } from "./whatsapp/whatsapp-settings"
 import { ZaloSettings } from "./zalo/zalo-settings"
@@ -74,6 +75,7 @@ export async function ManagePlatformCredentials({
     messengerResult,
     instagramResult,
     instagramFacebookResult,
+    threadsResult,
     googleResult,
     zaloResult,
     giphyResult,
@@ -84,6 +86,7 @@ export async function ManagePlatformCredentials({
     resolveCard(scopedUserId, "messenger"),
     resolveCard(scopedUserId, "instagram"),
     resolveCard(scopedUserId, "instagramFacebook"),
+    resolveCard(scopedUserId, "threads"),
     resolveCard(scopedUserId, "google"),
     resolveCard(scopedUserId, "zalo"),
     resolveCard(scopedUserId, "giphy"),
@@ -102,6 +105,8 @@ export async function ManagePlatformCredentials({
     instagramFacebookResult.status === "fulfilled"
       ? instagramFacebookResult.value
       : emptyCard
+  const threads =
+    threadsResult.status === "fulfilled" ? threadsResult.value : emptyCard
   const google =
     googleResult.status === "fulfilled" ? googleResult.value : emptyCard
   const zalo = zaloResult.status === "fulfilled" ? zaloResult.value : emptyCard
@@ -125,6 +130,10 @@ export async function ManagePlatformCredentials({
         <InstagramFacebookSettings
           isInherited={instagramFacebook.isInherited}
           publicConfig={instagramFacebook.publicConfig}
+        />
+        <ThreadsSettings
+          isInherited={threads.isInherited}
+          publicConfig={threads.publicConfig}
         />
         <GoogleSettings
           isInherited={google.isInherited}

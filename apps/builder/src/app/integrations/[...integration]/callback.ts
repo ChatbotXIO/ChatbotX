@@ -2,6 +2,7 @@ import {
   appointmentExternalCalendarService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
+  integrationThreadsService,
   platformCredentialService,
   workspaceMemberService,
   workspaceService,
@@ -29,6 +30,11 @@ import {
 } from "@chatbotx.io/integration-messenger"
 import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
+import {
+  buildThreadsAuthValue,
+  exchangeCodeForToken as exchangeThreadsCode,
+  getThreadsProfile,
+} from "@chatbotx.io/integration-threads"
 import {
   AuthType,
   type AuthValue,
@@ -482,6 +488,65 @@ export const handleCallback = async (
       return redirect(
         new URL("/channels/instagram-facebook/select", safeReferer).toString(),
       )
+    }
+
+    case "threads": {
+      const threadsCredential = await platformCredentialService.resolveForOwner(
+        {
+          ownerId: workspace.ownerId,
+          type: "threads",
+        },
+      )
+      if (!threadsCredential) {
+        return notFound()
+      }
+
+      const callbackUrl = buildBrokerCallbackUrl(
+        "/integrations/threads/callback",
+      )
+      const token = await exchangeThreadsCode(
+        threadsCredential.config,
+        code,
+        callbackUrl,
+      )
+      const profile = await getThreadsProfile(
+        token.accessToken,
+        threadsCredential.config.version,
+      )
+      const auth = buildThreadsAuthValue({
+        clientId: threadsCredential.config.clientId,
+        clientSecret: threadsCredential.config.clientSecret,
+        redirectUrl: callbackUrl,
+        version: threadsCredential.config.version,
+        accessToken: token.accessToken,
+        expiresAt: token.expiresAt,
+        threadsUserId: profile.id,
+        username: profile.username,
+      })
+
+      if (stateParams.reconnectIntegrationId) {
+        await integrationThreadsService.reconnect({
+          workspaceId: workspace.id,
+          id: stateParams.reconnectIntegrationId,
+          auth,
+          username: profile.username,
+          name: profile.username,
+        })
+        return redirect(
+          buildReconnectRedirectUrl(safeReferer, { status: "success" }),
+        )
+      }
+
+      await integrationThreadsService.connect({
+        workspaceId: workspace.id,
+        ownerId: workspace.ownerId,
+        auth,
+        threadsUserId: profile.id,
+        username: profile.username,
+        name: profile.username,
+      })
+
+      return redirect(safeReferer)
     }
 
     case "tiktok": {

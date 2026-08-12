@@ -715,6 +715,9 @@
       "cloneFromMessenger": "Sao chép từ Messenger",
       "clonedFromMessenger": "Đã sao chép từ Messenger"
     },
+    "threads": {
+      "label": "Threads"
+    },
     "zalo": {
       "label": "Zalo OA"
     },
@@ -4221,6 +4224,75 @@
       "instagramDescription": "Kết nối bằng Instagram Login. Hỗ trợ trả lời công khai, trả lời riêng tư, và ẩn bình luận. Không hỗ trợ thích bình luận.",
       "instagramFacebookTitle": "Instagram Login qua Facebook",
       "instagramFacebookDescription": "Instagram được kết nối qua một trang Facebook. Hỗ trợ trả lời công khai, trả lời riêng tư, ẩn bình luận, và thích bình luận."
+    }
+  },
+  "threadsCommentAutomation": {
+    "title": "Tự động hóa bình luận Threads",
+    "description": "Tự động hóa phản hồi công khai cho bình luận Threads của các liên hệ của bạn.",
+    "create": "Tạo tự động hóa",
+    "replies": "Phản hồi",
+    "empty": "Chưa có tự động hóa bình luận Threads nào.",
+    "publicOnlyNote": "Threads hiện chỉ hỗ trợ phản hồi công khai.",
+    "trackCommentsOn": "Theo dõi bình luận trên",
+    "publicReply": "Trả lời công khai bình luận",
+    "publicReplyDescription": "Gửi phản hồi công khai cho các bình luận Threads phù hợp.",
+    "replyMessage": "Nội dung trả lời",
+    "replyFlow": "Flow trả lời",
+    "replyAIAgent": "AI Agent trả lời",
+    "includeKeywordsType": "Trả lời cho",
+    "includeKeywords": "Từ khóa cần khớp",
+    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "keywordsPlaceholder": "Nhập và nhấn Enter...",
+    "replyAfter": "Trả lời sau",
+    "replyAfterValue": "Giá trị",
+    "specificPostIds": "ID bài viết cụ thể",
+    "postIdPlaceholder": "Nhập ID bài viết rồi nhấn Enter...",
+    "card": {
+      "targeting": "Nhắm mục tiêu & Trả lời",
+      "filters": "Bộ lọc & Tùy chọn",
+      "replyTiming": "Thời điểm trả lời"
+    },
+    "postType": {
+      "all": "Tất cả bài viết",
+      "specificPosts": "Bài viết cụ thể"
+    },
+    "replyType": {
+      "text": "Tin nhắn văn bản",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "Không trả lời"
+    },
+    "keywordsType": {
+      "all": "Tất cả bình luận",
+      "equal": "Khớp chính xác",
+      "contain": "Chứa"
+    },
+    "replyAfterType": {
+      "immediately": "Ngay lập tức",
+      "seconds": "Sau X giây",
+      "minutes": "Sau X phút",
+      "hours": "Sau X giờ",
+      "randomWithin3Minutes": "Ngẫu nhiên trong 3 phút",
+      "randomWithin5Minutes": "Ngẫu nhiên trong 5 phút",
+      "randomWithin10Minutes": "Ngẫu nhiên trong 10 phút",
+      "randomWithin20Minutes": "Ngẫu nhiên trong 20 phút",
+      "randomWithin30Minutes": "Ngẫu nhiên trong 30 phút",
+      "randomWithin60Minutes": "Ngẫu nhiên trong 60 phút"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Chỉ trả lời liên hệ mới",
+      "replyOncePerUserPerPost": "Chỉ trả lời một lần mỗi người mỗi bài",
+      "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận bài khác",
+      "ignoreCommentReplies": "Không trả lời các reply bình luận"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Danh sách ID bài viết phải để trống khi áp dụng cho tất cả bài viết.",
+      "postIdsRequired": "Hãy chọn ít nhất một ID bài viết khi áp dụng cho bài viết cụ thể.",
+      "keywordsMustBeEmptyForAll": "Danh sách từ khóa phải để trống khi áp dụng cho tất cả bình luận.",
+      "keywordsRequired": "Hãy nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
+      "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
+      "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời gian đã chọn.",
+      "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật."
     }
   },
   "instagramStoryAutomation": {

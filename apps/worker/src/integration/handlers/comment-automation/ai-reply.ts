@@ -8,7 +8,10 @@ import type { IntegrationType } from "@chatbotx.io/database/partials"
 import type { IntegrationJobCommentAIReply } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
-import { generateAIReplyText } from "../automated-response/replies"
+import {
+  createGuardedCommentInputMessage,
+  generateAIReplyText,
+} from "../automated-response/replies"
 import {
   PRIVATE_REPLY_TEXT_SENDERS,
   type PrivateReplyAuth,
@@ -28,6 +31,17 @@ export async function processCommentAIReply(
 ): Promise<void> {
   if (!data.message?.trim()) {
     // Image/sticker-only comment: nothing for the agent to answer.
+    return
+  }
+
+  // Resolved before generation so an undeliverable private reply (Threads has
+  // no private-reply API) skips without burning an AI call.
+  const sendPrivateReplyText = PRIVATE_REPLY_TEXT_SENDERS[data.channelType]
+  if (data.replyChannel === "private" && !sendPrivateReplyText) {
+    logger.info(
+      { commentId: data.commentId, capability: "private reply unsupported" },
+      "comment AI reply skipped: unsupported capability",
+    )
     return
   }
 
@@ -79,7 +93,17 @@ export async function processCommentAIReply(
   const generated = await generateAIReplyText({
     conversation,
     contactInbox,
-    messages: [{ role: "user", content: data.message }],
+    messages: [
+      // Threads comments are wrapped in an explicit untrusted-data envelope
+      // before reaching the agent. Meta-channel comments keep the raw shape
+      // they have always been sent with.
+      data.channelType === "threads"
+        ? createGuardedCommentInputMessage({
+            channel: data.channelType,
+            comment: data.message,
+          })
+        : { role: "user", content: data.message },
+    ],
     aiAgent: agent,
   })
   if (!generated?.text) {
@@ -110,14 +134,18 @@ export async function processCommentAIReply(
     return
   }
 
-  // Private DM.
+  // Private DM. Unreachable without a sender — guarded before generation.
+  if (!sendPrivateReplyText) {
+    return
+  }
+
   const { integrationRow } =
     await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
       data.integrationType as IntegrationType,
       data.integrationIdentifier,
     )
 
-  await PRIVATE_REPLY_TEXT_SENDERS[data.channelType](
+  await sendPrivateReplyText(
     integrationRow.auth as PrivateReplyAuth,
     data.commentId,
     generated.text,

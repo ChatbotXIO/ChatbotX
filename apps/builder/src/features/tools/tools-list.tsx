@@ -2,7 +2,11 @@
 
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { SiFacebook, SiInstagram } from "@icons-pack/react-simple-icons"
+import {
+  SiFacebook,
+  SiInstagram,
+  SiThreads,
+} from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
   CalendarIcon,
@@ -43,6 +47,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "instagramStoryAutomation.description",
     icon: SiInstagram,
     getLink: (id: string) => `/space/${id}/ig-stories`,
+  },
+  {
+    id: "threads-comment",
+    labelKey: "threadsCommentAutomation.title",
+    descriptionKey: "threadsCommentAutomation.description",
+    icon: SiThreads,
+    getLink: (id: string) => `/space/${id}/threads-comments`,
   },
   {
     id: "facebook-lead-ads",

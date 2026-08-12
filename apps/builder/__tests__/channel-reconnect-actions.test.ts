@@ -25,16 +25,19 @@ const {
   mockFindMessengerIntegration,
   mockFindInstagramIntegration,
   mockFindZaloIntegration,
+  mockFindThreadsIntegration,
   mockResolveForOwner,
   mockRedirect,
   mockGenerateMessengerAuthUrl,
   mockGenerateInstagramAuthUrl,
   mockGenerateInstagramFacebookAuthUrl,
   mockGenerateZaloAuthUrl,
+  mockGenerateThreadsAuthUrl,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockFindInstagramIntegration: vi.fn(),
   mockFindZaloIntegration: vi.fn(),
+  mockFindThreadsIntegration: vi.fn(),
   mockResolveForOwner: vi.fn(),
   mockRedirect: vi.fn(),
   mockGenerateMessengerAuthUrl: vi.fn(() => "https://facebook.example/auth"),
@@ -43,6 +46,7 @@ const {
     () => "https://facebook.example/instagram-auth",
   ),
   mockGenerateZaloAuthUrl: vi.fn(() => "https://zalo.example/auth"),
+  mockGenerateThreadsAuthUrl: vi.fn(() => "https://threads.example/auth"),
 }))
 
 vi.mock("@/lib/safe-action", () => ({
@@ -58,6 +62,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   zaloIntegrationService: {
     findById: mockFindZaloIntegration,
+  },
+  integrationThreadsService: {
+    findByIdForWorkspace: mockFindThreadsIntegration,
   },
   platformCredentialService: {
     resolveForOwner: mockResolveForOwner,
@@ -90,8 +97,16 @@ vi.mock("@chatbotx.io/integration-zalo", () => ({
   generateAuthUrl: mockGenerateZaloAuthUrl,
 }))
 
+vi.mock("@chatbotx.io/integration-threads", () => ({
+  generateAuthUrl: mockGenerateThreadsAuthUrl,
+}))
+
 vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
+}))
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn(async () => (key: string) => key),
 }))
 
 vi.mock("@/lib/domain", () => ({
@@ -105,11 +120,13 @@ vi.mock("@/lib/oauth-broker", () => ({
 await import("../src/features/integration-messenger/actions/reconnect.action")
 await import("../src/features/integration-instagram/actions/reconnect.action")
 await import("../src/features/integration-zalo/actions/reconnect.action")
+await import("../src/features/integration-threads/actions/reconnect.action")
 
 const [
   reconnectMessengerHandler,
   reconnectInstagramHandler,
   reconnectZaloHandler,
+  reconnectThreadsHandler,
 ] = capturedActionHandlers
 
 const executeMessengerReconnect = () =>
@@ -127,6 +144,12 @@ const executeInstagramReconnect = () =>
 const executeZaloReconnect = () =>
   reconnectZaloHandler({
     bindArgsParsedInputs: ["ws-1", "iz-1"],
+    ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+  })
+
+const executeThreadsReconnect = () =>
+  reconnectThreadsHandler({
+    bindArgsParsedInputs: ["ws-1", "th-1"],
     ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
   })
 
@@ -316,6 +339,62 @@ describe("reconnectZaloAction", () => {
 
     await expect(executeZaloReconnect()).rejects.toThrow(
       "Zalo App settings not found",
+    )
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+})
+
+describe("reconnectThreadsAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockResolveForOwner.mockResolvedValue({
+      config: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        version: "v23.0",
+      },
+    })
+  })
+
+  test("redirects to the Threads dialog with reconnect state", async () => {
+    mockFindThreadsIntegration.mockResolvedValue({
+      id: "th-1",
+      threadsUserId: "threads-user-1",
+    })
+
+    await executeThreadsReconnect()
+
+    expect(mockGenerateThreadsAuthUrl).toHaveBeenCalledWith({
+      clientId: "client-1",
+      redirectUrl: "https://broker.example.com/integrations/threads/callback",
+      stateParams: {
+        workspaceId: "ws-1",
+        referer:
+          "https://app.example.com/space/ws-1/settings/channels?channel=threads",
+        reconnectIntegrationId: "th-1",
+      },
+    })
+    expect(mockRedirect).toHaveBeenCalledWith("https://threads.example/auth")
+  })
+
+  test("throws a translated not-found error when the integration is missing", async () => {
+    mockFindThreadsIntegration.mockResolvedValue(undefined)
+
+    await expect(executeThreadsReconnect()).rejects.toThrow(
+      "channels.reconnect.errors.notFound",
+    )
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  test("throws a translated app-settings error when the credential is missing", async () => {
+    mockFindThreadsIntegration.mockResolvedValue({
+      id: "th-1",
+      threadsUserId: "threads-user-1",
+    })
+    mockResolveForOwner.mockResolvedValue(null)
+
+    await expect(executeThreadsReconnect()).rejects.toThrow(
+      "messages.needToAddSettings",
     )
     expect(mockRedirect).not.toHaveBeenCalled()
   })

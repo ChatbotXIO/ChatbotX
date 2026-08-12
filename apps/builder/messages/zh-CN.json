@@ -1832,6 +1832,9 @@
       "loginTitle": "使用 Instagram 登录",
       "viaFacebookTitle": "Instagram 通过 Facebook"
     },
+    "threads": {
+      "label": "Threads"
+    },
     "instagramBusinessFollowsUser": {
       "label": "Instagram 业务跟进用户"
     },
@@ -3180,6 +3183,75 @@
     "title": "Instagram 留言自动化",
     "trackCommentsOn": "追踪留言的对象",
     "trackCommentsOnDescription": "可套用到已连接帐号上的所有贴文，或缩小范围到您指定的特定贴文。"
+  },
+  "threadsCommentAutomation": {
+    "title": "Threads 评论自动化",
+    "description": "自动处理联系人在 Threads 帖子下的公开评论回复。",
+    "create": "创建自动化",
+    "replies": "回复",
+    "empty": "尚未创建 Threads 评论自动化。",
+    "publicOnlyNote": "Threads 目前仅支持公开回复。",
+    "trackCommentsOn": "追踪评论的对象",
+    "publicReply": "公开回复评论",
+    "publicReplyDescription": "对符合条件的 Threads 评论发表公开回复。",
+    "replyMessage": "回复消息",
+    "replyFlow": "回复流程",
+    "replyAIAgent": "回复 AI Agent",
+    "includeKeywordsType": "回复对象",
+    "includeKeywords": "要匹配的关键词",
+    "excludeKeywords": "排除包含这些关键词的评论",
+    "keywordsPlaceholder": "输入后按 Enter...",
+    "replyAfter": "回复时间",
+    "replyAfterValue": "时间值",
+    "specificPostIds": "指定帖子 ID",
+    "postIdPlaceholder": "输入帖子 ID 后按 Enter...",
+    "card": {
+      "targeting": "目标与回复",
+      "filters": "筛选条件与选项",
+      "replyTiming": "回复时机"
+    },
+    "postType": {
+      "all": "所有帖子",
+      "specificPosts": "指定帖子"
+    },
+    "replyType": {
+      "text": "文本消息",
+      "flow": "流程",
+      "AIAgent": "AI Agent",
+      "none": "不回复"
+    },
+    "keywordsType": {
+      "all": "所有评论",
+      "equal": "完全匹配",
+      "contain": "包含"
+    },
+    "replyAfterType": {
+      "immediately": "立即",
+      "seconds": "X 秒后",
+      "minutes": "X 分钟后",
+      "hours": "X 小时后",
+      "randomWithin3Minutes": "3 分钟内随机",
+      "randomWithin5Minutes": "5 分钟内随机",
+      "randomWithin10Minutes": "10 分钟内随机",
+      "randomWithin20Minutes": "20 分钟内随机",
+      "randomWithin30Minutes": "30 分钟内随机",
+      "randomWithin60Minutes": "60 分钟内随机"
+    },
+    "options": {
+      "replyToNewContactsOnly": "仅回复新联系人",
+      "replyOncePerUserPerPost": "每条帖子对每位用户只回复一次",
+      "replyToUsersWhoCommentedOnOtherPosts": "回复曾在其他帖子评论的用户",
+      "ignoreCommentReplies": "忽略评论下的回复"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "选择所有帖子时，帖子 ID 必须留空。",
+      "postIdsRequired": "选择指定帖子时，请至少填入一个帖子 ID。",
+      "keywordsMustBeEmptyForAll": "匹配所有评论时，关键词必须留空。",
+      "keywordsRequired": "请为所选的匹配方式至少输入一个关键词。",
+      "delayMustBePositive": "延迟时间必须大于零。",
+      "delayMustBeZero": "所选的时机选项不支持延迟时间，请设为零。",
+      "atLeastOneFieldRequired": "请至少填写一个字段。"
+    }
   },
   "instagramStoryAutomation": {
     "activated": "自动化已激活",

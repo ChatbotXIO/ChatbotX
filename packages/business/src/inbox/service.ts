@@ -33,6 +33,7 @@ class InboxService extends BaseService {
     integrationWebchat: true,
     integrationMessenger: true,
     integrationInstagram: true,
+    integrationThreads: true,
     integrationZalo: true,
     integrationTelegram: true,
     integrationSmtp: true,
