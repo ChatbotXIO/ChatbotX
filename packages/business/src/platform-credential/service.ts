@@ -1,9 +1,11 @@
 import {
   and,
+  asc,
   type DatabaseClient,
   db,
   eq,
   isNull,
+  sql,
 } from "@chatbotx.io/database/client"
 import {
   type CredentialByType,
@@ -42,7 +44,7 @@ type DecryptedCredential<T extends CredentialType> = {
 
 export type MetaAppCredentialType = Extract<
   CredentialType,
-  "messenger" | "instagram" | "instagramFacebook"
+  "messenger" | "instagram" | "instagramFacebook" | "threads"
 >
 
 class PlatformCredentialService extends BaseService {
@@ -214,6 +216,46 @@ class PlatformCredentialService extends BaseService {
       return this._decrypt(row)
     } catch (err) {
       logger.error({ props, err }, "Failed to decrypt platform credential")
+      return
+    }
+  }
+
+  async findDecryptedThreadsByClientId(props: {
+    clientId: string
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<"threads"> | undefined> {
+    const { clientId, livemode = false, tx = db } = props
+
+    try {
+      const [row] = await tx
+        .select()
+        .from(platformCredentialModel)
+        .where(
+          and(
+            eq(platformCredentialModel.type, "threads"),
+            eq(platformCredentialModel.livemode, livemode),
+            eq(platformCredentialModel.usePlatformCredential, false),
+            sql`${platformCredentialModel.publicConfig}->>'clientId' = ${clientId}`,
+          ),
+        )
+        .orderBy(
+          sql`CASE WHEN ${platformCredentialModel.userId} IS NULL THEN 0 ELSE 1 END`,
+          asc(platformCredentialModel.userId),
+          asc(platformCredentialModel.id),
+        )
+        .limit(1)
+
+      if (!row) {
+        return
+      }
+
+      return this._decrypt(row as CredentialRow<"threads">)
+    } catch (err) {
+      logger.error(
+        { clientId, err, livemode, type: "threads" },
+        "Failed to resolve threads credential by clientId",
+      )
       return
     }
   }

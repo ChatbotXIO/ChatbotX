@@ -72,7 +72,12 @@ const aiJobCommentAIReplySchema = z.object({
     commentId: z.string().min(1),
     agentId: z.string().min(1),
     replyChannel: z.enum(["public", "private"]),
-    channelType: z.enum(["messenger", "instagram", "instagramFacebook"]),
+    channelType: z.enum([
+      "messenger",
+      "instagram",
+      "instagramFacebook",
+      "threads",
+    ]),
     message: z.string().optional(),
     parentMessageId: z.string().nullable().optional(),
     parentMessageCreatedAt: z.string().nullable().optional(),

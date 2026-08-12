@@ -41,7 +41,12 @@ const conversation = {
   contactId: "contact-1",
 }
 
-const contactInbox = { id: "ci-1", inboxId: "inbox-1", contactId: "contact-1" }
+const contactInbox = {
+  id: "ci-1",
+  inboxId: "inbox-1",
+  contactId: "contact-1",
+  channel: "messenger",
+}
 
 beforeEach(() => {
   vi.clearAllMocks()

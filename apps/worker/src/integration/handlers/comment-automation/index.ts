@@ -35,16 +35,24 @@ import {
   matchPost,
   willSendReply,
 } from "./automation-matching"
-import type { CommentAutomationChannelType } from "./channel-type"
+import {
+  type CommentAutomationChannelType,
+  supportsCommentLike,
+} from "./channel-type"
 import {
   createAttachmentInfoResolver,
   needsAttachmentInfo,
 } from "./comment-attachment"
 import { createTagInfoResolver } from "./comment-tags"
-import { applyHideComments } from "./hide-comments"
+import {
+  applyHideComments,
+  hasHideCommentAction,
+  supportsHideComments,
+} from "./hide-comments"
 import {
   executePrivateReply,
   isOutsidePrivateReplyWindow,
+  supportsPrivateReply,
 } from "./private-reply"
 import { executePublicReply } from "./public-reply"
 import type { CommentReplyOutcome } from "./reply-outcome"
@@ -353,68 +361,93 @@ export async function processCommentAutomation(
         const messageRef = { id: dbMessage.id, createdAt: dbMessage.createdAt }
 
         if (automation.options.likeUserComment) {
-          chatQueue
-            .add(ChatJobAction.changeChannelMessageState, {
-              type: ChatJobAction.changeChannelMessageState,
-              data: {
-                conversation: conversationRef,
-                contactInbox,
-                message: messageRef,
-                liked: true,
-              },
+          if (supportsCommentLike(channelType)) {
+            chatQueue
+              .add(ChatJobAction.changeChannelMessageState, {
+                type: ChatJobAction.changeChannelMessageState,
+                data: {
+                  conversation: conversationRef,
+                  contactInbox,
+                  message: messageRef,
+                  liked: true,
+                },
+              })
+              .catch((err: unknown) =>
+                logger.error(
+                  { err, automationId: automation.id, commentId },
+                  "Failed to like comment",
+                ),
+              )
+          } else {
+            logUnsupportedCapability({
+              automationId: automation.id,
+              commentId,
+              capability: "like comment unsupported",
             })
-            .catch((err: unknown) =>
-              logger.error(
-                { err, automationId: automation.id, commentId },
-                "Failed to like comment",
-              ),
-            )
+          }
         }
 
-        const { hasImage, hasVideo } = needsAttachmentInfo(
-          automation.hideComments,
-        )
-          ? await resolveAttachmentInfo()
-          : { hasImage: false, hasVideo: false }
-
-        applyHideComments(automation.hideComments, commentId, message, {
-          conversation: conversationRef,
-          contactInbox,
-          messageId: dbMessage.id,
-          messageCreatedAt: dbMessage.createdAt,
-          hasImage,
-          hasVideo,
-        }).catch((err: unknown) =>
-          logger.error(
-            { err, automationId: automation.id, commentId },
-            "Failed to apply hide comments",
-          ),
-        )
-
-        // Awaited, unlike the like/hide fire-and-forget above: the reply below
-        // renders `{{total_tagged}}`/`{{total_new_tagged}}` by reading these
-        // back off this very row, so racing the send would render an empty
-        // value on the first comment and the right one only on a retry.
-        if (automation.options.trackUserTags) {
-          try {
-            const { totalTagged, totalNewTagged } = await resolveTagInfo()
-            await messageRepo.updateContentAttributes(
-              dbMessage.id,
-              workspaceId,
-              {
-                ...dbMessage.contentAttributes,
-                totalTagged,
-                totalNewTagged,
-              },
-              dbMessage.createdAt,
+        if (hasHideCommentAction(automation.hideComments)) {
+          if (supportsHideComments(channelType)) {
+            const { hasImage, hasVideo } = needsAttachmentInfo(
+              automation.hideComments,
             )
-          } catch (err) {
-            // Not a skip — the reply still goes out, just with the two tag
-            // variables unresolved. Logged because nothing else would show it.
-            logger.error(
-              { err, automationId: automation.id, commentId, postId },
-              "Failed to resolve user tags for comment",
+              ? await resolveAttachmentInfo()
+              : { hasImage: false, hasVideo: false }
+
+            applyHideComments(automation.hideComments, commentId, message, {
+              conversation: conversationRef,
+              contactInbox,
+              messageId: dbMessage.id,
+              messageCreatedAt: dbMessage.createdAt,
+              hasImage,
+              hasVideo,
+            }).catch((err: unknown) =>
+              logger.error(
+                { err, automationId: automation.id, commentId },
+                "Failed to apply hide comments",
+              ),
             )
+
+            // Awaited, unlike the like/hide fire-and-forget above: the reply below
+            // renders `{{total_tagged}}`/`{{total_new_tagged}}` by reading these
+            // back off this very row, so racing the send would render an empty
+            // value on the first comment and the right one only on a retry.
+            if (automation.options.trackUserTags) {
+              try {
+                const { totalTagged, totalNewTagged } = await resolveTagInfo()
+                await messageRepo.updateContentAttributes(
+                  dbMessage.id,
+                  workspaceId,
+                  {
+                    ...dbMessage.contentAttributes,
+                    totalTagged,
+                    totalNewTagged,
+                  },
+                  dbMessage.createdAt,
+                )
+              } catch (err) {
+                // Not a skip — the reply still goes out, just with the two tag
+                // variables unresolved. Logged because nothing else would show it.
+                logger.error(
+                  { err, automationId: automation.id, commentId, postId },
+                  "Failed to resolve user tags for comment",
+                )
+              }
+            }
+          } else {
+            if (needsAttachmentInfo(automation.hideComments)) {
+              logUnsupportedCapability({
+                automationId: automation.id,
+                commentId,
+                capability: "attachment lookup unsupported",
+              })
+            }
+            logUnsupportedCapability({
+              automationId: automation.id,
+              commentId,
+              capability: "hide or unhide comment unsupported",
+            })
           }
         }
       } else {
@@ -499,64 +532,43 @@ export async function processCommentAutomation(
         })
       }
 
-      // Two ways a configured DM never leaves, both decided here rather than
-      // inside the executor so they can be recorded. Neither is a *filtered*
-      // comment — this one passed every filter — it is a delivery Meta will not
-      // accept, which is exactly what the automation "attempted", so it earns a
-      // `failed` row the Error Logs panel can explain. No `logProviderError`:
-      // Meta was never called, so no third party failed.
-      const privateReplyBlockedReason = resolvePrivateReplyBlockedReason({
-        privateReply: automation.privateReply,
-        privateReplyClaimed,
-        createdTime,
-        delay,
-      })
+      // A private reply configured on a channel without a private-reply API
+      // (Threads) can never be delivered — same class as the like/hide
+      // capability checks above: logged, not recorded as a failed delivery,
+      // since nothing was attempted.
+      const privateReplyUnsupported =
+        willSendReply(automation.privateReply) &&
+        !supportsPrivateReply(channelType)
 
-      if (privateReplyBlockedReason) {
-        logAutomationSkipped({
+      if (privateReplyUnsupported) {
+        logUnsupportedCapability({
           automationId: automation.id,
           commentId,
-          postId,
-          workspaceId,
-          reason: privateReplyBlockedReason.logReason,
-        })
-        await recordBlockedPrivateReply({
-          workspaceId,
-          automationId: automation.id,
-          contactInbox,
-          commentId,
-          postId,
-          message,
-          occurredAt,
-          replyChannel: "private",
-          replyType: automation.privateReply.type,
-          errorDetail: privateReplyBlockedReason.errorDetail,
+          capability: "private reply unsupported",
         })
       } else {
-        try {
-          privateOutcome = await executePrivateReply(automation.privateReply, {
-            auth,
+        // Two ways a configured DM never leaves, both decided here rather than
+        // inside the executor so they can be recorded. Neither is a *filtered*
+        // comment — this one passed every filter — it is a delivery Meta will not
+        // accept, which is exactly what the automation "attempted", so it earns a
+        // `failed` row the Error Logs panel can explain. No `logProviderError`:
+        // Meta was never called, so no third party failed.
+        const privateReplyBlockedReason = resolvePrivateReplyBlockedReason({
+          privateReply: automation.privateReply,
+          privateReplyClaimed,
+          createdTime,
+          delay,
+        })
+
+        if (privateReplyBlockedReason) {
+          logAutomationSkipped({
             automationId: automation.id,
-            integrationType,
-            integrationIdentifier,
             commentId,
-            channelType,
-            conversationId,
-            contactInboxId,
-            contactInbox,
+            postId,
             workspaceId,
-            delay,
-            message,
-            createdTime,
-            dedup,
+            reason: privateReplyBlockedReason.logReason,
           })
-          privateReplyClaimed ||= privateOutcome !== null
-        } catch (err) {
-          logger.error(
-            { err, automationId: automation.id, commentId },
-            "Failed to send private reply",
-          )
-          await recordReplyFailure({
+          await recordBlockedPrivateReply({
             workspaceId,
             automationId: automation.id,
             contactInbox,
@@ -564,11 +576,48 @@ export async function processCommentAutomation(
             postId,
             message,
             occurredAt,
-            channelType,
             replyChannel: "private",
             replyType: automation.privateReply.type,
-            error: err,
+            errorDetail: privateReplyBlockedReason.errorDetail,
           })
+        } else {
+          try {
+            privateOutcome = await executePrivateReply(automation.privateReply, {
+              auth,
+              automationId: automation.id,
+              integrationType,
+              integrationIdentifier,
+              commentId,
+              channelType,
+              conversationId,
+              contactInboxId,
+              contactInbox,
+              workspaceId,
+              delay,
+              message,
+              createdTime,
+              dedup,
+            })
+            privateReplyClaimed ||= privateOutcome !== null
+          } catch (err) {
+            logger.error(
+              { err, automationId: automation.id, commentId },
+              "Failed to send private reply",
+            )
+            await recordReplyFailure({
+              workspaceId,
+              automationId: automation.id,
+              contactInbox,
+              commentId,
+              postId,
+              message,
+              occurredAt,
+              channelType,
+              replyChannel: "private",
+              replyType: automation.privateReply.type,
+              error: err,
+            })
+          }
         }
       }
 
@@ -592,8 +641,10 @@ export async function processCommentAutomation(
       // 1. One branch failing must NOT hold back the row when the other one
       //    dispatched — skipping it there let the contact's next comment post
       //    the successful branch a second time. A missed DM beats a duplicate.
-      // 2. An automation that sends nothing (like/hide only) still gets a row,
-      //    so `replyOncePerUserPerPost` keeps gating it once per user per post.
+      // 2. An automation that sends nothing (like/hide only, or a private
+      //    reply the channel cannot deliver at all — see
+      //    `privateReplyUnsupported` above) still gets a row, so
+      //    `replyOncePerUserPerPost` keeps gating it once per user per post.
       // 3. An async job that later gives up rolls the row back itself via
       //    `deleteDedup` (see `dedup` above), so the contact is not blocked
       //    forever. `sendFlow` is the exception: a flow can fail at any step
@@ -656,6 +707,7 @@ const ERROR_LOG_PROVIDER_BY_CHANNEL: Record<
   messenger: "messenger",
   instagram: "instagram",
   instagramFacebook: "instagram",
+  threads: "threads",
 }
 
 type ReplyEventContext = {
@@ -961,6 +1013,27 @@ async function recordConfiguredBranchFailures(
       "Failed to record a comment automation pre-dispatch failure",
     )
   }
+}
+
+/**
+ * A channel-level capability the automation asked for but the channel does not
+ * have (Threads has no like/hide/private-reply APIs). Logged per automation so
+ * a silently partial run is still traceable, and deliberately not an error:
+ * the rest of the automation still runs.
+ */
+const logUnsupportedCapability = ({
+  automationId,
+  commentId,
+  capability,
+}: {
+  automationId: string
+  commentId: string
+  capability: string
+}) => {
+  logger.info(
+    { automationId, commentId, capability },
+    "Comment automation capability unsupported",
+  )
 }
 
 const logAutomationSkipped = ({
