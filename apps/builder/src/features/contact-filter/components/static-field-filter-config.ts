@@ -196,12 +196,14 @@ const staticFieldRules: Record<string, StaticFieldRule> = {
   optedInForEmail: nonNullableBooleanRule,
   shoppingCartIsEmpty: booleanRule,
   lastSentMessageFailed: booleanRule,
+  fromCtwaAd: booleanRule,
 
   fullName: textFreeRule,
   lastComment: textFreeRule,
   phone: textFreeRule,
   email: textFreeRule,
   hasContactInfo: presenceSetRule,
+  ctwaConversion: presenceSetRule,
   lastUserInput: textFreeRule,
 
   contactCreatedAt: dateRule,
