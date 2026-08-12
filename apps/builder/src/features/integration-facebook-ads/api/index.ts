@@ -1,13 +1,18 @@
 import {
   facebookAdAccountSchema,
-  integration as facebookAdsIntegration,
+  facebookAdInsightSchema,
   facebookCustomAudienceSchema,
 } from "@chatbotx.io/integration-facebook-ads"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { getFacebookAdsContext } from "../queries"
+import {
+  getCachedAdAccounts,
+  getCachedAdInsights,
+  getCachedCustomAudiences,
+  getFacebookAdsContext,
+} from "../queries"
 
 const workspaceInput = z.object({ workspaceId: zodBigintAsString() })
 
@@ -23,10 +28,8 @@ export const integrationFacebookAdsAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ data: z.array(facebookAdAccountSchema) }))
     .handler(async ({ input }) => {
-      const ctx = await getFacebookAdsContext(input.workspaceId)
-      return {
-        data: await facebookAdsIntegration.runAction("getAdAccounts", { ctx }),
-      }
+      const adAccounts = await getCachedAdAccounts(input.workspaceId)
+      return { data: adAccounts }
     }),
 
   listCustomAudiences: authorizedAPI
@@ -39,13 +42,36 @@ export const integrationFacebookAdsAPI = {
     .input(workspaceInput.extend({ adAccountId: z.string().trim().min(1) }))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ data: z.array(facebookCustomAudienceSchema) }))
-    .handler(async ({ input }) => {
-      const ctx = await getFacebookAdsContext(input.workspaceId)
-      return {
-        data: await facebookAdsIntegration.runAction("getCustomAudiences", {
-          ctx,
-          props: { adAccountId: input.adAccountId },
-        }),
-      }
-    }),
+    .handler(async ({ input }) => ({
+      data: await getCachedCustomAudiences({
+        workspaceId: input.workspaceId,
+        adAccountId: input.adAccountId,
+      }),
+    })),
+
+  getAdInsights: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/facebook-ads/ad-insights",
+      summary: "Get Facebook ad insights",
+      tags: ["FacebookAds"],
+    })
+    .input(
+      workspaceInput.extend({
+        adAccountId: z.string().trim().min(1),
+        since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      }),
+    )
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(z.object({ data: z.array(facebookAdInsightSchema) }))
+    .handler(async ({ input }) => ({
+      data: await getCachedAdInsights({
+        workspaceId: input.workspaceId,
+        adAccountId: input.adAccountId,
+        since: input.since,
+        until: input.until,
+        getContext: () => getFacebookAdsContext(input.workspaceId),
+      }),
+    })),
 }

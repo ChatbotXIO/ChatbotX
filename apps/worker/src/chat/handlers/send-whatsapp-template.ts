@@ -30,6 +30,10 @@ import type {
   ChatJobSendWhatsappTemplateMessage,
 } from "@chatbotx.io/worker-config"
 import {
+  AdsConversionJobAction,
+  adsConversionQueue,
+} from "@chatbotx.io/worker-config"
+import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
@@ -37,6 +41,48 @@ import { logger } from "../../lib/logger"
 import { shouldSuppressRetryableChannelError } from "../utils/retry"
 import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToChannel } from "./send-message"
+
+type EnqueueTemplateSentEvaluationInput = {
+  workspaceId: string
+  integrationWhatsappId: string
+  contactInboxId: string
+  templateId: string
+  messageId: string
+}
+
+async function enqueueTemplateSentEvaluation(
+  input: EnqueueTemplateSentEvaluationInput,
+): Promise<void> {
+  try {
+    await adsConversionQueue.add(
+      AdsConversionJobAction.evaluateTemplateSent,
+      {
+        type: AdsConversionJobAction.evaluateTemplateSent,
+        data: {
+          workspaceId: input.workspaceId,
+          integrationWhatsappId: input.integrationWhatsappId,
+          contactInboxId: input.contactInboxId,
+          templateId: input.templateId,
+        },
+      },
+      {
+        jobId: `ads-conversion-evaluate-template-${input.messageId}`,
+      },
+    )
+  } catch (err) {
+    logger.warn(
+      {
+        err,
+        workspaceId: input.workspaceId,
+        integrationWhatsappId: input.integrationWhatsappId,
+        contactInboxId: input.contactInboxId,
+        templateId: input.templateId,
+        messageId: input.messageId,
+      },
+      "Failed to enqueue ads conversion template-sent evaluation",
+    )
+  }
+}
 
 export interface ProcessWhatsappTemplateParams {
   broadcastId?: string
@@ -211,6 +257,14 @@ export async function processWhatsappTemplate(
         template: { ...template, params: replacedParams },
       },
       metadata,
+      messageId: newMessage.id,
+    })
+
+    await enqueueTemplateSentEvaluation({
+      workspaceId: conversation.workspaceId,
+      integrationWhatsappId: validated.inbox.integrationWhatsapp.id,
+      contactInboxId: contactInbox.id,
+      templateId: template.id,
       messageId: newMessage.id,
     })
 

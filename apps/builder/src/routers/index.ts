@@ -1,5 +1,6 @@
 import { analyticsRoutes } from "@chatbotx.io/analytics-nextjs/routes"
 import { inboxTeamsAPI } from "@/enterprise/features/inbox-teams/api"
+import { adsAPI } from "@/features/ads/api"
 import { aiAgentsAPI } from "@/features/ai-agents/api"
 import { aiFilesAPI } from "@/features/ai-files/api"
 import { aiFunctionsAPI } from "@/features/ai-functions/api"
@@ -58,6 +59,7 @@ import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
 export const router = {
+  adsAPI,
   aiMcpServerAPIs,
   aiAgentsAPI,
   broadcastAPIs,

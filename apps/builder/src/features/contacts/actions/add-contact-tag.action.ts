@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  adsConversionService,
   type ContactAccessScope,
   contactService,
   tagService,
@@ -106,12 +107,24 @@ export const addContactTags = async ({
         }
       }
     }
-    // Channel sync only for newly attached pairs.
+    // Channel sync + ads conversion `tagApplied` trigger only for newly
+    // attached pairs (not every attempted pair, unlike the emit loop above).
     for (const pair of newlyLinkedPairs) {
       await tagSyncService.enqueueAttach({
         workspaceId,
         contactId: pair.contactId,
         tagId: pair.tagId,
+      })
+    }
+    // One batch resolve+enqueue call per chunk instead of one per pair
+    // (HIGH-1).
+    if (newlyLinkedPairs.length > 0) {
+      await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+        workspaceId,
+        pairs: newlyLinkedPairs.map((pair) => ({
+          contactId: pair.contactId,
+          tagId: pair.tagId,
+        })),
       })
     }
   }
@@ -161,9 +174,15 @@ export const attachContactTag = async ({
   } catch (error) {
     logger.error({ err: error }, "Failed to emit tagApplied event:")
   }
-  // Channel sync only when row was newly inserted.
+  // Channel sync + ads conversion `tagApplied` trigger only when the row was
+  // newly inserted.
   if (inserted.length > 0) {
     await tagSyncService.enqueueAttach({ workspaceId, contactId, tagId })
+    await adsConversionService.enqueueTagAppliedEvaluations({
+      workspaceId,
+      contactId,
+      tagId,
+    })
   }
 }
 

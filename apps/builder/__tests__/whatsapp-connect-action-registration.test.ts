@@ -103,7 +103,11 @@ vi.mock("@chatbotx.io/business", () => ({
     findActiveSignupSession: findActiveSignupSessionMock,
     findConnectedPhoneNumberIds: findConnectedPhoneNumberIdsMock,
     recordRegistrationOutcome: recordRegistrationOutcomeMock,
+    // Post-connect CAPI scope cache refresh (Phase 2 CTWA); connect flow
+    // treats its result as best-effort, so a resolved null is sufficient.
+    refreshCapiScopeCache: vi.fn().mockResolvedValue(null),
   },
+  WHATSAPP_CAPI_SCOPE: "whatsapp_business_manage_events",
   platformCredentialService: {
     resolveForOwner: platformCredentialResolveMock,
   },

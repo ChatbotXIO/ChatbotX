@@ -8,6 +8,7 @@ const enqueueAttachMany = vi.fn()
 const emitTagApplied = vi.fn()
 const invalidateCacheByTags = vi.fn()
 const selectWhere = vi.fn()
+const enqueueTagAppliedEvaluationsBulk = vi.fn()
 
 const createSelectBuilder = () => {
   const builder = {
@@ -73,6 +74,13 @@ vi.mock("@chatbotx.io/events", () => ({
   emitTagRemoved: vi.fn(),
 }))
 
+vi.mock("../src/ads-conversion/service", () => ({
+  adsConversionService: {
+    enqueueTagAppliedEvaluationsBulk: (...args: unknown[]) =>
+      enqueueTagAppliedEvaluationsBulk(...args),
+  },
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: (...args: unknown[]) => invalidateCacheByTags(...args),
   withCache: async (_key: string, callback: () => Promise<unknown>) =>
@@ -104,6 +112,7 @@ describe("TagService.bulkAttachToContacts", () => {
     invalidateCacheByTags.mockReset()
     selectWhere.mockReset()
     selectWhere.mockResolvedValue([])
+    enqueueTagAppliedEvaluationsBulk.mockReset()
   })
 
   test("attaches only scoped contacts and syncs only newly inserted pairs", async () => {
@@ -148,6 +157,11 @@ describe("TagService.bulkAttachToContacts", () => {
         tagId: "tag-2",
       },
     ])
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledTimes(1)
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      pairs: [{ contactId: "contact-1", tagId: "tag-2" }],
+    })
     expect(invalidateCacheByTags).toHaveBeenCalledWith([
       "workspaces:workspace-1#contacts",
       "workspaces:workspace-1#conversations",
@@ -167,6 +181,7 @@ describe("TagService.bulkAttachToContacts", () => {
 
     expect(findManyByIds).not.toHaveBeenCalled()
     expect(insertValues).not.toHaveBeenCalled()
+    expect(enqueueTagAppliedEvaluationsBulk).not.toHaveBeenCalled()
     expect(result).toEqual({ attachedPairCount: 0 })
   })
 
@@ -197,6 +212,10 @@ describe("TagService.bulkAttachToContacts", () => {
         tagId: "tag-1",
       },
     ])
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      pairs: [{ contactId: "contact-1", tagId: "tag-1" }],
+    })
     expect(result).toEqual({ attachedPairCount: 0 })
   })
 })

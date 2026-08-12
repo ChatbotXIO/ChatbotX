@@ -8,7 +8,9 @@ import type {
 } from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
+import { z } from "zod"
 import { BaseService } from "../base.service"
+import { logger } from "../logger"
 
 export type RegistrationStatus = WhatsappRegistrationStatus
 
@@ -27,6 +29,41 @@ type FindWorkspaceIntegrationInput = {
   id: string
   workspaceId: string
 }
+
+type RefreshCapiScopeCacheInput = FindWorkspaceIntegrationInput & {
+  now?: Date
+  maxAgeMs?: number
+  checkScope: (params: {
+    accessToken: string
+    wabaId: string
+  }) => Promise<boolean>
+}
+
+type ReplaceAuthInput = FindWorkspaceIntegrationInput & {
+  auth: unknown
+  hasCapiScope: boolean
+  capiScopeCheckedAt?: Date
+}
+
+type EnsureDatasetIdInput = FindWorkspaceIntegrationInput & {
+  provision: (params: {
+    wabaId: string
+    accessToken: string
+  }) => Promise<string>
+}
+
+export const WHATSAPP_CAPI_SCOPE = "whatsapp_business_manage_events"
+export const WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+export const whatsappAuthForCapiScopeSchema = z.object({
+  version: z.string().trim().min(1).optional(),
+  tokens: z.object({
+    accessToken: z.string().trim().min(1),
+  }),
+  metadata: z.object({
+    wabaId: z.string().trim().min(1),
+  }),
+})
 
 type ClaimVerificationCodeSlotInput = FindWorkspaceIntegrationInput & {
   cooldownSeconds: number
@@ -228,7 +265,17 @@ class IntegrationWhatsappService extends BaseService {
     })
   }
 
+  listByWorkspaceId(workspaceId: string) {
+    return integrationWhatsappRepository.listByWorkspaceId(workspaceId)
+  }
+
   findByIdForWorkspace(
+    input: FindWorkspaceIntegrationInput,
+  ): Promise<IntegrationWhatsappModel | null> {
+    return integrationWhatsappRepository.findByIdForWorkspace(input)
+  }
+
+  findWorkspaceIntegration(
     input: FindWorkspaceIntegrationInput,
   ): Promise<IntegrationWhatsappModel | null> {
     return integrationWhatsappRepository.findByIdForWorkspace(input)
@@ -256,6 +303,123 @@ class IntegrationWhatsappService extends BaseService {
 
   markTokenRefreshError(id: string, error: string): Promise<void> {
     return integrationWhatsappRepository.markTokenRefreshError(id, error)
+  }
+
+  async refreshCapiScopeCache(
+    input: RefreshCapiScopeCacheInput,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const now = input.now ?? new Date()
+    const maxAgeMs = input.maxAgeMs ?? WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS
+    const existing = await this.findWorkspaceIntegration(input)
+    if (!existing) {
+      return null
+    }
+
+    if (
+      existing.capiScopeCheckedAt &&
+      now.getTime() - existing.capiScopeCheckedAt.getTime() < maxAgeMs
+    ) {
+      return existing
+    }
+
+    const expectedCapiScopeCheckedAt = existing.capiScopeCheckedAt ?? null
+    const claimed =
+      await integrationWhatsappRepository.claimCapiScopeCacheRefresh({
+        id: input.id,
+        workspaceId: input.workspaceId,
+        capiScopeCheckedAt: now,
+        expectedCapiScopeCheckedAt,
+      })
+    if (!claimed) {
+      return this.findWorkspaceIntegration(input)
+    }
+
+    const auth = whatsappAuthForCapiScopeSchema.parse(existing.auth)
+    let hasCapiScope: boolean
+    try {
+      hasCapiScope = await input.checkScope({
+        accessToken: auth.tokens.accessToken,
+        wabaId: existing.wabaId,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, id: input.id, workspaceId: input.workspaceId },
+        "integration-whatsapp: CAPI scope refresh failed",
+      )
+      // Keep the claim timestamp so a transient Meta failure does not trigger a
+      // request-path retry storm; the previous scope value remains authoritative.
+      return claimed
+    }
+
+    return integrationWhatsappRepository.updateCapiScopeCache({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      hasCapiScope,
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: now,
+    })
+  }
+
+  async replaceAuth(
+    input: ReplaceAuthInput,
+  ): Promise<IntegrationWhatsappModel> {
+    const existing = await this.findWorkspaceIntegration(input)
+    if (!existing) {
+      throw new Error("WhatsApp integration not found")
+    }
+
+    const auth = whatsappAuthForCapiScopeSchema.parse(input.auth)
+    if (auth.metadata.wabaId !== existing.wabaId) {
+      throw new Error(
+        "Reconnect returned a different WhatsApp Business Account",
+      )
+    }
+
+    const updated = await integrationWhatsappRepository.replaceAuth({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      auth: input.auth,
+      hasCapiScope: input.hasCapiScope,
+      capiScopeCheckedAt: input.capiScopeCheckedAt ?? new Date(),
+    })
+    if (!updated) {
+      throw new Error("WhatsApp integration not found")
+    }
+
+    return updated
+  }
+
+  async ensureDatasetId(input: EnsureDatasetIdInput): Promise<string> {
+    const existing = await this.findWorkspaceIntegration(input)
+    if (!existing) {
+      throw new Error("WhatsApp integration not found")
+    }
+
+    if (existing.datasetId) {
+      return existing.datasetId
+    }
+
+    const auth = whatsappAuthForCapiScopeSchema.parse(existing.auth)
+    const datasetId = await input.provision({
+      wabaId: existing.wabaId,
+      accessToken: auth.tokens.accessToken,
+    })
+
+    const updated = await integrationWhatsappRepository.updateDatasetIdIfNull({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      datasetId,
+    })
+    if (updated?.datasetId) {
+      return updated.datasetId
+    }
+
+    const reread = await this.findWorkspaceIntegration(input)
+    if (reread?.datasetId) {
+      return reread.datasetId
+    }
+
+    throw new Error("WhatsApp integration dataset id was not stored")
   }
 
   /**

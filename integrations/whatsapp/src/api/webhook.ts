@@ -9,6 +9,7 @@ export const WHATSAPP_SUBSCRIBED_FIELDS = [
   "history",
   "smb_app_state_sync",
   "smb_message_echoes",
+  "automatic_events",
 ] as const
 
 export function subscribeWebhook({

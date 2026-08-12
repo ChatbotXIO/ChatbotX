@@ -508,6 +508,62 @@ describe("receiveMessage — message repository branch", () => {
     })
   })
 
+  test("emits message:received with origin: 'inbound' and isFirstIncomingMessage: true for a contact's first inbound message", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      lastIncomingMessageAt: null,
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "messenger",
+        inboxId: "inbox-1",
+        origin: "inbound",
+        messageId: fakeCreatedMessage.id,
+        isFirstIncomingMessage: true,
+      }),
+    )
+  })
+
+  test("emits isFirstIncomingMessage: false when the contact already has a prior inbound message", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      lastIncomingMessageAt: new Date("2025-12-31T00:00:00Z"),
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.objectContaining({
+        origin: "inbound",
+        isFirstIncomingMessage: false,
+      }),
+    )
+  })
+
   test("updates conversation activity but not lastIncomingMessageAt for outgoing webhook echo", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: {
@@ -547,6 +603,14 @@ describe("receiveMessage — message repository branch", () => {
           lastIncomingMessageAt: expect.any(Date),
         }),
       }),
+    )
+    // An outgoing webhook echo (e.g. an agent's native-app reply synced back
+    // in) is not a genuine contact-authored message, so it must not carry the
+    // `origin: "inbound"` discriminant the ads-conversion contactReplied
+    // listener keys off of.
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.not.objectContaining({ origin: "inbound" }),
     )
   })
 

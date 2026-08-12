@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
   type SendWaTemplateMessageStepSchema,
@@ -73,7 +74,11 @@ export async function replaceWhatsappTemplateVariables(props: {
 }
 
 export type ValidatedWhatsappTemplate = {
-  inbox: NonNullable<Awaited<ReturnType<typeof db.query.inboxModel.findFirst>>>
+  inbox: NonNullable<
+    Awaited<ReturnType<typeof db.query.inboxModel.findFirst>>
+  > & {
+    integrationWhatsapp: IntegrationWhatsappModel
+  }
   template: NonNullable<
     Awaited<ReturnType<typeof db.query.whatsappMessageTemplateModel.findFirst>>
   >
@@ -104,5 +109,8 @@ export async function validateWhatsappTemplate(
     return null
   }
 
-  return { inbox, template }
+  return {
+    inbox: { ...inbox, integrationWhatsapp: inbox.integrationWhatsapp },
+    template,
+  }
 }

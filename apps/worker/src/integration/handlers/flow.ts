@@ -646,6 +646,7 @@ async function tryRunRichButtonFallback(props: {
       conversationId: conversation.id,
       contactId: conversation.contactId,
       contactInboxId: contactInbox.id,
+      inboxId: contactInbox.inboxId,
       channel: contactInbox.channel,
       executionId: richResponse.executionId,
       flowContextId,
