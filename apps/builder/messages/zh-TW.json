@@ -1346,6 +1346,11 @@
       "label": "活動",
       "placeholder": "輸入事件名稱並按 Enter",
       "description": "新增一個或多個事件名稱。當 Make 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
+    },
+    "n8nEvents": {
+      "label": "活動",
+      "placeholder": "輸入事件名稱並按 Enter",
+      "description": "新增一個或多個事件名稱。當 n8n 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
     }
   },
   "messages": {
@@ -2204,6 +2209,7 @@
       "broadcastActions": "廣播操作",
       "callApi": "外部API 請求",
       "make": "Make.com",
+      "triggerN8n": "Trigger n8n",
       "triggers": "觸發器",
       "questionnaires": "問卷",
       "setUpCoupon": "設定優惠券",

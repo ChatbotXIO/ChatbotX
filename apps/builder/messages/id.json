@@ -1944,6 +1944,11 @@
       "label": "Peristiwa",
       "placeholder": "Ketik nama peristiwa lalu tekan Enter",
       "description": "Tambahkan satu atau beberapa nama peristiwa. Saat Make memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
+    },
+    "n8nEvents": {
+      "label": "Peristiwa",
+      "placeholder": "Ketik nama peristiwa lalu tekan Enter",
+      "description": "Tambahkan satu atau beberapa nama peristiwa. Saat n8n memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
     }
   },
   "flows": {
@@ -1990,6 +1995,7 @@
       "broadcastActions": "Tindakan Siaran",
       "callApi": "Permintaan API Eksternal",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Pemicu",
       "questionnaires": "Kuesioner",
       "setUpCoupon": "Siapkan Kupon",

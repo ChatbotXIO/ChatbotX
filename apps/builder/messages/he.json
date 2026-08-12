@@ -311,6 +311,7 @@
       "broadcastActions": "פעולות שידור",
       "callApi": "בקשת API חיצונית",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "גורמים מפעילים",
       "questionnaires": "שאלונים",
       "setUpCoupon": "הגדרת קופון",
@@ -3925,6 +3926,11 @@
       "label": "אירועים",
       "placeholder": "הקלידו שם אירוע ולחצו Enter",
       "description": "הוסיפו שם אירוע אחד או יותר. כאשר Make מצרף Webhook לאחד מהאירועים האלה, הנתונים נשלחים אליו בעת הפעלת שלב זה."
+    },
+    "n8nEvents": {
+      "label": "אירועים",
+      "placeholder": "הקלידו שם אירוע ולחצו Enter",
+      "description": "הוסיפו שם אירוע אחד או יותר. כאשר n8n מצרף Webhook לאחד מהאירועים האלה, הנתונים נשלחים אליו בעת הפעלת שלב זה."
     }
   },
   "billing": {

@@ -1944,6 +1944,11 @@
       "label": "イベント",
       "placeholder": "イベント名を入力してEnterキーを押してください",
       "description": "1つ以上のイベント名を追加します。MakeがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
+    },
+    "n8nEvents": {
+      "label": "イベント",
+      "placeholder": "イベント名を入力してEnterキーを押してください",
+      "description": "1つ以上のイベント名を追加します。n8nがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
     }
   },
   "flows": {
@@ -1990,6 +1995,7 @@
       "broadcastActions": "一斉配信アクション",
       "callApi": "外部APIリクエスト",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "トリガー",
       "questionnaires": "アンケート",
       "setUpCoupon": "クーポンを設定",

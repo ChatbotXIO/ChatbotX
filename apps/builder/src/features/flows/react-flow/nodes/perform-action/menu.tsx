@@ -4,6 +4,7 @@ import {
   SiGooglegemini,
   SiMake,
   SiMessenger,
+  SiN8n,
 } from "@icons-pack/react-simple-icons"
 import {
   ArchiveIcon,
@@ -615,6 +616,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.make"),
         icon: SiMake,
         stepType: stepTypes.enum.make,
+      },
+      {
+        label: t("flows.actions.triggerN8n"),
+        icon: SiN8n,
+        stepType: stepTypes.enum.triggerN8n,
       },
     ],
   },

@@ -1790,6 +1790,11 @@
       "label": "Händelser",
       "placeholder": "Skriv ett händelsenamn och tryck på Retur"
     },
+    "n8nEvents": {
+      "description": "Lägg till ett eller flera händelsenamn. När n8n kopplar en webhook till en av dessa händelser skickas data till den när detta steg körs.",
+      "label": "Händelser",
+      "placeholder": "Skriv ett händelsenamn och tryck på Retur"
+    },
     "marketingFeatures": {
       "description": "En lista över produktfunktioner som visas för kunderna. Visas i pristabeller.",
       "label": "Lista över marknadsföringsfunktioner"
@@ -2531,6 +2536,7 @@
       "tools": "Verktyg",
       "transferConversationToBot": "Överför konversation till bot",
       "transferConversationToHuman": "Överför konversation till människa",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Utlösare",
       "typing": "Skriver",
       "unarchiveConversation": "Återställ konversation från arkivet",

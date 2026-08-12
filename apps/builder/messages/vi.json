@@ -2019,6 +2019,11 @@
       "label": "Sự kiện",
       "placeholder": "Nhập tên sự kiện rồi nhấn Enter",
       "description": "Thêm một hoặc nhiều tên sự kiện. Khi Make gắn webhook cho một trong các sự kiện này, dữ liệu sẽ được gửi đến đó khi step này chạy."
+    },
+    "n8nEvents": {
+      "label": "Sự kiện",
+      "placeholder": "Nhập tên sự kiện rồi nhấn Enter",
+      "description": "Thêm một hoặc nhiều tên sự kiện. Khi n8n gắn webhook cho một trong các sự kiện này, dữ liệu sẽ được gửi đến đó khi step này chạy."
     }
   },
   "flows": {
@@ -2065,6 +2070,7 @@
       "broadcastActions": "Hành động phát sóng",
       "callApi": "Yêu cầu bên ngoài",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Trigger",
       "questionnaires": "Bảng câu hỏi",
       "setUpCoupon": "Thiết lập Coupon",

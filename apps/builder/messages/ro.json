@@ -43,6 +43,7 @@
       "broadcastActions": "Acțiuni de difuzare",
       "callApi": "Solicitare API externă",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Declanșatoare",
       "questionnaires": "Chestionare",
       "setUpCoupon": "Configurează cuponul",
@@ -2505,6 +2506,11 @@
       "label": "Evenimente",
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
       "description": "Adăugați unul sau mai multe nume de evenimente. Când Make atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
+    },
+    "n8nEvents": {
+      "label": "Evenimente",
+      "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
+      "description": "Adăugați unul sau mai multe nume de evenimente. Când n8n atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
     }
   },
   "channels": {

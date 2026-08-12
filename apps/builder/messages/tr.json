@@ -2018,6 +2018,11 @@
       "label": "Etkinlikler",
       "placeholder": "Bir etkinlik adı yazın ve Enter'a basın",
       "description": "Bir veya daha fazla etkinlik adı ekleyin. Make bu etkinliklerden biri için bir webhook eklediğinde, bu adım çalıştığında veri gönderilir."
+    },
+    "n8nEvents": {
+      "label": "Etkinlikler",
+      "placeholder": "Bir etkinlik adı yazın ve Enter'a basın",
+      "description": "Bir veya daha fazla etkinlik adı ekleyin. n8n bu etkinliklerden biri için bir webhook eklediğinde, bu adım çalıştığında veri gönderilir."
     }
   },
   "flows": {
@@ -2064,6 +2069,7 @@
       "broadcastActions": "Yayın İşlemleri",
       "callApi": "Harici API İsteği",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Tetikleyiciler",
       "questionnaires": "Anketler",
       "setUpCoupon": "Kupon Ayarla",
