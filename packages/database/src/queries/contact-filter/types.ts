@@ -12,6 +12,16 @@ export type ContactFilterConditionInput = {
   valueType?: string
   /** Present for dynamic coupon-topic conditions (`field === "couponTopic"`). */
   topicId?: string
+  /** Present for `field === "ctwaRetarget"` conditions. */
+  segment?: string
+  /** Present for `field === "ctwaRetarget"` conditions. */
+  adId?: string
+  /** Present for `field === "ctwaRetarget"` conditions — scopes the segment to one WhatsApp integration. */
+  integrationWhatsappId?: string
+  /** Present for `field === "ctwaRetarget"` conditions (`YYYY-MM-DD`). */
+  since?: string
+  /** Present for `field === "ctwaRetarget"` conditions (`YYYY-MM-DD`). */
+  until?: string
 }
 
 /**

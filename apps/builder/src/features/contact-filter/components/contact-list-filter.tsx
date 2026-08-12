@@ -129,7 +129,7 @@ export function ContactListFilterPanel({
   }
 
   const getConditionKey = (condition: ContactFilterCondition) =>
-    `${condition.field}-${condition.operator}-${
+    `${condition.field}-${"operator" in condition ? condition.operator : "none"}-${
       "value" in condition ? JSON.stringify(condition.value) : "empty"
     }`
 

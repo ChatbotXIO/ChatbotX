@@ -606,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Bot Link",
       "chatPlugin": "C. chat plugin"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA conversation starters",
+        "leads": "CTWA qualified leads",
+        "purchases": "CTWA purchasers"
+      },
+      "adPrefix": "ad",
+      "allAds": "all ads"
     }
   },
   "channels": {

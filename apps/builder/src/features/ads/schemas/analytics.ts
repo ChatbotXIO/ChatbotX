@@ -8,7 +8,7 @@ const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/
 // Facebook Graph API + CAPI-funnel date-range scan/loop (every day in the
 // range gets its own row/aggregation). 366 covers a full leap year for
 // legitimate year-over-year comparisons.
-const MAX_ADS_ANALYTICS_RANGE_DAYS = 366
+export const MAX_ADS_ANALYTICS_RANGE_DAYS = 366
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export function getDefaultAdsAnalyticsRange(now = new Date()) {

@@ -10,6 +10,10 @@ import {
   couponTopicConditionSchema,
 } from "./coupon-topic-filter"
 import {
+  type CtwaRetargetCondition,
+  ctwaRetargetConditionSchema,
+} from "./ctwa-retarget-filter"
+import {
   type CustomFieldCondition,
   customFieldConditionSchema,
 } from "./custom-field-filter"
@@ -24,6 +28,12 @@ export {
   type CouponTopicCondition,
   couponTopicConditionSchema,
 } from "./coupon-topic-filter"
+export {
+  type CtwaRetargetCondition,
+  type CtwaRetargetSegment,
+  ctwaRetargetConditionSchema,
+  ctwaRetargetSegments,
+} from "./ctwa-retarget-filter"
 export {
   type CustomFieldCondition,
   customFieldConditionSchema,
@@ -49,6 +59,7 @@ export type ContactFilterCondition =
   | z.infer<(typeof contactFilterConditionSchemas)[number]>
   | CustomFieldCondition
   | CouponTopicCondition
+  | CtwaRetargetCondition
 
 /** One validated condition row (matches `conditions` elements in {@link contactFilterCriteriaSchema}). */
 // Static fields are a discriminated union on `field`; dynamic custom fields and
@@ -66,6 +77,7 @@ export const singleContactFilterConditionSchema = z.union([
   ),
   customFieldConditionSchema,
   couponTopicConditionSchema,
+  ctwaRetargetConditionSchema,
 ]) as unknown as z.ZodType<ContactFilterCondition>
 
 export const contactFilterCriteriaSchema = z.object({

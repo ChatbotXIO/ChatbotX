@@ -171,4 +171,81 @@ describe("adsConversionEventRepository account filters", () => {
     expect(chain.where).toHaveBeenCalledWith(expect.anything())
     expect(chain.groupBy).toHaveBeenCalled()
   })
+
+  test("listExportSegmentRows resolves conversations via the shared ctwaRetarget predicate, keeping the same output shape", async () => {
+    const chain = createQueryChain([
+      {
+        id: "ci-1",
+        contactId: "c-1",
+        contactName: "Ada",
+        phoneNumber: "+84900000000",
+        email: null,
+        adId: "ad-1",
+        occurredAt: new Date("2026-07-15T00:00:00.000Z"),
+      },
+    ])
+
+    const result = await adsConversionEventRepository.listExportSegmentRows(
+      {
+        workspaceId: "ws-1",
+        segment: "conversations",
+        adId: "ad-1",
+        since: new Date("2026-07-01T00:00:00.000Z"),
+        until: new Date("2026-07-31T23:59:59.999Z"),
+        limit: 50,
+      },
+      { select: chain.select } as never,
+    )
+
+    expect(chain.where).toHaveBeenCalledWith(expect.anything())
+    expect(result).toEqual([
+      {
+        id: "ci-1",
+        contactId: "c-1",
+        contactName: "Ada",
+        phoneNumber: "+84900000000",
+        email: null,
+        adId: "ad-1",
+        occurredAt: new Date("2026-07-15T00:00:00.000Z"),
+      },
+    ])
+  })
+
+  test("listExportSegmentRows resolves leads/purchases via the shared ctwaRetarget predicate, keeping the same output shape", async () => {
+    const chain = createQueryChain([
+      {
+        id: "ace-1",
+        contactId: "c-2",
+        contactName: "Bob",
+        phoneNumber: "+84900000001",
+        email: "bob@example.com",
+        adId: "ad-2",
+        occurredAt: new Date("2026-07-20T00:00:00.000Z"),
+      },
+    ])
+
+    const result = await adsConversionEventRepository.listExportSegmentRows(
+      {
+        workspaceId: "ws-1",
+        segment: "purchases",
+        since: new Date("2026-07-01T00:00:00.000Z"),
+        until: new Date("2026-07-31T23:59:59.999Z"),
+        limit: 50,
+      },
+      { select: chain.select } as never,
+    )
+
+    expect(chain.where).toHaveBeenCalledWith(expect.anything())
+    expect(result).toEqual([
+      {
+        id: "ace-1",
+        contactId: "c-2",
+        contactName: "Bob",
+        phoneNumber: "+84900000001",
+        email: "bob@example.com",
+        adId: "ad-2",
+        occurredAt: new Date("2026-07-20T00:00:00.000Z"),
+      },
+    ])
+  })
 })

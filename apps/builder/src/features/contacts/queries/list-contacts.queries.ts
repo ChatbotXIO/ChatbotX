@@ -246,7 +246,9 @@ export const generateWhere = (
           includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
         })
       : undefined,
-    contactFilter ? applyContactFilter(contactFilter) : undefined,
+    contactFilter
+      ? applyContactFilter(contactFilter, input.workspaceId)
+      : undefined,
   ].filter((filter): filter is ContactWhere =>
     filter ? hasWhereParts(filter) : false,
   )

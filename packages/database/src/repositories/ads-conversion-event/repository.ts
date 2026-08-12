@@ -11,6 +11,7 @@ import {
   lte,
   sql,
 } from "../../client"
+import { buildCtwaSegmentPredicate } from "../../queries/contact-filter/ctwa-retarget"
 import type { AdsConversionCapiStatus } from "../../schema"
 import {
   adsConversionEventModel,
@@ -97,14 +98,6 @@ type ExportSegmentInput = DateRangeInput & {
   afterId?: string
   limit: number
 }
-
-const conversionEventTypeByExportSegment = {
-  leads: "lead",
-  purchases: "purchase",
-} satisfies Record<
-  Exclude<AdsConversionExportSegment, "conversations">,
-  "lead" | "purchase"
->
 
 export const adsConversionEventRepository = {
   async insertIgnoreDuplicate(
@@ -520,13 +513,17 @@ export const adsConversionEventRepository = {
   ): Promise<Array<AdsConversionExportRow & { id: string }>> {
     if (input.segment === "conversations") {
       const filters = and(
+        // Contact is in this query's FROM, so scope by workspace here — the
+        // shared predicate omits `Contact.workspaceId` (see ctwa-retarget.ts).
         eq(contactModel.workspaceId, input.workspaceId),
-        sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL`,
-        gte(contactInboxModel.firstInteractionAt, input.since),
-        lte(contactInboxModel.firstInteractionAt, input.until),
-        input.adId
-          ? sql`${contactInboxModel.referral}->>'adId' = ${input.adId}`
-          : undefined,
+        buildCtwaSegmentPredicate({
+          segment: "conversations",
+          adId: input.adId,
+          since: input.since,
+          until: input.until,
+          workspaceId: input.workspaceId,
+          integrationWhatsappId: input.integrationWhatsappId,
+        }),
         input.afterId ? gt(contactInboxModel.id, input.afterId) : undefined,
       )
       const selection = {
@@ -538,35 +535,18 @@ export const adsConversionEventRepository = {
         adId: sql<string | null>`${contactInboxModel.referral}->>'adId'`,
         occurredAt: contactInboxModel.firstInteractionAt,
       }
-      const rows = input.integrationWhatsappId
-        ? await tx
-            .select(selection)
-            .from(contactInboxModel)
-            .innerJoin(
-              integrationWhatsappModel,
-              and(
-                eq(contactInboxModel.inboxId, integrationWhatsappModel.inboxId),
-                eq(integrationWhatsappModel.id, input.integrationWhatsappId),
-                eq(integrationWhatsappModel.workspaceId, input.workspaceId),
-              ),
-            )
-            .innerJoin(
-              contactModel,
-              eq(contactModel.id, contactInboxModel.contactId),
-            )
-            .where(filters)
-            .orderBy(asc(contactInboxModel.id))
-            .limit(input.limit)
-        : await tx
-            .select(selection)
-            .from(contactInboxModel)
-            .innerJoin(
-              contactModel,
-              eq(contactModel.id, contactInboxModel.contactId),
-            )
-            .where(filters)
-            .orderBy(asc(contactInboxModel.id))
-            .limit(input.limit)
+      // Integration scope now lives in `buildCtwaSegmentPredicate` (a correlated
+      // EXISTS), so the query no longer branches on `integrationWhatsappId`.
+      const rows = await tx
+        .select(selection)
+        .from(contactInboxModel)
+        .innerJoin(
+          contactModel,
+          eq(contactModel.id, contactInboxModel.contactId),
+        )
+        .where(filters)
+        .orderBy(asc(contactInboxModel.id))
+        .limit(input.limit)
 
       return rows.flatMap((row) =>
         row.occurredAt
@@ -580,7 +560,6 @@ export const adsConversionEventRepository = {
       )
     }
 
-    const eventType = conversionEventTypeByExportSegment[input.segment]
     return tx
       .select({
         id: adsConversionEventModel.id,
@@ -599,17 +578,14 @@ export const adsConversionEventRepository = {
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
       .where(
         and(
-          eq(adsConversionEventModel.workspaceId, input.workspaceId),
-          eq(adsConversionEventModel.eventType, eventType),
-          gte(adsConversionEventModel.occurredAt, input.since),
-          lte(adsConversionEventModel.occurredAt, input.until),
-          input.adId ? eq(adsConversionEventModel.adId, input.adId) : undefined,
-          input.integrationWhatsappId
-            ? eq(
-                adsConversionEventModel.integrationWhatsappId,
-                input.integrationWhatsappId,
-              )
-            : undefined,
+          buildCtwaSegmentPredicate({
+            segment: input.segment,
+            adId: input.adId,
+            since: input.since,
+            until: input.until,
+            workspaceId: input.workspaceId,
+            integrationWhatsappId: input.integrationWhatsappId,
+          }),
           input.afterId
             ? gt(adsConversionEventModel.id, input.afterId)
             : undefined,
