@@ -168,7 +168,7 @@ export function buildConversationWhere(
     options.includeEmailAndPhone !== false,
   )
   if (contactFilter) {
-    const contactFilterWhere = applyContactFilter(contactFilter)
+    const contactFilterWhere = applyContactFilter(contactFilter, workspaceId)
     if (Object.keys(contactFilterWhere).length > 0) {
       addContactWhere(where, contactFilterWhere)
     }

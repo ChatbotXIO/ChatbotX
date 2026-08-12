@@ -235,5 +235,6 @@ export const contactFilterFields = z.enum([
   "language",
   "fromCtwaAd",
   "ctwaConversion",
+  "ctwaRetarget",
 ])
 export type ContactFilterField = z.infer<typeof contactFilterFields>

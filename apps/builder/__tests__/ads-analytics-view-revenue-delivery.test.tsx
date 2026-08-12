@@ -69,6 +69,10 @@ vi.mock("@chatbotx.io/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => children,
   DropdownMenuContent: ({ children }: { children: ReactNode }) => children,
   DropdownMenuItem: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuPortal: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuSub: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuSubContent: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuSubTrigger: ({ children }: { children: ReactNode }) => children,
   DropdownMenuTrigger: ({
     children,
     render,

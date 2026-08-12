@@ -47,6 +47,7 @@ import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadca
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { useWorkspaceId } from "@/hooks/routing"
 import { ContactFilter } from "../contact-filter"
+import type { ContactFilterCriteria } from "../contact-filter/schemas"
 import { useContactStore } from "../contacts/provider/contact-store-context"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { useFlowTemplate } from "../flows/react-flow/stores/flow-template-store-provider"
@@ -59,6 +60,7 @@ import type { MessageTemplateWithComponents } from "../integration-whatsapp/mess
 import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 import { MessengerBroadcastFlowButtons } from "./components/messenger-broadcast-flow-buttons"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
+import { buildCreateBroadcastDefaultValues } from "./lib/create-broadcast-defaults"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -90,11 +92,22 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
 type CreateBroadcastFormProps = {
   canViewEmailAndPhone?: boolean
   workspaceId: string
+  /**
+   * Deep-link prefill (e.g. Ads Analytics' per-ad "Retarget → Send WhatsApp
+   * broadcast → {segment}"). When `initialChannel` is set, the channel-picker
+   * step is skipped since `watchedChannel` is already non-empty.
+   */
+  initialChannel?: ChannelType
+  initialIntegrationWhatsappId?: string
+  initialContactFilter?: ContactFilterCriteria
 }
 
 export function CreateBroadcastForm({
   canViewEmailAndPhone = true,
   workspaceId,
+  initialChannel,
+  initialIntegrationWhatsappId,
+  initialContactFilter,
 }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -124,17 +137,11 @@ export function CreateBroadcastForm({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          channel: undefined,
-          flowId: undefined,
-          subaction: broadcastSubactions.enum.allContacts,
-          schedulesType: "now",
-          schedulesAt: null,
-          contactFilter: {
-            operator: "and",
-            conditions: [],
-          },
-        },
+        defaultValues: buildCreateBroadcastDefaultValues({
+          initialChannel,
+          initialIntegrationWhatsappId,
+          initialContactFilter,
+        }),
       },
       errorMapProps: {},
     },

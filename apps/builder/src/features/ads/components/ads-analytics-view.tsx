@@ -15,6 +15,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
@@ -54,6 +58,7 @@ import { toast } from "sonner"
 import useSWR from "swr"
 import { client } from "@/lib/orpc/orpc"
 import { retargetAdAction } from "../actions/retarget"
+import { buildWhatsappRetargetHref } from "../lib/build-whatsapp-retarget-href"
 import type { AdsAnalyticsData } from "../lib/merge-analytics"
 import type { AdsAnalyticsTimeseriesRow } from "../queries/analytics"
 import type { AdsSwitcherData } from "../queries/switcher"
@@ -242,10 +247,6 @@ function buildExportHref(input: {
     params.set("integrationWhatsappId", input.integrationWhatsappId)
   }
   return `/space/${input.workspaceId}/ads/analytics/export?${params.toString()}`
-}
-
-function buildBroadcastHref(workspaceId: string) {
-  return `/space/${workspaceId}/broadcasts/create`
 }
 
 function segmentLabelKey(segment: RetargetSegment) {
@@ -812,14 +813,66 @@ export function AdsAnalyticsView({
                           >
                             {t("ads.analytics.thoseWhoStartedConversation")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(buildBroadcastHref(workspaceId))
-                            }
-                          >
-                            <MessageCircleIcon className="size-4" />
-                            {t("ads.analytics.sendWhatsappBroadcast")}
-                          </DropdownMenuItem>
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <MessageCircleIcon className="size-4" />
+                              {t("ads.analytics.sendWhatsappBroadcast")}
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    router.push(
+                                      buildWhatsappRetargetHref({
+                                        workspaceId,
+                                        segment: "purchases",
+                                        adId: ad.adId,
+                                        range,
+                                        integrationWhatsappId:
+                                          selectedIntegrationWhatsappId,
+                                      }),
+                                    )
+                                  }
+                                >
+                                  {t("ads.analytics.thoseWhoPurchased")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    router.push(
+                                      buildWhatsappRetargetHref({
+                                        workspaceId,
+                                        segment: "leads",
+                                        adId: ad.adId,
+                                        range,
+                                        integrationWhatsappId:
+                                          selectedIntegrationWhatsappId,
+                                      }),
+                                    )
+                                  }
+                                >
+                                  {t("ads.analytics.qualifiedLeads")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    router.push(
+                                      buildWhatsappRetargetHref({
+                                        workspaceId,
+                                        segment: "conversations",
+                                        adId: ad.adId,
+                                        range,
+                                        integrationWhatsappId:
+                                          selectedIntegrationWhatsappId,
+                                      }),
+                                    )
+                                  }
+                                >
+                                  {t(
+                                    "ads.analytics.thoseWhoStartedConversation",
+                                  )}
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                          </DropdownMenuSub>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

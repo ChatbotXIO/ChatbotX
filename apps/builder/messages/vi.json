@@ -606,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Liên kết bot",
       "chatPlugin": "C. chat plugin"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA người bắt đầu hội thoại",
+        "leads": "CTWA khách tiềm năng đạt chuẩn",
+        "purchases": "CTWA người đã mua"
+      },
+      "adPrefix": "quảng cáo",
+      "allAds": "tất cả quảng cáo"
     }
   },
   "channels": {
