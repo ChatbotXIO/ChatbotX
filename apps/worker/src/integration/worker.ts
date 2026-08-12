@@ -16,6 +16,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
+import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
@@ -258,6 +259,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.coexistAttachmentDownload: {
             await coexistAttachmentDownload(job.data.data)
+            return
+          }
+          case IntegrationJobAction.adsAutomaticEvent: {
+            await handleAdsAutomaticEvent(job.data.data)
             return
           }
           case IntegrationJobAction.updateContactAvatar: {

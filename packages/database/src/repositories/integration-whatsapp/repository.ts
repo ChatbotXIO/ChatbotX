@@ -72,6 +72,23 @@ type UpdateWhatsappRegistrationInput = WorkspaceIntegrationRef & {
   >
 }
 
+type ReplaceWhatsappAuthInput = WorkspaceIntegrationRef & {
+  auth: typeof integrationWhatsappModel.$inferInsert.auth
+  hasCapiScope: boolean
+  capiScopeCheckedAt: Date
+}
+
+type UpdateWhatsappCapiScopeCacheInput = WorkspaceIntegrationRef & {
+  hasCapiScope: boolean
+  capiScopeCheckedAt: Date
+  expectedCapiScopeCheckedAt: Date | null
+}
+
+type ClaimWhatsappCapiScopeCacheRefreshInput = WorkspaceIntegrationRef & {
+  capiScopeCheckedAt: Date
+  expectedCapiScopeCheckedAt: Date | null
+}
+
 type ClaimVerificationCodeSlotInput = WorkspaceIntegrationRef & {
   /** Timestamp written on the row, and the identity of this claim. */
   now: Date
@@ -83,10 +100,28 @@ type ReleaseVerificationCodeSlotInput = WorkspaceIntegrationRef & {
   claimedAt: Date
 }
 
+type UpdateDatasetIdIfNullInput = WorkspaceIntegrationRef & {
+  datasetId: string
+}
+
 const workspaceIntegrationFilter = (input: WorkspaceIntegrationRef) =>
   and(
     eq(integrationWhatsappModel.id, input.id),
     eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+  )
+
+/**
+ * Compare-and-swap guard for the CAPI scope cache: matches the integration only
+ * while its `capiScopeCheckedAt` still equals the value the caller read. Shared
+ * by the claim and the write-back so both sides use identical optimistic-lock
+ * semantics (`IS NOT DISTINCT FROM` also matches the initial NULL).
+ */
+const capiScopeCasFilter = (
+  input: WorkspaceIntegrationRef & { expectedCapiScopeCheckedAt: Date | null },
+) =>
+  and(
+    workspaceIntegrationFilter(input),
+    sql`${integrationWhatsappModel.capiScopeCheckedAt} IS NOT DISTINCT FROM ${input.expectedCapiScopeCheckedAt}`,
   )
 
 /**
@@ -191,6 +226,75 @@ class IntegrationWhatsappRepository {
       .where(eq(integrationWhatsappModel.id, id))
   }
 
+  /**
+   * Resolves the WhatsApp integration that owns a given `Inbox.id`. Ads
+   * conversion trigger hook points (tag applied, keyword matched, contact
+   * replied) only have the inbox/contactInbox in scope, not the integration
+   * id the job data requires — this is how they get it.
+   */
+  async findWorkspaceIntegrationByInboxId(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; wabaId: string } | null> {
+    const [row] = await tx
+      .select({
+        id: integrationWhatsappModel.id,
+        wabaId: integrationWhatsappModel.wabaId,
+      })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.inboxId, input.inboxId),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  }
+
+  async findByPhoneNumberId(
+    input: { phoneNumberId: string; wabaId?: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .select()
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.phoneNumberId, input.phoneNumberId),
+          input.wabaId
+            ? eq(integrationWhatsappModel.wabaId, input.wabaId)
+            : undefined,
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  }
+
+  listByWorkspaceId(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<
+    (IntegrationWhatsappModel & {
+      inbox?: { id: string; name: string } | null
+    })[]
+  > {
+    return tx.query.integrationWhatsappModel.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: "asc" },
+      with: {
+        inbox: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+  }
+
   async findVerificationCodeRequestedAt(
     input: WorkspaceIntegrationRef,
     tx: DatabaseClient = db,
@@ -220,6 +324,72 @@ class IntegrationWhatsappRepository {
       })
 
     return row?.registrationError ?? null
+  }
+
+  async updateCapiScopeCache(
+    input: UpdateWhatsappCapiScopeCacheInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({
+        hasCapiScope: input.hasCapiScope,
+        capiScopeCheckedAt: input.capiScopeCheckedAt,
+      })
+      .where(capiScopeCasFilter(input))
+      .returning()
+
+    return row ?? this.findByIdForWorkspace(input, tx)
+  }
+
+  async claimCapiScopeCacheRefresh(
+    input: ClaimWhatsappCapiScopeCacheRefreshInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({
+        capiScopeCheckedAt: input.capiScopeCheckedAt,
+      })
+      .where(capiScopeCasFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  async replaceAuth(
+    input: ReplaceWhatsappAuthInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({
+        auth: input.auth,
+        hasCapiScope: input.hasCapiScope,
+        capiScopeCheckedAt: input.capiScopeCheckedAt,
+      })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  async updateDatasetIdIfNull(
+    input: UpdateDatasetIdIfNullInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ datasetId: input.datasetId })
+      .where(
+        and(
+          workspaceIntegrationFilter(input),
+          isNull(integrationWhatsappModel.datasetId),
+        ),
+      )
+      .returning()
+
+    return row ?? null
   }
 
   /**

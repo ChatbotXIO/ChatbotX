@@ -11,4 +11,5 @@ export const queueNames = z.enum([
   "sequenceScheduler",
   "broadcast",
   "quota",
+  "adsConversion",
 ])

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -96,5 +97,8 @@ export const contactInboxModel = pgTable(
       table.contactId.asc().nullsLast(),
       table.lastOutboundMessageAt.asc().nullsLast(),
     ),
+    index("ContactInbox_referral_ctwaClid_idx")
+      .using("btree", sql`(${table.referral}->>'ctwaClid')`)
+      .where(sql`${table.referral}->>'ctwaClid' IS NOT NULL`),
   ],
 )

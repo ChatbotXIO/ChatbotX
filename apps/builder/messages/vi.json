@@ -147,6 +147,9 @@
     "remove": "Xóa",
     "restore": "Khôi phục"
   },
+  "errors": {
+    "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
+  },
   "states": {
     "success": "Thành công",
     "error": "Lỗi",
@@ -2298,6 +2301,207 @@
       "invalidAppSettings": "Cấu hình Facebook App không hợp lệ"
     }
   },
+  "ads": {
+    "title": "Quảng cáo",
+    "nav": {
+      "clickToWhatsappAds": "Quảng cáo nhấp vào WhatsApp",
+      "clickToTiktokAds": "Quảng cáo nhấp vào TikTok",
+      "connectAccounts": "Kết nối tài khoản",
+      "conversionEvents": "Sự kiện chuyển đổi",
+      "adsAnalytics": "Phân tích quảng cáo",
+      "reporting": "Báo cáo",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Sắp ra mắt"
+    },
+    "connectAccounts": {
+      "title": "Quản lý tất cả tài khoản quảng cáo",
+      "description": "Theo dõi chuyển đổi và tối ưu chiến dịch quảng cáo nhấp vào WhatsApp.",
+      "learnMore": "Tìm hiểu thêm",
+      "connectAdAccount": "Kết nối tài khoản quảng cáo",
+      "adAccountName": "Tên tài khoản quảng cáo",
+      "disconnect": "Ngắt kết nối",
+      "empty": "Chưa có tài khoản quảng cáo nào được kết nối.",
+      "adAccountsTitle": "Tài khoản quảng cáo Meta",
+      "adAccountsDescription": "Kết nối Facebook Ads để tải các tài khoản quảng cáo dùng cho chiến dịch nhấp vào WhatsApp.",
+      "adAccountsReconnectBanner": "Token tài khoản quảng cáo Meta đã hết hạn hoặc mất quyền. Hãy kết nối lại Facebook Ads để tiếp tục xem báo cáo quảng cáo.",
+      "adAccountsNotConnected": "Chưa có tài khoản quảng cáo Meta nào được kết nối.",
+      "adAccountsEmpty": "Không tìm thấy tài khoản quảng cáo Meta nào cho kết nối Facebook Ads này.",
+      "adAccountsNote": "Chi tiêu và đối tượng retarget được lấy từ các tài khoản quảng cáo này.",
+      "reconnectBanner": "Kết nối lại tài khoản WhatsApp để bật gửi sự kiện chuyển đổi về Meta.",
+      "reconnect": "Kết nối lại",
+      "reconnectSuccess": "Đã kết nối lại tài khoản WhatsApp.",
+      "selectAccountLabel": "Tài khoản WhatsApp",
+      "status": {
+        "ready": "Đã đủ quyền Automatic Events",
+        "missingPermission": "Thiếu quyền Automatic Events",
+        "unverified": "Chưa xác minh quyền"
+      },
+      "table": {
+        "name": "Tên",
+        "phoneNumber": "Số điện thoại",
+        "wabaId": "WABA ID",
+        "permission": "Automatic Events"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Kết nối tài khoản WhatsApp trước",
+        "description": "Theo dõi chuyển đổi quảng cáo nhấp vào WhatsApp cần một tài khoản WhatsApp đã kết nối trước khi có thể liên kết tài khoản quảng cáo và tạo tập dữ liệu chuyển đổi.",
+        "step1": "Kết nối tài khoản WhatsApp Business trong mục Kênh.",
+        "step2": "Quay lại đây để cấp quyền cho Meta Ads và chọn tài khoản quảng cáo.",
+        "step3": "Chúng tôi sẽ tự động tạo tập dữ liệu chuyển đổi bằng tài khoản WhatsApp Business của bạn.",
+        "cta": "Kết nối tài khoản WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Sự kiện chuyển đổi",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Quản lý tài khoản quảng cáo",
+      "export": "Xuất",
+      "selectAll": "Chọn tất cả",
+      "whatsappAsset": "Tài sản WhatsApp",
+      "selectWhatsappAsset": "Chọn tài sản WhatsApp",
+      "templates": "Mẫu tin nhắn",
+      "selectTemplates": "Chọn mẫu tin nhắn",
+      "noTemplates": "Không tìm thấy mẫu đã phê duyệt.",
+      "existingRules": "Quy tắc hiện có",
+      "noRules": "Chưa có quy tắc chuyển đổi cho tài sản WhatsApp này.",
+      "toggleRule": "Bật hoặc tắt quy tắc",
+      "deleteRule": "Xóa quy tắc",
+      "qualifyingTemplateMessageSent": "Tin nhắn mẫu đủ điều kiện được gửi",
+      "qualifyingFirstReply": "Liên hệ gửi tin nhắn đầu tiên",
+      "qualifyingAnyReply": "Liên hệ gửi tin nhắn",
+      "when": "Khi",
+      "whenOptions": {
+        "templateSent": "Tin nhắn mẫu đủ điều kiện được gửi",
+        "tagApplied": "Liên hệ được gắn thẻ",
+        "keywordMatched": "Tin nhắn của liên hệ khớp với quy tắc từ khóa",
+        "contactReplied": "Liên hệ gửi tin nhắn"
+      },
+      "tags": "Thẻ",
+      "selectTags": "Chọn thẻ",
+      "noTags": "Không tìm thấy thẻ nào.",
+      "untitledKeywordRule": "(quy tắc từ khóa chưa đặt tên)",
+      "keywordRules": "Quy tắc từ khóa",
+      "selectKeywordRules": "Chọn quy tắc từ khóa",
+      "noKeywordRules": "Không tìm thấy quy tắc từ khóa chiều vào nào.",
+      "replyOptions": "Tùy chọn trả lời",
+      "firstReplyOnly": "Chỉ tin nhắn đầu tiên",
+      "dedupeNote": "Tối đa 1 sự kiện mỗi ngày cho mỗi cuộc hội thoại theo từng quy tắc.",
+      "dealWon": "Chốt giao dịch",
+      "eventTypeLead": "Khách tiềm năng",
+      "eventTypePurchase": "Mua hàng",
+      "messages": {
+        "ruleSaved": "Đã lưu quy tắc chuyển đổi",
+        "ruleUpdated": "Đã cập nhật quy tắc chuyển đổi",
+        "ruleDeleted": "Đã xóa quy tắc chuyển đổi"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Trang 1",
+        "page2": "Trang 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Theo dõi khách hàng tiềm năng đạt chuẩn",
+        "question": "Tại thời điểm nào trong cuộc hội thoại bạn muốn xác định một liên hệ là khách hàng tiềm năng?",
+        "when": "Khi",
+        "then": "Thì đánh dấu khách hàng tiềm năng CTWA là"
+      },
+      "trackPurchases": {
+        "title": "Theo dõi mua hàng",
+        "question": "Mẫu tin nào xác nhận một giao dịch mua?",
+        "when": "Khi",
+        "then": "Thì",
+        "noValueNote": "Quy tắc mua hàng ghi nhận một chuyển đổi Mua mà không có giá trị đơn hàng — nó được tính vào số lượt mua nhưng cộng 0 vào doanh thu. Giá trị đơn hàng chỉ được ghi nhận bởi Meta Automatic Events."
+      }
+    },
+    "analytics": {
+      "title": "Phân tích CTWA",
+      "funnelOverview": "Tổng quan phễu",
+      "conversationsStarted": "Cuộc hội thoại đã bắt đầu",
+      "qualifiedLeads": "Khách hàng tiềm năng đạt chuẩn",
+      "purchases": "Lượt mua",
+      "adSpend": "Chi tiêu quảng cáo",
+      "spendAccountLevelNote": "Chi tiêu được báo cáo ở cấp tài khoản quảng cáo Meta; khi chọn tài khoản WhatsApp, các quảng cáo chỉ có chi tiêu nhưng không có hoạt động phễu cho tài khoản đó sẽ bị ẩn.",
+      "revenue": "Doanh thu",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Doanh thu giả định một loại tiền tệ duy nhất (USD). Các tài khoản quảng cáo đa tiền tệ chưa được tổng hợp.",
+      "costPerLead": "Chi phí/khách tiềm năng",
+      "costPerPurchase": "Chi phí/lượt mua",
+      "impressions": "Lượt hiển thị",
+      "clicks": "Lượt nhấp",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Chi phí/cuộc hội thoại",
+      "costCurrencyNote": "Các chỉ số chi phí giả định một loại tiền tệ duy nhất (USD), nhất quán với chi tiêu quảng cáo.",
+      "performanceChart": {
+        "title": "Hiệu suất theo thời gian",
+        "empty": "Chưa có cuộc hội thoại, khách tiềm năng, lượt mua hoặc chi tiêu nào trong khoảng thời gian này."
+      },
+      "dateRange": {
+        "oneDay": "1N",
+        "oneWeek": "1T",
+        "oneMonth": "1Th",
+        "threeMonths": "3Th",
+        "custom": "Tùy chỉnh",
+        "apply": "Áp dụng"
+      },
+      "allAds": "Tất cả quảng cáo",
+      "adAccountFilter": {
+        "all": "Tất cả tài khoản quảng cáo",
+        "label": "Tài khoản quảng cáo",
+        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
+      },
+      "retarget": "Tiếp thị lại",
+      "thoseWhoPurchased": "Những người đã mua",
+      "thoseWhoStartedConversation": "Những người đã bắt đầu cuộc hội thoại",
+      "sendWhatsappBroadcast": "Gửi broadcast WhatsApp",
+      "from": "Từ ngày",
+      "to": "Đến ngày",
+      "unattributed": "Không gán quảng cáo",
+      "retargetDialog": {
+        "title": "Tiếp thị lại liên hệ CTWA",
+        "createAudience": "Tạo tệp đối tượng",
+        "useExistingAudience": "Dùng tệp hiện có",
+        "audienceName": "Tên tệp đối tượng",
+        "audiencePrefix": "CTWA",
+        "confirm": "Bắt đầu đồng bộ",
+        "success": "Đã đưa tác vụ đồng bộ tệp tiếp thị lại vào hàng đợi.",
+        "error": "Không thể đưa tác vụ đồng bộ tệp tiếp thị lại vào hàng đợi."
+      },
+      "delivery": {
+        "title": "Gửi chuyển đổi",
+        "sent": "Đã gửi",
+        "pending": "Đang chờ",
+        "failed": "Thất bại",
+        "skippedNoScope": "Bỏ qua (thiếu quyền)",
+        "skippedRegion": "Bỏ qua (khu vực)",
+        "noScopeWarning": "Một số chuyển đổi chưa được gửi vì tài khoản WhatsApp này thiếu quyền sự kiện. Kết nối lại để bật báo cáo Automatic Events.",
+        "reconnectCta": "Kết nối lại tài khoản",
+        "empty": "Chưa có sự kiện chuyển đổi nào trong khoảng thời gian này."
+      },
+      "export": {
+        "conversations": "Xuất cuộc hội thoại",
+        "leads": "Xuất khách tiềm năng",
+        "purchases": "Xuất lượt mua"
+      },
+      "csv": {
+        "contactName": "Tên liên hệ",
+        "phone": "Số điện thoại",
+        "adId": "ID quảng cáo",
+        "occurredAt": "Thời điểm xảy ra"
+      },
+      "empty": "Chưa có dữ liệu. Hãy kết nối tài khoản quảng cáo và bắt đầu theo dõi chuyển đổi."
+    }
+  },
   "googleSheets": {
     "setting": {
       "description": "Cấu hình dịch vụ Google (Sheets, SSO và nhiều hơn nữa)",
@@ -3059,6 +3263,13 @@
         "unableToVerifyToken": "Không xác minh được token WhatsApp.",
         "wabaMismatch": "WhatsApp Business Account đã chọn không khớp với quyền đã cấp.",
         "wabaResolveFailed": "Không xác định được WhatsApp Business Account từ quyền đã cấp."
+      }
+    },
+    "reconnect": {
+      "errors": {
+        "notFound": "Không tìm thấy kết nối WhatsApp.",
+        "phoneNumberMismatch": "Quá trình kết nối lại trả về đúng WhatsApp Business Account, nhưng không phải số điện thoại đang được kết nối với workspace này.",
+        "wabaMismatch": "Quá trình kết nối lại trả về một WhatsApp Business Account khác. Vui lòng kết nối lại đúng tài khoản."
       }
     },
     "marketingMessageLite": "Tin nhắn tiếp thị Lite",

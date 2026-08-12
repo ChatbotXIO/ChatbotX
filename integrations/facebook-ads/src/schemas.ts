@@ -36,6 +36,27 @@ export type FacebookCustomAudience = z.infer<
   typeof facebookCustomAudienceSchema
 >
 
+const numericInsightField = z
+  .union([z.string(), z.number()])
+  .optional()
+  .transform((value) => {
+    if (value === undefined || value === "") {
+      return 0
+    }
+    const parsed = typeof value === "number" ? value : Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  })
+
+export const facebookAdInsightSchema = z.object({
+  ad_id: z.string(),
+  ad_name: z.string().optional(),
+  spend: numericInsightField,
+  impressions: numericInsightField,
+  clicks: numericInsightField,
+  date_start: z.string().optional(),
+})
+export type FacebookAdInsight = z.infer<typeof facebookAdInsightSchema>
+
 export const customAudienceOperations = z.enum(["add", "remove"])
 export type CustomAudienceOperation = z.infer<typeof customAudienceOperations>
 
@@ -63,6 +84,27 @@ export type SyncAudienceUserProps = {
   fallbackCountry?: string | null
 }
 
+export type GetAdInsightsProps = {
+  adAccountId: string
+  since: string
+  until: string
+  /** When set to 1, requests daily-broken-down rows (adds `date_start`). */
+  timeIncrement?: 1
+}
+
+export type CreateCustomAudienceProps = {
+  adAccountId: string
+  name: string
+  description?: string | null
+}
+
+export type BulkSyncHashedAudienceUsersProps = {
+  customAudienceId: string
+  operation: CustomAudienceOperation
+  contacts: AudienceContact[]
+  fallbackCountry?: string | null
+}
+
 export type FacebookAdsActions = {
   getAdAccounts: Handler<
     { ctx: Context<FacebookAdsAuthValue> },
@@ -71,6 +113,21 @@ export type FacebookAdsActions = {
   getCustomAudiences: Handler<
     { ctx: Context<FacebookAdsAuthValue>; props: { adAccountId: string } },
     FacebookCustomAudience[]
+  >
+  getAdInsights: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: GetAdInsightsProps },
+    FacebookAdInsight[]
+  >
+  createCustomAudience: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: CreateCustomAudienceProps },
+    { id: string }
+  >
+  bulkSyncHashedAudienceUsers: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: BulkSyncHashedAudienceUsersProps
+    },
+    { received: number; batches: number }
   >
   syncAudienceUser: Handler<
     { ctx: Context<FacebookAdsAuthValue>; props: SyncAudienceUserProps },

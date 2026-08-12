@@ -43,6 +43,7 @@ export const IntegrationJobAction = {
   coexistMessengerSync: "coexistMessengerSync",
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
+  adsAutomaticEvent: "adsAutomaticEvent",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
@@ -343,6 +344,26 @@ export type IntegrationJobCoexistAttachmentDownload = {
   }
 }
 
+export type IntegrationJobAdsAutomaticEvent = {
+  type: typeof IntegrationJobAction.adsAutomaticEvent
+  data: {
+    integrationType: "whatsapp"
+    integrationIdentifier: string
+    phoneNumberId: string
+    wabaId: string
+    payload: {
+      event_name: "LeadSubmitted" | "Purchase"
+      id: string
+      timestamp: number | string
+      ctwa_clid: string
+      custom_data?: {
+        currency: string
+        value: number | string
+      }
+    }
+  }
+}
+
 /**
  * Fetches a contact's profile picture from the channel's Graph/API, mirrors
  * the bytes to our object storage, and persists the storage path on the
@@ -457,6 +478,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistMessengerSync
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
+  | IntegrationJobAdsAutomaticEvent
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation

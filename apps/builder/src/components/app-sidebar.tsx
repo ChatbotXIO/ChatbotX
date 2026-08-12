@@ -14,6 +14,7 @@ import {
   ChevronsRight,
   LightbulbIcon,
   type LucideIcon,
+  MegaphoneIcon,
   MessageCircleMoreIcon,
   RadioIcon,
   SlidersHorizontalIcon,
@@ -139,6 +140,12 @@ export function AppSidebar({
         title: t("tools.title"),
         url: `/space/${workspaceId}/tools`,
         icon: WrenchIcon,
+      },
+      {
+        title: t("ads.title"),
+        url: `/space/${workspaceId}/ads`,
+        icon: MegaphoneIcon,
+        permission: "superAdmin",
       },
       {
         title: t("settings.title"),

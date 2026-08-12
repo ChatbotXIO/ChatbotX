@@ -5,6 +5,7 @@ export default defineConfig({
   entry: [
     "src/chat/worker.ts",
     "src/integration/worker.ts",
+    "src/ads-conversion/worker.ts",
     "src/ai-agent/worker.ts",
     "src/default/worker.ts",
     "src/trigger/worker.ts",

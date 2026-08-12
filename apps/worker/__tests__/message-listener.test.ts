@@ -2,8 +2,16 @@ import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockRecordSendFailure } = vi.hoisted(() => ({
+const {
+  mockRecordSendFailure,
+  mockEnqueueContactRepliedEvaluation,
+  mockFindWorkspaceIntegrationByInboxId,
+  mockHasEnabledTriggerRule,
+} = vi.hoisted(() => ({
   mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
+  mockEnqueueContactRepliedEvaluation: vi.fn().mockResolvedValue(undefined),
+  mockFindWorkspaceIntegrationByInboxId: vi.fn(),
+  mockHasEnabledTriggerRule: vi.fn(),
 }))
 
 const makeService = (methods: string[]) =>
@@ -40,6 +48,17 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
   },
+  adsConversionService: {
+    enqueueContactRepliedEvaluation: mockEnqueueContactRepliedEvaluation,
+    hasEnabledTriggerRule: mockHasEnabledTriggerRule,
+    isEligibleChannel: (channel: unknown) => channel === "whatsapp",
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  integrationWhatsappRepository: {
+    findWorkspaceIntegrationByInboxId: mockFindWorkspaceIntegrationByInboxId,
+  },
 }))
 
 const { messageListeners } = await import("../src/events/message/listener")
@@ -64,10 +83,28 @@ function failedListener() {
   return listener
 }
 
+function contactRepliedListener() {
+  const listener = messageListeners[
+    messageEventTypeSchema.enum["message:received"]
+  ]?.find((candidate) => candidate.name === "ads-conversion-contact-replied")
+
+  if (!listener?.handler) {
+    throw new Error("ads-conversion-contact-replied listener is missing")
+  }
+
+  return listener
+}
+
 describe("messageListeners", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockRecordSendFailure.mockResolvedValue(undefined)
+    mockEnqueueContactRepliedEvaluation.mockResolvedValue(undefined)
+    mockFindWorkspaceIntegrationByInboxId.mockResolvedValue({
+      id: "iw-1",
+      wabaId: "waba-1",
+    })
+    mockHasEnabledTriggerRule.mockResolvedValue(true)
   })
 
   test("registers active-hourly only for real message activity", () => {
@@ -141,5 +178,211 @@ describe("messageListeners", () => {
     ])
 
     expect(result).toEqual({ failedMessageIds: ["stream-1-0"] })
+  })
+
+  test("registers the ads-conversion contact-replied listener on message:received", () => {
+    expect(listenerNames("message:received")).toContain(
+      "ads-conversion-contact-replied",
+    )
+  })
+
+  test("enqueues contactReplied evaluation for inbound whatsapp payloads", async () => {
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+        isFirstIncomingMessage: true,
+      },
+    ])
+
+    expect(mockFindWorkspaceIntegrationByInboxId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+    })
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationWhatsappId: "iw-1",
+      contactInboxId: "ci-1",
+      isFirstReply: true,
+      messageId: "msg-1",
+    })
+  })
+
+  test("ignores payloads without origin: 'inbound' (e.g. delivery-status echoes)", async () => {
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        messageId: "msg-1",
+        // origin is intentionally omitted — this is the delivery-status shape
+        // emitted from message-status.ts, not a genuine inbound message.
+      },
+    ])
+
+    expect(mockFindWorkspaceIntegrationByInboxId).not.toHaveBeenCalled()
+    expect(mockEnqueueContactRepliedEvaluation).not.toHaveBeenCalled()
+  })
+
+  test("ignores inbound payloads on non-whatsapp channels", async () => {
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "messenger",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+      },
+    ])
+
+    expect(mockEnqueueContactRepliedEvaluation).not.toHaveBeenCalled()
+  })
+
+  test("resolves integrationWhatsappId once per inboxId across a batch", async () => {
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+        isFirstIncomingMessage: true,
+      },
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-2",
+        contactInboxId: "ci-2",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:01.000Z"),
+        origin: "inbound",
+        messageId: "msg-2",
+        isFirstIncomingMessage: false,
+      },
+    ])
+
+    expect(mockFindWorkspaceIntegrationByInboxId).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledTimes(2)
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenNthCalledWith(1, {
+      workspaceId: "ws-1",
+      integrationWhatsappId: "iw-1",
+      contactInboxId: "ci-1",
+      isFirstReply: true,
+      messageId: "msg-1",
+    })
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenNthCalledWith(2, {
+      workspaceId: "ws-1",
+      integrationWhatsappId: "iw-1",
+      contactInboxId: "ci-2",
+      isFirstReply: false,
+      messageId: "msg-2",
+    })
+  })
+
+  test("skips enqueue when the inbox has no WhatsApp integration", async () => {
+    mockFindWorkspaceIntegrationByInboxId.mockResolvedValue(null)
+
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+      },
+    ])
+
+    expect(mockEnqueueContactRepliedEvaluation).not.toHaveBeenCalled()
+  })
+
+  test("defaults isFirstReply to false when isFirstIncomingMessage is omitted", async () => {
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+      },
+    ])
+
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledWith(
+      expect.objectContaining({ isFirstReply: false }),
+    )
+  })
+
+  test("skips enqueue when the integration has no enabled contactReplied rule", async () => {
+    mockHasEnabledTriggerRule.mockResolvedValue(false)
+
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+      },
+    ])
+
+    expect(mockHasEnabledTriggerRule).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationWhatsappId: "iw-1",
+      triggerType: "contactReplied",
+    })
+    expect(mockEnqueueContactRepliedEvaluation).not.toHaveBeenCalled()
+  })
+
+  test("checks hasEnabledTriggerRule once per integrationWhatsappId across a batch", async () => {
+    await contactRepliedListener().handler?.([
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+        origin: "inbound",
+        messageId: "msg-1",
+        isFirstIncomingMessage: true,
+      },
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-2",
+        contactInboxId: "ci-2",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        occurredAt: new Date("2026-08-11T00:00:01.000Z"),
+        origin: "inbound",
+        messageId: "msg-2",
+        isFirstIncomingMessage: false,
+      },
+    ])
+
+    expect(mockHasEnabledTriggerRule).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledTimes(2)
   })
 })

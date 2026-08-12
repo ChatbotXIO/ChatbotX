@@ -44,7 +44,7 @@ afterEach(() => {
 })
 
 describe("subscribeWebhook", () => {
-  it("posts subscribed_fields with all four coexist-relevant fields", async () => {
+  it("posts subscribed_fields with coexist and automatic-events fields", async () => {
     postMock.mockReturnValueOnce(okResponse())
 
     await subscribeWebhook({ auth: buildAuth() })
@@ -57,6 +57,7 @@ describe("subscribeWebhook", () => {
       "history",
       "smb_app_state_sync",
       "smb_message_echoes",
+      "automatic_events",
     ])
     expect(options.json.subscribed_fields).toEqual([
       ...WHATSAPP_SUBSCRIBED_FIELDS,
@@ -75,7 +76,7 @@ describe("subscribeWebhook", () => {
     const [, options] = postMock.mock.calls[0]
     expect(options.json.override_callback_uri).toBe("https://example.com/wh")
     expect(options.json.verify_token).toBe("verify")
-    expect(options.json.subscribed_fields).toHaveLength(4)
+    expect(options.json.subscribed_fields).toHaveLength(5)
   })
 
   it("omits override fields when overrideCallbackUrl not set and env var unset", async () => {

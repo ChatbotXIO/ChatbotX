@@ -80,6 +80,18 @@ export const receivedPayloadSchema = z.object({
   inboxId: z.string(),
   sourceId: z.string().optional(),
   occurredAt: z.date(),
+  // `message:received` is also emitted for outbound delivery-status echoes
+  // (see message-status.ts) — `origin: "inbound"` is the discriminant that
+  // tells apart a genuine contact-authored message from those. Optional so
+  // existing listeners (mac-tracking, active-hourly) are unaffected.
+  origin: z.literal("inbound").optional(),
+  messageId: z.string().optional(),
+  // Whether this was the contact's first-ever inbound message on this
+  // contactInbox, computed before the tracking update runs (see
+  // received-message.ts) since `ContactInbox.firstInteractionAt`/
+  // `lastIncomingMessageAt` get set by outbound sends too and can't be used
+  // to infer this after the fact.
+  isFirstIncomingMessage: z.boolean().optional(),
 })
 export type MessageReceivedPayload = z.infer<typeof receivedPayloadSchema>
 

@@ -444,6 +444,15 @@ const saveAndBroadcastMessage = async (props: {
   } = props
   const repository = await createMessageRepository()
 
+  // Computed from the pre-update `contactInbox` snapshot this function was
+  // called with — before persistNewMessageSideEffects' updateTracking runs —
+  // because ContactInbox.lastIncomingMessageAt/firstInteractionAt get set by
+  // outbound sends too (see contact-inbox/service.ts) and can't be used to
+  // infer "first inbound message" after the tracking update has landed.
+  const isInboundMessage = incomingMessage.messageType !== "outgoing"
+  const isFirstIncomingMessage =
+    isInboundMessage && contactInbox.lastIncomingMessageAt === null
+
   const messageInput = {
     id: createId(),
     conversationId: conversation.id,
@@ -523,6 +532,9 @@ const saveAndBroadcastMessage = async (props: {
       inboxId: inbox.id,
       occurredAt: newMessage.createdAt,
       sourceId: newMessage.sourceId ?? undefined,
+      origin: isInboundMessage ? "inbound" : undefined,
+      messageId: newMessage.id,
+      isFirstIncomingMessage,
     })
   }
 
