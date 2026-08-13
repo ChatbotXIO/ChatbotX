@@ -147,6 +147,9 @@
     "remove": "הסרה",
     "restore": "שחזור"
   },
+  "errors": {
+    "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
+  },
   "states": {
     "success": "הצלחה",
     "error": "שגיאה",
@@ -545,6 +548,207 @@
       "invalidAppSettings": "הגדרות אפליקציית Facebook אינן תקינות"
     }
   },
+  "ads": {
+    "title": "מודעות",
+    "nav": {
+      "clickToWhatsappAds": "מודעות Click to WhatsApp",
+      "clickToTiktokAds": "מודעות Click to TikTok",
+      "connectAccounts": "חיבור חשבונות",
+      "conversionEvents": "אירועי המרה",
+      "adsAnalytics": "אנליטיקת מודעות",
+      "reporting": "דוחות",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "בקרוב"
+    },
+    "connectAccounts": {
+      "title": "ניהול כל חשבונות המודעות שלכם",
+      "description": "עקבו אחר המרות ואפטמו את קמפייני ה-click-to-WhatsApp שלכם.",
+      "learnMore": "למידה נוספת",
+      "connectAdAccount": "חיבור חשבון מודעות",
+      "adAccountName": "שם חשבון המודעות",
+      "disconnect": "ניתוק",
+      "empty": "לא חובר עדיין חשבון מודעות.",
+      "adAccountsTitle": "חשבונות מודעות של Meta",
+      "adAccountsDescription": "חברו את מודעות Facebook כדי לטעון את חשבונות המודעות המשמשים לקמפייני click-to-WhatsApp.",
+      "adAccountsReconnectBanner": "האסימון של חשבון המודעות שלכם ב-Meta פג תוקף או איבד הרשאות. חברו מחדש את מודעות Facebook כדי לשמור על זמינות דוחות המודעות.",
+      "adAccountsNotConnected": "לא חוברו עדיין חשבונות מודעות של Meta.",
+      "adAccountsEmpty": "לא נמצאו חשבונות מודעות של Meta עבור חיבור מודעות Facebook זה.",
+      "adAccountsNote": "ההוצאה וקהלי הרימרקטינג מגיעים מחשבונות המודעות הללו.",
+      "reconnectBanner": "חברו מחדש את חשבון WhatsApp שלכם כדי לאפשר שליחת אירועי המרה ל-Meta.",
+      "reconnect": "חיבור מחדש",
+      "reconnectSuccess": "חשבון WhatsApp חובר מחדש.",
+      "selectAccountLabel": "חשבון WhatsApp",
+      "status": {
+        "ready": "אירועים אוטומטיים מוכנים",
+        "missingPermission": "חסרה הרשאת אירועים אוטומטיים",
+        "unverified": "ההרשאה לא אומתה"
+      },
+      "table": {
+        "name": "שם",
+        "phoneNumber": "מספר טלפון",
+        "wabaId": "מזהה WABA",
+        "permission": "אירועים אוטומטיים"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "חברו קודם את חשבון WhatsApp שלכם",
+        "description": "מעקב המרות של Click-to-WhatsApp מחייב חשבון WhatsApp מחובר לפני שתוכלו לקשר חשבונות מודעות וליצור מערכי נתוני המרה.",
+        "step1": "חברו את חשבון WhatsApp Business שלכם בעמוד הערוצים.",
+        "step2": "חזרו לכאן כדי לאשר את Meta Ads ולבחור את חשבון המודעות שלכם.",
+        "step3": "אנחנו ניצור אוטומטית את מערך נתוני ההמרה באמצעות חשבון WhatsApp Business שלכם.",
+        "cta": "חיבור חשבון WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "אירועי המרה",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "ניהול חשבונות מודעות",
+      "export": "ייצוא",
+      "selectAll": "בחירת הכול",
+      "whatsappAsset": "נכס WhatsApp",
+      "selectWhatsappAsset": "בחירת נכס WhatsApp",
+      "templates": "תבניות",
+      "selectTemplates": "בחירת תבניות",
+      "noTemplates": "לא נמצאו תבניות מאושרות.",
+      "existingRules": "כללים קיימים",
+      "noRules": "אין עדיין כללי המרה לנכס WhatsApp זה.",
+      "toggleRule": "הפעלה או השבתה של הכלל",
+      "deleteRule": "מחיקת הכלל",
+      "qualifyingTemplateMessageSent": "הודעת התבנית המכשירה נשלחת",
+      "qualifyingFirstReply": "איש הקשר שולח את הודעתו הראשונה",
+      "qualifyingAnyReply": "איש הקשר שולח הודעה",
+      "when": "כאשר",
+      "whenOptions": {
+        "templateSent": "הודעת התבנית המכשירה נשלחת",
+        "tagApplied": "איש הקשר מתוייג",
+        "keywordMatched": "ההודעה של איש הקשר תואמת לכלל מילות מפתח",
+        "contactReplied": "איש הקשר שולח הודעה"
+      },
+      "tags": "תגיות",
+      "selectTags": "בחירת תגיות",
+      "noTags": "לא נמצאו תגיות.",
+      "untitledKeywordRule": "(כלל מילות מפתח ללא שם)",
+      "keywordRules": "כללי מילות מפתח",
+      "selectKeywordRules": "בחירת כללי מילות מפתח",
+      "noKeywordRules": "לא נמצאו כללי מילות מפתח נכנסים.",
+      "replyOptions": "אפשרויות תגובה",
+      "firstReplyOnly": "רק ההודעה הראשונה",
+      "dedupeNote": "אירוע אחד לכל היותר ביום עבור כל שיחה עבור כל כלל.",
+      "dealWon": "עסקה שנסגרה",
+      "eventTypeLead": "ליד",
+      "eventTypePurchase": "רכישה",
+      "messages": {
+        "ruleSaved": "כלל ההמרה נשמר",
+        "ruleUpdated": "כלל ההמרה עודכן",
+        "ruleDeleted": "כלל ההמרה נמחק"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "עמוד 1",
+        "page2": "עמוד 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "מעקב אחר לידים מוכשרים",
+        "question": "באיזה שלב בשיחה תרצו להכשיר איש קשר כליד?",
+        "when": "כאשר",
+        "then": "אז סמנו את ליד ה-CTWA כ"
+      },
+      "trackPurchases": {
+        "title": "מעקב אחר רכישות",
+        "question": "איזו תבנית מאשרת רכישה?",
+        "when": "כאשר",
+        "then": "אז",
+        "noValueNote": "רכישה מבוססת-כלל רושמת המרת רכישה ללא ערך הזמנה — היא נספרת לכיוון הרכישות אך מוסיפה 0 להכנסות. ערך ההזמנה נלכד רק על ידי Meta Automatic Events."
+      }
+    },
+    "analytics": {
+      "title": "אנליטיקת CTWA",
+      "funnelOverview": "סקירת המשפך",
+      "conversationsStarted": "שיחות שהתחילו",
+      "qualifiedLeads": "לידים מוכשרים",
+      "purchases": "רכישות",
+      "adSpend": "הוצאת מודעות",
+      "spendAccountLevelNote": "ההוצאה מדווחת בהתאם לחשבון המודעות של Meta; כאשר נבחר חשבון WhatsApp, מודעות המציגות הוצאה בלבד ללא פעילות משפך עבור אותו חשבון מוסתרות.",
+      "revenue": "הכנסות",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "ההכנסות מניחות מטבע יחיד (USD). חשבונות מודעות במטבעות מעורבים אינם מצטברים עדיין.",
+      "costPerLead": "עלות/ליד",
+      "costPerPurchase": "עלות/רכישה",
+      "impressions": "חשיפות",
+      "clicks": "קליקים",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "עלות/שיחה",
+      "costCurrencyNote": "מדדי העלות מניחים מטבע יחיד (USD), בהתאם להוצאת המודעות.",
+      "performanceChart": {
+        "title": "ביצועים במהלך זמן",
+        "empty": "אין עדיין שיחות, לידים, רכישות או הוצאה בטווח זה."
+      },
+      "dateRange": {
+        "oneDay": "1י",
+        "oneWeek": "1ש",
+        "oneMonth": "1ח",
+        "threeMonths": "3ח",
+        "custom": "מותאם אישית",
+        "apply": "החלה"
+      },
+      "allAds": "כל המודעות",
+      "adAccountFilter": {
+        "all": "כל חשבונות המודעות",
+        "label": "חשבון מודעות",
+        "note": "מודעות עם המרות אך עם הוצאה אפסית או אפס הצגות בטווח התאריכים הנבחר מוסתרות בעת סינון לפי חשבון מודעות."
+      },
+      "retarget": "רימרקטינג",
+      "thoseWhoPurchased": "מי שרכשו",
+      "thoseWhoStartedConversation": "מי שהתחילו שיחה",
+      "sendWhatsappBroadcast": "שליחת שידור WhatsApp",
+      "from": "מ",
+      "to": "עד",
+      "unattributed": "לא מיוחס",
+      "retargetDialog": {
+        "title": "רימרקטינג לאנשי קשר של CTWA",
+        "createAudience": "יצירת קהל",
+        "useExistingAudience": "שימוש בקהל קיים",
+        "audienceName": "שם הקהל",
+        "audiencePrefix": "CTWA",
+        "confirm": "התחלת סנכרון",
+        "success": "סנכרון קהל הרימרקטינג נכנס לתור.",
+        "error": "העמדת סנכרון קהל הרימרקטינג בתור נכשלה."
+      },
+      "delivery": {
+        "title": "מסירת המרות",
+        "sent": "נשלח",
+        "pending": "בהמתנה",
+        "failed": "נכשל",
+        "skippedNoScope": "דולג (ללא הרשאה)",
+        "skippedRegion": "דולג (אזור)",
+        "noScopeWarning": "חלק מההמרות לא נשלחו כי לחשבון WhatsApp זה חסרה הרשאת אירועים. חברו אותו מחדש כדי לאפשר דיווח Automatic Events.",
+        "reconnectCta": "חיבור מחדש של החשבון",
+        "empty": "אין עדיין אירועי המרה בטווח זה."
+      },
+      "export": {
+        "conversations": "ייצוא שיחות",
+        "leads": "ייצוא לידים",
+        "purchases": "ייצוא רכישות"
+      },
+      "csv": {
+        "contactName": "שם איש הקשר",
+        "phone": "טלפון",
+        "adId": "מזהה מודעה",
+        "occurredAt": "התרחש בתאריך"
+      },
+      "empty": "אין עדיין נתונים. חברו חשבון מודעות והתחילו לעקוב אחר המרות."
+    }
+  },
   "googleSheets": {
     "setting": {
       "label": "Google Sheets",
@@ -897,8 +1101,14 @@
       "badge": "מחיקה מתוזמנת"
     }
   },
-  "workspaces": { "list": { "title": "רשימת סביבות עבודה" } },
-  "workspaceToken": { "title": "אסימון סביבת עבודה" },
+  "workspaces": {
+    "list": {
+      "title": "רשימת סביבות עבודה"
+    }
+  },
+  "workspaceToken": {
+    "title": "אסימון סביבת עבודה"
+  },
   "dialog": {
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו."
   },
@@ -1136,7 +1346,9 @@
       "unknown": "לא ניתן היה להפעיל את הסנכרון. נסו שוב מאוחר יותר."
     }
   },
-  "omnichannel": { "title": "רב-ערוצי" },
+  "omnichannel": {
+    "title": "רב-ערוצי"
+  },
   "openai": {
     "connect": {
       "description": "השיבו למשתמשים באופן טבעי באמצעות AI המבוסס על הנתונים העסקיים שלכם."
@@ -1203,14 +1415,25 @@
   },
   "settings": {
     "title": "הגדרות",
-    "agents": { "description": "תיאור סוכני AI", "title": "סוכני AI" },
+    "agents": {
+      "description": "תיאור סוכני AI",
+      "title": "סוכני AI"
+    },
     "aiTriggers": {
       "description": "תיאור גורמים מפעילים של AI",
       "title": "גורמים מפעילים של AI"
     },
-    "automatedResponses": { "title": "מילות מפתח" },
-    "openai": { "description": "תיאור שילוב OpenAI", "title": "שילוב OpenAI" },
-    "claude": { "description": "תיאור שילוב Claude", "title": "שילוב Claude" },
+    "automatedResponses": {
+      "title": "מילות מפתח"
+    },
+    "openai": {
+      "description": "תיאור שילוב OpenAI",
+      "title": "שילוב OpenAI"
+    },
+    "claude": {
+      "description": "תיאור שילוב Claude",
+      "title": "שילוב Claude"
+    },
     "deepseek": {
       "description": "תיאור שילוב DeepSeek",
       "title": "שילוב DeepSeek"
@@ -1251,10 +1474,20 @@
     "changePasswordDescription": "הגדירו סיסמה חדשה לפני שתמשיכו.",
     "passwordChangeSuccess": "הסיסמה שונתה"
   },
-  "emailTopics": { "title": "נושאי דוא\"ל" },
-  "tags": { "title": "תגיות" },
-  "texts": { "or": "או" },
-  "theme": { "dark": "כהה", "light": "בהיר", "system": "מערכת" },
+  "emailTopics": {
+    "title": "נושאי דוא\"ל"
+  },
+  "tags": {
+    "title": "תגיות"
+  },
+  "texts": {
+    "or": "או"
+  },
+  "theme": {
+    "dark": "כהה",
+    "light": "בהיר",
+    "system": "מערכת"
+  },
   "validation": {
     "maxSize": "גודל הקובץ חורג מהמגבלה המרבית",
     "maxItemsReached": "מותר לכל היותר {max} {feature} בכל סביבת עבודה",
@@ -1274,14 +1507,22 @@
   },
   "whatsapp": {
     "category": {
-      "marketing": { "description": "תיאור קטגוריית שיווק", "label": "שיווק" },
-      "utility": { "description": "תיאור קטגוריית שירות", "label": "שירות" }
+      "marketing": {
+        "description": "תיאור קטגוריית שיווק",
+        "label": "שיווק"
+      },
+      "utility": {
+        "description": "תיאור קטגוריית שירות",
+        "label": "שירות"
+      }
     },
     "commands": {
       "description": "אלו מילות מפתח מיוחדות שמורות לבוט WhatsApp מה לעשות",
       "label": "פקודות"
     },
-    "autoConnect": { "inProgress": "מתבצע חיבור…" },
+    "autoConnect": {
+      "inProgress": "מתבצע חיבור…"
+    },
     "connectExisting": "חיבור חשבון WhatsApp Business קיים",
     "embeddedSignupDone": "ההרשמה הושלמה — ניתן לסגור כרטיסייה זו.",
     "embeddedSignupPopupBlocked": "אפשרו חלונות קופצים באתר זה ונסו שוב.",
@@ -1305,7 +1546,10 @@
       "title": "אימות מספר טלפון WhatsApp",
       "description": "בקשו קוד אימות מ-Meta, הזינו אותו כאן ומספר הטלפון יירשם אוטומטית.",
       "errorTitle": "נדרש אימות של מספר הטלפון",
-      "methods": { "sms": "SMS", "voice": "שיחה קולית" },
+      "methods": {
+        "sms": "SMS",
+        "voice": "שיחה קולית"
+      },
       "actions": {
         "sendCode": "שליחת קוד",
         "resendIn": "שליחה מחדש בעוד {seconds} שניות",
@@ -1342,17 +1586,42 @@
         "wabaResolveFailed": "לא ניתן היה לזהות את חשבון WhatsApp Business מתוך ההרשאה."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "שילוב WhatsApp לא נמצא.",
+        "phoneNumberMismatch": "החיבור מחדש החזיר את חשבון WhatsApp Business הצפוי, אך לא את מספר הטלפון המחובר לסביבת עבודה זו.",
+        "wabaMismatch": "החיבור מחדש החזיר חשבון WhatsApp Business שונה. חברו מחדש את אותו חשבון."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
-      "carouselImage": { "label": "תמונת קרוסלה" },
-      "carouselVideo": { "label": "סרטון קרוסלה" },
-      "document": { "label": "מסמך" },
-      "image": { "label": "תמונה" },
-      "location": { "label": "מיקום" },
-      "text": { "label": "טקסט" },
-      "video": { "label": "וידאו" },
-      "viewCatalog": { "label": "הצגת קטלוג" },
-      "viewProduct": { "label": "הצגת מוצר" },
+      "carouselImage": {
+        "label": "תמונת קרוסלה"
+      },
+      "carouselVideo": {
+        "label": "סרטון קרוסלה"
+      },
+      "document": {
+        "label": "מסמך"
+      },
+      "image": {
+        "label": "תמונה"
+      },
+      "location": {
+        "label": "מיקום"
+      },
+      "text": {
+        "label": "טקסט"
+      },
+      "video": {
+        "label": "וידאו"
+      },
+      "viewCatalog": {
+        "label": "הצגת קטלוג"
+      },
+      "viewProduct": {
+        "label": "הצגת מוצר"
+      },
       "params": {
         "couponCode": "קוד קופון",
         "couponCodePlaceholder": "הזנת קוד קופון",
@@ -1375,11 +1644,21 @@
         "enterFormatUrl": "הזנת כתובת URL מסוג {format}"
       }
     },
-    "sampleBodyCardContent": { "label": "תוכן גוף כרטיס לדוגמה" },
-    "sampleBodyContent": { "label": "תוכן גוף לדוגמה" },
-    "sampleHeaderContent": { "label": "תוכן כותרת לדוגמה" },
-    "showFooter": { "label": "הצגת כותרת תחתונה" },
-    "showHeader": { "label": "הצגת כותרת" },
+    "sampleBodyCardContent": {
+      "label": "תוכן גוף כרטיס לדוגמה"
+    },
+    "sampleBodyContent": {
+      "label": "תוכן גוף לדוגמה"
+    },
+    "sampleHeaderContent": {
+      "label": "תוכן כותרת לדוגמה"
+    },
+    "showFooter": {
+      "label": "הצגת כותרת תחתונה"
+    },
+    "showHeader": {
+      "label": "הצגת כותרת"
+    },
     "tabs": {
       "accountHealths": "תקינות החשבון",
       "automation": "אוטומציה",
@@ -1481,7 +1760,10 @@
         "NONE": "ללא",
         "PENDING_REVIEW": "ממתין לבדיקה"
       },
-      "accountMode": { "LIVE": "פעיל", "SANDBOX": "ארגז חול" },
+      "accountMode": {
+        "LIVE": "פעיל",
+        "SANDBOX": "ארגז חול"
+      },
       "canSendMessage": {
         "AVAILABLE": "זמין",
         "LIMITED": "מוגבל",
@@ -1507,8 +1789,12 @@
         }
       }
     },
-    "templateFooter": { "label": "כותרת תחתונה של התבנית" },
-    "templateHeader": { "label": "כותרת התבנית" },
+    "templateFooter": {
+      "label": "כותרת תחתונה של התבנית"
+    },
+    "templateHeader": {
+      "label": "כותרת התבנית"
+    },
     "transferPhoneNumber": "העברת מספר טלפון מספק WhatsApp אחר",
     "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש."
   },
@@ -1534,9 +1820,15 @@
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
     "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
   },
-  "inboxTeams": { "title": "צוותי תיבת דואר נכנס" },
-  "userPersistentMenus": { "title": "תפריטי משתמש קבועים" },
-  "webhooks": { "title": "Webhooks" },
+  "inboxTeams": {
+    "title": "צוותי תיבת דואר נכנס"
+  },
+  "userPersistentMenus": {
+    "title": "תפריטי משתמש קבועים"
+  },
+  "webhooks": {
+    "title": "Webhooks"
+  },
   "reflinks": {
     "title": "קישורים לנקודות כניסה",
     "description": "קישורי מילות מפתח שמפעילים תהליכים ולוכדים מטעני הפניה מערוצים."
@@ -1612,7 +1904,9 @@
     "minute": "דקה",
     "at": "בשעה"
   },
-  "errorLogs": { "title": "יומני שגיאות" },
+  "errorLogs": {
+    "title": "יומני שגיאות"
+  },
   "developerAccessToken": {
     "title": "אסימון גישה ל-API",
     "description": "צרו אסימון שיאפשר לסביבת העבודה לגשת לממשקי ה-API הציבוריים. שמרו את האסימון בסוד ואל תשתפו אותו עם אף אחד."
@@ -1633,7 +1927,9 @@
     "exportTakingLong": "הייצוא נמשך זמן רב מהצפוי",
     "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא."
   },
-  "auditLogs": { "title": "יומני ביקורת" },
+  "auditLogs": {
+    "title": "יומני ביקורת"
+  },
   "customFields": {
     "title": "שדות מותאמים אישית",
     "variables": {
@@ -1654,8 +1950,12 @@
     },
     "pageWarning": "תוכן הודעה המכיל מילת מפתח לעמוד עלול לגרום לשליחת הודעות ללקוח בלופ אינסופי. השבת את מילת המפתח לעמוד באופן מיידי אם נתקלת במקרה זה!"
   },
-  "triggers": { "title": "גורמים מפעילים" },
-  "users": { "title": "משתמשים" },
+  "triggers": {
+    "title": "גורמים מפעילים"
+  },
+  "users": {
+    "title": "משתמשים"
+  },
   "sequences": {
     "title": "רצפים",
     "subscribers": "מנויים",
@@ -1742,7 +2042,9 @@
     "sunday": "יום ראשון",
     "afterText": "אחרי"
   },
-  "tools": { "title": "כלים" },
+  "tools": {
+    "title": "כלים"
+  },
   "aiProviders": {
     "openai": "OpenAI",
     "gemini": "Gemini",
@@ -1925,7 +2227,9 @@
       "keywords": "מילות מפתח",
       "showCommentsAfter": "הצגת תגובות אחרי"
     },
-    "showCommentsAfter": { "none": "לעולם לא" },
+    "showCommentsAfter": {
+      "none": "לעולם לא"
+    },
     "selectPosts": "בחירת פוסטים",
     "selectPageAll": "כל הדפים",
     "chooseSpecificPosts": "בחירת פוסטים...",
@@ -2021,7 +2325,9 @@
       "keywords": "מילות מפתח",
       "showCommentsAfter": "הצגת תגובות אחרי"
     },
-    "showCommentsAfter": { "none": "לעולם לא" },
+    "showCommentsAfter": {
+      "none": "לעולם לא"
+    },
     "selectPosts": "בחירת פוסטים",
     "selectPageAll": "כל החשבונות",
     "chooseSpecificPosts": "בחירת פוסטים...",
@@ -2137,7 +2443,9 @@
       "title": "קישורי עזרה",
       "description": "קישורי עזרה המוצגים בסרגל הצד בכל סביבות העבודה שאינן שייכות לדייר ממותג."
     },
-    "queues": { "title": "תורים" }
+    "queues": {
+      "title": "תורים"
+    }
   },
   "platformCredentials": {
     "title": "פרטי כניסה לפלטפורמה",
@@ -2204,7 +2512,10 @@
         "placeholder": "השאירו ריק כדי להשתמש בתבנית ברירת המחדל"
       }
     },
-    "status": { "custom": "מותאם אישית", "default": "ברירת מחדל" },
+    "status": {
+      "custom": "מותאם אישית",
+      "default": "ברירת מחדל"
+    },
     "availableVariables": "משתנים זמינים",
     "preview": {
       "title": "תצוגה מקדימה",
@@ -2242,7 +2553,10 @@
       "title": "למחוק את הנתונים שלכם?",
       "description": "פעולה זו מוחקת לצמיתות את פרטי הקשר בפרופיל, התגיות, השדות המותאמים אישית, הקבצים המצורפים וכל ההודעות של רשומת איש קשר זו."
     },
-    "empty": { "customFields": "אין שדות מותאמים אישית", "tags": "אין תגיות" },
+    "empty": {
+      "customFields": "אין שדות מותאמים אישית",
+      "tags": "אין תגיות"
+    },
     "fields": {
       "email": "דוא\"ל",
       "gender": "מגדר",
@@ -2250,14 +2564,23 @@
       "phone": "טלפון",
       "timezone": "שעה"
     },
-    "sections": { "customFields": "שדות מותאמים אישית", "tags": "תגיות משתמש" },
+    "sections": {
+      "customFields": "שדות מותאמים אישית",
+      "tags": "תגיות משתמש"
+    },
     "unknown": "לא ידוע"
   },
-  "orders": { "title": "הזמנות" },
+  "orders": {
+    "title": "הזמנות"
+  },
   "products": {
     "title": "מוצרים",
-    "create": { "title": "יצירת מוצר" },
-    "edit": { "title": "עריכת מוצר" },
+    "create": {
+      "title": "יצירת מוצר"
+    },
+    "edit": {
+      "title": "עריכת מוצר"
+    },
     "sections": {
       "pricing": "תמחור",
       "images": "תמונות",
@@ -2268,45 +2591,96 @@
       "moreOptions": "אפשרויות נוספות"
     },
     "fields": {
-      "shortDescription": { "label": "תיאור קצר" },
-      "longDescription": { "label": "תיאור ארוך" },
-      "price": { "label": "מחיר" },
-      "taxes": { "label": "מסים (0-100%)" },
-      "discount": { "label": "הנחה (0-100%)" },
-      "currency": { "label": "מטבע" },
+      "shortDescription": {
+        "label": "תיאור קצר"
+      },
+      "longDescription": {
+        "label": "תיאור ארוך"
+      },
+      "price": {
+        "label": "מחיר"
+      },
+      "taxes": {
+        "label": "מסים (0-100%)"
+      },
+      "discount": {
+        "label": "הנחה (0-100%)"
+      },
+      "currency": {
+        "label": "מטבע"
+      },
       "productUrl": {
         "label": "כתובת URL של המוצר",
         "placeholder": "https://store.example.com/products/123",
         "description": "הדף שלקוחות פותחים מתוך קניות ב-Messenger. מוצרים ללא כתובת URL אינם נכללים בסנכרון לקטלוג Meta."
       },
-      "sku": { "label": "SKU", "placeholder": "אופציונלי" },
-      "inventoryPolicy": { "label": "מדיניות מלאי" },
-      "inventoryQuantity": { "label": "כמות" },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "אופציונלי"
+      },
+      "inventoryPolicy": {
+        "label": "מדיניות מלאי"
+      },
+      "inventoryQuantity": {
+        "label": "כמות"
+      },
       "allowOutOfStockPurchase": {
         "label": "אפשר ללקוחות לרכוש מוצר זה כאשר אזל מהמלאי"
       },
-      "vendor": { "label": "ספק" },
-      "rank": { "label": "דירוג" },
-      "category": { "label": "קטגוריה", "placeholder": "ללא קטגוריה" },
-      "subcategory": { "label": "קטגוריית משנה", "placeholder": "ללא" },
-      "isSearchable": { "label": "ניתן לחפש מוצר זה בתוך הבוט" },
+      "vendor": {
+        "label": "ספק"
+      },
+      "rank": {
+        "label": "דירוג"
+      },
+      "category": {
+        "label": "קטגוריה",
+        "placeholder": "ללא קטגוריה"
+      },
+      "subcategory": {
+        "label": "קטגוריית משנה",
+        "placeholder": "ללא"
+      },
+      "isSearchable": {
+        "label": "ניתן לחפש מוצר זה בתוך הבוט"
+      },
       "allowSpecialRequest": {
         "label": "אפשר למשתמש להגיש בקשה מיוחדת (צירוף הערות)"
       },
-      "isActive": { "label": "פעיל" },
-      "isAddonOnly": { "label": "שימוש במוצר זה כתוספת למוצרים אחרים בלבד" },
-      "optionName": { "label": "שם אפשרות" },
-      "optionValue": { "label": "ערך אפשרות" },
-      "variant": { "label": "וריאציה" },
+      "isActive": {
+        "label": "פעיל"
+      },
+      "isAddonOnly": {
+        "label": "שימוש במוצר זה כתוספת למוצרים אחרים בלבד"
+      },
+      "optionName": {
+        "label": "שם אפשרות"
+      },
+      "optionValue": {
+        "label": "ערך אפשרות"
+      },
+      "variant": {
+        "label": "וריאציה"
+      },
       "addImageFromLink": "הוספת תמונה",
       "uploadImage": "העלאת תמונה",
       "tagsDescription": "ניתן לחפש תגיות.",
       "addonsDescription": "הוסיפו מוצרים שלקוחות יכולים לקנות כתוספת. ניתן גם להציע כאן מוצרים בחינם. לדוגמה, מסעדה יכולה להציע כאן משקאות בחינם. יש ליצור מוצר לפני השימוש בו כתוספת.",
-      "addonName": { "label": "שם", "placeholder": "שם" },
-      "addonMaxSelections": { "label": "מספר בחירות מרבי" },
-      "addonProducts": { "label": "מוצרים", "placeholder": "בחירת מוצרים..." },
+      "addonName": {
+        "label": "שם",
+        "placeholder": "שם"
+      },
+      "addonMaxSelections": {
+        "label": "מספר בחירות מרבי"
+      },
+      "addonProducts": {
+        "label": "מוצרים",
+        "placeholder": "בחירת מוצרים..."
+      },
       "variantsDescription": "הוסיפו וריאציות אם למוצר יש כמה גרסאות, כגון גדלים או צבעים שונים",
-      "metaCatalogId": { "label": "מזהה קטלוג Meta" }
+      "metaCatalogId": {
+        "label": "מזהה קטלוג Meta"
+      }
     },
     "inventoryPolicy": {
       "dont_track": "אין לעקוב אחר המלאי",
@@ -2329,7 +2703,10 @@
       "listTopic": "רשימת נושאים",
       "archive": "ארכיון"
     },
-    "topic": { "create": "יצירת חדש", "edit": "עריכת נושא" },
+    "topic": {
+      "create": "יצירת חדש",
+      "edit": "עריכת נושא"
+    },
     "actions": {
       "import": "ייבוא קופונים",
       "export": "הורדת רשימת קופונים",
@@ -2350,9 +2727,17 @@
       "allUsageStatuses": "כל סוגי השימוש",
       "searchCode": "חיפוש קוד"
     },
-    "issueStatuses": { "published": "פורסם", "unpublished": "לא פורסם" },
-    "usageStatuses": { "used": "בשימוש", "notUsed": "טרם נעשה שימוש" },
-    "variables": { "group": "קופונים" },
+    "issueStatuses": {
+      "published": "פורסם",
+      "unpublished": "לא פורסם"
+    },
+    "usageStatuses": {
+      "used": "בשימוש",
+      "notUsed": "טרם נעשה שימוש"
+    },
+    "variables": {
+      "group": "קופונים"
+    },
     "messages": {
       "topicSaved": "נושא הקופון נשמר.",
       "editLocked": "השם והתיאור נעולים לאחר יצירה או ייבוא של קופונים.",
@@ -2391,7 +2776,7 @@
     "cancel": "ביטול",
     "actions": "פעולות קטגוריה",
     "deleteTitle": "למחוק את „{name}”?",
-    "deleteDescription": "{count, plural, =0 {לא הוקצו מוצרים לקטגוריה זו.} one {מוצר אחד יועבר אל ללא קטגוריה.} other {# מוצרים יועברו אל ללא קטגוריה.}}",
+    "deleteDescription": "{count, plural, =0 {לא הוקצו מוצרים לקטגוריה זו.} one {# מוצר יועבר אל ללא קטגוריה.} other {# מוצרים יועברו אל ללא קטגוריה.}}",
     "createSub": "יצירת קטגוריית משנה",
     "empty": "אין עדיין קטגוריות. צרו קטגוריה כדי לקבץ את המוצרים.",
     "columns": {
@@ -2401,8 +2786,8 @@
     },
     "expand": "הצגת קטגוריות משנה",
     "collapse": "הסתרת קטגוריות משנה",
-    "productCount": "{count, plural, =0 {אין מוצרים} one {מוצר אחד} other {# מוצרים}}",
-    "deleteChildrenWarning": "{count, plural, one {גם קטגוריית המשנה האחת שלה תימחק.} other {גם # קטגוריות המשנה שלה יימחקו.}}"
+    "productCount": "{count, plural, =0 {אין מוצרים} one {# מוצר} other {# מוצרים}}",
+    "deleteChildrenWarning": "{count, plural, one {גם # קטגוריית המשנה שלה תימחק.} other {גם # קטגוריות המשנה שלה יימחקו.}}"
   },
   "productImport": {
     "title": "ייבוא",
@@ -2499,8 +2884,14 @@
       "unknown": "לא זמין",
       "never": "לעולם לא",
       "noExpiry": "ללא תפוגה",
-      "authModes": { "oauth": "OAuth", "fbe": "Facebook Business Extension" },
-      "connectionStatuses": { "active": "פעיל", "invalid": "נדרש חיבור מחדש" }
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook Business Extension"
+      },
+      "connectionStatuses": {
+        "active": "פעיל",
+        "invalid": "נדרש חיבור מחדש"
+      }
     },
     "disconnect": "ניתוק",
     "reconnect": "חיבור מחדש",
@@ -2515,8 +2906,14 @@
         "label": "תמונת מוצר",
         "value": "רזולוציה גבוהה של לפחות 500px × 500px, וגודל קובץ של עד 8MB."
       },
-      "video": { "label": "סרטון מוצר", "value": "גודל קובץ של עד 200MB." },
-      "price": { "label": "מחיר", "value": "לכל מוצר חייב להיות מחיר." },
+      "video": {
+        "label": "סרטון מוצר",
+        "value": "גודל קובץ של עד 200MB."
+      },
+      "price": {
+        "label": "מחיר",
+        "value": "לכל מוצר חייב להיות מחיר."
+      },
       "minimumItems": "פרסמו לפחות 6 פריטים כדי שללקוחות יהיה מבחר מספק."
     },
     "historyEmpty": "טרם הופעלו סנכרון או ייבוא.",
@@ -2538,7 +2935,10 @@
       "partial": "הושלם חלקית",
       "failed": "נכשל"
     },
-    "directions": { "push": "הועבר ל-Meta", "import": "יובא מ-Meta" },
+    "directions": {
+      "push": "הועבר ל-Meta",
+      "import": "יובא מ-Meta"
+    },
     "messages": {
       "catalogSelected": "ייבוא הקטלוג התחיל.",
       "syncStarted": "סנכרון קטלוג Meta התחיל.",
@@ -2557,7 +2957,10 @@
       "queueSync": "לא ניתן להוסיף את סנכרון קטלוג Meta לתור."
     }
   },
-  "helpMenu": { "title": "עזרה", "ariaLabel": "פתיחת תפריט עזרה" },
+  "helpMenu": {
+    "title": "עזרה",
+    "ariaLabel": "פתיחת תפריט עזרה"
+  },
   "helpItems": {
     "title": "קישורי עזרה",
     "addTitle": "הוספת קישור עזרה",
@@ -2878,8 +3281,8 @@
     "smartResponseDelaySeconds": {
       "description": "הגדירו כמה זמן הבוט ימתין לפני שישיב לאחר ההודעה האחרונה של המשתמש. אם המשתמש שולח הודעה נוספת, הטיימר מתאפס וההודעות מצורפות לתגובה אחת.",
       "label": "השהיית תגובת הבוט",
-      "minutes": "{count, plural, one {דקה אחת} other {# דקות}}",
-      "seconds": "{count, plural, one {שנייה אחת} other {# שניות}}"
+      "minutes": "{count, plural, one {# דקה} other {# דקות}}",
+      "seconds": "{count, plural, one {# שנייה} other {# שניות}}"
     },
     "delayType": {
       "label": "סוג השהיה",
@@ -4193,6 +4596,8 @@
       "blocked": "חסום",
       "noAdminReply": "אין תשובה ממנהל מערכת",
       "contactCreatedAt": "איש הקשר נוצר בתאריך",
+      "fromCtwaAd": "ממודעת Click to WhatsApp",
+      "ctwaConversion": "המרת CTWA",
       "lastUserInputTypes": {
         "text": "טקסט",
         "location": "מיקום",
@@ -4202,6 +4607,10 @@
         "audio": "שמע",
         "gif": "GIF",
         "file": "קובץ"
+      },
+      "ctwaConversionTypes": {
+        "lead": "ליד",
+        "purchase": "רכישה"
       }
     },
     "fieldGroups": {
@@ -4216,7 +4625,8 @@
       "topicCoupon": "נושא קופון",
       "customFields": "שדות מותאמים אישית",
       "email": "דוא\"ל",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "מודעות Click to WhatsApp"
     },
     "languages": {
       "ar": "ערבית",
@@ -4252,6 +4662,15 @@
       "webchat": "צ'אט אינטרנט",
       "botLink": "קישור לבוט",
       "chatPlugin": "תוסף צ'אט C."
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "פותחי שיחת CTWA",
+        "leads": "לידים מוכשרים של CTWA",
+        "purchases": "רוכשי CTWA"
+      },
+      "adPrefix": "מודעה",
+      "allAds": "כל המודעות"
     }
   }
 }

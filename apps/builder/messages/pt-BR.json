@@ -147,6 +147,9 @@
     "remove": "Remover",
     "restore": "Restaurar"
   },
+  "errors": {
+    "superAdminRequired": "Você precisa ser um superadministrador do espaço de trabalho para fazer isso."
+  },
   "states": {
     "success": "Sucesso",
     "error": "Erro",
@@ -537,6 +540,8 @@
       "blocked": "Bloqueada",
       "noAdminReply": "Sem resposta do administrador",
       "contactCreatedAt": "Contato criado em",
+      "fromCtwaAd": "De anúncio Click to WhatsApp",
+      "ctwaConversion": "Conversão CTWA",
       "lastUserInputTypes": {
         "text": "Texto",
         "location": "Localização",
@@ -546,6 +551,10 @@
         "audio": "Áudio",
         "gif": "GIF",
         "file": "Arquivo"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Compra"
       }
     },
     "fieldGroups": {
@@ -560,7 +569,8 @@
       "topicCoupon": "Tópico de cupom",
       "customFields": "Campos personalizados",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Anúncios Click to WhatsApp"
     },
     "languages": {
       "ar": "Árabe",
@@ -596,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Link do bot",
       "chatPlugin": "Plugin C. chat"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Iniciadores de conversa CTWA",
+        "leads": "Leads qualificados CTWA",
+        "purchases": "Compradores CTWA"
+      },
+      "adPrefix": "anúncio",
+      "allAds": "todos os anúncios"
     }
   },
   "fields": {
@@ -2224,6 +2243,207 @@
       "invalidAppSettings": "As configurações do aplicativo do Facebook não são válidas"
     }
   },
+  "ads": {
+    "title": "Anúncios",
+    "nav": {
+      "clickToWhatsappAds": "Anúncios Click to WhatsApp",
+      "clickToTiktokAds": "Anúncios Click to TikTok",
+      "connectAccounts": "Conectar contas",
+      "conversionEvents": "Eventos de conversão",
+      "adsAnalytics": "Análise de anúncios",
+      "reporting": "Relatórios",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Em breve"
+    },
+    "connectAccounts": {
+      "title": "Gerencie todas as suas contas de anúncios",
+      "description": "Acompanhe conversões e otimize suas campanhas de anúncios click-to-WhatsApp.",
+      "learnMore": "Saiba mais",
+      "connectAdAccount": "Conectar conta de anúncios",
+      "adAccountName": "Nome da conta de anúncios",
+      "disconnect": "Desconectar",
+      "empty": "Nenhuma conta de anúncios conectada ainda.",
+      "adAccountsTitle": "Contas de anúncios da Meta",
+      "adAccountsDescription": "Conecte o Facebook Ads para carregar as contas de anúncios usadas nas campanhas click-to-WhatsApp.",
+      "adAccountsReconnectBanner": "O token da sua conta de anúncios da Meta expirou ou perdeu permissões. Reconecte o Facebook Ads para manter os relatórios de anúncios disponíveis.",
+      "adAccountsNotConnected": "Ainda não há contas de anúncios da Meta conectadas.",
+      "adAccountsEmpty": "Nenhuma conta de anúncios da Meta foi encontrada para esta conexão do Facebook Ads.",
+      "adAccountsNote": "O investimento e os públicos de retargeting vêm dessas contas de anúncios.",
+      "reconnectBanner": "Reconecte sua conta do WhatsApp para permitir o envio de eventos de conversão para a Meta.",
+      "reconnect": "Reconectar",
+      "reconnectSuccess": "Conta do WhatsApp reconectada.",
+      "selectAccountLabel": "Conta do WhatsApp",
+      "status": {
+        "ready": "Eventos automáticos prontos",
+        "missingPermission": "Permissão de Eventos Automáticos ausente",
+        "unverified": "Permissão não verificada"
+      },
+      "table": {
+        "name": "Nome",
+        "phoneNumber": "Número de telefone",
+        "wabaId": "ID da WABA",
+        "permission": "Eventos Automáticos"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Conecte sua conta do WhatsApp primeiro",
+        "description": "O rastreamento de conversão Click-to-WhatsApp precisa de uma conta do WhatsApp conectada antes que você possa vincular contas de anúncios e criar conjuntos de dados de conversão.",
+        "step1": "Conecte sua conta do WhatsApp Business em Canais.",
+        "step2": "Volte aqui para autorizar o Meta Ads e selecionar sua conta de anúncios.",
+        "step3": "Criaremos automaticamente o conjunto de dados de conversão usando sua conta do WhatsApp Business.",
+        "cta": "Conectar conta do WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Eventos de conversão",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Gerenciar contas de anúncios",
+      "export": "Exportar",
+      "selectAll": "Selecionar tudo",
+      "whatsappAsset": "Ativo do WhatsApp",
+      "selectWhatsappAsset": "Selecionar ativo do WhatsApp",
+      "templates": "Modelos",
+      "selectTemplates": "Selecionar modelos",
+      "noTemplates": "Nenhum modelo aprovado encontrado.",
+      "existingRules": "Regras existentes",
+      "noRules": "Ainda não há regras de conversão para este ativo do WhatsApp.",
+      "toggleRule": "Ativar ou desativar regra",
+      "deleteRule": "Excluir regra",
+      "qualifyingTemplateMessageSent": "A mensagem de modelo qualificadora é enviada",
+      "qualifyingFirstReply": "O contato envia sua primeira mensagem",
+      "qualifyingAnyReply": "O contato envia uma mensagem",
+      "when": "Quando",
+      "whenOptions": {
+        "templateSent": "A mensagem de modelo qualificadora é enviada",
+        "tagApplied": "O contato é marcado com uma tag",
+        "keywordMatched": "A mensagem do contato corresponde a uma regra de palavra-chave",
+        "contactReplied": "O contato envia uma mensagem"
+      },
+      "tags": "Tags",
+      "selectTags": "Selecionar tags",
+      "noTags": "Nenhuma tag encontrada.",
+      "untitledKeywordRule": "(regra de palavra-chave sem título)",
+      "keywordRules": "Regras de palavra-chave",
+      "selectKeywordRules": "Selecionar regras de palavra-chave",
+      "noKeywordRules": "Nenhuma regra de palavra-chave de entrada encontrada.",
+      "replyOptions": "Opções de resposta",
+      "firstReplyOnly": "Somente a primeira mensagem",
+      "dedupeNote": "No máximo 1 evento por dia por conversa por regra.",
+      "dealWon": "Negócio ganho",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Compra",
+      "messages": {
+        "ruleSaved": "Regra de conversão salva",
+        "ruleUpdated": "Regra de conversão atualizada",
+        "ruleDeleted": "Regra de conversão excluída"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Página 1",
+        "page2": "Página 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Rastrear leads qualificados",
+        "question": "Em que ponto da conversa você quer qualificar um contato como lead?",
+        "when": "Quando",
+        "then": "Então marcar lead CTWA como"
+      },
+      "trackPurchases": {
+        "title": "Rastrear compras",
+        "question": "Qual modelo confirma uma compra?",
+        "when": "Quando",
+        "then": "Então",
+        "noValueNote": "Uma compra baseada em regra registra uma conversão de Compra sem um valor de pedido — ela conta para as compras, mas adiciona 0 à receita. O valor do pedido só é capturado pelos Eventos Automáticos da Meta."
+      }
+    },
+    "analytics": {
+      "title": "Análise de CTWA",
+      "funnelOverview": "Visão geral do funil",
+      "conversationsStarted": "Conversas iniciadas",
+      "qualifiedLeads": "Leads qualificados",
+      "purchases": "Compras",
+      "adSpend": "Investimento em anúncios",
+      "spendAccountLevelNote": "O investimento é reportado no nível da conta de anúncios da Meta; com uma conta do WhatsApp selecionada, anúncios com apenas investimento e sem atividade no funil para essa conta ficam ocultos.",
+      "revenue": "Receita",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "A receita assume uma única moeda (USD). Contas de anúncios com moedas mistas ainda não são agregadas.",
+      "costPerLead": "Custo/lead",
+      "costPerPurchase": "Custo/compra",
+      "impressions": "Impressões",
+      "clicks": "Cliques",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Custo/conversa",
+      "costCurrencyNote": "As métricas de custo assumem uma única moeda (USD), consistente com o investimento em anúncios.",
+      "performanceChart": {
+        "title": "Desempenho ao longo do tempo",
+        "empty": "Ainda não há conversas, leads, compras ou investimento neste período."
+      },
+      "dateRange": {
+        "oneDay": "1D",
+        "oneWeek": "1S",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Personalizado",
+        "apply": "Aplicar"
+      },
+      "allAds": "Todos os anúncios",
+      "adAccountFilter": {
+        "all": "Todas as contas de anúncios",
+        "label": "Conta de anúncios",
+        "note": "Anúncios com conversões, mas com investimento zero ou entrega zero no período selecionado, ficam ocultos ao filtrar por conta de anúncios."
+      },
+      "retarget": "Retargeting",
+      "thoseWhoPurchased": "Quem comprou",
+      "thoseWhoStartedConversation": "Quem iniciou uma conversa",
+      "sendWhatsappBroadcast": "Enviar transmissão do WhatsApp",
+      "from": "De",
+      "to": "Até",
+      "unattributed": "Não atribuído",
+      "retargetDialog": {
+        "title": "Fazer retargeting de contatos CTWA",
+        "createAudience": "Criar público",
+        "useExistingAudience": "Usar público existente",
+        "audienceName": "Nome do público",
+        "audiencePrefix": "CTWA",
+        "confirm": "Iniciar sincronização",
+        "success": "Sincronização do público de retargeting adicionada à fila.",
+        "error": "Falha ao adicionar a sincronização do público de retargeting à fila."
+      },
+      "delivery": {
+        "title": "Entrega de conversão",
+        "sent": "Enviado",
+        "pending": "Pendente",
+        "failed": "Falhou",
+        "skippedNoScope": "Ignorado (sem escopo)",
+        "skippedRegion": "Ignorado (região)",
+        "noScopeWarning": "Algumas conversões não foram enviadas porque esta conta do WhatsApp não tem a permissão de eventos. Reconecte-a para ativar os relatórios de Eventos Automáticos.",
+        "reconnectCta": "Reconectar conta",
+        "empty": "Ainda não há eventos de conversão neste período."
+      },
+      "export": {
+        "conversations": "Exportar conversas",
+        "leads": "Exportar leads",
+        "purchases": "Exportar compras"
+      },
+      "csv": {
+        "contactName": "Nome do contato",
+        "phone": "Telefone",
+        "adId": "ID do anúncio",
+        "occurredAt": "Ocorreu em"
+      },
+      "empty": "Ainda não há dados. Conecte uma conta de anúncios e comece a rastrear conversões."
+    }
+  },
   "googleSheets": {
     "setting": {
       "label": "Planilhas Google",
@@ -3043,6 +3263,13 @@
         "unableToVerifyToken": "Não foi possível verificar o token do WhatsApp.",
         "wabaMismatch": "A conta do WhatsApp Business selecionada não corresponde à autorização.",
         "wabaResolveFailed": "Não foi possível identificar a conta do WhatsApp Business a partir da autorização."
+      }
+    },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integração do WhatsApp não encontrada.",
+        "phoneNumberMismatch": "A reconexão retornou a Conta do WhatsApp Business esperada, mas não o número de telefone conectado a este espaço de trabalho.",
+        "wabaMismatch": "A reconexão retornou uma Conta do WhatsApp Business diferente. Reconecte a mesma conta."
       }
     },
     "marketingMessageLite": "Marketing Message Lite",
@@ -4255,7 +4482,7 @@
     "expand": "Mostrar subcategorias",
     "collapse": "Ocultar subcategorias",
     "productCount": "{count, plural, =0 {Nenhum produto} one {# produto} other {# produtos}}",
-    "deleteChildrenWarning": "{count, plural, one {A subcategoria será excluída também.} other {As # subcategorias serão excluídas também.}}"
+    "deleteChildrenWarning": "{count, plural, one {A # subcategoria será excluída também.} other {As # subcategorias serão excluídas também.}}"
   },
   "productImport": {
     "title": "Importar",

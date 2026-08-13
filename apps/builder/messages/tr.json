@@ -147,6 +147,9 @@
     "remove": "Kaldır",
     "restore": "Geri Yükle"
   },
+  "errors": {
+    "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
+  },
   "states": {
     "success": "Başarılı",
     "error": "Hata",
@@ -537,6 +540,8 @@
       "blocked": "Engellenmiş",
       "noAdminReply": "Yönetici yanıtı yok",
       "contactCreatedAt": "Kişinin oluşturulma zamanı",
+      "fromCtwaAd": "Click to WhatsApp reklamından",
+      "ctwaConversion": "CTWA dönüşümü",
       "lastUserInputTypes": {
         "text": "Metin",
         "location": "Konum",
@@ -546,6 +551,10 @@
         "audio": "Ses",
         "gif": "GIF",
         "file": "Dosya"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Potansiyel Müşteri",
+        "purchase": "Satın Alma"
       }
     },
     "fieldGroups": {
@@ -560,7 +569,8 @@
       "topicCoupon": "Kupon konusu",
       "customFields": "Özel Alanlar",
       "email": "E-posta",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp Ads"
     },
     "languages": {
       "ar": "Arapça",
@@ -596,6 +606,15 @@
       "webchat": "Web Sohbeti",
       "botLink": "Bot Bağlantısı",
       "chatPlugin": "C. sohbet eklentisi"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA sohbet başlatanlar",
+        "leads": "CTWA nitelikli potansiyel müşteriler",
+        "purchases": "CTWA satın alanlar"
+      },
+      "adPrefix": "reklam",
+      "allAds": "tüm reklamlar"
     }
   },
   "channels": {
@@ -2298,6 +2317,207 @@
       "invalidAppSettings": "Facebook Uygulama ayarları geçerli değil"
     }
   },
+  "ads": {
+    "title": "Reklamlar",
+    "nav": {
+      "clickToWhatsappAds": "Click to WhatsApp Ads",
+      "clickToTiktokAds": "Click to TikTok Ads",
+      "connectAccounts": "Hesapları Bağla",
+      "conversionEvents": "Dönüşüm Olayları",
+      "adsAnalytics": "Reklam Analizleri",
+      "reporting": "Raporlama",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Yakında"
+    },
+    "connectAccounts": {
+      "title": "Tüm reklam hesaplarınızı yönetin",
+      "description": "Dönüşümleri takip edin ve click-to-WhatsApp reklam kampanyalarınızı optimize edin.",
+      "learnMore": "Daha Fazla Bilgi",
+      "connectAdAccount": "Reklam Hesabı Bağla",
+      "adAccountName": "Reklam Hesabı Adı",
+      "disconnect": "Bağlantıyı Kes",
+      "empty": "Henüz bağlı bir reklam hesabı yok.",
+      "adAccountsTitle": "Meta reklam hesapları",
+      "adAccountsDescription": "Click-to-WhatsApp kampanyalarında kullanılan reklam hesaplarını yüklemek için Facebook Ads'i bağlayın.",
+      "adAccountsReconnectBanner": "Meta reklam hesabı belirteciniz süresi doldu veya izinlerini kaybetti. Reklam raporlamasının kullanılabilir kalması için Facebook Ads'i yeniden bağlayın.",
+      "adAccountsNotConnected": "Henüz bağlı bir Meta reklam hesabı yok.",
+      "adAccountsEmpty": "Bu Facebook Ads bağlantısı için Meta reklam hesabı bulunamadı.",
+      "adAccountsNote": "Harcama ve yeniden pazarlama hedef kitleleri bu reklam hesaplarından gelir.",
+      "reconnectBanner": "Meta'ya dönüşüm olayları gönderimini etkinleştirmek için WhatsApp hesabınızı yeniden bağlayın.",
+      "reconnect": "Yeniden Bağlan",
+      "reconnectSuccess": "WhatsApp hesabı yeniden bağlandı.",
+      "selectAccountLabel": "WhatsApp hesabı",
+      "status": {
+        "ready": "Otomatik Olaylar hazır",
+        "missingPermission": "Otomatik Olaylar izni eksik",
+        "unverified": "İzin doğrulanmadı"
+      },
+      "table": {
+        "name": "Ad",
+        "phoneNumber": "Telefon numarası",
+        "wabaId": "WABA Kimliği",
+        "permission": "Otomatik Olaylar"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Önce WhatsApp hesabınızı bağlayın",
+        "description": "Click-to-WhatsApp dönüşüm takibi, reklam hesaplarını bağlayıp dönüşüm veri kümeleri oluşturabilmeniz için önce bağlı bir WhatsApp hesabı gerektirir.",
+        "step1": "Kanallar bölümünden WhatsApp Business hesabınızı bağlayın.",
+        "step2": "Meta Ads'i yetkilendirmek ve reklam hesabınızı seçmek için buraya geri dönün.",
+        "step3": "Dönüşüm veri kümesini WhatsApp Business hesabınızı kullanarak otomatik olarak oluşturacağız.",
+        "cta": "WhatsApp Hesabını Bağla"
+      }
+    },
+    "conversionEvents": {
+      "title": "Dönüşüm olayları",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Reklam Hesaplarını Yönet",
+      "export": "Dışa Aktar",
+      "selectAll": "Tümünü Seç",
+      "whatsappAsset": "WhatsApp varlığı",
+      "selectWhatsappAsset": "WhatsApp varlığı seç",
+      "templates": "Şablonlar",
+      "selectTemplates": "Şablonları seçin",
+      "noTemplates": "Onaylanmış şablon bulunamadı.",
+      "existingRules": "Mevcut kurallar",
+      "noRules": "Bu WhatsApp varlığı için henüz dönüşüm kuralı yok.",
+      "toggleRule": "Kuralı etkinleştir veya devre dışı bırak",
+      "deleteRule": "Kuralı sil",
+      "qualifyingTemplateMessageSent": "Niteleyici şablon mesajı gönderildi",
+      "qualifyingFirstReply": "Kişi ilk mesajını gönderiyor",
+      "qualifyingAnyReply": "Kişi bir mesaj gönderiyor",
+      "when": "Ne zaman",
+      "whenOptions": {
+        "templateSent": "Niteleyici şablon mesajı gönderildi",
+        "tagApplied": "Kişi etiketleniyor",
+        "keywordMatched": "Kişinin mesajı bir anahtar kelime kuralıyla eşleşiyor",
+        "contactReplied": "Kişi bir mesaj gönderiyor"
+      },
+      "tags": "Etiketler",
+      "selectTags": "Etiketleri seçin",
+      "noTags": "Etiket bulunamadı.",
+      "untitledKeywordRule": "(adsız anahtar kelime kuralı)",
+      "keywordRules": "Anahtar kelime kuralları",
+      "selectKeywordRules": "Anahtar kelime kurallarını seçin",
+      "noKeywordRules": "Gelen anahtar kelime kuralı bulunamadı.",
+      "replyOptions": "Yanıt seçenekleri",
+      "firstReplyOnly": "Yalnızca ilk mesaj",
+      "dedupeNote": "Konuşma ve kural başına günde en fazla 1 olay.",
+      "dealWon": "Anlaşma Kazanıldı",
+      "eventTypeLead": "Potansiyel Müşteri",
+      "eventTypePurchase": "Satın Alma",
+      "messages": {
+        "ruleSaved": "Dönüşüm kuralı kaydedildi",
+        "ruleUpdated": "Dönüşüm kuralı güncellendi",
+        "ruleDeleted": "Dönüşüm kuralı silindi"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Sayfa 1",
+        "page2": "Sayfa 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Nitelikli potansiyel müşterileri takip edin",
+        "question": "Bir kişiyi potansiyel müşteri olarak nitelendirmek istediğiniz konuşma noktası neresidir?",
+        "when": "Ne zaman",
+        "then": "O zaman CTWA potansiyel müşterisini şu şekilde işaretle"
+      },
+      "trackPurchases": {
+        "title": "Satın almaları takip edin",
+        "question": "Hangi şablon bir satın almayı onaylıyor?",
+        "when": "Ne zaman",
+        "then": "O zaman",
+        "noValueNote": "Kurala dayalı bir satın alma, sipariş değeri olmadan bir Satın Alma dönüşümü kaydeder — satın almalara sayılır ancak gelire 0 ekler. Sipariş değeri yalnızca Meta Otomatik Olaylar tarafından yakalanır."
+      }
+    },
+    "analytics": {
+      "title": "CTWA Analizleri",
+      "funnelOverview": "Huni genel görünümü",
+      "conversationsStarted": "Başlatılan sohbetler",
+      "qualifiedLeads": "Nitelikli potansiyel müşteriler",
+      "purchases": "Satın Almalar",
+      "adSpend": "Reklam harcaması",
+      "spendAccountLevelNote": "Harcama, Meta reklam hesabı düzeyinde raporlanır; bir WhatsApp hesabı seçildiğinde, o hesap için huni etkinliği olmayan yalnızca harcama içeren reklamlar gizlenir.",
+      "revenue": "Gelir",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Gelir tek bir para birimi (USD) varsayar. Karma para birimli reklam hesapları henüz birleştirilmiyor.",
+      "costPerLead": "Maliyet/potansiyel müşteri",
+      "costPerPurchase": "Maliyet/satın alma",
+      "impressions": "Gösterimler",
+      "clicks": "Tıklamalar",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Maliyet/sohbet",
+      "costCurrencyNote": "Maliyet metrikleri, reklam harcamasıyla tutarlı olarak tek bir para birimi (USD) varsayar.",
+      "performanceChart": {
+        "title": "Zaman içindeki performans",
+        "empty": "Bu aralıkta henüz sohbet, potansiyel müşteri, satın alma veya harcama yok."
+      },
+      "dateRange": {
+        "oneDay": "1G",
+        "oneWeek": "1H",
+        "oneMonth": "1A",
+        "threeMonths": "3A",
+        "custom": "Özel",
+        "apply": "Uygula"
+      },
+      "allAds": "Tüm Reklamlar",
+      "adAccountFilter": {
+        "all": "Tüm reklam hesapları",
+        "label": "Reklam hesabı",
+        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir."
+      },
+      "retarget": "Yeniden Hedefle",
+      "thoseWhoPurchased": "Satın alanlar",
+      "thoseWhoStartedConversation": "Sohbet başlatanlar",
+      "sendWhatsappBroadcast": "WhatsApp toplu mesajı gönder",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "unattributed": "Atfedilmemiş",
+      "retargetDialog": {
+        "title": "CTWA kişilerini yeniden hedefle",
+        "createAudience": "Hedef kitle oluştur",
+        "useExistingAudience": "Mevcut hedef kitleyi kullan",
+        "audienceName": "Hedef kitle adı",
+        "audiencePrefix": "CTWA",
+        "confirm": "Senkronizasyonu Başlat",
+        "success": "Yeniden hedefleme hedef kitlesi senkronizasyonu kuyruğa alındı.",
+        "error": "Yeniden hedefleme hedef kitlesi senkronizasyonu kuyruğa alınamadı."
+      },
+      "delivery": {
+        "title": "Dönüşüm teslimatı",
+        "sent": "Gönderildi",
+        "pending": "Beklemede",
+        "failed": "Başarısız",
+        "skippedNoScope": "Atlandı (kapsam yok)",
+        "skippedRegion": "Atlandı (bölge)",
+        "noScopeWarning": "Bu WhatsApp hesabında olaylar izni eksik olduğu için bazı dönüşümler gönderilmedi. Otomatik Olaylar raporlamasını etkinleştirmek için hesabı yeniden bağlayın.",
+        "reconnectCta": "Hesabı yeniden bağla",
+        "empty": "Bu aralıkta henüz dönüşüm olayı yok."
+      },
+      "export": {
+        "conversations": "Sohbetleri dışa aktar",
+        "leads": "Potansiyel müşterileri dışa aktar",
+        "purchases": "Satın almaları dışa aktar"
+      },
+      "csv": {
+        "contactName": "Kişi adı",
+        "phone": "Telefon",
+        "adId": "Reklam Kimliği",
+        "occurredAt": "Gerçekleşme zamanı"
+      },
+      "empty": "Henüz veri yok. Bir reklam hesabı bağlayın ve dönüşümleri takip etmeye başlayın."
+    }
+  },
   "googleSheets": {
     "setting": {
       "label": "Google E-Tablolar",
@@ -3059,6 +3279,13 @@
         "unableToVerifyToken": "WhatsApp token'ı doğrulanamıyor.",
         "wabaMismatch": "Seçilen WhatsApp Business Hesabı yetkilendirmeyle eşleşmiyor.",
         "wabaResolveFailed": "Yetkilendirmeden WhatsApp Business Hesabı çözümlenemedi."
+      }
+    },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp entegrasyonu bulunamadı.",
+        "phoneNumberMismatch": "Yeniden bağlanma, beklenen WhatsApp Business Hesabını döndürdü, ancak bu çalışma alanına bağlı telefon numarasını döndürmedi.",
+        "wabaMismatch": "Yeniden bağlanma farklı bir WhatsApp Business Hesabı döndürdü. Lütfen aynı hesabı yeniden bağlayın."
       }
     },
     "marketingMessageLite": "Pazarlama Mesajı Lite",
