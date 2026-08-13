@@ -23,7 +23,7 @@ function TabsList({
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
   const children = props.children as React.ReactElement
-  const defaultClassName = "bg-card text-card-foreground px-8 w-fit rounded-lg rounded-xl border shadow-sm"
+  const defaultClassName = "bg-card text-card-foreground px-8 w-fit rounded-xl border shadow-sm"
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"

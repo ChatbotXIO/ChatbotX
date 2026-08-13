@@ -33,7 +33,7 @@ async function loadWhatsappAccountHealthData({
     findPhoneNumberDetail(auth),
     findWaba({
       wabaId: auth.metadata.wabaId,
-      acessToken: auth.tokens.accessToken,
+      accessToken: auth.tokens.accessToken,
       fields: "marketing_messages_onboarding_status",
     }),
   ])

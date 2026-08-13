@@ -181,7 +181,7 @@ export const buildBaseWhere = (data: ExportData): Record<string, unknown> => {
   )
 
   if (contactFilter) {
-    Object.assign(where, applyContactFilter(contactFilter))
+    Object.assign(where, applyContactFilter(contactFilter, data.workspaceId))
   }
 
   addAssignedContactScope(where, data.restrictToAssignedUserId)

@@ -112,6 +112,7 @@ export async function handleRichAIReply({
     conversationId: conversation.id,
     contactId: conversation.contactId,
     contactInboxId: props.contactInbox.id,
+    inboxId: props.contactInbox.inboxId,
     channel: props.channel,
     executionId,
     flowContextId,

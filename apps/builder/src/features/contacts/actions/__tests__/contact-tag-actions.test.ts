@@ -122,6 +122,7 @@ const contactFindByIdOrFail = vi.fn(() => {
   }
   return Promise.resolve(state.findOrFailResult ?? {})
 })
+const enqueueTagAppliedEvaluationsBulk = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach, enqueueDetach },
@@ -129,6 +130,9 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     findByIdOrFail: contactFindByIdOrFail,
     findManyByIds: contactFindManyByIds,
+  },
+  adsConversionService: {
+    enqueueTagAppliedEvaluationsBulk,
   },
   // safe-action.ts also imports isPlatformAdmin
   isPlatformAdmin: vi.fn(async () => false),
@@ -336,6 +340,7 @@ describe("addContactTags", () => {
 
     expect(emitTagApplied).toHaveBeenCalledOnce()
     expect(enqueueAttach).not.toHaveBeenCalled()
+    expect(enqueueTagAppliedEvaluationsBulk).not.toHaveBeenCalled()
   })
 
   // ── New rows → enqueueAttach once per new pair ───────────────────────────
@@ -363,6 +368,14 @@ describe("addContactTags", () => {
       workspaceId: "ws-1",
       contactId: "c-1",
       tagId: "tag-2",
+    })
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledOnce()
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      pairs: [
+        { contactId: "c-1", tagId: "tag-1" },
+        { contactId: "c-1", tagId: "tag-2" },
+      ],
     })
   })
 
@@ -733,6 +746,14 @@ describe("updateContactTags", () => {
     })
     expect(emitTagApplied).toHaveBeenCalledTimes(2)
     expect(emitTagRemoved).not.toHaveBeenCalled()
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledOnce()
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      pairs: [
+        { contactId: "c-1", tagId: "tag-1" },
+        { contactId: "c-1", tagId: "tag-2" },
+      ],
+    })
   })
 
   // ── purely subtractive → only enqueueDetach ──────────────────────────────
@@ -783,6 +804,11 @@ describe("updateContactTags", () => {
       contactId: "c-1",
       tagId: "tag-3",
     })
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledOnce()
+    expect(enqueueTagAppliedEvaluationsBulk).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      pairs: [{ contactId: "c-1", tagId: "tag-3" }],
+    })
     // tag-1 was removed → detach
     expect(enqueueDetach).toHaveBeenCalledOnce()
     expect(enqueueDetach).toHaveBeenCalledWith({
@@ -809,6 +835,7 @@ describe("updateContactTags", () => {
     expect(enqueueDetach).not.toHaveBeenCalled()
     expect(emitTagApplied).not.toHaveBeenCalled()
     expect(emitTagRemoved).not.toHaveBeenCalled()
+    expect(enqueueTagAppliedEvaluationsBulk).not.toHaveBeenCalled()
   })
 
   // ── emitTagApplied throws during update → swallowed, enqueueAttach still called

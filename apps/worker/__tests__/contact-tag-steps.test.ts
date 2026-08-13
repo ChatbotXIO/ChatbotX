@@ -146,8 +146,15 @@ const enqueueAttach = vi.fn(() => {
 const enqueueDetach = vi.fn(() => {
   order.push("enqueue")
 })
+const enqueueTagAppliedEvaluationsForInbox = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach, enqueueDetach },
+  adsConversionService: {
+    isEligibleChannel: (channel: string | null | undefined) =>
+      channel === "whatsapp",
+    enqueueTagAppliedEvaluationsForInbox: (...args: unknown[]) =>
+      enqueueTagAppliedEvaluationsForInbox(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
@@ -212,10 +219,16 @@ const {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function addProps(tags: string[], workspaceId = "ws-1", contactId = "c-1") {
+function addProps(
+  tags: string[],
+  workspaceId = "ws-1",
+  contactId = "c-1",
+  contactInbox?: { id: string; inboxId: string; channel: string },
+) {
   return {
     conversation: { workspaceId, contactId },
     step: { tags },
+    contactInbox,
   } as unknown as Parameters<typeof addContactTag>[0]
 }
 
@@ -300,6 +313,7 @@ function reset() {
   enqueueDetach.mockImplementation(() => {
     order.push("enqueue")
   })
+  enqueueTagAppliedEvaluationsForInbox.mockReset()
 }
 
 // ============================================================================
@@ -454,6 +468,66 @@ describe("addContactTag", () => {
       tagId: "tag-9",
     })
     expect(emitTagApplied).toHaveBeenCalledWith("ws-42", "c-77", "tag-9")
+  })
+
+  test("enqueues the ads conversion tagApplied evaluation when a WhatsApp contactInbox is in scope", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = [{ tagId: "tag-1" }]
+
+    await addContactTag(
+      addProps(["alpha"], "ws-1", "c-1", {
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "whatsapp",
+      }),
+    )
+
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledTimes(1)
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      contactInboxId: "ci-1",
+      tagIds: ["tag-1"],
+    })
+  })
+
+  test("does NOT enqueue the ads conversion evaluation without a contactInbox in scope", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = [{ tagId: "tag-1" }]
+
+    await addContactTag(addProps(["alpha"]))
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
+  })
+
+  test("does NOT enqueue the ads conversion evaluation for a non-WhatsApp contactInbox", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = [{ tagId: "tag-1" }]
+
+    await addContactTag(
+      addProps(["alpha"], "ws-1", "c-1", {
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "messenger",
+      }),
+    )
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
+  })
+
+  test("does NOT enqueue the ads conversion evaluation when no tags were newly linked", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = []
+
+    await addContactTag(
+      addProps(["alpha"], "ws-1", "c-1", {
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "whatsapp",
+      }),
+    )
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
   })
 })
 

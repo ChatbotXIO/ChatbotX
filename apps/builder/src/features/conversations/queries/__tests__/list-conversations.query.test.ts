@@ -168,10 +168,13 @@ describe("buildConversationWhere channel filter", () => {
       includeEmailAndPhone: false,
     })
 
-    expect(vi.mocked(applyContactFilter)).toHaveBeenCalledWith({
-      operator: "and",
-      conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
-    })
+    expect(vi.mocked(applyContactFilter)).toHaveBeenCalledWith(
+      {
+        operator: "and",
+        conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
+      },
+      "1",
+    )
   })
 
   test("defaults to including email/phone when no scope is provided", () => {

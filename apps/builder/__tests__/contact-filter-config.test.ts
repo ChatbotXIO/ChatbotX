@@ -383,6 +383,55 @@ describe("contact filter field config helpers", () => {
     ).toEqual([{ label: "Unassigned", value: "unassigned" }])
   })
 
+  test("exposes the ctwaAds group with fromCtwaAd and ctwaConversion options", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+    })
+
+    expect(configs).toContainEqual(
+      expect.objectContaining({
+        name: "fromCtwaAd",
+        formField: formFieldTypes.enum.boolean,
+        group: "ctwaAds",
+      }),
+    )
+    expect(configs).toContainEqual(
+      expect.objectContaining({
+        name: "ctwaConversion",
+        formField: formFieldTypes.enum.multiSelect,
+        group: "ctwaAds",
+        options: [
+          {
+            label: "condition.fields.ctwaConversionTypes.lead",
+            value: "lead",
+          },
+          {
+            label: "condition.fields.ctwaConversionTypes.purchase",
+            value: "purchase",
+          },
+        ],
+      }),
+    )
+
+    const options = getFieldOptions(configs, t)
+    expect(options).toContainEqual(
+      expect.objectContaining({
+        value: "group-ctwaAds",
+        children: [
+          { label: "condition.fields.fromCtwaAd", value: "fromCtwaAd" },
+          {
+            label: "condition.fields.ctwaConversion",
+            value: "ctwaConversion",
+          },
+        ],
+      }),
+    )
+  })
+
   test("groups field options and keeps contact-info fields flat", () => {
     const configs: FieldConfig[] = [
       {

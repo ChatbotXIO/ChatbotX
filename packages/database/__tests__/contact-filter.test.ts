@@ -2277,6 +2277,300 @@ describe("applyContactFilter — contactInbox relation fields", () => {
   })
 })
 
+describe("applyContactFilter — CTWA fields", () => {
+  test("renders fromCtwaAd true/false as EXISTS / NOT EXISTS on ContactInbox.referral", () => {
+    const positive = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fromCtwaAd",
+            operator: operatorTypes.enum.eq,
+            value: "true",
+          },
+        ],
+      }),
+    )
+    expect(positive.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
+    )
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' <> ''`,
+    )
+
+    const negative = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "fromCtwaAd",
+            operator: operatorTypes.enum.eq,
+            value: "false",
+          },
+        ],
+      }),
+    )
+    expect(negative.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+
+    const empty = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "fromCtwaAd", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+  })
+
+  test("renders ctwaConversion in/notIn as EXISTS/NOT EXISTS joining AdsConversionEvent through ContactInbox", () => {
+    const inQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "ctwaConversion",
+            operator: operatorTypes.enum.in,
+            value: ["lead", "purchase"],
+          },
+        ],
+      }),
+    )
+    expect(inQuery.sql).toContain('EXISTS (SELECT 1 FROM "AdsConversionEvent"')
+    expect(inQuery.sql).toContain(
+      'INNER JOIN "ContactInbox" ON "ContactInbox"."id" = "AdsConversionEvent"."contactInboxId"',
+    )
+    expect(inQuery.sql).toContain('"ContactInbox"."contactId" =')
+    expect(inQuery.sql).toContain('"AdsConversionEvent"."eventType" in')
+    expect(inQuery.params).toEqual(expect.arrayContaining(["lead", "purchase"]))
+
+    const notInQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "ctwaConversion",
+            operator: operatorTypes.enum.notIn,
+            value: ["lead"],
+          },
+        ],
+      }),
+    )
+    expect(notInQuery.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "AdsConversionEvent"',
+    )
+    expect(notInQuery.sql).toContain('"AdsConversionEvent"."eventType" in')
+  })
+
+  test("renders ctwaConversion isEmpty as NOT EXISTS with no eventType predicate", () => {
+    const emptyQuery = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          { field: "ctwaConversion", operator: operatorTypes.enum.isEmpty },
+        ],
+      }),
+    )
+    expect(emptyQuery.sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "AdsConversionEvent"',
+    )
+    expect(emptyQuery.sql).not.toContain('"AdsConversionEvent"."eventType"')
+  })
+})
+
+describe("applyContactFilter — ctwaRetarget", () => {
+  test("renders conversations segment as EXISTS on ContactInbox.firstInteractionAt, not event occurredAt", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "conversations",
+              adId: "ad-1",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    // Correlated on the outer contact id — the subquery must NOT re-join
+    // "Contact" (that self-join would break correlation and over-match).
+    expect(query.sql).toContain('"ContactInbox"."contactId" =')
+    expect(query.sql).not.toContain(
+      'INNER JOIN "Contact" ON "Contact"."id" = "ContactInbox"."contactId"',
+    )
+    expect(query.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
+    )
+    expect(query.sql).toContain('"ContactInbox"."firstInteractionAt"')
+    expect(query.sql).not.toContain('"AdsConversionEvent"."occurredAt"')
+    expect(query.sql).toContain(`"ContactInbox"."referral"->>'adId' =`)
+    expect(query.params).toEqual(
+      expect.arrayContaining([
+        "ad-1",
+        "2026-07-01T00:00:00.000Z",
+        "2026-07-31T23:59:59.999Z",
+      ]),
+    )
+  })
+
+  test("renders leads/purchases segments as EXISTS joining AdsConversionEvent through ContactInbox on the same row", () => {
+    const leadsQuery = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "leads",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(leadsQuery.sql).toContain(
+      'EXISTS (SELECT 1 FROM "AdsConversionEvent"',
+    )
+    expect(leadsQuery.sql).toContain(
+      'INNER JOIN "ContactInbox" ON "ContactInbox"."id" = "AdsConversionEvent"."contactInboxId"',
+    )
+    expect(leadsQuery.sql).toContain('"ContactInbox"."contactId" =')
+    expect(leadsQuery.sql).toContain(`"AdsConversionEvent"."eventType" =`)
+    expect(leadsQuery.params).toEqual(expect.arrayContaining(["lead", "ws-1"]))
+
+    const purchasesQuery = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "purchases",
+              adId: "ad-2",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(purchasesQuery.params).toEqual(
+      expect.arrayContaining(["purchase", "ad-2", "ws-1"]),
+    )
+  })
+
+  test("scopes conversations to the WhatsApp integration for parity with the Facebook path", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "conversations",
+              integrationWhatsappId: "iw-1",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    // Correlated existence on the integration's inbox — a contact whose CTWA
+    // conversation lives on a different integration must not match.
+    expect(query.sql).toContain('EXISTS (SELECT 1 FROM "IntegrationWhatsapp"')
+    expect(query.sql).toContain(
+      '"IntegrationWhatsapp"."inboxId" = "ContactInbox"."inboxId"',
+    )
+    expect(query.params).toEqual(expect.arrayContaining(["iw-1", "ws-1"]))
+  })
+
+  test("scopes leads/purchases to AdsConversionEvent.integrationWhatsappId", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "purchases",
+              integrationWhatsappId: "iw-1",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(query.sql).toContain(
+      '"AdsConversionEvent"."integrationWhatsappId" =',
+    )
+    expect(query.params).toEqual(
+      expect.arrayContaining(["purchase", "iw-1", "ws-1"]),
+    )
+  })
+
+  test("omits workspace scoping when workspaceId is not provided", () => {
+    const query = renderContactWhere(
+      applyContactFilter({
+        operator: "and",
+        conditions: [
+          {
+            field: "ctwaRetarget",
+            segment: "conversations",
+            since: "2026-07-01",
+            until: "2026-07-31",
+          },
+        ],
+      }),
+    )
+    expect(query.sql).not.toContain('"Contact"."workspaceId"')
+    expect(query.sql).not.toContain("INNER JOIN")
+  })
+
+  test("renders no predicate for a malformed ctwaRetarget condition", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [{ field: "ctwaRetarget", segment: "not-a-real-segment" }],
+    })
+    expect(where).toEqual({})
+  })
+
+  test("pruneEmailPhoneFilterConditions leaves ctwaRetarget intact", () => {
+    const contactFilter = {
+      operator: "and" as const,
+      conditions: [
+        {
+          field: "ctwaRetarget",
+          segment: "purchases",
+          adId: "ad-1",
+          since: "2026-07-01",
+          until: "2026-07-31",
+        },
+        { field: "email", operator: "eq", value: "ada@example.com" },
+      ],
+    }
+
+    expect(pruneEmailPhoneFilterConditions(contactFilter, false)).toEqual({
+      operator: "and",
+      conditions: [contactFilter.conditions[0]],
+    })
+  })
+})
+
 describe("applyContactFilter — tags relation", () => {
   test.each([
     [operatorTypes.enum.in, "in"],

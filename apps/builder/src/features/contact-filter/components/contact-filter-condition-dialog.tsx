@@ -127,12 +127,18 @@ const resolveDraftFieldName = (condition: ContactFilterCondition): string => {
   return condition.field
 }
 
-/** Inverse of buildConditionDraft; used to prefill the edit form. */
+/**
+ * Inverse of buildConditionDraft; used to prefill the edit form. The
+ * machine-generated `ctwaRetarget` condition has no `operator` — it's never
+ * actually routed here (its row renders a read-only chip with no edit
+ * affordance), but the field is typed defensively since `ContactFilterCondition`
+ * is a union.
+ */
 export const buildDraftFromCondition = (
   condition: ContactFilterCondition,
 ): ContactFilterConditionFormDraft => ({
   field: resolveDraftFieldName(condition),
-  operator: condition.operator,
+  operator: "operator" in condition ? condition.operator : "",
   value:
     "value" in condition && condition.value !== undefined
       ? condition.value

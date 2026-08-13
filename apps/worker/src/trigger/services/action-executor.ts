@@ -1,4 +1,5 @@
 import {
+  adsConversionService,
   contactCustomFieldService,
   conversationService,
   tagSyncService,
@@ -97,6 +98,11 @@ export class ActionExecutor {
 
           for (const link of newlyLinked) {
             await tagSyncService.enqueueAttach({
+              workspaceId,
+              contactId: conversation.contactId,
+              tagId: link.tagId,
+            })
+            await adsConversionService.enqueueTagAppliedEvaluations({
               workspaceId,
               contactId: conversation.contactId,
               tagId: link.tagId,

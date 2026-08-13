@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm"
 import {
   boolean,
   check,
+  index,
   jsonb,
   pgEnum,
   pgTable,
@@ -58,6 +59,9 @@ export const integrationWhatsappModel = pgTable(
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),
     historyDeclined: boolean().notNull().default(false),
+    hasCapiScope: boolean().notNull().default(false),
+    capiScopeCheckedAt: timestamp(timestampConfig),
+    datasetId: text(),
     registrationStatus: whatsappRegistrationStatus()
       .notNull()
       .default("pending_verification"),
@@ -81,6 +85,10 @@ export const integrationWhatsappModel = pgTable(
     uniqueIndex("IntegrationWhatsapp_inboxId_key").using(
       "btree",
       table.inboxId.asc().nullsLast(),
+    ),
+    index("IntegrationWhatsapp_workspaceId_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
     ),
     // A Meta phone number can back exactly one integration platform-wide.
     // The application already enforces this before insert, but that check and

@@ -17,6 +17,11 @@ export const integrationWhatsappResource = createSelectSchema(
   inboxId: true,
   displayPhoneNumber: true,
   tokenRefreshError: true,
+  phoneNumberId: true,
+  wabaId: true,
+  hasCapiScope: true,
+  capiScopeCheckedAt: true,
+  datasetId: true,
 })
 
 export type IntegrationWhatsappResource = z.infer<

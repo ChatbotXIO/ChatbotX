@@ -27,6 +27,8 @@ import {
   type ContactFilterFieldDefinition,
   type ContactFilterOptionSource,
   type ContactFilterSchemaKind,
+  type CtwaRetargetCondition,
+  type CtwaRetargetSegment,
 } from "../schemas"
 
 export type ConditionOption = {
@@ -74,6 +76,7 @@ export type ContactFilterFieldGroup =
   | "systemFields"
   | "topicCoupon"
   | "customFields"
+  | "ctwaAds"
 
 type GroupedContactFilterFieldGroup = Exclude<
   ContactFilterFieldGroup,
@@ -256,6 +259,17 @@ const resolveContactFilterOptions = (
       return ctx.reflinkOptions
     case "assignees":
       return ctx.assigneeOptions
+    case "ctwaConversionTypes":
+      return [
+        {
+          label: ctx.t("condition.fields.ctwaConversionTypes.lead"),
+          value: "lead",
+        },
+        {
+          label: ctx.t("condition.fields.ctwaConversionTypes.purchase"),
+          value: "purchase",
+        },
+      ]
     default: {
       const _exhaustive: never = optionSource
       return _exhaustive
@@ -327,6 +341,7 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "emailOpened",
     "emailClicked",
   ],
+  ctwaAds: ["fromCtwaAd", "ctwaConversion"],
   systemTime: [
     "isWithinWorkingHours",
     "currentDate",
@@ -524,6 +539,36 @@ export const getConditionOptions = (
   },
   { value: operatorTypes.enum.used, label: t("fields.operator.used") },
 ]
+
+const CTWA_RETARGET_SEGMENT_LABEL_KEYS = {
+  conversations: "condition.ctwaRetarget.segments.conversations",
+  leads: "condition.ctwaRetarget.segments.leads",
+  purchases: "condition.ctwaRetarget.segments.purchases",
+} as const satisfies Record<CtwaRetargetSegment, string>
+
+/**
+ * Read-only chip label for the machine-generated `ctwaRetarget` condition
+ * (no operator/value to render — see `contact-filter-condition-row.tsx` /
+ * `contact-filter-summary.tsx`). Composed from individually translated parts
+ * rather than one ICU-templated string, mirroring
+ * `ads-analytics-view.tsx`'s `suggestedName`.
+ */
+export const formatCtwaRetargetChipLabel = (
+  condition: Pick<
+    CtwaRetargetCondition,
+    "segment" | "adId" | "since" | "until"
+  >,
+  t: (key: string) => string,
+): string => {
+  const segmentLabel = t(CTWA_RETARGET_SEGMENT_LABEL_KEYS[condition.segment])
+  const adPart = condition.adId
+    ? `${t("condition.ctwaRetarget.adPrefix")} ${condition.adId}`
+    : t("condition.ctwaRetarget.allAds")
+
+  return [segmentLabel, adPart, `${condition.since}–${condition.until}`].join(
+    " · ",
+  )
+}
 
 export const formatConditionValueDisplay = (
   value: string | string[] | undefined,

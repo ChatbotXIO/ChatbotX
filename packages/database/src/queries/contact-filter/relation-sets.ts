@@ -1,13 +1,14 @@
 import { type AnyColumn, inArray, type SQL, sql } from "drizzle-orm"
 import { operatorTypes } from "../../partials"
 import {
+  adsConversionEventModel,
   contactInboxModel,
   contactsOnBroadcastsModel,
   contactsOnSequenceModel,
   contactsToTagsModel,
   refLinkStatModel,
 } from "../../schema"
-import { contactInboxExists, joinTableExists } from "./exists"
+import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
 import type { ContactWhere, RelationExists } from "./types"
 
 const tagsExists = joinTableExists(
@@ -26,6 +27,18 @@ const refLinkStatExists = joinTableExists(
   refLinkStatModel,
   refLinkStatModel.contactId,
 )
+
+// AdsConversionEvent has no contactId column — it correlates to a contact via
+// ContactInbox.contactInboxId, so this joins through ContactInbox instead of
+// using joinTableExists (which only supports a single-table EXISTS).
+const adsConversionEventExists: RelationExists = (predicate, negate = false) =>
+  existsWhere(
+    (contactId) =>
+      predicate
+        ? sql`SELECT 1 FROM ${adsConversionEventModel} INNER JOIN ${contactInboxModel} ON ${contactInboxModel.id} = ${adsConversionEventModel.contactInboxId} WHERE ${contactInboxModel.contactId} = ${contactId} AND ${predicate}`
+        : sql`SELECT 1 FROM ${adsConversionEventModel} INNER JOIN ${contactInboxModel} ON ${contactInboxModel.id} = ${adsConversionEventModel.contactInboxId} WHERE ${contactInboxModel.contactId} = ${contactId}`,
+    negate,
+  )
 
 const RELATION_SET_OPERATORS = new Set<string>([
   operatorTypes.enum.in,
@@ -105,6 +118,10 @@ const RELATION_SET_FILTERS: Record<string, RelationSetFilter> = {
   entryPointsLinks: {
     exists: refLinkStatExists,
     column: refLinkStatModel.linkId,
+  },
+  ctwaConversion: {
+    exists: adsConversionEventExists,
+    column: adsConversionEventModel.eventType,
   },
 }
 

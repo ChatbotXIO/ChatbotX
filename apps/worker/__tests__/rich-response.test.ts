@@ -99,6 +99,8 @@ const ctx = {
   conversationId: "conv-1",
   contactId: "contact-1",
   contactInboxId: "inbox-1",
+  inboxId: "inbox-parent-1",
+  channel: "whatsapp",
   executionId: "exec-1",
   flowContextId: "flow-ctx-1",
 }
@@ -493,7 +495,11 @@ describe("executeRichActions", () => {
     handoffExecuteMock.mockClear()
   })
 
-  test("add_tag calls attachTagsByNames", async () => {
+  // MEDIUM-a: add_tag must thread the contactInbox through so
+  // attachTagsByNames can fire the ads-conversion tagApplied evaluation for
+  // this conversation (mirrors the flow-step addContactTag path) instead of
+  // silently skipping it.
+  test("add_tag calls attachTagsByNames with the contactInbox from context", async () => {
     const result = await executeRichActions(
       [{ action: "add_tag", tag_name: "vip" }],
       ctx,
@@ -503,6 +509,11 @@ describe("executeRichActions", () => {
       ctx.workspaceId,
       ctx.contactId,
       ["vip"],
+      {
+        id: ctx.contactInboxId,
+        inboxId: ctx.inboxId,
+        channel: ctx.channel,
+      },
     )
     expect(result.executed).toBe(1)
     expect(result.failed).toHaveLength(0)

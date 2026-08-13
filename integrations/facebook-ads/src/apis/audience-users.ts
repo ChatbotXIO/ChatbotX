@@ -5,11 +5,25 @@ import { facebookAdsGraphClient } from "../lib/http-client"
 import type { AudienceContact, CustomAudienceOperation } from "../schemas"
 
 const ISO_COUNTRY_CODE_REGEX = /^[A-Z]{2}$/
+export const AUDIENCE_USERS_BATCH_SIZE = 5000
 
 export type AudienceUsersPayload = {
   schema: string[]
+  is_raw?: boolean
   page_ids?: string[]
-  data: (string | null)[][]
+  data: string[][]
+}
+
+// Graph spec: "In case a key is unknown, it should be left blank" — multi-key
+// rows use empty strings for missing identifiers, never null.
+const toBlankableRow = (values: (string | null)[]): string[] =>
+  values.map((value) => value ?? "")
+
+export type HashedAudienceIdentity = {
+  phone: string | null
+  email: string | null
+  firstName: string | null
+  lastName: string | null
 }
 
 const toRegion = (country?: string | null): CountryCode | undefined => {
@@ -73,30 +87,10 @@ async function hashField(value?: string | null): Promise<string | null> {
   return normalized ? await sha256(normalized) : null
 }
 
-/** Payload for a normal custom audience keyed by Messenger page-scoped id. */
-export function buildPageUidPayload({
-  psid,
-  pageId,
-}: {
-  psid: string
-  pageId: string
-}): AudienceUsersPayload {
-  return {
-    schema: ["PAGEUID"],
-    page_ids: [pageId],
-    data: [[psid]],
-  }
-}
-
-/**
- * Payload for a messenger-marketing-message audience, keyed by SHA-256 hashed
- * contact PII. Returns null when the contact has neither phone nor email —
- * Facebook cannot match such a row.
- */
-export async function buildHashedPayload(
+export async function buildHashedAudienceIdentity(
   contact: AudienceContact,
   fallbackCountry?: string | null,
-): Promise<AudienceUsersPayload | null> {
+): Promise<HashedAudienceIdentity | null> {
   if (!(contact.phoneNumber || contact.email)) {
     return null
   }
@@ -116,9 +110,89 @@ export async function buildHashedPayload(
     hashField(contact.lastName),
   ])
 
+  if (!(phone || email)) {
+    return null
+  }
+
+  return { phone, email, firstName, lastName }
+}
+
+/** Payload for a normal custom audience keyed by Messenger page-scoped id. */
+export function buildPageUidPayload({
+  psid,
+  pageId,
+}: {
+  psid: string
+  pageId: string
+}): AudienceUsersPayload {
+  return {
+    schema: ["PAGEUID"],
+    // PAGEUID is a raw (unhashed) key; the Graph default is_raw=false is for
+    // combinational hashed keys, so it must be set explicitly here.
+    is_raw: true,
+    page_ids: [pageId],
+    data: [[psid]],
+  }
+}
+
+/**
+ * Payload for a messenger-marketing-message audience, keyed by SHA-256 hashed
+ * contact PII. Returns null when the contact has neither phone nor email —
+ * Facebook cannot match such a row.
+ */
+export async function buildHashedPayload(
+  contact: AudienceContact,
+  fallbackCountry?: string | null,
+): Promise<AudienceUsersPayload | null> {
+  const identity = await buildHashedAudienceIdentity(contact, fallbackCountry)
+  if (!identity) {
+    return null
+  }
+
   return {
     schema: ["PHONE", "EMAIL", "FN", "LN"],
-    data: [[phone, email, firstName, lastName]],
+    data: [
+      toBlankableRow([
+        identity.phone,
+        identity.email,
+        identity.firstName,
+        identity.lastName,
+      ]),
+    ],
+  }
+}
+
+export async function buildBulkHashedAudiencePayload(
+  contacts: AudienceContact[],
+  fallbackCountry?: string | null,
+): Promise<AudienceUsersPayload | null> {
+  const identities = (
+    await Promise.all(
+      contacts.map((contact) =>
+        buildHashedAudienceIdentity(contact, fallbackCountry),
+      ),
+    )
+  ).filter((identity): identity is HashedAudienceIdentity => Boolean(identity))
+
+  if (identities.length === 0) {
+    return null
+  }
+
+  const hasEmail = identities.some((identity) => Boolean(identity.email))
+  if (!hasEmail) {
+    return {
+      schema: ["PHONE"],
+      data: identities.flatMap((identity) =>
+        identity.phone ? [[identity.phone]] : [],
+      ),
+    }
+  }
+
+  return {
+    schema: ["PHONE", "EMAIL"],
+    data: identities.map((identity) =>
+      toBlankableRow([identity.phone, identity.email]),
+    ),
   }
 }
 
@@ -171,4 +245,49 @@ export function mutateAudienceUsers({
     }
     await facebookAdsGraphClient.delete(endpoint, options)
   })
+}
+
+export async function bulkSyncHashedAudienceUsers({
+  accessToken,
+  customAudienceId,
+  contacts,
+  operation,
+  fallbackCountry,
+  version = DEFAULT_API_VERSION,
+}: {
+  accessToken: string
+  customAudienceId: string
+  contacts: AudienceContact[]
+  operation: CustomAudienceOperation
+  fallbackCountry?: string | null
+  version?: string
+}): Promise<{ received: number; batches: number }> {
+  let received = 0
+  let batches = 0
+
+  for (
+    let start = 0;
+    start < contacts.length;
+    start += AUDIENCE_USERS_BATCH_SIZE
+  ) {
+    const payload = await buildBulkHashedAudiencePayload(
+      contacts.slice(start, start + AUDIENCE_USERS_BATCH_SIZE),
+      fallbackCountry,
+    )
+    if (!payload || payload.data.length === 0) {
+      continue
+    }
+
+    await mutateAudienceUsers({
+      accessToken,
+      customAudienceId,
+      operation,
+      payload,
+      version,
+    })
+    received += payload.data.length
+    batches += 1
+  }
+
+  return { received, batches }
 }
