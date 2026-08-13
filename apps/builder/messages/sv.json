@@ -3119,6 +3119,7 @@
     "leaveEmptyToKeepSecret": "Lämna tomt för att behålla den nuvarande hemligheten",
     "loadingData": "Läser in data...",
     "messageDeleted": "Meddelandet har tagits bort.",
+    "sendFailed": "Det gick inte att skicka",
     "messagingWindowClosed": "Meddelandet kan inte skickas utanför den tillåtna tidsperioden",
     "messengerAdsError": "Något gick fel när JSON-koden genererades. Försök igen.",
     "messengerAdsInvalidStepType": "Startsteget kan innehålla text, bild, kort, galleri, video, Facebook-video, ljud och fil.",

@@ -39,6 +39,7 @@ export const messageModel = pgTable(
     type: messageKind().notNull().default("message"),
     parentId: text(),
     attributes: jsonb().$type<{ liked: boolean; hidden: boolean }>(),
+    sendError: text(),
   },
   (table) => [
     primaryKey({ columns: [table.id, table.createdAt] }),

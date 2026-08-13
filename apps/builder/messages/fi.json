@@ -2611,6 +2611,7 @@
     "changeHideState": "Vaihda piilotustilaa",
     "commentHidden": "Tämä kommentti piilotettiin",
     "messageDeleted": "Viesti on poistettu.",
+    "sendFailed": "Lähetys epäonnistui",
     "repliedToStory": "Vastasi tarinaasi",
     "sentAttachments": "Lähetettiin {count, plural, one {1 liite} other {# liitettä}}",
     "deleteComment": "Poista kommentti",

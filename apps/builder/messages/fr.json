@@ -2002,6 +2002,7 @@
     "changeHideState": "Modifier l’état masqué",
     "commentHidden": "Ce commentaire a été masqué",
     "messageDeleted": "Le message a été supprimé.",
+    "sendFailed": "Échec de l'envoi",
     "repliedToStory": "A répondu à votre story",
     "sentAttachments": "{count, plural, one {1 pièce jointe envoyée} other {# pièces jointes envoyées}}",
     "deleteComment": "Supprimer le commentaire",

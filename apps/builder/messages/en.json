@@ -2617,6 +2617,7 @@
     "changeHideState": "Change hide state",
     "commentHidden": "This comment was hidden",
     "messageDeleted": "The message has been deleted.",
+    "sendFailed": "Failed to send",
     "repliedToStory": "Replied to your story",
     "sentAttachments": "Sent {count, plural, one {1 attachment} other {# attachments}}",
     "deleteComment": "Delete comment",

@@ -1379,6 +1379,7 @@
     "changeHideState": "更改隱藏狀態",
     "commentHidden": "此留言已隱藏",
     "messageDeleted": "該訊息已被刪除。",
+    "sendFailed": "傳送失敗",
     "repliedToStory": "回覆了你的故事",
     "deleteComment": "刪除留言",
     "deleteCommentConfirmation": "您確定要刪除此留言嗎？它在收件匣中的回覆與 Facebook 上的回覆也會一併刪除。此操作無法復原。",

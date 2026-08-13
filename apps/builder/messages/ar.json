@@ -2616,6 +2616,7 @@
     "changeHideState": "تغيير حالة الإخفاء",
     "commentHidden": "تم إخفاء هذا التعليق",
     "messageDeleted": "تم حذف الرسالة.",
+    "sendFailed": "فشل الإرسال",
     "repliedToStory": "رد على قصتك",
     "sentAttachments": "تم إرسال {count, plural, one {مرفق واحد} other {# مرفقات}}",
     "deleteComment": "حذف التعليق",

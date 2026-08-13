@@ -2611,6 +2611,7 @@
     "changeHideState": "Ubah status sembunyikan",
     "commentHidden": "Komentar ini disembunyikan",
     "messageDeleted": "Pesan telah dihapus.",
+    "sendFailed": "Gagal mengirim",
     "repliedToStory": "Membalas story Anda",
     "sentAttachments": "Mengirim {count, plural, one {1 lampiran} other {# lampiran}}",
     "deleteComment": "Hapus komentar",

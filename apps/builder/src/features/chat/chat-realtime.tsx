@@ -18,6 +18,7 @@ export function ChatRealtime() {
   const {
     handleNewMessage,
     markMessagesDeleted,
+    markMessageFailed,
     assignMessageCommentId,
     updateMessageText,
     updateContact,
@@ -51,6 +52,9 @@ export function ChatRealtime() {
             break
           case RealtimeEventType.messageIdAssigned:
             assignMessageCommentId(data.messageId, data.commentId)
+            break
+          case RealtimeEventType.messageFailed:
+            markMessageFailed(data.messageId, data.clientId, data.error)
             break
           case RealtimeEventType.messageUpdated:
             updateMessageText(data.messageId, data.newText, {

@@ -926,6 +926,7 @@
     "changeHideState": "שינוי מצב הסתרה",
     "commentHidden": "תגובה זו הוסתרה",
     "messageDeleted": "ההודעה נמחקה.",
+    "sendFailed": "השליחה נכשלה",
     "repliedToStory": "הגיב לסטורי שלך",
     "sentAttachments": "נשלחו {count, plural, one {קובץ מצורף אחד} other {# קבצים מצורפים}}",
     "deleteComment": "מחיקת תגובה",

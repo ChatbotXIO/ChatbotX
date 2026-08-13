@@ -19,9 +19,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@chatbotx.io/ui/components/ui/carousel"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
+  AlertCircleIcon,
   BotIcon,
   ExternalLinkIcon,
   ImageIcon,
@@ -197,6 +203,22 @@ export const MessageItem = (props: MessageItemProps) => {
       </div>
 
       <div className="flex">
+        {message.messageType === "outgoing" && message.sendError && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="flex items-center self-center px-1 text-destructive">
+                  <AlertCircleIcon aria-hidden className="size-4" />
+                </span>
+              }
+            />
+            <TooltipContent>
+              <p>
+                {t("sendFailed")}: {message.sendError}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )}
         {isComment && !isEditing && message.messageType === "incoming" && (
           <Button
             className="self-center opacity-0 transition-opacity group-hover:opacity-100"

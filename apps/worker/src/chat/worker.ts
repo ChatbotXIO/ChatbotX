@@ -74,7 +74,7 @@ async function startChatWorker() {
 
       switch (job.data.type) {
         case ChatJobAction.sendChannelMessage:
-          await sendMessageToChannel(job.data.data)
+          await sendMessageToChannel(job.data.data, job.attemptsMade)
           return
         case ChatJobAction.sendFlowMessage:
           await sendFlowStep(job.data.data)

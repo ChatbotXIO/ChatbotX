@@ -2611,6 +2611,7 @@
     "changeHideState": "Verbergstatus wijzigen",
     "commentHidden": "Deze opmerking is verborgen",
     "messageDeleted": "Het bericht is verwijderd.",
+    "sendFailed": "Verzenden mislukt",
     "repliedToStory": "Heeft op je story gereageerd",
     "sentAttachments": "{count, plural, one {1 bijlage verzonden} other {# bijlagen verzonden}}",
     "deleteComment": "Opmerking verwijderen",

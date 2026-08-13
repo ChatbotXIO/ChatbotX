@@ -254,6 +254,7 @@ export const createGuestSessionStore = (
         type: "message",
         parentId: null,
         attributes: null,
+        sendError: null,
         ...message,
       }
 
