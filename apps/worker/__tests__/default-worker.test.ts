@@ -42,69 +42,45 @@ vi.mock("bullmq", () => {
 
   return {
     Worker: WorkerMock,
+    // Instantiated at module scope by worker-config's queue setup; not
+    // exercised by this unit test beyond needing to construct successfully.
+    Queue: class Queue {
+      add() {
+        return Promise.resolve()
+      }
+    },
   }
 })
 
-vi.mock("@chatbotx.io/worker-config", () => ({
-  DefaultJobAction: {
-    bulkTagContacts: "bulkTagContacts",
-    exportContacts: "exportContacts",
-    checkMetaCatalogSync: "checkMetaCatalogSync",
-    importMetaCatalogProducts: "importMetaCatalogProducts",
-    runImport: "runImport",
-    sendAuditLog: "sendAuditLog",
-    sendErrorLog: "sendErrorLog",
-    syncChannelLabels: "syncChannelLabels",
-    syncTag: "syncTag",
-    submitMetaCatalogSync: "submitMetaCatalogSync",
-  },
-  IntegrationJobAction: {
-    sendFlow: "sendFlow",
-    sendSequenceFlow: "sendSequenceFlow",
-    runRef: "runRef",
-    incomingMessage: "incomingMessage",
-    incomingComment: "incomingComment",
-    updateIncomingComment: "updateIncomingComment",
-    deleteIncomingComment: "deleteIncomingComment",
-    messageStatus: "messageStatus",
-    runFlowPostback: "runFlowPostback",
-    runFlowQuickReply: "runFlowQuickReply",
-    processAutomatedResonse: "processAutomatedResponse",
-    agentMarkAsRead: "agentMarkAsRead",
-    contactMarkAsRead: "contactMarkAsRead",
-    runChallenge: "runChallenge",
-    resumeWait: "resumeWait",
-    resumeFollowUp: "resumeFollowUp",
-    blockContact: "blockContact",
-    unblockContact: "unblockContact",
-    assignConversation: "assignConversation",
-    createMessage: "createMessage",
-    sendEmail: "sendEmail",
-    coexistWhatsappBuffer: "coexistWhatsappBuffer",
-    coexistWhatsappFlush: "coexistWhatsappFlush",
-    coexistMessengerSync: "coexistMessengerSync",
-    coexistInstagramSync: "coexistInstagramSync",
-    coexistAttachmentDownload: "coexistAttachmentDownload",
-    updateContactAvatar: "updateContactAvatar",
-    channelLabelChange: "channelLabelChange",
-    processCommentAutomation: "processCommentAutomation",
-    commentAIReply: "commentAIReply",
-    processLeadgen: "processLeadgen",
-    processStoryReplyAutomation: "processStoryReplyAutomation",
-    captureTemplateFlowResponse: "captureTemplateFlowResponse",
-  },
-  defaultQueue: {
-    add: (...args: unknown[]) => workerState.defaultQueueAdd(...args),
-  },
-  defaultWorkerOptions: {},
-  getRedisConnection: () => ({}),
-  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
-  queueNames: {
-    enum: {
-      default: "default",
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return {
+    ...actual,
+    DefaultJobAction: {
+      bulkTagContacts: "bulkTagContacts",
+      exportContacts: "exportContacts",
+      checkMetaCatalogSync: "checkMetaCatalogSync",
+      importMetaCatalogProducts: "importMetaCatalogProducts",
+      runImport: "runImport",
+      sendAuditLog: "sendAuditLog",
+      sendErrorLog: "sendErrorLog",
+      syncChannelLabels: "syncChannelLabels",
+      syncTag: "syncTag",
+      submitMetaCatalogSync: "submitMetaCatalogSync",
     },
-  },
-}))
+    defaultQueue: {
+      add: (...args: unknown[]) => workerState.defaultQueueAdd(...args),
+    },
+    defaultWorkerOptions: {},
+    getRedisConnection: () => ({}),
+    queueNames: {
+      enum: {
+        default: "default",
+      },
+    },
+  }
+})
 
 vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: (workspaceId: string | undefined) =>

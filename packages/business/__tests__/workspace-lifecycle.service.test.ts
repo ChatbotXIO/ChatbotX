@@ -93,7 +93,14 @@ beforeEach(() => {
   tearDownForIntegrationMock.mockResolvedValue(undefined)
 })
 
-test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis entries after commit", async () => {
+test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis entries after commit", {
+  timeout: 60_000,
+}, async () => {
+  // service.ts pulls in a dozen+ unmocked integration services (Klaviyo,
+  // SendGrid, OpenAI, ...); the one-time esbuild transform on this first
+  // `await import` can take several seconds under CPU contention (e.g.
+  // `turbo run test` fanning out across the whole monorepo) — a generous
+  // timeout avoids flaking under load without changing test behavior.
   const { workspaceLifecycleService } = await import(
     "../src/workspace-lifecycle/service"
   )

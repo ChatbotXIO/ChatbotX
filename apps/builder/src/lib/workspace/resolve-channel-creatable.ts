@@ -1,9 +1,6 @@
-import { tenantService, workspaceService } from "@chatbotx.io/business"
-import {
-  type ChannelType,
-  CREATABLE_CHANNELS,
-} from "@chatbotx.io/database/partials"
-import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import type { ChannelType } from "@chatbotx.io/database/partials"
+import { CREATABLE_CHANNELS } from "@chatbotx.io/database/partials"
+import { resolveChannelPolicy } from "@/lib/workspace/resolve-visible-channels"
 
 /**
  * Whether `workspaceId`'s owner may still *create* `channel`, per the two-tier
@@ -13,11 +10,10 @@ import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
  * the policy entirely and are always creatable — the same carve-out the
  * channels settings layout makes for its row filter.
  *
- * Each `@<channel>/page.tsx` slot calls this for itself: Next.js parallel
- * routes hand `layout.tsx` opaque `ReactNode` slots, so the flag cannot be
- * threaded down from the layout that computes the row-level filter. Both
- * reads are cached, so the per-slot fan-out costs nothing past the first
- * resolution.
+ * Each `settings/channels/<channel>/page.tsx` route calls this for itself.
+ * It reads from `resolveChannelPolicy`, which is request-scoped (`cache()`),
+ * so calling this alongside `resolveVisibleChannels` on the same request
+ * costs no extra workspace/tenant reads past the first resolution.
  */
 export const resolveChannelCreatable = async (
   workspaceId: string,
@@ -26,11 +22,6 @@ export const resolveChannelCreatable = async (
   if (!CREATABLE_CHANNELS.includes(channel)) {
     return true
   }
-  const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  if (!workspace) {
-    return false
-  }
-  const ownerId = await resolveOwnerForWorkspace(workspace)
-  const creatable = await tenantService.resolveVisibleChannels(ownerId)
-  return creatable.includes(channel)
+  const policy = await resolveChannelPolicy(workspaceId)
+  return policy?.creatable.includes(channel) ?? false
 }

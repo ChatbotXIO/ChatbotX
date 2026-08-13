@@ -56,7 +56,7 @@ describe("workspace status guard", () => {
     const switchElement = container.querySelector('[role="switch"]')
 
     expect(switchElement).not.toBeNull()
-    expect(switchElement?.hasAttribute("disabled")).toBe(true)
+    expect(switchElement?.getAttribute("data-disabled")).not.toBeNull()
   })
 
   test("keeps the switch enabled for super admins", () => {

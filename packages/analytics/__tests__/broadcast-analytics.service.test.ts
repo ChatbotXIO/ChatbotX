@@ -85,5 +85,5 @@ describe("BroadcastAnalyticsService", () => {
     expect(query).not.toContain('"deliveredAt"')
     expect(query).toContain("broadcast-1")
     expect(query).toContain("contact-inbox-1")
-  }, 15_000)
+  })
 })

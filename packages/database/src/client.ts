@@ -1,3 +1,4 @@
+import { parseEnvBool } from "@chatbotx.io/utils"
 import {
   DrizzleQueryError,
   type InferSelectModel,
@@ -32,7 +33,9 @@ export const db = drizzle({
   client: pool,
   schema,
   relations,
-  logger: env.DATABASE_DEBUG,
+  // parseEnvBool: with SKIP_ENV_CHECK=true (build scripts) this is the raw
+  // string "true", which drizzle would treat as a Logger object and crash on.
+  logger: parseEnvBool(env.DATABASE_DEBUG),
 })
 
 export * from "drizzle-orm"

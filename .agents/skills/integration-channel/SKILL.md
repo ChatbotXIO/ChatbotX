@@ -284,12 +284,13 @@ After editing, immediately read back each file to verify both import AND spread 
 
 **CRITICAL — verify imports:** After each StrReplace on `integration.ts` and `integrations.ts`, immediately read back lines 1-10 to confirm the import line is actually present. The `import` and the usage are TWO separate edits.
 
-**UI registration (2 files):**
+**UI registration (3 files):**
 
-| #   | File                                                               | Edit                                                       |
-| --- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
-| 5   | `apps/builder/src/features/inboxes/components/inbox-icon.tsx`      | Add icon to lucide import AND entry in `INBOX_ICON_CONFIG` |
-| 6   | `apps/builder/src/features/inboxes/components/inbox-card-list.tsx` | Add `<channel>: undefined` to `cardConfigs`                |
+| #   | File                                                               | Edit                                                                                                             |
+| --- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| 5   | `apps/builder/src/features/inboxes/components/inbox-icon.tsx`      | Add icon to lucide import AND entry in `INBOX_ICON_CONFIG`                                                       |
+| 6   | `apps/builder/src/features/inboxes/components/inbox-card-list.tsx` | Add `<channel>: undefined` to `cardConfigs`                                                                      |
+| 7   | `packages/utils/src/channel.ts`                                    | Add `CHANNEL_CAPABILITIES` entry (`creatable`, `manageable`, `requiresCredential`, `order`) — `CREATABLE_CHANNELS`/`MANAGEABLE_CHANNELS` derive from it, so the create picker and the settings accordion row appear automatically |
 
 **CRITICAL — `ChannelType` cascade:** Adding a value to the `channelTypes` enum causes compile errors in every `Record<ChannelType, ...>` that doesn't include the new key. Grep for `Record<ChannelType` and `Record<\n\s*ChannelType` (multiline) to find and fix ALL hits.
 
@@ -402,26 +403,52 @@ export const listIntegration<Channel>s = async (input: { workspaceId: string }) 
 - Shows table with integration data
 - Add button links to `/channels/create?channel=<channel>&workspaceId=...`
 
-**Settings page — create `@<channel>/page.tsx`:**
+**Settings page — create `settings/channels/<channel>/page.tsx`:**
+
+Each channel's settings panel is a real nested route
+(`apps/builder/src/app/space/[workspaceId]/(settings)/settings/channels/<channel>/page.tsx`),
+not a parallel-route slot. The accordion rows render in `layout.tsx` (from
+`MANAGEABLE_CHANNELS` filtered by visibility policy); opening a row navigates
+to this route so only this channel's server/client graph loads. Guard the page
+with `requireVisibleChannel` — it 404s for hidden channels and returns the
+request-scoped `ChannelPolicy`:
 
 ```typescript
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { <Channel>Manage } from "@/features/integration-<channel>/<channel>-manage"
 import { listIntegration<Channel>s } from "@/features/integration-<channel>/queries"
+import { requireVisibleChannel } from "@/lib/workspace/require-visible-channel"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannel<Channel>Page(props: {
   params: Promise<{ workspaceId: string }>
 }) {
   const workspaceId = getIdFromParams(await props.params, "workspaceId")
   if (!workspaceId) return notFound()
+
+  await requireVisibleChannel(workspaceId, "<channel>")
+
   const promises = listIntegration<Channel>s({ workspaceId })
-  return <<Channel>Manage promises={promises} workspaceId={workspaceId} />
+  const canCreate = await resolveChannelCreatable(workspaceId, "<channel>")
+  return <<Channel>Manage canCreate={canCreate} promises={promises} workspaceId={workspaceId} />
 }
 ```
 
-**Settings layout — edit `layout.tsx`:**
-Add `"<channel>"` to the `CHANNELS` array. That's the only edit needed — the type and props are derived automatically from the array.
+For credential-backed channels, keep the policy the guard returns — its
+`ownerId` is the tenant-aware owner, so no extra workspace/owner fetch:
+
+```typescript
+const policy = await requireVisibleChannel(workspaceId, "<channel>")
+const credential = await platformCredentialService.resolveForOwner({
+  ownerId: policy.ownerId,
+  type: "<channel>",
+})
+```
+
+No settings-layout edit is needed: the row appears once the
+`CHANNEL_CAPABILITIES` entry marks the channel `manageable` (Phase 3, file 7).
+A capability entry without this page 404s loudly when the row is clicked.
 
 ## Post-Creation Verification
 

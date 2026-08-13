@@ -53,6 +53,7 @@ vi.mock("@chatbotx.io/redis", () => ({
     mocks.withCache(_key, _options)
     return fn()
   },
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 
 vi.mock("@chatbotx.io/worker-config", async () => {

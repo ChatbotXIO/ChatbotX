@@ -52,6 +52,7 @@
     "disableBot": "Inaktivera bot",
     "disconnect": "Koppla från",
     "download": "Ladda ned",
+    "downloadTemplate": "Ladda ned mall",
     "duplicate": "Duplicera",
     "edit": "Redigera",
     "editFeature": "Redigera {feature}",
@@ -149,6 +150,9 @@
     "view": "Visa",
     "viewAnalytics": "Visa analys",
     "wait": "Vänta"
+  },
+  "errors": {
+    "superAdminRequired": "Du måste vara superadministratör för arbetsytan för att göra detta."
   },
   "activeCampaign": {
     "automations": {
@@ -604,6 +608,7 @@
       "instagram": "Instagram",
       "opportunity": "Affärsmöjlighet",
       "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp-annonser",
       "systemFields": "Systemfält",
       "systemTime": "Systemtid",
       "topicCoupon": "Kupongämne"
@@ -624,6 +629,8 @@
       "completedWhatsAppFlows": "Slutförda WhatsApp-flöden",
       "consecutiveAiFailures": "Antal AI-fel i följd",
       "contactCreatedAt": "Kontakten skapades",
+      "fromCtwaAd": "Från Click to WhatsApp-annons",
+      "ctwaConversion": "CTWA-konvertering",
       "contactCreatedDate": "Datum då kontakten skapades",
       "contactCreatedDateMinutesAgo": "Datum då kontakten skapades (minuter sedan)",
       "continent": "Kontinent",
@@ -687,6 +694,10 @@
         "refLink": "Referenslänk",
         "text": "Text",
         "video": "Video"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Köp"
       },
       "locale": "Språk",
       "messengerList": "Messenger-lista",
@@ -756,6 +767,15 @@
       "imported": "Importerad",
       "inboundMessage": "Inkommande meddelande",
       "webchat": "Webbchatt"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA-samtalsstartare",
+        "leads": "CTWA-kvalificerade leads",
+        "purchases": "CTWA-köpare"
+      },
+      "adPrefix": "annons",
+      "allAds": "alla annonser"
     },
     "valuePlaceholder": "...",
     "yes": "Ja"
@@ -841,7 +861,10 @@
     }
   },
   "customFields": {
-    "title": "Anpassade fält"
+    "title": "Anpassade fält",
+    "variables": {
+      "rawGroup": "Rå anpassade fält"
+    }
   },
   "deepseek": {
     "autoReply": {
@@ -959,6 +982,207 @@
       "reconnect": "Anslut igen"
     },
     "title": "Facebook Ads"
+  },
+  "ads": {
+    "title": "Annonser",
+    "nav": {
+      "clickToWhatsappAds": "Click to WhatsApp-annonser",
+      "clickToTiktokAds": "Click to TikTok-annonser",
+      "connectAccounts": "Anslut konton",
+      "conversionEvents": "Konverteringshändelser",
+      "adsAnalytics": "Annonsanalys",
+      "reporting": "Rapportering",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Kommer snart"
+    },
+    "connectAccounts": {
+      "title": "Hantera alla dina annonskonton",
+      "description": "Spåra konverteringar och optimera dina click-to-WhatsApp-annonskampanjer.",
+      "learnMore": "Läs mer",
+      "connectAdAccount": "Anslut annonskonto",
+      "adAccountName": "Namn på annonskonto",
+      "disconnect": "Koppla från",
+      "empty": "Inget annonskonto anslutet ännu.",
+      "adAccountsTitle": "Meta-annonskonton",
+      "adAccountsDescription": "Anslut Facebook Ads för att läsa in de annonskonton som används för click-to-WhatsApp-kampanjer.",
+      "adAccountsReconnectBanner": "Tokenet för ditt Meta-annonskonto har gått ut eller förlorat behörigheter. Anslut Facebook Ads igen för att fortsätta ha annonsrapportering tillgänglig.",
+      "adAccountsNotConnected": "Inga Meta-annonskonton är anslutna ännu.",
+      "adAccountsEmpty": "Inga Meta-annonskonton hittades för denna Facebook Ads-anslutning.",
+      "adAccountsNote": "Utgifter och retargeting-målgrupper kommer från dessa annonskonton.",
+      "reconnectBanner": "Anslut ditt WhatsApp-konto igen för att aktivera sändning av konverteringshändelser till Meta.",
+      "reconnect": "Anslut igen",
+      "reconnectSuccess": "WhatsApp-kontot är återanslutet.",
+      "selectAccountLabel": "WhatsApp-konto",
+      "status": {
+        "ready": "Automatiska händelser klara",
+        "missingPermission": "Behörighet för automatiska händelser saknas",
+        "unverified": "Behörighet inte verifierad"
+      },
+      "table": {
+        "name": "Namn",
+        "phoneNumber": "Telefonnummer",
+        "wabaId": "WABA-ID",
+        "permission": "Automatiska händelser"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Anslut ditt WhatsApp-konto först",
+        "description": "Konverteringsspårning för Click-to-WhatsApp kräver ett anslutet WhatsApp-konto innan du kan länka annonskonton och skapa konverteringsdataset.",
+        "step1": "Anslut ditt WhatsApp Business-konto under Kanaler.",
+        "step2": "Kom tillbaka hit för att auktorisera Meta Ads och välja ditt annonskonto.",
+        "step3": "Vi skapar automatiskt konverteringsdatasetet med ditt WhatsApp Business-konto.",
+        "cta": "Anslut WhatsApp-konto"
+      }
+    },
+    "conversionEvents": {
+      "title": "Konverteringshändelser",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Hantera annonskonton",
+      "export": "Exportera",
+      "selectAll": "Markera alla",
+      "whatsappAsset": "WhatsApp-tillgång",
+      "selectWhatsappAsset": "Välj WhatsApp-tillgång",
+      "templates": "Mallar",
+      "selectTemplates": "Välj mallar",
+      "noTemplates": "Inga godkända mallar hittades.",
+      "existingRules": "Befintliga regler",
+      "noRules": "Inga konverteringsregler för denna WhatsApp-tillgång ännu.",
+      "toggleRule": "Aktivera eller inaktivera regel",
+      "deleteRule": "Ta bort regel",
+      "qualifyingTemplateMessageSent": "Kvalificerande mallmeddelande skickas",
+      "qualifyingFirstReply": "Kontakten skickar sitt första meddelande",
+      "qualifyingAnyReply": "Kontakten skickar ett meddelande",
+      "when": "När",
+      "whenOptions": {
+        "templateSent": "Kvalificerande mallmeddelande skickas",
+        "tagApplied": "Kontakten taggas",
+        "keywordMatched": "Kontaktens meddelande matchar en nyckelordsregel",
+        "contactReplied": "Kontakten skickar ett meddelande"
+      },
+      "tags": "Taggar",
+      "selectTags": "Välj taggar",
+      "noTags": "Inga taggar hittades.",
+      "untitledKeywordRule": "(namnlös nyckelordsregel)",
+      "keywordRules": "Nyckelordsregler",
+      "selectKeywordRules": "Välj nyckelordsregler",
+      "noKeywordRules": "Inga inkommande nyckelordsregler hittades.",
+      "replyOptions": "Svarsalternativ",
+      "firstReplyOnly": "Endast det första meddelandet",
+      "dedupeNote": "Högst 1 händelse per dag per konversation per regel.",
+      "dealWon": "Affär vunnen",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Köp",
+      "messages": {
+        "ruleSaved": "Konverteringsregel sparad",
+        "ruleUpdated": "Konverteringsregel uppdaterad",
+        "ruleDeleted": "Konverteringsregel borttagen"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Sida 1",
+        "page2": "Sida 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Spåra kvalificerade leads",
+        "question": "Vid vilken punkt i konversationen vill du kvalificera en kontakt som lead?",
+        "when": "När",
+        "then": "Markera då CTWA-lead som"
+      },
+      "trackPurchases": {
+        "title": "Spåra köp",
+        "question": "Vilken mall bekräftar ett köp?",
+        "when": "När",
+        "then": "Då",
+        "noValueNote": "Ett regelbaserat köp registrerar en köpkonvertering utan ordervärde – det räknas mot köp men bidrar med 0 till intäkterna. Ordervärde registreras endast av Metas automatiska händelser."
+      }
+    },
+    "analytics": {
+      "title": "CTWA-analys",
+      "funnelOverview": "Tratt-översikt",
+      "conversationsStarted": "Startade konversationer",
+      "qualifiedLeads": "Kvalificerade leads",
+      "purchases": "Köp",
+      "adSpend": "Annonsutgifter",
+      "spendAccountLevelNote": "Utgifter rapporteras på Meta-annonskontonivå; med ett valt WhatsApp-konto döljs annonser med enbart utgifter och ingen tratt-aktivitet för det kontot.",
+      "revenue": "Intäkter",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Intäkter förutsätter en enda valuta (USD). Annonskonton med blandade valutor sammanställs inte ännu.",
+      "costPerLead": "Kostnad/lead",
+      "costPerPurchase": "Kostnad/köp",
+      "impressions": "Visningar",
+      "clicks": "Klick",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Kostnad/konversation",
+      "costCurrencyNote": "Kostnadsmått förutsätter en enda valuta (USD), i linje med annonsutgifterna.",
+      "performanceChart": {
+        "title": "Resultat över tid",
+        "empty": "Inga konversationer, leads, köp eller utgifter i detta intervall ännu."
+      },
+      "dateRange": {
+        "oneDay": "1D",
+        "oneWeek": "1V",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Anpassad",
+        "apply": "Tillämpa"
+      },
+      "allAds": "Alla annonser",
+      "adAccountFilter": {
+        "all": "Alla annonskonton",
+        "label": "Annonskonto",
+        "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto."
+      },
+      "retarget": "Retargeting",
+      "thoseWhoPurchased": "De som har köpt",
+      "thoseWhoStartedConversation": "De som startade en konversation",
+      "sendWhatsappBroadcast": "Skicka WhatsApp-utskick",
+      "from": "Från",
+      "to": "Till",
+      "unattributed": "Ej attribuerat",
+      "retargetDialog": {
+        "title": "Retargeta CTWA-kontakter",
+        "createAudience": "Skapa målgrupp",
+        "useExistingAudience": "Använd befintlig målgrupp",
+        "audienceName": "Målgruppens namn",
+        "audiencePrefix": "CTWA",
+        "confirm": "Starta synkronisering",
+        "success": "Synkronisering av retargeting-målgrupp har lagts i kö.",
+        "error": "Det gick inte att köa synkronisering av retargeting-målgrupp."
+      },
+      "delivery": {
+        "title": "Konverteringsleverans",
+        "sent": "Skickat",
+        "pending": "Väntande",
+        "failed": "Misslyckades",
+        "skippedNoScope": "Hoppades över (ingen behörighetsomfattning)",
+        "skippedRegion": "Hoppades över (region)",
+        "noScopeWarning": "Vissa konverteringar skickades inte eftersom detta WhatsApp-konto saknar behörigheten för händelser. Anslut det igen för att aktivera rapportering av automatiska händelser.",
+        "reconnectCta": "Anslut konto igen",
+        "empty": "Inga konverteringshändelser i detta intervall ännu."
+      },
+      "export": {
+        "conversations": "Exportera konversationer",
+        "leads": "Exportera leads",
+        "purchases": "Exportera köp"
+      },
+      "csv": {
+        "contactName": "Kontaktens namn",
+        "phone": "Telefon",
+        "adId": "Annons-ID",
+        "occurredAt": "Skedde vid"
+      },
+      "empty": "Inga data ännu. Anslut ett annonskonto och börja spåra konverteringar."
+    }
   },
   "facebookCommentAutomation": {
     "activated": "Automatiseringen har aktiverats",
@@ -2542,6 +2766,11 @@
       "whatsappFlow": "WhatsApp-flöde",
       "whatsappOptionList": "Alternativlista"
     },
+    "sendCarousel": {
+      "addSlide": "Lägg till kort",
+      "removeSlide": "Ta bort kort",
+      "whatsappLinkButtonIgnored": "På WhatsApp fungerar inte det här kortets länk: ett kort med en länkknapp kan inte ha andra knappar. Det skickas som ett svar istället."
+    },
     "additionalSteps": "Ytterligare steg",
     "aiAnalyzeImage": {
       "label": "{name}: Analysera bild"
@@ -3113,6 +3342,8 @@
     "failedToPreviewImage": "Det gick inte att förhandsgranska bilden",
     "featureNotFound": "{feature} hittades inte",
     "flowConfigIncomplete": "Vissa konfigurationer är ofullständiga",
+    "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
+    "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
     "historyDepth": "({count})",
     "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
     "humanAgentWindowExpired": "Meddelandeperioden har löpt ut. Kontakten måste skicka ett meddelande först för att öppna konversationen igen.",
@@ -4250,6 +4481,13 @@
         "wabaResolveFailed": "Det gick inte att fastställa WhatsApp Business-kontot från auktoriseringen."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp-integrationen hittades inte.",
+        "phoneNumberMismatch": "Återanslutningen returnerade det förväntade WhatsApp Business-kontot, men inte telefonnumret som är anslutet till denna arbetsyta.",
+        "wabaMismatch": "Återanslutningen returnerade ett annat WhatsApp Business-konto. Anslut samma konto igen."
+      }
+    },
     "connectExisting": "Anslut ett befintligt WhatsApp Business-konto",
     "continueManualConnect": "Fortsätt – manuell anslutning",
     "embeddedSignupDone": "Registreringen är klar – du kan stänga den här fliken.",
@@ -4295,6 +4533,7 @@
         "enterFormatUrl": "Ange URL för {format}",
         "flowToken": "Flödestoken",
         "flowTokenPlaceholder": "Ange flödestoken",
+        "flowNotSynced": "Synkronisera WhatsApp-flöden för att mappa inskickade fält.",
         "latitude": "Latitud",
         "limitedTimeOffer": "Erbjudandets sluttid",
         "limitedTimeOfferHelp": "Unix-tidsstämpel i millisekunder när erbjudandet löper ut",

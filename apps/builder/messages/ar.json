@@ -43,6 +43,7 @@
     "disableBot": "تعطيل البوت",
     "disconnect": "قطع الاتصال",
     "download": "تنزيل",
+    "downloadTemplate": "تنزيل نموذج",
     "edit": "تعديل",
     "editFeature": "تعديل {feature}",
     "enableBot": "تفعيل البوت",
@@ -145,6 +146,9 @@
     "clone": "استنساخ",
     "remove": "إزالة",
     "restore": "استعادة"
+  },
+  "errors": {
+    "superAdminRequired": "يجب أن تكون مسؤولًا فائقًا لمساحة العمل للقيام بذلك."
   },
   "states": {
     "success": "نجاح",
@@ -536,6 +540,8 @@
       "blocked": "محظور",
       "noAdminReply": "لا يوجد رد من المشرف",
       "contactCreatedAt": "تاريخ إنشاء جهة الاتصال",
+      "fromCtwaAd": "من إعلان Click to WhatsApp",
+      "ctwaConversion": "تحويل CTWA",
       "lastUserInputTypes": {
         "text": "نص",
         "location": "الموقع",
@@ -545,6 +551,10 @@
         "audio": "صوت",
         "gif": "GIF",
         "file": "ملف"
+      },
+      "ctwaConversionTypes": {
+        "lead": "عميل محتمل",
+        "purchase": "شراء"
       }
     },
     "fieldGroups": {
@@ -559,7 +569,8 @@
       "topicCoupon": "موضوع الكوبون",
       "customFields": "الحقول المخصصة",
       "email": "البريد الإلكتروني",
-      "sms": "الرسائل النصية"
+      "sms": "الرسائل النصية",
+      "ctwaAds": "إعلانات Click to WhatsApp"
     },
     "languages": {
       "ar": "العربية",
@@ -595,6 +606,15 @@
       "webchat": "دردشة الويب",
       "botLink": "رابط البوت",
       "chatPlugin": "إضافة الدردشة C."
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "بادئو محادثات CTWA",
+        "leads": "عملاء CTWA المحتملون المؤهلون",
+        "purchases": "مشترو CTWA"
+      },
+      "adPrefix": "إعلان",
+      "allAds": "جميع الإعلانات"
     }
   },
   "channels": {
@@ -2297,6 +2317,207 @@
       "invalidAppSettings": "إعدادات تطبيق Facebook غير صالحة"
     }
   },
+  "ads": {
+    "title": "الإعلانات",
+    "nav": {
+      "clickToWhatsappAds": "إعلانات Click to WhatsApp",
+      "clickToTiktokAds": "إعلانات Click to TikTok",
+      "connectAccounts": "ربط الحسابات",
+      "conversionEvents": "أحداث التحويل",
+      "adsAnalytics": "تحليلات الإعلانات",
+      "reporting": "التقارير",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "قريبًا"
+    },
+    "connectAccounts": {
+      "title": "إدارة جميع حساباتك الإعلانية",
+      "description": "تتبّع التحويلات وحسّن حملات إعلانات Click-to-WhatsApp الخاصة بك.",
+      "learnMore": "معرفة المزيد",
+      "connectAdAccount": "ربط حساب إعلاني",
+      "adAccountName": "اسم الحساب الإعلاني",
+      "disconnect": "قطع الاتصال",
+      "empty": "لا يوجد حساب إعلاني متصل حتى الآن.",
+      "adAccountsTitle": "حسابات Meta الإعلانية",
+      "adAccountsDescription": "اربط إعلانات Facebook لتحميل الحسابات الإعلانية المستخدمة في حملات click-to-WhatsApp.",
+      "adAccountsReconnectBanner": "انتهت صلاحية رمز حساب Meta الإعلاني الخاص بك أو فقد الأذونات. أعد ربط إعلانات Facebook للحفاظ على توفر تقارير الإعلانات.",
+      "adAccountsNotConnected": "لا توجد حسابات Meta إعلانية متصلة حتى الآن.",
+      "adAccountsEmpty": "لم يتم العثور على حسابات Meta إعلانية لاتصال إعلانات Facebook هذا.",
+      "adAccountsNote": "يأتي الإنفاق وجماهير إعادة الاستهداف من هذه الحسابات الإعلانية.",
+      "reconnectBanner": "أعد ربط حساب WhatsApp الخاص بك لتفعيل إرسال أحداث التحويل إلى Meta.",
+      "reconnect": "إعادة الاتصال",
+      "reconnectSuccess": "تمت إعادة ربط حساب WhatsApp.",
+      "selectAccountLabel": "حساب WhatsApp",
+      "status": {
+        "ready": "الأحداث التلقائية جاهزة",
+        "missingPermission": "إذن الأحداث التلقائية مفقود",
+        "unverified": "الإذن غير مُتحقّق منه"
+      },
+      "table": {
+        "name": "الاسم",
+        "phoneNumber": "رقم الهاتف",
+        "wabaId": "معرّف WABA",
+        "permission": "الأحداث التلقائية"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "اربط حساب WhatsApp الخاص بك أولًا",
+        "description": "يتطلب تتبع تحويلات Click-to-WhatsApp ربط حساب WhatsApp قبل أن تتمكن من ربط الحسابات الإعلانية وإنشاء مجموعات بيانات التحويل.",
+        "step1": "اربط حساب WhatsApp Business الخاص بك في القنوات.",
+        "step2": "عد إلى هنا لتفويض Meta Ads واختيار حسابك الإعلاني.",
+        "step3": "سننشئ تلقائيًا مجموعة بيانات التحويل باستخدام حساب WhatsApp Business الخاص بك.",
+        "cta": "ربط حساب WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "أحداث التحويل",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "إدارة الحسابات الإعلانية",
+      "export": "تصدير",
+      "selectAll": "تحديد الكل",
+      "whatsappAsset": "أصل WhatsApp",
+      "selectWhatsappAsset": "اختر أصل WhatsApp",
+      "templates": "القوالب",
+      "selectTemplates": "اختر القوالب",
+      "noTemplates": "لم يتم العثور على قوالب معتمدة.",
+      "existingRules": "القواعد الحالية",
+      "noRules": "لا توجد قواعد تحويل لهذا أصل WhatsApp حتى الآن.",
+      "toggleRule": "تفعيل أو تعطيل القاعدة",
+      "deleteRule": "حذف القاعدة",
+      "qualifyingTemplateMessageSent": "يتم إرسال رسالة القالب المؤهِّلة",
+      "qualifyingFirstReply": "ترسل جهة الاتصال رسالتها الأولى",
+      "qualifyingAnyReply": "ترسل جهة الاتصال رسالة",
+      "when": "عندما",
+      "whenOptions": {
+        "templateSent": "يتم إرسال رسالة القالب المؤهِّلة",
+        "tagApplied": "تُصنَّف جهة الاتصال بوسم",
+        "keywordMatched": "تطابق رسالة جهة الاتصال قاعدة كلمة مفتاحية",
+        "contactReplied": "ترسل جهة الاتصال رسالة"
+      },
+      "tags": "الوسوم",
+      "selectTags": "اختر الوسوم",
+      "noTags": "لم يتم العثور على وسوم.",
+      "untitledKeywordRule": "(قاعدة كلمة مفتاحية بلا عنوان)",
+      "keywordRules": "قواعد الكلمات المفتاحية",
+      "selectKeywordRules": "اختر قواعد الكلمات المفتاحية",
+      "noKeywordRules": "لم يتم العثور على قواعد كلمات مفتاحية واردة.",
+      "replyOptions": "خيارات الرد",
+      "firstReplyOnly": "الرسالة الأولى فقط",
+      "dedupeNote": "حدث واحد كحد أقصى في اليوم لكل محادثة لكل قاعدة.",
+      "dealWon": "صفقة فائزة",
+      "eventTypeLead": "عميل محتمل",
+      "eventTypePurchase": "شراء",
+      "messages": {
+        "ruleSaved": "تم حفظ قاعدة التحويل",
+        "ruleUpdated": "تم تحديث قاعدة التحويل",
+        "ruleDeleted": "تم حذف قاعدة التحويل"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "صفحة 1",
+        "page2": "صفحة 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "تتبع العملاء المحتملين المؤهلين",
+        "question": "في أي مرحلة من المحادثة تريد تأهيل جهة الاتصال كعميل محتمل؟",
+        "when": "عندما",
+        "then": "ثم صنّف عميل CTWA المحتمل كـ"
+      },
+      "trackPurchases": {
+        "title": "تتبع المشتريات",
+        "question": "أي قالب يؤكد عملية الشراء؟",
+        "when": "عندما",
+        "then": "ثم",
+        "noValueNote": "يسجّل الشراء المبني على قاعدة تحويل شراء دون قيمة طلب — يُحسب ضمن المشتريات لكنه يضيف 0 إلى الإيرادات. يتم تسجيل قيمة الطلب فقط بواسطة Meta Automatic Events."
+      }
+    },
+    "analytics": {
+      "title": "تحليلات CTWA",
+      "funnelOverview": "نظرة عامة على مسار التحويل",
+      "conversationsStarted": "المحادثات المبدوءة",
+      "qualifiedLeads": "العملاء المحتملون المؤهلون",
+      "purchases": "المشتريات",
+      "adSpend": "الإنفاق الإعلاني",
+      "spendAccountLevelNote": "يُسجَّل الإنفاق على مستوى حساب Meta الإعلاني؛ عند تحديد حساب WhatsApp، تُخفى الإعلانات ذات الإنفاق فقط بدون أي نشاط في مسار التحويل لذلك الحساب.",
+      "revenue": "الإيرادات",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "تفترض الإيرادات عملة واحدة (USD). لا يتم تجميع الحسابات الإعلانية متعددة العملات حاليًا.",
+      "costPerLead": "التكلفة/العميل المحتمل",
+      "costPerPurchase": "التكلفة/الشراء",
+      "impressions": "مرات الظهور",
+      "clicks": "النقرات",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "التكلفة/المحادثة",
+      "costCurrencyNote": "تفترض مقاييس التكلفة عملة واحدة (USD)، بما يتوافق مع الإنفاق الإعلاني.",
+      "performanceChart": {
+        "title": "الأداء عبر الزمن",
+        "empty": "لا توجد محادثات أو عملاء محتملون أو مشتريات أو إنفاق في هذا النطاق حتى الآن."
+      },
+      "dateRange": {
+        "oneDay": "1ي",
+        "oneWeek": "1أ",
+        "oneMonth": "1ش",
+        "threeMonths": "3ش",
+        "custom": "مخصص",
+        "apply": "تطبيق"
+      },
+      "allAds": "جميع الإعلانات",
+      "adAccountFilter": {
+        "all": "جميع الحسابات الإعلانية",
+        "label": "الحساب الإعلاني",
+        "note": "تُخفى الإعلانات ذات التحويلات ولكن بإنفاق صفري أو توصيل صفري في النطاق الزمني المحدد عند التصفية حسب الحساب الإعلاني."
+      },
+      "retarget": "إعادة الاستهداف",
+      "thoseWhoPurchased": "من قاموا بالشراء",
+      "thoseWhoStartedConversation": "من بدؤوا محادثة",
+      "sendWhatsappBroadcast": "إرسال بث WhatsApp",
+      "from": "من",
+      "to": "إلى",
+      "unattributed": "غير مُنسوب",
+      "retargetDialog": {
+        "title": "إعادة استهداف جهات اتصال CTWA",
+        "createAudience": "إنشاء جمهور",
+        "useExistingAudience": "استخدام جمهور موجود",
+        "audienceName": "اسم الجمهور",
+        "audiencePrefix": "CTWA",
+        "confirm": "بدء المزامنة",
+        "success": "تم وضع مزامنة جمهور إعادة الاستهداف في قائمة الانتظار.",
+        "error": "فشل وضع مزامنة جمهور إعادة الاستهداف في قائمة الانتظار."
+      },
+      "delivery": {
+        "title": "تسليم التحويلات",
+        "sent": "تم الإرسال",
+        "pending": "قيد الانتظار",
+        "failed": "فشل",
+        "skippedNoScope": "تم التخطي (لا يوجد نطاق صلاحية)",
+        "skippedRegion": "تم التخطي (المنطقة)",
+        "noScopeWarning": "لم يتم إرسال بعض التحويلات لأن حساب WhatsApp هذا يفتقد إذن الأحداث. أعد ربطه لتفعيل تقارير Automatic Events.",
+        "reconnectCta": "إعادة ربط الحساب",
+        "empty": "لا توجد أحداث تحويل في هذا النطاق حتى الآن."
+      },
+      "export": {
+        "conversations": "تصدير المحادثات",
+        "leads": "تصدير العملاء المحتملين",
+        "purchases": "تصدير المشتريات"
+      },
+      "csv": {
+        "contactName": "اسم جهة الاتصال",
+        "phone": "الهاتف",
+        "adId": "معرّف الإعلان",
+        "occurredAt": "وقت الحدوث"
+      },
+      "empty": "لا توجد بيانات حتى الآن. اربط حسابًا إعلانيًا وابدأ بتتبع التحويلات."
+    }
+  },
   "googleSheets": {
     "setting": {
       "label": "Google Sheets",
@@ -3060,6 +3281,13 @@
         "wabaResolveFailed": "تعذّر تحديد حساب WhatsApp Business من التفويض."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "لم يتم العثور على تكامل WhatsApp.",
+        "phoneNumberMismatch": "أعادت إعادة الاتصال حساب WhatsApp Business المتوقع، ولكن ليس رقم الهاتف المتصل بمساحة العمل هذه.",
+        "wabaMismatch": "أعادت إعادة الاتصال حساب WhatsApp Business مختلفًا. يُرجى إعادة الاتصال بالحساب نفسه."
+      }
+    },
     "marketingMessageLite": "الرسائل التسويقية الخفيفة",
     "messageTemplate": {
       "carouselImage": {
@@ -3096,6 +3324,7 @@
         "quickReplyPayloadPlaceholder": "أدخل البيانات (اختياري)",
         "flowToken": "رمز المسار",
         "flowTokenPlaceholder": "أدخل رمز المسار",
+        "flowNotSynced": "زامن مسارات واتساب لربط الحقول المُرسلة.",
         "catalogProductId": "معرّف المنتج",
         "catalogProductIdPlaceholder": "أدخل معرّف المنتج لدى بائع التجزئة",
         "carouselCard": "البطاقة {index}",
@@ -3397,7 +3626,10 @@
     "title": "سجلات التدقيق"
   },
   "customFields": {
-    "title": "الحقول المخصصة"
+    "title": "الحقول المخصصة",
+    "variables": {
+      "rawGroup": "الحقول المخصصة الخام"
+    }
   },
   "keywords": {
     "title": "الكلمات المفتاحية",

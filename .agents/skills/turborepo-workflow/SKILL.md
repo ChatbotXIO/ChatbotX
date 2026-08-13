@@ -130,6 +130,13 @@ Defined in `turbo.json`:
 - `build` depends on `^build` (builds dependencies first), outputs `.next/**`, `dist/**`
 - `dev`, `https`, `packages:dev` are persistent (long-running)
 - `db:migrate`, `db:setup`, `db:reset`, `db:studio` are non-cached
+- **`build` does NOT type-check the builder**: `next build` runs with
+  `typescript.ignoreBuildErrors: true` (the in-build tsc pass duplicated
+  `check-types` and OOMed a 4GB heap). A green build proves nothing about
+  types — always run `pnpm --filter builder check-types` (or
+  `pnpm turbo run check-types`). CI enforces this in
+  `.github/workflows/ci.yml`, and `release.yml`'s `check` job gates image
+  publishing on the same command set.
 
 ## Environment
 
