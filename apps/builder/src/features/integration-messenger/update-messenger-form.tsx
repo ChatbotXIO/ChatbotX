@@ -82,9 +82,7 @@ export function UpdateMessengerForm({
               feature: t("fields.messenger.label"),
             }),
           )
-          router.push(
-            `/space/${workspaceId}/settings/channels?channel=messenger`,
-          )
+          router.push(`/space/${workspaceId}/settings/channels/messenger`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to update messenger.")
@@ -369,9 +367,7 @@ export function UpdateMessengerForm({
         <DialogFooter>
           <Button
             onClick={() =>
-              router.push(
-                `/space/${workspaceId}/settings/channels?channel=messenger`,
-              )
+              router.push(`/space/${workspaceId}/settings/channels/messenger`)
             }
             type="button"
             variant="link"

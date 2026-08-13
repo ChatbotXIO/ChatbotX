@@ -7,7 +7,8 @@ node_modules
 docker-data/*
 dist
 .turbo
-/apps/build/.next
+**/.turbo
+**/.next
 /apps/worker/dist
 /apps/mcp-server/dist
 .devcontainer

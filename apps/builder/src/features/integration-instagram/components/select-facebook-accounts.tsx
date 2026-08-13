@@ -44,9 +44,7 @@ export function SelectFacebookAccounts({
     resolvedWorkspaceId: string | null | undefined,
   ) => {
     if (workspaceId && resolvedWorkspaceId) {
-      router.push(
-        `/space/${resolvedWorkspaceId}/settings/channels?channel=instagram`,
-      )
+      router.push(`/space/${resolvedWorkspaceId}/settings/channels/instagram`)
     } else {
       router.push("/")
     }
@@ -149,7 +147,7 @@ export function SelectFacebookAccounts({
           <div className="flex justify-end gap-2">
             <Link
               className={buttonVariants({ size: "sm", variant: "ghost" })}
-              href={`/space/${workspaceId}/settings/channels?channel=instagram`}
+              href={`/space/${workspaceId}/settings/channels/instagram`}
             >
               {t("actions.cancel")}
             </Link>

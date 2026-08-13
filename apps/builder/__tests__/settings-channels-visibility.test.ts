@@ -41,7 +41,8 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("not found")
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({ workspaceId: "ws-1" }),
+  useSelectedLayoutSegment: () => null,
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {

@@ -1,12 +1,9 @@
-import {
-  platformCredentialService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { platformCredentialService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { listIntegrationMessengers } from "@/features/integration-messenger/queries"
-import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { requireVisibleChannel } from "@/lib/workspace/require-visible-channel"
 import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelMessengerPage(props: {
@@ -17,12 +14,9 @@ export default async function SettingChannelMessengerPage(props: {
     return notFound()
   }
 
-  const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  if (!workspace) {
-    return notFound()
-  }
+  const policy = await requireVisibleChannel(workspaceId, "messenger")
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: await resolveOwnerForWorkspace(workspace),
+    ownerId: policy.ownerId,
     type: "messenger",
   })
 

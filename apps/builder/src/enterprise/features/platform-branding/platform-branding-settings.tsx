@@ -22,17 +22,23 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { CodeEditorField } from "@/components/code-editor-field"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { themeOptions, updatePlatformBrandingSchema } from "./schema"
 import {
   updatePlatformBrandingAction,
   updateRootPlatformBrandingAction,
 } from "./update-platform-branding.action"
+
+// codemirror is heavy — load it only when this settings screen mounts.
+const CodeEditorField = dynamic(
+  () => import("@/components/code-editor-field").then((m) => m.CodeEditorField),
+  { ssr: false },
+)
 
 const THEME_COLORS: Record<(typeof themeOptions)[number], string> = {
   Amber: "#f59e0b",

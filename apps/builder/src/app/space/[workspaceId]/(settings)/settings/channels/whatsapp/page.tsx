@@ -1,12 +1,9 @@
-import {
-  platformCredentialService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { platformCredentialService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationWhatsapps } from "@/features/integration-whatsapp/queries"
 import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
-import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { requireVisibleChannel } from "@/lib/workspace/require-visible-channel"
 import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelWhatsappPage(props: {
@@ -17,12 +14,9 @@ export default async function SettingChannelWhatsappPage(props: {
     return notFound()
   }
 
-  const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  if (!workspace) {
-    return notFound()
-  }
+  const policy = await requireVisibleChannel(workspaceId, "whatsapp")
   const credential = await platformCredentialService.resolveForOwner({
-    ownerId: await resolveOwnerForWorkspace(workspace),
+    ownerId: policy.ownerId,
     type: "whatsapp",
   })
 

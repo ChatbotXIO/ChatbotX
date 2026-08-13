@@ -62,9 +62,7 @@ export function TelegramConnect({
         onSuccess: () => {
           setOpen(false)
           if (workspaceId) {
-            router.push(
-              `/space/${workspaceId}/settings/channels?channel=telegram`,
-            )
+            router.push(`/space/${workspaceId}/settings/channels/telegram`)
           } else {
             router.push("/")
           }

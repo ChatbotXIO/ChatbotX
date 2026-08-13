@@ -54,7 +54,7 @@ export function FacebookPages({
 }) {
   const t = useTranslations()
 
-  const cancelHref = `/space/${workspaceId}/settings/channels?channel=messenger`
+  const cancelHref = `/space/${workspaceId}/settings/channels/messenger`
   const { form, handleSubmitWithAction } = useHookFormAction(
     selectPageAction,
     zodResolver(selectPageRequest),

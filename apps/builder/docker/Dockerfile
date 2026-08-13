@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:24-trixie-slim AS base
 
 ENV PNPM_HOME="/pnpm"
@@ -20,7 +21,10 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 COPY --from=pre /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+# BuildKit cache mount for the pnpm store (PNPM_HOME=/pnpm → store at /pnpm/store).
+# Persisted across CI runs via buildkit-cache-dance in release.yml.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+  pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
 # COPY --from=pre /app/.env .env
@@ -34,7 +38,17 @@ COPY --from=pre /app/out/full/ .
 ENV BETTER_AUTH_SECRET="docker-build-time-placeholder-not-used-at-runtime-0"
 ENV BETTER_AUTH_URL="http://localhost:3000"
 
-RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=builder
+# - `.next/cache` cache mount: Next.js incremental artifacts survive across CI
+#   runs (persisted via buildkit-cache-dance in release.yml).
+# - TURBO_* secret mounts: optional Turbo remote cache (self-hosted
+#   turborepo-remote-cache or Vercel). When the secrets are not provided the
+#   env vars stay unset and turbo builds without a remote cache — a full
+#   remote-cache hit restores `.next/**` and skips `next build` entirely.
+RUN --mount=type=cache,id=builder-next-cache,target=/app/apps/builder/.next/cache \
+  --mount=type=secret,id=TURBO_API,env=TURBO_API \
+  --mount=type=secret,id=TURBO_TOKEN,env=TURBO_TOKEN \
+  --mount=type=secret,id=TURBO_TEAM,env=TURBO_TEAM \
+  SKIP_ENV_CHECK=true pnpm turbo run build --filter=builder
 
 # Standalone image has no pnpm workspace; bundle a tiny migration runner (drizzle-orm + pg only).
 RUN apt-get update && apt-get install -y --no-install-recommends jq \

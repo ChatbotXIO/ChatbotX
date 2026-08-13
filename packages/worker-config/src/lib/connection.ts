@@ -1,4 +1,5 @@
-import { default as IORedis, type RedisOptions } from "ioredis"
+import { createRedisConnection } from "@chatbotx.io/redis"
+import type { default as IORedis, RedisOptions } from "ioredis"
 import { keys } from "../keys"
 
 let permanentRedis: IORedis | null = null
@@ -12,6 +13,10 @@ export function getRedisConnection() {
   const options: RedisOptions = {
     maxRetriesPerRequest: null,
     enableReadyCheck: true,
+    // Module-scope consumers (event buses, queues) are evaluated while
+    // `next build` collects page data with no Redis reachable; lazyConnect
+    // keeps the build from dialing 127.0.0.1:6379 in an infinite retry loop.
+    lazyConnect: env.NEXT_PHASE === "phase-production-build",
     retryStrategy: (times) => {
       const delay = Math.min(times * 50, 2000)
       return delay
@@ -25,7 +30,7 @@ export function getRedisConnection() {
     },
   }
 
-  permanentRedis = new IORedis(env.REDIS_URL, options)
+  permanentRedis = createRedisConnection(env.REDIS_URL, options)
 
   return permanentRedis
 }

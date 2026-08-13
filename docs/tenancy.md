@@ -198,11 +198,19 @@ else and the policy silently falls back to platform-global.
   on `resolveVisibleChannels` before rendering, including the self-serve telegram/webchat ones,
   so a hidden channel's entry point never renders even via a `?channel=` deep link.
 - **Settings accordion** (`.../settings/channels/layout.tsx`) — narrows the row list to visible
-  channels, **grandfathering** any channel the workspace already has a connected inbox for
-  (`inboxService.distinctConnectedChannels`) so hiding never makes an existing connection vanish.
-- **Per-slot pages** — each `@<channel>/page.tsx` re-checks via
-  `resolveChannelCreatable(workspaceId, channel)` (`app/.../webchats/create/page.tsx` too),
-  since Next.js parallel routes cannot thread the layout's flag into opaque slots.
+  channels via `resolveVisibleChannels`, **grandfathering** any channel the workspace already has
+  a connected inbox for (`inboxService.distinctConnectedChannels`) so hiding never makes an
+  existing connection vanish. Rows are real nested routes (`settings/channels/<channel>`)
+  rendered through the route-driven accordion shell.
+- **Per-channel pages** — each `settings/channels/<channel>/page.tsx` guards itself with
+  `requireVisibleChannel(workspaceId, channel)`
+  (`apps/builder/src/lib/workspace/require-visible-channel.ts`), which 404s hidden channels and
+  returns the request-scoped `ChannelPolicy` (`ownerId`, `creatable`, `visibleChannels`) so
+  credential pages reuse the same reads. The layout and every page share one
+  `resolveChannelPolicy` resolution per request (string-keyed React `cache()`), so the rendered
+  rows and the directly-addressable routes can never disagree. The channels index page gates the
+  legacy `?channel=` deep-link redirect on the same policy, and `webchats/create/page.tsx`
+  re-checks via `resolveChannelCreatable(workspaceId, channel)`.
 
 Channels that are `manageable` but not `creatable` (currently only `smtp`) sit **outside** the
 policy entirely — `resolveVisibleChannels` only ever filters `CREATABLE_CHANNELS`, so those rows

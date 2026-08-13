@@ -21,7 +21,6 @@
     "./**/*": "./src/**/*.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
     "check-types": "tsc --noEmit"
   }
 }

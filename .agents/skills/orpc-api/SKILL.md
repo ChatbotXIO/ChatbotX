@@ -132,18 +132,33 @@ export default workspaceTokenAPIs
 
 ## Registering the Router
 
-Add to `apps/builder/src/routers/index.ts`:
+Add to `apps/builder/src/routers/index.ts` as a **lazy branch** — every feature
+router there is wrapped in oRPC's `lazy()` so the feature's api module (and its
+import graph) only loads on the first call that targets it, instead of all ~58
+feature api modules loading with the route handler:
 
 ```typescript
-import { myFeatureAPI } from "@/features/my-feature/api"
+import { lazy } from "@orpc/server"
 
 export const router = {
   // ...existing routes
-  myFeatureAPI,
+  myFeatureAPI: lazy(() =>
+    import("@/features/my-feature/api").then((m) => ({
+      default: m.myFeatureAPI,
+    })),
+  ),
 }
 ```
 
-For public API (workspace-token), also add to `apps/builder/src/routers/public.ts`.
+Two failure modes to watch: the `import("...")` specifier must stay a literal
+string (the bundler needs to statically analyze it), and the picked export
+name must match the module's actual export — a mismatch produces
+`default: undefined`, which fails at the first call to that branch rather than
+at build time. Dynamic `import()` is allowed here because `apps/builder` is
+Next.js-built (see `.agents/rules/no-dynamic-import.md`).
+
+For public API (workspace-token), also add to `apps/builder/src/routers/public.ts` —
+that router stays **eager** (plain imports); it feeds `/api/public-spec.json`.
 
 ## Schema Patterns
 

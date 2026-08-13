@@ -5,6 +5,7 @@ import { listIntegrationWebchats } from "@/features/integration-webchat/queries"
 import { listIntegrationWebchatsRequest } from "@/features/integration-webchat/schema/query"
 import { WebchatTable } from "@/features/integration-webchat/webchat-table"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { requireVisibleChannel } from "@/lib/workspace/require-visible-channel"
 import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelWebchatPage(props: {
@@ -15,6 +16,8 @@ export default async function SettingChannelWebchatPage(props: {
   if (!data) {
     return notFound()
   }
+
+  await requireVisibleChannel(data.workspaceId, "webchat")
 
   const searchParams = await props.searchParams
   const search = listIntegrationWebchatsRequest.parse(searchParams)

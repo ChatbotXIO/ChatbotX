@@ -1,0 +1,46 @@
+name: CI
+
+# Quality gate for type-checking, linting, and tests.
+#
+# This workflow is the ONLY type gate for apps/builder: `next build` runs with
+# `typescript.ignoreBuildErrors: true` (see apps/builder/next.config.ts), so
+# `turbo run check-types` here must stay green — never remove it without
+# re-enabling type-checking inside the build.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Types, lint, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Turbo remote cache backed by the GitHub Actions cache (zero infra).
+      # Sets TURBO_API/TURBO_TOKEN/TURBO_TEAM for the steps below.
+      - name: Set up Turbo cache
+        uses: rharkor/caching-for-turbo@v2
+
+      - name: Type-check, lint, and test
+        run: pnpm turbo run check-types lint test

@@ -4,6 +4,7 @@ import type {
   TenantHelpItemModel,
   TenantModel,
 } from "@chatbotx.io/database/types"
+import { parseEnvBool } from "@chatbotx.io/utils"
 import { customDomainService } from "../enterprise/custom-domain/service"
 import { tenantService } from "../enterprise/tenant/service"
 import { tenantHelpItemService } from "../enterprise/tenant-help-item/service"
@@ -41,7 +42,7 @@ const buildDefaults = (helpItems: TenantHelpItemModel[]): TenantSettings => {
   const derived = deriveUrls(
     env.NEXT_PUBLIC_BUILDER_URL,
     env.NEXT_PUBLIC_STORAGE_URL,
-    { forceHttps: env.FORCE_PUBLIC_HTTPS },
+    { forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS) },
   )
   return {
     appUrl: derived.appUrl,
@@ -201,7 +202,7 @@ export const resolveWorkspaceAppUrl = async (args: {
 
   const env = integrationContextEnv()
   return deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
-    forceHttps: env.FORCE_PUBLIC_HTTPS,
+    forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
   }).appUrl
 }
 
