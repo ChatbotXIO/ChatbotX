@@ -6,9 +6,29 @@ import {
 import { Queue } from "bullmq"
 import { env } from "../../env"
 
+/**
+ * Quota/billing schedulers only make sense on the cloud edition. The trial
+ * teardown is the dangerous one: it disconnects every channel of an expired
+ * trial owner, and off-cloud there is no billing path to recover from that.
+ */
+const CLOUD_ONLY_SCHEDULERS = [
+  ScheduleJobData.syncUserQuota,
+  ScheduleJobData.reconcileTenants,
+  ScheduleJobData.unsubscribeExpiredTrials,
+] as const
+
 export const registerSchedules = async () => {
   if (!(scheduleQueue instanceof Queue)) {
     return
+  }
+
+  const isCloud = env.NEXT_PUBLIC_EDITION === "cloud"
+  if (!isCloud) {
+    // upsertJobScheduler persists in Redis: a scheduler registered by an
+    // earlier cloud boot (or a shared Redis) keeps firing until removed.
+    for (const name of CLOUD_ONLY_SCHEDULERS) {
+      await scheduleQueue.removeJobScheduler(name)
+    }
   }
 
   await scheduleQueue.upsertJobScheduler(
@@ -126,23 +146,25 @@ export const registerSchedules = async () => {
     },
   )
 
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.syncUserQuota,
-    { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
-    {
-      name: ScheduleJobData.syncUserQuota,
-      data: { type: ScheduleJobData.syncUserQuota, data: {} },
-    },
-  )
+  if (isCloud) {
+    await scheduleQueue.upsertJobScheduler(
+      ScheduleJobData.syncUserQuota,
+      { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
+      {
+        name: ScheduleJobData.syncUserQuota,
+        data: { type: ScheduleJobData.syncUserQuota, data: {} },
+      },
+    )
 
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.reconcileTenants,
-    { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
-    {
-      name: ScheduleJobData.reconcileTenants,
-      data: { type: ScheduleJobData.reconcileTenants, data: {} },
-    },
-  )
+    await scheduleQueue.upsertJobScheduler(
+      ScheduleJobData.reconcileTenants,
+      { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
+      {
+        name: ScheduleJobData.reconcileTenants,
+        data: { type: ScheduleJobData.reconcileTenants, data: {} },
+      },
+    )
+  }
 
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.maintainMacPartitions,
@@ -242,17 +264,19 @@ export const registerSchedules = async () => {
     },
   )
 
-  await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.unsubscribeExpiredTrials,
-    {
-      pattern: "0 * * * *",
-    },
-    {
-      name: ScheduleJobData.unsubscribeExpiredTrials,
-      data: {
-        type: ScheduleJobData.unsubscribeExpiredTrials,
-        data: {},
+  if (isCloud) {
+    await scheduleQueue.upsertJobScheduler(
+      ScheduleJobData.unsubscribeExpiredTrials,
+      {
+        pattern: "0 * * * *",
       },
-    },
-  )
+      {
+        name: ScheduleJobData.unsubscribeExpiredTrials,
+        data: {
+          type: ScheduleJobData.unsubscribeExpiredTrials,
+          data: {},
+        },
+      },
+    )
+  }
 }

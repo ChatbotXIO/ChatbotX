@@ -5,7 +5,16 @@ import { beforeEach, expect, test, vi } from "vitest"
 const mockHasWorkspacePermission = vi.fn()
 const mockFindOrFail = vi.fn()
 const mockDbTransaction = vi.fn()
+const mockIsCommunity = vi.fn(() => false)
 const SUPER_ADMIN_ERROR_RE = /super admin/i
+
+vi.mock("@/env", () => ({ isCommunity: mockIsCommunity }))
+
+vi.mock("@/features/tenant/utils", () => ({
+  getTenantSettings: vi.fn(async () => ({
+    appUrl: "https://app.chatbotx.io",
+  })),
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}

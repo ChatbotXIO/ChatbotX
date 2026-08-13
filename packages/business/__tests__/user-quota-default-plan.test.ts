@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
 
@@ -72,6 +72,12 @@ beforeEach(() => {
   findFirstQuota.mockResolvedValue(null)
   // Default: user not found → tenantId null → resolves the global platform key.
   findFirstUser.mockResolvedValue(null)
+  // The default-plan overlay only applies on the cloud edition.
+  process.env.NEXT_PUBLIC_EDITION = "cloud"
+})
+
+afterAll(() => {
+  delete process.env.NEXT_PUBLIC_EDITION
 })
 
 describe("userQuotaService default-plan overlay (macLimit)", () => {
@@ -223,5 +229,21 @@ describe("userQuotaService per-tenant default-plan resolution", () => {
 
     expect(quota?.macLimit).toBe(100)
     expect(quota?.planName).toBe("Free")
+  })
+})
+
+describe("userQuotaService default-plan overlay off cloud", () => {
+  test.each([
+    "community",
+    "enterprise",
+  ])("%s edition never reads the Redis snapshot", async (edition) => {
+    process.env.NEXT_PUBLIC_EDITION = edition
+    findFirstQuota.mockResolvedValue(null)
+    stubStore(null, snapshot)
+
+    const quota = await userQuotaService.getForUser(USER)
+
+    expect(quota).toBeNull()
+    expect(storeGet).not.toHaveBeenCalledWith(DEFAULT_PLAN_ENTITLEMENT_KEY)
   })
 })

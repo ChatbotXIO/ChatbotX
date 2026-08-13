@@ -63,6 +63,12 @@ vi.mock("@/lib/auth/upgrade-facebook-account", () => ({
   upgradeFacebookAccount: mockUpgradeFacebookAccount,
 }))
 
+const mockIsCommunity = vi.fn(() => false)
+vi.mock("@/env", () => ({
+  isCommunity: mockIsCommunity,
+  isCloud: vi.fn(() => false),
+}))
+
 const credential = (clientId: string, clientSecret = "secret") => ({
   config: { clientId, clientSecret, verifyToken: "token", version: "v1" },
 })
@@ -75,6 +81,7 @@ async function loadModule() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockIsCommunity.mockReturnValue(false)
 })
 
 describe("isSocialLoginEnabledForTenant — google", () => {

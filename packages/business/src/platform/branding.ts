@@ -48,3 +48,27 @@ export function moveBrandingMenuLast<T extends BrandableMenuItem>(
 
   return result
 }
+
+/** Shape of the url-type persistent-menu entry the branding link uses. */
+type BrandingMenuEntry = { label: string; type: "url"; url: string }
+
+/**
+ * Return a copy of `menus` guaranteed to contain the branding entry (matched
+ * by `entry.url`), appending it when absent. Pure, like `moveBrandingMenuLast`.
+ * Community deployments run stored menus through this on the read path (and
+ * normalize on write) so the "Built with" link cannot be stripped by editing
+ * the persisted rows or posting directly to the update action.
+ */
+export function ensureBrandingMenuEntry<T extends BrandableMenuItem>(
+  menus: readonly T[],
+  entry: { label: string; url: string },
+): (T | BrandingMenuEntry)[] {
+  const hasBranding = menus.some(
+    (menu) => menu.type === "url" && menu.url === entry.url,
+  )
+  if (hasBranding) {
+    return [...menus]
+  }
+
+  return [...menus, { label: entry.label, type: "url", url: entry.url }]
+}
