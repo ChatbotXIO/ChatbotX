@@ -34,7 +34,8 @@ export function AdsNav() {
       label: t("ads.nav.clickToWhatsappAds"),
       links: [
         { label: t("ads.nav.connectAccounts"), segment: "connect-accounts" },
-        { label: t("ads.nav.conversionEvents"), segment: "conversion-events" },
+        // Conversion Events is hidden from the menu for now (not surfaced to
+        // users). Re-add this link to show it again — the page/route still exists.
         { label: t("ads.nav.adsAnalytics"), segment: "analytics" },
       ],
     },
