@@ -61,7 +61,7 @@ vi.mock("@chatbotx.io/worker-config", async () => {
   >("@chatbotx.io/worker-config")
   return {
     ...actual,
-    adsConversionQueue: { add: mocks.adsConversionQueueAdd },
+    enqueueIntegrationJob: mocks.adsConversionQueueAdd,
   }
 })
 
@@ -238,7 +238,6 @@ describe("AdsConversionService", () => {
       undefined,
     )
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "sendConversionEvent",
       {
         type: "sendConversionEvent",
         data: {
@@ -248,7 +247,7 @@ describe("AdsConversionService", () => {
       },
       { jobId: "ads-conversion-send-event-1" },
     )
-    expect(mocks.adsConversionQueueAdd.mock.calls[0][2].jobId).not.toContain(
+    expect(mocks.adsConversionQueueAdd.mock.calls[0][1].jobId).not.toContain(
       ":",
     )
   })
@@ -713,7 +712,6 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
       undefined,
     )
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "sendConversionEvent",
       {
         type: "sendConversionEvent",
         data: { adsConversionEventId: "event-1", workspaceId: "ws-1" },
@@ -841,7 +839,6 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
       undefined,
     )
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "sendConversionEvent",
       {
         type: "sendConversionEvent",
         data: { adsConversionEventId: "event-existing", workspaceId: "ws-1" },
@@ -906,7 +903,6 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     })
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledTimes(2)
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {
@@ -919,7 +915,6 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
       { jobId: "ads-conversion-evaluate-tag-ci-1-tag-1-20260810" },
     )
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {
@@ -971,7 +966,6 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     })
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledTimes(1)
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {
@@ -1012,7 +1006,6 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
       inboxId: "inbox-1",
     })
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {
@@ -1051,7 +1044,6 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
 
     expect(mocks.findWorkspaceIntegrationByInboxId).not.toHaveBeenCalled()
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {
@@ -1106,7 +1098,6 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
     })
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledTimes(2)
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {
@@ -1119,7 +1110,6 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
       { jobId: "ads-conversion-evaluate-tag-ci-1-tag-1-20260810" },
     )
     expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateConversionTrigger",
       {
         type: "evaluateConversionTrigger",
         data: {

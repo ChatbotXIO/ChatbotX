@@ -17,6 +17,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
+import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
@@ -263,6 +264,13 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.adsAutomaticEvent: {
             await handleAdsAutomaticEvent(job.data.data)
+            return
+          }
+          case IntegrationJobAction.evaluateTemplateSent:
+          case IntegrationJobAction.evaluateConversionTrigger:
+          case IntegrationJobAction.sendConversionEvent:
+          case IntegrationJobAction.syncRetargetAudience: {
+            await dispatchAdsConversionJob(job.data)
             return
           }
           case IntegrationJobAction.updateContactAvatar: {

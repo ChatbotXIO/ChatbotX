@@ -16,7 +16,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 const { handleEvaluateConversionTrigger } = await import(
-  "../src/ads-conversion/handlers/evaluate-conversion-trigger"
+  "../src/integration/handlers/ads-conversion/evaluate-conversion-trigger"
 )
 
 const jobData = {

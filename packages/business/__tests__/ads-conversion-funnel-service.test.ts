@@ -22,8 +22,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  AdsConversionJobAction: { sendConversionEvent: "sendConversionEvent" },
-  adsConversionQueue: { add: vi.fn() },
+  IntegrationJobAction: { sendConversionEvent: "sendConversionEvent" },
+  enqueueIntegrationJob: vi.fn(),
 }))
 
 const { adsConversionService } = await import("../src/ads-conversion/service")

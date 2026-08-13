@@ -30,8 +30,8 @@ import type {
   ChatJobSendWhatsappTemplateMessage,
 } from "@chatbotx.io/worker-config"
 import {
-  AdsConversionJobAction,
-  adsConversionQueue,
+  enqueueIntegrationJob,
+  IntegrationJobAction,
 } from "@chatbotx.io/worker-config"
 import {
   replaceWhatsappTemplateVariables,
@@ -54,10 +54,9 @@ async function enqueueTemplateSentEvaluation(
   input: EnqueueTemplateSentEvaluationInput,
 ): Promise<void> {
   try {
-    await adsConversionQueue.add(
-      AdsConversionJobAction.evaluateTemplateSent,
+    await enqueueIntegrationJob(
       {
-        type: AdsConversionJobAction.evaluateTemplateSent,
+        type: IntegrationJobAction.evaluateTemplateSent,
         data: {
           workspaceId: input.workspaceId,
           integrationWhatsappId: input.integrationWhatsappId,

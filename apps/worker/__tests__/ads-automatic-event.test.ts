@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   findByPhoneNumberId: vi.fn(),
   ingestAutomaticEvent: vi.fn(),
-  adsConversionQueueAdd: vi.fn(),
+  enqueueIntegrationJob: vi.fn(),
   withBlockedOwnerGuard: vi.fn(
     async (_workspaceId: string | undefined, fn: () => Promise<void>) =>
       await fn(),
@@ -29,7 +29,7 @@ vi.mock("@chatbotx.io/worker-config", async () => {
   >("@chatbotx.io/worker-config")
   return {
     ...actual,
-    adsConversionQueue: { add: mocks.adsConversionQueueAdd },
+    enqueueIntegrationJob: mocks.enqueueIntegrationJob,
   }
 })
 
@@ -87,8 +87,7 @@ describe("handleAdsAutomaticEvent", () => {
       workspaceId: "ws-1",
       payload: jobData.payload,
     })
-    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
-      "sendConversionEvent",
+    expect(mocks.enqueueIntegrationJob).toHaveBeenCalledWith(
       {
         type: "sendConversionEvent",
         data: {
@@ -98,7 +97,7 @@ describe("handleAdsAutomaticEvent", () => {
       },
       { jobId: "ads-conversion-send-event-1" },
     )
-    expect(mocks.adsConversionQueueAdd.mock.calls[0][2].jobId).not.toContain(
+    expect(mocks.enqueueIntegrationJob.mock.calls[0][1].jobId).not.toContain(
       ":",
     )
   })
@@ -107,6 +106,6 @@ describe("handleAdsAutomaticEvent", () => {
     mocks.ingestAutomaticEvent.mockResolvedValue(null)
 
     await expect(handleAdsAutomaticEvent(jobData)).resolves.toBeUndefined()
-    expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
+    expect(mocks.enqueueIntegrationJob).not.toHaveBeenCalled()
   })
 })

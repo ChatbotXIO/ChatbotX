@@ -20,7 +20,7 @@ const {
   mockParseSdkError,
   mockRecordSendFailure,
   mockDbSet,
-  mockAdsConversionQueueAdd,
+  mockEnqueueIntegrationJob,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -83,7 +83,7 @@ const {
     mockParseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
-    mockAdsConversionQueueAdd: vi.fn().mockResolvedValue(undefined),
+    mockEnqueueIntegrationJob: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -118,12 +118,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  AdsConversionJobAction: {
+  IntegrationJobAction: {
     evaluateTemplateSent: "evaluateTemplateSent",
   },
-  adsConversionQueue: {
-    add: mockAdsConversionQueueAdd,
-  },
+  enqueueIntegrationJob: mockEnqueueIntegrationJob,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -424,8 +422,7 @@ describe("processWhatsappTemplate", () => {
       template: fakeTemplate,
     })
 
-    expect(mockAdsConversionQueueAdd).toHaveBeenCalledWith(
-      "evaluateTemplateSent",
+    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
       {
         type: "evaluateTemplateSent",
         data: {
@@ -437,11 +434,11 @@ describe("processWhatsappTemplate", () => {
       },
       { jobId: "ads-conversion-evaluate-template-msg-created" },
     )
-    expect(mockAdsConversionQueueAdd.mock.calls[0][2].jobId).not.toContain(":")
+    expect(mockEnqueueIntegrationJob.mock.calls[0][1].jobId).not.toContain(":")
   })
 
   test("swallows ads conversion evaluation enqueue failures after send success", async () => {
-    mockAdsConversionQueueAdd.mockRejectedValueOnce(new Error("redis down"))
+    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
 
     await expect(
       processWhatsappTemplate({
@@ -452,7 +449,7 @@ describe("processWhatsappTemplate", () => {
     ).resolves.toBeDefined()
 
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
-    expect(mockAdsConversionQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueIntegrationJob).toHaveBeenCalledTimes(1)
   })
 
   test("emits message:failed on error and rethrows", async () => {
