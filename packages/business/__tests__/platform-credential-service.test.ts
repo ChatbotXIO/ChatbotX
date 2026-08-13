@@ -9,13 +9,18 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
   isNull: vi.fn(),
 }))
+const credentialSchemas = {
+  instagram: { name: "instagram-schema" },
+  messenger: { name: "messenger-schema" },
+}
 vi.mock("@chatbotx.io/database/partials", () => ({
-  credentialEncryptedSchema: {},
+  credentialEncryptedSchema: { parse: vi.fn((value: unknown) => value) },
   credentialPublicSchemas: {},
-  credentialSchemas: {},
+  credentialSchemas,
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({ platformCredentialModel: {} }))
-vi.mock("@chatbotx.io/encryption", () => ({ encryptUtils: {} }))
+const encryptUtils = { decryptObject: vi.fn() }
+vi.mock("@chatbotx.io/encryption", () => ({ encryptUtils }))
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(async () => undefined),
   withCache: vi.fn(async (_key: string, fn: () => unknown) => fn()),
@@ -39,6 +44,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  encryptUtils.decryptObject.mockReset()
 })
 
 describe("resolveForOwner", () => {
@@ -194,5 +200,67 @@ describe("resolvePlatformAppAccessToken", () => {
     await expect(
       platformCredentialService.resolvePlatformAppAccessToken("instagram"),
     ).resolves.toBeUndefined()
+  })
+})
+
+describe("_decrypt", () => {
+  test("passes platform aad when decrypting a platform-scoped row", async () => {
+    encryptUtils.decryptObject.mockResolvedValue({ clientId: "client-1" })
+
+    await expect(
+      (platformCredentialService as never)._decrypt({
+        id: "platform-1",
+        userId: null,
+        type: "instagram",
+        livemode: false,
+        value: { encrypted: true },
+        publicConfig: { clientId: "client-1" },
+        createdAt: new Date("2026-08-13T00:00:00.000Z"),
+        updatedAt: new Date("2026-08-13T00:00:00.000Z"),
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        id: "platform-1",
+        userId: null,
+        type: "instagram",
+        config: { clientId: "client-1" },
+      }),
+    )
+
+    expect(encryptUtils.decryptObject).toHaveBeenCalledWith(
+      { encrypted: true },
+      credentialSchemas.instagram,
+      "platform:instagram:false",
+    )
+  })
+
+  test("passes user aad when decrypting a user-scoped row", async () => {
+    encryptUtils.decryptObject.mockResolvedValue({ clientId: "client-2" })
+
+    await expect(
+      (platformCredentialService as never)._decrypt({
+        id: "user-1",
+        userId: "owner-1",
+        type: "messenger",
+        livemode: true,
+        value: { encrypted: true },
+        publicConfig: { clientId: "client-2" },
+        createdAt: new Date("2026-08-13T00:00:00.000Z"),
+        updatedAt: new Date("2026-08-13T00:00:00.000Z"),
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        id: "user-1",
+        userId: "owner-1",
+        type: "messenger",
+        config: { clientId: "client-2" },
+      }),
+    )
+
+    expect(encryptUtils.decryptObject).toHaveBeenCalledWith(
+      { encrypted: true },
+      credentialSchemas.messenger,
+      "user:owner-1:messenger:true",
+    )
   })
 })
