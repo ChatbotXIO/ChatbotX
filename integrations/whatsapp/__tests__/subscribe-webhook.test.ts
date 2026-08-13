@@ -13,6 +13,7 @@ vi.mock("ky", async () => {
 
 import {
   subscribeWebhook,
+  WHATSAPP_BASE_SUBSCRIBED_FIELDS,
   WHATSAPP_SUBSCRIBED_FIELDS,
 } from "../src/api/webhook"
 import type { WhatsappAuthValue } from "../src/schema"
@@ -44,7 +45,7 @@ afterEach(() => {
 })
 
 describe("subscribeWebhook", () => {
-  it("posts subscribed_fields with coexist and automatic-events fields", async () => {
+  it("posts base subscribed_fields by default", async () => {
     postMock.mockReturnValueOnce(okResponse())
 
     await subscribeWebhook({ auth: buildAuth() })
@@ -53,16 +54,24 @@ describe("subscribeWebhook", () => {
     const [url, options] = postMock.mock.calls[0]
     expect(url).toContain("/waba-1/subscribed_apps")
     expect(options.json.subscribed_fields).toEqual([
-      "messages",
-      "history",
-      "smb_app_state_sync",
-      "smb_message_echoes",
-      "automatic_events",
+      ...WHATSAPP_BASE_SUBSCRIBED_FIELDS,
     ])
+    expect(options.json.subscribed_fields).not.toContain("automatic_events")
+    expect(options.headers.Authorization).toBe("Bearer tok-abc")
+  })
+
+  it("posts automatic_events when includeAutomaticEvents=true", async () => {
+    postMock.mockReturnValueOnce(okResponse())
+
+    await subscribeWebhook({
+      auth: buildAuth(),
+      includeAutomaticEvents: true,
+    })
+
+    const [, options] = postMock.mock.calls[0]
     expect(options.json.subscribed_fields).toEqual([
       ...WHATSAPP_SUBSCRIBED_FIELDS,
     ])
-    expect(options.headers.Authorization).toBe("Bearer tok-abc")
   })
 
   it("adds override_callback_uri from metadata.webhookUrl when overrideCallbackUrl=true", async () => {
@@ -76,7 +85,7 @@ describe("subscribeWebhook", () => {
     const [, options] = postMock.mock.calls[0]
     expect(options.json.override_callback_uri).toBe("https://example.com/wh")
     expect(options.json.verify_token).toBe("verify")
-    expect(options.json.subscribed_fields).toHaveLength(5)
+    expect(options.json.subscribed_fields).toHaveLength(4)
   })
 
   it("omits override fields when overrideCallbackUrl not set and env var unset", async () => {

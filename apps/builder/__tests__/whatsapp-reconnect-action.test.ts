@@ -15,6 +15,7 @@ type ReconnectWhatsappActionHandler = (
 
 const {
   exchangeAccessTokenMock,
+  findWabaMock,
   findWorkspaceIntegrationMock,
   getCurrentUserAndTargetWorkspaceMock,
   getSharedWabaIdMock,
@@ -25,6 +26,7 @@ const {
   subscribeWebhookMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
+  findWabaMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
   getCurrentUserAndTargetWorkspaceMock: vi.fn(),
   getSharedWabaIdMock: vi.fn(),
@@ -85,7 +87,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/phone-number", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/waba", () => ({
-  findWaba: vi.fn(),
+  findWaba: findWabaMock,
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/webhook", () => ({
@@ -102,6 +104,53 @@ const callReconnectWhatsappAction =
 describe("reconnectWhatsappAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    exchangeAccessTokenMock.mockResolvedValue({
+      access_token: "access-token-1",
+    })
+    findWabaMock.mockResolvedValue({
+      id: "waba-1",
+      owner_business_info: { id: "business-1" },
+    })
+    findWorkspaceIntegrationMock.mockResolvedValue({
+      id: "iw-1",
+      wabaId: "waba-1",
+      phoneNumberId: "phone-number-1",
+      businessId: "business-1",
+    })
+    getCurrentUserAndTargetWorkspaceMock.mockResolvedValue({
+      targetWorkspaceMember: {
+        permissions: {
+          superAdmin: true,
+          analytics: true,
+          flows: true,
+          contacts: true,
+          onlyAssignedContacts: false,
+          emailAndPhone: true,
+          broadcast: true,
+          ecommerce: true,
+        },
+      },
+    })
+    getSharedWabaIdMock.mockResolvedValue("waba-1")
+    hasWhatsappCapiScopeMock.mockResolvedValue(true)
+    listPhoneNumbersMock.mockResolvedValue({
+      data: [
+        {
+          id: "phone-number-1",
+          display_phone_number: "+15550001111",
+        },
+      ],
+    })
+    platformCredentialResolveMock.mockResolvedValue({
+      config: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        verifyToken: "verify-token-1",
+        version: "v23.0",
+      },
+    })
+    replaceAuthMock.mockResolvedValue(undefined)
+    subscribeWebhookMock.mockResolvedValue(undefined)
   })
 
   test("rejects non-super-admin members before reconnecting WhatsApp auth", async () => {
@@ -133,5 +182,20 @@ describe("reconnectWhatsappAction", () => {
     expect(exchangeAccessTokenMock).not.toHaveBeenCalled()
     expect(replaceAuthMock).not.toHaveBeenCalled()
     expect(subscribeWebhookMock).not.toHaveBeenCalled()
+  })
+
+  test("resubscribes with automatic_events during ads reconnect", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(subscribeWebhookMock).toHaveBeenCalledWith({
+      auth: expect.objectContaining({
+        metadata: expect.objectContaining({ wabaId: "waba-1" }),
+      }),
+      includeAutomaticEvents: true,
+    })
   })
 })

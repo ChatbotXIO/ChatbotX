@@ -173,7 +173,10 @@ async function persistReconnectAuthAndResubscribe(input: {
   })
   let resubscribed = true
   try {
-    await subscribeWebhook({ auth: input.auth })
+    await subscribeWebhook({
+      auth: input.auth,
+      includeAutomaticEvents: true,
+    })
   } catch (err) {
     resubscribed = false
     logger.warn(
