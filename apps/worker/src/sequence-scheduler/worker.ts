@@ -1,6 +1,7 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
+import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
@@ -325,6 +326,7 @@ const shouldAutoStart = process.env.NODE_ENV !== "test" && !process.env.VITEST
 let isShuttingDown = false
 
 async function startReconcileWorker() {
+  await ensureBootstrapped()
   await reconcile.start()
 }
 

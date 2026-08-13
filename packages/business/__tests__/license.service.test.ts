@@ -219,6 +219,72 @@ describe("enterprise license verification", () => {
     expect(status.error).toContain("nbf")
   })
 
+  test("rejects a cloud-tier license when only enterprise is allowed", async () => {
+    const token = await signLicense({ claims: { tier: "cloud" } })
+
+    const status = await verifyLicenseToken(token, keyMap, {
+      currentDate: NOW,
+      allowedTiers: ["enterprise"],
+    })
+
+    expect(status).toMatchObject({
+      state: "invalid",
+      error: 'License tier "cloud" cannot be used with this edition',
+    })
+  })
+
+  test("rejects an enterprise-tier license when only cloud is allowed", async () => {
+    const token = await signLicense({ claims: { tier: "enterprise" } })
+
+    const status = await verifyLicenseToken(token, keyMap, {
+      currentDate: NOW,
+      allowedTiers: ["cloud"],
+    })
+
+    expect(status.state).toBe("invalid")
+  })
+
+  test("accepts a license whose tier is in allowedTiers", async () => {
+    const token = await signLicense({ claims: { tier: "enterprise" } })
+
+    const status = await verifyLicenseToken(token, keyMap, {
+      currentDate: NOW,
+      allowedTiers: ["enterprise"],
+    })
+
+    expect(status.state).toBe("valid")
+  })
+
+  test("keeps default behavior when allowedTiers is omitted", async () => {
+    const token = await signLicense({ claims: { tier: "cloud" } })
+
+    const status = await verifyLicenseToken(token, keyMap, { currentDate: NOW })
+
+    expect(status.state).toBe("valid")
+  })
+
+  test("marks an expired license as invalid (not expired) on tier mismatch", async () => {
+    const token = await signLicense({
+      claims: { tier: "cloud" },
+      exp: NOW_SECONDS - 2 * DAY_SECONDS,
+    })
+
+    const status = await verifyLicenseToken(token, keyMap, {
+      currentDate: NOW,
+      allowedTiers: ["enterprise"],
+    })
+
+    expect(status.state).toBe("invalid")
+  })
+
+  test("rejects a signed license with the removed enterprise-plus tier", async () => {
+    const token = await signLicense({ claims: { tier: "enterprise-plus" } })
+
+    const status = await verifyLicenseToken(token, keyMap, { currentDate: NOW })
+
+    expect(status.state).toBe("invalid")
+  })
+
   test("loads LICENSE_KEY once and exposes feature and limit accessors", async () => {
     process.env.LICENSE_KEY = await signLicense({
       exp: NOW_SECONDS + 400 * DAY_SECONDS,

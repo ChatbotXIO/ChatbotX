@@ -26,19 +26,24 @@ vi.mock("@chatbotx.io/database/client", () => ({
   isNull: (column: unknown) => ({ __isNull: column }),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactModel: {
-    id: { __column: "id" },
-    workspaceId: { __column: "workspaceId" },
-    broadcastSubscribedAt: { __column: "broadcastSubscribedAt" },
-  },
-  contactCustomFieldModel: {},
-  contactNoteModel: {},
-  contactsOnSequenceModel: {},
-  contactsToTagsModel: {},
-  conversationModel: {},
-  tagModel: {},
-}))
+// Do NOT importOriginal the real schema module here: its index pulls in the
+// message sharding client, which opens a database connection at import time.
+vi.mock("@chatbotx.io/database/schema", () => {
+  const explicit: Record<string, unknown> = {
+    contactModel: {
+      id: { __column: "id" },
+      workspaceId: { __column: "workspaceId" },
+      broadcastSubscribedAt: { __column: "broadcastSubscribedAt" },
+    },
+  }
+  // The real schema index pulls in the message sharding client (opens a DB
+  // connection at import), so serve `{}` sentinels for any model the wider
+  // import graph touches instead of importOriginal.
+  return new Proxy(explicit, {
+    get: (target, prop) => (prop in target ? target[prop as string] : {}),
+    has: () => true,
+  })
+})
 
 vi.mock("@chatbotx.io/event-bus", () => ({ emit: vi.fn() }))
 const emitContactUnsubscribed = vi.fn()
@@ -63,6 +68,12 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   }
 })
 
+// Imported once at module level: the handlers chain is heavy to transform,
+// and paying it inside a test body can exceed the 5s timeout under load.
+const { subscribeBroadcast, unsubscribeBroadcast } = await import(
+  "../src/integration/handlers/contact"
+)
+
 const buildProps = () =>
   ({
     conversation: {
@@ -83,10 +94,6 @@ beforeEach(() => {
 
 describe("subscribeBroadcast", () => {
   test("sets broadcastSubscribedAt to current Date scoped by contact + workspace", async () => {
-    const { subscribeBroadcast } = await import(
-      "../src/integration/handlers/contact"
-    )
-
     const before = Date.now()
     await subscribeBroadcast(buildProps())
     const after = Date.now()
@@ -106,10 +113,6 @@ describe("subscribeBroadcast", () => {
   })
 
   test("is idempotent — WHERE includes isNull guard to preserve original subscription date", async () => {
-    const { subscribeBroadcast } = await import(
-      "../src/integration/handlers/contact"
-    )
-
     await subscribeBroadcast(buildProps())
 
     const whereArg = whereSpy.mock.calls[0][0] as {
@@ -122,10 +125,6 @@ describe("subscribeBroadcast", () => {
 
 describe("unsubscribeBroadcast", () => {
   test("sets broadcastSubscribedAt to null scoped by contact + workspace", async () => {
-    const { unsubscribeBroadcast } = await import(
-      "../src/integration/handlers/contact"
-    )
-
     await unsubscribeBroadcast(buildProps())
 
     expect(updateSpy).toHaveBeenCalledTimes(1)

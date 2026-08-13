@@ -153,7 +153,16 @@ export const AccountRail = async ({
           component; a second one would split the free space and reopen the
           dead-gap bug this replaces.
         */}
-        <div className="mt-auto flex flex-col gap-1 border-t pt-4">
+        <div
+          className={cn(
+            "mt-auto flex flex-col gap-1",
+            // Community edition with no super admin renders none of the
+            // items below — skip the divider so it doesn't float with
+            // nothing underneath it.
+            (isSuperAdmin || cloud) && "border-t pt-4",
+          )}
+          id="account-rail-menu"
+        >
           {isSuperAdmin && (
             <Link className={railMenuItemClassName} href="/admin">
               <ShieldCheckIcon aria-hidden className="size-4" />
@@ -172,11 +181,13 @@ export const AccountRail = async ({
             client-side navigation would fail. Mirrors the portal, where the
             cross-zone dashboard link is a plain anchor.
           */}
-          <a className={railMenuItemClassName} href="/portal/billing">
-            <CreditCardIcon aria-hidden className="size-4" />
-            {t("actions.billing")}
-          </a>
-          {isPlatformContext && (
+          {cloud && (
+            <a className={railMenuItemClassName} href="/portal/billing">
+              <CreditCardIcon aria-hidden className="size-4" />
+              {t("actions.billing")}
+            </a>
+          )}
+          {cloud && isPlatformContext && (
             <a className={railMenuItemClassName} href="/portal/redeem">
               <TicketIcon aria-hidden className="size-4" />
               {t("actions.redeem")}

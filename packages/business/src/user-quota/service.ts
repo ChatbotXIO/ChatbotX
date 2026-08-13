@@ -310,6 +310,13 @@ class UserQuotaService extends BaseService {
     userId: string,
     quota: UserQuotaModel | null,
   ): Promise<UserQuotaModel | null> {
+    // Default-plan snapshots are a cloud concept. Off-cloud, a shared or
+    // stale Redis carrying `entitlements:default-plan` must never impose
+    // cloud limits on a self-hosted install.
+    if (!isCloud()) {
+      return null
+    }
+
     const snapshot = await this.resolveDefaultPlanSnapshot(userId)
     if (!snapshot) {
       return null

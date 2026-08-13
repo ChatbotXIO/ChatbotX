@@ -1,6 +1,6 @@
 "use server"
 
-import { tenantService } from "@chatbotx.io/business"
+import { assertEnterpriseFeatures, tenantService } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import {
@@ -32,6 +32,7 @@ export const updatePlatformBrandingAction = platformAdminActionClient
       ctx: { user: UserModel }
       parsedInput: UpdatePlatformBrandingSchema
     }) => {
+      await assertEnterpriseFeatures()
       await tenantService.upsertByOwner(
         ctx.user.id,
         toTenantBrandingData(parsedInput),
@@ -43,6 +44,7 @@ export const updateRootPlatformBrandingAction = superAdminActionClient
   .inputSchema(updatePlatformBrandingSchema)
   .action(
     async ({ parsedInput }: { parsedInput: UpdatePlatformBrandingSchema }) => {
+      await assertEnterpriseFeatures()
       await tenantService.upsertById(
         ROOT_TENANT_ID,
         toTenantBrandingData(parsedInput),

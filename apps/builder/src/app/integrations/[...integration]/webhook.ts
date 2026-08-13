@@ -50,11 +50,20 @@ const resolveWebhookFreezeReason = async (
   workspaceId: string,
 ): Promise<ReturnType<typeof resolveWorkspaceFreezeReason>> => {
   const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  const accessState = workspace
-    ? await userQuotaService.getAccessState(workspace.ownerId)
-    : null
 
-  return resolveWorkspaceFreezeReason({ accessState, workspace })
+  // Two passes, mirroring withBlockedOwnerGuard: the Workspace row alone
+  // decides `missingWorkspace`/`scheduledForDeletion`; only `ownerBlocked`
+  // needs entitlements, and only the cloud edition can produce it, so
+  // self-hosted installs skip the quota lookup entirely.
+  const rowReason = resolveWorkspaceFreezeReason({ workspace })
+  if (rowReason || !isCloud() || !workspace) {
+    return rowReason
+  }
+
+  return resolveWorkspaceFreezeReason({
+    accessState: await userQuotaService.getAccessState(workspace.ownerId),
+    workspace,
+  })
 }
 
 export const handleWebhook = async (

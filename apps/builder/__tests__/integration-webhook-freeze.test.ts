@@ -43,8 +43,9 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: {},
 }))
 
+const isCloud = vi.fn(() => false)
 vi.mock("@/env", () => ({
-  isCloud: () => false,
+  isCloud,
 }))
 
 vi.mock("@/features/integration-telegram/queries", () => ({
@@ -87,6 +88,7 @@ const liveWorkspace = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  isCloud.mockReturnValue(false)
   getAccessState.mockResolvedValue({ blocked: false })
   workspaceFind.mockResolvedValue(liveWorkspace)
   telegramHandleRequest.mockResolvedValue("ok")
@@ -130,13 +132,24 @@ describe("telegram webhook freeze", () => {
     )
   })
 
-  test("skips the update when the owner entitlement is blocked", async () => {
+  test("skips the update when the owner entitlement is blocked on cloud", async () => {
+    isCloud.mockReturnValue(true)
     getAccessState.mockResolvedValue({ blocked: true })
 
     const response = await handleWebhook("telegram", request())
 
     expect(await response.text()).toBe("ok")
     expect(telegramHandleRequest).not.toHaveBeenCalled()
+  })
+
+  test("off cloud, never consults owner entitlements (mirrors withBlockedOwnerGuard)", async () => {
+    isCloud.mockReturnValue(false)
+    getAccessState.mockResolvedValue({ blocked: true })
+
+    await handleWebhook("telegram", request())
+
+    expect(telegramHandleRequest).toHaveBeenCalledOnce()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("skips the update when the workspace row no longer exists", async () => {

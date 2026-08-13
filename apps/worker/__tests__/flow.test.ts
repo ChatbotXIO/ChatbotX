@@ -26,6 +26,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: { add: integrationQueueAdd },
   ChatJobAction: { sendFlowMessage: "sendFlowMessage" },
   chatQueue: { add: chatQueueAdd },
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({

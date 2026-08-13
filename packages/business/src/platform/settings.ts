@@ -102,29 +102,45 @@ const applyTenantSetting = (
   const storageUrl = setting.storageUrl
     ? `${setting.storageUrl.replace(TRAILING_SLASH_RE, "")}/`
     : defaults.storageUrl
+  // Branding (name, logos, favicon, theme), custom JS/CSS, and email
+  // templates are all gated to Enterprise/Cloud. Without a valid license the
+  // stored values are ignored and defaults apply (mail falls back to the
+  // built-in templates on null).
   return {
     ...defaults,
     storageUrl,
-    name: setting.brandName ?? defaults.name,
-    logoLightUrl: setting.logoLightPath
-      ? new URL(setting.logoLightPath, storageUrl).toString()
-      : defaults.logoLightUrl,
-    logoDarkUrl: setting.logoDarkPath
-      ? new URL(setting.logoDarkPath, storageUrl).toString()
-      : defaults.logoDarkUrl,
-    faviconUrl: setting.faviconPath
-      ? new URL(setting.faviconPath, storageUrl).toString()
-      : defaults.faviconUrl,
-    theme: setting.theme ?? null,
-    // customJs and customCSS are gated to Enterprise/Cloud only.
+    name: enterpriseFeaturesEnabled
+      ? (setting.brandName ?? defaults.name)
+      : defaults.name,
+    logoLightUrl:
+      enterpriseFeaturesEnabled && setting.logoLightPath
+        ? new URL(setting.logoLightPath, storageUrl).toString()
+        : defaults.logoLightUrl,
+    logoDarkUrl:
+      enterpriseFeaturesEnabled && setting.logoDarkPath
+        ? new URL(setting.logoDarkPath, storageUrl).toString()
+        : defaults.logoDarkUrl,
+    faviconUrl:
+      enterpriseFeaturesEnabled && setting.faviconPath
+        ? new URL(setting.faviconPath, storageUrl).toString()
+        : defaults.faviconUrl,
+    theme: enterpriseFeaturesEnabled ? (setting.theme ?? null) : null,
     customJS: enterpriseFeaturesEnabled ? (setting.customJs ?? null) : null,
     customCSS: enterpriseFeaturesEnabled ? (setting.customCss ?? null) : null,
     policyUrl: setting.policyUrl ?? defaults.policyUrl,
     termsOfServiceUrl: setting.termsOfServiceUrl ?? defaults.termsOfServiceUrl,
-    signupEmailTemplate: setting.signupEmailTemplate,
-    forgotPasswordEmailTemplate: setting.forgotPasswordEmailTemplate,
-    magicLinkEmailTemplate: setting.magicLinkEmailTemplate,
-    accountCredentialsEmailTemplate: setting.accountCredentialsEmailTemplate,
+    signupEmailTemplate: enterpriseFeaturesEnabled
+      ? setting.signupEmailTemplate
+      : null,
+    forgotPasswordEmailTemplate: enterpriseFeaturesEnabled
+      ? setting.forgotPasswordEmailTemplate
+      : null,
+    magicLinkEmailTemplate: enterpriseFeaturesEnabled
+      ? setting.magicLinkEmailTemplate
+      : null,
+    accountCredentialsEmailTemplate: enterpriseFeaturesEnabled
+      ? setting.accountCredentialsEmailTemplate
+      : null,
     helpItems,
   }
 }

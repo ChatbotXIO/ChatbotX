@@ -1,5 +1,8 @@
-// biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op after analytics server removal
-export function bootstrapApp(): void {}
+import { assertLicenseAtStartup } from "@chatbotx.io/business/license-startup"
+
+async function bootstrapApp(): Promise<void> {
+  await assertLicenseAtStartup()
+}
 
 let bootstrapPromise: Promise<void> | null = null
 

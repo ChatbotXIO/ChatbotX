@@ -9,5 +9,15 @@ export async function register() {
   if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
     return
   }
+
+  // instrumentation also runs in the edge runtime, where process.exit doesn't
+  // exist — only gate on the license in the nodejs runtime.
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { assertLicenseAtStartup } = await import(
+      "@chatbotx.io/business/license-startup"
+    )
+    await assertLicenseAtStartup()
+  }
+
   await import("./lib/orpc/orpc.server")
 }
