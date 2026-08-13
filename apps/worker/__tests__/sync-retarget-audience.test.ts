@@ -61,7 +61,7 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 const { handleSyncRetargetAudience } = await import(
-  "../src/ads-conversion/handlers/sync-retarget-audience"
+  "../src/integration/handlers/ads-conversion/sync-retarget-audience"
 )
 
 const jobData = {

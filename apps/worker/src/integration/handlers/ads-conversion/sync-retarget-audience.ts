@@ -15,7 +15,7 @@ import {
 } from "@chatbotx.io/integration-facebook-ads"
 import type { AdsConversionJobSyncRetargetAudience } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
-import { logger } from "../../lib/logger"
+import { logger } from "../../../lib/logger"
 
 type SyncRetargetAudienceData = AdsConversionJobSyncRetargetAudience["data"]
 type FacebookAdsContext = Awaited<

@@ -55,7 +55,7 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 const { handleSendConversionEvent } = await import(
-  "../src/ads-conversion/handlers/send-conversion-event"
+  "../src/integration/handlers/ads-conversion/send-conversion-event"
 )
 
 const jobData = {

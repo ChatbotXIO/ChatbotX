@@ -21,8 +21,8 @@ import type {
 } from "@chatbotx.io/database/types"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import {
-  AdsConversionJobAction,
-  adsConversionQueue,
+  enqueueIntegrationJob,
+  IntegrationJobAction,
 } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
@@ -316,10 +316,9 @@ async function evaluateTemplateSentRule(input: {
     return null
   }
 
-  await adsConversionQueue.add(
-    AdsConversionJobAction.sendConversionEvent,
+  await enqueueIntegrationJob(
     {
-      type: AdsConversionJobAction.sendConversionEvent,
+      type: IntegrationJobAction.sendConversionEvent,
       data: {
         adsConversionEventId: event.id,
         workspaceId: event.workspaceId,
@@ -336,10 +335,9 @@ async function evaluateTemplateSentRule(input: {
 async function enqueueSendConversionEvent(
   event: Pick<AdsConversionEventModel, "id" | "workspaceId">,
 ): Promise<void> {
-  await adsConversionQueue.add(
-    AdsConversionJobAction.sendConversionEvent,
+  await enqueueIntegrationJob(
     {
-      type: AdsConversionJobAction.sendConversionEvent,
+      type: IntegrationJobAction.sendConversionEvent,
       data: {
         adsConversionEventId: event.id,
         workspaceId: event.workspaceId,
@@ -1029,10 +1027,9 @@ class AdsConversionService extends BaseService {
     jobId: string
   }): Promise<void> {
     try {
-      await adsConversionQueue.add(
-        AdsConversionJobAction.evaluateConversionTrigger,
+      await enqueueIntegrationJob(
         {
-          type: AdsConversionJobAction.evaluateConversionTrigger,
+          type: IntegrationJobAction.evaluateConversionTrigger,
           data: {
             workspaceId: input.workspaceId,
             integrationWhatsappId: input.integrationWhatsappId,

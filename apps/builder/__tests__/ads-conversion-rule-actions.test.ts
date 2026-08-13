@@ -143,10 +143,10 @@ vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  AdsConversionJobAction: {
+  IntegrationJobAction: {
     syncRetargetAudience: "syncRetargetAudience",
   },
-  adsConversionQueue: { add: vi.fn() },
+  enqueueIntegrationJob: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

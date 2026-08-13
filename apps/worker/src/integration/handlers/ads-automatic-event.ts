@@ -4,8 +4,8 @@ import {
 } from "@chatbotx.io/business"
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import {
-  AdsConversionJobAction,
-  adsConversionQueue,
+  enqueueIntegrationJob,
+  IntegrationJobAction,
   type IntegrationJobAdsAutomaticEvent,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
@@ -40,10 +40,9 @@ export const handleAdsAutomaticEvent = async (
       return
     }
 
-    await adsConversionQueue.add(
-      AdsConversionJobAction.sendConversionEvent,
+    await enqueueIntegrationJob(
       {
-        type: AdsConversionJobAction.sendConversionEvent,
+        type: IntegrationJobAction.sendConversionEvent,
         data: {
           adsConversionEventId: event.id,
           workspaceId: event.workspaceId,

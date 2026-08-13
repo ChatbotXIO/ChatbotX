@@ -13,8 +13,8 @@ import {
 } from "@chatbotx.io/integration-facebook-ads"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
-  AdsConversionJobAction,
-  adsConversionQueue,
+  enqueueIntegrationJob,
+  IntegrationJobAction,
 } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
@@ -103,10 +103,9 @@ export const retargetAdAction = workspaceActionClient
           })
         ).id
 
-      await adsConversionQueue.add(
-        AdsConversionJobAction.syncRetargetAudience,
+      await enqueueIntegrationJob(
         {
-          type: AdsConversionJobAction.syncRetargetAudience,
+          type: IntegrationJobAction.syncRetargetAudience,
           data: {
             workspaceId,
             customAudienceId,

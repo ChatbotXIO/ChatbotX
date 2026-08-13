@@ -11,7 +11,6 @@
     "test:domains": "tsx scripts/test-domains.ts",
     "test:watch": "vitest",
     "worker:schedule": "dotenv -e ../../.env -- tsx --watch src/schedule/worker.ts",
-    "worker:ads-conversion": "dotenv -e ../../.env -- tsx --watch src/ads-conversion/worker.ts",
     "worker:ai-agent": "dotenv -e ../../.env -- tsx --watch src/ai-agent/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
     "worker:default": "dotenv -e ../../.env -- tsx --watch src/default/worker.ts",

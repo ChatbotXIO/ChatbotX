@@ -13,7 +13,7 @@ import {
   DefaultJobAction,
   defaultQueue,
 } from "@chatbotx.io/worker-config"
-import { logger } from "../../lib/logger"
+import { logger } from "../../../lib/logger"
 
 type SendConversionEventData = AdsConversionJobSendConversionEvent["data"]
 
