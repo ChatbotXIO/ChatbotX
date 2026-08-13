@@ -4,19 +4,25 @@ import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue, WhatsappException } from "../exception"
 import { logger } from "../lib/logger"
 
-export const WHATSAPP_SUBSCRIBED_FIELDS = [
+export const WHATSAPP_BASE_SUBSCRIBED_FIELDS = [
   "messages",
   "history",
   "smb_app_state_sync",
   "smb_message_echoes",
+] as const
+
+export const WHATSAPP_SUBSCRIBED_FIELDS = [
+  ...WHATSAPP_BASE_SUBSCRIBED_FIELDS,
   "automatic_events",
 ] as const
 
 export function subscribeWebhook({
   auth,
+  includeAutomaticEvents = false,
   overrideCallbackUrl = false,
 }: {
   auth: WhatsappAuthValue
+  includeAutomaticEvents?: boolean
   overrideCallbackUrl?: boolean
 }) {
   const { version = DEFAULT_API_VERSION } = auth
@@ -24,7 +30,9 @@ export function subscribeWebhook({
 
   return rescue(async () => {
     const json: Record<string, unknown> = {
-      subscribed_fields: WHATSAPP_SUBSCRIBED_FIELDS,
+      subscribed_fields: includeAutomaticEvents
+        ? WHATSAPP_SUBSCRIBED_FIELDS
+        : WHATSAPP_BASE_SUBSCRIBED_FIELDS,
     }
 
     // Explicit per-integration callback (metadata.webhookUrl) wins; the env
