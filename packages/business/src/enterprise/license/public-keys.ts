@@ -23,4 +23,11 @@ export const LICENSE_PUBLIC_KEYS: LicensePublicKeys = {
     "MCowBQYDK2VwAyEAo+li4bBUyYNnGoOrXm2NLHrUP14S4MTH3lw4Z6C8pl4=",
     "-----END PUBLIC KEY-----",
   ].join("\n"),
+  // Dev/test signing key — the matching private key is shared inside the
+  // private enterprise repo so developers can mint local licenses.
+  "chatbotx-license-ed25519-dev": [
+    "-----BEGIN PUBLIC KEY-----",
+    "MCowBQYDK2VwAyEAO5V5i1yZkhjX6pdurY1+S1WPOb7lGVYzxndIfsBSkvk=",
+    "-----END PUBLIC KEY-----",
+  ].join("\n"),
 }
