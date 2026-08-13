@@ -40,7 +40,7 @@ jobs:
       # Turbo remote cache backed by the GitHub Actions cache (zero infra).
       # Sets TURBO_API/TURBO_TOKEN/TURBO_TEAM for the steps below.
       - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2
+        uses: rharkor/caching-for-turbo@v2.5.1
 
       - name: Type-check, lint, and test
         run: pnpm turbo run check-types lint test

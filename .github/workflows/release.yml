@@ -51,7 +51,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2
+        uses: rharkor/caching-for-turbo@v2.5.1
 
       - name: Type-check, lint, and test
         run: pnpm turbo run check-types lint test
