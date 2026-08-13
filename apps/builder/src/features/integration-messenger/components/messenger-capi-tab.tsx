@@ -1,0 +1,110 @@
+"use client"
+
+import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@chatbotx.io/ui/components/ui/card"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { useTranslations } from "next-intl"
+import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
+import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
+import { getCapiConnectionState } from "@/features/meta-conversions/lib/capi-connection-state"
+import {
+  type CapiStatus,
+  capiStatusConfig,
+  getCapiStatus,
+} from "@/features/meta-conversions/lib/capi-status"
+import { useWorkspaceId } from "@/hooks/routing"
+import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
+import { connectMessengerCustomCapiAction } from "../actions/connect-custom-capi.action"
+import { disconnectMessengerCapiAction } from "../actions/disconnect-capi.action"
+import { reconnectMessengerCapiAction } from "../actions/reconnect-capi.action"
+
+type MessengerCapiTabProps = {
+  integrationMessenger: Pick<
+    IntegrationMessengerModel,
+    "id" | "hasCapiScope" | "datasetId"
+  >
+  hasManualCapiAccessToken: boolean
+  capiDisconnected: boolean
+  credentialAvailable: boolean
+}
+
+const statusDescriptionKey = {
+  ready: "metaConversions.statusDescriptions.ready",
+  notConnected: "metaConversions.statusDescriptions.notConnected",
+  unverified: "metaConversions.statusDescriptions.unverified",
+  unsupported: "metaConversions.statusDescriptions.unsupported",
+} as const satisfies Record<CapiStatus, string>
+
+export function MessengerCapiTab({
+  integrationMessenger,
+  hasManualCapiAccessToken,
+  capiDisconnected,
+  credentialAvailable,
+}: MessengerCapiTabProps) {
+  const t = useTranslations()
+  const workspaceId = useWorkspaceId()
+  useChannelReconnectResult()
+  const connectionState = getCapiConnectionState({
+    capiDisconnected,
+    hasManualCapiAccessToken,
+    hasCapiScope: integrationMessenger.hasCapiScope,
+    hasDatasetId: Boolean(integrationMessenger.datasetId),
+  })
+  const status = getCapiStatus({
+    hasCapiScope: !capiDisconnected && integrationMessenger.hasCapiScope,
+    hasManualCapiAccessToken,
+    hasDatasetId: Boolean(integrationMessenger.datasetId),
+    credentialAvailable,
+  })
+  const statusConfig = capiStatusConfig[status]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader className="gap-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-1.5">
+              <CardTitle>{t("metaConversions.status.title")}</CardTitle>
+              <CardDescription>
+                {t(statusDescriptionKey[status])}
+              </CardDescription>
+            </div>
+            <Badge className={cn("gap-2", statusConfig.className)}>
+              <span
+                className={cn("size-2 rounded-full", statusConfig.dotClassName)}
+              />
+              {t(statusConfig.labelKey)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {connectionState === "disconnected" ? (
+            <CapiMethodChooser
+              actions={{
+                oauthConnect: reconnectMessengerCapiAction,
+                connectCustom: connectMessengerCustomCapiAction,
+              }}
+              datasetId={integrationMessenger.datasetId}
+              integrationId={integrationMessenger.id}
+              workspaceId={workspaceId}
+            />
+          ) : (
+            <CapiConnectedCard
+              datasetId={integrationMessenger.datasetId}
+              disconnectAction={disconnectMessengerCapiAction}
+              integrationId={integrationMessenger.id}
+              workspaceId={workspaceId}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

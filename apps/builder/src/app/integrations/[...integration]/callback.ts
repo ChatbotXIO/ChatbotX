@@ -1,6 +1,9 @@
 import {
+  instagramIntegrationService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
+  messengerIntegrationService,
+  metaConversionsService,
   platformCredentialService,
   workspaceMemberService,
   workspaceService,
@@ -18,13 +21,23 @@ import {
 } from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import {
+  debugToken as debugInstagramFacebookToken,
   exchangeCodeForToken as exchangeInstagramFacebookCode,
   getFacebookUser as getInstagramFacebookUser,
+  getUserInstagramAccounts,
+  hasInstagramManageEventsScope,
+  type InstagramAuthValue as InstagramFacebookAuthValue,
+  toAppAccessToken as toInstagramFacebookAppAccessToken,
 } from "@chatbotx.io/integration-instagram-facebook"
 import {
+  debugToken as debugMessengerToken,
   exchangeCodeForToken as exchangeMessengerCode,
   type FacebookUser,
   getFacebookUser as getMessengerFacebookUser,
+  getUserPages,
+  hasPageEventsScope,
+  type MessengerAuthValue,
+  toAppAccessToken as toMessengerAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
@@ -51,6 +64,7 @@ import { reconnectMessengerHandler } from "@/features/integration-messenger/acti
 import { connectTiktokHandler } from "@/features/integration-tiktok/actions/connect.action"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { integrations } from "@/integration"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
 import {
@@ -60,6 +74,7 @@ import {
   FB_MESSENGER_PENDING_AUTH_COOKIE,
   FB_PENDING_AUTH_MAX_AGE,
 } from "@/lib/facebook-pending-auth"
+import { lookupIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
@@ -72,7 +87,15 @@ const stateValidationSchema = z.object({
   // redirect_uri registered with the Facebook app); the connect action sets
   // this flag so the Messenger branch dispatches to the right token-storage /
   // webhook-subscription logic instead of the page picker.
-  flow: z.enum(["facebookAds", "facebookLeadAds", "metaCatalog"]).optional(),
+  flow: z
+    .enum([
+      "facebookAds",
+      "facebookLeadAds",
+      "metaCatalog",
+      "messengerCapi",
+      "instagramCapi",
+    ])
+    .optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
   // of this existing integration row (matched against its stored page/account
   // identity) instead of running the connect/page-select flow.
@@ -157,6 +180,210 @@ const lookupFacebookUser = async (
   }
 }
 
+async function handleMessengerCapiReconnect(props: {
+  credentialConfig: { clientId: string; clientSecret: string; version: string }
+  workspaceId: string
+  integrationId: string
+  code: string
+  callbackUrl: string
+}) {
+  const integrationMessenger =
+    await messengerIntegrationService.findByIdForWorkspace({
+      id: props.integrationId,
+      workspaceId: props.workspaceId,
+    })
+  if (!integrationMessenger) {
+    return { status: "error", reason: "notFound" } as const
+  }
+
+  try {
+    const shortLivedToken = await exchangeMessengerCode(
+      props.credentialConfig,
+      props.code,
+      props.callbackUrl,
+    )
+    const userToken = await exchangeMessengerLongLivedToken(
+      props.credentialConfig,
+      shortLivedToken,
+    ).catch((error) => {
+      logger.warn(
+        { err: error },
+        "Messenger long-lived token exchange failed during CAPI reconnect, using short-lived token",
+      )
+      return shortLivedToken
+    })
+
+    const { pages } = await getUserPages(
+      userToken,
+      props.credentialConfig.version,
+    )
+    const page = pages.find(
+      (userPage) =>
+        userPage.id === integrationMessenger.pageId && userPage.access_token,
+    )
+    if (!page?.access_token) {
+      return { status: "error", reason: "pageNotFound" } as const
+    }
+
+    const pageToken = await exchangeMessengerLongLivedToken(
+      props.credentialConfig,
+      page.access_token,
+    )
+    const debug = await debugMessengerToken({
+      inputToken: pageToken,
+      appAccessToken: toMessengerAppAccessToken(props.credentialConfig),
+      version: props.credentialConfig.version,
+    })
+    const hasCapiScope = hasPageEventsScope(debug.scopes)
+    if (!hasCapiScope) {
+      await metaConversionsService.updateCapiScopeCache({
+        channel: "messenger",
+        integration: integrationMessenger,
+        hasCapiScope,
+      })
+      return { status: "error", reason: "failed" } as const
+    }
+
+    const userInfo = await lookupIntegrationUserInfo({
+      workspaceId: props.workspaceId,
+      userAccessToken: userToken,
+      existingAvatar: integrationMessenger.userInfo?.avatar,
+      fetchUser: () =>
+        getMessengerFacebookUser(userToken, props.credentialConfig.version),
+    })
+    const auth: MessengerAuthValue = {
+      authType: AuthType.oauth2,
+      clientId: props.credentialConfig.clientId,
+      clientSecret: props.credentialConfig.clientSecret,
+      redirectUrl: "",
+      tokens: {
+        accessToken: pageToken,
+      },
+      metadata: {
+        pageId: integrationMessenger.pageId,
+        pageName: page.name,
+        version: props.credentialConfig.version,
+      },
+    }
+
+    await messengerIntegrationService.updateAuth({
+      id: integrationMessenger.id,
+      workspaceId: props.workspaceId,
+      auth,
+      name: page.name,
+      ...(userInfo ? { userInfo } : {}),
+    })
+    await metaConversionsService.updateCapiScopeCache({
+      channel: "messenger",
+      integration: integrationMessenger,
+      hasCapiScope,
+    })
+    await metaConversionsService.reconnectCapi({
+      channel: "messenger",
+      integration: integrationMessenger,
+    })
+
+    return { status: "success" } as const
+  } catch (error) {
+    logger.error({ err: error }, "Failed to reconnect Messenger CAPI")
+    return { status: "error", reason: "failed" } as const
+  }
+}
+
+async function handleInstagramCapiReconnect(props: {
+  credentialConfig: { clientId: string; clientSecret: string; version: string }
+  workspaceId: string
+  integrationId: string
+  userToken: string
+}) {
+  const integrationInstagram =
+    await instagramIntegrationService.findByIdForWorkspace({
+      id: props.integrationId,
+      workspaceId: props.workspaceId,
+    })
+  if (integrationInstagram?.type !== "facebook") {
+    return { status: "error", reason: "notFound" } as const
+  }
+
+  try {
+    const accounts = await getUserInstagramAccounts(
+      props.userToken,
+      props.credentialConfig.version,
+    )
+    const account = accounts.find(
+      (candidate) => candidate.id === integrationInstagram.igId,
+    )
+    if (!account) {
+      return { status: "error", reason: "accountNotFound" } as const
+    }
+
+    const debug = await debugInstagramFacebookToken({
+      inputToken: account.pageAccessToken,
+      appAccessToken: toInstagramFacebookAppAccessToken(props.credentialConfig),
+      version: props.credentialConfig.version,
+    })
+    const hasCapiScope = hasInstagramManageEventsScope(debug.scopes)
+    if (!hasCapiScope) {
+      await metaConversionsService.updateCapiScopeCache({
+        channel: "instagram",
+        integration: integrationInstagram,
+        hasCapiScope,
+      })
+      return { status: "error", reason: "failed" } as const
+    }
+
+    const userInfo = await lookupIntegrationUserInfo({
+      workspaceId: props.workspaceId,
+      userAccessToken: props.userToken,
+      existingAvatar: integrationInstagram.userInfo?.avatar,
+      fetchUser: () =>
+        getInstagramFacebookUser(
+          props.userToken,
+          props.credentialConfig.version,
+        ),
+    })
+    const auth: InstagramFacebookAuthValue = {
+      authType: AuthType.oauth2,
+      clientId: props.credentialConfig.clientId,
+      clientSecret: props.credentialConfig.clientSecret,
+      redirectUrl: "",
+      tokens: {
+        accessToken: account.pageAccessToken,
+      },
+      metadata: {
+        igId: integrationInstagram.igId,
+        igName: account.name,
+        pageId: account.pageId,
+        version: props.credentialConfig.version,
+      },
+    }
+
+    await instagramIntegrationService.updateAuth({
+      id: integrationInstagram.id,
+      workspaceId: props.workspaceId,
+      auth,
+      name: account.name,
+      username: account.username,
+      pageId: account.pageId,
+      ...(userInfo ? { userInfo } : {}),
+    })
+    await metaConversionsService.updateCapiScopeCache({
+      channel: "instagram",
+      integration: integrationInstagram,
+      hasCapiScope,
+    })
+    await metaConversionsService.reconnectCapi({
+      channel: "instagram",
+      integration: integrationInstagram,
+    })
+
+    return { status: "success" } as const
+  } catch (error) {
+    logger.error({ err: error }, "Failed to reconnect Instagram CAPI")
+    return { status: "error", reason: "failed" } as const
+  }
+}
+
 export const handleCallback = async (
   integrationType: IntegrationType,
   req: NextRequest,
@@ -236,13 +463,14 @@ export const handleCallback = async (
         createdBy: userId,
       })
 
-  if (
-    stateParams.workspaceId &&
-    !(await workspaceMemberService.isMember({
-      workspaceId: stateParams.workspaceId,
-      userId,
-    }))
-  ) {
+  const workspaceMember = stateParams.workspaceId
+    ? await workspaceMemberService.findByWorkspaceIdAndUserId({
+        workspaceId: stateParams.workspaceId,
+        userId,
+      })
+    : undefined
+
+  if (stateParams.workspaceId && !workspaceMember) {
     logger.info(
       { userId, workspaceId: stateParams.workspaceId },
       "user is not a member of workspace in OAuth callback",
@@ -252,6 +480,9 @@ export const handleCallback = async (
 
   const safeReferer = await sanitizeReferer(stateParams.referer)
   const code = url.searchParams.get("code") ?? ""
+  const hasCapiReconnectPermission =
+    workspaceMember &&
+    hasWorkspacePermission(workspaceMember.permissions, "superAdmin")
 
   // Resolved once and reused across every case below: a sub-account's
   // workspace must use its reseller's app, not fall through to the platform
@@ -310,6 +541,33 @@ export const handleCallback = async (
       if (stateParams.flow === "facebookLeadAds") {
         await enableLeadgenForWorkspacePages(workspace.id)
         return redirect(safeReferer)
+      }
+
+      if (
+        stateParams.flow === "messengerCapi" &&
+        stateParams.reconnectIntegrationId
+      ) {
+        if (!hasCapiReconnectPermission) {
+          logger.info(
+            { userId, workspaceId: workspace.id },
+            "user lacks superAdmin permission for Messenger CAPI OAuth callback",
+          )
+          return redirect(
+            buildReconnectRedirectUrl(safeReferer, {
+              status: "error",
+              reason: "failed",
+            }),
+          )
+        }
+
+        const result = await handleMessengerCapiReconnect({
+          credentialConfig: messengerCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          code,
+          callbackUrl,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
       if (stateParams.reconnectIntegrationId) {
@@ -435,11 +693,41 @@ export const handleCallback = async (
         "/integrations/instagram-facebook/callback",
       )
 
+      if (
+        stateParams.flow === "instagramCapi" &&
+        stateParams.reconnectIntegrationId &&
+        !hasCapiReconnectPermission
+      ) {
+        logger.info(
+          { userId, workspaceId: workspace.id },
+          "user lacks superAdmin permission for Instagram CAPI OAuth callback",
+        )
+        return redirect(
+          buildReconnectRedirectUrl(safeReferer, {
+            status: "error",
+            reason: "failed",
+          }),
+        )
+      }
+
       const userToken = await exchangeInstagramFacebookCode(
         instagramFacebookCredential.config,
         code,
         callbackUrl,
       )
+      if (
+        stateParams.flow === "instagramCapi" &&
+        stateParams.reconnectIntegrationId
+      ) {
+        const result = await handleInstagramCapiReconnect({
+          credentialConfig: instagramFacebookCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          userToken,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
+      }
+
       if (stateParams.reconnectIntegrationId) {
         const result = await reconnectInstagramFacebookHandler({
           credentialConfig: instagramFacebookCredential.config,

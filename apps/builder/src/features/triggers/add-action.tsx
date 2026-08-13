@@ -18,6 +18,7 @@ import { defaultFn as addTagsAction } from "./components/actions/schemas/add-tag
 import { defaultFn as clearCustomFieldAction } from "./components/actions/schemas/clear-custom-field"
 import { defaultFn as removeTagsAction } from "./components/actions/schemas/remove-tags"
 import { defaultFn as runGoogleSheetAction } from "./components/actions/schemas/run-google-sheet"
+import { defaultFn as sendMetaCapiEventAction } from "./components/actions/schemas/send-meta-capi-event"
 import { defaultFn as setCustomFieldAction } from "./components/actions/schemas/set-custom-field"
 import { defaultFn as startFlowAction } from "./components/actions/schemas/start-flow"
 import { defaultFn as transferConversationToHumanAction } from "./components/actions/schemas/transfer-conversation-to-human"
@@ -32,6 +33,7 @@ type ActionOption = {
     | typeof clearCustomFieldAction
     | typeof startFlowAction
     | typeof transferConversationToHumanAction
+    | typeof sendMetaCapiEventAction
     | typeof runGoogleSheetAction
 }
 
@@ -72,6 +74,11 @@ export function AddAction({
         label: t("trigger.actions.transferConversationToHuman"),
         value: triggerActions.enum.transferConversationToHuman,
         defaultFn: transferConversationToHumanAction,
+      },
+      {
+        label: t("trigger.actions.sendMetaCapiEvent"),
+        value: triggerActions.enum.sendMetaCapiEvent,
+        defaultFn: sendMetaCapiEventAction,
       },
       {
         label: "Google Sheets",

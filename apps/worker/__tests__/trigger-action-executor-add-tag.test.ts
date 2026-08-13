@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   insertReturning: vi.fn(),
   enqueueAttach: vi.fn(),
   enqueueTagAppliedEvaluations: vi.fn(),
+  enqueueLeadEvent: vi.fn(),
+  formatUtcDay: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -53,6 +55,10 @@ vi.mock("@chatbotx.io/business", () => ({
     enqueueTagAppliedEvaluations: (...args: unknown[]) =>
       mocks.enqueueTagAppliedEvaluations(...args),
   },
+  metaConversionsService: {
+    enqueueLeadEvent: (...args: unknown[]) => mocks.enqueueLeadEvent(...args),
+    formatUtcDay: (...args: unknown[]) => mocks.formatUtcDay(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/events/context", () => ({
@@ -90,8 +96,11 @@ describe("ActionExecutor addTag", () => {
     })
     mocks.contactInboxFindFirst.mockResolvedValue({
       id: "ci-1",
+      inboxId: "inbox-1",
       contactId: "contact-1",
+      channel: "messenger",
     })
+    mocks.formatUtcDay.mockReturnValue("20260810")
   })
 
   test("enqueues tag sync and ads conversion tagApplied evaluation for newly-linked tags", async () => {
@@ -146,5 +155,25 @@ describe("ActionExecutor addTag", () => {
 
     expect(mocks.tagFindMany).not.toHaveBeenCalled()
     expect(mocks.enqueueTagAppliedEvaluations).not.toHaveBeenCalled()
+  })
+
+  test("enqueues Meta CAPI trigger events with contact inbox source key and inbox id", async () => {
+    const executor = new ActionExecutor()
+
+    await executor.execute({
+      action: { type: "sendMetaCapiEvent" },
+      contactId: "contact-1",
+      triggerId: "trigger-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      contactInboxId: "ci-1",
+      inboxId: "inbox-1",
+      source: "triggerAction",
+      sourceKey: "trigger:trigger-1:ci-1:20260810",
+    })
   })
 })

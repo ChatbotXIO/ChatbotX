@@ -26,6 +26,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
+import { formatUtcDay } from "../lib/date"
 import { logger } from "../logger"
 import {
   type AdsConversionRuleTriggerType,
@@ -260,10 +261,6 @@ function mapWhatsappAutomaticEventPayload(
     capiStatus: "pending",
     capiSentAt: null,
   }
-}
-
-function formatUtcDay(date: Date): string {
-  return date.toISOString().slice(0, 10).replaceAll("-", "")
 }
 
 // TODO(follow-up): this pipeline is left untouched by the generic trigger

@@ -2717,6 +2717,7 @@
       "markCouponUsed": "Markera kupong som använd",
       "markEmailVerified": "Markera e-postadress som verifierad",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "moosendCreateContact": "Lägg till kontakt i Moosend",
       "noFlowsAvailable": "Inga flöden tillgängliga",
       "noTemplatesAvailable": "Inga mallar tillgängliga",
@@ -2770,7 +2771,8 @@
       "unsubscribeSequence": "Avsluta prenumeration på sekvens",
       "updateMessengerContactData": "Uppdatera kontaktdata",
       "whatsappFlow": "WhatsApp-flöde",
-      "whatsappOptionList": "Alternativlista"
+      "whatsappOptionList": "Alternativlista",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3004,7 +3006,11 @@
     "iceBreakersDescription": "Isbrytare hjälper användare att starta en konversation med din bot genom att visa en lista med vanliga frågor.",
     "reconnect": "Återanslut",
     "selectInstagramAccount": "Välj Instagram-konto",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "instagramCommentAutomation": {
     "activated": "Automatiseringen har aktiverats",
@@ -3477,7 +3483,8 @@
     },
     "tabs": {
       "generalSettings": "Allmänna inställningar",
-      "messageTemplates": "Meddelandemallar"
+      "messageTemplates": "Meddelandemallar",
+      "conversionsApi": "Ads Optimization"
     },
     "tagSync": {
       "description": "Tvåvägssynkronisering av taggar mellan den här arbetsytan och den anslutna kanalen.",
@@ -4247,7 +4254,8 @@
       "removeTag": "Ta bort tagg",
       "setCustomField": "Ange anpassat fält",
       "startAnotherFlow": "Starta ett annat flöde",
-      "transferConversationToHuman": "Överför konversationen till en människa"
+      "transferConversationToHuman": "Överför konversationen till en människa",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "after": "Efter",
     "at": "Kl.",
@@ -4678,5 +4686,87 @@
       "toggleSuccess": "Inställningen för taggsynkronisering har uppdaterats."
     },
     "title": "Zalo OA"
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger and Instagram conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger or Instagram."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "messengerAppNotFound": "Messenger app settings not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "instagramAppNotFound": "Instagram app settings not found.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "createAutomatically": "Create automatically",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "One-click connect using your page permissions. The dataset is created automatically.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      }
+    }
   }
 }

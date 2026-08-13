@@ -175,6 +175,7 @@ async function executeActions(
         action,
         contactId,
         workspaceId: triggerInfo.workspaceId,
+        triggerId: triggerInfo.triggerId,
       })
     } catch (error) {
       logger.error(

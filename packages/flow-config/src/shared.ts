@@ -40,6 +40,7 @@ import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { questionnairesStepSchema } from "./steps/questionnaires"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
+import { sendMetaCapiEventSchema } from "./steps/send-meta-capi-event"
 import { sendGridAddContactSchema } from "./steps/sendgrid-add-contact"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
 import { setMessengerPersonaStepSchema } from "./steps/set-messenger-persona"
@@ -141,6 +142,7 @@ const aiSteps = [
 
 const messengerSteps = [
   facebookCustomAudienceSchema,
+  sendMetaCapiEventSchema,
   setMessengerUserPersistentMenuStepSchema,
   enableMessengerComposerStepSchema,
   disableMessengerComposerStepSchema,

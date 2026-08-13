@@ -2044,6 +2044,7 @@
       "getResponseAddContact": "連絡先をGetResponseに追加",
       "sendGridAddContact": "連絡先をSendGridに追加",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Webサイトを開く",
       "optInEmail": "メール配信に登録",
       "optOutEmail": "メール配信を解除",
@@ -2097,7 +2098,8 @@
       "unsubscribeSequence": "シーケンスを解除",
       "splitTraffic": "トラフィックを分割",
       "aiEditImage": "AIで画像を編集",
-      "whatsappFlow": "WhatsAppフロー"
+      "whatsappFlow": "WhatsAppフロー",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2921,7 +2923,11 @@
     "iceBreakers": "会話のきっかけ",
     "iceBreakersDescription": "よくある質問の一覧を表示し、ユーザーがボットとの会話を始めやすくします。",
     "reconnect": "再接続",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "既存の連絡先とチャット履歴を同期しますか？",
@@ -2977,7 +2983,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "一般設定",
-      "messageTemplates": "メッセージテンプレート"
+      "messageTemplates": "メッセージテンプレート",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3578,7 +3585,8 @@
       "clearCustomField": "カスタムフィールドをクリア",
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
-      "transferConversationToHuman": "会話を担当者に転送"
+      "transferConversationToHuman": "会話を担当者に転送",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -4677,6 +4685,88 @@
       "iconPlaceholder": "例：book-open、star、circle-question-mark",
       "position": "表示順",
       "iconSearchLink": "Lucideアイコンを探す →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger and Instagram conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger or Instagram."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "messengerAppNotFound": "Messenger app settings not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "instagramAppNotFound": "Instagram app settings not found.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "createAutomatically": "Create automatically",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "One-click connect using your page permissions. The dataset is created automatically.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      }
     }
   }
 }

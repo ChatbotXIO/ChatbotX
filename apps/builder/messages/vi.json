@@ -2118,6 +2118,7 @@
       "getResponseAddContact": "Thêm liên hệ vào GetResponse",
       "sendGridAddContact": "Thêm liên hệ vào SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "API Chuyển đổi Meta",
       "openWebsite": "Mở trang web",
       "optInEmail": "Đăng ký nhận email",
       "optOutEmail": "Hủy đăng ký email",
@@ -2171,7 +2172,8 @@
       "noFlowsAvailable": "Không có flow nào",
       "splitTraffic": "Chia lưu lượng",
       "aiEditImage": "AI Chỉnh sửa hình ảnh",
-      "whatsappFlow": "Luồng WhatsApp"
+      "whatsappFlow": "Luồng WhatsApp",
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2937,7 +2939,11 @@
     "iceBreakers": "Câu hỏi gợi mở",
     "iceBreakersDescription": "Câu hỏi gợi mở cung cấp cách để người dùng bắt đầu trò chuyện với bot bằng danh sách câu hỏi thường gặp.",
     "reconnect": "Kết nối lại",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "Cài đặt chung",
+      "conversionsApi": "Tối ưu quảng cáo"
+    }
   },
   "coexist": {
     "title": "Đồng bộ liên hệ và lịch sử chat hiện có?",
@@ -2993,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Cài đặt chung",
-      "messageTemplates": "Mẫu tin nhắn"
+      "messageTemplates": "Mẫu tin nhắn",
+      "conversionsApi": "Tối ưu quảng cáo"
     },
     "messageTemplate": {
       "params": {
@@ -3572,7 +3579,8 @@
       "clearCustomField": "Xóa trường tùy chỉnh",
       "startAnotherFlow": "Bắt đầu luồng khác",
       "notifyAdmins": "Thông báo quản trị viên",
-      "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người"
+      "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
     },
     "triggerGoesOff": "Trigger kích hoạt",
     "before": "Trước",
@@ -4677,6 +4685,88 @@
       "iconPlaceholder": "vd. book-open, star, circle-question-mark",
       "position": "Thứ tự",
       "iconSearchLink": "Tìm kiếm biểu tượng Lucide →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Gửi sự kiện LeadSubmitted từ hội thoại Messenger và Instagram đến Meta.",
+    "datasetId": "ID dataset",
+    "reconnect": "Kết nối lại quyền",
+    "connectViaFacebook": "Kết nối qua Facebook",
+    "unsupportedExplanation": "Tài khoản Instagram này được kết nối bằng Instagram Business Login. Hãy kết nối tài khoản qua Facebook để dùng Meta Conversions API.",
+    "flowStep": {
+      "description": "Đưa sự kiện LeadSubmitted cho Messenger hoặc Instagram vào hàng đợi."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Sẵn sàng",
+      "missingPermission": "Cần cấp quyền",
+      "unverified": "Chưa xác minh",
+      "unsupported": "Chưa hỗ trợ",
+      "notConnected": "Chưa kết nối"
+    },
+    "statusDescriptions": {
+      "ready": "Tích hợp này đã có quyền Meta cần thiết để gửi sự kiện Conversions API.",
+      "missingPermission": "Hãy kết nối lại tích hợp này và cấp quyền Meta được yêu cầu.",
+      "unverified": "Chưa có cấu hình ứng dụng nền tảng nên không thể xác minh quyền CAPI.",
+      "unsupported": "Meta Conversions API cho Instagram yêu cầu tài khoản được kết nối qua Facebook Login for Business.",
+      "notConnected": "Conversions API là công cụ kinh doanh của Meta cho phép bạn chia sẻ dữ liệu với Meta để nâng cao hiệu quả quảng cáo."
+    },
+    "errors": {
+      "reconnect": "Không thể bắt đầu kết nối lại Meta CAPI.",
+      "messengerNotFound": "Không tìm thấy tích hợp Messenger.",
+      "messengerAppNotFound": "Không tìm thấy cấu hình ứng dụng Messenger.",
+      "instagramNotFound": "Không tìm thấy tích hợp Instagram.",
+      "instagramRequiresFacebook": "Instagram CAPI yêu cầu kết nối qua Facebook.",
+      "instagramAppNotFound": "Không tìm thấy cấu hình ứng dụng Instagram.",
+      "saveFailed": "Không lưu được. Vui lòng thử lại.",
+      "datasetRequired": "Hãy lưu Dataset ID trước khi thêm access token.",
+      "invalidToken": "Token này không truy cập được dataset."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Loại sự kiện",
+        "leadSubmitted": "Gửi thông tin (Lead)"
+      },
+      "value": "Giá trị",
+      "valuePlaceholder": "vd: 250",
+      "currency": "Tiền tệ",
+      "currencyPlaceholder": "vd: VND",
+      "contentCategory": "Danh mục nội dung",
+      "contentCategoryPlaceholder": "Danh mục của nội dung gắn với sự kiện",
+      "contentName": "Tên nội dung",
+      "contentNamePlaceholder": "Tên trang hoặc sản phẩm gắn với sự kiện"
+    },
+    "datasetIdPlaceholder": "Dán Dataset ID từ Events Manager",
+    "saveDataset": "Lưu",
+    "createAutomatically": "Tạo tự động",
+    "accessToken": "Access Token (tuỳ chọn)",
+    "accessTokenHint": "Dán token từ Events Manager để gửi sự kiện bằng token riêng thay vì token của trang. Cần có Dataset ID.",
+    "accessTokenPlaceholder": "Access token của Events Manager",
+    "saveToken": "Lưu token",
+    "tokenSaved": "Đã lưu token",
+    "removeToken": "Xoá",
+    "saved": "Đã lưu",
+    "help": {
+      "delay": "Sự kiện có thể mất tới 40 phút để xuất hiện trong Events Manager và hiển thị dạng Meta Leads trong Ads Manager."
+    },
+    "connected": "Đã kết nối",
+    "disconnect": "Ngắt kết nối",
+    "openEventManager": "Mở Trình quản lý sự kiện",
+    "methods": {
+      "oauth": {
+        "title": "Kết nối qua Facebook",
+        "description": "Kết nối một chạm bằng quyền của trang. Dataset được tạo tự động.",
+        "connect": "Kết nối qua Facebook",
+        "connectedLabel": "qua Facebook"
+      },
+      "custom": {
+        "title": "Kết nối tuỳ chỉnh",
+        "description": "Dùng Dataset ID và access token từ Meta Events Manager.",
+        "start": "Thiết lập kết nối tuỳ chỉnh",
+        "connect": "Kết nối",
+        "connectedLabel": "Tuỳ chỉnh"
+      }
     }
   }
 }

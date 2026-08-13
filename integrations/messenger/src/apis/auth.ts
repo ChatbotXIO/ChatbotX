@@ -182,6 +182,7 @@ export const MESSENGER_SCOPES = [
   "pages_show_list",
   "business_management",
   "pages_utility_messaging",
+  "page_events",
 ]
 
 /**
@@ -192,7 +193,8 @@ export const MESSENGER_SCOPES = [
  * page-connect step can reuse it instead of re-running OAuth.
  */
 export const MESSENGER_REUSE_REQUIRED_SCOPES = MESSENGER_SCOPES.filter(
-  (scope) => scope !== "email" && scope !== "public_profile",
+  (scope) =>
+    scope !== "email" && scope !== "public_profile" && scope !== "page_events",
 )
 
 /**
@@ -209,6 +211,9 @@ export const LEAD_ADS_SCOPES = [
 ]
 
 export const LEADS_RETRIEVAL_SCOPE = "leads_retrieval"
+export const PAGE_EVENTS_SCOPE = "page_events"
+
+export const CAPI_SCOPES = [PAGE_EVENTS_SCOPE]
 
 export function generateAuthUrl({
   clientId,
@@ -255,6 +260,28 @@ export function generateLeadAdsAuthUrl({
     client_id: clientId,
     redirect_uri: redirectUrl,
     scope: LEAD_ADS_SCOPES.join(","),
+    response_type: "code",
+    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
+  })
+  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
+}
+
+export function generateCapiAuthUrl({
+  clientId,
+  version = DEFAULT_API_VERSION,
+  redirectUrl,
+  stateParams,
+}: {
+  clientId: string
+  version?: string
+  redirectUrl: string
+  stateParams?: Record<string, unknown>
+}): string {
+  const params = new URLSearchParams({
+    auth_type: "rerequest",
+    client_id: clientId,
+    redirect_uri: redirectUrl,
+    scope: CAPI_SCOPES.join(","),
     response_type: "code",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
   })
@@ -323,6 +350,10 @@ export function debugToken({
 
 export function hasLeadsRetrieval(scopes: string[] | undefined): boolean {
   return Boolean(scopes?.includes(LEADS_RETRIEVAL_SCOPE))
+}
+
+export function hasPageEventsScope(scopes: string[] | undefined): boolean {
+  return Boolean(scopes?.includes(PAGE_EVENTS_SCOPE))
 }
 
 export function exchangeCodeForToken(

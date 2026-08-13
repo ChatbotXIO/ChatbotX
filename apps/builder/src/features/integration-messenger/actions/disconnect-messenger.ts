@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
+import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
   integrationMessengerModel,
   tagChannelModel,
@@ -87,6 +88,17 @@ export const disconnectMessenger = async (ctx: {
           eq(tagChannelModel.integrationId, integrationMessenger.id),
         ),
       )
+
+    // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
+    // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
+    await metaCapiEventRepository.deleteByIntegration(
+      {
+        workspaceId: ctx.workspaceId,
+        channel: "messenger",
+        integrationId: integrationMessenger.id,
+      },
+      tx,
+    )
 
     await tx
       .delete(integrationMessengerModel)

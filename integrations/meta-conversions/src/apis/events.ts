@@ -1,0 +1,119 @@
+import { z } from "zod"
+import {
+  DEFAULT_API_VERSION,
+  META_CONVERSIONS_PARTNER_AGENT,
+} from "../constants"
+import { rescueMetaConversions } from "../exception"
+import {
+  graphAuthHeaders,
+  metaConversionsGraphClient,
+} from "../lib/http-client"
+import type { MetaCapiEventName, MetaMessagingChannel } from "../schemas"
+
+type MessengerEventInput = {
+  eventName: MetaCapiEventName
+  occurredAt: Date
+  eventId: string
+  messagingChannel: "messenger"
+  pageId: string
+  pageScopedUserId: string
+  currency?: string | null
+  value?: string | number | null
+  contentCategory?: string | null
+  contentName?: string | null
+}
+
+type InstagramEventInput = {
+  eventName: MetaCapiEventName
+  occurredAt: Date
+  eventId: string
+  messagingChannel: "instagram"
+  instagramBusinessAccountId: string
+  igSid: string
+  currency?: string | null
+  value?: string | number | null
+  contentCategory?: string | null
+  contentName?: string | null
+}
+
+export type MetaConversionEventInput = MessengerEventInput | InstagramEventInput
+
+type SendConversionEventInput = {
+  datasetId: string
+  accessToken: string
+  version?: string
+  event: MetaConversionEventInput
+}
+
+const conversionEventsResponseSchema = z.object({}).passthrough()
+
+// Verified against Meta Conversions API for Business Messaging docs:
+// https://developers.facebook.com/docs/marketing-api/conversions-api/business-messaging
+// user_data keys: messenger uses page_id + page_scoped_user_id; instagram uses instagram_business_account_id + ig_sid.
+const channelUserDataBuilders = {
+  messenger: (event: MetaConversionEventInput) => ({
+    page_id: (event as MessengerEventInput).pageId,
+    page_scoped_user_id: (event as MessengerEventInput).pageScopedUserId,
+  }),
+  instagram: (event: MetaConversionEventInput) => ({
+    instagram_business_account_id: (event as InstagramEventInput)
+      .instagramBusinessAccountId,
+    ig_sid: (event as InstagramEventInput).igSid,
+  }),
+} as const satisfies {
+  [Channel in MetaMessagingChannel]: (
+    event: MetaConversionEventInput,
+  ) => Record<string, string>
+}
+
+const buildCustomData = (event: MetaConversionEventInput) => {
+  const hasValue = event.value !== null && event.value !== undefined
+  const hasAny =
+    event.currency || hasValue || event.contentCategory || event.contentName
+  return hasAny
+    ? {
+        custom_data: {
+          ...(event.currency ? { currency: event.currency } : {}),
+          ...(hasValue ? { value: Number(event.value) } : {}),
+          ...(event.contentCategory
+            ? { content_category: event.contentCategory }
+            : {}),
+          ...(event.contentName ? { content_name: event.contentName } : {}),
+        },
+      }
+    : {}
+}
+
+const buildChannelUserData = (event: MetaConversionEventInput) =>
+  channelUserDataBuilders[event.messagingChannel](event)
+
+const buildConversionEventPayload = (event: MetaConversionEventInput) => ({
+  event_name: event.eventName,
+  event_time: Math.floor(event.occurredAt.getTime() / 1000),
+  event_id: event.eventId,
+  action_source: "business_messaging",
+  messaging_channel: event.messagingChannel,
+  user_data: buildChannelUserData(event),
+  ...buildCustomData(event),
+})
+
+export const sendConversionEvent = ({
+  datasetId,
+  accessToken,
+  version = DEFAULT_API_VERSION,
+  event,
+}: SendConversionEventInput): Promise<void> =>
+  rescueMetaConversions(async () => {
+    const response = await metaConversionsGraphClient.post<unknown>(
+      `${version}/${datasetId}/events`,
+      {
+        headers: graphAuthHeaders(accessToken),
+        json: {
+          data: [buildConversionEventPayload(event)],
+          partner_agent: META_CONVERSIONS_PARTNER_AGENT,
+        },
+      },
+    )
+
+    conversionEventsResponseSchema.parse(response.data)
+  })
