@@ -51,8 +51,7 @@ export const IntegrationJobAction = {
   processLeadgen: "processLeadgen",
   processStoryReplyAutomation: "processStoryReplyAutomation",
   captureTemplateFlowResponse: "captureTemplateFlowResponse",
-  // Ads-conversion actions (merged from the retired `adsConversion` queue —
-  // see docs/plans/2026-08-13-merge-ads-conversion-into-integration-worker-plan.md).
+  // Ads-conversion actions (merged from the retired `adsConversion` queue).
   evaluateTemplateSent: "evaluateTemplateSent",
   evaluateConversionTrigger: "evaluateConversionTrigger",
   sendConversionEvent: "sendConversionEvent",
@@ -374,7 +373,7 @@ export type IntegrationJobAdsAutomaticEvent = {
 }
 
 // Ads-conversion job-data variants (merged from the retired `adsConversion`
-// queue — see docs/plans/2026-08-13-merge-ads-conversion-into-integration-worker-plan.md).
+// queue).
 // Kept as `AdsConversionJob*` type names since `@chatbotx.io/business` and the
 // handlers under `apps/worker/src/integration/handlers/ads-conversion/` import
 // them by these names.
