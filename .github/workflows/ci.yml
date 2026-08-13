@@ -42,5 +42,8 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
+      # --concurrency=4 matches the runner's vCPU count: tsc and vitest tasks
+      # are all CPU-bound, so turbo's default of 10 concurrent tasks only adds
+      # contention (and test timeouts) on a 4-core box.
       - name: Type-check, lint, and test
-        run: pnpm turbo run check-types lint test
+        run: pnpm turbo run check-types lint test --concurrency=4

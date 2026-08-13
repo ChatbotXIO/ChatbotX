@@ -10,7 +10,7 @@ import Link from "next/link"
 import { useSelectedLayoutSegment } from "next/navigation"
 import type { ReactNode } from "react"
 
-export type RouteAccordionItem = {
+type RouteAccordionItem = {
   /** Route segment under `basePath` — also the accordion value. */
   readonly value: string
   /** Trigger row content. */
