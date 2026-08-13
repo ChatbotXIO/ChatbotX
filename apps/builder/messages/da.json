@@ -43,6 +43,7 @@
     "disableBot": "Deaktivér bot",
     "disconnect": "Afbryd",
     "download": "Download",
+    "downloadTemplate": "Download skabelon",
     "edit": "Rediger",
     "editFeature": "Rediger {feature}",
     "enableBot": "Aktivér bot",
@@ -2104,6 +2105,11 @@
       "addMapping": "Tilføj Tilknytning",
       "addCustomField": "Tilføj Ny"
     },
+    "sendCarousel": {
+      "addSlide": "Tilføj kort",
+      "removeSlide": "Fjern kort",
+      "whatsappLinkButtonIgnored": "På WhatsApp virker dette korts link ikke: et kort med en linkknap kan ikke have andre knapper. Det sendes i stedet som et svar."
+    },
     "additionalSteps": "Additional trin",
     "delayType": {
       "datetimeCustomField": "Dato & Tid Brugerdefineret Felt",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Ingen published versions found",
     "publishVersionSuccess": "A ny version har been published",
     "flowConfigIncomplete": "Some configurations er incomplete",
+    "whatsappCarouselButtonsMismatch": "På WhatsApp skal en karrusel have de samme knapper på hvert kort: enten en enkelt linkknap på hvert kort eller det samme antal svarknapper på hvert kort",
+    "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan et karruselkort med en linkknap ikke have andre knapper. Fjern de andre knapper på kortet, eller skift linkknappen til en anden handling.",
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",
     "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
     "redoHistoryCleared": "Gentag historik cleared",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Indtast payload (valgfri)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Indtast flow token",
+        "flowNotSynced": "Synkroniser WhatsApp-flows for at knytte indsendte felter.",
         "catalogProductId": "Product ID",
         "catalogProductIdPlaceholder": "Indtast product retailer ID",
         "carouselCard": "Card {index}",
@@ -3390,7 +3399,10 @@
     "title": "Audit Logfiler"
   },
   "customFields": {
-    "title": "Brugerdefineret Felter"
+    "title": "Brugerdefineret Felter",
+    "variables": {
+      "rawGroup": "Rå brugerdefinerede felter"
+    }
   },
   "keywords": {
     "title": "Nøgleord",

@@ -43,6 +43,7 @@
     "disableBot": "تعطيل البوت",
     "disconnect": "قطع الاتصال",
     "download": "تنزيل",
+    "downloadTemplate": "تنزيل نموذج",
     "edit": "تعديل",
     "editFeature": "تعديل {feature}",
     "enableBot": "تفعيل البوت",
@@ -3096,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "أدخل البيانات (اختياري)",
         "flowToken": "رمز المسار",
         "flowTokenPlaceholder": "أدخل رمز المسار",
+        "flowNotSynced": "زامن مسارات واتساب لربط الحقول المُرسلة.",
         "catalogProductId": "معرّف المنتج",
         "catalogProductIdPlaceholder": "أدخل معرّف المنتج لدى بائع التجزئة",
         "carouselCard": "البطاقة {index}",
@@ -3397,7 +3399,10 @@
     "title": "سجلات التدقيق"
   },
   "customFields": {
-    "title": "الحقول المخصصة"
+    "title": "الحقول المخصصة",
+    "variables": {
+      "rawGroup": "الحقول المخصصة الخام"
+    }
   },
   "keywords": {
     "title": "الكلمات المفتاحية",

@@ -157,6 +157,11 @@
       "addMapping": "Adaugă o asociere",
       "addCustomField": "Adaugă"
     },
+    "sendCarousel": {
+      "addSlide": "Adaugă cardul",
+      "removeSlide": "Elimină cardul",
+      "whatsappLinkButtonIgnored": "Pe WhatsApp, linkul acestui card nu va funcționa: un card cu un buton de link nu poate avea alte butoane. Va fi trimis ca răspuns în schimb."
+    },
     "additionalSteps": "Pași suplimentari",
     "delayType": {
       "datetimeCustomField": "Câmp personalizat pentru dată și oră",
@@ -604,6 +609,7 @@
     "disableBot": "Dezactivează botul",
     "disconnect": "Deconectează",
     "download": "Descarcă",
+    "downloadTemplate": "Descarcă șablonul",
     "edit": "Editează",
     "editFeature": "Editează {feature}",
     "enableBot": "Activează botul",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Nicio versiune publicată găsită",
     "publishVersionSuccess": "A fost publicată o versiune nouă",
     "flowConfigIncomplete": "Unele configurări sunt incomplete",
+    "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
+    "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
     "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
     "redoHistoryCleared": "Istoricul de refacere a fost șters",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Introdu payload-ul (opțional)",
         "flowToken": "Token flux",
         "flowTokenPlaceholder": "Introdu tokenul fluxului",
+        "flowNotSynced": "Sincronizează fluxurile WhatsApp pentru a asocia câmpurile trimise.",
         "catalogProductId": "ID produs",
         "catalogProductIdPlaceholder": "Introdu ID-ul de retailer al produsului",
         "carouselCard": "Card {index}",
@@ -3390,7 +3399,10 @@
     "title": "Jurnale de audit"
   },
   "customFields": {
-    "title": "Câmpuri personalizate"
+    "title": "Câmpuri personalizate",
+    "variables": {
+      "rawGroup": "Câmpuri personalizate brute"
+    }
   },
   "keywords": {
     "title": "Cuvinte cheie",

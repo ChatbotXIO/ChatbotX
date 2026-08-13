@@ -43,6 +43,7 @@
     "disableBot": "ボットを無効化",
     "disconnect": "接続を解除",
     "download": "ダウンロード",
+    "downloadTemplate": "テンプレートをダウンロード",
     "edit": "編集",
     "editFeature": "{feature}を編集",
     "enableBot": "ボットを有効化",
@@ -2104,6 +2105,11 @@
       "addMapping": "マッピングを追加",
       "addCustomField": "新規追加"
     },
+    "sendCarousel": {
+      "addSlide": "スライドを追加",
+      "removeSlide": "スライドを削除",
+      "whatsappLinkButtonIgnored": "WhatsAppでは、このカードのリンクは機能しません。リンクボタンを含むカードには他のボタンを設定できません。代わりに返信として送信されます。"
+    },
     "additionalSteps": "追加ステップ",
     "delayType": {
       "datetimeCustomField": "日時カスタムフィールド",
@@ -2675,6 +2681,8 @@
     "noVersionsFound": "公開済みバージョンが見つかりません",
     "publishVersionSuccess": "新しいバージョンを公開しました",
     "flowConfigIncomplete": "一部の設定が未完了です",
+    "whatsappCarouselButtonsMismatch": "WhatsAppでは、カルーセルのすべてのカードに同じボタンが必要です。各カードに1つのリンクボタンを設定するか、各カードに同じ数の返信ボタンを設定してください",
+    "whatsappCarouselLinkButtonNotAlone": "WhatsAppでは、リンクボタンを含むカルーセルカードに他のボタンを設定できません。そのカードの他のボタンを削除するか、リンクボタンを別のアクションに変更してください。",
     "duplicateNodeError": "ブロックを複製できませんでした。もう一度お試しください。",
     "deleteNodeError": "ブロックを削除できませんでした。もう一度お試しください。",
     "redoHistoryCleared": "やり直し履歴を消去しました",
@@ -3073,6 +3081,7 @@
         "quickReplyPayloadPlaceholder": "ペイロードを入力（任意）",
         "flowToken": "フロートークン",
         "flowTokenPlaceholder": "フロートークンを入力",
+        "flowNotSynced": "送信されたフィールドをマッピングするには、WhatsAppフローを同期してください。",
         "catalogProductId": "商品ID",
         "catalogProductIdPlaceholder": "小売業者の商品IDを入力",
         "carouselCard": "カード{index}",
@@ -3374,7 +3383,10 @@
     "title": "監査ログ"
   },
   "customFields": {
-    "title": "カスタムフィールド"
+    "title": "カスタムフィールド",
+    "variables": {
+      "rawGroup": "生のカスタムフィールド"
+    }
   },
   "keywords": {
     "title": "キーワード",

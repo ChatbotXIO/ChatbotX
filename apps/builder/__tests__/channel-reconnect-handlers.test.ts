@@ -10,8 +10,11 @@ const {
   mockExchangeMessengerCode,
   mockGetUserPages,
   mockGetMessengerFacebookUser,
+  mockDebugToken,
+  mockToAppAccessToken,
   mockExchangeMessengerLongLivedToken,
   mockSubscribePageToAppWebhook,
+  mockScopesToPageSubscribeFields,
   mockGetInstagramAccount,
   mockSubscribeInstagramWebhook,
   mockGetUserInstagramAccounts,
@@ -27,8 +30,11 @@ const {
   mockExchangeMessengerCode: vi.fn(),
   mockGetUserPages: vi.fn(),
   mockGetMessengerFacebookUser: vi.fn(),
+  mockDebugToken: vi.fn(),
+  mockToAppAccessToken: vi.fn(),
   mockExchangeMessengerLongLivedToken: vi.fn(),
   mockSubscribePageToAppWebhook: vi.fn(),
+  mockScopesToPageSubscribeFields: vi.fn(),
   mockGetInstagramAccount: vi.fn(),
   mockSubscribeInstagramWebhook: vi.fn(),
   mockGetUserInstagramAccounts: vi.fn(),
@@ -53,11 +59,14 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
   exchangeCodeForToken: mockExchangeMessengerCode,
   getFacebookUser: mockGetMessengerFacebookUser,
   getUserPages: mockGetUserPages,
+  debugToken: mockDebugToken,
+  toAppAccessToken: mockToAppAccessToken,
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
   exchangeLongLivedToken: mockExchangeMessengerLongLivedToken,
   subscribePageToAppWebhook: mockSubscribePageToAppWebhook,
+  scopesToPageSubscribeFields: mockScopesToPageSubscribeFields,
 }))
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
@@ -182,6 +191,9 @@ describe("reconnectMessengerHandler", () => {
       ],
       bmLookupFailed: false,
     })
+    mockToAppAccessToken.mockReturnValue("app-id|app-secret")
+    mockDebugToken.mockResolvedValue({ scopes: [] })
+    mockScopesToPageSubscribeFields.mockReturnValue(["messages"])
   })
 
   const executeReconnect = () =>
@@ -201,6 +213,7 @@ describe("reconnectMessengerHandler", () => {
       pageId: "page-1",
       accessToken: "long-page-token",
       version: "v23.0",
+      subscribedFields: "messages",
     })
     expect(mockUpdateMessengerIntegrationAuth).toHaveBeenCalledWith({
       id: "im-1",

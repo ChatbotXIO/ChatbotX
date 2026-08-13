@@ -643,7 +643,7 @@ describe("MacTrackingService — occurredAt coercion", () => {
       newService().trackMessageIn([
         makeInPayload({ occurredAt: "not-a-date" }),
       ]),
-    ).resolves.toBeUndefined()
+    ).resolves.toBeInstanceOf(Map)
 
     expect(macRepository.upsertMonthlyPresence).toHaveBeenCalledTimes(1)
     const [rows] = macRepository.upsertMonthlyPresence.mock.calls[0] as [

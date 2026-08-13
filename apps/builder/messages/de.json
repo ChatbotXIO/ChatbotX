@@ -43,6 +43,7 @@
     "disableBot": "Bot deaktivieren",
     "disconnect": "Verbindung trennen",
     "download": "Herunterladen",
+    "downloadTemplate": "Vorlage herunterladen",
     "edit": "Bearbeiten",
     "editFeature": "{feature} bearbeiten",
     "enableBot": "Bot aktivieren",
@@ -1486,6 +1487,11 @@
       "addMapping": "Zuordnung hinzufügen",
       "addCustomField": "Neu hinzufügen"
     },
+    "sendCarousel": {
+      "addSlide": "Karte hinzufügen",
+      "removeSlide": "Karte entfernen",
+      "whatsappLinkButtonIgnored": "Bei WhatsApp funktioniert der Link dieser Karte nicht: Eine Karte mit einer Link-Schaltfläche darf keine weiteren Schaltflächen haben. Sie wird stattdessen als Antwort gesendet."
+    },
     "additionalSteps": "Zusätzliche Schritte",
     "delayType": {
       "datetimeCustomField": "Benutzerdefiniertes Datums- und Uhrzeitfeld",
@@ -2056,6 +2062,8 @@
     "noVersionsFound": "Keine veröffentlichten Versionen gefunden",
     "publishVersionSuccess": "Eine neue Version wurde veröffentlicht",
     "flowConfigIncomplete": "Einige Konfigurationen sind unvollständig",
+    "whatsappCarouselButtonsMismatch": "Bei WhatsApp benötigt ein Karussell auf jeder Karte dieselben Schaltflächen: entweder eine einzelne Link-Schaltfläche auf jeder Karte oder dieselbe Anzahl an Antwort-Schaltflächen auf jeder Karte",
+    "whatsappCarouselLinkButtonNotAlone": "Bei WhatsApp darf eine Karussellkarte mit einer Link-Schaltfläche keine weiteren Schaltflächen haben. Entfernen Sie die anderen Schaltflächen auf dieser Karte oder ändern Sie die Link-Schaltfläche in eine andere Aktion.",
     "duplicateNodeError": "Der Block konnte nicht dupliziert werden. Versuchen Sie es erneut.",
     "deleteNodeError": "Der Block konnte nicht gelöscht werden. Versuchen Sie es erneut.",
     "redoHistoryCleared": "Wiederholungsverlauf gelöscht",
@@ -2417,6 +2425,7 @@
         "quickReplyPayloadPlaceholder": "Nutzdaten eingeben (optional)",
         "flowToken": "Flow-Token",
         "flowTokenPlaceholder": "Flow-Token eingeben",
+        "flowNotSynced": "WhatsApp-Flows synchronisieren, um übermittelte Felder zuzuordnen.",
         "catalogProductId": "Produkt-ID",
         "catalogProductIdPlaceholder": "Produkt-Händler-ID eingeben",
         "carouselCard": "Karte {index}",
@@ -2690,7 +2699,12 @@
     "exportTakingLongDescription": "Der Export wird noch verarbeitet. Sie können diesen Dialog schließen und in einigen Minuten im Exportverlauf erneut nachsehen."
   },
   "auditLogs": { "title": "Audit-Protokolle" },
-  "customFields": { "title": "Benutzerdefinierte Felder" },
+  "customFields": {
+    "title": "Benutzerdefinierte Felder",
+    "variables": {
+      "rawGroup": "Rohe benutzerdefinierte Felder"
+    }
+  },
   "keywords": {
     "title": "Schlüsselwörter",
     "tabs": {

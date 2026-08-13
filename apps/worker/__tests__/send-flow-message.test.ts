@@ -10,16 +10,20 @@ const mocks = vi.hoisted(() => ({
   waitForChatJobCompletion: vi.fn(async () => undefined),
 }))
 
-vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: {
-    sendChatMessage: "sendChatMessage",
-    sendFlowMessage: "sendFlowMessage",
-  },
-  chatQueue: { add: mocks.chatQueueAdd },
-  IntegrationJobAction: { sendFlow: "sendFlow" },
-  integrationQueue: { add: mocks.integrationQueueAdd },
-  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
-}))
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return {
+    ...actual,
+    ChatJobAction: {
+      sendChatMessage: "sendChatMessage",
+      sendFlowMessage: "sendFlowMessage",
+    },
+    chatQueue: { add: mocks.chatQueueAdd },
+    IntegrationJobAction: { sendFlow: "sendFlow" },
+    integrationQueue: { add: mocks.integrationQueueAdd },
+  }
+})
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { query: {}, update: vi.fn(), insert: vi.fn() },
   eq: vi.fn(),

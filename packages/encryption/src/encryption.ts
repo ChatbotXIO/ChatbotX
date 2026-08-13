@@ -135,7 +135,7 @@ export const encryptUtils = {
       hexToBytes(encryptedData.text),
       hexToBytes(encryptedData.tag),
     )
-    const resolvedAad = encryptedData.aad ?? aad
+    const resolvedAad = aad ?? encryptedData.aad
     const raw = await crypto.subtle.decrypt(
       buildAlgorithm(iv, resolvedAad),
       key,

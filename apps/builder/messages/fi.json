@@ -43,6 +43,7 @@
     "disableBot": "Poista botti käytöstä",
     "disconnect": "Katkaise yhteys",
     "download": "Lataa",
+    "downloadTemplate": "Lataa malli",
     "edit": "Muokkaa",
     "editFeature": "Muokkaa: {feature}",
     "enableBot": "Ota botti käyttöön",
@@ -2104,6 +2105,11 @@
       "addMapping": "Lisää yhdistäminen",
       "addCustomField": "Lisää uusi"
     },
+    "sendCarousel": {
+      "addSlide": "Lisää kortti",
+      "removeSlide": "Poista kortti",
+      "whatsappLinkButtonIgnored": "WhatsAppissa tämän kortin linkki ei toimi: linkkipainikkeen sisältävällä kortilla ei voi olla muita painikkeita. Se lähetetään sen sijaan vastauksena."
+    },
     "additionalSteps": "Lisävaiheet",
     "delayType": {
       "datetimeCustomField": "Päivämäärän ja ajan mukautettu kenttä",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Julkaistuja versioita ei löytynyt",
     "publishVersionSuccess": "Uusi versio on julkaistu",
     "flowConfigIncomplete": "Jotkin määritykset ovat puutteellisia",
+    "whatsappCarouselButtonsMismatch": "WhatsAppissa karusellin jokaisella kortilla on oltava samat painikkeet: joko yksi linkkipainike jokaisella kortilla tai sama määrä vastauspainikkeita jokaisella kortilla",
+    "whatsappCarouselLinkButtonNotAlone": "WhatsAppissa linkkipainikkeen sisältävällä karusellikortilla ei voi olla muita painikkeita. Poista kortin muut painikkeet tai vaihda linkkipainike toiseen toimintoon.",
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",
     "deleteNodeError": "Lohkoa ei voitu poistaa. Yritä uudelleen.",
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Kirjoita tietosisältö (valinnainen)",
         "flowToken": "Flow-tunnus",
         "flowTokenPlaceholder": "Kirjoita flow-tunnus",
+        "flowNotSynced": "Synkronoi WhatsApp-flow't lähetettyjen kenttien yhdistämiseksi.",
         "catalogProductId": "Tuotetunnus",
         "catalogProductIdPlaceholder": "Kirjoita jälleenmyyjän tuotetunnus",
         "carouselCard": "Kortti {index}",
@@ -3390,7 +3399,10 @@
     "title": "Tarkastuslokit"
   },
   "customFields": {
-    "title": "Mukautetut kentät"
+    "title": "Mukautetut kentät",
+    "variables": {
+      "rawGroup": "Raa'at mukautetut kentät"
+    }
   },
   "keywords": {
     "title": "Avainsanat",

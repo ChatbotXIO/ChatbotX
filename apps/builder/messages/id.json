@@ -43,6 +43,7 @@
     "disableBot": "Nonaktifkan Bot",
     "disconnect": "Putuskan",
     "download": "Unduh",
+    "downloadTemplate": "Unduh templat",
     "edit": "Edit",
     "editFeature": "Edit {feature}",
     "enableBot": "Aktifkan Bot",
@@ -2104,6 +2105,11 @@
       "addMapping": "Tambah Pemetaan",
       "addCustomField": "Tambah Baru"
     },
+    "sendCarousel": {
+      "addSlide": "Tambah kartu",
+      "removeSlide": "Hapus kartu",
+      "whatsappLinkButtonIgnored": "Di WhatsApp, tautan kartu ini tidak akan berfungsi: kartu dengan tombol tautan tidak boleh memiliki tombol lain. Kartu ini akan dikirim sebagai balasan."
+    },
     "additionalSteps": "Langkah tambahan",
     "delayType": {
       "datetimeCustomField": "Kolom Kustom Tanggal & Waktu",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Tidak ada versi yang dipublikasikan",
     "publishVersionSuccess": "Versi baru telah dipublikasikan",
     "flowConfigIncomplete": "Beberapa konfigurasi belum lengkap",
+    "whatsappCarouselButtonsMismatch": "Di WhatsApp, carousel memerlukan tombol yang sama di setiap kartu: satu tombol tautan di setiap kartu, atau jumlah tombol balasan yang sama di setiap kartu",
+    "whatsappCarouselLinkButtonNotAlone": "Di WhatsApp, kartu carousel dengan tombol tautan tidak boleh memiliki tombol lain. Hapus tombol lain pada kartu tersebut, atau ubah tombol tautan menjadi tindakan lain.",
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",
     "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
     "redoHistoryCleared": "Riwayat pengulangan dihapus",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Masukkan payload (opsional)",
         "flowToken": "Token Alur",
         "flowTokenPlaceholder": "Masukkan token alur",
+        "flowNotSynced": "Sinkronkan alur WhatsApp untuk memetakan kolom yang dikirim.",
         "catalogProductId": "ID Produk",
         "catalogProductIdPlaceholder": "Masukkan ID pengecer produk",
         "carouselCard": "Kartu {index}",
@@ -3390,7 +3399,10 @@
     "title": "Log Audit"
   },
   "customFields": {
-    "title": "Kolom Kustom"
+    "title": "Kolom Kustom",
+    "variables": {
+      "rawGroup": "Kolom kustom mentah"
+    }
   },
   "keywords": {
     "title": "Kata Kunci",

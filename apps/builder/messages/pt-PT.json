@@ -43,6 +43,7 @@
     "disableBot": "Desativar bot",
     "disconnect": "Desligar",
     "download": "Transferir",
+    "downloadTemplate": "Transferir modelo",
     "edit": "Editar",
     "editFeature": "Editar {feature}",
     "enableBot": "Ativar bot",
@@ -2104,6 +2105,11 @@
       "addMapping": "Adicionar mapeamento",
       "addCustomField": "Adicionar"
     },
+    "sendCarousel": {
+      "addSlide": "Adicionar cartão",
+      "removeSlide": "Remover cartão",
+      "whatsappLinkButtonIgnored": "No WhatsApp, a ligação deste cartão não vai funcionar: um cartão com um botão de ligação não pode ter outros botões. Será enviado como resposta."
+    },
     "additionalSteps": "Passos adicionais",
     "delayType": {
       "datetimeCustomField": "Campo personalizado de data e hora",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Não foram encontradas versões publicadas",
     "publishVersionSuccess": "Foi publicada uma nova versão",
     "flowConfigIncomplete": "Algumas configurações estão incompletas",
+    "whatsappCarouselButtonsMismatch": "No WhatsApp, um carrossel tem de ter os mesmos botões em cada cartão: um único botão de ligação em cada cartão, ou o mesmo número de botões de resposta em cada cartão",
+    "whatsappCarouselLinkButtonNotAlone": "No WhatsApp, um cartão de carrossel com um botão de ligação não pode ter outros botões. Remova os outros botões nesse cartão ou altere o botão de ligação para outra ação.",
     "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",
     "deleteNodeError": "Não foi possível eliminar o bloco. Tente novamente.",
     "redoHistoryCleared": "Histórico de refazer limpo",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Introduza o payload (opcional)",
         "flowToken": "Token do fluxo",
         "flowTokenPlaceholder": "Introduza o token do fluxo",
+        "flowNotSynced": "Sincronize os fluxos do WhatsApp para mapear os campos submetidos.",
         "catalogProductId": "ID do produto",
         "catalogProductIdPlaceholder": "Introduza o ID do produto do retalhista",
         "carouselCard": "Cartão {index}",
@@ -3386,7 +3395,10 @@
     "title": "Registos de auditoria"
   },
   "customFields": {
-    "title": "Campos personalizados"
+    "title": "Campos personalizados",
+    "variables": {
+      "rawGroup": "Campos personalizados brutos"
+    }
   },
   "keywords": {
     "title": "Palavras-chave",

@@ -43,6 +43,7 @@
     "disableBot": "Désactiver le bot",
     "disconnect": "Déconnecter",
     "download": "Télécharger",
+    "downloadTemplate": "Télécharger le modèle",
     "edit": "Modifier",
     "editFeature": "Modifier {feature}",
     "enableBot": "Activer le bot",
@@ -1512,6 +1513,11 @@
       "addMapping": "Ajouter une correspondance",
       "addCustomField": "Ajouter"
     },
+    "sendCarousel": {
+      "addSlide": "Ajouter une carte",
+      "removeSlide": "Supprimer la carte",
+      "whatsappLinkButtonIgnored": "Sur WhatsApp, le lien de cette carte ne fonctionnera pas : une carte avec un bouton de lien ne peut pas avoir d'autres boutons. Il sera envoyé comme réponse à la place."
+    },
     "additionalSteps": "Étapes supplémentaires",
     "delayType": {
       "datetimeCustomField": "Champ personnalisé de date et d’heure",
@@ -2082,6 +2088,8 @@
     "noVersionsFound": "Aucune version publiée trouvée",
     "publishVersionSuccess": "Une nouvelle version a été publiée",
     "flowConfigIncomplete": "Certaines configurations sont incomplètes",
+    "whatsappCarouselButtonsMismatch": "Sur WhatsApp, un carrousel nécessite les mêmes boutons sur chaque carte : soit un seul bouton de lien sur chaque carte, soit le même nombre de boutons de réponse sur chaque carte",
+    "whatsappCarouselLinkButtonNotAlone": "Sur WhatsApp, une carte de carrousel avec un bouton de lien ne peut avoir aucun autre bouton. Supprimez les autres boutons de cette carte, ou remplacez le bouton de lien par une autre action.",
     "duplicateNodeError": "Impossible de dupliquer le bloc. Veuillez réessayer.",
     "deleteNodeError": "Impossible de supprimer le bloc. Veuillez réessayer.",
     "redoHistoryCleared": "Historique de rétablissement effacé",
@@ -2443,6 +2451,7 @@
         "quickReplyPayloadPlaceholder": "Saisissez la charge utile (facultatif)",
         "flowToken": "Jeton du flux",
         "flowTokenPlaceholder": "Saisissez le jeton du flux",
+        "flowNotSynced": "Synchronisez les flux WhatsApp pour mapper les champs soumis.",
         "catalogProductId": "Identifiant du produit",
         "catalogProductIdPlaceholder": "Saisissez l’identifiant du produit du détaillant",
         "carouselCard": "Carte {index}",
@@ -2718,7 +2727,12 @@
     "exportTakingLongDescription": "L’exportation est toujours en cours. Vous pouvez fermer cette boîte de dialogue et consulter l’historique des exportations dans quelques minutes."
   },
   "auditLogs": { "title": "Journaux d’audit" },
-  "customFields": { "title": "Champs personnalisés" },
+  "customFields": {
+    "title": "Champs personnalisés",
+    "variables": {
+      "rawGroup": "Champs personnalisés bruts"
+    }
+  },
   "keywords": {
     "title": "Mots-clés",
     "tabs": {

@@ -43,6 +43,7 @@
     "disableBot": "Bot uitschakelen",
     "disconnect": "Verbinding verbreken",
     "download": "Downloaden",
+    "downloadTemplate": "Sjabloon downloaden",
     "edit": "Bewerken",
     "editFeature": "{feature} bewerken",
     "enableBot": "Bot inschakelen",
@@ -2104,6 +2105,11 @@
       "addMapping": "Toewijzing toevoegen",
       "addCustomField": "Nieuwe toevoegen"
     },
+    "sendCarousel": {
+      "addSlide": "Kaart toevoegen",
+      "removeSlide": "Kaart verwijderen",
+      "whatsappLinkButtonIgnored": "Op WhatsApp werkt de link van deze kaart niet: een kaart met een linkknop mag geen andere knoppen hebben. Deze wordt in plaats daarvan als antwoord verzonden."
+    },
     "additionalSteps": "Aanvullende stappen",
     "delayType": {
       "datetimeCustomField": "Aangepast datum- en tijdveld",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Geen gepubliceerde versies gevonden",
     "publishVersionSuccess": "Er is een nieuwe versie gepubliceerd",
     "flowConfigIncomplete": "Sommige configuraties zijn onvolledig",
+    "whatsappCarouselButtonsMismatch": "Op WhatsApp moet een carrousel op elke kaart dezelfde knoppen hebben: één linkknop op elke kaart, of hetzelfde aantal antwoordknoppen op elke kaart",
+    "whatsappCarouselLinkButtonNotAlone": "Op WhatsApp mag een carrouselkaart met een linkknop geen andere knoppen hebben. Verwijder de andere knoppen op die kaart, of wijzig de linkknop in een andere actie.",
     "duplicateNodeError": "Het blok kon niet worden gedupliceerd. Probeer het opnieuw.",
     "deleteNodeError": "Het blok kon niet worden verwijderd. Probeer het opnieuw.",
     "redoHistoryCleared": "Geschiedenis voor opnieuw uitvoeren gewist",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Voer payload in (optioneel)",
         "flowToken": "Flowtoken",
         "flowTokenPlaceholder": "Voer flowtoken in",
+        "flowNotSynced": "Synchroniseer WhatsApp-flows om ingediende velden te koppelen.",
         "catalogProductId": "Product-ID",
         "catalogProductIdPlaceholder": "Voer de retailer-ID van het product in",
         "carouselCard": "Kaart {index}",
@@ -3390,7 +3399,10 @@
     "title": "Auditlogboeken"
   },
   "customFields": {
-    "title": "Aangepaste velden"
+    "title": "Aangepaste velden",
+    "variables": {
+      "rawGroup": "Onbewerkte aangepaste velden"
+    }
   },
   "keywords": {
     "title": "Trefwoorden",

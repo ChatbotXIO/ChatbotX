@@ -1543,6 +1543,7 @@
     "disableBot": "停用機器人",
     "disconnect": "中斷連線",
     "download": "下載",
+    "downloadTemplate": "下載範本",
     "edit": "編輯",
     "editFeature": "編輯 {feature}",
     "enableBot": "啟用機器人",
@@ -2117,6 +2118,16 @@
         "cancelled": "重新連線已取消。請重試並授予請求的權限。",
         "failed": "重新連線失敗。請再試一次。"
       }
+    },
+    "tokenRefreshErrorDialog": {
+      "title": "緊急",
+      "description": "以下頻道未能自動重新整理存取權杖。請重新連接以繼續傳送和接收訊息。",
+      "cta": "重新連接"
+    },
+    "refreshAllTokens": {
+      "button": "重新整理所有權限",
+      "resultSuccess": "已重新整理 {refreshed} 個頻道。",
+      "resultWithFailures": "已重新整理 {refreshed} 個頻道，{failed} 個失敗。"
     }
   },
   "workspace": {
@@ -3968,7 +3979,8 @@
   "platformChannels": {
     "title": "允許頻道",
     "description": "選擇此租使用者中的工作區可以建立哪些頻道類型。",
-    "hint": "取消選取每個頻道以允許所有頻道。"
+    "hint": "取消選取每個頻道以允許所有頻道。",
+    "hiddenByPlatform": "已被平台管理員隱藏—您無法重新啟用此頻道。"
   },
   "platformEmailTemplates": {
     "title": "電子郵件範本",

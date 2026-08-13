@@ -43,6 +43,7 @@ vi.mock("../src/contact-inbox/service", () => ({
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags,
   withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 
 const { conversationService } = await import("../src/conversation/service")

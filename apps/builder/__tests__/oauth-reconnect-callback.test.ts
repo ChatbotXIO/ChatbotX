@@ -94,6 +94,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationGoogleSheetsModel: {},
   integrationModel: {},
+  ROOT_TENANT_ID: "1",
 }))
 
 vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
@@ -127,6 +128,7 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
 
 vi.mock("@chatbotx.io/sdk", () => ({
   AuthType: { oauth2: "oauth2", custom: "custom" },
+  SdkException: class SdkException extends Error {},
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -233,7 +235,11 @@ describe("handleCallback OAuth reconnect", () => {
       name: "FB User",
       avatarUrl: "https://fb.example/avatar.jpg",
     })
-    mockFindWorkspaceById.mockResolvedValue({ id: "1", ownerId: "owner-1" })
+    mockFindWorkspaceById.mockResolvedValue({
+      id: "1",
+      ownerId: "owner-1",
+      tenantId: "1",
+    })
     mockIsMember.mockResolvedValue(true)
     mockResolveForOwner.mockResolvedValue({
       config: {

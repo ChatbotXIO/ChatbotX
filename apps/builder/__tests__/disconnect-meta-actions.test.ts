@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
     dbTransaction: vi.fn(async (callback: (tx: unknown) => Promise<void>) =>
       callback(tx),
     ),
+    coexistTearDownForIntegration: vi.fn().mockResolvedValue(undefined),
     findOrFail: vi.fn(),
     inboxDisconnect: vi.fn().mockResolvedValue(undefined),
     instagramExists: vi.fn().mockResolvedValue(false),
@@ -35,6 +36,9 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
+  coexistService: {
+    tearDownForIntegration: mocks.coexistTearDownForIntegration,
+  },
   inboxService: { disconnect: mocks.inboxDisconnect },
   instagramIntegrationService: { existsForPage: mocks.instagramExists },
   messengerIntegrationService: { existsForPage: mocks.messengerExists },

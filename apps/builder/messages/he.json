@@ -43,6 +43,7 @@
     "disableBot": "השבתת הבוט",
     "disconnect": "ניתוק",
     "download": "הורדה",
+    "downloadTemplate": "הורדת תבנית",
     "edit": "עריכה",
     "editFeature": "עריכת {feature}",
     "enableBot": "הפעלת הבוט",
@@ -424,6 +425,11 @@
       "selectCustomFieldPlaceholder": "בחירת שדה מותאם אישית",
       "addMapping": "הוספת מיפוי",
       "addCustomField": "הוספת חדש"
+    },
+    "sendCarousel": {
+      "addSlide": "הוספת כרטיס",
+      "removeSlide": "הסרת כרטיס",
+      "whatsappLinkButtonIgnored": "בוואטסאפ, הקישור של כרטיס זה לא יעבוד: כרטיס עם כפתור קישור לא יכול לכלול כפתורים נוספים. הוא יישלח כתשובה במקום זאת."
     },
     "additionalSteps": "שלבים נוספים",
     "delayType": {
@@ -1006,6 +1012,8 @@
     "noVersionsFound": "לא נמצאו גרסאות שפורסמו",
     "publishVersionSuccess": "גרסה חדשה פורסמה",
     "flowConfigIncomplete": "חלק מההגדרות אינן שלמות",
+    "whatsappCarouselButtonsMismatch": "בוואטסאפ, קרוסלה חייבת לכלול את אותם כפתורים בכל כרטיס: או כפתור קישור יחיד בכל כרטיס, או אותו מספר כפתורי תשובה בכל כרטיס",
+    "whatsappCarouselLinkButtonNotAlone": "בוואטסאפ, כרטיס קרוסלה עם כפתור קישור לא יכול לכלול כפתורים נוספים. הסר את הכפתורים הנוספים בכרטיס הזה, או שנה את כפתור הקישור לפעולה אחרת.",
     "duplicateNodeError": "לא ניתן היה לשכפל את הבלוק. נסו שוב.",
     "deleteNodeError": "לא ניתן היה למחוק את הבלוק. נסו שוב.",
     "redoHistoryCleared": "היסטוריית הביצוע מחדש נוקתה",
@@ -1352,6 +1360,7 @@
         "quickReplyPayloadPlaceholder": "הזנת מטען (אופציונלי)",
         "flowToken": "אסימון תהליך",
         "flowTokenPlaceholder": "הזנת אסימון תהליך",
+        "flowNotSynced": "סנכרן תהליכי WhatsApp כדי למפות את השדות שנשלחו.",
         "catalogProductId": "מזהה מוצר",
         "catalogProductIdPlaceholder": "הזנת מזהה המוצר אצל הקמעונאי",
         "carouselCard": "כרטיס {index}",
@@ -1625,7 +1634,12 @@
     "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא."
   },
   "auditLogs": { "title": "יומני ביקורת" },
-  "customFields": { "title": "שדות מותאמים אישית" },
+  "customFields": {
+    "title": "שדות מותאמים אישית",
+    "variables": {
+      "rawGroup": "שדות מותאמים אישית גולמיים"
+    }
+  },
   "keywords": {
     "title": "מילות מפתח",
     "tabs": {

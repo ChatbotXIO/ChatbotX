@@ -21,6 +21,15 @@ vi.mock("@/features/ai-agents/provider/ai-agent-store-context", () => ({
   useAIAgentStore: () => [],
 }))
 
+// The rich-text body isn't under test here (only capability gating is);
+// mounting the real Tiptap/ProseMirror editor needs DOM APIs jsdom lacks
+// (e.g. Range.getClientRects, elementFromPoint).
+vi.mock("@/components/tiptap/tiptap-editor-field", () => ({
+  TiptapEditorField: ({ name }: { name: string }) => (
+    <div data-testid={`tiptap-${name}`} />
+  ),
+}))
+
 vi.mock("@chatbotx.io/ui/components/ui/form", async () => {
   const { FormProvider } = await import("react-hook-form")
   return {

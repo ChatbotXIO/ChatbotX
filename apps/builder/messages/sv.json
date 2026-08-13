@@ -52,6 +52,7 @@
     "disableBot": "Inaktivera bot",
     "disconnect": "Koppla från",
     "download": "Ladda ned",
+    "downloadTemplate": "Ladda ned mall",
     "duplicate": "Duplicera",
     "edit": "Redigera",
     "editFeature": "Redigera {feature}",
@@ -841,7 +842,10 @@
     }
   },
   "customFields": {
-    "title": "Anpassade fält"
+    "title": "Anpassade fält",
+    "variables": {
+      "rawGroup": "Rå anpassade fält"
+    }
   },
   "deepseek": {
     "autoReply": {
@@ -2542,6 +2546,11 @@
       "whatsappFlow": "WhatsApp-flöde",
       "whatsappOptionList": "Alternativlista"
     },
+    "sendCarousel": {
+      "addSlide": "Lägg till kort",
+      "removeSlide": "Ta bort kort",
+      "whatsappLinkButtonIgnored": "På WhatsApp fungerar inte det här kortets länk: ett kort med en länkknapp kan inte ha andra knappar. Det skickas som ett svar istället."
+    },
     "additionalSteps": "Ytterligare steg",
     "aiAnalyzeImage": {
       "label": "{name}: Analysera bild"
@@ -3113,6 +3122,8 @@
     "failedToPreviewImage": "Det gick inte att förhandsgranska bilden",
     "featureNotFound": "{feature} hittades inte",
     "flowConfigIncomplete": "Vissa konfigurationer är ofullständiga",
+    "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
+    "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
     "historyDepth": "({count})",
     "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
     "humanAgentWindowExpired": "Meddelandeperioden har löpt ut. Kontakten måste skicka ett meddelande först för att öppna konversationen igen.",
@@ -4295,6 +4306,7 @@
         "enterFormatUrl": "Ange URL för {format}",
         "flowToken": "Flödestoken",
         "flowTokenPlaceholder": "Ange flödestoken",
+        "flowNotSynced": "Synkronisera WhatsApp-flöden för att mappa inskickade fält.",
         "latitude": "Latitud",
         "limitedTimeOffer": "Erbjudandets sluttid",
         "limitedTimeOfferHelp": "Unix-tidsstämpel i millisekunder när erbjudandet löper ut",

@@ -81,6 +81,7 @@ vi.mock("@chatbotx.io/database/client", async (importOriginal) => {
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn((callback) => callback),
   invalidateCacheByTags: vi.fn(async () => undefined),
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 
 vi.mock("../src/contact/service", () => ({

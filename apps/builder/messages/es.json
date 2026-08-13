@@ -43,6 +43,7 @@
     "disableBot": "Desactivar bot",
     "disconnect": "Desconectar",
     "download": "Descargar",
+    "downloadTemplate": "Descargar plantilla",
     "edit": "Editar",
     "editFeature": "Editar {feature}",
     "enableBot": "Activar bot",
@@ -2178,6 +2179,11 @@
       "addMapping": "Añadir Mapping",
       "addCustomField": "Añadir Nuevo"
     },
+    "sendCarousel": {
+      "addSlide": "Añadir tarjeta",
+      "removeSlide": "Eliminar tarjeta",
+      "whatsappLinkButtonIgnored": "En WhatsApp, el enlace de esta tarjeta no funcionará: una tarjeta con un botón de enlace no puede tener otros botones. Se enviará como respuesta en su lugar."
+    },
     "additionalSteps": "Pasos adicionales",
     "delayType": {
       "datetimeCustomField": "Fecha & Tiempo Personalizado Campo",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "No publicado versions found",
     "publishVersionSuccess": "A nuevo version tiene been publicado",
     "flowConfigIncomplete": "Some configurations son incomplete",
+    "whatsappCarouselButtonsMismatch": "En WhatsApp, un carrusel necesita los mismos botones en cada tarjeta: un único botón de enlace en cada tarjeta, o el mismo número de botones de respuesta en cada tarjeta",
+    "whatsappCarouselLinkButtonNotAlone": "En WhatsApp, una tarjeta de carrusel con un botón de enlace no puede tener otros botones. Elimina los otros botones de esa tarjeta o cambia el botón de enlace a otra acción.",
     "duplicateNodeError": "Could not duplicate el block. Por favor, try again.",
     "deleteNodeError": "Could not Eliminar el block. Por favor, try again.",
     "redoHistoryCleared": "Se borró el historial de rehacer",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Introduce payload (opcional)",
         "flowToken": "Token del flujo",
         "flowTokenPlaceholder": "Introduce flow token",
+        "flowNotSynced": "Sincroniza los flujos de WhatsApp para asignar los campos enviados.",
         "catalogProductId": "ID del producto",
         "catalogProductIdPlaceholder": "Introduce product retailer ID",
         "carouselCard": "Tarjeta {index}",
@@ -3390,7 +3399,10 @@
     "title": "Registros de auditoría"
   },
   "customFields": {
-    "title": "Campos personalizados"
+    "title": "Campos personalizados",
+    "variables": {
+      "rawGroup": "Campos personalizados sin procesar"
+    }
   },
   "keywords": {
     "title": "Palabras clave",

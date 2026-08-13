@@ -43,6 +43,7 @@
     "disableBot": "Desativar bot",
     "disconnect": "Desconectar",
     "download": "Baixar",
+    "downloadTemplate": "Baixar modelo",
     "edit": "Editar",
     "editFeature": "Editar {feature}",
     "enableBot": "Ativar bot",
@@ -2104,6 +2105,11 @@
       "addMapping": "Adicionar mapeamento",
       "addCustomField": "Adicionar"
     },
+    "sendCarousel": {
+      "addSlide": "Adicionar cartão",
+      "removeSlide": "Remover cartão",
+      "whatsappLinkButtonIgnored": "No WhatsApp, o link deste cartão não funcionará: um cartão com um botão de link não pode ter outros botões. Ele será enviado como resposta."
+    },
     "additionalSteps": "Etapas adicionais",
     "delayType": {
       "datetimeCustomField": "Campo personalizado de data e hora",
@@ -2675,6 +2681,8 @@
     "noVersionsFound": "Nenhuma versão publicada encontrada",
     "publishVersionSuccess": "Uma nova versão foi publicada",
     "flowConfigIncomplete": "Algumas configurações estão incompletas",
+    "whatsappCarouselButtonsMismatch": "No WhatsApp, um carrossel precisa ter os mesmos botões em cada cartão: um único botão de link em cada cartão, ou o mesmo número de botões de resposta em cada cartão",
+    "whatsappCarouselLinkButtonNotAlone": "No WhatsApp, um cartão de carrossel com um botão de link não pode ter outros botões. Remova os outros botões desse cartão ou altere o botão de link para outra ação.",
     "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",
     "deleteNodeError": "Não foi possível excluir o bloco. Tente novamente.",
     "redoHistoryCleared": "Histórico de refazer limpo",
@@ -3073,6 +3081,7 @@
         "quickReplyPayloadPlaceholder": "Insira a carga útil (opcional)",
         "flowToken": "Token do fluxo",
         "flowTokenPlaceholder": "Insira o token do fluxo",
+        "flowNotSynced": "Sincronize os fluxos do WhatsApp para mapear os campos enviados.",
         "catalogProductId": "ID do produto",
         "catalogProductIdPlaceholder": "Insira o ID do produto no varejista",
         "carouselCard": "Cartão {index}",
@@ -3349,7 +3358,10 @@
     "title": "Logs de auditoria"
   },
   "customFields": {
-    "title": "Campos personalizados"
+    "title": "Campos personalizados",
+    "variables": {
+      "rawGroup": "Campos personalizados brutos"
+    }
   },
   "keywords": {
     "title": "Palavras-chave",

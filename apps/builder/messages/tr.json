@@ -43,6 +43,7 @@
     "disableBot": "Botu Devre Dışı Bırak",
     "disconnect": "Bağlantıyı Kes",
     "download": "İndir",
+    "downloadTemplate": "Şablonu indir",
     "edit": "Düzenle",
     "editFeature": "{feature} Düzenle",
     "enableBot": "Botu Etkinleştir",
@@ -2178,6 +2179,11 @@
       "addMapping": "Eşleme Ekle",
       "addCustomField": "Yeni Ekle"
     },
+    "sendCarousel": {
+      "addSlide": "Kart ekle",
+      "removeSlide": "Kartı kaldır",
+      "whatsappLinkButtonIgnored": "WhatsApp'ta bu kartın bağlantısı çalışmayacaktır: bağlantı düğmesi olan bir kartta başka düğme bulunamaz. Bunun yerine yanıt olarak gönderilecektir."
+    },
     "additionalSteps": "Ek adımlar",
     "delayType": {
       "datetimeCustomField": "Tarih ve Saat Özel Alanı",
@@ -2691,6 +2697,8 @@
     "noVersionsFound": "Yayınlanmış sürüm bulunamadı",
     "publishVersionSuccess": "Yeni bir sürüm yayınlandı",
     "flowConfigIncomplete": "Bazı yapılandırmalar eksik",
+    "whatsappCarouselButtonsMismatch": "WhatsApp'ta bir karusel her kartta aynı düğmelere sahip olmalıdır: her kartta tek bir bağlantı düğmesi veya her kartta aynı sayıda yanıt düğmesi",
+    "whatsappCarouselLinkButtonNotAlone": "WhatsApp'ta bağlantı düğmesi olan bir karusel kartında başka düğme bulunamaz. O karttaki diğer düğmeleri kaldırın veya bağlantı düğmesini başka bir eyleme dönüştürün.",
     "duplicateNodeError": "Blok çoğaltılamadı. Lütfen tekrar deneyin.",
     "deleteNodeError": "Blok silinemedi. Lütfen tekrar deneyin.",
     "redoHistoryCleared": "Yinele geçmişi temizlendi",
@@ -3089,6 +3097,7 @@
         "quickReplyPayloadPlaceholder": "Veriyi girin (isteğe bağlı)",
         "flowToken": "Akış Token'ı",
         "flowTokenPlaceholder": "Akış token'ını girin",
+        "flowNotSynced": "Gönderilen alanları eşlemek için WhatsApp akışlarını senkronize edin.",
         "catalogProductId": "Ürün ID",
         "catalogProductIdPlaceholder": "Ürün satıcı ID'sini girin",
         "carouselCard": "Kart {index}",
@@ -3390,7 +3399,10 @@
     "title": "Denetim Günlükleri"
   },
   "customFields": {
-    "title": "Özel Alanlar"
+    "title": "Özel Alanlar",
+    "variables": {
+      "rawGroup": "Ham özel alanlar"
+    }
   },
   "keywords": {
     "title": "Anahtar Kelimeler",

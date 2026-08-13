@@ -1138,6 +1138,7 @@
     "disableBot": "Disattiva bot",
     "disconnect": "Disconnetti",
     "download": "Scarica",
+    "downloadTemplate": "Scarica modello",
     "edit": "Modifica",
     "editFeature": "Modifica {feature}",
     "enableBot": "Attiva bot",
@@ -1850,6 +1851,11 @@
       "addMapping": "Aggiungi mappatura",
       "addCustomField": "Aggiungi"
     },
+    "sendCarousel": {
+      "addSlide": "Aggiungi scheda",
+      "removeSlide": "Rimuovi scheda",
+      "whatsappLinkButtonIgnored": "Su WhatsApp, il link di questa scheda non funzionerà: una scheda con un pulsante di collegamento non può avere altri pulsanti. Verrà inviata come risposta."
+    },
     "additionalSteps": "Passaggi aggiuntivi",
     "delayType": {
       "datetimeCustomField": "Campo personalizzato data e ora",
@@ -2437,6 +2443,8 @@
     "noVersionsFound": "Nessuna versione pubblicata trovata",
     "publishVersionSuccess": "È stata pubblicata una nuova versione",
     "flowConfigIncomplete": "Alcune configurazioni sono incomplete",
+    "whatsappCarouselButtonsMismatch": "Su WhatsApp, un carosello richiede gli stessi pulsanti su ogni scheda: un unico pulsante di collegamento su ogni scheda, oppure lo stesso numero di pulsanti di risposta su ogni scheda",
+    "whatsappCarouselLinkButtonNotAlone": "Su WhatsApp, una scheda del carosello con un pulsante di collegamento non può avere altri pulsanti. Rimuovi gli altri pulsanti su quella scheda, oppure cambia il pulsante di collegamento in un'altra azione.",
     "duplicateNodeError": "Impossibile duplicare il blocco. Riprova.",
     "deleteNodeError": "Impossibile eliminare il blocco. Riprova.",
     "redoHistoryCleared": "Cronologia delle operazioni ripetibili cancellata",
@@ -2835,6 +2843,7 @@
         "quickReplyPayloadPlaceholder": "Inserisci payload (facoltativo)",
         "flowToken": "Token del flusso",
         "flowTokenPlaceholder": "Inserisci token del flusso",
+        "flowNotSynced": "Sincronizza i flussi WhatsApp per mappare i campi inviati.",
         "catalogProductId": "ID prodotto",
         "catalogProductIdPlaceholder": "Inserisci ID del rivenditore del prodotto",
         "carouselCard": "Scheda {index}",
@@ -3136,7 +3145,10 @@
     "title": "Registri di controllo"
   },
   "customFields": {
-    "title": "Campi personalizzati"
+    "title": "Campi personalizzati",
+    "variables": {
+      "rawGroup": "Campi personalizzati non elaborati"
+    }
   },
   "keywords": {
     "title": "Parole chiave",
