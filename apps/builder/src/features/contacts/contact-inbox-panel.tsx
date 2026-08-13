@@ -9,12 +9,14 @@ import {
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
+import type { ContactAppointmentResource } from "../appointments/schemas/resource"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
 import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
 import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
 import type { TagResource } from "../tags/schema/resource"
+import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import type { GetContactResponse } from "./schemas/query"
@@ -47,17 +49,24 @@ export const ContactInboxPanel = ({
   const [coupons, setCoupons] = useState<
     Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
   >([])
+  const [appointments, setAppointments] = useState<
+    ContactAppointmentResource[]
+  >([])
 
   useEffect(() => {
     const contactId = storeContact?.id
 
     if (!activeConversationId) {
       setContactData(null)
+      setCoupons([])
+      setAppointments([])
       return
     }
 
     if (!contactId) {
       setContactData(null)
+      setCoupons([])
+      setAppointments([])
       return
     }
 
@@ -74,6 +83,11 @@ export const ContactInboxPanel = ({
       .listContactCouponsAPI({ workspaceId, contactId })
       .then(setCoupons)
       .catch(() => setCoupons([]))
+
+    client.appointmentsAPI
+      .listContactAppointmentsAPI({ workspaceId, contactId })
+      .then(setAppointments)
+      .catch(() => setAppointments([]))
   }, [activeConversationId, storeContact?.id, workspaceId])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
@@ -105,6 +119,10 @@ export const ContactInboxPanel = ({
             )}
           </div>
         ),
+      },
+      {
+        keyName: t("appointments.title"),
+        content: <ContactAppointmentsList appointments={appointments} />,
       },
       {
         keyName: t("fields.tags.label"),
@@ -143,7 +161,7 @@ export const ContactInboxPanel = ({
         ),
       },
     ]
-  }, [contactData, workspaceId, t, coupons])
+  }, [contactData, workspaceId, t, coupons, appointments])
 
   if (!storeContact) {
     return null

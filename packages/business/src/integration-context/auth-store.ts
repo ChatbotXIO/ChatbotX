@@ -6,11 +6,11 @@ import { type AuthStore, type AuthValue, SdkException } from "@chatbotx.io/sdk"
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
 
 const channelToIntegrationTable = (channel: string): string => {
-  const inboxName = channel
+  const integrationName = channel
     .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("")
-  return `Integration${inboxName}`
+  return `Integration${integrationName}`
 }
 
 /**

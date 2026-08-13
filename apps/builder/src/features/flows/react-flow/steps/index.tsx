@@ -13,6 +13,7 @@ import { aiGenerateTextStep } from "./ai-generate-text"
 import { aiGenerateTextAgentStep } from "./ai-generate-text-agent"
 import { aiSpeechToTextStep } from "./ai-speech-to-text"
 import { aiTextToSpeechStep } from "./ai-text-to-speech"
+import { appointmentSchedulingStep } from "./appointment-scheduling"
 import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
@@ -151,6 +152,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.subscribeSequence]: subscribeSequenceStep,
   [stepTypes.enum.unsubscribeSequence]: unsubscribeSequenceStep,
   [stepTypes.enum.chooseChannel]: chooseChannelStep,
+  [stepTypes.enum.appointmentScheduling]: appointmentSchedulingStep,
   [stepTypes.enum.questionnaires]: questionnairesStep,
   [stepTypes.enum.setUpCoupon]: setUpCouponStep,
   [stepTypes.enum.markCouponUsed]: markCouponUsedStep,

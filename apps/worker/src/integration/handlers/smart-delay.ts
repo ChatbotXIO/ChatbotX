@@ -29,6 +29,7 @@ type SmartDelayJobSpec = {
 type SmartDelayResumeJobExtras = {
   metadata?: MetadataPayload
   sendFrom?: "inbox"
+  appointmentId?: string
 }
 
 const parseResumeMetadata = (
@@ -47,6 +48,7 @@ export const buildSendFlowResumeJob = (
   extras?: SmartDelayResumeJobExtras,
 ): SmartDelayJobSpec => {
   const metadata = extras?.metadata ?? parseResumeMetadata(row.metadata)
+  const appointmentId = extras?.appointmentId ?? row.appointmentId ?? undefined
 
   return {
     name: IntegrationJobAction.sendFlow,
@@ -60,6 +62,7 @@ export const buildSendFlowResumeJob = (
         nodeId: row.nodeId ?? undefined,
         ...(metadata ? { metadata } : {}),
         ...(extras?.sendFrom ? { sendFrom: extras.sendFrom } : {}),
+        ...(appointmentId ? { appointmentId } : {}),
       },
     },
   }
@@ -113,6 +116,7 @@ export async function scheduleSmartDelayResume(props: {
   stepId: string
   metadata?: MetadataPayload
   sendFrom?: "inbox"
+  appointmentId?: string
 }): Promise<void> {
   const rowId = createId()
   const row: SmartDelayRow = {
@@ -121,6 +125,7 @@ export async function scheduleSmartDelayResume(props: {
     flowId: props.flowId,
     flowVersionId: props.flowVersionId,
     contactInboxId: props.contactInboxId,
+    appointmentId: props.appointmentId ?? null,
     conversationId: props.conversationId,
     nodeId: props.connectedNodeId,
     stepId: props.stepId,
@@ -145,6 +150,7 @@ export async function scheduleSmartDelayResume(props: {
     const job = smartDelayResumeJobFactories[persistedRow.type](persistedRow, {
       metadata: props.metadata,
       sendFrom: props.sendFrom,
+      appointmentId: props.appointmentId,
     })
     await integrationQueue.add(job.name, job.data, {
       delay: Math.max(0, diffMs),

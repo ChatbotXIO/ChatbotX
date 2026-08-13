@@ -1,0 +1,29 @@
+{
+  "name": "@chatbotx.io/integration-google-calendar",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
+    "google-auth-library": "^10.6.2",
+    "googleapis": "^171.4.0",
+    "universal-error-normalizer": "^1.0.0"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "^5",
+    "vitest": "^4.1.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./**/*": "./src/**/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  }
+}

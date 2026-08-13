@@ -17,6 +17,7 @@ export type ContactVariableContext = {
   contact: ContactModel
   contactInbox: ContactInboxModel | null
   conversation?: ConversationModel | null
+  appointmentId?: string
   workspace: WorkspaceModel | null
 }
 

@@ -29,6 +29,7 @@ import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syn
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
+import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { syncUserQuota } from "./handlers/sync-user-quota"
@@ -96,6 +97,10 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.scanSmartDelay:
           await scanSmartDelay()
+          return
+
+        case ScheduleJobData.scanAppointmentReminders:
+          await scanAppointmentReminders(job.data.data)
           return
 
         case ScheduleJobData.syncUserQuota:

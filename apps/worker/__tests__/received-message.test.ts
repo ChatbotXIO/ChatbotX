@@ -31,6 +31,11 @@ const {
   mockContactUpdate,
   mockUpdateTracking,
   mockInvalidateTracking,
+  mockWorkspaceIsActiveNow,
+  mockAppointmentCancelByToken,
+  mockParseAppointmentCancelPostback,
+  mockVerifyAppointmentCancelPostback,
+  mockChatQueueAdd,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -83,11 +88,18 @@ const {
     mockDbCount,
     mockCreateNewContactWithMac: vi.fn(),
     mockWorkspaceFind: vi.fn().mockResolvedValue(null),
+    mockWorkspaceIsActiveNow: vi.fn().mockReturnValue(true),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
     mockUpdateTracking: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
     mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
+    mockAppointmentCancelByToken: vi.fn().mockResolvedValue({
+      cancellable: true,
+    }),
+    mockParseAppointmentCancelPostback: vi.fn().mockReturnValue(null),
+    mockVerifyAppointmentCancelPostback: vi.fn(),
+    mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -134,6 +146,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentService: {
+    cancelAppointmentByToken: mockAppointmentCancelByToken,
+  },
   broadcastToWorkspaceParty: mockBroadcast,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
@@ -155,7 +170,7 @@ vi.mock("@chatbotx.io/business", () => ({
       endTime: null,
       timezone: "UTC",
     }),
-    isActiveNow: vi.fn().mockReturnValue(true),
+    isActiveNow: mockWorkspaceIsActiveNow,
   },
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
@@ -211,7 +226,18 @@ vi.mock("@chatbotx.io/flow-config", async (importOriginal) => {
   return { ...actual }
 })
 
+vi.mock("@chatbotx.io/encryption", () => ({
+  parseAppointmentCancelPostback: mockParseAppointmentCancelPostback,
+  verifyAppointmentCancelPostback: mockVerifyAppointmentCancelPostback,
+}))
+
 vi.mock("@chatbotx.io/worker-config", () => ({
+  ChatJobAction: {
+    sendChatMessage: "sendChatMessage",
+  },
+  chatQueue: {
+    add: mockChatQueueAdd,
+  },
   IntegrationJobAction: {
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
@@ -415,6 +441,16 @@ describe("receiveMessage — message repository branch", () => {
     mockEmit.mockResolvedValue(undefined)
     mockBroadcast.mockReturnValue(undefined)
     mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    mockChatQueueAdd.mockResolvedValue(undefined)
+    mockAppointmentCancelByToken.mockResolvedValue({ cancellable: true })
+    mockParseAppointmentCancelPostback.mockReturnValue(null)
+    mockVerifyAppointmentCancelPostback.mockResolvedValue({
+      workspaceId: "ws-1",
+      appointmentId: "appointment-1",
+      contactId: "contact-1",
+      contactInboxId: "ci-1",
+    })
+    mockWorkspaceIsActiveNow.mockReturnValue(true)
   })
 
   test("calls repository.createOrUpdate() when message has no attachments", async () => {
@@ -726,6 +762,80 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
       kind: "postback",
       data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  test("sends Vietnamese feedback instead of going silent when an appointment cancel token is invalid", async () => {
+    mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
+    mockVerifyAppointmentCancelPostback.mockRejectedValue(
+      new Error("token expired"),
+    )
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test", language: "vi" },
+      postbackAction: "cancel-token",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAppointmentCancelByToken).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        conversation: expect.objectContaining({ id: fakeConversation.id }),
+        contactInbox: expect.objectContaining({ id: fakeContactInbox.id }),
+        text: "Liên kết hủy lịch đã hết hạn hoặc không còn khả dụng.",
+      }),
+    })
+  })
+
+  test("sends English feedback for appointment cancel postbacks when the workspace is inactive", async () => {
+    mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
+    mockWorkspaceIsActiveNow.mockReturnValue(false)
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test", language: "en" },
+      postbackAction: "cancel-token",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAppointmentCancelByToken).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        conversation: expect.objectContaining({ id: fakeConversation.id }),
+        contactInbox: expect.objectContaining({ id: fakeContactInbox.id }),
+        text: "This appointment cannot be cancelled because the workspace is currently inactive.",
+      }),
+    })
+  })
+
+  test("falls back to English feedback when an appointment cancel token is valid but no longer cancellable", async () => {
+    mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
+    mockAppointmentCancelByToken.mockResolvedValue({ cancellable: false })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test", language: "xx" },
+      postbackAction: "cancel-token",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAppointmentCancelByToken).toHaveBeenCalled()
+    expect(mockChatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        conversation: expect.objectContaining({ id: fakeConversation.id }),
+        contactInbox: expect.objectContaining({ id: fakeContactInbox.id }),
+        text: "This cancellation link has expired or is no longer available.",
+      }),
     })
   })
 

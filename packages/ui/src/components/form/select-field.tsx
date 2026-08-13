@@ -35,6 +35,7 @@ export type SelectFieldProps<T extends FieldValues> = React.ComponentProps<
   descriptionType?: "inline" | "tooltip"
   options?: SelectOption[]
   fetchOptionsUrl?: string
+  formItemClassName?: string
   className?: string
   allowClear?: boolean
   clearLabel?: string
@@ -63,6 +64,7 @@ export const SelectField = <T extends FieldValues>(
     descriptionType = "inline",
     options = [],
     fetchOptionsUrl,
+    formItemClassName,
     allowClear,
     clearLabel,
     triggerValueChange,
@@ -149,6 +151,7 @@ export const SelectField = <T extends FieldValues>(
     <FormFieldWrapper<T>
       description={description}
       descriptionType={descriptionType}
+      formItemClassName={formItemClassName}
       label={label}
       name={name}
       required={required}

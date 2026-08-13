@@ -80,6 +80,7 @@ type GetAllProps = {
   contactId: string
   contactInbox: ContactInboxModel | string
   conversation?: ConversationModel | null
+  appointmentId?: string
   workspace?: WorkspaceModel
 }
 
@@ -162,6 +163,7 @@ export const contactVariableService = {
       contact,
       contactInbox,
       conversation: input.conversation ?? null,
+      appointmentId: input.appointmentId,
       customFieldsMap,
       workspace,
     }

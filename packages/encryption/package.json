@@ -20,6 +20,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./appointment-cancel-token": "./src/appointment-cancel-token.ts",
+    "./appointment-schedule-token": "./src/appointment-schedule-token.ts",
+    "./appointment-webview-token": "./src/appointment-webview-token.ts",
     "./keys": "./src/keys.ts",
     "./link-signature": "./src/link-signature.ts",
     "./user-hash": "./src/user-hash.ts"

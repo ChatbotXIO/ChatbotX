@@ -682,6 +682,20 @@ describe("getUserData — first send (no challenge state)", () => {
     ).toBeUndefined()
   })
 
+  test("writes appointmentId into challenge state and the first prompt job", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.appointmentId = "appointment-1"
+
+    await getUserData(props)
+
+    const [, job] = chatQueueAdd.mock.calls[0]
+    expect(job.data.appointmentId).toBe("appointment-1")
+    expect(challengeSetCalls()[0]?.[0].challenge?.data.appointmentId).toBe(
+      "appointment-1",
+    )
+  })
+
   test("still uses sendFlowMessage when there is no broadcast metadata", async () => {
     const props = makeProps(ReplyFormat.email)
     props.ctx = { variables: { conversation: {} } }

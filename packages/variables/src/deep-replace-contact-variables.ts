@@ -74,6 +74,7 @@ export const resolveContactVariablesDeep = async <T>(
     contactInbox: ContactInboxModel | string
     conversation?: ConversationModel | null
     workspace?: WorkspaceModel
+    appointmentId?: string
   },
 ): Promise<T> => {
   if (!valueContainsVariablePlaceholder(value)) {

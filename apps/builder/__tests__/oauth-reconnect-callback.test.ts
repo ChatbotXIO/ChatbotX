@@ -29,6 +29,9 @@ const {
   mockReconnectMessengerHandler,
   mockReconnectInstagramHandler,
   mockReconnectInstagramFacebookHandler,
+  mockExchangeAndVerifyGoogleCalendar,
+  mockCreateGoogleFromOAuthCallback,
+  mockResolveOwnerForWorkspace,
   mockGetCurrentUserId,
   mockEncryptAuth,
   mockCookieSet,
@@ -60,6 +63,9 @@ const {
   mockReconnectMessengerHandler: vi.fn(),
   mockReconnectInstagramHandler: vi.fn(),
   mockReconnectInstagramFacebookHandler: vi.fn(),
+  mockExchangeAndVerifyGoogleCalendar: vi.fn(),
+  mockCreateGoogleFromOAuthCallback: vi.fn(),
+  mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
   mockGetCurrentUserId: vi.fn(),
   mockEncryptAuth: vi.fn(async () => "encrypted-token"),
   mockCookieSet: vi.fn(),
@@ -77,6 +83,9 @@ vi.mock("@chatbotx.io/business", () => ({
   instagramIntegrationService: {
     findByIdForWorkspace: mockFindInstagramIntegration,
     updateAuth: mockUpdateInstagramIntegrationAuth,
+  },
+  appointmentExternalCalendarService: {
+    createGoogleFromOAuthCallback: mockCreateGoogleFromOAuthCallback,
   },
   integrationFacebookAdsService: { upsert: mockUpsertFacebookAds },
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
@@ -157,6 +166,10 @@ vi.mock("@/features/integration-instagram/actions/reconnect-callback", () => ({
   reconnectInstagramFacebookHandler: mockReconnectInstagramFacebookHandler,
 }))
 
+vi.mock("@/features/external-calendars/lib/google-calendar-provider", () => ({
+  exchangeAndVerifyGoogleCalendar: mockExchangeAndVerifyGoogleCalendar,
+}))
+
 vi.mock("@/features/integration-tiktok/actions/connect.action", () => ({
   connectTiktokHandler: vi.fn(),
 }))
@@ -173,8 +186,13 @@ vi.mock("@/integration", () => ({
     facebookAds: {},
     tiktok: {},
     zalo: {},
+    googleCalendar: {},
     googleSheets: {},
   },
+}))
+
+vi.mock("@/lib/platform-credential-owner", () => ({
+  resolveOwnerForWorkspace: mockResolveOwnerForWorkspace,
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -241,6 +259,7 @@ describe("handleCallback OAuth reconnect", () => {
       tenantId: "1",
     })
     mockIsMember.mockResolvedValue(true)
+    mockResolveOwnerForWorkspace.mockResolvedValue("platform-owner-1")
     mockResolveForOwner.mockResolvedValue({
       config: {
         clientId: "client-1",
@@ -396,6 +415,55 @@ describe("handleCallback OAuth reconnect", () => {
     )
     expect(mockRedirect).toHaveBeenCalledWith(
       new URL("/channels/messenger/select", REFERER).toString(),
+    )
+  })
+
+  test("google calendar callback resolves credentials with the tenant-aware owner", async () => {
+    mockExchangeAndVerifyGoogleCalendar.mockResolvedValue({
+      auth: { type: "oauth2", tokens: { accessToken: "google-token" } },
+      providerCalendarId: "primary",
+      email: "owner@example.com",
+    })
+
+    await handleCallback(
+      "googleCalendar",
+      buildCallbackRequest("google-calendar", {
+        workspaceId: "1",
+        referer:
+          "https://app.example.com/space/1/appointment-calendars/external-calendars",
+      }),
+    )
+
+    expect(mockResolveOwnerForWorkspace).toHaveBeenCalledWith({
+      id: "1",
+      ownerId: "owner-1",
+      tenantId: "1",
+    })
+    expect(mockResolveForOwner).toHaveBeenCalledWith({
+      ownerId: "platform-owner-1",
+      type: "google",
+    })
+    expect(mockExchangeAndVerifyGoogleCalendar).toHaveBeenCalledWith({
+      credentialConfig: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        version: "v23.0",
+      },
+      req: expect.anything(),
+      callbackUrl:
+        "https://broker.example.com/integrations/google-calendar/callback",
+      workspaceId: "1",
+    })
+    expect(mockCreateGoogleFromOAuthCallback).toHaveBeenCalledWith({
+      workspaceId: "1",
+      auth: { type: "oauth2", tokens: { accessToken: "google-token" } },
+      providerCalendarId: "primary",
+      email: "owner@example.com",
+    })
+
+    const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
+    expect(redirectTarget.searchParams.get("externalCalendarConnect")).toBe(
+      "success",
     )
   })
 

@@ -1,4 +1,8 @@
-import { conversationService, messageService } from "@chatbotx.io/business"
+import {
+  appointmentService,
+  conversationService,
+  messageService,
+} from "@chatbotx.io/business"
 import {
   languageFromLocale,
   normalizeStoredTimezone,
@@ -249,6 +253,32 @@ const getContactLanguage = (
   languageFromLocale(context.contactInbox?.language) ??
   languageFromLocale(context.contact.locale)
 
+const getAppointment = async (
+  context: ContactVariableContext,
+): Promise<Awaited<ReturnType<typeof appointmentService.findBy>> | null> => {
+  if (!context.appointmentId) {
+    logger.debug(
+      {
+        workspaceId: context.contact.workspaceId,
+        contactId: context.contact.id,
+      },
+      "Appointment variable skipped without explicit appointment context",
+    )
+    return null
+  }
+
+  const appointment = await appointmentService.findBy({
+    workspaceId: context.contact.workspaceId,
+    id: context.appointmentId,
+  })
+
+  if (!appointment || appointment.contactId !== context.contact.id) {
+    return null
+  }
+
+  return appointment
+}
+
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
   key: SystemFieldType,
@@ -451,6 +481,15 @@ export const getSystemFieldValue = async (
       return await getFlowStepValue(context, "lastStep")
     case systemFieldTypes.enum.current_step:
       return await getFlowStepValue(context, "currentStep")
+    case systemFieldTypes.enum.booking_calendar:
+      return (await getAppointment(context))?.calendar.name ?? null
+    case systemFieldTypes.enum.booking_date: {
+      const appointment = await getAppointment(context)
+      return formatDateTime(
+        appointment?.startAt,
+        appointment?.inviteeTimezone ?? contactTimezone,
+      )
+    }
     case systemFieldTypes.enum.last_input_failure:
       return contactInbox?.lastInputFailure ?? null
     default: {

@@ -70,6 +70,7 @@ export type ChatJobSendFlowStep = {
     contactInboxId?: string
     flowId: string
     flowVersionId?: string
+    executedFlowVersionId?: string
     step:
       | SendTextStepSchema
       | SendImageStepSchema
@@ -84,6 +85,7 @@ export type ChatJobSendFlowStep = {
       | SendMessengerTemplateMessageStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    appointmentId?: string
     richResponse?: {
       executionId: string
       buttonPayloads: Record<string, DatabaseRichButtonPayloadEntry>

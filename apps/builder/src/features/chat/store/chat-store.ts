@@ -263,6 +263,11 @@ export const createChatStore = () => {
                 cursor: nextCursorConversation ?? "",
                 ...filters,
               },
+              // Default ky timeout (10s) is too tight for this endpoint: it
+              // fans out into per-conversation sharded message lookups, which
+              // can legitimately take longer under cold caches or dev-server
+              // recompiles, so a stricter timeout was tripping spuriously.
+              timeout: 30_000,
             },
           )
           .json()

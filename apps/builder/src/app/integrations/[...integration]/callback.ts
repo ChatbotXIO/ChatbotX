@@ -1,4 +1,5 @@
 import {
+  appointmentExternalCalendarService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
   platformCredentialService,
@@ -41,7 +42,9 @@ import {
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
+import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
+import { exchangeAndVerifyGoogleCalendar } from "@/features/external-calendars/lib/google-calendar-provider"
 import { enableLeadgenForWorkspacePages } from "@/features/facebook-lead-ad-automation/lib/pages"
 import {
   reconnectInstagramFacebookHandler,
@@ -549,6 +552,49 @@ export const handleCallback = async (
       })
 
       return redirect(safeReferer)
+    }
+
+    case "googleCalendar": {
+      const googleCredential = await platformCredentialService.resolveForOwner({
+        ownerId: platformOwnerId,
+        type: "google",
+      })
+      if (!googleCredential) {
+        return notFound()
+      }
+
+      const callbackUrl = buildBrokerCallbackUrl(
+        "/integrations/google-calendar/callback",
+      )
+      try {
+        const connection = await exchangeAndVerifyGoogleCalendar({
+          credentialConfig: googleCredential.config,
+          req,
+          callbackUrl,
+          workspaceId: workspace.id,
+        })
+
+        await appointmentExternalCalendarService.createGoogleFromOAuthCallback({
+          workspaceId: workspace.id,
+          auth: connection.auth,
+          providerCalendarId: connection.providerCalendarId,
+          email: connection.email,
+        })
+
+        const successUrl = new URL(safeReferer)
+        successUrl.searchParams.set("externalCalendarConnect", "success")
+
+        return redirect(successUrl.toString())
+      } catch (error) {
+        logger.error(
+          { err: normalizeError(error), workspaceId: workspace.id },
+          "Failed to connect Google Calendar from OAuth callback",
+        )
+        const errorUrl = new URL(safeReferer)
+        errorUrl.searchParams.set("externalCalendarConnect", "error")
+
+        return redirect(errorUrl.toString())
+      }
     }
 
     case "googleSheets": {

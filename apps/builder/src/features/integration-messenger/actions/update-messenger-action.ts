@@ -1,6 +1,6 @@
 "use server"
 
-import { buildContext } from "@chatbotx.io/business"
+import { buildContext, type IntegrationContext } from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
@@ -12,6 +12,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
+  ensureMessengerWhitelistedDomain,
   integration as integrationMessenger,
   isRegisteredPersona,
   type MessengerProfileRequest,
@@ -19,6 +20,7 @@ import {
 } from "@chatbotx.io/integration-messenger"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { normalizeError } from "universal-error-normalizer"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -55,6 +57,10 @@ export const updateMessenger = async (
   parsedInput: UpdateMessengerRequest,
 ) => {
   try {
+    let botContext: IntegrationContext<MessengerAuthValue> | undefined
+    let fieldsToDelete: string[] = []
+    let profileParams: MessengerProfileRequest = {}
+
     await db.transaction(async (tx) => {
       const integrationMessengerData = await findIntegrationMessenger({
         workspaceId: ctx.workspace.id,
@@ -86,7 +92,7 @@ export const updateMessenger = async (
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
-      const botContext = await buildContext({
+      botContext = await buildContext({
         workspaceId: ctx.workspace.id,
         integrationType: "messenger",
         integration: {
@@ -95,32 +101,74 @@ export const updateMessenger = async (
         },
       })
 
-      const fieldsToDelete = getFieldsToDelete(parsedInput)
-      if (fieldsToDelete.length > 0) {
-        await integrationMessenger.runChannelHandler(
-          "bot",
-          "deleteProfileFields",
-          {
-            ctx: botContext,
-            fields: fieldsToDelete,
-          },
-        )
-      }
-
-      const profileParams = getMessengerProfileParams(
+      fieldsToDelete = getFieldsToDelete(parsedInput)
+      profileParams = getMessengerProfileParams(
         {
           ...integrationMessengerData,
           ...parsedInput,
         },
         botContext.platform.appUrl,
       )
-      if (Object.keys(profileParams).length > 0) {
-        await integrationMessenger.runChannelHandler("bot", "updateProfile", {
+    })
+
+    if (!botContext) {
+      return
+    }
+
+    if (fieldsToDelete.length > 0) {
+      await integrationMessenger
+        .runChannelHandler("bot", "deleteProfileFields", {
+          ctx: botContext,
+          fields: fieldsToDelete,
+        })
+        .catch((error) => {
+          logger.warn(
+            {
+              err: normalizeError(error),
+              workspaceId: ctx.workspace.id,
+              integrationId: ctx.id,
+              action: "deleteProfileFields",
+              reason: "messengerProfileSyncFailed",
+            },
+            "Failed to delete Messenger profile fields after settings update",
+          )
+        })
+    }
+
+    await ensureMessengerWhitelistedDomain({ ctx: botContext }).catch(
+      (error) => {
+        logger.warn(
+          {
+            err: normalizeError(error),
+            workspaceId: ctx.workspace.id,
+            integrationId: ctx.id,
+            action: "ensureMessengerWhitelistedDomain",
+            reason: "messengerProfileSyncFailed",
+          },
+          "Failed to ensure Messenger whitelisted domain after settings update",
+        )
+      },
+    )
+
+    if (Object.keys(profileParams).length > 0) {
+      await integrationMessenger
+        .runChannelHandler("bot", "updateProfile", {
           ctx: botContext,
           data: profileParams,
         })
-      }
-    })
+        .catch((error) => {
+          logger.warn(
+            {
+              err: normalizeError(error),
+              workspaceId: ctx.workspace.id,
+              integrationId: ctx.id,
+              action: "updateProfile",
+              reason: "messengerProfileSyncFailed",
+            },
+            "Failed to update Messenger profile after settings update",
+          )
+        })
+    }
   } catch (error) {
     // Preserve explicit, actionable messages (e.g. persona registration); only
     // unknown failures collapse to the generic message.

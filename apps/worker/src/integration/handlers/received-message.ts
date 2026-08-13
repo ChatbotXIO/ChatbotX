@@ -1,5 +1,6 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
+  appointmentService,
   broadcastToWorkspaceParty,
   buildContext,
   type ContactInboxTrackingData,
@@ -13,7 +14,10 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
-import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
+import {
+  finalizeContactProfile,
+  normalizeLanguage,
+} from "@chatbotx.io/business/contact-locale"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
@@ -33,6 +37,10 @@ import type {
   InboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
+import {
+  parseAppointmentCancelPostback,
+  verifyAppointmentCancelPostback,
+} from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   emitContactCreated,
@@ -56,6 +64,8 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
+  ChatJobAction,
+  chatQueue,
   IntegrationJobAction,
   type IntegrationJobDeleteIncomingComment,
   type IntegrationJobReceiveComment,
@@ -64,6 +74,7 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
+import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -98,6 +109,43 @@ const correctStoryReplyDirectionForNewContact = (
     return { ...message, messageType: messageTypes.enum.incoming }
   }
   return message
+}
+
+const APPOINTMENT_CANCEL_FEEDBACK_COPY = {
+  en: {
+    unavailable:
+      "This cancellation link has expired or is no longer available.",
+    workspaceInactive:
+      "This appointment cannot be cancelled because the workspace is currently inactive.",
+  },
+  vi: {
+    unavailable: "Liên kết hủy lịch đã hết hạn hoặc không còn khả dụng.",
+    workspaceInactive: "Không thể hủy lịch vì workspace đang tạm ngưng.",
+  },
+} as const
+
+type AppointmentCancelFeedbackReason =
+  keyof (typeof APPOINTMENT_CANCEL_FEEDBACK_COPY)["en"]
+
+const resolveAppointmentCancelFeedbackText = ({
+  reason,
+  contactInbox,
+  incomingContact,
+}: {
+  reason: AppointmentCancelFeedbackReason
+  contactInbox: ContactInboxModel
+  incomingContact: IncomingContact
+}) => {
+  const language =
+    normalizeLanguage(contactInbox.language) ??
+    normalizeLanguage(incomingContact.language) ??
+    normalizeLanguage(incomingContact.locale) ??
+    "en"
+
+  const supportedLanguage: keyof typeof APPOINTMENT_CANCEL_FEEDBACK_COPY =
+    language === "vi" ? language : "en"
+
+  return APPOINTMENT_CANCEL_FEEDBACK_COPY[supportedLanguage][reason]
 }
 
 export const metaReferralToContactSource = (
@@ -184,7 +232,9 @@ export const receiveMessage = async (
     ref,
     referralSource,
   } = parsedMessage
-  const postbackAction = sanitizeFlowAction(rawPostbackAction, {
+  const appointmentCancelToken =
+    parseAppointmentCancelPostback(rawPostbackAction)
+  let postbackAction = sanitizeFlowAction(rawPostbackAction, {
     kind: "postback",
     integrationType,
     integrationIdentifier,
@@ -266,6 +316,59 @@ export const receiveMessage = async (
 
     if (isNewMessage) {
       createdMessage = newMessage
+
+      if (appointmentCancelToken) {
+        try {
+          const payload = await verifyAppointmentCancelPostback(
+            rawPostbackAction ?? "",
+          )
+          postbackAction = null
+
+          if (isWorkspaceActive) {
+            const result =
+              await appointmentService.cancelAppointmentByToken(payload)
+            if (!result.cancellable) {
+              await sendAppointmentCancelFeedback({
+                conversation,
+                contactInbox,
+                text: resolveAppointmentCancelFeedbackText({
+                  reason: "unavailable",
+                  contactInbox,
+                  incomingContact,
+                }),
+              })
+            }
+          } else {
+            await sendAppointmentCancelFeedback({
+              conversation,
+              contactInbox,
+              text: resolveAppointmentCancelFeedbackText({
+                reason: "workspaceInactive",
+                contactInbox,
+                incomingContact,
+              }),
+            })
+          }
+        } catch (error) {
+          logger.warn(
+            {
+              error: normalizeError(error),
+              conversationId: conversation.id,
+              contactInboxId: contactInbox.id,
+            },
+            "Appointment cancel postback failed",
+          )
+          await sendAppointmentCancelFeedback({
+            conversation,
+            contactInbox,
+            text: resolveAppointmentCancelFeedbackText({
+              reason: "unavailable",
+              contactInbox,
+              incomingContact,
+            }),
+          })
+        }
+      }
 
       if (postbackAction && isWorkspaceActive) {
         await automatedResponseService.enqueueFlowAction({
@@ -413,6 +516,33 @@ const parseIncomingLocation = (
   }
 
   return { latitude, longitude }
+}
+
+async function sendAppointmentCancelFeedback(input: {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  text: string
+}) {
+  try {
+    await chatQueue.add(ChatJobAction.sendChatMessage, {
+      type: ChatJobAction.sendChatMessage,
+      data: {
+        conversation: input.conversation,
+        contactInbox: input.contactInbox,
+        text: input.text,
+      },
+    })
+  } catch (error) {
+    logger.warn(
+      {
+        err: normalizeError(error),
+        conversationId: input.conversation.id,
+        contactInboxId: input.contactInbox.id,
+        action: "sendAppointmentCancelFeedback",
+      },
+      "Failed to send appointment cancel feedback",
+    )
+  }
 }
 
 // Creates or updates the message row (deduplicates webhook retries via sourceId),

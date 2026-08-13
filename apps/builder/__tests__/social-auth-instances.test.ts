@@ -47,6 +47,10 @@ vi.mock("@chatbotx.io/auth/tenant", () => ({
   resolveTenantOwnerId: mockResolveTenantOwnerId,
 }))
 
+vi.mock("@/lib/auth/on-user-created", () => ({
+  onUserCreated: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     findDecryptedPlatform: mockFindDecryptedPlatform,

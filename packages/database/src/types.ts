@@ -14,6 +14,15 @@ export type AdsConversionEventModel =
 export type FieldModel = typeof schema.customFieldModel.$inferSelect
 export type AutomatedResponseModel =
   typeof schema.automatedResponseModel.$inferSelect
+export type AppointmentModel = typeof schema.appointmentModel.$inferSelect
+export type AppointmentCalendarModel =
+  typeof schema.appointmentCalendarModel.$inferSelect
+export type AppointmentCalendarAvailabilityModel =
+  typeof schema.appointmentCalendarAvailabilityModel.$inferSelect
+export type AppointmentCalendarReminderModel =
+  typeof schema.appointmentCalendarReminderModel.$inferSelect
+export type AppointmentReminderDispatchModel =
+  typeof schema.appointmentReminderDispatchModel.$inferSelect
 export type FlowModel = typeof schema.flowModel.$inferSelect
 export type FolderModel = typeof schema.folderModel.$inferSelect
 export type TagModel = typeof schema.tagModel.$inferSelect
@@ -54,6 +63,8 @@ export type IntegrationActiveCampaignModel =
   typeof schema.integrationActiveCampaignModel.$inferSelect
 export type IntegrationGoogleSheetsModel =
   typeof schema.integrationGoogleSheetsModel.$inferSelect
+export type IntegrationGoogleCalendarModel =
+  typeof schema.integrationGoogleCalendarModel.$inferSelect
 export type IntegrationMailchimpModel =
   typeof schema.integrationMailchimpModel.$inferSelect
 export type IntegrationMailerLiteModel =
@@ -68,6 +79,8 @@ export type IntegrationMessengerModel =
   typeof schema.integrationMessengerModel.$inferSelect
 export type IntegrationOpenAIModel =
   typeof schema.integrationOpenaiModel.$inferSelect
+export type IntegrationOutlookCalendarModel =
+  typeof schema.integrationOutlookCalendarModel.$inferSelect
 export type IntegrationWhatsappModel =
   typeof schema.integrationWhatsappModel.$inferSelect
 export type IntegrationZaloModel =

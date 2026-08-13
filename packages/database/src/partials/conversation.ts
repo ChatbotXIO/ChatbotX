@@ -30,6 +30,7 @@ export type ConversationAttributes = {
       stepId: string
       attempts: number
       lastAttemptAt: Date
+      appointmentId?: string
     }
   }
 }

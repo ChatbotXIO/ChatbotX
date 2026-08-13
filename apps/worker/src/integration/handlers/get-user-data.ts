@@ -223,6 +223,7 @@ async function sendMessage(
         stepId: step.id,
         attempts,
         lastAttemptAt: new Date(),
+        appointmentId: props.appointmentId,
       },
     },
   })
@@ -242,6 +243,7 @@ async function sendMessage(
     flowVersionId,
     step: promptStep,
     metadata: props.metadata,
+    ...(props.appointmentId ? { appointmentId: props.appointmentId } : {}),
   })
 }
 

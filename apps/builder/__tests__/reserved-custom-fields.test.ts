@@ -22,6 +22,8 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.last_input,
   systemFieldTypes.enum["ai.queued.messages"],
   systemFieldTypes.enum.current_time,
+  systemFieldTypes.enum.booking_calendar,
+  systemFieldTypes.enum.booking_date,
   systemFieldTypes.enum.last_seen,
   systemFieldTypes.enum.last_interaction,
   systemFieldTypes.enum.inbox_link,

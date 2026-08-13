@@ -1,4 +1,5 @@
 import { Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
@@ -17,6 +18,7 @@ export const ScheduleJobData = {
   evaluateDateTimeWebhooks: "evaluateDateTimeWebhooks",
   cleanupWebhookExecutions: "cleanupWebhookExecutions",
   scanSmartDelay: "scanSmartDelay",
+  scanAppointmentReminders: "scanAppointmentReminders",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
@@ -104,6 +106,14 @@ export type ScheduleJobScanSmartDelay = {
   data: Record<string, never>
 }
 
+export const scheduleJobScanAppointmentRemindersDataSchema = z.object({
+  triggeredAt: z.string().optional(),
+})
+export type ScheduleJobScanAppointmentReminders = {
+  type: typeof ScheduleJobData.scanAppointmentReminders
+  data: z.infer<typeof scheduleJobScanAppointmentRemindersDataSchema>
+}
+
 export type ScheduleJobSyncUserQuota = {
   type: typeof ScheduleJobData.syncUserQuota
   data: Record<string, never>
@@ -175,6 +185,7 @@ export type ScheduleJobData =
   | ScheduleJobEvaluateDateTimeWebhooks
   | ScheduleJobCleanupWebhookExecutions
   | ScheduleJobScanSmartDelay
+  | ScheduleJobScanAppointmentReminders
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac

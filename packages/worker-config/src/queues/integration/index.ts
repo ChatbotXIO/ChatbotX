@@ -148,6 +148,7 @@ export type IntegrationJobRunFlowNode = {
     nodeVisits?: NodeVisits
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    appointmentId?: string
     sendFrom?: "inbox"
     origin?: "channel"
     /** See {@link CommentAnchor}. */
@@ -236,6 +237,7 @@ export type IntegrationJobRunChallenge = {
         stepId: string
         attempts: number
         lastAttemptAt: Date
+        appointmentId?: string
       }
     }
   }

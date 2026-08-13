@@ -11,6 +11,10 @@ export const contactOnSmartDelayRelations = defineRelationsPart(
         to: r.workspaceModel.id,
         optional: false,
       }),
+      appointment: r.one.appointmentModel({
+        from: r.contactOnSmartDelayModel.appointmentId,
+        to: r.appointmentModel.id,
+      }),
     },
   }),
 )

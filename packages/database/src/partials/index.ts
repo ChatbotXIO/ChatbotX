@@ -1,4 +1,5 @@
 export * from "./ai"
+export * from "./appointment"
 export * from "./automated-response"
 export * from "./broadcast"
 export * from "./channel"

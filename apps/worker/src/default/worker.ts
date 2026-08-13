@@ -18,9 +18,11 @@ import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
 import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
 import { runImport } from "./handlers/run-import"
+import { sendAppointmentReminder } from "./handlers/send-appointment-reminder"
 import { sendAuditLog } from "./handlers/send-audit-log"
 import { sendErrorLog } from "./handlers/send-error-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
+import { syncExternalCalendarEvent } from "./handlers/sync-external-calendar-event"
 import { handleSyncTag } from "./handlers/sync-tag"
 
 const isBlockedJob = async (data: unknown) =>
@@ -102,6 +104,18 @@ async function startDefaultWorker() {
             return
           }
           await checkMetaCatalogSync(job.data.data)
+          return
+        case DefaultJobAction.syncExternalCalendarEvent:
+          if (await isBlockedJob(job.data.data)) {
+            return
+          }
+          await syncExternalCalendarEvent(job.data.data)
+          return
+        case DefaultJobAction.sendAppointmentReminder:
+          if (await isBlockedJob(job.data.data)) {
+            return
+          }
+          await sendAppointmentReminder(job.data.data)
           return
         default:
           logger.warn(`Unknown job name: ${job.name}`)
