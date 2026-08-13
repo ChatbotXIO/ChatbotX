@@ -356,6 +356,47 @@ describe("messageListeners", () => {
     expect(mockEnqueueContactRepliedEvaluation).not.toHaveBeenCalled()
   })
 
+  test("skips a payload when contactReplied gating fails and continues the batch", async () => {
+    mockHasEnabledTriggerRule
+      .mockRejectedValueOnce(new Error("gate unavailable"))
+      .mockResolvedValueOnce(true)
+
+    await expect(
+      contactRepliedListener().handler?.([
+        {
+          workspaceId: "ws-1",
+          contactId: "contact-1",
+          contactInboxId: "ci-1",
+          channel: "whatsapp",
+          inboxId: "inbox-1",
+          occurredAt: new Date("2026-08-11T00:00:00.000Z"),
+          origin: "inbound",
+          messageId: "msg-1",
+        },
+        {
+          workspaceId: "ws-1",
+          contactId: "contact-2",
+          contactInboxId: "ci-2",
+          channel: "whatsapp",
+          inboxId: "inbox-2",
+          occurredAt: new Date("2026-08-11T00:00:01.000Z"),
+          origin: "inbound",
+          messageId: "msg-2",
+        },
+      ]),
+    ).resolves.toBeUndefined()
+
+    expect(mockHasEnabledTriggerRule).toHaveBeenCalledTimes(2)
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationWhatsappId: "iw-1",
+      contactInboxId: "ci-2",
+      isFirstReply: false,
+      messageId: "msg-2",
+    })
+  })
+
   test("checks hasEnabledTriggerRule once per integrationWhatsappId across a batch", async () => {
     await contactRepliedListener().handler?.([
       {

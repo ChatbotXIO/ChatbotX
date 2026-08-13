@@ -123,49 +123,59 @@ async function enqueueContactRepliedEvaluations(
   const hasContactRepliedRuleByIntegrationId = new Map<string, boolean>()
 
   for (const payload of inboundWhatsappPayloads) {
-    if (!payload.messageId) {
-      continue
-    }
+    try {
+      if (!payload.messageId) {
+        continue
+      }
 
-    let integrationWhatsappId = integrationIdByInboxId.get(payload.inboxId)
-    if (integrationWhatsappId === undefined) {
-      const integration =
-        await integrationWhatsappRepository.findWorkspaceIntegrationByInboxId({
-          workspaceId: payload.workspaceId,
-          inboxId: payload.inboxId,
-        })
-      integrationWhatsappId = integration?.id ?? null
-      integrationIdByInboxId.set(payload.inboxId, integrationWhatsappId)
-    }
-    if (!integrationWhatsappId) {
-      continue
-    }
+      let integrationWhatsappId = integrationIdByInboxId.get(payload.inboxId)
+      if (integrationWhatsappId === undefined) {
+        const integration =
+          await integrationWhatsappRepository.findWorkspaceIntegrationByInboxId(
+            {
+              workspaceId: payload.workspaceId,
+              inboxId: payload.inboxId,
+            },
+          )
+        integrationWhatsappId = integration?.id ?? null
+        integrationIdByInboxId.set(payload.inboxId, integrationWhatsappId)
+      }
+      if (!integrationWhatsappId) {
+        continue
+      }
 
-    let hasContactRepliedRule = hasContactRepliedRuleByIntegrationId.get(
-      integrationWhatsappId,
-    )
-    if (hasContactRepliedRule === undefined) {
-      hasContactRepliedRule = await adsConversionService.hasEnabledTriggerRule({
+      let hasContactRepliedRule = hasContactRepliedRuleByIntegrationId.get(
+        integrationWhatsappId,
+      )
+      if (hasContactRepliedRule === undefined) {
+        hasContactRepliedRule =
+          await adsConversionService.hasEnabledTriggerRule({
+            workspaceId: payload.workspaceId,
+            integrationWhatsappId,
+            triggerType: "contactReplied",
+          })
+        hasContactRepliedRuleByIntegrationId.set(
+          integrationWhatsappId,
+          hasContactRepliedRule,
+        )
+      }
+      if (!hasContactRepliedRule) {
+        continue
+      }
+
+      await adsConversionService.enqueueContactRepliedEvaluation({
         workspaceId: payload.workspaceId,
         integrationWhatsappId,
-        triggerType: "contactReplied",
+        contactInboxId: payload.contactInboxId,
+        isFirstReply: payload.isFirstIncomingMessage ?? false,
+        messageId: payload.messageId,
       })
-      hasContactRepliedRuleByIntegrationId.set(
-        integrationWhatsappId,
-        hasContactRepliedRule,
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId: payload.workspaceId },
+        "Ads contact-replied gating failed; skipping payload",
       )
     }
-    if (!hasContactRepliedRule) {
-      continue
-    }
-
-    await adsConversionService.enqueueContactRepliedEvaluation({
-      workspaceId: payload.workspaceId,
-      integrationWhatsappId,
-      contactInboxId: payload.contactInboxId,
-      isFirstReply: payload.isFirstIncomingMessage ?? false,
-      messageId: payload.messageId,
-    })
   }
 }
 
