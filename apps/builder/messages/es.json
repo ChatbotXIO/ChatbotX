@@ -2611,6 +2611,7 @@
     "changeHideState": "Cambiar estado de visibilidad",
     "commentHidden": "Este comentario se ha ocultado",
     "messageDeleted": "The mensaje tiene been deleted.",
+    "sendFailed": "Error al enviar",
     "repliedToStory": "Respondió a tu historia",
     "sentAttachments": "Se enviaron {count, plural, one {1 archivo adjunto} other {# archivos adjuntos}}",
     "deleteComment": "Eliminar comment",

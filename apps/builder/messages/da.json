@@ -2611,6 +2611,7 @@
     "changeHideState": "Change hide state",
     "commentHidden": "Denne kommentar var hidden",
     "messageDeleted": "Den besked har been slettet.",
+    "sendFailed": "Afsendelse mislykkedes",
     "repliedToStory": "Svarede på din story",
     "sentAttachments": "Sendte {count, plural, one {1 vedhæftet fil} other {# vedhæftede filer}}",
     "deleteComment": "Slet kommentar",

@@ -2617,6 +2617,7 @@
     "changeHideState": "Thay đổi trạng thái ẩn",
     "commentHidden": "Bình luận này đã bị ẩn",
     "messageDeleted": "Tin nhắn này đã bị xoá.",
+    "sendFailed": "Gửi thất bại",
     "repliedToStory": "Đã trả lời story của bạn",
     "sentAttachments": "Đã gửi {count, plural, one {1 tệp đính kèm} other {# tệp đính kèm}}",
     "deleteComment": "Xóa bình luận",

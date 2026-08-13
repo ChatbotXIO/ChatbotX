@@ -2611,6 +2611,7 @@
     "changeHideState": "Schimbă starea de ascundere",
     "commentHidden": "Acest comentariu a fost ascuns",
     "messageDeleted": "Mesajul a fost șters.",
+    "sendFailed": "Trimiterea a eșuat",
     "repliedToStory": "A răspuns la story-ul tău",
     "sentAttachments": "S-a trimis {count, plural, one {1 atașament} other {# atașamente}}",
     "deleteComment": "Șterge comentariul",

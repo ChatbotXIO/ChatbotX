@@ -1976,6 +1976,7 @@
     "changeHideState": "Sichtbarkeitsstatus ändern",
     "commentHidden": "Dieser Kommentar wurde ausgeblendet",
     "messageDeleted": "Die Nachricht wurde gelöscht.",
+    "sendFailed": "Senden fehlgeschlagen",
     "repliedToStory": "Hat auf deine Story geantwortet",
     "sentAttachments": "{count, plural, one {1 Anhang gesendet} other {# Anhänge gesendet}}",
     "deleteComment": "Kommentar löschen",

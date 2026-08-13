@@ -2595,6 +2595,7 @@
     "changeHideState": "非表示状態を変更",
     "commentHidden": "このコメントは非表示になりました",
     "messageDeleted": "メッセージは削除されました。",
+    "sendFailed": "送信に失敗しました",
     "repliedToStory": "あなたのストーリーに返信しました",
     "sentAttachments": "{count, plural, one {添付ファイル1件を送信} other {添付ファイル#件を送信}}",
     "deleteComment": "コメントを削除",

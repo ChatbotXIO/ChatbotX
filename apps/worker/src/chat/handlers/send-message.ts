@@ -12,7 +12,10 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  type RealtimeEventData,
+  RealtimeEventType,
+} from "@chatbotx.io/partysocket-config"
 import {
   type CommentAnchor,
   type MessageButtonTemplate,
@@ -35,8 +38,16 @@ import {
 } from "../../services/integrations"
 import { shouldSuppressRetryableChannelError } from "../utils/retry"
 
+function broadcastChatEvent(workspaceId: string, event: RealtimeEventData) {
+  return chatQueue.add(ChatJobAction.broadcastEvent, {
+    type: ChatJobAction.broadcastEvent,
+    data: { workspaceId, event },
+  })
+}
+
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
+  attemptsMade = 0,
 ): Promise<{ messageIds: string[] }> {
   const {
     conversation,
@@ -120,16 +131,19 @@ export async function sendMessageToChannel(
           )
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          await chatQueue.add(ChatJobAction.broadcastEvent, {
-            type: ChatJobAction.broadcastEvent,
-            data: {
-              workspaceId: conversation.workspaceId,
-              event: {
-                eventType: RealtimeEventType.messageIdAssigned,
-                data: { messageId: message.id, commentId: replyId },
-              },
-            },
+          await broadcastChatEvent(conversation.workspaceId, {
+            eventType: RealtimeEventType.messageIdAssigned,
+            data: { messageId: message.id, commentId: replyId },
           })
+
+          if (attemptsMade > 0) {
+            await clearMessageSendError(
+              message.id,
+              message.clientId,
+              conversation.workspaceId,
+              new Date(message.createdAt),
+            )
+          }
         } catch (err) {
           logger.error(
             err,
@@ -149,6 +163,15 @@ export async function sendMessageToChannel(
         new Date(message.createdAt),
         result,
       )
+
+      if (attemptsMade > 0) {
+        await clearMessageSendError(
+          message.id,
+          message.clientId,
+          conversation.workspaceId,
+          new Date(message.createdAt),
+        )
+      }
     }
 
     await contactInboxService.recordOutboundMessageSent({
@@ -213,6 +236,13 @@ export async function sendMessageToChannel(
       occurredAt: new Date(),
       metadata,
     })
+    await recordMessageSendError(
+      message?.id,
+      message?.clientId,
+      conversation.workspaceId,
+      message?.createdAt ? new Date(message.createdAt) : undefined,
+      errorData.message,
+    )
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
       return { messageIds: [] }
     }
@@ -386,6 +416,62 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
     ctx,
     data: { contact: contactInbox, typing, seconds },
   })
+}
+
+const MAX_SEND_ERROR_LENGTH = 500
+
+export async function recordMessageSendError(
+  messageId: string | undefined,
+  clientId: string | undefined,
+  workspaceId: string,
+  createdAt: Date | undefined,
+  errorMessage: string,
+) {
+  try {
+    if (!(messageId && createdAt)) {
+      return
+    }
+    const truncatedError = errorMessage.slice(0, MAX_SEND_ERROR_LENGTH)
+    const repo = await createMessageRepository()
+    await repo.updateSendError(
+      messageId,
+      truncatedError,
+      workspaceId,
+      createdAt,
+    )
+
+    await broadcastChatEvent(workspaceId, {
+      eventType: RealtimeEventType.messageFailed,
+      data: { messageId, clientId, error: truncatedError },
+    })
+  } catch (err) {
+    logger.error(err, "Failed to persist message sendError")
+  }
+}
+
+async function clearMessageSendError(
+  messageId: string | undefined,
+  clientId: string | undefined,
+  workspaceId: string,
+  createdAt: Date | undefined,
+) {
+  try {
+    if (!(messageId && createdAt)) {
+      return
+    }
+    const repo = await createMessageRepository()
+    await repo.updateSendError(messageId, null, workspaceId, createdAt)
+
+    await broadcastChatEvent(workspaceId, {
+      eventType: RealtimeEventType.messageFailed,
+      data: { messageId, clientId, error: null },
+    })
+  } catch (err) {
+    logger.error(
+      err,
+      "Failed to clear message sendError after a retry succeeded",
+    )
+  }
 }
 
 async function updateMessageSourceId(

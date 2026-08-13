@@ -89,6 +89,11 @@ export type ChatActions = {
   appendMessage: (message: MessageResourceWithRelations) => void
   markMessagesDeleted: (messageIds: string[]) => void
   markMessagesRestored: (messageIds: string[]) => void
+  markMessageFailed: (
+    messageId: string,
+    clientId: string | undefined,
+    error: string | null,
+  ) => void
   assignMessageCommentId: (messageId: string, commentId: string) => void
   updateMessageAttributes: (
     messageId: string,
@@ -445,6 +450,28 @@ export const createChatStore = () => {
       }))
     },
 
+    markMessageFailed: (
+      messageId: string,
+      clientId: string | undefined,
+      error: string | null,
+    ) => {
+      set((state) => {
+        const matchesByClientId =
+          clientId && state.messages.some((m) => m.clientId === clientId)
+        return {
+          messages: state.messages.map((message) =>
+            (
+              matchesByClientId
+                ? message.clientId === clientId
+                : message.id === messageId
+            )
+              ? { ...message, sendError: error }
+              : message,
+          ),
+        }
+      })
+    },
+
     assignMessageCommentId: (messageId, commentId) => {
       set((state) => ({
         messages: state.messages.map((message): typeof message =>
@@ -669,6 +696,11 @@ export const createChatStore = () => {
           newMessages[messageIndex] = {
             ...newMessages[messageIndex],
             ...message,
+            // messageCreated's payload is captured before the async send job
+            // runs, so its sendError is always null at broadcast time — keep
+            // a sendError already recorded by markMessageFailed instead of
+            // letting this stale snapshot clobber it.
+            sendError: newMessages[messageIndex].sendError ?? message.sendError,
           }
           set({
             messages: newMessages,

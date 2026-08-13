@@ -2357,6 +2357,7 @@
     "changeHideState": "Cambia stato di visibilità",
     "commentHidden": "Questo commento è stato nascosto",
     "messageDeleted": "Il messaggio è stato eliminato.",
+    "sendFailed": "Invio non riuscito",
     "repliedToStory": "Ha risposto alla tua storia",
     "sentAttachments": "Inviati {count, plural, one {1 allegato} other {# allegati}}",
     "deleteComment": "Elimina commento",

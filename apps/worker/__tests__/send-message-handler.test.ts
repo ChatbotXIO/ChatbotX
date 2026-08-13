@@ -6,10 +6,12 @@ const {
   mockRunChannelHandler,
   mockDbUpdate,
   mockUpdateSourceId,
+  mockUpdateSendError,
   mockCreateMessageRepository,
   mockContactUnblockIfBlocked,
   mockRecordOutboundMessageSent,
   mockRecordSendFailure,
+  mockChatQueueAdd,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -17,6 +19,7 @@ const {
   }
 
   const updateSourceId = vi.fn().mockResolvedValue(undefined)
+  const updateSendError = vi.fn().mockResolvedValue(undefined)
 
   return {
     mockEmit: vi.fn().mockResolvedValue(undefined),
@@ -24,13 +27,16 @@ const {
     mockRunChannelHandler: vi.fn().mockResolvedValue({ messageIds: ["mid-1"] }),
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
     mockUpdateSourceId: updateSourceId,
+    mockUpdateSendError: updateSendError,
     mockCreateMessageRepository: vi.fn().mockResolvedValue({
       updateSourceId,
+      updateSendError,
       findById: vi.fn().mockResolvedValue(null),
     }),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
+    mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -78,6 +84,11 @@ vi.mock("../src/services/integrations", () => ({
   allIntegrations: {},
   resolveIntegrationContextFromContactInbox:
     mockResolveIntegrationContextFromContactInbox,
+}))
+
+vi.mock("@chatbotx.io/worker-config", () => ({
+  ChatJobAction: { broadcastEvent: "broadcastEvent" },
+  chatQueue: { add: mockChatQueueAdd },
 }))
 
 const { sendFlowStepToChannel, sendMessageToChannel } = await import(
@@ -338,6 +349,7 @@ describe("chat send-message handlers", () => {
           messageType: "outgoing",
           senderType: "user",
           text: "hello",
+          createdAt: new Date("2026-07-09T08:37:21.108Z"),
         } as never,
       }),
     ).resolves.toEqual({ messageIds: [] })
@@ -351,6 +363,108 @@ describe("chat send-message handlers", () => {
     )
     expect(mockRecordOutboundMessageSent).not.toHaveBeenCalled()
     expect(mockRecordSendFailure).not.toHaveBeenCalled()
+    expect(mockUpdateSendError).toHaveBeenCalledWith(
+      "msg-1",
+      "sdk error",
+      "ws-1",
+      expect.any(Date),
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "broadcastEvent",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          workspaceId: "ws-1",
+          event: {
+            eventType: "messageFailed",
+            data: { messageId: "msg-1", error: "sdk error" },
+          },
+        }),
+      }),
+    )
+  })
+
+  test("does not persist a sendError on a successful send", async () => {
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+      } as never,
+    })
+
+    expect(mockUpdateSendError).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("clears a prior sendError when a retry (attemptsMade > 0) succeeds", async () => {
+    const createdAt = new Date("2026-07-09T08:37:21.108Z")
+
+    await sendMessageToChannel(
+      {
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "hello",
+          clientId: "client-1",
+          createdAt,
+        } as never,
+      },
+      1,
+    )
+
+    expect(mockUpdateSendError).toHaveBeenCalledWith(
+      "msg-1",
+      null,
+      "ws-1",
+      createdAt,
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "broadcastEvent",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          workspaceId: "ws-1",
+          event: {
+            eventType: "messageFailed",
+            data: { messageId: "msg-1", clientId: "client-1", error: null },
+          },
+        }),
+      }),
+    )
+  })
+
+  test("does not clear sendError on a first-attempt (non-retry) successful send", async () => {
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockUpdateSendError).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).not.toHaveBeenCalled()
   })
 
   test("does not retry a retryable ChannelError for messenger/instagram channels", async () => {

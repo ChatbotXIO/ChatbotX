@@ -2611,6 +2611,7 @@
     "changeHideState": "Gizleme durumunu değiştir",
     "commentHidden": "Bu yorum gizlendi",
     "messageDeleted": "Mesaj silindi.",
+    "sendFailed": "Gönderilemedi",
     "repliedToStory": "Hikayenize yanıt verdi",
     "sentAttachments": "{count, plural, one {1 ek} other {# ek}} gönderildi",
     "deleteComment": "Yorumu sil",

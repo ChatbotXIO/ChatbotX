@@ -19,12 +19,15 @@ import {
   messageTypes,
   senderTypes,
 } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import {
+  createMessageRepository,
+  type MessageWithAttachments,
+} from "@chatbotx.io/database/repositories"
 import {
   conversationModel,
   type messageModel,
 } from "@chatbotx.io/database/schema"
-import type { AttachmentModel } from "@chatbotx.io/database/types"
+import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
@@ -54,7 +57,11 @@ import type {
 } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
-import { sendFlowStepToChannel, sendMessageToChannel } from "./send-message"
+import {
+  recordMessageSendError,
+  sendFlowStepToChannel,
+  sendMessageToChannel,
+} from "./send-message"
 import { processMessengerTemplate } from "./send-messenger-template"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
@@ -331,6 +338,8 @@ export async function sendFlowStep({
   const messageText =
     resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
 
+  let message: MessageModel | MessageWithAttachments | undefined
+
   try {
     const [repository, { storageUrl }] = await Promise.all([
       createMessageRepository(),
@@ -446,7 +455,7 @@ export async function sendFlowStep({
       }
     }
 
-    const message = attachmentInput
+    message = attachmentInput
       ? await repository.createWithAttachments(messageInput, [attachmentInput])
       : await repository.create(messageInput)
 
@@ -459,6 +468,7 @@ export async function sendFlowStep({
         }))
     }
 
+    const createdMessage = message
     const trackingInvalidation = await db.transaction(async (tx) => {
       const invalidation =
         await contactInboxService.recordOutboundMessageCreated({
@@ -466,14 +476,14 @@ export async function sendFlowStep({
           contactInboxId: targetContactInbox.id,
           contactId: targetContactInbox.contactId,
           workspaceId: conversation.workspaceId,
-          at: message.createdAt,
+          at: createdMessage.createdAt,
         })
 
       await conversationService.updateFlowStepState({
         tx,
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
-        lastActivityAt: message.createdAt,
+        lastActivityAt: createdMessage.createdAt,
         lastStep: conversation.currentStep,
         currentStep: resolvedStep.id,
       })
@@ -614,12 +624,20 @@ export async function sendFlowStep({
     await emit(messageEventTypeSchema.enum["message:failed"], {
       ...eventLogData,
       action: {
-        messageId: "",
+        messageId: message?.id ?? "",
         flowId,
       },
       errorData: parsedError,
       occurredAt: new Date(),
     })
+
+    await recordMessageSendError(
+      message?.id,
+      undefined,
+      conversation.workspaceId,
+      message?.createdAt,
+      parsedError.message,
+    )
 
     if (trackingContext) {
       await emit("analytics:dashboard", {
