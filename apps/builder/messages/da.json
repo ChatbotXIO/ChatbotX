@@ -1964,6 +1964,11 @@
       "label": "Events",
       "placeholder": "Type an event navn og press Indtast",
       "description": "Tilføj one eller mere event names. Når Make attaches a webhook for one af these events, data er sendt til it når denne trin runs."
+    },
+    "n8nEvents": {
+      "label": "Hændelser",
+      "placeholder": "Skriv et hændelsenavn og tryk på Enter",
+      "description": "Tilføj et eller flere hændelsenavne. Når n8n tilføjer et webhook for en af disse hændelser, sendes data til det, når dette trin køres."
     }
   },
   "flows": {
@@ -2010,6 +2015,7 @@
       "broadcastActions": "Broadcast Handlinger",
       "callApi": "External API Anmodning",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Set up Kupon",

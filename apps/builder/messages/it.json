@@ -1346,6 +1346,11 @@
       "label": "Eventi",
       "placeholder": "Digita il nome di un evento e premi Invio",
       "description": "Aggiungi uno o più nomi di eventi. Quando Make collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
+    },
+    "n8nEvents": {
+      "label": "Eventi",
+      "placeholder": "Digita il nome di un evento e premi Invio",
+      "description": "Aggiungi uno o più nomi di eventi. Quando n8n collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
     }
   },
   "actions": {
@@ -2010,6 +2015,7 @@
       "broadcastActions": "Azioni broadcast",
       "callApi": "Richiesta API esterna",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Trigger",
       "questionnaires": "Questionari",
       "setUpCoupon": "Configura coupon",

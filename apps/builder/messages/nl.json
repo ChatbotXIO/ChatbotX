@@ -1778,6 +1778,11 @@
       "label": "Gebeurtenissen",
       "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
       "description": "Voeg een of meer gebeurtenisnamen toe. Wanneer Make een webhook aan een van deze gebeurtenissen koppelt, worden er gegevens naartoe gestuurd wanneer deze stap wordt uitgevoerd."
+    },
+    "n8nEvents": {
+      "label": "Gebeurtenissen",
+      "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
+      "description": "Voeg een of meer gebeurtenisnamen toe. Wanneer n8n een webhook aan een van deze gebeurtenissen koppelt, worden er gegevens naartoe gestuurd wanneer deze stap wordt uitgevoerd."
     }
   },
   "condition": {
@@ -2010,6 +2015,7 @@
       "broadcastActions": "Broadcastacties",
       "callApi": "Externe API-aanvraag",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Vragenlijsten",
       "setUpCoupon": "Kortingsbon instellen",

@@ -100,6 +100,7 @@ import {
   generateCode,
   getDataFromJSON,
 } from "./tool-handler"
+import { handleTriggerN8nStep } from "./trigger-n8n-handler"
 
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
@@ -355,6 +356,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.blockContact]: stepBlockContact,
   [stepTypes.enum.callApi]: externalRequest,
   [stepTypes.enum.make]: handleMakeStep,
+  [stepTypes.enum.triggerN8n]: handleTriggerN8nStep,
   [stepTypes.enum.cancelContactInput]: undefined,
   [stepTypes.enum.clearCustomField]: clearContactCustomField,
   [stepTypes.enum.countCharacters]: countCharacters,

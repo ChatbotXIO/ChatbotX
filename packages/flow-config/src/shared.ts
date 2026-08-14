@@ -54,6 +54,7 @@ import { startExternalFlowStepSchema } from "./steps/start-external-flow"
 import { startExternalNodeStepSchema } from "./steps/start-external-node"
 import { subscribeBroadcastStepSchema } from "./steps/subscribe-broadcast"
 import { subscribeSequenceStepSchema } from "./steps/subscribe-sequence"
+import { triggerN8nStepSchema } from "./steps/trigger-n8n"
 import { unarchiveConversationStepSchema } from "./steps/unarchive-conversation"
 import { unassignConversationStepSchema } from "./steps/unassign-conversation"
 import { unfollowConversationStepSchema } from "./steps/unfollow-conversation"
@@ -104,7 +105,7 @@ const toolSteps = [
   externalRequestStepSchema,
 ]
 
-const triggerSteps = [makeStepSchema]
+const triggerSteps = [makeStepSchema, triggerN8nStepSchema]
 
 const emailSteps = [
   markEmailVerifiedStepSchema,

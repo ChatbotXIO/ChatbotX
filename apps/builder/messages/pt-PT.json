@@ -1964,6 +1964,11 @@
       "label": "Eventos",
       "placeholder": "Introduza o nome de um evento e prima Enter",
       "description": "Adicione um ou mais nomes de eventos. Quando o Make associa um webhook a um destes eventos, os dados são enviados para o mesmo quando este passo é executado."
+    },
+    "n8nEvents": {
+      "label": "Eventos",
+      "placeholder": "Introduza o nome de um evento e prima Enter",
+      "description": "Adicione um ou mais nomes de eventos. Quando o n8n associa um webhook a um destes eventos, os dados são enviados para o mesmo quando este passo é executado."
     }
   },
   "flows": {
@@ -2010,6 +2015,7 @@
       "broadcastActions": "Ações de difusão",
       "callApi": "Pedido a API externa",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Acionadores",
       "questionnaires": "Questionários",
       "setUpCoupon": "Configurar cupão",

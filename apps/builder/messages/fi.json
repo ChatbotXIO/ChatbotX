@@ -1964,6 +1964,11 @@
       "label": "Tapahtumat",
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
       "description": "Lisää vähintään yksi tapahtuman nimi. Kun Make liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
+    },
+    "n8nEvents": {
+      "label": "Tapahtumat",
+      "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
+      "description": "Lisää vähintään yksi tapahtuman nimi. Kun n8n liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
     }
   },
   "flows": {
@@ -2010,6 +2015,7 @@
       "broadcastActions": "Joukkolähetystoiminnot",
       "callApi": "Ulkoinen API-pyyntö",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Käynnistimet",
       "questionnaires": "Kyselyt",
       "setUpCoupon": "Määritä kuponki",
