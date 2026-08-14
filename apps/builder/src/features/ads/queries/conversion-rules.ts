@@ -11,9 +11,16 @@ import type { ListWhatsappMessageTemplatesResponse } from "@/features/integratio
 import { listTags } from "@/features/tags/queries"
 import type { TagResource } from "@/features/tags/schema/resource"
 
-export type ConversionEventsWhatsappIntegration = Awaited<
-  ReturnType<typeof integrationWhatsappService.listByWorkspaceId>
->[number]
+// Redacted to the fields ConversionEventsView actually reads (account id +
+// display name). `integrationWhatsappService.listByWorkspaceId` returns the
+// FULL row, including the encrypted `auth` and `capiAccessToken` columns —
+// those must never be forwarded to a "use client" component's props.
+export type ConversionEventsWhatsappIntegration = Pick<
+  Awaited<
+    ReturnType<typeof integrationWhatsappService.listByWorkspaceId>
+  >[number],
+  "id" | "name"
+>
 
 export type ConversionEventsData = {
   whatsappIntegrations: ConversionEventsWhatsappIntegration[]
@@ -33,7 +40,7 @@ export async function getConversionEventsData(
   workspaceId: string,
 ): Promise<ConversionEventsData> {
   const [
-    whatsappIntegrations,
+    rawWhatsappIntegrations,
     whatsappTemplates,
     rules,
     tagsResult,
@@ -61,6 +68,9 @@ export async function getConversionEventsData(
       sort: [{ id: "createdAt", desc: true }],
     }),
   ])
+
+  const whatsappIntegrations: ConversionEventsWhatsappIntegration[] =
+    rawWhatsappIntegrations.map(({ id, name }) => ({ id, name }))
 
   return {
     whatsappIntegrations,

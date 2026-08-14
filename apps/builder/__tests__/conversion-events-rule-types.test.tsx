@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { createAdsConversionRuleAction } from "@/features/ads/actions/conversion-rule"
 import { ConversionEventsView } from "@/features/ads/components/conversion-events-view"
 import type { ConversionEventsData } from "@/features/ads/queries/conversion-rules"
+import type { AdsSwitcherIntegration } from "@/features/ads/queries/switcher"
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -176,6 +177,12 @@ const data = {
   automatedResponses: [{ id: "ar-1", keywords: ["hello", "hi"] }],
 } as unknown as ConversionEventsData
 
+// The account switcher pulls from a separate, richer query in production
+// (getAdsSwitcherData); the fixture above intentionally carries the extra
+// fields so it can double as that data source here.
+const switcherIntegrations =
+  data.whatsappIntegrations as unknown as AdsSwitcherIntegration[]
+
 describe("ConversionEventsView rule types", () => {
   let container: HTMLDivElement
   let root: Root
@@ -200,7 +207,7 @@ describe("ConversionEventsView rule types", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,
@@ -231,7 +238,7 @@ describe("ConversionEventsView rule types", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,
@@ -263,7 +270,7 @@ describe("ConversionEventsView rule types", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,
@@ -306,7 +313,7 @@ describe("ConversionEventsView rule types", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,
@@ -348,7 +355,7 @@ describe("ConversionEventsView rule types", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,

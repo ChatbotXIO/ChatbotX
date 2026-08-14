@@ -1,3 +1,4 @@
+import type { EncryptedData } from "@chatbotx.io/encryption"
 import { sql } from "drizzle-orm"
 import {
   boolean,
@@ -62,6 +63,8 @@ export const integrationWhatsappModel = pgTable(
     hasCapiScope: boolean().notNull().default(false),
     capiScopeCheckedAt: timestamp(timestampConfig),
     datasetId: text(),
+    capiAccessToken: jsonb().$type<EncryptedData>(),
+    capiDisconnectedAt: timestamp(timestampConfig),
     registrationStatus: whatsappRegistrationStatus()
       .notNull()
       .default("pending_verification"),

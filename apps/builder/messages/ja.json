@@ -1970,6 +1970,11 @@
     },
     "bookingDate": {
       "label": "Booking Date"
+    },
+    "n8nEvents": {
+      "label": "イベント",
+      "placeholder": "イベント名を入力してEnterキーを押してください",
+      "description": "1つ以上のイベント名を追加します。n8nがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
     }
   },
   "flows": {
@@ -2011,7 +2016,6 @@
       "aiTextToSpeech": "AIテキスト読み上げ",
       "archiveConversation": "会話をアーカイブ",
       "assignConversation": "会話を割り当て",
-      "appointmentScheduling": "予約スケジュール",
       "autoAssignConversation": "会話を自動割り当て",
       "blockContact": "連絡先をブロック",
       "broadcastActions": "一斉配信アクション",
@@ -2098,7 +2102,11 @@
       "unsubscribeSequence": "シーケンスを解除",
       "splitTraffic": "トラフィックを分割",
       "aiEditImage": "AIで画像を編集",
-      "whatsappFlow": "WhatsAppフロー"
+      "whatsappFlow": "WhatsAppフロー",
+      "appointmentScheduling": "予約スケジュール",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2922,7 +2930,11 @@
     "iceBreakers": "会話のきっかけ",
     "iceBreakersDescription": "よくある質問の一覧を表示し、ユーザーがボットとの会話を始めやすくします。",
     "reconnect": "再接続",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "既存の連絡先とチャット履歴を同期しますか？",
@@ -2978,7 +2990,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "一般設定",
-      "messageTemplates": "メッセージテンプレート"
+      "messageTemplates": "メッセージテンプレート",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3352,7 +3365,8 @@
       "flows": "フロー",
       "messageTemplates": "メッセージテンプレート",
       "profile": "プロフィール",
-      "usefulLinks": "便利なリンク"
+      "usefulLinks": "便利なリンク",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3579,7 +3593,8 @@
       "clearCustomField": "カスタムフィールドをクリア",
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
-      "transferConversationToHuman": "会話を担当者に転送"
+      "transferConversationToHuman": "会話を担当者に転送",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -4264,77 +4279,6 @@
     "unavailableTitle": "配信を停止できません。",
     "unavailableDescription": "このワークスペースは利用できなくなりました。"
   },
-  "bookingWebview": {
-    "metadataTitle": "Book appointment",
-    "badge": "Appointment",
-    "timezone": "Timezone",
-    "empty": "No available times were found.",
-    "noSelection": "Choose a time",
-    "actions": {
-      "book": "Book appointment",
-      "viewDetails": "View details"
-    },
-    "errors": {
-      "invalidTokenTitle": "This booking link is unavailable.",
-      "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new booking link.",
-      "staleSlot": "This time is no longer available. Please choose another time.",
-      "availabilityChanged": "Availability changed while you were choosing a time. Please choose again.",
-      "submitFailed": "We couldn't complete this request. Please try again."
-    },
-    "success": {
-      "title": "Your appointment is booked.",
-      "description": "The appointment details are ready."
-    },
-    "schedule": {
-      "metadataTitle": "Appointment details",
-      "defaultMessage": "Your appointment has been scheduled.",
-      "unknownInvitee": "Guest",
-      "fields": {
-        "invitee": "Invitee",
-        "time": "Time",
-        "timezone": "Timezone",
-        "location": "Location"
-      },
-      "status": {
-        "scheduled": "Scheduled",
-        "cancelled": "Canceled"
-      },
-      "locationTypes": {
-        "inPerson": "In-person meeting",
-        "phoneCall": "Phone call",
-        "onlineMeeting": "Online meeting"
-      }
-    },
-    "cancel": {
-      "metadataTitle": "Cancel appointment",
-      "title": "Cancel appointment",
-      "description": "Cancel {calendar} at {time}.",
-      "action": "Cancel appointment",
-      "cancelledTitle": "Appointment canceled",
-      "cancelledDescription": "This appointment has been canceled.",
-      "unavailableTitle": "Cancellation unavailable",
-      "unavailableDescription": "This appointment is already canceled, deleted, or in the past."
-    },
-    "range": {
-      "metadataTitle": "Check availability",
-      "empty": "Not selected",
-      "successTitle": "Date range received.",
-      "successDescription": "We are checking available appointment times.",
-      "fields": {
-        "startDate": "Start Date",
-        "endDate": "End Date",
-        "startTime": "Start Time",
-        "endTime": "End Time"
-      },
-      "actions": {
-        "skip": "Skip"
-      },
-      "errors": {
-        "invalidRange": "End Date must be on or after Start Date."
-      },
-      "timezoneHint": "Times are shown in {timezone}."
-    }
-  },
   "extensionsMe": {
     "actions": {
       "delete": "自分のデータを削除",
@@ -4769,6 +4713,77 @@
       "iconSearchLink": "Lucideアイコンを探す →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Book appointment",
+    "badge": "Appointment",
+    "timezone": "Timezone",
+    "empty": "No available times were found.",
+    "noSelection": "Choose a time",
+    "actions": {
+      "book": "Book appointment",
+      "viewDetails": "View details"
+    },
+    "errors": {
+      "invalidTokenTitle": "This booking link is unavailable.",
+      "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new booking link.",
+      "staleSlot": "This time is no longer available. Please choose another time.",
+      "availabilityChanged": "Availability changed while you were choosing a time. Please choose again.",
+      "submitFailed": "We couldn't complete this request. Please try again."
+    },
+    "success": {
+      "title": "Your appointment is booked.",
+      "description": "The appointment details are ready."
+    },
+    "schedule": {
+      "metadataTitle": "Appointment details",
+      "defaultMessage": "Your appointment has been scheduled.",
+      "unknownInvitee": "Guest",
+      "fields": {
+        "invitee": "Invitee",
+        "time": "Time",
+        "timezone": "Timezone",
+        "location": "Location"
+      },
+      "status": {
+        "scheduled": "Scheduled",
+        "cancelled": "Canceled"
+      },
+      "locationTypes": {
+        "inPerson": "In-person meeting",
+        "phoneCall": "Phone call",
+        "onlineMeeting": "Online meeting"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Cancel appointment",
+      "title": "Cancel appointment",
+      "description": "Cancel {calendar} at {time}.",
+      "action": "Cancel appointment",
+      "cancelledTitle": "Appointment canceled",
+      "cancelledDescription": "This appointment has been canceled.",
+      "unavailableTitle": "Cancellation unavailable",
+      "unavailableDescription": "This appointment is already canceled, deleted, or in the past."
+    },
+    "range": {
+      "metadataTitle": "Check availability",
+      "empty": "Not selected",
+      "successTitle": "Date range received.",
+      "successDescription": "We are checking available appointment times.",
+      "fields": {
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "startTime": "Start Time",
+        "endTime": "End Time"
+      },
+      "actions": {
+        "skip": "Skip"
+      },
+      "errors": {
+        "invalidRange": "End Date must be on or after Start Date."
+      },
+      "timezoneHint": "Times are shown in {timezone}."
+    }
+  },
   "appointments": {
     "title": "Appointments",
     "statuses": {
@@ -4950,5 +4965,101 @@
     "metadataTitle": "Booking",
     "comingSoonTitle": "Booking page coming soon",
     "comingSoonDescription": "This public booking page is not available yet."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "保存",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
+    }
   }
 }

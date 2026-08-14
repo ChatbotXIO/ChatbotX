@@ -1352,6 +1352,11 @@
     },
     "bookingDate": {
       "label": "Booking Date"
+    },
+    "n8nEvents": {
+      "label": "活動",
+      "placeholder": "輸入事件名稱並按 Enter",
+      "description": "新增一個或多個事件名稱。當 n8n 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
     }
   },
   "messages": {
@@ -2323,7 +2328,10 @@
       "splitTraffic": "拆分流量",
       "aiEditImage": "人工智慧編輯影像",
       "whatsappFlow": "WhatsApp流程",
-      "appointmentScheduling": "Appointment Scheduling"
+      "appointmentScheduling": "Appointment Scheduling",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2971,7 +2979,11 @@
     "iceBreakers": "破冰船",
     "iceBreakersDescription": "破冰活動透過顯示常見問題清單為使用者提供了一種與您的機器人開始對話的方式。",
     "reconnect": "重新連接",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "同步現有聯絡人和聊天記錄？",
@@ -3027,7 +3039,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "一般設定",
-      "messageTemplates": "訊息範本"
+      "messageTemplates": "訊息範本",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3401,7 +3414,8 @@
       "flows": "流程",
       "messageTemplates": "訊息範本",
       "profile": "簡介",
-      "usefulLinks": "有用連結"
+      "usefulLinks": "有用連結",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3628,7 +3642,8 @@
       "clearCustomField": "清除自訂欄位",
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
-      "transferConversationToHuman": "將對話轉移給人類"
+      "transferConversationToHuman": "將對話轉移給人類",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -4949,6 +4964,102 @@
       "cancelledDescription": "This appointment has been canceled.",
       "unavailableTitle": "Cancellation unavailable",
       "unavailableDescription": "This appointment is already canceled, deleted, or in the past."
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "儲存",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

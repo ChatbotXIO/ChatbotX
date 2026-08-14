@@ -2,6 +2,7 @@
 
 import { inboxService, workspaceService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
   coexistSyncRunModel,
   integrationWhatsappModel,
@@ -73,6 +74,18 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
               integrationWhatsapp.phoneNumberId,
             ),
           )
+
+        // Polymorphic FK cleanup — no DB-level cascade for
+        // MetaCapiEvent.integrationId; stale rows would keep occupying the
+        // (workspaceId, channel, sourceKey) dedup slot after a reconnect.
+        await metaCapiEventRepository.deleteByIntegration(
+          {
+            workspaceId,
+            channel: "whatsapp",
+            integrationId: integrationWhatsapp.id,
+          },
+          tx,
+        )
 
         await tx
           .delete(integrationWhatsappModel)

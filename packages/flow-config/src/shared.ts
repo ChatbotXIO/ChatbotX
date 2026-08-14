@@ -41,6 +41,7 @@ import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { questionnairesStepSchema } from "./steps/questionnaires"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
+import { sendMetaCapiEventSchema } from "./steps/send-meta-capi-event"
 import { sendGridAddContactSchema } from "./steps/sendgrid-add-contact"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
 import { setMessengerPersonaStepSchema } from "./steps/set-messenger-persona"
@@ -55,6 +56,7 @@ import { startExternalFlowStepSchema } from "./steps/start-external-flow"
 import { startExternalNodeStepSchema } from "./steps/start-external-node"
 import { subscribeBroadcastStepSchema } from "./steps/subscribe-broadcast"
 import { subscribeSequenceStepSchema } from "./steps/subscribe-sequence"
+import { triggerN8nStepSchema } from "./steps/trigger-n8n"
 import { unarchiveConversationStepSchema } from "./steps/unarchive-conversation"
 import { unassignConversationStepSchema } from "./steps/unassign-conversation"
 import { unfollowConversationStepSchema } from "./steps/unfollow-conversation"
@@ -106,7 +108,7 @@ const toolSteps = [
   externalRequestStepSchema,
 ]
 
-const triggerSteps = [makeStepSchema]
+const triggerSteps = [makeStepSchema, triggerN8nStepSchema]
 
 const emailSteps = [
   markEmailVerifiedStepSchema,
@@ -142,6 +144,7 @@ const aiSteps = [
 
 const messengerSteps = [
   facebookCustomAudienceSchema,
+  sendMetaCapiEventSchema,
   setMessengerUserPersistentMenuStepSchema,
   enableMessengerComposerStepSchema,
   disableMessengerComposerStepSchema,

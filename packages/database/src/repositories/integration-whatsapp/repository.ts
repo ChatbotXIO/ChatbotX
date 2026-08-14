@@ -80,7 +80,9 @@ type ReplaceWhatsappAuthInput = WorkspaceIntegrationRef & {
 
 type UpdateWhatsappCapiScopeCacheInput = WorkspaceIntegrationRef & {
   hasCapiScope: boolean
-  capiScopeCheckedAt: Date
+  // Nullable so the send-path CAS restore (metaConversionsService, meta-conversions
+  // send path) can put back a never-checked (null) prior value on a failed refresh.
+  capiScopeCheckedAt: Date | null
   expectedCapiScopeCheckedAt: Date | null
 }
 
@@ -102,6 +104,10 @@ type ReleaseVerificationCodeSlotInput = WorkspaceIntegrationRef & {
 
 type UpdateDatasetIdIfNullInput = WorkspaceIntegrationRef & {
   datasetId: string
+}
+
+type UpdateCapiAccessTokenInput = WorkspaceIntegrationRef & {
+  capiAccessToken: EncryptedData
 }
 
 const workspaceIntegrationFilter = (input: WorkspaceIntegrationRef) =>
@@ -253,6 +259,31 @@ class IntegrationWhatsappRepository {
     return row ?? null
   }
 
+  /**
+   * Same lookup as `findWorkspaceIntegrationByInboxId` but returns the full
+   * row. Used by the explicit "Send Meta CAPI Event" action (Meta Conversions
+   * API), which needs `auth`/`hasCapiScope`/`datasetId` and not just the id
+   * pair — a separate method so the existing partial-column query and its
+   * callers are untouched.
+   */
+  async findByInboxIdForWorkspace(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .select()
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.inboxId, input.inboxId),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  }
+
   async findByPhoneNumberId(
     input: { phoneNumberId: string; wabaId?: string },
     tx: DatabaseClient = db,
@@ -387,6 +418,103 @@ class IntegrationWhatsappRepository {
           isNull(integrationWhatsappModel.datasetId),
         ),
       )
+      .returning()
+
+    return row ?? null
+  }
+
+  /**
+   * Unconditional write — a user-entered dataset id must be able to
+   * overwrite one that was auto-provisioned by the lazy send-path.
+   */
+  async updateDatasetId(
+    input: UpdateDatasetIdIfNullInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ datasetId: input.datasetId })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  async updateCapiAccessToken(
+    input: UpdateCapiAccessTokenInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ capiAccessToken: input.capiAccessToken })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  /**
+   * Custom connection: writes dataset id, encrypted token, and clears the
+   * disconnect flag in one atomic update — mirrors
+   * `integrationMessengerRepository.connectCustomCapi`.
+   */
+  async connectCustomCapi(
+    input: WorkspaceIntegrationRef & {
+      datasetId: string
+      capiAccessToken: EncryptedData
+    },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({
+        datasetId: input.datasetId,
+        capiAccessToken: input.capiAccessToken,
+        capiDisconnectedAt: null,
+      })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  async setCapiDisconnectedAt(
+    input: WorkspaceIntegrationRef & { capiDisconnectedAt: Date },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({
+        capiDisconnectedAt: input.capiDisconnectedAt,
+        capiAccessToken: null,
+      })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  async clearCapiDisconnectedAt(
+    input: WorkspaceIntegrationRef,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ capiDisconnectedAt: null })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  async clearCapiAccessToken(
+    input: WorkspaceIntegrationRef,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ capiAccessToken: null })
+      .where(workspaceIntegrationFilter(input))
       .returning()
 
     return row ?? null

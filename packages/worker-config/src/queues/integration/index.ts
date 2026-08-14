@@ -55,6 +55,7 @@ export const IntegrationJobAction = {
   evaluateTemplateSent: "evaluateTemplateSent",
   evaluateConversionTrigger: "evaluateConversionTrigger",
   sendConversionEvent: "sendConversionEvent",
+  sendMetaCapiEvent: "sendMetaCapiEvent",
   syncRetargetAudience: "syncRetargetAudience",
 } as const
 
@@ -388,6 +389,14 @@ export type AdsConversionJobSendConversionEvent = {
   }
 }
 
+export type IntegrationJobSendMetaCapiEvent = {
+  type: typeof IntegrationJobAction.sendMetaCapiEvent
+  data: {
+    metaCapiEventId: string
+    workspaceId: string
+  }
+}
+
 export type AdsConversionJobEvaluateTemplateSent = {
   type: typeof IntegrationJobAction.evaluateTemplateSent
   data: {
@@ -560,6 +569,7 @@ export type IntegrationJobData =
   | IntegrationJobProcessStoryReplyAutomation
   | IntegrationJobCaptureTemplateFlowResponse
   | AdsConversionJobSendConversionEvent
+  | IntegrationJobSendMetaCapiEvent
   | AdsConversionJobEvaluateTemplateSent
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
@@ -600,6 +610,7 @@ const jobOptionsByAction: Partial<
     ...adsConversionRetryOptions,
     priority: CAPI_EVENT_PRIORITY,
   },
+  [IntegrationJobAction.sendMetaCapiEvent]: adsConversionRetryOptions,
   [IntegrationJobAction.syncRetargetAudience]: adsConversionRetryOptions,
 }
 

@@ -73,7 +73,8 @@ vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/sdk")>()),
   getStoryReply: vi.fn(),
 }))
 

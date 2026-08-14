@@ -78,6 +78,7 @@ export const stepTypes = z.enum([
   "callApi",
   "splitTraffic",
   "make",
+  "triggerN8n",
 
   // Flow Operations (F_)
   "startAnotherNode",
@@ -125,6 +126,7 @@ export const stepTypes = z.enum([
 
   // Messenger Operations (N_)
   "facebookCustomAudience",
+  "sendMetaCapiEvent",
   "setMessengerUserPersistentMenu",
   "enableMessengerComposer",
   "disableMessengerComposer",

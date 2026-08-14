@@ -57,6 +57,7 @@ import sendFileStep from "./send-file"
 import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendMessengerTemplateMessageStep from "./send-messenger-template-message"
+import { sendMetaCapiEventStep } from "./send-meta-capi-event"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
 import sendWaTemplateMessageStep from "./send-wa-template-message"
@@ -75,6 +76,7 @@ import { sendExternalFlowStep } from "./start-external-flow"
 import { sendExternalNodeStep } from "./start-external-node"
 import { subscribeBroadcastStep } from "./subscribe-broadcast"
 import { subscribeSequenceStep } from "./subscribe-schedule"
+import { triggerN8nStep } from "./trigger-n8n"
 import typingStep from "./typing"
 import { unarchiveConversationStep } from "./unarchive-conversation"
 import { unassignConversationStep } from "./unassign-conversation"
@@ -108,6 +110,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.deleteContact]: deleteContactStep,
   [stepTypes.enum.callApi]: externalRequestStep,
   [stepTypes.enum.make]: makeStep,
+  [stepTypes.enum.triggerN8n]: triggerN8nStep,
   [stepTypes.enum.disableBot]: disableBotStep,
   [stepTypes.enum.enableBot]: enableBotStep,
   [stepTypes.enum.assignConversation]: assignConversationStep,
@@ -122,6 +125,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.markEmailVerified]: markEmailVerifiedStep,
   [stepTypes.enum.activeCampaignSyncContact]: activeCampaignSyncContactStep,
   [stepTypes.enum.facebookCustomAudience]: facebookCustomAudienceStep,
+  [stepTypes.enum.sendMetaCapiEvent]: sendMetaCapiEventStep,
   [stepTypes.enum.getResponseAddContact]: getResponseAddContactStep,
   [stepTypes.enum.dripSubscribeSubscriber]: dripSubscribeSubscriberStep,
   [stepTypes.enum.mailchimpAddMember]: mailchimpAddMemberStep,

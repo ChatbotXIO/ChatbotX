@@ -8,6 +8,13 @@ class InstagramIntegrationService extends BaseService {
     return findOrFail({ table: integrationInstagramModel, where: { inboxId } })
   }
 
+  findByInboxIdForWorkspace(props: { inboxId: string; workspaceId: string }) {
+    return findOrFail({
+      table: integrationInstagramModel,
+      where: { inboxId: props.inboxId, workspaceId: props.workspaceId },
+    })
+  }
+
   /**
    * Standalone Instagram Business Login rows (`type: "instagram"`) eligible for
    * the daily `ig_refresh_token` cron.

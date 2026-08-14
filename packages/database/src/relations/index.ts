@@ -98,6 +98,7 @@ import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
+import { metaCapiEventRelations } from "./meta-capi-event"
 import { metaCatalogRelations } from "./meta-catalog"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
@@ -128,6 +129,7 @@ import { workspaceMemberRelations } from "./workspace-member"
 export const relations = {
   ...aiTriggerRelations,
   ...adsConversionEventRelations,
+  ...metaCapiEventRelations,
   ...adsConversionRuleRelations,
   ...integrationOpenaiRelations,
   ...contactRelations,
