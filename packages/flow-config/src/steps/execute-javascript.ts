@@ -1,4 +1,3 @@
-import { MAX_CODE_LENGTH } from "@chatbotx.io/javascript-sandbox"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -8,6 +7,8 @@ import {
   successStateSchema,
 } from "../states"
 import { stepTypes } from "./step-action"
+
+export const MAX_CODE_LENGTH = 10_000
 
 export const executeJavascriptStepSchema = z.object({
   id: zodBigintAsString(),

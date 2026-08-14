@@ -1,3 +1,5 @@
+import { MAX_CODE_LENGTH as FLOW_CONFIG_MAX_CODE_LENGTH } from "@chatbotx.io/flow-config"
+import { MAX_CODE_LENGTH as SANDBOX_MAX_CODE_LENGTH } from "@chatbotx.io/javascript-sandbox"
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ChatbotXException } from "../src/errors"
@@ -25,6 +27,10 @@ beforeEach(() => {
 })
 
 describe("javascriptExecutionService", () => {
+  test("flow-config and javascript-sandbox agree on MAX_CODE_LENGTH", () => {
+    expect(FLOW_CONFIG_MAX_CODE_LENGTH).toBe(SANDBOX_MAX_CODE_LENGTH)
+  })
+
   test("executes JavaScript through the remote executor", async () => {
     server.use(
       http.post(EXECUTOR_URL, async ({ request }) => {
