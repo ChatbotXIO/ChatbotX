@@ -8,7 +8,7 @@ import {
 } from "../states"
 import { stepTypes } from "./step-action"
 
-// Keep in sync with MAX_CODE_LENGTH in packages/javascript-sandbox/src/sandbox.ts
+// Keep in sync with MAX_CODE_LENGTH in packages/javascript-sandbox/src/contract.ts
 const MAX_CODE_LENGTH = 10_000
 const MAX_MAPPING_ENTRIES = 20
 

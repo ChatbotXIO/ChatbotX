@@ -1268,6 +1268,12 @@
     "outputCustomField": {
       "label": "حقل الإخراج المخصص"
     },
+    "javascriptCode": {
+      "label": "رمز JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "استخدم JavaScript خالصًا وأعد قيمة. الشبكة والملفات وواجهات البرمجة والمكتبات الخارجية غير متوفرة.",
+      "returnPathPlaceholder": "مسار القيمة المُعادة (اتركه فارغًا لاستخدام القيمة كاملة)"
+    },
     "httpMethod": {
       "label": "الطريقة"
     },
@@ -2099,6 +2105,7 @@
       "questionnaires": "الاستبيانات",
       "setUpCoupon": "إعداد كوبون",
       "markCouponUsed": "تحديد الكوبون كمستخدم",
+      "executeJavascript": "تنفيذ JavaScript",
       "chooseChannel": "اختيار القناة",
       "clearCustomField": "مسح الحقل المخصص",
       "condition": "شرط",

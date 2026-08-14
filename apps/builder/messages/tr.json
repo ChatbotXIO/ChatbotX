@@ -1268,6 +1268,12 @@
     "outputCustomField": {
       "label": "Çıkış Özel Alanı"
     },
+    "javascriptCode": {
+      "label": "JavaScript kodu",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Saf JavaScript kullanın ve bir değer döndürün. Ağ, dosyalar, API'ler ve harici kitaplıklar kullanılamaz.",
+      "returnPathPlaceholder": "Dönüş yolu (tüm değer için boş bırakın)"
+    },
     "httpMethod": {
       "label": "Yöntem"
     },
@@ -2099,6 +2105,7 @@
       "questionnaires": "Anketler",
       "setUpCoupon": "Kupon Ayarla",
       "markCouponUsed": "Kuponu Kullanıldı Olarak İşaretle",
+      "executeJavascript": "JavaScript Çalıştır",
       "chooseChannel": "Kanal Seç",
       "clearCustomField": "Özel Alanı Temizle",
       "condition": "Koşul",

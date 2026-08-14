@@ -11,6 +11,7 @@ dist
 **/.next
 /apps/worker/dist
 /apps/mcp-server/dist
+/apps/javascript-executor/dist
 .devcontainer
 **/.git
 **/*.md
@@ -20,3 +21,15 @@ dist
 .git
 .github
 reports
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+**/.secrets
+**/.secrets/**
+**/*.key
+**/*.pem
+**/id_ed25519*
+**/id_rsa*

@@ -21,7 +21,7 @@ export default defineConfig({
     skipNodeModulesBundle: false,
     // https://github.com/egoist/tsdown/issues/619
     alwaysBundle: [/(.*)/],
-    neverBundle: ["react", "isolated-vm"],
+    neverBundle: ["react"],
   },
   clean: true,
   // target: 'node20',

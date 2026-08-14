@@ -1194,6 +1194,12 @@
     "outputCustomField": {
       "label": "Output Kustom Field"
     },
+    "javascriptCode": {
+      "label": "Kode JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Gunakan JavaScript murni dan kembalikan sebuah nilai. Jaringan, file, API, dan pustaka eksternal tidak tersedia.",
+      "returnPathPlaceholder": "Jalur nilai kembalian (biarkan kosong untuk seluruh nilai)"
+    },
     "httpMethod": {
       "label": "Metode"
     },
@@ -2025,6 +2031,7 @@
       "questionnaires": "Kuesioner",
       "setUpCoupon": "Siapkan Kupon",
       "markCouponUsed": "Tandai Kupon Telah Digunakan",
+      "executeJavascript": "Jalankan JavaScript",
       "chooseChannel": "Pilih Channel",
       "clearCustomField": "Kosongkan Kolom Kustom",
       "condition": "Kondisi",

@@ -2159,6 +2159,12 @@
     "outputCustomField": {
       "label": "Anpassat utdatafält"
     },
+    "javascriptCode": {
+      "label": "JavaScript-kod",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Använd ren JavaScript och returnera ett värde. Nätverk, filer, API:er och externa bibliotek är inte tillgängliga.",
+      "returnPathPlaceholder": "Returväg (lämna tomt för hela värdet)"
+    },
     "outputFieldId": {
       "label": "Spara resultatet i ett anpassat fält"
     },
@@ -2739,6 +2745,7 @@
       "mailerLiteAddSubscriber": "Lägg till kontakt i MailerLite",
       "make": "Make",
       "markCouponUsed": "Markera kupong som använd",
+      "executeJavascript": "Kör JavaScript",
       "markEmailVerified": "Markera e-postadress som verifierad",
       "messenger": "Messenger",
       "moosendCreateContact": "Lägg till kontakt i Moosend",

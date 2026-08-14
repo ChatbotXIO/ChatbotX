@@ -1194,6 +1194,12 @@
     "outputCustomField": {
       "label": "Benutzerdefiniertes Ausgabefeld"
     },
+    "javascriptCode": {
+      "label": "JavaScript-Code",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Verwenden Sie reines JavaScript und geben Sie einen Wert zurück. Netzwerk, Dateien, APIs und externe Bibliotheken stehen nicht zur Verfügung.",
+      "returnPathPlaceholder": "Rückgabepfad (leer lassen für den gesamten Wert)"
+    },
     "httpMethod": {
       "label": "Methode"
     },
@@ -2025,6 +2031,7 @@
       "questionnaires": "Fragebögen",
       "setUpCoupon": "Gutschein einrichten",
       "markCouponUsed": "Gutschein als verwendet markieren",
+      "executeJavascript": "JavaScript ausführen",
       "chooseChannel": "Kanal auswählen",
       "clearCustomField": "Benutzerdefiniertes Feld leeren",
       "condition": "Bedingung",

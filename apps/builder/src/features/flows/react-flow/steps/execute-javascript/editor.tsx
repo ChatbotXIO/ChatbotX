@@ -73,13 +73,13 @@ const ExecuteJavascriptDialog = ({ parentName }: { parentName: string }) => {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
-        render={() => (
+        render={
           <div className="flex justify-center">
             <Button size="sm" type="button" variant="outline">
               {t("actions.edit")}
             </Button>
           </div>
-        )}
+        }
       />
       <DialogContent className="max-h-screen max-w-md overflow-y-scroll">
         <DialogHeader>
@@ -147,11 +147,11 @@ const ExecuteJavascriptDialog = ({ parentName }: { parentName: string }) => {
             </div>
             <DialogFooter>
               <DialogClose
-                render={() => (
+                render={
                   <Button size="sm" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
-                )}
+                }
               />
               <Button
                 disabled={

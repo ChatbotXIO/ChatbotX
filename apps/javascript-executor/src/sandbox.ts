@@ -1,26 +1,16 @@
+import {
+  JavascriptSandboxError,
+  type JavascriptSandboxErrorCode,
+  MAX_CODE_LENGTH,
+} from "@chatbotx.io/javascript-sandbox"
 import ivm from "isolated-vm"
+
+export { MAX_CODE_LENGTH } from "@chatbotx.io/javascript-sandbox"
 
 const MEMORY_LIMIT_MB = 8
 const TIMEOUT_MS = 500
-export const MAX_CODE_LENGTH = 10_000
 const timeoutErrorPattern = /timed out/i
 const memoryErrorPattern = /memory limit|heap/i
-
-export type JavascriptSandboxErrorCode =
-  | "javascriptTimeout"
-  | "javascriptMemoryLimit"
-  | "javascriptExecutionFailed"
-  | "javascriptNoReturnValue"
-
-export class JavascriptSandboxError extends Error {
-  readonly code: JavascriptSandboxErrorCode
-
-  constructor(message: string, code: JavascriptSandboxErrorCode) {
-    super(message)
-    this.name = "JavascriptSandboxError"
-    this.code = code
-  }
-}
 
 export const executeJavascript = async (props: {
   code: string
@@ -64,15 +54,15 @@ export const executeJavascript = async (props: {
 
     const message = error instanceof Error ? error.message : "Unknown error"
     let code: JavascriptSandboxErrorCode = "javascriptExecutionFailed"
+    let clientMessage = "JavaScript execution failed"
     if (timeoutErrorPattern.test(message)) {
       code = "javascriptTimeout"
+      clientMessage = "JavaScript execution timed out"
     } else if (memoryErrorPattern.test(message)) {
       code = "javascriptMemoryLimit"
+      clientMessage = "JavaScript execution exceeded the memory limit"
     }
-    throw new JavascriptSandboxError(
-      `JavaScript execution failed: ${message}`,
-      code,
-    )
+    throw new JavascriptSandboxError(clientMessage, code)
   } finally {
     input?.release()
     context?.release()

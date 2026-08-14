@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { executeJavascript, MAX_CODE_LENGTH } from "../src"
+import { executeJavascript, MAX_CODE_LENGTH } from "../src/sandbox"
 
 describe("executeJavascript", () => {
   test("executes pure JavaScript against a copied input", async () => {
@@ -37,7 +37,19 @@ describe("executeJavascript", () => {
         code: 'throw new Error("broken")',
         input: {},
       }),
-    ).rejects.toMatchObject({ code: "javascriptExecutionFailed" })
+    ).rejects.toMatchObject({
+      code: "javascriptExecutionFailed",
+      message: "JavaScript execution failed",
+    })
+  })
+
+  test("throws a typed error when code returns undefined", async () => {
+    await expect(
+      executeJavascript({
+        code: "return undefined",
+        input: {},
+      }),
+    ).rejects.toMatchObject({ code: "javascriptNoReturnValue" })
   })
 
   test("throws a typed error when code exceeds the max length", async () => {

@@ -1,3 +1,4 @@
+import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ChatbotXException } from "../src/errors"
 
@@ -13,32 +14,51 @@ const { javascriptExecutionService } = await import(
   "../src/javascript-execution/service"
 )
 
+const EXECUTOR_URL = `${process.env.JAVASCRIPT_EXECUTOR_URL}/execute`
+
+const respondWithValue = (value: unknown): void => {
+  server.use(http.post(EXECUTOR_URL, () => HttpResponse.json({ value })))
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe("javascriptExecutionService", () => {
-  test("executes pure JavaScript against a copied input", async () => {
+  test("executes JavaScript through the remote executor", async () => {
+    server.use(
+      http.post(EXECUTOR_URL, async ({ request }) => {
+        await expect(request.json()).resolves.toEqual({
+          code: "return input.answer",
+          input: { answer: 42 },
+        })
+        return HttpResponse.json({ value: 42 })
+      }),
+    )
+
     await expect(
       javascriptExecutionService.execute({
-        code: "return { greeting: input.firstName.toUpperCase() }",
-        input: { firstName: "Ada" },
+        code: "return input.answer",
+        input: { answer: 42 },
       }),
-    ).resolves.toEqual({ value: { greeting: "ADA" } })
+    ).resolves.toEqual({ value: 42 })
   })
 
-  test("does not expose Node or network globals", async () => {
-    await expect(
-      javascriptExecutionService.execute({
-        code: "return [typeof fetch, typeof require, typeof process, typeof globalThis.process]",
-        input: {},
-      }),
-    ).resolves.toEqual({
-      value: ["undefined", "undefined", "undefined", "undefined"],
-    })
-  })
+  test("preserves typed executor error codes", async () => {
+    server.use(
+      http.post(EXECUTOR_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "javascriptTimeout",
+              message: "JavaScript execution timed out",
+            },
+          },
+          { status: 422 },
+        ),
+      ),
+    )
 
-  test("throws a typed exception when code times out", async () => {
     await expect(
       javascriptExecutionService.execute({
         code: "while (true) {}",
@@ -46,21 +66,23 @@ describe("javascriptExecutionService", () => {
       }),
     ).rejects.toMatchObject<Partial<ChatbotXException>>({
       code: "javascriptTimeout",
+      message: "JavaScript execution timed out",
     })
   })
 
-  test("throws a typed exception for a script error", async () => {
+  test("maps transport failures to a typed execution exception", async () => {
+    server.use(http.post(EXECUTOR_URL, () => HttpResponse.error()))
+
     await expect(
-      javascriptExecutionService.execute({
-        code: 'throw new Error("broken")',
-        input: {},
-      }),
+      javascriptExecutionService.execute({ code: "return 1", input: {} }),
     ).rejects.toMatchObject<Partial<ChatbotXException>>({
       code: "javascriptExecutionFailed",
     })
   })
 
   test("maps the returned value into contact custom fields", async () => {
+    respondWithValue({ profile: { name: "Ada" }, active: true })
+
     await javascriptExecutionService.executeAndMap({
       workspaceId: "workspace-1",
       contactId: "contact-1",
@@ -82,7 +104,27 @@ describe("javascriptExecutionService", () => {
     })
   })
 
+  test("maps a small field from a result larger than one custom field", async () => {
+    respondWithValue({ ignored: "x".repeat(128 * 1024), selected: "Ada" })
+
+    await javascriptExecutionService.executeAndMap({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      code: "return input",
+      input: {},
+      mapping: [{ jsonPath: "selected", outputFieldId: "field-name" }],
+    })
+
+    expect(mocks.setValues).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "field-name", value: "Ada" }],
+    })
+  })
+
   test("skips a jsonPath mapping when the returned value is a primitive", async () => {
+    respondWithValue("hello")
+
     await javascriptExecutionService.executeAndMap({
       workspaceId: "workspace-1",
       contactId: "contact-1",
@@ -95,6 +137,8 @@ describe("javascriptExecutionService", () => {
   })
 
   test("maps the whole primitive value when jsonPath is blank", async () => {
+    respondWithValue("hello")
+
     await javascriptExecutionService.executeAndMap({
       workspaceId: "workspace-1",
       contactId: "contact-1",
@@ -111,6 +155,8 @@ describe("javascriptExecutionService", () => {
   })
 
   test("throws a typed exception when the output is too large to save", async () => {
+    respondWithValue("a".repeat(64 * 1024 + 1))
+
     await expect(
       javascriptExecutionService.executeAndMap({
         workspaceId: "workspace-1",

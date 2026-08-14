@@ -11,6 +11,7 @@ Never use dynamic `import()` expressions (e.g. `await import('...')`, `const x =
 - `apps/worker`
 - `apps/cli`
 - `apps/mcp-server`
+- `apps/javascript-executor`
 
 **Does NOT apply to (Next.js-built — dynamic imports allowed and encouraged for code-splitting):**
 
@@ -27,7 +28,7 @@ Dynamic imports break the **tsdown** build pipeline: the bundler cannot resolve 
 ## What to do instead (tsdown targets)
 
 ```ts
-// WRONG in packages/, integrations/, apps/{worker,cli,mcp-server} — breaks tsdown build
+// WRONG in packages/, integrations/, apps/{worker,cli,mcp-server,javascript-executor} — breaks tsdown build
 const { parse } = await import('some-lib')
 
 // CORRECT — use static import

@@ -1,11 +1,12 @@
 import {
-  executeJavascript,
+  createJavascriptExecutorClient,
   JavascriptSandboxError,
 } from "@chatbotx.io/javascript-sandbox"
 import { getProperty } from "dot-prop"
 import { BaseService } from "../base.service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { ChatbotXException } from "../errors"
+import { javascriptExecutionEnv } from "./keys"
 
 const MAX_OUTPUT_BYTES = 64 * 1024
 
@@ -49,7 +50,12 @@ class JavascriptExecutionService extends BaseService {
     input: Record<string, unknown>
   }): Promise<{ value: unknown }> {
     try {
-      return await executeJavascript(props)
+      const env = javascriptExecutionEnv()
+      const client = createJavascriptExecutorClient({
+        url: env.JAVASCRIPT_EXECUTOR_URL,
+        token: env.JAVASCRIPT_EXECUTOR_TOKEN,
+      })
+      return await client.execute(props)
     } catch (error) {
       if (error instanceof JavascriptSandboxError) {
         throw new ChatbotXException(error.message, error.code, 400)

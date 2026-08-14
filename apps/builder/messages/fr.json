@@ -1194,6 +1194,12 @@
     "outputCustomField": {
       "label": "Champ personnalisé de sortie"
     },
+    "javascriptCode": {
+      "label": "Code JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Utilisez du JavaScript pur et renvoyez une valeur. Le réseau, les fichiers, les API et les bibliothèques externes ne sont pas disponibles.",
+      "returnPathPlaceholder": "Chemin de retour (laisser vide pour la valeur entière)"
+    },
     "httpMethod": {
       "label": "Méthode"
     },
@@ -2025,6 +2031,7 @@
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Configurer le coupon",
       "markCouponUsed": "Marquer le coupon comme utilisé",
+      "executeJavascript": "Exécuter JavaScript",
       "chooseChannel": "Choisir un canal",
       "clearCustomField": "Effacer le champ personnalisé",
       "condition": "Condition",

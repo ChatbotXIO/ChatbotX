@@ -1008,6 +1008,12 @@
     "outputCustomField": {
       "label": "Aangepast uitvoerveld"
     },
+    "javascriptCode": {
+      "label": "JavaScript-code",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar.",
+      "returnPathPlaceholder": "Retourpad (laat leeg voor de volledige waarde)"
+    },
     "httpMethod": {
       "label": "Methode"
     },
@@ -2025,6 +2031,7 @@
       "questionnaires": "Vragenlijsten",
       "setUpCoupon": "Kortingsbon instellen",
       "markCouponUsed": "Kortingsbon als gebruikt markeren",
+      "executeJavascript": "JavaScript uitvoeren",
       "chooseChannel": "Kanaal kiezen",
       "clearCustomField": "Aangepast veld wissen",
       "condition": "Voorwaarde",

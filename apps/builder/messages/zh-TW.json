@@ -584,6 +584,12 @@
     "outputCustomField": {
       "label": "輸出自訂欄位"
     },
+    "javascriptCode": {
+      "label": "JavaScript 程式碼",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。",
+      "returnPathPlaceholder": "回傳路徑（留空以使用整個值）"
+    },
     "httpMethod": {
       "label": "方法"
     },
@@ -2250,6 +2256,7 @@
       "questionnaires": "問卷",
       "setUpCoupon": "設定優惠券",
       "markCouponUsed": "標記優惠券",
+      "executeJavascript": "執行 JavaScript",
       "chooseChannel": "選擇頻道",
       "clearCustomField": "清除自訂欄位",
       "condition": "條件",
