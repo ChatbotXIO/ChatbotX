@@ -2,7 +2,10 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { WhatsappFlowsTable } from "@/features/integration-whatsapp/flows/flows-table"
 import { whatsappFlowService } from "@/features/integration-whatsapp/flows/queries"
-import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
+import {
+  findIntegrationWhatsapp,
+  toIntegrationWhatsappLinkable,
+} from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function WhatsappFlowsPage(props: {
@@ -28,7 +31,7 @@ export default async function WhatsappFlowsPage(props: {
   return (
     <Suspense>
       <WhatsappFlowsTable
-        integrationWhatsapp={integrationWhatsapp}
+        integrationWhatsapp={toIntegrationWhatsappLinkable(integrationWhatsapp)}
         promises={promises}
       />
     </Suspense>

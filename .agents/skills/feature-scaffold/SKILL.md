@@ -393,7 +393,8 @@ Wrap with React context provider (`provider/item-store-provider.tsx`).
 ## Layout Patterns
 
 - **Route groups** `()` organize without URL segments: `(settings)`, `(has-folder)`, `(ai)`
-- **Parallel routes** `@slot` for multi-panel layouts (e.g. channels settings)
+- **Parallel routes** `@slot` for multi-panel layouts (e.g. the `@folders` sidebars under `(has-folder)`)
+- **Route-driven accordions** for the channels/integrations settings lists: each row is a real nested route (`settings/channels/<channel>`, `settings/integrations/<slug>`) rendered through the shared `RouteAccordionShell` (`@/components/route-accordion-shell`) with `prefetch={false}`, so only the active row's server/client graph loads — do NOT convert these back to slots or eager panels
 - **Workspace layout** at `space/[workspaceId]/layout.tsx`: auth, sidebar, workspace context
 - Server layouts: auth checks, data loading
 - Client layouts: tabs, accordions, interactive navigation
@@ -608,7 +609,7 @@ import { integrationService, webhookService } from "@chatbotx.io/business"
 3. Create DB queries in `queries/`
 4. Add server actions in `actions/` (if mutations needed)
 5. Create oRPC API in `api/` (if API access needed)
-6. Register router in `src/routers/index.ts`
+6. Register router in `src/routers/index.ts` as a `lazy()` branch (see the orpc-api skill — every feature router there is lazy so the route handler stays small)
 7. Create page(s) under `src/app/space/[workspaceId]/...`
 8. Build UI components (server page → client table/form)
 9. **Add i18n translations** to `apps/builder/messages/en.json` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`

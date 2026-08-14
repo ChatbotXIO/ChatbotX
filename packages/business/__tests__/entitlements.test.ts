@@ -23,12 +23,20 @@ describe("enterprise entitlements", () => {
     mocks.getLicenseStatus.mockResolvedValue({ state: "missing" })
   })
 
-  test("enables enterprise features for cloud without a license check", async () => {
+  test("disables enterprise features for cloud without a valid license", async () => {
     mocks.isCloud.mockReturnValue(true)
     const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
 
+    await expect(hasEnterpriseFeatures()).resolves.toBe(false)
+    expect(mocks.getLicenseStatus).toHaveBeenCalled()
+  })
+
+  test("enables enterprise features for cloud with a valid license", async () => {
+    mocks.isCloud.mockReturnValue(true)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "valid" })
+    const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
+
     await expect(hasEnterpriseFeatures()).resolves.toBe(true)
-    expect(mocks.getLicenseStatus).not.toHaveBeenCalled()
   })
 
   test("disables enterprise features for community", async () => {
@@ -46,5 +54,54 @@ describe("enterprise entitlements", () => {
 
     mocks.getLicenseStatus.mockResolvedValue({ state: "valid" })
     await expect(hasEnterpriseFeatures()).resolves.toBe(true)
+  })
+
+  test("treats an expired license as disabled", async () => {
+    mocks.isEnterprise.mockReturnValue(true)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "expired" })
+    const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
+
+    await expect(hasEnterpriseFeatures()).resolves.toBe(false)
+  })
+})
+
+describe("assertEnterpriseFeatures", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.isCloud.mockReturnValue(false)
+    mocks.isEnterprise.mockReturnValue(false)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "missing" })
+  })
+
+  test("throws enterpriseFeatureRequired (403) on community", async () => {
+    const { assertEnterpriseFeatures } = await import(
+      "../src/user/entitlements"
+    )
+
+    await expect(assertEnterpriseFeatures()).rejects.toMatchObject({
+      code: "enterpriseFeatureRequired",
+      httpStatusCode: 403,
+    })
+  })
+
+  test("throws when enterprise edition has no valid license", async () => {
+    mocks.isEnterprise.mockReturnValue(true)
+    const { assertEnterpriseFeatures } = await import(
+      "../src/user/entitlements"
+    )
+
+    await expect(assertEnterpriseFeatures()).rejects.toMatchObject({
+      code: "enterpriseFeatureRequired",
+    })
+  })
+
+  test("resolves when the license is valid", async () => {
+    mocks.isEnterprise.mockReturnValue(true)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "valid" })
+    const { assertEnterpriseFeatures } = await import(
+      "../src/user/entitlements"
+    )
+
+    await expect(assertEnterpriseFeatures()).resolves.toBeUndefined()
   })
 })

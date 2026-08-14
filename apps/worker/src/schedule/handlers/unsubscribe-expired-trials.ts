@@ -5,12 +5,20 @@ import {
   scheduleQueue,
   teardownExpiredTrialJobId,
 } from "@chatbotx.io/worker-config"
+import { env } from "../../env"
 
 const SCAN_PAGE_SIZE = 500
 const GRACE_DAYS = 7
 const LOCK_TTL_SECONDS = 55
 
 export async function unsubscribeExpiredTrials(cursor?: string): Promise<void> {
+  // Belt-and-braces behind the scheduler gate: trial teardown disconnects
+  // every channel of an owner, and off-cloud there is no billing path to
+  // recover. Guards against a shared Redis re-enqueueing the job.
+  if (env.NEXT_PUBLIC_EDITION !== "cloud") {
+    return
+  }
+
   await distributedLock.runExclusive({
     key: "schedule:unsubscribe-expired-trials",
     timeoutInSeconds: LOCK_TTL_SECONDS,

@@ -2,7 +2,10 @@ import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { findConversationalAutomation } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { notFound } from "next/navigation"
 import { WhatsappAutomationManage } from "@/features/integration-whatsapp/automation/whatsapp-automation-manage"
-import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
+import {
+  findIntegrationWhatsapp,
+  toIntegrationWhatsappLinkable,
+} from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function WhatsappAutomationPage(props: {
@@ -34,7 +37,7 @@ export default async function WhatsappAutomationPage(props: {
 
   return (
     <WhatsappAutomationManage
-      integrationWhatsapp={integrationWhatsapp}
+      integrationWhatsapp={toIntegrationWhatsappLinkable(integrationWhatsapp)}
       promises={promises}
     />
   )

@@ -136,10 +136,9 @@ export const CREATABLE_CHANNELS: ChannelType[] = channelTypes.options
 
 /**
  * Channels with a row in the workspace settings channels accordion, in
- * display order. Still requires a matching `@<channel>` parallel-route slot
- * under `settings/channels/` — Next.js parallel routes are a filesystem
- * constraint this registry cannot remove — but that slot fails loudly (an
- * empty accordion item) rather than the silent omission a hand-maintained
+ * display order. Still requires a matching `settings/channels/<channel>/page.tsx`
+ * route — a filesystem constraint this registry cannot remove — but a missing
+ * route now 404s loudly rather than the silent omission a hand-maintained
  * array allowed.
  */
 export const MANAGEABLE_CHANNELS: ChannelType[] = channelTypes.options

@@ -88,6 +88,7 @@ export function ComboboxField<T extends FieldValues>({
   side,
   triggerValueChange,
   disableValues,
+  portal,
   allowClear,
   clearLabel,
   emptyValue,
@@ -155,6 +156,7 @@ export function ComboboxField<T extends FieldValues>({
             <PopoverContent
               align="start"
               className={cn("w-50 p-0", popoverClassName)}
+              portal={portal}
               side={side}
             >
               <Command>

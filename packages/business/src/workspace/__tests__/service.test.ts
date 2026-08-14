@@ -68,7 +68,15 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(async (_key: string, resolver: () => unknown) => resolver()),
   invalidateCacheByTags: mocks.invalidateCacheByTags,
+  distributedLock: {
+    runExclusive: vi.fn(async ({ fn }: { fn: () => unknown }) => fn()),
+  },
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
+
+// These suites exercise the quota-driven create path; the community
+// workspace cap is covered by __tests__/workspace.service.test.ts.
+vi.mock("../../keys", () => ({ isCommunity: vi.fn(() => false) }))
 
 vi.mock("../../enterprise/tenant/service", () => ({
   tenantService: { findByOwner: vi.fn(async () => undefined) },

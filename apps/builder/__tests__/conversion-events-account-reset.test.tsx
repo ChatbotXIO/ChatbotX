@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { ConversionEventsView } from "@/features/ads/components/conversion-events-view"
 import type { ConversionEventsData } from "@/features/ads/queries/conversion-rules"
+import type { AdsSwitcherIntegration } from "@/features/ads/queries/switcher"
 
 const multiSelectSnapshots: string[][] = []
 
@@ -100,6 +101,12 @@ const data = {
   automatedResponses: [],
 } as unknown as ConversionEventsData
 
+// The account switcher pulls from a separate, richer query in production
+// (getAdsSwitcherData); the fixture above intentionally carries the extra
+// fields so it can double as that data source here.
+const switcherIntegrations =
+  data.whatsappIntegrations as unknown as AdsSwitcherIntegration[]
+
 describe("ConversionEventsView account selection", () => {
   let container: HTMLDivElement
   let root: Root
@@ -125,7 +132,7 @@ describe("ConversionEventsView account selection", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,
@@ -149,7 +156,7 @@ describe("ConversionEventsView account selection", () => {
         <ConversionEventsView
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[1]}
-          switcherIntegrations={data.whatsappIntegrations}
+          switcherIntegrations={switcherIntegrations}
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,

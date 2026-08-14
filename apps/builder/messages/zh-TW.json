@@ -1346,6 +1346,11 @@
       "label": "活動",
       "placeholder": "輸入事件名稱並按 Enter",
       "description": "新增一個或多個事件名稱。當 Make 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
+    },
+    "n8nEvents": {
+      "label": "事件",
+      "placeholder": "輸入事件名稱後按 Enter",
+      "description": "新增一個或多個事件名稱。當 n8n 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
     }
   },
   "messages": {
@@ -2037,6 +2042,7 @@
       "blocked": "已阻止",
       "noAdminReply": "無管理員回覆",
       "contactCreatedAt": "聯絡人建立時間",
+      "fromCtwaAd": "來自 Click to WhatsApp 廣告",
       "lastUserInputTypes": {
         "text": "文字",
         "location": "位置",
@@ -2051,8 +2057,7 @@
       "ctwaConversionTypes": {
         "lead": "潛在客戶",
         "purchase": "購買"
-      },
-      "fromCtwaAd": "來自 Click to WhatsApp 廣告"
+      }
     },
     "fieldGroups": {
       "opportunity": "機會",
@@ -2135,15 +2140,15 @@
         "failed": "重新連線失敗。請再試一次。"
       }
     },
+    "tokenRefreshErrorDialog": {
+      "title": "緊急",
+      "description": "以下頻道未能自動刷新其存取權杖。請重新連接，以持續收發訊息。",
+      "cta": "重新連接"
+    },
     "refreshAllTokens": {
       "button": "重新整理所有權限",
       "resultSuccess": "已重新整理 {refreshed} 個頻道。",
       "resultWithFailures": "已重新整理 {refreshed} 個頻道，{failed} 個失敗。"
-    },
-    "tokenRefreshErrorDialog": {
-      "cta": "重新連接",
-      "description": "以下頻道未能自動刷新其存取權杖。請重新連接，以持續收發訊息。",
-      "title": "緊急"
     }
   },
   "workspace": {
@@ -2232,6 +2237,7 @@
       "broadcastActions": "廣播操作",
       "callApi": "外部API 請求",
       "make": "Make.com",
+      "triggerN8n": "觸發 n8n",
       "triggers": "觸發器",
       "questionnaires": "問卷",
       "setUpCoupon": "設定優惠券",
@@ -2260,6 +2266,7 @@
       "getResponseAddContact": "將聯絡人新增到 GetResponse",
       "sendGridAddContact": "將聯絡人新增到 SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta 轉換 API",
       "openWebsite": "打開網站",
       "optInEmail": "選擇接收電子郵件",
       "optOutEmail": "選擇退出電子郵件",
@@ -2313,7 +2320,8 @@
       "unsubscribeSequence": "退訂序列",
       "splitTraffic": "拆分流量",
       "aiEditImage": "人工智慧編輯影像",
-      "whatsappFlow": "WhatsApp流程"
+      "whatsappFlow": "WhatsApp流程",
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2760,7 +2768,11 @@
     "iceBreakers": "破冰船",
     "iceBreakersDescription": "破冰活動透過顯示常見問題清單為使用者提供了一種與您的機器人開始對話的方式。",
     "reconnect": "重新連接",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "一般設定",
+      "conversionsApi": "廣告最佳化"
+    }
   },
   "coexist": {
     "title": "同步現有聯絡人和聊天記錄？",
@@ -2816,7 +2828,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "一般設定",
-      "messageTemplates": "訊息範本"
+      "messageTemplates": "訊息範本",
+      "conversionsApi": "廣告最佳化"
     },
     "messageTemplate": {
       "params": {
@@ -3183,7 +3196,8 @@
       "flows": "流程",
       "messageTemplates": "訊息範本",
       "profile": "簡介",
-      "usefulLinks": "有用連結"
+      "usefulLinks": "有用連結",
+      "conversionsApi": "廣告最佳化"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3417,7 +3431,8 @@
       "clearCustomField": "清除自訂欄位",
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
-      "transferConversationToHuman": "將對話轉移給人類"
+      "transferConversationToHuman": "將對話轉移給人類",
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -4672,5 +4687,101 @@
   },
   "errors": {
     "superAdminRequired": "您必須是工作區超級管理員才能執行此操作。"
+  },
+  "metaConversions": {
+    "title": "轉換 API",
+    "description": "將 Messenger、Instagram 與 WhatsApp 對話中的 LeadSubmitted 事件傳送到 Meta。",
+    "datasetId": "資料集 ID",
+    "reconnect": "重新連接權限",
+    "connectViaFacebook": "透過 Facebook 連接",
+    "unsupportedExplanation": "此 Instagram 帳號是透過 Instagram Business Login 連接。請改用 Facebook 連接此帳號，才能使用 Meta 轉換 API。",
+    "flowStep": {
+      "description": "為 Messenger、Instagram 或 WhatsApp 排入一筆 LeadSubmitted 事件。",
+      "whatsappNote": "WhatsApp 事件只會針對由 Click to WhatsApp 廣告開始的對話傳送。"
+    },
+    "status": {
+      "title": "Meta 轉換 API",
+      "ready": "已就緒",
+      "missingPermission": "需要權限",
+      "unverified": "尚未驗證",
+      "unsupported": "不支援",
+      "notConnected": "尚未連接"
+    },
+    "statusDescriptions": {
+      "ready": "此整合已具備傳送轉換 API 事件所需的 Meta 權限。",
+      "missingPermission": "請重新連接此整合，並授予要求的 Meta 權限。",
+      "unverified": "目前無法取得平台應用程式設定，因此無法驗證 CAPI 權限。",
+      "unsupported": "Instagram 的 Meta 轉換 API 需要透過 Facebook Login for Business 連接的帳號。",
+      "notConnected": "轉換 API 是 Meta 的商務工具，可讓您與 Meta 分享資料，以提升廣告成效。"
+    },
+    "errors": {
+      "reconnect": "無法開始 Meta CAPI 重新連接。",
+      "messengerNotFound": "找不到 Messenger 整合。",
+      "instagramNotFound": "找不到 Instagram 整合。",
+      "instagramRequiresFacebook": "Instagram CAPI 需要透過 Facebook 連接。",
+      "saveFailed": "無法儲存。請再試一次。",
+      "datasetRequired": "新增存取權杖前，請先儲存資料集 ID。",
+      "invalidToken": "此權杖無法存取該資料集。",
+      "whatsappNotFound": "找不到 WhatsApp 整合。"
+    },
+    "fields": {
+      "eventType": {
+        "label": "事件類型",
+        "leadSubmitted": "LeadSubmitted"
+      },
+      "value": "數值",
+      "valuePlaceholder": "例如 250",
+      "currency": "幣別",
+      "currencyPlaceholder": "例如 USD",
+      "contentCategory": "內容分類",
+      "contentCategoryPlaceholder": "與此事件相關內容的分類",
+      "contentName": "內容名稱",
+      "contentNamePlaceholder": "與此事件相關的頁面或商品名稱"
+    },
+    "datasetIdPlaceholder": "貼上來自 Events Manager 的資料集 ID",
+    "saveDataset": "儲存",
+    "accessToken": "存取權杖（選填）",
+    "accessTokenHint": "貼上來自 Events Manager 的權杖，即可改用您自己的權杖傳送事件，而不是使用已連接頁面的權杖。需要先填入資料集 ID。",
+    "accessTokenPlaceholder": "Events Manager 存取權杖",
+    "saveToken": "儲存權杖",
+    "tokenSaved": "權杖已儲存",
+    "removeToken": "移除",
+    "saved": "已儲存",
+    "help": {
+      "delay": "事件最多可能需要 40 分鐘才會出現在 Events Manager，並在 Ads Manager 中顯示為 Meta 潛在客戶。"
+    },
+    "connected": "已連接",
+    "disconnect": "中斷連接",
+    "openEventManager": "開啟 Events Manager",
+    "methods": {
+      "oauth": {
+        "title": "透過 Facebook 連接",
+        "description": "使用您頁面現有的連接，然後選擇資料集 ID。",
+        "connect": "透過 Facebook 連接",
+        "connectedLabel": "透過 Facebook"
+      },
+      "custom": {
+        "title": "自訂連接",
+        "description": "使用來自 Meta Events Manager 的資料集 ID 與存取權杖。",
+        "start": "設定自訂連接",
+        "connect": "連接",
+        "connectedLabel": "自訂"
+      },
+      "whatsapp": {
+        "title": "透過 WhatsApp 連接",
+        "description": "使用您的 WhatsApp 連接，然後選擇資料集 ID。",
+        "connect": "透過 WhatsApp 連接",
+        "connectedLabel": "透過 WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "選擇資料集 ID",
+      "description": "輸入現有的資料集 ID，或留空讓系統自動建立。",
+      "save": "儲存",
+      "caveat": "若資料集 ID 未連結到此 Facebook 頁面或 Instagram 帳號，事件可能無法正確歸因。將此欄位留空即可自動建立已連結的資料集。"
+    },
+    "whatsapp": {
+      "connect": "連接"
+    }
   }
 }

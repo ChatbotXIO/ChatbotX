@@ -123,6 +123,8 @@ export const BaseEditor = ({
         return t("trigger.actions.startAnotherFlow")
       case triggerActions.enum.transferConversationToHuman:
         return t("trigger.actions.transferConversationToHuman")
+      case triggerActions.enum.sendMetaCapiEvent:
+        return t("trigger.actions.sendMetaCapiEvent")
       case triggerActions.enum.runGoogleSheet:
         return "Google Sheets"
       default:

@@ -19,6 +19,10 @@ const TAB_CONFIGS: readonly TabConfig[] = [
     value: "message-templates",
     translationKey: "messenger.tabs.messageTemplates",
   },
+  {
+    value: "capi",
+    translationKey: "messenger.tabs.conversionsApi",
+  },
 ] as const
 
 export const MessengerSettingTabs = memo(

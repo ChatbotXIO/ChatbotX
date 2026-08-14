@@ -87,7 +87,7 @@ Compact JWS, header `{ alg: "EdDSA", kid, typ: "JWT" }`. Payload
 | `nbf`          | Optional not-before.                                             |
 | `customerName` | Human-readable customer name.                                    |
 | `licenseId`    | Vendor's internal license id.                                    |
-| `tier`         | `"enterprise"` or `"enterprise-plus"`.                           |
+| `tier`         | `"enterprise"` or `"cloud"`.                                     |
 | `features`     | Subset of `sso`, `customBranding`, `customDomain`, `auditLog`, `prioritySupport`. |
 | `limits`       | `maxWorkspaces`, `maxSeats`, `maxChannels` — positive int or `null` (unlimited). |
 
@@ -95,6 +95,13 @@ Verification (`service.ts`) rejects non-`EdDSA` algorithms *before* verifying
 (algorithm-confusion guard), rejects unknown `kid`s, enforces `iss`/`exp`/`nbf`
 via `jose`, and validates the payload shape with zod. An **expired** token still
 surfaces its claims (state `"expired"`) so operators can see what lapsed.
+
+**Tier must match the running edition.** `NEXT_PUBLIC_EDITION=cloud` deployments
+only accept `tier: "cloud"` licenses; `NEXT_PUBLIC_EDITION=enterprise` deployments
+only accept `tier: "enterprise"`. A mismatched tier makes the license `"invalid"`
+(not merely a warning) — this applies to expired tokens too, so a wrong-tier
+expired license reports `"invalid"` rather than `"expired"`. Community edition
+never verifies a license, so this rule doesn't apply there.
 
 > `LICENSE_ISSUER` in `public-keys.ts` must exactly match the `iss` claim set by
 > the signer in `../aha.chat-enterprise`, or every token fails verification.

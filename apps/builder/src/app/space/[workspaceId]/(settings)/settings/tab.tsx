@@ -49,7 +49,8 @@ export function SettingsTab({
 
   const activeTab = useMemo(() => {
     const segments = pathname.split("/")
-    return segments.at(-1)
+    const settingsIndex = segments.indexOf("settings")
+    return settingsIndex === -1 ? undefined : segments[settingsIndex + 1]
   }, [pathname])
 
   return (

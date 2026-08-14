@@ -229,6 +229,7 @@ export async function attachTagsByNames(
   // other WhatsApp-CTWA inbox the contact might have.
   if (
     contactInbox &&
+    newlyLinkedTagIds.length > 0 &&
     adsConversionService.isEligibleChannel(contactInbox.channel)
   ) {
     await adsConversionService.enqueueTagAppliedEvaluationsForInbox({

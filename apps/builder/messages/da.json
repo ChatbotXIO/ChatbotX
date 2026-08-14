@@ -43,6 +43,7 @@
     "disableBot": "Deaktivér bot",
     "disconnect": "Afbryd",
     "download": "Download",
+    "downloadTemplate": "Download skabelon",
     "edit": "Rediger",
     "editFeature": "Rediger {feature}",
     "enableBot": "Aktivér bot",
@@ -145,6 +146,9 @@
     "clone": "Klon",
     "remove": "Fjern",
     "restore": "Gendan"
+  },
+  "errors": {
+    "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
   },
   "states": {
     "success": "Succes",
@@ -536,6 +540,8 @@
       "blocked": "Blokeret",
       "noAdminReply": "Intet svar fra administrator",
       "contactCreatedAt": "Kontakt oprettet den",
+      "fromCtwaAd": "Fra Click to WhatsApp-annonce",
+      "ctwaConversion": "CTWA-konvertering",
       "lastUserInputTypes": {
         "text": "Tekst",
         "location": "Placering",
@@ -545,6 +551,10 @@
         "audio": "Lyd",
         "gif": "GIF",
         "file": "Fil"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Køb"
       }
     },
     "fieldGroups": {
@@ -559,7 +569,8 @@
       "topicCoupon": "Emnekupon",
       "customFields": "Brugerdefinerede felter",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp Ads"
     },
     "languages": {
       "ar": "Arabisk",
@@ -595,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Botlink",
       "chatPlugin": "C. chatplugin"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA-samtalestartere",
+        "leads": "CTWA-kvalificerede leads",
+        "purchases": "CTWA-købere"
+      },
+      "adPrefix": "annonce",
+      "allAds": "alle annoncer"
     }
   },
   "fields": {
@@ -1944,6 +1964,11 @@
       "label": "Events",
       "placeholder": "Type an event navn og press Indtast",
       "description": "Tilføj one eller mere event names. Når Make attaches a webhook for one af these events, data er sendt til it når denne trin runs."
+    },
+    "n8nEvents": {
+      "label": "Hændelser",
+      "placeholder": "Skriv et hændelsenavn og tryk på Enter",
+      "description": "Tilføj et eller flere hændelsenavne. Når n8n tilføjer et webhook for en af disse hændelser, sendes data til det, når dette trin køres."
     }
   },
   "flows": {
@@ -1990,6 +2015,7 @@
       "broadcastActions": "Broadcast Handlinger",
       "callApi": "External API Anmodning",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Set up Kupon",
@@ -2018,6 +2044,7 @@
       "getResponseAddContact": "Tilføj Kontakt til GetResponse",
       "sendGridAddContact": "Tilføj Kontakt til SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Åbn Websted",
       "optInEmail": "Opt I E-mail",
       "optOutEmail": "Opt Out E-mail",
@@ -2071,7 +2098,8 @@
       "unsubscribeSequence": "Unsubscribe Sequence",
       "splitTraffic": "Split Traffic",
       "aiEditImage": "AI Rediger Billede",
-      "whatsappFlow": "WhatsApp Flow"
+      "whatsappFlow": "WhatsApp Flow",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2103,6 +2131,11 @@
       "selectCustomFieldPlaceholder": "Vælg brugerdefineret felt",
       "addMapping": "Tilføj Tilknytning",
       "addCustomField": "Tilføj Ny"
+    },
+    "sendCarousel": {
+      "addSlide": "Tilføj kort",
+      "removeSlide": "Fjern kort",
+      "whatsappLinkButtonIgnored": "På WhatsApp virker dette korts link ikke: et kort med en linkknap kan ikke have andre knapper. Det sendes i stedet som et svar."
     },
     "additionalSteps": "Additional trin",
     "delayType": {
@@ -2165,7 +2198,7 @@
     },
     "followUp": {
       "durationLabel": "Duration",
-      "waitAndContinue": "Vent <værdi>{duration} {unit}</værdi> og fortsæt",
+      "waitAndContinue": "Vent <value>{duration} {unit}</value> og fortsæt",
       "cancelOnReplyHint": "Den follow-up won't være sendt if den kontakt svar before den tid expires."
     },
     "setCustomField": {
@@ -2216,6 +2249,207 @@
     },
     "errors": {
       "invalidAppSettings": "Facebook App indstillinger er ikke valid"
+    }
+  },
+  "ads": {
+    "title": "Annoncer",
+    "nav": {
+      "clickToWhatsappAds": "Click to WhatsApp Ads",
+      "clickToTiktokAds": "Click to TikTok Ads",
+      "connectAccounts": "Forbind konti",
+      "conversionEvents": "Konverteringshændelser",
+      "adsAnalytics": "Annonceanalyse",
+      "reporting": "Rapportering",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Kommer snart"
+    },
+    "connectAccounts": {
+      "title": "Administrer alle dine annoncekonti",
+      "description": "Spor konverteringer og optimer dine click-to-WhatsApp-annoncekampagner.",
+      "learnMore": "Lær mere",
+      "connectAdAccount": "Forbind annoncekonto",
+      "adAccountName": "Annoncekontonavn",
+      "disconnect": "Afbryd",
+      "empty": "Ingen annoncekonto forbundet endnu.",
+      "adAccountsTitle": "Meta-annoncekonti",
+      "adAccountsDescription": "Forbind Facebook Ads for at indlæse de annoncekonti, der bruges til click-to-WhatsApp-kampagner.",
+      "adAccountsReconnectBanner": "Din Meta-annoncekontos token er udløbet eller har mistet tilladelser. Forbind Facebook Ads igen for at bevare annonceapportering.",
+      "adAccountsNotConnected": "Der er endnu ikke forbundet nogen Meta-annoncekonti.",
+      "adAccountsEmpty": "Der blev ikke fundet nogen Meta-annoncekonti til denne Facebook Ads-forbindelse.",
+      "adAccountsNote": "Forbrug og retargeting-målgrupper kommer fra disse annoncekonti.",
+      "reconnectBanner": "Forbind din WhatsApp-konto igen for at aktivere afsendelse af konverteringshændelser til Meta.",
+      "reconnect": "Forbind igen",
+      "reconnectSuccess": "WhatsApp-kontoen er forbundet igen.",
+      "selectAccountLabel": "WhatsApp-konto",
+      "status": {
+        "ready": "Automatiske hændelser klar",
+        "missingPermission": "Mangler tilladelse til Automatiske hændelser",
+        "unverified": "Tilladelse ikke bekræftet"
+      },
+      "table": {
+        "name": "Navn",
+        "phoneNumber": "Telefonnummer",
+        "wabaId": "WABA-ID",
+        "permission": "Automatiske hændelser"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Forbind først din WhatsApp-konto",
+        "description": "Click-to-WhatsApp-konverteringstracking kræver en forbundet WhatsApp-konto, før du kan tilknytte annoncekonti og oprette konverteringsdatasæt.",
+        "step1": "Forbind din WhatsApp Business-konto under Kanaler.",
+        "step2": "Kom tilbage hertil for at godkende Meta Ads og vælge din annoncekonto.",
+        "step3": "Vi opretter automatisk konverteringsdatasættet ved hjælp af din WhatsApp Business-konto.",
+        "cta": "Forbind WhatsApp-konto"
+      }
+    },
+    "conversionEvents": {
+      "title": "Konverteringshændelser",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Administrer annoncekonti",
+      "export": "Eksportér",
+      "selectAll": "Vælg alle",
+      "whatsappAsset": "WhatsApp-aktiv",
+      "selectWhatsappAsset": "Vælg WhatsApp-aktiv",
+      "templates": "Skabeloner",
+      "selectTemplates": "Vælg skabeloner",
+      "noTemplates": "Ingen godkendte skabeloner fundet.",
+      "existingRules": "Eksisterende regler",
+      "noRules": "Ingen konverteringsregler for dette WhatsApp-aktiv endnu.",
+      "toggleRule": "Aktivér eller deaktivér regel",
+      "deleteRule": "Slet regel",
+      "qualifyingTemplateMessageSent": "Kvalificerende skabelonbesked er sendt",
+      "qualifyingFirstReply": "Kontakt sender sin første besked",
+      "qualifyingAnyReply": "Kontakt sender en besked",
+      "when": "Når",
+      "whenOptions": {
+        "templateSent": "Kvalificerende skabelonbesked er sendt",
+        "tagApplied": "Kontakt bliver tagget",
+        "keywordMatched": "Kontaktens besked matcher en nøgleordsregel",
+        "contactReplied": "Kontakt sender en besked"
+      },
+      "tags": "Tags",
+      "selectTags": "Vælg tags",
+      "noTags": "Ingen tags fundet.",
+      "untitledKeywordRule": "(navnløs nøgleordsregel)",
+      "keywordRules": "Nøgleordsregler",
+      "selectKeywordRules": "Vælg nøgleordsregler",
+      "noKeywordRules": "Ingen indgående nøgleordsregler fundet.",
+      "replyOptions": "Svarindstillinger",
+      "firstReplyOnly": "Kun den første besked",
+      "dedupeNote": "Højst 1 hændelse pr. dag pr. samtale pr. regel.",
+      "dealWon": "Deal vundet",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Køb",
+      "messages": {
+        "ruleSaved": "Konverteringsregel gemt",
+        "ruleUpdated": "Konverteringsregel opdateret",
+        "ruleDeleted": "Konverteringsregel slettet"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Side 1",
+        "page2": "Side 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Spor kvalificerede leads",
+        "question": "På hvilket tidspunkt i samtalen vil du kvalificere en kontakt som lead?",
+        "when": "Når",
+        "then": "Marker derefter CTWA-lead som"
+      },
+      "trackPurchases": {
+        "title": "Spor køb",
+        "question": "Hvilken skabelon bekræfter et køb?",
+        "when": "Når",
+        "then": "Så",
+        "noValueNote": "Et regelbaseret køb registrerer en Køb-konvertering uden en ordreværdi — det tæller med i køb, men tilføjer 0 til omsætningen. Ordreværdi registreres kun af Meta Automatiske hændelser."
+      }
+    },
+    "analytics": {
+      "title": "CTWA-analyse",
+      "funnelOverview": "Trakteoverblik",
+      "conversationsStarted": "Startede samtaler",
+      "qualifiedLeads": "Kvalificerede leads",
+      "purchases": "Køb",
+      "adSpend": "Annonceforbrug",
+      "spendAccountLevelNote": "Forbrug rapporteres på Meta-annoncekontoniveau; når en WhatsApp-konto er valgt, skjules annoncer med kun forbrug og ingen trakteaktivitet for den konto.",
+      "revenue": "Omsætning",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Omsætning antager en enkelt valuta (USD). Annoncekonti med blandet valuta aggregeres endnu ikke.",
+      "costPerLead": "Pris/lead",
+      "costPerPurchase": "Pris/køb",
+      "impressions": "Visninger",
+      "clicks": "Klik",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Pris/samtale",
+      "costCurrencyNote": "Omkostningsmålinger antager en enkelt valuta (USD), i overensstemmelse med annonceforbrug.",
+      "performanceChart": {
+        "title": "Præstation over tid",
+        "empty": "Ingen samtaler, leads, køb eller forbrug i denne periode endnu."
+      },
+      "dateRange": {
+        "oneDay": "1D",
+        "oneWeek": "1U",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Brugerdefineret",
+        "apply": "Anvend"
+      },
+      "allAds": "Alle annoncer",
+      "adAccountFilter": {
+        "all": "Alle annoncekonti",
+        "label": "Annoncekonto",
+        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
+      },
+      "retarget": "Retarget",
+      "thoseWhoPurchased": "De, der har købt",
+      "thoseWhoStartedConversation": "De, der har startet en samtale",
+      "sendWhatsappBroadcast": "Send WhatsApp-broadcast",
+      "from": "Fra",
+      "to": "Til",
+      "unattributed": "Ikke tilskrevet",
+      "retargetDialog": {
+        "title": "Retarget CTWA-kontakter",
+        "createAudience": "Opret målgruppe",
+        "useExistingAudience": "Brug eksisterende målgruppe",
+        "audienceName": "Målgruppenavn",
+        "audiencePrefix": "CTWA",
+        "confirm": "Start synkronisering",
+        "success": "Synkronisering af retarget-målgruppe er sat i kø.",
+        "error": "Kunne ikke sætte synkronisering af retarget-målgruppe i kø."
+      },
+      "delivery": {
+        "title": "Levering af konverteringer",
+        "sent": "Sendt",
+        "pending": "Afventer",
+        "failed": "Mislykkedes",
+        "skippedNoScope": "Sprunget over (intet scope)",
+        "skippedRegion": "Sprunget over (region)",
+        "noScopeWarning": "Nogle konverteringer blev ikke sendt, fordi denne WhatsApp-konto mangler tilladelsen til hændelser. Forbind den igen for at aktivere rapportering af Automatiske hændelser.",
+        "reconnectCta": "Forbind konto igen",
+        "empty": "Ingen konverteringshændelser i denne periode endnu."
+      },
+      "export": {
+        "conversations": "Eksportér samtaler",
+        "leads": "Eksportér leads",
+        "purchases": "Eksportér køb"
+      },
+      "csv": {
+        "contactName": "Kontaktnavn",
+        "phone": "Telefon",
+        "adId": "Annonce-ID",
+        "occurredAt": "Fandt sted"
+      },
+      "empty": "Ingen data endnu. Forbind en annoncekonto, og begynd at spore konverteringer."
     }
   },
   "googleSheets": {
@@ -2691,6 +2925,8 @@
     "noVersionsFound": "Ingen published versions found",
     "publishVersionSuccess": "A ny version har been published",
     "flowConfigIncomplete": "Some configurations er incomplete",
+    "whatsappCarouselButtonsMismatch": "På WhatsApp skal en karrusel have de samme knapper på hvert kort: enten en enkelt linkknap på hvert kort eller det samme antal svarknapper på hvert kort",
+    "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan et karruselkort med en linkknap ikke have andre knapper. Fjern de andre knapper på kortet, eller skift linkknappen til en anden handling.",
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",
     "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
     "redoHistoryCleared": "Gentag historik cleared",
@@ -2703,7 +2939,11 @@
     "iceBreakers": "Ice Breakers",
     "iceBreakersDescription": "Ice breakers provide a way for brugere til start a samtale med din bot af showing a liste af frequently asked questions.",
     "reconnect": "Forbind igen",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Synkroniser existing kontakter og chat historik?",
@@ -2759,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Generelt Indstillinger",
-      "messageTemplates": "Besked Skabeloner"
+      "messageTemplates": "Besked Skabeloner",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3294,13 @@
         "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp-integrationen blev ikke fundet.",
+        "phoneNumberMismatch": "Gentilslutningen returnerede den forventede WhatsApp Business-konto, men ikke det telefonnummer, der er forbundet til dette arbejdsområde.",
+        "wabaMismatch": "Gentilslutningen returnerede en anden WhatsApp Business-konto. Forbind venligst den samme konto igen."
+      }
+    },
     "marketingMessageLite": "Marketing Besked Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3089,6 +3337,7 @@
         "quickReplyPayloadPlaceholder": "Indtast payload (valgfri)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Indtast flow token",
+        "flowNotSynced": "Synkroniser WhatsApp-flows for at knytte indsendte felter.",
         "catalogProductId": "Product ID",
         "catalogProductIdPlaceholder": "Indtast product retailer ID",
         "carouselCard": "Card {index}",
@@ -3125,7 +3374,8 @@
       "flows": "Flows",
       "messageTemplates": "Besked Skabeloner",
       "profile": "Profil",
-      "usefulLinks": "Useful Links"
+      "usefulLinks": "Useful Links",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3352,7 +3602,8 @@
       "clearCustomField": "Ryd brugerdefineret felt",
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Administratorer",
-      "transferConversationToHuman": "Transfer Samtale til Menneskelig"
+      "transferConversationToHuman": "Transfer Samtale til Menneskelig",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Udløser goes off",
     "before": "Før",
@@ -3390,7 +3641,10 @@
     "title": "Audit Logfiler"
   },
   "customFields": {
-    "title": "Brugerdefineret Felter"
+    "title": "Brugerdefineret Felter",
+    "variables": {
+      "rawGroup": "Rå brugerdefinerede felter"
+    }
   },
   "keywords": {
     "title": "Nøgleord",
@@ -4432,6 +4686,102 @@
       "iconPlaceholder": "e.g. book-open, star, circle-question-mark",
       "position": "Ordre",
       "iconSearchLink": "Browse Lucide icons →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Gem",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

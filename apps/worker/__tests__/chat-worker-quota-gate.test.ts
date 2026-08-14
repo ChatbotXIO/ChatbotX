@@ -11,30 +11,42 @@ const mocks = vi.hoisted(() => ({
   sendTypingToChannel: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/automated-response", () => ({
+  replyByOutboundAutomatedResponse: vi.fn(),
+}))
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
 }))
-vi.mock("@chatbotx.io/sdk", () => ({
-  SdkException: class SdkException extends Error {},
-}))
-vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: {
-    sendChannelMessage: "sendChannelMessage",
-    sendFlowMessage: "sendFlowMessage",
-    sendChatMessage: "sendChatMessage",
-    sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
-    sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
-    sendTyping: "sendTyping",
-    notifyExportResult: "notifyExportResult",
-    broadcastEvent: "broadcastEvent",
-    deleteChannelMessage: "deleteChannelMessage",
-    editChannelMessage: "editChannelMessage",
-    changeChannelMessageState: "changeChannelMessageState",
-  },
-  defaultWorkerOptions: {},
-  getRedisConnection: vi.fn(),
-  queueNames: { enum: { chat: "chat" } },
-}))
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
+  return {
+    ...actual,
+    SdkException: class SdkException extends Error {},
+  }
+})
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return {
+    ...actual,
+    ChatJobAction: {
+      sendChannelMessage: "sendChannelMessage",
+      sendFlowMessage: "sendFlowMessage",
+      sendChatMessage: "sendChatMessage",
+      sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
+      sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
+      sendTyping: "sendTyping",
+      notifyExportResult: "notifyExportResult",
+      broadcastEvent: "broadcastEvent",
+      deleteChannelMessage: "deleteChannelMessage",
+      editChannelMessage: "editChannelMessage",
+      changeChannelMessageState: "changeChannelMessageState",
+    },
+    defaultWorkerOptions: {},
+    getRedisConnection: vi.fn(),
+    queueNames: { enum: { chat: "chat" } },
+  }
+})
 vi.mock("bullmq", () => ({
   Worker: class Worker {
     constructor(_queue: string, processJob: (job: unknown) => Promise<void>) {
@@ -46,6 +58,13 @@ vi.mock("bullmq", () => ({
     }
 
     close() {
+      return Promise.resolve()
+    }
+  },
+  // Instantiated at module scope by worker-config's queue setup; not
+  // exercised by this unit test beyond needing to construct successfully.
+  Queue: class Queue {
+    add() {
       return Promise.resolve()
     }
   },
@@ -87,7 +106,11 @@ beforeAll(async () => {
   mocks.ensureBootstrapped.mockResolvedValue(undefined)
   await import("../src/chat/worker")
   await vi.waitFor(() => expect(mocks.processJob).toBeTypeOf("function"))
-})
+  // `src/chat/worker` pulls in many largely-unmocked handler modules; the
+  // one-time esbuild transform on this first import can exceed the default
+  // 10s hook timeout under CPU contention (e.g. `turbo run test` fanning out
+  // across the whole monorepo).
+}, 60_000)
 
 beforeEach(() => {
   vi.clearAllMocks()

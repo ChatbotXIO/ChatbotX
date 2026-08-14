@@ -62,9 +62,7 @@ export function UpdateInstagramForm({
               feature: t("fields.instagram.label"),
             }),
           )
-          router.push(
-            `/space/${workspaceId}/settings/channels?channel=instagram`,
-          )
+          router.push(`/space/${workspaceId}/settings/channels/instagram`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to update Instagram.")
@@ -195,9 +193,7 @@ export function UpdateInstagramForm({
         <DialogFooter>
           <Button
             onClick={() =>
-              router.push(
-                `/space/${workspaceId}/settings/channels?channel=instagram`,
-              )
+              router.push(`/space/${workspaceId}/settings/channels/instagram`)
             }
             type="button"
             variant="link"

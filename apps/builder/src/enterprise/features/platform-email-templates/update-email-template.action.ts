@@ -1,6 +1,6 @@
 "use server"
 
-import { tenantService } from "@chatbotx.io/business"
+import { assertEnterpriseFeatures, tenantService } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import type { TenantModel, UserModel } from "@chatbotx.io/database/types"
 import {
@@ -47,6 +47,7 @@ export const updateEmailTemplateAction = platformAdminActionClient
       ctx: { user: UserModel }
       parsedInput: UpdateEmailTemplateSchema
     }) => {
+      await assertEnterpriseFeatures()
       await tenantService.upsertByOwner(
         ctx.user.id,
         toTemplateUpdate(parsedInput),
@@ -58,6 +59,7 @@ export const updateRootEmailTemplateAction = superAdminActionClient
   .inputSchema(updateEmailTemplateSchema)
   .action(
     async ({ parsedInput }: { parsedInput: UpdateEmailTemplateSchema }) => {
+      await assertEnterpriseFeatures()
       await tenantService.upsertById(
         ROOT_TENANT_ID,
         toTemplateUpdate(parsedInput),

@@ -6,6 +6,7 @@ import {
 import { workspaceService } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import { cache } from "react"
 import { isCloud } from "@/env"
 import { getDomainFromHeader } from "@/lib/domain"
 
@@ -47,7 +48,7 @@ export async function resolvePlatformOwnerId(props: {
     await getDomainFromHeader(),
   )
   if (domainTenantId !== ROOT_TENANT_ID) {
-    return (await resolveTenantOwnerId(domainTenantId)) ?? userId
+    return (await resolveTenantOwnerIdCached(domainTenantId)) ?? userId
   }
 
   if (workspaceId) {
@@ -67,6 +68,15 @@ export async function resolvePlatformOwnerId(props: {
 }
 
 /**
+ * Request-scoped tenant-owner lookup, keyed on the `tenantId` string.
+ * `cache()` memoizes on argument identity, so the key must be a primitive —
+ * caching `resolveOwnerForWorkspace` on its `WorkspaceModel` argument would
+ * never hit, because every `workspaceService.find` returns a fresh object
+ * (superjson-deserialized from Redis, or a new Drizzle row).
+ */
+const resolveTenantOwnerIdCached = cache(resolveTenantOwnerId)
+
+/**
  * The tenant-aware owner for a known workspace: its own tenant's owner when
  * it has one, else the workspace's direct owner.
  *
@@ -78,12 +88,16 @@ export async function resolvePlatformOwnerId(props: {
  * `resolveForOwner` picks it up the same way it does for the no-workspace
  * case above; if not, it falls back to the platform default. No migration
  * needed.
+ *
+ * Callers on the same request that resolve the same workspace's tenant all
+ * collapse into one `resolveTenantOwnerId` read via the string-keyed cache
+ * above; root-tenant workspaces short-circuit with zero I/O.
  */
 export async function resolveOwnerForWorkspace(
   workspace: WorkspaceModel,
 ): Promise<string> {
   if (workspace.tenantId !== ROOT_TENANT_ID) {
-    const tenantOwnerId = await resolveTenantOwnerId(workspace.tenantId)
+    const tenantOwnerId = await resolveTenantOwnerIdCached(workspace.tenantId)
     if (tenantOwnerId) {
       return tenantOwnerId
     }

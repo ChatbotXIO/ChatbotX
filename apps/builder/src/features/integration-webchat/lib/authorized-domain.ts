@@ -35,6 +35,12 @@ export const isOriginAuthorized = (
   origin: string | null | undefined,
   authorizedDomains: string[] = [],
 ) => {
+  // No origin means the webchat was opened directly, not embedded in an
+  // iframe — the allowlist only applies to embedding, so always allow.
+  if (!origin) {
+    return true
+  }
+
   const domains = authorizedDomains.map(normalizeHost).filter(Boolean)
   if (domains.length === 0) {
     return true

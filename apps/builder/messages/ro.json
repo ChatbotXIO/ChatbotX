@@ -43,6 +43,7 @@
       "broadcastActions": "Acțiuni de difuzare",
       "callApi": "Solicitare API externă",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Declanșatoare",
       "questionnaires": "Chestionare",
       "setUpCoupon": "Configurează cuponul",
@@ -71,6 +72,7 @@
       "getResponseAddContact": "Adaugă contactul în GetResponse",
       "sendGridAddContact": "Adaugă contactul în SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Deschide site-ul web",
       "optInEmail": "Abonează la e-mail",
       "optOutEmail": "Dezabonează de la e-mail",
@@ -124,7 +126,8 @@
       "unsubscribeSequence": "Dezabonează de la secvență",
       "splitTraffic": "Distribuie traficul",
       "aiEditImage": "Editează imaginea cu IA",
-      "whatsappFlow": "Flux WhatsApp"
+      "whatsappFlow": "Flux WhatsApp",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -156,6 +159,11 @@
       "selectCustomFieldPlaceholder": "Selectați câmpul personalizat",
       "addMapping": "Adaugă o asociere",
       "addCustomField": "Adaugă"
+    },
+    "sendCarousel": {
+      "addSlide": "Adaugă cardul",
+      "removeSlide": "Elimină cardul",
+      "whatsappLinkButtonIgnored": "Pe WhatsApp, linkul acestui card nu va funcționa: un card cu un buton de link nu poate avea alte butoane. Va fi trimis ca răspuns în schimb."
     },
     "additionalSteps": "Pași suplimentari",
     "delayType": {
@@ -269,6 +277,207 @@
     },
     "errors": {
       "invalidAppSettings": "Setările aplicației Facebook nu sunt valide"
+    }
+  },
+  "ads": {
+    "title": "Anunțuri",
+    "nav": {
+      "clickToWhatsappAds": "Anunțuri Click to WhatsApp",
+      "clickToTiktokAds": "Anunțuri Click to TikTok",
+      "connectAccounts": "Conectează conturi",
+      "conversionEvents": "Evenimente de conversie",
+      "adsAnalytics": "Analiză anunțuri",
+      "reporting": "Rapoarte",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "În curând"
+    },
+    "connectAccounts": {
+      "title": "Gestionează toate conturile tale de anunțuri",
+      "description": "Urmărește conversiile și optimizează-ți campaniile de anunțuri click-to-WhatsApp.",
+      "learnMore": "Află mai multe",
+      "connectAdAccount": "Conectează cont de anunțuri",
+      "adAccountName": "Numele contului de anunțuri",
+      "disconnect": "Deconectează",
+      "empty": "Niciun cont de anunțuri conectat încă.",
+      "adAccountsTitle": "Conturi de anunțuri Meta",
+      "adAccountsDescription": "Conectează Facebook Ads pentru a încărca conturile de anunțuri utilizate în campaniile click-to-WhatsApp.",
+      "adAccountsReconnectBanner": "Tokenul contului tău de anunțuri Meta a expirat sau a pierdut permisiunile. Reconectează Facebook Ads pentru a păstra raportarea anunțurilor disponibilă.",
+      "adAccountsNotConnected": "Niciun cont de anunțuri Meta nu este conectat încă.",
+      "adAccountsEmpty": "Nu a fost găsit niciun cont de anunțuri Meta pentru această conexiune Facebook Ads.",
+      "adAccountsNote": "Cheltuielile și audiențele de retargetare provin din aceste conturi de anunțuri.",
+      "reconnectBanner": "Reconectează-ți contul de WhatsApp pentru a permite trimiterea evenimentelor de conversie către Meta.",
+      "reconnect": "Reconectează",
+      "reconnectSuccess": "Contul de WhatsApp a fost reconectat.",
+      "selectAccountLabel": "Cont WhatsApp",
+      "status": {
+        "ready": "Evenimente automate pregătite",
+        "missingPermission": "Permisiunea pentru Evenimente Automate lipsește",
+        "unverified": "Permisiune neverificată"
+      },
+      "table": {
+        "name": "Nume",
+        "phoneNumber": "Număr de telefon",
+        "wabaId": "ID WABA",
+        "permission": "Evenimente Automate"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Conectează-ți mai întâi contul de WhatsApp",
+        "description": "Urmărirea conversiilor Click-to-WhatsApp necesită un cont de WhatsApp conectat înainte să poți asocia conturi de anunțuri și să creezi seturi de date de conversie.",
+        "step1": "Conectează-ți contul WhatsApp Business în Canale.",
+        "step2": "Revino aici pentru a autoriza Meta Ads și a selecta contul tău de anunțuri.",
+        "step3": "Vom crea automat setul de date de conversie folosind contul tău WhatsApp Business.",
+        "cta": "Conectează contul WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Evenimente de conversie",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Gestionează conturile de anunțuri",
+      "export": "Exportă",
+      "selectAll": "Selectează tot",
+      "whatsappAsset": "Element WhatsApp",
+      "selectWhatsappAsset": "Selectează elementul WhatsApp",
+      "templates": "Șabloane",
+      "selectTemplates": "Selectează șabloane",
+      "noTemplates": "Nu a fost găsit niciun șablon aprobat.",
+      "existingRules": "Reguli existente",
+      "noRules": "Nu există încă reguli de conversie pentru acest element WhatsApp.",
+      "toggleRule": "Activează sau dezactivează regula",
+      "deleteRule": "Șterge regula",
+      "qualifyingTemplateMessageSent": "Este trimis mesajul șablon de calificare",
+      "qualifyingFirstReply": "Contactul trimite primul său mesaj",
+      "qualifyingAnyReply": "Contactul trimite un mesaj",
+      "when": "Când",
+      "whenOptions": {
+        "templateSent": "Este trimis mesajul șablon de calificare",
+        "tagApplied": "Contactul este etichetat",
+        "keywordMatched": "Mesajul contactului corespunde unei reguli de cuvinte-cheie",
+        "contactReplied": "Contactul trimite un mesaj"
+      },
+      "tags": "Etichete",
+      "selectTags": "Selectează etichete",
+      "noTags": "Nu a fost găsită nicio etichetă.",
+      "untitledKeywordRule": "(regulă de cuvinte-cheie fără titlu)",
+      "keywordRules": "Reguli de cuvinte-cheie",
+      "selectKeywordRules": "Selectează reguli de cuvinte-cheie",
+      "noKeywordRules": "Nu a fost găsită nicio regulă de cuvinte-cheie pentru mesaje primite.",
+      "replyOptions": "Opțiuni de răspuns",
+      "firstReplyOnly": "Doar primul mesaj",
+      "dedupeNote": "Cel mult 1 eveniment pe zi per conversație per regulă.",
+      "dealWon": "Afacere câștigată",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Achiziție",
+      "messages": {
+        "ruleSaved": "Regula de conversie a fost salvată",
+        "ruleUpdated": "Regula de conversie a fost actualizată",
+        "ruleDeleted": "Regula de conversie a fost ștearsă"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Pagina 1",
+        "page2": "Pagina 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Urmărește leadurile calificate",
+        "question": "În ce moment al conversației vrei să califici un contact ca lead?",
+        "when": "Când",
+        "then": "Apoi marchează leadul CTWA ca"
+      },
+      "trackPurchases": {
+        "title": "Urmărește achizițiile",
+        "question": "Ce șablon confirmă o achiziție?",
+        "when": "Când",
+        "then": "Apoi",
+        "noValueNote": "O achiziție bazată pe regulă înregistrează o conversie de tip Achiziție fără o valoare a comenzii — contează pentru achiziții, dar adaugă 0 la venituri. Valoarea comenzii este captată doar de Evenimentele Automate Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analiză CTWA",
+      "funnelOverview": "Prezentare generală a pâlniei",
+      "conversationsStarted": "Conversații începute",
+      "qualifiedLeads": "Leaduri calificate",
+      "purchases": "Achiziții",
+      "adSpend": "Cheltuieli publicitare",
+      "spendAccountLevelNote": "Cheltuielile sunt raportate la nivelul contului de anunțuri Meta; când este selectat un cont de WhatsApp, anunțurile care au doar cheltuieli, fără activitate în pâlnie pentru acel cont, sunt ascunse.",
+      "revenue": "Venituri",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Veniturile presupun o singură monedă (USD). Conturile de anunțuri cu monede mixte nu sunt încă agregate.",
+      "costPerLead": "Cost/lead",
+      "costPerPurchase": "Cost/achiziție",
+      "impressions": "Afișări",
+      "clicks": "Clicuri",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Cost/conversație",
+      "costCurrencyNote": "Valorile de cost presupun o singură monedă (USD), în concordanță cu cheltuielile publicitare.",
+      "performanceChart": {
+        "title": "Performanță în timp",
+        "empty": "Încă nu există conversații, leaduri, achiziții sau cheltuieli în acest interval."
+      },
+      "dateRange": {
+        "oneDay": "1Z",
+        "oneWeek": "1S",
+        "oneMonth": "1L",
+        "threeMonths": "3L",
+        "custom": "Personalizat",
+        "apply": "Aplică"
+      },
+      "allAds": "Toate anunțurile",
+      "adAccountFilter": {
+        "all": "Toate conturile de anunțuri",
+        "label": "Cont de anunțuri",
+        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri."
+      },
+      "retarget": "Retargetare",
+      "thoseWhoPurchased": "Cei care au achiziționat",
+      "thoseWhoStartedConversation": "Cei care au început o conversație",
+      "sendWhatsappBroadcast": "Trimite difuzare WhatsApp",
+      "from": "De la",
+      "to": "Până la",
+      "unattributed": "Neatribuit",
+      "retargetDialog": {
+        "title": "Retargetează contactele CTWA",
+        "createAudience": "Creează audiență",
+        "useExistingAudience": "Folosește o audiență existentă",
+        "audienceName": "Numele audienței",
+        "audiencePrefix": "CTWA",
+        "confirm": "Începe sincronizarea",
+        "success": "Sincronizarea audienței de retargetare a fost adăugată în coadă.",
+        "error": "Nu s-a putut adăuga în coadă sincronizarea audienței de retargetare."
+      },
+      "delivery": {
+        "title": "Livrarea conversiei",
+        "sent": "Trimis",
+        "pending": "În așteptare",
+        "failed": "Eșuat",
+        "skippedNoScope": "Omis (fără domeniu de aplicare)",
+        "skippedRegion": "Omis (regiune)",
+        "noScopeWarning": "Unele conversii nu au fost trimise pentru că acest cont de WhatsApp nu are permisiunea pentru evenimente. Reconectează-l pentru a activa raportarea Evenimentelor Automate.",
+        "reconnectCta": "Reconectează contul",
+        "empty": "Încă nu există evenimente de conversie în acest interval."
+      },
+      "export": {
+        "conversations": "Exportă conversații",
+        "leads": "Exportă leaduri",
+        "purchases": "Exportă achiziții"
+      },
+      "csv": {
+        "contactName": "Numele contactului",
+        "phone": "Telefon",
+        "adId": "ID anunț",
+        "occurredAt": "A avut loc la"
+      },
+      "empty": "Încă nu există date. Conectează un cont de anunțuri și începe să urmărești conversiile."
     }
   },
   "googleSheets": {
@@ -604,6 +813,7 @@
     "disableBot": "Dezactivează botul",
     "disconnect": "Deconectează",
     "download": "Descarcă",
+    "downloadTemplate": "Descarcă șablonul",
     "edit": "Editează",
     "editFeature": "Editează {feature}",
     "enableBot": "Activează botul",
@@ -706,6 +916,9 @@
     "clone": "Clonează",
     "remove": "Elimină",
     "restore": "Restaurează"
+  },
+  "errors": {
+    "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
   },
   "states": {
     "success": "Succes",
@@ -1097,6 +1310,8 @@
       "blocked": "Blocat",
       "noAdminReply": "Niciun răspuns de la administrator",
       "contactCreatedAt": "Contact creat la",
+      "fromCtwaAd": "Din anunț Click to WhatsApp",
+      "ctwaConversion": "Conversie CTWA",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Locație",
@@ -1106,6 +1321,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Fișier"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Achiziție"
       }
     },
     "fieldGroups": {
@@ -1120,7 +1339,8 @@
       "topicCoupon": "Subiect cupon",
       "customFields": "Câmpuri personalizate",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Anunțuri Click to WhatsApp"
     },
     "languages": {
       "ar": "Arabă",
@@ -1156,6 +1376,15 @@
       "webchat": "Webchat",
       "botLink": "Link bot",
       "chatPlugin": "Plugin C. chat"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Inițiatori de conversații CTWA",
+        "leads": "Leaduri calificate CTWA",
+        "purchases": "Cumpărători CTWA"
+      },
+      "adPrefix": "anunț",
+      "allAds": "toate anunțurile"
     }
   },
   "fields": {
@@ -2505,6 +2734,11 @@
       "label": "Evenimente",
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
       "description": "Adăugați unul sau mai multe nume de evenimente. Când Make atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
+    },
+    "n8nEvents": {
+      "label": "Evenimente",
+      "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
+      "description": "Adăugați unul sau mai multe nume de evenimente. Când n8n atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
     }
   },
   "channels": {
@@ -2691,6 +2925,8 @@
     "noVersionsFound": "Nicio versiune publicată găsită",
     "publishVersionSuccess": "A fost publicată o versiune nouă",
     "flowConfigIncomplete": "Unele configurări sunt incomplete",
+    "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
+    "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
     "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
     "redoHistoryCleared": "Istoricul de refacere a fost șters",
@@ -2703,7 +2939,11 @@
     "iceBreakers": "Sparge-gheață",
     "iceBreakersDescription": "Sparge-gheața oferă utilizatorilor o modalitate de a începe o conversație cu botul tău, afișând o listă de întrebări frecvente.",
     "reconnect": "Reconectează",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Sincronizezi contactele existente și istoricul conversațiilor?",
@@ -2759,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Setări generale",
-      "messageTemplates": "Șabloane de mesaje"
+      "messageTemplates": "Șabloane de mesaje",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3294,13 @@
         "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integrarea WhatsApp nu a fost găsită.",
+        "phoneNumberMismatch": "Reconectarea a returnat Contul WhatsApp Business așteptat, dar nu numărul de telefon conectat la acest spațiu de lucru.",
+        "wabaMismatch": "Reconectarea a returnat un Cont WhatsApp Business diferit. Reconectează același cont."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3089,6 +3337,7 @@
         "quickReplyPayloadPlaceholder": "Introdu payload-ul (opțional)",
         "flowToken": "Token flux",
         "flowTokenPlaceholder": "Introdu tokenul fluxului",
+        "flowNotSynced": "Sincronizează fluxurile WhatsApp pentru a asocia câmpurile trimise.",
         "catalogProductId": "ID produs",
         "catalogProductIdPlaceholder": "Introdu ID-ul de retailer al produsului",
         "carouselCard": "Card {index}",
@@ -3125,7 +3374,8 @@
       "flows": "Fluxuri",
       "messageTemplates": "Șabloane de mesaje",
       "profile": "Profil",
-      "usefulLinks": "Linkuri utile"
+      "usefulLinks": "Linkuri utile",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Gestionează-ți contul WhatsApp",
@@ -3352,7 +3602,8 @@
       "clearCustomField": "Golește câmpul personalizat",
       "startAnotherFlow": "Pornește alt flux",
       "notifyAdmins": "Notifică administratorii",
-      "transferConversationToHuman": "Transferă conversația către un operator"
+      "transferConversationToHuman": "Transferă conversația către un operator",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Declanșatorul se activează",
     "before": "Înainte de",
@@ -3390,7 +3641,10 @@
     "title": "Jurnale de audit"
   },
   "customFields": {
-    "title": "Câmpuri personalizate"
+    "title": "Câmpuri personalizate",
+    "variables": {
+      "rawGroup": "Câmpuri personalizate brute"
+    }
   },
   "keywords": {
     "title": "Cuvinte cheie",
@@ -4433,5 +4687,101 @@
     "title": "Ai fost dezabonat.",
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Salvează",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
+    }
   }
 }

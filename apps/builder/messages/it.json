@@ -1,9 +1,17 @@
 {
   "fields": {
-    "omnichannel": { "label": "Omnicanale" },
-    "smtp": { "label": "SMTP" },
-    "messenger": { "label": "Messenger" },
-    "image": { "label": "Immagine" },
+    "omnichannel": {
+      "label": "Omnicanale"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Immagine"
+    },
     "instagram": {
       "label": "Instagram",
       "loginTitle": "Accedi con Instagram",
@@ -15,7 +23,9 @@
       "cloneFromMessenger": "Clona da Messenger",
       "clonedFromMessenger": "Clonato da Messenger"
     },
-    "zalo": { "label": "Zalo OA" },
+    "zalo": {
+      "label": "Zalo OA"
+    },
     "telegram": {
       "label": "Telegram",
       "botToken": "Token del bot",
@@ -25,17 +35,39 @@
         "step3": "Dopo aver creato il bot, riceverai il token API del bot. Copia il token API e incollalo qui sotto."
       }
     },
-    "matchAll": { "label": "Soddisfa tutte le condizioni seguenti" },
-    "matchAny": { "label": "Soddisfa una delle condizioni seguenti" },
-    "condition": { "label": "Condizione" },
-    "actions": { "label": "Azioni" },
-    "tags": { "label": "Tag" },
-    "customFields": { "label": "Campi personalizzati" },
-    "pipelines": { "label": "Pipeline" },
-    "sequences": { "label": "Sequenze" },
-    "ecommerce": { "label": "E-commerce" },
-    "entryPointLink": { "label": "Link del punto di ingresso" },
-    "assignedId": { "label": "Assegna a" },
+    "matchAll": {
+      "label": "Soddisfa tutte le condizioni seguenti"
+    },
+    "matchAny": {
+      "label": "Soddisfa una delle condizioni seguenti"
+    },
+    "condition": {
+      "label": "Condizione"
+    },
+    "actions": {
+      "label": "Azioni"
+    },
+    "tags": {
+      "label": "Tag"
+    },
+    "customFields": {
+      "label": "Campi personalizzati"
+    },
+    "pipelines": {
+      "label": "Pipeline"
+    },
+    "sequences": {
+      "label": "Sequenze"
+    },
+    "ecommerce": {
+      "label": "E-commerce"
+    },
+    "entryPointLink": {
+      "label": "Link del punto di ingresso"
+    },
+    "assignedId": {
+      "label": "Assegna a"
+    },
     "operator": {
       "label": "Operatore",
       "is": "È",
@@ -63,8 +95,12 @@
       "onlyContactsMatch": "Solo i contatti che corrispondono a",
       "moreOptions": "Altre opzioni"
     },
-    "contactNote": { "label": "Nota del contatto" },
-    "chooseTime": { "label": "Scegli l'ora" },
+    "contactNote": {
+      "label": "Nota del contatto"
+    },
+    "chooseTime": {
+      "label": "Scegli l'ora"
+    },
     "notificationType": {
       "label": "Tipo di notifica",
       "notifyAdmin": "Notifica amministratore",
@@ -78,18 +114,42 @@
       "telegram": "Telegram",
       "browser": "Browser"
     },
-    "accessToken": { "label": "Token di accesso" },
-    "botField": { "label": "Campo del bot" },
-    "agent": { "label": "Agente" },
-    "aiAgent": { "label": "Agente IA" },
-    "aiQueuedMessages": { "label": "Messaggi IA in coda" },
-    "aiFile": { "label": "File IA" },
-    "aiFunction": { "label": "Funzione IA" },
-    "aiTrigger": { "label": "Trigger IA" },
-    "alphanumericLength": { "label": "Lunghezza alfanumerica" },
-    "analytics": { "label": "Analisi" },
-    "apiKey": { "label": "Chiave API" },
-    "auth": { "label": "Autenticazione" },
+    "accessToken": {
+      "label": "Token di accesso"
+    },
+    "botField": {
+      "label": "Campo del bot"
+    },
+    "agent": {
+      "label": "Agente"
+    },
+    "aiAgent": {
+      "label": "Agente IA"
+    },
+    "aiQueuedMessages": {
+      "label": "Messaggi IA in coda"
+    },
+    "aiFile": {
+      "label": "File IA"
+    },
+    "aiFunction": {
+      "label": "Funzione IA"
+    },
+    "aiTrigger": {
+      "label": "Trigger IA"
+    },
+    "alphanumericLength": {
+      "label": "Lunghezza alfanumerica"
+    },
+    "analytics": {
+      "label": "Analisi"
+    },
+    "apiKey": {
+      "label": "Chiave API"
+    },
+    "auth": {
+      "label": "Autenticazione"
+    },
     "authorizedDomain": {
       "description": "I domini o sottodomini autorizzati ad accedere alla tua webchat.",
       "label": "Domini autorizzati{plural, select, 1 {} other {}}"
@@ -99,43 +159,79 @@
       "placeholder": "example.com",
       "tooltip": "Elenco dei domini ai quali può accedere l'agente IA. Lascia vuoto per consentire tutti i domini."
     },
-    "authToken": { "label": "Token" },
+    "authToken": {
+      "label": "Token"
+    },
     "authType": {
       "headers": "Intestazione personalizzata",
       "token": "Token"
     },
-    "automatedResponse": { "label": "Risposta automatica" },
-    "avatar": { "label": "Immagine del profilo" },
-    "reflink": { "label": "Link del punto di ingresso" },
-    "qrCode": { "label": "Codice QR" },
+    "automatedResponse": {
+      "label": "Risposta automatica"
+    },
+    "avatar": {
+      "label": "Immagine del profilo"
+    },
+    "reflink": {
+      "label": "Link del punto di ingresso"
+    },
+    "qrCode": {
+      "label": "Codice QR"
+    },
     "savePayloadToCustomField": {
       "label": "Salva il payload nel campo personalizzato"
     },
-    "bot": { "label": "Bot" },
-    "botResponse": { "label": "Risposta del bot" },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Risposta del bot"
+    },
     "brandColor": {
       "description": "Questo colore viene utilizzato sui pulsanti per adattarsi al tuo marchio nella pagina di destinazione, nelle e-mail e nella webchat.",
       "label": "Colore del marchio"
     },
-    "broadcast": { "label": "Broadcast" },
-    "trigger": { "label": "Trigger" },
-    "webhook": { "label": "Webhook" },
+    "broadcast": {
+      "label": "Broadcast"
+    },
+    "trigger": {
+      "label": "Trigger"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
     "button": {
       "label": "Pulsante",
       "whenPressed": "Quando viene premuto questo pulsante"
     },
-    "buttonLabel": { "label": "Etichetta del pulsante" },
-    "category": { "label": "Categoria" },
-    "completed": { "label": "Completato" },
-    "workspace": { "label": "Spazio di lavoro" },
+    "buttonLabel": {
+      "label": "Etichetta del pulsante"
+    },
+    "category": {
+      "label": "Categoria"
+    },
+    "completed": {
+      "label": "Completato"
+    },
+    "workspace": {
+      "label": "Spazio di lavoro"
+    },
     "workspaceId": {
       "description": "Identificatore univoco del tuo spazio di lavoro.",
       "label": "ID spazio di lavoro"
     },
-    "workspaceName": { "label": "Nome account" },
-    "contact": { "label": "Contatto" },
-    "contacts": { "label": "Contatti" },
-    "conversation": { "label": "Conversazione" },
+    "workspaceName": {
+      "label": "Nome account"
+    },
+    "contact": {
+      "label": "Contatto"
+    },
+    "contacts": {
+      "label": "Contatti"
+    },
+    "conversation": {
+      "label": "Conversazione"
+    },
     "conversationStarter": {
       "description": "Gli avvii di conversazione vengono utilizzati per iniziare una conversazione con un utente.",
       "label": "Avvii di conversazione{plural, select, 1 {} other {}}",
@@ -145,11 +241,22 @@
         "sendText": "Invia testo"
       }
     },
-    "createdAt": { "label": "Creato il" },
-    "currentTime": { "label": "Ora corrente" },
-    "customRange": { "label": "Intervallo personalizzato" },
-    "customCss": { "label": "CSS personalizzato" },
-    "theme": { "label": "Tema", "placeholder": "Seleziona un tema" },
+    "createdAt": {
+      "label": "Creato il"
+    },
+    "currentTime": {
+      "label": "Ora corrente"
+    },
+    "customRange": {
+      "label": "Intervallo personalizzato"
+    },
+    "customCss": {
+      "label": "CSS personalizzato"
+    },
+    "theme": {
+      "label": "Tema",
+      "placeholder": "Seleziona un tema"
+    },
     "customJS": {
       "label": "JS personalizzato",
       "placeholder": "Inserisci JavaScript personalizzato"
@@ -167,7 +274,9 @@
       "increase": "Aumenta di",
       "decrease": "Diminuisci di"
     },
-    "dataCollect": { "label": "Raccolta dati" },
+    "dataCollect": {
+      "label": "Raccolta dati"
+    },
     "defaultReply": {
       "description": "È la risposta predefinita che il tuo spazio di lavoro invierà agli utenti quando non sa come rispondere al loro messaggio.",
       "label": "Risposta predefinita"
@@ -196,25 +305,53 @@
       "description": "Il bot funzionerà solo per gli amministratori del bot. Attiva questa opzione se stai creando il bot e non vuoi che utenti non amministratori lo utilizzino.",
       "label": "Modalità sviluppo"
     },
-    "email": { "label": "E-mail", "placeholder": "Inserisci e-mail" },
+    "email": {
+      "label": "E-mail",
+      "placeholder": "Inserisci e-mail"
+    },
     "embedCode": {
       "description": "Copia e incolla questo codice nel tuo sito web per incorporare il widget della chat.",
       "label": "Codice di incorporamento",
       "securityNote": "Nota sulla sicurezza",
       "securityNoteDescription": "Questo widget funzionerà solo nei domini autorizzati nella configurazione della webchat. Assicurati di aggiungere il tuo dominio all'elenco dei domini autorizzati."
     },
-    "processingStatus": { "label": "Stato di elaborazione" },
-    "enable": { "label": "Attiva" },
-    "file": { "label": "File" },
-    "link": { "label": "Link" },
-    "message": { "label": "Messaggio" },
-    "filter": { "label": "Filtro" },
-    "finalMessage": { "label": "Messaggio finale" },
-    "firstName": { "label": "Nome", "placeholder": "Inserisci il nome" },
-    "countryCode": { "label": "Prefisso internazionale" },
-    "contactId": { "label": "ID contatto" },
-    "flow": { "label": "Flusso" },
-    "flowId": { "label": "ID flusso" },
+    "processingStatus": {
+      "label": "Stato di elaborazione"
+    },
+    "enable": {
+      "label": "Attiva"
+    },
+    "file": {
+      "label": "File"
+    },
+    "link": {
+      "label": "Link"
+    },
+    "message": {
+      "label": "Messaggio"
+    },
+    "filter": {
+      "label": "Filtro"
+    },
+    "finalMessage": {
+      "label": "Messaggio finale"
+    },
+    "firstName": {
+      "label": "Nome",
+      "placeholder": "Inserisci il nome"
+    },
+    "countryCode": {
+      "label": "Prefisso internazionale"
+    },
+    "contactId": {
+      "label": "ID contatto"
+    },
+    "flow": {
+      "label": "Flusso"
+    },
+    "flowId": {
+      "label": "ID flusso"
+    },
     "flows": {
       "aiGenerateText": "{aiName}: Genera testo",
       "aiGenerateImage": "{aiName}: Genera immagine",
@@ -228,9 +365,16 @@
       "aiGenerateTextAgent": "{aiName}: Genera agente testuale",
       "aiDeleteMessageHistory": "{aiName}: Elimina cronologia messaggi"
     },
-    "steps": { "label": "Passaggi", "placeholder": "Seleziona passaggio" },
-    "folder": { "label": "Cartella" },
-    "format": { "label": "Formato" },
+    "steps": {
+      "label": "Passaggi",
+      "placeholder": "Seleziona passaggio"
+    },
+    "folder": {
+      "label": "Cartella"
+    },
+    "format": {
+      "label": "Formato"
+    },
     "framework": {
       "angular": "Angular",
       "ember": "Ember",
@@ -238,36 +382,77 @@
       "svelte": "Svelte",
       "vue": "Vue"
     },
-    "function": { "label": "Funzione" },
-    "gemini": { "label": "Gemini" },
-    "geminiModel": { "label": "Modello Gemini" },
+    "function": {
+      "label": "Funzione"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Modello Gemini"
+    },
     "gender": {
       "female": "Donna",
       "label": "Genere",
       "male": "Uomo",
       "unknown": "Sconosciuto"
     },
-    "googleSheets": { "label": "Google Sheets" },
-    "activeCampaign": { "label": "ActiveCampaign" },
-    "getResponse": { "label": "GetResponse" },
-    "mailchimp": { "label": "Mailchimp" },
-    "mailerLite": { "label": "MailerLite" },
-    "klaviyo": { "label": "Klaviyo" },
-    "moosend": { "label": "Moosend" },
-    "host": { "label": "Host", "placeholder": "smtp.example.com" },
-    "hideHeader": { "label": "Nascondi intestazione" },
-    "hideMessageInput": { "label": "Nascondi campo del messaggio" },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Host",
+      "placeholder": "smtp.example.com"
+    },
+    "hideHeader": {
+      "label": "Nascondi intestazione"
+    },
+    "hideMessageInput": {
+      "label": "Nascondi campo del messaggio"
+    },
     "inbox": {
       "label": "Posta in arrivo",
       "placeholder": "Seleziona una casella di posta"
     },
-    "inboxTeam": { "label": "Team della posta in arrivo" },
-    "teamMembers": { "label": "Membri del team" },
-    "inboxTeamMember": { "label": "Membro del team della posta in arrivo" },
-    "inputCustomField": { "label": "Campo personalizzato di input" },
-    "insertLink": { "label": "Inserisci link" },
-    "instructions": { "label": "Messaggio di sistema (prompt)" },
-    "isDefault": { "label": "Contrassegna come predefinito" },
+    "inboxTeam": {
+      "label": "Team della posta in arrivo"
+    },
+    "teamMembers": {
+      "label": "Membri del team"
+    },
+    "inboxTeamMember": {
+      "label": "Membro del team della posta in arrivo"
+    },
+    "inputCustomField": {
+      "label": "Campo personalizzato di input"
+    },
+    "insertLink": {
+      "label": "Inserisci link"
+    },
+    "instructions": {
+      "label": "Messaggio di sistema (prompt)"
+    },
+    "isDefault": {
+      "label": "Contrassegna come predefinito"
+    },
     "isRichResponse": {
       "description": "Restituisce JSON strutturato con messaggi e azioni invece di testo semplice in streaming.",
       "label": "Risposta avanzata"
@@ -277,10 +462,19 @@
       "label": "Lingua",
       "placeholder": "Seleziona lingua"
     },
-    "lastName": { "label": "Cognome", "placeholder": "Inserisci il cognome" },
-    "last30days": { "label": "Ultimi 30 giorni" },
-    "last7days": { "label": "Ultimi 7 giorni" },
-    "lastInput": { "label": "Ultimo input" },
+    "lastName": {
+      "label": "Cognome",
+      "placeholder": "Inserisci il cognome"
+    },
+    "last30days": {
+      "label": "Ultimi 30 giorni"
+    },
+    "last7days": {
+      "label": "Ultimi 7 giorni"
+    },
+    "lastInput": {
+      "label": "Ultimo input"
+    },
     "lastUserInputTypes": {
       "text": "Testo",
       "location": "Posizione",
@@ -291,13 +485,25 @@
       "gif": "GIF",
       "file": "File"
     },
-    "lastMonth": { "label": "Mese scorso" },
-    "lifeTime": { "label": "Intero periodo" },
-    "locale": { "label": "Impostazioni locali" },
-    "errorLog": { "label": "Registro errori" },
+    "lastMonth": {
+      "label": "Mese scorso"
+    },
+    "lifeTime": {
+      "label": "Intero periodo"
+    },
+    "locale": {
+      "label": "Impostazioni locali"
+    },
+    "errorLog": {
+      "label": "Registro errori"
+    },
     "inputType": {
       "label": "Tipo di input",
-      "options": { "text": "Testo", "image": "Immagine", "file": "File" }
+      "options": {
+        "text": "Testo",
+        "image": "Immagine",
+        "file": "File"
+      }
     },
     "extractFields": {
       "label": "Campi da estrarre",
@@ -305,15 +511,23 @@
         "label": "Chiave JSON",
         "placeholder": "ad es. e-mail, telefono, indirizzo"
       },
-      "customFieldId": { "label": "Salva nel campo personalizzato" },
+      "customFieldId": {
+        "label": "Salva nel campo personalizzato"
+      },
       "description": {
         "label": "Descrizione (facoltativa)",
         "placeholder": "Descrivi cosa estrarre"
       }
     },
-    "max": { "label": "Massimo" },
-    "maxOutputTokens": { "label": "Token massimi" },
-    "mcpServer": { "label": "Server MCP" },
+    "max": {
+      "label": "Massimo"
+    },
+    "maxOutputTokens": {
+      "label": "Token massimi"
+    },
+    "mcpServer": {
+      "label": "Server MCP"
+    },
     "systemFunction": {
       "label": "Funzione di sistema",
       "names": {
@@ -324,23 +538,47 @@
         "webSearch": "Ricerca web"
       }
     },
-    "min": { "label": "Minimo" },
-    "model": { "label": "Modello" },
+    "min": {
+      "label": "Minimo"
+    },
+    "model": {
+      "label": "Modello"
+    },
     "name": {
       "label": "Nome",
       "placeholder": "Inserisci nome",
       "searchPlaceholder": "Cerca nome..."
     },
-    "selectUsers": { "label": "Seleziona utenti" },
-    "node": { "label": "Nodo" },
-    "noResults": { "label": "Nessun risultato trovato" },
-    "notes": { "label": "Note" },
-    "numericLength": { "label": "Lunghezza numerica" },
-    "numericValue": { "label": "Valore numerico" },
-    "openai": { "label": "OpenAI" },
-    "operation": { "label": "Operazione" },
-    "outputCustomField": { "label": "Campo personalizzato di output" },
-    "httpMethod": { "label": "Metodo" },
+    "selectUsers": {
+      "label": "Seleziona utenti"
+    },
+    "node": {
+      "label": "Nodo"
+    },
+    "noResults": {
+      "label": "Nessun risultato trovato"
+    },
+    "notes": {
+      "label": "Note"
+    },
+    "numericLength": {
+      "label": "Lunghezza numerica"
+    },
+    "numericValue": {
+      "label": "Valore numerico"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Operazione"
+    },
+    "outputCustomField": {
+      "label": "Campo personalizzato di output"
+    },
+    "httpMethod": {
+      "label": "Metodo"
+    },
     "requestUrl": {
       "label": "URL",
       "placeholder": "https://api.example.com/endpoint"
@@ -363,29 +601,45 @@
         "formEncoded": "Modulo codificato"
       }
     },
-    "statusCode": { "label": "Codice di stato" },
+    "statusCode": {
+      "label": "Codice di stato"
+    },
     "outputMessage": {
       "label": "Messaggio di output",
       "placeholder": "Qual è il messaggio di output?"
     },
-    "paymentHistory": { "label": "Cronologia pagamenti" },
-    "paymentMethods": { "label": "Metodi di pagamento" },
+    "paymentHistory": {
+      "label": "Cronologia pagamenti"
+    },
+    "paymentMethods": {
+      "label": "Metodi di pagamento"
+    },
     "persistentMenu": {
       "description": "I menu persistenti vengono utilizzati per iniziare una conversazione con un utente.",
       "label": "Menu persistenti{plural, select, 1 {} other {}}",
-      "type": { "openWebsite": "Apri sito web", "sendFlow": "Invia flusso" }
+      "type": {
+        "openWebsite": "Apri sito web",
+        "sendFlow": "Invia flusso"
+      }
     },
     "userPersistentMenu": {
       "pageDefault": "Predefinito",
       "label": "Menu persistente dell'utente"
     },
-    "phoneNumber": { "label": "Numero di telefono" },
+    "phoneNumber": {
+      "label": "Numero di telefono"
+    },
     "phoneNumberId": {
       "label": "Numero di telefono",
       "noPhoneNumbersFound": "Nessun numero di telefono trovato per questo account"
     },
-    "port": { "label": "Porta", "placeholder": "587" },
-    "provider": { "label": "Provider" },
+    "port": {
+      "label": "Porta",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Provider"
+    },
     "prompt": {
       "label": "Prompt",
       "placeholder": "Inserisci il prompt"
@@ -965,7 +1219,7 @@
       "displayName": "Nome visualizzato",
       "connectInstructions": {
         "step1": "Crea un'app TikTok su <link>developers.tiktok.com</link>.",
-        "step2": "Autorizza il tuo account e copia il <strong>token di accesso</strong>, l'<strong>Open ID</strong> e il <strong>segreto client</strong>.",
+        "step2": "Autorizza il tuo account e copia il <strong>token di accesso</strong>, l’<strong>Open ID</strong> e il <strong>segreto client</strong>.",
         "step3": "Incolla qui sotto le credenziali per collegarti."
       }
     },
@@ -1092,6 +1346,11 @@
       "label": "Eventi",
       "placeholder": "Digita il nome di un evento e premi Invio",
       "description": "Aggiungi uno o più nomi di eventi. Quando Make collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
+    },
+    "n8nEvents": {
+      "label": "Eventi",
+      "placeholder": "Digita il nome di un evento e premi Invio",
+      "description": "Aggiungi uno o più nomi di eventi. Quando n8n collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
     }
   },
   "actions": {
@@ -1138,6 +1397,7 @@
     "disableBot": "Disattiva bot",
     "disconnect": "Disconnetti",
     "download": "Scarica",
+    "downloadTemplate": "Scarica modello",
     "edit": "Modifica",
     "editFeature": "Modifica {feature}",
     "enableBot": "Attiva bot",
@@ -1240,6 +1500,9 @@
     "clone": "Clona",
     "remove": "Rimuovi",
     "restore": "Ripristina"
+  },
+  "errors": {
+    "superAdminRequired": "Devi essere super admin dello spazio di lavoro per farlo."
   },
   "states": {
     "success": "Successo",
@@ -1631,6 +1894,8 @@
       "blocked": "Bloccato",
       "noAdminReply": "Nessuna risposta dell'amministratore",
       "contactCreatedAt": "Contatto creato il",
+      "fromCtwaAd": "Da un'inserzione Click to WhatsApp",
+      "ctwaConversion": "Conversione CTWA",
       "lastUserInputTypes": {
         "text": "Testo",
         "location": "Posizione",
@@ -1640,6 +1905,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Acquisto"
       }
     },
     "fieldGroups": {
@@ -1654,7 +1923,8 @@
       "topicCoupon": "Argomento coupon",
       "customFields": "Campi personalizzati",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Inserzioni Click to WhatsApp"
     },
     "languages": {
       "ar": "Arabo",
@@ -1690,6 +1960,15 @@
       "webchat": "Webchat",
       "botLink": "Link del bot",
       "chatPlugin": "Plugin chat C."
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Avvii conversazione CTWA",
+        "leads": "Lead qualificati CTWA",
+        "purchases": "Acquirenti CTWA"
+      },
+      "adPrefix": "inserzione",
+      "allAds": "tutte le inserzioni"
     }
   },
   "flows": {
@@ -1736,6 +2015,7 @@
       "broadcastActions": "Azioni broadcast",
       "callApi": "Richiesta API esterna",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Trigger",
       "questionnaires": "Questionari",
       "setUpCoupon": "Configura coupon",
@@ -1764,6 +2044,7 @@
       "getResponseAddContact": "Aggiungi contatto a GetResponse",
       "sendGridAddContact": "Aggiungi contatto a SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Apri sito web",
       "optInEmail": "Acconsenti alle e-mail",
       "optOutEmail": "Revoca consenso alle e-mail",
@@ -1817,7 +2098,8 @@
       "unsubscribeSequence": "Annulla iscrizione alla sequenza",
       "splitTraffic": "Suddividi traffico",
       "aiEditImage": "Modifica immagine con IA",
-      "whatsappFlow": "Flusso WhatsApp"
+      "whatsappFlow": "Flusso WhatsApp",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -1849,6 +2131,11 @@
       "selectCustomFieldPlaceholder": "Seleziona un campo personalizzato",
       "addMapping": "Aggiungi mappatura",
       "addCustomField": "Aggiungi"
+    },
+    "sendCarousel": {
+      "addSlide": "Aggiungi scheda",
+      "removeSlide": "Rimuovi scheda",
+      "whatsappLinkButtonIgnored": "Su WhatsApp, il link di questa scheda non funzionerà: una scheda con un pulsante di collegamento non può avere altri pulsanti. Verrà inviata come risposta."
     },
     "additionalSteps": "Passaggi aggiuntivi",
     "delayType": {
@@ -1962,6 +2249,207 @@
     },
     "errors": {
       "invalidAppSettings": "Le impostazioni dell'app Facebook non sono valide"
+    }
+  },
+  "ads": {
+    "title": "Inserzioni",
+    "nav": {
+      "clickToWhatsappAds": "Inserzioni Click to WhatsApp",
+      "clickToTiktokAds": "Inserzioni Click to TikTok",
+      "connectAccounts": "Collega account",
+      "conversionEvents": "Eventi di conversione",
+      "adsAnalytics": "Analisi delle inserzioni",
+      "reporting": "Report",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Prossimamente"
+    },
+    "connectAccounts": {
+      "title": "Gestisci tutti i tuoi account pubblicitari",
+      "description": "Monitora le conversioni e ottimizza le tue campagne di inserzioni Click to WhatsApp.",
+      "learnMore": "Scopri di più",
+      "connectAdAccount": "Collega account pubblicitario",
+      "adAccountName": "Nome account pubblicitario",
+      "disconnect": "Disconnetti",
+      "empty": "Nessun account pubblicitario ancora collegato.",
+      "adAccountsTitle": "Account pubblicitari Meta",
+      "adAccountsDescription": "Collega Facebook Ads per caricare gli account pubblicitari usati per le campagne Click to WhatsApp.",
+      "adAccountsReconnectBanner": "Il token del tuo account pubblicitario Meta è scaduto o ha perso le autorizzazioni. Ricollega Facebook Ads per mantenere disponibile il reporting delle inserzioni.",
+      "adAccountsNotConnected": "Nessun account pubblicitario Meta è ancora collegato.",
+      "adAccountsEmpty": "Non è stato trovato alcun account pubblicitario Meta per questa connessione Facebook Ads.",
+      "adAccountsNote": "La spesa e i pubblici di retargeting provengono da questi account pubblicitari.",
+      "reconnectBanner": "Ricollega il tuo account WhatsApp per abilitare l'invio degli eventi di conversione a Meta.",
+      "reconnect": "Ricollega",
+      "reconnectSuccess": "Account WhatsApp ricollegato.",
+      "selectAccountLabel": "Account WhatsApp",
+      "status": {
+        "ready": "Eventi automatici pronti",
+        "missingPermission": "Autorizzazione Eventi automatici mancante",
+        "unverified": "Autorizzazione non verificata"
+      },
+      "table": {
+        "name": "Nome",
+        "phoneNumber": "Numero di telefono",
+        "wabaId": "ID WABA",
+        "permission": "Eventi automatici"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Collega prima il tuo account WhatsApp",
+        "description": "Il monitoraggio delle conversioni Click to WhatsApp richiede un account WhatsApp collegato prima di poter collegare account pubblicitari e creare set di dati di conversione.",
+        "step1": "Collega il tuo account WhatsApp Business in Canali.",
+        "step2": "Torna qui per autorizzare Meta Ads e selezionare il tuo account pubblicitario.",
+        "step3": "Creeremo automaticamente il set di dati di conversione utilizzando il tuo account WhatsApp Business.",
+        "cta": "Collega account WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Eventi di conversione",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Gestisci account pubblicitari",
+      "export": "Esporta",
+      "selectAll": "Seleziona tutto",
+      "whatsappAsset": "Asset WhatsApp",
+      "selectWhatsappAsset": "Seleziona asset WhatsApp",
+      "templates": "Modelli",
+      "selectTemplates": "Seleziona modelli",
+      "noTemplates": "Nessun modello approvato trovato.",
+      "existingRules": "Regole esistenti",
+      "noRules": "Nessuna regola di conversione per questo asset WhatsApp per ora.",
+      "toggleRule": "Attiva o disattiva la regola",
+      "deleteRule": "Elimina regola",
+      "qualifyingTemplateMessageSent": "Viene inviato il messaggio modello qualificante",
+      "qualifyingFirstReply": "Il contatto invia il primo messaggio",
+      "qualifyingAnyReply": "Il contatto invia un messaggio",
+      "when": "Quando",
+      "whenOptions": {
+        "templateSent": "Viene inviato il messaggio modello qualificante",
+        "tagApplied": "Al contatto viene applicato un tag",
+        "keywordMatched": "Il messaggio del contatto corrisponde a una regola di parole chiave",
+        "contactReplied": "Il contatto invia un messaggio"
+      },
+      "tags": "Tag",
+      "selectTags": "Seleziona tag",
+      "noTags": "Nessun tag trovato.",
+      "untitledKeywordRule": "(regola di parole chiave senza titolo)",
+      "keywordRules": "Regole di parole chiave",
+      "selectKeywordRules": "Seleziona regole di parole chiave",
+      "noKeywordRules": "Nessuna regola di parole chiave in entrata trovata.",
+      "replyOptions": "Opzioni di risposta",
+      "firstReplyOnly": "Solo il primo messaggio",
+      "dedupeNote": "Massimo 1 evento al giorno per conversazione per regola.",
+      "dealWon": "Affare vinto",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Acquisto",
+      "messages": {
+        "ruleSaved": "Regola di conversione salvata",
+        "ruleUpdated": "Regola di conversione aggiornata",
+        "ruleDeleted": "Regola di conversione eliminata"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Pagina 1",
+        "page2": "Pagina 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Monitora i lead qualificati",
+        "question": "In quale punto della conversazione vuoi qualificare un contatto come lead?",
+        "when": "Quando",
+        "then": "Allora contrassegna il lead CTWA come"
+      },
+      "trackPurchases": {
+        "title": "Monitora gli acquisti",
+        "question": "Quale modello conferma un acquisto?",
+        "when": "Quando",
+        "then": "Allora",
+        "noValueNote": "Un acquisto basato su regole registra una conversione di Acquisto senza un valore d'ordine: conta per gli acquisti, ma aggiunge 0 al fatturato. Il valore dell'ordine viene rilevato solo dagli Eventi automatici di Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analisi CTWA",
+      "funnelOverview": "Panoramica del funnel",
+      "conversationsStarted": "Conversazioni avviate",
+      "qualifiedLeads": "Lead qualificati",
+      "purchases": "Acquisti",
+      "adSpend": "Spesa pubblicitaria",
+      "spendAccountLevelNote": "La spesa viene riportata a livello di account pubblicitario Meta; quando è selezionato un account WhatsApp, le inserzioni con sola spesa e nessuna attività di funnel per quell'account vengono nascoste.",
+      "revenue": "Fatturato",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Il fatturato presuppone una sola valuta (USD). Gli account pubblicitari con più valute non sono ancora aggregati.",
+      "costPerLead": "Costo/lead",
+      "costPerPurchase": "Costo/acquisto",
+      "impressions": "Impressioni",
+      "clicks": "Clic",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Costo/conversazione",
+      "costCurrencyNote": "Le metriche di costo presuppongono una sola valuta (USD), in linea con la spesa pubblicitaria.",
+      "performanceChart": {
+        "title": "Andamento nel tempo",
+        "empty": "Nessuna conversazione, lead, acquisto o spesa in questo intervallo per ora."
+      },
+      "dateRange": {
+        "oneDay": "1G",
+        "oneWeek": "1S",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Personalizzato",
+        "apply": "Applica"
+      },
+      "allAds": "Tutte le inserzioni",
+      "adAccountFilter": {
+        "all": "Tutti gli account pubblicitari",
+        "label": "Account pubblicitario",
+        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario."
+      },
+      "retarget": "Retarget",
+      "thoseWhoPurchased": "Chi ha acquistato",
+      "thoseWhoStartedConversation": "Chi ha avviato una conversazione",
+      "sendWhatsappBroadcast": "Invia broadcast WhatsApp",
+      "from": "Da",
+      "to": "A",
+      "unattributed": "Non attribuito",
+      "retargetDialog": {
+        "title": "Retarget dei contatti CTWA",
+        "createAudience": "Crea pubblico",
+        "useExistingAudience": "Usa un pubblico esistente",
+        "audienceName": "Nome del pubblico",
+        "audiencePrefix": "CTWA",
+        "confirm": "Avvia sincronizzazione",
+        "success": "Sincronizzazione del pubblico di retargeting in coda.",
+        "error": "Impossibile accodare la sincronizzazione del pubblico di retargeting."
+      },
+      "delivery": {
+        "title": "Consegna delle conversioni",
+        "sent": "Inviato",
+        "pending": "In attesa",
+        "failed": "Non riuscito",
+        "skippedNoScope": "Ignorato (nessun ambito)",
+        "skippedRegion": "Ignorato (regione)",
+        "noScopeWarning": "Alcune conversioni non sono state inviate perché a questo account WhatsApp manca l'autorizzazione per gli eventi. Ricollegalo per abilitare il reporting degli Eventi automatici.",
+        "reconnectCta": "Ricollega account",
+        "empty": "Nessun evento di conversione in questo intervallo per ora."
+      },
+      "export": {
+        "conversations": "Esporta conversazioni",
+        "leads": "Esporta lead",
+        "purchases": "Esporta acquisti"
+      },
+      "csv": {
+        "contactName": "Nome del contatto",
+        "phone": "Telefono",
+        "adId": "ID inserzione",
+        "occurredAt": "Avvenuto il"
+      },
+      "empty": "Nessun dato per ora. Collega un account pubblicitario e inizia a monitorare le conversioni."
     }
   },
   "googleSheets": {
@@ -2437,6 +2925,8 @@
     "noVersionsFound": "Nessuna versione pubblicata trovata",
     "publishVersionSuccess": "È stata pubblicata una nuova versione",
     "flowConfigIncomplete": "Alcune configurazioni sono incomplete",
+    "whatsappCarouselButtonsMismatch": "Su WhatsApp, un carosello richiede gli stessi pulsanti su ogni scheda: un unico pulsante di collegamento su ogni scheda, oppure lo stesso numero di pulsanti di risposta su ogni scheda",
+    "whatsappCarouselLinkButtonNotAlone": "Su WhatsApp, una scheda del carosello con un pulsante di collegamento non può avere altri pulsanti. Rimuovi gli altri pulsanti su quella scheda, oppure cambia il pulsante di collegamento in un'altra azione.",
     "duplicateNodeError": "Impossibile duplicare il blocco. Riprova.",
     "deleteNodeError": "Impossibile eliminare il blocco. Riprova.",
     "redoHistoryCleared": "Cronologia delle operazioni ripetibili cancellata",
@@ -2449,7 +2939,11 @@
     "iceBreakers": "Spunti di conversazione",
     "iceBreakersDescription": "Gli spunti di conversazione consentono agli utenti di avviare una conversazione con il tuo bot mostrando un elenco di domande frequenti.",
     "reconnect": "Ricollega",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Sincronizzare i contatti esistenti e la cronologia chat?",
@@ -2505,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Impostazioni generali",
-      "messageTemplates": "Modelli di messaggio"
+      "messageTemplates": "Modelli di messaggio",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -2799,6 +3294,13 @@
         "wabaResolveFailed": "Impossibile determinare l'account WhatsApp Business dall'autorizzazione."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integrazione WhatsApp non trovata.",
+        "phoneNumberMismatch": "La riconnessione ha restituito l'account WhatsApp Business previsto, ma non il numero di telefono collegato a questo spazio di lavoro.",
+        "wabaMismatch": "La riconnessione ha restituito un account WhatsApp Business diverso. Ricollega lo stesso account."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -2835,6 +3337,7 @@
         "quickReplyPayloadPlaceholder": "Inserisci payload (facoltativo)",
         "flowToken": "Token del flusso",
         "flowTokenPlaceholder": "Inserisci token del flusso",
+        "flowNotSynced": "Sincronizza i flussi WhatsApp per mappare i campi inviati.",
         "catalogProductId": "ID prodotto",
         "catalogProductIdPlaceholder": "Inserisci ID del rivenditore del prodotto",
         "carouselCard": "Scheda {index}",
@@ -2871,7 +3374,8 @@
       "flows": "Flussi",
       "messageTemplates": "Modelli di messaggio",
       "profile": "Profilo",
-      "usefulLinks": "Link utili"
+      "usefulLinks": "Link utili",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Gestisci il tuo account WhatsApp",
@@ -3098,7 +3602,8 @@
       "clearCustomField": "Cancella campo personalizzato",
       "startAnotherFlow": "Avvia un altro flusso",
       "notifyAdmins": "Notifica gli amministratori",
-      "transferConversationToHuman": "Trasferisci la conversazione a un operatore"
+      "transferConversationToHuman": "Trasferisci la conversazione a un operatore",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Il trigger si attiva",
     "before": "Prima",
@@ -3136,7 +3641,10 @@
     "title": "Registri di controllo"
   },
   "customFields": {
-    "title": "Campi personalizzati"
+    "title": "Campi personalizzati",
+    "variables": {
+      "rawGroup": "Campi personalizzati non elaborati"
+    }
   },
   "keywords": {
     "title": "Parole chiave",
@@ -3989,7 +4497,7 @@
     "expand": "Mostra sottocategorie",
     "collapse": "Nascondi sottocategorie",
     "productCount": "{count, plural, =0 {Nessun prodotto} one {# prodotto} other {# prodotti}}",
-    "deleteChildrenWarning": "{count, plural, one {Anche la sua sottocategoria verrà eliminata.} other {Anche le sue # sottocategorie verranno eliminate.}}"
+    "deleteChildrenWarning": "{count, plural, one {Anche la sua # sottocategoria verrà eliminata.} other {Anche le sue # sottocategorie verranno eliminate.}}"
   },
   "productImport": {
     "title": "Importa",
@@ -4178,6 +4686,102 @@
       "iconPlaceholder": "ad es. book-open, star, circle-question-mark",
       "position": "Ordine",
       "iconSearchLink": "Sfoglia le icone Lucide →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Salva",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

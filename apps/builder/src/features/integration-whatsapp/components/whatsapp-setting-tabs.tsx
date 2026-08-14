@@ -36,6 +36,10 @@ const TAB_CONFIGS: readonly TabConfig[] = [
     translationKey: "whatsapp.tabs.ecommerce",
   },
   {
+    value: "capi",
+    translationKey: "whatsapp.tabs.conversionsApi",
+  },
+  {
     value: "account-healths",
     translationKey: "whatsapp.tabs.accountHealths",
   },

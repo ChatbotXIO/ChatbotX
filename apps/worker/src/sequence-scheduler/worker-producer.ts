@@ -6,6 +6,7 @@ import {
   SEQUENCE_SCHEDULER_QUEUE_NAME,
 } from "@chatbotx.io/worker-config"
 import { createProducer } from "@chatbotx.io/worker-config/message-queue/factory"
+import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 
 const TOTAL_BUCKETS = 256
@@ -258,6 +259,7 @@ async function startSchedulerWorker() {
   logger.info("Starting scheduler worker")
 
   try {
+    await ensureBootstrapped()
     await scheduler.start()
     logger.info("Scheduler worker fully operational")
   } catch (error) {

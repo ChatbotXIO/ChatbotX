@@ -94,7 +94,7 @@ describe("SequenceAnalyticsService dispatch updates", () => {
     const query = executeSpy.mock.calls[0][0]
     expect(query).toContain('"id" = d1 AND "workspaceId" = w1')
     expect(query).not.toContain('"status" =')
-  }, 15_000)
+  })
 
   test("adds status predicate only when caller selected completed dispatches", async () => {
     findManySpy
@@ -127,5 +127,5 @@ describe("SequenceAnalyticsService dispatch updates", () => {
     expect(executeSpy.mock.calls[0][0]).toContain(
       '"id" = d1 AND "workspaceId" = w1 AND "status" = completed',
     )
-  }, 15_000)
+  })
 })

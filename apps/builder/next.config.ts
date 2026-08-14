@@ -17,10 +17,22 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
+  // Type-checking is NOT part of `next build`: the in-build tsc pass duplicated
+  // `check-types` and OOMs a default 4GB heap. The type gate lives in
+  // .github/workflows/ci.yml (`turbo run check-types lint test`) — keep that
+  // workflow green before trusting a build.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",
     },
+    // Additive to Next's built-in default list, which already covers
+    // lucide-react. `@chatbotx.io/ui` doesn't belong here: it's imported via
+    // per-file subpaths and its root export is not a re-export barrel, so
+    // there is nothing for this optimization to rewrite.
+    optimizePackageImports: ["@icons-pack/react-simple-icons"],
     // turbopackServerFastRefresh: false,
   },
   poweredByHeader: false,

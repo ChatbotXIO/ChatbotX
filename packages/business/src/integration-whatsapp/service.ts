@@ -281,6 +281,27 @@ class IntegrationWhatsappService extends BaseService {
     return integrationWhatsappRepository.findByIdForWorkspace(input)
   }
 
+  /**
+   * Resolves the WhatsApp integration owning an inbox, for the explicit
+   * "Send Meta CAPI Event" action (Meta Conversions API). Mirrors the
+   * messenger/instagram `findByInboxIdForWorkspace` contract — throws rather
+   * than returning null so it composes with `metaConversionsService`'s
+   * generic per-channel integration resolver.
+   */
+  async findByInboxIdForWorkspace(input: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<IntegrationWhatsappModel> {
+    const integration =
+      await integrationWhatsappRepository.findByInboxIdForWorkspace(input)
+
+    if (!integration) {
+      throw new Error("WhatsApp integration not found for workspace")
+    }
+
+    return integration
+  }
+
   findAllForTokenRefresh() {
     return integrationWhatsappRepository.findAllForTokenRefresh()
   }

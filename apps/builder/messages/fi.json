@@ -43,6 +43,7 @@
     "disableBot": "Poista botti käytöstä",
     "disconnect": "Katkaise yhteys",
     "download": "Lataa",
+    "downloadTemplate": "Lataa malli",
     "edit": "Muokkaa",
     "editFeature": "Muokkaa: {feature}",
     "enableBot": "Ota botti käyttöön",
@@ -145,6 +146,9 @@
     "clone": "Kloonaa",
     "remove": "Poista",
     "restore": "Palauta"
+  },
+  "errors": {
+    "superAdminRequired": "Sinun täytyy olla työtilan pääylläpitäjä tehdäksesi tämän."
   },
   "states": {
     "success": "Onnistui",
@@ -536,6 +540,8 @@
       "blocked": "Estetty",
       "noAdminReply": "Ei ylläpitäjän vastausta",
       "contactCreatedAt": "Yhteystieto luotu",
+      "fromCtwaAd": "Click to WhatsApp -mainoksesta",
+      "ctwaConversion": "CTWA-konversio",
       "lastUserInputTypes": {
         "text": "Teksti",
         "location": "Sijainti",
@@ -545,6 +551,10 @@
         "audio": "Ääni",
         "gif": "GIF",
         "file": "Tiedosto"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Liidi",
+        "purchase": "Ostotapahtuma"
       }
     },
     "fieldGroups": {
@@ -559,7 +569,8 @@
       "topicCoupon": "Kuponkiaihe",
       "customFields": "Mukautetut kentät",
       "email": "Sähköposti",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp Ads"
     },
     "languages": {
       "ar": "Arabia",
@@ -595,6 +606,15 @@
       "webchat": "Verkkokeskustelu",
       "botLink": "Bottilinkki",
       "chatPlugin": "C.-keskustelulaajennus"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA-keskustelun aloittajat",
+        "leads": "CTWA-kelpuutetut liidit",
+        "purchases": "CTWA-ostajat"
+      },
+      "adPrefix": "mainos",
+      "allAds": "kaikki mainokset"
     }
   },
   "fields": {
@@ -1944,6 +1964,11 @@
       "label": "Tapahtumat",
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
       "description": "Lisää vähintään yksi tapahtuman nimi. Kun Make liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
+    },
+    "n8nEvents": {
+      "label": "Tapahtumat",
+      "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
+      "description": "Lisää vähintään yksi tapahtuman nimi. Kun n8n liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
     }
   },
   "flows": {
@@ -1990,6 +2015,7 @@
       "broadcastActions": "Joukkolähetystoiminnot",
       "callApi": "Ulkoinen API-pyyntö",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Käynnistimet",
       "questionnaires": "Kyselyt",
       "setUpCoupon": "Määritä kuponki",
@@ -2018,6 +2044,7 @@
       "getResponseAddContact": "Lisää yhteystieto GetResponseen",
       "sendGridAddContact": "Lisää yhteystieto SendGridiin",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Avaa verkkosivusto",
       "optInEmail": "Tilaa sähköpostit",
       "optOutEmail": "Peru sähköpostit",
@@ -2071,7 +2098,8 @@
       "unsubscribeSequence": "Poista sekvenssistä",
       "splitTraffic": "Jaa liikenne",
       "aiEditImage": "AI muokkaa kuvaa",
-      "whatsappFlow": "WhatsApp Flow"
+      "whatsappFlow": "WhatsApp Flow",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2103,6 +2131,11 @@
       "selectCustomFieldPlaceholder": "Valitse mukautettu kenttä",
       "addMapping": "Lisää yhdistäminen",
       "addCustomField": "Lisää uusi"
+    },
+    "sendCarousel": {
+      "addSlide": "Lisää kortti",
+      "removeSlide": "Poista kortti",
+      "whatsappLinkButtonIgnored": "WhatsAppissa tämän kortin linkki ei toimi: linkkipainikkeen sisältävällä kortilla ei voi olla muita painikkeita. Se lähetetään sen sijaan vastauksena."
     },
     "additionalSteps": "Lisävaiheet",
     "delayType": {
@@ -2216,6 +2249,207 @@
     },
     "errors": {
       "invalidAppSettings": "Facebook-sovelluksen asetukset eivät ole kelvolliset"
+    }
+  },
+  "ads": {
+    "title": "Mainokset",
+    "nav": {
+      "clickToWhatsappAds": "Click to WhatsApp Ads",
+      "clickToTiktokAds": "Click to TikTok Ads",
+      "connectAccounts": "Yhdistä tilit",
+      "conversionEvents": "Konversiotapahtumat",
+      "adsAnalytics": "Mainosanalytiikka",
+      "reporting": "Raportointi",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Tulossa pian"
+    },
+    "connectAccounts": {
+      "title": "Hallitse kaikkia mainostilejäsi",
+      "description": "Seuraa konversioita ja optimoi click-to-WhatsApp-mainoskampanjasi.",
+      "learnMore": "Lue lisää",
+      "connectAdAccount": "Yhdistä mainostili",
+      "adAccountName": "Mainostilin nimi",
+      "disconnect": "Katkaise yhteys",
+      "empty": "Yhtään mainostiliä ei ole vielä yhdistetty.",
+      "adAccountsTitle": "Metan mainostilit",
+      "adAccountsDescription": "Yhdistä Facebook Ads latataksesi click-to-WhatsApp-kampanjoissa käytettävät mainostilit.",
+      "adAccountsReconnectBanner": "Meta-mainostilisi tunnistetiedot ovat vanhentuneet tai menettäneet käyttöoikeuksia. Yhdistä Facebook Ads uudelleen, jotta mainosraportointi pysyy käytettävissä.",
+      "adAccountsNotConnected": "Yhtään Meta-mainostiliä ei ole vielä yhdistetty.",
+      "adAccountsEmpty": "Tälle Facebook Ads -yhteydelle ei löytynyt Meta-mainostileja.",
+      "adAccountsNote": "Kulutus ja uudelleenkohdistuksen kohdeyleisöt tulevat näistä mainostileistä.",
+      "reconnectBanner": "Yhdistä WhatsApp-tilisi uudelleen, jotta konversiotapahtumien lähettäminen Metalle onnistuu.",
+      "reconnect": "Yhdistä uudelleen",
+      "reconnectSuccess": "WhatsApp-tili yhdistetty uudelleen.",
+      "selectAccountLabel": "WhatsApp-tili",
+      "status": {
+        "ready": "Automaattiset tapahtumat valmiina",
+        "missingPermission": "Automaattisten tapahtumien käyttöoikeus puuttuu",
+        "unverified": "Käyttöoikeutta ei ole vahvistettu"
+      },
+      "table": {
+        "name": "Nimi",
+        "phoneNumber": "Puhelinnumero",
+        "wabaId": "WABA-tunnus",
+        "permission": "Automaattiset tapahtumat"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Yhdistä ensin WhatsApp-tilisi",
+        "description": "Click-to-WhatsApp-konversioiden seuranta vaatii yhdistetyn WhatsApp-tilin, ennen kuin voit linkittää mainostilejä ja luoda konversiotietojoukkoja.",
+        "step1": "Yhdistä WhatsApp Business -tilisi Kanavat-osiossa.",
+        "step2": "Palaa tänne valtuuttaaksesi Meta Ads:in ja valitse mainostilisi.",
+        "step3": "Luomme automaattisesti konversiotietojoukon WhatsApp Business -tilisi avulla.",
+        "cta": "Yhdistä WhatsApp-tili"
+      }
+    },
+    "conversionEvents": {
+      "title": "Konversiotapahtumat",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Hallitse mainostilejä",
+      "export": "Vie",
+      "selectAll": "Valitse kaikki",
+      "whatsappAsset": "WhatsApp-resurssi",
+      "selectWhatsappAsset": "Valitse WhatsApp-resurssi",
+      "templates": "Mallipohjat",
+      "selectTemplates": "Valitse mallipohjat",
+      "noTemplates": "Hyväksyttyjä mallipohjia ei löytynyt.",
+      "existingRules": "Olemassa olevat säännöt",
+      "noRules": "Tälle WhatsApp-resurssille ei ole vielä konversiosääntöjä.",
+      "toggleRule": "Ota sääntö käyttöön tai poista käytöstä",
+      "deleteRule": "Poista sääntö",
+      "qualifyingTemplateMessageSent": "Kelpuuttava mallipohjaviesti on lähetetty",
+      "qualifyingFirstReply": "Kontakti lähettää ensimmäisen viestinsä",
+      "qualifyingAnyReply": "Kontakti lähettää viestin",
+      "when": "Kun",
+      "whenOptions": {
+        "templateSent": "Kelpuuttava mallipohjaviesti on lähetetty",
+        "tagApplied": "Kontakti tägätään",
+        "keywordMatched": "Kontaktin viesti vastaa avainsanasääntöä",
+        "contactReplied": "Kontakti lähettää viestin"
+      },
+      "tags": "Tägit",
+      "selectTags": "Valitse tägit",
+      "noTags": "Tägejä ei löytynyt.",
+      "untitledKeywordRule": "(nimetön avainsanasääntö)",
+      "keywordRules": "Avainsanasäännöt",
+      "selectKeywordRules": "Valitse avainsanasäännöt",
+      "noKeywordRules": "Saapuvia avainsanasääntöjä ei löytynyt.",
+      "replyOptions": "Vastausasetukset",
+      "firstReplyOnly": "Vain ensimmäinen viesti",
+      "dedupeNote": "Enintään 1 tapahtuma päivässä keskustelua ja sääntöä kohti.",
+      "dealWon": "Kauppa voitettu",
+      "eventTypeLead": "Liidi",
+      "eventTypePurchase": "Ostotapahtuma",
+      "messages": {
+        "ruleSaved": "Konversiosääntö tallennettu",
+        "ruleUpdated": "Konversiosääntö päivitetty",
+        "ruleDeleted": "Konversiosääntö poistettu"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Sivu 1",
+        "page2": "Sivu 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Seuraa kelpuutettuja liidejä",
+        "question": "Missä vaiheessa keskustelua haluat kelpuuttaa kontaktin liidiksi?",
+        "when": "Kun",
+        "then": "Merkitse tämän jälkeen CTWA-liidi tilaan"
+      },
+      "trackPurchases": {
+        "title": "Seuraa ostotapahtumia",
+        "question": "Mikä mallipohja vahvistaa ostotapahtuman?",
+        "when": "Kun",
+        "then": "Silloin",
+        "noValueNote": "Säännöllä käynnistetty ostotapahtuma kirjaa Ostotapahtuma-konversion ilman tilauksen arvoa — se lasketaan ostotapahtumiin, mutta lisää tuloihin 0. Tilauksen arvon tallentaa vain Meta Automaattiset tapahtumat."
+      }
+    },
+    "analytics": {
+      "title": "CTWA-analytiikka",
+      "funnelOverview": "Suppilon yleiskatsaus",
+      "conversationsStarted": "Aloitetut keskustelut",
+      "qualifiedLeads": "Kelpuutetut liidit",
+      "purchases": "Ostotapahtumat",
+      "adSpend": "Mainoskulutus",
+      "spendAccountLevelNote": "Kulutus raportoidaan Meta-mainostilin tasolla; kun WhatsApp-tili on valittu, kyseisen tilin mainokset, joissa on vain kulutusta mutta ei suppiloaktiviteettia, piilotetaan.",
+      "revenue": "Tulot",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Tulot oletetaan yhdessä valuutassa (USD). Sekavaluuttaisia mainostileja ei vielä yhdistetä.",
+      "costPerLead": "Hinta/liidi",
+      "costPerPurchase": "Hinta/ostotapahtuma",
+      "impressions": "Näyttökerrat",
+      "clicks": "Klikkaukset",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Hinta/keskustelu",
+      "costCurrencyNote": "Kustannusmittarit oletetaan yhdessä valuutassa (USD), samoin kuin mainoskulutus.",
+      "performanceChart": {
+        "title": "Suorituskyky ajan mittaan",
+        "empty": "Ei keskusteluja, liidejä, ostotapahtumia tai kulutusta tällä aikavälillä vielä."
+      },
+      "dateRange": {
+        "oneDay": "1P",
+        "oneWeek": "1VK",
+        "oneMonth": "1KK",
+        "threeMonths": "3KK",
+        "custom": "Mukautettu",
+        "apply": "Käytä"
+      },
+      "allAds": "Kaikki mainokset",
+      "adAccountFilter": {
+        "all": "Kaikki mainostilit",
+        "label": "Mainostili",
+        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
+      },
+      "retarget": "Kohdista uudelleen",
+      "thoseWhoPurchased": "Ostotapahtuman tehneet",
+      "thoseWhoStartedConversation": "Keskustelun aloittaneet",
+      "sendWhatsappBroadcast": "Lähetä WhatsApp-joukkoviesti",
+      "from": "Alkaen",
+      "to": "Päättyen",
+      "unattributed": "Ei kohdistettu",
+      "retargetDialog": {
+        "title": "Kohdista CTWA-kontaktit uudelleen",
+        "createAudience": "Luo kohdeyleisö",
+        "useExistingAudience": "Käytä olemassa olevaa kohdeyleisöä",
+        "audienceName": "Kohdeyleisön nimi",
+        "audiencePrefix": "CTWA",
+        "confirm": "Aloita synkronointi",
+        "success": "Uudelleenkohdistuksen kohdeyleisön synkronointi lisätty jonoon.",
+        "error": "Uudelleenkohdistuksen kohdeyleisön synkronoinnin lisääminen jonoon epäonnistui."
+      },
+      "delivery": {
+        "title": "Konversioiden toimitus",
+        "sent": "Lähetetty",
+        "pending": "Odottaa",
+        "failed": "Epäonnistui",
+        "skippedNoScope": "Ohitettu (ei käyttöoikeutta)",
+        "skippedRegion": "Ohitettu (alue)",
+        "noScopeWarning": "Osaa konversioista ei lähetetty, koska tältä WhatsApp-tililtä puuttuu tapahtumien käyttöoikeus. Yhdistä se uudelleen ottaaksesi käyttöön Automaattisten tapahtumien raportoinnin.",
+        "reconnectCta": "Yhdistä tili uudelleen",
+        "empty": "Ei konversiotapahtumia tällä aikavälillä vielä."
+      },
+      "export": {
+        "conversations": "Vie keskustelut",
+        "leads": "Vie liidit",
+        "purchases": "Vie ostotapahtumat"
+      },
+      "csv": {
+        "contactName": "Kontaktin nimi",
+        "phone": "Puhelin",
+        "adId": "Mainostunnus",
+        "occurredAt": "Tapahtumisajankohta"
+      },
+      "empty": "Ei tietoja vielä. Yhdistä mainostili ja aloita konversioiden seuranta."
     }
   },
   "googleSheets": {
@@ -2691,6 +2925,8 @@
     "noVersionsFound": "Julkaistuja versioita ei löytynyt",
     "publishVersionSuccess": "Uusi versio on julkaistu",
     "flowConfigIncomplete": "Jotkin määritykset ovat puutteellisia",
+    "whatsappCarouselButtonsMismatch": "WhatsAppissa karusellin jokaisella kortilla on oltava samat painikkeet: joko yksi linkkipainike jokaisella kortilla tai sama määrä vastauspainikkeita jokaisella kortilla",
+    "whatsappCarouselLinkButtonNotAlone": "WhatsAppissa linkkipainikkeen sisältävällä karusellikortilla ei voi olla muita painikkeita. Poista kortin muut painikkeet tai vaihda linkkipainike toiseen toimintoon.",
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",
     "deleteNodeError": "Lohkoa ei voitu poistaa. Yritä uudelleen.",
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",
@@ -2703,7 +2939,11 @@
     "iceBreakers": "Keskustelunavaukset",
     "iceBreakersDescription": "Keskustelunavaukset auttavat käyttäjiä aloittamaan keskustelun bottisi kanssa näyttämällä luettelon usein kysytyistä kysymyksistä.",
     "reconnect": "Yhdistä uudelleen",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Synkronoidaanko nykyiset yhteystiedot ja keskusteluhistoria?",
@@ -2759,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Yleiset asetukset",
-      "messageTemplates": "Viestimallit"
+      "messageTemplates": "Viestimallit",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3294,13 @@
         "wabaResolveFailed": "WhatsApp Business -tiliä ei voitu selvittää valtuutuksesta."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp-integraatiota ei löytynyt.",
+        "phoneNumberMismatch": "Uudelleenyhdistäminen palautti odotetun WhatsApp Business -tilin, mutta ei tähän työtilaan yhdistettyä puhelinnumeroa.",
+        "wabaMismatch": "Uudelleenyhdistäminen palautti eri WhatsApp Business -tilin. Yhdistä sama tili uudelleen."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3089,6 +3337,7 @@
         "quickReplyPayloadPlaceholder": "Kirjoita tietosisältö (valinnainen)",
         "flowToken": "Flow-tunnus",
         "flowTokenPlaceholder": "Kirjoita flow-tunnus",
+        "flowNotSynced": "Synkronoi WhatsApp-flow't lähetettyjen kenttien yhdistämiseksi.",
         "catalogProductId": "Tuotetunnus",
         "catalogProductIdPlaceholder": "Kirjoita jälleenmyyjän tuotetunnus",
         "carouselCard": "Kortti {index}",
@@ -3125,7 +3374,8 @@
       "flows": "Flow't",
       "messageTemplates": "Viestimallit",
       "profile": "Profiili",
-      "usefulLinks": "Hyödylliset linkit"
+      "usefulLinks": "Hyödylliset linkit",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -3352,7 +3602,8 @@
       "clearCustomField": "Tyhjennä mukautettu kenttä",
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
-      "transferConversationToHuman": "Siirrä keskustelu ihmiselle"
+      "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -3390,7 +3641,10 @@
     "title": "Tarkastuslokit"
   },
   "customFields": {
-    "title": "Mukautetut kentät"
+    "title": "Mukautetut kentät",
+    "variables": {
+      "rawGroup": "Raa'at mukautetut kentät"
+    }
   },
   "keywords": {
     "title": "Avainsanat",
@@ -4432,6 +4686,102 @@
       "iconPlaceholder": "esim. book-open, star, circle-question-mark",
       "position": "Järjestys",
       "iconSearchLink": "Selaa Lucide-kuvakkeita →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Tallenna",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

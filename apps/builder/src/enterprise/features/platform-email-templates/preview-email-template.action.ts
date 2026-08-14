@@ -1,6 +1,10 @@
 "use server"
 
-import { isPlatformAdmin, isSuperAdmin } from "@chatbotx.io/business"
+import {
+  assertEnterpriseFeatures,
+  isPlatformAdmin,
+  isSuperAdmin,
+} from "@chatbotx.io/business"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { compileEmailPreview } from "@chatbotx.io/mail/preview"
 import { z } from "zod"
@@ -16,6 +20,7 @@ export const previewEmailTemplateAction = authActionClient
       ctx: { user: UserModel }
       parsedInput: { body: string }
     }) => {
+      await assertEnterpriseFeatures()
       if (!(isSuperAdmin(ctx.user) || (await isPlatformAdmin(ctx.user)))) {
         throw new Error("Unauthorized")
       }

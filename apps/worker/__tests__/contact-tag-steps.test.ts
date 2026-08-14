@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 // ---------------------------------------------------------------------------
 // These tests cover OUR orchestration logic in the flow-step handlers
@@ -112,27 +113,47 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/database/schema — sentinel objects
 // ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/database/schema", () => ({
-  tagModel: {
-    id: "tagModel.id",
-    name: "tagModel.name",
-    workspaceId: "tagModel.workspaceId",
-  },
-  contactsOnSequenceModel: {
-    id: "contactsOnSequenceModel.id",
-    contactId: "contactsOnSequenceModel.contactId",
-    sequenceId: "contactsOnSequenceModel.sequenceId",
-    workspaceId: "contactsOnSequenceModel.workspaceId",
-  },
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
-  contactModel: {
-    id: "contactModel.id",
-    workspaceId: "contactModel.workspaceId",
-  },
-}))
+// Do NOT importOriginal the real schema module here: its index pulls in the
+// message sharding client, which opens a database connection at import time.
+vi.mock("@chatbotx.io/database/schema", () => {
+  const explicit: Record<string, unknown> = {
+    tagModel: {
+      id: "tagModel.id",
+      name: "tagModel.name",
+      workspaceId: "tagModel.workspaceId",
+    },
+    contactsOnSequenceModel: {
+      id: "contactsOnSequenceModel.id",
+      contactId: "contactsOnSequenceModel.contactId",
+      sequenceId: "contactsOnSequenceModel.sequenceId",
+      workspaceId: "contactsOnSequenceModel.workspaceId",
+    },
+    contactsToTagsModel: {
+      contactId: "contactsToTagsModel.contactId",
+      tagId: "contactsToTagsModel.tagId",
+    },
+    contactModel: {
+      id: "contactModel.id",
+      workspaceId: "contactModel.workspaceId",
+    },
+    // Real values: ads-conversion/schema.ts (pulled in transitively via
+    // tag/service.ts -> ads-conversion/service.ts) uses these at module scope
+    // to build Zod schemas from adsConversionRuleModel's column shape.
+    createSelectSchema: (
+      _table: unknown,
+      refinements?: Record<string, unknown>,
+    ) => z.object(refinements ?? {}),
+    adsConversionChannelSchema: z.enum(["whatsapp", "facebook"]),
+    adsConversionEventTypeSchema: z.enum(["lead", "purchase"]),
+  }
+  // The real schema index pulls in the message sharding client (opens a DB
+  // connection at import), so serve `{}` sentinels for any model the wider
+  // import graph touches instead of importOriginal.
+  return new Proxy(explicit, {
+    get: (target, prop) => (prop in target ? target[prop as string] : {}),
+    has: () => true,
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/business
