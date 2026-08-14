@@ -5,6 +5,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import {
   type InstagramAuthValue,
@@ -77,6 +78,17 @@ export const disconnectInstagram = async (ctx: {
         tx,
       })
     }
+
+    // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
+    // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
+    await metaCapiEventRepository.deleteByIntegration(
+      {
+        workspaceId: ctx.workspaceId,
+        channel: "instagram",
+        integrationId: integrationInstagram.id,
+      },
+      tx,
+    )
 
     await tx
       .delete(integrationInstagramModel)

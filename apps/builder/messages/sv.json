@@ -2717,6 +2717,7 @@
       "markCouponUsed": "Markera kupong som använd",
       "markEmailVerified": "Markera e-postadress som verifierad",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "moosendCreateContact": "Lägg till kontakt i Moosend",
       "noFlowsAvailable": "Inga flöden tillgängliga",
       "noTemplatesAvailable": "Inga mallar tillgängliga",
@@ -2770,7 +2771,8 @@
       "unsubscribeSequence": "Avsluta prenumeration på sekvens",
       "updateMessengerContactData": "Uppdatera kontaktdata",
       "whatsappFlow": "WhatsApp-flöde",
-      "whatsappOptionList": "Alternativlista"
+      "whatsappOptionList": "Alternativlista",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3004,7 +3006,11 @@
     "iceBreakersDescription": "Isbrytare hjälper användare att starta en konversation med din bot genom att visa en lista med vanliga frågor.",
     "reconnect": "Återanslut",
     "selectInstagramAccount": "Välj Instagram-konto",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "instagramCommentAutomation": {
     "activated": "Automatiseringen har aktiverats",
@@ -3477,7 +3483,8 @@
     },
     "tabs": {
       "generalSettings": "Allmänna inställningar",
-      "messageTemplates": "Meddelandemallar"
+      "messageTemplates": "Meddelandemallar",
+      "conversionsApi": "Ads Optimization"
     },
     "tagSync": {
       "description": "Tvåvägssynkronisering av taggar mellan den här arbetsytan och den anslutna kanalen.",
@@ -4247,7 +4254,8 @@
       "removeTag": "Ta bort tagg",
       "setCustomField": "Ange anpassat fält",
       "startAnotherFlow": "Starta ett annat flöde",
-      "transferConversationToHuman": "Överför konversationen till en människa"
+      "transferConversationToHuman": "Överför konversationen till en människa",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "after": "Efter",
     "at": "Kl.",
@@ -4618,7 +4626,8 @@
       "flows": "Flöden",
       "messageTemplates": "Meddelandemallar",
       "profile": "Profil",
-      "usefulLinks": "Användbara länkar"
+      "usefulLinks": "Användbara länkar",
+      "conversionsApi": "Ads Optimization"
     },
     "templateFooter": {
       "label": "Mallens sidfot"
@@ -4678,5 +4687,101 @@
       "toggleSuccess": "Inställningen för taggsynkronisering har uppdaterats."
     },
     "title": "Zalo OA"
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Spara",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
+    }
   }
 }

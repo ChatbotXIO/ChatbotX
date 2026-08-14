@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl"
 import { SetCustomField } from "@/features/contacts/components/add-custom-field-dialog"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { CapiEventFields } from "@/features/meta-conversions/components/capi-event-fields"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { GoogleSheetAction } from "./run-google-sheet"
 
@@ -62,6 +63,8 @@ export const ActionEditor = ({
       )
     case triggerActions.enum.runGoogleSheet:
       return <GoogleSheetAction parentName={parentName} />
+    case triggerActions.enum.sendMetaCapiEvent:
+      return <CapiEventFields parentName={parentName} />
     default:
       return null
   }

@@ -56,6 +56,7 @@ import sendFileStep from "./send-file"
 import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendMessengerTemplateMessageStep from "./send-messenger-template-message"
+import { sendMetaCapiEventStep } from "./send-meta-capi-event"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
 import sendWaTemplateMessageStep from "./send-wa-template-message"
@@ -123,6 +124,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.markEmailVerified]: markEmailVerifiedStep,
   [stepTypes.enum.activeCampaignSyncContact]: activeCampaignSyncContactStep,
   [stepTypes.enum.facebookCustomAudience]: facebookCustomAudienceStep,
+  [stepTypes.enum.sendMetaCapiEvent]: sendMetaCapiEventStep,
   [stepTypes.enum.getResponseAddContact]: getResponseAddContactStep,
   [stepTypes.enum.dripSubscribeSubscriber]: dripSubscribeSubscriberStep,
   [stepTypes.enum.mailchimpAddMember]: mailchimpAddMemberStep,

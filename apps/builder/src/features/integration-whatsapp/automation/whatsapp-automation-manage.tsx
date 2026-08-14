@@ -1,7 +1,5 @@
 "use client"
 
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import {
@@ -14,6 +12,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useEffect } from "react"
 import { toast } from "sonner"
+import type { IntegrationWhatsappLinkable } from "@/features/integration-whatsapp/queries"
 import type { findWhatsappAutomation } from "./queries"
 
 type WhatsappAutomationResponse = Awaited<
@@ -21,7 +20,7 @@ type WhatsappAutomationResponse = Awaited<
 > & { error?: string }
 
 type WhatsappAutomationManageProps = {
-  integrationWhatsapp: IntegrationWhatsappModel
+  integrationWhatsapp: IntegrationWhatsappLinkable
   promises: Promise<[WhatsappAutomationResponse]>
 }
 
@@ -38,8 +37,7 @@ export function WhatsappAutomationManage({
     }
   }, [error])
 
-  const auth = integrationWhatsapp.auth as unknown as WhatsappAuthValue
-  const managerUrl = `https://business.facebook.com/latest/whatsapp_manager/phone_numbers?business_id=${auth.metadata.businessId}&asset_id=${auth.metadata.wabaId}`
+  const managerUrl = `https://business.facebook.com/latest/whatsapp_manager/phone_numbers?business_id=${integrationWhatsapp.businessId}&asset_id=${integrationWhatsapp.wabaId}`
 
   return (
     <div className="flex flex-col gap-8">

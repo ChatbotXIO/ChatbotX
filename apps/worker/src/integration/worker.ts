@@ -38,6 +38,7 @@ import { runFollowUpResume } from "./handlers/follow-up"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
 import { handleMessageStatus } from "./handlers/message-status"
+import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
 import {
   deleteIncomingComment,
   receiveComment,
@@ -271,6 +272,10 @@ async function startIntegrationWorker() {
           case IntegrationJobAction.sendConversionEvent:
           case IntegrationJobAction.syncRetargetAudience: {
             await dispatchAdsConversionJob(job.data)
+            return
+          }
+          case IntegrationJobAction.sendMetaCapiEvent: {
+            await handleSendMetaCapiEvent(job.data.data)
             return
           }
           case IntegrationJobAction.updateContactAvatar: {

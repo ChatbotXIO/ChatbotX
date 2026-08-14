@@ -31,5 +31,6 @@ export type ConditionEvaluationContext = {
 export type ActionExecutionContext = {
   action: Record<string, unknown>
   contactId: string
+  triggerId: string
   workspaceId: string
 }

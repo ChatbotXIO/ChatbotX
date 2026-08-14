@@ -1,7 +1,5 @@
 "use client"
 
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
@@ -15,11 +13,12 @@ import { ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import React from "react"
+import type { IntegrationWhatsappLinkable } from "@/features/integration-whatsapp/queries"
 import { WhatsappMessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
 import type { WhatsappMessageTemplateResource } from "./schema/resource"
 
 type WhatsappMessageTemplatesTableProps = {
-  integrationWhatsapp: IntegrationWhatsappModel
+  integrationWhatsapp: IntegrationWhatsappLinkable
   promises: Promise<WhatsappMessageTemplateResource[]>
 }
 
@@ -30,14 +29,12 @@ export function WhatsappMessageTemplatesTable({
   const t = useTranslations()
   const data = React.use(promises)
 
-  const auth = integrationWhatsapp.auth as unknown as WhatsappAuthValue
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
         <Button size="sm" variant="secondary">
           <Link
-            href={`https://business.facebook.com/latest/whatsapp_manager/message_templates?business_id=${auth.metadata.businessId}&asset_id=${auth.metadata.wabaId}`}
+            href={`https://business.facebook.com/latest/whatsapp_manager/message_templates?business_id=${integrationWhatsapp.businessId}&asset_id=${integrationWhatsapp.wabaId}`}
             target="_blank"
           >
             {t("actions.manage")}
@@ -64,7 +61,7 @@ export function WhatsappMessageTemplatesTable({
                 <TableCell>{mt.status}</TableCell>
                 <TableCell>
                   <Link
-                    href={`https://business.facebook.com/latest/whatsapp_manager/template_details/?business_id=${auth.metadata.businessId}&tab=mt-edit&id=${mt.id}&nav_ref=whatsapp_manager&asset_id=${auth.metadata.wabaId}`}
+                    href={`https://business.facebook.com/latest/whatsapp_manager/template_details/?business_id=${integrationWhatsapp.businessId}&tab=mt-edit&id=${mt.id}&nav_ref=whatsapp_manager&asset_id=${integrationWhatsapp.wabaId}`}
                     target="_blank"
                   >
                     <ExternalLink className="size-4" />
