@@ -2162,7 +2162,7 @@
     "javascriptCode": {
       "label": "JavaScript-kod",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Använd ren JavaScript och returnera ett värde. Nätverk, filer, API:er och externa bibliotek är inte tillgängliga."
+      "description": "Använd ren JavaScript och returnera ett värde. Nätverk, filer, API:er och externa bibliotek är inte tillgängliga. Kontakt- och systemdata är tillgängliga via `input`-objektet."
     },
     "outputFieldId": {
       "label": "Spara resultatet i ett anpassat fält"

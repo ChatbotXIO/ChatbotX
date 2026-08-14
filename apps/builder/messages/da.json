@@ -1197,7 +1197,7 @@
     "javascriptCode": {
       "label": "JavaScript-kode",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige."
+      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige. Kontakt- og systemdata er tilgængelige via `input`-objektet."
     },
     "httpMethod": {
       "label": "Method"

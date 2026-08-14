@@ -1197,7 +1197,7 @@
     "javascriptCode": {
       "label": "JavaScriptコード",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "純粋なJavaScriptを使用して値を返してください。ネットワーク、ファイル、API、外部ライブラリは利用できません。"
+      "description": "純粋なJavaScriptを使用して値を返してください。ネットワーク、ファイル、API、外部ライブラリは利用できません。連絡先およびシステムデータは `input` オブジェクトから利用できます。"
     },
     "httpMethod": {
       "label": "メソッド"

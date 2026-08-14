@@ -587,7 +587,7 @@
     "javascriptCode": {
       "label": "JavaScript 程式碼",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。"
+      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。聯絡人與系統資料可透過 `input` 物件取得。"
     },
     "httpMethod": {
       "label": "方法"

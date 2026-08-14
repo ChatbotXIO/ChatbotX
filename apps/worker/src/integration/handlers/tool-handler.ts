@@ -349,19 +349,23 @@ export async function handleExecuteJavascript({
       ]),
     )
 
-    for (const systemField of systemFieldTypes.options) {
-      input[systemField] = await getSystemFieldValue(variables, systemField)
+    const systemFieldEntries = await Promise.all(
+      systemFieldTypes.options.map(
+        async (systemField) =>
+          [
+            systemField,
+            await getSystemFieldValue(variables, systemField),
+          ] as const,
+      ),
+    )
+    for (const [systemField, value] of systemFieldEntries) {
+      input[systemField] = value
     }
-
-    const resolvedCode = await contactVariableService.replaceAll({
-      text: step.code,
-      variables,
-    })
 
     await javascriptExecutionService.executeAndMap({
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
-      code: resolvedCode,
+      code: step.code,
       input,
       customFieldId: step.customFieldId,
     })

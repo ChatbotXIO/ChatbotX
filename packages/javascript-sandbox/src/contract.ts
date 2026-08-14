@@ -24,6 +24,3 @@ export type ExecuteJavascriptRequest = z.infer<typeof executeRequestSchema>
 export type ExecuteJavascriptSuccessResponse = z.infer<
   typeof executeSuccessResponseSchema
 >
-export type ExecuteJavascriptErrorResponse = z.infer<
-  typeof executeErrorResponseSchema
->

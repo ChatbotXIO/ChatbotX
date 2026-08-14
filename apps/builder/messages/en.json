@@ -1277,7 +1277,7 @@
     "javascriptCode": {
       "label": "JavaScript code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable."
+      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable. Contact and system data is available on the `input` object."
     },
     "httpMethod": {
       "label": "Method"

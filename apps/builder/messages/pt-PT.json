@@ -1197,7 +1197,7 @@
     "javascriptCode": {
       "label": "Código JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Utilize JavaScript puro e devolva um valor. Rede, ficheiros, APIs e bibliotecas externas não estão disponíveis."
+      "description": "Utilize JavaScript puro e devolva um valor. Rede, ficheiros, APIs e bibliotecas externas não estão disponíveis. Os dados do contacto e do sistema estão disponíveis no objeto `input`."
     },
     "httpMethod": {
       "label": "Método"

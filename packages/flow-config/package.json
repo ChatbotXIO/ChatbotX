@@ -11,6 +11,7 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
+    "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@xyflow/react": "^12.10.2",
     "date-fns": "^4.1.0",

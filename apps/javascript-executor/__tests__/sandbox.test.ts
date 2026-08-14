@@ -1,5 +1,6 @@
+import { MAX_CODE_LENGTH } from "@chatbotx.io/javascript-sandbox"
 import { describe, expect, test } from "vitest"
-import { executeJavascript, MAX_CODE_LENGTH } from "../src/sandbox"
+import { executeJavascript } from "../src/sandbox"
 
 describe("executeJavascript", () => {
   test("executes pure JavaScript against a copied input", async () => {
@@ -29,6 +30,20 @@ describe("executeJavascript", () => {
         input: {},
       }),
     ).rejects.toMatchObject({ code: "javascriptTimeout" })
+  })
+
+  test("throws a typed error when code exceeds the isolate memory limit", async () => {
+    await expect(
+      executeJavascript({
+        code: `
+          const chunks = [];
+          while (true) {
+            chunks.push(new Array(1_000_000).fill("x"));
+          }
+        `,
+        input: {},
+      }),
+    ).rejects.toMatchObject({ code: "javascriptMemoryLimit" })
   })
 
   test("throws a typed error for a script error", async () => {

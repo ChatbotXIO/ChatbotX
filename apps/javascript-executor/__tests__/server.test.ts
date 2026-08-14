@@ -128,6 +128,42 @@ describe("JavaScript executor server", () => {
     expect(secondStarted).toHaveBeenCalledOnce()
   })
 
+  test("drains back to an idle pool after queue saturation and handoff", async () => {
+    const limiter = new ExecutionLimiter(1, 1)
+    let releaseFirst: (() => void) | undefined
+    const firstStarted = vi.fn()
+    const secondStarted = vi.fn()
+    const thirdStarted = vi.fn()
+
+    const first = limiter.run(async () => {
+      firstStarted()
+      await new Promise<void>((resolve) => {
+        releaseFirst = resolve
+      })
+      return "first"
+    })
+    await vi.waitFor(() => expect(firstStarted).toHaveBeenCalledOnce())
+
+    const second = limiter.run(() => {
+      secondStarted()
+      return Promise.resolve("second")
+    })
+
+    releaseFirst?.()
+    await expect(first).resolves.toBe("first")
+    await expect(second).resolves.toBe("second")
+
+    // If the pool didn't drain back to idle after the handoff, this third
+    // acquisition would have to queue behind a phantom occupant instead of
+    // starting immediately.
+    const third = limiter.run(() => {
+      thirdStarted()
+      return Promise.resolve("third")
+    })
+    await expect(third).resolves.toBe("third")
+    expect(thirdStarted).toHaveBeenCalledOnce()
+  })
+
   test("reports health without authentication", async () => {
     const server = createServer({ token: EXECUTOR_TOKEN })
     await listen(server)
@@ -398,5 +434,82 @@ describe("JavaScript executor server", () => {
       body: { value: "first" },
       status: 200,
     })
+  })
+
+  test("does not run sandboxed execution once the client has disconnected", async () => {
+    let releaseFirst: (() => void) | undefined
+    const executionStarted = vi.fn()
+    const queuedExecutionStarted = vi.fn()
+    const server = createServer({
+      token: EXECUTOR_TOKEN,
+      maxConcurrency: 1,
+      maxQueueSize: 1,
+      executeJavascript: async () => {
+        const callIndex = executionStarted.mock.calls.length
+        executionStarted()
+        if (callIndex === 1) {
+          queuedExecutionStarted()
+        }
+        await new Promise<void>((resolve) => {
+          releaseFirst = resolve
+        })
+        return { value: callIndex }
+      },
+    })
+    await listen(server)
+    const address = server.address() as AddressInfo
+
+    const firstRequest = requestJson(server, {
+      body: { code: "return 1", input: {} },
+      method: "POST",
+      path: "/execute",
+      token: EXECUTOR_TOKEN,
+    })
+    await vi.waitFor(() => expect(executionStarted).toHaveBeenCalledOnce())
+
+    // Queue a second request behind the first, then abandon it before the
+    // first slot is released — this second request's socket is destroyed
+    // client-side while it still sits in the limiter's queue.
+    const abandonedRequest = httpRequest({
+      hostname: "127.0.0.1",
+      port: address.port,
+      path: "/execute",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${EXECUTOR_TOKEN}`,
+      },
+    })
+    const abandonedBody = JSON.stringify({ code: "return 2", input: {} })
+    abandonedRequest.setHeader(
+      "Content-Length",
+      Buffer.byteLength(abandonedBody),
+    )
+    const abandonedSocketClosed = new Promise<void>((resolve) => {
+      abandonedRequest.on("error", () => {
+        // Expected once we destroy the socket below.
+      })
+      abandonedRequest.on("close", () => resolve())
+    })
+    abandonedRequest.end(abandonedBody)
+    // Let the request body reach the server and queue behind the first
+    // in-flight execution before abandoning it.
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    abandonedRequest.destroy()
+    await abandonedSocketClosed
+    // Allow the server's response "close" event to propagate before the
+    // first slot is released and the queue is serviced.
+    await new Promise<void>((resolve) => setTimeout(resolve, 50))
+
+    releaseFirst?.()
+    await expect(firstRequest).resolves.toEqual({
+      body: { value: 0 },
+      status: 200,
+    })
+
+    // Give the queued task a chance to run if it incorrectly would.
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    releaseFirst?.()
+    expect(queuedExecutionStarted).not.toHaveBeenCalled()
   })
 })

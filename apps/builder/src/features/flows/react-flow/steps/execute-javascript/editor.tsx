@@ -85,10 +85,12 @@ const ExecuteJavascriptDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <TiptapEditorField
+              enableEmoji={false}
               label={t("fields.javascriptCode.label")}
               name="code"
               placeholder={t("fields.javascriptCode.placeholder")}
               required
+              showEmojiPicker={false}
             />
             <CustomFieldSelect
               allowCreate={true}

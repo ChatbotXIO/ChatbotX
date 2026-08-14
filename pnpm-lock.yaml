@@ -2374,6 +2374,9 @@ importers:
 
   packages/flow-config:
     dependencies:
+      '@chatbotx.io/javascript-sandbox':
+        specifier: workspace:*
+        version: link:../javascript-sandbox
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../utils

@@ -1011,7 +1011,7 @@
     "javascriptCode": {
       "label": "JavaScript-code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar."
+      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar. Contact- en systeemgegevens zijn beschikbaar via het `input`-object."
     },
     "httpMethod": {
       "label": "Methode"

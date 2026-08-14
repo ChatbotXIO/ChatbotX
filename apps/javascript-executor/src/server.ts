@@ -148,12 +148,10 @@ const readJsonBody = async (request: IncomingMessage): Promise<unknown> =>
   await new Promise<unknown>((resolve, reject) => {
     const chunks: Buffer[] = []
     let totalBytes = 0
-    let tooLarge = false
 
     request.on("data", (chunk: Buffer) => {
       totalBytes += chunk.length
       if (totalBytes > BODY_LIMIT_BYTES) {
-        tooLarge = true
         chunks.length = 0
         request.pause()
         reject(new RequestBodyTooLargeError())
@@ -163,11 +161,6 @@ const readJsonBody = async (request: IncomingMessage): Promise<unknown> =>
     })
     request.once("error", reject)
     request.once("end", () => {
-      if (tooLarge) {
-        reject(new Error("Request body is too large"))
-        return
-      }
-
       try {
         const body = Buffer.concat(chunks).toString("utf8")
         resolve(JSON.parse(body) as unknown)
@@ -197,6 +190,12 @@ const handleRequest = async (options: {
 }): Promise<void> => {
   const { executeJavascript, expectedTokenDigest, limiter, request, response } =
     options
+  let requestAbandoned = false
+  response.once("close", () => {
+    if (!response.writableEnded) {
+      requestAbandoned = true
+    }
+  })
   const url = new URL(request.url ?? "", "http://localhost")
 
   if (request.method === "GET" && url.pathname === "/health") {
@@ -244,8 +243,13 @@ const handleRequest = async (options: {
 
   try {
     const result = await limiter.run(() =>
-      executeJavascript(parsedRequest.data),
+      requestAbandoned
+        ? Promise.resolve(undefined)
+        : executeJavascript(parsedRequest.data),
     )
+    if (requestAbandoned) {
+      return
+    }
     if (result === undefined) {
       writeError(response, 503, "JavaScript executor is at capacity")
       return

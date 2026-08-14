@@ -5,12 +5,16 @@ import {
 } from "@chatbotx.io/javascript-sandbox"
 import ivm from "isolated-vm"
 
-export { MAX_CODE_LENGTH } from "@chatbotx.io/javascript-sandbox"
-
 const MEMORY_LIMIT_MB = 8
 const TIMEOUT_MS = 500
+// isolated-vm throws plain Error instances with an English message and
+// exposes no typed error classes, so regex against the message is the only
+// way to distinguish timeout/memory failures from other execution errors.
+// On a real OOM, V8 force-disposes the isolate before evalClosure's promise
+// settles, so the rejection we actually observe is "Isolate is already
+// disposed" rather than a message mentioning memory/heap directly.
 const timeoutErrorPattern = /timed out/i
-const memoryErrorPattern = /memory limit|heap/i
+const memoryErrorPattern = /memory limit|heap|isolate is already disposed/i
 
 export const executeJavascript = async (props: {
   code: string
@@ -64,8 +68,16 @@ export const executeJavascript = async (props: {
     }
     throw new JavascriptSandboxError(clientMessage, code)
   } finally {
-    input?.release()
-    context?.release()
-    isolate.dispose()
+    // A real OOM disposes the isolate internally before evalClosure settles,
+    // so release/dispose here can throw "Isolate is already disposed" — left
+    // unguarded, that throw from `finally` would silently replace the
+    // classified error from the `catch` block above.
+    try {
+      input?.release()
+      context?.release()
+      isolate.dispose()
+    } catch {
+      // Isolate already disposed by the engine (e.g. after OOM) — ignore.
+    }
   }
 }
