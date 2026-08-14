@@ -1197,8 +1197,7 @@
     "javascriptCode": {
       "label": "Kode JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Gunakan JavaScript murni dan kembalikan sebuah nilai. Jaringan, file, API, dan pustaka eksternal tidak tersedia.",
-      "returnPathPlaceholder": "Jalur nilai kembalian (biarkan kosong untuk seluruh nilai)"
+      "description": "Gunakan JavaScript murni dan kembalikan sebuah nilai. Jaringan, file, API, dan pustaka eksternal tidak tersedia."
     },
     "httpMethod": {
       "label": "Metode"

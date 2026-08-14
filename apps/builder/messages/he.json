@@ -3606,8 +3606,7 @@
     "javascriptCode": {
       "label": "קוד JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "השתמשו ב-JavaScript טהור והחזירו ערך. רשת, קבצים, ממשקי API וספריות חיצוניות אינם זמינים.",
-      "returnPathPlaceholder": "נתיב החזרה (השאירו ריק כדי להשתמש בערך המלא)"
+      "description": "השתמשו ב-JavaScript טהור והחזירו ערך. רשת, קבצים, ממשקי API וספריות חיצוניות אינם זמינים."
     },
     "httpMethod": {
       "label": "שיטה"

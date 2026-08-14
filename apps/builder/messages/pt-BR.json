@@ -1197,8 +1197,7 @@
     "javascriptCode": {
       "label": "Código JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Use JavaScript puro e retorne um valor. Rede, arquivos, APIs e bibliotecas externas não estão disponíveis.",
-      "returnPathPlaceholder": "Caminho de retorno (deixe em branco para o valor completo)"
+      "description": "Use JavaScript puro e retorne um valor. Rede, arquivos, APIs e bibliotecas externas não estão disponíveis."
     },
     "httpMethod": {
       "label": "Método"

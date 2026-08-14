@@ -579,8 +579,7 @@
     "javascriptCode": {
       "label": "Codice JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Usa JavaScript puro e restituisci un valore. Rete, file, API e librerie esterne non sono disponibili.",
-      "returnPathPlaceholder": "Percorso di ritorno (lascia vuoto per l'intero valore)"
+      "description": "Usa JavaScript puro e restituisci un valore. Rete, file, API e librerie esterne non sono disponibili."
     },
     "httpMethod": {
       "label": "Metodo"

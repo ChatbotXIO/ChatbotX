@@ -12,7 +12,7 @@ describe("executeJavascript step registration", () => {
     const value = {
       ...executeJavascriptStepDefaultFn(),
       code: "return input",
-      mapping: [{ jsonPath: "", outputFieldId: "field-1" }],
+      customFieldId: "field-1",
     }
     expect(stepTypes.enum.executeJavascript).toBe("executeJavascript")
     expect(executeJavascriptStepSchema.safeParse(value).success).toBe(true)

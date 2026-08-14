@@ -1197,8 +1197,7 @@
     "javascriptCode": {
       "label": "JavaScript-kode",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige.",
-      "returnPathPlaceholder": "Returstien (lad stå tom for hele værdien)"
+      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige."
     },
     "httpMethod": {
       "label": "Method"

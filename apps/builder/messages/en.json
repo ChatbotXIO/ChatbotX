@@ -1277,8 +1277,7 @@
     "javascriptCode": {
       "label": "JavaScript code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable.",
-      "returnPathPlaceholder": "Return path (blank for whole value)"
+      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable."
     },
     "httpMethod": {
       "label": "Method"
@@ -2203,7 +2202,7 @@
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Set up Coupon",
       "markCouponUsed": "Mark Coupon used",
-      "executeJavascript": "Execute JavaScript",
+      "executeJavascript": "Execute JavaScript Code",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "condition": "Condition",

@@ -1271,8 +1271,7 @@
     "javascriptCode": {
       "label": "JavaScript kodu",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Saf JavaScript kullanın ve bir değer döndürün. Ağ, dosyalar, API'ler ve harici kitaplıklar kullanılamaz.",
-      "returnPathPlaceholder": "Dönüş yolu (tüm değer için boş bırakın)"
+      "description": "Saf JavaScript kullanın ve bir değer döndürün. Ağ, dosyalar, API'ler ve harici kitaplıklar kullanılamaz."
     },
     "httpMethod": {
       "label": "Yöntem"

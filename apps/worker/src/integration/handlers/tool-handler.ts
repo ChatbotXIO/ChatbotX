@@ -353,12 +353,17 @@ export async function handleExecuteJavascript({
       input[systemField] = await getSystemFieldValue(variables, systemField)
     }
 
+    const resolvedCode = await contactVariableService.replaceAll({
+      text: step.code,
+      variables,
+    })
+
     await javascriptExecutionService.executeAndMap({
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
-      code: step.code,
+      code: resolvedCode,
       input,
-      mapping: step.mapping,
+      customFieldId: step.customFieldId,
     })
 
     return { status: "success", result: null }

@@ -1271,8 +1271,7 @@
     "javascriptCode": {
       "label": "رمز JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "استخدم JavaScript خالصًا وأعد قيمة. الشبكة والملفات وواجهات البرمجة والمكتبات الخارجية غير متوفرة.",
-      "returnPathPlaceholder": "مسار القيمة المُعادة (اتركه فارغًا لاستخدام القيمة كاملة)"
+      "description": "استخدم JavaScript خالصًا وأعد قيمة. الشبكة والملفات وواجهات البرمجة والمكتبات الخارجية غير متوفرة."
     },
     "httpMethod": {
       "label": "الطريقة"

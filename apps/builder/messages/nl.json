@@ -1011,8 +1011,7 @@
     "javascriptCode": {
       "label": "JavaScript-code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar.",
-      "returnPathPlaceholder": "Retourpad (laat leeg voor de volledige waarde)"
+      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar."
     },
     "httpMethod": {
       "label": "Methode"

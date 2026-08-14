@@ -1241,8 +1241,7 @@
     "javascriptCode": {
       "label": "Mã JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Dùng JavaScript thuần túy và trả về một giá trị. Không thể dùng mạng, tệp, API hoặc thư viện bên ngoài.",
-      "returnPathPlaceholder": "Đường dẫn giá trị trả về (để trống cho toàn bộ giá trị)"
+      "description": "Dùng JavaScript thuần túy và trả về một giá trị. Không thể dùng mạng, tệp, API hoặc thư viện bên ngoài."
     },
     "httpMethod": {
       "label": "Phương thức"

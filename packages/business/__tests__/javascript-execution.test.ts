@@ -80,7 +80,7 @@ describe("javascriptExecutionService", () => {
     })
   })
 
-  test("maps the returned value into contact custom fields", async () => {
+  test("maps the whole returned value into the output custom field", async () => {
     respondWithValue({ profile: { name: "Ada" }, active: true })
 
     await javascriptExecutionService.executeAndMap({
@@ -88,41 +88,22 @@ describe("javascriptExecutionService", () => {
       contactId: "contact-1",
       code: "return { profile: { name: input.name }, active: true }",
       input: { name: "Ada" },
-      mapping: [
-        { jsonPath: "profile.name", outputFieldId: "field-name" },
-        { jsonPath: "active", outputFieldId: "field-active" },
-      ],
+      customFieldId: "field-name",
     })
 
     expect(mocks.setValues).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
       fields: [
-        { customFieldId: "field-name", value: "Ada" },
-        { customFieldId: "field-active", value: "true" },
+        {
+          customFieldId: "field-name",
+          value: JSON.stringify({ profile: { name: "Ada" }, active: true }),
+        },
       ],
     })
   })
 
-  test("maps a small field from a result larger than one custom field", async () => {
-    respondWithValue({ ignored: "x".repeat(128 * 1024), selected: "Ada" })
-
-    await javascriptExecutionService.executeAndMap({
-      workspaceId: "workspace-1",
-      contactId: "contact-1",
-      code: "return input",
-      input: {},
-      mapping: [{ jsonPath: "selected", outputFieldId: "field-name" }],
-    })
-
-    expect(mocks.setValues).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      contactId: "contact-1",
-      fields: [{ customFieldId: "field-name", value: "Ada" }],
-    })
-  })
-
-  test("skips a jsonPath mapping when the returned value is a primitive", async () => {
+  test("maps a primitive value directly to the output custom field", async () => {
     respondWithValue("hello")
 
     await javascriptExecutionService.executeAndMap({
@@ -130,21 +111,7 @@ describe("javascriptExecutionService", () => {
       contactId: "contact-1",
       code: "return 'hello'",
       input: {},
-      mapping: [{ jsonPath: "name", outputFieldId: "field-name" }],
-    })
-
-    expect(mocks.setValues).not.toHaveBeenCalled()
-  })
-
-  test("maps the whole primitive value when jsonPath is blank", async () => {
-    respondWithValue("hello")
-
-    await javascriptExecutionService.executeAndMap({
-      workspaceId: "workspace-1",
-      contactId: "contact-1",
-      code: "return 'hello'",
-      input: {},
-      mapping: [{ jsonPath: "", outputFieldId: "field-name" }],
+      customFieldId: "field-name",
     })
 
     expect(mocks.setValues).toHaveBeenCalledWith({
@@ -152,6 +119,20 @@ describe("javascriptExecutionService", () => {
       contactId: "contact-1",
       fields: [{ customFieldId: "field-name", value: "hello" }],
     })
+  })
+
+  test("skips the write when the returned value is null or undefined", async () => {
+    respondWithValue(null)
+
+    await javascriptExecutionService.executeAndMap({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      code: "return null",
+      input: {},
+      customFieldId: "field-name",
+    })
+
+    expect(mocks.setValues).not.toHaveBeenCalled()
   })
 
   test("throws a typed exception when the output is too large to save", async () => {
@@ -163,7 +144,7 @@ describe("javascriptExecutionService", () => {
         contactId: "contact-1",
         code: 'return "a".repeat(64 * 1024 + 1)',
         input: {},
-        mapping: [{ jsonPath: "", outputFieldId: "field-name" }],
+        customFieldId: "field-name",
       }),
     ).rejects.toMatchObject<Partial<ChatbotXException>>({
       code: "javascriptOutputTooLarge",

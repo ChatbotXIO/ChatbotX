@@ -587,8 +587,7 @@
     "javascriptCode": {
       "label": "JavaScript 程式碼",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。",
-      "returnPathPlaceholder": "回傳路徑（留空以使用整個值）"
+      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。"
     },
     "httpMethod": {
       "label": "方法"

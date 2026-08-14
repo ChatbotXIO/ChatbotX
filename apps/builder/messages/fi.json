@@ -1197,8 +1197,7 @@
     "javascriptCode": {
       "label": "JavaScript-koodi",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Käytä puhdasta JavaScriptiä ja palauta arvo. Verkko, tiedostot, API:t ja ulkoiset kirjastot eivät ole käytettävissä.",
-      "returnPathPlaceholder": "Palautuspolku (jätä tyhjäksi koko arvolle)"
+      "description": "Käytä puhdasta JavaScriptiä ja palauta arvo. Verkko, tiedostot, API:t ja ulkoiset kirjastot eivät ole käytettävissä."
     },
     "httpMethod": {
       "label": "Menetelmä"

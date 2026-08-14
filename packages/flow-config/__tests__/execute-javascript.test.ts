@@ -11,7 +11,7 @@ describe("JavaScript execution flow contract", () => {
     expect(value).toMatchObject({
       stepType: "executeJavascript",
       code: "",
-      mapping: [{ jsonPath: "", outputFieldId: "" }],
+      customFieldId: "",
     })
     expect(value.states.map((state) => state.stateType)).toEqual([
       "success",
@@ -19,11 +19,11 @@ describe("JavaScript execution flow contract", () => {
     ])
   })
 
-  test("accepts a code snippet and a whole-value output mapping", () => {
+  test("accepts a code snippet and an output custom field", () => {
     const value = {
       ...executeJavascriptStepDefaultFn(),
       code: "return input.firstName.toUpperCase()",
-      mapping: [{ jsonPath: "", outputFieldId: "field-1" }],
+      customFieldId: "field-1",
     }
     expect(executeJavascriptStepSchema.safeParse(value).success).toBe(true)
     expect(actionSteps.some((schema) => schema.safeParse(value).success)).toBe(
@@ -35,12 +35,12 @@ describe("JavaScript execution flow contract", () => {
     const blankCode = {
       ...executeJavascriptStepDefaultFn(),
       code: "  ",
-      mapping: [{ jsonPath: "", outputFieldId: "field-1" }],
+      customFieldId: "field-1",
     }
     const blankOutputField = {
       ...executeJavascriptStepDefaultFn(),
       code: "return input",
-      mapping: [{ jsonPath: "", outputFieldId: " " }],
+      customFieldId: " ",
     }
     expect(executeJavascriptStepSchema.safeParse(blankCode).success).toBe(false)
     expect(
@@ -48,24 +48,13 @@ describe("JavaScript execution flow contract", () => {
     ).toBe(false)
   })
 
-  test("rejects code exceeding the max length and mappings past the max count", () => {
+  test("rejects code exceeding the max length", () => {
     const oversizedCode = {
       ...executeJavascriptStepDefaultFn(),
       code: "a".repeat(10_001),
-      mapping: [{ jsonPath: "", outputFieldId: "field-1" }],
-    }
-    const tooManyMappings = {
-      ...executeJavascriptStepDefaultFn(),
-      code: "return input",
-      mapping: Array.from({ length: 21 }, (_, index) => ({
-        jsonPath: "",
-        outputFieldId: `field-${index}`,
-      })),
+      customFieldId: "field-1",
     }
     expect(executeJavascriptStepSchema.safeParse(oversizedCode).success).toBe(
-      false,
-    )
-    expect(executeJavascriptStepSchema.safeParse(tooManyMappings).success).toBe(
       false,
     )
   })
