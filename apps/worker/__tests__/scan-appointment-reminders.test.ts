@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 const enqueueDuePending = vi.fn()
 const runExclusive = vi.fn((input: { fn: () => unknown }) => input.fn())
@@ -13,6 +14,12 @@ vi.mock("@chatbotx.io/redis", () => ({
   distributedLock: {
     runExclusive,
   },
+}))
+
+vi.mock("@chatbotx.io/worker-config", () => ({
+  scheduleJobScanAppointmentRemindersDataSchema: z.object({
+    triggeredAt: z.string().optional(),
+  }),
 }))
 
 vi.mock("../src/lib/logger", () => ({
