@@ -8,7 +8,6 @@ import {
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { generateCapiAuthUrl } from "@chatbotx.io/integration-instagram-facebook"
-import { ensureDataset } from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -44,15 +43,11 @@ export const reconnectInstagramCapiAction = workspaceActionClient
       }
 
       // ManyChat-style one-click: when the stored token already carries
-      // instagram_manage_events, connect in place (idempotent dataset
-      // provisioning + clear the disconnect flag) — no OAuth round-trip.
+      // instagram_manage_events, connect in place (clear the disconnect
+      // flag) — no OAuth round-trip. Dataset provisioning is a separate,
+      // explicit step the user picks on the CAPI tab (oauthAwaitingDataset
+      // state) rather than an implicit side effect of reconnecting.
       if (integrationInstagram.hasCapiScope) {
-        await metaConversionsService.provisionDatasetNow({
-          channel: "instagram",
-          integration: integrationInstagram,
-          provisionDataset: ({ accessToken, resourceId }) =>
-            ensureDataset({ resourceType: "igUser", resourceId, accessToken }),
-        })
         await metaConversionsService.reconnectCapi({
           channel: "instagram",
           integration: integrationInstagram,

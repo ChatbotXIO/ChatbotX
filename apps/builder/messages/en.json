@@ -2125,6 +2125,12 @@
         "connect": "Connect",
         "connectedLabel": "Custom"
       }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Permission granted. Enter an existing Dataset ID or create one automatically to finish connecting.",
+      "useDatasetId": "Use this Dataset ID",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
     }
   },
   "flows": {

@@ -1,6 +1,7 @@
 export type CapiConnectionState =
   | "connectedCustom"
   | "connectedOauth"
+  | "oauthAwaitingDataset"
   | "disconnected"
 
 /**
@@ -22,6 +23,9 @@ export function getCapiConnectionState(input: {
   }
   if (input.hasCapiScope && input.hasDatasetId) {
     return "connectedOauth"
+  }
+  if (input.hasCapiScope && !input.hasDatasetId) {
+    return "oauthAwaitingDataset"
   }
   return "disconnected"
 }

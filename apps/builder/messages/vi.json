@@ -4767,6 +4767,12 @@
         "connect": "Kết nối",
         "connectedLabel": "Tuỳ chỉnh"
       }
+    },
+    "finalize": {
+      "title": "Chọn Dataset ID",
+      "description": "Đã cấp quyền. Nhập Dataset ID có sẵn hoặc tạo tự động để hoàn tất kết nối.",
+      "useDatasetId": "Dùng Dataset ID này",
+      "caveat": "Dataset ID không liên kết với Trang hoặc tài khoản Instagram này có thể không ghi nhận đúng sự kiện. Để trống để tạo dataset được liên kết tự động."
     }
   }
 }

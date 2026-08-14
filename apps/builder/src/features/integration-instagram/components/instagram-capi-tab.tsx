@@ -15,7 +15,11 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
-import { getCapiConnectionState } from "@/features/meta-conversions/lib/capi-connection-state"
+import { CapiOauthFinalizeCard } from "@/features/meta-conversions/components/capi-oauth-finalize-card"
+import {
+  type CapiConnectionState,
+  getCapiConnectionState,
+} from "@/features/meta-conversions/lib/capi-connection-state"
 import {
   type CapiStatus,
   capiStatusConfig,
@@ -25,7 +29,9 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { connectInstagramCustomCapiAction } from "../actions/connect-custom-capi.action"
 import { disconnectInstagramCapiAction } from "../actions/disconnect-capi.action"
+import { provisionInstagramCapiDatasetAction } from "../actions/provision-capi-dataset.action"
 import { reconnectInstagramCapiAction } from "../actions/reconnect-capi.action"
+import { setInstagramCapiDatasetAction } from "../actions/set-capi-dataset.action"
 
 type InstagramCapiTabProps = {
   integrationInstagram: Pick<
@@ -43,6 +49,50 @@ const statusDescriptionKey = {
   unverified: "metaConversions.statusDescriptions.unverified",
   unsupported: "metaConversions.statusDescriptions.unsupported",
 } as const satisfies Record<CapiStatus, string>
+
+function renderConnectionContent({
+  connectionState,
+  integrationInstagram,
+  workspaceId,
+}: {
+  connectionState: CapiConnectionState
+  integrationInstagram: InstagramCapiTabProps["integrationInstagram"]
+  workspaceId: string
+}) {
+  if (connectionState === "disconnected") {
+    return (
+      <CapiMethodChooser
+        actions={{
+          oauthConnect: reconnectInstagramCapiAction,
+          connectCustom: connectInstagramCustomCapiAction,
+        }}
+        datasetId={integrationInstagram.datasetId}
+        integrationId={integrationInstagram.id}
+        workspaceId={workspaceId}
+      />
+    )
+  }
+  if (connectionState === "oauthAwaitingDataset") {
+    return (
+      <CapiOauthFinalizeCard
+        actions={{
+          setDataset: setInstagramCapiDatasetAction,
+          provision: provisionInstagramCapiDatasetAction,
+        }}
+        integrationId={integrationInstagram.id}
+        workspaceId={workspaceId}
+      />
+    )
+  }
+  return (
+    <CapiConnectedCard
+      datasetId={integrationInstagram.datasetId}
+      disconnectAction={disconnectInstagramCapiAction}
+      integrationId={integrationInstagram.id}
+      workspaceId={workspaceId}
+    />
+  )
+}
 
 export function InstagramCapiTab({
   integrationInstagram,
@@ -69,25 +119,11 @@ export function InstagramCapiTab({
   })
   const statusConfig = capiStatusConfig[status]
 
-  const connectionContent =
-    connectionState === "disconnected" ? (
-      <CapiMethodChooser
-        actions={{
-          oauthConnect: reconnectInstagramCapiAction,
-          connectCustom: connectInstagramCustomCapiAction,
-        }}
-        datasetId={integrationInstagram.datasetId}
-        integrationId={integrationInstagram.id}
-        workspaceId={workspaceId}
-      />
-    ) : (
-      <CapiConnectedCard
-        datasetId={integrationInstagram.datasetId}
-        disconnectAction={disconnectInstagramCapiAction}
-        integrationId={integrationInstagram.id}
-        workspaceId={workspaceId}
-      />
-    )
+  const connectionContent = renderConnectionContent({
+    connectionState,
+    integrationInstagram,
+    workspaceId,
+  })
 
   return (
     <div className="flex flex-col gap-4">

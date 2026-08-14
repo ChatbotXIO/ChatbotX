@@ -13,7 +13,11 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
-import { getCapiConnectionState } from "@/features/meta-conversions/lib/capi-connection-state"
+import { CapiOauthFinalizeCard } from "@/features/meta-conversions/components/capi-oauth-finalize-card"
+import {
+  type CapiConnectionState,
+  getCapiConnectionState,
+} from "@/features/meta-conversions/lib/capi-connection-state"
 import {
   type CapiStatus,
   capiStatusConfig,
@@ -23,7 +27,9 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { connectMessengerCustomCapiAction } from "../actions/connect-custom-capi.action"
 import { disconnectMessengerCapiAction } from "../actions/disconnect-capi.action"
+import { provisionMessengerCapiDatasetAction } from "../actions/provision-capi-dataset.action"
 import { reconnectMessengerCapiAction } from "../actions/reconnect-capi.action"
+import { setMessengerCapiDatasetAction } from "../actions/set-capi-dataset.action"
 
 type MessengerCapiTabProps = {
   integrationMessenger: Pick<
@@ -41,6 +47,50 @@ const statusDescriptionKey = {
   unverified: "metaConversions.statusDescriptions.unverified",
   unsupported: "metaConversions.statusDescriptions.unsupported",
 } as const satisfies Record<CapiStatus, string>
+
+function renderConnectionContent({
+  connectionState,
+  integrationMessenger,
+  workspaceId,
+}: {
+  connectionState: CapiConnectionState
+  integrationMessenger: MessengerCapiTabProps["integrationMessenger"]
+  workspaceId: string
+}) {
+  if (connectionState === "disconnected") {
+    return (
+      <CapiMethodChooser
+        actions={{
+          oauthConnect: reconnectMessengerCapiAction,
+          connectCustom: connectMessengerCustomCapiAction,
+        }}
+        datasetId={integrationMessenger.datasetId}
+        integrationId={integrationMessenger.id}
+        workspaceId={workspaceId}
+      />
+    )
+  }
+  if (connectionState === "oauthAwaitingDataset") {
+    return (
+      <CapiOauthFinalizeCard
+        actions={{
+          setDataset: setMessengerCapiDatasetAction,
+          provision: provisionMessengerCapiDatasetAction,
+        }}
+        integrationId={integrationMessenger.id}
+        workspaceId={workspaceId}
+      />
+    )
+  }
+  return (
+    <CapiConnectedCard
+      datasetId={integrationMessenger.datasetId}
+      disconnectAction={disconnectMessengerCapiAction}
+      integrationId={integrationMessenger.id}
+      workspaceId={workspaceId}
+    />
+  )
+}
 
 export function MessengerCapiTab({
   integrationMessenger,
@@ -85,24 +135,11 @@ export function MessengerCapiTab({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {connectionState === "disconnected" ? (
-            <CapiMethodChooser
-              actions={{
-                oauthConnect: reconnectMessengerCapiAction,
-                connectCustom: connectMessengerCustomCapiAction,
-              }}
-              datasetId={integrationMessenger.datasetId}
-              integrationId={integrationMessenger.id}
-              workspaceId={workspaceId}
-            />
-          ) : (
-            <CapiConnectedCard
-              datasetId={integrationMessenger.datasetId}
-              disconnectAction={disconnectMessengerCapiAction}
-              integrationId={integrationMessenger.id}
-              workspaceId={workspaceId}
-            />
-          )}
+          {renderConnectionContent({
+            connectionState,
+            integrationMessenger,
+            workspaceId,
+          })}
         </CardContent>
       </Card>
     </div>

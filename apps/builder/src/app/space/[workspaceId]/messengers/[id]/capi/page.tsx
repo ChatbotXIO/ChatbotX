@@ -8,7 +8,6 @@ import {
   hasPageEventsScope,
   toAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
-import { ensureDataset } from "@chatbotx.io/integration-meta-conversions"
 import { notFound } from "next/navigation"
 import { MessengerCapiTab } from "@/features/integration-messenger/components/messenger-capi-tab"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
@@ -57,24 +56,7 @@ export default async function MessengerCapiPage(props: {
           .catch(() => integrationMessenger)
       : integrationMessenger
 
-  let resolved = refreshed ?? integrationMessenger
-
-  // Close the OAuth transitional gap: permission granted but no dataset yet —
-  // provision it now (best-effort) so the tab lands in the connected state.
-  if (
-    resolved.hasCapiScope &&
-    !(resolved.datasetId || resolved.capiAccessToken || capiDisconnected)
-  ) {
-    resolved = await metaConversionsService
-      .ensureDatasetId({
-        channel: "messenger",
-        integration: resolved,
-        provisionDataset: ({ accessToken, resourceId }) =>
-          ensureDataset({ resourceType: "page", resourceId, accessToken }),
-      })
-      .then((datasetId) => ({ ...resolved, datasetId }))
-      .catch(() => resolved)
-  }
+  const resolved = refreshed ?? integrationMessenger
 
   return (
     <MessengerCapiTab

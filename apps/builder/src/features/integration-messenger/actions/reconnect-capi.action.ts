@@ -8,7 +8,6 @@ import {
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { generateCapiAuthUrl } from "@chatbotx.io/integration-messenger"
-import { ensureDataset } from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -41,16 +40,11 @@ export const reconnectMessengerCapiAction = workspaceActionClient
       }
 
       // ManyChat-style one-click: when the stored page token already carries
-      // page_events, connect in place (idempotent POST /{page_id}/dataset +
-      // clear the disconnect flag) — no OAuth round-trip needed. OAuth is only
-      // for tokens that still lack the permission.
+      // page_events, connect in place (clear the disconnect flag) — no OAuth
+      // round-trip needed. Dataset provisioning is a separate, explicit step
+      // the user picks on the CAPI tab (oauthAwaitingDataset state) rather
+      // than an implicit side effect of reconnecting.
       if (integrationMessenger.hasCapiScope) {
-        await metaConversionsService.provisionDatasetNow({
-          channel: "messenger",
-          integration: integrationMessenger,
-          provisionDataset: ({ accessToken, resourceId }) =>
-            ensureDataset({ resourceType: "page", resourceId, accessToken }),
-        })
         await metaConversionsService.reconnectCapi({
           channel: "messenger",
           integration: integrationMessenger,

@@ -44,7 +44,7 @@ export function getCapiStatus(input: {
   if (input.hasManualCapiAccessToken && input.hasDatasetId) {
     return "ready"
   }
-  if (input.hasCapiScope) {
+  if (input.hasCapiScope && input.hasDatasetId) {
     return "ready"
   }
   if (input.credentialAvailable) {

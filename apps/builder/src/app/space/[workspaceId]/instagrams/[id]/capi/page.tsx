@@ -8,7 +8,6 @@ import {
   hasInstagramManageEventsScope,
   toAppAccessToken,
 } from "@chatbotx.io/integration-instagram-facebook"
-import { ensureDataset } from "@chatbotx.io/integration-meta-conversions"
 import { notFound } from "next/navigation"
 import { InstagramCapiTab } from "@/features/integration-instagram/components/instagram-capi-tab"
 import { findIntegrationInstagram } from "@/features/integration-instagram/queries"
@@ -60,25 +59,7 @@ export default async function InstagramCapiPage(props: {
           .catch(() => integrationInstagram)
       : integrationInstagram
 
-  let resolved = refreshed ?? integrationInstagram
-
-  // Close the OAuth transitional gap: permission granted but no dataset yet —
-  // provision it now (best-effort) so the tab lands in the connected state.
-  if (
-    resolved.type === "facebook" &&
-    resolved.hasCapiScope &&
-    !(resolved.datasetId || resolved.capiAccessToken || capiDisconnected)
-  ) {
-    resolved = await metaConversionsService
-      .ensureDatasetId({
-        channel: "instagram",
-        integration: resolved,
-        provisionDataset: ({ accessToken, resourceId }) =>
-          ensureDataset({ resourceType: "igUser", resourceId, accessToken }),
-      })
-      .then((datasetId) => ({ ...resolved, datasetId }))
-      .catch(() => resolved)
-  }
+  const resolved = refreshed ?? integrationInstagram
 
   return (
     <InstagramCapiTab

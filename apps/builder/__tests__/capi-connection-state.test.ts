@@ -51,6 +51,17 @@ describe("getCapiConnectionState", () => {
         hasCapiScope: true,
         hasDatasetId: false,
       }),
+    ).toBe("oauthAwaitingDataset")
+  })
+
+  test("user disconnect still overrides scope-only state", () => {
+    expect(
+      getCapiConnectionState({
+        capiDisconnected: true,
+        hasManualCapiAccessToken: false,
+        hasCapiScope: true,
+        hasDatasetId: false,
+      }),
     ).toBe("disconnected")
   })
 
