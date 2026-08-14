@@ -236,14 +236,13 @@ export const handleCallback = async (
         createdBy: userId,
       })
 
-  const workspaceMember = stateParams.workspaceId
-    ? await workspaceMemberService.findByWorkspaceIdAndUserId({
-        workspaceId: stateParams.workspaceId,
-        userId,
-      })
-    : undefined
-
-  if (stateParams.workspaceId && !workspaceMember) {
+  if (
+    stateParams.workspaceId &&
+    !(await workspaceMemberService.isMember({
+      workspaceId: stateParams.workspaceId,
+      userId,
+    }))
+  ) {
     logger.info(
       { userId, workspaceId: stateParams.workspaceId },
       "user is not a member of workspace in OAuth callback",
