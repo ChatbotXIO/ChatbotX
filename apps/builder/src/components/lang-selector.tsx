@@ -15,6 +15,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/popover"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Check, ChevronsUpDown } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import type React from "react"
 import { useState, useTransition } from "react"
@@ -29,17 +30,19 @@ const items = locales.map((value) => ({
 export const LangSelector: React.FC = () => {
   const locale = resolveLocale(useLocale())
   const [open, setOpen] = useState(false)
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
   const t = useTranslations()
 
   function onChangeLocale(value: string) {
     if (!isLocale(value)) {
       return
     }
-    startTransition(() => {
-      setUserLocale(value)
+    startTransition(async () => {
+      await setUserLocale(value)
+      setOpen(false)
+      router.refresh()
     })
-    setOpen(false)
   }
 
   return (
@@ -50,6 +53,7 @@ export const LangSelector: React.FC = () => {
             aria-expanded={open}
             aria-label={t("fields.language.label")}
             className="w-45 justify-between"
+            disabled={isPending}
             role="combobox"
             variant="outline"
           >
@@ -65,6 +69,7 @@ export const LangSelector: React.FC = () => {
             <CommandEmpty>{t("actions.noRecordFound")}</CommandEmpty>
             {items.map((item) => (
               <CommandItem
+                disabled={isPending}
                 key={item.value}
                 onSelect={() => onChangeLocale(item.value)}
                 value={item.label}
