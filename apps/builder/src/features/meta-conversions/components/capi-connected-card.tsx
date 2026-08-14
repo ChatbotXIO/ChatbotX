@@ -13,8 +13,8 @@ type CapiConnectedCardProps = {
   workspaceId: string
   integrationId: string
   datasetId: string | null
-  // Messenger/Instagram disconnect actions share one signature; the Messenger
-  // action type stands in as the shared contract for both tabs.
+  // Messenger/Instagram/WhatsApp disconnect actions share one signature; the
+  // Messenger action type stands in as the shared contract for every tab.
   disconnectAction: typeof disconnectMessengerCapiAction
 }
 

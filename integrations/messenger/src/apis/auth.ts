@@ -213,8 +213,6 @@ export const LEAD_ADS_SCOPES = [
 export const LEADS_RETRIEVAL_SCOPE = "leads_retrieval"
 export const PAGE_EVENTS_SCOPE = "page_events"
 
-export const CAPI_SCOPES = [PAGE_EVENTS_SCOPE]
-
 export function generateAuthUrl({
   clientId,
   version = DEFAULT_API_VERSION,
@@ -260,28 +258,6 @@ export function generateLeadAdsAuthUrl({
     client_id: clientId,
     redirect_uri: redirectUrl,
     scope: LEAD_ADS_SCOPES.join(","),
-    response_type: "code",
-    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
-  })
-  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
-}
-
-export function generateCapiAuthUrl({
-  clientId,
-  version = DEFAULT_API_VERSION,
-  redirectUrl,
-  stateParams,
-}: {
-  clientId: string
-  version?: string
-  redirectUrl: string
-  stateParams?: Record<string, unknown>
-}): string {
-  const params = new URLSearchParams({
-    auth_type: "rerequest",
-    client_id: clientId,
-    redirect_uri: redirectUrl,
-    scope: CAPI_SCOPES.join(","),
     response_type: "code",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
   })

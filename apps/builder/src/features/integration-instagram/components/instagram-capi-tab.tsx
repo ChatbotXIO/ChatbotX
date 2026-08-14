@@ -15,7 +15,6 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
-import { CapiOauthFinalizeCard } from "@/features/meta-conversions/components/capi-oauth-finalize-card"
 import {
   type CapiConnectionState,
   getCapiConnectionState,
@@ -26,11 +25,9 @@ import {
   getCapiStatus,
 } from "@/features/meta-conversions/lib/capi-status"
 import { useWorkspaceId } from "@/hooks/routing"
-import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { connectInstagramCustomCapiAction } from "../actions/connect-custom-capi.action"
 import { disconnectInstagramCapiAction } from "../actions/disconnect-capi.action"
 import { provisionInstagramCapiDatasetAction } from "../actions/provision-capi-dataset.action"
-import { reconnectInstagramCapiAction } from "../actions/reconnect-capi.action"
 import { setInstagramCapiDatasetAction } from "../actions/set-capi-dataset.action"
 
 type InstagramCapiTabProps = {
@@ -63,22 +60,11 @@ function renderConnectionContent({
     return (
       <CapiMethodChooser
         actions={{
-          oauthConnect: reconnectInstagramCapiAction,
           connectCustom: connectInstagramCustomCapiAction,
-        }}
-        datasetId={integrationInstagram.datasetId}
-        integrationId={integrationInstagram.id}
-        workspaceId={workspaceId}
-      />
-    )
-  }
-  if (connectionState === "oauthAwaitingDataset") {
-    return (
-      <CapiOauthFinalizeCard
-        actions={{
           setDataset: setInstagramCapiDatasetAction,
           provision: provisionInstagramCapiDatasetAction,
         }}
+        datasetId={integrationInstagram.datasetId}
         integrationId={integrationInstagram.id}
         workspaceId={workspaceId}
       />
@@ -102,7 +88,6 @@ export function InstagramCapiTab({
 }: InstagramCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
-  useChannelReconnectResult()
   const supported = integrationInstagram.type === "facebook"
   const connectionState = getCapiConnectionState({
     capiDisconnected,

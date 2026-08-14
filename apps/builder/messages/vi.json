@@ -3374,7 +3374,8 @@
       "flows": "Luồng",
       "messageTemplates": "Mẫu tin nhắn",
       "profile": "Hồ sơ",
-      "usefulLinks": "Liên kết hữu ích"
+      "usefulLinks": "Liên kết hữu ích",
+      "conversionsApi": "Tối ưu quảng cáo"
     },
     "accountHealths": {
       "title": "Quản lý tài khoản WhatsApp của bạn",
@@ -4689,13 +4690,14 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Gửi sự kiện LeadSubmitted từ hội thoại Messenger và Instagram đến Meta.",
+    "description": "Gửi sự kiện LeadSubmitted từ hội thoại Messenger, Instagram và WhatsApp đến Meta.",
     "datasetId": "ID dataset",
     "reconnect": "Kết nối lại quyền",
     "connectViaFacebook": "Kết nối qua Facebook",
     "unsupportedExplanation": "Tài khoản Instagram này được kết nối bằng Instagram Business Login. Hãy kết nối tài khoản qua Facebook để dùng Meta Conversions API.",
     "flowStep": {
-      "description": "Đưa sự kiện LeadSubmitted cho Messenger hoặc Instagram vào hàng đợi."
+      "description": "Đưa sự kiện LeadSubmitted cho Messenger, Instagram hoặc WhatsApp vào hàng đợi.",
+      "whatsappNote": "Sự kiện WhatsApp chỉ được gửi cho các hội thoại bắt đầu từ quảng cáo click-to-WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -4715,13 +4717,12 @@
     "errors": {
       "reconnect": "Không thể bắt đầu kết nối lại Meta CAPI.",
       "messengerNotFound": "Không tìm thấy tích hợp Messenger.",
-      "messengerAppNotFound": "Không tìm thấy cấu hình ứng dụng Messenger.",
       "instagramNotFound": "Không tìm thấy tích hợp Instagram.",
       "instagramRequiresFacebook": "Instagram CAPI yêu cầu kết nối qua Facebook.",
-      "instagramAppNotFound": "Không tìm thấy cấu hình ứng dụng Instagram.",
       "saveFailed": "Không lưu được. Vui lòng thử lại.",
       "datasetRequired": "Hãy lưu Dataset ID trước khi thêm access token.",
-      "invalidToken": "Token này không truy cập được dataset."
+      "invalidToken": "Token này không truy cập được dataset.",
+      "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp."
     },
     "fields": {
       "eventType": {
@@ -4739,7 +4740,6 @@
     },
     "datasetIdPlaceholder": "Dán Dataset ID từ Events Manager",
     "saveDataset": "Lưu",
-    "createAutomatically": "Tạo tự động",
     "accessToken": "Access Token (tuỳ chọn)",
     "accessTokenHint": "Dán token từ Events Manager để gửi sự kiện bằng token riêng thay vì token của trang. Cần có Dataset ID.",
     "accessTokenPlaceholder": "Access token của Events Manager",
@@ -4756,7 +4756,7 @@
     "methods": {
       "oauth": {
         "title": "Kết nối qua Facebook",
-        "description": "Kết nối một chạm bằng quyền của trang. Dataset được tạo tự động.",
+        "description": "Sử dụng kết nối hiện có của trang, sau đó chọn Dataset ID.",
         "connect": "Kết nối qua Facebook",
         "connectedLabel": "qua Facebook"
       },
@@ -4766,13 +4766,22 @@
         "start": "Thiết lập kết nối tuỳ chỉnh",
         "connect": "Kết nối",
         "connectedLabel": "Tuỳ chỉnh"
+      },
+      "whatsapp": {
+        "title": "Kết nối qua WhatsApp",
+        "description": "Sử dụng kết nối WhatsApp hiện có, sau đó chọn Dataset ID.",
+        "connect": "Kết nối qua WhatsApp",
+        "connectedLabel": "qua WhatsApp"
       }
     },
     "finalize": {
       "title": "Chọn Dataset ID",
-      "description": "Đã cấp quyền. Nhập Dataset ID có sẵn hoặc tạo tự động để hoàn tất kết nối.",
-      "useDatasetId": "Dùng Dataset ID này",
+      "description": "Nhập Dataset ID có sẵn, hoặc để trống để tự động tạo mới.",
+      "save": "Lưu",
       "caveat": "Dataset ID không liên kết với Trang hoặc tài khoản Instagram này có thể không ghi nhận đúng sự kiện. Để trống để tạo dataset được liên kết tự động."
+    },
+    "whatsapp": {
+      "connect": "Kết nối"
     }
   }
 }

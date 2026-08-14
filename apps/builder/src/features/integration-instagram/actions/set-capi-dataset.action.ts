@@ -9,6 +9,7 @@ import { getDataset } from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
+import { surfaceCapiError } from "@/features/meta-conversions/lib/surface-capi-error"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -46,9 +47,16 @@ export const setInstagramCapiDatasetAction = workspaceActionClient
           datasetId: parsedInput.datasetId,
           validate: getDataset,
         })
-      } catch {
-        throw new ChatbotXException(t("invalidToken"))
+      } catch (error) {
+        surfaceCapiError(error, t("invalidToken"))
       }
+
+      // Save = connect: clear a user-intent disconnect so this is the only
+      // path back from a Disconnect now that OAuth reconnect is gone.
+      await metaConversionsService.reconnectCapi({
+        channel: "instagram",
+        integration,
+      })
 
       return { success: true }
     },

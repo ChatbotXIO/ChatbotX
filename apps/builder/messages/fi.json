@@ -3374,7 +3374,8 @@
       "flows": "Flow't",
       "messageTemplates": "Viestimallit",
       "profile": "Profiili",
-      "usefulLinks": "Hyödylliset linkit"
+      "usefulLinks": "Hyödylliset linkit",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -4689,13 +4690,14 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger and Instagram conversations to Meta.",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
     "datasetId": "Dataset ID",
     "reconnect": "Reconnect permissions",
     "connectViaFacebook": "Connect via Facebook",
     "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger or Instagram."
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -4715,13 +4717,12 @@
     "errors": {
       "reconnect": "Failed to start Meta CAPI reconnect.",
       "messengerNotFound": "Messenger integration not found.",
-      "messengerAppNotFound": "Messenger app settings not found.",
       "instagramNotFound": "Instagram integration not found.",
       "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "instagramAppNotFound": "Instagram app settings not found.",
       "saveFailed": "Could not save. Please try again.",
       "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset."
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
     },
     "fields": {
       "eventType": {
@@ -4739,7 +4740,6 @@
     },
     "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
     "saveDataset": "Save",
-    "createAutomatically": "Create automatically",
     "accessToken": "Access Token (optional)",
     "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
     "accessTokenPlaceholder": "Events Manager access token",
@@ -4756,7 +4756,7 @@
     "methods": {
       "oauth": {
         "title": "Connect via Facebook",
-        "description": "One-click connect using your page permissions. The dataset is created automatically.",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
         "connect": "Connect via Facebook",
         "connectedLabel": "via Facebook"
       },
@@ -4766,13 +4766,22 @@
         "start": "Set up custom connection",
         "connect": "Connect",
         "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
       }
     },
     "finalize": {
       "title": "Choose a Dataset ID",
-      "description": "Permission granted. Enter an existing Dataset ID or create one automatically to finish connecting.",
-      "useDatasetId": "Use this Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Tallenna",
       "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

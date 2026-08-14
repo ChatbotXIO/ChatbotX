@@ -323,7 +323,8 @@ export class ActionExecutor {
       case triggerActions.enum.sendMetaCapiEvent: {
         if (
           recentContactInbox.channel !== "messenger" &&
-          recentContactInbox.channel !== "instagram"
+          recentContactInbox.channel !== "instagram" &&
+          recentContactInbox.channel !== "whatsapp"
         ) {
           baseLogger.warn(
             `Unsupported Meta CAPI trigger channel: ${recentContactInbox.channel}`,

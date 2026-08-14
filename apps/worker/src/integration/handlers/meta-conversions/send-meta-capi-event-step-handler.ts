@@ -7,7 +7,11 @@ import { logger } from "../../../lib/logger"
 import type { ExecuteStepProps } from "../flow-utils"
 import type { ExecuteStepResult } from "../step"
 
-const supportedChannels = new Set<string>(["messenger", "instagram"])
+const supportedChannels = new Set<string>([
+  "messenger",
+  "instagram",
+  "whatsapp",
+])
 
 function isMetaConversionsChannel(
   channel: string,

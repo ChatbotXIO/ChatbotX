@@ -8,6 +8,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { ensureDataset } from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
+import { surfaceCapiError } from "@/features/meta-conversions/lib/surface-capi-error"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -31,11 +32,22 @@ export const provisionMessengerCapiDatasetAction = workspaceActionClient
         throw new ChatbotXException(t("messengerNotFound"))
       }
 
-      await metaConversionsService.provisionDatasetNow({
+      try {
+        await metaConversionsService.provisionDatasetNow({
+          channel: "messenger",
+          integration,
+          provisionDataset: ({ accessToken, resourceId }) =>
+            ensureDataset({ resourceType: "page", resourceId, accessToken }),
+        })
+      } catch (error) {
+        surfaceCapiError(error)
+      }
+
+      // Save = connect: clear a user-intent disconnect so this is the only
+      // path back from a Disconnect now that OAuth reconnect is gone.
+      await metaConversionsService.reconnectCapi({
         channel: "messenger",
         integration,
-        provisionDataset: ({ accessToken, resourceId }) =>
-          ensureDataset({ resourceType: "page", resourceId, accessToken }),
       })
 
       return { success: true }

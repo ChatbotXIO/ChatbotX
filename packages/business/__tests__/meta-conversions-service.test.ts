@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => ({
   messengerFindWorkspaceIntegration: vi.fn(),
   messengerClaimCapiScopeCacheRefresh: vi.fn(),
   messengerUpdateCapiScopeCache: vi.fn(),
-  messengerSetCapiScopeCache: vi.fn(),
   messengerUpdateDatasetIdIfNull: vi.fn(),
   messengerUpdateDatasetId: vi.fn(),
   messengerUpdateCapiAccessToken: vi.fn(),
@@ -21,11 +20,21 @@ const mocks = vi.hoisted(() => ({
   instagramFindWorkspaceIntegration: vi.fn(),
   instagramClaimCapiScopeCacheRefresh: vi.fn(),
   instagramUpdateCapiScopeCache: vi.fn(),
-  instagramSetCapiScopeCache: vi.fn(),
   instagramUpdateDatasetIdIfNull: vi.fn(),
   instagramUpdateDatasetId: vi.fn(),
   instagramUpdateCapiAccessToken: vi.fn(),
   instagramClearCapiAccessToken: vi.fn(),
+  whatsappFindByInboxIdForWorkspace: vi.fn(),
+  whatsappFindByIdForWorkspace: vi.fn(),
+  whatsappClaimCapiScopeCacheRefresh: vi.fn(),
+  whatsappUpdateCapiScopeCache: vi.fn(),
+  whatsappUpdateDatasetIdIfNull: vi.fn(),
+  whatsappUpdateDatasetId: vi.fn(),
+  whatsappUpdateCapiAccessToken: vi.fn(),
+  whatsappClearCapiAccessToken: vi.fn(),
+  whatsappConnectCustomCapi: vi.fn(),
+  whatsappSetCapiDisconnectedAt: vi.fn(),
+  whatsappClearCapiDisconnectedAt: vi.fn(),
   encryptedDataParse: vi.fn((value: unknown) => value),
   encryptObject: vi.fn(),
   decryptObject: vi.fn(),
@@ -43,7 +52,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findWorkspaceIntegration: mocks.messengerFindWorkspaceIntegration,
     claimCapiScopeCacheRefresh: mocks.messengerClaimCapiScopeCacheRefresh,
     updateCapiScopeCache: mocks.messengerUpdateCapiScopeCache,
-    setCapiScopeCache: mocks.messengerSetCapiScopeCache,
     updateDatasetIdIfNull: mocks.messengerUpdateDatasetIdIfNull,
     updateDatasetId: mocks.messengerUpdateDatasetId,
     updateCapiAccessToken: mocks.messengerUpdateCapiAccessToken,
@@ -53,11 +61,22 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findWorkspaceIntegration: mocks.instagramFindWorkspaceIntegration,
     claimCapiScopeCacheRefresh: mocks.instagramClaimCapiScopeCacheRefresh,
     updateCapiScopeCache: mocks.instagramUpdateCapiScopeCache,
-    setCapiScopeCache: mocks.instagramSetCapiScopeCache,
     updateDatasetIdIfNull: mocks.instagramUpdateDatasetIdIfNull,
     updateDatasetId: mocks.instagramUpdateDatasetId,
     updateCapiAccessToken: mocks.instagramUpdateCapiAccessToken,
     clearCapiAccessToken: mocks.instagramClearCapiAccessToken,
+  },
+  integrationWhatsappRepository: {
+    findByIdForWorkspace: mocks.whatsappFindByIdForWorkspace,
+    claimCapiScopeCacheRefresh: mocks.whatsappClaimCapiScopeCacheRefresh,
+    updateCapiScopeCache: mocks.whatsappUpdateCapiScopeCache,
+    updateDatasetIdIfNull: mocks.whatsappUpdateDatasetIdIfNull,
+    updateDatasetId: mocks.whatsappUpdateDatasetId,
+    updateCapiAccessToken: mocks.whatsappUpdateCapiAccessToken,
+    clearCapiAccessToken: mocks.whatsappClearCapiAccessToken,
+    connectCustomCapi: mocks.whatsappConnectCustomCapi,
+    setCapiDisconnectedAt: mocks.whatsappSetCapiDisconnectedAt,
+    clearCapiDisconnectedAt: mocks.whatsappClearCapiDisconnectedAt,
   },
 }))
 
@@ -79,6 +98,12 @@ vi.mock("../src/integration-instagram/service", () => ({
   instagramIntegrationService: {
     findByInboxId: mocks.instagramFindByInboxId,
     findByInboxIdForWorkspace: mocks.instagramFindByInboxIdForWorkspace,
+  },
+}))
+
+vi.mock("../src/integration-whatsapp/service", () => ({
+  integrationWhatsappService: {
+    findByInboxIdForWorkspace: mocks.whatsappFindByInboxIdForWorkspace,
   },
 }))
 
@@ -127,6 +152,18 @@ const instagramBusinessLoginIntegration = {
   type: "instagram",
 }
 
+const whatsappIntegration = {
+  id: "wa-1",
+  workspaceId: "ws-1",
+  inboxId: "inbox-1",
+  wabaId: "waba-1",
+  auth: { tokens: { accessToken: "whatsapp-token" } },
+  capiScopeCheckedAt: null,
+  datasetId: null,
+  hasCapiScope: true,
+  capiAccessToken: null,
+}
+
 describe("MetaConversionsService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -138,6 +175,22 @@ describe("MetaConversionsService", () => {
     mocks.instagramFindByInboxId.mockResolvedValue(instagramFacebookIntegration)
     mocks.instagramFindByInboxIdForWorkspace.mockResolvedValue(
       instagramFacebookIntegration,
+    )
+    mocks.whatsappFindByInboxIdForWorkspace.mockResolvedValue(
+      whatsappIntegration,
+    )
+    mocks.whatsappClaimCapiScopeCacheRefresh.mockImplementation(
+      async (input: Record<string, unknown>) => ({
+        ...whatsappIntegration,
+        capiScopeCheckedAt: input.capiScopeCheckedAt,
+      }),
+    )
+    mocks.whatsappUpdateCapiScopeCache.mockImplementation(
+      async (input: Record<string, unknown>) => ({
+        ...whatsappIntegration,
+        hasCapiScope: input.hasCapiScope,
+        capiScopeCheckedAt: input.capiScopeCheckedAt,
+      }),
     )
     mocks.insertIgnoreDuplicate.mockImplementation(
       async (values: Record<string, unknown>) => ({
@@ -169,21 +222,7 @@ describe("MetaConversionsService", () => {
         capiScopeCheckedAt: input.capiScopeCheckedAt,
       }),
     )
-    mocks.messengerSetCapiScopeCache.mockImplementation(
-      async (input: Record<string, unknown>) => ({
-        ...messengerIntegration,
-        hasCapiScope: input.hasCapiScope,
-        capiScopeCheckedAt: input.capiScopeCheckedAt,
-      }),
-    )
     mocks.instagramUpdateCapiScopeCache.mockImplementation(
-      async (input: Record<string, unknown>) => ({
-        ...instagramFacebookIntegration,
-        hasCapiScope: input.hasCapiScope,
-        capiScopeCheckedAt: input.capiScopeCheckedAt,
-      }),
-    )
-    mocks.instagramSetCapiScopeCache.mockImplementation(
       async (input: Record<string, unknown>) => ({
         ...instagramFacebookIntegration,
         hasCapiScope: input.hasCapiScope,
@@ -442,28 +481,6 @@ describe("MetaConversionsService", () => {
     )
   })
 
-  test("public scope-cache update uses the unconditional adapter write", async () => {
-    const now = new Date("2026-08-10T12:00:00.000Z")
-
-    await metaConversionsService.updateCapiScopeCache({
-      channel: "messenger",
-      integration: messengerIntegration,
-      hasCapiScope: true,
-      capiScopeCheckedAt: now,
-    })
-
-    expect(mocks.messengerSetCapiScopeCache).toHaveBeenCalledWith(
-      {
-        id: "im-1",
-        workspaceId: "ws-1",
-        hasCapiScope: true,
-        capiScopeCheckedAt: now,
-      },
-      undefined,
-    )
-    expect(mocks.messengerUpdateCapiScopeCache).not.toHaveBeenCalled()
-  })
-
   test("dispatches dataset provisioning through the instagram adapter", async () => {
     mocks.instagramUpdateDatasetIdIfNull.mockResolvedValueOnce({
       ...instagramFacebookIntegration,
@@ -579,5 +596,278 @@ describe("MetaConversionsService", () => {
     ).rejects.toThrow("Instagram Business Login integrations do not support")
 
     expect(mocks.instagramClaimCapiScopeCacheRefresh).not.toHaveBeenCalled()
+  })
+
+  test("resolves the whatsapp integration by inbox when enqueuing a lead event", async () => {
+    await expect(
+      metaConversionsService.enqueueLeadEvent({
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+        contactInboxId: "ci-1",
+        inboxId: "inbox-1",
+        sourceKey: "flow:step-1:ci-1:20260810",
+        source: "flowStep",
+        occurredAt: new Date("2026-08-10T12:00:00.000Z"),
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        id: "event-1",
+        channel: "whatsapp",
+        integrationId: "wa-1",
+      }),
+    )
+
+    expect(mocks.whatsappFindByInboxIdForWorkspace).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.enqueueIntegrationJob).toHaveBeenCalledWith(
+      {
+        type: "sendMetaCapiEvent",
+        data: { metaCapiEventId: "event-1", workspaceId: "ws-1" },
+      },
+      { jobId: "meta-capi-send-event-1" },
+    )
+  })
+
+  test("dispatches dataset provisioning through the whatsapp adapter", async () => {
+    mocks.whatsappUpdateDatasetIdIfNull.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      datasetId: "dataset-waba-1",
+    })
+    const provisionDataset = vi.fn().mockResolvedValue("dataset-waba-1")
+
+    await expect(
+      metaConversionsService.ensureDatasetId({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+        provisionDataset,
+      }),
+    ).resolves.toBe("dataset-waba-1")
+
+    expect(provisionDataset).toHaveBeenCalledWith({
+      accessToken: "whatsapp-token",
+      resourceId: "waba-1",
+    })
+    expect(mocks.whatsappUpdateDatasetIdIfNull).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+        datasetId: "dataset-waba-1",
+      },
+      undefined,
+    )
+  })
+
+  test("dispatches whatsapp readiness refresh through the send-path CAS adapter", async () => {
+    const now = new Date("2026-08-10T12:00:00.000Z")
+    const checkScope = vi.fn().mockResolvedValue(true)
+
+    await metaConversionsService.refreshCapiScopeCache({
+      channel: "whatsapp",
+      integration: whatsappIntegration,
+      checkScope,
+      now,
+    })
+
+    expect(checkScope).toHaveBeenCalledWith({
+      accessToken: "whatsapp-token",
+      resourceId: "waba-1",
+    })
+    expect(mocks.whatsappUpdateCapiScopeCache).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+        hasCapiScope: true,
+        capiScopeCheckedAt: now,
+        expectedCapiScopeCheckedAt: now,
+      },
+      undefined,
+    )
+  })
+
+  test("resolves OAuth CAPI access token for whatsapp when no manual token is saved", async () => {
+    await expect(resolveCapiAccessToken(whatsappIntegration)).resolves.toEqual({
+      accessToken: "whatsapp-token",
+      source: "oauth",
+    })
+
+    expect(mocks.decryptObject).not.toHaveBeenCalled()
+  })
+
+  test("resolves manual CAPI access token for whatsapp before OAuth auth (v1.7 custom connection)", async () => {
+    await expect(
+      resolveCapiAccessToken({
+        ...whatsappIntegration,
+        capiAccessToken: { encrypted: true },
+      }),
+    ).resolves.toEqual({
+      accessToken: "manual-token",
+      source: "manual",
+    })
+
+    expect(mocks.decryptObject).toHaveBeenCalledWith(
+      { encrypted: true },
+      expect.any(Object),
+    )
+  })
+
+  test("saves a manually entered dataset id for whatsapp through the send adapter", async () => {
+    mocks.whatsappUpdateDatasetId.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      datasetId: "123456789",
+    })
+    const validate = vi.fn().mockResolvedValue("123456789")
+
+    await expect(
+      metaConversionsService.saveDatasetId({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+        datasetId: " 123456789 ",
+        validate,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ datasetId: "123456789" }))
+
+    expect(validate).toHaveBeenCalledWith({
+      datasetId: "123456789",
+      accessToken: "whatsapp-token",
+    })
+    expect(mocks.whatsappUpdateDatasetId).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+        datasetId: "123456789",
+      },
+      undefined,
+    )
+  })
+
+  // v1.7 — WhatsApp is now a full CapiConnectChannel peer of messenger/
+  // instagram (Custom connection + Disconnect). These calls now compile and
+  // dispatch through the whatsapp connect adapter; there is no longer a
+  // `@ts-expect-error` rejection for whatsapp on these methods.
+  test("encrypts and saves manual CAPI token for whatsapp after dataset validation succeeds", async () => {
+    const validate = vi.fn().mockResolvedValue("123456789")
+    mocks.whatsappUpdateCapiAccessToken.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      capiAccessToken: { encrypted: true },
+    })
+
+    await expect(
+      metaConversionsService.saveCapiAccessToken({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+        accessToken: " manual-token ",
+        datasetId: "123456789",
+        validate,
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({ capiAccessToken: { encrypted: true } }),
+    )
+
+    expect(validate).toHaveBeenCalledWith({
+      datasetId: "123456789",
+      accessToken: "manual-token",
+    })
+    expect(mocks.encryptObject).toHaveBeenCalledWith({
+      accessToken: "manual-token",
+    })
+    expect(mocks.whatsappUpdateCapiAccessToken).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+        capiAccessToken: { encrypted: true },
+      },
+      undefined,
+    )
+  })
+
+  test("connects whatsapp custom CAPI: writes dataset id + encrypted token + clears disconnect atomically", async () => {
+    const validate = vi.fn().mockResolvedValue("123456789")
+    mocks.whatsappConnectCustomCapi.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      datasetId: "123456789",
+      capiAccessToken: { encrypted: true },
+      capiDisconnectedAt: null,
+    })
+
+    await expect(
+      metaConversionsService.connectCustomCapi({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+        accessToken: " manual-token ",
+        datasetId: " 123456789 ",
+        validate,
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        datasetId: "123456789",
+        capiAccessToken: { encrypted: true },
+      }),
+    )
+
+    expect(validate).toHaveBeenCalledWith({
+      datasetId: "123456789",
+      accessToken: "manual-token",
+    })
+    expect(mocks.whatsappConnectCustomCapi).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+        datasetId: "123456789",
+        capiAccessToken: { encrypted: true },
+      },
+      undefined,
+    )
+  })
+
+  test("disconnects whatsapp CAPI: sets the disconnect flag and clears the manual token", async () => {
+    mocks.whatsappSetCapiDisconnectedAt.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      capiAccessToken: null,
+      capiDisconnectedAt: new Date("2026-08-14T00:00:00.000Z"),
+    })
+
+    await expect(
+      metaConversionsService.disconnectCapi({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        capiDisconnectedAt: new Date("2026-08-14T00:00:00.000Z"),
+      }),
+    )
+
+    expect(mocks.whatsappSetCapiDisconnectedAt).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+        capiDisconnectedAt: expect.any(Date),
+      },
+      undefined,
+    )
+  })
+
+  test("reconnects whatsapp CAPI: clears the disconnect flag", async () => {
+    mocks.whatsappClearCapiDisconnectedAt.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      capiDisconnectedAt: null,
+    })
+
+    await expect(
+      metaConversionsService.reconnectCapi({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ capiDisconnectedAt: null }))
+
+    expect(mocks.whatsappClearCapiDisconnectedAt).toHaveBeenCalledWith(
+      {
+        id: "wa-1",
+        workspaceId: "ws-1",
+      },
+      undefined,
+    )
   })
 })

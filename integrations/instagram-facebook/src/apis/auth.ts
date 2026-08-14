@@ -19,7 +19,6 @@ const INSTAGRAM_SCOPES = [
 ]
 
 export const INSTAGRAM_MANAGE_EVENTS_SCOPE = "instagram_manage_events"
-export const CAPI_SCOPES = [INSTAGRAM_MANAGE_EVENTS_SCOPE]
 
 export type InstagramAccount = {
   id: string
@@ -59,28 +58,6 @@ export function generateAuthUrl({
     client_id: clientId,
     redirect_uri: redirectUrl,
     scope: INSTAGRAM_SCOPES.join(","),
-    response_type: "code",
-    state: btoa(JSON.stringify(stateParams ?? {})),
-  })
-  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
-}
-
-export function generateCapiAuthUrl({
-  clientId,
-  version = DEFAULT_API_VERSION,
-  redirectUrl,
-  stateParams,
-}: {
-  clientId: string
-  version?: string
-  redirectUrl: string
-  stateParams?: Record<string, unknown>
-}): string {
-  const params = new URLSearchParams({
-    auth_type: "rerequest",
-    client_id: clientId,
-    redirect_uri: redirectUrl,
-    scope: CAPI_SCOPES.join(","),
     response_type: "code",
     state: btoa(JSON.stringify(stateParams ?? {})),
   })

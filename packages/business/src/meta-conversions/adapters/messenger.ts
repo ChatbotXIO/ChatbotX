@@ -34,8 +34,6 @@ export const messengerCapiReadinessAdapter: CapiReadinessAdapter<"messenger"> =
       integrationMessengerRepository.claimCapiScopeCacheRefresh(input, tx),
     findWorkspaceIntegration: (input, tx) =>
       integrationMessengerRepository.findWorkspaceIntegration(input, tx),
-    setCapiScopeCache: (input, tx) =>
-      integrationMessengerRepository.setCapiScopeCache(input, tx),
     updateCapiScopeCache: (input, tx) =>
       integrationMessengerRepository.updateCapiScopeCache(input, tx),
     updateDatasetIdIfNull: (input, tx) =>

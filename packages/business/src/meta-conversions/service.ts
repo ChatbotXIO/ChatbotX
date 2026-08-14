@@ -8,12 +8,15 @@ import {
 import { BaseService } from "../base.service"
 import { instagramIntegrationService } from "../integration-instagram/service"
 import { messengerIntegrationService } from "../integration-messenger/service"
+import { integrationWhatsappService } from "../integration-whatsapp/service"
 import { formatUtcDay } from "../lib/date"
 import { logger } from "../logger"
 import { instagramCapiReadinessAdapter } from "./adapters/instagram"
 import { messengerCapiReadinessAdapter } from "./adapters/messenger"
-import type { CapiReadinessAdapter } from "./adapters/types"
+import type { CapiReadinessAdapter, CapiSendAdapter } from "./adapters/types"
+import { whatsappCapiReadinessAdapter } from "./adapters/whatsapp"
 import {
+  type CapiConnectChannel,
   type ClearCapiAccessTokenInput,
   type EnqueueLeadEventInput,
   type EnsureDatasetIdInput,
@@ -28,7 +31,6 @@ import {
   type SaveDatasetIdInput,
   saveCapiAccessTokenInput,
   saveDatasetIdInput,
-  type UpdateCapiScopeCacheInput,
   type UpdateCapiStatusInput,
   updateCapiStatusInput,
 } from "./schema"
@@ -45,17 +47,35 @@ export class CapiScopeRefreshError extends Error {
   }
 }
 
-const capiReadinessAdapters = {
+// Send-path adapters: all 3 channels. Used by every method that runs on the
+// worker send path or the lazy scope-refresh/dataset-provisioning paths.
+const capiSendAdapters = {
   messenger: messengerCapiReadinessAdapter,
   instagram: instagramCapiReadinessAdapter,
+  whatsapp: whatsappCapiReadinessAdapter,
 } satisfies {
-  [TChannel in MetaConversionsChannel]: CapiReadinessAdapter<TChannel>
+  [TChannel in MetaConversionsChannel]: CapiSendAdapter<TChannel>
 }
 
-function readinessAdapterFor<TChannel extends MetaConversionsChannel>(
+function sendAdapterFor<TChannel extends MetaConversionsChannel>(
+  channel: TChannel,
+): CapiSendAdapter<TChannel> {
+  return capiSendAdapters[channel] as CapiSendAdapter<TChannel>
+}
+
+// Connect-path adapters: messenger/instagram/whatsapp — see CapiConnectAdapter.
+const capiConnectAdapters = {
+  messenger: messengerCapiReadinessAdapter,
+  instagram: instagramCapiReadinessAdapter,
+  whatsapp: whatsappCapiReadinessAdapter,
+} satisfies {
+  [TChannel in CapiConnectChannel]: CapiReadinessAdapter<TChannel>
+}
+
+function connectAdapterFor<TChannel extends CapiConnectChannel>(
   channel: TChannel,
 ): CapiReadinessAdapter<TChannel> {
-  return capiReadinessAdapters[channel] as CapiReadinessAdapter<TChannel>
+  return capiConnectAdapters[channel] as CapiReadinessAdapter<TChannel>
 }
 
 const integrationResolvers = {
@@ -63,6 +83,8 @@ const integrationResolvers = {
     messengerIntegrationService.findByInboxIdForWorkspace(input),
   instagram: (input) =>
     instagramIntegrationService.findByInboxIdForWorkspace(input),
+  whatsapp: (input) =>
+    integrationWhatsappService.findByInboxIdForWorkspace(input),
 } satisfies {
   [TChannel in MetaConversionsChannel]: (input: {
     inboxId: string
@@ -110,7 +132,7 @@ class MetaConversionsService extends BaseService {
       inboxId: parsed.inboxId,
       workspaceId: parsed.workspaceId,
     })
-    readinessAdapterFor(parsed.channel).assertSupported(integration)
+    sendAdapterFor(parsed.channel).assertSupported(integration)
 
     const inserted = await metaCapiEventRepository.insertIgnoreDuplicate({
       workspaceId: parsed.workspaceId,
@@ -152,7 +174,7 @@ class MetaConversionsService extends BaseService {
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
     const now = input.now ?? new Date()
     const maxAgeMs = input.maxAgeMs ?? META_CAPI_SCOPE_CACHE_TTL_MS
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = sendAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     if (
@@ -227,7 +249,7 @@ class MetaConversionsService extends BaseService {
   async ensureDatasetId<TChannel extends MetaConversionsChannel>(
     input: EnsureDatasetIdInput<TChannel>,
   ): Promise<string> {
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = sendAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     if (input.integration.datasetId) {
@@ -261,7 +283,7 @@ class MetaConversionsService extends BaseService {
     input: SaveDatasetIdInput<TChannel>,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
     const parsed = saveDatasetIdInput.parse({ datasetId: input.datasetId })
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = sendAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
     const resolved = await resolveCapiAccessToken(input.integration)
 
@@ -283,14 +305,14 @@ class MetaConversionsService extends BaseService {
     return this.ensureDatasetId(input)
   }
 
-  async saveCapiAccessToken<TChannel extends MetaConversionsChannel>(
+  async saveCapiAccessToken<TChannel extends CapiConnectChannel>(
     input: SaveCapiAccessTokenInput<TChannel>,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
     const parsed = saveCapiAccessTokenInput.parse({
       accessToken: input.accessToken,
       datasetId: input.datasetId,
     })
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = connectAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     await input.validate({
@@ -309,10 +331,10 @@ class MetaConversionsService extends BaseService {
     })
   }
 
-  clearCapiAccessToken<TChannel extends MetaConversionsChannel>(
+  clearCapiAccessToken<TChannel extends CapiConnectChannel>(
     input: ClearCapiAccessTokenInput<TChannel>,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = connectAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     return adapter.clearCapiAccessToken({
@@ -326,14 +348,14 @@ class MetaConversionsService extends BaseService {
    * writes dataset id, encrypted token, and the cleared disconnect flag in a
    * single atomic update — no half-connected state is ever visible.
    */
-  async connectCustomCapi<TChannel extends MetaConversionsChannel>(
+  async connectCustomCapi<TChannel extends CapiConnectChannel>(
     input: SaveCapiAccessTokenInput<TChannel>,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
     const parsed = saveCapiAccessTokenInput.parse({
       accessToken: input.accessToken,
       datasetId: input.datasetId,
     })
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = connectAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     await input.validate({
@@ -358,10 +380,10 @@ class MetaConversionsService extends BaseService {
    * token in one write. The dataset id is kept — it still belongs to the
    * page/account and reconnecting reuses it.
    */
-  disconnectCapi<TChannel extends MetaConversionsChannel>(
+  disconnectCapi<TChannel extends CapiConnectChannel>(
     input: ClearCapiAccessTokenInput<TChannel>,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = connectAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     return adapter.setCapiDisconnectedAt({
@@ -375,30 +397,15 @@ class MetaConversionsService extends BaseService {
    * Re-enables CAPI after a user disconnect (called by the OAuth connect
    * callback and the custom connect path).
    */
-  reconnectCapi<TChannel extends MetaConversionsChannel>(
+  reconnectCapi<TChannel extends CapiConnectChannel>(
     input: ClearCapiAccessTokenInput<TChannel>,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
-    const adapter = readinessAdapterFor(input.channel)
+    const adapter = connectAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
     return adapter.clearCapiDisconnectedAt({
       id: input.integration.id,
       workspaceId: input.integration.workspaceId,
-    })
-  }
-
-  updateCapiScopeCache<TChannel extends MetaConversionsChannel>(
-    input: UpdateCapiScopeCacheInput<TChannel>,
-  ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
-    const now = input.capiScopeCheckedAt ?? new Date()
-    const adapter = readinessAdapterFor(input.channel)
-    adapter.assertSupported(input.integration)
-
-    return adapter.setCapiScopeCache({
-      id: input.integration.id,
-      workspaceId: input.integration.workspaceId,
-      hasCapiScope: input.hasCapiScope,
-      capiScopeCheckedAt: now,
     })
   }
 

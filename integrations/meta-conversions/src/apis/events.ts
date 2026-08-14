@@ -36,7 +36,23 @@ type InstagramEventInput = {
   contentName?: string | null
 }
 
-export type MetaConversionEventInput = MessengerEventInput | InstagramEventInput
+type WhatsappEventInput = {
+  eventName: MetaCapiEventName
+  occurredAt: Date
+  eventId: string
+  messagingChannel: "whatsapp"
+  wabaId: string
+  ctwaClid: string
+  currency?: string | null
+  value?: string | number | null
+  contentCategory?: string | null
+  contentName?: string | null
+}
+
+export type MetaConversionEventInput =
+  | MessengerEventInput
+  | InstagramEventInput
+  | WhatsappEventInput
 
 type SendConversionEventInput = {
   datasetId: string
@@ -49,7 +65,10 @@ const conversionEventsResponseSchema = z.object({}).passthrough()
 
 // Verified against Meta Conversions API for Business Messaging docs:
 // https://developers.facebook.com/docs/marketing-api/conversions-api/business-messaging
-// user_data keys: messenger uses page_id + page_scoped_user_id; instagram uses instagram_business_account_id + ig_sid.
+// user_data keys: messenger uses page_id + page_scoped_user_id; instagram uses
+// instagram_business_account_id + ig_sid; whatsapp uses
+// whatsapp_business_account_id + ctwa_clid (payload identical to the existing
+// automatic CTWA pipeline in integrations/whatsapp/src/api/conversions.ts).
 const channelUserDataBuilders = {
   messenger: (event: MetaConversionEventInput) => ({
     page_id: (event as MessengerEventInput).pageId,
@@ -59,6 +78,10 @@ const channelUserDataBuilders = {
     instagram_business_account_id: (event as InstagramEventInput)
       .instagramBusinessAccountId,
     ig_sid: (event as InstagramEventInput).igSid,
+  }),
+  whatsapp: (event: MetaConversionEventInput) => ({
+    whatsapp_business_account_id: (event as WhatsappEventInput).wabaId,
+    ctwa_clid: (event as WhatsappEventInput).ctwaClid,
   }),
 } as const satisfies {
   [Channel in MetaMessagingChannel]: (

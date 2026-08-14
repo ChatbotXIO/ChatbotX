@@ -44,6 +44,9 @@ describe("getCapiConnectionState", () => {
         hasDatasetId: true,
       }),
     ).toBe("connectedOauth")
+  })
+
+  test("scope granted but no dataset stays disconnected (chooser owns the dataset step)", () => {
     expect(
       getCapiConnectionState({
         capiDisconnected: false,
@@ -51,7 +54,7 @@ describe("getCapiConnectionState", () => {
         hasCapiScope: true,
         hasDatasetId: false,
       }),
-    ).toBe("oauthAwaitingDataset")
+    ).toBe("disconnected")
   })
 
   test("user disconnect still overrides scope-only state", () => {

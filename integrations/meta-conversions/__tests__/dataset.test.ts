@@ -55,6 +55,23 @@ describe("Meta Conversions dataset API", () => {
     })
   })
 
+  test("creates or reads a WhatsApp dataset on the WABA dataset edge", async () => {
+    mocks.post.mockResolvedValue({ data: { id: "dataset-waba-1" } })
+
+    await expect(
+      ensureDataset({
+        resourceType: "waba",
+        resourceId: "waba-1",
+        accessToken: "token-1",
+        version: "v24.0",
+      }),
+    ).resolves.toBe("dataset-waba-1")
+
+    expect(mocks.post).toHaveBeenCalledWith("v24.0/waba-1/dataset", {
+      headers: { Authorization: "Bearer token-1" },
+    })
+  })
+
   test("validates dataset access by reading the dataset id", async () => {
     mocks.get.mockResolvedValue({ data: { id: "dataset-1" } })
 

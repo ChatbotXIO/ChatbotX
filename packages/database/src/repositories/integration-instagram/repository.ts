@@ -14,11 +14,6 @@ type UpdateInstagramCapiScopeCacheInput = WorkspaceIntegrationRef & {
   expectedCapiScopeCheckedAt: Date | null
 }
 
-type SetInstagramCapiScopeCacheInput = WorkspaceIntegrationRef & {
-  hasCapiScope: boolean
-  capiScopeCheckedAt: Date | null
-}
-
 type ClaimInstagramCapiScopeCacheRefreshInput = WorkspaceIntegrationRef & {
   capiScopeCheckedAt: Date
   expectedCapiScopeCheckedAt: Date | null
@@ -74,22 +69,6 @@ export const integrationInstagramRepository = {
       .returning()
 
     return row ?? this.findWorkspaceIntegration(input, tx)
-  },
-
-  async setCapiScopeCache(
-    input: SetInstagramCapiScopeCacheInput,
-    tx: DatabaseClient = db,
-  ): Promise<IntegrationInstagramModel | null> {
-    const [row] = await tx
-      .update(integrationInstagramModel)
-      .set({
-        hasCapiScope: input.hasCapiScope,
-        capiScopeCheckedAt: input.capiScopeCheckedAt,
-      })
-      .where(workspaceIntegrationFilter(input))
-      .returning()
-
-    return row ?? null
   },
 
   async claimCapiScopeCacheRefresh(

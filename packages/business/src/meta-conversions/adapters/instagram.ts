@@ -44,8 +44,6 @@ export const instagramCapiReadinessAdapter: CapiReadinessAdapter<"instagram"> =
       integrationInstagramRepository.claimCapiScopeCacheRefresh(input, tx),
     findWorkspaceIntegration: (input, tx) =>
       integrationInstagramRepository.findWorkspaceIntegration(input, tx),
-    setCapiScopeCache: (input, tx) =>
-      integrationInstagramRepository.setCapiScopeCache(input, tx),
     updateCapiScopeCache: (input, tx) =>
       integrationInstagramRepository.updateCapiScopeCache(input, tx),
     updateDatasetIdIfNull: (input, tx) =>

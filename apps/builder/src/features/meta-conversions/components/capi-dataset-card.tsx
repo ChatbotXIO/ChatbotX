@@ -18,24 +18,25 @@ import { toast } from "sonner"
 import type { provisionMessengerCapiDatasetAction } from "@/features/integration-messenger/actions/provision-capi-dataset.action"
 import type { setMessengerCapiDatasetAction } from "@/features/integration-messenger/actions/set-capi-dataset.action"
 
-// Messenger and Instagram CAPI actions share identical bind/input signatures,
-// so the Messenger action types stand in as the shared contract for both tabs.
-export type CapiOauthFinalizeActions = {
+// Messenger, Instagram, and WhatsApp CAPI actions share identical bind/input
+// signatures, so the Messenger action types stand in as the shared contract
+// for every channel that reuses this card.
+export type CapiDatasetCardActions = {
   setDataset: typeof setMessengerCapiDatasetAction
   provision: typeof provisionMessengerCapiDatasetAction
 }
 
-type CapiOauthFinalizeCardProps = {
+type CapiDatasetCardProps = {
   workspaceId: string
   integrationId: string
-  actions: CapiOauthFinalizeActions
+  actions: CapiDatasetCardActions
 }
 
-export function CapiOauthFinalizeCard({
+export function CapiDatasetCard({
   workspaceId,
   integrationId,
   actions,
-}: CapiOauthFinalizeCardProps) {
+}: CapiDatasetCardProps) {
   const t = useTranslations()
   const router = useRouter()
   const [datasetInput, setDatasetInput] = useState("")
@@ -59,6 +60,17 @@ export function CapiOauthFinalizeCard({
 
   const isPending = setDataset.isPending || provision.isPending
 
+  // One Save button: a pasted Dataset ID is validated and used as-is; an empty
+  // field falls back to auto-creating a linked dataset (the old logic).
+  const onSave = () => {
+    const datasetId = datasetInput.trim()
+    if (datasetId.length > 0) {
+      setDataset.execute({ datasetId })
+      return
+    }
+    provision.execute()
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -77,28 +89,9 @@ export function CapiOauthFinalizeCard({
           value={datasetInput}
         />
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            disabled={isPending || datasetInput.trim().length === 0}
-            onClick={() =>
-              setDataset.execute({ datasetId: datasetInput.trim() })
-            }
-            type="button"
-          >
-            {setDataset.isPending ? (
-              <Loader2Icon className="animate-spin" />
-            ) : null}
-            {t("metaConversions.finalize.useDatasetId")}
-          </Button>
-          <Button
-            disabled={isPending}
-            onClick={() => provision.execute()}
-            type="button"
-            variant="secondary"
-          >
-            {provision.isPending ? (
-              <Loader2Icon className="animate-spin" />
-            ) : null}
-            {t("metaConversions.createAutomatically")}
+          <Button disabled={isPending} onClick={onSave} type="button">
+            {isPending ? <Loader2Icon className="animate-spin" /> : null}
+            {t("metaConversions.finalize.save")}
           </Button>
         </div>
         <p className="text-muted-foreground text-xs">

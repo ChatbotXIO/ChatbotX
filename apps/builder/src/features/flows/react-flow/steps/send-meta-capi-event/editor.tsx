@@ -23,6 +23,9 @@ export const SendMetaCapiEventEditor = ({
         <p className="text-muted-foreground text-sm">
           {t("metaConversions.flowStep.description")}
         </p>
+        <p className="text-muted-foreground text-xs">
+          {t("metaConversions.flowStep.whatsappNote")}
+        </p>
         <CapiEventFields parentName={parentName} />
       </div>
     </BaseStepEditor>

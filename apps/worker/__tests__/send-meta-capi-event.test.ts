@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   updateCapiStatus: vi.fn(),
   findMessengerIntegration: vi.fn(),
   findInstagramIntegration: vi.fn(),
+  findWhatsappIntegration: vi.fn(),
   refreshCapiScopeCache: vi.fn(),
   ensureDatasetId: vi.fn(),
   findContactInbox: vi.fn(),
@@ -39,6 +40,9 @@ vi.mock("@chatbotx.io/business", async () => {
     },
     messengerIntegrationService: {
       findByIdForWorkspace: mocks.findMessengerIntegration,
+    },
+    integrationWhatsappService: {
+      findByIdForWorkspace: mocks.findWhatsappIntegration,
     },
     metaConversionsService: {
       findWorkspaceEvent: mocks.findWorkspaceEvent,
@@ -111,12 +115,39 @@ const contactInbox = {
   sourceId: "psid-1",
 }
 
+const whatsappIntegration = {
+  id: "wa-1",
+  workspaceId: "ws-1",
+  inboxId: "inbox-1",
+  wabaId: "waba-1",
+  hasCapiScope: true,
+  capiScopeCheckedAt: null,
+  datasetId: null,
+  auth: {
+    tokens: { accessToken: "token-1" },
+  },
+}
+
+const whatsappPendingEvent = {
+  ...pendingEvent,
+  channel: "whatsapp" as const,
+  integrationId: "wa-1",
+}
+
+const whatsappContactInbox = {
+  id: "ci-1",
+  inboxId: "inbox-1",
+  sourceId: "wa-user-1",
+  referral: { ctwaClid: "clid-1" },
+}
+
 describe("handleSendMetaCapiEvent", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.findWorkspaceEvent.mockResolvedValue(pendingEvent)
     mocks.findMessengerIntegration.mockResolvedValue(integration)
     mocks.findInstagramIntegration.mockResolvedValue(undefined)
+    mocks.findWhatsappIntegration.mockResolvedValue(undefined)
     mocks.refreshCapiScopeCache.mockImplementation(
       async (input: { integration: MessengerIntegration }) => input.integration,
     )
@@ -233,8 +264,10 @@ describe("handleSendMetaCapiEvent", () => {
       from: "pending",
       to: "skipped_no_scope",
     })
+    // A manual token skips the OAuth scope refresh entirely; the contact
+    // identity is resolved up front (shared with the WhatsApp identity gate)
+    // but no dataset is provisioned and nothing is sent.
     expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
-    expect(mocks.findContactInbox).not.toHaveBeenCalled()
     expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
     expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
   })
@@ -406,5 +439,211 @@ describe("handleSendMetaCapiEvent", () => {
     expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
     expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
     expect(mocks.defaultQueueAdd).not.toHaveBeenCalled()
+  })
+
+  describe("whatsapp channel", () => {
+    beforeEach(() => {
+      mocks.findWorkspaceEvent.mockResolvedValue(whatsappPendingEvent)
+      mocks.findWhatsappIntegration.mockResolvedValue(whatsappIntegration)
+      mocks.findContactInbox.mockResolvedValue(whatsappContactInbox)
+      mocks.refreshCapiScopeCache.mockImplementation(
+        async (input: { integration: typeof whatsappIntegration }) =>
+          input.integration,
+      )
+      mocks.ensureDatasetId.mockImplementation(
+        async (input: {
+          provisionDataset: (data: DatasetProvisionInput) => Promise<string>
+        }) =>
+          await input.provisionDataset({
+            accessToken: "token-1",
+            resourceId: "waba-1",
+          }),
+      )
+    })
+
+    test("sends a pending whatsapp event with a ctwa_clid and marks it sent", async () => {
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.findWhatsappIntegration).toHaveBeenCalledWith({
+        id: "wa-1",
+        workspaceId: "ws-1",
+      })
+      expect(mocks.ensureDataset).toHaveBeenCalledWith({
+        resourceType: "waba",
+        resourceId: "waba-1",
+        accessToken: "token-1",
+      })
+      expect(mocks.sendConversionEvent).toHaveBeenCalledWith({
+        datasetId: "dataset-1",
+        accessToken: "token-1",
+        event: {
+          eventName: "LeadSubmitted",
+          occurredAt: whatsappPendingEvent.occurredAt,
+          eventId: "flow:step-1:ci-1:20260810",
+          messagingChannel: "whatsapp",
+          wabaId: "waba-1",
+          ctwaClid: "clid-1",
+        },
+      })
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "sent",
+        capiSentAt: expect.any(Date),
+      })
+    })
+
+    test("skips a whatsapp event whose contact has no ctwa_clid", async () => {
+      mocks.findContactInbox.mockResolvedValue({
+        ...whatsappContactInbox,
+        referral: null,
+      })
+
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "skipped_no_identity",
+      })
+      expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+    })
+
+    test("no ctwa_clid wins over missing scope: skipped_no_identity before any scope work", async () => {
+      // A whatsapp contact with neither a ctwa_clid nor CAPI scope must be
+      // terminally skipped_no_identity (the harder, unsendable constraint), and
+      // the handler must NOT spend a debug-token scope refresh on an event it
+      // can never send — so refreshCapiScopeCache is never reached.
+      mocks.findContactInbox.mockResolvedValue({
+        ...whatsappContactInbox,
+        referral: null,
+      })
+      mocks.refreshCapiScopeCache.mockResolvedValue({
+        ...whatsappIntegration,
+        hasCapiScope: false,
+      })
+
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "skipped_no_identity",
+      })
+      expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
+      expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+    })
+
+    test("skips a whatsapp event when the integration lacks CAPI scope", async () => {
+      mocks.refreshCapiScopeCache.mockResolvedValue({
+        ...whatsappIntegration,
+        hasCapiScope: false,
+      })
+
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "skipped_no_scope",
+      })
+      expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+    })
+
+    test("a whatsapp integration without a disconnect flag still sends", async () => {
+      // Happy path sanity check now that whatsapp rows carry
+      // `capiDisconnectedAt` (v1.7): unset must not skip the send.
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.updateCapiStatus).not.toHaveBeenCalledWith(
+        expect.objectContaining({ to: "skipped_disconnected" }),
+      )
+      expect(mocks.sendConversionEvent).toHaveBeenCalled()
+    })
+
+    test("a user-disconnected whatsapp integration skips the event without sending", async () => {
+      // v1.7 — WhatsApp is now a full CAPI connect peer of messenger/
+      // instagram: a user Disconnect on the WhatsApp CAPI tab must gate the
+      // send the same way it does for messenger/instagram.
+      mocks.findWhatsappIntegration.mockResolvedValue({
+        ...whatsappIntegration,
+        capiDisconnectedAt: new Date("2026-08-14T00:00:00.000Z"),
+      })
+
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "skipped_disconnected",
+      })
+      expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+    })
+
+    test("sends a manual-token whatsapp event with a stored dataset without refreshing scope", async () => {
+      mocks.findWhatsappIntegration.mockResolvedValue({
+        ...whatsappIntegration,
+        datasetId: "dataset-manual",
+        capiAccessToken: { encrypted: true },
+        hasCapiScope: false,
+      })
+      mocks.resolveCapiAccessToken.mockResolvedValue({
+        accessToken: "manual-token-1",
+        source: "manual",
+      })
+
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
+      expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
+      expect(mocks.ensureDataset).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).toHaveBeenCalledWith({
+        datasetId: "dataset-manual",
+        accessToken: "manual-token-1",
+        event: {
+          eventName: "LeadSubmitted",
+          occurredAt: whatsappPendingEvent.occurredAt,
+          eventId: "flow:step-1:ci-1:20260810",
+          messagingChannel: "whatsapp",
+          wabaId: "waba-1",
+          ctwaClid: "clid-1",
+        },
+      })
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "sent",
+        capiSentAt: expect.any(Date),
+      })
+    })
+
+    test("skips a manual-token whatsapp event without a stored dataset", async () => {
+      mocks.resolveCapiAccessToken.mockResolvedValue({
+        accessToken: "manual-token-1",
+        source: "manual",
+      })
+
+      await handleSendMetaCapiEvent(jobData)
+
+      expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+        id: "mce-1",
+        workspaceId: "ws-1",
+        from: "pending",
+        to: "skipped_no_scope",
+      })
+      expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
+      expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+    })
   })
 })

@@ -17,7 +17,11 @@ import {
 import { contactInboxModel } from "./contact-inbox"
 import { workspaceModel } from "./workspace"
 
-export const metaCapiEventChannelValues = ["messenger", "instagram"] as const
+export const metaCapiEventChannelValues = [
+  "messenger",
+  "instagram",
+  "whatsapp",
+] as const
 export const metaCapiEventNameValues = ["LeadSubmitted"] as const
 export const metaCapiEventSourceValues = ["flowStep", "triggerAction"] as const
 export const metaCapiStatusValues = [
@@ -26,6 +30,10 @@ export const metaCapiStatusValues = [
   "failed",
   "skipped_no_scope",
   "skipped_disconnected",
+  // WhatsApp business-messaging CAPI requires a ctwa_clid (click-to-WhatsApp
+  // ad identifier). Contacts that did not arrive via a CTWA ad have none —
+  // this is a Meta constraint, not a transient failure, so it is terminal.
+  "skipped_no_identity",
 ] as const
 
 export const metaCapiEventChannelSchema = z.enum(metaCapiEventChannelValues)
@@ -91,7 +99,7 @@ export const metaCapiEventModel = pgTable(
     ),
     check(
       "MetaCapiEvent_channel_check",
-      sql`"channel" IN ('messenger', 'instagram')`,
+      sql`"channel" IN ('messenger', 'instagram', 'whatsapp')`,
     ),
   ],
 )

@@ -14,11 +14,6 @@ type UpdateMessengerCapiScopeCacheInput = WorkspaceIntegrationRef & {
   expectedCapiScopeCheckedAt: Date | null
 }
 
-type SetMessengerCapiScopeCacheInput = WorkspaceIntegrationRef & {
-  hasCapiScope: boolean
-  capiScopeCheckedAt: Date | null
-}
-
 type ClaimMessengerCapiScopeCacheRefreshInput = WorkspaceIntegrationRef & {
   capiScopeCheckedAt: Date
   expectedCapiScopeCheckedAt: Date | null
@@ -74,22 +69,6 @@ export const integrationMessengerRepository = {
       .returning()
 
     return row ?? this.findWorkspaceIntegration(input, tx)
-  },
-
-  async setCapiScopeCache(
-    input: SetMessengerCapiScopeCacheInput,
-    tx: DatabaseClient = db,
-  ): Promise<IntegrationMessengerModel | null> {
-    const [row] = await tx
-      .update(integrationMessengerModel)
-      .set({
-        hasCapiScope: input.hasCapiScope,
-        capiScopeCheckedAt: input.capiScopeCheckedAt,
-      })
-      .where(workspaceIntegrationFilter(input))
-      .returning()
-
-    return row ?? null
   },
 
   async claimCapiScopeCacheRefresh(

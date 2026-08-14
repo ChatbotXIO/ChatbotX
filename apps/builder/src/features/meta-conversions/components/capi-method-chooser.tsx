@@ -16,13 +16,17 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import type { connectMessengerCustomCapiAction } from "@/features/integration-messenger/actions/connect-custom-capi.action"
-import type { reconnectMessengerCapiAction } from "@/features/integration-messenger/actions/reconnect-capi.action"
+import type { provisionMessengerCapiDatasetAction } from "@/features/integration-messenger/actions/provision-capi-dataset.action"
+import type { setMessengerCapiDatasetAction } from "@/features/integration-messenger/actions/set-capi-dataset.action"
+import { CapiDatasetCard } from "./capi-dataset-card"
 
-// Messenger and Instagram CAPI actions share identical bind/input signatures,
-// so the Messenger action types stand in as the shared contract for both tabs.
+// Messenger, Instagram, and WhatsApp CAPI actions share identical bind/input
+// signatures, so the Messenger action types stand in as the shared contract
+// for every channel that reuses this chooser.
 export type CapiMethodChooserActions = {
-  oauthConnect: typeof reconnectMessengerCapiAction
   connectCustom: typeof connectMessengerCustomCapiAction
+  setDataset: typeof setMessengerCapiDatasetAction
+  provision: typeof provisionMessengerCapiDatasetAction
 }
 
 type CapiMethodChooserProps = {
@@ -30,6 +34,12 @@ type CapiMethodChooserProps = {
   integrationId: string
   datasetId: string | null
   actions: CapiMethodChooserActions
+  /**
+   * Which primary-card copy to render. Literal keys only — next-intl message
+   * typing is strict, so this maps to a fixed `metaConversions.methods.*`
+   * branch rather than building a dynamic key string.
+   */
+  primaryMethod?: "oauth" | "whatsapp"
 }
 
 export function CapiMethodChooser({
@@ -37,9 +47,11 @@ export function CapiMethodChooser({
   integrationId,
   datasetId,
   actions,
+  primaryMethod = "oauth",
 }: CapiMethodChooserProps) {
   const t = useTranslations()
   const router = useRouter()
+  const [step, setStep] = useState<"chooser" | "oauthDataset">("chooser")
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [datasetInput, setDatasetInput] = useState(datasetId ?? "")
   const [tokenInput, setTokenInput] = useState("")
@@ -48,18 +60,6 @@ export function CapiMethodChooser({
     toast.error(error.serverError ?? t("metaConversions.errors.saveFailed"))
   }
 
-  const oauthConnect = useAction(
-    actions.oauthConnect.bind(null, workspaceId, integrationId),
-    {
-      onError,
-      // The action returns (instead of redirecting to OAuth) when the stored
-      // token already has the permission — the in-place ManyChat-style path.
-      onSuccess: () => {
-        toast.success(t("metaConversions.connected"))
-        router.refresh()
-      },
-    },
-  )
   const connectCustom = useAction(
     actions.connectCustom.bind(null, workspaceId, integrationId),
     {
@@ -75,28 +75,40 @@ export function CapiMethodChooser({
   const customFormComplete =
     datasetInput.trim().length > 0 && tokenInput.trim().length > 0
 
+  if (step === "oauthDataset") {
+    return (
+      <CapiDatasetCard
+        actions={{
+          setDataset: actions.setDataset,
+          provision: actions.provision,
+        }}
+        integrationId={integrationId}
+        workspaceId={workspaceId}
+      />
+    )
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <PlugZapIcon className="size-4" />
-            {t("metaConversions.methods.oauth.title")}
+            {primaryMethod === "whatsapp"
+              ? t("metaConversions.methods.whatsapp.title")
+              : t("metaConversions.methods.oauth.title")}
           </CardTitle>
           <CardDescription>
-            {t("metaConversions.methods.oauth.description")}
+            {primaryMethod === "whatsapp"
+              ? t("metaConversions.methods.whatsapp.description")
+              : t("metaConversions.methods.oauth.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            disabled={oauthConnect.isPending}
-            onClick={() => oauthConnect.execute()}
-            type="button"
-          >
-            {oauthConnect.isPending ? (
-              <Loader2Icon className="animate-spin" />
-            ) : null}
-            {t("metaConversions.methods.oauth.connect")}
+          <Button onClick={() => setStep("oauthDataset")} type="button">
+            {primaryMethod === "whatsapp"
+              ? t("metaConversions.methods.whatsapp.connect")
+              : t("metaConversions.methods.oauth.connect")}
           </Button>
         </CardContent>
       </Card>

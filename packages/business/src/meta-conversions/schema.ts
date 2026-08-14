@@ -7,6 +7,7 @@ import {
 import type {
   IntegrationInstagramModel,
   IntegrationMessengerModel,
+  IntegrationWhatsappModel,
   MetaCapiEventModel,
 } from "@chatbotx.io/database/types"
 import { z } from "zod"
@@ -41,9 +42,21 @@ export type EnqueueLeadEventInput = z.infer<typeof enqueueLeadEventInput>
 
 export type MetaConversionsChannel = EnqueueLeadEventInput["channel"]
 
+/**
+ * Channels with a CAPI *connect* UI (custom connection + disconnect).
+ * WhatsApp gained a Custom connection + Disconnect flow in v1.7 — the
+ * workaround to send WhatsApp CAPI while the embedded-signup `config_id`
+ * does not yet grant `whatsapp_business_manage_events` — so it is included
+ * here alongside messenger/instagram. Methods narrowed to this type are a
+ * compile error to call with a channel outside this set, not a runtime
+ * throw.
+ */
+export type CapiConnectChannel = "messenger" | "instagram" | "whatsapp"
+
 export type MetaConversionsIntegrationByChannel = {
   messenger: IntegrationMessengerModel
   instagram: IntegrationInstagramModel
+  whatsapp: IntegrationWhatsappModel
 }
 
 export type MetaConversionsIntegration =
@@ -74,15 +87,6 @@ export type RefreshCapiScopeCacheInput<
   maxAgeMs?: number
 }
 
-export type UpdateCapiScopeCacheInput<
-  TChannel extends MetaConversionsChannel = MetaConversionsChannel,
-> = {
-  channel: TChannel
-  integration: MetaConversionsIntegrationByChannel[TChannel]
-  hasCapiScope: boolean
-  capiScopeCheckedAt?: Date
-}
-
 export type EnsureDatasetIdInput<
   TChannel extends MetaConversionsChannel = MetaConversionsChannel,
 > = {
@@ -105,7 +109,7 @@ export type ProvisionDatasetNowInput<
 > = EnsureDatasetIdInput<TChannel>
 
 export type SaveCapiAccessTokenInput<
-  TChannel extends MetaConversionsChannel = MetaConversionsChannel,
+  TChannel extends CapiConnectChannel = CapiConnectChannel,
 > = {
   channel: TChannel
   integration: MetaConversionsIntegrationByChannel[TChannel]
@@ -115,7 +119,7 @@ export type SaveCapiAccessTokenInput<
 }
 
 export type ClearCapiAccessTokenInput<
-  TChannel extends MetaConversionsChannel = MetaConversionsChannel,
+  TChannel extends CapiConnectChannel = CapiConnectChannel,
 > = {
   channel: TChannel
   integration: MetaConversionsIntegrationByChannel[TChannel]

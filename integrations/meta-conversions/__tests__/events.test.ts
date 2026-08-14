@@ -100,6 +100,50 @@ describe("Meta Conversions events API", () => {
     expect(payload?.data?.[0]).not.toHaveProperty("custom_data")
   })
 
+  test("builds the WhatsApp business messaging payload", async () => {
+    mocks.post.mockResolvedValue({ data: { events_received: 1 } })
+
+    await sendConversionEvent({
+      datasetId: "dataset-1",
+      accessToken: "token-1",
+      version: "v24.0",
+      event: {
+        eventName: "LeadSubmitted",
+        occurredAt: new Date("2026-08-10T10:20:30.000Z"),
+        eventId: "event-4",
+        messagingChannel: "whatsapp",
+        wabaId: "waba-1",
+        ctwaClid: "clid-1",
+        currency: "USD",
+        value: "42.50",
+      },
+    })
+
+    expect(mocks.post).toHaveBeenCalledWith("v24.0/dataset-1/events", {
+      headers: { Authorization: "Bearer token-1" },
+      json: {
+        data: [
+          {
+            event_name: "LeadSubmitted",
+            event_time: 1_786_357_230,
+            event_id: "event-4",
+            action_source: "business_messaging",
+            messaging_channel: "whatsapp",
+            user_data: {
+              whatsapp_business_account_id: "waba-1",
+              ctwa_clid: "clid-1",
+            },
+            custom_data: {
+              currency: "USD",
+              value: 42.5,
+            },
+          },
+        ],
+        partner_agent: "ChatConnectX",
+      },
+    })
+  })
+
   test("includes content fields in the Instagram custom_data", async () => {
     mocks.post.mockResolvedValue({ data: { events_received: 1 } })
 

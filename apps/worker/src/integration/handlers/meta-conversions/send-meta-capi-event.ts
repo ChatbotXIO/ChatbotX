@@ -2,12 +2,14 @@ import {
   type CapiScopeCheckInput,
   contactInboxService,
   instagramIntegrationService,
+  integrationWhatsappService,
   type MetaConversionsChannel,
   type MetaConversionsIntegrationByChannel,
   messengerIntegrationService,
   metaConversionsService,
   platformCredentialService,
   resolveCapiAccessToken,
+  WHATSAPP_CAPI_SCOPE,
   withBlockedOwnerGuard,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -22,9 +24,11 @@ import {
   toAppAccessToken as toMessengerAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import {
+  type EnsureDatasetInput,
   ensureDataset,
   sendConversionEvent,
 } from "@chatbotx.io/integration-meta-conversions"
+import { debugTokenOrThrow } from "@chatbotx.io/integration-whatsapp/api/auth"
 import {
   DefaultJobAction,
   defaultQueue,
@@ -44,6 +48,14 @@ const skippedDisconnectedStatus = {
   to: "skipped_disconnected",
 } as const
 
+// WhatsApp business-messaging CAPI requires a ctwa_clid (click-to-WhatsApp ad
+// identifier), which only exists for contacts that arrived via a CTWA ad —
+// this is a Meta constraint, not a transient failure.
+const skippedNoIdentityStatus = {
+  from: "pending",
+  to: "skipped_no_identity",
+} as const
+
 const failedStatus = {
   from: "pending",
   to: "failed",
@@ -54,14 +66,26 @@ const sentStatus = {
   to: "sent",
 } as const
 
+const datasetResourceTypeByChannel = {
+  messenger: "page",
+  instagram: "igUser",
+  whatsapp: "waba",
+} as const satisfies Record<
+  MetaConversionsChannel,
+  EnsureDatasetInput["resourceType"]
+>
+
 const integrationResolvers = {
   messenger: (input) => messengerIntegrationService.findByIdForWorkspace(input),
   instagram: (input) => instagramIntegrationService.findByIdForWorkspace(input),
+  whatsapp: (input) => integrationWhatsappService.findByIdForWorkspace(input),
 } satisfies {
   [TChannel in MetaConversionsChannel]: (input: {
     id: string
     workspaceId: string
-  }) => Promise<MetaConversionsIntegrationByChannel[TChannel] | undefined>
+  }) => Promise<
+    MetaConversionsIntegrationByChannel[TChannel] | null | undefined
+  >
 }
 
 async function findEventIntegration<TChannel extends MetaConversionsChannel>(
@@ -74,7 +98,9 @@ async function findEventIntegration<TChannel extends MetaConversionsChannel>(
   const resolveIntegration = integrationResolvers[channel] as (input: {
     id: string
     workspaceId: string
-  }) => Promise<MetaConversionsIntegrationByChannel[TChannel] | undefined>
+  }) => Promise<
+    MetaConversionsIntegrationByChannel[TChannel] | null | undefined
+  >
 
   return (
     (await resolveIntegration({
@@ -130,9 +156,47 @@ async function checkInstagramCapiScope(
   return hasInstagramManageEventsScope(debug.scopes)
 }
 
+/**
+ * Worker-local WhatsApp CAPI scope check — mirrors the builder's
+ * `hasWhatsappCapiScope` (apps/builder/src/features/integration-whatsapp/libs/capi-scope.ts)
+ * without importing across the `@/...` app boundary. The app access token
+ * comes from the workspace owner's WhatsApp platform credential
+ * (`clientId|clientSecret`), same as the messenger/instagram checkers above.
+ */
+async function checkWhatsappCapiScope(
+  input: CapiScopeCheckInput,
+  storedHasCapiScope: boolean,
+  workspaceId: string,
+): Promise<boolean> {
+  const workspace = await workspaceService.findById({ id: workspaceId })
+  const credential = await platformCredentialService.resolveForOwner({
+    ownerId: workspace.ownerId,
+    type: "whatsapp",
+  })
+  if (!credential) {
+    return storedHasCapiScope
+  }
+
+  const appAccessToken = `${credential.config.clientId}|${credential.config.clientSecret}`
+  const token = await debugTokenOrThrow(input.accessToken, appAccessToken)
+  const capiScope = token?.granular_scopes?.find(
+    (scope) => scope.scope === WHATSAPP_CAPI_SCOPE,
+  )
+  if (!capiScope) {
+    return false
+  }
+
+  return (
+    !capiScope.target_ids ||
+    capiScope.target_ids.length === 0 ||
+    capiScope.target_ids.includes(input.resourceId)
+  )
+}
+
 const scopeCheckers = {
   messenger: checkMessengerCapiScope,
   instagram: checkInstagramCapiScope,
+  whatsapp: checkWhatsappCapiScope,
 } satisfies {
   [TChannel in MetaConversionsChannel]: (
     input: CapiScopeCheckInput,
@@ -167,6 +231,7 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
   occurredAt: Date
   eventId: string
   contactInboxSourceId: string
+  ctwaClid?: string | null
   value?: string | null
   currency?: string | null
   contentCategory?: string | null
@@ -186,6 +251,34 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
         messagingChannel: "messenger" as const,
         pageId: integration.pageId,
         pageScopedUserId: input.contactInboxSourceId,
+        ...(input.value ? { value: input.value } : {}),
+        ...(input.currency ? { currency: input.currency } : {}),
+        ...(input.contentCategory
+          ? { contentCategory: input.contentCategory }
+          : {}),
+        ...(input.contentName ? { contentName: input.contentName } : {}),
+      },
+    }
+  }
+
+  if (input.channel === "whatsapp") {
+    const integration =
+      input.integration as MetaConversionsIntegrationByChannel["whatsapp"]
+    if (!input.ctwaClid) {
+      // Defensive: the handler already gates on this via `skipped_no_identity`
+      // before calling `sendConversionEvent` — this should be unreachable.
+      throw new Error("Missing ctwa_clid for WhatsApp Meta CAPI event")
+    }
+    return {
+      datasetId: input.datasetId,
+      accessToken: input.accessToken,
+      event: {
+        eventName: input.eventName,
+        occurredAt: input.occurredAt,
+        eventId: input.eventId,
+        messagingChannel: "whatsapp" as const,
+        wabaId: integration.wabaId,
+        ctwaClid: input.ctwaClid,
         ...(input.value ? { value: input.value } : {}),
         ...(input.currency ? { currency: input.currency } : {}),
         ...(input.contentCategory
@@ -252,7 +345,10 @@ export async function handleSendMetaCapiEvent(
       return
     }
 
-    if (integration.capiDisconnectedAt) {
+    // A user-intent disconnect blocks the send. Property guard, not a channel
+    // switch: `capiDisconnectedAt` exists on every connect-capable channel, and
+    // this stays correct if a channel ever lacks the column.
+    if ("capiDisconnectedAt" in integration && integration.capiDisconnectedAt) {
       await metaConversionsService.updateCapiStatus({
         id: event.id,
         workspaceId: event.workspaceId,
@@ -262,6 +358,40 @@ export async function handleSendMetaCapiEvent(
     }
 
     try {
+      const contactInbox = await contactInboxService.findByUncached({
+        where: { id: event.contactInboxId },
+      })
+      if (!contactInbox) {
+        await metaConversionsService.updateCapiStatus({
+          id: event.id,
+          workspaceId: event.workspaceId,
+          ...failedStatus,
+          capiError: "contactInboxNotFound",
+        })
+        logger.warn(
+          {
+            metaCapiEventId: event.id,
+            workspaceId: event.workspaceId,
+            contactInboxId: event.contactInboxId,
+          },
+          "Meta CAPI event contact inbox not found; marked failed",
+        )
+        return
+      }
+
+      // WhatsApp business-messaging CAPI cannot send without a ctwa_clid, so
+      // gate BEFORE any token/scope/dataset work: an unsendable event is
+      // terminally skipped_no_identity (never skipped_no_scope), and we avoid a
+      // wasted debug-token round-trip when scope also happens to be missing.
+      if (event.channel === "whatsapp" && !contactInbox.referral?.ctwaClid) {
+        await metaConversionsService.updateCapiStatus({
+          id: event.id,
+          workspaceId: event.workspaceId,
+          ...skippedNoIdentityStatus,
+        })
+        return
+      }
+
       const auth = await resolveCapiAccessToken(integration)
       const integrationForSend =
         auth.source === "manual"
@@ -286,27 +416,6 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
-      const contactInbox = await contactInboxService.findByUncached({
-        where: { id: event.contactInboxId },
-      })
-      if (!contactInbox) {
-        await metaConversionsService.updateCapiStatus({
-          id: event.id,
-          workspaceId: event.workspaceId,
-          ...failedStatus,
-          capiError: "contactInboxNotFound",
-        })
-        logger.warn(
-          {
-            metaCapiEventId: event.id,
-            workspaceId: event.workspaceId,
-            contactInboxId: event.contactInboxId,
-          },
-          "Meta CAPI event contact inbox not found; marked failed",
-        )
-        return
-      }
-
       const datasetId =
         auth.source === "manual" && integrationForSend.datasetId
           ? integrationForSend.datasetId
@@ -315,8 +424,7 @@ export async function handleSendMetaCapiEvent(
               integration: integrationForSend,
               provisionDataset: ({ resourceId }) =>
                 ensureDataset({
-                  resourceType:
-                    event.channel === "messenger" ? "page" : "igUser",
+                  resourceType: datasetResourceTypeByChannel[event.channel],
                   resourceId,
                   accessToken: auth.accessToken,
                 }),
@@ -331,6 +439,7 @@ export async function handleSendMetaCapiEvent(
           occurredAt: event.occurredAt,
           eventId: event.sourceKey,
           contactInboxSourceId: contactInbox.sourceId,
+          ctwaClid: contactInbox.referral?.ctwaClid,
           value: event.value,
           currency: event.currency,
           contentCategory: event.contentCategory,

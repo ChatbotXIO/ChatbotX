@@ -9,6 +9,7 @@ import {
 export const datasetEndpointByResourceType = {
   page: (resourceId: string) => `${resourceId}/dataset`,
   igUser: (resourceId: string) => `${resourceId}/dataset`,
+  waba: (resourceId: string) => `${resourceId}/dataset`,
 } as const satisfies Record<
   EnsureDatasetInput["resourceType"],
   (resourceId: string) => string
@@ -26,7 +27,7 @@ const datasetIdResponseSchema = z.union([
 ])
 
 export type EnsureDatasetInput = {
-  resourceType: "page" | "igUser"
+  resourceType: "page" | "igUser" | "waba"
   resourceId: string
   accessToken: string
   version?: string

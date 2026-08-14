@@ -20,7 +20,11 @@ export type ResolvedCapiAccessToken = {
 export async function resolveCapiAccessToken(
   integration: MetaConversionsIntegration,
 ): Promise<ResolvedCapiAccessToken> {
-  if (integration.capiAccessToken) {
+  // A manual (Custom-connection) token wins over the OAuth page token when
+  // present. Read via a property guard, not a channel switch: the column
+  // exists on every connect-capable channel, and this keeps working unchanged
+  // if a channel ever lacks it.
+  if ("capiAccessToken" in integration && integration.capiAccessToken) {
     const manual = await encryptUtils.decryptObject(
       encryptedDataSchema.parse(integration.capiAccessToken),
       manualCapiAccessTokenSchema,

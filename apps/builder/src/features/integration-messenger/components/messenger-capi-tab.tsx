@@ -13,7 +13,6 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
-import { CapiOauthFinalizeCard } from "@/features/meta-conversions/components/capi-oauth-finalize-card"
 import {
   type CapiConnectionState,
   getCapiConnectionState,
@@ -24,11 +23,9 @@ import {
   getCapiStatus,
 } from "@/features/meta-conversions/lib/capi-status"
 import { useWorkspaceId } from "@/hooks/routing"
-import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { connectMessengerCustomCapiAction } from "../actions/connect-custom-capi.action"
 import { disconnectMessengerCapiAction } from "../actions/disconnect-capi.action"
 import { provisionMessengerCapiDatasetAction } from "../actions/provision-capi-dataset.action"
-import { reconnectMessengerCapiAction } from "../actions/reconnect-capi.action"
 import { setMessengerCapiDatasetAction } from "../actions/set-capi-dataset.action"
 
 type MessengerCapiTabProps = {
@@ -61,22 +58,11 @@ function renderConnectionContent({
     return (
       <CapiMethodChooser
         actions={{
-          oauthConnect: reconnectMessengerCapiAction,
           connectCustom: connectMessengerCustomCapiAction,
-        }}
-        datasetId={integrationMessenger.datasetId}
-        integrationId={integrationMessenger.id}
-        workspaceId={workspaceId}
-      />
-    )
-  }
-  if (connectionState === "oauthAwaitingDataset") {
-    return (
-      <CapiOauthFinalizeCard
-        actions={{
           setDataset: setMessengerCapiDatasetAction,
           provision: provisionMessengerCapiDatasetAction,
         }}
+        datasetId={integrationMessenger.datasetId}
         integrationId={integrationMessenger.id}
         workspaceId={workspaceId}
       />
@@ -100,7 +86,6 @@ export function MessengerCapiTab({
 }: MessengerCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
-  useChannelReconnectResult()
   const connectionState = getCapiConnectionState({
     capiDisconnected,
     hasManualCapiAccessToken,
