@@ -22,6 +22,7 @@ const {
   mockSignMeLink,
   mockMessengerGetUserInboxLink,
   mockMessengerGetPostDetails,
+  mockAppointmentFindBy,
   testEncryptionKey,
 } = vi.hoisted(() => ({
   mockConversationFindBy: vi.fn().mockResolvedValue({
@@ -42,11 +43,15 @@ const {
   mockSignMeLink: vi.fn(),
   mockMessengerGetUserInboxLink: vi.fn(),
   mockMessengerGetPostDetails: vi.fn(),
+  mockAppointmentFindBy: vi.fn(),
   testEncryptionKey:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentService: {
+    findBy: mockAppointmentFindBy,
+  },
   contactInboxService: {
     findRecentByContactId: mockFindRecentByContactId,
   },
@@ -158,6 +163,7 @@ const createContext = (overrides?: {
   contact?: ContactModel
   contactInbox?: ContactInboxModel | null
   conversation?: ConversationModel | null
+  appointmentId?: string
   workspace?: WorkspaceModel | null
 }) => ({
   contact: overrides?.contact ?? contact,
@@ -169,6 +175,7 @@ const createContext = (overrides?: {
     overrides && "conversation" in overrides
       ? overrides.conversation
       : conversation,
+  appointmentId: overrides?.appointmentId,
   workspace:
     overrides && "workspace" in overrides ? overrides.workspace : workspace,
 })
@@ -1460,6 +1467,51 @@ describe("getSystemFieldValue — clock fields", () => {
         systemFieldTypes.enum.current_time,
       ),
     ).resolves.toBe("2026-01-02 03:04:05")
+  })
+})
+
+describe("getSystemFieldValue — appointment fields", () => {
+  beforeEach(() => {
+    cache.clear()
+    vi.clearAllMocks()
+  })
+
+  test("booking fields resolve from explicit appointment context", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    const context = createContext({ appointmentId: "appointment-1" })
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_calendar),
+    ).resolves.toBe("Discovery Call")
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_date),
+    ).resolves.toBe("2026-01-02 10:04:05")
+
+    expect(mockAppointmentFindBy).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "appointment-1",
+    })
+  })
+
+  test("booking fields do not guess without explicit appointment context", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext(),
+        systemFieldTypes.enum.booking_calendar,
+      ),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.booking_date),
+    ).resolves.toBeNull()
+
+    expect(mockAppointmentFindBy).not.toHaveBeenCalled()
   })
 })
 

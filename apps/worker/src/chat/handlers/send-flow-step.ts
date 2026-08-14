@@ -5,6 +5,7 @@ import {
   trackingResponseTypes,
 } from "@chatbotx.io/analytics"
 import {
+  appointmentCalendarService,
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
   contactInboxService,
@@ -28,6 +29,7 @@ import {
   type messageModel,
 } from "@chatbotx.io/database/schema"
 import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
+import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
@@ -91,6 +93,18 @@ const isBlankTextCarrierStep = (step: SendFlowStepData) => {
   }
 
   return false
+}
+
+const BOOKING_PUBLIC_LINK_PATH_REGEX = /^\/booking\/([^/]+)$/
+
+const extractBookingPublicLinkSlug = (url: string): string | null => {
+  try {
+    const parsedUrl = new URL(url)
+    const match = parsedUrl.pathname.match(BOOKING_PUBLIC_LINK_PATH_REGEX)
+    return match?.[1] ? decodeURIComponent(match[1]) : null
+  } catch {
+    return null
+  }
 }
 
 const findTargetContactInbox = ({
@@ -159,6 +173,128 @@ export const convertButtonsToTemplate = (props: {
   })
 }
 
+const signBookingButtonIfNeeded = async (props: {
+  workspaceId: string
+  contactId: string
+  conversationId: string
+  contactInboxId: string
+  channel: string
+  flowId: string
+  flowVersionId?: string
+  executedFlowVersionId?: string
+  stepId: string
+  appUrl: string
+  button: ButtonStepProps
+}): Promise<ButtonStepProps> => {
+  const { button } = props
+  if (!(button.buttonType === buttonTypes.enum.openWebsite)) {
+    return button
+  }
+  const tokenFlowVersionId = props.flowVersionId ?? props.executedFlowVersionId
+  if (!tokenFlowVersionId) {
+    return button
+  }
+
+  const publicLinkSlug = extractBookingPublicLinkSlug(button.beforeStep.url)
+  if (!publicLinkSlug) {
+    return button
+  }
+
+  const calendar = await appointmentCalendarService.findByPublicLinkSlug({
+    workspaceId: props.workspaceId,
+    publicLinkSlug,
+  })
+  if (!calendar) {
+    return button
+  }
+
+  const token = await signAppointmentWebviewToken({
+    mode: "book",
+    workspaceId: props.workspaceId,
+    calendarId: calendar.id,
+    contactId: props.contactId,
+    conversationId: props.conversationId,
+    contactInboxId: props.contactInboxId,
+    channel: props.channel,
+    flowId: props.flowId,
+    flowVersionId: tokenFlowVersionId,
+    stepId: props.stepId,
+  })
+  const pickerUrl = new URL("/booking/picker", props.appUrl)
+  pickerUrl.searchParams.set("token", token)
+
+  return {
+    ...button,
+    beforeStep: {
+      ...button.beforeStep,
+      url: pickerUrl.toString(),
+    },
+  }
+}
+
+const signBookingButtonsIfNeeded = async (props: {
+  workspaceId: string
+  contactId: string
+  conversationId: string
+  contactInboxId: string
+  channel: string
+  flowId: string
+  flowVersionId?: string
+  executedFlowVersionId?: string
+  stepId: string
+  appUrl: string
+  buttons?: ButtonStepProps[]
+}) => {
+  if (!props.buttons?.length) {
+    return props.buttons
+  }
+  return await Promise.all(
+    props.buttons.map((button) =>
+      signBookingButtonIfNeeded({ ...props, button }),
+    ),
+  )
+}
+
+const signBookingLinksInStep = async (props: {
+  workspaceId: string
+  contactId: string
+  conversationId: string
+  contactInboxId: string
+  channel: string
+  flowId: string
+  flowVersionId?: string
+  executedFlowVersionId?: string
+  appUrl: string
+  step: SendFlowStepData
+}): Promise<SendFlowStepData> => {
+  let step = props.step
+  if ("buttons" in step && step.buttons.length > 0) {
+    const buttons = await signBookingButtonsIfNeeded({
+      ...props,
+      stepId: step.id,
+      buttons: step.buttons,
+    })
+    step = { ...step, buttons: buttons ?? [] } as SendFlowStepData
+  }
+  if (!("cards" in step) || step.cards.length === 0) {
+    return step
+  }
+  const cards = await Promise.all(
+    step.cards.map(async (card) => {
+      if (!("buttons" in card) || card.buttons.length === 0) {
+        return card
+      }
+      const buttons = await signBookingButtonsIfNeeded({
+        ...props,
+        stepId: step.id,
+        buttons: card.buttons,
+      })
+      return { ...card, buttons: buttons ?? [] } as SendCardStepSchema
+    }),
+  )
+  return { ...step, cards } as SendFlowStepData
+}
+
 const convertCardsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
@@ -191,6 +327,7 @@ export async function sendFlowStep({
   contactInboxId,
   flowId,
   flowVersionId,
+  executedFlowVersionId,
   step,
   trackingContext,
   metadata,
@@ -198,6 +335,7 @@ export async function sendFlowStep({
   quickReplies,
   sendFrom,
   commentAnchor,
+  appointmentId,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
@@ -318,7 +456,11 @@ export async function sendFlowStep({
   const resolvedStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
-    { contactInbox: targetContactInbox, conversation },
+    {
+      contactInbox: targetContactInbox,
+      conversation,
+      ...(appointmentId ? { appointmentId } : {}),
+    },
   )
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
@@ -341,10 +483,38 @@ export async function sendFlowStep({
   let message: MessageModel | MessageWithAttachments | undefined
 
   try {
-    const [repository, { storageUrl }] = await Promise.all([
+    const [repository, tenantSettings] = await Promise.all([
       createMessageRepository(),
       resolveTenantSettings({ workspaceId: conversation.workspaceId }),
     ])
+    const { appUrl, storageUrl } = tenantSettings
+    const stepWithSignedBookingLinks = await signBookingLinksInStep({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      conversationId: conversation.id,
+      contactInboxId: targetContactInbox.id,
+      channel: targetContactInbox.channel,
+      flowId,
+      flowVersionId,
+      executedFlowVersionId,
+      appUrl,
+      step: resolvedStep as SendFlowStepData,
+    })
+    const quickRepliesWithSignedBookingLinks = await signBookingButtonsIfNeeded(
+      {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversationId: conversation.id,
+        contactInboxId: targetContactInbox.id,
+        channel: targetContactInbox.channel,
+        flowId,
+        flowVersionId,
+        executedFlowVersionId,
+        stepId: stepWithSignedBookingLinks.id,
+        appUrl,
+        buttons: quickReplies,
+      },
+    )
 
     let contentAttributes: (typeof messageModel.$inferInsert)["contentAttributes"] =
       {
@@ -357,22 +527,24 @@ export async function sendFlowStep({
       }
 
     const canonicalQuickReplies =
-      quickReplies && quickReplies.length > 0
+      quickRepliesWithSignedBookingLinks &&
+      quickRepliesWithSignedBookingLinks.length > 0
         ? convertButtonsToTemplate({
             flowId,
             flowVersionId,
-            buttons: quickReplies,
+            buttons: quickRepliesWithSignedBookingLinks,
             metadata,
             contactInboxId: targetContactInbox.id,
           })
         : undefined
 
     const canonicalStepButtons =
-      "buttons" in resolvedStep && resolvedStep.buttons.length > 0
+      "buttons" in stepWithSignedBookingLinks &&
+      stepWithSignedBookingLinks.buttons.length > 0
         ? convertButtonsToTemplate({
             flowId,
             flowVersionId,
-            buttons: resolvedStep.buttons,
+            buttons: stepWithSignedBookingLinks.buttons,
             metadata,
             contactInboxId: targetContactInbox.id,
           })
@@ -393,7 +565,10 @@ export async function sendFlowStep({
         ...contentAttributes,
       }
     }
-    if ("cards" in resolvedStep && resolvedStep.cards.length > 0) {
+    if (
+      "cards" in stepWithSignedBookingLinks &&
+      stepWithSignedBookingLinks.cards.length > 0
+    ) {
       contentAttributes = {
         type: "template",
         payload: {
@@ -401,7 +576,7 @@ export async function sendFlowStep({
           cards: convertCardsToTemplate({
             flowId,
             flowVersionId,
-            cards: resolvedStep.cards,
+            cards: stepWithSignedBookingLinks.cards,
             metadata,
             contactInboxId: targetContactInbox.id,
           }),
@@ -514,7 +689,7 @@ export async function sendFlowStep({
           contactInbox: targetContactInbox,
           flowId,
           flowVersionId,
-          step: resolvedStep as SendFlowStepData,
+          step: stepWithSignedBookingLinks,
           metadata,
           richResponse,
           quickReplies: canonicalQuickReplies,

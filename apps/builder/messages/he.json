@@ -315,7 +315,6 @@
       "broadcastActions": "פעולות שידור",
       "callApi": "בקשת API חיצונית",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "גורמים מפעילים",
       "questionnaires": "שאלונים",
       "setUpCoupon": "הגדרת קופון",
@@ -344,7 +343,6 @@
       "getResponseAddContact": "הוספת איש קשר ל-GetResponse",
       "sendGridAddContact": "הוספת איש קשר ל-SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "פתיחת אתר",
       "optInEmail": "הסכמה לקבלת דוא\"ל",
       "optOutEmail": "ביטול הסכמה לקבלת דוא\"ל",
@@ -399,7 +397,10 @@
       "splitTraffic": "פיצול תעבורה",
       "aiEditImage": "עריכת תמונה באמצעות AI",
       "whatsappFlow": "תהליך WhatsApp",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "תזמון פגישות",
+      "triggerN8n": "הפעלת n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -1241,8 +1242,8 @@
     "reconnect": "חיבור מחדש",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "הגדרות כלליות",
+      "conversionsApi": "אופטימיזציית מודעות"
     }
   },
   "messenger": {
@@ -1276,7 +1277,7 @@
     "tabs": {
       "generalSettings": "הגדרות כלליות",
       "messageTemplates": "תבניות הודעה",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "אופטימיזציית מודעות"
     },
     "messageTemplate": {
       "params": {
@@ -1675,7 +1676,7 @@
       "messageTemplates": "תבניות הודעה",
       "profile": "פרופיל",
       "usefulLinks": "קישורים שימושיים",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "אופטימיזציית מודעות"
     },
     "accountHealths": {
       "title": "ניהול חשבון WhatsApp",
@@ -1903,7 +1904,7 @@
       "startAnotherFlow": "הפעלת תהליך אחר",
       "notifyAdmins": "יידוע מנהלי מערכת",
       "transferConversationToHuman": "העברת השיחה לנציג אנושי",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
     },
     "triggerGoesOff": "הגורם המפעיל מופעל",
     "before": "לפני",
@@ -2434,7 +2435,25 @@
   },
   "appointmentScheduling": {
     "title": "תזמון פגישות",
-    "description": "יצירה וניהול של תזמון הפגישות שלכם."
+    "description": "יצירה וניהול של תזמון הפגישות שלכם.",
+    "flowModes": {
+      "book": "קביעת פגישה",
+      "cancel": "ביטול פגישה",
+      "checkAvailability": "בדיקת זמינות"
+    },
+    "fields": {
+      "mode": "מצב",
+      "dateTimeFieldId": "תאריך ושעת הפגישה",
+      "startDateFieldId": "תאריך התחלה",
+      "endDateFieldId": "תאריך סיום",
+      "resultUsedByAI": "שימוש בתוצאה עבור AI",
+      "outputCustomFieldId": "שמירת התוצאה ב",
+      "startDateFieldIdSelected": "שמירת תאריך ההתחלה שנבחר ב",
+      "endDateFieldIdSelected": "שמירת תאריך הסיום שנבחר ב"
+    },
+    "dialogDescriptions": {
+      "flowStep": "בחרו כיצד שלב זה בתהליך מתזמן פגישות."
+    }
   },
   "templates": {
     "title": "תבניות",
@@ -4354,6 +4373,12 @@
       "placeholder": "הקלידו שם אירוע ולחצו Enter",
       "description": "הוסיפו שם אירוע אחד או יותר. כאשר Make מצרף Webhook לאחד מהאירועים האלה, הנתונים נשלחים אליו בעת הפעלת שלב זה."
     },
+    "bookingCalendar": {
+      "label": "יומן הפגישה"
+    },
+    "bookingDate": {
+      "label": "תאריך הפגישה"
+    },
     "n8nEvents": {
       "label": "אירועים",
       "placeholder": "הקלידו שם אירוע ולחצו Enter",
@@ -4688,100 +4713,353 @@
       "allAds": "כל המודעות"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "קביעת פגישה",
+    "badge": "פגישה",
+    "timezone": "אזור זמן",
+    "empty": "לא נמצאו זמנים פנויים.",
+    "noSelection": "בחרו זמן",
+    "actions": {
+      "book": "קביעת פגישה",
+      "viewDetails": "צפייה בפרטים"
+    },
+    "errors": {
+      "invalidTokenTitle": "קישור קביעת הפגישה הזה אינו זמין.",
+      "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור קביעת פגישה חדש.",
+      "staleSlot": "הזמן הזה כבר אינו זמין. בחרו זמן אחר.",
+      "availabilityChanged": "הזמינות השתנתה בזמן שבחרתם זמן. בחרו שוב.",
+      "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
+    },
+    "success": {
+      "title": "הפגישה שלכם נקבעה.",
+      "description": "פרטי הפגישה מוכנים."
+    },
+    "schedule": {
+      "metadataTitle": "פרטי הפגישה",
+      "defaultMessage": "הפגישה שלכם נקבעה.",
+      "unknownInvitee": "אורח",
+      "fields": {
+        "invitee": "מוזמן",
+        "time": "שעה",
+        "timezone": "אזור זמן",
+        "location": "מיקום"
+      },
+      "status": {
+        "scheduled": "מתוזמן",
+        "cancelled": "בוטל"
+      },
+      "locationTypes": {
+        "inPerson": "פגישה פרונטלית",
+        "phoneCall": "שיחת טלפון",
+        "onlineMeeting": "פגישה מקוונת"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "ביטול פגישה",
+      "title": "ביטול פגישה",
+      "description": "ביטול {calendar} בשעה {time}.",
+      "action": "ביטול פגישה",
+      "cancelledTitle": "הפגישה בוטלה",
+      "cancelledDescription": "הפגישה הזו בוטלה.",
+      "unavailableTitle": "לא ניתן לבטל",
+      "unavailableDescription": "פגישה זו כבר בוטלה, נמחקה, או שמועד קיומה חלף."
+    },
+    "range": {
+      "metadataTitle": "בדיקת זמינות",
+      "empty": "לא נבחר",
+      "successTitle": "טווח התאריכים התקבל.",
+      "successDescription": "אנו בודקים את זמני הפגישות הפנויים.",
+      "fields": {
+        "startDate": "תאריך התחלה",
+        "endDate": "תאריך סיום",
+        "startTime": "שעת התחלה",
+        "endTime": "שעת סיום"
+      },
+      "actions": {
+        "skip": "דילוג"
+      },
+      "errors": {
+        "invalidRange": "תאריך הסיום חייב להיות זהה לתאריך ההתחלה או מאוחר ממנו."
+      },
+      "timezoneHint": "הזמנים מוצגים לפי {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "פגישות",
+    "statuses": {
+      "scheduled": "מתוזמן",
+      "cancelled": "בוטל"
+    },
+    "messages": {
+      "empty": "עדיין אין פגישות."
+    }
+  },
+  "appointmentManagement": {
+    "title": "פגישות",
+    "singular": "פגישה",
+    "unknownContact": "איש קשר לא ידוע",
+    "searchPlaceholder": "חיפוש לפי שם...",
+    "tabs": {
+      "next": "קרובות",
+      "past": "שעברו"
+    },
+    "fields": {
+      "name": "שם",
+      "date": "תאריך",
+      "status": "סטטוס",
+      "calendar": "יומן"
+    },
+    "statuses": {
+      "scheduled": "מתוזמן",
+      "cancelled": "בוטל"
+    },
+    "actions": {
+      "cancelAppointment": "ביטול פגישה"
+    },
+    "dialogs": {
+      "cancelTitle": "ביטול פגישה",
+      "cancelDescription": "בטלו פגישה זו והפעילו את השפעות הביטול שלה.",
+      "deleteTitle": "מחיקת פגישה",
+      "deleteDescription": "מחקו פגישה זו מרשימת הניהול. פעולה זו לא תפעיל את תהליך הביטול."
+    },
+    "messages": {
+      "cancelled": "הפגישה בוטלה.",
+      "deleted": "הפגישה נמחקה."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "יומני פגישות",
+    "singular": "יומן פגישות",
+    "addNew": "הוספת חדש",
+    "none": "ללא",
+    "addReminder": "הוספת תזכורת",
+    "reminderSummary": "שליחת תזכורת - {calendar} {timing}.",
+    "noExternalConnections": "עדיין אין חיבורי יומן חיצוניים",
+    "dialogDescriptions": {
+      "create": "תנו ליומן הפגישות שלכם שם כדי להתחיל.",
+      "rename": "שנו את שם יומן הפגישות הזה."
+    },
+    "tabs": {
+      "calendars": "יומנים",
+      "appointments": "פגישות",
+      "externalCalendars": "יומנים חיצוניים"
+    },
+    "sections": {
+      "appointment": "מהי הפגישה שלכם",
+      "availability": "מתי אפשר לקבוע פגישה?",
+      "duration": "כמה זמן נמשכת הפגישה שלכם?",
+      "location": "היכן תתקיים הפגישה?",
+      "notifications": "התראות",
+      "restrictions": "הגבלות",
+      "externalCalendar": "חיבור Google Calendar"
+    },
+    "fields": {
+      "description": "תיאור",
+      "timezone": "אזור זמן",
+      "locationType": "סוג המיקום",
+      "locationDetail": "פרטים",
+      "durationMinutes": "משך הפגישה",
+      "bufferAfterMinutes": "הוספת זמן לאחר הפגישות שלכם",
+      "scheduleWindowType": "ניתן לקבוע פגישה",
+      "rollingDays": "ימים מתגלגלים",
+      "minAdvanceDays": "מספר ימים מינימלי מראש",
+      "startDate": "תאריך התחלה",
+      "endDate": "תאריך סיום",
+      "specificDate": "תאריך",
+      "maxAppointmentsPerUser": "מספר פגישות מקסימלי למשתמש",
+      "dailyLimitEnabled": "מגבלה יומית",
+      "maxPerDay": "מקסימום ליום",
+      "allowGroupMeeting": "אפשור פגישה קבוצתית",
+      "maxPerSlot": "מקסימום למשבצת זמן",
+      "confirmationMessage": "הודעת אישור",
+      "confirmationFlowId": "תהליך אישור",
+      "cancellationFlowId": "תהליך ביטול",
+      "externalConnectionId": "יומן חיצוני",
+      "reminders": "תזכורות",
+      "reminderTimingValue": "ערך",
+      "reminderTimingUnit": "יחידה"
+    },
+    "locationTypes": {
+      "inPerson": "פגישה פרונטלית",
+      "phoneCall": "שיחת טלפון",
+      "onlineMeeting": "פגישה מקוונת"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "בטווח של ימים מתגלגלים בעתיד",
+      "dateRange": "בטווח תאריכים",
+      "specificDay": "יום ספציפי אחד",
+      "anyFutureDate": "בכל תאריך בעתיד"
+    },
+    "reminderTimingUnits": {
+      "minutes": "דקות לפני",
+      "hours": "שעות לפני",
+      "days": "ימים לפני"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# דקה לפני} other {# דקות לפני}}",
+      "hours": "{count, plural, one {שעה אחת לפני} other {# שעות לפני}}",
+      "days": "{count, plural, one {יום אחד לפני} other {# ימים לפני}}"
+    },
+    "weekdays": {
+      "0": "ראשון",
+      "1": "שני",
+      "2": "שלישי",
+      "3": "רביעי",
+      "4": "חמישי",
+      "5": "שישי",
+      "6": "שבת"
+    },
+    "weekdayEditor": {
+      "description": "הגדירו את טווחי הזמן הזמינים ליום זה.",
+      "unavailable": "לא זמין",
+      "overlapWarning": "חלק מהטווחים חופפים. זמן חופף לא נספר פעמיים.",
+      "addInterval": "הוספת טווח",
+      "startTime": "שעת התחלה",
+      "endTime": "שעת סיום"
+    },
+    "tooltips": {
+      "timezone": "אזור הזמן שבו אתם יוצרים יומן זה. אנשים יראו את הזמינות לפי אזור הזמן שלהם.",
+      "confirmationFlow": "התהליך שנשלח לאחר שהמשתמש קבע פגישה.",
+      "cancellationFlow": "התהליך שנשלח לאחר שפגישה בוטלה.",
+      "reminders": "שלחו תזכורות כדי להזכיר למוזמן על הפגישה.",
+      "appointmentDuration": "הגדירו כמה זמן תימשך הפגישה שלכם.",
+      "bufferAfterMinutes": "תנו לעצמכם זמן חיץ לסיום הפגישות שנקבעו.",
+      "peopleCanSchedule": "הגדירו טווח תאריכים שבו תוכלו לקבל פגישות.",
+      "maxAppointmentsPerUser": "המספר המקסימלי של פגישות עתידיות שמשתמש רשאי לקבוע.",
+      "rollingDays": "אפשרו קביעת פגישות עד כמה ימים בעתיד",
+      "minAdvanceDays": "דרשו שקביעת פגישות תיעשה לפחות כך וכך ימים מראש. השתמשו ב-0 כדי לאפשר קביעה באותו יום.",
+      "dailyLimit": "המספר המקסימלי של אנשים שרשאים לקבוע פגישה ביום.",
+      "allowGroupMeeting": "אפשרו למספר אנשים לקבוע פגישה באותה משבצת זמן.",
+      "externalCalendar": "חברו את Google Calendar כדי לסנכרן את הפגישות שלכם."
+    },
+    "minutesLabel": "{count} דקות"
+  },
+  "externalCalendars": {
+    "title": "יומנים חיצוניים",
+    "connectGoogle": "חיבור Google",
+    "emptyEmail": "אין דוא\"ל",
+    "fields": {
+      "provider": "ספק",
+      "email": "דוא\"ל",
+      "calendarId": "מזהה יומן",
+      "connected": "מחובר",
+      "date": "תאריך"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "עריכת מזהה יומן",
+      "editDescription": "בחרו את מזהה ה-Google Calendar שייבדק לאיתור התנגשויות וליצירת אירועי פגישות.",
+      "deleteTitle": "ניתוק יומן",
+      "deleteDescription": "נתקו את Google Calendar הזה מתזמון הפגישות."
+    },
+    "messages": {
+      "connected": "Google Calendar חובר בהצלחה.",
+      "connectFailed": "לא ניתן היה לחבר את Google Calendar. בדקו את הגדרות ה-Google OAuth ואת הגישה ל-Calendar API ונסו שוב.",
+      "calendarIdUpdated": "מזהה היומן עודכן.",
+      "disconnected": "היומן נותק."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "קביעת פגישה",
+    "comingSoonTitle": "עמוד קביעת הפגישות בקרוב",
+    "comingSoonDescription": "עמוד קביעת הפגישות הציבורי הזה עדיין אינו זמין."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "שליחת אירועי LeadSubmitted משיחות Messenger, Instagram ו-WhatsApp אל Meta.",
+    "datasetId": "מזהה Dataset",
+    "reconnect": "חיבור מחדש להרשאות",
+    "connectViaFacebook": "חיבור דרך Facebook",
+    "unsupportedExplanation": "חשבון Instagram זה חובר באמצעות Instagram Business Login. חברו את החשבון דרך Facebook כדי להשתמש ב-Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "הוסיפו לתור אירוע LeadSubmitted עבור Messenger, Instagram או WhatsApp.",
+      "whatsappNote": "אירועי WhatsApp נשלחים רק עבור שיחות שהתחילו ממודעת click-to-WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "מוכן",
+      "missingPermission": "נדרשת הרשאה",
+      "unverified": "לא מאומת",
+      "unsupported": "לא נתמך",
+      "notConnected": "לא מחובר"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "לשילוב זה יש את הרשאת Meta הנדרשת לאירועי Conversions API.",
+      "missingPermission": "חברו מחדש את השילוב הזה והעניקו את הרשאת Meta המבוקשת.",
+      "unverified": "הגדרות אפליקציית הפלטפורמה אינן זמינות, ולכן לא ניתן לאמת את הרשאת ה-CAPI.",
+      "unsupported": "Meta Conversions API עבור Instagram דורש חשבון המחובר דרך Facebook Login for Business.",
+      "notConnected": "ה-Conversions API הוא כלי עסקי של Meta שמאפשר לכם לשתף נתונים עם Meta כדי לשפר את ביצועי המודעות."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "החיבור מחדש ל-Meta CAPI נכשל.",
+      "messengerNotFound": "שילוב Messenger לא נמצא.",
+      "instagramNotFound": "שילוב Instagram לא נמצא.",
+      "instagramRequiresFacebook": "Instagram CAPI דורש חיבור דרך Facebook.",
+      "saveFailed": "לא ניתן היה לשמור. נסו שוב.",
+      "datasetRequired": "שמרו מזהה Dataset לפני הוספת אסימון גישה.",
+      "invalidToken": "האסימון הזה לא הצליח לגשת למאגר הנתונים.",
+      "whatsappNotFound": "שילוב WhatsApp לא נמצא."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "סוג אירוע",
+        "leadSubmitted": "ליד נשלח"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "ערך",
+      "valuePlaceholder": "לדוגמה: 250",
+      "currency": "מטבע",
+      "currencyPlaceholder": "לדוגמה: USD",
+      "contentCategory": "קטגוריית תוכן",
+      "contentCategoryPlaceholder": "הקטגוריה של התוכן המשויך לאירוע",
+      "contentName": "שם תוכן",
+      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "הדביקו את מזהה ה-Dataset מ-Events Manager",
+    "saveDataset": "שמור",
+    "accessToken": "אסימון גישה (אופציונלי)",
+    "accessTokenHint": "הדביקו אסימון מ-Events Manager כדי לשלוח אירועים עם האסימון שלכם במקום אסימון הדף המחובר. נדרש מזהה Dataset.",
+    "accessTokenPlaceholder": "אסימון גישה של Events Manager",
+    "saveToken": "שמירת אסימון",
+    "tokenSaved": "האסימון נשמר",
+    "removeToken": "הסרה",
+    "saved": "נשמר",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "ייתכן שיחלפו עד 40 דקות עד שהאירועים יופיעו ב-Events Manager ויוצגו כלידים של Meta ב-Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "מחובר",
+    "disconnect": "ניתוק",
+    "openEventManager": "פתיחת Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "חיבור דרך Facebook",
+        "description": "השתמשו בחיבור הקיים של הדף שלכם, ולאחר מכן בחרו מזהה Dataset.",
+        "connect": "חיבור דרך Facebook",
+        "connectedLabel": "דרך Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "חיבור מותאם אישית",
+        "description": "השתמשו במזהה Dataset ובאסימון גישה מ-Meta Events Manager.",
+        "start": "הגדרת חיבור מותאם אישית",
+        "connect": "חיבור",
+        "connectedLabel": "מותאם אישית"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "חיבור דרך WhatsApp",
+        "description": "השתמשו בחיבור ה-WhatsApp שלכם, ולאחר מכן בחרו מזהה Dataset.",
+        "connect": "חיבור דרך WhatsApp",
+        "connectedLabel": "דרך WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "בחרו מזהה Dataset",
+      "description": "הזינו מזהה Dataset קיים, או השאירו ריק כדי ליצור אחד באופן אוטומטי.",
       "save": "שמור",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "מזהה Dataset שאינו מקושר לעמוד או לחשבון Instagram הזה עלול לא לייחס אירועים כראוי. השאירו שדה זה ריק כדי ליצור מאגר נתונים מקושר באופן אוטומטי."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "חיבור"
     }
   }
 }

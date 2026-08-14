@@ -82,6 +82,7 @@ const TOOLS_CONFIG = [
     labelKey: "appointmentScheduling.title",
     descriptionKey: "appointmentScheduling.description",
     icon: CalendarIcon,
+    getLink: (id: string) => `/space/${id}/appointment-calendars`,
   },
   {
     id: "questionnaires",

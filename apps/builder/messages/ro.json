@@ -43,7 +43,6 @@
       "broadcastActions": "Acțiuni de difuzare",
       "callApi": "Solicitare API externă",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Declanșatoare",
       "questionnaires": "Chestionare",
       "setUpCoupon": "Configurează cuponul",
@@ -72,7 +71,6 @@
       "getResponseAddContact": "Adaugă contactul în GetResponse",
       "sendGridAddContact": "Adaugă contactul în SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Deschide site-ul web",
       "optInEmail": "Abonează la e-mail",
       "optOutEmail": "Dezabonează de la e-mail",
@@ -127,7 +125,10 @@
       "splitTraffic": "Distribuie traficul",
       "aiEditImage": "Editează imaginea cu IA",
       "whatsappFlow": "Flux WhatsApp",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Programări",
+      "triggerN8n": "Declanșează n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -2735,6 +2736,12 @@
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
       "description": "Adăugați unul sau mai multe nume de evenimente. Când Make atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
     },
+    "bookingCalendar": {
+      "label": "Calendar de programare"
+    },
+    "bookingDate": {
+      "label": "Data programării"
+    },
     "n8nEvents": {
       "label": "Evenimente",
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
@@ -2941,8 +2948,8 @@
     "reconnect": "Reconectează",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "Setări generale",
+      "conversionsApi": "Optimizare anunțuri"
     }
   },
   "coexist": {
@@ -3000,7 +3007,7 @@
     "tabs": {
       "generalSettings": "Setări generale",
       "messageTemplates": "Șabloane de mesaje",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Optimizare anunțuri"
     },
     "messageTemplate": {
       "params": {
@@ -3375,7 +3382,7 @@
       "messageTemplates": "Șabloane de mesaje",
       "profile": "Profil",
       "usefulLinks": "Linkuri utile",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Optimizare anunțuri"
     },
     "accountHealths": {
       "title": "Gestionează-ți contul WhatsApp",
@@ -3603,7 +3610,7 @@
       "startAnotherFlow": "Pornește alt flux",
       "notifyAdmins": "Notifică administratorii",
       "transferConversationToHuman": "Transferă conversația către un operator",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI"
     },
     "triggerGoesOff": "Declanșatorul se activează",
     "before": "Înainte de",
@@ -3846,7 +3853,25 @@
   },
   "appointmentScheduling": {
     "description": "Creează și gestionează programările tale.",
-    "title": "Programări"
+    "title": "Programări",
+    "flowModes": {
+      "book": "Programează o întâlnire",
+      "cancel": "Anulează întâlnirea",
+      "checkAvailability": "Verifică disponibilitatea"
+    },
+    "fields": {
+      "mode": "Mod",
+      "dateTimeFieldId": "Data și ora întâlnirii",
+      "startDateFieldId": "Data de început",
+      "endDateFieldId": "Data de sfârșit",
+      "resultUsedByAI": "Folosește rezultatul pentru AI",
+      "outputCustomFieldId": "Salvează rezultatul în",
+      "startDateFieldIdSelected": "Salvează data de început selectată în",
+      "endDateFieldIdSelected": "Salvează data de sfârșit selectată în"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Alege cum programează întâlniri acest pas al fluxului."
+    }
   },
   "coupons": {
     "actions": {
@@ -4688,100 +4713,353 @@
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
   },
+  "bookingWebview": {
+    "metadataTitle": "Programează o întâlnire",
+    "badge": "Programare",
+    "timezone": "Fus orar",
+    "empty": "Nu a fost găsit niciun interval orar disponibil.",
+    "noSelection": "Alege o oră",
+    "actions": {
+      "book": "Programează o întâlnire",
+      "viewDetails": "Vezi detalii"
+    },
+    "errors": {
+      "invalidTokenTitle": "Acest link de programare nu este disponibil.",
+      "invalidTokenDescription": "Linkul poate fi invalid sau expirat. Solicită un nou link de programare.",
+      "staleSlot": "Această oră nu mai este disponibilă. Te rugăm să alegi o altă oră.",
+      "availabilityChanged": "Disponibilitatea s-a schimbat în timp ce alegeai o oră. Te rugăm să alegi din nou.",
+      "submitFailed": "Nu am putut finaliza această solicitare. Te rugăm să încerci din nou."
+    },
+    "success": {
+      "title": "Programarea ta a fost făcută.",
+      "description": "Detaliile programării sunt gata."
+    },
+    "schedule": {
+      "metadataTitle": "Detaliile programării",
+      "defaultMessage": "Programarea ta a fost efectuată.",
+      "unknownInvitee": "Oaspete",
+      "fields": {
+        "invitee": "Invitat",
+        "time": "Oră",
+        "timezone": "Fus orar",
+        "location": "Locație"
+      },
+      "status": {
+        "scheduled": "Programat",
+        "cancelled": "Anulat"
+      },
+      "locationTypes": {
+        "inPerson": "Întâlnire în persoană",
+        "phoneCall": "Apel telefonic",
+        "onlineMeeting": "Întâlnire online"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Anulează programarea",
+      "title": "Anulează programarea",
+      "description": "Anulează {calendar} la {time}.",
+      "action": "Anulează programarea",
+      "cancelledTitle": "Programare anulată",
+      "cancelledDescription": "Această programare a fost anulată.",
+      "unavailableTitle": "Anulare indisponibilă",
+      "unavailableDescription": "Această programare este deja anulată, ștearsă sau a trecut."
+    },
+    "range": {
+      "metadataTitle": "Verifică disponibilitatea",
+      "empty": "Neselectat",
+      "successTitle": "Intervalul de date a fost primit.",
+      "successDescription": "Verificăm orele disponibile pentru programare.",
+      "fields": {
+        "startDate": "Data de început",
+        "endDate": "Data de sfârșit",
+        "startTime": "Ora de început",
+        "endTime": "Ora de sfârșit"
+      },
+      "actions": {
+        "skip": "Omitere"
+      },
+      "errors": {
+        "invalidRange": "Data de sfârșit trebuie să fie egală sau ulterioară datei de început."
+      },
+      "timezoneHint": "Orele sunt afișate în {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "Programări",
+    "statuses": {
+      "scheduled": "Programat",
+      "cancelled": "Anulat"
+    },
+    "messages": {
+      "empty": "Nicio programare încă."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Programări",
+    "singular": "Programare",
+    "unknownContact": "Contact necunoscut",
+    "searchPlaceholder": "Caută după nume...",
+    "tabs": {
+      "next": "Următoare",
+      "past": "Trecute"
+    },
+    "fields": {
+      "name": "Nume",
+      "date": "Dată",
+      "status": "Stare",
+      "calendar": "Calendar"
+    },
+    "statuses": {
+      "scheduled": "Programat",
+      "cancelled": "Anulat"
+    },
+    "actions": {
+      "cancelAppointment": "Anulează programarea"
+    },
+    "dialogs": {
+      "cancelTitle": "Anulează programarea",
+      "cancelDescription": "Anulează această programare și execută efectele secundare de anulare.",
+      "deleteTitle": "Șterge programarea",
+      "deleteDescription": "Șterge această programare din lista de gestionare. Aceasta nu va executa fluxul de anulare."
+    },
+    "messages": {
+      "cancelled": "Programare anulată.",
+      "deleted": "Programare ștearsă."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Calendare de programări",
+    "singular": "Calendar de programări",
+    "addNew": "Adaugă nou",
+    "none": "Niciunul",
+    "addReminder": "Adaugă memento",
+    "reminderSummary": "Trimite memento - {calendar} {timing}.",
+    "noExternalConnections": "Încă nu există conexiuni la calendare externe",
+    "dialogDescriptions": {
+      "create": "Dă un nume calendarului tău de programări pentru a începe.",
+      "rename": "Redenumește acest calendar de programări."
+    },
+    "tabs": {
+      "calendars": "Calendare",
+      "appointments": "Programări",
+      "externalCalendars": "Calendare externe"
+    },
+    "sections": {
+      "appointment": "Care este programarea ta",
+      "availability": "Când pot oamenii să facă o programare?",
+      "duration": "Cât durează programarea ta?",
+      "location": "Unde va avea loc programarea?",
+      "notifications": "Notificări",
+      "restrictions": "Restricții",
+      "externalCalendar": "Conectează Google Calendar"
+    },
+    "fields": {
+      "description": "Descriere",
+      "timezone": "Fus orar",
+      "locationType": "Tip de locație",
+      "locationDetail": "Detaliu",
+      "durationMinutes": "Durata programării",
+      "bufferAfterMinutes": "Adaugă timp după programările tale",
+      "scheduleWindowType": "Persoanele pot programa",
+      "rollingDays": "Zile glisante",
+      "minAdvanceDays": "Zile minime în avans",
+      "startDate": "Data de început",
+      "endDate": "Data de sfârșit",
+      "specificDate": "Dată",
+      "maxAppointmentsPerUser": "Numărul maxim de programări per utilizator",
+      "dailyLimitEnabled": "Limită zilnică",
+      "maxPerDay": "Maxim pe zi",
+      "allowGroupMeeting": "Permite întâlniri de grup",
+      "maxPerSlot": "Maxim per interval",
+      "confirmationMessage": "Mesaj de confirmare",
+      "confirmationFlowId": "Flux de confirmare",
+      "cancellationFlowId": "Flux de anulare",
+      "externalConnectionId": "Calendar extern",
+      "reminders": "Mementouri",
+      "reminderTimingValue": "Valoare",
+      "reminderTimingUnit": "Unitate"
+    },
+    "locationTypes": {
+      "inPerson": "Întâlnire în persoană",
+      "phoneCall": "Apel telefonic",
+      "onlineMeeting": "Întâlnire online"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "În limita zilelor glisante din viitor",
+      "dateRange": "Într-un interval de date",
+      "specificDay": "O singură zi specifică",
+      "anyFutureDate": "La orice dată din viitor"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minute înainte",
+      "hours": "Ore înainte",
+      "days": "Zile înainte"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minut înainte} other {# minute înainte}}",
+      "hours": "{count, plural, one {o oră înainte} other {# ore înainte}}",
+      "days": "{count, plural, one {o zi înainte} other {# zile înainte}}"
+    },
+    "weekdays": {
+      "0": "Duminică",
+      "1": "Luni",
+      "2": "Marți",
+      "3": "Miercuri",
+      "4": "Joi",
+      "5": "Vineri",
+      "6": "Sâmbătă"
+    },
+    "weekdayEditor": {
+      "description": "Setează intervalele orare disponibile pentru această zi.",
+      "unavailable": "Indisponibil",
+      "overlapWarning": "Unele intervale se suprapun. Timpul suprapus nu este numărat de două ori.",
+      "addInterval": "Adaugă interval",
+      "startTime": "Ora de început",
+      "endTime": "Ora de sfârșit"
+    },
+    "tooltips": {
+      "timezone": "Fusul orar în care creezi acest calendar. Persoanele vor vedea disponibilitatea în funcție de propriul fus orar.",
+      "confirmationFlow": "Fluxul trimis după ce utilizatorul face o programare.",
+      "cancellationFlow": "Fluxul trimis după ce o programare este anulată.",
+      "reminders": "Trimite mementouri pentru a-i reaminti invitatului despre programare.",
+      "appointmentDuration": "Definește cât va dura programarea ta.",
+      "bufferAfterMinutes": "Oferă-ți un timp tampon pentru a încheia programările rezervate.",
+      "peopleCanSchedule": "Stabilește un interval de date în care poți accepta întâlniri.",
+      "maxAppointmentsPerUser": "Numărul maxim de programări viitoare pe care un utilizator are voie să le facă.",
+      "rollingDays": "Permite programarea până la câte zile în viitor",
+      "minAdvanceDays": "Solicită ca programările să fie făcute cu cel puțin acest număr de zile în avans. Folosește 0 pentru a permite programări în aceeași zi.",
+      "dailyLimit": "Numărul maxim de persoane care au voie să facă o programare pe zi.",
+      "allowGroupMeeting": "Permite mai multor persoane să facă o programare în același interval orar.",
+      "externalCalendar": "Conectează Google Calendar pentru a-ți sincroniza programările."
+    },
+    "minutesLabel": "{count} minute"
+  },
+  "externalCalendars": {
+    "title": "Calendare externe",
+    "connectGoogle": "Conectează Google",
+    "emptyEmail": "Fără email",
+    "fields": {
+      "provider": "Furnizor",
+      "email": "E-mail",
+      "calendarId": "ID Calendar",
+      "connected": "Conectat",
+      "date": "Dată"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Editează ID-ul calendarului",
+      "editDescription": "Alege ID-ul Google Calendar pentru a verifica conflictele și a crea evenimente de programare.",
+      "deleteTitle": "Deconectează calendarul",
+      "deleteDescription": "Deconectează acest Google Calendar de la programări."
+    },
+    "messages": {
+      "connected": "Google Calendar a fost conectat.",
+      "connectFailed": "Nu s-a putut conecta Google Calendar. Verifică setările OAuth Google și accesul la API-ul Calendar, apoi încearcă din nou.",
+      "calendarIdUpdated": "ID-ul calendarului a fost actualizat.",
+      "disconnected": "Calendarul a fost deconectat."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Programare",
+    "comingSoonTitle": "Pagina de programare vine în curând",
+    "comingSoonDescription": "Această pagină publică de programare nu este încă disponibilă."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Trimite evenimente LeadSubmitted din conversațiile Messenger, Instagram și WhatsApp către Meta.",
+    "datasetId": "ID set de date",
+    "reconnect": "Reconectează permisiunile",
+    "connectViaFacebook": "Conectează prin Facebook",
+    "unsupportedExplanation": "Acest cont Instagram a fost conectat cu Instagram Business Login. Conectează contul prin Facebook pentru a folosi Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Pune în coadă un eveniment LeadSubmitted pentru Messenger, Instagram sau WhatsApp.",
+      "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Pregătit",
+      "missingPermission": "Permisiune necesară",
+      "unverified": "Neverificat",
+      "unsupported": "Neacceptat",
+      "notConnected": "Neconectat"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Această integrare are permisiunea Meta necesară pentru evenimentele Conversions API.",
+      "missingPermission": "Reconectează această integrare și acordă permisiunea Meta solicitată.",
+      "unverified": "Setările aplicației platformei nu sunt disponibile, deci permisiunea CAPI nu poate fi verificată.",
+      "unsupported": "Meta Conversions API pentru Instagram necesită un cont conectat prin Facebook Login for Business.",
+      "notConnected": "Conversions API este un instrument Meta Business care îți permite să partajezi date cu Meta pentru a îmbunătăți performanța anunțurilor."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Reconectarea Meta CAPI nu a putut fi pornită.",
+      "messengerNotFound": "Integrarea Messenger nu a fost găsită.",
+      "instagramNotFound": "Integrarea Instagram nu a fost găsită.",
+      "instagramRequiresFacebook": "Instagram CAPI necesită conectarea prin Facebook.",
+      "saveFailed": "Nu s-a putut salva. Te rugăm să încerci din nou.",
+      "datasetRequired": "Salvează un ID set de date înainte de a adăuga un token de acces.",
+      "invalidToken": "Acest token nu a putut accesa setul de date.",
+      "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Tip de eveniment",
+        "leadSubmitted": "Lead trimis"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Valoare",
+      "valuePlaceholder": "de ex. 250",
+      "currency": "Monedă",
+      "currencyPlaceholder": "de ex. USD",
+      "contentCategory": "Categorie de conținut",
+      "contentCategoryPlaceholder": "Categoria conținutului asociat evenimentului",
+      "contentName": "Numele conținutului",
+      "contentNamePlaceholder": "Numele paginii sau produsului asociat evenimentului"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Lipește ID-ul setului de date din Events Manager",
+    "saveDataset": "Salvează",
+    "accessToken": "Token de acces (opțional)",
+    "accessTokenHint": "Lipește un token din Events Manager pentru a trimite evenimente cu propriul tău token în loc de tokenul paginii conectate. Necesită un ID set de date.",
+    "accessTokenPlaceholder": "Token de acces Events Manager",
+    "saveToken": "Salvează tokenul",
+    "tokenSaved": "Token salvat",
+    "removeToken": "Elimină",
+    "saved": "Salvat",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Evenimentele pot dura până la 40 de minute pentru a apărea în Events Manager și a fi afișate ca Meta Leads în Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Conectat",
+    "disconnect": "Deconectează",
+    "openEventManager": "Deschide Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "Conectează prin Facebook",
+        "description": "Folosește conexiunea existentă a paginii tale, apoi alege un ID set de date.",
+        "connect": "Conectează prin Facebook",
+        "connectedLabel": "prin Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Conexiune personalizată",
+        "description": "Folosește un ID set de date și un token de acces din Meta Events Manager.",
+        "start": "Configurează o conexiune personalizată",
+        "connect": "Conectează",
+        "connectedLabel": "Personalizat"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "Conectează prin WhatsApp",
+        "description": "Folosește conexiunea ta WhatsApp, apoi alege un ID set de date.",
+        "connect": "Conectează prin WhatsApp",
+        "connectedLabel": "prin WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Alege un ID set de date",
+      "description": "Introdu un ID set de date existent, sau lasă gol pentru a crea unul automat.",
       "save": "Salvează",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "Un ID set de date care nu este asociat acestei Pagini sau cont Instagram poate să nu atribuie corect evenimentele. Lasă acest câmp gol pentru a crea automat un set de date asociat."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Conectează"
     }
   }
 }

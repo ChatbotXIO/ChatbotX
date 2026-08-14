@@ -12,6 +12,16 @@ export const router = {
   adsAPI: lazy(() =>
     import("@/features/ads/api").then((m) => ({ default: m.adsAPI })),
   ),
+  appointmentCalendarsAPI: lazy(() =>
+    import("@/features/appointment-calendars/api").then((m) => ({
+      default: m.appointmentCalendarsAPI,
+    })),
+  ),
+  appointmentsAPI: lazy(() =>
+    import("@/features/appointments/api").then((m) => ({
+      default: m.appointmentsAPI,
+    })),
+  ),
   aiMcpServerAPIs: lazy(() =>
     import("@/features/ai-mcp-servers/api").then((m) => ({
       default: m.aiMcpServerAPIs,

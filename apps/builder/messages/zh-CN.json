@@ -514,7 +514,25 @@
   },
   "appointmentScheduling": {
     "description": "创建并管理您的预约安排。",
-    "title": "预约安排"
+    "title": "预约安排",
+    "flowModes": {
+      "book": "预约",
+      "cancel": "取消预约",
+      "checkAvailability": "查看可预约时间"
+    },
+    "fields": {
+      "mode": "模式",
+      "dateTimeFieldId": "将所选日期保存至",
+      "startDateFieldId": "开始日期",
+      "startDateFieldIdSelected": "将所选开始日期保存至",
+      "endDateFieldId": "结束日期",
+      "endDateFieldIdSelected": "将所选结束日期保存至",
+      "resultUsedByAI": "将结果用于 AI",
+      "outputCustomFieldId": "将回应保存到自订字段"
+    },
+    "dialogDescriptions": {
+      "flowStep": "选择此流程步骤如何安排预约。"
+    }
   },
   "assignAdmin": {
     "assignConversation": "指派对话",
@@ -2653,6 +2671,17 @@
     },
     "zalo": {
       "label": "ZaloOA"
+    },
+    "bookingCalendar": {
+      "label": "预约日历"
+    },
+    "bookingDate": {
+      "label": "预约日期"
+    },
+    "n8nEvents": {
+      "label": "事件",
+      "placeholder": "输入事件名称并按 Enter",
+      "description": "添加一个或多个事件名称。当 n8n 为其中某个事件附加 webhook 时，此步骤运行时会将数据发送给它。"
     }
   },
   "flowAnalytics": {
@@ -2767,7 +2796,11 @@
       "unsubscribeSequence": "退订串行",
       "updateMessengerContactData": "更新联系人数据",
       "whatsappFlow": "WhatsApp流程",
-      "whatsappOptionList": "选项清单"
+      "whatsappOptionList": "选项清单",
+      "appointmentScheduling": "预约安排",
+      "triggerN8n": "触发 n8n",
+      "sendMetaCapiEvent": "发送 Meta CAPI 事件",
+      "metaConversions": "Meta Conversions API"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -2998,7 +3031,11 @@
     "iceBreakersDescription": "破冰活动通过显示常见问题清单为用户提供了一种与您的机器人开始对话的方式。",
     "reconnect": "重新连接",
     "selectInstagramAccount": "选择Instagram 帐户",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "常规设置",
+      "conversionsApi": "广告优化"
+    }
   },
   "instagramCommentAutomation": {
     "activated": "自动化已激活",
@@ -3471,7 +3508,8 @@
     },
     "tabs": {
       "generalSettings": "一般设置",
-      "messageTemplates": "消息范本"
+      "messageTemplates": "消息范本",
+      "conversionsApi": "广告优化"
     },
     "tagSync": {
       "description": "在此工作区与已连接频道之间双向同步标签。",
@@ -4241,7 +4279,8 @@
       "removeTag": "移除标签",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
-      "transferConversationToHuman": "将对话转移给人类"
+      "transferConversationToHuman": "将对话转移给人类",
+      "sendMetaCapiEvent": "发送 Meta CAPI 事件"
     },
     "after": "之后",
     "at": "在",
@@ -4612,7 +4651,8 @@
       "flows": "流程",
       "messageTemplates": "消息范本",
       "profile": "简介",
-      "usefulLinks": "有用链接"
+      "usefulLinks": "有用链接",
+      "conversionsApi": "广告优化"
     },
     "templateFooter": {
       "label": "范本页脚"
@@ -4672,5 +4712,354 @@
       "toggleSuccess": "标签同步设置已更新。"
     },
     "title": "ZaloOA"
+  },
+  "metaConversions": {
+    "flowStep": {
+      "description": "为 Messenger、Instagram 或 WhatsApp 排队发送一个 LeadSubmitted 事件。",
+      "whatsappNote": "WhatsApp 事件仅针对由点击 WhatsApp 广告发起的对话发送。"
+    },
+    "title": "Conversions API",
+    "description": "将 Messenger、Instagram 和 WhatsApp 对话中的 LeadSubmitted 事件发送给 Meta。",
+    "datasetId": "数据集 ID",
+    "reconnect": "重新连接权限",
+    "connectViaFacebook": "通过 Facebook 连接",
+    "unsupportedExplanation": "此 Instagram 帐户是通过 Instagram Business Login 连接的。请通过 Facebook 连接该帐户，以使用 Meta Conversions API。",
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "已就绪",
+      "missingPermission": "需要权限",
+      "unverified": "未验证",
+      "unsupported": "不支持",
+      "notConnected": "未连接"
+    },
+    "statusDescriptions": {
+      "ready": "此集成已获得 Conversions API 事件所需的 Meta 权限。",
+      "missingPermission": "请重新连接此集成，并授予所请求的 Meta 权限。",
+      "unverified": "平台应用设置不可用，因此无法验证 CAPI 权限。",
+      "unsupported": "Instagram 的 Meta Conversions API 需要通过 Facebook 商业登录连接的帐户。",
+      "notConnected": "Conversions API 是一款 Meta 商业工具，可让您与 Meta 共享数据，以提升广告效果。"
+    },
+    "errors": {
+      "reconnect": "无法启动 Meta CAPI 重新连接。",
+      "messengerNotFound": "未找到 Messenger 集成。",
+      "instagramNotFound": "未找到 Instagram 集成。",
+      "instagramRequiresFacebook": "Instagram CAPI 需要通过 Facebook 连接。",
+      "saveFailed": "无法保存，请重试。",
+      "datasetRequired": "请先保存数据集 ID，再添加访问令牌。",
+      "invalidToken": "此令牌无法访问该数据集。",
+      "whatsappNotFound": "未找到 WhatsApp 集成。"
+    },
+    "fields": {
+      "eventType": {
+        "label": "事件类型",
+        "leadSubmitted": "已提交潜在客户"
+      },
+      "value": "价值",
+      "valuePlaceholder": "例如 250",
+      "currency": "货币",
+      "currencyPlaceholder": "例如 USD",
+      "contentCategory": "内容类别",
+      "contentCategoryPlaceholder": "与此事件相关联的内容类别",
+      "contentName": "内容名称",
+      "contentNamePlaceholder": "与此事件相关联的页面或产品名称"
+    },
+    "datasetIdPlaceholder": "粘贴来自事件管理工具的数据集 ID",
+    "saveDataset": "保存",
+    "accessToken": "访问令牌（可选）",
+    "accessTokenHint": "粘贴来自事件管理工具的令牌，以使用您自己的令牌而非已连接的页面令牌发送事件。需要数据集 ID。",
+    "accessTokenPlaceholder": "事件管理工具访问令牌",
+    "saveToken": "保存令牌",
+    "tokenSaved": "令牌已保存",
+    "removeToken": "移除",
+    "saved": "已保存",
+    "help": {
+      "delay": "事件最多可能需要 40 分钟才会显示在事件管理工具中，并在广告管理工具中显示为 Meta Leads。"
+    },
+    "connected": "已连接",
+    "disconnect": "断开连接",
+    "openEventManager": "打开事件管理工具",
+    "methods": {
+      "oauth": {
+        "title": "通过 Facebook 连接",
+        "description": "使用您页面现有的连接，然后选择数据集 ID。",
+        "connect": "通过 Facebook 连接",
+        "connectedLabel": "通过 Facebook"
+      },
+      "custom": {
+        "title": "自定义连接",
+        "description": "使用来自 Meta 事件管理工具的数据集 ID 和访问令牌。",
+        "start": "设置自定义连接",
+        "connect": "连接",
+        "connectedLabel": "自定义"
+      },
+      "whatsapp": {
+        "title": "通过 WhatsApp 连接",
+        "description": "使用您的 WhatsApp 连接，然后选择数据集 ID。",
+        "connect": "通过 WhatsApp 连接",
+        "connectedLabel": "通过 WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "选择数据集 ID",
+      "description": "输入现有的数据集 ID，留空则自动创建一个。",
+      "save": "保存",
+      "caveat": "未关联到此页面或 Instagram 帐户的数据集 ID 可能无法正确归因事件。留空此字段可自动创建关联的数据集。"
+    },
+    "whatsapp": {
+      "connect": "连接"
+    }
+  },
+  "appointments": {
+    "title": "预约",
+    "statuses": {
+      "scheduled": "已排定",
+      "cancelled": "已取消"
+    },
+    "messages": {
+      "empty": "暂无预约。"
+    }
+  },
+  "appointmentManagement": {
+    "title": "预约",
+    "singular": "预约",
+    "unknownContact": "未知联系人",
+    "searchPlaceholder": "按姓名搜索...",
+    "tabs": {
+      "next": "即将到来",
+      "past": "过去"
+    },
+    "fields": {
+      "name": "姓名",
+      "date": "日期",
+      "status": "状态",
+      "calendar": "日历"
+    },
+    "statuses": {
+      "scheduled": "已排定",
+      "cancelled": "已取消"
+    },
+    "actions": {
+      "cancelAppointment": "取消预约"
+    },
+    "dialogs": {
+      "cancelTitle": "取消预约",
+      "cancelDescription": "取消此预约并执行其取消后续动作。",
+      "deleteTitle": "删除预约",
+      "deleteDescription": "从管理列表中删除此预约。此操作不会执行取消流程。"
+    },
+    "messages": {
+      "cancelled": "预约已取消。",
+      "deleted": "预约已删除。"
+    }
+  },
+  "appointmentCalendars": {
+    "title": "预约日历",
+    "singular": "预约日历",
+    "addNew": "新建",
+    "none": "无",
+    "addReminder": "添加提醒",
+    "reminderSummary": "发送提醒 - {calendar} {timing}。",
+    "noExternalConnections": "尚未连接任何外部日历",
+    "dialogDescriptions": {
+      "create": "为您的预约日历命名以开始使用。",
+      "rename": "重命名此预约日历。"
+    },
+    "tabs": {
+      "calendars": "日历",
+      "appointments": "预约",
+      "externalCalendars": "外部日历"
+    },
+    "sections": {
+      "appointment": "您的预约是什么",
+      "availability": "何时可供预约？",
+      "duration": "预约时长是多少？",
+      "location": "预约将在哪里进行？",
+      "notifications": "通知",
+      "restrictions": "限制",
+      "externalCalendar": "连接 Google 日历"
+    },
+    "fields": {
+      "description": "说明",
+      "timezone": "时区",
+      "locationType": "地点类型",
+      "locationDetail": "详细信息",
+      "durationMinutes": "预约时长",
+      "bufferAfterMinutes": "在预约后增加时间",
+      "scheduleWindowType": "可预约时间范围",
+      "rollingDays": "滚动天数",
+      "minAdvanceDays": "最少提前天数",
+      "startDate": "开始日期",
+      "endDate": "结束日期",
+      "specificDate": "日期",
+      "maxAppointmentsPerUser": "每位用户的最大预约数",
+      "dailyLimitEnabled": "每日限额",
+      "maxPerDay": "每日最大数量",
+      "allowGroupMeeting": "允许团体会议",
+      "maxPerSlot": "每个时段的最大数量",
+      "confirmationMessage": "确认消息",
+      "confirmationFlowId": "确认流程",
+      "cancellationFlowId": "取消流程",
+      "externalConnectionId": "外部日历",
+      "reminders": "提醒",
+      "reminderTimingValue": "数值",
+      "reminderTimingUnit": "单位"
+    },
+    "locationTypes": {
+      "inPerson": "线下会面",
+      "phoneCall": "电话通话",
+      "onlineMeeting": "在线会议"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "未来滚动天数内",
+      "dateRange": "在某个日期范围内",
+      "specificDay": "某一特定日期",
+      "anyFutureDate": "未来任意日期"
+    },
+    "reminderTimingUnits": {
+      "minutes": "提前几分钟",
+      "hours": "提前几小时",
+      "days": "提前几天"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {提前 # 分钟} other {提前 # 分钟}}",
+      "hours": "{count, plural, one {提前一小时} other {提前 # 小时}}",
+      "days": "{count, plural, one {提前一天} other {提前 # 天}}"
+    },
+    "weekdays": {
+      "0": "星期日",
+      "1": "星期一",
+      "2": "星期二",
+      "3": "星期三",
+      "4": "星期四",
+      "5": "星期五",
+      "6": "星期六"
+    },
+    "weekdayEditor": {
+      "description": "设置此日期的可用时间段。",
+      "unavailable": "不可预约",
+      "overlapWarning": "部分时间段重叠。重叠的时间不会被重复计算。",
+      "addInterval": "添加时间段",
+      "startTime": "开始时间",
+      "endTime": "结束时间"
+    },
+    "tooltips": {
+      "timezone": "您创建此日历时所在的时区。用户将看到基于其自身时区的可预约时间。",
+      "confirmationFlow": "用户预约成功后发送的流程。",
+      "cancellationFlow": "预约被取消后发送的流程。",
+      "reminders": "向受邀者发送预约提醒。",
+      "appointmentDuration": "定义您的预约时长。",
+      "bufferAfterMinutes": "在已预约的时段后留出缓冲时间。",
+      "peopleCanSchedule": "设置您可以接受会议的日期范围。",
+      "maxAppointmentsPerUser": "允许每位用户预约的未来预约数量上限。",
+      "rollingDays": "允许安排到未来最多多少天",
+      "minAdvanceDays": "要求预约至少提前这么多天进行。设为 0 可允许当天预约。",
+      "dailyLimit": "每天允许预约的最大人数。",
+      "allowGroupMeeting": "允许多人预约同一个时间段。",
+      "externalCalendar": "连接 Google 日历以同步您的预约。"
+    },
+    "minutesLabel": "{count} 分钟"
+  },
+  "externalCalendars": {
+    "title": "外部日历",
+    "connectGoogle": "连接 Google",
+    "emptyEmail": "无电子邮件",
+    "fields": {
+      "provider": "提供商",
+      "email": "电子邮件",
+      "calendarId": "日历 ID",
+      "connected": "已连接",
+      "date": "日期"
+    },
+    "providers": {
+      "googleCalendar": "Google 日历"
+    },
+    "dialogs": {
+      "editTitle": "编辑日历 ID",
+      "editDescription": "选择要检查冲突并创建预约事件的 Google 日历 ID。",
+      "deleteTitle": "断开日历连接",
+      "deleteDescription": "从预约安排中断开此 Google 日历的连接。"
+    },
+    "messages": {
+      "connected": "Google 日历已连接。",
+      "connectFailed": "无法连接 Google 日历。请检查 Google OAuth 设置和日历 API 访问权限，然后重试。",
+      "calendarIdUpdated": "日历 ID 已更新。",
+      "disconnected": "日历已断开连接。"
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "预约",
+    "comingSoonTitle": "预约页面即将推出",
+    "comingSoonDescription": "此公开预约页面尚不可用。"
+  },
+  "bookingWebview": {
+    "metadataTitle": "预约",
+    "badge": "预约",
+    "timezone": "时区",
+    "empty": "未找到可用时间。",
+    "noSelection": "选择时间",
+    "range": {
+      "metadataTitle": "查看可预约时间",
+      "empty": "未选择",
+      "successTitle": "已收到日期范围。",
+      "successDescription": "我们正在查询可预约的时间。",
+      "fields": {
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "startTime": "开始时间",
+        "endTime": "结束时间"
+      },
+      "actions": {
+        "skip": "跳过"
+      },
+      "errors": {
+        "invalidRange": "结束日期必须晚于或等于开始日期。"
+      },
+      "timezoneHint": "时间以 {timezone} 显示。"
+    },
+    "actions": {
+      "book": "预约",
+      "viewDetails": "查看详情"
+    },
+    "errors": {
+      "invalidTokenTitle": "此预约链接不可用。",
+      "invalidTokenDescription": "该链接可能无效或已过期，请索取新的预约链接。",
+      "staleSlot": "此时间段已不可用，请选择其他时间。",
+      "availabilityChanged": "在您选择时间的过程中，可预约时间已发生变化，请重新选择。",
+      "submitFailed": "无法完成此请求，请重试。"
+    },
+    "success": {
+      "title": "您的预约已完成。",
+      "description": "预约详情已准备就绪。"
+    },
+    "schedule": {
+      "metadataTitle": "预约详情",
+      "defaultMessage": "您的预约已排定。",
+      "unknownInvitee": "访客",
+      "fields": {
+        "invitee": "受邀者",
+        "time": "时间",
+        "timezone": "时区",
+        "location": "地点"
+      },
+      "status": {
+        "scheduled": "已排定",
+        "cancelled": "已取消"
+      },
+      "locationTypes": {
+        "inPerson": "线下会面",
+        "phoneCall": "电话通话",
+        "onlineMeeting": "在线会议"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "取消预约",
+      "title": "取消预约",
+      "description": "取消 {time} 的 {calendar}。",
+      "action": "取消预约",
+      "cancelledTitle": "预约已取消",
+      "cancelledDescription": "此预约已被取消。",
+      "unavailableTitle": "无法取消",
+      "unavailableDescription": "此预约已取消、已删除或已过期。"
+    }
   }
 }

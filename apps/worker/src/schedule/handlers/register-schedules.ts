@@ -146,6 +146,22 @@ export const registerSchedules = async () => {
     },
   )
 
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanAppointmentReminders,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.scanAppointmentReminders,
+      data: {
+        type: ScheduleJobData.scanAppointmentReminders,
+        data: {
+          triggeredAt: new Date().toISOString(),
+        },
+      },
+    },
+  )
+
   if (isCloud) {
     await scheduleQueue.upsertJobScheduler(
       ScheduleJobData.syncUserQuota,

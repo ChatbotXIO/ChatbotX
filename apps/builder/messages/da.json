@@ -1965,6 +1965,12 @@
       "placeholder": "Type an event navn og press Indtast",
       "description": "Tilføj one eller mere event names. Når Make attaches a webhook for one af these events, data er sendt til it når denne trin runs."
     },
+    "bookingCalendar": {
+      "label": "Bookingkalender"
+    },
+    "bookingDate": {
+      "label": "Bookingdato"
+    },
     "n8nEvents": {
       "label": "Hændelser",
       "placeholder": "Skriv et hændelsenavn og tryk på Enter",
@@ -2015,7 +2021,6 @@
       "broadcastActions": "Broadcast Handlinger",
       "callApi": "External API Anmodning",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Set up Kupon",
@@ -2044,7 +2049,6 @@
       "getResponseAddContact": "Tilføj Kontakt til GetResponse",
       "sendGridAddContact": "Tilføj Kontakt til SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Åbn Websted",
       "optInEmail": "Opt I E-mail",
       "optOutEmail": "Opt Out E-mail",
@@ -2099,6 +2103,9 @@
       "splitTraffic": "Split Traffic",
       "aiEditImage": "AI Rediger Billede",
       "whatsappFlow": "WhatsApp Flow",
+      "appointmentScheduling": "Aftaleplanlægning",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
@@ -2941,7 +2948,7 @@
     "reconnect": "Forbind igen",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
+      "generalSettings": "Generelt Indstillinger",
       "conversionsApi": "Ads Optimization"
     }
   },
@@ -3543,7 +3550,7 @@
     "description": "Keyword links at start flows og capture ref payloads fra kanaler."
   },
   "qrCodes": {
-    "title": "QR Codes",
+    "title": "QR-koder",
     "description": "Opret QR codes at link til din chatbot flows."
   },
   "magicLinks": {
@@ -4133,8 +4140,26 @@
     "description": "Opret og administrer din e-handel butik."
   },
   "appointmentScheduling": {
-    "title": "Aftale Scheduling",
-    "description": "Opret og administrer din aftale scheduling."
+    "title": "Aftaleplanlægning",
+    "description": "Opret og administrer din aftaleplanlægning.",
+    "flowModes": {
+      "book": "Book aftale",
+      "cancel": "Annuller aftale",
+      "checkAvailability": "Tjek tilgængelighed"
+    },
+    "fields": {
+      "mode": "Tilstand",
+      "dateTimeFieldId": "Gem valgt dato til",
+      "startDateFieldId": "Startdato",
+      "endDateFieldId": "Slutdato",
+      "resultUsedByAI": "Brug resultat til AI",
+      "outputCustomFieldId": "Gem svar i et brugerdefineret felt",
+      "startDateFieldIdSelected": "Gem valgt startdato til",
+      "endDateFieldIdSelected": "Gem valgt slutdato til"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Vælg, hvordan dette flowtrin planlægger aftaler."
+    }
   },
   "templates": {
     "title": "Skabeloner",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "Browse Lucide icons →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Book aftale",
+    "badge": "Aftale",
+    "timezone": "Tidszone",
+    "empty": "Ingen ledige tidspunkter blev fundet.",
+    "noSelection": "Vælg et tidspunkt",
+    "actions": {
+      "book": "Book aftale",
+      "viewDetails": "Se detaljer"
+    },
+    "errors": {
+      "invalidTokenTitle": "Dette booking-link er ikke tilgængeligt.",
+      "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt booking-link.",
+      "staleSlot": "Dette tidspunkt er ikke længere ledigt. Vælg venligst et andet tidspunkt.",
+      "availabilityChanged": "Tilgængeligheden ændrede sig, mens du valgte tidspunkt. Vælg venligst igen.",
+      "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
+    },
+    "success": {
+      "title": "Din aftale er booket.",
+      "description": "Aftaledetaljerne er klar."
+    },
+    "schedule": {
+      "metadataTitle": "Aftaledetaljer",
+      "defaultMessage": "Din aftale er blevet planlagt.",
+      "unknownInvitee": "Gæst",
+      "fields": {
+        "invitee": "Inviteret",
+        "time": "Tidspunkt",
+        "timezone": "Tidszone",
+        "location": "Placering"
+      },
+      "status": {
+        "scheduled": "Planlagt",
+        "cancelled": "Annulleret"
+      },
+      "locationTypes": {
+        "inPerson": "Personligt møde",
+        "phoneCall": "Telefonopkald",
+        "onlineMeeting": "Online møde"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Annuller aftale",
+      "title": "Annuller aftale",
+      "description": "Annuller {calendar} kl. {time}.",
+      "action": "Annuller aftale",
+      "cancelledTitle": "Aftale annulleret",
+      "cancelledDescription": "Denne aftale er blevet annulleret.",
+      "unavailableTitle": "Annullering ikke mulig",
+      "unavailableDescription": "Denne aftale er allerede annulleret, slettet eller ligger i fortiden."
+    },
+    "range": {
+      "metadataTitle": "Tjek tilgængelighed",
+      "empty": "Ikke valgt",
+      "successTitle": "Datointerval modtaget.",
+      "successDescription": "Vi tjekker tilgængelige aftaletidspunkter.",
+      "fields": {
+        "startDate": "Startdato",
+        "endDate": "Slutdato",
+        "startTime": "Starttidspunkt",
+        "endTime": "Sluttidspunkt"
+      },
+      "actions": {
+        "skip": "Spring over"
+      },
+      "errors": {
+        "invalidRange": "Slutdato skal være på eller efter startdato."
+      },
+      "timezoneHint": "Tidspunkter vises i {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "Aftaler",
+    "statuses": {
+      "scheduled": "Planlagt",
+      "cancelled": "Annulleret"
+    },
+    "messages": {
+      "empty": "Ingen aftaler endnu."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Aftaler",
+    "singular": "Aftale",
+    "unknownContact": "Ukendt kontakt",
+    "searchPlaceholder": "Søg efter navn...",
+    "tabs": {
+      "next": "Kommende",
+      "past": "Tidligere"
+    },
+    "fields": {
+      "name": "Navn",
+      "date": "Dato",
+      "status": "Status",
+      "calendar": "Kalender"
+    },
+    "statuses": {
+      "scheduled": "Planlagt",
+      "cancelled": "Annulleret"
+    },
+    "actions": {
+      "cancelAppointment": "Annuller aftale"
+    },
+    "dialogs": {
+      "cancelTitle": "Annuller aftale",
+      "cancelDescription": "Annuller denne aftale, og kør dens annulleringshandlinger.",
+      "deleteTitle": "Slet aftale",
+      "deleteDescription": "Slet denne aftale fra administrationslisten. Dette kører ikke annulleringsflowet."
+    },
+    "messages": {
+      "cancelled": "Aftale annulleret.",
+      "deleted": "Aftale slettet."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Aftalekalendere",
+    "singular": "Aftalekalender",
+    "addNew": "Tilføj ny",
+    "none": "Ingen",
+    "addReminder": "Tilføj påmindelse",
+    "reminderSummary": "Send påmindelse - {calendar} {timing}.",
+    "noExternalConnections": "Ingen eksterne kalenderforbindelser endnu",
+    "dialogDescriptions": {
+      "create": "Giv din aftalekalender et navn for at komme i gang.",
+      "rename": "Omdøb denne aftalekalender."
+    },
+    "tabs": {
+      "calendars": "Kalendere",
+      "appointments": "Aftaler",
+      "externalCalendars": "Eksterne kalendere"
+    },
+    "sections": {
+      "appointment": "Hvad er din aftale",
+      "availability": "Hvornår kan folk booke?",
+      "duration": "Hvor lang er din aftale?",
+      "location": "Hvor foregår aftalen?",
+      "notifications": "Notifikationer",
+      "restrictions": "Begrænsninger",
+      "externalCalendar": "Forbind Google Calendar"
+    },
+    "fields": {
+      "description": "Beskrivelse",
+      "timezone": "Tidszone",
+      "locationType": "Placeringstype",
+      "locationDetail": "Detalje",
+      "durationMinutes": "Aftalens varighed",
+      "bufferAfterMinutes": "Tilføj tid efter dine aftaler",
+      "scheduleWindowType": "Folk kan booke",
+      "rollingDays": "Rullende dage",
+      "minAdvanceDays": "Minimum antal dage i forvejen",
+      "startDate": "Startdato",
+      "endDate": "Slutdato",
+      "specificDate": "Dato",
+      "maxAppointmentsPerUser": "Maksimalt antal aftaler pr. bruger",
+      "dailyLimitEnabled": "Daglig grænse",
+      "maxPerDay": "Maks. pr. dag",
+      "allowGroupMeeting": "Tillad gruppemøde",
+      "maxPerSlot": "Maks. pr. tidsrum",
+      "confirmationMessage": "Bekræftelsesbesked",
+      "confirmationFlowId": "Bekræftelsesflow",
+      "cancellationFlowId": "Annulleringsflow",
+      "externalConnectionId": "Ekstern kalender",
+      "reminders": "Påmindelser",
+      "reminderTimingValue": "Værdi",
+      "reminderTimingUnit": "Enhed"
+    },
+    "locationTypes": {
+      "inPerson": "Personligt møde",
+      "phoneCall": "Telefonopkald",
+      "onlineMeeting": "Online møde"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Inden for rullende dage i fremtiden",
+      "dateRange": "Inden for et datointerval",
+      "specificDay": "Én bestemt dag",
+      "anyFutureDate": "På en hvilken som helst fremtidig dato"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minutter før",
+      "hours": "Timer før",
+      "days": "Dage før"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minut før} other {# minutter før}}",
+      "hours": "{count, plural, one {en time før} other {# timer før}}",
+      "days": "{count, plural, one {en dag før} other {# dage før}}"
+    },
+    "weekdays": {
+      "0": "Søndag",
+      "1": "Mandag",
+      "2": "Tirsdag",
+      "3": "Onsdag",
+      "4": "Torsdag",
+      "5": "Fredag",
+      "6": "Lørdag"
+    },
+    "weekdayEditor": {
+      "description": "Angiv de tilgængelige tidsintervaller for denne dag.",
+      "unavailable": "Ikke tilgængelig",
+      "overlapWarning": "Nogle intervaller overlapper. Overlappende tid tælles ikke to gange.",
+      "addInterval": "Tilføj interval",
+      "startTime": "Starttidspunkt",
+      "endTime": "Sluttidspunkt"
+    },
+    "tooltips": {
+      "timezone": "Den tidszone, du opretter denne kalender i. Folk vil se tilgængelighed baseret på deres egen tidszone.",
+      "confirmationFlow": "Flowet, der sendes, når brugeren booker en aftale.",
+      "cancellationFlow": "Flowet, der sendes, når en aftale annulleres.",
+      "reminders": "Send påmindelser for at minde den inviterede om aftalen.",
+      "appointmentDuration": "Angiv, hvor lang din aftale skal være.",
+      "bufferAfterMinutes": "Giv dig selv lidt buffertid til at afslutte efter bookede aftaler.",
+      "peopleCanSchedule": "Angiv en periode med datoer, hvor du kan acceptere møder.",
+      "maxAppointmentsPerUser": "Det maksimale antal fremtidige aftaler, en bruger må booke.",
+      "rollingDays": "Tillad booking op til hvor mange dage ud i fremtiden",
+      "minAdvanceDays": "Kræv, at bookinger foretages mindst så mange dage i forvejen. Brug 0 for at tillade booking samme dag.",
+      "dailyLimit": "Det maksimale antal personer, der må booke pr. dag.",
+      "allowGroupMeeting": "Tillad flere personer at booke det samme tidsrum.",
+      "externalCalendar": "Forbind Google Calendar for at synkronisere dine aftaler."
+    },
+    "minutesLabel": "{count} minutter"
+  },
+  "externalCalendars": {
+    "title": "Eksterne kalendere",
+    "connectGoogle": "Forbind Google",
+    "emptyEmail": "Ingen e-mail",
+    "fields": {
+      "provider": "Udbyder",
+      "email": "E-mail",
+      "calendarId": "Kalender-ID",
+      "connected": "Forbundet",
+      "date": "Dato"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Rediger kalender-ID",
+      "editDescription": "Vælg det Google Calendar-ID, der skal tjekkes for konflikter, og som skal bruges til at oprette aftalebegivenheder.",
+      "deleteTitle": "Afbryd kalender",
+      "deleteDescription": "Afbryd denne Google Calendar fra aftaleplanlægning."
+    },
+    "messages": {
+      "connected": "Google Calendar forbundet.",
+      "connectFailed": "Kunne ikke forbinde Google Calendar. Tjek Google OAuth-indstillingerne og Calendar API-adgangen, og prøv igen.",
+      "calendarIdUpdated": "Kalender-ID opdateret.",
+      "disconnected": "Kalender afbrudt."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Booking",
+    "comingSoonTitle": "Bookingside kommer snart",
+    "comingSoonDescription": "Denne offentlige bookingside er ikke tilgængelig endnu."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Send LeadSubmitted-hændelser fra Messenger-, Instagram- og WhatsApp-samtaler til Meta.",
+    "datasetId": "Dataset-ID",
+    "reconnect": "Genopret tilladelser",
+    "connectViaFacebook": "Forbind via Facebook",
+    "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp.",
+      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Klar",
+      "missingPermission": "Tilladelse påkrævet",
+      "unverified": "Ikke bekræftet",
+      "unsupported": "Ikke understøttet",
+      "notConnected": "Ikke forbundet"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Denne integration har den nødvendige Meta-tilladelse til Conversions API-hændelser.",
+      "missingPermission": "Genopret forbindelsen til denne integration, og giv den ønskede Meta-tilladelse.",
+      "unverified": "Platformens appindstillinger er ikke tilgængelige, så CAPI-tilladelsen kan ikke bekræftes.",
+      "unsupported": "Meta Conversions API til Instagram kræver en konto forbundet via Facebook Login for Business.",
+      "notConnected": "Conversions API er et Meta Business Tool, der gør det muligt at dele data med Meta for at forbedre annoncernes performance."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Kunne ikke starte Meta CAPI-genoprettelse.",
+      "messengerNotFound": "Messenger-integration ikke fundet.",
+      "instagramNotFound": "Instagram-integration ikke fundet.",
+      "instagramRequiresFacebook": "Instagram CAPI kræver forbindelse via Facebook.",
+      "saveFailed": "Kunne ikke gemme. Prøv venligst igen.",
+      "datasetRequired": "Gem et Dataset-ID, før du tilføjer en adgangstoken.",
+      "invalidToken": "Denne token kunne ikke tilgå datasættet.",
+      "whatsappNotFound": "WhatsApp-integration ikke fundet."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Hændelsestype",
+        "leadSubmitted": "Lead indsendt"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Værdi",
+      "valuePlaceholder": "f.eks. 250",
+      "currency": "Valuta",
+      "currencyPlaceholder": "f.eks. USD",
+      "contentCategory": "Indholdskategori",
+      "contentCategoryPlaceholder": "Kategorien for det indhold, der er knyttet til hændelsen",
+      "contentName": "Indholdsnavn",
+      "contentNamePlaceholder": "Navnet på siden eller produktet, der er knyttet til hændelsen"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Indsæt Dataset-ID fra Events Manager",
+    "saveDataset": "Gem",
+    "accessToken": "Adgangstoken (valgfrit)",
+    "accessTokenHint": "Indsæt en token fra Events Manager for at sende hændelser med din egen token i stedet for den forbundne sidetoken. Kræver et Dataset-ID.",
+    "accessTokenPlaceholder": "Events Manager-adgangstoken",
+    "saveToken": "Gem token",
+    "tokenSaved": "Token gemt",
+    "removeToken": "Fjern",
+    "saved": "Gemt",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Hændelser kan tage op til 40 minutter om at fremgå i Events Manager og vises som Meta Leads i Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Forbundet",
+    "disconnect": "Afbryd",
+    "openEventManager": "Åbn Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
+        "title": "Forbind via Facebook",
+        "description": "Brug din sides eksisterende forbindelse, og vælg derefter et Dataset-ID.",
+        "connect": "Forbind via Facebook",
         "connectedLabel": "via Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Brugerdefineret forbindelse",
+        "description": "Brug et Dataset-ID og en adgangstoken fra Meta Events Manager.",
+        "start": "Opsæt brugerdefineret forbindelse",
+        "connect": "Forbind",
+        "connectedLabel": "Brugerdefineret"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
+        "title": "Forbind via WhatsApp",
+        "description": "Brug din WhatsApp-forbindelse, og vælg derefter et Dataset-ID.",
+        "connect": "Forbind via WhatsApp",
         "connectedLabel": "via WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Vælg et Dataset-ID",
+      "description": "Indtast et eksisterende Dataset-ID, eller lad det stå tomt for automatisk at oprette et.",
       "save": "Gem",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "Et Dataset-ID, der ikke er knyttet til denne side eller Instagram-konto, tilskriver muligvis ikke hændelser korrekt. Lad dette felt stå tomt for automatisk at oprette et tilknyttet datasæt."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Forbind"
     }
   }
 }

@@ -1347,6 +1347,12 @@
       "placeholder": "輸入事件名稱並按 Enter",
       "description": "新增一個或多個事件名稱。當 Make 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
     },
+    "bookingCalendar": {
+      "label": "預約日曆"
+    },
+    "bookingDate": {
+      "label": "預約日期"
+    },
     "n8nEvents": {
       "label": "活動",
       "placeholder": "輸入事件名稱並按 Enter",
@@ -2240,7 +2246,6 @@
       "broadcastActions": "廣播操作",
       "callApi": "外部API 請求",
       "make": "Make.com",
-      "triggerN8n": "Trigger n8n",
       "triggers": "觸發器",
       "questionnaires": "問卷",
       "setUpCoupon": "設定優惠券",
@@ -2269,7 +2274,6 @@
       "getResponseAddContact": "將聯絡人新增到 GetResponse",
       "sendGridAddContact": "將聯絡人新增到 SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "打開網站",
       "optInEmail": "選擇接收電子郵件",
       "optOutEmail": "選擇退出電子郵件",
@@ -2324,7 +2328,10 @@
       "splitTraffic": "拆分流量",
       "aiEditImage": "人工智慧編輯影像",
       "whatsappFlow": "WhatsApp流程",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "預約安排",
+      "triggerN8n": "觸發 n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2974,8 +2981,8 @@
     "reconnect": "重新連接",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "一般設定",
+      "conversionsApi": "廣告優化"
     }
   },
   "coexist": {
@@ -3033,7 +3040,7 @@
     "tabs": {
       "generalSettings": "一般設定",
       "messageTemplates": "訊息範本",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "廣告優化"
     },
     "messageTemplate": {
       "params": {
@@ -3408,7 +3415,7 @@
       "messageTemplates": "訊息範本",
       "profile": "簡介",
       "usefulLinks": "有用連結",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "廣告優化"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3636,7 +3643,7 @@
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
       "transferConversationToHuman": "將對話轉移給人類",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -4167,7 +4174,25 @@
   },
   "appointmentScheduling": {
     "title": "預約安排",
-    "description": "建立並管理您的預約安排。"
+    "description": "建立並管理您的預約安排。",
+    "flowModes": {
+      "book": "預約",
+      "cancel": "取消預約",
+      "checkAvailability": "查看可預約時間"
+    },
+    "fields": {
+      "mode": "模式",
+      "dateTimeFieldId": "將所選日期儲存至",
+      "startDateFieldId": "開始日期",
+      "startDateFieldIdSelected": "將所選開始日期儲存至",
+      "endDateFieldId": "結束日期",
+      "endDateFieldIdSelected": "將所選結束日期儲存至",
+      "resultUsedByAI": "將結果用於 AI",
+      "outputCustomFieldId": "將回應儲存至自訂欄位"
+    },
+    "dialogDescriptions": {
+      "flowStep": "選擇此流程步驟如何安排預約。"
+    }
   },
   "templates": {
     "title": "範本",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "瀏覽 Lucide 圖示 →"
     }
   },
+  "appointments": {
+    "title": "預約",
+    "statuses": {
+      "scheduled": "已預約",
+      "cancelled": "已取消"
+    },
+    "messages": {
+      "empty": "尚無預約。"
+    }
+  },
+  "appointmentManagement": {
+    "title": "預約",
+    "singular": "預約",
+    "unknownContact": "未知聯絡人",
+    "searchPlaceholder": "依姓名搜尋…",
+    "tabs": {
+      "next": "即將到來",
+      "past": "過去"
+    },
+    "fields": {
+      "name": "姓名",
+      "date": "日期",
+      "status": "狀態",
+      "calendar": "日曆"
+    },
+    "statuses": {
+      "scheduled": "已預約",
+      "cancelled": "已取消"
+    },
+    "actions": {
+      "cancelAppointment": "取消預約"
+    },
+    "dialogs": {
+      "cancelTitle": "取消預約",
+      "cancelDescription": "取消此預約，並執行其取消附帶效果。",
+      "deleteTitle": "刪除預約",
+      "deleteDescription": "從管理清單中刪除此預約。此操作不會執行取消流程。"
+    },
+    "messages": {
+      "cancelled": "預約已取消。",
+      "deleted": "預約已刪除。"
+    }
+  },
+  "appointmentCalendars": {
+    "title": "預約日曆",
+    "singular": "預約日曆",
+    "addNew": "新增",
+    "none": "無",
+    "addReminder": "新增提醒",
+    "reminderSummary": "傳送提醒 - {calendar} {timing}。",
+    "noExternalConnections": "尚未連接任何外部日曆",
+    "dialogDescriptions": {
+      "create": "為您的預約日曆命名以開始使用。",
+      "rename": "重新命名此預約日曆。"
+    },
+    "tabs": {
+      "calendars": "日曆",
+      "appointments": "預約",
+      "externalCalendars": "外部日曆"
+    },
+    "sections": {
+      "appointment": "您的預約項目是什麼",
+      "availability": "何時可供預約？",
+      "duration": "您的預約時長是多久？",
+      "location": "預約將在哪裡進行？",
+      "notifications": "通知",
+      "restrictions": "限制",
+      "externalCalendar": "連接 Google 日曆"
+    },
+    "fields": {
+      "description": "描述",
+      "timezone": "時區",
+      "locationType": "地點類型",
+      "locationDetail": "詳細資訊",
+      "durationMinutes": "預約時長",
+      "bufferAfterMinutes": "在預約後新增緩衝時間",
+      "scheduleWindowType": "可供預約的時間範圍",
+      "rollingDays": "滾動天數",
+      "minAdvanceDays": "最少提前天數",
+      "startDate": "開始日期",
+      "endDate": "結束日期",
+      "specificDate": "日期",
+      "maxAppointmentsPerUser": "每位使用者最多預約數",
+      "dailyLimitEnabled": "每日上限",
+      "maxPerDay": "每日最多",
+      "allowGroupMeeting": "允許團體會議",
+      "maxPerSlot": "每時段最多",
+      "confirmationMessage": "確認訊息",
+      "confirmationFlowId": "確認流程",
+      "cancellationFlowId": "取消流程",
+      "externalConnectionId": "外部日曆",
+      "reminders": "提醒",
+      "reminderTimingValue": "數值",
+      "reminderTimingUnit": "單位"
+    },
+    "locationTypes": {
+      "inPerson": "實體會議",
+      "phoneCall": "電話通話",
+      "onlineMeeting": "線上會議"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "未來滾動天數內",
+      "dateRange": "在指定日期範圍內",
+      "specificDay": "特定某一天",
+      "anyFutureDate": "未來任何日期"
+    },
+    "reminderTimingUnits": {
+      "minutes": "提前幾分鐘",
+      "hours": "提前幾小時",
+      "days": "提前幾天"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {提前 # 分鐘} other {提前 # 分鐘}}",
+      "hours": "{count, plural, one {提前一小時} other {提前 # 小時}}",
+      "days": "{count, plural, one {提前一天} other {提前 # 天}}"
+    },
+    "weekdays": {
+      "0": "星期日",
+      "1": "星期一",
+      "2": "星期二",
+      "3": "星期三",
+      "4": "星期四",
+      "5": "星期五",
+      "6": "星期六"
+    },
+    "weekdayEditor": {
+      "description": "設定此日期的可用時間區段。",
+      "unavailable": "不可預約",
+      "overlapWarning": "部分時間區段重疊。重疊的時間不會被重複計算。",
+      "addInterval": "新增時間區段",
+      "startTime": "開始時間",
+      "endTime": "結束時間"
+    },
+    "tooltips": {
+      "timezone": "您建立此日曆時所在的時區。使用者將依其自身時區看到可預約時間。",
+      "confirmationFlow": "使用者預約成功後所傳送的流程。",
+      "cancellationFlow": "預約被取消後所傳送的流程。",
+      "reminders": "向受邀者傳送預約提醒。",
+      "appointmentDuration": "定義您的預約時長。",
+      "bufferAfterMinutes": "在已預約的時段後保留緩衝時間，方便您結束前一個預約。",
+      "peopleCanSchedule": "設定您可接受會議預約的日期範圍。",
+      "maxAppointmentsPerUser": "允許每位使用者預約的未來預約數量上限。",
+      "rollingDays": "允許安排至未來最多幾天內",
+      "minAdvanceDays": "要求預約至少提前這麼多天進行。設為 0 可允許當天預約。",
+      "dailyLimit": "每天允許預約的最大人數。",
+      "allowGroupMeeting": "允許多人預約同一個時段。",
+      "externalCalendar": "連接 Google 日曆以同步您的預約。"
+    },
+    "minutesLabel": "{count} 分鐘"
+  },
+  "externalCalendars": {
+    "title": "外部日曆",
+    "connectGoogle": "連接 Google",
+    "emptyEmail": "無電子郵件",
+    "fields": {
+      "provider": "提供者",
+      "email": "電子郵件",
+      "calendarId": "日曆 ID",
+      "connected": "已連接",
+      "date": "日期"
+    },
+    "providers": {
+      "googleCalendar": "Google 日曆"
+    },
+    "dialogs": {
+      "editTitle": "編輯日曆 ID",
+      "editDescription": "選擇要用來檢查衝突並建立預約事件的 Google 日曆 ID。",
+      "deleteTitle": "中斷日曆連線",
+      "deleteDescription": "從預約安排中中斷此 Google 日曆的連線。"
+    },
+    "messages": {
+      "connected": "Google 日曆已連接。",
+      "connectFailed": "無法連接 Google 日曆。請檢查 Google OAuth 設定與日曆 API 存取權限，然後再試一次。",
+      "calendarIdUpdated": "日曆 ID 已更新。",
+      "disconnected": "日曆連線已中斷。"
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "預約",
+    "comingSoonTitle": "預約頁面即將推出",
+    "comingSoonDescription": "此公開預約頁面尚不可用。"
+  },
+  "bookingWebview": {
+    "metadataTitle": "預約",
+    "badge": "預約",
+    "timezone": "時區",
+    "empty": "未找到可用時間。",
+    "noSelection": "選擇時間",
+    "range": {
+      "metadataTitle": "查看可預約時間",
+      "empty": "未選擇",
+      "successTitle": "已收到日期範圍。",
+      "successDescription": "我們正在查詢可預約的時間。",
+      "fields": {
+        "startDate": "開始日期",
+        "endDate": "結束日期",
+        "startTime": "開始時間",
+        "endTime": "結束時間"
+      },
+      "actions": {
+        "skip": "略過"
+      },
+      "errors": {
+        "invalidRange": "結束日期必須晚於或等於開始日期。"
+      },
+      "timezoneHint": "時間以 {timezone} 顯示。"
+    },
+    "actions": {
+      "book": "預約",
+      "viewDetails": "查看詳情"
+    },
+    "errors": {
+      "invalidTokenTitle": "此預約連結目前無法使用。",
+      "invalidTokenDescription": "此連結可能無效或已過期，請索取新的預約連結。",
+      "staleSlot": "此時段已不可用，請選擇其他時間。",
+      "availabilityChanged": "在您選擇時間的過程中，可預約時間已變更，請重新選擇。",
+      "submitFailed": "我們無法完成此請求，請再試一次。"
+    },
+    "success": {
+      "title": "您的預約已完成。",
+      "description": "預約詳情已準備就緒。"
+    },
+    "schedule": {
+      "metadataTitle": "預約詳情",
+      "defaultMessage": "您的預約已排定。",
+      "unknownInvitee": "訪客",
+      "fields": {
+        "invitee": "受邀者",
+        "time": "時間",
+        "timezone": "時區",
+        "location": "地點"
+      },
+      "status": {
+        "scheduled": "已排定",
+        "cancelled": "已取消"
+      },
+      "locationTypes": {
+        "inPerson": "實體會議",
+        "phoneCall": "電話通話",
+        "onlineMeeting": "線上會議"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "取消預約",
+      "title": "取消預約",
+      "description": "取消 {time} 的 {calendar}。",
+      "action": "取消預約",
+      "cancelledTitle": "預約已取消",
+      "cancelledDescription": "此預約已被取消。",
+      "unavailableTitle": "無法取消",
+      "unavailableDescription": "此預約已取消、已刪除，或時間已過。"
+    }
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "將 Messenger、Instagram 和 WhatsApp 對話中的 LeadSubmitted 事件傳送給 Meta。",
+    "datasetId": "資料集 ID",
+    "reconnect": "重新連接權限",
+    "connectViaFacebook": "透過 Facebook 連接",
+    "unsupportedExplanation": "此 Instagram 帳戶是透過 Instagram Business Login 連接的。請透過 Facebook 連接該帳戶，以使用 Meta Conversions API。",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "為 Messenger、Instagram 或 WhatsApp 排入一筆 LeadSubmitted 事件。",
+      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。"
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "已就緒",
+      "missingPermission": "需要權限",
+      "unverified": "未驗證",
+      "unsupported": "不支援",
+      "notConnected": "未連接"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "此整合已取得 Conversions API 事件所需的 Meta 權限。",
+      "missingPermission": "請重新連接此整合，並授予所要求的 Meta 權限。",
+      "unverified": "平台應用程式設定無法取得，因此無法驗證 CAPI 權限。",
+      "unsupported": "Instagram 的 Meta Conversions API 需要透過 Facebook Login for Business 連接的帳戶。",
+      "notConnected": "Conversions API 是一項 Meta 商業工具，可讓您與 Meta 分享資料，以提升廣告成效。"
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "無法啟動 Meta CAPI 重新連接。",
+      "messengerNotFound": "找不到 Messenger 整合。",
+      "instagramNotFound": "找不到 Instagram 整合。",
+      "instagramRequiresFacebook": "Instagram CAPI 需要透過 Facebook 連接。",
+      "saveFailed": "無法儲存，請再試一次。",
+      "datasetRequired": "請先儲存資料集 ID，再新增存取權杖。",
+      "invalidToken": "此權杖無法存取該資料集。",
+      "whatsappNotFound": "找不到 WhatsApp 整合。"
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "事件類型",
+        "leadSubmitted": "已提交名單"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "價值",
+      "valuePlaceholder": "例如 250",
+      "currency": "貨幣",
+      "currencyPlaceholder": "例如 USD",
+      "contentCategory": "內容類別",
+      "contentCategoryPlaceholder": "與此事件相關聯的內容類別",
+      "contentName": "內容名稱",
+      "contentNamePlaceholder": "與此事件相關聯的頁面或產品名稱"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "貼上來自 Events Manager 的資料集 ID",
+    "saveDataset": "儲存",
+    "accessToken": "存取權杖（選填）",
+    "accessTokenHint": "貼上來自 Events Manager 的權杖，即可改用您自己的權杖傳送事件，而非目前連接的粉專權杖。需要先設定資料集 ID。",
+    "accessTokenPlaceholder": "Events Manager 存取權杖",
+    "saveToken": "儲存權杖",
+    "tokenSaved": "權杖已儲存",
+    "removeToken": "移除",
+    "saved": "已儲存",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "事件最多可能需要 40 分鐘才會顯示於 Events Manager，並在 Ads Manager 中顯示為 Meta Leads。"
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "已連接",
+    "disconnect": "中斷連線",
+    "openEventManager": "開啟 Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "透過 Facebook 連接",
+        "description": "使用您粉專現有的連接，然後選擇資料集 ID。",
+        "connect": "透過 Facebook 連接",
+        "connectedLabel": "透過 Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "自訂連接",
+        "description": "使用來自 Meta Events Manager 的資料集 ID 與存取權杖。",
+        "start": "設定自訂連接",
+        "connect": "連接",
+        "connectedLabel": "自訂"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "透過 WhatsApp 連接",
+        "description": "使用您的 WhatsApp 連接，然後選擇資料集 ID。",
+        "connect": "透過 WhatsApp 連接",
+        "connectedLabel": "透過 WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "選擇資料集 ID",
+      "description": "輸入現有的資料集 ID，或留空以自動建立一個。",
       "save": "儲存",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "未連結至此粉專或 Instagram 帳戶的資料集 ID 可能無法正確歸因事件。將此欄位留空即可自動建立已連結的資料集。"
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "連接"
     }
   }
 }

@@ -69,6 +69,7 @@ class SmartDelayService extends BaseService {
         targetWhere: sql`${contactOnSmartDelayModel.status} NOT IN ('completed', 'failed', 'canceled') AND ${contactOnSmartDelayModel.type} = 'followUp'`,
         set: {
           conversationId: data.conversationId,
+          appointmentId: data.appointmentId,
           createdAt: now,
           flowVersionId: data.flowVersionId,
           metadata: data.metadata,

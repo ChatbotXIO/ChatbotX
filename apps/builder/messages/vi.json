@@ -934,6 +934,12 @@
     "currentTime": {
       "label": "Thời gian hiện tại"
     },
+    "bookingCalendar": {
+      "label": "Lịch hẹn đã đặt"
+    },
+    "bookingDate": {
+      "label": "Thời gian hẹn đã đặt"
+    },
     "customCss": {
       "label": "CSS tùy chỉnh"
     },
@@ -2084,6 +2090,7 @@
       "aiTextToSpeech": "AI chuyển văn bản thành giọng nói",
       "archiveConversation": "Lưu trữ cuộc trò chuyện",
       "assignConversation": "Gán cuộc trò chuyện",
+      "appointmentScheduling": "Đặt lịch hẹn",
       "autoAssignConversation": "Tự động gán cuộc trò chuyện",
       "blockContact": "Chặn liên hệ",
       "broadcastActions": "Hành động phát sóng",
@@ -3641,6 +3648,49 @@
   "triggers": {
     "title": "Kích hoạt"
   },
+  "appointments": {
+    "title": "Cuộc hẹn",
+    "statuses": {
+      "scheduled": "Đã lên lịch",
+      "cancelled": "Đã hủy"
+    },
+    "messages": {
+      "empty": "Chưa có cuộc hẹn."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Cuộc hẹn",
+    "singular": "Cuộc hẹn",
+    "unknownContact": "Không rõ liên hệ",
+    "searchPlaceholder": "Tìm theo tên...",
+    "tabs": {
+      "next": "Sắp tới",
+      "past": "Đã qua"
+    },
+    "fields": {
+      "name": "Tên",
+      "date": "Thời gian",
+      "status": "Trạng thái",
+      "calendar": "Lịch hẹn"
+    },
+    "statuses": {
+      "scheduled": "Đã lên lịch",
+      "cancelled": "Đã hủy"
+    },
+    "actions": {
+      "cancelAppointment": "Hủy cuộc hẹn"
+    },
+    "dialogs": {
+      "cancelTitle": "Hủy cuộc hẹn",
+      "cancelDescription": "Hủy cuộc hẹn này và chạy các xử lý hủy lịch liên quan.",
+      "deleteTitle": "Xóa cuộc hẹn",
+      "deleteDescription": "Xóa cuộc hẹn này khỏi danh sách quản lý. Thao tác này không chạy flow hủy lịch."
+    },
+    "messages": {
+      "cancelled": "Đã hủy cuộc hẹn.",
+      "deleted": "Đã xóa cuộc hẹn."
+    }
+  },
   "userPersistentMenus": {
     "title": "Menu cố định người dùng"
   },
@@ -4130,7 +4180,159 @@
   },
   "appointmentScheduling": {
     "title": "Lập lịch hẹn",
-    "description": "Tạo và quản lý lịch hẹn của bạn."
+    "description": "Tạo và quản lý lịch hẹn của bạn.",
+    "flowModes": {
+      "book": "Đặt lịch hẹn",
+      "cancel": "Hủy lịch hẹn",
+      "checkAvailability": "Kiểm tra lịch trống"
+    },
+    "fields": {
+      "mode": "Chế độ",
+      "dateTimeFieldId": "Lưu ngày đã chọn vào",
+      "startDateFieldId": "Ngày bắt đầu",
+      "startDateFieldIdSelected": "Lưu ngày bắt đầu đã chọn vào",
+      "endDateFieldId": "Ngày kết thúc",
+      "endDateFieldIdSelected": "Lưu ngày kết thúc đã chọn vào",
+      "resultUsedByAI": "Dùng kết quả cho AI",
+      "outputCustomFieldId": "Lưu phản hồi vào một trường tùy chỉnh"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Chọn cách bước luồng này xử lý lịch hẹn."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Lịch hẹn",
+    "singular": "Lịch hẹn",
+    "addNew": "Thêm mới",
+    "none": "Không chọn",
+    "addReminder": "Thêm nhắc hẹn",
+    "reminderSummary": "Gửi nhắc hẹn - {calendar} trước {timing}.",
+    "noExternalConnections": "Chưa có kết nối lịch bên ngoài",
+    "dialogDescriptions": {
+      "create": "Đặt tên cho lịch hẹn để bắt đầu.",
+      "rename": "Đổi tên lịch hẹn này."
+    },
+    "tabs": {
+      "calendars": "Lịch hẹn",
+      "appointments": "Cuộc hẹn",
+      "externalCalendars": "Lịch bên ngoài"
+    },
+    "sections": {
+      "appointment": "Cuộc hẹn của bạn là gì?",
+      "availability": "Khi nào mọi người có thể đặt lịch?",
+      "duration": "Cuộc hẹn kéo dài bao lâu?",
+      "location": "Cuộc hẹn sẽ diễn ra ở đâu?",
+      "notifications": "Thông báo",
+      "restrictions": "Giới hạn",
+      "externalCalendar": "Kết nối Google Calendar"
+    },
+    "fields": {
+      "description": "Mô tả",
+      "locationType": "Hình thức",
+      "timezone": "Múi giờ",
+      "locationDetail": "Chi tiết",
+      "durationMinutes": "Thời lượng cuộc hẹn",
+      "bufferAfterMinutes": "Thêm thời gian sau cuộc hẹn",
+      "scheduleWindowType": "Phạm vi cho phép đặt lịch",
+      "rollingDays": "Số ngày tối đa",
+      "minAdvanceDays": "Số ngày đặt trước tối thiểu",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "specificDate": "Ngày",
+      "maxAppointmentsPerUser": "Số cuộc hẹn tối đa mỗi người",
+      "dailyLimitEnabled": "Giới hạn theo ngày",
+      "maxPerDay": "Số lượng tối đa mỗi ngày",
+      "allowGroupMeeting": "Cho phép hẹn nhóm",
+      "maxPerSlot": "Số lượng tối đa mỗi khung giờ",
+      "confirmationMessage": "Tin nhắn xác nhận",
+      "confirmationFlowId": "Flow xác nhận",
+      "cancellationFlowId": "Flow huỷ lịch",
+      "externalConnectionId": "Lịch bên ngoài",
+      "reminders": "Nhắc hẹn",
+      "reminderTimingValue": "Giá trị",
+      "reminderTimingUnit": "Đơn vị"
+    },
+    "locationTypes": {
+      "inPerson": "Gặp trực tiếp",
+      "phoneCall": "Gọi điện thoại",
+      "onlineMeeting": "Họp trực tuyến"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Trong số ngày tới kể từ hôm nay",
+      "dateRange": "Trong một khoảng thời gian",
+      "specificDay": "Một ngày cụ thể",
+      "anyFutureDate": "Bất kỳ ngày nào trong tương lai"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Phút trước",
+      "hours": "Giờ trước",
+      "days": "Ngày trước"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# phút trước} other {# phút trước}}",
+      "hours": "{count, plural, one {một giờ trước} other {# giờ trước}}",
+      "days": "{count, plural, one {một ngày trước} other {# ngày trước}}"
+    },
+    "weekdays": {
+      "0": "Chủ nhật",
+      "1": "Thứ Hai",
+      "2": "Thứ Ba",
+      "3": "Thứ Tư",
+      "4": "Thứ Năm",
+      "5": "Thứ Sáu",
+      "6": "Thứ Bảy"
+    },
+    "weekdayEditor": {
+      "description": "Thiết lập các khung giờ khả dụng cho ngày này.",
+      "unavailable": "Không khả dụng",
+      "overlapWarning": "Một số khung giờ bị trùng nhau. Thời gian trùng không được tính hai lần.",
+      "addInterval": "Thêm khung giờ",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc"
+    },
+    "tooltips": {
+      "timezone": "Múi giờ bạn dùng để tạo lịch này. Người dùng sẽ thấy khung giờ khả dụng theo múi giờ của họ.",
+      "confirmationFlow": "Flow được gửi khi người dùng đặt lịch hẹn thành công.",
+      "cancellationFlow": "Flow được gửi khi cuộc hẹn bị huỷ.",
+      "reminders": "Gửi nhắc hẹn để người được mời nhớ về cuộc hẹn.",
+      "appointmentDuration": "Xác định thời lượng của cuộc hẹn.",
+      "bufferAfterMinutes": "Dành thêm thời gian nghỉ sau mỗi cuộc hẹn đã đặt.",
+      "peopleCanSchedule": "Thiết lập phạm vi ngày có thể nhận cuộc hẹn.",
+      "maxAppointmentsPerUser": "Số cuộc hẹn tương lai tối đa mà một người được phép đặt.",
+      "rollingDays": "Cho phép đặt lịch trước tối đa bao nhiêu ngày",
+      "minAdvanceDays": "Yêu cầu đặt lịch trước tối thiểu số ngày này. Nhập 0 để cho phép đặt lịch trong ngày.",
+      "dailyLimit": "Số lượng người tối đa được phép đặt lịch mỗi ngày.",
+      "allowGroupMeeting": "Cho phép nhiều người đặt cùng một khung giờ.",
+      "externalCalendar": "Kết nối Google Calendar để đồng bộ cuộc hẹn của bạn."
+    },
+    "minutesLabel": "{count} phút"
+  },
+  "externalCalendars": {
+    "title": "Lịch bên ngoài",
+    "connectGoogle": "Kết nối Google",
+    "emptyEmail": "Chưa có email",
+    "fields": {
+      "provider": "Nhà cung cấp",
+      "email": "Email",
+      "calendarId": "ID lịch",
+      "connected": "Đang dùng",
+      "date": "Ngày tạo"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Chỉnh sửa ID lịch",
+      "editDescription": "Chọn ID Google Calendar để kiểm tra lịch bận và tạo sự kiện cuộc hẹn.",
+      "deleteTitle": "Ngắt kết nối lịch",
+      "deleteDescription": "Ngắt kết nối Google Calendar này khỏi tính năng đặt lịch hẹn."
+    },
+    "messages": {
+      "connected": "Đã kết nối Google Calendar.",
+      "connectFailed": "Không thể kết nối Google Calendar. Kiểm tra cấu hình Google OAuth và quyền truy cập Calendar API rồi thử lại.",
+      "calendarIdUpdated": "Đã cập nhật ID lịch.",
+      "disconnected": "Đã ngắt kết nối lịch."
+    }
   },
   "templates": {
     "title": "Mẫu",
@@ -4141,7 +4343,7 @@
     "description": "Tạo và quản lý mã QR của bạn."
   },
   "QRCode": {
-    "title": "QR Code",
+    "title": "Mã QR",
     "description": "Share this code so people open your tracking link."
   },
   "platformAdmin": {
@@ -4253,6 +4455,82 @@
     "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
     "unavailableTitle": "Không thể hủy đăng ký.",
     "unavailableDescription": "Không gian làm việc này không còn khả dụng."
+  },
+  "bookingPage": {
+    "metadataTitle": "Đặt lịch",
+    "comingSoonTitle": "Trang đặt lịch sắp ra mắt",
+    "comingSoonDescription": "Trang đặt lịch công khai này chưa khả dụng."
+  },
+  "bookingWebview": {
+    "metadataTitle": "Đặt lịch hẹn",
+    "badge": "Lịch hẹn",
+    "timezone": "Múi giờ",
+    "empty": "Không tìm thấy khung giờ khả dụng.",
+    "noSelection": "Chọn một khung giờ",
+    "range": {
+      "metadataTitle": "Kiểm tra lịch trống",
+      "empty": "Chưa chọn",
+      "successTitle": "Đã nhận khoảng ngày.",
+      "successDescription": "Chúng tôi đang kiểm tra các khung giờ khả dụng.",
+      "fields": {
+        "startDate": "Ngày bắt đầu",
+        "endDate": "Ngày kết thúc",
+        "startTime": "Giờ bắt đầu",
+        "endTime": "Giờ kết thúc"
+      },
+      "actions": {
+        "skip": "Bỏ qua"
+      },
+      "errors": {
+        "invalidRange": "Ngày kết thúc phải cùng hoặc sau ngày bắt đầu."
+      },
+      "timezoneHint": "Giờ hiển thị theo múi giờ {timezone}."
+    },
+    "actions": {
+      "book": "Đặt lịch hẹn",
+      "viewDetails": "Xem chi tiết"
+    },
+    "errors": {
+      "invalidTokenTitle": "Liên kết đặt lịch không khả dụng.",
+      "invalidTokenDescription": "Liên kết có thể không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết đặt lịch mới.",
+      "staleSlot": "Khung giờ này không còn khả dụng. Vui lòng chọn khung giờ khác.",
+      "availabilityChanged": "Lịch khả dụng đã thay đổi trong khi bạn chọn giờ. Vui lòng chọn lại.",
+      "submitFailed": "Không thể hoàn tất yêu cầu này. Vui lòng thử lại."
+    },
+    "success": {
+      "title": "Đã đặt lịch hẹn.",
+      "description": "Chi tiết cuộc hẹn đã sẵn sàng."
+    },
+    "schedule": {
+      "metadataTitle": "Chi tiết cuộc hẹn",
+      "defaultMessage": "Cuộc hẹn của bạn đã được đặt.",
+      "unknownInvitee": "Khách",
+      "fields": {
+        "invitee": "Người đặt",
+        "time": "Thời gian",
+        "timezone": "Múi giờ",
+        "location": "Địa điểm"
+      },
+      "status": {
+        "scheduled": "Đã đặt",
+        "cancelled": "Đã hủy"
+      },
+      "locationTypes": {
+        "inPerson": "Gặp trực tiếp",
+        "phoneCall": "Gọi điện thoại",
+        "onlineMeeting": "Họp trực tuyến"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Hủy lịch hẹn",
+      "title": "Hủy lịch hẹn",
+      "description": "Hủy {calendar} lúc {time}.",
+      "action": "Hủy lịch hẹn",
+      "cancelledTitle": "Đã hủy lịch hẹn",
+      "cancelledDescription": "Cuộc hẹn này đã được hủy.",
+      "unavailableTitle": "Không thể hủy",
+      "unavailableDescription": "Cuộc hẹn này đã bị hủy, bị xóa hoặc đã diễn ra."
+    }
   },
   "extensionsMe": {
     "actions": {

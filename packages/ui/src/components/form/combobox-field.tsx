@@ -61,6 +61,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   emptyText?: string
   description?: string
   descriptionType?: "inline" | "tooltip"
+  formItemClassName?: string
   options: SelectOption[]
   className?: string
   popoverClassName?: string
@@ -84,6 +85,7 @@ export function ComboboxField<T extends FieldValues>({
   emptyText,
   description,
   descriptionType = "inline",
+  formItemClassName,
   options,
   side,
   triggerValueChange,
@@ -110,6 +112,7 @@ export function ComboboxField<T extends FieldValues>({
     <FormFieldWrapper<T>
       description={description}
       descriptionType={descriptionType}
+      formItemClassName={formItemClassName}
       label={label}
       name={name}
       required={required}

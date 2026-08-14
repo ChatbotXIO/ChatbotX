@@ -1965,6 +1965,12 @@
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
       "description": "Lisää vähintään yksi tapahtuman nimi. Kun Make liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
     },
+    "bookingCalendar": {
+      "label": "Ajanvarauskalenteri"
+    },
+    "bookingDate": {
+      "label": "Ajanvarauspäivä"
+    },
     "n8nEvents": {
       "label": "Tapahtumat",
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
@@ -2015,7 +2021,6 @@
       "broadcastActions": "Joukkolähetystoiminnot",
       "callApi": "Ulkoinen API-pyyntö",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Käynnistimet",
       "questionnaires": "Kyselyt",
       "setUpCoupon": "Määritä kuponki",
@@ -2044,7 +2049,6 @@
       "getResponseAddContact": "Lisää yhteystieto GetResponseen",
       "sendGridAddContact": "Lisää yhteystieto SendGridiin",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Avaa verkkosivusto",
       "optInEmail": "Tilaa sähköpostit",
       "optOutEmail": "Peru sähköpostit",
@@ -2099,7 +2103,10 @@
       "splitTraffic": "Jaa liikenne",
       "aiEditImage": "AI muokkaa kuvaa",
       "whatsappFlow": "WhatsApp Flow",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Ajanvaraus",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2941,8 +2948,8 @@
     "reconnect": "Yhdistä uudelleen",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "Yleiset asetukset",
+      "conversionsApi": "Mainosten optimointi"
     }
   },
   "coexist": {
@@ -3000,7 +3007,7 @@
     "tabs": {
       "generalSettings": "Yleiset asetukset",
       "messageTemplates": "Viestimallit",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Mainosten optimointi"
     },
     "messageTemplate": {
       "params": {
@@ -3375,7 +3382,7 @@
       "messageTemplates": "Viestimallit",
       "profile": "Profiili",
       "usefulLinks": "Hyödylliset linkit",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Mainosten optimointi"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -3603,7 +3610,7 @@
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -4134,7 +4141,25 @@
   },
   "appointmentScheduling": {
     "title": "Ajanvaraus",
-    "description": "Luo ja hallitse ajanvaraustasi."
+    "description": "Luo ja hallitse ajanvaraustasi.",
+    "flowModes": {
+      "book": "Varaa aika",
+      "cancel": "Peruuta aika",
+      "checkAvailability": "Tarkista saatavuus"
+    },
+    "fields": {
+      "mode": "Tila",
+      "dateTimeFieldId": "Ajan päivämäärä ja kellonaika",
+      "startDateFieldId": "Aloituspäivä",
+      "endDateFieldId": "Päättymispäivä",
+      "resultUsedByAI": "Käytä tulosta tekoälylle",
+      "outputCustomFieldId": "Tallenna vastaus mukautettuun kenttään",
+      "startDateFieldIdSelected": "Tallenna valittu aloituspäivä kenttään",
+      "endDateFieldIdSelected": "Tallenna valittu päättymispäivä kenttään"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Valitse, miten tämä flow-vaihe ajoittaa ajanvarauksia."
+    }
   },
   "templates": {
     "title": "Mallit",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "Selaa Lucide-kuvakkeita →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Varaa aika",
+    "badge": "Ajanvaraus",
+    "timezone": "Aikavyöhyke",
+    "empty": "Vapaita aikoja ei löytynyt.",
+    "noSelection": "Valitse aika",
+    "actions": {
+      "book": "Varaa aika",
+      "viewDetails": "Näytä tiedot"
+    },
+    "errors": {
+      "invalidTokenTitle": "Tämä ajanvarauslinkki ei ole käytettävissä.",
+      "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi ajanvarauslinkki.",
+      "staleSlot": "Tämä aika ei ole enää saatavilla. Valitse toinen aika.",
+      "availabilityChanged": "Saatavuus muuttui, kun valitsit aikaa. Valitse uudelleen.",
+      "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
+    },
+    "success": {
+      "title": "Ajanvarauksesi on varattu.",
+      "description": "Ajanvarauksen tiedot ovat valmiit."
+    },
+    "schedule": {
+      "metadataTitle": "Ajanvarauksen tiedot",
+      "defaultMessage": "Ajanvarauksesi on ajastettu.",
+      "unknownInvitee": "Vieras",
+      "fields": {
+        "invitee": "Kutsuttu",
+        "time": "Aika",
+        "timezone": "Aikavyöhyke",
+        "location": "Sijainti"
+      },
+      "status": {
+        "scheduled": "Ajastettu",
+        "cancelled": "Peruutettu"
+      },
+      "locationTypes": {
+        "inPerson": "Tapaaminen paikan päällä",
+        "phoneCall": "Puhelu",
+        "onlineMeeting": "Verkkotapaaminen"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Peruuta aika",
+      "title": "Peruuta aika",
+      "description": "Peruuta {calendar} ajankohtana {time}.",
+      "action": "Peruuta aika",
+      "cancelledTitle": "Ajanvaraus peruutettu",
+      "cancelledDescription": "Tämä ajanvaraus on peruutettu.",
+      "unavailableTitle": "Peruutus ei ole mahdollinen",
+      "unavailableDescription": "Tämä ajanvaraus on jo peruutettu, poistettu tai menneisyydessä."
+    },
+    "range": {
+      "metadataTitle": "Tarkista saatavuus",
+      "empty": "Ei valittu",
+      "successTitle": "Aikaväli vastaanotettu.",
+      "successDescription": "Tarkistamme vapaita ajanvarausaikoja.",
+      "fields": {
+        "startDate": "Aloituspäivä",
+        "endDate": "Päättymispäivä",
+        "startTime": "Alkamisaika",
+        "endTime": "Päättymisaika"
+      },
+      "actions": {
+        "skip": "Ohita"
+      },
+      "errors": {
+        "invalidRange": "Päättymispäivän on oltava sama tai myöhäisempi kuin aloituspäivä."
+      },
+      "timezoneHint": "Ajat näytetään aikavyöhykkeellä {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "Ajanvaraukset",
+    "statuses": {
+      "scheduled": "Ajastettu",
+      "cancelled": "Peruutettu"
+    },
+    "messages": {
+      "empty": "Ei vielä ajanvarauksia."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Ajanvaraukset",
+    "singular": "Ajanvaraus",
+    "unknownContact": "Tuntematon yhteystieto",
+    "searchPlaceholder": "Hae nimellä...",
+    "tabs": {
+      "next": "Tulevat",
+      "past": "Menneet"
+    },
+    "fields": {
+      "name": "Nimi",
+      "date": "Päivämäärä",
+      "status": "Tila",
+      "calendar": "Kalenteri"
+    },
+    "statuses": {
+      "scheduled": "Ajastettu",
+      "cancelled": "Peruutettu"
+    },
+    "actions": {
+      "cancelAppointment": "Peruuta aika"
+    },
+    "dialogs": {
+      "cancelTitle": "Peruuta aika",
+      "cancelDescription": "Peruuta tämä ajanvaraus ja suorita sen peruutuksen sivuvaikutukset.",
+      "deleteTitle": "Poista ajanvaraus",
+      "deleteDescription": "Poista tämä ajanvaraus hallintaluettelosta. Tämä ei suorita peruutusflow'ta."
+    },
+    "messages": {
+      "cancelled": "Ajanvaraus peruutettu.",
+      "deleted": "Ajanvaraus poistettu."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Ajanvarauskalenterit",
+    "singular": "Ajanvarauskalenteri",
+    "addNew": "Lisää uusi",
+    "none": "Ei mitään",
+    "addReminder": "Lisää muistutus",
+    "reminderSummary": "Lähetä muistutus - {calendar} {timing}.",
+    "noExternalConnections": "Ei vielä ulkoisia kalenteriyhteyksiä",
+    "dialogDescriptions": {
+      "create": "Anna ajanvarauskalenterillesi nimi aloittaaksesi.",
+      "rename": "Nimeä tämä ajanvarauskalenteri uudelleen."
+    },
+    "tabs": {
+      "calendars": "Kalenterit",
+      "appointments": "Ajanvaraukset",
+      "externalCalendars": "Ulkoiset kalenterit"
+    },
+    "sections": {
+      "appointment": "Mistä ajanvarauksessa on kyse",
+      "availability": "Milloin ihmiset voivat varata ajan?",
+      "duration": "Kuinka pitkä ajanvarauksesi on?",
+      "location": "Missä ajanvaraus tapahtuu?",
+      "notifications": "Ilmoitukset",
+      "restrictions": "Rajoitukset",
+      "externalCalendar": "Yhdistä Google Calendar"
+    },
+    "fields": {
+      "description": "Kuvaus",
+      "timezone": "Aikavyöhyke",
+      "locationType": "Sijaintityyppi",
+      "locationDetail": "Tarkennus",
+      "durationMinutes": "Ajanvarauksen kesto",
+      "bufferAfterMinutes": "Lisää aikaa ajanvarausten jälkeen",
+      "scheduleWindowType": "Ihmiset voivat varata ajan",
+      "rollingDays": "Liukuvat päivät",
+      "minAdvanceDays": "Vähimmäismäärä päiviä etukäteen",
+      "startDate": "Aloituspäivä",
+      "endDate": "Päättymispäivä",
+      "specificDate": "Päivämäärä",
+      "maxAppointmentsPerUser": "Käyttäjäkohtainen ajanvarausten enimmäismäärä",
+      "dailyLimitEnabled": "Päivittäinen raja",
+      "maxPerDay": "Enimmäismäärä päivässä",
+      "allowGroupMeeting": "Salli ryhmätapaaminen",
+      "maxPerSlot": "Enimmäismäärä per aika",
+      "confirmationMessage": "Vahvistusviesti",
+      "confirmationFlowId": "Vahvistus-flow",
+      "cancellationFlowId": "Peruutus-flow",
+      "externalConnectionId": "Ulkoinen kalenteri",
+      "reminders": "Muistutukset",
+      "reminderTimingValue": "Arvo",
+      "reminderTimingUnit": "Yksikkö"
+    },
+    "locationTypes": {
+      "inPerson": "Tapaaminen paikan päällä",
+      "phoneCall": "Puhelu",
+      "onlineMeeting": "Verkkotapaaminen"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Liukuvan päivämäärän sisällä tulevaisuudessa",
+      "dateRange": "Aikavälin sisällä",
+      "specificDay": "Yhtenä tiettynä päivänä",
+      "anyFutureDate": "Minä tahansa tulevana päivänä"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minuuttia ennen",
+      "hours": "Tuntia ennen",
+      "days": "Päivää ennen"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minuutti ennen} other {# minuuttia ennen}}",
+      "hours": "{count, plural, one {tunti ennen} other {# tuntia ennen}}",
+      "days": "{count, plural, one {päivä ennen} other {# päivää ennen}}"
+    },
+    "weekdays": {
+      "0": "Sunnuntai",
+      "1": "Maanantai",
+      "2": "Tiistai",
+      "3": "Keskiviikko",
+      "4": "Torstai",
+      "5": "Perjantai",
+      "6": "Lauantai"
+    },
+    "weekdayEditor": {
+      "description": "Aseta tämän päivän saatavilla olevat aikavälit.",
+      "unavailable": "Ei saatavilla",
+      "overlapWarning": "Jotkin aikavälit menevät päällekkäin. Päällekkäistä aikaa ei lasketa kahteen kertaan.",
+      "addInterval": "Lisää aikaväli",
+      "startTime": "Alkamisaika",
+      "endTime": "Päättymisaika"
+    },
+    "tooltips": {
+      "timezone": "Aikavyöhyke, jolla luot tämän kalenterin. Ihmiset näkevät saatavuuden oman aikavyöhykkeensä mukaan.",
+      "confirmationFlow": "Flow, joka lähetetään heti kun käyttäjä varaa ajan.",
+      "cancellationFlow": "Flow, joka lähetetään heti kun ajanvaraus peruutetaan.",
+      "reminders": "Lähetä muistutuksia, jotta kutsuttu muistaa ajanvarauksen.",
+      "appointmentDuration": "Määritä, kuinka pitkä ajanvarauksesi on.",
+      "bufferAfterMinutes": "Anna itsellesi puskuriaikaa varattujen ajanvarausten päättymisen jälkeen.",
+      "peopleCanSchedule": "Aseta ajanjakso, jolloin voit ottaa vastaan tapaamisia.",
+      "maxAppointmentsPerUser": "Suurin sallittu määrä tulevia ajanvarauksia, jonka käyttäjä voi varata.",
+      "rollingDays": "Salli varaaminen enintään näin monta päivää tulevaisuuteen",
+      "minAdvanceDays": "Vaadi, että varaus tehdään vähintään näin monta päivää etukäteen. Käytä arvoa 0 salliaksesi saman päivän varaukset.",
+      "dailyLimit": "Suurin sallittu määrä ihmisiä, jotka voivat varata ajan päivässä.",
+      "allowGroupMeeting": "Salli useiden ihmisten varata sama aikaväli.",
+      "externalCalendar": "Yhdistä Google Calendar synkronoidaksesi ajanvarauksesi."
+    },
+    "minutesLabel": "{count} minuuttia"
+  },
+  "externalCalendars": {
+    "title": "Ulkoiset kalenterit",
+    "connectGoogle": "Yhdistä Google",
+    "emptyEmail": "Ei sähköpostia",
+    "fields": {
+      "provider": "Palveluntarjoaja",
+      "email": "Sähköposti",
+      "calendarId": "Kalenterin tunnus",
+      "connected": "Yhdistetty",
+      "date": "Päivämäärä"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Muokkaa kalenterin tunnusta",
+      "editDescription": "Valitse Google Calendar -tunnus, jota käytetään päällekkäisyyksien tarkistamiseen ja ajanvaraustapahtumien luomiseen.",
+      "deleteTitle": "Katkaise kalenteriyhteys",
+      "deleteDescription": "Katkaise tämän Google Calendarin yhteys ajanvaraukseen."
+    },
+    "messages": {
+      "connected": "Google Calendar yhdistetty.",
+      "connectFailed": "Google Calendaria ei voitu yhdistää. Tarkista Google OAuth -asetukset ja Calendar API -käyttöoikeudet ja yritä uudelleen.",
+      "calendarIdUpdated": "Kalenterin tunnus päivitetty.",
+      "disconnected": "Kalenteriyhteys katkaistu."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Ajanvaraus",
+    "comingSoonTitle": "Ajanvaraussivu tulossa pian",
+    "comingSoonDescription": "Tämä julkinen ajanvaraussivu ei ole vielä käytettävissä."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Lähetä LeadSubmitted-tapahtumia Messenger-, Instagram- ja WhatsApp-keskusteluista Metalle.",
+    "datasetId": "Tietojoukon tunnus",
+    "reconnect": "Uusi käyttöoikeudet",
+    "connectViaFacebook": "Yhdistä Facebookin kautta",
+    "unsupportedExplanation": "Tämä Instagram-tili yhdistettiin Instagram Business -kirjautumisella. Yhdistä tili Facebookin kautta käyttääksesi Meta Conversions API:a.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Jonota LeadSubmitted-tapahtuma Messengerille, Instagramille tai WhatsAppille.",
+      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Valmis",
+      "missingPermission": "Käyttöoikeus tarvitaan",
+      "unverified": "Vahvistamaton",
+      "unsupported": "Ei tuettu",
+      "notConnected": "Ei yhdistetty"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Tällä integraatiolla on Conversions API -tapahtumiin vaadittu Meta-käyttöoikeus.",
+      "missingPermission": "Yhdistä tämä integraatio uudelleen ja myönnä pyydetty Meta-käyttöoikeus.",
+      "unverified": "Alustan sovellusasetukset eivät ole saatavilla, joten CAPI-käyttöoikeutta ei voida vahvistaa.",
+      "unsupported": "Meta Conversions API Instagramille vaatii tilin, joka on yhdistetty Facebook Login for Business -kirjautumisella.",
+      "notConnected": "Conversions API on Metan liiketoimintatyökalu, jonka avulla voit jakaa tietoja Metalle mainostesi suorituskyvyn parantamiseksi."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Meta CAPI -uudelleenyhdistämisen käynnistäminen epäonnistui.",
+      "messengerNotFound": "Messenger-integraatiota ei löytynyt.",
+      "instagramNotFound": "Instagram-integraatiota ei löytynyt.",
+      "instagramRequiresFacebook": "Instagramin CAPI vaatii yhdistämisen Facebookin kautta.",
+      "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "datasetRequired": "Tallenna tietojoukon tunnus ennen käyttöoikeustunnuksen lisäämistä.",
+      "invalidToken": "Tämä tunnus ei päässyt käsiksi tietojoukkoon.",
+      "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Tapahtuman tyyppi",
+        "leadSubmitted": "Liidi lähetetty"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Arvo",
+      "valuePlaceholder": "esim. 250",
+      "currency": "Valuutta",
+      "currencyPlaceholder": "esim. USD",
+      "contentCategory": "Sisällön luokka",
+      "contentCategoryPlaceholder": "Tapahtumaan liittyvän sisällön luokka",
+      "contentName": "Sisällön nimi",
+      "contentNamePlaceholder": "Tapahtumaan liittyvän sivun tai tuotteen nimi"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Liitä tietojoukon tunnus Events Managerista",
+    "saveDataset": "Tallenna",
+    "accessToken": "Käyttöoikeustunnus (valinnainen)",
+    "accessTokenHint": "Liitä tunnus Events Managerista lähettääksesi tapahtumat omalla tunnuksellasi yhdistetyn sivun tunnuksen sijaan. Vaatii tietojoukon tunnuksen.",
+    "accessTokenPlaceholder": "Events Manager -käyttöoikeustunnus",
+    "saveToken": "Tallenna tunnus",
+    "tokenSaved": "Tunnus tallennettu",
+    "removeToken": "Poista",
+    "saved": "Tallennettu",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Tapahtumien näkyminen Events Managerissa ja Meta-liideinä Ads Managerissa voi kestää jopa 40 minuuttia."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Yhdistetty",
+    "disconnect": "Katkaise yhteys",
+    "openEventManager": "Avaa Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "Yhdistä Facebookin kautta",
+        "description": "Käytä sivusi olemassa olevaa yhteyttä ja valitse sitten tietojoukon tunnus.",
+        "connect": "Yhdistä Facebookin kautta",
+        "connectedLabel": "Facebookin kautta"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Mukautettu yhteys",
+        "description": "Käytä tietojoukon tunnusta ja Meta Events Managerin käyttöoikeustunnusta.",
+        "start": "Määritä mukautettu yhteys",
+        "connect": "Yhdistä",
+        "connectedLabel": "Mukautettu"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "Yhdistä WhatsAppin kautta",
+        "description": "Käytä WhatsApp-yhteyttäsi ja valitse sitten tietojoukon tunnus.",
+        "connect": "Yhdistä WhatsAppin kautta",
+        "connectedLabel": "WhatsAppin kautta"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Valitse tietojoukon tunnus",
+      "description": "Anna olemassa oleva tietojoukon tunnus tai jätä tyhjäksi luodaksesi sen automaattisesti.",
       "save": "Tallenna",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "Tietojoukon tunnus, jota ei ole linkitetty tähän sivuun tai Instagram-tiliin, ei ehkä kohdista tapahtumia oikein. Jätä tämä kenttä tyhjäksi luodaksesi linkitetyn tietojoukon automaattisesti."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Yhdistä"
     }
   }
 }

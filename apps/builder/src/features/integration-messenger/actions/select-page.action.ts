@@ -134,6 +134,7 @@ export const selectPageAction = authActionClient
             clientId: messengerSettings.clientId,
             clientSecret: messengerSettings.clientSecret,
             redirectUrl: "",
+            version: messengerSettings.version,
             tokens: {
               accessToken: longLivedToken,
             },

@@ -44,6 +44,7 @@ export type ExecuteMultipleStepsProps = {
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
   commentAnchor?: CommentAnchor
+  appointmentId?: string
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
@@ -116,6 +117,7 @@ export async function sendFlow(
         flowId: flowVersion.flowId,
         nodeId: connectedNodeId,
         metadata: props.metadata,
+        appointmentId: props.appointmentId,
         sendFrom: props.sendFrom,
         nodeVisits: props.nodeVisits,
         commentAnchor: props.commentAnchor,

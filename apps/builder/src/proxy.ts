@@ -21,6 +21,7 @@ const publicRoutes = [
   "/unsubscribe",
   "/email-topic",
   "/extensions",
+  "/booking",
   "/portal/redeem",
 ]
 const signinPath = "/auth/sign-in"

@@ -12,6 +12,7 @@ import {
   BellRingIcon,
   BotIcon,
   CalculatorIcon,
+  CalendarClockIcon,
   CircleCheckIcon,
   CircleEllipsisIcon,
   ClipboardListIcon,
@@ -527,6 +528,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         stepType: stepTypes.enum.startExternalNode,
       },
     ],
+  },
+  {
+    label: t("flows.actions.appointmentScheduling"),
+    icon: CalendarClockIcon,
+    stepType: stepTypes.enum.appointmentScheduling,
   },
   {
     label: t("flows.actions.questionnaires"),

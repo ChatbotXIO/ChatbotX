@@ -2039,6 +2039,12 @@
       "placeholder": "اكتب اسم حدث واضغط Enter",
       "description": "أضف اسم حدث واحدًا أو أكثر. عندما يربط Make خطاف ويب بأحد هذه الأحداث، تُرسل إليه البيانات عند تشغيل هذه الخطوة."
     },
+    "bookingCalendar": {
+      "label": "تقويم الحجز"
+    },
+    "bookingDate": {
+      "label": "تاريخ الحجز"
+    },
     "n8nEvents": {
       "label": "الأحداث",
       "placeholder": "اكتب اسم حدث واضغط Enter",
@@ -2089,7 +2095,6 @@
       "broadcastActions": "إجراءات البث",
       "callApi": "طلب API خارجي",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "المحفزات",
       "questionnaires": "الاستبيانات",
       "setUpCoupon": "إعداد كوبون",
@@ -2118,7 +2123,6 @@
       "getResponseAddContact": "إضافة جهة الاتصال إلى GetResponse",
       "sendGridAddContact": "إضافة جهة الاتصال إلى SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "فتح الموقع الإلكتروني",
       "optInEmail": "تفعيل اشتراك البريد الإلكتروني",
       "optOutEmail": "إلغاء اشتراك البريد الإلكتروني",
@@ -2173,7 +2177,10 @@
       "splitTraffic": "تقسيم حركة المرور",
       "aiEditImage": "تعديل صورة بالذكاء الاصطناعي",
       "whatsappFlow": "مسار واتساب",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "جدولة المواعيد",
+      "triggerN8n": "تشغيل n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "إرسال حدث Meta CAPI"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2941,8 +2948,8 @@
     "reconnect": "إعادة الاتصال",
     "title": "إنستغرام",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "الإعدادات العامة",
+      "conversionsApi": "تحسين الإعلانات"
     }
   },
   "coexist": {
@@ -3000,7 +3007,7 @@
     "tabs": {
       "generalSettings": "الإعدادات العامة",
       "messageTemplates": "قوالب الرسائل",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "تحسين الإعلانات"
     },
     "messageTemplate": {
       "params": {
@@ -3375,7 +3382,7 @@
       "messageTemplates": "قوالب الرسائل",
       "profile": "الملف التعريفي",
       "usefulLinks": "روابط مفيدة",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "تحسين الإعلانات"
     },
     "accountHealths": {
       "title": "إدارة حساب WhatsApp",
@@ -3603,7 +3610,7 @@
       "startAnotherFlow": "بدء مسار آخر",
       "notifyAdmins": "إشعار المسؤولين",
       "transferConversationToHuman": "نقل المحادثة إلى موظف",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "إرسال حدث Meta CAPI"
     },
     "triggerGoesOff": "يتم تشغيل المشغّل",
     "before": "قبل",
@@ -3969,7 +3976,25 @@
   },
   "appointmentScheduling": {
     "title": "جدولة المواعيد",
-    "description": "إنشاء جدولة مواعيدك وإدارتها."
+    "description": "إنشاء جدولة مواعيدك وإدارتها.",
+    "flowModes": {
+      "book": "حجز موعد",
+      "cancel": "إلغاء موعد",
+      "checkAvailability": "التحقق من التوفر"
+    },
+    "fields": {
+      "mode": "الوضع",
+      "dateTimeFieldId": "تاريخ ووقت الموعد",
+      "startDateFieldId": "تاريخ البدء",
+      "endDateFieldId": "تاريخ الانتهاء",
+      "resultUsedByAI": "استخدام النتيجة للذكاء الاصطناعي",
+      "outputCustomFieldId": "حفظ النتيجة في",
+      "startDateFieldIdSelected": "حفظ تاريخ البدء المحدد في",
+      "endDateFieldIdSelected": "حفظ تاريخ الانتهاء المحدد في"
+    },
+    "dialogDescriptions": {
+      "flowStep": "اختر كيف تقوم خطوة التدفق هذه بجدولة المواعيد."
+    }
   },
   "templates": {
     "title": "القوالب",
@@ -4688,100 +4713,353 @@
       "queueSync": "تعذّر جدولة مزامنة كتالوج ميتا."
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "حجز موعد",
+    "badge": "موعد",
+    "timezone": "المنطقة الزمنية",
+    "empty": "لم يتم العثور على أوقات متاحة.",
+    "noSelection": "اختر وقتًا",
+    "actions": {
+      "book": "حجز موعد",
+      "viewDetails": "عرض التفاصيل"
+    },
+    "errors": {
+      "invalidTokenTitle": "رابط الحجز هذا غير متاح.",
+      "invalidTokenDescription": "قد يكون الرابط غير صالح أو منتهي الصلاحية. يُرجى طلب رابط حجز جديد.",
+      "staleSlot": "هذا الوقت لم يعد متاحًا. يُرجى اختيار وقت آخر.",
+      "availabilityChanged": "تغيّر التوفر أثناء اختيارك للوقت. يُرجى الاختيار مرة أخرى.",
+      "submitFailed": "تعذّر إتمام هذا الطلب. يُرجى المحاولة مرة أخرى."
+    },
+    "success": {
+      "title": "تم حجز موعدك.",
+      "description": "تفاصيل الموعد جاهزة."
+    },
+    "schedule": {
+      "metadataTitle": "تفاصيل الموعد",
+      "defaultMessage": "تمت جدولة موعدك.",
+      "unknownInvitee": "ضيف",
+      "fields": {
+        "invitee": "المدعو",
+        "time": "الوقت",
+        "timezone": "المنطقة الزمنية",
+        "location": "الموقع"
+      },
+      "status": {
+        "scheduled": "مجدول",
+        "cancelled": "ملغى"
+      },
+      "locationTypes": {
+        "inPerson": "اجتماع حضوري",
+        "phoneCall": "مكالمة هاتفية",
+        "onlineMeeting": "اجتماع عبر الإنترنت"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "إلغاء الموعد",
+      "title": "إلغاء الموعد",
+      "description": "إلغاء {calendar} في {time}.",
+      "action": "إلغاء الموعد",
+      "cancelledTitle": "تم إلغاء الموعد",
+      "cancelledDescription": "تم إلغاء هذا الموعد.",
+      "unavailableTitle": "الإلغاء غير متاح",
+      "unavailableDescription": "هذا الموعد ملغى بالفعل أو محذوف أو في الماضي."
+    },
+    "range": {
+      "metadataTitle": "التحقق من التوفر",
+      "empty": "لم يتم التحديد",
+      "successTitle": "تم استلام نطاق التاريخ.",
+      "successDescription": "نحن نتحقق من أوقات المواعيد المتاحة.",
+      "fields": {
+        "startDate": "تاريخ البدء",
+        "endDate": "تاريخ الانتهاء",
+        "startTime": "وقت البدء",
+        "endTime": "وقت الانتهاء"
+      },
+      "actions": {
+        "skip": "تخطي"
+      },
+      "errors": {
+        "invalidRange": "يجب أن يكون تاريخ الانتهاء مطابقًا لتاريخ البدء أو بعده."
+      },
+      "timezoneHint": "تُعرض الأوقات بتوقيت {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "المواعيد",
+    "statuses": {
+      "scheduled": "مجدول",
+      "cancelled": "ملغى"
+    },
+    "messages": {
+      "empty": "لا توجد مواعيد بعد."
+    }
+  },
+  "appointmentManagement": {
+    "title": "المواعيد",
+    "singular": "موعد",
+    "unknownContact": "جهة اتصال غير معروفة",
+    "searchPlaceholder": "ابحث بالاسم...",
+    "tabs": {
+      "next": "القادمة",
+      "past": "السابقة"
+    },
+    "fields": {
+      "name": "الاسم",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "calendar": "التقويم"
+    },
+    "statuses": {
+      "scheduled": "مجدول",
+      "cancelled": "ملغى"
+    },
+    "actions": {
+      "cancelAppointment": "إلغاء الموعد"
+    },
+    "dialogs": {
+      "cancelTitle": "إلغاء الموعد",
+      "cancelDescription": "إلغاء هذا الموعد وتنفيذ الإجراءات المرتبطة بالإلغاء.",
+      "deleteTitle": "حذف الموعد",
+      "deleteDescription": "حذف هذا الموعد من قائمة الإدارة. لن يؤدي ذلك إلى تشغيل مسار الإلغاء."
+    },
+    "messages": {
+      "cancelled": "تم إلغاء الموعد.",
+      "deleted": "تم حذف الموعد."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "تقويمات المواعيد",
+    "singular": "تقويم مواعيد",
+    "addNew": "إضافة جديد",
+    "none": "لا شيء",
+    "addReminder": "إضافة تذكير",
+    "reminderSummary": "إرسال تذكير - {calendar} {timing}.",
+    "noExternalConnections": "لا توجد اتصالات بتقويمات خارجية بعد",
+    "dialogDescriptions": {
+      "create": "امنح تقويم مواعيدك اسمًا للبدء.",
+      "rename": "إعادة تسمية تقويم المواعيد هذا."
+    },
+    "tabs": {
+      "calendars": "التقويمات",
+      "appointments": "المواعيد",
+      "externalCalendars": "التقويمات الخارجية"
+    },
+    "sections": {
+      "appointment": "ما هو موعدك",
+      "availability": "متى يمكن للأشخاص الحجز؟",
+      "duration": "ما هي مدة موعدك؟",
+      "location": "أين سيُعقد الموعد؟",
+      "notifications": "الإشعارات",
+      "restrictions": "القيود",
+      "externalCalendar": "ربط Google Calendar"
+    },
+    "fields": {
+      "description": "الوصف",
+      "timezone": "المنطقة الزمنية",
+      "locationType": "نوع الموقع",
+      "locationDetail": "التفاصيل",
+      "durationMinutes": "مدة الموعد",
+      "bufferAfterMinutes": "إضافة وقت بعد مواعيدك",
+      "scheduleWindowType": "يمكن للأشخاص الحجز",
+      "rollingDays": "أيام متجددة",
+      "minAdvanceDays": "الحد الأدنى لعدد أيام الحجز المسبق",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "specificDate": "التاريخ",
+      "maxAppointmentsPerUser": "الحد الأقصى للمواعيد لكل مستخدم",
+      "dailyLimitEnabled": "الحد اليومي",
+      "maxPerDay": "الحد الأقصى في اليوم",
+      "allowGroupMeeting": "السماح باجتماع جماعي",
+      "maxPerSlot": "الحد الأقصى لكل فترة",
+      "confirmationMessage": "رسالة التأكيد",
+      "confirmationFlowId": "مسار التأكيد",
+      "cancellationFlowId": "مسار الإلغاء",
+      "externalConnectionId": "التقويم الخارجي",
+      "reminders": "التذكيرات",
+      "reminderTimingValue": "القيمة",
+      "reminderTimingUnit": "الوحدة"
+    },
+    "locationTypes": {
+      "inPerson": "اجتماع حضوري",
+      "phoneCall": "مكالمة هاتفية",
+      "onlineMeeting": "اجتماع عبر الإنترنت"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "خلال عدد أيام متجددة في المستقبل",
+      "dateRange": "خلال نطاق تاريخ محدد",
+      "specificDay": "يوم محدد واحد",
+      "anyFutureDate": "في أي تاريخ في المستقبل"
+    },
+    "reminderTimingUnits": {
+      "minutes": "دقائق قبل الموعد",
+      "hours": "ساعات قبل الموعد",
+      "days": "أيام قبل الموعد"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# دقيقة قبل الموعد} other {# دقائق قبل الموعد}}",
+      "hours": "{count, plural, one {ساعة واحدة قبل الموعد} other {# ساعات قبل الموعد}}",
+      "days": "{count, plural, one {يوم واحد قبل الموعد} other {# أيام قبل الموعد}}"
+    },
+    "weekdays": {
+      "0": "الأحد",
+      "1": "الاثنين",
+      "2": "الثلاثاء",
+      "3": "الأربعاء",
+      "4": "الخميس",
+      "5": "الجمعة",
+      "6": "السبت"
+    },
+    "weekdayEditor": {
+      "description": "حدد الفترات الزمنية المتاحة لهذا اليوم.",
+      "unavailable": "غير متاح",
+      "overlapWarning": "بعض الفترات الزمنية متداخلة. لا يُحتسب الوقت المتداخل مرتين.",
+      "addInterval": "إضافة فترة",
+      "startTime": "وقت البدء",
+      "endTime": "وقت الانتهاء"
+    },
+    "tooltips": {
+      "timezone": "المنطقة الزمنية التي تُنشئ بها هذا التقويم. سيرى الأشخاص التوفر بحسب منطقتهم الزمنية الخاصة.",
+      "confirmationFlow": "المسار الذي يُرسل بمجرد أن يحجز المستخدم موعدًا.",
+      "cancellationFlow": "المسار الذي يُرسل بمجرد إلغاء موعد.",
+      "reminders": "أرسل تذكيرات لتذكير المدعو بالموعد.",
+      "appointmentDuration": "حدد المدة التي سيستغرقها موعدك.",
+      "bufferAfterMinutes": "امنح نفسك بعض الوقت الإضافي لإنهاء المواعيد المحجوزة.",
+      "peopleCanSchedule": "حدد نطاق التواريخ التي يمكنك خلالها قبول الاجتماعات.",
+      "maxAppointmentsPerUser": "الحد الأقصى لعدد المواعيد المستقبلية التي يمكن للمستخدم حجزها.",
+      "rollingDays": "السماح بالحجز حتى عدد معين من الأيام في المستقبل",
+      "minAdvanceDays": "اطلب أن يتم الحجز قبل هذه المدة على الأقل بالأيام. استخدم 0 للسماح بالحجز في اليوم نفسه.",
+      "dailyLimit": "الحد الأقصى لعدد الأشخاص المسموح لهم بالحجز في اليوم الواحد.",
+      "allowGroupMeeting": "السماح لعدة أشخاص بالحجز في نفس الفترة الزمنية.",
+      "externalCalendar": "اربط Google Calendar لمزامنة مواعيدك."
+    },
+    "minutesLabel": "{count} دقيقة"
+  },
+  "externalCalendars": {
+    "title": "التقويمات الخارجية",
+    "connectGoogle": "ربط Google",
+    "emptyEmail": "لا يوجد بريد إلكتروني",
+    "fields": {
+      "provider": "المزوّد",
+      "email": "البريد الإلكتروني",
+      "calendarId": "معرف التقويم",
+      "connected": "متصل",
+      "date": "التاريخ"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "تعديل معرف التقويم",
+      "editDescription": "اختر معرف تقويم Google للتحقق من التعارضات وإنشاء أحداث المواعيد.",
+      "deleteTitle": "قطع اتصال التقويم",
+      "deleteDescription": "قطع اتصال تقويم Google هذا عن جدولة المواعيد."
+    },
+    "messages": {
+      "connected": "تم ربط تقويم Google.",
+      "connectFailed": "تعذّر ربط تقويم Google. تحقق من إعدادات Google OAuth وصلاحية الوصول إلى Calendar API، ثم حاول مرة أخرى.",
+      "calendarIdUpdated": "تم تحديث معرف التقويم.",
+      "disconnected": "تم قطع اتصال التقويم."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "الحجز",
+    "comingSoonTitle": "صفحة الحجز قريبًا",
+    "comingSoonDescription": "صفحة الحجز العامة هذه غير متاحة بعد."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "إرسال أحداث LeadSubmitted من محادثات Messenger وInstagram وWhatsApp إلى Meta.",
+    "datasetId": "معرف Dataset",
+    "reconnect": "إعادة ربط الصلاحيات",
+    "connectViaFacebook": "ربط عبر Facebook",
+    "unsupportedExplanation": "تم ربط حساب Instagram هذا باستخدام تسجيل دخول Instagram للأعمال. اربط الحساب عبر Facebook لاستخدام Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "إضافة حدث LeadSubmitted إلى قائمة الانتظار لـ Messenger أو Instagram أو WhatsApp.",
+      "whatsappNote": "تُرسل أحداث WhatsApp فقط للمحادثات التي بدأت من إعلان النقر للمحادثة عبر WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "جاهز",
+      "missingPermission": "الصلاحية مطلوبة",
+      "unverified": "غير موثّق",
+      "unsupported": "غير مدعوم",
+      "notConnected": "غير متصل"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "يمتلك هذا الاتصال صلاحية Meta المطلوبة لأحداث Conversions API.",
+      "missingPermission": "أعد ربط هذا الاتصال وامنح صلاحية Meta المطلوبة.",
+      "unverified": "إعدادات تطبيق المنصة غير متاحة، لذا لا يمكن التحقق من صلاحية CAPI.",
+      "unsupported": "يتطلب Meta Conversions API لـ Instagram حسابًا متصلًا عبر Facebook Login for Business.",
+      "notConnected": "تُعد Conversions API أداة أعمال من Meta تتيح لك مشاركة البيانات مع Meta لتحسين أداء الإعلانات."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "تعذّر بدء إعادة ربط Meta CAPI.",
+      "messengerNotFound": "لم يتم العثور على اتصال Messenger.",
+      "instagramNotFound": "لم يتم العثور على اتصال Instagram.",
+      "instagramRequiresFacebook": "يتطلب Instagram CAPI الربط عبر Facebook.",
+      "saveFailed": "تعذّر الحفظ. يُرجى المحاولة مرة أخرى.",
+      "datasetRequired": "احفظ معرف Dataset قبل إضافة رمز وصول.",
+      "invalidToken": "تعذّر على هذا الرمز الوصول إلى Dataset.",
+      "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "نوع الحدث",
+        "leadSubmitted": "تم إرسال عميل محتمل"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "القيمة",
+      "valuePlaceholder": "مثال: 250",
+      "currency": "العملة",
+      "currencyPlaceholder": "مثال: USD",
+      "contentCategory": "فئة المحتوى",
+      "contentCategoryPlaceholder": "فئة المحتوى المرتبط بالحدث",
+      "contentName": "اسم المحتوى",
+      "contentNamePlaceholder": "اسم الصفحة أو المنتج المرتبط بالحدث"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "الصق معرف Dataset من Events Manager",
+    "saveDataset": "حفظ",
+    "accessToken": "رمز الوصول (اختياري)",
+    "accessTokenHint": "الصق رمزًا من Events Manager لإرسال الأحداث برمزك الخاص بدلاً من رمز الصفحة المتصلة. يتطلب معرف Dataset.",
+    "accessTokenPlaceholder": "رمز وصول Events Manager",
+    "saveToken": "حفظ الرمز",
+    "tokenSaved": "تم حفظ الرمز",
+    "removeToken": "إزالة",
+    "saved": "تم الحفظ",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "قد تستغرق الأحداث حتى 40 دقيقة لتظهر في Events Manager وتظهر كـ Meta Leads في Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "متصل",
+    "disconnect": "قطع الاتصال",
+    "openEventManager": "فتح Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "ربط عبر Facebook",
+        "description": "استخدم اتصال صفحتك الحالي، ثم اختر معرف Dataset.",
+        "connect": "ربط عبر Facebook",
+        "connectedLabel": "عبر Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "اتصال مخصص",
+        "description": "استخدم معرف Dataset ورمز وصول من Meta Events Manager.",
+        "start": "إعداد اتصال مخصص",
+        "connect": "ربط",
+        "connectedLabel": "مخصص"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "ربط عبر WhatsApp",
+        "description": "استخدم اتصال WhatsApp الخاص بك، ثم اختر معرف Dataset.",
+        "connect": "ربط عبر WhatsApp",
+        "connectedLabel": "عبر WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "اختر معرف Dataset",
+      "description": "أدخل معرف Dataset موجودًا، أو اتركه فارغًا لإنشاء واحد تلقائيًا.",
       "save": "حفظ",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "قد لا يُسند معرف Dataset غير المرتبط بهذه الصفحة أو حساب Instagram الأحداث بشكل صحيح. اترك هذا الحقل فارغًا لإنشاء Dataset مرتبط تلقائيًا."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "ربط"
     }
   }
 }

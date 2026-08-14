@@ -119,6 +119,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
   commentAnchor?: CommentAnchor
+  appointmentId?: string
 }
 
 /** A job carries either an entity ID or the already-loaded entity. */
@@ -218,6 +219,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       sendFrom,
       nodeVisits: props.nodeVisits,
       commentAnchor,
+      appointmentId: props.appointmentId,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -391,6 +393,7 @@ export async function runStepsAndQuickReplies(
               : undefined,
           startFromStepId: nextStep.id,
           metadata: props.metadata,
+          appointmentId: props.appointmentId,
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
           nodeVisits,
@@ -452,6 +455,7 @@ export async function runStepsAndQuickReplies(
         flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: nextNode.id,
         metadata: props.metadata,
+        appointmentId: props.appointmentId,
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
         nodeVisits,
@@ -544,6 +548,7 @@ async function* executeMultipleStepsGenerator(
                 : props.flowVersion.id,
               nodeId: connectedNodeId,
               metadata: props.metadata,
+              appointmentId: props.appointmentId,
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
               nodeVisits: props.nodeVisits,

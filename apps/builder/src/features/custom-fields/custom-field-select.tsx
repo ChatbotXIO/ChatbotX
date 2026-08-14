@@ -32,6 +32,7 @@ type CustomFieldSelectProps = {
   placeholder?: string
   onValueChange?: (value: string) => void
   portal?: boolean
+  createDefaultType?: CustomFieldType
   /**
    * Adds a leading "none" option (value "") so the selection can be unset. Use
    * when the field is optional and picking nothing is a valid choice.
@@ -56,6 +57,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     placeholder,
     onValueChange,
     portal,
+    createDefaultType,
     clearable,
   } = props
 
@@ -103,6 +105,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
 
           {allowCreate && (
             <CreateCustomFieldDialog
+              defaultType={createDefaultType}
               folderId={null}
               onSuccess={handleSuccess}
               triggerButton={

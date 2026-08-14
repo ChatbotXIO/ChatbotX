@@ -27,6 +27,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentService: { findBy: vi.fn() },
   contactInboxService: {
     findLatestLastIncomingMessageAtByContactId:
       mockFindLatestLastIncomingMessageAt,

@@ -1965,6 +1965,12 @@
       "placeholder": "Saisissez le nom d’un événement et appuyez sur Entrée",
       "description": "Ajoutez un ou plusieurs noms d’événements. Lorsque Make associe un webhook à l’un de ces événements, des données lui sont envoyées lors de l’exécution de cette étape."
     },
+    "bookingCalendar": {
+      "label": "Calendrier de réservation"
+    },
+    "bookingDate": {
+      "label": "Date de réservation"
+    },
     "n8nEvents": {
       "label": "Événements",
       "placeholder": "Saisissez le nom d’un événement et appuyez sur Entrée",
@@ -2015,7 +2021,6 @@
       "broadcastActions": "Actions de diffusion",
       "callApi": "Requête API externe",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Déclencheurs",
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Configurer le coupon",
@@ -2044,7 +2049,6 @@
       "getResponseAddContact": "Ajouter le contact à GetResponse",
       "sendGridAddContact": "Ajouter le contact à SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Ouvrir le site Web",
       "optInEmail": "Accepter les e-mails",
       "optOutEmail": "Refuser les e-mails",
@@ -2099,7 +2103,10 @@
       "splitTraffic": "Répartir le trafic",
       "aiEditImage": "Modification d’image par IA",
       "whatsappFlow": "Flux WhatsApp",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Planification des rendez-vous",
+      "triggerN8n": "Déclencher n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Envoyer un événement Meta CAPI"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
@@ -2941,8 +2948,8 @@
     "reconnect": "Reconnecter",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "Paramètres généraux",
+      "conversionsApi": "Optimisation des publicités"
     }
   },
   "coexist": {
@@ -3000,7 +3007,7 @@
     "tabs": {
       "generalSettings": "Paramètres généraux",
       "messageTemplates": "Modèles de message",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Optimisation des publicités"
     },
     "messageTemplate": {
       "params": {
@@ -3375,7 +3382,7 @@
       "messageTemplates": "Modèles de message",
       "profile": "Profil",
       "usefulLinks": "Liens utiles",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Optimisation des publicités"
     },
     "accountHealths": {
       "title": "Gérer votre compte WhatsApp",
@@ -3603,7 +3610,7 @@
       "startAnotherFlow": "Démarrer un autre flux",
       "notifyAdmins": "Notifier les administrateurs",
       "transferConversationToHuman": "Transférer la conversation à un humain",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Envoyer un événement Meta CAPI"
     },
     "triggerGoesOff": "Le déclencheur s’active",
     "before": "Avant",
@@ -4134,7 +4141,25 @@
   },
   "appointmentScheduling": {
     "title": "Planification des rendez-vous",
-    "description": "Créez et gérez la planification de vos rendez-vous."
+    "description": "Créez et gérez la planification de vos rendez-vous.",
+    "flowModes": {
+      "book": "Réserver un rendez-vous",
+      "cancel": "Annuler un rendez-vous",
+      "checkAvailability": "Vérifier les disponibilités"
+    },
+    "fields": {
+      "mode": "Mode",
+      "dateTimeFieldId": "Enregistrer la date sélectionnée dans",
+      "startDateFieldId": "Date de début",
+      "endDateFieldId": "Date de fin",
+      "resultUsedByAI": "Utiliser le résultat pour l’IA",
+      "outputCustomFieldId": "Enregistrer la réponse dans un champ personnalisé",
+      "startDateFieldIdSelected": "Enregistrer la date de début sélectionnée dans",
+      "endDateFieldIdSelected": "Enregistrer la date de fin sélectionnée dans"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Choisissez comment cette étape du flux planifie les rendez-vous."
+    }
   },
   "templates": {
     "title": "Modèles",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "Parcourir les icônes Lucide →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Réserver un rendez-vous",
+    "badge": "Rendez-vous",
+    "timezone": "Fuseau horaire",
+    "empty": "Aucun créneau disponible n’a été trouvé.",
+    "noSelection": "Choisissez un horaire",
+    "actions": {
+      "book": "Réserver un rendez-vous",
+      "viewDetails": "Voir les détails"
+    },
+    "errors": {
+      "invalidTokenTitle": "Ce lien de réservation n’est pas disponible.",
+      "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien de réservation.",
+      "staleSlot": "Cet horaire n’est plus disponible. Veuillez choisir un autre horaire.",
+      "availabilityChanged": "Les disponibilités ont changé pendant que vous choisissiez un horaire. Veuillez choisir à nouveau.",
+      "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
+    },
+    "success": {
+      "title": "Votre rendez-vous est réservé.",
+      "description": "Les détails du rendez-vous sont prêts."
+    },
+    "schedule": {
+      "metadataTitle": "Détails du rendez-vous",
+      "defaultMessage": "Votre rendez-vous a été planifié.",
+      "unknownInvitee": "Invité",
+      "fields": {
+        "invitee": "Invité",
+        "time": "Heure",
+        "timezone": "Fuseau horaire",
+        "location": "Lieu"
+      },
+      "status": {
+        "scheduled": "Planifié",
+        "cancelled": "Annulé"
+      },
+      "locationTypes": {
+        "inPerson": "Réunion en personne",
+        "phoneCall": "Appel téléphonique",
+        "onlineMeeting": "Réunion en ligne"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Annuler le rendez-vous",
+      "title": "Annuler le rendez-vous",
+      "description": "Annuler {calendar} à {time}.",
+      "action": "Annuler le rendez-vous",
+      "cancelledTitle": "Rendez-vous annulé",
+      "cancelledDescription": "Ce rendez-vous a été annulé.",
+      "unavailableTitle": "Annulation indisponible",
+      "unavailableDescription": "Ce rendez-vous est déjà annulé, supprimé ou passé."
+    },
+    "range": {
+      "metadataTitle": "Vérifier les disponibilités",
+      "empty": "Non sélectionné",
+      "successTitle": "Plage de dates reçue.",
+      "successDescription": "Nous vérifions les horaires de rendez-vous disponibles.",
+      "fields": {
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "startTime": "Heure de début",
+        "endTime": "Heure de fin"
+      },
+      "actions": {
+        "skip": "Passer"
+      },
+      "errors": {
+        "invalidRange": "La date de fin doit être égale ou postérieure à la date de début."
+      },
+      "timezoneHint": "Les horaires sont affichés en {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "Rendez-vous",
+    "statuses": {
+      "scheduled": "Planifié",
+      "cancelled": "Annulé"
+    },
+    "messages": {
+      "empty": "Aucun rendez-vous pour le moment."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Rendez-vous",
+    "singular": "Rendez-vous",
+    "unknownContact": "Contact inconnu",
+    "searchPlaceholder": "Rechercher par nom...",
+    "tabs": {
+      "next": "À venir",
+      "past": "Passés"
+    },
+    "fields": {
+      "name": "Nom",
+      "date": "Date",
+      "status": "État",
+      "calendar": "Calendrier"
+    },
+    "statuses": {
+      "scheduled": "Planifié",
+      "cancelled": "Annulé"
+    },
+    "actions": {
+      "cancelAppointment": "Annuler le rendez-vous"
+    },
+    "dialogs": {
+      "cancelTitle": "Annuler le rendez-vous",
+      "cancelDescription": "Annulez ce rendez-vous et exécutez les effets associés à son annulation.",
+      "deleteTitle": "Supprimer le rendez-vous",
+      "deleteDescription": "Supprimez ce rendez-vous de la liste de gestion. Cette action n’exécutera pas le flux d’annulation."
+    },
+    "messages": {
+      "cancelled": "Rendez-vous annulé.",
+      "deleted": "Rendez-vous supprimé."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Calendriers de rendez-vous",
+    "singular": "Calendrier de rendez-vous",
+    "addNew": "Ajouter",
+    "none": "Aucun",
+    "addReminder": "Ajouter un rappel",
+    "reminderSummary": "Envoyer un rappel - {calendar} {timing}.",
+    "noExternalConnections": "Aucune connexion à un calendrier externe pour le moment",
+    "dialogDescriptions": {
+      "create": "Donnez un nom à votre calendrier de rendez-vous pour commencer.",
+      "rename": "Renommez ce calendrier de rendez-vous."
+    },
+    "tabs": {
+      "calendars": "Calendriers",
+      "appointments": "Rendez-vous",
+      "externalCalendars": "Calendriers externes"
+    },
+    "sections": {
+      "appointment": "Quel est votre rendez-vous",
+      "availability": "Quand peut-on réserver ?",
+      "duration": "Quelle est la durée de votre rendez-vous ?",
+      "location": "Où le rendez-vous aura-t-il lieu ?",
+      "notifications": "Notifications",
+      "restrictions": "Restrictions",
+      "externalCalendar": "Connecter Google Calendar"
+    },
+    "fields": {
+      "description": "Description",
+      "timezone": "Fuseau horaire",
+      "locationType": "Type de lieu",
+      "locationDetail": "Détail",
+      "durationMinutes": "Durée du rendez-vous",
+      "bufferAfterMinutes": "Ajouter du temps après vos rendez-vous",
+      "scheduleWindowType": "Les personnes peuvent réserver",
+      "rollingDays": "Jours glissants",
+      "minAdvanceDays": "Délai minimum à l’avance (jours)",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "specificDate": "Date",
+      "maxAppointmentsPerUser": "Nombre maximum de rendez-vous par utilisateur",
+      "dailyLimitEnabled": "Limite quotidienne",
+      "maxPerDay": "Maximum par jour",
+      "allowGroupMeeting": "Autoriser les réunions de groupe",
+      "maxPerSlot": "Maximum par créneau",
+      "confirmationMessage": "Message de confirmation",
+      "confirmationFlowId": "Flux de confirmation",
+      "cancellationFlowId": "Flux d’annulation",
+      "externalConnectionId": "Calendrier externe",
+      "reminders": "Rappels",
+      "reminderTimingValue": "Valeur",
+      "reminderTimingUnit": "Unité"
+    },
+    "locationTypes": {
+      "inPerson": "Réunion en personne",
+      "phoneCall": "Appel téléphonique",
+      "onlineMeeting": "Réunion en ligne"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Dans un nombre de jours glissants à venir",
+      "dateRange": "Dans une plage de dates",
+      "specificDay": "Un jour précis",
+      "anyFutureDate": "À n’importe quelle date future"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minutes avant",
+      "hours": "Heures avant",
+      "days": "Jours avant"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minute avant} other {# minutes avant}}",
+      "hours": "{count, plural, one {une heure avant} other {# heures avant}}",
+      "days": "{count, plural, one {un jour avant} other {# jours avant}}"
+    },
+    "weekdays": {
+      "0": "Dimanche",
+      "1": "Lundi",
+      "2": "Mardi",
+      "3": "Mercredi",
+      "4": "Jeudi",
+      "5": "Vendredi",
+      "6": "Samedi"
+    },
+    "weekdayEditor": {
+      "description": "Définissez les plages horaires disponibles pour ce jour.",
+      "unavailable": "Indisponible",
+      "overlapWarning": "Certaines plages se chevauchent. Le temps chevauché n’est pas compté deux fois.",
+      "addInterval": "Ajouter une plage",
+      "startTime": "Heure de début",
+      "endTime": "Heure de fin"
+    },
+    "tooltips": {
+      "timezone": "Le fuseau horaire dans lequel vous créez ce calendrier. Les personnes verront les disponibilités selon leur propre fuseau horaire.",
+      "confirmationFlow": "Le flux envoyé une fois que l’utilisateur a réservé un rendez-vous.",
+      "cancellationFlow": "Le flux envoyé une fois qu’un rendez-vous est annulé.",
+      "reminders": "Envoyez des rappels pour que l’invité se souvienne du rendez-vous.",
+      "appointmentDuration": "Définissez la durée de votre rendez-vous.",
+      "bufferAfterMinutes": "Accordez-vous un temps tampon pour conclure après vos rendez-vous réservés.",
+      "peopleCanSchedule": "Définissez une plage de dates pendant laquelle vous pouvez accepter des rendez-vous.",
+      "maxAppointmentsPerUser": "Le nombre maximum de rendez-vous futurs qu’un utilisateur est autorisé à réserver.",
+      "rollingDays": "Autorisez la réservation jusqu’à un certain nombre de jours dans le futur",
+      "minAdvanceDays": "Exigez que les réservations soient effectuées au moins ce nombre de jours à l’avance. Utilisez 0 pour autoriser les réservations le jour même.",
+      "dailyLimit": "Le nombre maximum de personnes autorisées à réserver par jour.",
+      "allowGroupMeeting": "Autorisez plusieurs personnes à réserver le même créneau horaire.",
+      "externalCalendar": "Connectez Google Calendar pour synchroniser vos rendez-vous."
+    },
+    "minutesLabel": "{count} minutes"
+  },
+  "externalCalendars": {
+    "title": "Calendriers externes",
+    "connectGoogle": "Connecter Google",
+    "emptyEmail": "Aucun e-mail",
+    "fields": {
+      "provider": "Fournisseur",
+      "email": "E-mail",
+      "calendarId": "ID du calendrier",
+      "connected": "Connecté",
+      "date": "Date"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Modifier l’ID du calendrier",
+      "editDescription": "Choisissez l’ID du calendrier Google Calendar à vérifier pour les conflits et la création d’événements de rendez-vous.",
+      "deleteTitle": "Déconnecter le calendrier",
+      "deleteDescription": "Déconnectez ce calendrier Google Calendar de la planification des rendez-vous."
+    },
+    "messages": {
+      "connected": "Google Calendar connecté.",
+      "connectFailed": "Impossible de connecter Google Calendar. Vérifiez les paramètres OAuth Google et l’accès à l’API Calendar, puis réessayez.",
+      "calendarIdUpdated": "ID du calendrier mis à jour.",
+      "disconnected": "Calendrier déconnecté."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Réservation",
+    "comingSoonTitle": "Page de réservation bientôt disponible",
+    "comingSoonDescription": "Cette page de réservation publique n’est pas encore disponible."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Envoyez des événements LeadSubmitted depuis les conversations Messenger, Instagram et WhatsApp vers Meta.",
+    "datasetId": "ID de l’ensemble de données",
+    "reconnect": "Reconnecter les autorisations",
+    "connectViaFacebook": "Connecter via Facebook",
+    "unsupportedExplanation": "Ce compte Instagram a été connecté avec Instagram Business Login. Connectez le compte via Facebook pour utiliser Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Mettez en file d’attente un événement LeadSubmitted pour Messenger, Instagram ou WhatsApp.",
+      "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Prêt",
+      "missingPermission": "Autorisation requise",
+      "unverified": "Non vérifié",
+      "unsupported": "Non pris en charge",
+      "notConnected": "Non connecté"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Cette intégration dispose de l’autorisation Meta requise pour les événements Conversions API.",
+      "missingPermission": "Reconnectez cette intégration et accordez l’autorisation Meta demandée.",
+      "unverified": "Les paramètres de l’application de la plateforme ne sont pas disponibles, l’autorisation CAPI ne peut donc pas être vérifiée.",
+      "unsupported": "Meta Conversions API pour Instagram nécessite un compte connecté via Facebook Login for Business.",
+      "notConnected": "Conversions API est un outil professionnel Meta qui vous permet de partager des données avec Meta afin d’améliorer les performances de vos publicités."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Échec du démarrage de la reconnexion Meta CAPI.",
+      "messengerNotFound": "Intégration Messenger introuvable.",
+      "instagramNotFound": "Intégration Instagram introuvable.",
+      "instagramRequiresFacebook": "Instagram CAPI nécessite une connexion via Facebook.",
+      "saveFailed": "Impossible d’enregistrer. Veuillez réessayer.",
+      "datasetRequired": "Enregistrez un ID d’ensemble de données avant d’ajouter un jeton d’accès.",
+      "invalidToken": "Ce jeton n’a pas pu accéder à l’ensemble de données.",
+      "whatsappNotFound": "Intégration WhatsApp introuvable."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Type d’événement",
+        "leadSubmitted": "Prospect soumis"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Valeur",
+      "valuePlaceholder": "p. ex. 250",
+      "currency": "Devise",
+      "currencyPlaceholder": "p. ex. USD",
+      "contentCategory": "Catégorie de contenu",
+      "contentCategoryPlaceholder": "La catégorie du contenu associé à l’événement",
+      "contentName": "Nom du contenu",
+      "contentNamePlaceholder": "Le nom de la page ou du produit associé à l’événement"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Collez l’ID de l’ensemble de données depuis Events Manager",
+    "saveDataset": "Enregistrer",
+    "accessToken": "Jeton d’accès (facultatif)",
+    "accessTokenHint": "Collez un jeton depuis Events Manager pour envoyer les événements avec votre propre jeton au lieu du jeton de la page connectée. Nécessite un ID d’ensemble de données.",
+    "accessTokenPlaceholder": "Jeton d’accès Events Manager",
+    "saveToken": "Enregistrer le jeton",
+    "tokenSaved": "Jeton enregistré",
+    "removeToken": "Supprimer",
+    "saved": "Enregistré",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Les événements peuvent prendre jusqu’à 40 minutes pour apparaître dans Events Manager et s’afficher comme Meta Leads dans Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Connecté",
+    "disconnect": "Déconnecter",
+    "openEventManager": "Ouvrir Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
+        "title": "Connecter via Facebook",
+        "description": "Utilisez la connexion existante de votre page, puis choisissez un ID d’ensemble de données.",
+        "connect": "Connecter via Facebook",
         "connectedLabel": "via Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Connexion personnalisée",
+        "description": "Utilisez un ID d’ensemble de données et un jeton d’accès depuis Meta Events Manager.",
+        "start": "Configurer une connexion personnalisée",
+        "connect": "Connecter",
+        "connectedLabel": "Personnalisée"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
+        "title": "Connecter via WhatsApp",
+        "description": "Utilisez votre connexion WhatsApp, puis choisissez un ID d’ensemble de données.",
+        "connect": "Connecter via WhatsApp",
         "connectedLabel": "via WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Choisissez un ID d’ensemble de données",
+      "description": "Saisissez un ID d’ensemble de données existant, ou laissez le champ vide pour en créer un automatiquement.",
       "save": "Enregistrer",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "Un ID d’ensemble de données non lié à cette page ou à ce compte Instagram peut ne pas attribuer les événements correctement. Laissez ce champ vide pour créer automatiquement un ensemble de données lié."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Connecter"
     }
   }
 }

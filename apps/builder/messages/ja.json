@@ -1965,6 +1965,12 @@
       "placeholder": "イベント名を入力してEnterキーを押してください",
       "description": "1つ以上のイベント名を追加します。MakeがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
     },
+    "bookingCalendar": {
+      "label": "予約カレンダー"
+    },
+    "bookingDate": {
+      "label": "予約日"
+    },
     "n8nEvents": {
       "label": "イベント",
       "placeholder": "イベント名を入力してEnterキーを押してください",
@@ -2015,7 +2021,6 @@
       "broadcastActions": "一斉配信アクション",
       "callApi": "外部APIリクエスト",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "トリガー",
       "questionnaires": "アンケート",
       "setUpCoupon": "クーポンを設定",
@@ -2044,7 +2049,6 @@
       "getResponseAddContact": "連絡先をGetResponseに追加",
       "sendGridAddContact": "連絡先をSendGridに追加",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Webサイトを開く",
       "optInEmail": "メール配信に登録",
       "optOutEmail": "メール配信を解除",
@@ -2099,7 +2103,10 @@
       "splitTraffic": "トラフィックを分割",
       "aiEditImage": "AIで画像を編集",
       "whatsappFlow": "WhatsAppフロー",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "予約スケジュール",
+      "triggerN8n": "n8n をトリガー",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2925,8 +2932,8 @@
     "reconnect": "再接続",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "一般設定",
+      "conversionsApi": "広告最適化"
     }
   },
   "coexist": {
@@ -2984,7 +2991,7 @@
     "tabs": {
       "generalSettings": "一般設定",
       "messageTemplates": "メッセージテンプレート",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "広告最適化"
     },
     "messageTemplate": {
       "params": {
@@ -3359,7 +3366,7 @@
       "messageTemplates": "メッセージテンプレート",
       "profile": "プロフィール",
       "usefulLinks": "便利なリンク",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "広告最適化"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3587,7 +3594,7 @@
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -4134,7 +4141,25 @@
   },
   "appointmentScheduling": {
     "title": "予約スケジュール",
-    "description": "予約スケジュールを作成・管理します。"
+    "description": "予約スケジュールを作成・管理します。",
+    "flowModes": {
+      "book": "予約を作成",
+      "cancel": "予約をキャンセル",
+      "checkAvailability": "空き状況を確認"
+    },
+    "fields": {
+      "mode": "モード",
+      "dateTimeFieldId": "予約日時",
+      "startDateFieldId": "開始日",
+      "endDateFieldId": "終了日",
+      "resultUsedByAI": "AIで結果を使用",
+      "outputCustomFieldId": "結果の保存先",
+      "startDateFieldIdSelected": "選択した開始日の保存先",
+      "endDateFieldIdSelected": "選択した終了日の保存先"
+    },
+    "dialogDescriptions": {
+      "flowStep": "このフローステップで予約をどのようにスケジュールするかを選択します。"
+    }
   },
   "templates": {
     "title": "テンプレート",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "Lucideアイコンを探す →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "予約を作成",
+    "badge": "予約",
+    "timezone": "タイムゾーン",
+    "empty": "利用可能な時間が見つかりませんでした。",
+    "noSelection": "時間を選択してください",
+    "actions": {
+      "book": "予約を作成",
+      "viewDetails": "詳細を表示"
+    },
+    "errors": {
+      "invalidTokenTitle": "この予約リンクはご利用いただけません。",
+      "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しい予約リンクをご請求ください。",
+      "staleSlot": "この時間はすでに利用できません。別の時間を選択してください。",
+      "availabilityChanged": "時間を選択している間に空き状況が変わりました。もう一度選択してください。",
+      "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
+    },
+    "success": {
+      "title": "予約が完了しました。",
+      "description": "予約の詳細が準備できました。"
+    },
+    "schedule": {
+      "metadataTitle": "予約の詳細",
+      "defaultMessage": "予約が確定しました。",
+      "unknownInvitee": "ゲスト",
+      "fields": {
+        "invitee": "招待者",
+        "time": "時間",
+        "timezone": "タイムゾーン",
+        "location": "場所"
+      },
+      "status": {
+        "scheduled": "予約済み",
+        "cancelled": "キャンセル済み"
+      },
+      "locationTypes": {
+        "inPerson": "対面ミーティング",
+        "phoneCall": "電話",
+        "onlineMeeting": "オンラインミーティング"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "予約をキャンセル",
+      "title": "予約をキャンセル",
+      "description": "{calendar}({time})をキャンセルします。",
+      "action": "予約をキャンセル",
+      "cancelledTitle": "予約をキャンセルしました",
+      "cancelledDescription": "この予約はキャンセルされました。",
+      "unavailableTitle": "キャンセルできません",
+      "unavailableDescription": "この予約はすでにキャンセル済み、削除済み、または過去の日時のものです。"
+    },
+    "range": {
+      "metadataTitle": "空き状況を確認",
+      "empty": "未選択",
+      "successTitle": "日付範囲を受け付けました。",
+      "successDescription": "予約可能な時間を確認しています。",
+      "fields": {
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "startTime": "開始時刻",
+        "endTime": "終了時刻"
+      },
+      "actions": {
+        "skip": "スキップ"
+      },
+      "errors": {
+        "invalidRange": "終了日は開始日以降の日付にしてください。"
+      },
+      "timezoneHint": "時間は {timezone} で表示されています。"
+    }
+  },
+  "appointments": {
+    "title": "予約",
+    "statuses": {
+      "scheduled": "予約済み",
+      "cancelled": "キャンセル済み"
+    },
+    "messages": {
+      "empty": "まだ予約がありません。"
+    }
+  },
+  "appointmentManagement": {
+    "title": "予約",
+    "singular": "予約",
+    "unknownContact": "不明な連絡先",
+    "searchPlaceholder": "名前で検索...",
+    "tabs": {
+      "next": "今後の予約",
+      "past": "過去の予約"
+    },
+    "fields": {
+      "name": "名前",
+      "date": "日付",
+      "status": "ステータス",
+      "calendar": "カレンダー"
+    },
+    "statuses": {
+      "scheduled": "予約済み",
+      "cancelled": "キャンセル済み"
+    },
+    "actions": {
+      "cancelAppointment": "予約をキャンセル"
+    },
+    "dialogs": {
+      "cancelTitle": "予約をキャンセル",
+      "cancelDescription": "この予約をキャンセルし、キャンセル時の後続処理を実行します。",
+      "deleteTitle": "予約を削除",
+      "deleteDescription": "この予約を管理リストから削除します。キャンセルフローは実行されません。"
+    },
+    "messages": {
+      "cancelled": "予約をキャンセルしました。",
+      "deleted": "予約を削除しました。"
+    }
+  },
+  "appointmentCalendars": {
+    "title": "予約カレンダー",
+    "singular": "予約カレンダー",
+    "addNew": "新規追加",
+    "none": "なし",
+    "addReminder": "リマインダーを追加",
+    "reminderSummary": "リマインダーを送信 - {calendar} {timing}。",
+    "noExternalConnections": "外部カレンダーとの連携はまだありません",
+    "dialogDescriptions": {
+      "create": "予約カレンダーの名前を入力して開始します。",
+      "rename": "この予約カレンダーの名前を変更します。"
+    },
+    "tabs": {
+      "calendars": "カレンダー",
+      "appointments": "予約",
+      "externalCalendars": "外部カレンダー"
+    },
+    "sections": {
+      "appointment": "予約の内容",
+      "availability": "いつ予約を受け付けますか?",
+      "duration": "予約の所要時間は?",
+      "location": "予約はどこで行われますか?",
+      "notifications": "通知",
+      "restrictions": "制限",
+      "externalCalendar": "Google カレンダーを連携"
+    },
+    "fields": {
+      "description": "説明",
+      "timezone": "タイムゾーン",
+      "locationType": "場所の種類",
+      "locationDetail": "詳細",
+      "durationMinutes": "予約の所要時間",
+      "bufferAfterMinutes": "予約後にバッファ時間を追加",
+      "scheduleWindowType": "予約可能な期間",
+      "rollingDays": "ローリング日数",
+      "minAdvanceDays": "最短予約可能日数",
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "specificDate": "日付",
+      "maxAppointmentsPerUser": "1ユーザーあたりの最大予約数",
+      "dailyLimitEnabled": "1日の上限",
+      "maxPerDay": "1日あたりの最大件数",
+      "allowGroupMeeting": "グループミーティングを許可",
+      "maxPerSlot": "1枠あたりの最大件数",
+      "confirmationMessage": "確認メッセージ",
+      "confirmationFlowId": "確認フロー",
+      "cancellationFlowId": "キャンセルフロー",
+      "externalConnectionId": "外部カレンダー",
+      "reminders": "リマインダー",
+      "reminderTimingValue": "値",
+      "reminderTimingUnit": "単位"
+    },
+    "locationTypes": {
+      "inPerson": "対面ミーティング",
+      "phoneCall": "電話",
+      "onlineMeeting": "オンラインミーティング"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "今後のローリング日数以内",
+      "dateRange": "日付範囲内",
+      "specificDay": "特定の1日のみ",
+      "anyFutureDate": "今後の任意の日付"
+    },
+    "reminderTimingUnits": {
+      "minutes": "分前",
+      "hours": "時間前",
+      "days": "日前"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {#分前} other {#分前}}",
+      "hours": "{count, plural, one {1時間前} other {#時間前}}",
+      "days": "{count, plural, one {1日前} other {#日前}}"
+    },
+    "weekdays": {
+      "0": "日曜日",
+      "1": "月曜日",
+      "2": "火曜日",
+      "3": "水曜日",
+      "4": "木曜日",
+      "5": "金曜日",
+      "6": "土曜日"
+    },
+    "weekdayEditor": {
+      "description": "この曜日の利用可能な時間帯を設定します。",
+      "unavailable": "利用不可",
+      "overlapWarning": "一部の時間帯が重複しています。重複した時間は二重にカウントされません。",
+      "addInterval": "時間帯を追加",
+      "startTime": "開始時刻",
+      "endTime": "終了時刻"
+    },
+    "tooltips": {
+      "timezone": "このカレンダーを作成するタイムゾーンです。予約者には各自のタイムゾーンに基づいて空き状況が表示されます。",
+      "confirmationFlow": "ユーザーが予約を完了した際に送信されるフローです。",
+      "cancellationFlow": "予約がキャンセルされた際に送信されるフローです。",
+      "reminders": "予約について招待者に思い出してもらうためのリマインダーを送信します。",
+      "appointmentDuration": "予約の所要時間を設定します。",
+      "bufferAfterMinutes": "予約後に片付けなどのためのバッファ時間を確保します。",
+      "peopleCanSchedule": "ミーティングを受け付ける日付の範囲を設定します。",
+      "maxAppointmentsPerUser": "1人のユーザーが予約できる今後の予約の最大件数です。",
+      "rollingDays": "今後何日先まで予約を許可するかを設定します",
+      "minAdvanceDays": "予約に必要な最短の事前日数です。0を指定すると当日予約を許可します。",
+      "dailyLimit": "1日あたりに予約できる人数の上限です。",
+      "allowGroupMeeting": "同じ時間枠に複数人の予約を許可します。",
+      "externalCalendar": "Google カレンダーと連携して予約を同期します。"
+    },
+    "minutesLabel": "{count}分"
+  },
+  "externalCalendars": {
+    "title": "外部カレンダー",
+    "connectGoogle": "Google と連携",
+    "emptyEmail": "メールアドレスなし",
+    "fields": {
+      "provider": "プロバイダー",
+      "email": "メールアドレス",
+      "calendarId": "カレンダーID",
+      "connected": "連携済み",
+      "date": "日付"
+    },
+    "providers": {
+      "googleCalendar": "Google カレンダー"
+    },
+    "dialogs": {
+      "editTitle": "カレンダーIDを編集",
+      "editDescription": "競合を確認し、予約イベントを作成する Google カレンダーIDを選択します。",
+      "deleteTitle": "カレンダーの連携を解除",
+      "deleteDescription": "この Google カレンダーと予約スケジュールとの連携を解除します。"
+    },
+    "messages": {
+      "connected": "Google カレンダーと連携しました。",
+      "connectFailed": "Google カレンダーと連携できませんでした。Google OAuth の設定と Calendar API のアクセス権を確認し、再度お試しください。",
+      "calendarIdUpdated": "カレンダーIDを更新しました。",
+      "disconnected": "カレンダーの連携を解除しました。"
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "予約",
+    "comingSoonTitle": "予約ページは近日公開予定です",
+    "comingSoonDescription": "この公開予約ページはまだご利用いただけません。"
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Messenger、Instagram、WhatsApp の会話から LeadSubmitted イベントを Meta に送信します。",
+    "datasetId": "データセットID",
+    "reconnect": "権限を再連携",
+    "connectViaFacebook": "Facebook 経由で連携",
+    "unsupportedExplanation": "この Instagram アカウントは Instagram ビジネスログインで連携されています。Meta Conversions API を利用するには、Facebook 経由でアカウントを連携してください。",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Messenger、Instagram、WhatsApp 向けに LeadSubmitted イベントをキューに追加します。",
+      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。"
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "準備完了",
+      "missingPermission": "権限が必要です",
+      "unverified": "未検証",
+      "unsupported": "非対応",
+      "notConnected": "未連携"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "この連携には Conversions API イベントに必要な Meta の権限があります。",
+      "missingPermission": "この連携を再接続し、要求された Meta の権限を付与してください。",
+      "unverified": "プラットフォームのアプリ設定が利用できないため、CAPI の権限を検証できません。",
+      "unsupported": "Instagram 向け Meta Conversions API には、Facebook ログイン(ビジネス向け)で連携したアカウントが必要です。",
+      "notConnected": "Conversions API は、広告のパフォーマンスを向上させるために Meta とデータを共有できる Meta ビジネスツールです。"
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Meta CAPI の再連携を開始できませんでした。",
+      "messengerNotFound": "Messenger の連携が見つかりません。",
+      "instagramNotFound": "Instagram の連携が見つかりません。",
+      "instagramRequiresFacebook": "Instagram の CAPI には Facebook 経由の連携が必要です。",
+      "saveFailed": "保存できませんでした。もう一度お試しください。",
+      "datasetRequired": "アクセストークンを追加する前にデータセットIDを保存してください。",
+      "invalidToken": "このトークンではデータセットにアクセスできませんでした。",
+      "whatsappNotFound": "WhatsApp の連携が見つかりません。"
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
+        "label": "イベントタイプ",
         "leadSubmitted": "Lead Submitted"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "値",
+      "valuePlaceholder": "例: 250",
+      "currency": "通貨",
+      "currencyPlaceholder": "例: USD",
+      "contentCategory": "コンテンツカテゴリ",
+      "contentCategoryPlaceholder": "イベントに関連付けられたコンテンツのカテゴリ",
+      "contentName": "コンテンツ名",
+      "contentNamePlaceholder": "イベントに関連付けられたページまたは商品の名前"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Events Manager からデータセットIDを貼り付けてください",
+    "saveDataset": "保存",
+    "accessToken": "アクセストークン(任意)",
+    "accessTokenHint": "連携済みのページトークンの代わりに、ご自身のトークンでイベントを送信するには、Events Manager から取得したトークンを貼り付けてください。データセットIDが必要です。",
+    "accessTokenPlaceholder": "Events Manager のアクセストークン",
+    "saveToken": "トークンを保存",
+    "tokenSaved": "トークンを保存しました",
+    "removeToken": "削除",
+    "saved": "保存しました",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "イベントが Events Manager に表示され、Ads Manager で Meta リードとして表示されるまで最大40分かかる場合があります。"
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "連携済み",
+    "disconnect": "連携を解除",
+    "openEventManager": "Event Manager を開く",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "Facebook 経由で連携",
+        "description": "既存のページの連携を利用し、データセットIDを選択します。",
+        "connect": "Facebook 経由で連携",
+        "connectedLabel": "Facebook 経由"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "カスタム連携",
+        "description": "Meta Events Manager のデータセットIDとアクセストークンを利用します。",
+        "start": "カスタム連携を設定",
+        "connect": "連携",
+        "connectedLabel": "カスタム"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "WhatsApp 経由で連携",
+        "description": "既存の WhatsApp 連携を利用し、データセットIDを選択します。",
+        "connect": "WhatsApp 経由で連携",
+        "connectedLabel": "WhatsApp 経由"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "データセットIDを選択",
+      "description": "既存のデータセットIDを入力するか、空欄のままにすると自動的に作成されます。",
       "save": "保存",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "このページまたは Instagram アカウントに紐付いていないデータセットIDでは、イベントが正しく属性付けされない場合があります。このフィールドを空欄にすると、紐付いたデータセットが自動的に作成されます。"
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "連携"
     }
   }
 }

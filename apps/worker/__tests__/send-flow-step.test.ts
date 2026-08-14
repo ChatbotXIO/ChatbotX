@@ -27,6 +27,8 @@ const {
   mockInvalidateTracking,
   mockConversationInvalidate,
   mockUpdateFlowStepState,
+  mockFindAppointmentCalendarBySlug,
+  mockSignAppointmentWebviewToken,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -125,6 +127,8 @@ const {
     mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
     mockConversationInvalidate: vi.fn().mockResolvedValue(undefined),
     mockUpdateFlowStepState: vi.fn().mockResolvedValue(undefined),
+    mockFindAppointmentCalendarBySlug: vi.fn(),
+    mockSignAppointmentWebviewToken: vi.fn().mockResolvedValue("webview-token"),
   }
 })
 
@@ -183,6 +187,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentCalendarService: {
+    findByPublicLinkSlug: mockFindAppointmentCalendarBySlug,
+  },
   broadcastToWorkspaceParty: mockBroadcast,
   broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
@@ -196,6 +203,10 @@ vi.mock("@chatbotx.io/business", () => ({
     updateFlowStepState: mockUpdateFlowStepState,
   },
   resolveTenantSettings: mockresolveTenantSettings,
+}))
+
+vi.mock("@chatbotx.io/encryption", () => ({
+  signAppointmentWebviewToken: mockSignAppointmentWebviewToken,
 }))
 
 vi.mock("@chatbotx.io/business/utils", () => ({
@@ -324,6 +335,7 @@ describe("sendFlowStep", () => {
     })
     mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://storage.example.com",
+      appUrl: "https://app.example.test",
     })
     mockResolveContactVariables.mockImplementation(
       (_contactId: string, step: unknown, _source: unknown) =>
@@ -369,6 +381,8 @@ describe("sendFlowStep", () => {
       messageIds: ["provider-comment-1"],
     })
     mockEmit.mockResolvedValue(undefined)
+    mockFindAppointmentCalendarBySlug.mockResolvedValue(null)
+    mockSignAppointmentWebviewToken.mockResolvedValue("webview-token")
   })
 
   test("returns early when conversation not found — repository not called", async () => {
@@ -385,6 +399,21 @@ describe("sendFlowStep", () => {
     await sendFlowStep(baseParams)
 
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+  })
+
+  test("forwards appointmentId when resolving contact variables", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      appointmentId: "appointment-1",
+    })
+
+    expect(mockResolveContactVariables).toHaveBeenCalledWith(
+      "contact-1",
+      sendTextStep,
+      expect.objectContaining({
+        appointmentId: "appointment-1",
+      }),
+    )
   })
 
   test("skips non-deliverable AI steps instead of sending an empty channel message", async () => {
@@ -494,6 +523,348 @@ describe("sendFlowStep", () => {
       expect.objectContaining({
         contactInbox: expect.objectContaining({ id: "ci-broadcast" }),
         messageId: "msg-created",
+      }),
+    )
+  })
+
+  test("signs pasted appointment booking links at send time", async () => {
+    mockFindAppointmentCalendarBySlug.mockResolvedValueOnce({
+      id: "calendar-1",
+    })
+    const bookingButtonStep = {
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label: "Book appointment",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-1",
+            stepType: "openWebsite",
+            url: "https://app.example.test/booking/public-slug",
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: bookingButtonStep,
+    })
+
+    expect(mockFindAppointmentCalendarBySlug).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      publicLinkSlug: "public-slug",
+    })
+    expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith({
+      mode: "book",
+      workspaceId: "ws-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      channel: "messenger",
+      flowId: "flow-1",
+      flowVersionId: "fv-1",
+      stepId: "step-1",
+    })
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: expect.objectContaining({
+          buttons: [
+            expect.objectContaining({
+              beforeStep: expect.objectContaining({
+                url: "https://app.example.test/booking/picker?token=webview-token",
+              }),
+            }),
+          ],
+        }),
+      }),
+    )
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          payload: expect.objectContaining({
+            buttons: [
+              expect.objectContaining({
+                url: "https://app.example.test/booking/picker?token=webview-token",
+              }),
+            ],
+          }),
+        }),
+      }),
+    )
+  })
+
+  test("signs pasted appointment booking links from another origin", async () => {
+    mockFindAppointmentCalendarBySlug.mockResolvedValueOnce({
+      id: "calendar-1",
+    })
+    const bookingButtonStep = {
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label: "Book appointment",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-1",
+            stepType: "openWebsite",
+            url: "https://other.example.test/booking/public-slug",
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: bookingButtonStep,
+    })
+
+    expect(mockFindAppointmentCalendarBySlug).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      publicLinkSlug: "public-slug",
+    })
+    expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        calendarId: "calendar-1",
+      }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: expect.objectContaining({
+          buttons: [
+            expect.objectContaining({
+              beforeStep: expect.objectContaining({
+                url: "https://app.example.test/booking/picker?token=webview-token",
+              }),
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+
+  test("signs latest-version appointment booking links with executed version", async () => {
+    mockFindAppointmentCalendarBySlug.mockResolvedValueOnce({
+      id: "calendar-1",
+    })
+    const bookingButtonStep = {
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label: "Book appointment",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-1",
+            stepType: "openWebsite",
+            url: "https://builder.chatbotx.online/booking/public-slug",
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      flowVersionId: undefined,
+      executedFlowVersionId: "fv-latest",
+      contactInboxId: "ci-1",
+      step: bookingButtonStep,
+    })
+
+    expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith({
+      mode: "book",
+      workspaceId: "ws-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      channel: "messenger",
+      flowId: "flow-1",
+      flowVersionId: "fv-latest",
+      stepId: "step-1",
+    })
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          payload: expect.objectContaining({
+            buttons: [
+              expect.objectContaining({
+                url: "https://app.example.test/booking/picker?token=webview-token",
+              }),
+            ],
+          }),
+        }),
+      }),
+    )
+  })
+
+  test("does not sign appointment booking links when flowVersionId is missing", async () => {
+    const bookingButtonStep = {
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label: "Book appointment",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-1",
+            stepType: "openWebsite",
+            url: "https://app.example.test/booking/public-slug",
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      flowVersionId: undefined,
+      contactInboxId: "ci-1",
+      step: bookingButtonStep,
+    })
+
+    expect(mockFindAppointmentCalendarBySlug).not.toHaveBeenCalled()
+    expect(mockSignAppointmentWebviewToken).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: expect.objectContaining({
+          buttons: [
+            expect.objectContaining({
+              beforeStep: expect.objectContaining({
+                url: "https://app.example.test/booking/public-slug",
+              }),
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+
+  test("does not sign non-booking open website links", async () => {
+    const nonBookingButtonStep = {
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label: "Open docs",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-1",
+            stepType: "openWebsite",
+            url: "https://app.example.test/docs",
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: nonBookingButtonStep,
+    })
+
+    expect(mockFindAppointmentCalendarBySlug).not.toHaveBeenCalled()
+    expect(mockSignAppointmentWebviewToken).not.toHaveBeenCalled()
+  })
+
+  test("signs pasted appointment booking links inside carousel cards", async () => {
+    mockFindAppointmentCalendarBySlug.mockResolvedValueOnce({
+      id: "calendar-1",
+    })
+    const carouselStep = {
+      id: "carousel-step",
+      nodeId: "node-1",
+      stepType: "sendCarousel",
+      layout: "horizontal",
+      cards: [
+        {
+          id: "card-1",
+          nodeId: "node-1",
+          stepType: "sendCard",
+          title: "Demo Calendar",
+          subtitle: "",
+          buttons: [
+            {
+              id: "button-1",
+              label: "Book appointment",
+              buttonType: "openWebsite",
+              beforeStep: {
+                id: "before-1",
+                stepType: "openWebsite",
+                url: "https://app.example.test/booking/public-slug",
+                browserSize: 100,
+              },
+              steps: [],
+            },
+          ],
+        },
+      ],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: carouselStep,
+    })
+
+    expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        calendarId: "calendar-1",
+        contactId: "contact-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        stepId: "carousel-step",
+      }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: expect.objectContaining({
+          cards: [
+            expect.objectContaining({
+              buttons: [
+                expect.objectContaining({
+                  beforeStep: expect.objectContaining({
+                    url: "https://app.example.test/booking/picker?token=webview-token",
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    )
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          payload: expect.objectContaining({
+            cards: [
+              expect.objectContaining({
+                buttons: [
+                  expect.objectContaining({
+                    url: "https://app.example.test/booking/picker?token=webview-token",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        }),
       }),
     )
   })

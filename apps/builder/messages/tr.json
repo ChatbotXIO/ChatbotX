@@ -2039,6 +2039,12 @@
       "placeholder": "Bir etkinlik adı yazın ve Enter'a basın",
       "description": "Bir veya daha fazla etkinlik adı ekleyin. Make bu etkinliklerden biri için bir webhook eklediğinde, bu adım çalıştığında veri gönderilir."
     },
+    "bookingCalendar": {
+      "label": "Randevu Takvimi"
+    },
+    "bookingDate": {
+      "label": "Randevu Tarihi"
+    },
     "n8nEvents": {
       "label": "Etkinlikler",
       "placeholder": "Bir etkinlik adı yazın ve Enter'a basın",
@@ -2089,7 +2095,6 @@
       "broadcastActions": "Yayın İşlemleri",
       "callApi": "Harici API İsteği",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Tetikleyiciler",
       "questionnaires": "Anketler",
       "setUpCoupon": "Kupon Ayarla",
@@ -2118,7 +2123,6 @@
       "getResponseAddContact": "GetResponse'a Kişi Ekle",
       "sendGridAddContact": "SendGrid'e Kişi Ekle",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Web Sitesini Aç",
       "optInEmail": "E-posta İzni Ver",
       "optOutEmail": "E-posta İznini Kaldır",
@@ -2173,7 +2177,10 @@
       "splitTraffic": "Trafiği Böl",
       "aiEditImage": "Yapay Zekâ ile Görsel Düzenle",
       "whatsappFlow": "WhatsApp Akışı",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Randevu Planlama",
+      "triggerN8n": "n8n'i Tetikle",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2941,8 +2948,8 @@
     "reconnect": "Yeniden Bağlan",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "Genel Ayarlar",
+      "conversionsApi": "Reklam Optimizasyonu"
     }
   },
   "coexist": {
@@ -3000,7 +3007,7 @@
     "tabs": {
       "generalSettings": "Genel Ayarlar",
       "messageTemplates": "Mesaj Şablonları",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Reklam Optimizasyonu"
     },
     "messageTemplate": {
       "params": {
@@ -3375,7 +3382,7 @@
       "messageTemplates": "Mesaj Şablonları",
       "profile": "Profil",
       "usefulLinks": "Faydalı Bağlantılar",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Reklam Optimizasyonu"
     },
     "accountHealths": {
       "title": "WhatsApp hesabınızı yönetin",
@@ -3603,7 +3610,7 @@
       "startAnotherFlow": "Başka Bir Akış Başlat",
       "notifyAdmins": "Yöneticileri Bilgilendir",
       "transferConversationToHuman": "Görüşmeyi İnsana Aktar",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
     },
     "triggerGoesOff": "Tetikleyici devreye girer",
     "before": "Önce",
@@ -4134,7 +4141,25 @@
   },
   "appointmentScheduling": {
     "title": "Randevu Planlama",
-    "description": "Randevu planlamanızı oluşturun ve yönetin."
+    "description": "Randevu planlamanızı oluşturun ve yönetin.",
+    "flowModes": {
+      "book": "Randevu al",
+      "cancel": "Randevuyu iptal et",
+      "checkAvailability": "Uygunluğu kontrol et"
+    },
+    "fields": {
+      "mode": "Mod",
+      "dateTimeFieldId": "Seçilen tarihi şuraya kaydet",
+      "startDateFieldId": "Başlangıç tarihi",
+      "endDateFieldId": "Bitiş tarihi",
+      "resultUsedByAI": "Sonucu AI için kullan",
+      "outputCustomFieldId": "Sonucu şuraya kaydet",
+      "startDateFieldIdSelected": "Seçilen başlangıç tarihini şuraya kaydet",
+      "endDateFieldIdSelected": "Seçilen bitiş tarihini şuraya kaydet"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Bu akış adımının randevuları nasıl planlayacağını seçin."
+    }
   },
   "templates": {
     "title": "Şablonlar",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "Lucide simgelerine göz atın →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Randevu al",
+    "badge": "Randevu",
+    "timezone": "Saat dilimi",
+    "empty": "Uygun saat bulunamadı.",
+    "noSelection": "Bir saat seçin",
+    "actions": {
+      "book": "Randevu al",
+      "viewDetails": "Ayrıntıları görüntüle"
+    },
+    "errors": {
+      "invalidTokenTitle": "Bu randevu bağlantısı kullanılamıyor.",
+      "invalidTokenDescription": "Bağlantı geçersiz veya süresi dolmuş olabilir. Lütfen yeni bir randevu bağlantısı isteyin.",
+      "staleSlot": "Bu saat artık uygun değil. Lütfen başka bir saat seçin.",
+      "availabilityChanged": "Saat seçerken uygunluk değişti. Lütfen tekrar seçin.",
+      "submitFailed": "Bu isteği tamamlayamadık. Lütfen tekrar deneyin."
+    },
+    "success": {
+      "title": "Randevunuz alındı.",
+      "description": "Randevu ayrıntıları hazır."
+    },
+    "schedule": {
+      "metadataTitle": "Randevu ayrıntıları",
+      "defaultMessage": "Randevunuz planlandı.",
+      "unknownInvitee": "Konuk",
+      "fields": {
+        "invitee": "Davetli",
+        "time": "Saat",
+        "timezone": "Saat dilimi",
+        "location": "Konum"
+      },
+      "status": {
+        "scheduled": "Planlandı",
+        "cancelled": "İptal Edildi"
+      },
+      "locationTypes": {
+        "inPerson": "Yüz yüze görüşme",
+        "phoneCall": "Telefon görüşmesi",
+        "onlineMeeting": "Çevrimiçi görüşme"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Randevuyu iptal et",
+      "title": "Randevuyu iptal et",
+      "description": "{calendar} randevusunu {time} saatinde iptal edin.",
+      "action": "Randevuyu iptal et",
+      "cancelledTitle": "Randevu iptal edildi",
+      "cancelledDescription": "Bu randevu iptal edildi.",
+      "unavailableTitle": "İptal kullanılamıyor",
+      "unavailableDescription": "Bu randevu zaten iptal edilmiş, silinmiş veya geçmişte kalmış."
+    },
+    "range": {
+      "metadataTitle": "Uygunluğu kontrol et",
+      "empty": "Seçilmedi",
+      "successTitle": "Tarih aralığı alındı.",
+      "successDescription": "Uygun randevu saatlerini kontrol ediyoruz.",
+      "fields": {
+        "startDate": "Başlangıç Tarihi",
+        "endDate": "Bitiş Tarihi",
+        "startTime": "Başlangıç Saati",
+        "endTime": "Bitiş Saati"
+      },
+      "actions": {
+        "skip": "Atla"
+      },
+      "errors": {
+        "invalidRange": "Bitiş Tarihi, Başlangıç Tarihi'yle aynı veya sonrasında olmalıdır."
+      },
+      "timezoneHint": "Saatler {timezone} olarak gösterilir."
+    }
+  },
+  "appointments": {
+    "title": "Randevular",
+    "statuses": {
+      "scheduled": "Planlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "messages": {
+      "empty": "Henüz randevu yok."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Randevular",
+    "singular": "Randevu",
+    "unknownContact": "Bilinmeyen kişi",
+    "searchPlaceholder": "İsme göre ara...",
+    "tabs": {
+      "next": "Sonraki",
+      "past": "Geçmiş"
+    },
+    "fields": {
+      "name": "Ad",
+      "date": "Tarih",
+      "status": "Durum",
+      "calendar": "Takvim"
+    },
+    "statuses": {
+      "scheduled": "Planlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "actions": {
+      "cancelAppointment": "Randevuyu iptal et"
+    },
+    "dialogs": {
+      "cancelTitle": "Randevuyu iptal et",
+      "cancelDescription": "Bu randevuyu iptal edin ve iptal yan etkilerini çalıştırın.",
+      "deleteTitle": "Randevuyu sil",
+      "deleteDescription": "Bu randevuyu yönetim listesinden silin. Bu, iptal akışını çalıştırmaz."
+    },
+    "messages": {
+      "cancelled": "Randevu iptal edildi.",
+      "deleted": "Randevu silindi."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Randevu Takvimleri",
+    "singular": "Randevu Takvimi",
+    "addNew": "Yeni Ekle",
+    "none": "Yok",
+    "addReminder": "Hatırlatma Ekle",
+    "reminderSummary": "Hatırlatma Gönder - {calendar} {timing}.",
+    "noExternalConnections": "Henüz harici takvim bağlantısı yok",
+    "dialogDescriptions": {
+      "create": "Randevu takviminize başlamak için bir ad verin.",
+      "rename": "Bu randevu takvimini yeniden adlandırın."
+    },
+    "tabs": {
+      "calendars": "Takvimler",
+      "appointments": "Randevular",
+      "externalCalendars": "Harici Takvimler"
+    },
+    "sections": {
+      "appointment": "Randevunuz nedir",
+      "availability": "İnsanlar ne zaman randevu alabilir?",
+      "duration": "Randevunuz ne kadar sürer?",
+      "location": "Randevu nerede gerçekleşecek?",
+      "notifications": "Bildirimler",
+      "restrictions": "Kısıtlamalar",
+      "externalCalendar": "Google Takvim'i Bağla"
+    },
+    "fields": {
+      "description": "Açıklama",
+      "timezone": "Saat dilimi",
+      "locationType": "Konum Türü",
+      "locationDetail": "Detay",
+      "durationMinutes": "Randevu süresi",
+      "bufferAfterMinutes": "Randevularınızdan sonra süre ekleyin",
+      "scheduleWindowType": "Randevu alınabilir",
+      "rollingDays": "Hareketli Günler",
+      "minAdvanceDays": "Minimum kaç gün önceden",
+      "startDate": "Başlangıç Tarihi",
+      "endDate": "Bitiş Tarihi",
+      "specificDate": "Tarih",
+      "maxAppointmentsPerUser": "Kullanıcı başına maksimum randevu",
+      "dailyLimitEnabled": "Günlük limit",
+      "maxPerDay": "Gün Başına Maksimum",
+      "allowGroupMeeting": "Grup Toplantısına İzin Ver",
+      "maxPerSlot": "Aralık Başına Maksimum",
+      "confirmationMessage": "Onay Mesajı",
+      "confirmationFlowId": "Onay Akışı",
+      "cancellationFlowId": "İptal Akışı",
+      "externalConnectionId": "Harici Takvim",
+      "reminders": "Hatırlatmalar",
+      "reminderTimingValue": "Değer",
+      "reminderTimingUnit": "Birim"
+    },
+    "locationTypes": {
+      "inPerson": "Yüz Yüze Görüşme",
+      "phoneCall": "Telefon Görüşmesi",
+      "onlineMeeting": "Çevrimiçi Görüşme"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Gelecekteki hareketli günler içinde",
+      "dateRange": "Bir tarih aralığında",
+      "specificDay": "Belirli bir günde",
+      "anyFutureDate": "Gelecekteki herhangi bir tarihte"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Dakika önce",
+      "hours": "Saat önce",
+      "days": "Gün önce"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# dakika önce} other {# dakika önce}}",
+      "hours": "{count, plural, one {bir saat önce} other {# saat önce}}",
+      "days": "{count, plural, one {bir gün önce} other {# gün önce}}"
+    },
+    "weekdays": {
+      "0": "Pazar",
+      "1": "Pazartesi",
+      "2": "Salı",
+      "3": "Çarşamba",
+      "4": "Perşembe",
+      "5": "Cuma",
+      "6": "Cumartesi"
+    },
+    "weekdayEditor": {
+      "description": "Bu gün için uygun zaman aralıklarını ayarlayın.",
+      "unavailable": "Müsait Değil",
+      "overlapWarning": "Bazı aralıklar çakışıyor. Çakışan süre iki kez sayılmaz.",
+      "addInterval": "Aralık Ekle",
+      "startTime": "Başlangıç Saati",
+      "endTime": "Bitiş Saati"
+    },
+    "tooltips": {
+      "timezone": "Bu takvimi oluşturduğunuz saat dilimi. Kişiler uygunluğu kendi saat dilimlerine göre görür.",
+      "confirmationFlow": "Kullanıcı bir randevu aldığında gönderilen akış.",
+      "cancellationFlow": "Bir randevu iptal edildiğinde gönderilen akış.",
+      "reminders": "Davetliye randevuyu hatırlatmak için hatırlatmalar gönderin.",
+      "appointmentDuration": "Randevunuzun ne kadar süreceğini tanımlayın.",
+      "bufferAfterMinutes": "Randevularınızı tamamlamak için kendinize biraz tampon süre tanıyın.",
+      "peopleCanSchedule": "Toplantı kabul edebileceğiniz tarih aralığını ayarlayın.",
+      "maxAppointmentsPerUser": "Bir kullanıcının alabileceği maksimum gelecekteki randevu sayısı.",
+      "rollingDays": "Gelecekte kaç güne kadar randevu alınabileceğine izin verin",
+      "minAdvanceDays": "Randevuların en az bu kadar gün önceden alınmasını zorunlu kılın. Aynı gün randevu almaya izin vermek için 0 kullanın.",
+      "dailyLimit": "Günde randevu alabilecek maksimum kişi sayısı.",
+      "allowGroupMeeting": "Birden fazla kişinin aynı zaman aralığında randevu almasına izin verin.",
+      "externalCalendar": "Randevularınızı senkronize etmek için Google Takvim'i bağlayın."
+    },
+    "minutesLabel": "{count} dakika"
+  },
+  "externalCalendars": {
+    "title": "Harici Takvimler",
+    "connectGoogle": "Google'a Bağlan",
+    "emptyEmail": "E-posta yok",
+    "fields": {
+      "provider": "Sağlayıcı",
+      "email": "E-posta",
+      "calendarId": "Takvim ID",
+      "connected": "Bağlandı",
+      "date": "Tarih"
+    },
+    "providers": {
+      "googleCalendar": "Google Takvim"
+    },
+    "dialogs": {
+      "editTitle": "Takvim ID'sini Düzenle",
+      "editDescription": "Çakışmaları kontrol etmek ve randevu etkinlikleri oluşturmak için Google Takvim ID'sini seçin.",
+      "deleteTitle": "Takvim Bağlantısını Kes",
+      "deleteDescription": "Bu Google Takvim'in randevu planlamayla bağlantısını kesin."
+    },
+    "messages": {
+      "connected": "Google Takvim bağlandı.",
+      "connectFailed": "Google Takvim bağlanamadı. Google OAuth ayarlarını ve Takvim API erişimini kontrol edip tekrar deneyin.",
+      "calendarIdUpdated": "Takvim ID'si güncellendi.",
+      "disconnected": "Takvim bağlantısı kesildi."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Randevu Alma",
+    "comingSoonTitle": "Randevu alma sayfası yakında",
+    "comingSoonDescription": "Bu genel randevu alma sayfası henüz kullanılamıyor."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Messenger, Instagram ve WhatsApp konuşmalarından LeadSubmitted etkinliklerini Meta'ya gönderin.",
+    "datasetId": "Veri Kümesi ID",
+    "reconnect": "İzinleri yeniden bağla",
+    "connectViaFacebook": "Facebook üzerinden bağlan",
+    "unsupportedExplanation": "Bu Instagram hesabı Instagram Business Girişi ile bağlandı. Meta Conversions API'yi kullanmak için hesabı Facebook üzerinden bağlayın.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Messenger, Instagram veya WhatsApp için bir LeadSubmitted etkinliği kuyruğa alın.",
+      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Hazır",
+      "missingPermission": "İzin gerekli",
+      "unverified": "Doğrulanmadı",
+      "unsupported": "Desteklenmiyor",
+      "notConnected": "Bağlı değil"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Bu entegrasyon, Conversions API etkinlikleri için gereken Meta iznine sahip.",
+      "missingPermission": "Bu entegrasyonu yeniden bağlayın ve istenen Meta iznini verin.",
+      "unverified": "Platform uygulama ayarları kullanılamıyor, bu nedenle CAPI izni doğrulanamıyor.",
+      "unsupported": "Instagram için Meta Conversions API, Facebook için İşletme Girişi üzerinden bağlanmış bir hesap gerektirir.",
+      "notConnected": "Conversions API, reklamlarınızın performansını artırmak için Meta ile veri paylaşmanızı sağlayan bir Meta İş Aracıdır."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Meta CAPI yeniden bağlantısı başlatılamadı.",
+      "messengerNotFound": "Messenger entegrasyonu bulunamadı.",
+      "instagramNotFound": "Instagram entegrasyonu bulunamadı.",
+      "instagramRequiresFacebook": "Instagram CAPI, Facebook üzerinden bağlantı gerektirir.",
+      "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin.",
+      "datasetRequired": "Erişim jetonu eklemeden önce bir Veri Kümesi ID'si kaydedin.",
+      "invalidToken": "Bu jeton veri kümesine erişemedi.",
+      "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Etkinlik Türü",
+        "leadSubmitted": "Potansiyel Müşteri Gönderildi"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Değer",
+      "valuePlaceholder": "ör. 250",
+      "currency": "Para Birimi",
+      "currencyPlaceholder": "ör. USD",
+      "contentCategory": "İçerik Kategorisi",
+      "contentCategoryPlaceholder": "Etkinlikle ilişkili içeriğin kategorisi",
+      "contentName": "İçerik Adı",
+      "contentNamePlaceholder": "Etkinlikle ilişkili sayfanın veya ürünün adı"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Etkinlik Yöneticisi'nden Veri Kümesi ID'sini yapıştırın",
+    "saveDataset": "Kaydet",
+    "accessToken": "Erişim Jetonu (isteğe bağlı)",
+    "accessTokenHint": "Bağlı sayfa jetonu yerine kendi jetonunuzla etkinlik göndermek için Etkinlik Yöneticisi'nden bir jeton yapıştırın. Veri Kümesi ID'si gerektirir.",
+    "accessTokenPlaceholder": "Etkinlik Yöneticisi erişim jetonu",
+    "saveToken": "Jetonu kaydet",
+    "tokenSaved": "Jeton kaydedildi",
+    "removeToken": "Kaldır",
+    "saved": "Kaydedildi",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Etkinlikler, Etkinlik Yöneticisi'nde görünmesi ve Reklam Yöneticisi'nde Meta Potansiyel Müşterisi olarak gösterilmesi 40 dakikaya kadar sürebilir."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Bağlandı",
+    "disconnect": "Bağlantıyı Kes",
+    "openEventManager": "Etkinlik Yöneticisi'ni Aç",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "Facebook üzerinden bağlan",
+        "description": "Sayfanızın mevcut bağlantısını kullanın, ardından bir Veri Kümesi ID'si seçin.",
+        "connect": "Facebook üzerinden bağlan",
+        "connectedLabel": "Facebook üzerinden"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Özel bağlantı",
+        "description": "Meta Etkinlik Yöneticisi'nden bir Veri Kümesi ID'si ve erişim jetonu kullanın.",
+        "start": "Özel bağlantı kur",
+        "connect": "Bağlan",
+        "connectedLabel": "Özel"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "WhatsApp üzerinden bağlan",
+        "description": "WhatsApp bağlantınızı kullanın, ardından bir Veri Kümesi ID'si seçin.",
+        "connect": "WhatsApp üzerinden bağlan",
+        "connectedLabel": "WhatsApp üzerinden"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Bir Veri Kümesi ID'si seçin",
+      "description": "Mevcut bir Veri Kümesi ID'si girin veya otomatik olarak oluşturmak için boş bırakın.",
       "save": "Kaydet",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "Bu Sayfa veya Instagram hesabına bağlı olmayan bir Veri Kümesi ID'si etkinlikleri doğru şekilde ilişkilendirmeyebilir. Bağlı bir veri kümesini otomatik olarak oluşturmak için bu alanı boş bırakın."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Bağlan"
     }
   }
 }

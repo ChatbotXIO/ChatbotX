@@ -1,6 +1,10 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
-import { unsubscribePageFromAppWebhook } from "../src/apis/page"
+import {
+  ensureMessengerWhitelistedDomain,
+  normalizeMessengerWhitelistedDomain,
+  unsubscribePageFromAppWebhook,
+} from "../src/apis/page"
 
 const BASE = "https://graph.facebook.com"
 const VERSION = "v99.0"
@@ -47,5 +51,73 @@ describe("unsubscribePageFromAppWebhook", () => {
         version: VERSION,
       }),
     ).rejects.toThrow()
+  })
+})
+
+describe("ensureMessengerWhitelistedDomain", () => {
+  test("merges the https app origin into existing whitelisted domains", async () => {
+    const requests: Request[] = []
+    let postedBody: unknown = null
+    server.use(
+      http.get(`${BASE}/${VERSION}/me/messenger_profile`, ({ request }) => {
+        requests.push(request)
+        return HttpResponse.json({
+          whitelisted_domains: ["https://existing.example"],
+        })
+      }),
+      http.post(
+        `${BASE}/${VERSION}/me/messenger_profile`,
+        async ({ request }) => {
+          requests.push(request)
+          postedBody = await request.json()
+          return HttpResponse.json({ success: true })
+        },
+      ),
+    )
+
+    await ensureMessengerWhitelistedDomain({
+      ctx: {
+        auth: {
+          tokens: { accessToken: "page-token" },
+          version: VERSION,
+          metadata: { version: VERSION },
+        },
+        platform: { appUrl: "https://app.example.test/space/ws-1" },
+      } as never,
+    })
+
+    expect(requests).toHaveLength(2)
+    expect(postedBody).toEqual({
+      whitelisted_domains: [
+        "https://existing.example",
+        "https://app.example.test",
+      ],
+    })
+  })
+
+  test("skips non-https app URLs", async () => {
+    let called = false
+    server.use(
+      http.get(`${BASE}/${VERSION}/me/messenger_profile`, () => {
+        called = true
+        return HttpResponse.json({ whitelisted_domains: [] })
+      }),
+    )
+
+    await ensureMessengerWhitelistedDomain({
+      ctx: {
+        auth: {
+          tokens: { accessToken: "page-token" },
+          version: VERSION,
+          metadata: { version: VERSION },
+        },
+        platform: { appUrl: "http://localhost:3123" },
+      } as never,
+    })
+
+    expect(called).toBe(false)
+    expect(normalizeMessengerWhitelistedDomain("http://localhost:3123")).toBe(
+      undefined,
+    )
   })
 })

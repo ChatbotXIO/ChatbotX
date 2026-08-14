@@ -1779,6 +1779,12 @@
       "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
       "description": "Voeg een of meer gebeurtenisnamen toe. Wanneer Make een webhook aan een van deze gebeurtenissen koppelt, worden er gegevens naartoe gestuurd wanneer deze stap wordt uitgevoerd."
     },
+    "bookingCalendar": {
+      "label": "Boekingskalender"
+    },
+    "bookingDate": {
+      "label": "Boekingsdatum"
+    },
     "n8nEvents": {
       "label": "Gebeurtenissen",
       "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
@@ -2015,7 +2021,6 @@
       "broadcastActions": "Broadcastacties",
       "callApi": "Externe API-aanvraag",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Vragenlijsten",
       "setUpCoupon": "Kortingsbon instellen",
@@ -2044,7 +2049,6 @@
       "getResponseAddContact": "Contact toevoegen aan GetResponse",
       "sendGridAddContact": "Contact toevoegen aan SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Website openen",
       "optInEmail": "Aanmelden voor e-mail",
       "optOutEmail": "Afmelden voor e-mail",
@@ -2099,7 +2103,10 @@
       "splitTraffic": "Verkeer splitsen",
       "aiEditImage": "Afbeelding bewerken met AI",
       "whatsappFlow": "WhatsApp-flow",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Afspraken plannen",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2941,8 +2948,8 @@
     "reconnect": "Opnieuw koppelen",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "Algemene instellingen",
+      "conversionsApi": "Advertentie-optimalisatie"
     }
   },
   "coexist": {
@@ -3000,7 +3007,7 @@
     "tabs": {
       "generalSettings": "Algemene instellingen",
       "messageTemplates": "Berichtsjablonen",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Advertentie-optimalisatie"
     },
     "messageTemplate": {
       "params": {
@@ -3375,7 +3382,7 @@
       "messageTemplates": "Berichtsjablonen",
       "profile": "Profiel",
       "usefulLinks": "Nuttige links",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Advertentie-optimalisatie"
     },
     "accountHealths": {
       "title": "Je WhatsApp-account beheren",
@@ -3603,7 +3610,7 @@
       "startAnotherFlow": "Andere flow starten",
       "notifyAdmins": "Beheerders informeren",
       "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
     },
     "triggerGoesOff": "Trigger wordt geactiveerd",
     "before": "Voor",
@@ -4134,7 +4141,25 @@
   },
   "appointmentScheduling": {
     "title": "Afspraken plannen",
-    "description": "Maak en beheer je afsprakenplanning."
+    "description": "Maak en beheer je afsprakenplanning.",
+    "flowModes": {
+      "book": "Afspraak boeken",
+      "cancel": "Afspraak annuleren",
+      "checkAvailability": "Beschikbaarheid controleren"
+    },
+    "fields": {
+      "mode": "Modus",
+      "dateTimeFieldId": "Geselecteerde datum opslaan in",
+      "startDateFieldId": "Begindatum",
+      "endDateFieldId": "Einddatum",
+      "resultUsedByAI": "Resultaat gebruiken voor AI",
+      "outputCustomFieldId": "Antwoord opslaan in een aangepast veld",
+      "startDateFieldIdSelected": "Geselecteerde begindatum opslaan in",
+      "endDateFieldIdSelected": "Geselecteerde einddatum opslaan in"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Kies hoe deze flowstap afspraken plant."
+    }
   },
   "templates": {
     "title": "Sjablonen",
@@ -4688,100 +4713,353 @@
       "iconSearchLink": "Lucide-pictogrammen bekijken →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Afspraak boeken",
+    "badge": "Afspraak",
+    "timezone": "Tijdzone",
+    "empty": "Er zijn geen beschikbare tijden gevonden.",
+    "noSelection": "Kies een tijd",
+    "actions": {
+      "book": "Afspraak boeken",
+      "viewDetails": "Details bekijken"
+    },
+    "errors": {
+      "invalidTokenTitle": "Deze boekingslink is niet beschikbaar.",
+      "invalidTokenDescription": "De link is mogelijk ongeldig of verlopen. Vraag om een nieuwe boekingslink.",
+      "staleSlot": "Deze tijd is niet meer beschikbaar. Kies een andere tijd.",
+      "availabilityChanged": "De beschikbaarheid is gewijzigd terwijl je een tijd koos. Kies opnieuw.",
+      "submitFailed": "We konden dit verzoek niet voltooien. Probeer het opnieuw."
+    },
+    "success": {
+      "title": "Je afspraak is geboekt.",
+      "description": "De afspraakgegevens zijn klaar."
+    },
+    "schedule": {
+      "metadataTitle": "Afspraakgegevens",
+      "defaultMessage": "Je afspraak is ingepland.",
+      "unknownInvitee": "Gast",
+      "fields": {
+        "invitee": "Genodigde",
+        "time": "Tijd",
+        "timezone": "Tijdzone",
+        "location": "Locatie"
+      },
+      "status": {
+        "scheduled": "Gepland",
+        "cancelled": "Geannuleerd"
+      },
+      "locationTypes": {
+        "inPerson": "Persoonlijke afspraak",
+        "phoneCall": "Telefoongesprek",
+        "onlineMeeting": "Online afspraak"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Afspraak annuleren",
+      "title": "Afspraak annuleren",
+      "description": "Annuleer {calendar} om {time}.",
+      "action": "Afspraak annuleren",
+      "cancelledTitle": "Afspraak geannuleerd",
+      "cancelledDescription": "Deze afspraak is geannuleerd.",
+      "unavailableTitle": "Annuleren niet mogelijk",
+      "unavailableDescription": "Deze afspraak is al geannuleerd, verwijderd of ligt in het verleden."
+    },
+    "range": {
+      "metadataTitle": "Beschikbaarheid controleren",
+      "empty": "Niet geselecteerd",
+      "successTitle": "Datumbereik ontvangen.",
+      "successDescription": "We controleren de beschikbare afspraaktijden.",
+      "fields": {
+        "startDate": "Begindatum",
+        "endDate": "Einddatum",
+        "startTime": "Begintijd",
+        "endTime": "Eindtijd"
+      },
+      "actions": {
+        "skip": "Overslaan"
+      },
+      "errors": {
+        "invalidRange": "Einddatum moet op of na de begindatum liggen."
+      },
+      "timezoneHint": "Tijden worden weergegeven in {timezone}."
+    }
+  },
+  "appointments": {
+    "title": "Afspraken",
+    "statuses": {
+      "scheduled": "Gepland",
+      "cancelled": "Geannuleerd"
+    },
+    "messages": {
+      "empty": "Nog geen afspraken."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Afspraken",
+    "singular": "Afspraak",
+    "unknownContact": "Onbekend contact",
+    "searchPlaceholder": "Zoeken op naam...",
+    "tabs": {
+      "next": "Volgende",
+      "past": "Verleden"
+    },
+    "fields": {
+      "name": "Naam",
+      "date": "Datum",
+      "status": "Status",
+      "calendar": "Kalender"
+    },
+    "statuses": {
+      "scheduled": "Gepland",
+      "cancelled": "Geannuleerd"
+    },
+    "actions": {
+      "cancelAppointment": "Afspraak annuleren"
+    },
+    "dialogs": {
+      "cancelTitle": "Afspraak annuleren",
+      "cancelDescription": "Annuleer deze afspraak en voer de bijbehorende annuleringsacties uit.",
+      "deleteTitle": "Afspraak verwijderen",
+      "deleteDescription": "Verwijder deze afspraak uit de beheerlijst. De annuleringsflow wordt hierbij niet uitgevoerd."
+    },
+    "messages": {
+      "cancelled": "Afspraak geannuleerd.",
+      "deleted": "Afspraak verwijderd."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Afspraakkalenders",
+    "singular": "Afspraakkalender",
+    "addNew": "Nieuwe toevoegen",
+    "none": "Geen",
+    "addReminder": "Herinnering toevoegen",
+    "reminderSummary": "Herinnering verzenden - {calendar} {timing}.",
+    "noExternalConnections": "Nog geen externe kalenderkoppelingen",
+    "dialogDescriptions": {
+      "create": "Geef je afspraakkalender een naam om te beginnen.",
+      "rename": "Hernoem deze afspraakkalender."
+    },
+    "tabs": {
+      "calendars": "Kalenders",
+      "appointments": "Afspraken",
+      "externalCalendars": "Externe kalenders"
+    },
+    "sections": {
+      "appointment": "Wat is je afspraak",
+      "availability": "Wanneer kunnen mensen boeken?",
+      "duration": "Hoe lang duurt je afspraak?",
+      "location": "Waar vindt de afspraak plaats?",
+      "notifications": "Meldingen",
+      "restrictions": "Beperkingen",
+      "externalCalendar": "Google Calendar koppelen"
+    },
+    "fields": {
+      "description": "Beschrijving",
+      "timezone": "Tijdzone",
+      "locationType": "Locatietype",
+      "locationDetail": "Detail",
+      "durationMinutes": "Duur van de afspraak",
+      "bufferAfterMinutes": "Extra tijd na je afspraken toevoegen",
+      "scheduleWindowType": "Mensen kunnen boeken",
+      "rollingDays": "Voortschrijdende dagen",
+      "minAdvanceDays": "Minimum aantal dagen van tevoren",
+      "startDate": "Begindatum",
+      "endDate": "Einddatum",
+      "specificDate": "Datum",
+      "maxAppointmentsPerUser": "Maximum aantal afspraken per gebruiker",
+      "dailyLimitEnabled": "Dagelijkse limiet",
+      "maxPerDay": "Max. per dag",
+      "allowGroupMeeting": "Groepsafspraak toestaan",
+      "maxPerSlot": "Max. per tijdslot",
+      "confirmationMessage": "Bevestigingsbericht",
+      "confirmationFlowId": "Bevestigingsflow",
+      "cancellationFlowId": "Annuleringsflow",
+      "externalConnectionId": "Externe kalender",
+      "reminders": "Herinneringen",
+      "reminderTimingValue": "Waarde",
+      "reminderTimingUnit": "Eenheid"
+    },
+    "locationTypes": {
+      "inPerson": "Persoonlijke afspraak",
+      "phoneCall": "Telefoongesprek",
+      "onlineMeeting": "Online afspraak"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Binnen een voortschrijdend aantal dagen in de toekomst",
+      "dateRange": "Binnen een datumbereik",
+      "specificDay": "Eén specifieke dag",
+      "anyFutureDate": "Op elke datum in de toekomst"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minuten van tevoren",
+      "hours": "Uren van tevoren",
+      "days": "Dagen van tevoren"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minuut van tevoren} other {# minuten van tevoren}}",
+      "hours": "{count, plural, one {een uur van tevoren} other {# uur van tevoren}}",
+      "days": "{count, plural, one {een dag van tevoren} other {# dagen van tevoren}}"
+    },
+    "weekdays": {
+      "0": "Zondag",
+      "1": "Maandag",
+      "2": "Dinsdag",
+      "3": "Woensdag",
+      "4": "Donderdag",
+      "5": "Vrijdag",
+      "6": "Zaterdag"
+    },
+    "weekdayEditor": {
+      "description": "Stel de beschikbare tijdsintervallen voor deze dag in.",
+      "unavailable": "Niet beschikbaar",
+      "overlapWarning": "Sommige intervallen overlappen. Overlappende tijd wordt niet dubbel geteld.",
+      "addInterval": "Interval toevoegen",
+      "startTime": "Begintijd",
+      "endTime": "Eindtijd"
+    },
+    "tooltips": {
+      "timezone": "De tijdzone waarin je deze kalender maakt. Mensen zien de beschikbaarheid op basis van hun eigen tijdzone.",
+      "confirmationFlow": "De flow die wordt verzonden zodra de gebruiker een afspraak boekt.",
+      "cancellationFlow": "De flow die wordt verzonden zodra een afspraak wordt geannuleerd.",
+      "reminders": "Verstuur herinneringen om de genodigde aan de afspraak te herinneren.",
+      "appointmentDuration": "Bepaal hoe lang je afspraak duurt.",
+      "bufferAfterMinutes": "Geef jezelf wat extra tijd om geboekte afspraken af te ronden.",
+      "peopleCanSchedule": "Stel een periode in waarbinnen je afspraken accepteert.",
+      "maxAppointmentsPerUser": "Het maximum aantal toekomstige afspraken dat een gebruiker mag boeken.",
+      "rollingDays": "Sta boekingen toe tot hoeveel dagen in de toekomst",
+      "minAdvanceDays": "Vereis dat boekingen minimaal dit aantal dagen van tevoren worden gemaakt. Gebruik 0 om boekingen op dezelfde dag toe te staan.",
+      "dailyLimit": "Het maximum aantal mensen dat per dag mag boeken.",
+      "allowGroupMeeting": "Sta toe dat meerdere mensen hetzelfde tijdslot boeken.",
+      "externalCalendar": "Koppel Google Calendar om je afspraken te synchroniseren."
+    },
+    "minutesLabel": "{count} minuten"
+  },
+  "externalCalendars": {
+    "title": "Externe kalenders",
+    "connectGoogle": "Google koppelen",
+    "emptyEmail": "Geen e-mailadres",
+    "fields": {
+      "provider": "Provider",
+      "email": "E-mail",
+      "calendarId": "Kalender-ID",
+      "connected": "Gekoppeld",
+      "date": "Datum"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Kalender-ID bewerken",
+      "editDescription": "Kies de Google Calendar-ID om conflicten te controleren en afspraakevenementen te maken.",
+      "deleteTitle": "Kalender loskoppelen",
+      "deleteDescription": "Koppel deze Google Calendar los van de afsprakenplanning."
+    },
+    "messages": {
+      "connected": "Google Calendar gekoppeld.",
+      "connectFailed": "Google Calendar kan niet worden gekoppeld. Controleer de Google OAuth-instellingen en de toegang tot de Calendar API en probeer het opnieuw.",
+      "calendarIdUpdated": "Kalender-ID bijgewerkt.",
+      "disconnected": "Kalender losgekoppeld."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Boeking",
+    "comingSoonTitle": "Boekingspagina binnenkort beschikbaar",
+    "comingSoonDescription": "Deze openbare boekingspagina is nog niet beschikbaar."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Verstuur LeadSubmitted-gebeurtenissen vanuit Messenger-, Instagram- en WhatsApp-gesprekken naar Meta.",
+    "datasetId": "Dataset-ID",
+    "reconnect": "Machtigingen opnieuw koppelen",
+    "connectViaFacebook": "Koppelen via Facebook",
+    "unsupportedExplanation": "Dit Instagram-account is gekoppeld met Instagram Business Login. Koppel het account via Facebook om Meta Conversions API te kunnen gebruiken.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Plaats een LeadSubmitted-gebeurtenis in de wachtrij voor Messenger, Instagram of WhatsApp.",
+      "whatsappNote": "WhatsApp-gebeurtenissen worden alleen verzonden voor gesprekken die zijn gestart vanuit een click-to-WhatsApp-advertentie."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Gereed",
+      "missingPermission": "Machtiging vereist",
+      "unverified": "Niet geverifieerd",
+      "unsupported": "Niet ondersteund",
+      "notConnected": "Niet gekoppeld"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Deze integratie heeft de vereiste Meta-machtiging voor Conversions API-gebeurtenissen.",
+      "missingPermission": "Koppel deze integratie opnieuw en verleen de gevraagde Meta-machtiging.",
+      "unverified": "De platforminstellingen van de app zijn niet beschikbaar, waardoor de CAPI-machtiging niet kan worden geverifieerd.",
+      "unsupported": "Meta Conversions API voor Instagram vereist een account dat is gekoppeld via Facebook Login for Business.",
+      "notConnected": "De Conversions API is een Meta Business Tool waarmee je gegevens met Meta kunt delen om de prestaties van advertenties te verbeteren."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Het opnieuw koppelen van Meta CAPI kon niet worden gestart.",
+      "messengerNotFound": "Messenger-integratie niet gevonden.",
+      "instagramNotFound": "Instagram-integratie niet gevonden.",
+      "instagramRequiresFacebook": "Instagram CAPI vereist koppelen via Facebook.",
+      "saveFailed": "Opslaan is mislukt. Probeer het opnieuw.",
+      "datasetRequired": "Sla een Dataset-ID op voordat je een toegangstoken toevoegt.",
+      "invalidToken": "Dit token kreeg geen toegang tot de dataset.",
+      "whatsappNotFound": "WhatsApp-integratie niet gevonden."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Gebeurtenistype",
+        "leadSubmitted": "Lead ingediend"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Waarde",
+      "valuePlaceholder": "bijv. 250",
+      "currency": "Valuta",
+      "currencyPlaceholder": "bijv. USD",
+      "contentCategory": "Contentcategorie",
+      "contentCategoryPlaceholder": "De categorie van de content die bij de gebeurtenis hoort",
+      "contentName": "Contentnaam",
+      "contentNamePlaceholder": "De naam van de pagina of het product dat bij de gebeurtenis hoort"
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Plak de Dataset-ID uit Events Manager",
+    "saveDataset": "Opslaan",
+    "accessToken": "Toegangstoken (optioneel)",
+    "accessTokenHint": "Plak een token uit Events Manager om gebeurtenissen te versturen met je eigen token in plaats van het gekoppelde paginatoken. Vereist een Dataset-ID.",
+    "accessTokenPlaceholder": "Toegangstoken van Events Manager",
+    "saveToken": "Token opslaan",
+    "tokenSaved": "Token opgeslagen",
+    "removeToken": "Verwijderen",
+    "saved": "Opgeslagen",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Het kan tot 40 minuten duren voordat gebeurtenissen verschijnen in Events Manager en als Meta Leads worden weergegeven in Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Gekoppeld",
+    "disconnect": "Loskoppelen",
+    "openEventManager": "Event Manager openen",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
+        "title": "Koppelen via Facebook",
+        "description": "Gebruik de bestaande koppeling van je pagina en kies daarna een Dataset-ID.",
+        "connect": "Koppelen via Facebook",
         "connectedLabel": "via Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Aangepaste koppeling",
+        "description": "Gebruik een Dataset-ID en een toegangstoken uit Meta Events Manager.",
+        "start": "Aangepaste koppeling instellen",
+        "connect": "Koppelen",
+        "connectedLabel": "Aangepast"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
+        "title": "Koppelen via WhatsApp",
+        "description": "Gebruik je WhatsApp-koppeling en kies daarna een Dataset-ID.",
+        "connect": "Koppelen via WhatsApp",
         "connectedLabel": "via WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Kies een Dataset-ID",
+      "description": "Voer een bestaande Dataset-ID in, of laat dit veld leeg om er automatisch een aan te maken.",
       "save": "Opslaan",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "caveat": "Een Dataset-ID die niet aan deze pagina of dit Instagram-account is gekoppeld, kan gebeurtenissen mogelijk niet correct toewijzen. Laat dit veld leeg om automatisch een gekoppelde dataset aan te maken."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Koppelen"
     }
   }
 }

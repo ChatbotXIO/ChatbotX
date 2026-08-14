@@ -1,5 +1,8 @@
 "use client"
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import {
+  type CustomFieldType,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
@@ -29,6 +32,7 @@ type CreateCustomFieldDialogProps = {
   triggerButton?: ReactElement
   onSuccess?: () => void
   modal?: boolean
+  defaultType?: CustomFieldType
 }
 
 export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
@@ -40,6 +44,7 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
     folderId,
     triggerButton,
     modal = true,
+    defaultType,
     onSuccess = () => {
       router.refresh()
     },
@@ -72,6 +77,7 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
         </DialogHeader>
 
         <CreateCustomFieldForm
+          defaultType={defaultType}
           folderId={folderId}
           onClose={() => setOpen(false)}
           onSuccess={() => {
@@ -88,11 +94,13 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
 function CreateCustomFieldForm({
   workspaceId,
   folderId,
+  defaultType = "shortText",
   onSuccess,
   onClose,
 }: {
   workspaceId: string
   folderId: string | null
+  defaultType?: CustomFieldType
   onSuccess?: () => void
   onClose?: () => void
 }) {
@@ -154,7 +162,7 @@ function CreateCustomFieldForm({
           mode: "onChange",
           defaultValues: {
             name: "",
-            type: "shortText",
+            type: defaultType,
             description: "",
             folderId: null,
           },

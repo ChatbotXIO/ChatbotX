@@ -153,6 +153,8 @@ export type MessageButtonTemplate = {
   | {
       buttonType: "url"
       url: string
+      /** Enables Messenger Extensions in Facebook/Messenger webviews. */
+      messengerExtensions?: boolean
       /** Encoded flow payload for channels that cannot render URL quick replies. */
       postback?: string
     }

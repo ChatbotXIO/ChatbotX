@@ -20,6 +20,7 @@ import {
 import { logger } from "../../lib/logger"
 import { syncActiveCampaignContact } from "./active-campaign-handler"
 import { handleAIAnalyzeImage } from "./analyze-image"
+import { appointmentScheduling } from "./appointment-scheduling"
 import { handleCondition } from "./condition"
 import {
   addContactNotes,
@@ -116,18 +117,21 @@ export async function sendFlowMessage(
     quickReplies,
     sendFrom,
     commentAnchor,
+    appointmentId,
   } = props
   await enqueueFlowStepMessage({
     conversationId: conversation.id,
     contactInboxId: props.contactInbox.id,
     flowId: flowVersion.flowId,
     flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
+    executedFlowVersionId: flowVersion.id,
     step,
     trackingContext,
     metadata,
     quickReplies,
     sendFrom,
     commentAnchor,
+    appointmentId,
   })
 }
 
@@ -141,6 +145,7 @@ async function splitTraffic({
   sendFrom,
   nodeVisits,
   commentAnchor,
+  appointmentId,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -174,6 +179,7 @@ async function splitTraffic({
         sendFrom,
         nodeVisits,
         commentAnchor,
+        appointmentId,
         origin: webhookChannelOrigin(),
       },
     })
@@ -197,6 +203,7 @@ async function handleWait({
   useLatestFlowVersion,
   metadata,
   sendFrom,
+  appointmentId,
 }: ExecuteStepProps<WaitStepSchema>): Promise<ExecuteStepResult> {
   if (!(targetId && step)) {
     return { status: "skip", result: null }
@@ -249,6 +256,7 @@ async function handleWait({
     stepId: step.id,
     metadata,
     sendFrom,
+    appointmentId,
   })
 
   return { status: "wait", result: null }
@@ -266,6 +274,7 @@ async function startAnotherNode(
       flowVersionId: props.flowVersion.id,
       nodeId: props.step.nodeId,
       metadata: props.metadata,
+      appointmentId: props.appointmentId,
       sendFrom: props.sendFrom,
       nodeVisits: props.nodeVisits,
       commentAnchor: props.commentAnchor,
@@ -282,6 +291,7 @@ async function startExternalFlow({
   sendFrom,
   nodeVisits,
   commentAnchor,
+  appointmentId,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -290,6 +300,7 @@ async function startExternalFlow({
       contactInboxId: contactInbox.id,
       flowId: step.flowId,
       metadata,
+      appointmentId,
       sendFrom,
       nodeVisits,
       commentAnchor,
@@ -306,6 +317,7 @@ async function startExternalNode({
   sendFrom,
   nodeVisits,
   commentAnchor,
+  appointmentId,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -315,6 +327,7 @@ async function startExternalNode({
       flowId: step.flowId,
       nodeId: step.nodeId,
       metadata,
+      appointmentId,
       sendFrom,
       nodeVisits,
       commentAnchor,
@@ -414,6 +427,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.followUp]: handleFollowUp,
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
+  [stepTypes.enum.appointmentScheduling]: appointmentScheduling,
   [stepTypes.enum.questionnaires]: questionnaires,
   [stepTypes.enum.setUpCoupon]: setUpCoupon,
   [stepTypes.enum.markCouponUsed]: markCouponUsed,

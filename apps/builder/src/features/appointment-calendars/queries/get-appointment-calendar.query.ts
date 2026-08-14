@@ -1,0 +1,10 @@
+import { appointmentCalendarService } from "@chatbotx.io/business"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+
+export async function getAppointmentCalendar(input: {
+  workspaceId: string
+  id: string
+}) {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+  return await appointmentCalendarService.getForEdit(input)
+}
