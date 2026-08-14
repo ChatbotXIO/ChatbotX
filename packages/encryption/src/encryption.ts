@@ -90,15 +90,6 @@ const encode = (text: string): Uint8Array<ArrayBuffer> =>
 const decode = (bytes: Uint8Array<ArrayBuffer>): string =>
   new TextDecoder().decode(bytes)
 
-const assertMatchingAad = (
-  encryptedAad: string | undefined,
-  providedAad: string | undefined,
-): void => {
-  if (encryptedAad !== providedAad) {
-    throw new Error("AAD mismatch.")
-  }
-}
-
 const buildAlgorithm = (
   iv: Uint8Array<ArrayBuffer>,
   aad?: string,
@@ -137,7 +128,6 @@ export const encryptUtils = {
     aad?: string,
   ): Promise<string> => {
     assertCurrentVersion(encryptedData.v)
-    assertMatchingAad(encryptedData.aad, aad)
     const key = await getKey(encryptedData.kid)
     const iv = hexToBytes(encryptedData.iv)
     // Web Crypto expects ciphertext + tag concatenated as a single buffer
@@ -145,8 +135,9 @@ export const encryptUtils = {
       hexToBytes(encryptedData.text),
       hexToBytes(encryptedData.tag),
     )
+    const resolvedAad = aad ?? encryptedData.aad
     const raw = await crypto.subtle.decrypt(
-      buildAlgorithm(iv, aad),
+      buildAlgorithm(iv, resolvedAad),
       key,
       combined,
     )

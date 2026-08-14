@@ -43,6 +43,7 @@
     "disableBot": "ボットを無効化",
     "disconnect": "接続を解除",
     "download": "ダウンロード",
+    "downloadTemplate": "テンプレートをダウンロード",
     "edit": "編集",
     "editFeature": "{feature}を編集",
     "enableBot": "ボットを有効化",
@@ -145,6 +146,9 @@
     "clone": "複製",
     "remove": "削除",
     "restore": "復元"
+  },
+  "errors": {
+    "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
   },
   "states": {
     "success": "成功",
@@ -536,6 +540,8 @@
       "blocked": "ブロック済み",
       "noAdminReply": "管理者からの返信なし",
       "contactCreatedAt": "連絡先の作成日時",
+      "fromCtwaAd": "Click to WhatsApp広告経由",
+      "ctwaConversion": "CTWAコンバージョン",
       "lastUserInputTypes": {
         "text": "テキスト",
         "location": "位置情報",
@@ -545,6 +551,10 @@
         "audio": "音声",
         "gif": "GIF",
         "file": "ファイル"
+      },
+      "ctwaConversionTypes": {
+        "lead": "リード",
+        "purchase": "購入"
       }
     },
     "fieldGroups": {
@@ -559,7 +569,8 @@
       "topicCoupon": "クーポントピック",
       "customFields": "カスタムフィールド",
       "email": "メール",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp広告"
     },
     "languages": {
       "ar": "アラビア語",
@@ -595,6 +606,15 @@
       "webchat": "Webチャット",
       "botLink": "ボットリンク",
       "chatPlugin": "カスタマーチャットプラグイン"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA会話開始者",
+        "leads": "CTWA有効リード",
+        "purchases": "CTWA購入者"
+      },
+      "adPrefix": "広告",
+      "allAds": "すべての広告"
     }
   },
   "fields": {
@@ -1944,6 +1964,11 @@
       "label": "イベント",
       "placeholder": "イベント名を入力してEnterキーを押してください",
       "description": "1つ以上のイベント名を追加します。MakeがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
+    },
+    "n8nEvents": {
+      "label": "イベント",
+      "placeholder": "イベント名を入力してEnterキーを押してください",
+      "description": "1つ以上のイベント名を追加します。n8nがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
     }
   },
   "flows": {
@@ -1990,6 +2015,7 @@
       "broadcastActions": "一斉配信アクション",
       "callApi": "外部APIリクエスト",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "トリガー",
       "questionnaires": "アンケート",
       "setUpCoupon": "クーポンを設定",
@@ -2018,6 +2044,7 @@
       "getResponseAddContact": "連絡先をGetResponseに追加",
       "sendGridAddContact": "連絡先をSendGridに追加",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Webサイトを開く",
       "optInEmail": "メール配信に登録",
       "optOutEmail": "メール配信を解除",
@@ -2071,7 +2098,8 @@
       "unsubscribeSequence": "シーケンスを解除",
       "splitTraffic": "トラフィックを分割",
       "aiEditImage": "AIで画像を編集",
-      "whatsappFlow": "WhatsAppフロー"
+      "whatsappFlow": "WhatsAppフロー",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2103,6 +2131,11 @@
       "selectCustomFieldPlaceholder": "カスタムフィールドを選択",
       "addMapping": "マッピングを追加",
       "addCustomField": "新規追加"
+    },
+    "sendCarousel": {
+      "addSlide": "スライドを追加",
+      "removeSlide": "スライドを削除",
+      "whatsappLinkButtonIgnored": "WhatsAppでは、このカードのリンクは機能しません。リンクボタンを含むカードには他のボタンを設定できません。代わりに返信として送信されます。"
     },
     "additionalSteps": "追加ステップ",
     "delayType": {
@@ -2216,6 +2249,207 @@
     },
     "errors": {
       "invalidAppSettings": "Facebookアプリの設定が無効です"
+    }
+  },
+  "ads": {
+    "title": "広告",
+    "nav": {
+      "clickToWhatsappAds": "Click to WhatsApp広告",
+      "clickToTiktokAds": "Click to TikTok広告",
+      "connectAccounts": "アカウントを接続",
+      "conversionEvents": "コンバージョンイベント",
+      "adsAnalytics": "広告分析",
+      "reporting": "レポート",
+      "ctwa": "CTWA",
+      "googleAds": "Google広告",
+      "comingSoon": "近日公開"
+    },
+    "connectAccounts": {
+      "title": "すべての広告アカウントを管理",
+      "description": "コンバージョンを追跡し、Click to WhatsApp広告キャンペーンを最適化しましょう。",
+      "learnMore": "詳しくはこちら",
+      "connectAdAccount": "広告アカウントを接続",
+      "adAccountName": "広告アカウント名",
+      "disconnect": "接続解除",
+      "empty": "広告アカウントはまだ接続されていません。",
+      "adAccountsTitle": "Meta広告アカウント",
+      "adAccountsDescription": "Facebook広告を接続して、Click to WhatsAppキャンペーンで使用する広告アカウントを読み込みます。",
+      "adAccountsReconnectBanner": "Meta広告アカウントのトークンが期限切れ、または権限が失われました。広告レポートを利用できる状態に保つには、Facebook広告を再接続してください。",
+      "adAccountsNotConnected": "Meta広告アカウントはまだ接続されていません。",
+      "adAccountsEmpty": "このFacebook広告の接続では、Meta広告アカウントが見つかりませんでした。",
+      "adAccountsNote": "広告費とリターゲティングオーディエンスは、これらの広告アカウントから取得されます。",
+      "reconnectBanner": "コンバージョンイベントをMetaに送信できるようにするには、WhatsAppアカウントを再接続してください。",
+      "reconnect": "再接続",
+      "reconnectSuccess": "WhatsAppアカウントを再接続しました。",
+      "selectAccountLabel": "WhatsAppアカウント",
+      "status": {
+        "ready": "自動イベントの準備が完了しています",
+        "missingPermission": "自動イベントの権限がありません",
+        "unverified": "権限が未確認です"
+      },
+      "table": {
+        "name": "名前",
+        "phoneNumber": "電話番号",
+        "wabaId": "WABA ID",
+        "permission": "自動イベント"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google広告",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "まずWhatsAppアカウントを接続してください",
+        "description": "Click to WhatsAppのコンバージョン追跡を行うには、広告アカウントを連携してコンバージョンデータセットを作成する前に、WhatsAppアカウントを接続しておく必要があります。",
+        "step1": "「チャネル」でWhatsApp Businessアカウントを接続します。",
+        "step2": "ここに戻ってMeta広告を承認し、広告アカウントを選択します。",
+        "step3": "お使いのWhatsApp Businessアカウントを使用して、コンバージョンデータセットを自動的に作成します。",
+        "cta": "WhatsAppアカウントを接続"
+      }
+    },
+    "conversionEvents": {
+      "title": "コンバージョンイベント",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "広告アカウントを管理",
+      "export": "エクスポート",
+      "selectAll": "すべて選択",
+      "whatsappAsset": "WhatsAppアセット",
+      "selectWhatsappAsset": "WhatsAppアセットを選択",
+      "templates": "テンプレート",
+      "selectTemplates": "テンプレートを選択",
+      "noTemplates": "承認済みのテンプレートが見つかりません。",
+      "existingRules": "既存のルール",
+      "noRules": "このWhatsAppアセットのコンバージョンルールはまだありません。",
+      "toggleRule": "ルールを有効化・無効化",
+      "deleteRule": "ルールを削除",
+      "qualifyingTemplateMessageSent": "対象のテンプレートメッセージが送信されたとき",
+      "qualifyingFirstReply": "連絡先が最初のメッセージを送信したとき",
+      "qualifyingAnyReply": "連絡先がメッセージを送信したとき",
+      "when": "条件",
+      "whenOptions": {
+        "templateSent": "対象のテンプレートメッセージが送信されたとき",
+        "tagApplied": "連絡先にタグが付けられたとき",
+        "keywordMatched": "連絡先のメッセージがキーワードルールに一致したとき",
+        "contactReplied": "連絡先がメッセージを送信したとき"
+      },
+      "tags": "タグ",
+      "selectTags": "タグを選択",
+      "noTags": "タグが見つかりません。",
+      "untitledKeywordRule": "（無題のキーワードルール）",
+      "keywordRules": "キーワードルール",
+      "selectKeywordRules": "キーワードルールを選択",
+      "noKeywordRules": "受信キーワードルールが見つかりません。",
+      "replyOptions": "返信オプション",
+      "firstReplyOnly": "最初のメッセージのみ",
+      "dedupeNote": "1つの会話・ルールにつき、1日最大1件のイベントのみ記録されます。",
+      "dealWon": "成約",
+      "eventTypeLead": "リード",
+      "eventTypePurchase": "購入",
+      "messages": {
+        "ruleSaved": "コンバージョンルールを保存しました",
+        "ruleUpdated": "コンバージョンルールを更新しました",
+        "ruleDeleted": "コンバージョンルールを削除しました"
+      },
+      "mockAdAccount": "バナナ 1",
+      "mockPages": {
+        "page1": "ページ 1",
+        "page2": "ページ 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "有効リードを追跡",
+        "question": "会話のどの時点で、連絡先をリードとして認定しますか？",
+        "when": "条件",
+        "then": "CTWAリードのマーク方法"
+      },
+      "trackPurchases": {
+        "title": "購入を追跡",
+        "question": "どのテンプレートで購入を確認しますか？",
+        "when": "条件",
+        "then": "アクション",
+        "noValueNote": "ルールベースの購入は、注文金額なしで購入コンバージョンとして記録されます。購入件数には反映されますが、売上には0として加算されます。注文金額はMetaの自動イベントでのみ取得されます。"
+      }
+    },
+    "analytics": {
+      "title": "CTWA分析",
+      "funnelOverview": "ファネル概要",
+      "conversationsStarted": "開始された会話",
+      "qualifiedLeads": "有効リード",
+      "purchases": "購入",
+      "adSpend": "広告費",
+      "spendAccountLevelNote": "広告費はMeta広告アカウント単位で集計されます。WhatsAppアカウントを選択している場合、そのアカウントでファネル上の動きがなく広告費のみ発生した広告は非表示になります。",
+      "revenue": "収益",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "収益は単一通貨（USD）を前提としています。複数通貨の広告アカウントはまだ集計対象外です。",
+      "costPerLead": "リード獲得単価",
+      "costPerPurchase": "購入獲得単価",
+      "impressions": "インプレッション",
+      "clicks": "クリック",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "会話獲得単価",
+      "costCurrencyNote": "コスト指標は広告費と同様に単一通貨（USD）を前提としています。",
+      "performanceChart": {
+        "title": "期間別パフォーマンス",
+        "empty": "この期間には会話、リード、購入、広告費のデータがまだありません。"
+      },
+      "dateRange": {
+        "oneDay": "1日",
+        "oneWeek": "1週間",
+        "oneMonth": "1か月",
+        "threeMonths": "3か月",
+        "custom": "カスタム",
+        "apply": "適用"
+      },
+      "allAds": "すべての広告",
+      "adAccountFilter": {
+        "all": "すべての広告アカウント",
+        "label": "広告アカウント",
+        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
+      },
+      "retarget": "リターゲット",
+      "thoseWhoPurchased": "購入したユーザー",
+      "thoseWhoStartedConversation": "会話を開始したユーザー",
+      "sendWhatsappBroadcast": "WhatsApp一斉配信を送信",
+      "from": "開始",
+      "to": "終了",
+      "unattributed": "帰属先不明",
+      "retargetDialog": {
+        "title": "CTWA連絡先をリターゲット",
+        "createAudience": "オーディエンスを作成",
+        "useExistingAudience": "既存のオーディエンスを使用",
+        "audienceName": "オーディエンス名",
+        "audiencePrefix": "CTWA",
+        "confirm": "同期を開始",
+        "success": "リターゲットオーディエンスの同期をキューに追加しました。",
+        "error": "リターゲットオーディエンスの同期をキューに追加できませんでした。"
+      },
+      "delivery": {
+        "title": "コンバージョンの配信状況",
+        "sent": "送信済み",
+        "pending": "保留中",
+        "failed": "失敗",
+        "skippedNoScope": "スキップ（権限なし）",
+        "skippedRegion": "スキップ（地域）",
+        "noScopeWarning": "このWhatsAppアカウントにイベント権限がないため、一部のコンバージョンが送信されませんでした。自動イベントレポートを有効にするには、再接続してください。",
+        "reconnectCta": "アカウントを再接続",
+        "empty": "この期間のコンバージョンイベントはまだありません。"
+      },
+      "export": {
+        "conversations": "会話をエクスポート",
+        "leads": "リードをエクスポート",
+        "purchases": "購入をエクスポート"
+      },
+      "csv": {
+        "contactName": "連絡先名",
+        "phone": "電話番号",
+        "adId": "広告ID",
+        "occurredAt": "発生日時"
+      },
+      "empty": "データはまだありません。広告アカウントを接続してコンバージョンの追跡を開始しましょう。"
     }
   },
   "googleSheets": {
@@ -2675,6 +2909,8 @@
     "noVersionsFound": "公開済みバージョンが見つかりません",
     "publishVersionSuccess": "新しいバージョンを公開しました",
     "flowConfigIncomplete": "一部の設定が未完了です",
+    "whatsappCarouselButtonsMismatch": "WhatsAppでは、カルーセルのすべてのカードに同じボタンが必要です。各カードに1つのリンクボタンを設定するか、各カードに同じ数の返信ボタンを設定してください",
+    "whatsappCarouselLinkButtonNotAlone": "WhatsAppでは、リンクボタンを含むカルーセルカードに他のボタンを設定できません。そのカードの他のボタンを削除するか、リンクボタンを別のアクションに変更してください。",
     "duplicateNodeError": "ブロックを複製できませんでした。もう一度お試しください。",
     "deleteNodeError": "ブロックを削除できませんでした。もう一度お試しください。",
     "redoHistoryCleared": "やり直し履歴を消去しました",
@@ -2687,7 +2923,11 @@
     "iceBreakers": "会話のきっかけ",
     "iceBreakersDescription": "よくある質問の一覧を表示し、ユーザーがボットとの会話を始めやすくします。",
     "reconnect": "再接続",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "既存の連絡先とチャット履歴を同期しますか？",
@@ -2743,7 +2983,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "一般設定",
-      "messageTemplates": "メッセージテンプレート"
+      "messageTemplates": "メッセージテンプレート",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3037,6 +3278,13 @@
         "wabaResolveFailed": "認証情報からWhatsApp Businessアカウントを特定できませんでした。"
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp連携が見つかりません。",
+        "phoneNumberMismatch": "再接続では想定していたWhatsApp Businessアカウントが返されましたが、このワークスペースに接続されている電話番号とは一致しませんでした。",
+        "wabaMismatch": "再接続で異なるWhatsApp Businessアカウントが返されました。同じアカウントで再接続してください。"
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3073,6 +3321,7 @@
         "quickReplyPayloadPlaceholder": "ペイロードを入力（任意）",
         "flowToken": "フロートークン",
         "flowTokenPlaceholder": "フロートークンを入力",
+        "flowNotSynced": "送信されたフィールドをマッピングするには、WhatsAppフローを同期してください。",
         "catalogProductId": "商品ID",
         "catalogProductIdPlaceholder": "小売業者の商品IDを入力",
         "carouselCard": "カード{index}",
@@ -3109,7 +3358,8 @@
       "flows": "フロー",
       "messageTemplates": "メッセージテンプレート",
       "profile": "プロフィール",
-      "usefulLinks": "便利なリンク"
+      "usefulLinks": "便利なリンク",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3336,7 +3586,8 @@
       "clearCustomField": "カスタムフィールドをクリア",
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
-      "transferConversationToHuman": "会話を担当者に転送"
+      "transferConversationToHuman": "会話を担当者に転送",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -3374,7 +3625,10 @@
     "title": "監査ログ"
   },
   "customFields": {
-    "title": "カスタムフィールド"
+    "title": "カスタムフィールド",
+    "variables": {
+      "rawGroup": "生のカスタムフィールド"
+    }
   },
   "keywords": {
     "title": "キーワード",
@@ -4432,6 +4686,102 @@
       "iconPlaceholder": "例：book-open、star、circle-question-mark",
       "position": "表示順",
       "iconSearchLink": "Lucideアイコンを探す →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "保存",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

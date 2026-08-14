@@ -206,11 +206,15 @@ describe("webchat authorized domains", () => {
     )
   })
 
-  test("rejects mismatched or missing origins when domains are configured", () => {
+  test("rejects mismatched origins when domains are configured", () => {
     expect(isOriginAuthorized("https://attacker.test", ["example.com"])).toBe(
       false,
     )
-    expect(isOriginAuthorized(null, ["example.com"])).toBe(false)
+  })
+
+  test("allows a missing origin even when domains are configured (direct, non-embedded access)", () => {
+    expect(isOriginAuthorized(null, ["example.com"])).toBe(true)
+    expect(isOriginAuthorized(undefined, ["example.com"])).toBe(true)
   })
 
   test("extracts a parent origin from a webchat referer URL", () => {

@@ -27,6 +27,9 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  inboxService: {
+    distinctConnectedChannels: vi.fn(async () => []),
+  },
   tenantService: {
     resolveVisibleChannels: mockResolveVisibleChannels,
   },

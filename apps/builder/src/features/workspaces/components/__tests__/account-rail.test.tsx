@@ -65,6 +65,10 @@ vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
   ),
 }))
 
+// Hoisted so the heavy first import of the component graph happens during
+// collection, not inside the first test's timeout budget under parallel load.
+const { AccountRail } = await import("../account-rail")
+
 const BASE_USER = { name: "Jane Doe", email: "jane@example.test", image: null }
 
 describe("account rail", () => {
@@ -95,7 +99,6 @@ describe("account rail", () => {
     }> = {},
   ) {
     isCloud.mockReturnValue(props.cloud ?? false)
-    const { AccountRail } = await import("../account-rail")
     const element = await AccountRail({
       user: BASE_USER,
       isSuperAdmin: props.isSuperAdmin,

@@ -46,9 +46,7 @@ export function SelectPage({
     const resolvedWorkspaceId = coexist?.resolvedWorkspaceId ?? workspaceId
     setCoexist(null)
     if (resolvedWorkspaceId) {
-      router.push(
-        `/space/${resolvedWorkspaceId}/settings/channels?channel=messenger`,
-      )
+      router.push(`/space/${resolvedWorkspaceId}/settings/channels/messenger`)
     } else {
       router.push(referer)
     }

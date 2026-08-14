@@ -2,7 +2,10 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { WhatsappMessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
 import { whatsappMessageTemplateService } from "@/features/integration-whatsapp/message-templates/queries"
-import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
+import {
+  findIntegrationWhatsapp,
+  toIntegrationWhatsappLinkable,
+} from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function WhatsappMessageTemplatePage(props: {
@@ -28,7 +31,7 @@ export default async function WhatsappMessageTemplatePage(props: {
   return (
     <Suspense>
       <WhatsappMessageTemplatesTable
-        integrationWhatsapp={integrationWhatsapp}
+        integrationWhatsapp={toIntegrationWhatsappLinkable(integrationWhatsapp)}
         promises={promises}
       />
     </Suspense>

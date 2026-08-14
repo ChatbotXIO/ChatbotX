@@ -71,6 +71,7 @@ vi.mock("@chatbotx.io/redis", () => ({
   distributedLock: {
     runExclusive: vi.fn(async ({ fn }: { fn: () => unknown }) => fn()),
   },
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 
 // These suites exercise the quota-driven create path; the community

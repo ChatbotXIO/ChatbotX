@@ -11,6 +11,7 @@ export type AdsConversionRuleModel =
   typeof schema.adsConversionRuleModel.$inferSelect
 export type AdsConversionEventModel =
   typeof schema.adsConversionEventModel.$inferSelect
+export type MetaCapiEventModel = typeof schema.metaCapiEventModel.$inferSelect
 export type FieldModel = typeof schema.customFieldModel.$inferSelect
 export type AutomatedResponseModel =
   typeof schema.automatedResponseModel.$inferSelect

@@ -8,6 +8,7 @@ export const triggerActions = z.enum([
   "setCustomField",
   "clearCustomField",
   "transferConversationToHuman",
+  "sendMetaCapiEvent",
   "runGoogleSheet",
   "archiveConversation",
   "unarchiveConversation",

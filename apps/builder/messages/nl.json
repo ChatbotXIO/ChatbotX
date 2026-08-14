@@ -43,6 +43,7 @@
     "disableBot": "Bot uitschakelen",
     "disconnect": "Verbinding verbreken",
     "download": "Downloaden",
+    "downloadTemplate": "Sjabloon downloaden",
     "edit": "Bewerken",
     "editFeature": "{feature} bewerken",
     "enableBot": "Bot inschakelen",
@@ -145,6 +146,9 @@
     "clone": "Klonen",
     "remove": "Verwijderen",
     "restore": "Herstellen"
+  },
+  "errors": {
+    "superAdminRequired": "Je moet superbeheerder van de werkruimte zijn om dit te doen."
   },
   "states": {
     "success": "Succes",
@@ -1774,6 +1778,11 @@
       "label": "Gebeurtenissen",
       "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
       "description": "Voeg een of meer gebeurtenisnamen toe. Wanneer Make een webhook aan een van deze gebeurtenissen koppelt, worden er gegevens naartoe gestuurd wanneer deze stap wordt uitgevoerd."
+    },
+    "n8nEvents": {
+      "label": "Gebeurtenissen",
+      "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
+      "description": "Voeg een of meer gebeurtenisnamen toe. Wanneer n8n een webhook aan een van deze gebeurtenissen koppelt, worden er gegevens naartoe gestuurd wanneer deze stap wordt uitgevoerd."
     }
   },
   "condition": {
@@ -1885,6 +1894,8 @@
       "blocked": "Geblokkeerd",
       "noAdminReply": "Geen antwoord van beheerder",
       "contactCreatedAt": "Contact aangemaakt op",
+      "fromCtwaAd": "Van Click-to-WhatsApp-advertentie",
+      "ctwaConversion": "CTWA-conversie",
       "lastUserInputTypes": {
         "text": "Tekst",
         "location": "Locatie",
@@ -1894,6 +1905,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Bestand"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Aankoop"
       }
     },
     "fieldGroups": {
@@ -1908,7 +1923,8 @@
       "topicCoupon": "Coupononderwerp",
       "customFields": "Aangepaste velden",
       "email": "E-mail",
-      "sms": "Sms"
+      "sms": "Sms",
+      "ctwaAds": "Click-to-WhatsApp-advertenties"
     },
     "languages": {
       "ar": "Arabisch",
@@ -1944,6 +1960,15 @@
       "webchat": "Webchat",
       "botLink": "Botlink",
       "chatPlugin": "C. chatplugin"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA-gespreksstarters",
+        "leads": "CTWA-gekwalificeerde leads",
+        "purchases": "CTWA-kopers"
+      },
+      "adPrefix": "advertentie",
+      "allAds": "alle advertenties"
     }
   },
   "flows": {
@@ -1990,6 +2015,7 @@
       "broadcastActions": "Broadcastacties",
       "callApi": "Externe API-aanvraag",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Vragenlijsten",
       "setUpCoupon": "Kortingsbon instellen",
@@ -2018,6 +2044,7 @@
       "getResponseAddContact": "Contact toevoegen aan GetResponse",
       "sendGridAddContact": "Contact toevoegen aan SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Website openen",
       "optInEmail": "Aanmelden voor e-mail",
       "optOutEmail": "Afmelden voor e-mail",
@@ -2071,7 +2098,8 @@
       "unsubscribeSequence": "Afmelden voor reeks",
       "splitTraffic": "Verkeer splitsen",
       "aiEditImage": "Afbeelding bewerken met AI",
-      "whatsappFlow": "WhatsApp-flow"
+      "whatsappFlow": "WhatsApp-flow",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2103,6 +2131,11 @@
       "selectCustomFieldPlaceholder": "Selecteer een aangepast veld",
       "addMapping": "Toewijzing toevoegen",
       "addCustomField": "Nieuwe toevoegen"
+    },
+    "sendCarousel": {
+      "addSlide": "Kaart toevoegen",
+      "removeSlide": "Kaart verwijderen",
+      "whatsappLinkButtonIgnored": "Op WhatsApp werkt de link van deze kaart niet: een kaart met een linkknop mag geen andere knoppen hebben. Deze wordt in plaats daarvan als antwoord verzonden."
     },
     "additionalSteps": "Aanvullende stappen",
     "delayType": {
@@ -2216,6 +2249,207 @@
     },
     "errors": {
       "invalidAppSettings": "De instellingen van de Facebook-app zijn ongeldig"
+    }
+  },
+  "ads": {
+    "title": "Advertenties",
+    "nav": {
+      "clickToWhatsappAds": "Click-to-WhatsApp-advertenties",
+      "clickToTiktokAds": "Click-to-TikTok-advertenties",
+      "connectAccounts": "Accounts koppelen",
+      "conversionEvents": "Conversie-events",
+      "adsAnalytics": "Advertentieanalyse",
+      "reporting": "Rapportage",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Binnenkort beschikbaar"
+    },
+    "connectAccounts": {
+      "title": "Beheer al je advertentieaccounts",
+      "description": "Volg conversies en optimaliseer je click-to-WhatsApp-advertentiecampagnes.",
+      "learnMore": "Meer informatie",
+      "connectAdAccount": "Advertentieaccount koppelen",
+      "adAccountName": "Naam advertentieaccount",
+      "disconnect": "Verbinding verbreken",
+      "empty": "Nog geen advertentieaccount gekoppeld.",
+      "adAccountsTitle": "Meta-advertentieaccounts",
+      "adAccountsDescription": "Koppel Facebook Ads om de advertentieaccounts te laden die worden gebruikt voor click-to-WhatsApp-campagnes.",
+      "adAccountsReconnectBanner": "Het token van je Meta-advertentieaccount is verlopen of heeft rechten verloren. Koppel Facebook Ads opnieuw om advertentierapportage beschikbaar te houden.",
+      "adAccountsNotConnected": "Er zijn nog geen Meta-advertentieaccounts gekoppeld.",
+      "adAccountsEmpty": "Er zijn geen Meta-advertentieaccounts gevonden voor deze Facebook Ads-koppeling.",
+      "adAccountsNote": "Uitgaven en retargetingdoelgroepen komen uit deze advertentieaccounts.",
+      "reconnectBanner": "Koppel je WhatsApp-account opnieuw om conversie-events naar Meta te kunnen verzenden.",
+      "reconnect": "Opnieuw verbinden",
+      "reconnectSuccess": "WhatsApp-account opnieuw gekoppeld.",
+      "selectAccountLabel": "WhatsApp-account",
+      "status": {
+        "ready": "Automatische events gereed",
+        "missingPermission": "Rechten voor automatische events ontbreken",
+        "unverified": "Rechten niet geverifieerd"
+      },
+      "table": {
+        "name": "Naam",
+        "phoneNumber": "Telefoonnummer",
+        "wabaId": "WABA-ID",
+        "permission": "Automatische events"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Koppel eerst je WhatsApp-account",
+        "description": "Voor click-to-WhatsApp-conversietracking is een gekoppeld WhatsApp-account nodig voordat je advertentieaccounts kunt koppelen en conversiedatasets kunt aanmaken.",
+        "step1": "Koppel je WhatsApp Business-account bij Kanalen.",
+        "step2": "Kom hier terug om Meta Ads te autoriseren en je advertentieaccount te selecteren.",
+        "step3": "We maken automatisch de conversiedataset aan met je WhatsApp Business-account.",
+        "cta": "WhatsApp-account koppelen"
+      }
+    },
+    "conversionEvents": {
+      "title": "Conversie-events",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Advertentieaccounts beheren",
+      "export": "Exporteren",
+      "selectAll": "Alles selecteren",
+      "whatsappAsset": "WhatsApp-asset",
+      "selectWhatsappAsset": "WhatsApp-asset selecteren",
+      "templates": "Sjablonen",
+      "selectTemplates": "Sjablonen selecteren",
+      "noTemplates": "Geen goedgekeurde sjablonen gevonden.",
+      "existingRules": "Bestaande regels",
+      "noRules": "Nog geen conversieregels voor dit WhatsApp-asset.",
+      "toggleRule": "Regel in- of uitschakelen",
+      "deleteRule": "Regel verwijderen",
+      "qualifyingTemplateMessageSent": "Kwalificerend sjabloonbericht wordt verzonden",
+      "qualifyingFirstReply": "Contact stuurt zijn eerste bericht",
+      "qualifyingAnyReply": "Contact stuurt een bericht",
+      "when": "Wanneer",
+      "whenOptions": {
+        "templateSent": "Kwalificerend sjabloonbericht wordt verzonden",
+        "tagApplied": "Contact wordt getagd",
+        "keywordMatched": "Bericht van contact komt overeen met een keywordregel",
+        "contactReplied": "Contact stuurt een bericht"
+      },
+      "tags": "Tags",
+      "selectTags": "Tags selecteren",
+      "noTags": "Geen tags gevonden.",
+      "untitledKeywordRule": "(naamloze keywordregel)",
+      "keywordRules": "Keywordregels",
+      "selectKeywordRules": "Keywordregels selecteren",
+      "noKeywordRules": "Geen inkomende keywordregels gevonden.",
+      "replyOptions": "Antwoordopties",
+      "firstReplyOnly": "Alleen het eerste bericht",
+      "dedupeNote": "Maximaal 1 event per dag per gesprek per regel.",
+      "dealWon": "Deal gewonnen",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Aankoop",
+      "messages": {
+        "ruleSaved": "Conversieregel opgeslagen",
+        "ruleUpdated": "Conversieregel bijgewerkt",
+        "ruleDeleted": "Conversieregel verwijderd"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Pagina 1",
+        "page2": "Pagina 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Gekwalificeerde leads bijhouden",
+        "question": "Op welk punt in het gesprek wil je een contact als lead kwalificeren?",
+        "when": "Wanneer",
+        "then": "Markeer CTWA-lead dan als"
+      },
+      "trackPurchases": {
+        "title": "Aankopen bijhouden",
+        "question": "Welk sjabloon bevestigt een aankoop?",
+        "when": "Wanneer",
+        "then": "Dan",
+        "noValueNote": "Een op regels gebaseerde aankoop registreert een aankoopconversie zonder bestelwaarde – die telt mee voor aankopen, maar draagt 0 bij aan de omzet. De bestelwaarde wordt alleen vastgelegd door Meta's automatische events."
+      }
+    },
+    "analytics": {
+      "title": "CTWA-analyse",
+      "funnelOverview": "Funneloverzicht",
+      "conversationsStarted": "Gestarte gesprekken",
+      "qualifiedLeads": "Gekwalificeerde leads",
+      "purchases": "Aankopen",
+      "adSpend": "Advertentie-uitgaven",
+      "spendAccountLevelNote": "Uitgaven worden gerapporteerd op het niveau van het Meta-advertentieaccount; met een geselecteerd WhatsApp-account worden advertenties met alleen uitgaven maar zonder funnelactiviteit voor dat account verborgen.",
+      "revenue": "Omzet",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Omzet gaat uit van één valuta (USD). Advertentieaccounts met meerdere valuta's worden nog niet samengevoegd.",
+      "costPerLead": "Kosten/lead",
+      "costPerPurchase": "Kosten/aankoop",
+      "impressions": "Vertoningen",
+      "clicks": "Klikken",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Kosten/gesprek",
+      "costCurrencyNote": "Kostenstatistieken gaan uit van één valuta (USD), consistent met de advertentie-uitgaven.",
+      "performanceChart": {
+        "title": "Prestaties in de tijd",
+        "empty": "Nog geen gesprekken, leads, aankopen of uitgaven in deze periode."
+      },
+      "dateRange": {
+        "oneDay": "1D",
+        "oneWeek": "1W",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Aangepast",
+        "apply": "Toepassen"
+      },
+      "allAds": "Alle advertenties",
+      "adAccountFilter": {
+        "all": "Alle advertentieaccounts",
+        "label": "Advertentieaccount",
+        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount."
+      },
+      "retarget": "Retargeten",
+      "thoseWhoPurchased": "Degenen die hebben gekocht",
+      "thoseWhoStartedConversation": "Degenen die een gesprek zijn gestart",
+      "sendWhatsappBroadcast": "WhatsApp-broadcast versturen",
+      "from": "Van",
+      "to": "Tot",
+      "unattributed": "Niet toegewezen",
+      "retargetDialog": {
+        "title": "CTWA-contacten retargeten",
+        "createAudience": "Doelgroep aanmaken",
+        "useExistingAudience": "Bestaande doelgroep gebruiken",
+        "audienceName": "Naam doelgroep",
+        "audiencePrefix": "CTWA",
+        "confirm": "Synchronisatie starten",
+        "success": "Synchronisatie van retargetingdoelgroep staat in de wachtrij.",
+        "error": "Synchronisatie van retargetingdoelgroep kon niet in de wachtrij worden geplaatst."
+      },
+      "delivery": {
+        "title": "Conversielevering",
+        "sent": "Verzonden",
+        "pending": "In behandeling",
+        "failed": "Mislukt",
+        "skippedNoScope": "Overgeslagen (geen bereik)",
+        "skippedRegion": "Overgeslagen (regio)",
+        "noScopeWarning": "Sommige conversies zijn niet verzonden omdat dit WhatsApp-account de rechten voor events mist. Koppel het opnieuw om rapportage van automatische events in te schakelen.",
+        "reconnectCta": "Account opnieuw koppelen",
+        "empty": "Nog geen conversie-events in deze periode."
+      },
+      "export": {
+        "conversations": "Gesprekken exporteren",
+        "leads": "Leads exporteren",
+        "purchases": "Aankopen exporteren"
+      },
+      "csv": {
+        "contactName": "Naam contact",
+        "phone": "Telefoon",
+        "adId": "Advertentie-ID",
+        "occurredAt": "Opgetreden op"
+      },
+      "empty": "Nog geen gegevens. Koppel een advertentieaccount en begin met het bijhouden van conversies."
     }
   },
   "googleSheets": {
@@ -2691,6 +2925,8 @@
     "noVersionsFound": "Geen gepubliceerde versies gevonden",
     "publishVersionSuccess": "Er is een nieuwe versie gepubliceerd",
     "flowConfigIncomplete": "Sommige configuraties zijn onvolledig",
+    "whatsappCarouselButtonsMismatch": "Op WhatsApp moet een carrousel op elke kaart dezelfde knoppen hebben: één linkknop op elke kaart, of hetzelfde aantal antwoordknoppen op elke kaart",
+    "whatsappCarouselLinkButtonNotAlone": "Op WhatsApp mag een carrouselkaart met een linkknop geen andere knoppen hebben. Verwijder de andere knoppen op die kaart, of wijzig de linkknop in een andere actie.",
     "duplicateNodeError": "Het blok kon niet worden gedupliceerd. Probeer het opnieuw.",
     "deleteNodeError": "Het blok kon niet worden verwijderd. Probeer het opnieuw.",
     "redoHistoryCleared": "Geschiedenis voor opnieuw uitvoeren gewist",
@@ -2703,7 +2939,11 @@
     "iceBreakers": "IJsbrekers",
     "iceBreakersDescription": "IJsbrekers bieden gebruikers een manier om een gesprek met je bot te beginnen door een lijst met veelgestelde vragen te tonen.",
     "reconnect": "Opnieuw koppelen",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Bestaande contacten en chatgeschiedenis synchroniseren?",
@@ -2759,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Algemene instellingen",
-      "messageTemplates": "Berichtsjablonen"
+      "messageTemplates": "Berichtsjablonen",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3294,13 @@
         "wabaResolveFailed": "Het WhatsApp Business-account kon niet uit de autorisatie worden bepaald."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp-integratie niet gevonden.",
+        "phoneNumberMismatch": "De herkoppeling heeft het verwachte WhatsApp Business-account teruggegeven, maar niet het telefoonnummer dat aan deze werkruimte is gekoppeld.",
+        "wabaMismatch": "De herkoppeling heeft een ander WhatsApp Business-account teruggegeven. Koppel opnieuw hetzelfde account."
+      }
+    },
     "marketingMessageLite": "Marketing Messages Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3089,6 +3337,7 @@
         "quickReplyPayloadPlaceholder": "Voer payload in (optioneel)",
         "flowToken": "Flowtoken",
         "flowTokenPlaceholder": "Voer flowtoken in",
+        "flowNotSynced": "Synchroniseer WhatsApp-flows om ingediende velden te koppelen.",
         "catalogProductId": "Product-ID",
         "catalogProductIdPlaceholder": "Voer de retailer-ID van het product in",
         "carouselCard": "Kaart {index}",
@@ -3125,7 +3374,8 @@
       "flows": "Flows",
       "messageTemplates": "Berichtsjablonen",
       "profile": "Profiel",
-      "usefulLinks": "Nuttige links"
+      "usefulLinks": "Nuttige links",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Je WhatsApp-account beheren",
@@ -3352,7 +3602,8 @@
       "clearCustomField": "Aangepast veld wissen",
       "startAnotherFlow": "Andere flow starten",
       "notifyAdmins": "Beheerders informeren",
-      "transferConversationToHuman": "Gesprek overdragen aan een medewerker"
+      "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Trigger wordt geactiveerd",
     "before": "Voor",
@@ -3390,7 +3641,10 @@
     "title": "Auditlogboeken"
   },
   "customFields": {
-    "title": "Aangepaste velden"
+    "title": "Aangepaste velden",
+    "variables": {
+      "rawGroup": "Onbewerkte aangepaste velden"
+    }
   },
   "keywords": {
     "title": "Trefwoorden",
@@ -4432,6 +4686,102 @@
       "iconPlaceholder": "bijv. book-open, star, circle-question-mark",
       "position": "Volgorde",
       "iconSearchLink": "Lucide-pictogrammen bekijken →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Opslaan",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }

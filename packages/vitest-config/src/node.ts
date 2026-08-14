@@ -32,6 +32,20 @@ const config: ViteUserConfig = defineConfig({
     setupFiles: [setupEnvPath, setupMswPath],
     clearMocks: true,
     restoreMocks: true,
+    // On CI, turbo already parallelizes at the task level (many workspace
+    // suites at once on a small runner). Left at the default, every vitest
+    // process forks one worker per CPU, multiplying into dozens of node
+    // processes fighting for 2-4 vCPUs — which is what pushes cold imports
+    // past testTimeout. One worker per suite keeps total processes ≈ turbo
+    // concurrency.
+    ...(process.env.CI ? { maxWorkers: 1 } : {}),
+    // `turbo run test` executes every workspace's suite concurrently, so a
+    // test's first module-graph import can take well over vitest's 5s default
+    // on a loaded machine (and CI runners). A timed-out test also poisons the
+    // next one in its file: the abandoned call resolves late and increments
+    // shared mocks. Generous timeouts only delay true hangs.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],

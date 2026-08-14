@@ -135,18 +135,22 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
   }
 })
 
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
-  withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
-  // Referenced at module scope by transitive imports (analytics mac-tracking).
-  bloomFilter: {},
-  cacheConnections: { useExisting: vi.fn(), create: vi.fn() },
-  distributedStore: {},
-  distributedSequenceStore: {},
-  distributedLock: {
-    runExclusive: vi.fn(async (_k: string, fn: () => unknown) => fn()),
-  },
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/redis")>()
+  return {
+    ...actual,
+    invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
+    withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
+    // Referenced at module scope by transitive imports (analytics mac-tracking).
+    bloomFilter: {},
+    cacheConnections: { useExisting: vi.fn(), create: vi.fn() },
+    distributedStore: {},
+    distributedSequenceStore: {},
+    distributedLock: {
+      runExclusive: vi.fn(async (_k: string, fn: () => unknown) => fn()),
+    },
+  }
+})
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn().mockResolvedValue(undefined),

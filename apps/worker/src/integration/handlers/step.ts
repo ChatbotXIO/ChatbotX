@@ -64,6 +64,7 @@ import {
   setMessengerPersona,
   setMessengerUserPersistentMenu,
 } from "./messenger-user-menu"
+import { handleSendMetaCapiEventStep } from "./meta-conversions/send-meta-capi-event-step-handler"
 import { addOrUpdateMoosendContact } from "./moosend-handler"
 import { questionnaires } from "./questionnaires"
 import { sendEmail } from "./send-email"
@@ -100,6 +101,7 @@ import {
   generateCode,
   getDataFromJSON,
 } from "./tool-handler"
+import { handleTriggerN8nStep } from "./trigger-n8n-handler"
 
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
@@ -355,6 +357,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.blockContact]: stepBlockContact,
   [stepTypes.enum.callApi]: externalRequest,
   [stepTypes.enum.make]: handleMakeStep,
+  [stepTypes.enum.triggerN8n]: handleTriggerN8nStep,
   [stepTypes.enum.cancelContactInput]: undefined,
   [stepTypes.enum.clearCustomField]: clearContactCustomField,
   [stepTypes.enum.countCharacters]: countCharacters,
@@ -369,6 +372,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.markEmailVerified]: markEmailVerified,
   [stepTypes.enum.activeCampaignSyncContact]: syncActiveCampaignContact,
   [stepTypes.enum.facebookCustomAudience]: handleFacebookCustomAudience,
+  [stepTypes.enum.sendMetaCapiEvent]: handleSendMetaCapiEventStep,
   [stepTypes.enum.getResponseAddContact]: addGetResponseContact,
   [stepTypes.enum.dripSubscribeSubscriber]: subscribeDripSubscriber,
   [stepTypes.enum.mailchimpAddMember]: addMailchimpMember,

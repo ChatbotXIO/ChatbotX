@@ -140,7 +140,7 @@ describe("toggleZaloTagSyncAction", () => {
     findOrFailMock.mockResolvedValue({ id: "user-1", name: "Test User" })
     getAllWorkspaceMembersMock.mockResolvedValue({
       workspaces: [{ id: WORKSPACE_ID }],
-      workspaceMembers: [],
+      workspaceMembers: [{ workspaceId: WORKSPACE_ID, permissions: {} }],
       workspaceIds: [WORKSPACE_ID],
     })
 

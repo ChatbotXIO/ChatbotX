@@ -33,13 +33,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
-vi.mock(
-  "@chatbotx.io/database/partials",
-  async (importOriginal: () => Promise<Record<string, unknown>>) => ({
-    ...(await importOriginal()),
+vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/partials")>()
+  return {
+    ...actual,
     workspaceMemberRoles: { enum: { owner: "owner" } },
-  }),
-)
+  }
+})
 const invalidateCacheByTags = vi.fn(async () => undefined)
 const runExclusive = vi.fn(async ({ fn }: { key: string; fn: () => unknown }) =>
   fn(),
@@ -48,6 +49,7 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags,
   withCache: vi.fn(async (_key: string, fn: () => unknown) => fn()),
   distributedLock: { runExclusive },
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 const isCommunity = vi.fn(() => false)
 vi.mock("../src/keys", () => ({ isCommunity }))

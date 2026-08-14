@@ -1,3 +1,4 @@
+import type { EncryptedData } from "@chatbotx.io/encryption"
 import { sql } from "drizzle-orm"
 import {
   boolean,
@@ -42,6 +43,11 @@ export const integrationMessengerModel = pgTable(
     personas: jsonb().$type<MessengerPersona[]>().default(sql`[]`).notNull(),
     personaId: text(),
     coexistEnabled: boolean().notNull().default(false),
+    hasCapiScope: boolean().notNull().default(false),
+    capiScopeCheckedAt: timestamp(timestampConfig),
+    datasetId: text(),
+    capiAccessToken: jsonb().$type<EncryptedData>(),
+    capiDisconnectedAt: timestamp(timestampConfig),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

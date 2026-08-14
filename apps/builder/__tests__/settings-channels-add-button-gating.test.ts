@@ -3,29 +3,37 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// The channels settings accordion grandfathers a channel back into view when
+// The channels settings list grandfathers a channel back into view when
 // it's hidden by policy but the workspace already has a connected inbox for
 // it (see settings-channels-visibility.test.ts). Inside that grandfathered
 // row, the manage component's own "Add <Channel>" button must be disabled —
 // otherwise it dead-ends at /channels/create, which silently falls through
 // to the picker instead of creating anything.
 //
-// Each @<channel>/page.tsx slot computes this for itself via
-// resolveChannelCreatable, because Next.js parallel routes hand the layout
-// opaque ReactNode slots — the flag can't be threaded down from there.
+// Each settings/channels/<channel>/page.tsx computes this for itself via
+// resolveChannelCreatable. The pages additionally 404 when the channel is
+// not visible at all (hidden by policy AND not grandfathered) — so the
+// hidden-channel cases below mark the channel as connected, matching the
+// real grandfather scenario they describe.
 // ---------------------------------------------------------------------------
 
-const { mockResolveVisibleChannels, mockWorkspaceServiceFind } = vi.hoisted(
-  () => ({
-    mockResolveVisibleChannels: vi.fn(),
-    mockWorkspaceServiceFind: vi.fn(async () => ({
-      id: "ws-1",
-      ownerId: "owner-1",
-    })),
-  }),
-)
+const {
+  mockDistinctConnectedChannels,
+  mockResolveVisibleChannels,
+  mockWorkspaceServiceFind,
+} = vi.hoisted(() => ({
+  mockDistinctConnectedChannels: vi.fn(async (): Promise<string[]> => []),
+  mockResolveVisibleChannels: vi.fn(),
+  mockWorkspaceServiceFind: vi.fn(async () => ({
+    id: "ws-1",
+    ownerId: "owner-1",
+  })),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
+  inboxService: {
+    distinctConnectedChannels: mockDistinctConnectedChannels,
+  },
   tenantService: {
     resolveVisibleChannels: mockResolveVisibleChannels,
   },
@@ -101,13 +109,13 @@ vi.mock("@/features/integration-webchat/queries", () => ({
 }))
 
 const { default: SettingChannelZaloPage } = await import(
-  "../src/app/space/[workspaceId]/(settings)/settings/channels/@zalo/page"
+  "../src/app/space/[workspaceId]/(settings)/settings/channels/zalo/page"
 )
 const { default: SettingChannelSmtpPage } = await import(
-  "../src/app/space/[workspaceId]/(settings)/settings/channels/@smtp/page"
+  "../src/app/space/[workspaceId]/(settings)/settings/channels/smtp/page"
 )
 const { default: SettingChannelTelegramPage } = await import(
-  "../src/app/space/[workspaceId]/(settings)/settings/channels/@telegram/page"
+  "../src/app/space/[workspaceId]/(settings)/settings/channels/telegram/page"
 )
 const { resolveChannelCreatable } = await import(
   "../src/lib/workspace/resolve-channel-creatable"
@@ -120,10 +128,12 @@ describe("channels settings Add-button gating", () => {
       id: "ws-1",
       ownerId: "owner-1",
     })
+    mockDistinctConnectedChannels.mockResolvedValue([])
   })
 
   test("the reported bug: a grandfathered channel (hidden by policy) gets canCreate=false", async () => {
     mockResolveVisibleChannels.mockResolvedValue(["whatsapp"])
+    mockDistinctConnectedChannels.mockResolvedValue(["zalo"])
 
     const result = await SettingChannelZaloPage({
       params: Promise.resolve({ workspaceId: "ws-1" }),
@@ -164,6 +174,7 @@ describe("channels settings Add-button gating", () => {
 
   test("telegram — historically the bypass-prone channel — gets canCreate=false when hidden", async () => {
     mockResolveVisibleChannels.mockResolvedValue([])
+    mockDistinctConnectedChannels.mockResolvedValue(["telegram"])
 
     const result = await SettingChannelTelegramPage({
       params: Promise.resolve({ workspaceId: "ws-1" }),
@@ -176,16 +187,17 @@ describe("channels settings Add-button gating", () => {
 
   test("webchat — the other bypass-prone channel — gets canCreate=false when hidden", async () => {
     const { default: SettingChannelWebchatPage } = await import(
-      "../src/app/space/[workspaceId]/(settings)/settings/channels/@webchat/page"
+      "../src/app/space/[workspaceId]/(settings)/settings/channels/webchat/page"
     )
     mockResolveVisibleChannels.mockResolvedValue([])
+    mockDistinctConnectedChannels.mockResolvedValue(["webchat"])
 
     const result = await SettingChannelWebchatPage({
       params: Promise.resolve({ workspaceId: "ws-1" }),
       searchParams: Promise.resolve({}),
     })
 
-    // @webchat/page.tsx wraps WebchatTable in <Suspense>, so canCreate lives
+    // webchat/page.tsx wraps WebchatTable in <Suspense>, so canCreate lives
     // one level down on the Suspense child's props.
     const suspenseElement = result as {
       props: { children: { props: { canCreate: boolean } } }

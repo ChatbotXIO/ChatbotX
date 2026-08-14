@@ -1,3 +1,4 @@
+import { parseEnvBool } from "@chatbotx.io/utils"
 import { keys } from "../../keys"
 
 const ENV_PREFIX = "env://"
@@ -20,7 +21,10 @@ export function resolveShardCredentials(
     shard.credentialRef,
     env.MESSAGE_SHARDS_PASSWORD,
   )
-  const sslMode = normalizeSslMode(shard.sslMode, env.MESSAGE_SHARDS_SSL)
+  const sslMode = normalizeSslMode(
+    shard.sslMode,
+    parseEnvBool(env.MESSAGE_SHARDS_SSL),
+  )
 
   return { password, sslMode }
 }

@@ -2,6 +2,7 @@ import {
   adsConversionService,
   contactCustomFieldService,
   conversationService,
+  metaConversionsService,
   tagSyncService,
 } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
@@ -42,7 +43,7 @@ import type { ActionExecutionContext } from "../types"
 
 export class ActionExecutor {
   async execute(context: ActionExecutionContext): Promise<void> {
-    const { action, contactId, workspaceId } = context
+    const { action, contactId, triggerId, workspaceId } = context
     const actionType = action.type
 
     const conversation = await db.query.conversationModel.findFirst({
@@ -318,6 +319,46 @@ export class ActionExecutor {
           )
         }
         break
+
+      case triggerActions.enum.sendMetaCapiEvent: {
+        if (
+          recentContactInbox.channel !== "messenger" &&
+          recentContactInbox.channel !== "instagram" &&
+          recentContactInbox.channel !== "whatsapp"
+        ) {
+          baseLogger.warn(
+            `Unsupported Meta CAPI trigger channel: ${recentContactInbox.channel}`,
+          )
+          break
+        }
+
+        const value =
+          typeof action.value === "string" ? action.value : undefined
+        const currency =
+          typeof action.currency === "string" ? action.currency : undefined
+        const contentCategory =
+          typeof action.contentCategory === "string"
+            ? action.contentCategory
+            : undefined
+        const contentName =
+          typeof action.contentName === "string"
+            ? action.contentName
+            : undefined
+
+        await metaConversionsService.enqueueLeadEvent({
+          workspaceId,
+          channel: recentContactInbox.channel,
+          contactInboxId: recentContactInbox.id,
+          inboxId: recentContactInbox.inboxId,
+          source: "triggerAction",
+          sourceKey: `trigger:${triggerId}:${recentContactInbox.id}:${metaConversionsService.formatUtcDay(new Date())}`,
+          value,
+          currency,
+          contentCategory,
+          contentName,
+        })
+        break
+      }
 
       case triggerActions.enum.runGoogleSheet: {
         const spreadsheetAction = action.action as StepType

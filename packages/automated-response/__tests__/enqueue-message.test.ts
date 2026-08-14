@@ -120,7 +120,9 @@ describe("enqueueMessage", () => {
     mockWorkspaceFindById.mockResolvedValue({
       smartResponseDelaySeconds: 30,
     })
-    mockAutomatedResponseGetAll.mockResolvedValue([{ keywords: ["hello"] }])
+    mockAutomatedResponseGetAll.mockResolvedValue([
+      { keywords: ["hello"], type: "inbound" },
+    ])
 
     await enqueueMessage(enqueueProps)
 

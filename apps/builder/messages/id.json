@@ -43,6 +43,7 @@
     "disableBot": "Nonaktifkan Bot",
     "disconnect": "Putuskan",
     "download": "Unduh",
+    "downloadTemplate": "Unduh templat",
     "edit": "Edit",
     "editFeature": "Edit {feature}",
     "enableBot": "Aktifkan Bot",
@@ -145,6 +146,9 @@
     "clone": "Klon",
     "remove": "Hapus",
     "restore": "Pulihkan"
+  },
+  "errors": {
+    "superAdminRequired": "Anda harus menjadi super admin workspace untuk melakukan ini."
   },
   "states": {
     "success": "Berhasil",
@@ -536,6 +540,8 @@
       "blocked": "Diblokir",
       "noAdminReply": "Tidak ada balasan admin",
       "contactCreatedAt": "Kontak dibuat pada",
+      "fromCtwaAd": "Dari iklan Click to WhatsApp",
+      "ctwaConversion": "Konversi CTWA",
       "lastUserInputTypes": {
         "text": "Teks",
         "location": "Lokasi",
@@ -545,6 +551,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Pembelian"
       }
     },
     "fieldGroups": {
@@ -559,7 +569,8 @@
       "topicCoupon": "Topik kupon",
       "customFields": "Kolom Kustom",
       "email": "Email",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Iklan Click to WhatsApp"
     },
     "languages": {
       "ar": "Arab",
@@ -595,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Tautan Bot",
       "chatPlugin": "Plugin C. chat"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Pemula percakapan CTWA",
+        "leads": "Lead terkualifikasi CTWA",
+        "purchases": "Pembeli CTWA"
+      },
+      "adPrefix": "iklan",
+      "allAds": "semua iklan"
     }
   },
   "fields": {
@@ -1944,6 +1964,11 @@
       "label": "Peristiwa",
       "placeholder": "Ketik nama peristiwa lalu tekan Enter",
       "description": "Tambahkan satu atau beberapa nama peristiwa. Saat Make memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
+    },
+    "n8nEvents": {
+      "label": "Peristiwa",
+      "placeholder": "Ketik nama peristiwa lalu tekan Enter",
+      "description": "Tambahkan satu atau beberapa nama peristiwa. Saat n8n memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
     }
   },
   "flows": {
@@ -1990,6 +2015,7 @@
       "broadcastActions": "Tindakan Siaran",
       "callApi": "Permintaan API Eksternal",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Pemicu",
       "questionnaires": "Kuesioner",
       "setUpCoupon": "Siapkan Kupon",
@@ -2018,6 +2044,7 @@
       "getResponseAddContact": "Tambah Kontak ke GetResponse",
       "sendGridAddContact": "Tambah Kontak ke SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Buka Situs Web",
       "optInEmail": "Ikut Serta Email",
       "optOutEmail": "Berhenti Ikut Serta Email",
@@ -2071,7 +2098,8 @@
       "unsubscribeSequence": "Berhenti Berlangganan Urutan",
       "splitTraffic": "Bagi Trafik",
       "aiEditImage": "AI Edit Gambar",
-      "whatsappFlow": "Alur WhatsApp"
+      "whatsappFlow": "Alur WhatsApp",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2103,6 +2131,11 @@
       "selectCustomFieldPlaceholder": "Pilih kolom kustom",
       "addMapping": "Tambah Pemetaan",
       "addCustomField": "Tambah Baru"
+    },
+    "sendCarousel": {
+      "addSlide": "Tambah kartu",
+      "removeSlide": "Hapus kartu",
+      "whatsappLinkButtonIgnored": "Di WhatsApp, tautan kartu ini tidak akan berfungsi: kartu dengan tombol tautan tidak boleh memiliki tombol lain. Kartu ini akan dikirim sebagai balasan."
     },
     "additionalSteps": "Langkah tambahan",
     "delayType": {
@@ -2216,6 +2249,207 @@
     },
     "errors": {
       "invalidAppSettings": "Pengaturan Aplikasi Facebook tidak valid"
+    }
+  },
+  "ads": {
+    "title": "Iklan",
+    "nav": {
+      "clickToWhatsappAds": "Iklan Click to WhatsApp",
+      "clickToTiktokAds": "Iklan Click to TikTok",
+      "connectAccounts": "Hubungkan Akun",
+      "conversionEvents": "Peristiwa Konversi",
+      "adsAnalytics": "Analitik iklan",
+      "reporting": "Pelaporan",
+      "ctwa": "CTWA",
+      "googleAds": "Google Ads",
+      "comingSoon": "Segera hadir"
+    },
+    "connectAccounts": {
+      "title": "Kelola semua akun iklan Anda",
+      "description": "Lacak konversi dan optimalkan kampanye iklan click-to-WhatsApp Anda.",
+      "learnMore": "Pelajari Lebih Lanjut",
+      "connectAdAccount": "Hubungkan Akun Iklan",
+      "adAccountName": "Nama Akun Iklan",
+      "disconnect": "Putuskan Koneksi",
+      "empty": "Belum ada akun iklan yang terhubung.",
+      "adAccountsTitle": "Akun iklan Meta",
+      "adAccountsDescription": "Hubungkan Iklan Facebook untuk memuat akun iklan yang digunakan untuk kampanye click-to-WhatsApp.",
+      "adAccountsReconnectBanner": "Token akun iklan Meta Anda telah berakhir atau kehilangan izin. Hubungkan kembali Iklan Facebook agar pelaporan iklan tetap tersedia.",
+      "adAccountsNotConnected": "Belum ada akun iklan Meta yang terhubung.",
+      "adAccountsEmpty": "Tidak ditemukan akun iklan Meta untuk koneksi Iklan Facebook ini.",
+      "adAccountsNote": "Pengeluaran dan audiens retargeting berasal dari akun iklan ini.",
+      "reconnectBanner": "Hubungkan kembali akun WhatsApp Anda untuk mengaktifkan pengiriman peristiwa konversi ke Meta.",
+      "reconnect": "Hubungkan Kembali",
+      "reconnectSuccess": "Akun WhatsApp berhasil dihubungkan kembali.",
+      "selectAccountLabel": "Akun WhatsApp",
+      "status": {
+        "ready": "Peristiwa otomatis siap",
+        "missingPermission": "Izin Peristiwa Otomatis tidak ada",
+        "unverified": "Izin belum diverifikasi"
+      },
+      "table": {
+        "name": "Nama",
+        "phoneNumber": "Nomor telepon",
+        "wabaId": "ID WABA",
+        "permission": "Peristiwa Otomatis"
+      },
+      "providers": {
+        "meta": "Meta",
+        "googleAds": "Google Ads",
+        "tiktok": "TikTok"
+      },
+      "connectWhatsapp": {
+        "title": "Hubungkan akun WhatsApp Anda terlebih dahulu",
+        "description": "Pelacakan konversi Click-to-WhatsApp memerlukan akun WhatsApp yang terhubung sebelum Anda dapat menautkan akun iklan dan membuat dataset konversi.",
+        "step1": "Hubungkan akun WhatsApp Business Anda di Kanal.",
+        "step2": "Kembali ke sini untuk mengotorisasi Meta Ads dan memilih akun iklan Anda.",
+        "step3": "Kami akan otomatis membuat dataset konversi menggunakan akun WhatsApp Business Anda.",
+        "cta": "Hubungkan akun WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Peristiwa konversi",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Kelola Akun Iklan",
+      "export": "Ekspor",
+      "selectAll": "Pilih Semua",
+      "whatsappAsset": "Aset WhatsApp",
+      "selectWhatsappAsset": "Pilih aset WhatsApp",
+      "templates": "Template",
+      "selectTemplates": "Pilih template",
+      "noTemplates": "Tidak ditemukan template yang disetujui.",
+      "existingRules": "Aturan yang ada",
+      "noRules": "Belum ada aturan konversi untuk aset WhatsApp ini.",
+      "toggleRule": "Aktifkan atau nonaktifkan aturan",
+      "deleteRule": "Hapus aturan",
+      "qualifyingTemplateMessageSent": "Pesan template yang memenuhi syarat dikirim",
+      "qualifyingFirstReply": "Kontak mengirim pesan pertama mereka",
+      "qualifyingAnyReply": "Kontak mengirim pesan",
+      "when": "Ketika",
+      "whenOptions": {
+        "templateSent": "Pesan template yang memenuhi syarat dikirim",
+        "tagApplied": "Kontak diberi tag",
+        "keywordMatched": "Pesan kontak cocok dengan aturan kata kunci",
+        "contactReplied": "Kontak mengirim pesan"
+      },
+      "tags": "Tag",
+      "selectTags": "Pilih tag",
+      "noTags": "Tidak ditemukan tag.",
+      "untitledKeywordRule": "(aturan kata kunci tanpa judul)",
+      "keywordRules": "Aturan kata kunci",
+      "selectKeywordRules": "Pilih aturan kata kunci",
+      "noKeywordRules": "Tidak ditemukan aturan kata kunci masuk.",
+      "replyOptions": "Opsi balasan",
+      "firstReplyOnly": "Hanya pesan pertama",
+      "dedupeNote": "Maksimal 1 peristiwa per hari untuk setiap percakapan per aturan.",
+      "dealWon": "Deal Menang",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Pembelian",
+      "messages": {
+        "ruleSaved": "Aturan konversi disimpan",
+        "ruleUpdated": "Aturan konversi diperbarui",
+        "ruleDeleted": "Aturan konversi dihapus"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Halaman 1",
+        "page2": "Halaman 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Lacak lead terkualifikasi",
+        "question": "Pada titik mana dalam percakapan Anda ingin mengualifikasikan kontak sebagai lead?",
+        "when": "Ketika",
+        "then": "Lalu tandai lead CTWA sebagai"
+      },
+      "trackPurchases": {
+        "title": "Lacak pembelian",
+        "question": "Template mana yang mengonfirmasi pembelian?",
+        "when": "Ketika",
+        "then": "Lalu",
+        "noValueNote": "Pembelian berbasis aturan mencatat konversi Pembelian tanpa nilai pesanan — ini dihitung dalam jumlah pembelian tetapi menambahkan 0 pada pendapatan. Nilai pesanan hanya ditangkap oleh Peristiwa Otomatis Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analitik CTWA",
+      "funnelOverview": "Ringkasan funnel",
+      "conversationsStarted": "Percakapan dimulai",
+      "qualifiedLeads": "Lead terkualifikasi",
+      "purchases": "Pembelian",
+      "adSpend": "Pengeluaran iklan",
+      "spendAccountLevelNote": "Pengeluaran dilaporkan pada tingkat akun iklan Meta; ketika sebuah akun WhatsApp dipilih, iklan yang hanya memiliki pengeluaran tanpa aktivitas funnel untuk akun tersebut akan disembunyikan.",
+      "revenue": "Pendapatan",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Pendapatan mengasumsikan satu mata uang (USD). Akun iklan dengan mata uang campuran belum dapat diagregasi.",
+      "costPerLead": "Biaya/lead",
+      "costPerPurchase": "Biaya/pembelian",
+      "impressions": "Impresi",
+      "clicks": "Klik",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Biaya/percakapan",
+      "costCurrencyNote": "Metrik biaya mengasumsikan satu mata uang (USD), konsisten dengan pengeluaran iklan.",
+      "performanceChart": {
+        "title": "Performa dari waktu ke waktu",
+        "empty": "Belum ada percakapan, lead, pembelian, atau pengeluaran dalam rentang ini."
+      },
+      "dateRange": {
+        "oneDay": "1H",
+        "oneWeek": "1M",
+        "oneMonth": "1B",
+        "threeMonths": "3B",
+        "custom": "Kustom",
+        "apply": "Terapkan"
+      },
+      "allAds": "Semua Iklan",
+      "adAccountFilter": {
+        "all": "Semua akun iklan",
+        "label": "Akun iklan",
+        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
+      },
+      "retarget": "Retarget",
+      "thoseWhoPurchased": "Mereka yang membeli",
+      "thoseWhoStartedConversation": "Mereka yang memulai percakapan",
+      "sendWhatsappBroadcast": "Kirim broadcast WhatsApp",
+      "from": "Dari",
+      "to": "Hingga",
+      "unattributed": "Tidak teratribusi",
+      "retargetDialog": {
+        "title": "Retarget kontak CTWA",
+        "createAudience": "Buat audiens",
+        "useExistingAudience": "Gunakan audiens yang ada",
+        "audienceName": "Nama audiens",
+        "audiencePrefix": "CTWA",
+        "confirm": "Mulai sinkronisasi",
+        "success": "Sinkronisasi audiens retarget dimasukkan ke antrean.",
+        "error": "Gagal memasukkan sinkronisasi audiens retarget ke antrean."
+      },
+      "delivery": {
+        "title": "Pengiriman konversi",
+        "sent": "Terkirim",
+        "pending": "Menunggu",
+        "failed": "Gagal",
+        "skippedNoScope": "Dilewati (tidak ada scope)",
+        "skippedRegion": "Dilewati (wilayah)",
+        "noScopeWarning": "Beberapa konversi tidak terkirim karena akun WhatsApp ini tidak memiliki izin peristiwa. Hubungkan kembali untuk mengaktifkan pelaporan Peristiwa Otomatis.",
+        "reconnectCta": "Hubungkan kembali akun",
+        "empty": "Belum ada peristiwa konversi dalam rentang ini."
+      },
+      "export": {
+        "conversations": "Ekspor percakapan",
+        "leads": "Ekspor lead",
+        "purchases": "Ekspor pembelian"
+      },
+      "csv": {
+        "contactName": "Nama kontak",
+        "phone": "Telepon",
+        "adId": "ID Iklan",
+        "occurredAt": "Terjadi pada"
+      },
+      "empty": "Belum ada data. Hubungkan akun iklan dan mulai lacak konversi."
     }
   },
   "googleSheets": {
@@ -2691,6 +2925,8 @@
     "noVersionsFound": "Tidak ada versi yang dipublikasikan",
     "publishVersionSuccess": "Versi baru telah dipublikasikan",
     "flowConfigIncomplete": "Beberapa konfigurasi belum lengkap",
+    "whatsappCarouselButtonsMismatch": "Di WhatsApp, carousel memerlukan tombol yang sama di setiap kartu: satu tombol tautan di setiap kartu, atau jumlah tombol balasan yang sama di setiap kartu",
+    "whatsappCarouselLinkButtonNotAlone": "Di WhatsApp, kartu carousel dengan tombol tautan tidak boleh memiliki tombol lain. Hapus tombol lain pada kartu tersebut, atau ubah tombol tautan menjadi tindakan lain.",
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",
     "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
     "redoHistoryCleared": "Riwayat pengulangan dihapus",
@@ -2703,7 +2939,11 @@
     "iceBreakers": "Pembuka Percakapan",
     "iceBreakersDescription": "Pembuka percakapan membantu pengguna memulai percakapan dengan bot Anda melalui daftar pertanyaan yang sering diajukan.",
     "reconnect": "Hubungkan kembali",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Sinkronkan kontak dan riwayat obrolan yang sudah ada?",
@@ -2759,7 +2999,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Pengaturan Umum",
-      "messageTemplates": "Templat Pesan"
+      "messageTemplates": "Templat Pesan",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3294,13 @@
         "wabaResolveFailed": "Tidak dapat menentukan Akun WhatsApp Business dari otorisasi."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integrasi WhatsApp tidak ditemukan.",
+        "phoneNumberMismatch": "Hubungkan kembali mengembalikan WhatsApp Business Account yang diharapkan, tetapi bukan nomor telepon yang terhubung ke workspace ini.",
+        "wabaMismatch": "Hubungkan kembali mengembalikan WhatsApp Business Account yang berbeda. Silakan hubungkan kembali akun yang sama."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3089,6 +3337,7 @@
         "quickReplyPayloadPlaceholder": "Masukkan payload (opsional)",
         "flowToken": "Token Alur",
         "flowTokenPlaceholder": "Masukkan token alur",
+        "flowNotSynced": "Sinkronkan alur WhatsApp untuk memetakan kolom yang dikirim.",
         "catalogProductId": "ID Produk",
         "catalogProductIdPlaceholder": "Masukkan ID pengecer produk",
         "carouselCard": "Kartu {index}",
@@ -3125,7 +3374,8 @@
       "flows": "Alur",
       "messageTemplates": "Templat Pesan",
       "profile": "Profil",
-      "usefulLinks": "Tautan Berguna"
+      "usefulLinks": "Tautan Berguna",
+      "conversionsApi": "Ads Optimization"
     },
     "accountHealths": {
       "title": "Kelola akun WhatsApp Anda",
@@ -3352,7 +3602,8 @@
       "clearCustomField": "Kosongkan Kolom Kustom",
       "startAnotherFlow": "Mulai Alur Lain",
       "notifyAdmins": "Beri Tahu Admin",
-      "transferConversationToHuman": "Alihkan Percakapan ke Manusia"
+      "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Pemicu dijalankan",
     "before": "Sebelum",
@@ -3390,7 +3641,10 @@
     "title": "Log Audit"
   },
   "customFields": {
-    "title": "Kolom Kustom"
+    "title": "Kolom Kustom",
+    "variables": {
+      "rawGroup": "Kolom kustom mentah"
+    }
   },
   "keywords": {
     "title": "Kata Kunci",
@@ -4432,6 +4686,102 @@
       "iconPlaceholder": "mis. book-open, star, circle-question-mark",
       "position": "Urutan",
       "iconSearchLink": "Jelajahi ikon Lucide →"
+    }
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Connect via Facebook",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Connect via WhatsApp",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Simpan",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   }
 }
