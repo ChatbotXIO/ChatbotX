@@ -351,7 +351,12 @@ export class ActionExecutor {
           contactInboxId: recentContactInbox.id,
           inboxId: recentContactInbox.inboxId,
           source: "triggerAction",
-          sourceKey: `trigger:${triggerId}:${recentContactInbox.id}:${metaConversionsService.formatUtcDay(new Date())}`,
+          sourceKey: metaConversionsService.buildLeadSourceKey({
+            scope: "trigger",
+            scopeId: triggerId,
+            contactInboxId: recentContactInbox.id,
+            channel: recentContactInbox.channel,
+          }),
           value,
           currency,
           contentCategory,
