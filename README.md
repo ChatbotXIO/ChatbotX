@@ -133,6 +133,8 @@
 
 To have the project up and running, please follow the [Quick Start Guide](https://chatbotx.io/docs/quickstart).
 
+**Self-hosting ChatbotX without developing on it?** Use **[chatbotx-docker-compose](https://github.com/ChatbotXIO/chatbotx-docker-compose)** — a standalone repo that runs the pre-built `ghcr.io` images with `docker compose up`, no local checkout of this monorepo required. The compose files in this repository (`docker-compose.yml`, `docker-compose.dev.yml`) provision local infrastructure only and expect the apps to run from source via `pnpm dev`.
+
 ## Project Structure
 
 ```text
