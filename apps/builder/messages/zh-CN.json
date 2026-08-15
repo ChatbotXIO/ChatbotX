@@ -2703,6 +2703,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "该流程从未发布过。请先发布后再导出。",
+      "failed": "导出失败，请重试。"
+    },
     "actions": {
       "actions": "操作",
       "activeCampaignSyncContact": "将联系人添加到 ActiveCampaign",

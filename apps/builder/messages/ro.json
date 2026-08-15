@@ -1,5 +1,9 @@
 {
   "flows": {
+    "export": {
+      "notPublished": "Acest flux nu a fost niciodată publicat. Publicați-l înainte de a-l exporta.",
+      "failed": "Exportul a eșuat. Vă rugăm să încercați din nou."
+    },
     "title": "Fluxuri",
     "quickReplies": {
       "limitReached": "A fost atinsă limita de răspunsuri rapide ({max})."

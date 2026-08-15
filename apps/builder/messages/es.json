@@ -2057,6 +2057,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Este flujo nunca se ha publicado. Publícalo antes de exportarlo.",
+      "failed": "Error al exportar. Inténtalo de nuevo."
+    },
     "title": "Flujos",
     "quickReplies": {
       "limitReached": "Quick respuesta limit reached ({max})."

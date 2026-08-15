@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Denne flow er aldrig blevet offentliggjort. Udgiv den, før du eksporterer.",
+      "failed": "Eksport mislykkedes. Prøv igen."
+    },
     "title": "Flows",
     "quickReplies": {
       "limitReached": "Quick svar limit reached ({max})."

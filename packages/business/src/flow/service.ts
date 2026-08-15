@@ -4,7 +4,7 @@ import {
   flowModel,
   flowVersionModel,
 } from "@chatbotx.io/database/schema"
-import type { FlowModel } from "@chatbotx.io/database/types"
+import type { FlowModel, FlowVersionModel } from "@chatbotx.io/database/types"
 import type { EdgeSchema, FlowVersionSchema } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
@@ -31,6 +31,54 @@ class FlowService extends BaseService {
     return Boolean(row)
   }
 
+  /**
+   * Inserts a flow, its analytics session, and a draft version in one
+   * transaction — the write shape shared by `duplicate` and `createFromImport`.
+   */
+  private async insertFlowWithDraft(
+    tx: DatabaseClient,
+    input: {
+      name: string
+      active: boolean
+      enableInInbox: boolean
+      workspaceId: string
+      folderId: string | null
+      startNodeId: string
+      nodes: FlowVersionModel["nodes"]
+      edges: FlowVersionModel["edges"]
+    },
+  ): Promise<string> {
+    const newFlowId = createId()
+    const draftVersionId = createId()
+    await tx.insert(flowModel).values({
+      id: newFlowId,
+      name: input.name,
+      active: input.active,
+      enableInInbox: input.enableInInbox,
+      workspaceId: input.workspaceId,
+      folderId: input.folderId,
+      currentVersionId: null,
+      draftVersionId,
+    })
+    await tx.insert(flowAnalyticsSessionModel).values({
+      id: createId(),
+      flowId: newFlowId,
+      workspaceId: input.workspaceId,
+    })
+    await tx.insert(flowVersionModel).values({
+      id: draftVersionId,
+      workspaceId: input.workspaceId,
+      flowId: newFlowId,
+      nodes: input.nodes,
+      edges: input.edges,
+      isDraft: true,
+      isLatest: false,
+      startNodeId: input.startNodeId,
+    })
+
+    return newFlowId
+  }
+
   duplicate(input: { workspaceId: string; id: string }): Promise<string> {
     return db.transaction(async (tx) => {
       const flow = await this.findBy(input, tx)
@@ -49,35 +97,16 @@ class FlowService extends BaseService {
         throw notFoundException("Draft version not found")
       }
 
-      const newFlowId = createId()
-      const draftVersionId = createId()
-      await tx.insert(flowModel).values({
-        id: newFlowId,
+      return this.insertFlowWithDraft(tx, {
         name: `${flow.name} _copy`,
         active: flow.active,
         enableInInbox: flow.enableInInbox,
         workspaceId: flow.workspaceId,
         folderId: flow.folderId,
-        currentVersionId: null,
-        draftVersionId,
-      })
-      await tx.insert(flowAnalyticsSessionModel).values({
-        id: createId(),
-        flowId: newFlowId,
-        workspaceId: flow.workspaceId,
-      })
-      await tx.insert(flowVersionModel).values({
-        id: draftVersionId,
-        workspaceId: flow.workspaceId,
-        flowId: newFlowId,
+        startNodeId: draftVersion.startNodeId,
         nodes: draftVersion.nodes,
         edges: draftVersion.edges,
-        isDraft: true,
-        isLatest: false,
-        startNodeId: draftVersion.startNodeId,
       })
-
-      return newFlowId
     })
   }
 
@@ -97,37 +126,18 @@ class FlowService extends BaseService {
     edges: EdgeSchema[]
     folderId?: string | null
   }): Promise<string> {
-    return db.transaction(async (tx) => {
-      const newFlowId = createId()
-      const draftVersionId = createId()
-      await tx.insert(flowModel).values({
-        id: newFlowId,
+    return db.transaction(async (tx) =>
+      this.insertFlowWithDraft(tx, {
         name: input.name,
         active: input.active,
         enableInInbox: input.enableInInbox,
         workspaceId: input.workspaceId,
         folderId: input.folderId ?? null,
-        currentVersionId: null,
-        draftVersionId,
-      })
-      await tx.insert(flowAnalyticsSessionModel).values({
-        id: createId(),
-        flowId: newFlowId,
-        workspaceId: input.workspaceId,
-      })
-      await tx.insert(flowVersionModel).values({
-        id: draftVersionId,
-        workspaceId: input.workspaceId,
-        flowId: newFlowId,
+        startNodeId: input.startNodeId,
         nodes: input.nodes,
         edges: input.edges,
-        isDraft: true,
-        isLatest: false,
-        startNodeId: input.startNodeId,
-      })
-
-      return newFlowId
-    })
+      }),
+    )
   }
 }
 

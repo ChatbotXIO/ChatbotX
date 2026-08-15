@@ -2057,6 +2057,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Luồng này chưa từng được xuất bản. Hãy xuất bản trước khi xuất tệp.",
+      "failed": "Xuất tệp thất bại. Vui lòng thử lại."
+    },
     "title": "Luồng",
     "quickReplies": {
       "limitReached": "Đã đạt giới hạn trả lời nhanh ({max})."

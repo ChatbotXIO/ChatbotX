@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Tätä flow'ta ei ole koskaan julkaistu. Julkaise se ennen viemistä.",
+      "failed": "Vienti epäonnistui. Yritä uudelleen."
+    },
     "title": "Flow't",
     "quickReplies": {
       "limitReached": "Pikavastausten enimmäismäärä saavutettu ({max})."

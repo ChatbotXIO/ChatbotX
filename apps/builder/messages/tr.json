@@ -2057,6 +2057,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Bu akış hiç yayınlanmadı. Dışa aktarmadan önce yayınlayın.",
+      "failed": "Dışa aktarma başarısız oldu. Lütfen tekrar deneyin."
+    },
     "title": "Akışlar",
     "quickReplies": {
       "limitReached": "Hızlı yanıt sınırına ulaşıldı ({max})."

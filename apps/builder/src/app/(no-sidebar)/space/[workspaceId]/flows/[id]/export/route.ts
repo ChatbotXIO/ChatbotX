@@ -55,12 +55,12 @@ export async function GET(
     return new Response(null, { status: 404 })
   }
 
-  const draftVersion = await flowVersionService.findDraft({
+  const publishedVersion = await flowVersionService.findPublished({
     flowId: flow.id,
     workspaceId: flow.workspaceId,
   })
-  if (!draftVersion) {
-    return new Response(null, { status: 404 })
+  if (!publishedVersion) {
+    return Response.json({ code: "notPublished" }, { status: 409 })
   }
 
   const body = JSON.stringify(
@@ -73,9 +73,9 @@ export async function GET(
           name: flow.name,
           active: flow.active,
           enableInInbox: flow.enableInInbox,
-          startNodeId: draftVersion.startNodeId,
-          nodes: draftVersion.nodes,
-          edges: draftVersion.edges,
+          startNodeId: publishedVersion.startNodeId,
+          nodes: publishedVersion.nodes,
+          edges: publishedVersion.edges,
         },
       ],
     },

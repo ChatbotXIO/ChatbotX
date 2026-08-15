@@ -104,10 +104,7 @@ export const productImportMetaSchema = z.object({
 })
 export type ProductImportMeta = z.infer<typeof productImportMetaSchema>
 
-export const flowImportMetaSchema = z.object({
-  flowName: z.string().trim().min(1).max(255).optional(),
-  targetFolderId: bigintAsStringSchema.optional(),
-})
+export const flowImportMetaSchema = z.object({})
 export type FlowImportMeta = z.infer<typeof flowImportMetaSchema>
 
 export const importMetaByType = {

@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Este fluxo nunca foi publicado. Publique-o antes de exportar.",
+      "failed": "Falha na exportação. Tente novamente."
+    },
     "title": "Fluxos",
     "quickReplies": {
       "limitReached": "Foi atingido o limite de respostas rápidas ({max})."

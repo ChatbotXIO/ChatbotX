@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Deze flow is nog nooit gepubliceerd. Publiceer deze voordat je exporteert.",
+      "failed": "Exporteren mislukt. Probeer het opnieuw."
+    },
     "title": "Flows",
     "quickReplies": {
       "limitReached": "Limiet voor snelle antwoorden bereikt ({max})."

@@ -30,8 +30,40 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { toast } from "sonner"
 import { updateFlowAction } from "./actions/update-flow-action"
 import type { FlowResource } from "./schemas/resource"
+
+const CONTENT_DISPOSITION_FILENAME_REGEX = /filename="([^"]+)"/
+
+async function downloadFlowExport(
+  flow: FlowResource,
+  t: ReturnType<typeof useTranslations>,
+): Promise<void> {
+  const response = await fetch(
+    `/space/${flow.workspaceId}/flows/${flow.id}/export`,
+  )
+  if (!response.ok) {
+    if (response.status === 409) {
+      toast.error(t("flows.export.notPublished"))
+    } else {
+      toast.error(t("flows.export.failed"))
+    }
+    return
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? ""
+  const fileNameMatch = CONTENT_DISPOSITION_FILENAME_REGEX.exec(disposition)
+  const fileName = fileNameMatch?.[1] ?? `${flow.name}.chatbotx-flow.json`
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>
@@ -238,13 +270,9 @@ export function getFlowColumns({
               {t("actions.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              render={
-                // biome-ignore lint/a11y/useAnchorContent: DropdownMenuItem's icon + label children are merged onto this <a> via Base UI's render prop at runtime, which the linter can't trace statically.
-                <a
-                  download
-                  href={`/space/${row.original.workspaceId}/flows/${row.original.id}/export`}
-                />
-              }
+              onClick={() => {
+                downloadFlowExport(row.original, t)
+              }}
             >
               <DownloadIcon />
               {t("actions.export")}

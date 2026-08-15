@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { refineStepsByChannel } from "../channel-rules/channel-step-refinement"
 import { edgeSchema, flowVersionSchema } from "../nodes/index"
 
 export const FLOW_EXPORT_FORMAT_VERSION = 1
@@ -8,7 +9,7 @@ export const flowExportedFlowSchema = z.object({
   active: z.boolean(),
   enableInInbox: z.boolean(),
   startNodeId: z.string(),
-  nodes: z.array(flowVersionSchema),
+  nodes: z.array(flowVersionSchema).superRefine(refineStepsByChannel),
   edges: z.array(edgeSchema),
 })
 export type FlowExportedFlow = z.infer<typeof flowExportedFlowSchema>
@@ -21,7 +22,10 @@ export const flowExportSchema = z.object({
     flowId: z.string(),
     appVersion: z.string().optional(),
   }),
-  flows: z.array(flowExportedFlowSchema).min(1),
+  // Export writes exactly one flow and the importer only ever reads `flows[0]`;
+  // pinning the length keeps that array-of-one shape from silently accepting
+  // (and dropping) a multi-flow payload.
+  flows: z.array(flowExportedFlowSchema).length(1),
 })
 export type FlowExport = z.infer<typeof flowExportSchema>
 

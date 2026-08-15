@@ -2700,6 +2700,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Det här flödet har aldrig publicerats. Publicera det innan du exporterar.",
+      "failed": "Export misslyckades. Försök igen."
+    },
     "actions": {
       "actions": "Åtgärder",
       "activeCampaignSyncContact": "Lägg till kontakt i ActiveCampaign",

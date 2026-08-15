@@ -2154,6 +2154,10 @@
   },
   "flows": {
     "title": "Flows",
+    "export": {
+      "notPublished": "This flow has never been published. Publish it before exporting.",
+      "failed": "Export failed. Please try again."
+    },
     "quickReplies": {
       "limitReached": "Quick reply limit reached ({max})."
     },

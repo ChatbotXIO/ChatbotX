@@ -2,11 +2,15 @@ import { describe, expect, test } from "vitest"
 import {
   buttonStepDefaultFn,
   buttonTypes,
+  chooseChannelStepDefaultFn,
   collectFlowReferenceWarnings,
   conditionNodeDefaultFn,
   FLOW_EXPORT_FORMAT_VERSION,
   type FlowExportedFlow,
+  openWebsiteStepDefaultFn,
   parseFlowExport,
+  sendCardStepDefaultFn,
+  sendCarouselStepDefaultFn,
   sendMessageNodeDefaultFn,
   splitTrafficNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
@@ -136,6 +140,67 @@ describe("flow export/import round trip", () => {
       exportedAt: new Date().toISOString(),
       source: { workspaceId: "1", flowId: "1" },
       flows: [brokenFlow],
+    })
+
+    expect(result.ok).toBe(false)
+  })
+
+  /**
+   * Requirement-2 regression guard: import must share publish's per-channel
+   * step rules, not just the bare node union. A carousel that publish would
+   * reject on WhatsApp must also be rejected on import.
+   */
+  test("rejects a WhatsApp carousel card that mixes a link button with a reply", () => {
+    const websiteButton = {
+      ...buttonStepDefaultFn({ label: "Open" }),
+      buttonType: buttonTypes.enum.openWebsite,
+      beforeStep: { ...openWebsiteStepDefaultFn(), url: "https://example.com" },
+    }
+    const replyButton = buttonStepDefaultFn({ label: "Yes" })
+
+    const node = sendMessageNodeDefaultFn({
+      labelVersion: 1,
+      nodeProps: { id: "1" },
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({ channel: "whatsapp" }),
+      },
+    })
+    const carouselNode = {
+      ...node,
+      data: {
+        ...node.data,
+        details: {
+          ...node.data.details,
+          steps: [
+            {
+              ...sendCarouselStepDefaultFn(),
+              cards: [
+                {
+                  ...sendCardStepDefaultFn(),
+                  title: "Card",
+                  buttons: [websiteButton, replyButton],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    }
+
+    const flow: FlowExportedFlow = {
+      name: "Broken carousel flow",
+      active: true,
+      enableInInbox: true,
+      startNodeId: carouselNode.id,
+      nodes: [carouselNode],
+      edges: [],
+    }
+
+    const result = parseFlowExport({
+      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [flow],
     })
 
     expect(result.ok).toBe(false)

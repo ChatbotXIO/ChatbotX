@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Alur ini belum pernah dipublikasikan. Publikasikan sebelum mengekspor.",
+      "failed": "Ekspor gagal. Silakan coba lagi."
+    },
     "title": "Alur",
     "quickReplies": {
       "limitReached": "Batas balasan cepat tercapai ({max})."

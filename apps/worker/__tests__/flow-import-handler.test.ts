@@ -27,11 +27,13 @@ vi.mock("@chatbotx.io/business", () => ({
         importId: string
         counters: { processed: number; success: number; failed: number }
         errorSample: Array<{ row: number; reason: string }>
+        warningMessage?: string
       }) => {
         mocks.updateValues.push({
           status: "completed",
           ...input.counters,
           errorSample: input.errorSample,
+          errorMessage: input.warningMessage ?? null,
         })
         return Promise.resolve()
       },
@@ -39,6 +41,16 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   flowService: {
     createFromImport: (...args: unknown[]) => mocks.createFromImport(...args),
+  },
+}))
+
+vi.mock("@chatbotx.io/business/errors", () => ({
+  ChatbotXException: class ChatbotXException extends Error {
+    code: string
+    constructor(message: string, code: string) {
+      super(message)
+      this.code = code
+    }
   },
 }))
 
@@ -150,10 +162,15 @@ describe("runFlowImport", () => {
     })
     expect(finalUpdate?.errorSample).toEqual([
       expect.objectContaining({
-        row: 0,
+        row: 1,
         reason: expect.stringContaining("sequence"),
       }),
     ])
+    // A dangling reference must not look like a clean import: the completed
+    // row still carries a visible warning message even though failed: 0.
+    expect(finalUpdate?.errorMessage).toEqual(
+      expect.stringContaining("unresolved reference"),
+    )
   })
 
   test("persists nodes byte for byte (no id rewriting)", async () => {

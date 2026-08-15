@@ -1,13 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
-import {
-  fileContextTypes,
-  fileStatuses,
-  importTypes,
-} from "@chatbotx.io/database/partials"
-import { fileModel, importModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { importService } from "@chatbotx.io/business"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -40,58 +33,28 @@ export const importFlowAction = workspaceActionClient
         })
       }
 
-      const file = await db.query.fileModel.findFirst({
-        where: { id: parsedInput.fileId, workspaceId },
+      const result = await importService.startFlowImport({
+        workspaceId,
+        userId: user.id,
+        fileId: parsedInput.fileId,
       })
-      if (!file) {
+      if (!result.ok) {
         return returnValidationErrors(importFlowRequest, {
-          fileId: { _errors: ["File not found"] },
+          fileId: {
+            _errors: [
+              result.reason === "fileNotFound"
+                ? "File not found"
+                : "File is not a flow import",
+            ],
+          },
         })
       }
-      if (
-        file.contextType !== fileContextTypes.enum.import ||
-        file.subType !== importTypes.enum.flow
-      ) {
-        return returnValidationErrors(importFlowRequest, {
-          fileId: { _errors: ["File is not a flow import"] },
-        })
-      }
-
-      const importId = createId()
-
-      // Mark the file uploaded and create the import row atomically so the
-      // queued job can never reference an import row that failed to persist.
-      await db.transaction(async (tx) => {
-        await tx
-          .update(fileModel)
-          .set({
-            status: fileStatuses.enum.uploaded,
-            uploadedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(fileModel.id, file.id),
-              eq(fileModel.workspaceId, workspaceId),
-            ),
-          )
-
-        await tx.insert(importModel).values({
-          id: importId,
-          workspaceId,
-          userId: user.id,
-          fileId: file.id,
-          type: importTypes.enum.flow,
-          format: "json",
-          status: "pending",
-          meta: {},
-        })
-      })
 
       await defaultQueue.add(DefaultJobAction.runImport, {
         type: DefaultJobAction.runImport,
-        data: { importId },
+        data: { importId: result.importId },
       })
 
-      return { importId }
+      return { importId: result.importId }
     },
   )

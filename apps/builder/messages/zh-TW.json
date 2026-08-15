@@ -2208,6 +2208,10 @@
     "deleteConfirmation": "你確定嗎？\n此操作無法撤銷。\n這將從我們的伺服器中永久刪除您的 {feature}。"
   },
   "flows": {
+    "export": {
+      "notPublished": "此流程從未發布過。請先發布後再匯出。",
+      "failed": "匯出失敗，請重試。"
+    },
     "title": "流程",
     "quickReplies": {
       "limitReached": "已達到快速回覆限制 ({max})。"
