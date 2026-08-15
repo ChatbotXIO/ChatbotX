@@ -1876,6 +1876,11 @@
       "description": "传回包含消息与操作的结构化 JSON，而不是纯文本流。",
       "label": "丰富回应"
     },
+    "javascriptCode": {
+      "description": "使用纯 JavaScript 并返回一个值。网络、文件、API 和外部库均不可用。可通过 `input` 对象访问联系人和系统数据。",
+      "label": "JavaScript 代码",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()"
+    },
     "jsonPath": {
       "placeholder": "输入 JSON 路径",
       "targetThisRow": "从 JSON 填入此列"
@@ -2727,6 +2732,7 @@
       "dripSubscribeSubscriber": "将联系人加入 Drip",
       "emailActions": "电子邮件操作",
       "enableMessengerComposer": "激活 Messenger 作曲家",
+      "executeJavascript": "执行 JavaScript 代码",
       "facebookCustomAudience": "Facebook 自订受众",
       "findGif": "找 GIF",
       "flowActions": "流程操作",

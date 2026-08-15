@@ -39,6 +39,10 @@ const TEST_DEFAULTS: Readonly<Record<string, string>> = {
   // Realtime
   REALTIME_BROADCAST_SECRET: "test-broadcast-secret-32-bytes-ok",
 
+  // JavaScript executor
+  JAVASCRIPT_EXECUTOR_URL: "http://127.0.0.1:1",
+  JAVASCRIPT_EXECUTOR_TOKEN: "test-executor-secret-at-least-32-bytes",
+
   // SMTP
   SMTP_SERVER: "smtp://test:test@127.0.0.1:1",
   SMTP_FROM: "test@localhost",

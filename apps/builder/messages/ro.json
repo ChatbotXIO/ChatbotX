@@ -47,6 +47,7 @@
       "questionnaires": "Chestionare",
       "setUpCoupon": "Configurează cuponul",
       "markCouponUsed": "Marchează cuponul ca utilizat",
+      "executeJavascript": "Execută JavaScript",
       "chooseChannel": "Alege canalul",
       "clearCustomField": "Golește câmpul personalizat",
       "condition": "Condiție",
@@ -1964,6 +1965,11 @@
     },
     "outputCustomField": {
       "label": "Câmp personalizat de ieșire"
+    },
+    "javascriptCode": {
+      "label": "Cod JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Utilizați JavaScript pur și returnați o valoare. Rețeaua, fișierele, API-urile și bibliotecile externe nu sunt disponibile. Datele contactului și ale sistemului sunt disponibile în obiectul `input`."
     },
     "httpMethod": {
       "label": "Metodă"

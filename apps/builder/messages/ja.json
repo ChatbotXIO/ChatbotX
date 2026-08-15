@@ -1194,6 +1194,11 @@
     "outputCustomField": {
       "label": "出力カスタムフィールド"
     },
+    "javascriptCode": {
+      "label": "JavaScriptコード",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "純粋なJavaScriptを使用して値を返してください。ネットワーク、ファイル、API、外部ライブラリは利用できません。連絡先およびシステムデータは `input` オブジェクトから利用できます。"
+    },
     "httpMethod": {
       "label": "メソッド"
     },
@@ -2025,6 +2030,7 @@
       "questionnaires": "アンケート",
       "setUpCoupon": "クーポンを設定",
       "markCouponUsed": "クーポンを使用済みにする",
+      "executeJavascript": "JavaScriptを実行",
       "chooseChannel": "チャネルを選択",
       "clearCustomField": "カスタムフィールドをクリア",
       "condition": "条件",

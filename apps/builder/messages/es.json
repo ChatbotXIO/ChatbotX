@@ -1268,6 +1268,11 @@
     "outputCustomField": {
       "label": "Campo personalizado de salida"
     },
+    "javascriptCode": {
+      "label": "Código JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Usa JavaScript puro y devuelve un valor. La red, los archivos, las API y las bibliotecas externas no están disponibles. Los datos del contacto y del sistema están disponibles en el objeto `input`."
+    },
     "httpMethod": {
       "label": "Método"
     },
@@ -2099,6 +2104,7 @@
       "questionnaires": "Cuestionarios",
       "setUpCoupon": "Establecer up Coupon",
       "markCouponUsed": "Marcar cupón como usado",
+      "executeJavascript": "Ejecutar JavaScript",
       "chooseChannel": "Elegir Channel",
       "clearCustomField": "Borrar campo personalizado",
       "condition": "Condición",

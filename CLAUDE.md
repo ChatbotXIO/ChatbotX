@@ -56,4 +56,4 @@ Default to the cheapest tier that fits the task; reserve the top tier for judgme
 - Do not skip `pnpm lint` — the CI will fail.
 - Do not hardcode user-facing strings — use `useTranslations()`.
 - Do not import `db` directly in `apps/` or `integrations/` — all DB access must go through a service (`@chatbotx.io/business`) or repository (`@chatbotx.io/database/repositories`). See `.agents/rules/data-access.md`.
-- Do not use dynamic `import()` in tsdown-built code (`packages/*`, `integrations/*`, `apps/worker`, `apps/cli`, `apps/mcp-server`) — it breaks the tsdown build. In `apps/builder/src` dynamic imports and `next/dynamic` are allowed (and preferred for heavy client islands). See `.agents/rules/no-dynamic-import.md`.
+- Do not use dynamic `import()` in tsdown-built code (`packages/*`, `integrations/*`, `apps/worker`, `apps/cli`, `apps/mcp-server`, `apps/javascript-executor`) — it breaks the tsdown build. In `apps/builder/src` dynamic imports and `next/dynamic` are allowed (and preferred for heavy client islands). See `.agents/rules/no-dynamic-import.md`.

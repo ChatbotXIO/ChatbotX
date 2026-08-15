@@ -1238,6 +1238,11 @@
     "outputCustomField": {
       "label": "Trường tùy chỉnh đầu ra"
     },
+    "javascriptCode": {
+      "label": "Mã JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Dùng JavaScript thuần túy và trả về một giá trị. Không thể dùng mạng, tệp, API hoặc thư viện bên ngoài. Dữ liệu liên hệ và hệ thống có sẵn trong đối tượng `input`."
+    },
     "httpMethod": {
       "label": "Phương thức"
     },
@@ -2101,6 +2106,7 @@
       "questionnaires": "Bảng câu hỏi",
       "setUpCoupon": "Thiết lập Coupon",
       "markCouponUsed": "Đánh dấu Coupon đã dùng",
+      "executeJavascript": "Thực thi JavaScript",
       "chooseChannel": "Chọn kênh",
       "clearCustomField": "Xóa trường tùy chỉnh",
       "condition": "Điều kiện",

@@ -319,6 +319,7 @@
       "questionnaires": "שאלונים",
       "setUpCoupon": "הגדרת קופון",
       "markCouponUsed": "סימון קופון כמשומש",
+      "executeJavascript": "הפעלת JavaScript",
       "chooseChannel": "בחירת ערוץ",
       "clearCustomField": "ניקוי שדה מותאם אישית",
       "condition": "תנאי",
@@ -3601,6 +3602,11 @@
     },
     "outputCustomField": {
       "label": "שדה פלט מותאם אישית"
+    },
+    "javascriptCode": {
+      "label": "קוד JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "השתמשו ב-JavaScript טהור והחזירו ערך. רשת, קבצים, ממשקי API וספריות חיצוניות אינם זמינים. נתוני איש הקשר והמערכת זמינים באובייקט `input`."
     },
     "httpMethod": {
       "label": "שיטה"

@@ -83,6 +83,7 @@ jobs:
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-worker
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-realtime
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-mcp
+            ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-javascript-executor
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -112,6 +113,9 @@ jobs:
           - label: mcp-server
             image: chatbotx-mcp
             dockerfile: ./apps/mcp-server/docker/Dockerfile
+          - label: javascript-executor
+            image: chatbotx-javascript-executor
+            dockerfile: ./apps/javascript-executor/docker/Dockerfile
     permissions:
       contents: read
       packages: write
@@ -239,7 +243,8 @@ jobs:
               "Builder image (main): ${REGISTRY}/chatbotx-builder:main" \
               "Worker image (main): ${REGISTRY}/chatbotx-worker:main" \
               "Realtime image (main): ${REGISTRY}/chatbotx-realtime:main" \
-              "MCP Server image (main): ${REGISTRY}/chatbotx-mcp:main"
+              "MCP Server image (main): ${REGISTRY}/chatbotx-mcp:main" \
+              "JavaScript Executor image (main): ${REGISTRY}/chatbotx-javascript-executor:main"
           elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             printf '%s\n' \
               "Builder image (version): ${REGISTRY}/chatbotx-builder:${VERSION}" \
@@ -249,7 +254,9 @@ jobs:
               "Realtime image (version): ${REGISTRY}/chatbotx-realtime:${VERSION}" \
               "Realtime image (latest): ${REGISTRY}/chatbotx-realtime:latest" \
               "MCP Server image (version): ${REGISTRY}/chatbotx-mcp:${VERSION}" \
-              "MCP Server image (latest): ${REGISTRY}/chatbotx-mcp:latest"
+              "MCP Server image (latest): ${REGISTRY}/chatbotx-mcp:latest" \
+              "JavaScript Executor image (version): ${REGISTRY}/chatbotx-javascript-executor:${VERSION}" \
+              "JavaScript Executor image (latest): ${REGISTRY}/chatbotx-javascript-executor:latest"
           else
             echo "No publish tags for ref ${GITHUB_REF}."
           fi

@@ -1194,6 +1194,11 @@
     "outputCustomField": {
       "label": "Tulosteen mukautettu kenttä"
     },
+    "javascriptCode": {
+      "label": "JavaScript-koodi",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Käytä puhdasta JavaScriptiä ja palauta arvo. Verkko, tiedostot, API:t ja ulkoiset kirjastot eivät ole käytettävissä. Yhteystiedot ja järjestelmätiedot ovat saatavilla `input`-objektissa."
+    },
     "httpMethod": {
       "label": "Menetelmä"
     },
@@ -2025,6 +2030,7 @@
       "questionnaires": "Kyselyt",
       "setUpCoupon": "Määritä kuponki",
       "markCouponUsed": "Merkitse kuponki käytetyksi",
+      "executeJavascript": "Suorita JavaScript",
       "chooseChannel": "Valitse kanava",
       "clearCustomField": "Tyhjennä mukautettu kenttä",
       "condition": "Ehto",
