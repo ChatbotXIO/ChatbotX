@@ -2186,7 +2186,11 @@
       "appointmentScheduling": "Randevu Planlama",
       "triggerN8n": "n8n'i Tetikle",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder",
+      "import": "Akışı içe aktar",
+      "export": "Dışa aktar",
+      "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
+      "importJsonOnly": "Yalnızca JSON dosyaları"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",

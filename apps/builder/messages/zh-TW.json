@@ -2337,7 +2337,11 @@
       "appointmentScheduling": "預約安排",
       "triggerN8n": "觸發 n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
+      "import": "匯入流程",
+      "export": "匯出",
+      "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
+      "importJsonOnly": "僅限 JSON 檔案"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",

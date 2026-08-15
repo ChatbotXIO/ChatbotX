@@ -2,6 +2,7 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -10,6 +11,8 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
+import { HistoryIcon } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
@@ -19,6 +22,7 @@ import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import { DuplicateFlowDialog } from "./duplicate-flow-dialog"
 import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
+import { ImportFlowDialog } from "./import-flow-dialog"
 import type { listFlowsRSC } from "./queries"
 import { RenameFlowDialog } from "./react-flow/components/rename-flow"
 import type { FlowResource } from "./schemas/resource"
@@ -73,6 +77,14 @@ export function FlowsTable({
               table={table}
               workspaceId={workspaceId}
             />
+            <Link
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              href={`/space/${workspaceId}/flows/import/histories`}
+            >
+              <HistoryIcon className="size-4" />
+              {t("fields.import.histories.title")}
+            </Link>
+            <ImportFlowDialog workspaceId={workspaceId} />
             <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>

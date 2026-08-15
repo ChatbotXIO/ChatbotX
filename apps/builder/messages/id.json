@@ -2112,7 +2112,11 @@
       "appointmentScheduling": "Penjadwalan Janji Temu",
       "triggerN8n": "Trigger n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI"
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
+      "import": "Impor Alur",
+      "export": "Ekspor",
+      "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
+      "importJsonOnly": "Hanya file JSON"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",

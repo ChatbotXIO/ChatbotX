@@ -2186,7 +2186,11 @@
       "appointmentScheduling": "Programación de citas",
       "triggerN8n": "Activar n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Enviar evento Meta CAPI"
+      "sendMetaCapiEvent": "Enviar evento Meta CAPI",
+      "import": "Importar flujo",
+      "export": "Exportar",
+      "importStarted": "El flujo se está importando. Consulta el historial de importaciones para ver los resultados.",
+      "importJsonOnly": "Solo archivos JSON"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",

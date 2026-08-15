@@ -97,7 +97,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
           placeholder: t("fields.name.searchPlaceholder"),
           variant: "text",
         },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
         enableSorting: false,
         enableHiding: false,
       },

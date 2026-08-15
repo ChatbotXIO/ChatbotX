@@ -2112,7 +2112,11 @@
       "appointmentScheduling": "Aftaleplanlægning",
       "triggerN8n": "Trigger n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Send Meta CAPI Event",
+      "import": "Importer flow",
+      "export": "Eksporter",
+      "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
+      "importJsonOnly": "Kun JSON-filer"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",

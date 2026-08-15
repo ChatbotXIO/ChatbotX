@@ -42,3 +42,13 @@ export const selectFlowSchema = z.object({
   flowId: z.string(),
 })
 export type SelectFlowSchema = z.infer<typeof selectFlowSchema>
+
+export const importFlowRequest = z.object({
+  fileId: zodBigintAsString(),
+})
+export type ImportFlowRequest = z.infer<typeof importFlowRequest>
+
+export const importFlowResponse = z.object({
+  importId: z.string(),
+})
+export type ImportFlowResponse = z.infer<typeof importFlowResponse>

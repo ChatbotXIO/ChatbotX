@@ -2803,7 +2803,11 @@
       "appointmentScheduling": "Tidsbokning",
       "metaConversions": "Meta Conversions API",
       "triggerN8n": "Trigger n8n",
-      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse"
+      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
+      "import": "Importera flöde",
+      "export": "Exportera",
+      "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
+      "importJsonOnly": "Endast JSON-filer"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",

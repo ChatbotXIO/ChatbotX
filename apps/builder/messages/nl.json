@@ -2112,7 +2112,11 @@
       "appointmentScheduling": "Afspraken plannen",
       "triggerN8n": "Trigger n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
+      "import": "Flow importeren",
+      "export": "Exporteren",
+      "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
+      "importJsonOnly": "Alleen JSON-bestanden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",

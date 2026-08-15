@@ -20,6 +20,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   CopyPlus,
+  DownloadIcon,
   EllipsisVerticalIcon,
   FolderUpIcon,
   TextIcon,
@@ -235,6 +236,18 @@ export function getFlowColumns({
             >
               <CopyPlus />
               {t("actions.duplicate")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                // biome-ignore lint/a11y/useAnchorContent: DropdownMenuItem's icon + label children are merged onto this <a> via Base UI's render prop at runtime, which the linter can't trace statically.
+                <a
+                  download
+                  href={`/space/${row.original.workspaceId}/flows/${row.original.id}/export`}
+                />
+              }
+            >
+              <DownloadIcon />
+              {t("actions.export")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setRowAction({ row, variant: "delete" })}

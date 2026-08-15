@@ -2282,7 +2282,11 @@
       "unsubscribeSequence": "Unsubscribe Sequence",
       "splitTraffic": "Split Traffic",
       "aiEditImage": "AI Edit Image",
-      "whatsappFlow": "WhatsApp Flow"
+      "whatsappFlow": "WhatsApp Flow",
+      "import": "Import Flow",
+      "export": "Export",
+      "importStarted": "Flow is importing. Check the import history for results.",
+      "importJsonOnly": "JSON files only"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",

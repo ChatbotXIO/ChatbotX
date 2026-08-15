@@ -2806,7 +2806,11 @@
       "appointmentScheduling": "预约安排",
       "triggerN8n": "触发 n8n",
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
-      "metaConversions": "Meta Conversions API"
+      "metaConversions": "Meta Conversions API",
+      "import": "导入流程",
+      "export": "导出",
+      "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
+      "importJsonOnly": "仅限 JSON 文件"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {

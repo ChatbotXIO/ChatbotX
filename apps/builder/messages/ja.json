@@ -2112,7 +2112,11 @@
       "appointmentScheduling": "予約スケジュール",
       "triggerN8n": "n8n をトリガー",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
+      "import": "フローをインポート",
+      "export": "エクスポート",
+      "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
+      "importJsonOnly": "JSONファイルのみ"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",

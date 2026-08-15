@@ -2112,7 +2112,11 @@
       "appointmentScheduling": "Planification des rendez-vous",
       "triggerN8n": "Déclencher n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Envoyer un événement Meta CAPI"
+      "sendMetaCapiEvent": "Envoyer un événement Meta CAPI",
+      "import": "Importer le flux",
+      "export": "Exporter",
+      "importStarted": "Le flux est en cours d'importation. Consultez l'historique des imports pour voir les résultats.",
+      "importJsonOnly": "Fichiers JSON uniquement"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
