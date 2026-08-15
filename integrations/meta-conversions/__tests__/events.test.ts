@@ -93,6 +93,7 @@ describe("Meta Conversions events API", () => {
       action_source: "business_messaging",
       messaging_channel: "instagram",
       user_data: {
+        ig_account_id: "ig-business-1",
         instagram_business_account_id: "ig-business-1",
         ig_sid: "ig-sid-1",
       },

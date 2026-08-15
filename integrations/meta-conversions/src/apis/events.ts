@@ -66,15 +66,25 @@ const conversionEventsResponseSchema = z.object({}).passthrough()
 // Verified against Meta Conversions API for Business Messaging docs:
 // https://developers.facebook.com/docs/marketing-api/conversions-api/business-messaging
 // user_data keys: messenger uses page_id + page_scoped_user_id; instagram uses
-// instagram_business_account_id + ig_sid; whatsapp uses
-// whatsapp_business_account_id + ctwa_clid (payload identical to the existing
-// automatic CTWA pipeline in integrations/whatsapp/src/api/conversions.ts).
+// ig_account_id (+ instagram_business_account_id for forward-compat) + ig_sid;
+// whatsapp uses whatsapp_business_account_id + ctwa_clid (payload identical to
+// the existing automatic CTWA pipeline in
+// integrations/whatsapp/src/api/conversions.ts). NOTE: the live IG endpoint
+// requires `ig_account_id` even though the public doc example still shows
+// `instagram_business_account_id` — see the instagram builder below.
 const channelUserDataBuilders = {
   messenger: (event: MetaConversionEventInput) => ({
     page_id: (event as MessengerEventInput).pageId,
     page_scoped_user_id: (event as MessengerEventInput).pageScopedUserId,
   }),
   instagram: (event: MetaConversionEventInput) => ({
+    // Live business_messaging endpoint requires `ig_account_id`; it rejects the
+    // event as "Missing IG account ID parameter" (error_subcode 2804079) when
+    // only `instagram_business_account_id` is sent, even though the public doc
+    // example still lists the latter. We send BOTH (same value): the live API
+    // requires `ig_account_id` and tolerates the doc-named key as unknown, so
+    // this stays correct whichever name Meta consolidates on.
+    ig_account_id: (event as InstagramEventInput).instagramBusinessAccountId,
     instagram_business_account_id: (event as InstagramEventInput)
       .instagramBusinessAccountId,
     ig_sid: (event as InstagramEventInput).igSid,
