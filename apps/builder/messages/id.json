@@ -2266,32 +2266,12 @@
   },
   "ads": {
     "title": "Iklan",
-    "nav": {
-      "clickToWhatsappAds": "Iklan Click to WhatsApp",
-      "clickToTiktokAds": "Iklan Click to TikTok",
-      "connectAccounts": "Hubungkan Akun",
-      "conversionEvents": "Peristiwa Konversi",
-      "adsAnalytics": "Analitik iklan",
-      "reporting": "Pelaporan",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Segera hadir"
-    },
     "connectAccounts": {
-      "title": "Kelola semua akun iklan Anda",
-      "description": "Lacak konversi dan optimalkan kampanye iklan click-to-WhatsApp Anda.",
-      "learnMore": "Pelajari Lebih Lanjut",
       "connectAdAccount": "Hubungkan Akun Iklan",
       "adAccountName": "Nama Akun Iklan",
-      "disconnect": "Putuskan Koneksi",
-      "empty": "Belum ada akun iklan yang terhubung.",
-      "adAccountsTitle": "Akun iklan Meta",
-      "adAccountsDescription": "Hubungkan Iklan Facebook untuk memuat akun iklan yang digunakan untuk kampanye click-to-WhatsApp.",
       "adAccountsReconnectBanner": "Token akun iklan Meta Anda telah berakhir atau kehilangan izin. Hubungkan kembali Iklan Facebook agar pelaporan iklan tetap tersedia.",
       "adAccountsNotConnected": "Belum ada akun iklan Meta yang terhubung.",
       "adAccountsEmpty": "Tidak ditemukan akun iklan Meta untuk koneksi Iklan Facebook ini.",
-      "adAccountsNote": "Pengeluaran dan audiens retargeting berasal dari akun iklan ini.",
-      "reconnectBanner": "Hubungkan kembali akun WhatsApp Anda untuk mengaktifkan pengiriman peristiwa konversi ke Meta.",
       "reconnect": "Hubungkan Kembali",
       "reconnectSuccess": "Akun WhatsApp berhasil dihubungkan kembali.",
       "selectAccountLabel": "Akun WhatsApp",
@@ -2301,22 +2281,9 @@
         "unverified": "Izin belum diverifikasi"
       },
       "table": {
-        "name": "Nama",
-        "phoneNumber": "Nomor telepon",
-        "wabaId": "ID WABA",
-        "permission": "Peristiwa Otomatis"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "ID WABA"
       },
       "connectWhatsapp": {
-        "title": "Hubungkan akun WhatsApp Anda terlebih dahulu",
-        "description": "Pelacakan konversi Click-to-WhatsApp memerlukan akun WhatsApp yang terhubung sebelum Anda dapat menautkan akun iklan dan membuat dataset konversi.",
-        "step1": "Hubungkan akun WhatsApp Business Anda di Kanal.",
-        "step2": "Kembali ke sini untuk mengotorisasi Meta Ads dan memilih akun iklan Anda.",
-        "step3": "Kami akan otomatis membuat dataset konversi menggunakan akun WhatsApp Business Anda.",
         "cta": "Hubungkan akun WhatsApp"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Templat Pesan",
       "profile": "Profil",
       "usefulLinks": "Tautan Berguna",
-      "conversionsApi": "Optimasi Iklan"
+      "conversionsApi": "Optimasi Iklan",
+      "settings": "Pengaturan"
     },
     "accountHealths": {
       "title": "Kelola akun WhatsApp Anda",
@@ -3518,7 +3486,13 @@
       "label": "Header Templat"
     },
     "transferPhoneNumber": "Transfer telepon dari penyedia WhatsApp lain",
-    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi."
+    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Peristiwa Otomatis",
+        "description": "Kirim peristiwa konversi dari nomor WhatsApp ini ke Meta secara otomatis. Jika izin belum ada, sambungkan ulang akun untuk memberikannya."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

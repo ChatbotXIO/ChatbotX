@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { GET } from "../src/app/space/[workspaceId]/ads/analytics/export/route"
+import { GET } from "../src/app/space/[workspaceId]/dashboard/ads/export/route"
 
 type ExportRow = {
   id: string
@@ -54,7 +54,7 @@ vi.mock("next-intl/server", () => ({
 
 const callRoute = (query: string) =>
   GET(
-    new Request(`http://localhost/space/ws-1/ads/analytics/export?${query}`),
+    new Request(`http://localhost/space/ws-1/dashboard/ads/export?${query}`),
     {
       params: Promise.resolve({ workspaceId: "ws-1" }),
     },

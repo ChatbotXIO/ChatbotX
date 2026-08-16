@@ -10,7 +10,7 @@ import type { AdsAnalyticsTimeseriesRow } from "@/features/ads/queries/analytics
 import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/space/ws-1/ads/analytics",
+  usePathname: () => "/space/ws-1/dashboard/ads",
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -222,11 +222,38 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     )
     expect(
       Array.from(container.querySelectorAll("a")).some((anchor) =>
-        anchor.href.includes("/ads/connect-accounts"),
+        anchor.href.includes("/whatsapps/iw-1/capi"),
       ),
     ).toBe(true)
     expect(container.textContent).not.toContain(
       "ads.analytics.delivery.skippedRegion",
+    )
+  })
+
+  test("omits the reconnect CTA link in the aggregate (no account) view", async () => {
+    await act(async () => {
+      root.render(
+        <AdsAnalyticsView
+          promises={Promise.resolve([
+            analyticsData,
+            deliverySummary,
+            timeseries,
+          ])}
+          range={range}
+          selectedIntegrationWhatsappId={null}
+          switcherIntegrations={[]}
+          whatsappCredentialPublic={null}
+          workspaceId="ws-1"
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(container.textContent).toContain(
+      "ads.analytics.delivery.noScopeWarning",
+    )
+    expect(container.textContent).not.toContain(
+      "ads.analytics.delivery.reconnectCta",
     )
   })
 })

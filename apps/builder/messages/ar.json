@@ -2340,32 +2340,12 @@
   },
   "ads": {
     "title": "الإعلانات",
-    "nav": {
-      "clickToWhatsappAds": "إعلانات Click to WhatsApp",
-      "clickToTiktokAds": "إعلانات Click to TikTok",
-      "connectAccounts": "ربط الحسابات",
-      "conversionEvents": "أحداث التحويل",
-      "adsAnalytics": "تحليلات الإعلانات",
-      "reporting": "التقارير",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "قريبًا"
-    },
     "connectAccounts": {
-      "title": "إدارة جميع حساباتك الإعلانية",
-      "description": "تتبّع التحويلات وحسّن حملات إعلانات Click-to-WhatsApp الخاصة بك.",
-      "learnMore": "معرفة المزيد",
       "connectAdAccount": "ربط حساب إعلاني",
       "adAccountName": "اسم الحساب الإعلاني",
-      "disconnect": "قطع الاتصال",
-      "empty": "لا يوجد حساب إعلاني متصل حتى الآن.",
-      "adAccountsTitle": "حسابات Meta الإعلانية",
-      "adAccountsDescription": "اربط إعلانات Facebook لتحميل الحسابات الإعلانية المستخدمة في حملات click-to-WhatsApp.",
       "adAccountsReconnectBanner": "انتهت صلاحية رمز حساب Meta الإعلاني الخاص بك أو فقد الأذونات. أعد ربط إعلانات Facebook للحفاظ على توفر تقارير الإعلانات.",
       "adAccountsNotConnected": "لا توجد حسابات Meta إعلانية متصلة حتى الآن.",
       "adAccountsEmpty": "لم يتم العثور على حسابات Meta إعلانية لاتصال إعلانات Facebook هذا.",
-      "adAccountsNote": "يأتي الإنفاق وجماهير إعادة الاستهداف من هذه الحسابات الإعلانية.",
-      "reconnectBanner": "أعد ربط حساب WhatsApp الخاص بك لتفعيل إرسال أحداث التحويل إلى Meta.",
       "reconnect": "إعادة الاتصال",
       "reconnectSuccess": "تمت إعادة ربط حساب WhatsApp.",
       "selectAccountLabel": "حساب WhatsApp",
@@ -2375,22 +2355,9 @@
         "unverified": "الإذن غير مُتحقّق منه"
       },
       "table": {
-        "name": "الاسم",
-        "phoneNumber": "رقم الهاتف",
-        "wabaId": "معرّف WABA",
-        "permission": "الأحداث التلقائية"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "معرّف WABA"
       },
       "connectWhatsapp": {
-        "title": "اربط حساب WhatsApp الخاص بك أولًا",
-        "description": "يتطلب تتبع تحويلات Click-to-WhatsApp ربط حساب WhatsApp قبل أن تتمكن من ربط الحسابات الإعلانية وإنشاء مجموعات بيانات التحويل.",
-        "step1": "اربط حساب WhatsApp Business الخاص بك في القنوات.",
-        "step2": "عد إلى هنا لتفويض Meta Ads واختيار حسابك الإعلاني.",
-        "step3": "سننشئ تلقائيًا مجموعة بيانات التحويل باستخدام حساب WhatsApp Business الخاص بك.",
         "cta": "ربط حساب WhatsApp"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "قوالب الرسائل",
       "profile": "الملف التعريفي",
       "usefulLinks": "روابط مفيدة",
-      "conversionsApi": "تحسين الإعلانات"
+      "conversionsApi": "تحسين الإعلانات",
+      "settings": "الإعدادات"
     },
     "accountHealths": {
       "title": "إدارة حساب WhatsApp",
@@ -3518,7 +3486,13 @@
       "label": "رأس القالب"
     },
     "transferPhoneNumber": "نقل رقم الهاتف من مزوّد WhatsApp آخر",
-    "signupSessionExpired": "انتهت صلاحية جلسة تسجيل WhatsApp. يُرجى بدء الاتصال من جديد."
+    "signupSessionExpired": "انتهت صلاحية جلسة تسجيل WhatsApp. يُرجى بدء الاتصال من جديد.",
+    "capi": {
+      "automaticEvents": {
+        "title": "الأحداث التلقائية",
+        "description": "أرسل أحداث التحويل من رقم واتساب هذا إلى Meta تلقائيًا. إذا كان الإذن مفقودًا، فأعد ربط الحساب لمنحه."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

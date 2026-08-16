@@ -191,8 +191,13 @@ function DeliveryCount({
   )
 }
 
-function buildConnectAccountsHref(workspaceId: string) {
-  return `/space/${workspaceId}/ads/connect-accounts`
+// The Automatic Events permission now lives on each WhatsApp channel's Ads
+// Optimization (capi) tab, so the CTA needs a concrete integration to target.
+function buildCapiSettingsHref(
+  workspaceId: string,
+  integrationWhatsappId: string,
+) {
+  return `/space/${workspaceId}/whatsapps/${integrationWhatsappId}/capi`
 }
 
 // Formatters take the next-intl locale explicitly: it is identical on the
@@ -246,7 +251,7 @@ function buildExportHref(input: {
   if (input.integrationWhatsappId) {
     params.set("integrationWhatsappId", input.integrationWhatsappId)
   }
-  return `/space/${input.workspaceId}/ads/analytics/export?${params.toString()}`
+  return `/space/${input.workspaceId}/dashboard/ads/export?${params.toString()}`
 }
 
 function segmentLabelKey(segment: RetargetSegment) {
@@ -696,15 +701,22 @@ export function AdsAnalyticsView({
               {delivery.skippedNoScope > 0 ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 text-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                   <span>{t("ads.analytics.delivery.noScopeWarning")}</span>
-                  <Link
-                    className={buttonVariants({
-                      size: "sm",
-                      variant: "outline",
-                    })}
-                    href={buildConnectAccountsHref(workspaceId)}
-                  >
-                    {t("ads.analytics.delivery.reconnectCta")}
-                  </Link>
+                  {/* Aggregate view (no selected account) has no single
+                      WhatsApp integration to link to — pick one first. */}
+                  {selectedIntegrationWhatsappId ? (
+                    <Link
+                      className={buttonVariants({
+                        size: "sm",
+                        variant: "outline",
+                      })}
+                      href={buildCapiSettingsHref(
+                        workspaceId,
+                        selectedIntegrationWhatsappId,
+                      )}
+                    >
+                      {t("ads.analytics.delivery.reconnectCta")}
+                    </Link>
+                  ) : null}
                 </div>
               ) : null}
             </>

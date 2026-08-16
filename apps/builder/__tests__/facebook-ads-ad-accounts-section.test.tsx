@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 
-import { act, type ReactNode, Suspense } from "react"
+import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { ConnectAccountsView } from "@/features/ads/components/connect-accounts-view"
-import type { ConnectAccountsData } from "@/features/ads/queries/connect-accounts"
+import { AdAccountsSection } from "@/features/integration-facebook-ads/components/ad-accounts-section"
 
 const swrState = vi.hoisted(() => ({
   data: undefined as
@@ -17,22 +16,12 @@ const actionState = vi.hoisted(() => ({
   execute: vi.fn(),
 }))
 
-vi.mock("next/navigation", () => ({
-  usePathname: () => "/space/ws-1/ads/connect-accounts",
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
-}))
-
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
 vi.mock("next-safe-action/hooks", () => ({
   useAction: () => ({ execute: actionState.execute, isPending: false }),
-}))
-
-vi.mock("@/features/integration-whatsapp/actions/reconnect.action", () => ({
-  reconnectWhatsappAction: vi.fn(),
 }))
 
 vi.mock("swr", () => ({
@@ -51,35 +40,20 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-vi.mock(
-  "@/features/integration-facebook-ads/actions/connect-from-ads.action",
-  () => ({
-    connectFacebookAdsFromAdsAction: vi.fn(),
-  }),
-)
-
-vi.mock("@/features/ads/queries/connect-accounts", () => ({}))
+vi.mock("@/features/integration-facebook-ads/actions/connect.action", () => ({
+  connectFacebookAds: vi.fn(),
+}))
 
 vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }))
 
-vi.mock("@chatbotx.io/ui/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => children,
-  TooltipContent: ({ children }: { children: ReactNode }) => children,
-  TooltipTrigger: ({ render }: { render: ReactNode }) => render,
-}))
+type FacebookAdsStatus = {
+  connected: boolean
+  needsReconnect: boolean
+}
 
-const baseData = {
-  whatsappIntegrations: [],
-  whatsappCredentialPublic: null,
-  facebookAds: {
-    connected: false,
-    needsReconnect: false,
-  },
-} satisfies ConnectAccountsData
-
-describe("ConnectAccountsView Meta ad accounts section", () => {
+describe("AdAccountsSection", () => {
   let container: HTMLDivElement
   let root: Root
 
@@ -102,24 +76,16 @@ describe("ConnectAccountsView Meta ad accounts section", () => {
     container.remove()
   })
 
-  async function renderView(data: ConnectAccountsData) {
-    const promises = Promise.resolve<[ConnectAccountsData]>([data])
-    await act(async () => {
+  function renderSection(facebookAds: FacebookAdsStatus) {
+    act(() => {
       root.render(
-        <Suspense fallback={null}>
-          <ConnectAccountsView
-            promises={promises}
-            selectedAccount=""
-            workspaceId="ws-1"
-          />
-        </Suspense>,
+        <AdAccountsSection facebookAds={facebookAds} workspaceId="ws-1" />,
       )
-      await promises
     })
   }
 
-  test("shows the connect state without rendering an ad accounts table", async () => {
-    await renderView(baseData)
+  test("shows the connect state without rendering an ad accounts table", () => {
+    renderSection({ connected: false, needsReconnect: false })
 
     expect(container.textContent).toContain(
       "ads.connectAccounts.adAccountsNotConnected",
@@ -130,14 +96,8 @@ describe("ConnectAccountsView Meta ad accounts section", () => {
     expect(container.querySelector("table")).toBeNull()
   })
 
-  test("shows the reconnect state without the connect CTA", async () => {
-    await renderView({
-      ...baseData,
-      facebookAds: {
-        connected: true,
-        needsReconnect: true,
-      },
-    })
+  test("shows the reconnect state without the connect CTA", () => {
+    renderSection({ connected: true, needsReconnect: true })
 
     expect(container.textContent).toContain(
       "ads.connectAccounts.adAccountsReconnectBanner",
@@ -147,16 +107,10 @@ describe("ConnectAccountsView Meta ad accounts section", () => {
     )
   })
 
-  test("shows connected ad accounts from SWR without the reconnect banner", async () => {
+  test("shows connected ad accounts from SWR without the reconnect banner", () => {
     swrState.data = { data: [{ id: "act_1", name: "Acme Ads" }] }
 
-    await renderView({
-      ...baseData,
-      facebookAds: {
-        connected: true,
-        needsReconnect: false,
-      },
-    })
+    renderSection({ connected: true, needsReconnect: false })
 
     expect(container.textContent).toContain("Acme Ads")
     expect(container.textContent).toContain("act_1")
@@ -165,16 +119,10 @@ describe("ConnectAccountsView Meta ad accounts section", () => {
     )
   })
 
-  test("shows the empty state when connected without ad accounts", async () => {
+  test("shows the empty state when connected without ad accounts", () => {
     swrState.data = { data: [] }
 
-    await renderView({
-      ...baseData,
-      facebookAds: {
-        connected: true,
-        needsReconnect: false,
-      },
-    })
+    renderSection({ connected: true, needsReconnect: false })
 
     expect(container.textContent).toContain(
       "ads.connectAccounts.adAccountsEmpty",

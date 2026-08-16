@@ -7,7 +7,7 @@ import { AdAccountFilter } from "@/features/ads/components/ad-account-filter"
 import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
 
 const navigation = vi.hoisted(() => ({
-  pathname: "/space/ws-1/ads/analytics",
+  pathname: "/space/ws-1/dashboard/ads",
   push: vi.fn(),
   searchParams: new URLSearchParams(),
 }))
@@ -143,7 +143,7 @@ describe("AdAccountFilter", () => {
     })
 
     expect(navigation.push).toHaveBeenCalledWith(
-      "/space/ws-1/ads/analytics?from=2026-08-01&to=2026-08-10&account=iw-1&adAccount=act_1",
+      "/space/ws-1/dashboard/ads?from=2026-08-01&to=2026-08-10&account=iw-1&adAccount=act_1",
     )
   })
 

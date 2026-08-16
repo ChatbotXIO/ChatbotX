@@ -16,8 +16,8 @@ import { useAction } from "next-safe-action/hooks"
 import type { ReactNode } from "react"
 import { toast } from "sonner"
 import useSWR from "swr"
-import { connectFacebookAdsFromAdsAction } from "@/features/integration-facebook-ads/actions/connect-from-ads.action"
 import { client } from "@/lib/orpc/orpc"
+import { connectFacebookAds } from "../actions/connect.action"
 
 type FacebookAdsStatus = {
   connected: boolean
@@ -131,7 +131,7 @@ export function AdAccountsSection({
 }) {
   const t = useTranslations()
   const { execute, isPending } = useAction(
-    connectFacebookAdsFromAdsAction.bind(null, workspaceId),
+    connectFacebookAds.bind(null, workspaceId),
     {
       onError: ({ error }) => {
         if (error.serverError) {
@@ -181,23 +181,10 @@ export function AdAccountsSection({
   } satisfies Record<AdAccountsState, ReactNode>
 
   return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h2 className="font-semibold text-lg">
-          {t("ads.connectAccounts.adAccountsTitle")}
-        </h2>
-        <p className="mt-1 text-muted-foreground text-sm">
-          {t("ads.connectAccounts.adAccountsDescription")}
-        </p>
-      </div>
-      <Card>
-        <CardContent className="flex flex-col gap-4 px-4">
-          {stateContent[state]}
-          <p className="text-muted-foreground text-xs">
-            {t("ads.connectAccounts.adAccountsNote")}
-          </p>
-        </CardContent>
-      </Card>
-    </section>
+    <Card>
+      <CardContent className="flex flex-col gap-4 px-4">
+        {stateContent[state]}
+      </CardContent>
+    </Card>
   )
 }

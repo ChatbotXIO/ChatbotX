@@ -2340,32 +2340,12 @@
   },
   "ads": {
     "title": "Reklamlar",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp Ads",
-      "clickToTiktokAds": "Click to TikTok Ads",
-      "connectAccounts": "Hesapları Bağla",
-      "conversionEvents": "Dönüşüm Olayları",
-      "adsAnalytics": "Reklam Analizleri",
-      "reporting": "Raporlama",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Yakında"
-    },
     "connectAccounts": {
-      "title": "Tüm reklam hesaplarınızı yönetin",
-      "description": "Dönüşümleri takip edin ve click-to-WhatsApp reklam kampanyalarınızı optimize edin.",
-      "learnMore": "Daha Fazla Bilgi",
       "connectAdAccount": "Reklam Hesabı Bağla",
       "adAccountName": "Reklam Hesabı Adı",
-      "disconnect": "Bağlantıyı Kes",
-      "empty": "Henüz bağlı bir reklam hesabı yok.",
-      "adAccountsTitle": "Meta reklam hesapları",
-      "adAccountsDescription": "Click-to-WhatsApp kampanyalarında kullanılan reklam hesaplarını yüklemek için Facebook Ads'i bağlayın.",
       "adAccountsReconnectBanner": "Meta reklam hesabı belirteciniz süresi doldu veya izinlerini kaybetti. Reklam raporlamasının kullanılabilir kalması için Facebook Ads'i yeniden bağlayın.",
       "adAccountsNotConnected": "Henüz bağlı bir Meta reklam hesabı yok.",
       "adAccountsEmpty": "Bu Facebook Ads bağlantısı için Meta reklam hesabı bulunamadı.",
-      "adAccountsNote": "Harcama ve yeniden pazarlama hedef kitleleri bu reklam hesaplarından gelir.",
-      "reconnectBanner": "Meta'ya dönüşüm olayları gönderimini etkinleştirmek için WhatsApp hesabınızı yeniden bağlayın.",
       "reconnect": "Yeniden Bağlan",
       "reconnectSuccess": "WhatsApp hesabı yeniden bağlandı.",
       "selectAccountLabel": "WhatsApp hesabı",
@@ -2375,22 +2355,9 @@
         "unverified": "İzin doğrulanmadı"
       },
       "table": {
-        "name": "Ad",
-        "phoneNumber": "Telefon numarası",
-        "wabaId": "WABA Kimliği",
-        "permission": "Otomatik Olaylar"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "WABA Kimliği"
       },
       "connectWhatsapp": {
-        "title": "Önce WhatsApp hesabınızı bağlayın",
-        "description": "Click-to-WhatsApp dönüşüm takibi, reklam hesaplarını bağlayıp dönüşüm veri kümeleri oluşturabilmeniz için önce bağlı bir WhatsApp hesabı gerektirir.",
-        "step1": "Kanallar bölümünden WhatsApp Business hesabınızı bağlayın.",
-        "step2": "Meta Ads'i yetkilendirmek ve reklam hesabınızı seçmek için buraya geri dönün.",
-        "step3": "Dönüşüm veri kümesini WhatsApp Business hesabınızı kullanarak otomatik olarak oluşturacağız.",
         "cta": "WhatsApp Hesabını Bağla"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Mesaj Şablonları",
       "profile": "Profil",
       "usefulLinks": "Faydalı Bağlantılar",
-      "conversionsApi": "Reklam Optimizasyonu"
+      "conversionsApi": "Reklam Optimizasyonu",
+      "settings": "Ayarlar"
     },
     "accountHealths": {
       "title": "WhatsApp hesabınızı yönetin",
@@ -3518,7 +3486,13 @@
       "label": "Şablon Üst Bilgisi"
     },
     "transferPhoneNumber": "Telefonu başka bir WhatsApp sağlayıcısından aktar",
-    "signupSessionExpired": "WhatsApp kayıt oturumunuzun süresi doldu. Lütfen bağlantıyı yeniden başlatın."
+    "signupSessionExpired": "WhatsApp kayıt oturumunuzun süresi doldu. Lütfen bağlantıyı yeniden başlatın.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Otomatik Olaylar",
+        "description": "Bu WhatsApp numarasından dönüşüm etkinliklerini Meta’ya otomatik olarak gönderin. İzin eksikse, vermek için hesabı yeniden bağlayın."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

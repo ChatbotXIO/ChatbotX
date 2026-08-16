@@ -283,32 +283,12 @@
   },
   "ads": {
     "title": "Anunțuri",
-    "nav": {
-      "clickToWhatsappAds": "Anunțuri Click to WhatsApp",
-      "clickToTiktokAds": "Anunțuri Click to TikTok",
-      "connectAccounts": "Conectează conturi",
-      "conversionEvents": "Evenimente de conversie",
-      "adsAnalytics": "Analiză anunțuri",
-      "reporting": "Rapoarte",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "În curând"
-    },
     "connectAccounts": {
-      "title": "Gestionează toate conturile tale de anunțuri",
-      "description": "Urmărește conversiile și optimizează-ți campaniile de anunțuri click-to-WhatsApp.",
-      "learnMore": "Află mai multe",
       "connectAdAccount": "Conectează cont de anunțuri",
       "adAccountName": "Numele contului de anunțuri",
-      "disconnect": "Deconectează",
-      "empty": "Niciun cont de anunțuri conectat încă.",
-      "adAccountsTitle": "Conturi de anunțuri Meta",
-      "adAccountsDescription": "Conectează Facebook Ads pentru a încărca conturile de anunțuri utilizate în campaniile click-to-WhatsApp.",
       "adAccountsReconnectBanner": "Tokenul contului tău de anunțuri Meta a expirat sau a pierdut permisiunile. Reconectează Facebook Ads pentru a păstra raportarea anunțurilor disponibilă.",
       "adAccountsNotConnected": "Niciun cont de anunțuri Meta nu este conectat încă.",
       "adAccountsEmpty": "Nu a fost găsit niciun cont de anunțuri Meta pentru această conexiune Facebook Ads.",
-      "adAccountsNote": "Cheltuielile și audiențele de retargetare provin din aceste conturi de anunțuri.",
-      "reconnectBanner": "Reconectează-ți contul de WhatsApp pentru a permite trimiterea evenimentelor de conversie către Meta.",
       "reconnect": "Reconectează",
       "reconnectSuccess": "Contul de WhatsApp a fost reconectat.",
       "selectAccountLabel": "Cont WhatsApp",
@@ -318,22 +298,9 @@
         "unverified": "Permisiune neverificată"
       },
       "table": {
-        "name": "Nume",
-        "phoneNumber": "Număr de telefon",
-        "wabaId": "ID WABA",
-        "permission": "Evenimente Automate"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "ID WABA"
       },
       "connectWhatsapp": {
-        "title": "Conectează-ți mai întâi contul de WhatsApp",
-        "description": "Urmărirea conversiilor Click-to-WhatsApp necesită un cont de WhatsApp conectat înainte să poți asocia conturi de anunțuri și să creezi seturi de date de conversie.",
-        "step1": "Conectează-ți contul WhatsApp Business în Canale.",
-        "step2": "Revino aici pentru a autoriza Meta Ads și a selecta contul tău de anunțuri.",
-        "step3": "Vom crea automat setul de date de conversie folosind contul tău WhatsApp Business.",
         "cta": "Conectează contul WhatsApp"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Șabloane de mesaje",
       "profile": "Profil",
       "usefulLinks": "Linkuri utile",
-      "conversionsApi": "Optimizare anunțuri"
+      "conversionsApi": "Optimizare anunțuri",
+      "settings": "Setări"
     },
     "accountHealths": {
       "title": "Gestionează-ți contul WhatsApp",
@@ -3518,7 +3486,13 @@
       "label": "Antet șablon"
     },
     "transferPhoneNumber": "Transferă numărul de telefon de la un alt furnizor WhatsApp",
-    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea."
+    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Evenimente Automate",
+        "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

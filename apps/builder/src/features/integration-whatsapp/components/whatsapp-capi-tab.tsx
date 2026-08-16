@@ -1,5 +1,6 @@
 "use client"
 
+import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import {
@@ -27,15 +28,22 @@ import { connectWhatsappCustomCapiAction } from "../actions/connect-custom-capi.
 import { disconnectWhatsappCapiAction } from "../actions/disconnect-capi.action"
 import { provisionWhatsappCapiDatasetAction } from "../actions/provision-capi-dataset.action"
 import { setWhatsappCapiDatasetAction } from "../actions/set-capi-dataset.action"
+import { WhatsappAutomaticEventsCard } from "./whatsapp-automatic-events-card"
 
 type WhatsappCapiTabProps = {
   integrationWhatsapp: Pick<
     IntegrationWhatsappModel,
-    "id" | "hasCapiScope" | "datasetId"
+    | "id"
+    | "name"
+    | "displayPhoneNumber"
+    | "wabaId"
+    | "hasCapiScope"
+    | "datasetId"
   >
   hasManualCapiAccessToken: boolean
   capiDisconnected: boolean
   credentialAvailable: boolean
+  whatsappCredentialPublic: WhatsappCredentialPublic | null
 }
 
 const statusDescriptionKey = {
@@ -84,6 +92,7 @@ export function WhatsappCapiTab({
   hasManualCapiAccessToken,
   capiDisconnected,
   credentialAvailable,
+  whatsappCredentialPublic,
 }: WhatsappCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -131,6 +140,11 @@ export function WhatsappCapiTab({
           </p>
         </CardContent>
       </Card>
+      <WhatsappAutomaticEventsCard
+        integrationWhatsapp={integrationWhatsapp}
+        whatsappCredentialPublic={whatsappCredentialPublic}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

@@ -2266,32 +2266,12 @@
   },
   "ads": {
     "title": "広告",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp広告",
-      "clickToTiktokAds": "Click to TikTok広告",
-      "connectAccounts": "アカウントを接続",
-      "conversionEvents": "コンバージョンイベント",
-      "adsAnalytics": "広告分析",
-      "reporting": "レポート",
-      "ctwa": "CTWA",
-      "googleAds": "Google広告",
-      "comingSoon": "近日公開"
-    },
     "connectAccounts": {
-      "title": "すべての広告アカウントを管理",
-      "description": "コンバージョンを追跡し、Click to WhatsApp広告キャンペーンを最適化しましょう。",
-      "learnMore": "詳しくはこちら",
       "connectAdAccount": "広告アカウントを接続",
       "adAccountName": "広告アカウント名",
-      "disconnect": "接続解除",
-      "empty": "広告アカウントはまだ接続されていません。",
-      "adAccountsTitle": "Meta広告アカウント",
-      "adAccountsDescription": "Facebook広告を接続して、Click to WhatsAppキャンペーンで使用する広告アカウントを読み込みます。",
       "adAccountsReconnectBanner": "Meta広告アカウントのトークンが期限切れ、または権限が失われました。広告レポートを利用できる状態に保つには、Facebook広告を再接続してください。",
       "adAccountsNotConnected": "Meta広告アカウントはまだ接続されていません。",
       "adAccountsEmpty": "このFacebook広告の接続では、Meta広告アカウントが見つかりませんでした。",
-      "adAccountsNote": "広告費とリターゲティングオーディエンスは、これらの広告アカウントから取得されます。",
-      "reconnectBanner": "コンバージョンイベントをMetaに送信できるようにするには、WhatsAppアカウントを再接続してください。",
       "reconnect": "再接続",
       "reconnectSuccess": "WhatsAppアカウントを再接続しました。",
       "selectAccountLabel": "WhatsAppアカウント",
@@ -2301,22 +2281,9 @@
         "unverified": "権限が未確認です"
       },
       "table": {
-        "name": "名前",
-        "phoneNumber": "電話番号",
-        "wabaId": "WABA ID",
-        "permission": "自動イベント"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google広告",
-        "tiktok": "TikTok"
+        "wabaId": "WABA ID"
       },
       "connectWhatsapp": {
-        "title": "まずWhatsAppアカウントを接続してください",
-        "description": "Click to WhatsAppのコンバージョン追跡を行うには、広告アカウントを連携してコンバージョンデータセットを作成する前に、WhatsAppアカウントを接続しておく必要があります。",
-        "step1": "「チャネル」でWhatsApp Businessアカウントを接続します。",
-        "step2": "ここに戻ってMeta広告を承認し、広告アカウントを選択します。",
-        "step3": "お使いのWhatsApp Businessアカウントを使用して、コンバージョンデータセットを自動的に作成します。",
         "cta": "WhatsAppアカウントを接続"
       }
     },
@@ -3372,7 +3339,8 @@
       "messageTemplates": "メッセージテンプレート",
       "profile": "プロフィール",
       "usefulLinks": "便利なリンク",
-      "conversionsApi": "広告最適化"
+      "conversionsApi": "広告最適化",
+      "settings": "設定"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3502,7 +3470,13 @@
       "label": "テンプレートのヘッダー"
     },
     "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
-    "signupSessionExpired": "WhatsApp登録セッションの有効期限が切れました。接続を最初からやり直してください。"
+    "signupSessionExpired": "WhatsApp登録セッションの有効期限が切れました。接続を最初からやり直してください。",
+    "capi": {
+      "automaticEvents": {
+        "title": "自動イベント",
+        "description": "この WhatsApp 番号からコンバージョンイベントを Meta に自動送信します。権限がない場合は、アカウントを再接続して付与してください。"
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

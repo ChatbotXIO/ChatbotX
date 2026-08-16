@@ -2266,32 +2266,12 @@
   },
   "ads": {
     "title": "Annoncer",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp Ads",
-      "clickToTiktokAds": "Click to TikTok Ads",
-      "connectAccounts": "Forbind konti",
-      "conversionEvents": "Konverteringshændelser",
-      "adsAnalytics": "Annonceanalyse",
-      "reporting": "Rapportering",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Kommer snart"
-    },
     "connectAccounts": {
-      "title": "Administrer alle dine annoncekonti",
-      "description": "Spor konverteringer og optimer dine click-to-WhatsApp-annoncekampagner.",
-      "learnMore": "Lær mere",
       "connectAdAccount": "Forbind annoncekonto",
       "adAccountName": "Annoncekontonavn",
-      "disconnect": "Afbryd",
-      "empty": "Ingen annoncekonto forbundet endnu.",
-      "adAccountsTitle": "Meta-annoncekonti",
-      "adAccountsDescription": "Forbind Facebook Ads for at indlæse de annoncekonti, der bruges til click-to-WhatsApp-kampagner.",
       "adAccountsReconnectBanner": "Din Meta-annoncekontos token er udløbet eller har mistet tilladelser. Forbind Facebook Ads igen for at bevare annonceapportering.",
       "adAccountsNotConnected": "Der er endnu ikke forbundet nogen Meta-annoncekonti.",
       "adAccountsEmpty": "Der blev ikke fundet nogen Meta-annoncekonti til denne Facebook Ads-forbindelse.",
-      "adAccountsNote": "Forbrug og retargeting-målgrupper kommer fra disse annoncekonti.",
-      "reconnectBanner": "Forbind din WhatsApp-konto igen for at aktivere afsendelse af konverteringshændelser til Meta.",
       "reconnect": "Forbind igen",
       "reconnectSuccess": "WhatsApp-kontoen er forbundet igen.",
       "selectAccountLabel": "WhatsApp-konto",
@@ -2301,22 +2281,9 @@
         "unverified": "Tilladelse ikke bekræftet"
       },
       "table": {
-        "name": "Navn",
-        "phoneNumber": "Telefonnummer",
-        "wabaId": "WABA-ID",
-        "permission": "Automatiske hændelser"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "WABA-ID"
       },
       "connectWhatsapp": {
-        "title": "Forbind først din WhatsApp-konto",
-        "description": "Click-to-WhatsApp-konverteringstracking kræver en forbundet WhatsApp-konto, før du kan tilknytte annoncekonti og oprette konverteringsdatasæt.",
-        "step1": "Forbind din WhatsApp Business-konto under Kanaler.",
-        "step2": "Kom tilbage hertil for at godkende Meta Ads og vælge din annoncekonto.",
-        "step3": "Vi opretter automatisk konverteringsdatasættet ved hjælp af din WhatsApp Business-konto.",
         "cta": "Forbind WhatsApp-konto"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Besked Skabeloner",
       "profile": "Profil",
       "usefulLinks": "Useful Links",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Ads Optimization",
+      "settings": "Indstillinger"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3518,7 +3486,13 @@
       "label": "Skabelon Overskrift"
     },
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
-    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen."
+    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatiske hændelser",
+        "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
