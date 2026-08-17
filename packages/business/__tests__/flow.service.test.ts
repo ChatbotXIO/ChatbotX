@@ -42,6 +42,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/database/partials", () => ({
+  rootFolderId: "0",
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   flowAnalyticsSessionModel,
   flowModel,
@@ -50,6 +54,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
+}))
+
+vi.mock("@chatbotx.io/flow-config", () => ({
+  remapCustomFieldReferences: vi.fn(),
 }))
 
 vi.mock("../src/base.service", () => ({
@@ -64,6 +72,14 @@ vi.mock("../src/flow-version", () => ({
   flowVersionService: {
     findDraft: mockFindDraft,
   },
+}))
+
+vi.mock("../src/custom-field/service", () => ({
+  customFieldService: { resolveByNameAndType: vi.fn() },
+}))
+
+vi.mock("../src/folder/service", () => ({
+  folderService: { find: vi.fn() },
 }))
 
 const { flowService } = await import("../src/flow/service")

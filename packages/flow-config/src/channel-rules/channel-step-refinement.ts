@@ -1,10 +1,8 @@
-import {
-  type FlowVersionSchema,
-  nodeTypeSchema,
-} from "@chatbotx.io/flow-config"
 import type { z } from "zod"
-import { resolveStepValidator } from "../react-flow/steps/channel-validator"
-import { channelAwareStepValidators } from "../react-flow/steps/validators"
+import { nodeTypeSchema } from "../nodes/base"
+import type { FlowVersionSchema } from "../nodes/index"
+import { resolveStepValidator } from "./channel-validator"
+import { channelAwareStepValidators } from "./validators"
 
 /**
  * Validates every step against the channel its node sends on.
@@ -13,8 +11,9 @@ import { channelAwareStepValidators } from "../react-flow/steps/validators"
  * `chooseChannel` beforeStep — so a per-step rule can only be resolved from here,
  * where both are in scope.
  *
- * Runs on publish only. Draft autosave uses `z.array(z.any())`, so a half-built
- * step is still saved and the author is not interrupted mid-edit.
+ * Runs on publish (builder) and import validation (worker) only. Draft autosave
+ * uses `z.array(z.any())`, so a half-built step is still saved and the author is
+ * not interrupted mid-edit.
  */
 export const refineStepsByChannel = (
   nodes: FlowVersionSchema[],

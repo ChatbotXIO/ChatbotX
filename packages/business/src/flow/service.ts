@@ -1,14 +1,24 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
   flowAnalyticsSessionModel,
   flowModel,
   flowVersionModel,
 } from "@chatbotx.io/database/schema"
-import type { FlowModel } from "@chatbotx.io/database/types"
+import type { FlowModel, FlowVersionModel } from "@chatbotx.io/database/types"
+import type {
+  EdgeSchema,
+  FlowExportCustomField,
+  FlowVersionSchema,
+} from "@chatbotx.io/flow-config"
+import { remapCustomFieldReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
+import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
+import { folderService } from "../folder/service"
 
 class FlowService extends BaseService {
   async findBy(
@@ -30,6 +40,54 @@ class FlowService extends BaseService {
     return Boolean(row)
   }
 
+  /**
+   * Inserts a flow, its analytics session, and a draft version in one
+   * transaction — the write shape shared by `duplicate` and `createFromImport`.
+   */
+  private async insertFlowWithDraft(
+    tx: DatabaseClient,
+    input: {
+      name: string
+      active: boolean
+      enableInInbox: boolean
+      workspaceId: string
+      folderId: string | null
+      startNodeId: string
+      nodes: FlowVersionModel["nodes"]
+      edges: FlowVersionModel["edges"]
+    },
+  ): Promise<string> {
+    const newFlowId = createId()
+    const draftVersionId = createId()
+    await tx.insert(flowModel).values({
+      id: newFlowId,
+      name: input.name,
+      active: input.active,
+      enableInInbox: input.enableInInbox,
+      workspaceId: input.workspaceId,
+      folderId: input.folderId,
+      currentVersionId: null,
+      draftVersionId,
+    })
+    await tx.insert(flowAnalyticsSessionModel).values({
+      id: createId(),
+      flowId: newFlowId,
+      workspaceId: input.workspaceId,
+    })
+    await tx.insert(flowVersionModel).values({
+      id: draftVersionId,
+      workspaceId: input.workspaceId,
+      flowId: newFlowId,
+      nodes: input.nodes,
+      edges: input.edges,
+      isDraft: true,
+      isLatest: false,
+      startNodeId: input.startNodeId,
+    })
+
+    return newFlowId
+  }
+
   duplicate(input: { workspaceId: string; id: string }): Promise<string> {
     return db.transaction(async (tx) => {
       const flow = await this.findBy(input, tx)
@@ -48,35 +106,128 @@ class FlowService extends BaseService {
         throw notFoundException("Draft version not found")
       }
 
-      const newFlowId = createId()
-      const draftVersionId = createId()
-      await tx.insert(flowModel).values({
-        id: newFlowId,
+      return this.insertFlowWithDraft(tx, {
         name: `${flow.name} _copy`,
         active: flow.active,
         enableInInbox: flow.enableInInbox,
         workspaceId: flow.workspaceId,
         folderId: flow.folderId,
-        currentVersionId: null,
-        draftVersionId,
-      })
-      await tx.insert(flowAnalyticsSessionModel).values({
-        id: createId(),
-        flowId: newFlowId,
-        workspaceId: flow.workspaceId,
-      })
-      await tx.insert(flowVersionModel).values({
-        id: draftVersionId,
-        workspaceId: flow.workspaceId,
-        flowId: newFlowId,
+        startNodeId: draftVersion.startNodeId,
         nodes: draftVersion.nodes,
         edges: draftVersion.edges,
-        isDraft: true,
-        isLatest: false,
-        startNodeId: draftVersion.startNodeId,
+      })
+    })
+  }
+
+  /**
+   * Inserts an imported flow verbatim: node/step ids are reused as-is. Every
+   * table that keys on a nodeId also scopes by flowId/analyticsId, and this
+   * always mints a fresh flowId, so reused ids from the source workspace
+   * cannot collide here — see docs/tenancy.md and the import/export plan.
+   *
+   * Accepts an optional `tx` so the caller can share a transaction with
+   * custom-field creation (flow-import handler) — without that, a failed flow
+   * insert would leave orphan custom fields already committed in the target
+   * workspace. Opens its own transaction when no `tx` is passed (e.g. tests).
+   */
+  createFromImport(input: {
+    workspaceId: string
+    name: string
+    active: boolean
+    enableInInbox: boolean
+    startNodeId: string
+    nodes: FlowVersionSchema[]
+    edges: EdgeSchema[]
+    folderId?: string | null
+    tx?: DatabaseClient
+  }): Promise<string> {
+    const run = (tx: DatabaseClient) =>
+      this.insertFlowWithDraft(tx, {
+        name: input.name,
+        active: input.active,
+        enableInInbox: input.enableInInbox,
+        workspaceId: input.workspaceId,
+        folderId: input.folderId ?? null,
+        startNodeId: input.startNodeId,
+        nodes: input.nodes,
+        edges: input.edges,
+      })
+    return input.tx ? run(input.tx) : db.transaction(run)
+  }
+
+  /**
+   * Full flow-import orchestration: resolves the export's custom-field
+   * manifest against the target workspace, remaps `nodes`/`edges` to the
+   * resolved ids, and inserts the flow — all inside one transaction, so a
+   * failed flow insert cannot leave orphan custom fields behind.
+   *
+   * Cache invalidation for created fields is deliberately NOT done here (it
+   * would run inside the transaction and could repopulate Redis from an
+   * uncommitted read) — the caller must invalidate once, after this resolves,
+   * using the returned `createdCustomFieldIds`.
+   */
+  async importFlowExport(input: {
+    workspaceId: string
+    name: string
+    active: boolean
+    enableInInbox: boolean
+    startNodeId: string
+    nodes: FlowVersionSchema[]
+    edges: EdgeSchema[]
+    customFields: Record<string, FlowExportCustomField>
+    folderId?: string | null
+  }): Promise<{
+    flowId: string
+    createdCustomFieldIds: string[]
+  }> {
+    return await db.transaction(async (tx) => {
+      const manifestEntries = Object.entries(input.customFields)
+      const { idMap: resolvedByKey, createdIds } =
+        await customFieldService.resolveByNameAndType({
+          workspaceId: input.workspaceId,
+          fields: manifestEntries.map(([, field]) => field),
+          tx,
+        })
+
+      const idMap = new Map(
+        manifestEntries.flatMap(([sourceId, field]) => {
+          const targetId = resolvedByKey.get(customFieldResolutionKey(field))
+          return targetId ? [[sourceId, targetId] as const] : []
+        }),
+      )
+
+      const remapped = remapCustomFieldReferences(
+        { nodes: input.nodes, edges: input.edges },
+        idMap,
+      )
+
+      const requestedFolderId =
+        !input.folderId || input.folderId === rootFolderId
+          ? null
+          : input.folderId
+      const folder = requestedFolderId
+        ? await folderService.find({
+            id: requestedFolderId,
+            workspaceId: input.workspaceId,
+            folderType: "flow",
+            tx,
+          })
+        : undefined
+      const resolvedFolderId = folder?.id ?? null
+
+      const flowId = await this.createFromImport({
+        workspaceId: input.workspaceId,
+        name: input.name,
+        active: input.active,
+        enableInInbox: input.enableInInbox,
+        startNodeId: input.startNodeId,
+        nodes: remapped.nodes,
+        edges: remapped.edges,
+        folderId: resolvedFolderId,
+        tx,
       })
 
-      return newFlowId
+      return { flowId, createdCustomFieldIds: createdIds }
     })
   }
 }

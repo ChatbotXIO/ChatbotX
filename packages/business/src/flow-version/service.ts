@@ -28,6 +28,22 @@ class FlowVersionService extends BaseService {
     })
   }
 
+  async findPublished(
+    {
+      flowId,
+      workspaceId,
+    }: {
+      flowId: string
+      workspaceId: string
+    },
+    tx?: DatabaseClient,
+  ): Promise<FlowVersionModel | undefined> {
+    const client = tx ?? db
+    return await client.query.flowVersionModel.findFirst({
+      where: { flowId, workspaceId, isDraft: false, isLatest: true },
+    })
+  }
+
   async list({
     flowId,
     workspaceId,

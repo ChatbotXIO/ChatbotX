@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Dieser Flow wurde noch nie veröffentlicht. Veröffentlichen Sie ihn, bevor Sie ihn exportieren.",
+      "failed": "Export fehlgeschlagen. Bitte versuchen Sie es erneut."
+    },
     "title": "Flows",
     "quickReplies": {
       "limitReached": "Limit für Schnellantworten erreicht ({max})."
@@ -2112,7 +2116,11 @@
       "appointmentScheduling": "Terminplanung",
       "triggerN8n": "n8n auslösen",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Meta-CAPI-Ereignis senden"
+      "sendMetaCapiEvent": "Meta-CAPI-Ereignis senden",
+      "import": "Flow importieren",
+      "export": "Exportieren",
+      "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
+      "importJsonOnly": "Nur JSON-Dateien"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",

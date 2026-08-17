@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Este fluxo nunca foi publicado. Publique-o antes de exportar.",
+      "failed": "Falha na exportação. Tente novamente."
+    },
     "title": "Fluxos",
     "quickReplies": {
       "limitReached": "O limite de respostas rápidas foi atingido ({max})."
@@ -2112,7 +2116,11 @@
       "appointmentScheduling": "Agendamento de compromissos",
       "triggerN8n": "Acionar n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Enviar evento Meta CAPI"
+      "sendMetaCapiEvent": "Enviar evento Meta CAPI",
+      "import": "Importar fluxo",
+      "export": "Exportar",
+      "importStarted": "O fluxo está sendo importado. Verifique o histórico de importações para ver os resultados.",
+      "importJsonOnly": "Somente arquivos JSON"
     },
     "splitTraffic": {
       "balanceHint": "A soma total deve ser igual a 100%.",

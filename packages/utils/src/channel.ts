@@ -3,11 +3,11 @@ import { z } from "zod"
 /**
  * The channels a workspace can talk to a contact through.
  *
- * Lives here rather than in `@chatbotx.io/database` because packages that need
- * to key data by channel — `@chatbotx.io/flow-config` most of all, which holds
- * the per-channel step rules — must not depend on the database layer. Before
- * this move those tables had to fall back to `Record<string, ...>`, so a typo'd
- * or renamed channel silently missed its entry instead of failing to compile.
+ * See this package's README ("Exception: cross-cutting product enums") for why
+ * a product enum lives in a generic-utils package: `@chatbotx.io/flow-config`
+ * needs it without depending on `@chatbotx.io/database`. Before this move those
+ * tables had to fall back to `Record<string, ...>`, so a typo'd or renamed
+ * channel silently missed its entry instead of failing to compile.
  *
  * `@chatbotx.io/database/partials` re-exports this, so the many existing
  * importers there keep working unchanged.

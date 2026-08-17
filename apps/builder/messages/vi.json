@@ -2057,6 +2057,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Luồng này chưa từng được xuất bản. Hãy xuất bản trước khi xuất tệp.",
+      "failed": "Xuất tệp thất bại. Vui lòng thử lại."
+    },
     "title": "Luồng",
     "quickReplies": {
       "limitReached": "Đã đạt giới hạn trả lời nhanh ({max})."
@@ -2186,7 +2190,11 @@
       "splitTraffic": "Chia lưu lượng",
       "aiEditImage": "AI Chỉnh sửa hình ảnh",
       "whatsappFlow": "Luồng WhatsApp",
-      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",
+      "import": "Nhập luồng",
+      "export": "Xuất",
+      "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
+      "importJsonOnly": "Chỉ tệp JSON"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",

@@ -3,6 +3,7 @@ import { importFormats, importTypes } from "@chatbotx.io/database/partials"
 import type { JobRunImport } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import { type ImportRow, importHandlers, runImportPipeline } from "./imports"
+import { runFlowImport } from "./imports/flow-import"
 
 export const runImport = async (data: JobRunImport["data"]): Promise<void> => {
   const row = await importService.findForWorker(data.importId)
@@ -47,6 +48,11 @@ export const runImport = async (data: JobRunImport["data"]): Promise<void> => {
         break
       case "products":
         await runImportPipeline(importRow, importHandlers.products)
+        break
+      case "flow":
+        // A flow export is a single JSON document, not row data, so it
+        // bypasses the row-oriented runImportPipeline entirely.
+        await runFlowImport(importRow)
         break
       default: {
         const exhaustiveType: never = importType

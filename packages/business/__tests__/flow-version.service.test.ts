@@ -87,6 +87,50 @@ describe("flowVersionService.findDraft", () => {
   })
 })
 
+describe("flowVersionService.findPublished", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("finds the latest published version within the requested workspace", async () => {
+    const publishedVersion = {
+      id: "published-1",
+      flowId: "flow-1",
+      workspaceId: "ws-1",
+      isDraft: false,
+      isLatest: true,
+    }
+    mockFindFirst.mockResolvedValue(publishedVersion)
+
+    await expect(
+      flowVersionService.findPublished({
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe(publishedVersion)
+
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: {
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+        isDraft: false,
+        isLatest: true,
+      },
+    })
+  })
+
+  test("returns undefined when the flow has never been published", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      flowVersionService.findPublished({
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBeUndefined()
+  })
+})
+
 describe("flowVersionService.revertDraftToPublished", () => {
   afterEach(() => {
     vi.clearAllMocks()

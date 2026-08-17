@@ -1,4 +1,4 @@
-import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
+import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import type { ZodTypeAny } from "zod"
 
 /**

@@ -20,6 +20,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   CopyPlus,
+  DownloadIcon,
   EllipsisVerticalIcon,
   FolderUpIcon,
   TextIcon,
@@ -30,6 +31,7 @@ import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateFlowAction } from "./actions/update-flow-action"
+import { downloadFlowExport } from "./lib/download-flow-export"
 import type { FlowResource } from "./schemas/resource"
 
 type GetColumnsProps = {
@@ -78,12 +80,12 @@ export function getFlowColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[300px] truncate">
+        <div className="max-w-75 truncate">
           <Tooltip>
             <TooltipTrigger
               render={
                 <Link
-                  className="max-w-[300px] truncate"
+                  className="max-w-75 truncate"
                   href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
                 >
                   {row.original.name}
@@ -235,6 +237,14 @@ export function getFlowColumns({
             >
               <CopyPlus />
               {t("actions.duplicate")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                downloadFlowExport(row.original, t)
+              }}
+            >
+              <DownloadIcon />
+              {t("actions.export")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setRowAction({ row, variant: "delete" })}

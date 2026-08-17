@@ -2057,6 +2057,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "هذا المسار لم يُنشر مطلقًا. يرجى نشره قبل التصدير.",
+      "failed": "فشل التصدير. يرجى المحاولة مرة أخرى."
+    },
     "title": "المسارات",
     "quickReplies": {
       "limitReached": "تم الوصول إلى الحد الأقصى للردود السريعة ({max})."
@@ -2186,7 +2190,11 @@
       "appointmentScheduling": "جدولة المواعيد",
       "triggerN8n": "تشغيل n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "إرسال حدث Meta CAPI"
+      "sendMetaCapiEvent": "إرسال حدث Meta CAPI",
+      "import": "استيراد التدفق",
+      "export": "تصدير",
+      "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
+      "importJsonOnly": "ملفات JSON فقط"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",

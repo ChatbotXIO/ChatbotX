@@ -1,7 +1,7 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { describe, expect, test } from "vitest"
 import { z } from "zod"
-import { resolveStepValidator } from "@/features/flows/react-flow/steps/channel-validator"
+import { resolveStepValidator } from "../src/channel-rules/channel-validator"
 
 const base = z.object({ kind: z.literal("base") })
 const whatsapp = z.object({ kind: z.literal("whatsapp") })

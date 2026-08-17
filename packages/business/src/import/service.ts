@@ -9,11 +9,13 @@ import {
   type SQL,
 } from "@chatbotx.io/database/client"
 import {
+  fileContextTypes,
   fileStatuses,
   type ImportFormat,
   type ImportStatus,
   type ImportType,
   importStatuses,
+  importTypes,
 } from "@chatbotx.io/database/partials"
 import { fileModel, importModel } from "@chatbotx.io/database/schema"
 import {
@@ -149,6 +151,63 @@ class ImportService extends BaseService {
     }
   }
 
+  /**
+   * Validates the uploaded file belongs to this workspace and is a flow
+   * import, then marks it uploaded and creates the import row atomically so
+   * a queued job can never reference an import row that failed to persist.
+   */
+  async startFlowImport(input: {
+    workspaceId: string
+    userId: string
+    fileId: string
+    folderId?: string | null
+  }): Promise<
+    | { ok: true; importId: string }
+    | { ok: false; reason: "fileNotFound" | "notAFlowImport" }
+  > {
+    const file = await db.query.fileModel.findFirst({
+      where: { id: input.fileId, workspaceId: input.workspaceId },
+    })
+    if (!file) {
+      return { ok: false, reason: "fileNotFound" }
+    }
+    if (
+      file.contextType !== fileContextTypes.enum.import ||
+      file.subType !== importTypes.enum.flow
+    ) {
+      return { ok: false, reason: "notAFlowImport" }
+    }
+
+    const importId = createId()
+    await db.transaction(async (tx) => {
+      await tx
+        .update(fileModel)
+        .set({
+          status: fileStatuses.enum.uploaded,
+          uploadedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(fileModel.id, file.id),
+            eq(fileModel.workspaceId, input.workspaceId),
+          ),
+        )
+
+      await tx.insert(importModel).values({
+        id: importId,
+        workspaceId: input.workspaceId,
+        userId: input.userId,
+        fileId: file.id,
+        type: importTypes.enum.flow,
+        format: "json",
+        status: "pending",
+        meta: { folderId: input.folderId ?? null },
+      })
+    })
+
+    return { ok: true, importId }
+  }
+
   async markProcessing(importId: string) {
     await db
       .update(importModel)
@@ -203,11 +262,27 @@ class ImportService extends BaseService {
     importId: string
     counters: ImportCounters
     errorSample: ImportErrorSample[]
+    /**
+     * A non-failure summary to show on the completed row — e.g. flow import's
+     * unresolved-reference warnings. Distinct from the `hiddenErrorCount`
+     * message below: that one only fires when `failed > 0`, but a warning can
+     * accompany an otherwise fully successful import (`failed: 0`).
+     */
+    warningMessage?: string
   }) {
     const hiddenErrorCount = Math.max(
       0,
       input.counters.failed - input.errorSample.length,
     )
+    // Both parts can be present at once (a caller may report warnings on an
+    // import that also had row failures), so they are joined rather than one
+    // replacing the other — `??` here would silently drop the failure count.
+    const messages = [
+      input.warningMessage,
+      hiddenErrorCount > 0
+        ? `${input.counters.failed} rows failed; showing the first ${input.errorSample.length}`
+        : undefined,
+    ].filter((message): message is string => Boolean(message))
     await db
       .update(importModel)
       .set({
@@ -218,10 +293,7 @@ class ImportService extends BaseService {
         successCount: input.counters.success,
         failedCount: input.counters.failed,
         errorSample: input.errorSample,
-        errorMessage:
-          hiddenErrorCount > 0
-            ? `${input.counters.failed} rows failed; showing the first ${input.errorSample.length}`
-            : null,
+        errorMessage: messages.length > 0 ? messages.join(" ") : null,
       })
       .where(eq(importModel.id, input.importId))
   }

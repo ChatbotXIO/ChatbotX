@@ -1,5 +1,9 @@
 {
   "flows": {
+    "export": {
+      "notPublished": "Acest flux nu a fost niciodată publicat. Publicați-l înainte de a-l exporta.",
+      "failed": "Exportul a eșuat. Vă rugăm să încercați din nou."
+    },
     "title": "Fluxuri",
     "quickReplies": {
       "limitReached": "A fost atinsă limita de răspunsuri rapide ({max})."
@@ -129,7 +133,11 @@
       "appointmentScheduling": "Programări",
       "triggerN8n": "Declanșează n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI"
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI",
+      "import": "Importă fluxul",
+      "export": "Exportă",
+      "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
+      "importJsonOnly": "Doar fișiere JSON"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",

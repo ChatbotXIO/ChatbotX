@@ -2208,6 +2208,10 @@
     "deleteConfirmation": "你確定嗎？\n此操作無法撤銷。\n這將從我們的伺服器中永久刪除您的 {feature}。"
   },
   "flows": {
+    "export": {
+      "notPublished": "此流程從未發布過。請先發布後再匯出。",
+      "failed": "匯出失敗，請重試。"
+    },
     "title": "流程",
     "quickReplies": {
       "limitReached": "已達到快速回覆限制 ({max})。"
@@ -2337,7 +2341,11 @@
       "appointmentScheduling": "預約安排",
       "triggerN8n": "觸發 n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
+      "import": "匯入流程",
+      "export": "匯出",
+      "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
+      "importJsonOnly": "僅限 JSON 檔案"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",

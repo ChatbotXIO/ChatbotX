@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "このフローはまだ公開されていません。エクスポートする前に公開してください。",
+      "failed": "エクスポートに失敗しました。もう一度お試しください。"
+    },
     "title": "フロー",
     "quickReplies": {
       "limitReached": "クイック返信の上限（{max}件）に達しました。"
@@ -2112,7 +2116,11 @@
       "appointmentScheduling": "予約スケジュール",
       "triggerN8n": "n8n をトリガー",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
+      "import": "フローをインポート",
+      "export": "エクスポート",
+      "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
+      "importJsonOnly": "JSONファイルのみ"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",

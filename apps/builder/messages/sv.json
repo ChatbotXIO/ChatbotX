@@ -2667,6 +2667,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Det här flödet har aldrig publicerats. Publicera det innan du exporterar.",
+      "failed": "Export misslyckades. Försök igen."
+    },
     "actions": {
       "actions": "Åtgärder",
       "activeCampaignSyncContact": "Lägg till kontakt i ActiveCampaign",
@@ -2770,7 +2774,11 @@
       "appointmentScheduling": "Tidsbokning",
       "metaConversions": "Meta Conversions API",
       "triggerN8n": "Trigger n8n",
-      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse"
+      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
+      "import": "Importera flöde",
+      "export": "Exportera",
+      "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
+      "importJsonOnly": "Endast JSON-filer"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",

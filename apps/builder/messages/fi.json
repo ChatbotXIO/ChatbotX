@@ -1983,6 +1983,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Tätä flow'ta ei ole koskaan julkaistu. Julkaise se ennen viemistä.",
+      "failed": "Vienti epäonnistui. Yritä uudelleen."
+    },
     "title": "Flow't",
     "quickReplies": {
       "limitReached": "Pikavastausten enimmäismäärä saavutettu ({max})."
@@ -2112,7 +2116,11 @@
       "appointmentScheduling": "Ajanvaraus",
       "triggerN8n": "Trigger n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
+      "import": "Tuo vuo",
+      "export": "Vie",
+      "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
+      "importJsonOnly": "Vain JSON-tiedostot"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",

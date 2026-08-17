@@ -86,7 +86,7 @@ export function EditFolderDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <div className="flex justify-end gap-4">
                 <Button

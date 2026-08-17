@@ -272,6 +272,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "תהליך זה מעולם לא פורסם. יש לפרסם אותו לפני הייצוא.",
+      "failed": "הייצוא נכשל. יש לנסות שוב."
+    },
     "title": "תהליכים",
     "quickReplies": {
       "limitReached": "הגעתם למגבלת התשובות המהירות ({max})."
@@ -401,7 +405,11 @@
       "appointmentScheduling": "תזמון פגישות",
       "triggerN8n": "הפעלת n8n",
       "metaConversions": "Meta Conversions API",
-      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
+      "import": "ייבוא זרימה",
+      "export": "ייצוא",
+      "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
+      "importJsonOnly": "קבצי JSON בלבד"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",

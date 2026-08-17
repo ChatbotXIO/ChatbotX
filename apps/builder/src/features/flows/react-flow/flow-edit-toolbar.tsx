@@ -30,6 +30,7 @@ import { type Edge, MarkerType, type Node, useReactFlow } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
   CopyIcon,
+  DownloadIcon,
   EllipsisIcon,
   HistoryIcon,
   LinkIcon,
@@ -51,6 +52,7 @@ import { publishFlowAction } from "../actions/publish-flow-action"
 import { revertToPublishedAction } from "../actions/revert-to-published-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import { DuplicateFlowDialog } from "../duplicate-flow-dialog"
+import { downloadFlowExport } from "../lib/download-flow-export"
 import {
   type PublishFlowSchema,
   updateFlowVersionSchema,
@@ -230,6 +232,14 @@ export function FlowEditToolbar({
     setAction("getMessengerAdsJson")
   }
 
+  const onClickExport = () => {
+    if (!hasPublishedVersion) {
+      toast.error(t("flows.export.notPublished"))
+      return
+    }
+    downloadFlowExport(flow, t)
+  }
+
   return (
     <div className="flex gap-2">
       <Tooltip>
@@ -319,6 +329,9 @@ export function FlowEditToolbar({
               <CopyIcon />
               {t("actions.duplicate")}
             </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setAction("getDraftLink")}>
               <LinkIcon />
               {t("actions.getDraftLink")}
@@ -336,6 +349,10 @@ export function FlowEditToolbar({
             >
               <MegaphoneIcon />
               {t("actions.getMessengerAdPayload")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onClickExport}>
+              <DownloadIcon />
+              {t("actions.export")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
@@ -361,6 +378,9 @@ export function FlowEditToolbar({
               <RefreshCcwIcon />
               {t("actions.revertToPublished")}
             </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
             <DropdownMenuItem
               onClick={() => setAction("delete")}
               variant="destructive"

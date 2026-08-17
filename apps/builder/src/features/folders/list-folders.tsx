@@ -62,7 +62,7 @@ const ListFolders = (props: ListFoldersProps) => {
   return (
     <>
       {/* Breadcrumb */}
-      <div className="flex">
+      <div className="mb-2 flex">
         <div className="flex flex-1 flex-col justify-center">
           <AppBreadcrumb
             items={[
