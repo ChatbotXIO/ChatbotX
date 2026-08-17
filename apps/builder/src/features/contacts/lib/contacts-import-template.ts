@@ -16,6 +16,7 @@ export const CONTACTS_IMPORT_TEMPLATE_COLUMNS = [
   "email",
   "firstName",
   "lastName",
+  "sourceUserId",
 ] as const
 
 type ContactsImportTemplateColumn =
@@ -28,19 +29,37 @@ type TemplateLocale = (typeof TEMPLATE_LOCALES)[number]
 const resolveTemplateLocale = (language: string): TemplateLocale =>
   resolveLocale(language) === "vi" ? "vi" : "en"
 
+// Maps a template column to the i18n `fields.*` key that carries its label.
+// Only `sourceUserId` differs from its own name — it reuses the existing
+// `waUserId` key shipped with the BSUID feature rather than adding a new one.
+const TEMPLATE_COLUMN_MESSAGE_KEY: Record<
+  ContactsImportTemplateColumn,
+  string
+> = {
+  contactId: "contactId",
+  phoneNumber: "phoneNumber",
+  email: "email",
+  firstName: "firstName",
+  lastName: "lastName",
+  sourceUserId: "waUserId",
+}
+
 type FieldLabelMessages = {
-  fields?: Partial<Record<ContactsImportTemplateColumn, { label?: string }>>
+  fields?: Partial<Record<string, { label?: string }>>
 }
 
 const resolveColumnLabel = (
   locale: TemplateLocale,
   column: ContactsImportTemplateColumn,
 ): string => {
+  const messageKey = TEMPLATE_COLUMN_MESSAGE_KEY[column]
   const localizedFields = (messagesByLocale[locale] as FieldLabelMessages)
     .fields
   const englishFields = (messagesByLocale.en as FieldLabelMessages).fields
   return (
-    localizedFields?.[column]?.label ?? englishFields?.[column]?.label ?? column
+    localizedFields?.[messageKey]?.label ??
+    englishFields?.[messageKey]?.label ??
+    column
   )
 }
 
@@ -56,6 +75,7 @@ const TEMPLATE_EXAMPLE_ROW: Record<
     email: "john.doe@example.com",
     firstName: "John",
     lastName: "Doe",
+    sourceUserId: "user.9187654321098765",
   },
   vi: {
     contactId: "1234567890",
@@ -63,6 +83,7 @@ const TEMPLATE_EXAMPLE_ROW: Record<
     email: "an.nguyen@example.com",
     firstName: "An",
     lastName: "Nguyễn",
+    sourceUserId: "user.9187654321098765",
   },
 }
 

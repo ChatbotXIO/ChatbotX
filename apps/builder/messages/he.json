@@ -3664,6 +3664,12 @@
     "pageUserName": {
       "label": "שם המשתמש של הדף"
     },
+    "waUserId": {
+      "label": "מזהה משתמש בוואטסאפ"
+    },
+    "waUserName": {
+      "label": "שם משתמש בוואטסאפ"
+    },
     "purpose": {
       "label": "מטרה",
       "placeholder": "מה הפונקציה הזו עושה?"

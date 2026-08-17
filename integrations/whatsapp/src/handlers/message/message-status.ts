@@ -36,7 +36,11 @@ export const handleMessageStatus = async (props: {
     quickReplyAction: null,
     ref: null,
     contact: {
-      sourceId: data.phone,
+      // BSUID fallback: a status for a message sent via `recipient` (BSUID)
+      // carries an empty `phone`/`recipient_id`; the worker's single
+      // ContactInbox lookup still resolves because a BSUID-keyed row's
+      // `sourceId` IS the BSUID (see D2 in the BSUID plan).
+      sourceId: data.phone || data.recipientUserId || "",
       phoneNumber: data.phone,
       phoneNumberId: data.phoneID,
     },

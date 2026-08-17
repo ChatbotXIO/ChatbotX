@@ -131,6 +131,35 @@ const processContactRow = (
   return { ...mapped, customFields: safeCustomFields }
 }
 
+const collectSourceUserIds = (rows: ContactRow[]): string[] =>
+  rows.flatMap((row) => (row.sourceUserId ? [row.sourceUserId] : []))
+
+// A row is a duplicate when its externalId already matches an existing
+// ContactInbox.sourceId OR its sourceUserId already matches an existing
+// ContactInbox.sourceUserId (a phone-keyed row that already learned this
+// scoped id must not be duplicated — mirrors live-webhook dedup).
+const isDuplicateIdentity = (
+  row: ContactRow,
+  existing: { sourceIds: Set<string>; sourceUserIds: Set<string> },
+): boolean =>
+  Boolean(row.externalId && existing.sourceIds.has(row.externalId)) ||
+  Boolean(row.sourceUserId && existing.sourceUserIds.has(row.sourceUserId))
+
+// Re-checks candidate rows against the inbox's current identities and drops
+// duplicates. Used both as the pre-check before building the insert batch and
+// as the race-window re-check immediately before the insert.
+const filterEligibleRows = async (
+  inboxId: string,
+  rows: ContactRow[],
+): Promise<ContactRow[]> => {
+  const existing = await contactInboxService.findExistingSourceIdentities({
+    inboxId,
+    sourceIds: rows.map((row) => row.externalId as string),
+    sourceUserIds: collectSourceUserIds(rows),
+  })
+  return rows.filter((row) => !isDuplicateIdentity(row, existing))
+}
+
 // Import only creates contact records: the info-only `contacts` metric is
 // counted (see processContactBatch), but MAC is never reserved here — MAC is
 // counted later only when a real interaction occurs.
@@ -139,15 +168,7 @@ const insertContactBatch = async (
   eligible: ContactRow[],
   ctx: { row: ImportRow; meta: ContactImportMeta },
 ): Promise<number> => {
-  const externalIds = eligible.map((row) => row.externalId as string)
-  const latestExisting = await contactInboxService.findExistingSourceIds({
-    inboxId: deps.inbox.id,
-    sourceIds: externalIds,
-  })
-
-  const freshEligible = eligible.filter(
-    (row) => !latestExisting.has(row.externalId as string),
-  )
+  const freshEligible = await filterEligibleRows(deps.inbox.id, eligible)
   if (freshEligible.length === 0) {
     return 0
   }
@@ -197,6 +218,7 @@ const insertContactBatch = async (
             channel: deps.inbox.channel,
             source: contactSources.enum.imported,
             sourceId: row.externalId,
+            sourceUserId: row.sourceUserId ?? null,
           }
         }),
       )
@@ -290,15 +312,7 @@ const processContactBatch = async (
       return { success: 0, failed: total }
     }
 
-    const externalIds = contacts.map((c) => c.externalId as string)
-    const existing = await contactInboxService.findExistingSourceIds({
-      inboxId: deps.inbox.id,
-      sourceIds: externalIds,
-    })
-
-    const eligible = contacts.filter(
-      (row) => !existing.has(row.externalId as string),
-    )
+    const eligible = await filterEligibleRows(deps.inbox.id, contacts)
     if (eligible.length === 0) {
       return { success: 0, failed: total }
     }

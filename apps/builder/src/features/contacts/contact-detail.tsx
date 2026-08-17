@@ -6,8 +6,11 @@ import {
   normalizeStoredTimezone,
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
-import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import { customFieldTypes } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  CustomFieldType,
+} from "@chatbotx.io/database/partials"
+import { channelTypes, customFieldTypes } from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -22,8 +25,10 @@ import {
 import {
   AtSignIcon,
   ClockIcon,
+  FingerprintIcon,
   IdCardIcon,
   LanguagesIcon,
+  type LucideIcon,
   PhoneIcon,
   TextIcon,
   UserRoundIcon,
@@ -33,6 +38,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
+import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
@@ -89,6 +95,64 @@ const getLanguageLabel = (
 ) => {
   const option = contactLanguageOptions.find((item) => item.value === language)
   return option ? t(option.labelKey) : language
+}
+
+type ScopedIdentityRowConfig = {
+  key: "sourceUserId" | "sourceUsername"
+  icon: LucideIcon
+  labelKey: string
+}
+
+/**
+ * Per-channel display config for the channel-scoped identity columns on
+ * ContactInbox (`sourceUserId`/`sourceUsername`). Labels are channel-branded,
+ * so each channel that populates these columns declares its own rows here —
+ * adding a channel is one config entry, no branching.
+ */
+const scopedIdentityRowsByChannel: Partial<
+  Record<ChannelType, readonly ScopedIdentityRowConfig[]>
+> = {
+  [channelTypes.enum.whatsapp]: [
+    {
+      key: "sourceUserId",
+      icon: FingerprintIcon,
+      labelKey: "fields.waUserId.label",
+    },
+    {
+      key: "sourceUsername",
+      icon: AtSignIcon,
+      labelKey: "fields.waUserName.label",
+    },
+  ],
+}
+
+const buildScopedIdentityFields = (
+  contactInbox: ContactInboxResource | undefined,
+  t: (key: string) => string,
+): ContactEditableField[] => {
+  const parsedChannel = channelTypes.safeParse(contactInbox?.channel)
+  if (!(contactInbox && parsedChannel.success)) {
+    return []
+  }
+  const rows = scopedIdentityRowsByChannel[parsedChannel.data] ?? []
+  return rows.flatMap((row): ContactEditableField[] => {
+    const value = contactInbox[row.key]
+    // Skip absent values, and a value that IS the Contact ID shown above
+    // (a scoped-id-keyed contact) — no duplicate row.
+    if (!value || value === contactInbox.sourceId) {
+      return []
+    }
+    return [
+      {
+        key: row.key,
+        icon: row.icon,
+        label: t(row.labelKey),
+        value,
+        type: "shortText",
+        readOnly: true,
+      },
+    ]
+  })
 }
 
 export const ContactDetail = ({
@@ -220,6 +284,7 @@ export const ContactDetail = ({
             type: "shortText",
             readOnly: true,
           },
+          ...buildScopedIdentityFields(activeContactInbox, t),
           {
             key: "language",
             icon: LanguagesIcon,

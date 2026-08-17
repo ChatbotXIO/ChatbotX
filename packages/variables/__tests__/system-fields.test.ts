@@ -381,6 +381,74 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBeNull()
   })
 
+  // wa_user_id / wa_user_name (D9, the BSUID plan): unlike ig_*, these read the
+  // STORED ContactInbox columns directly — Meta offers no BSUID→profile
+  // endpoint, so there is no API call and no cache to exercise here.
+  test("wa_user_id / wa_user_name resolve from the stored ContactInbox columns", async () => {
+    mockFindWithIntegrationsById.mockResolvedValue({
+      integrationWhatsapp: { id: "whatsapp-integration-1" },
+    })
+    const whatsappInbox = {
+      ...contactInbox,
+      channel: "whatsapp",
+      sourceId: "user.9373001",
+      sourceUserId: "user.9373001",
+      sourceUsername: "@handle",
+    } as ContactInboxModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_id,
+      ),
+    ).resolves.toBe("user.9373001")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_name,
+      ),
+    ).resolves.toBe("@handle")
+  })
+
+  test("wa_user_id / wa_user_name resolve to null when absent (phone-keyed contact, no adopted username)", async () => {
+    mockFindWithIntegrationsById.mockResolvedValue({
+      integrationWhatsapp: { id: "whatsapp-integration-1" },
+    })
+    const whatsappInbox = {
+      ...contactInbox,
+      channel: "whatsapp",
+      sourceId: "84901234567",
+      sourceUserId: null,
+      sourceUsername: null,
+    } as ContactInboxModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_id,
+      ),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_name,
+      ),
+    ).resolves.toBeNull()
+  })
+
+  test("wa_user_id / wa_user_name resolve to null on a non-WhatsApp inbox (channel guard)", async () => {
+    mockFindWithIntegrationsById.mockResolvedValue({
+      integrationInstagram: { id: "instagram-integration-1" },
+    })
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.wa_user_id),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.wa_user_name),
+    ).resolves.toBeNull()
+  })
+
   test("fb_chat_link resolves the Business Suite conversation link", async () => {
     mockMessengerGetUserInboxLink.mockResolvedValue(
       "https://business.facebook.com/1453585961452628/inbox/1453594044785153",

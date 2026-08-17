@@ -1273,6 +1273,12 @@
     "pageUserName": {
       "label": "Side Bruger Navn"
     },
+    "waUserId": {
+      "label": "WhatsApp Bruger-ID"
+    },
+    "waUserName": {
+      "label": "WhatsApp Brugernavn"
+    },
     "purpose": {
       "label": "Purpose",
       "placeholder": "What does denne Function do?"

@@ -9,6 +9,7 @@ import {
 } from "@chatbotx.io/sdk"
 import type { ServerMessageTypes } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../../client"
+import { extractWhatsappUserIdentity } from "../../lib/raw-identity"
 import { asString } from "../../lib/value"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
 import {
@@ -156,9 +157,19 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       messageType: messageTypes.enum.incoming,
       contentType: contentTypes.enum.text,
     }
+    const { sourceUserId, sourceUsername } = extractWhatsappUserIdentity(
+      data.raw,
+    )
+    // Username adopters: Meta sends an empty `from` (phone hidden) alongside
+    // a BSUID in `contacts[0].user_id`. Fall back to the BSUID as the
+    // contact's identity so the row is BSUID-keyed instead of empty-keyed
+    // (D2 in the BSUID plan — no phone regex sniffing, deterministic on
+    // `from` being empty).
     const contact: IncomingContact = {
-      sourceId: data.from,
+      sourceId: asString(data.from) ?? sourceUserId ?? "",
       firstName: data.name,
+      ...(sourceUserId ? { sourceUserId } : {}),
+      ...(sourceUsername ? { sourceUsername } : {}),
     }
 
     const parse = messageParsers[data.message.type]

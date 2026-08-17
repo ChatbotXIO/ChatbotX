@@ -1273,6 +1273,12 @@
     "pageUserName": {
       "label": "Nom d’utilisateur de la Page"
     },
+    "waUserId": {
+      "label": "ID utilisateur WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nom d’utilisateur WhatsApp"
+    },
     "purpose": {
       "label": "Objectif",
       "placeholder": "Que fait cette fonction ?"

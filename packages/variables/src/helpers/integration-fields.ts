@@ -41,6 +41,8 @@ type IntegrationFieldKey = Extract<
   | "me"
   | "user_code"
   | "webchat"
+  | "wa_user_id"
+  | "wa_user_name"
 >
 
 const IG_PROFILE_CACHE_TTL = 300
@@ -344,6 +346,19 @@ export const getIntegrationField = async (
         hash,
       })
       return `${appUrl}/extensions/me/?${query.toString()}`
+    }
+
+    case "wa_user_id":
+    case "wa_user_name": {
+      // Stored at receive time (ContactInbox.sourceUserId/sourceUsername) —
+      // Meta offers no BSUID→profile endpoint, so unlike ig_* this resolves
+      // from the DB with no extra API call.
+      if (!inbox.integrationWhatsapp) {
+        return null
+      }
+      return key === "wa_user_id"
+        ? (contactInbox.sourceUserId ?? null)
+        : (contactInbox.sourceUsername ?? null)
     }
 
     case "ig_user_name":

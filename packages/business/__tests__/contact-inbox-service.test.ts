@@ -8,9 +8,13 @@ const {
   mockDbSelect,
   mockDbSelectJoinLimit,
   mockDbSelectLimit,
+  mockDbSelectWhereRows,
   mockDbSet,
   mockDbUpdate,
+  mockInArray,
   mockLoggerWarn,
+  mockOr,
+  mockIsUniqueViolationError,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const mockDbWhere = vi.fn()
@@ -30,7 +34,15 @@ const {
   const mockDbSelectJoinWhere = vi.fn(() => ({ limit: mockDbSelectJoinLimit }))
   const mockDbSelectInnerJoin = vi.fn(() => ({ where: mockDbSelectJoinWhere }))
   const mockDbSelectOrderBy = vi.fn(() => ({ limit: mockDbSelectLimit }))
-  const mockDbSelectWhere = vi.fn(() => ({ orderBy: mockDbSelectOrderBy }))
+  // `.where(...)` is used two ways by the service: `findLatestBySource`
+  // chains `.orderBy().limit()` off it, while `findExistingSourceIdentities`
+  // awaits it directly for the row array. `mockDbSelectWhereRows` resolves
+  // the latter; attaching `.orderBy` on top of the Promise instance keeps the
+  // former chain working unchanged.
+  const mockDbSelectWhereRows = vi.fn().mockResolvedValue([] as unknown[])
+  const mockDbSelectWhere = vi.fn(() =>
+    Object.assign(mockDbSelectWhereRows(), { orderBy: mockDbSelectOrderBy }),
+  )
   const mockDbSelectFrom = vi.fn(() => ({
     innerJoin: mockDbSelectInnerJoin,
     where: mockDbSelectWhere,
@@ -45,10 +57,17 @@ const {
     mockDbSelect,
     mockDbSelectJoinLimit,
     mockDbSelectLimit,
+    mockDbSelectWhereRows,
     mockDbSet,
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
     mockDbWhere,
+    mockInArray: vi.fn((field: unknown, values: unknown[]) => ({
+      field,
+      values,
+    })),
     mockLoggerWarn,
+    mockOr: vi.fn((...conditions: unknown[]) => ({ or: conditions })),
+    mockIsUniqueViolationError: vi.fn().mockReturnValue(false),
   }
 })
 
@@ -77,10 +96,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn((...conditions: unknown[]) => ({ conditions })),
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   gt: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  inArray: mockInArray,
+  isNull: vi.fn((field: unknown) => ({ isNull: field })),
+  or: mockOr,
+  isUniqueViolationError: mockIsUniqueViolationError,
   sql: mockSql,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  CONTACT_INBOX_SOURCE_USER_ID_KEY: "ContactInbox_inboxId_sourceUserId_key",
   contactModel: {
     id: "contactId",
     workspaceId: "workspaceId",
@@ -96,6 +120,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     lastUserInputType: "lastUserInputType",
     referral: "referral",
     sourceId: "sourceId",
+    sourceUserId: "sourceUserId",
+    sourceUsername: "sourceUsername",
   },
 }))
 
@@ -483,5 +509,244 @@ describe("contactInboxService timestamp helpers", () => {
       'GREATEST(t."lastIncomingMessageAt", u.incoming_ts)',
     )
     expect(statement).not.toContain("CASE")
+  })
+})
+
+describe("contactInboxService.syncScopedIdentity (WhatsApp BSUID support, D3)", () => {
+  const baseContactInbox = {
+    id: "ci-1",
+    inboxId: "inbox-1",
+    contactId: "contact-1",
+    sourceId: "84900000001",
+    sourceUserId: null,
+    sourceUsername: null,
+  } as never
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockIsUniqueViolationError.mockReturnValue(false)
+  })
+
+  test("backfills sourceUserId when currently null", async () => {
+    mockDbReturning.mockResolvedValueOnce([
+      { ...baseContactInbox, sourceUserId: "user.bsuid-1" },
+    ])
+
+    const { contactInbox, learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: baseContactInbox,
+        incomingContact: {
+          sourceId: "84900000001",
+          sourceUserId: "user.bsuid-1",
+        },
+      })
+
+    expect(mockDbSet).toHaveBeenCalledWith({ sourceUserId: "user.bsuid-1" })
+    expect(contactInbox.sourceUserId).toBe("user.bsuid-1")
+    expect(learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("does not touch sourceUserId when the row already has one", async () => {
+    const existing = {
+      ...baseContactInbox,
+      sourceUserId: "user.bsuid-existing",
+    }
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: existing,
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceUserId: "user.bsuid-new",
+      },
+    })
+
+    expect(mockDbUpdate).not.toHaveBeenCalled()
+    expect(contactInbox.sourceUserId).toBe("user.bsuid-existing")
+  })
+
+  test("skips the backfill and logs a warning when the sourceUserId is already claimed by another row (unique-violation race)", async () => {
+    mockDbReturning.mockRejectedValueOnce(
+      Object.assign(new Error("duplicate key value"), { code: "23505" }),
+    )
+    mockIsUniqueViolationError.mockReturnValue(true)
+
+    const { contactInbox, learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: baseContactInbox,
+        incomingContact: {
+          sourceId: "84900000001",
+          sourceUserId: "user.bsuid-taken",
+        },
+      })
+
+    expect(contactInbox.sourceUserId).toBeNull()
+    expect(learnedPrimaryIdentity).toBeUndefined()
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceUserId: "user.bsuid-taken" }),
+      "ContactInbox.sourceUserId backfill skipped: already claimed by another row in this inbox",
+    )
+  })
+
+  test("rethrows a non-unique-violation error from the sourceUserId backfill", async () => {
+    mockDbReturning.mockRejectedValueOnce(new Error("connection reset"))
+    mockIsUniqueViolationError.mockReturnValue(false)
+
+    await expect(
+      contactInboxService.syncScopedIdentity({
+        contactInbox: baseContactInbox,
+        incomingContact: {
+          sourceId: "84900000001",
+          sourceUserId: "user.bsuid-1",
+        },
+      }),
+    ).rejects.toThrow("connection reset")
+  })
+
+  test("upserts sourceUsername on change (display-only)", async () => {
+    mockDbReturning.mockResolvedValueOnce([
+      { ...baseContactInbox, sourceUsername: "@newhandle" },
+    ])
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: { ...baseContactInbox, sourceUsername: "@oldhandle" },
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceUsername: "@newhandle",
+      },
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith({ sourceUsername: "@newhandle" })
+    expect(contactInbox.sourceUsername).toBe("@newhandle")
+  })
+
+  test("does not write sourceUsername when unchanged", async () => {
+    await contactInboxService.syncScopedIdentity({
+      contactInbox: { ...baseContactInbox, sourceUsername: "@samehandle" },
+      incomingContact: {
+        sourceId: "84900000001",
+        sourceUsername: "@samehandle",
+      },
+    })
+
+    expect(mockDbUpdate).not.toHaveBeenCalled()
+  })
+
+  test("returns learnedPrimaryIdentity when a phone becomes visible on a BSUID-keyed row (D2/D3 phone-learned-later)", async () => {
+    const bsuidKeyedRow = {
+      ...baseContactInbox,
+      sourceId: "user.bsuid-2",
+      sourceUserId: "user.bsuid-2",
+    }
+
+    const { learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: bsuidKeyedRow,
+        incomingContact: {
+          sourceId: "84900000002",
+          sourceUserId: "user.bsuid-2",
+        },
+      })
+
+    expect(learnedPrimaryIdentity).toBe("84900000002")
+  })
+
+  test("never returns learnedPrimaryIdentity for a phone-keyed row (regression safety)", async () => {
+    const { learnedPrimaryIdentity } =
+      await contactInboxService.syncScopedIdentity({
+        contactInbox: baseContactInbox, // sourceId=phone, sourceUserId=null
+        incomingContact: { sourceId: "84900000001" },
+      })
+
+    expect(learnedPrimaryIdentity).toBeUndefined()
+  })
+
+  test("never rewrites ContactInbox.sourceId even when a phone is learned (D2 stability rule)", async () => {
+    const bsuidKeyedRow = {
+      ...baseContactInbox,
+      sourceId: "user.bsuid-3",
+      sourceUserId: "user.bsuid-3",
+    }
+
+    const { contactInbox } = await contactInboxService.syncScopedIdentity({
+      contactInbox: bsuidKeyedRow,
+      incomingContact: {
+        sourceId: "84900000003",
+        sourceUserId: "user.bsuid-3",
+      },
+    })
+
+    expect(contactInbox.sourceId).toBe("user.bsuid-3")
+  })
+})
+
+describe("contactInboxService.findExistingSourceIdentities", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDbSelectWhereRows.mockResolvedValue([])
+  })
+
+  test("returns empty sets without querying when both candidate lists are empty", async () => {
+    const result = await contactInboxService.findExistingSourceIdentities({
+      inboxId: "inbox-1",
+      sourceIds: [],
+      sourceUserIds: [],
+    })
+
+    expect(result).toEqual({ sourceIds: new Set(), sourceUserIds: new Set() })
+    expect(mockDbSelect).not.toHaveBeenCalled()
+  })
+
+  test("matches rows by sourceId alone when no sourceUserIds are given (empty-array guard)", async () => {
+    mockDbSelectWhereRows.mockResolvedValue([
+      { sourceId: "84900000001", sourceUserId: null },
+    ])
+
+    const result = await contactInboxService.findExistingSourceIdentities({
+      inboxId: "inbox-1",
+      sourceIds: ["84900000001"],
+      sourceUserIds: [],
+    })
+
+    expect(result).toEqual({
+      sourceIds: new Set(["84900000001"]),
+      sourceUserIds: new Set(),
+    })
+    // The empty-array guard: `inArray` must never receive the empty
+    // sourceUserIds list — only the sourceId predicate is built.
+    expect(mockInArray).toHaveBeenCalledTimes(1)
+    expect(mockInArray).toHaveBeenCalledWith("sourceId", ["84900000001"])
+  })
+
+  test("matches rows by sourceId OR sourceUserId when both candidate lists are non-empty", async () => {
+    mockDbSelectWhereRows.mockResolvedValue([
+      { sourceId: "84900000001", sourceUserId: "user.bsuid-1" },
+    ])
+
+    const result = await contactInboxService.findExistingSourceIdentities({
+      inboxId: "inbox-1",
+      sourceIds: ["84900000002"],
+      sourceUserIds: ["user.bsuid-1"],
+    })
+
+    expect(result).toEqual({
+      sourceIds: new Set(["84900000001"]),
+      sourceUserIds: new Set(["user.bsuid-1"]),
+    })
+    expect(mockOr).toHaveBeenCalled()
+  })
+
+  test("drops null sourceUserId rows from the returned sourceUserIds set", async () => {
+    mockDbSelectWhereRows.mockResolvedValue([
+      { sourceId: "84900000001", sourceUserId: null },
+      { sourceId: "84900000002", sourceUserId: "user.bsuid-2" },
+    ])
+
+    const result = await contactInboxService.findExistingSourceIdentities({
+      inboxId: "inbox-1",
+      sourceIds: ["84900000001", "84900000002"],
+      sourceUserIds: ["user.bsuid-2"],
+    })
+
+    expect(result.sourceUserIds).toEqual(new Set(["user.bsuid-2"]))
   })
 })

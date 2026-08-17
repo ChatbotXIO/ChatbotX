@@ -76,6 +76,7 @@ vi.mock("@chatbotx.io/database/client", () => {
     inArray: vi.fn((col: unknown, vals: unknown) => ({
       __inArray: [col, vals],
     })),
+    or: vi.fn((...args: unknown[]) => ({ __or: args })),
     sql: Object.assign(
       (strings: TemplateStringsArray, ..._args: unknown[]) => ({
         __sql: strings.raw,
@@ -93,6 +94,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {
     id: "ci_id",
     sourceId: "ci_sourceId",
+    sourceUserId: "ci_sourceUserId",
     contactId: "ci_contactId",
     inboxId: "ci_inboxId",
   },
@@ -650,6 +652,119 @@ describe("bulkImportHistorical", () => {
     for (const c of contacts) {
       expect(result.contactInboxIds.get(c.sourceId)).toBe(c.contactInboxId)
     }
+  })
+
+  it("resolves an entry by scoped user id to the existing row instead of inserting", async () => {
+    // A username-adopter thread keyed by its BSUID, whose BSUID already
+    // belongs to a phone-keyed row in this inbox. Inserting would violate
+    // the partial unique index (inboxId, sourceUserId) and abort the batch;
+    // the entry must resolve to the existing row up front.
+    // 1. SELECT existing (by sourceId OR sourceUserId) → phone-keyed row
+    enqueueSelect({
+      rows: [
+        {
+          id: "ci-old",
+          sourceId: "phone-1",
+          sourceUserId: "user.abc",
+          contactId: "c-old",
+        },
+      ],
+    })
+    // 2. SELECT conversations for existing contacts
+    enqueueSelect({ rows: [{ id: "conv-old", contactId: "c-old" }] })
+    mockBulkCreate.mockResolvedValueOnce([{ id: "m-1", sourceId: "m-src-1" }])
+
+    const result = await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      batch: [
+        {
+          contact: contact("user.abc", { sourceUserId: "user.abc" }),
+          messages: [msg("m-src-1")],
+        },
+      ],
+    })
+
+    expect(result.importedContacts).toBe(0)
+    expect(result.importedMessages).toBe(1)
+    expect(result.contactInboxIds.get("user.abc")).toBe("ci-old")
+    // No Contact/ContactInbox insert was attempted — the conflict never fires.
+    expect(mockTxInsert).not.toHaveBeenCalled()
+  })
+
+  it("ContactInbox insert uses targetless onConflictDoNothing (covers both identity indexes)", async () => {
+    // 1. SELECT existing → none
+    enqueueSelect({ rows: [] })
+    // 2. INSERT Contact (terminal)
+    enqueueInsert({ returningRows: [{ id: "id-1" }] })
+    // 3. INSERT ContactInbox .returning() — the chain under test
+    const contactInboxInsert = enqueueInsert({
+      returningRows: [{ id: "ci-1", sourceId: "src-1", contactId: "id-1" }],
+    })
+    // 4. INSERT Conversation
+    enqueueInsertNoReturning()
+    // 5. SELECT conversations
+    enqueueSelect({ rows: [{ id: "conv-1", contactId: "id-1" }] })
+
+    await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      batch: [{ contact: contact("src-1"), messages: [] }],
+    })
+
+    // A target on (inboxId, sourceId) would let a conflict on the partial
+    // (inboxId, sourceUserId) index abort the whole batch — pin targetless.
+    expect(contactInboxInsert.onConflictDoNothing).toHaveBeenCalledWith()
+  })
+
+  it("raced scoped-id entry resolves through the winner row and aliases the import key", async () => {
+    // Concurrent import claimed the BSUID between the resolution SELECT and
+    // the insert: the insert returns no row, the winner is found by scoped
+    // user id under a DIFFERENT sourceId, and the entry's own import key
+    // must still map to the winner's link.
+    // 1. SELECT existing → none
+    enqueueSelect({ rows: [] })
+    // 2. INSERT Contact (terminal)
+    enqueueInsert({ returningRows: [{ id: "id-1" }] })
+    // 3. INSERT ContactInbox → EMPTY: the row lost the race
+    enqueueInsert({ returningRows: [] })
+    // 4. Winner re-SELECT by sourceId → none (loser conflicted on sourceUserId)
+    enqueueSelect({ rows: [] })
+    // 5. Winner re-SELECT by scoped user id → phone-keyed winner row
+    enqueueSelect({
+      rows: [
+        {
+          id: "ci-w",
+          sourceId: "phone-9",
+          sourceUserId: "user.abc",
+          contactId: "c-w",
+        },
+      ],
+    })
+    // 6. DELETE orphan pre-created contacts
+    _enqueueDelete()
+    // 7. Conversation insert skipped (all raced); SELECT conversations
+    enqueueSelect({ rows: [{ id: "conv-w", contactId: "c-w" }] })
+    mockBulkCreate.mockResolvedValueOnce([{ id: "m-1", sourceId: "m-src-1" }])
+
+    const result = await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      batch: [
+        {
+          contact: contact("user.abc", { sourceUserId: "user.abc" }),
+          messages: [msg("m-src-1")],
+        },
+      ],
+    })
+
+    expect(result.importedContacts).toBe(0)
+    expect(result.importedMessages).toBe(1)
+    // The entry's import key aliases to the winner's contact-inbox row.
+    expect(result.contactInboxIds.get("user.abc")).toBe("ci-w")
   })
 
   // -------------------------------------------------------------------------

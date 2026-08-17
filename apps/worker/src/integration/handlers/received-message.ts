@@ -18,7 +18,7 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
-import { db, eq } from "@chatbotx.io/database/client"
+import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
   contactSources,
@@ -26,6 +26,8 @@ import {
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
+  CONTACT_INBOX_SOURCE_ID_KEY,
+  CONTACT_INBOX_SOURCE_USER_ID_KEY,
   contactInboxModel,
   contactModel,
   conversationModel,
@@ -56,10 +58,12 @@ import {
   getStoryReply,
   type IncomingContact,
   type IncomingMessage,
+  isSourceUserIdKeyedIdentity,
   type MessageLocationEntity,
   type MessageWhatsappFlowResponseEntity,
   messageTypes,
   type ReceivedMessageResult,
+  resolveWithSourceUserIdFallback,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -974,6 +978,98 @@ export const deleteIncomingComment = async (
   }
 }
 
+type ContactInboxWithContact = ContactInboxModel & { contact: ContactModel }
+
+type ContactInboxResolverProps = {
+  inbox: InboxModel
+  incomingContact: IncomingContact
+}
+
+// Ordered identity lookup via the shared fallback contract: sourceId first
+// (today's behavior, unchanged — a phone-keyed match never falls through),
+// then the scoped user id (e.g. a WhatsApp BSUID) when the payload carries
+// one. Both columns are backed by unique indexes on (inboxId, …).
+const resolveExistingContactInbox = async ({
+  inbox,
+  incomingContact,
+}: ContactInboxResolverProps): Promise<ContactInboxWithContact | undefined> =>
+  await resolveWithSourceUserIdFallback(incomingContact, (where) =>
+    db.query.contactInboxModel.findFirst({
+      where: { inboxId: inbox.id, channel: inbox.channel, ...where },
+      with: { contact: true },
+    }),
+  )
+
+// Shared by the direct-hit path and the unique-violation race recovery below
+// (D8): syncs newly-learned identity fields onto the matched row, then
+// resolves/opens the conversation.
+const buildExistingContactMatch = async (props: {
+  inbox: InboxModel
+  incomingContact: IncomingContact
+  conversationSourceId: string | null
+  existing: ContactInboxWithContact
+}): Promise<{
+  contactInbox: ContactInboxModel
+  contact: ContactModel
+  conversation: ConversationModel
+  isNewContact: false
+}> => {
+  const { inbox, incomingContact, conversationSourceId, existing } = props
+  const { contact, ...contactInbox } = existing
+
+  const { contactInbox: syncedContactInbox, learnedPrimaryIdentity } =
+    await contactInboxService.syncScopedIdentity({
+      contactInbox,
+      incomingContact,
+    })
+
+  // Phone learned later on a BSUID-keyed row (D3): write it to
+  // Contact.phoneNumber only — never rewrite ContactInbox.sourceId. Kept at
+  // this call site (not inside the contact-inbox service) so contactService
+  // stays a caller-level composition, not a cross-domain import.
+  let syncedContact = contact
+  if (learnedPrimaryIdentity) {
+    try {
+      syncedContact = await contactService.update(
+        { workspaceId: inbox.workspaceId, id: contact.id },
+        { phoneNumber: learnedPrimaryIdentity },
+      )
+    } catch (error) {
+      logger.warn(
+        {
+          error,
+          contactId: contact.id,
+          contactInboxId: syncedContactInbox.id,
+        },
+        "Contact.phoneNumber backfill from newly-learned identity failed",
+      )
+    }
+  }
+
+  const conversation = await conversationService.findOrCreate({
+    workspaceId: inbox.workspaceId,
+    contactId: syncedContactInbox.contactId,
+    sourceId: conversationSourceId,
+  })
+
+  return {
+    contactInbox: syncedContactInbox,
+    contact: syncedContact,
+    conversation,
+    isNewContact: false,
+  }
+}
+
+const CONTACT_INBOX_IDENTITY_CONSTRAINTS = [
+  CONTACT_INBOX_SOURCE_ID_KEY,
+  CONTACT_INBOX_SOURCE_USER_ID_KEY,
+] as const
+
+const isContactInboxIdentityRace = (error: unknown): boolean =>
+  CONTACT_INBOX_IDENTITY_CONSTRAINTS.some((constraint) =>
+    isUniqueViolationError(error, constraint),
+  )
+
 export const detectContactAndConversation = async (props: {
   inbox: InboxModel
   incomingContact: IncomingContact
@@ -992,13 +1088,9 @@ export const detectContactAndConversation = async (props: {
 }> => {
   const { incomingContact, inbox, integrationRow, source } = props
 
-  const existingContactInbox = await db.query.contactInboxModel.findFirst({
-    where: {
-      inboxId: inbox.id,
-      channel: inbox.channel,
-      sourceId: incomingContact.sourceId,
-    },
-    with: { contact: true },
+  const existingContactInbox = await resolveExistingContactInbox({
+    inbox,
+    incomingContact,
   })
 
   // The conversation source id (e.g. a Facebook post id for comments) keys the
@@ -1010,18 +1102,84 @@ export const detectContactAndConversation = async (props: {
   // `findOrCreate` resolves the existing conversation or opens a fresh one when
   // the source id is new (e.g. a comment on a different post).
   if (existingContactInbox) {
-    const conversation = await conversationService.findOrCreate({
-      workspaceId: inbox.workspaceId,
-      contactId: existingContactInbox.contactId,
-      sourceId: conversationSourceId,
+    return await buildExistingContactMatch({
+      inbox,
+      incomingContact,
+      conversationSourceId,
+      existing: existingContactInbox,
     })
-    return {
-      contactInbox: existingContactInbox,
-      contact: existingContactInbox.contact,
-      conversation,
-      isNewContact: false,
-    }
   }
+
+  // Used below to skip phone-hint inference when the sourceId is a scoped
+  // user id (e.g. a WhatsApp BSUID), not an actual phone number (§8.1).
+  const isBsuidKeyedIncomingContact =
+    isSourceUserIdKeyedIdentity(incomingContact)
+
+  try {
+    return await createNewContactAndContactInbox({
+      inbox,
+      integrationRow,
+      incomingContact,
+      source,
+      conversationSourceId,
+      isBsuidKeyedIncomingContact,
+    })
+  } catch (error) {
+    // D8: two concurrent first-messages from the same identity can both pass
+    // the resolver-chain miss above. The loser hits a unique-violation on
+    // either `(inboxId, sourceId)` or the new partial `(inboxId,
+    // sourceUserId)` index; its transaction rolls back (no orphan Contact, no
+    // MAC double-count). Re-run the resolver chain and return the winning
+    // row instead of dead-lettering the job.
+    if (!isContactInboxIdentityRace(error)) {
+      throw error
+    }
+    logger.warn(
+      { inboxId: inbox.id, sourceId: incomingContact.sourceId },
+      "ContactInbox creation race detected; resolving winning row",
+    )
+    const winner = await resolveExistingContactInbox({
+      inbox,
+      incomingContact,
+    })
+    if (!winner) {
+      throw error
+    }
+    return await buildExistingContactMatch({
+      inbox,
+      incomingContact,
+      conversationSourceId,
+      existing: winner,
+    })
+  }
+}
+
+const createNewContactAndContactInbox = async (props: {
+  inbox: InboxModel
+  integrationRow: {
+    id: string
+    auth: AuthValue
+    inboxId: string
+    [x: string]: unknown
+  }
+  incomingContact: IncomingContact
+  source: ContactSource
+  conversationSourceId: string | null
+  isBsuidKeyedIncomingContact: boolean
+}): Promise<{
+  contactInbox: ContactInboxModel
+  contact: ContactModel
+  conversation: ConversationModel
+  isNewContact: true
+}> => {
+  const {
+    inbox,
+    integrationRow,
+    incomingContact,
+    source,
+    conversationSourceId,
+    isBsuidKeyedIncomingContact,
+  } = props
 
   let contactData: typeof contactModel.$inferInsert = {
     ...incomingContact,
@@ -1068,9 +1226,14 @@ export const detectContactAndConversation = async (props: {
       timezone: contactData.timezone,
     },
     {
+      // §8.1: a BSUID-keyed identity is not a phone number — feeding it here
+      // would infer garbage locale/timezone. Only pass the sourceId as a
+      // phone hint when it is NOT BSUID-keyed (deterministic per D2).
       phoneHint:
         incomingContact.phoneNumber ??
-        (inbox.channel === "whatsapp" ? incomingContact.sourceId : undefined),
+        (inbox.channel === "whatsapp" && !isBsuidKeyedIncomingContact
+          ? incomingContact.sourceId
+          : undefined),
       fallbackLocale: inbox.channel === "zalo" ? "vi_VN" : undefined,
     },
   )
@@ -1090,6 +1253,9 @@ export const detectContactAndConversation = async (props: {
   // cannot overrun the limit; the `ContactActiveMonthly` presence row written
   // inside the transaction makes the `message:received` event emitted later a
   // dedup no-op (no double count). `contacts` stays the info-only metric.
+  // Contact + ContactInbox creation share this one transaction (D8): a losing
+  // insert's unique-violation rolls back both rows together — no orphan
+  // Contact — and is recovered by the caller's try/catch above.
   const result = await quotaEnforcementService.createNewContactWithMac({
     ownerId: ws.ownerId,
     workspaceId: inbox.workspaceId,
@@ -1115,6 +1281,8 @@ export const detectContactAndConversation = async (props: {
           originalContactId: newContact.id,
           source,
           sourceId: incomingContact.sourceId,
+          sourceUserId: incomingContact.sourceUserId ?? null,
+          sourceUsername: incomingContact.sourceUsername ?? null,
           channel: inbox.channel,
           language: finalizedProfile.language,
         })

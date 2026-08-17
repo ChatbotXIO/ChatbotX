@@ -295,6 +295,40 @@ describe("loopableExportContacts", () => {
     )
   })
 
+  test("loads every contactInboxes row (no limit) ONLY when the WhatsApp User ID column is selected", async () => {
+    captureCsv()
+    findManyContacts.mockResolvedValueOnce([])
+
+    await loopableExportContacts(buildData({ fields: ["sys:sourceUserId"] }))
+
+    const query = findManyContacts.mock.calls[0][0] as {
+      with: {
+        contactInboxes: {
+          columns: Record<string, boolean>
+          limit?: number
+        }
+      }
+    }
+    expect(query.with.contactInboxes.columns).toMatchObject({
+      sourceId: true,
+      sourceUserId: true,
+    })
+    // Multi-inbox scan is only paid for when the column is actually selected.
+    expect(query.with.contactInboxes.limit).toBeUndefined()
+  })
+
+  test("keeps the single-row contactInboxes load when the WhatsApp User ID column is NOT selected (regression)", async () => {
+    captureCsv()
+    findManyContacts.mockResolvedValueOnce([])
+
+    await loopableExportContacts(buildData())
+
+    const query = findManyContacts.mock.calls[0][0] as {
+      with: { contactInboxes: { limit?: number } }
+    }
+    expect(query.with.contactInboxes.limit).toBe(1)
+  })
+
   test("filters by contactIds when no filter is supplied", async () => {
     captureCsv()
     findManyContacts.mockResolvedValueOnce([])

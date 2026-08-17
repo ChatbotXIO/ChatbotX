@@ -532,3 +532,131 @@ describe("processWhatsappTemplate", () => {
     )
   })
 })
+
+describe("processWhatsappTemplate — BSUID auth-template guard (D5)", () => {
+  const bsuidKeyedContactInbox = {
+    ...fakeContactInbox,
+    sourceId: "user.9373001",
+    sourceUserId: "user.9373001",
+  } as unknown as ProcessWhatsappTemplateParams["contactInbox"]
+
+  const emptySourceIdContactInbox = {
+    ...fakeContactInbox,
+    sourceId: "",
+    sourceUserId: "VN.4416742385309647",
+  } as unknown as ProcessWhatsappTemplateParams["contactInbox"]
+
+  const phoneKeyedContactInbox = {
+    ...fakeContactInbox,
+    sourceId: "84900000001",
+    sourceUserId: null,
+  } as unknown as ProcessWhatsappTemplateParams["contactInbox"]
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockCreateMessageRepository.mockResolvedValue({
+      create: mockRepositoryCreate,
+      updateSourceId: mockRepositoryUpdateSourceId,
+    })
+    mockReplaceVariables.mockResolvedValue([])
+    mockContactVariables.mockResolvedValue([])
+    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockEmit.mockResolvedValue(undefined)
+  })
+
+  test("rejects with a typed 131062 error BEFORE any send when an AUTHENTICATION template targets a BSUID-keyed contact", async () => {
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-auth-1",
+        name: "auth-template",
+        language: "en",
+        category: "AUTHENTICATION",
+        components: [],
+      },
+    })
+
+    const error = await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: bsuidKeyedContactInbox,
+      template: fakeTemplate,
+    }).catch((e) => e as InstanceType<typeof ChannelError>)
+
+    expect(error).toBeInstanceOf(ChannelError)
+    expect(error.code).toBe(131_062)
+    expect(error.category).toBe(ChannelErrorCategory.PAYLOAD_INVALID)
+    // Fails fast — no API call, no message row, no variable resolution.
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockContactVariables).not.toHaveBeenCalled()
+  })
+
+  test("also rejects an AUTHENTICATION template when sourceId is empty but a BSUID exists (send would route via `recipient`)", async () => {
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-auth-1",
+        name: "auth-template",
+        language: "en",
+        category: "AUTHENTICATION",
+        components: [],
+      },
+    })
+
+    const error = await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: emptySourceIdContactInbox,
+      template: fakeTemplate,
+    }).catch((e) => e as InstanceType<typeof ChannelError>)
+
+    expect(error).toBeInstanceOf(ChannelError)
+    expect(error.code).toBe(131_062)
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+  })
+
+  test("allows a MARKETING template to a BSUID-keyed contact (only AUTHENTICATION is restricted)", async () => {
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-marketing-1",
+        name: "marketing-template",
+        language: "en",
+        category: "MARKETING",
+        components: [],
+      },
+    })
+
+    await expect(
+      processWhatsappTemplate({
+        conversation: fakeConversation,
+        contactInbox: bsuidKeyedContactInbox,
+        template: fakeTemplate,
+      }),
+    ).resolves.toBeDefined()
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+  })
+
+  test("allows an AUTHENTICATION template to a phone-keyed contact (regression — guard is BSUID-specific)", async () => {
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-auth-2",
+        name: "auth-template",
+        language: "en",
+        category: "AUTHENTICATION",
+        components: [],
+      },
+    })
+
+    await expect(
+      processWhatsappTemplate({
+        conversation: fakeConversation,
+        contactInbox: phoneKeyedContactInbox,
+        template: fakeTemplate,
+      }),
+    ).resolves.toBeDefined()
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+  })
+})

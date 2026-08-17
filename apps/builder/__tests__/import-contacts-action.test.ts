@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest"
-import { importContactsRequest } from "@/features/contacts/schemas/contact-import"
+import {
+  buildContactImportMeta,
+  importContactsRequest,
+} from "@/features/contacts/schemas/contact-import"
 
 describe("importContactsRequest schema", () => {
   // Non-whatsapp channels require a contactId mapping (superRefine).
@@ -98,7 +101,7 @@ describe("importContactsRequest schema", () => {
     expect(result.success).toBe(false)
   })
 
-  test("requires phoneNumber when channel is whatsapp", () => {
+  test("requires phoneNumber or sourceUserId when channel is whatsapp", () => {
     const result = importContactsRequest.safeParse({
       ...validBase,
       channel: "whatsapp",
@@ -117,5 +120,58 @@ describe("importContactsRequest schema", () => {
 
     expect(parsed.countryCode).toBe("+84")
     expect(parsed.phoneNumber).toBe("phone")
+  })
+
+  test("accepts whatsapp channel with only sourceUserId mapped (no phone)", () => {
+    const parsed = importContactsRequest.parse({
+      ...validBase,
+      channel: "whatsapp",
+      phoneNumber: undefined,
+      sourceUserId: "wa_user_id_column",
+    })
+
+    expect(parsed.sourceUserId).toBe("wa_user_id_column")
+    expect(parsed.phoneNumber).toBeUndefined()
+  })
+
+  test("rejects whatsapp channel with neither phoneNumber nor sourceUserId", () => {
+    const result = importContactsRequest.safeParse({
+      ...validBase,
+      channel: "whatsapp",
+      sourceUserId: "",
+    })
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("buildContactImportMeta", () => {
+  test("persists sourceUserId into the columnMap for a whatsapp import", () => {
+    const parsed = importContactsRequest.parse({
+      fileId: "123",
+      channel: "whatsapp",
+      inboxId: "456",
+      sourceUserId: "WA User ID",
+    })
+
+    const meta = buildContactImportMeta(parsed)
+
+    expect(meta.columnMap.sourceUserId).toBe("WA User ID")
+    expect(meta.columnMap.phoneNumber).toBeUndefined()
+    expect(meta.channel).toBe("whatsapp")
+  })
+
+  test("leaves sourceUserId absent when the column is not mapped (regression)", () => {
+    const parsed = importContactsRequest.parse({
+      fileId: "123",
+      channel: "whatsapp",
+      inboxId: "456",
+      phoneNumber: "Phone",
+    })
+
+    const meta = buildContactImportMeta(parsed)
+
+    expect(meta.columnMap.sourceUserId).toBeUndefined()
+    expect(meta.columnMap.phoneNumber).toBe("Phone")
   })
 })

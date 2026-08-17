@@ -22,7 +22,13 @@ import {
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import { type MessageTemplateEntity, parseSdkError } from "@chatbotx.io/sdk"
+import {
+  ChannelError,
+  ChannelErrorCategory,
+  type MessageTemplateEntity,
+  parseSdkError,
+  shouldAddressBySourceUserId,
+} from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
@@ -41,6 +47,37 @@ import { logger } from "../../lib/logger"
 import { shouldSuppressRetryableChannelError } from "../utils/retry"
 import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToChannel } from "./send-message"
+
+// Meta rejects (error 131062) an authentication-category template sent to a
+// Business-Scoped User ID (BSUID) recipient. Declared as data so the guard
+// below stays a lookup, not a branch, and any future restricted category
+// Meta adds is a one-line change.
+const bsuidRestrictedTemplateCategories = new Set(["AUTHENTICATION"])
+
+/**
+ * Pre-send guard (D5 in the BSUID plan): a BSUID-keyed contact-inbox cannot
+ * receive an authentication-category template. Meta would return error
+ * 131062, but failing fast here — before any API call — avoids a wasted
+ * round trip and gives the caller a typed, categorized error instead of a
+ * raw provider error. The error-mapper's 131062 entry is the safety net for
+ * any send path that bypasses this call site.
+ */
+const assertTemplateAllowedForContactInbox = (props: {
+  contactInbox: ContactInboxModel
+  templateCategory: string
+}): void => {
+  const { contactInbox, templateCategory } = props
+  if (
+    shouldAddressBySourceUserId(contactInbox) &&
+    bsuidRestrictedTemplateCategories.has(templateCategory)
+  ) {
+    throw new ChannelError(
+      `Cannot send a ${templateCategory} template to a Business-Scoped User ID recipient`,
+      ChannelErrorCategory.PAYLOAD_INVALID,
+      { code: 131_062 },
+    )
+  }
+}
 
 type EnqueueTemplateSentEvaluationInput = {
   workspaceId: string
@@ -150,6 +187,11 @@ export async function processWhatsappTemplate(
       )
       throw new Error(`Template validation failed: ${template.id}`)
     }
+
+    assertTemplateAllowedForContactInbox({
+      contactInbox,
+      templateCategory: validated.template.category,
+    })
 
     const variables = await contactVariableService.getAll({
       contactId: conversation.contactId,

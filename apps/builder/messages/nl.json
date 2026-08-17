@@ -1087,6 +1087,12 @@
     "pageUserName": {
       "label": "Gebruikersnaam van pagina"
     },
+    "waUserId": {
+      "label": "WhatsApp-gebruikers-ID"
+    },
+    "waUserName": {
+      "label": "WhatsApp-gebruikersnaam"
+    },
     "purpose": {
       "label": "Doel",
       "placeholder": "Wat doet deze functie?"
