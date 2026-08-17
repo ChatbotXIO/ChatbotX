@@ -5,15 +5,15 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import {
-  type MessengerAuthValue,
-  sendPrivateReply,
-} from "@chatbotx.io/integration-messenger"
 import type { IntegrationJobCommentAIReply } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
 import { generateAIReplyText } from "../automated-response/replies"
-import { postPublicCommentReply } from "."
+import {
+  PRIVATE_REPLY_TEXT_SENDERS,
+  type PrivateReplyAuth,
+} from "./private-reply"
+import { postPublicCommentReply } from "./public-reply"
 
 /**
  * Generate an AI agent reply for a Facebook comment and deliver it on the
@@ -110,18 +110,16 @@ export async function processCommentAIReply(
     return
   }
 
-  // Private DM. Instagram private DM is out of scope (no private_replies API),
-  // same as the private text branch.
-  if (data.channelType === "messenger") {
-    const { integrationRow } =
-      await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-        data.integrationType as IntegrationType,
-        data.integrationIdentifier,
-      )
-    await sendPrivateReply(
-      integrationRow.auth as MessengerAuthValue,
-      data.commentId,
-      generated.text,
+  // Private DM.
+  const { integrationRow } =
+    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+      data.integrationType as IntegrationType,
+      data.integrationIdentifier,
     )
-  }
+
+  await PRIVATE_REPLY_TEXT_SENDERS[data.channelType](
+    integrationRow.auth as PrivateReplyAuth,
+    data.commentId,
+    generated.text,
+  )
 }

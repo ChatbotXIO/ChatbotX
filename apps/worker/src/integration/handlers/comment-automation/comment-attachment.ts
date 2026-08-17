@@ -3,6 +3,7 @@ import type { FBCommentHideComments } from "@chatbotx.io/database/partials"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { allIntegrations } from "../../../services/integrations"
+import type { CommentAutomationChannelType } from "./channel-type"
 
 export type CommentAttachmentInfo = {
   hasImage: boolean
@@ -18,11 +19,12 @@ export function needsAttachmentInfo(
 /**
  * Returns a memoized resolver that fetches a comment's attachment type at
  * most once per incoming comment, regardless of how many active automations
- * need it. Instagram has no attachment-lookup API yet — out of scope MVP,
- * same boundary as executePrivateReply.
+ * need it. Instagram has no attachment-lookup API yet, so non-messenger
+ * channels short-circuit to "no attachment" — unrelated to which channels
+ * support private replies.
  */
 export function createAttachmentInfoResolver(params: {
-  channelType: "messenger" | "instagram" | "instagramFacebook"
+  channelType: CommentAutomationChannelType
   workspaceId: string
   commentId: string
   integrationRow: {
