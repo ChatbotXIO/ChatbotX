@@ -220,8 +220,8 @@ vi.mock(
 const { default: CreateChannelPage } = await import(
   "../src/app/(no-sidebar)/channels/create/page"
 )
-const { default: DashboardPage } = await import(
-  "../src/app/space/[workspaceId]/dashboard/contacts/page"
+const { default: DashboardLayout } = await import(
+  "../src/app/space/[workspaceId]/dashboard/layout"
 )
 const { default: MessengerLayout } = await import(
   "../src/app/space/[workspaceId]/messengers/[id]/layout"
@@ -296,7 +296,8 @@ describe("channel route guards", () => {
       },
     })
 
-    const dashboardTree = await DashboardPage({
+    const dashboardTree = await DashboardLayout({
+      children: null,
       params: Promise.resolve({ workspaceId: "ws-1" }),
     })
     renderToStaticMarkup(dashboardTree)
@@ -322,7 +323,8 @@ describe("channel route guards", () => {
       },
     })
 
-    const dashboardTree = await DashboardPage({
+    const dashboardTree = await DashboardLayout({
+      children: null,
       params: Promise.resolve({ workspaceId: "ws-1" }),
     })
     renderToStaticMarkup(dashboardTree)
