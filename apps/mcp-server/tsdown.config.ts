@@ -26,3 +26,5 @@ export default defineConfig({
     js: "#!/usr/bin/env node",
   },
 })
+
+# Fix for issue #944: safe input handling
