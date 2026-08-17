@@ -47,11 +47,18 @@ const findStatusContactInbox = (where: StatusContactInboxWhere) =>
 const resolveStatusContactInbox = async (
   inboxId: string,
   recipientIdentity: string,
-) =>
-  await resolveWithSourceUserIdFallback(
+) => {
+  // A status with no recipient identity at all must never resolve: querying
+  // sourceId="" could attach the status (read receipts, delivered postbacks)
+  // to an anomalous empty-keyed row belonging to a different contact.
+  if (!recipientIdentity) {
+    return
+  }
+  return await resolveWithSourceUserIdFallback(
     { sourceId: recipientIdentity, sourceUserId: recipientIdentity },
     (where) => findStatusContactInbox({ inboxId, ...where }),
   )
+}
 
 export const handleMessageStatus = async (
   job: IntegrationJobMessageStatus["data"],
