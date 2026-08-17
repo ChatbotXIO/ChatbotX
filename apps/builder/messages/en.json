@@ -945,6 +945,9 @@
     "bookingDate": {
       "label": "Booking Date"
     },
+    "bookingLink": {
+      "label": "Booking Link"
+    },
     "customRange": {
       "label": "Custom range"
     },
@@ -4270,16 +4273,19 @@
     "title": "Appointment Scheduling",
     "description": "Create and manage your appointment scheduling.",
     "flowModes": {
-      "book": "Book appointment",
-      "cancel": "Cancel appointment",
-      "checkAvailability": "Check availability"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Date & time picker",
+      "checkAvailability": "Date range picker",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mode",
       "dateTimeFieldId": "Save selected date to",
-      "startDateFieldId": "Start date",
+      "dateTimeFieldIdSource": "Date/time field",
+      "startDateFieldId": "Start date field",
       "startDateFieldIdSelected": "Save selected start date to",
-      "endDateFieldId": "End date",
+      "endDateFieldId": "End date field",
       "endDateFieldIdSelected": "Save selected end date to",
       "resultUsedByAI": "Use result for AI",
       "outputCustomFieldId": "Save response to a custom field"
@@ -4328,6 +4334,7 @@
       "endDate": "End Date",
       "specificDate": "Date",
       "maxAppointmentsPerUser": "Maximum appointments per user",
+      "maxAppointmentsUnlimited": "Unlimited",
       "dailyLimitEnabled": "Daily limit",
       "maxPerDay": "Max Per Day",
       "allowGroupMeeting": "Allow Group Meeting",

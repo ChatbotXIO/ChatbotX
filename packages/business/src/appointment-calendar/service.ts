@@ -16,6 +16,12 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { appointmentModel } from "@chatbotx.io/database/schema"
 import type { AppointmentCalendarModel } from "@chatbotx.io/database/types"
+import {
+  chooseChannelStepDefaultFn,
+  openWebsiteStepDefaultFn,
+  type SendMessageNodeSchema,
+  sendTextStepDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { createId, resolveFilterTimezone } from "@chatbotx.io/utils"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import { normalizeError } from "universal-error-normalizer"
@@ -23,6 +29,8 @@ import { appointmentExternalCalendarService } from "../appointment-external-cale
 import { appointmentReminderService } from "../appointment-reminder"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { flowService } from "../flow/service"
+import { flowVersionService } from "../flow-version"
 import { logger } from "../logger"
 
 const MINUTES_PER_DAY = 1440
@@ -99,6 +107,52 @@ export type ZonedCalendarDay = { date: string; weekday: number }
 
 const LISTING_BUSY_EVENTS_TIMEOUT_MS = 2500
 const BOOKING_BUSY_EVENTS_TIMEOUT_MS = 5000
+
+const DEFAULT_REMINDER_TIMINGS: {
+  timingValue: number
+  timingUnit: "minutes" | "hours" | "days"
+}[] = [
+  { timingValue: 10, timingUnit: "minutes" },
+  { timingValue: 1, timingUnit: "hours" },
+  { timingValue: 1, timingUnit: "days" },
+]
+
+function buildDefaultBookingFlowNode(input: {
+  text: string
+  url: string
+}): SendMessageNodeSchema {
+  return {
+    id: createId(),
+    position: { x: 100, y: 300 },
+    measured: { width: 288, height: 100 },
+    type: "sendMessage",
+    data: {
+      name: "Start",
+      isStartNode: true,
+      details: {
+        beforeStep: chooseChannelStepDefaultFn(),
+        steps: [
+          {
+            ...sendTextStepDefaultFn({ text: input.text }),
+            buttons: [
+              {
+                id: createId(),
+                label: "More Information",
+                buttonType: "openWebsite",
+                beforeStep: {
+                  ...openWebsiteStepDefaultFn(),
+                  url: input.url,
+                },
+                steps: [],
+              },
+            ],
+          },
+        ],
+        quickReplies: [],
+      },
+    },
+  }
+}
 
 /** Sort + merge overlapping/duplicate intervals; overlap never adds capacity. */
 export function mergeIntervals(
@@ -325,19 +379,85 @@ export class AppointmentCalendarService extends BaseService {
   }
 
   async create(input: { workspaceId: string; name: string }) {
+    let confirmationFlowId: string
+    let reminderFlowId: string
+    let calendarId: string
     try {
-      const row = await appointmentCalendarRepository.create({
-        workspaceId: input.workspaceId,
-        name: input.name.trim(),
-        timezone: "UTC",
-        locationType: "onlineMeeting",
-        publicLinkSlug: createId().toString(),
-      })
-      return row.id
+      ;({ calendarId, confirmationFlowId, reminderFlowId } =
+        await db.transaction(async (tx) => {
+          const row = await appointmentCalendarRepository.create(
+            {
+              workspaceId: input.workspaceId,
+              name: input.name.trim(),
+              timezone: "UTC",
+              locationType: "onlineMeeting",
+              publicLinkSlug: createId().toString(),
+              active: true,
+            },
+            tx,
+          )
+
+          const confirmationNode = buildDefaultBookingFlowNode({
+            text: "Appointment Confirmation - {{booking_calendar}}\n\nDate: {{booking_date}}",
+            url: "{{booking_link}}",
+          })
+          const confirmation = await flowService.createPublishedDefault(tx, {
+            workspaceId: input.workspaceId,
+            name: `Booking confirmation - ${row.name}`,
+            startNodeId: confirmationNode.id,
+            nodes: [confirmationNode],
+            edges: [],
+          })
+
+          const reminderNode = buildDefaultBookingFlowNode({
+            text: "Reminder - {{booking_calendar}}\n\nDate: {{booking_date}}",
+            url: "{{booking_link}}",
+          })
+          const reminder = await flowService.createPublishedDefault(tx, {
+            workspaceId: input.workspaceId,
+            name: `Reminder - ${row.name}`,
+            startNodeId: reminderNode.id,
+            nodes: [reminderNode],
+            edges: [],
+          })
+
+          await appointmentCalendarRepository.update(
+            {
+              workspaceId: input.workspaceId,
+              id: row.id,
+              confirmationFlowId: confirmation.flowId,
+            },
+            tx,
+          )
+
+          await appointmentCalendarRepository.replaceReminders(
+            {
+              calendarId: row.id,
+              reminders: DEFAULT_REMINDER_TIMINGS.map((timing) => ({
+                flowId: reminder.flowId,
+                ...timing,
+              })),
+            },
+            tx,
+          )
+
+          return {
+            calendarId: row.id,
+            confirmationFlowId: confirmation.flowId,
+            reminderFlowId: reminder.flowId,
+          }
+        }))
     } catch (error) {
       this.throwMappedUniqueError(error)
       throw error
     }
+
+    await Promise.all([
+      flowVersionService.invalidateList(confirmationFlowId),
+      flowVersionService.invalidateList(reminderFlowId),
+    ])
+
+    return calendarId
   }
 
   async setActive(input: { workspaceId: string; id: string; active: boolean }) {

@@ -940,6 +940,9 @@
     "bookingDate": {
       "label": "Thời gian hẹn đã đặt"
     },
+    "bookingLink": {
+      "label": "Liên kết đặt lịch"
+    },
     "customCss": {
       "label": "CSS tùy chỉnh"
     },
@@ -4170,16 +4173,19 @@
     "title": "Lập lịch hẹn",
     "description": "Tạo và quản lý lịch hẹn của bạn.",
     "flowModes": {
-      "book": "Đặt lịch hẹn",
-      "cancel": "Hủy lịch hẹn",
-      "checkAvailability": "Kiểm tra lịch trống"
+      "bookFromCustomField": "Đặt lịch hẹn",
+      "checkAvailabilityFromCustomField": "Kiểm tra lịch trống",
+      "book": "Bộ chọn ngày giờ",
+      "checkAvailability": "Bộ chọn khoảng ngày",
+      "cancel": "Hủy lịch hẹn"
     },
     "fields": {
       "mode": "Chế độ",
       "dateTimeFieldId": "Lưu ngày đã chọn vào",
-      "startDateFieldId": "Ngày bắt đầu",
+      "dateTimeFieldIdSource": "Trường ngày giờ",
+      "startDateFieldId": "Trường ngày bắt đầu",
       "startDateFieldIdSelected": "Lưu ngày bắt đầu đã chọn vào",
-      "endDateFieldId": "Ngày kết thúc",
+      "endDateFieldId": "Trường ngày kết thúc",
       "endDateFieldIdSelected": "Lưu ngày kết thúc đã chọn vào",
       "resultUsedByAI": "Dùng kết quả cho AI",
       "outputCustomFieldId": "Lưu phản hồi vào một trường tùy chỉnh"
@@ -4228,6 +4234,7 @@
       "endDate": "Ngày kết thúc",
       "specificDate": "Ngày",
       "maxAppointmentsPerUser": "Số cuộc hẹn tối đa mỗi người",
+      "maxAppointmentsUnlimited": "Không giới hạn",
       "dailyLimitEnabled": "Giới hạn theo ngày",
       "maxPerDay": "Số lượng tối đa mỗi ngày",
       "allowGroupMeeting": "Cho phép hẹn nhóm",

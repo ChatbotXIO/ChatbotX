@@ -28,12 +28,31 @@ vi.mock("@chatbotx.io/business", () => ({
   appointmentService: {
     findBy: vi.fn().mockResolvedValue({
       id: "appointment-1",
+      workspaceId: "workspace-1",
       contactId: "contact-1",
+      conversationId: "conversation-1",
+      startAt: new Date("2026-01-04T03:04:05.000Z"),
+      inviteeTimezone: "UTC",
+      calendar: { name: "Discovery" },
+    }),
+    findLatestForContact: vi.fn().mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      conversationId: "conversation-1",
       startAt: new Date("2026-01-04T03:04:05.000Z"),
       inviteeTimezone: "UTC",
       calendar: { name: "Discovery" },
     }),
   },
+  buildAppointmentUrl: (appUrl: string, pathname: string, token: string) => {
+    const url = new URL(pathname, appUrl)
+    url.searchParams.set("token", token)
+    return url.toString()
+  },
+  resolveTenantSettings: vi
+    .fn()
+    .mockResolvedValue({ appUrl: "https://app.example.test" }),
   conversationService: {
     findDMByContact: vi.fn().mockResolvedValue({
       lastStep: "step-1",

@@ -24,6 +24,7 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.current_time,
   systemFieldTypes.enum.booking_calendar,
   systemFieldTypes.enum.booking_date,
+  systemFieldTypes.enum.booking_link,
   systemFieldTypes.enum.last_seen,
   systemFieldTypes.enum.last_interaction,
   systemFieldTypes.enum.inbox_link,

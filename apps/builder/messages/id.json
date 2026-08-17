@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Tanggal Pemesanan"
     },
+    "bookingLink": {
+      "label": "Tautan pemesanan"
+    },
     "n8nEvents": {
       "label": "Peristiwa",
       "placeholder": "Ketik nama peristiwa lalu tekan Enter",
@@ -4131,15 +4134,18 @@
     "title": "Penjadwalan Janji Temu",
     "description": "Buat dan kelola penjadwalan janji temu Anda.",
     "flowModes": {
-      "book": "Buat janji temu",
-      "cancel": "Batalkan janji temu",
-      "checkAvailability": "Periksa ketersediaan"
+      "bookFromCustomField": "Buat janji temu",
+      "checkAvailabilityFromCustomField": "Periksa ketersediaan",
+      "book": "Pemilih tanggal & waktu",
+      "checkAvailability": "Pemilih rentang tanggal",
+      "cancel": "Batalkan janji temu"
     },
     "fields": {
       "mode": "Mode",
       "dateTimeFieldId": "Simpan tanggal terpilih ke",
-      "startDateFieldId": "Tanggal mulai",
-      "endDateFieldId": "Tanggal selesai",
+      "dateTimeFieldIdSource": "Kolom tanggal/waktu",
+      "startDateFieldId": "Kolom tanggal mulai",
+      "endDateFieldId": "Kolom tanggal selesai",
       "resultUsedByAI": "Gunakan hasil untuk AI",
       "outputCustomFieldId": "Simpan respons ke kolom kustom",
       "startDateFieldIdSelected": "Simpan tanggal mulai terpilih ke",
@@ -4855,6 +4861,7 @@
       "endDate": "Tanggal Selesai",
       "specificDate": "Tanggal",
       "maxAppointmentsPerUser": "Maksimum janji temu per pengguna",
+      "maxAppointmentsUnlimited": "Tidak terbatas",
       "dailyLimitEnabled": "Batas harian",
       "maxPerDay": "Maks per Hari",
       "allowGroupMeeting": "Izinkan Pertemuan Kelompok",

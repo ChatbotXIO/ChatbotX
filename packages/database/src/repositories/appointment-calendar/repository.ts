@@ -34,6 +34,7 @@ export type CreateAppointmentCalendarInput = {
   timezone: string
   locationType: (typeof appointmentCalendarModel.$inferInsert)["locationType"]
   publicLinkSlug: string
+  active?: boolean
 }
 
 export type UpdateAppointmentCalendarInput = {
@@ -181,6 +182,7 @@ export const appointmentCalendarRepository = {
         timezone: input.timezone,
         locationType: input.locationType,
         publicLinkSlug: input.publicLinkSlug,
+        active: input.active,
       })
       .returning()
     return row

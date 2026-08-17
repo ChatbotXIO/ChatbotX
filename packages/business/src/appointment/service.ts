@@ -9,11 +9,7 @@ import {
   signAppointmentScheduleToken,
 } from "@chatbotx.io/encryption"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
 import {
-  ChatJobAction,
-  chatQueue,
   DefaultJobAction,
   defaultQueue,
   IntegrationJobAction,
@@ -28,10 +24,9 @@ import {
 } from "../appointment-calendar"
 import { appointmentReminderService } from "../appointment-reminder"
 import { BaseService } from "../base.service"
-import { contactInboxService } from "../contact-inbox/service"
-import { normalizeLanguage } from "../contact-locale"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import { resolveTenantSettings } from "../platform/settings"
 
 export class SlotUnavailableException extends ChatbotXException {
   constructor() {
@@ -71,8 +66,8 @@ export class AmbiguousCancelException extends ChatbotXException {
 
 type FlowContinuationInput = {
   contactInboxId?: string
-  flowVersionId?: string
   metadata?: MetadataPayload
+  appointmentId?: string
 }
 
 type CancelSideEffectsInput = {
@@ -80,7 +75,6 @@ type CancelSideEffectsInput = {
   appointmentId: string
   conversationId?: string | null
   contactInboxId?: string
-  flowVersionId?: string
   metadata?: MetadataPayload
   externalConnectionId?: string | null
   cancellationFlowId?: string | null
@@ -138,6 +132,13 @@ class AppointmentService extends BaseService {
     tx?: DatabaseClient,
   ) {
     return await appointmentRepository.findBy(input, tx)
+  }
+
+  async findLatestForContact(
+    input: { workspaceId: string; contactId: string },
+    tx?: DatabaseClient,
+  ) {
+    return await appointmentRepository.findLatestForContact(input, tx)
   }
 
   async list(
@@ -200,16 +201,52 @@ class AppointmentService extends BaseService {
     contactId: string
     limit?: number
   }) {
-    return await appointmentRepository.listByContact(input)
+    const appointments = await appointmentRepository.listByContact(input)
+    const { appUrl } = await resolveTenantSettings({
+      workspaceId: input.workspaceId,
+    })
+
+    // Appointments come sorted upcoming-first, then most-recent-past; drop
+    // cancelled ones and keep only the most relevant appointment per
+    // calendar (the first one encountered for each calendarId), so we don't
+    // sign a schedule token for rows the UI would discard anyway.
+    const relevantByCalendar = new Map<string, (typeof appointments)[number]>()
+    for (const appointment of appointments) {
+      if (
+        appointment.status !== "cancelled" &&
+        !relevantByCalendar.has(appointment.calendarId)
+      ) {
+        relevantByCalendar.set(appointment.calendarId, appointment)
+      }
+    }
+
+    return await Promise.all(
+      [...relevantByCalendar.values()].map(async (appointment) => {
+        const token = await signAppointmentScheduleToken({
+          appointmentId: appointment.id,
+          workspaceId: appointment.workspaceId,
+          contactId: appointment.contactId,
+          conversationId: appointment.conversationId ?? undefined,
+        })
+        return {
+          ...appointment,
+          scheduleUrl: buildAppointmentUrl(appUrl, "/booking/schedule", token),
+        }
+      }),
+    )
   }
 
   async hasFutureScheduledAppointmentForContact(
     input: { workspaceId: string; calendarId: string; contactId: string },
+    maxAppointmentsPerUser: number | null,
     tx?: DatabaseClient,
   ) {
+    if (maxAppointmentsPerUser == null) {
+      return false
+    }
     const appointments =
       await appointmentRepository.listFutureScheduledForContact(input, tx)
-    return appointments.length > 0
+    return appointments.length >= maxAppointmentsPerUser
   }
 
   async findByOrFail(
@@ -231,7 +268,6 @@ class AppointmentService extends BaseService {
     contactInboxId?: string
     startAt: Date
     inviteeTimezone?: string
-    flowVersionId?: string
     metadata?: MetadataPayload
   }) {
     const availabilityContext =
@@ -267,7 +303,13 @@ class AppointmentService extends BaseService {
       }
 
       await lockAppointmentCap(tx, input)
-      if (await this.hasFutureScheduledAppointmentForContact(input, tx)) {
+      if (
+        await this.hasFutureScheduledAppointmentForContact(
+          input,
+          calendar.maxAppointmentsPerUser,
+          tx,
+        )
+      ) {
         throw new AppointmentAlreadyScheduledException()
       }
 
@@ -363,8 +405,8 @@ class AppointmentService extends BaseService {
       conversationId: input.conversationId,
       contactInboxId: input.contactInboxId,
       flowId: calendar.confirmationFlowId,
-      flowVersionId: input.flowVersionId,
       metadata: input.metadata,
+      appointmentId: appointment.id,
     })
 
     return appointment
@@ -414,12 +456,6 @@ class AppointmentService extends BaseService {
       cancelToken,
     )
 
-    await this.enqueueWebviewBookingConfirmation({
-      appointment: fullAppointment,
-      contactInboxId: input.tokenPayload.contactInboxId,
-      scheduleUrl,
-    })
-
     return {
       appointment: fullAppointment,
       scheduleUrl,
@@ -461,7 +497,6 @@ class AppointmentService extends BaseService {
     contactId: string
     conversationId?: string | null
     contactInboxId?: string
-    flowVersionId?: string
     metadata?: MetadataPayload
   }) {
     const appointment = await db.transaction(async (tx) => {
@@ -497,7 +532,6 @@ class AppointmentService extends BaseService {
       appointmentId: appointment.id,
       conversationId: input.conversationId,
       contactInboxId: input.contactInboxId,
-      flowVersionId: input.flowVersionId,
       metadata: input.metadata,
       externalConnectionId: appointment.calendar.externalConnectionId,
       cancellationFlowId: appointment.calendar.cancellationFlowId,
@@ -549,7 +583,6 @@ class AppointmentService extends BaseService {
     appointmentId: string
     contactId: string
     contactInboxId?: string
-    flowVersionId?: string
   }) {
     const result = await db.transaction(async (tx) => {
       const appointment = await this.findOwnedAppointmentOrFail(input, tx)
@@ -586,7 +619,6 @@ class AppointmentService extends BaseService {
         appointmentId: result.appointment.id,
         conversationId: result.appointment.conversationId,
         contactInboxId: input.contactInboxId,
-        flowVersionId: input.flowVersionId,
         externalConnectionId: result.appointment.calendar.externalConnectionId,
         cancellationFlowId: result.appointment.calendar.cancellationFlowId,
       })
@@ -780,14 +812,18 @@ class AppointmentService extends BaseService {
     }
 
     try {
+      // Known gap: not awaited, so this can race the caller's own next step
+      // and arrive out of order in the channel. Accepted for now — see
+      // enqueueCalendarFlowIfNeeded's callers for context; revisit once the
+      // ordering fix lands without reintroducing worker self-starvation.
       await integrationQueue.add(IntegrationJobAction.sendFlow, {
         type: IntegrationJobAction.sendFlow,
         data: {
           conversationId: input.conversationId,
           contactInboxId: input.contactInboxId,
           flowId: input.flowId,
-          flowVersionId: input.flowVersionId,
           metadata: input.metadata,
+          appointmentId: input.appointmentId,
           origin: "channel",
         },
       })
@@ -802,45 +838,6 @@ class AppointmentService extends BaseService {
         "Failed to enqueue appointment follow-up flow",
       )
     }
-  }
-
-  private async enqueueWebviewBookingConfirmation(input: {
-    appointment: Awaited<ReturnType<AppointmentService["findByOrFail"]>>
-    contactInboxId: string
-    scheduleUrl: string
-  }) {
-    if (!input.appointment.conversation) {
-      return
-    }
-    const contactInbox = await contactInboxService.findByUncached({
-      where: {
-        id: input.contactInboxId,
-        contactId: input.appointment.contactId,
-      },
-    })
-    if (!contactInbox) {
-      return
-    }
-    const copy = getAppointmentConfirmationCopy(input.appointment.contact)
-
-    const buttons: MessageButtonTemplate[] = [
-      {
-        id: createId(),
-        label: copy.moreInformation,
-        buttonType: "url",
-        url: input.scheduleUrl,
-      },
-    ]
-
-    await chatQueue.add(ChatJobAction.sendChatMessage, {
-      type: ChatJobAction.sendChatMessage,
-      data: {
-        conversation: input.appointment.conversation,
-        contactInbox,
-        text: buildBookingConfirmationText(input.appointment),
-        quickReplies: buttons,
-      },
-    })
   }
 
   private async applyCancellationSideEffects(input: CancelSideEffectsInput) {
@@ -859,8 +856,8 @@ class AppointmentService extends BaseService {
       conversationId: input.conversationId,
       contactInboxId: input.contactInboxId,
       flowId: input.cancellationFlowId,
-      flowVersionId: input.flowVersionId,
       metadata: input.metadata,
+      appointmentId: input.appointmentId,
     })
   }
 
@@ -884,43 +881,14 @@ class AppointmentService extends BaseService {
 
 export const appointmentService = new AppointmentService()
 
-function buildAppointmentUrl(appUrl: string, pathname: string, token: string) {
+export function buildAppointmentUrl(
+  appUrl: string,
+  pathname: string,
+  token: string,
+) {
   const url = new URL(pathname, appUrl)
   url.searchParams.set("token", token)
   return url.toString()
-}
-
-function buildBookingConfirmationText(
-  appointment: Awaited<ReturnType<AppointmentService["findByOrFail"]>>,
-) {
-  return [
-    `Appointment Confirmation - ${appointment.calendar.name}`,
-    "",
-    `Date: ${formatAppointmentConfirmationDate(
-      appointment.startAt,
-      appointment.inviteeTimezone,
-    )}`,
-  ].join("\n")
-}
-
-function formatAppointmentConfirmationDate(date: Date, timezone: string) {
-  const dateParts = new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: timezone,
-  }).formatToParts(date)
-  const day = dateParts.find((part) => part.type === "day")?.value ?? ""
-  const month = dateParts.find((part) => part.type === "month")?.value ?? ""
-  const year = dateParts.find((part) => part.type === "year")?.value ?? ""
-  const time = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: timezone,
-  }).format(date)
-
-  return `${day}/${month}/${year}\n${time}`
 }
 
 function getAppointmentContactName(contact: {
@@ -941,28 +909,4 @@ function getCancellationExternalSyncStatus(appointment: {
   return appointment.calendar.externalConnectionId
     ? "pending"
     : appointment.externalSyncStatus
-}
-
-type AppointmentConfirmationCopy = {
-  moreInformation: string
-}
-
-const APPOINTMENT_CONFIRMATION_COPY = {
-  en: {
-    moreInformation: "More Information",
-  },
-  vi: {
-    moreInformation: "Xem thêm",
-  },
-} satisfies Record<string, AppointmentConfirmationCopy>
-
-function getAppointmentConfirmationCopy(contact: {
-  language?: string | null
-  locale?: string | null
-}): AppointmentConfirmationCopy {
-  const language =
-    normalizeLanguage(contact.language) ?? normalizeLanguage(contact.locale)
-  return language === "vi"
-    ? APPOINTMENT_CONFIRMATION_COPY.vi
-    : APPOINTMENT_CONFIRMATION_COPY.en
 }

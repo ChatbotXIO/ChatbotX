@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Data da marcação"
     },
+    "bookingLink": {
+      "label": "Link de agendamento"
+    },
     "n8nEvents": {
       "label": "Eventos",
       "placeholder": "Introduza o nome de um evento e prima Enter",
@@ -4131,15 +4134,18 @@
     "title": "Agendamento de marcações",
     "description": "Crie e faça a gestão do agendamento das suas marcações.",
     "flowModes": {
-      "book": "Agendar marcação",
-      "cancel": "Cancelar marcação",
-      "checkAvailability": "Verificar disponibilidade"
+      "bookFromCustomField": "Agendar marcação",
+      "checkAvailabilityFromCustomField": "Verificar disponibilidade",
+      "book": "Seletor de data e hora",
+      "checkAvailability": "Seletor de intervalo de datas",
+      "cancel": "Cancelar marcação"
     },
     "fields": {
       "mode": "Modo",
       "dateTimeFieldId": "Guardar a data selecionada em",
-      "startDateFieldId": "Data de início",
-      "endDateFieldId": "Data de fim",
+      "dateTimeFieldIdSource": "Campo de data/hora",
+      "startDateFieldId": "Campo de data de início",
+      "endDateFieldId": "Campo de data de fim",
       "resultUsedByAI": "Usar resultado para IA",
       "outputCustomFieldId": "Guardar resposta num campo personalizado",
       "startDateFieldIdSelected": "Guardar a data de início selecionada em",
@@ -4855,6 +4861,7 @@
       "endDate": "Data de fim",
       "specificDate": "Data",
       "maxAppointmentsPerUser": "Número máximo de marcações por utilizador",
+      "maxAppointmentsUnlimited": "Ilimitado",
       "dailyLimitEnabled": "Limite diário",
       "maxPerDay": "Máximo por dia",
       "allowGroupMeeting": "Permitir reunião de grupo",

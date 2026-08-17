@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Ajanvarauspäivä"
     },
+    "bookingLink": {
+      "label": "Varauslinkki"
+    },
     "n8nEvents": {
       "label": "Tapahtumat",
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
@@ -4131,15 +4134,18 @@
     "title": "Ajanvaraus",
     "description": "Luo ja hallitse ajanvaraustasi.",
     "flowModes": {
-      "book": "Varaa aika",
-      "cancel": "Peruuta aika",
-      "checkAvailability": "Tarkista saatavuus"
+      "bookFromCustomField": "Varaa aika",
+      "checkAvailabilityFromCustomField": "Tarkista saatavuus",
+      "book": "Päivä- ja aikavalitsin",
+      "checkAvailability": "Päivämääräväli-valitsin",
+      "cancel": "Peruuta aika"
     },
     "fields": {
       "mode": "Tila",
       "dateTimeFieldId": "Ajan päivämäärä ja kellonaika",
-      "startDateFieldId": "Aloituspäivä",
-      "endDateFieldId": "Päättymispäivä",
+      "dateTimeFieldIdSource": "Päivämäärä/aika-kenttä",
+      "startDateFieldId": "Aloituspäivän kenttä",
+      "endDateFieldId": "Päättymispäivän kenttä",
       "resultUsedByAI": "Käytä tulosta tekoälylle",
       "outputCustomFieldId": "Tallenna vastaus mukautettuun kenttään",
       "startDateFieldIdSelected": "Tallenna valittu aloituspäivä kenttään",
@@ -4855,6 +4861,7 @@
       "endDate": "Päättymispäivä",
       "specificDate": "Päivämäärä",
       "maxAppointmentsPerUser": "Käyttäjäkohtainen ajanvarausten enimmäismäärä",
+      "maxAppointmentsUnlimited": "Rajoittamaton",
       "dailyLimitEnabled": "Päivittäinen raja",
       "maxPerDay": "Enimmäismäärä päivässä",
       "allowGroupMeeting": "Salli ryhmätapaaminen",

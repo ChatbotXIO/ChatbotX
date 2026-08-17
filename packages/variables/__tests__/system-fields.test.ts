@@ -23,6 +23,7 @@ const {
   mockMessengerGetUserInboxLink,
   mockMessengerGetPostDetails,
   mockAppointmentFindBy,
+  mockAppointmentFindLatestForContact,
   testEncryptionKey,
 } = vi.hoisted(() => ({
   mockConversationFindBy: vi.fn().mockResolvedValue({
@@ -44,6 +45,7 @@ const {
   mockMessengerGetUserInboxLink: vi.fn(),
   mockMessengerGetPostDetails: vi.fn(),
   mockAppointmentFindBy: vi.fn(),
+  mockAppointmentFindLatestForContact: vi.fn(),
   testEncryptionKey:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 }))
@@ -51,6 +53,12 @@ const {
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: {
     findBy: mockAppointmentFindBy,
+    findLatestForContact: mockAppointmentFindLatestForContact,
+  },
+  buildAppointmentUrl: (appUrl: string, pathname: string, token: string) => {
+    const url = new URL(pathname, appUrl)
+    url.searchParams.set("token", token)
+    return url.toString()
   },
   contactInboxService: {
     findRecentByContactId: mockFindRecentByContactId,
@@ -89,6 +97,9 @@ vi.mock("@chatbotx.io/business/system-field", () => ({
 vi.mock("@chatbotx.io/encryption/link-signature", () => ({
   signMeLink: mockSignMeLink,
 }))
+
+const BOOKING_SCHEDULE_URL_RE =
+  /^https:\/\/app\.example\.test\/booking\/schedule\?token=.+/
 
 const cache = new Map<string, unknown>()
 vi.mock("@chatbotx.io/redis", () => ({
@@ -1498,20 +1509,96 @@ describe("getSystemFieldValue — appointment fields", () => {
       workspaceId: "workspace-1",
       id: "appointment-1",
     })
+    expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
   })
 
-  test("booking fields do not guess without explicit appointment context", async () => {
+  test("booking fields fall back to the contact's latest appointment without explicit appointment context", async () => {
+    mockAppointmentFindLatestForContact.mockResolvedValue({
+      id: "appointment-2",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    const context = createContext()
+
     await expect(
-      getSystemFieldValue(
-        createContext(),
-        systemFieldTypes.enum.booking_calendar,
-      ),
-    ).resolves.toBeNull()
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_calendar),
+    ).resolves.toBe("Discovery Call")
     await expect(
-      getSystemFieldValue(createContext(), systemFieldTypes.enum.booking_date),
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_date),
+    ).resolves.toBe("2026-01-02 10:04:05")
+
+    expect(mockAppointmentFindBy).not.toHaveBeenCalled()
+    expect(mockAppointmentFindLatestForContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+
+  test("booking_link resolves null without any appointment for the contact", async () => {
+    mockAppointmentFindLatestForContact.mockResolvedValue(null)
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.booking_link),
     ).resolves.toBeNull()
 
     expect(mockAppointmentFindBy).not.toHaveBeenCalled()
+    expect(mockAppointmentFindLatestForContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+
+  test("booking_link resolves a schedule URL with an appointmentId", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      conversationId: "conversation-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    mockResolveTenantSettings.mockResolvedValue({
+      appUrl: "https://app.example.test",
+    })
+    const context = createContext({ appointmentId: "appointment-1" })
+
+    const value = await getSystemFieldValue(
+      context,
+      systemFieldTypes.enum.booking_link,
+    )
+
+    expect(value).toMatch(BOOKING_SCHEDULE_URL_RE)
+    expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
+  })
+
+  test("explicit appointmentId takes priority over the contact's latest appointment", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    mockAppointmentFindLatestForContact.mockResolvedValue({
+      id: "appointment-2",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-02-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Newer Calendar" },
+    })
+    const context = createContext({ appointmentId: "appointment-1" })
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_calendar),
+    ).resolves.toBe("Discovery Call")
+
+    expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
   })
 })
 

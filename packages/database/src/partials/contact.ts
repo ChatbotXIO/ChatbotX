@@ -95,6 +95,7 @@ export const systemFieldTypes = z.enum([
   "current_step",
   "booking_calendar",
   "booking_date",
+  "booking_link",
   "member_name",
   "team_name",
   "last_input_failure",

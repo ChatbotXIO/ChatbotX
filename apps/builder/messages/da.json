@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Bookingdato"
     },
+    "bookingLink": {
+      "label": "Bookinglink"
+    },
     "n8nEvents": {
       "label": "Hændelser",
       "placeholder": "Skriv et hændelsenavn og tryk på Enter",
@@ -4131,15 +4134,18 @@
     "title": "Aftaleplanlægning",
     "description": "Opret og administrer din aftaleplanlægning.",
     "flowModes": {
-      "book": "Book aftale",
-      "cancel": "Annuller aftale",
-      "checkAvailability": "Tjek tilgængelighed"
+      "bookFromCustomField": "Book aftale",
+      "checkAvailabilityFromCustomField": "Tjek tilgængelighed",
+      "book": "Dato- og tidsvælger",
+      "checkAvailability": "Datointervalvælger",
+      "cancel": "Annuller aftale"
     },
     "fields": {
       "mode": "Tilstand",
       "dateTimeFieldId": "Gem valgt dato til",
-      "startDateFieldId": "Startdato",
-      "endDateFieldId": "Slutdato",
+      "dateTimeFieldIdSource": "Dato/tid-felt",
+      "startDateFieldId": "Startdatofelt",
+      "endDateFieldId": "Slutdatofelt",
       "resultUsedByAI": "Brug resultat til AI",
       "outputCustomFieldId": "Gem svar i et brugerdefineret felt",
       "startDateFieldIdSelected": "Gem valgt startdato til",
@@ -4855,6 +4861,7 @@
       "endDate": "Slutdato",
       "specificDate": "Dato",
       "maxAppointmentsPerUser": "Maksimalt antal aftaler pr. bruger",
+      "maxAppointmentsUnlimited": "Ubegrænset",
       "dailyLimitEnabled": "Daglig grænse",
       "maxPerDay": "Maks. pr. dag",
       "allowGroupMeeting": "Tillad gruppemøde",

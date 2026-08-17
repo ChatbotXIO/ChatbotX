@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "予約日"
     },
+    "bookingLink": {
+      "label": "予約リンク"
+    },
     "n8nEvents": {
       "label": "イベント",
       "placeholder": "イベント名を入力してEnterキーを押してください",
@@ -4131,15 +4134,18 @@
     "title": "予約スケジュール",
     "description": "予約スケジュールを作成・管理します。",
     "flowModes": {
-      "book": "予約を作成",
-      "cancel": "予約をキャンセル",
-      "checkAvailability": "空き状況を確認"
+      "bookFromCustomField": "予約を作成",
+      "checkAvailabilityFromCustomField": "空き状況を確認",
+      "book": "日時ピッカー",
+      "checkAvailability": "日付範囲ピッカー",
+      "cancel": "予約をキャンセル"
     },
     "fields": {
       "mode": "モード",
       "dateTimeFieldId": "予約日時",
-      "startDateFieldId": "開始日",
-      "endDateFieldId": "終了日",
+      "dateTimeFieldIdSource": "日時フィールド",
+      "startDateFieldId": "開始日フィールド",
+      "endDateFieldId": "終了日フィールド",
       "resultUsedByAI": "AIで結果を使用",
       "outputCustomFieldId": "結果の保存先",
       "startDateFieldIdSelected": "選択した開始日の保存先",
@@ -4855,6 +4861,7 @@
       "endDate": "終了日",
       "specificDate": "日付",
       "maxAppointmentsPerUser": "1ユーザーあたりの最大予約数",
+      "maxAppointmentsUnlimited": "無制限",
       "dailyLimitEnabled": "1日の上限",
       "maxPerDay": "1日あたりの最大件数",
       "allowGroupMeeting": "グループミーティングを許可",

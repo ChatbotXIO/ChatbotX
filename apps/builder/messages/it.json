@@ -1358,6 +1358,9 @@
     "bookingDate": {
       "label": "Data di prenotazione"
     },
+    "bookingLink": {
+      "label": "Link di prenotazione"
+    },
     "n8nEvents": {
       "label": "Eventi",
       "placeholder": "Digita un nome di evento e premi Invio",
@@ -4131,15 +4134,18 @@
     "title": "Pianificazione appuntamenti",
     "description": "Crea e gestisci la pianificazione dei tuoi appuntamenti.",
     "flowModes": {
-      "book": "Prenota appuntamento",
-      "cancel": "Annulla appuntamento",
-      "checkAvailability": "Verifica disponibilità"
+      "bookFromCustomField": "Prenota appuntamento",
+      "checkAvailabilityFromCustomField": "Verifica disponibilità",
+      "book": "Selettore data e ora",
+      "checkAvailability": "Selettore intervallo date",
+      "cancel": "Annulla appuntamento"
     },
     "fields": {
       "mode": "Modalità",
       "dateTimeFieldId": "Salva la data selezionata in",
-      "startDateFieldId": "Data di inizio",
-      "endDateFieldId": "Data di fine",
+      "dateTimeFieldIdSource": "Campo data/ora",
+      "startDateFieldId": "Campo data di inizio",
+      "endDateFieldId": "Campo data di fine",
       "resultUsedByAI": "Usa il risultato per l'IA",
       "outputCustomFieldId": "Salva il risultato in un campo personalizzato",
       "startDateFieldIdSelected": "Salva la data di inizio selezionata in",
@@ -4855,6 +4861,7 @@
       "endDate": "Data di fine",
       "specificDate": "Data",
       "maxAppointmentsPerUser": "Numero massimo di appuntamenti per utente",
+      "maxAppointmentsUnlimited": "Illimitato",
       "dailyLimitEnabled": "Limite giornaliero",
       "maxPerDay": "Massimo al giorno",
       "allowGroupMeeting": "Consenti riunione di gruppo",

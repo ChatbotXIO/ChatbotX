@@ -2420,15 +2420,18 @@
     "title": "תזמון פגישות",
     "description": "יצירה וניהול של תזמון הפגישות שלכם.",
     "flowModes": {
-      "book": "קביעת פגישה",
-      "cancel": "ביטול פגישה",
-      "checkAvailability": "בדיקת זמינות"
+      "bookFromCustomField": "קביעת פגישה",
+      "checkAvailabilityFromCustomField": "בדיקת זמינות",
+      "book": "בורר תאריך ושעה",
+      "checkAvailability": "בורר טווח תאריכים",
+      "cancel": "ביטול פגישה"
     },
     "fields": {
       "mode": "מצב",
       "dateTimeFieldId": "תאריך ושעת הפגישה",
-      "startDateFieldId": "תאריך התחלה",
-      "endDateFieldId": "תאריך סיום",
+      "dateTimeFieldIdSource": "שדה תאריך ושעה",
+      "startDateFieldId": "שדה תאריך התחלה",
+      "endDateFieldId": "שדה תאריך סיום",
       "resultUsedByAI": "שימוש בתוצאה עבור AI",
       "outputCustomFieldId": "שמירת התוצאה ב",
       "startDateFieldIdSelected": "שמירת תאריך ההתחלה שנבחר ב",
@@ -4367,6 +4370,9 @@
     "bookingDate": {
       "label": "תאריך הפגישה"
     },
+    "bookingLink": {
+      "label": "קישור להזמנה"
+    },
     "n8nEvents": {
       "label": "אירועים",
       "placeholder": "הקלידו שם אירוע ולחצו Enter",
@@ -4855,6 +4861,7 @@
       "endDate": "תאריך סיום",
       "specificDate": "תאריך",
       "maxAppointmentsPerUser": "מספר פגישות מקסימלי למשתמש",
+      "maxAppointmentsUnlimited": "ללא הגבלה",
       "dailyLimitEnabled": "מגבלה יומית",
       "maxPerDay": "מקסימום ליום",
       "allowGroupMeeting": "אפשור פגישה קבוצתית",

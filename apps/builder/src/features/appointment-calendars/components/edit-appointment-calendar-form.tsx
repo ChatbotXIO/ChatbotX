@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
   Tooltip,
   TooltipContent,
@@ -66,7 +67,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
@@ -96,11 +97,6 @@ const DEFAULT_REMINDER_DRAFT = {
   timingValue: 1,
   timingUnit: "minutes",
 } satisfies AppointmentReminderDraft
-const DEFAULT_REMINDER_TIMINGS = [
-  { timingValue: 10, timingUnit: "minutes" },
-  { timingValue: 1, timingUnit: "hours" },
-  { timingValue: 1, timingUnit: "days" },
-] as const satisfies Pick<AppointmentReminder, "timingValue" | "timingUnit">[]
 const REMINDER_TIMING_LABEL_KEY_BY_UNIT = {
   minutes: "appointmentCalendars.reminderTimingLabels.minutes",
   hours: "appointmentCalendars.reminderTimingLabels.hours",
@@ -292,7 +288,6 @@ export function EditAppointmentCalendarForm({
   const router = useRouter()
   const flowOptions = useFlowSelectOptions()
   const [editingWeekday, setEditingWeekday] = useState<number | null>(null)
-  const defaultRemindersInitialized = useRef(false)
   const [newReminder, setNewReminder] = useState<AppointmentReminderDraft>(
     DEFAULT_REMINDER_DRAFT,
   )
@@ -399,9 +394,15 @@ export function EditAppointmentCalendarForm({
   })
 
   const locationType = form.watch("locationType")
+  const bufferAfterMinutes = form.watch("bufferAfterMinutes")
   const dailyLimitEnabled = form.watch("dailyLimitEnabled")
   const allowGroupMeeting = form.watch("allowGroupMeeting")
   const maxPerSlot = form.watch("maxPerSlot") as number | null | undefined
+  const maxAppointmentsPerUser = form.watch("maxAppointmentsPerUser") as
+    | number
+    | null
+    | undefined
+  const maxAppointmentsUnlimited = maxAppointmentsPerUser == null
   const scheduleWindowType = form.watch(
     "scheduleWindowConfig.scheduleWindowType",
   )
@@ -410,7 +411,14 @@ export function EditAppointmentCalendarForm({
     | undefined
   const availabilityValues = form.watch("availability")
   const reminderValues = form.watch("reminders") as AppointmentReminder[]
-  const defaultReminderFlowId = flowOptions[0]?.value
+
+  const handleMaxAppointmentsUnlimitedChange = (checked: boolean) => {
+    form.setValue("maxAppointmentsPerUser", checked ? null : 1, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
+  }
 
   const handleAddReminder = () => {
     if (
@@ -461,24 +469,6 @@ export function EditAppointmentCalendarForm({
       shouldValidate: true,
     })
   }, [allowGroupMeeting, form, maxPerSlot])
-
-  useEffect(() => {
-    if (
-      defaultRemindersInitialized.current ||
-      reminderValues.length > 0 ||
-      !defaultReminderFlowId
-    ) {
-      return
-    }
-
-    defaultRemindersInitialized.current = true
-    remindersFieldArray.append(
-      DEFAULT_REMINDER_TIMINGS.map((reminder) => ({
-        flowId: defaultReminderFlowId,
-        ...reminder,
-      })),
-    )
-  }, [defaultReminderFlowId, reminderValues.length, remindersFieldArray])
 
   return (
     <Form {...form}>
@@ -871,6 +861,11 @@ export function EditAppointmentCalendarForm({
                         )}
                         name="bufferAfterMinutes"
                         options={bufferOptions}
+                        value={
+                          bufferAfterMinutes == null
+                            ? noAppointmentCalendarSelectionValue
+                            : String(bufferAfterMinutes)
+                        }
                       />
                     </div>
                     <SelectField
@@ -934,17 +929,47 @@ export function EditAppointmentCalendarForm({
                         />
                       </div>
                     )}
-                    <InputNumberField
-                      description={t(
-                        "appointmentCalendars.tooltips.maxAppointmentsPerUser",
+                    <div className="max-w-4xl space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Label className="flex items-center gap-1">
+                          {t(
+                            "appointmentCalendars.fields.maxAppointmentsPerUser",
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                              }
+                            />
+                            <TooltipContent className="max-w-sm">
+                              {t(
+                                "appointmentCalendars.tooltips.maxAppointmentsPerUser",
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={maxAppointmentsUnlimited}
+                            onCheckedChange={
+                              handleMaxAppointmentsUnlimitedChange
+                            }
+                          />
+                          <span className="text-muted-foreground text-sm">
+                            {t(
+                              "appointmentCalendars.fields.maxAppointmentsUnlimited",
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      {!maxAppointmentsUnlimited && (
+                        <InputNumberField
+                          formItemClassName="max-w-xs"
+                          min={1}
+                          name="maxAppointmentsPerUser"
+                        />
                       )}
-                      descriptionType="tooltip"
-                      formItemClassName="max-w-4xl"
-                      label={t(
-                        "appointmentCalendars.fields.maxAppointmentsPerUser",
-                      )}
-                      name="maxAppointmentsPerUser"
-                    />
+                    </div>
                     <SwitchField
                       description={t(
                         "appointmentCalendars.tooltips.dailyLimit",

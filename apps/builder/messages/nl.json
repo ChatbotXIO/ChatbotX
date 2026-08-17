@@ -1790,6 +1790,9 @@
     "bookingDate": {
       "label": "Boekingsdatum"
     },
+    "bookingLink": {
+      "label": "Boekingslink"
+    },
     "n8nEvents": {
       "label": "Gebeurtenissen",
       "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
@@ -4131,15 +4134,18 @@
     "title": "Afspraken plannen",
     "description": "Maak en beheer je afsprakenplanning.",
     "flowModes": {
-      "book": "Afspraak boeken",
-      "cancel": "Afspraak annuleren",
-      "checkAvailability": "Beschikbaarheid controleren"
+      "bookFromCustomField": "Afspraak boeken",
+      "checkAvailabilityFromCustomField": "Beschikbaarheid controleren",
+      "book": "Datum-/tijdkiezer",
+      "checkAvailability": "Datumbereikkiezer",
+      "cancel": "Afspraak annuleren"
     },
     "fields": {
       "mode": "Modus",
       "dateTimeFieldId": "Geselecteerde datum opslaan in",
-      "startDateFieldId": "Begindatum",
-      "endDateFieldId": "Einddatum",
+      "dateTimeFieldIdSource": "Datum-/tijdveld",
+      "startDateFieldId": "Begindatumveld",
+      "endDateFieldId": "Einddatumveld",
       "resultUsedByAI": "Resultaat gebruiken voor AI",
       "outputCustomFieldId": "Antwoord opslaan in een aangepast veld",
       "startDateFieldIdSelected": "Geselecteerde begindatum opslaan in",
@@ -4855,6 +4861,7 @@
       "endDate": "Einddatum",
       "specificDate": "Datum",
       "maxAppointmentsPerUser": "Maximum aantal afspraken per gebruiker",
+      "maxAppointmentsUnlimited": "Onbeperkt",
       "dailyLimitEnabled": "Dagelijkse limiet",
       "maxPerDay": "Max. per dag",
       "allowGroupMeeting": "Groepsafspraak toestaan",

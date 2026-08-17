@@ -2050,6 +2050,9 @@
     "bookingDate": {
       "label": "تاريخ الحجز"
     },
+    "bookingLink": {
+      "label": "رابط الحجز"
+    },
     "n8nEvents": {
       "label": "الأحداث",
       "placeholder": "اكتب اسم حدث واضغط Enter",
@@ -3966,15 +3969,18 @@
     "title": "جدولة المواعيد",
     "description": "إنشاء جدولة مواعيدك وإدارتها.",
     "flowModes": {
-      "book": "حجز موعد",
-      "cancel": "إلغاء موعد",
-      "checkAvailability": "التحقق من التوفر"
+      "bookFromCustomField": "حجز موعد",
+      "checkAvailabilityFromCustomField": "التحقق من التوفر",
+      "book": "أداة اختيار التاريخ والوقت",
+      "checkAvailability": "أداة اختيار نطاق التاريخ",
+      "cancel": "إلغاء موعد"
     },
     "fields": {
       "mode": "الوضع",
       "dateTimeFieldId": "تاريخ ووقت الموعد",
-      "startDateFieldId": "تاريخ البدء",
-      "endDateFieldId": "تاريخ الانتهاء",
+      "dateTimeFieldIdSource": "حقل التاريخ والوقت",
+      "startDateFieldId": "حقل تاريخ البدء",
+      "endDateFieldId": "حقل تاريخ الانتهاء",
       "resultUsedByAI": "استخدام النتيجة للذكاء الاصطناعي",
       "outputCustomFieldId": "حفظ النتيجة في",
       "startDateFieldIdSelected": "حفظ تاريخ البدء المحدد في",
@@ -4855,6 +4861,7 @@
       "endDate": "تاريخ الانتهاء",
       "specificDate": "التاريخ",
       "maxAppointmentsPerUser": "الحد الأقصى للمواعيد لكل مستخدم",
+      "maxAppointmentsUnlimited": "غير محدود",
       "dailyLimitEnabled": "الحد اليومي",
       "maxPerDay": "الحد الأقصى في اليوم",
       "allowGroupMeeting": "السماح باجتماع جماعي",

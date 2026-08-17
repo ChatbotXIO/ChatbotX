@@ -15,33 +15,49 @@ const baseStep = {
 }
 
 describe("appointment scheduling schemas", () => {
-  test("requires outputCustomFieldId regardless of resultUsedByAI", () => {
-    expect(
-      appointmentSchedulingStepSchema.safeParse({
-        ...baseStep,
-        resultUsedByAI: false,
-      }).success,
-    ).toBe(false)
+  test("checkAvailability does not require resultUsedByAI or outputCustomFieldId", () => {
+    expect(appointmentSchedulingStepSchema.safeParse(baseStep).success).toBe(
+      true,
+    )
+  })
 
-    expect(
-      appointmentSchedulingStepSchema.safeParse({
-        ...baseStep,
-        resultUsedByAI: true,
-      }).success,
-    ).toBe(false)
+  test("bookFromCustomField requires dateTimeFieldId", () => {
+    const step = {
+      id: "step-1",
+      stepType: "appointmentScheduling",
+      mode: "bookFromCustomField",
+      calendarId: "calendar-1",
+      states: [
+        { id: "1", stateType: "success" },
+        { id: "2", stateType: "error" },
+      ],
+    }
 
+    expect(appointmentSchedulingStepSchema.safeParse(step).success).toBe(false)
     expect(
       appointmentSchedulingStepSchema.safeParse({
-        ...baseStep,
-        resultUsedByAI: false,
-        outputCustomFieldId: "output-field",
+        ...step,
+        dateTimeFieldId: "date-field",
       }).success,
     ).toBe(true)
+  })
+
+  test("checkAvailabilityFromCustomField requires outputCustomFieldId regardless of resultUsedByAI", () => {
+    const step = {
+      ...baseStep,
+      mode: "checkAvailabilityFromCustomField",
+    }
 
     expect(
       appointmentSchedulingStepSchema.safeParse({
-        ...baseStep,
-        resultUsedByAI: true,
+        ...step,
+        resultUsedByAI: false,
+      }).success,
+    ).toBe(false)
+    expect(
+      appointmentSchedulingStepSchema.safeParse({
+        ...step,
+        resultUsedByAI: false,
         outputCustomFieldId: "output-field",
       }).success,
     ).toBe(true)

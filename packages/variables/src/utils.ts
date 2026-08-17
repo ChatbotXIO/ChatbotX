@@ -1,7 +1,9 @@
 import {
   appointmentService,
+  buildAppointmentUrl,
   conversationService,
   messageService,
+  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import {
   languageFromLocale,
@@ -17,6 +19,7 @@ import {
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
+import { signAppointmentScheduleToken } from "@chatbotx.io/encryption"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
 import {
   DATE_FORMAT,
@@ -256,27 +259,23 @@ const getContactLanguage = (
 const getAppointment = async (
   context: ContactVariableContext,
 ): Promise<Awaited<ReturnType<typeof appointmentService.findBy>> | null> => {
-  if (!context.appointmentId) {
-    logger.debug(
-      {
-        workspaceId: context.contact.workspaceId,
-        contactId: context.contact.id,
-      },
-      "Appointment variable skipped without explicit appointment context",
-    )
-    return null
+  if (context.appointmentId) {
+    const appointment = await appointmentService.findBy({
+      workspaceId: context.contact.workspaceId,
+      id: context.appointmentId,
+    })
+
+    return appointment && appointment.contactId === context.contact.id
+      ? appointment
+      : null
   }
 
-  const appointment = await appointmentService.findBy({
+  const latest = await appointmentService.findLatestForContact({
     workspaceId: context.contact.workspaceId,
-    id: context.appointmentId,
+    contactId: context.contact.id,
   })
 
-  if (!appointment || appointment.contactId !== context.contact.id) {
-    return null
-  }
-
-  return appointment
+  return latest ?? null
 }
 
 export const getSystemFieldValue = async (
@@ -492,6 +491,22 @@ export const getSystemFieldValue = async (
     }
     case systemFieldTypes.enum.last_input_failure:
       return contactInbox?.lastInputFailure ?? null
+    case systemFieldTypes.enum.booking_link: {
+      const appointment = await getAppointment(context)
+      if (!appointment) {
+        return null
+      }
+      const { appUrl } = await resolveTenantSettings({
+        workspaceId: contact.workspaceId,
+      })
+      const token = await signAppointmentScheduleToken({
+        appointmentId: appointment.id,
+        workspaceId: appointment.workspaceId,
+        contactId: appointment.contactId,
+        conversationId: appointment.conversationId ?? undefined,
+      })
+      return buildAppointmentUrl(appUrl, "/booking/schedule", token)
+    }
     default: {
       // Adding a systemFieldTypes value without a case above fails to compile
       // here. If one ever reaches runtime it must not take a message down, so
