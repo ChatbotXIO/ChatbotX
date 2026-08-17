@@ -67,6 +67,11 @@ vi.mock("@chatbotx.io/utils", () => ({
   isNumericId: (value: string) => NUMERIC_ID_PATTERN.test(value),
 }))
 
+vi.mock("@chatbotx.io/utils/custom-field", () => ({
+  customFieldResolutionKey: (field: { name: string; type: string }) =>
+    `${field.type}:${field.name.trim().toLowerCase()}`,
+}))
+
 vi.mock("../src/base.service", () => ({
   BaseService: class BaseService {
     invalidateCacheTags(...args: unknown[]) {
@@ -333,5 +338,57 @@ describe("customFieldService.findManyByIds", () => {
 
     expect(rows).toEqual([])
     expect(mockFindMany).not.toHaveBeenCalled()
+  })
+})
+
+describe("customFieldService.resolveByNameAndType case collisions", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // `CustomField_workspaceId_type_name_key` is a plain case-sensitive btree
+  // index, so "Email" and "email" can both exist in one workspace and fold to
+  // the same resolution key. `findMany` has no ORDER BY, so resolution must
+  // not depend on which row comes back last.
+  const collidingRows = [
+    { id: "20", workspaceId: "ws-1", name: "Email", type: "shortText" },
+    { id: "10", workspaceId: "ws-1", name: "email", type: "shortText" },
+  ]
+
+  test("prefers the exact-case row over a case-only match", async () => {
+    mockFindMany.mockResolvedValue(collidingRows)
+
+    const { idMap, createdIds } = await customFieldService.resolveByNameAndType(
+      {
+        workspaceId: "ws-1",
+        fields: [{ name: "Email", type: "shortText" }],
+      },
+    )
+
+    expect(idMap.get("shortText:email")).toBe("20")
+    expect(createdIds).toEqual([])
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  test("resolves the same regardless of row order", async () => {
+    mockFindMany.mockResolvedValue([...collidingRows].reverse())
+
+    const { idMap } = await customFieldService.resolveByNameAndType({
+      workspaceId: "ws-1",
+      fields: [{ name: "Email", type: "shortText" }],
+    })
+
+    expect(idMap.get("shortText:email")).toBe("20")
+  })
+
+  test("falls back to the oldest row when no casing matches exactly", async () => {
+    mockFindMany.mockResolvedValue(collidingRows)
+
+    const { idMap } = await customFieldService.resolveByNameAndType({
+      workspaceId: "ws-1",
+      fields: [{ name: "EMAIL", type: "shortText" }],
+    })
+
+    expect(idMap.get("shortText:email")).toBe("10")
   })
 })

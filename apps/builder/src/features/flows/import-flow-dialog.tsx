@@ -1,6 +1,10 @@
 "use client"
 
-import { importTypes, uploadTypes } from "@chatbotx.io/database/partials"
+import {
+  importTypes,
+  rootFolderId,
+  uploadTypes,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -21,9 +25,13 @@ import { importFlowAction } from "./actions/import-flow.action"
 
 type ImportFlowDialogProps = {
   workspaceId: string
+  folderId: string | null
 }
 
-export function ImportFlowDialog({ workspaceId }: ImportFlowDialogProps) {
+export function ImportFlowDialog({
+  workspaceId,
+  folderId,
+}: ImportFlowDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<UploadResult | null>(null)
@@ -71,7 +79,14 @@ export function ImportFlowDialog({ workspaceId }: ImportFlowDialogProps) {
           </Button>
           <Button
             disabled={isPending || !file}
-            onClick={() => file && execute({ fileId: file.fileId })}
+            onClick={() =>
+              file &&
+              execute({
+                fileId: file.fileId,
+                folderId:
+                  folderId && folderId !== rootFolderId ? folderId : null,
+              })
+            }
             type="button"
           >
             {isPending ? <Loader2Icon className="size-4 animate-spin" /> : null}

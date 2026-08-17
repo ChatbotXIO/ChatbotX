@@ -84,7 +84,7 @@ export function FlowsTable({
               <HistoryIcon className="size-4" />
               {t("fields.import.histories.title")}
             </Link>
-            <ImportFlowDialog workspaceId={workspaceId} />
+            <ImportFlowDialog folderId={folderId} workspaceId={workspaceId} />
             <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>

@@ -503,3 +503,72 @@ describe("remapCustomFieldReferences", () => {
     expect(flow).toEqual(original)
   })
 })
+
+describe("deeply nested graphs", () => {
+  // A ~100KB export (far inside the 5MB cap) can reach tens of thousands of
+  // nesting levels through a `z.any()` step slot; before the depth ceiling the
+  // recursive walkers blew the stack with an opaque RangeError.
+  const deeplyNested = (depth: number): unknown => {
+    let value: unknown = { inputFieldId: "42" }
+    for (let index = 0; index < depth; index++) {
+      value = { child: value }
+    }
+    return value
+  }
+
+  test("collectFlowReferenceWarnings does not overflow the stack", () => {
+    expect(() =>
+      collectFlowReferenceWarnings({
+        nodes: [deeplyNested(50_000)],
+        edges: [],
+      } as unknown as FlowExportedFlow),
+    ).not.toThrow()
+  })
+
+  test("collectCustomFieldReferences does not overflow the stack", () => {
+    expect(() =>
+      collectCustomFieldReferences({
+        nodes: [deeplyNested(50_000)],
+        edges: [],
+      }),
+    ).not.toThrow()
+  })
+
+  // Iterative so the assertion itself cannot overflow the stack the way a
+  // recursive JSON.stringify over the same structure would.
+  const descend = (value: unknown, depth: number): unknown => {
+    let current = value
+    for (let index = 0; index < depth; index++) {
+      current = (current as { child: unknown }).child
+    }
+    return current
+  }
+
+  test("remapCustomFieldReferences preserves data past the depth ceiling", () => {
+    const flow = { nodes: [deeplyNested(50_000)], edges: [] }
+
+    let remapped: { nodes: unknown[]; edges: unknown[] } | undefined
+    expect(() => {
+      remapped = remapCustomFieldReferences(
+        flow as never,
+        new Map([["42", "target-42"]]),
+      )
+    }).not.toThrow()
+
+    // Truncation must never drop the subtree — the deep leaf still resolves.
+    expect(descend(remapped?.nodes[0], 50_000)).toEqual({ inputFieldId: "42" })
+  })
+
+  test("still remaps references at realistic depths", () => {
+    const flow = { nodes: [deeplyNested(10)], edges: [] }
+
+    const remapped = remapCustomFieldReferences(
+      flow as never,
+      new Map([["42", "target-42"]]),
+    )
+
+    expect(descend(remapped.nodes[0], 10)).toEqual({
+      inputFieldId: "target-42",
+    })
+  })
+})

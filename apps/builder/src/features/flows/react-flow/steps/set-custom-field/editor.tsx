@@ -71,6 +71,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
+        nativeButton={false}
         render={
           <div className="rounded-lg border-2 border-dashed p-4 text-sm">
             {t("flows.actions.setCustomField")}

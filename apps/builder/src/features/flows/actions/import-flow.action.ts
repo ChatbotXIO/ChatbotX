@@ -37,6 +37,7 @@ export const importFlowAction = workspaceActionClient
         workspaceId,
         userId: user.id,
         fileId: parsedInput.fileId,
+        folderId: parsedInput.folderId,
       })
       if (!result.ok) {
         return returnValidationErrors(importFlowRequest, {

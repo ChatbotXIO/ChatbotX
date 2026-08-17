@@ -66,7 +66,7 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
           )
         }
       />
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {

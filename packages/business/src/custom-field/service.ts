@@ -20,6 +20,7 @@ import {
 } from "@chatbotx.io/database/utils"
 import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
+import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { folderService } from "../folder/service"
@@ -162,6 +163,14 @@ class CustomFieldService extends BaseService {
    * and folded in JS (mirrors `productCategoryService.resolveByNames`):
    * an exact-case DB match would create a duplicate on every casing drift.
    *
+   * `CustomField_workspaceId_type_name_key` is a plain (case-sensitive) btree
+   * index, so `"Email"` and `"email"` can legitimately coexist in one
+   * workspace and both fold to the same key here. `findMany` has no
+   * `ORDER BY`, so picking "whichever row folds last" would remap an imported
+   * flow to an arbitrary one of them, differently across runs. `pickBetter`
+   * therefore resolves collisions deterministically: an exact-case name match
+   * always wins, and otherwise the lowest id (oldest row) does.
+   *
    * Creation is a single bulk insert (avoids one round-trip per missing
    * field) and idempotent via `onConflictDoNothing` + re-select, so two
    * concurrent imports resolving the same (name, type) both land on the same
@@ -179,22 +188,65 @@ class CustomFieldService extends BaseService {
   }): Promise<{ idMap: Map<string, string>; createdIds: string[] }> {
     const { workspaceId, fields, tx = db } = props
 
-    const toKey = (field: { name: string; type: CustomFieldType }): string =>
-      `${field.type}:${field.name.trim().toLowerCase()}`
-
     const uniqueFields = Array.from(
-      new Map(fields.map((field) => [toKey(field), field])).values(),
+      new Map(
+        fields.map((field) => [customFieldResolutionKey(field), field]),
+      ).values(),
     )
     if (uniqueFields.length === 0) {
       return { idMap: new Map(), createdIds: [] }
     }
 
+    // Requested names, keyed the same way, so a folded collision can be
+    // broken by "does this row match the requested casing exactly?".
+    const requestedNameByKey = new Map(
+      uniqueFields.map(
+        (field) =>
+          [customFieldResolutionKey(field), field.name.trim()] as const,
+      ),
+    )
+
+    const byKey = new Map<string, CustomFieldModel>()
+    /**
+     * Deterministic winner between two rows folding to the same key: exact
+     * (trimmed) name match beats a case-only match; otherwise the lowest id
+     * — the oldest row — wins. Without this the last row of an unordered
+     * `findMany` would win and the mapping would drift between runs.
+     */
+    const pickBetter = (
+      current: CustomFieldModel | undefined,
+      candidate: CustomFieldModel,
+      key: string,
+    ): CustomFieldModel => {
+      if (!current) {
+        return candidate
+      }
+      const requested = requestedNameByKey.get(key)
+      if (requested !== undefined) {
+        const currentExact = current.name.trim() === requested
+        const candidateExact = candidate.name.trim() === requested
+        if (currentExact !== candidateExact) {
+          return candidateExact ? candidate : current
+        }
+      }
+      return candidate.id < current.id ? candidate : current
+    }
+    const remember = (row: CustomFieldModel): void => {
+      const key = customFieldResolutionKey(row)
+      byKey.set(key, pickBetter(byKey.get(key), row, key))
+    }
+
     const existing = await tx.query.customFieldModel.findMany({
       where: { workspaceId },
+      columns: { id: true, name: true, type: true },
     })
-    const byKey = new Map(existing.map((row) => [toKey(row), row] as const))
+    for (const row of existing) {
+      remember(row as CustomFieldModel)
+    }
 
-    const missing = uniqueFields.filter((field) => !byKey.has(toKey(field)))
+    const missing = uniqueFields.filter(
+      (field) => !byKey.has(customFieldResolutionKey(field)),
+    )
     const createdIds: string[] = []
     let lostRace = false
 
@@ -215,7 +267,7 @@ class CustomFieldService extends BaseService {
 
       for (const row of inserted) {
         createdIds.push(row.id)
-        byKey.set(toKey(row), row)
+        remember(row)
       }
       // Rows dropped by onConflictDoNothing (a concurrent import won the
       // race) can't be matched by array position — returning() doesn't
@@ -227,16 +279,18 @@ class CustomFieldService extends BaseService {
     if (lostRace) {
       const reresolved = await tx.query.customFieldModel.findMany({
         where: { workspaceId },
+        columns: { id: true, name: true, type: true },
       })
       for (const row of reresolved) {
-        byKey.set(toKey(row), row)
+        remember(row as CustomFieldModel)
       }
     }
 
     const idMap = new Map(
       uniqueFields.flatMap((field) => {
-        const row = byKey.get(toKey(field))
-        return row ? [[toKey(field), row.id] as const] : []
+        const key = customFieldResolutionKey(field)
+        const row = byKey.get(key)
+        return row ? [[key, row.id] as const] : []
       }),
     )
 

@@ -160,6 +160,7 @@ class ImportService extends BaseService {
     workspaceId: string
     userId: string
     fileId: string
+    folderId?: string | null
   }): Promise<
     | { ok: true; importId: string }
     | { ok: false; reason: "fileNotFound" | "notAFlowImport" }
@@ -200,7 +201,7 @@ class ImportService extends BaseService {
         type: importTypes.enum.flow,
         format: "json",
         status: "pending",
-        meta: {},
+        meta: { folderId: input.folderId ?? null },
       })
     })
 
@@ -273,6 +274,15 @@ class ImportService extends BaseService {
       0,
       input.counters.failed - input.errorSample.length,
     )
+    // Both parts can be present at once (a caller may report warnings on an
+    // import that also had row failures), so they are joined rather than one
+    // replacing the other — `??` here would silently drop the failure count.
+    const messages = [
+      input.warningMessage,
+      hiddenErrorCount > 0
+        ? `${input.counters.failed} rows failed; showing the first ${input.errorSample.length}`
+        : undefined,
+    ].filter((message): message is string => Boolean(message))
     await db
       .update(importModel)
       .set({
@@ -283,11 +293,7 @@ class ImportService extends BaseService {
         successCount: input.counters.success,
         failedCount: input.counters.failed,
         errorSample: input.errorSample,
-        errorMessage:
-          input.warningMessage ??
-          (hiddenErrorCount > 0
-            ? `${input.counters.failed} rows failed; showing the first ${input.errorSample.length}`
-            : null),
+        errorMessage: messages.length > 0 ? messages.join(" ") : null,
       })
       .where(eq(importModel.id, input.importId))
   }

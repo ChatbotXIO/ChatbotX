@@ -10,12 +10,15 @@ import {
   collectFlowReferenceWarnings,
   parseFlowExport,
 } from "@chatbotx.io/flow-config"
+import { getImportEntry } from "@chatbotx.io/imports/registry"
 import { createByteLimitedStream } from "@chatbotx.io/imports/stream-guard"
 import { logger } from "../../../lib/logger"
 import type { ImportRow } from "./base-import"
 
 const BYTES_PER_MB = 1024 * 1024
-const FLOW_IMPORT_MAX_FILE_SIZE_MB = 5
+// Sourced from the registry rather than redeclared, so the limit the dropzone
+// advertises to the user and the one the worker enforces cannot drift apart.
+const FLOW_IMPORT_MAX_FILE_SIZE_MB = getImportEntry("flow").config.maxFileSizeMB
 
 const readImportedJson = async (row: ImportRow): Promise<unknown> => {
   const maxBytes = FLOW_IMPORT_MAX_FILE_SIZE_MB * BYTES_PER_MB
@@ -138,6 +141,7 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
       nodes: exportedFlow.nodes,
       edges: exportedFlow.edges,
       customFields: parsed.data.customFields,
+      folderId: parsedMeta.data.folderId,
     })
     createdCustomFieldIds = result.createdCustomFieldIds
     // Custom-field creation is unconditional, so any customField reference

@@ -145,8 +145,27 @@ describe("importService.startFlowImport", () => {
         type: "flow",
         format: "json",
         status: "pending",
-        meta: {},
+        meta: { folderId: null },
       }),
+    )
+  })
+
+  test("persists the requested folder id into the import row's meta", async () => {
+    mockFindFile.mockResolvedValue({
+      id: "file-1",
+      contextType: "import",
+      subType: "flow",
+    })
+
+    await importService.startFlowImport({
+      workspaceId: "ws-1",
+      userId: "user-1",
+      fileId: "file-1",
+      folderId: "folder-1",
+    })
+
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ meta: { folderId: "folder-1" } }),
     )
   })
 })

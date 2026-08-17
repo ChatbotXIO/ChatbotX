@@ -104,7 +104,9 @@ export const productImportMetaSchema = z.object({
 })
 export type ProductImportMeta = z.infer<typeof productImportMetaSchema>
 
-export const flowImportMetaSchema = z.object({})
+export const flowImportMetaSchema = z.object({
+  folderId: z.string().nullable().optional(),
+})
 export type FlowImportMeta = z.infer<typeof flowImportMetaSchema>
 
 export const importMetaByType = {

@@ -1,4 +1,5 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
   flowAnalyticsSessionModel,
   flowModel,
@@ -12,10 +13,12 @@ import type {
 } from "@chatbotx.io/flow-config"
 import { remapCustomFieldReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
 import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
+import { folderService } from "../folder/service"
 
 class FlowService extends BaseService {
   async findBy(
@@ -172,10 +175,9 @@ class FlowService extends BaseService {
     nodes: FlowVersionSchema[]
     edges: EdgeSchema[]
     customFields: Record<string, FlowExportCustomField>
+    folderId?: string | null
   }): Promise<{
     flowId: string
-    nodes: FlowVersionSchema[]
-    edges: EdgeSchema[]
     createdCustomFieldIds: string[]
   }> {
     return await db.transaction(async (tx) => {
@@ -187,11 +189,9 @@ class FlowService extends BaseService {
           tx,
         })
 
-      const toKey = (field: FlowExportCustomField): string =>
-        `${field.type}:${field.name.trim().toLowerCase()}`
       const idMap = new Map(
         manifestEntries.flatMap(([sourceId, field]) => {
-          const targetId = resolvedByKey.get(toKey(field))
+          const targetId = resolvedByKey.get(customFieldResolutionKey(field))
           return targetId ? [[sourceId, targetId] as const] : []
         }),
       )
@@ -201,6 +201,20 @@ class FlowService extends BaseService {
         idMap,
       )
 
+      const requestedFolderId =
+        !input.folderId || input.folderId === rootFolderId
+          ? null
+          : input.folderId
+      const folder = requestedFolderId
+        ? await folderService.find({
+            id: requestedFolderId,
+            workspaceId: input.workspaceId,
+            folderType: "flow",
+            tx,
+          })
+        : undefined
+      const resolvedFolderId = folder?.id ?? null
+
       const flowId = await this.createFromImport({
         workspaceId: input.workspaceId,
         name: input.name,
@@ -209,16 +223,11 @@ class FlowService extends BaseService {
         startNodeId: input.startNodeId,
         nodes: remapped.nodes,
         edges: remapped.edges,
-        folderId: null,
+        folderId: resolvedFolderId,
         tx,
       })
 
-      return {
-        flowId,
-        nodes: remapped.nodes,
-        edges: remapped.edges,
-        createdCustomFieldIds: createdIds,
-      }
+      return { flowId, createdCustomFieldIds: createdIds }
     })
   }
 }

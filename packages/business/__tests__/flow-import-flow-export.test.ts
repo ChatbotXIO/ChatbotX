@@ -9,6 +9,7 @@ const {
   mockInsertValues,
   mockResolveByNameAndType,
   mockRemapCustomFieldReferences,
+  mockFolderFind,
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
@@ -20,6 +21,7 @@ const {
     mockInsertValues,
     mockResolveByNameAndType: vi.fn(),
     mockRemapCustomFieldReferences: vi.fn(),
+    mockFolderFind: vi.fn(),
   }
 })
 
@@ -34,6 +36,10 @@ const transaction = {
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: mockDbTransaction },
+}))
+
+vi.mock("@chatbotx.io/database/partials", () => ({
+  rootFolderId: "0",
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -64,6 +70,10 @@ vi.mock("../src/flow-version", () => ({
 
 vi.mock("../src/custom-field/service", () => ({
   customFieldService: { resolveByNameAndType: mockResolveByNameAndType },
+}))
+
+vi.mock("../src/folder/service", () => ({
+  folderService: { find: mockFolderFind },
 }))
 
 const { flowService } = await import("../src/flow/service")
@@ -112,10 +122,17 @@ describe("flowService.importFlowExport", () => {
     )
     expect(result).toEqual({
       flowId: "new-flow-id",
-      nodes: [{ id: "1", inputFieldId: "target-42" }],
-      edges: [],
       createdCustomFieldIds: ["target-42"],
     })
+    // The remapped graph is not returned to the caller, so assert it reaches
+    // the version row instead — that write is the only consumer.
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        flowId: "new-flow-id",
+        nodes: [{ id: "1", inputFieldId: "target-42" }],
+        edges: [],
+      }),
+    )
   })
 
   test("an empty manifest short-circuits resolution: nodes pass through unmapped", async () => {
@@ -182,6 +199,139 @@ describe("flowService.importFlowExport", () => {
     // resolveByNameAndType's writes and the flow insert live in the same tx.
     expect(mockResolveByNameAndType).toHaveBeenCalledWith(
       expect.objectContaining({ tx: transaction }),
+    )
+  })
+
+  test("a valid folder id is resolved and persisted on the flow insert", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockFolderFind.mockResolvedValue({ id: "folder-1" })
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      name: "Onboarding",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [] as never,
+      edges: [] as never,
+      customFields: {},
+      folderId: "folder-1",
+    })
+
+    expect(mockFolderFind).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "ws-1",
+      folderType: "flow",
+      tx: transaction,
+    })
+    expect(mockInsertValues.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ folderId: "folder-1" }),
+    )
+  })
+
+  test("a folder missing in the workspace falls back to null without failing the import", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockFolderFind.mockResolvedValue(undefined)
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      name: "Onboarding",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [] as never,
+      edges: [] as never,
+      customFields: {},
+      folderId: "deleted-folder",
+    })
+
+    expect(mockInsertValues.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ folderId: null }),
+    )
+  })
+
+  test("the root folder sentinel skips the lookup and persists null", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      name: "Onboarding",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [] as never,
+      edges: [] as never,
+      customFields: {},
+      folderId: "0",
+    })
+
+    expect(mockFolderFind).not.toHaveBeenCalled()
+    expect(mockInsertValues.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ folderId: null }),
+    )
+  })
+
+  test("an omitted folder id skips the lookup and persists null", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      name: "Onboarding",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [] as never,
+      edges: [] as never,
+      customFields: {},
+    })
+
+    expect(mockFolderFind).not.toHaveBeenCalled()
+    expect(mockInsertValues.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ folderId: null }),
     )
   })
 })

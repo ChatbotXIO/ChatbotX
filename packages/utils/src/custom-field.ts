@@ -20,3 +20,23 @@ export const customFieldTypes = z.enum([
   "longText",
 ])
 export type CustomFieldType = z.infer<typeof customFieldTypes>
+
+/**
+ * Canonical `(type, name)` identity used to match a flow export's custom-field
+ * manifest against the target workspace's existing fields.
+ *
+ * Case- and whitespace-insensitive: the export carries whatever casing the
+ * source workspace used, and an exact-case match would mint a duplicate field
+ * on every casing drift. `type` is part of the key because the DB's unique
+ * index is on `(workspaceId, type, name)` — two fields may share a name if
+ * their types differ.
+ *
+ * Lives here, beside the enum, because both `customFieldService` (which builds
+ * the resolved map) and `flowService` (which looks up into it) must fold keys
+ * identically — two private copies would silently diverge and break the
+ * lookup.
+ */
+export const customFieldResolutionKey = (field: {
+  name: string
+  type: CustomFieldType
+}): string => `${field.type}:${field.name.trim().toLowerCase()}`

@@ -52,6 +52,24 @@ const CROSS_FLOW_NODE_FIELD = "nodeId"
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
 
+/**
+ * Depth ceiling for the walkers below.
+ *
+ * These recurse over attacker-supplied JSON. A few step schemas keep an
+ * unconstrained escape hatch — `steps: z.array(z.any())` on a null-typed
+ * button (`steps/button.ts`), the same on `steps/email.ts`, and
+ * `flow_action_data: z.record(z.string(), z.unknown())` on
+ * `steps/send-wa-message-template.ts` — so validated input can still carry
+ * arbitrary nesting. Node's stack blows around ~10k frames, well inside the
+ * 5MB upload cap (a ~100KB file reaches 50k levels), which would surface as
+ * an opaque RangeError instead of a readable failure.
+ *
+ * Anything deeper than this is not a real flow, so the walkers stop
+ * descending. Truncating only costs a missed reference *warning*; it never
+ * changes what gets written.
+ */
+const MAX_WALK_DEPTH = 512
+
 const toWarningValue = (value: unknown): string | null => {
   if (typeof value === "string" && value.trim().length > 0) {
     return value
@@ -63,10 +81,14 @@ const walk = (
   value: unknown,
   path: string,
   warnings: FlowReferenceWarning[],
+  depth = 0,
 ): void => {
+  if (depth > MAX_WALK_DEPTH) {
+    return
+  }
   if (Array.isArray(value)) {
     for (const [index, item] of value.entries()) {
-      walk(item, `${path}[${index}]`, warnings)
+      walk(item, `${path}[${index}]`, warnings, depth + 1)
     }
     return
   }
@@ -104,7 +126,7 @@ const walk = (
       }
     }
 
-    walk(child, childPath, warnings)
+    walk(child, childPath, warnings, depth + 1)
   }
 }
 
@@ -127,10 +149,17 @@ export const collectFlowReferenceWarnings = (
 const isCustomFieldReferenceKey = (key: string): boolean =>
   REFERENCE_FIELD_ENTITY_KIND[key] === "customField"
 
-const collectCustomFieldIds = (value: unknown, ids: Set<string>): void => {
+const collectCustomFieldIds = (
+  value: unknown,
+  ids: Set<string>,
+  depth = 0,
+): void => {
+  if (depth > MAX_WALK_DEPTH) {
+    return
+  }
   if (Array.isArray(value)) {
     for (const item of value) {
-      collectCustomFieldIds(item, ids)
+      collectCustomFieldIds(item, ids, depth + 1)
     }
     return
   }
@@ -146,7 +175,7 @@ const collectCustomFieldIds = (value: unknown, ids: Set<string>): void => {
     ) {
       ids.add(child)
     }
-    collectCustomFieldIds(child, ids)
+    collectCustomFieldIds(child, ids, depth + 1)
   }
 }
 
@@ -176,9 +205,17 @@ export const collectCustomFieldReferences = (flow: {
 const remapCustomFieldIds = (
   value: unknown,
   idMap: ReadonlyMap<string, string>,
+  depth = 0,
 ): unknown => {
+  // Unlike the read-only walkers, this one is the write path: past the depth
+  // ceiling the subtree is returned *as-is* rather than skipped, so hitting
+  // the limit can only leave references un-remapped (which then surfaces as a
+  // warning) and can never drop imported data.
+  if (depth > MAX_WALK_DEPTH) {
+    return value
+  }
   if (Array.isArray(value)) {
-    return value.map((item) => remapCustomFieldIds(item, idMap))
+    return value.map((item) => remapCustomFieldIds(item, idMap, depth + 1))
   }
   if (!isPlainObject(value)) {
     return value
@@ -194,7 +231,7 @@ const remapCustomFieldIds = (
       // biome-ignore lint/style/noNonNullAssertion: idMap.has(child) just checked above
       next[key] = idMap.get(child)!
     } else {
-      next[key] = remapCustomFieldIds(child, idMap)
+      next[key] = remapCustomFieldIds(child, idMap, depth + 1)
     }
   }
   return next
