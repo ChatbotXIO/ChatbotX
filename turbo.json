@@ -11,6 +11,11 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
+    // Only the two workspaces whose tsconfig sets `incremental: true`
+    // (apps/builder, packages/ui — both extend typescript-config/nextjs.json)
+    // emit a tsbuildinfo, so `outputs` is declared in their own turbo.json
+    // rather than here: a root-level key makes turbo warn "no output files
+    // found" for the other 56 check-types tasks.
     "check-types": {
       "dependsOn": ["^check-types"]
     },
@@ -26,7 +31,13 @@
         "**/*.spec.ts",
         "**/*.spec.tsx"
       ],
-      "outputs": []
+      "outputs": [],
+      // turbo runs in strict env mode, so without this the escape hatch in
+      // packages/vitest-config/src/node.ts never reaches vitest through
+      // `turbo run test` — which is how CI invokes it. passThroughEnv (not
+      // env) is deliberate: worker count changes timing, not test results, so
+      // it must not become part of the cache hash.
+      "passThroughEnv": ["VITEST_MAX_WORKERS"]
     },
     "dev": {
       "cache": false,

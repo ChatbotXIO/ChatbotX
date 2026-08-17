@@ -1,0 +1,12 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    // See apps/builder/turbo.json — this package also extends
+    // typescript-config/nextjs.json, so `incremental: true` makes
+    // `tsc --noEmit` write a tsbuildinfo worth caching.
+    "check-types": {
+      "dependsOn": ["^check-types"],
+      "outputs": ["tsconfig.tsbuildinfo"]
+    }
+  }
+}

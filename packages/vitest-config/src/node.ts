@@ -7,6 +7,40 @@ const COVERAGE_THRESHOLD = 80
 const setupEnvPath = fileURLToPath(new URL("./setup-env.ts", import.meta.url))
 const setupMswPath = fileURLToPath(new URL("./setup-msw.ts", import.meta.url))
 
+/** Workers per suite on CI. See the `resolveWorkerPool` doc comment. */
+const CI_MAX_WORKERS = 2
+
+/**
+ * Worker sizing. `turbo run test --concurrency=N` runs N workspace suites at
+ * once, but turbo does NOT parallelize *within* a suite: each suite is one
+ * `vitest run` process, so wall clock is bounded below by the slowest single
+ * suite (builder: 248 files). Task-level concurrency therefore cannot shorten
+ * the critical path — only vitest's own workers can.
+ *
+ * Budget: keep (turbo concurrency x maxWorkers) <= vCPU count so forks never
+ * oversubscribe. CI runs `--concurrency=2` on 4-vCPU runners, so 2 workers per
+ * suite fills the box exactly. Locally, leave vitest's default (one worker per
+ * CPU) alone.
+ *
+ * Measured on builder (248 files, through `turbo run test`): 1 worker 147s,
+ * 2 workers 76s, 4 workers 41s. Set `VITEST_MAX_WORKERS` to experiment without
+ * editing this preset — it is declared in the root turbo.json `passThroughEnv`
+ * so it survives turbo's strict env mode.
+ */
+function resolveWorkerPool(): { maxWorkers?: number; minWorkers?: number } {
+  const override = Number(process.env.VITEST_MAX_WORKERS)
+
+  if (Number.isInteger(override) && override > 0) {
+    return { maxWorkers: override, minWorkers: 1 }
+  }
+
+  if (process.env.CI) {
+    return { maxWorkers: CI_MAX_WORKERS, minWorkers: 1 }
+  }
+
+  return {}
+}
+
 /**
  * Base Vitest preset for Node.js workspaces (libraries, workers, CLIs).
  *
@@ -32,18 +66,12 @@ const config: ViteUserConfig = defineConfig({
     setupFiles: [setupEnvPath, setupMswPath],
     clearMocks: true,
     restoreMocks: true,
-    // On CI, turbo already parallelizes at the task level (many workspace
-    // suites at once on a small runner). Left at the default, every vitest
-    // process forks one worker per CPU, multiplying into dozens of node
-    // processes fighting for 2-4 vCPUs — which is what pushes cold imports
-    // past testTimeout. One worker per suite keeps total processes ≈ turbo
-    // concurrency.
-    ...(process.env.CI ? { maxWorkers: 1 } : {}),
-    // `turbo run test` executes every workspace's suite concurrently, so a
-    // test's first module-graph import can take well over vitest's 5s default
-    // on a loaded machine (and CI runners). A timed-out test also poisons the
-    // next one in its file: the abandoned call resolves late and increments
-    // shared mocks. Generous timeouts only delay true hangs.
+    ...resolveWorkerPool(),
+    // Several suites run at once (turbo) and several files within each (above),
+    // so a test's first module-graph import can take well over vitest's 5s
+    // default on a loaded machine (and CI runners). A timed-out test also
+    // poisons the next one in its file: the abandoned call resolves late and
+    // increments shared mocks. Generous timeouts only delay true hangs.
     testTimeout: 30_000,
     hookTimeout: 30_000,
     coverage: {
