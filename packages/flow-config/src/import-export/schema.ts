@@ -1,8 +1,15 @@
+import { customFieldTypes } from "@chatbotx.io/utils/custom-field"
 import { z } from "zod"
 import { refineStepsByChannel } from "../channel-rules/channel-step-refinement"
 import { edgeSchema, flowVersionSchema } from "../nodes/index"
 
-export const FLOW_EXPORT_FORMAT_VERSION = 1
+export const FLOW_EXPORT_FORMAT_VERSION = 2
+
+export const flowExportCustomFieldSchema = z.object({
+  name: z.string().trim().min(1),
+  type: customFieldTypes,
+})
+export type FlowExportCustomField = z.infer<typeof flowExportCustomFieldSchema>
 
 export const flowExportedFlowSchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -26,6 +33,9 @@ export const flowExportSchema = z.object({
   // pinning the length keeps that array-of-one shape from silently accepting
   // (and dropping) a multi-flow payload.
   flows: z.array(flowExportedFlowSchema).length(1),
+  // Keyed by source-workspace custom field id. A record (not an array) makes
+  // duplicate-id conflicts structurally impossible to represent.
+  customFields: z.record(z.string(), flowExportCustomFieldSchema).default({}),
 })
 export type FlowExport = z.infer<typeof flowExportSchema>
 

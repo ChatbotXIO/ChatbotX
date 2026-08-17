@@ -1,3 +1,4 @@
+import { isNumericId } from "@chatbotx.io/utils/id"
 import type { FlowExportedFlow } from "./schema"
 
 export type FlowReferenceWarning = {
@@ -11,7 +12,10 @@ export type FlowReferenceWarning = {
  * name while walking the exported graph — not a per-stepType table — so a new
  * step referencing an existing entity kind (e.g. another `sequenceId`) is
  * covered automatically. Missing an entry here only costs a warning, never
- * correctness: nothing in the importer writes based on this table.
+ * correctness for warnings — but the importer *does* now write based on the
+ * `"customField"` entries (see `collectCustomFieldReferences` /
+ * `remapCustomFieldReferences` below), so a new custom-field-holding key must
+ * be added here to be remapped, not just warned about.
  */
 const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   inputFieldId: "customField",
@@ -21,6 +25,7 @@ const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   dateTimeFieldId: "customField",
   startDateFieldId: "customField",
   endDateFieldId: "customField",
+  contactFieldId: "customField",
   sequenceId: "sequence",
   aiAgentId: "aiAgent",
   integrationId: "integration",
@@ -118,3 +123,101 @@ export const collectFlowReferenceWarnings = (
   walk(flow.edges, "edges", warnings)
   return warnings
 }
+
+const isCustomFieldReferenceKey = (key: string): boolean =>
+  REFERENCE_FIELD_ENTITY_KIND[key] === "customField"
+
+const collectCustomFieldIds = (value: unknown, ids: Set<string>): void => {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectCustomFieldIds(item, ids)
+    }
+    return
+  }
+  if (!isPlainObject(value)) {
+    return
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    if (
+      isCustomFieldReferenceKey(key) &&
+      typeof child === "string" &&
+      isNumericId(child)
+    ) {
+      ids.add(child)
+    }
+    collectCustomFieldIds(child, ids)
+  }
+}
+
+/**
+ * Read-only: finds every custom-field id referenced by a reference slot
+ * (`REFERENCE_FIELD_ENTITY_KIND[key] === "customField"`), deduplicated.
+ * System-field slugs (`first_name`, `user_tags`) and merge-tag text share the
+ * same slots but are excluded by `isNumericId`, which is fully anchored
+ * (`/^\d+$/`) — unlike `zodBigintAsString`'s unanchored pattern, so this
+ * filter is a sound discriminator on its own.
+ *
+ * Accepts `nodes`/`edges` as `unknown[]` (not the strict `FlowExportedFlow`
+ * shape) so callers can pass a flow-version row straight from the DB — those
+ * columns are typed loosely (`{ id: string; [x: string]: unknown }[]`) at the
+ * jsonb boundary, before `parseFlowExport` narrows them.
+ */
+export const collectCustomFieldReferences = (flow: {
+  nodes: readonly unknown[]
+  edges: readonly unknown[]
+}): string[] => {
+  const ids = new Set<string>()
+  collectCustomFieldIds(flow.nodes, ids)
+  collectCustomFieldIds(flow.edges, ids)
+  return [...ids]
+}
+
+const remapCustomFieldIds = (
+  value: unknown,
+  idMap: ReadonlyMap<string, string>,
+): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => remapCustomFieldIds(item, idMap))
+  }
+  if (!isPlainObject(value)) {
+    return value
+  }
+
+  const next: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    if (
+      isCustomFieldReferenceKey(key) &&
+      typeof child === "string" &&
+      idMap.has(child)
+    ) {
+      // biome-ignore lint/style/noNonNullAssertion: idMap.has(child) just checked above
+      next[key] = idMap.get(child)!
+    } else {
+      next[key] = remapCustomFieldIds(child, idMap)
+    }
+  }
+  return next
+}
+
+/**
+ * Structural clone of `flow` with every custom-field reference slot rewritten
+ * from a source-workspace id to a target-workspace id via `idMap`. An id
+ * absent from the map passes through unchanged (so it still surfaces as an
+ * unresolved-reference warning downstream). Never mutates the input.
+ *
+ * Rebuilds every plain object key-by-key rather than special-casing known
+ * step shapes, so sibling keys on the same row — e.g. a `condition` case's
+ * `customFieldType` / `valueType` alongside `customFieldId` — are preserved
+ * automatically instead of needing to be threaded through by hand.
+ */
+export const remapCustomFieldReferences = <
+  T extends Pick<FlowExportedFlow, "edges" | "nodes">,
+>(
+  flow: T,
+  idMap: ReadonlyMap<string, string>,
+): T => ({
+  ...flow,
+  nodes: remapCustomFieldIds(flow.nodes, idMap) as T["nodes"],
+  edges: remapCustomFieldIds(flow.edges, idMap) as T["edges"],
+})

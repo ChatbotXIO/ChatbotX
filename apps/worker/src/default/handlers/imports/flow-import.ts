@@ -1,4 +1,8 @@
-import { flowService, importService } from "@chatbotx.io/business"
+import {
+  customFieldService,
+  flowService,
+  importService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { flowImportMetaSchema } from "@chatbotx.io/database/partials"
 import { uploader } from "@chatbotx.io/filesystem"
@@ -122,10 +126,10 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
 
   const exportedFlow = parsed.data.flows[0]
 
-  const warnings = collectFlowReferenceWarnings(exportedFlow)
-
+  let createdCustomFieldIds: string[]
+  let warnings: ReturnType<typeof collectFlowReferenceWarnings>
   try {
-    await flowService.createFromImport({
+    const result = await flowService.importFlowExport({
       workspaceId: row.workspaceId,
       name: exportedFlow.name,
       active: exportedFlow.active,
@@ -133,12 +137,30 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
       startNodeId: exportedFlow.startNodeId,
       nodes: exportedFlow.nodes,
       edges: exportedFlow.edges,
-      folderId: null,
+      customFields: parsed.data.customFields,
     })
+    createdCustomFieldIds = result.createdCustomFieldIds
+    // Custom-field creation is unconditional, so any customField reference
+    // whose source id has a manifest entry is guaranteed resolved — warn on
+    // the *source* graph (ids still recognizable against the manifest), then
+    // drop exactly those warnings. Other kinds (sequence, aiAgent,
+    // integration, …) are untouched by the manifest and warn exactly as
+    // before; an unmapped customField id (no manifest entry) still warns.
+    const manifestIds = new Set(Object.keys(parsed.data.customFields))
+    warnings = collectFlowReferenceWarnings(exportedFlow).filter(
+      (warning) =>
+        !(
+          warning.entityKind === "customField" && manifestIds.has(warning.value)
+        ),
+    )
   } catch (error) {
     logger.error({ err: error }, `Flow import ${row.id} insert failed`)
     await importService.fail(row.id, error)
     return
+  }
+
+  if (createdCustomFieldIds.length > 0) {
+    await customFieldService.invalidate({ workspaceId: row.workspaceId })
   }
 
   const MAX_WARNING_SAMPLE = 50

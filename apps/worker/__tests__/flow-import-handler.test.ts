@@ -5,7 +5,8 @@ import type { ImportRow } from "../src/default/handlers/imports/base-import"
 const mocks = vi.hoisted(() => ({
   getObjectStream: vi.fn(),
   headObject: vi.fn(),
-  createFromImport: vi.fn(),
+  importFlowExport: vi.fn(),
+  invalidateCustomFields: vi.fn(),
   updateValues: [] as Record<string, unknown>[],
 }))
 
@@ -40,7 +41,10 @@ vi.mock("@chatbotx.io/business", () => ({
     ),
   },
   flowService: {
-    createFromImport: (...args: unknown[]) => mocks.createFromImport(...args),
+    importFlowExport: (...args: unknown[]) => mocks.importFlowExport(...args),
+  },
+  customFieldService: {
+    invalidate: (...args: unknown[]) => mocks.invalidateCustomFields(...args),
   },
 }))
 
@@ -83,7 +87,7 @@ const importRow = {
 } as ImportRow
 
 const buildExportJson = (overrides: Record<string, unknown> = {}) => ({
-  formatVersion: 1,
+  formatVersion: 2,
   exportedAt: new Date().toISOString(),
   source: { workspaceId: "source-workspace", flowId: "source-flow" },
   flows: [
@@ -122,6 +126,7 @@ const buildExportJson = (overrides: Record<string, unknown> = {}) => ({
       edges: [],
     },
   ],
+  customFields: {},
   ...overrides,
 })
 
@@ -130,7 +135,15 @@ describe("runFlowImport", () => {
     vi.clearAllMocks()
     mocks.updateValues = []
     mocks.headObject.mockRejectedValue(new Error("head failed"))
-    mocks.createFromImport.mockResolvedValue("new-flow-id")
+    mocks.importFlowExport.mockImplementation(
+      (input: { nodes: unknown[]; edges: unknown[] }) =>
+        Promise.resolve({
+          flowId: "new-flow-id",
+          nodes: input.nodes,
+          edges: input.edges,
+          createdCustomFieldIds: [],
+        }),
+    )
   })
 
   const mockStream = (json: unknown) => {
@@ -145,8 +158,8 @@ describe("runFlowImport", () => {
 
     await runFlowImport(importRow)
 
-    expect(mocks.createFromImport).toHaveBeenCalledTimes(1)
-    expect(mocks.createFromImport).toHaveBeenCalledWith(
+    expect(mocks.importFlowExport).toHaveBeenCalledTimes(1)
+    expect(mocks.importFlowExport).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "workspace-1",
         name: "Onboarding",
@@ -173,14 +186,14 @@ describe("runFlowImport", () => {
     )
   })
 
-  test("persists nodes byte for byte (no id rewriting)", async () => {
+  test("passes nodes byte for byte when the manifest is empty (no custom-field ids to remap)", async () => {
     const exportJson = buildExportJson()
     mockStream(exportJson)
 
     await runFlowImport(importRow)
 
-    const insertedNodes = mocks.createFromImport.mock.calls[0]?.[0]?.nodes
-    expect(insertedNodes).toEqual(exportJson.flows[0].nodes)
+    const passedNodes = mocks.importFlowExport.mock.calls[0]?.[0]?.nodes
+    expect(passedNodes).toEqual(exportJson.flows[0].nodes)
   })
 
   test("fails the import without inserting a flow when formatVersion is unknown", async () => {
@@ -188,7 +201,7 @@ describe("runFlowImport", () => {
 
     await runFlowImport(importRow)
 
-    expect(mocks.createFromImport).not.toHaveBeenCalled()
+    expect(mocks.importFlowExport).not.toHaveBeenCalled()
     expect(mocks.updateValues.at(-1)).toMatchObject({ status: "failed" })
   })
 
@@ -201,10 +214,173 @@ describe("runFlowImport", () => {
 
     await runFlowImport(importRow)
 
-    expect(mocks.createFromImport).not.toHaveBeenCalled()
+    expect(mocks.importFlowExport).not.toHaveBeenCalled()
     expect(mocks.updateValues.at(-1)).toMatchObject({
       status: "failed",
       errorMessage: expect.stringContaining("File exceeds"),
     })
+  })
+
+  test("invalidates the custom-field cache only when new fields were created", async () => {
+    mockStream(buildExportJson())
+
+    await runFlowImport(importRow)
+
+    expect(mocks.invalidateCustomFields).not.toHaveBeenCalled()
+
+    mocks.importFlowExport.mockResolvedValueOnce({
+      flowId: "new-flow-id",
+      nodes: [],
+      edges: [],
+      createdCustomFieldIds: ["field-1"],
+    })
+    mockStream(buildExportJson())
+
+    await runFlowImport(importRow)
+
+    expect(mocks.invalidateCustomFields).toHaveBeenCalledTimes(1)
+    expect(mocks.invalidateCustomFields).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("does not warn about a custom-field reference that was successfully remapped", async () => {
+    const exportJson = buildExportJson({
+      flows: [
+        {
+          name: "Onboarding",
+          active: true,
+          enableInInbox: true,
+          startNodeId: "1",
+          nodes: [
+            {
+              id: "1",
+              position: { x: 0, y: 0 },
+              measured: { width: 288, height: 100 },
+              type: "sendMessage",
+              data: {
+                name: "Send Message",
+                isStartNode: true,
+                details: {
+                  beforeStep: {
+                    id: "b1",
+                    stepType: "chooseChannel",
+                    channel: "omnichannel",
+                  },
+                  steps: [
+                    {
+                      id: "s1",
+                      stepType: "setCustomField",
+                      inputFieldId: "source-field-1",
+                      operation: "O01",
+                      value: "1990-01-01",
+                    },
+                  ],
+                  quickReplies: [],
+                },
+              },
+            },
+          ],
+          edges: [],
+        },
+      ],
+      customFields: {
+        "source-field-1": { name: "Birthday", type: "date" },
+      },
+    })
+    mockStream(exportJson)
+
+    mocks.importFlowExport.mockResolvedValueOnce({
+      flowId: "new-flow-id",
+      nodes: [
+        {
+          ...exportJson.flows[0].nodes[0],
+          data: {
+            ...exportJson.flows[0].nodes[0].data,
+            details: {
+              ...exportJson.flows[0].nodes[0].data.details,
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "setCustomField",
+                  inputFieldId: "target-field-1",
+                  operation: "O01",
+                  value: "1990-01-01",
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+      createdCustomFieldIds: [],
+    })
+
+    await runFlowImport(importRow)
+
+    const finalUpdate = mocks.updateValues.at(-1)
+    expect(finalUpdate).toMatchObject({ status: "completed" })
+    expect(finalUpdate?.errorMessage).toBeNull()
+  })
+
+  test("still warns about a customField reference absent from the manifest", async () => {
+    const exportJson = buildExportJson({
+      flows: [
+        {
+          name: "Onboarding",
+          active: true,
+          enableInInbox: true,
+          startNodeId: "1",
+          nodes: [
+            {
+              id: "1",
+              position: { x: 0, y: 0 },
+              measured: { width: 288, height: 100 },
+              type: "sendMessage",
+              data: {
+                name: "Send Message",
+                isStartNode: true,
+                details: {
+                  beforeStep: {
+                    id: "b1",
+                    stepType: "chooseChannel",
+                    channel: "omnichannel",
+                  },
+                  steps: [
+                    {
+                      id: "s1",
+                      stepType: "setCustomField",
+                      inputFieldId: "999",
+                      operation: "O01",
+                      value: "1990-01-01",
+                    },
+                  ],
+                  quickReplies: [],
+                },
+              },
+            },
+          ],
+          edges: [],
+        },
+      ],
+      // No manifest entry for "999" — e.g. the field was already deleted in
+      // the source workspace at export time.
+      customFields: {},
+    })
+    mockStream(exportJson)
+
+    await runFlowImport(importRow)
+
+    const finalUpdate = mocks.updateValues.at(-1)
+    expect(finalUpdate).toMatchObject({ status: "completed" })
+    expect(finalUpdate?.errorSample).toEqual([
+      expect.objectContaining({
+        row: 1,
+        reason: expect.stringContaining("customField"),
+      }),
+    ])
+    expect(finalUpdate?.errorMessage).toEqual(
+      expect.stringContaining("unresolved reference"),
+    )
   })
 })

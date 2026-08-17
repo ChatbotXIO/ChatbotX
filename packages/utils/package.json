@@ -18,9 +18,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./ai": "./src/ai.ts",
     "./channel": "./src/channel.ts",
     "./crypto": "./src/crypto.ts",
+    "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
     "./id": "./src/id.ts",
     "./temporal-input": "./src/temporal-input/index.ts",

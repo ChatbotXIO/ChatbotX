@@ -34,9 +34,6 @@ export function ImportFlowDialog({ workspaceId }: ImportFlowDialogProps) {
         toast.success(t("flows.actions.importStarted"))
         setOpen(false)
         setFile(null)
-        // A new flow affects the folder tree/sidebar, so a full reload is
-        // used instead of router.refresh().
-        window.location.reload()
       },
       onError: ({ error }) => {
         toast.error(error.serverError ?? t("messages.error"))

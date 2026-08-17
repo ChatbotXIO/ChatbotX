@@ -3,12 +3,14 @@ import {
   buttonStepDefaultFn,
   buttonTypes,
   chooseChannelStepDefaultFn,
+  collectCustomFieldReferences,
   collectFlowReferenceWarnings,
   conditionNodeDefaultFn,
   FLOW_EXPORT_FORMAT_VERSION,
   type FlowExportedFlow,
   openWebsiteStepDefaultFn,
   parseFlowExport,
+  remapCustomFieldReferences,
   sendCardStepDefaultFn,
   sendCarouselStepDefaultFn,
   sendMessageNodeDefaultFn,
@@ -274,5 +276,230 @@ describe("collectFlowReferenceWarnings", () => {
 
     const warnings = collectFlowReferenceWarnings(flow)
     expect(warnings).toEqual([])
+  })
+})
+
+describe("collectCustomFieldReferences", () => {
+  test("system slugs and merge-tag text never appear in the collected ids", () => {
+    const ids = collectCustomFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "setCustomField",
+                  inputFieldId: "first_name",
+                },
+                {
+                  id: "s2",
+                  stepType: "setCustomField",
+                  inputFieldId: "user_tags",
+                },
+                { id: "s3", stepType: "setCustomField", inputFieldId: "42" },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(ids).toEqual(["42"])
+  })
+
+  test("dedupes the same id referenced from multiple slots", () => {
+    const ids = collectCustomFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                { id: "s1", stepType: "setCustomField", inputFieldId: "42" },
+                {
+                  id: "s2",
+                  stepType: "condition",
+                  cases: [
+                    {
+                      id: "c1",
+                      conditions: [
+                        { customFieldId: "42" },
+                        { customFieldId: "43" },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(ids.sort()).toEqual(["42", "43"])
+  })
+
+  test("collects across the awkward per-step shapes", () => {
+    const ids = collectCustomFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "condition",
+                  cases: [{ id: "c1", conditions: [{ customFieldId: "1" }] }],
+                },
+                {
+                  id: "s2",
+                  stepType: "aiExtractData",
+                  extractFields: [{ customFieldId: "2" }],
+                },
+                {
+                  id: "s3",
+                  stepType: "getDataFromJson",
+                  inputFieldId: "3",
+                  mapping: [{ jsonPath: "$.a", outputFieldId: "4" }],
+                },
+                {
+                  id: "s4",
+                  stepType: "whatsappFlow",
+                  flow: {
+                    fieldMappings: [
+                      { customFieldId: "5" },
+                      { customFieldId: null },
+                    ],
+                  },
+                },
+                {
+                  id: "s5",
+                  stepType: "appointmentScheduling",
+                  mode: "checkAvailability",
+                  startDateFieldId: "6",
+                  endDateFieldId: "7",
+                  outputCustomFieldId: "8",
+                },
+                {
+                  id: "s6",
+                  stepType: "spreadsheetSendData",
+                  map: [{ customFieldId: "" }],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(ids.sort()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"])
+  })
+})
+
+describe("remapCustomFieldReferences", () => {
+  test("rewrites a mapped id and leaves an unmapped id untouched", () => {
+    const flow = {
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                { id: "s1", stepType: "setCustomField", inputFieldId: "42" },
+                { id: "s2", stepType: "setCustomField", inputFieldId: "999" },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    }
+
+    const remapped = remapCustomFieldReferences(
+      flow,
+      new Map([["42", "target-42"]]),
+    )
+
+    expect(remapped.nodes[0].data.details.steps[0].inputFieldId).toBe(
+      "target-42",
+    )
+    expect(remapped.nodes[0].data.details.steps[1].inputFieldId).toBe("999")
+  })
+
+  test("preserves sibling keys (customFieldType, valueType) on a condition row", () => {
+    const flow = {
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "condition",
+                  cases: [
+                    {
+                      id: "c1",
+                      conditions: [
+                        {
+                          customFieldId: "42",
+                          customFieldType: "date",
+                          valueType: "date",
+                          operator: "eq",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    }
+
+    const remapped = remapCustomFieldReferences(
+      flow,
+      new Map([["42", "target-42"]]),
+    )
+
+    const remappedCondition =
+      remapped.nodes[0].data.details.steps[0].cases[0].conditions[0]
+    expect(remappedCondition).toEqual({
+      customFieldId: "target-42",
+      customFieldType: "date",
+      valueType: "date",
+      operator: "eq",
+    })
+  })
+
+  test("does not mutate the input", () => {
+    const flow = {
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                { id: "s1", stepType: "setCustomField", inputFieldId: "42" },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    }
+    const original = JSON.parse(JSON.stringify(flow))
+
+    remapCustomFieldReferences(flow, new Map([["42", "target-42"]]))
+
+    expect(flow).toEqual(original)
   })
 })

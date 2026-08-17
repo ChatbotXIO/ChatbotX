@@ -1,5 +1,14 @@
-import { flowService, flowVersionService } from "@chatbotx.io/business"
-import { FLOW_EXPORT_FORMAT_VERSION } from "@chatbotx.io/flow-config"
+import {
+  customFieldService,
+  flowService,
+  flowVersionService,
+} from "@chatbotx.io/business"
+import {
+  collectCustomFieldReferences,
+  FLOW_EXPORT_FORMAT_VERSION,
+  type FlowExportCustomField,
+  flowExportSchema,
+} from "@chatbotx.io/flow-config"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import {
   hasWorkspacePermission,
@@ -63,25 +72,44 @@ export async function GET(
     return Response.json({ code: "notPublished" }, { status: 409 })
   }
 
-  const body = JSON.stringify(
-    {
-      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
-      exportedAt: new Date().toISOString(),
-      source: { workspaceId: flow.workspaceId, flowId: flow.id },
-      flows: [
-        {
-          name: flow.name,
-          active: flow.active,
-          enableInInbox: flow.enableInInbox,
-          startNodeId: publishedVersion.startNodeId,
-          nodes: publishedVersion.nodes,
-          edges: publishedVersion.edges,
-        },
-      ],
-    },
-    null,
-    2,
+  const customFieldIds = collectCustomFieldReferences({
+    nodes: publishedVersion.nodes,
+    edges: publishedVersion.edges,
+  })
+  const customFieldRows = await customFieldService.findManyByIds({
+    workspaceId: flow.workspaceId,
+    ids: customFieldIds,
+  })
+  const customFields = Object.fromEntries(
+    customFieldRows.map((row): [string, FlowExportCustomField] => [
+      row.id,
+      { name: row.name, type: row.type },
+    ]),
   )
+
+  const envelope = {
+    formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    source: { workspaceId: flow.workspaceId, flowId: flow.id },
+    flows: [
+      {
+        name: flow.name,
+        active: flow.active,
+        enableInInbox: flow.enableInInbox,
+        startNodeId: publishedVersion.startNodeId,
+        nodes: publishedVersion.nodes,
+        edges: publishedVersion.edges,
+      },
+    ],
+    customFields,
+  }
+
+  // Guards against export ever emitting a payload the importer would reject —
+  // the route hand-builds the envelope above and does not otherwise validate
+  // its own output.
+  flowExportSchema.parse(envelope)
+
+  const body = JSON.stringify(envelope, null, 2)
 
   return new Response(body, {
     headers: {

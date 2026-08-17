@@ -5,9 +5,15 @@ import {
   flowVersionModel,
 } from "@chatbotx.io/database/schema"
 import type { FlowModel, FlowVersionModel } from "@chatbotx.io/database/types"
-import type { EdgeSchema, FlowVersionSchema } from "@chatbotx.io/flow-config"
+import type {
+  EdgeSchema,
+  FlowExportCustomField,
+  FlowVersionSchema,
+} from "@chatbotx.io/flow-config"
+import { remapCustomFieldReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
 
@@ -115,6 +121,11 @@ class FlowService extends BaseService {
    * table that keys on a nodeId also scopes by flowId/analyticsId, and this
    * always mints a fresh flowId, so reused ids from the source workspace
    * cannot collide here — see docs/tenancy.md and the import/export plan.
+   *
+   * Accepts an optional `tx` so the caller can share a transaction with
+   * custom-field creation (flow-import handler) — without that, a failed flow
+   * insert would leave orphan custom fields already committed in the target
+   * workspace. Opens its own transaction when no `tx` is passed (e.g. tests).
    */
   createFromImport(input: {
     workspaceId: string
@@ -125,8 +136,9 @@ class FlowService extends BaseService {
     nodes: FlowVersionSchema[]
     edges: EdgeSchema[]
     folderId?: string | null
+    tx?: DatabaseClient
   }): Promise<string> {
-    return db.transaction(async (tx) =>
+    const run = (tx: DatabaseClient) =>
       this.insertFlowWithDraft(tx, {
         name: input.name,
         active: input.active,
@@ -136,8 +148,78 @@ class FlowService extends BaseService {
         startNodeId: input.startNodeId,
         nodes: input.nodes,
         edges: input.edges,
-      }),
-    )
+      })
+    return input.tx ? run(input.tx) : db.transaction(run)
+  }
+
+  /**
+   * Full flow-import orchestration: resolves the export's custom-field
+   * manifest against the target workspace, remaps `nodes`/`edges` to the
+   * resolved ids, and inserts the flow — all inside one transaction, so a
+   * failed flow insert cannot leave orphan custom fields behind.
+   *
+   * Cache invalidation for created fields is deliberately NOT done here (it
+   * would run inside the transaction and could repopulate Redis from an
+   * uncommitted read) — the caller must invalidate once, after this resolves,
+   * using the returned `createdCustomFieldIds`.
+   */
+  async importFlowExport(input: {
+    workspaceId: string
+    name: string
+    active: boolean
+    enableInInbox: boolean
+    startNodeId: string
+    nodes: FlowVersionSchema[]
+    edges: EdgeSchema[]
+    customFields: Record<string, FlowExportCustomField>
+  }): Promise<{
+    flowId: string
+    nodes: FlowVersionSchema[]
+    edges: EdgeSchema[]
+    createdCustomFieldIds: string[]
+  }> {
+    return await db.transaction(async (tx) => {
+      const manifestEntries = Object.entries(input.customFields)
+      const { idMap: resolvedByKey, createdIds } =
+        await customFieldService.resolveByNameAndType({
+          workspaceId: input.workspaceId,
+          fields: manifestEntries.map(([, field]) => field),
+          tx,
+        })
+
+      const toKey = (field: FlowExportCustomField): string =>
+        `${field.type}:${field.name.trim().toLowerCase()}`
+      const idMap = new Map(
+        manifestEntries.flatMap(([sourceId, field]) => {
+          const targetId = resolvedByKey.get(toKey(field))
+          return targetId ? [[sourceId, targetId] as const] : []
+        }),
+      )
+
+      const remapped = remapCustomFieldReferences(
+        { nodes: input.nodes, edges: input.edges },
+        idMap,
+      )
+
+      const flowId = await this.createFromImport({
+        workspaceId: input.workspaceId,
+        name: input.name,
+        active: input.active,
+        enableInInbox: input.enableInInbox,
+        startNodeId: input.startNodeId,
+        nodes: remapped.nodes,
+        edges: remapped.edges,
+        folderId: null,
+        tx,
+      })
+
+      return {
+        flowId,
+        nodes: remapped.nodes,
+        edges: remapped.edges,
+        createdCustomFieldIds: createdIds,
+      }
+    })
   }
 }
 

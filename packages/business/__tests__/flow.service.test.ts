@@ -52,6 +52,10 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
 }))
 
+vi.mock("@chatbotx.io/flow-config", () => ({
+  remapCustomFieldReferences: vi.fn(),
+}))
+
 vi.mock("../src/base.service", () => ({
   BaseService: class BaseService {},
 }))
@@ -64,6 +68,10 @@ vi.mock("../src/flow-version", () => ({
   flowVersionService: {
     findDraft: mockFindDraft,
   },
+}))
+
+vi.mock("../src/custom-field/service", () => ({
+  customFieldService: { resolveByNameAndType: vi.fn() },
 }))
 
 const { flowService } = await import("../src/flow/service")

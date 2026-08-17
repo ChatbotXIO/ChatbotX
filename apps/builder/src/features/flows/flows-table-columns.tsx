@@ -30,40 +30,9 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
-import { toast } from "sonner"
 import { updateFlowAction } from "./actions/update-flow-action"
+import { downloadFlowExport } from "./lib/download-flow-export"
 import type { FlowResource } from "./schemas/resource"
-
-const CONTENT_DISPOSITION_FILENAME_REGEX = /filename="([^"]+)"/
-
-async function downloadFlowExport(
-  flow: FlowResource,
-  t: ReturnType<typeof useTranslations>,
-): Promise<void> {
-  const response = await fetch(
-    `/space/${flow.workspaceId}/flows/${flow.id}/export`,
-  )
-  if (!response.ok) {
-    if (response.status === 409) {
-      toast.error(t("flows.export.notPublished"))
-    } else {
-      toast.error(t("flows.export.failed"))
-    }
-    return
-  }
-
-  const disposition = response.headers.get("Content-Disposition") ?? ""
-  const fileNameMatch = CONTENT_DISPOSITION_FILENAME_REGEX.exec(disposition)
-  const fileName = fileNameMatch?.[1] ?? `${flow.name}.chatbotx-flow.json`
-
-  const blob = await response.blob()
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = fileName
-  link.click()
-  URL.revokeObjectURL(url)
-}
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>
@@ -111,12 +80,12 @@ export function getFlowColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[300px] truncate">
+        <div className="max-w-75 truncate">
           <Tooltip>
             <TooltipTrigger
               render={
                 <Link
-                  className="max-w-[300px] truncate"
+                  className="max-w-75 truncate"
                   href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
                 >
                   {row.original.name}
