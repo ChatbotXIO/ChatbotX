@@ -93,7 +93,7 @@ jobs:
 
   build-image:
     name: Build ${{ matrix.label }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     needs:
       - prepare-metadata
       - check
@@ -101,21 +101,40 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # The builder compile is CPU-bound and `next build` only ever reports
+          # 3 workers on a 4-vCPU runner, so a bigger runner is the cheapest
+          # remaining win — but it needs one that actually exists. GitHub does
+          # NOT publish an `ubuntu-latest-N-cores` label: larger runners are an
+          # org-level feature that an admin must create and name, and
+          # `ubuntu-latest-4-cores` in GitHub's docs is only an example name.
+          # A public repo makes larger-runner minutes free, not the runners
+          # themselves. An unmatched label does not fail the job — it queues
+          # until it times out — so this stays on `ubuntu-latest` until a real
+          # provisioned label is confirmed (`gh api /orgs/ChatbotXIO/actions/
+          # runner-groups` needs admin:org). Then it is a one-word change here.
           - label: builder
             image: chatbotx-builder
             dockerfile: ./apps/builder/docker/Dockerfile
+            runner: ubuntu-latest
           - label: worker
             image: chatbotx-worker
             dockerfile: ./apps/worker/docker/Dockerfile
+            runner: ubuntu-latest
           - label: realtime
             image: chatbotx-realtime
             dockerfile: ./apps/realtime/docker/Dockerfile
+            runner: ubuntu-latest
           - label: mcp-server
             image: chatbotx-mcp
             dockerfile: ./apps/mcp-server/docker/Dockerfile
+            runner: ubuntu-latest
           - label: javascript-executor
             image: chatbotx-javascript-executor
             dockerfile: ./apps/javascript-executor/docker/Dockerfile
+            runner: ubuntu-latest
+    # Baseline builder leg was ~16 min and the others ~1-2 min. Bounds a hung
+    # build, and an unprovisioned `runner` label, against the 24-hour default.
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
@@ -126,40 +145,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      # `type=gha` layer cache does NOT persist RUN cache mounts (pnpm store,
-      # .next/cache). buildkit-cache-dance injects/extracts them through the
-      # regular actions cache. Builder image only — its Dockerfile declares the
-      # matching mount ids.
-      - name: Restore BuildKit cache-mount contents
-        if: matrix.label == 'builder'
-        id: buildkit-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            buildkit-cache/pnpm-store
-            buildkit-cache/builder-next-cache
-          key: buildkit-cache-${{ matrix.label }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            buildkit-cache-${{ matrix.label }}-${{ github.ref_name }}-
-            buildkit-cache-${{ matrix.label }}-
-
-      - name: Inject cache mounts into the Docker build
-        if: matrix.label == 'builder'
-        uses: reproducible-containers/buildkit-cache-dance@v3
-        with:
-          cache-map: |
-            {
-              "buildkit-cache/pnpm-store": {
-                "target": "/pnpm/store",
-                "id": "pnpm-store"
-              },
-              "buildkit-cache/builder-next-cache": {
-                "target": "/app/apps/builder/.next/cache",
-                "id": "builder-next-cache"
-              }
-            }
-          skip-extraction: ${{ steps.buildkit-cache.outputs.cache-hit }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -181,12 +166,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ env.BUILD_PLATFORMS }}
-          # Optional Turbo remote cache (self-hosted turborepo-remote-cache).
-          # Unset repo secrets resolve to empty strings → remote cache disabled.
-          secrets: |
-            TURBO_API=${{ secrets.TURBO_API }}
-            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
+          # Turbo remote cache: deliberately NOT passed. buildx rejects an
+          # empty-valued secret outright, so passing the partial set that exists
+          # (TURBO_TOKEN/TURBO_TEAM, no TURBO_API) dropped TURBO_API and left
+          # turbo stalling on its built-in Vercel default —
+          # `Remote caching unavailable (Could not connect to vercel.com/api)`.
+          # The Dockerfile's --mount=type=secret lines are optional-safe, so
+          # restoring these three lines together is all it takes once a
+          # turborepo-remote-cache is provisioned and TURBO_API is set.
 
       - name: Build and push version image
         if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
@@ -202,10 +189,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ env.BUILD_PLATFORMS }}
-          secrets: |
-            TURBO_API=${{ secrets.TURBO_API }}
-            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
+          # Turbo remote cache secrets omitted — see "Build and push main image".
 
       - name: Build image for pull request
         if: github.event_name == 'pull_request'
@@ -218,10 +202,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ env.BUILD_PLATFORMS }}
-          secrets: |
-            TURBO_API=${{ secrets.TURBO_API }}
-            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
+          # Turbo remote cache secrets omitted — see "Build and push main image".
 
   output-image-urls:
     runs-on: ubuntu-latest

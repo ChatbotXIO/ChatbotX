@@ -22,8 +22,10 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 WORKDIR /app
 COPY --from=pre /app/out/json/ .
 # BuildKit cache mount for the pnpm store (PNPM_HOME=/pnpm → store at /pnpm/store).
-# Persisted across CI runs via buildkit-cache-dance in release.yml.
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+# Local to the build (and to BuildKit layer reuse) — deliberately NOT round-tripped
+# through the GitHub Actions cache: exporting/importing the multi-GB store cost far
+# more in CI than the ~40s install it was meant to save.
+RUN --mount=type=cache,target=/pnpm/store \
   pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
@@ -38,13 +40,17 @@ COPY --from=pre /app/out/full/ .
 ENV BETTER_AUTH_SECRET="docker-build-time-placeholder-not-used-at-runtime-0"
 ENV BETTER_AUTH_URL="http://localhost:3000"
 
-# - `.next/cache` cache mount: Next.js incremental artifacts survive across CI
-#   runs (persisted via buildkit-cache-dance in release.yml).
+# - `.next/cache` cache mount: Turbopack's filesystem cache, local to the build.
+#   Not persisted across CI runs — `turbo.json` excludes `.next/cache/**` from the
+#   build outputs, so restoring it can never turn a turbo cache miss into a hit;
+#   it only ever warmed an already-executing build, at a much higher CI cost.
 # - TURBO_* secret mounts: optional Turbo remote cache (self-hosted
 #   turborepo-remote-cache or Vercel). When the secrets are not provided the
 #   env vars stay unset and turbo builds without a remote cache — a full
-#   remote-cache hit restores `.next/**` and skips `next build` entirely.
-RUN --mount=type=cache,id=builder-next-cache,target=/app/apps/builder/.next/cache \
+#   remote-cache hit restores `.next/**` and skips `next build` entirely. This is
+#   the only mechanism that can actually skip the build; wiring it up is a
+#   secrets-only change.
+RUN --mount=type=cache,target=/app/apps/builder/.next/cache \
   --mount=type=secret,id=TURBO_API,env=TURBO_API \
   --mount=type=secret,id=TURBO_TOKEN,env=TURBO_TOKEN \
   --mount=type=secret,id=TURBO_TEAM,env=TURBO_TEAM \
