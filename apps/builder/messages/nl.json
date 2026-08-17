@@ -2266,32 +2266,12 @@
   },
   "ads": {
     "title": "Advertenties",
-    "nav": {
-      "clickToWhatsappAds": "Click-to-WhatsApp-advertenties",
-      "clickToTiktokAds": "Click-to-TikTok-advertenties",
-      "connectAccounts": "Accounts koppelen",
-      "conversionEvents": "Conversie-events",
-      "adsAnalytics": "Advertentieanalyse",
-      "reporting": "Rapportage",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Binnenkort beschikbaar"
-    },
     "connectAccounts": {
-      "title": "Beheer al je advertentieaccounts",
-      "description": "Volg conversies en optimaliseer je click-to-WhatsApp-advertentiecampagnes.",
-      "learnMore": "Meer informatie",
       "connectAdAccount": "Advertentieaccount koppelen",
       "adAccountName": "Naam advertentieaccount",
-      "disconnect": "Verbinding verbreken",
-      "empty": "Nog geen advertentieaccount gekoppeld.",
-      "adAccountsTitle": "Meta-advertentieaccounts",
-      "adAccountsDescription": "Koppel Facebook Ads om de advertentieaccounts te laden die worden gebruikt voor click-to-WhatsApp-campagnes.",
       "adAccountsReconnectBanner": "Het token van je Meta-advertentieaccount is verlopen of heeft rechten verloren. Koppel Facebook Ads opnieuw om advertentierapportage beschikbaar te houden.",
       "adAccountsNotConnected": "Er zijn nog geen Meta-advertentieaccounts gekoppeld.",
       "adAccountsEmpty": "Er zijn geen Meta-advertentieaccounts gevonden voor deze Facebook Ads-koppeling.",
-      "adAccountsNote": "Uitgaven en retargetingdoelgroepen komen uit deze advertentieaccounts.",
-      "reconnectBanner": "Koppel je WhatsApp-account opnieuw om conversie-events naar Meta te kunnen verzenden.",
       "reconnect": "Opnieuw verbinden",
       "reconnectSuccess": "WhatsApp-account opnieuw gekoppeld.",
       "selectAccountLabel": "WhatsApp-account",
@@ -2301,22 +2281,9 @@
         "unverified": "Rechten niet geverifieerd"
       },
       "table": {
-        "name": "Naam",
-        "phoneNumber": "Telefoonnummer",
-        "wabaId": "WABA-ID",
-        "permission": "Automatische events"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "WABA-ID"
       },
       "connectWhatsapp": {
-        "title": "Koppel eerst je WhatsApp-account",
-        "description": "Voor click-to-WhatsApp-conversietracking is een gekoppeld WhatsApp-account nodig voordat je advertentieaccounts kunt koppelen en conversiedatasets kunt aanmaken.",
-        "step1": "Koppel je WhatsApp Business-account bij Kanalen.",
-        "step2": "Kom hier terug om Meta Ads te autoriseren en je advertentieaccount te selecteren.",
-        "step3": "We maken automatisch de conversiedataset aan met je WhatsApp Business-account.",
         "cta": "WhatsApp-account koppelen"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Berichtsjablonen",
       "profile": "Profiel",
       "usefulLinks": "Nuttige links",
-      "conversionsApi": "Advertentie-optimalisatie"
+      "conversionsApi": "Advertentie-optimalisatie",
+      "settings": "Instellingen"
     },
     "accountHealths": {
       "title": "Je WhatsApp-account beheren",
@@ -3518,7 +3486,13 @@
       "label": "Koptekst van sjabloon"
     },
     "transferPhoneNumber": "Telefoonnummer van een andere WhatsApp-provider overdragen",
-    "signupSessionExpired": "Je WhatsApp-registratiesessie is verlopen. Start de koppeling opnieuw."
+    "signupSessionExpired": "Je WhatsApp-registratiesessie is verlopen. Start de koppeling opnieuw.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatische events",
+        "description": "Verstuur conversiegebeurtenissen van dit WhatsApp-nummer automatisch naar Meta. Ontbreekt de machtiging, verbind het account dan opnieuw om deze te verlenen."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

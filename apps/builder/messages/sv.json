@@ -1003,32 +1003,12 @@
   },
   "ads": {
     "title": "Annonser",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp-annonser",
-      "clickToTiktokAds": "Click to TikTok-annonser",
-      "connectAccounts": "Anslut konton",
-      "conversionEvents": "Konverteringshändelser",
-      "adsAnalytics": "Annonsanalys",
-      "reporting": "Rapportering",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Kommer snart"
-    },
     "connectAccounts": {
-      "title": "Hantera alla dina annonskonton",
-      "description": "Spåra konverteringar och optimera dina click-to-WhatsApp-annonskampanjer.",
-      "learnMore": "Läs mer",
       "connectAdAccount": "Anslut annonskonto",
       "adAccountName": "Namn på annonskonto",
-      "disconnect": "Koppla från",
-      "empty": "Inget annonskonto anslutet ännu.",
-      "adAccountsTitle": "Meta-annonskonton",
-      "adAccountsDescription": "Anslut Facebook Ads för att läsa in de annonskonton som används för click-to-WhatsApp-kampanjer.",
       "adAccountsReconnectBanner": "Tokenet för ditt Meta-annonskonto har gått ut eller förlorat behörigheter. Anslut Facebook Ads igen för att fortsätta ha annonsrapportering tillgänglig.",
       "adAccountsNotConnected": "Inga Meta-annonskonton är anslutna ännu.",
       "adAccountsEmpty": "Inga Meta-annonskonton hittades för denna Facebook Ads-anslutning.",
-      "adAccountsNote": "Utgifter och retargeting-målgrupper kommer från dessa annonskonton.",
-      "reconnectBanner": "Anslut ditt WhatsApp-konto igen för att aktivera sändning av konverteringshändelser till Meta.",
       "reconnect": "Anslut igen",
       "reconnectSuccess": "WhatsApp-kontot är återanslutet.",
       "selectAccountLabel": "WhatsApp-konto",
@@ -1038,22 +1018,9 @@
         "unverified": "Behörighet inte verifierad"
       },
       "table": {
-        "name": "Namn",
-        "phoneNumber": "Telefonnummer",
-        "wabaId": "WABA-ID",
-        "permission": "Automatiska händelser"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "WABA-ID"
       },
       "connectWhatsapp": {
-        "title": "Anslut ditt WhatsApp-konto först",
-        "description": "Konverteringsspårning för Click-to-WhatsApp kräver ett anslutet WhatsApp-konto innan du kan länka annonskonton och skapa konverteringsdataset.",
-        "step1": "Anslut ditt WhatsApp Business-konto under Kanaler.",
-        "step2": "Kom tillbaka hit för att auktorisera Meta Ads och välja ditt annonskonto.",
-        "step3": "Vi skapar automatiskt konverteringsdatasetet med ditt WhatsApp Business-konto.",
         "cta": "Anslut WhatsApp-konto"
       }
     },
@@ -4658,7 +4625,8 @@
       "messageTemplates": "Meddelandemallar",
       "profile": "Profil",
       "usefulLinks": "Användbara länkar",
-      "conversionsApi": "Annonsoptimering"
+      "conversionsApi": "Annonsoptimering",
+      "settings": "Inställningar"
     },
     "templateFooter": {
       "label": "Mallens sidfot"
@@ -4666,7 +4634,13 @@
     "templateHeader": {
       "label": "Mallens sidhuvud"
     },
-    "transferPhoneNumber": "Överför telefonnummer från en annan WhatsApp-leverantör"
+    "transferPhoneNumber": "Överför telefonnummer från en annan WhatsApp-leverantör",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatiska händelser",
+        "description": "Skicka konverteringshändelser från detta WhatsApp-nummer automatiskt till Meta. Om behörigheten saknas, återanslut kontot för att bevilja den."
+      }
+    }
   },
   "workspace": {
     "deletion": {

@@ -2491,32 +2491,12 @@
   },
   "ads": {
     "title": "廣告",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp 廣告",
-      "clickToTiktokAds": "Click to TikTok 廣告",
-      "connectAccounts": "連接帳戶",
-      "conversionEvents": "轉換事件",
-      "adsAnalytics": "廣告分析",
-      "reporting": "報表",
-      "ctwa": "CTWA",
-      "googleAds": "Google 廣告",
-      "comingSoon": "即將推出"
-    },
     "connectAccounts": {
-      "title": "管理您的所有廣告帳戶",
-      "description": "追蹤轉換並優化您的 Click to WhatsApp 廣告活動。",
-      "learnMore": "了解更多",
       "connectAdAccount": "連接廣告帳戶",
       "adAccountName": "廣告帳戶名稱",
-      "disconnect": "取消連接",
-      "empty": "尚未連接任何廣告帳戶。",
-      "adAccountsTitle": "Meta 廣告帳戶",
-      "adAccountsDescription": "連接 Facebook 廣告，以載入用於 Click to WhatsApp 活動的廣告帳戶。",
       "adAccountsReconnectBanner": "您的 Meta 廣告帳戶權杖已過期或失去權限。請重新連接 Facebook 廣告，以維持廣告報表功能可用。",
       "adAccountsNotConnected": "尚未連接任何 Meta 廣告帳戶。",
       "adAccountsEmpty": "此 Facebook 廣告連接找不到任何 Meta 廣告帳戶。",
-      "adAccountsNote": "花費與再行銷受眾皆來自這些廣告帳戶。",
-      "reconnectBanner": "重新連接您的 WhatsApp 帳戶，以啟用將轉換事件傳送至 Meta。",
       "reconnect": "重新連接",
       "reconnectSuccess": "WhatsApp 帳戶已重新連接。",
       "selectAccountLabel": "WhatsApp 帳戶",
@@ -2526,22 +2506,9 @@
         "unverified": "權限尚未驗證"
       },
       "table": {
-        "name": "名稱",
-        "phoneNumber": "電話號碼",
-        "wabaId": "WABA ID",
-        "permission": "自動事件"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google 廣告",
-        "tiktok": "TikTok"
+        "wabaId": "WABA ID"
       },
       "connectWhatsapp": {
-        "title": "請先連接您的 WhatsApp 帳戶",
-        "description": "在連接廣告帳戶並建立轉換資料集之前，Click to WhatsApp 轉換追蹤需要先連接一個 WhatsApp 帳戶。",
-        "step1": "在「頻道」中連接您的 WhatsApp Business 帳戶。",
-        "step2": "返回此處以授權 Meta 廣告並選擇您的廣告帳戶。",
-        "step3": "我們將使用您的 WhatsApp Business 帳戶自動建立轉換資料集。",
         "cta": "連接 WhatsApp 帳戶"
       }
     },
@@ -3421,7 +3388,8 @@
       "messageTemplates": "訊息範本",
       "profile": "簡介",
       "usefulLinks": "有用連結",
-      "conversionsApi": "廣告優化"
+      "conversionsApi": "廣告優化",
+      "settings": "設定"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3551,7 +3519,13 @@
       "label": "範本標頭"
     },
     "transferPhoneNumber": "從其他 Whatsapp 供應商轉接電話",
-    "signupSessionExpired": "您的WhatsApp註冊會話已過期。請重新開始連線。"
+    "signupSessionExpired": "您的WhatsApp註冊會話已過期。請重新開始連線。",
+    "capi": {
+      "automaticEvents": {
+        "title": "自動事件",
+        "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
+      }
+    }
   },
   "zalo": {
     "title": "ZaloOA",

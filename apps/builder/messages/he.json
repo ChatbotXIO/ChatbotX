@@ -555,32 +555,12 @@
   },
   "ads": {
     "title": "מודעות",
-    "nav": {
-      "clickToWhatsappAds": "מודעות Click to WhatsApp",
-      "clickToTiktokAds": "מודעות Click to TikTok",
-      "connectAccounts": "חיבור חשבונות",
-      "conversionEvents": "אירועי המרה",
-      "adsAnalytics": "אנליטיקת מודעות",
-      "reporting": "דוחות",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "בקרוב"
-    },
     "connectAccounts": {
-      "title": "ניהול כל חשבונות המודעות שלכם",
-      "description": "עקבו אחר המרות ואפטמו את קמפייני ה-click-to-WhatsApp שלכם.",
-      "learnMore": "למידה נוספת",
       "connectAdAccount": "חיבור חשבון מודעות",
       "adAccountName": "שם חשבון המודעות",
-      "disconnect": "ניתוק",
-      "empty": "לא חובר עדיין חשבון מודעות.",
-      "adAccountsTitle": "חשבונות מודעות של Meta",
-      "adAccountsDescription": "חברו את מודעות Facebook כדי לטעון את חשבונות המודעות המשמשים לקמפייני click-to-WhatsApp.",
       "adAccountsReconnectBanner": "האסימון של חשבון המודעות שלכם ב-Meta פג תוקף או איבד הרשאות. חברו מחדש את מודעות Facebook כדי לשמור על זמינות דוחות המודעות.",
       "adAccountsNotConnected": "לא חוברו עדיין חשבונות מודעות של Meta.",
       "adAccountsEmpty": "לא נמצאו חשבונות מודעות של Meta עבור חיבור מודעות Facebook זה.",
-      "adAccountsNote": "ההוצאה וקהלי הרימרקטינג מגיעים מחשבונות המודעות הללו.",
-      "reconnectBanner": "חברו מחדש את חשבון WhatsApp שלכם כדי לאפשר שליחת אירועי המרה ל-Meta.",
       "reconnect": "חיבור מחדש",
       "reconnectSuccess": "חשבון WhatsApp חובר מחדש.",
       "selectAccountLabel": "חשבון WhatsApp",
@@ -590,22 +570,9 @@
         "unverified": "ההרשאה לא אומתה"
       },
       "table": {
-        "name": "שם",
-        "phoneNumber": "מספר טלפון",
-        "wabaId": "מזהה WABA",
-        "permission": "אירועים אוטומטיים"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "מזהה WABA"
       },
       "connectWhatsapp": {
-        "title": "חברו קודם את חשבון WhatsApp שלכם",
-        "description": "מעקב המרות של Click-to-WhatsApp מחייב חשבון WhatsApp מחובר לפני שתוכלו לקשר חשבונות מודעות וליצור מערכי נתוני המרה.",
-        "step1": "חברו את חשבון WhatsApp Business שלכם בעמוד הערוצים.",
-        "step2": "חזרו לכאן כדי לאשר את Meta Ads ולבחור את חשבון המודעות שלכם.",
-        "step3": "אנחנו ניצור אוטומטית את מערך נתוני ההמרה באמצעות חשבון WhatsApp Business שלכם.",
         "cta": "חיבור חשבון WhatsApp"
       }
     },
@@ -1677,7 +1644,8 @@
       "messageTemplates": "תבניות הודעה",
       "profile": "פרופיל",
       "usefulLinks": "קישורים שימושיים",
-      "conversionsApi": "אופטימיזציית מודעות"
+      "conversionsApi": "אופטימיזציית מודעות",
+      "settings": "הגדרות"
     },
     "accountHealths": {
       "title": "ניהול חשבון WhatsApp",
@@ -1807,7 +1775,13 @@
       "label": "כותרת התבנית"
     },
     "transferPhoneNumber": "העברת מספר טלפון מספק WhatsApp אחר",
-    "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש."
+    "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש.",
+    "capi": {
+      "automaticEvents": {
+        "title": "אירועים אוטומטיים",
+        "description": "שלח אירועי המרה ממספר וואטסאפ זה אל Meta באופן אוטומטי. אם ההרשאה חסרה, חבר מחדש את החשבון כדי להעניק אותה."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

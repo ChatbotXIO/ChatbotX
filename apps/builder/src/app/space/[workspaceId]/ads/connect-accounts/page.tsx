@@ -1,27 +1,16 @@
-import { getIdFromParams } from "@chatbotx.io/utils"
+import { redirect } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
-import { ConnectAccountsView } from "@/features/ads/components/connect-accounts-view"
-import { getConnectAccountsData } from "@/features/ads/queries/connect-accounts"
-import { connectAccountsSearchParamsCache } from "@/features/ads/schemas/connect-accounts"
+import { buildRedirectSearch } from "@/lib/build-redirect-search"
 
-export default async function ConnectAccountsPage(props: {
+// Connect Accounts was split up: the WhatsApp "Automatic Events" table moved
+// into each WhatsApp channel's Ads Optimization tab, and the Facebook ad
+// accounts section moved to Analytics > Ads (/dashboard/ads). Forward the
+// query string so `?account=…` keeps selecting the same WhatsApp account.
+export default async function ConnectAccountsRedirect(props: {
   params: Promise<{ workspaceId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const workspaceId = getIdFromParams(await props.params, "workspaceId")
-  const search = connectAccountsSearchParamsCache.parse(
-    await props.searchParams,
-  )
-  const promises = Promise.all([getConnectAccountsData(workspaceId)])
-
-  return (
-    <Suspense>
-      <ConnectAccountsView
-        promises={promises}
-        selectedAccount={search.account}
-        workspaceId={workspaceId}
-      />
-    </Suspense>
-  )
+  const { workspaceId } = await props.params
+  const search = buildRedirectSearch(await props.searchParams)
+  redirect(`/space/${workspaceId}/dashboard/ads${search}`)
 }

@@ -2340,32 +2340,12 @@
   },
   "ads": {
     "title": "Quảng cáo",
-    "nav": {
-      "clickToWhatsappAds": "Quảng cáo nhấp vào WhatsApp",
-      "clickToTiktokAds": "Quảng cáo nhấp vào TikTok",
-      "connectAccounts": "Kết nối tài khoản",
-      "conversionEvents": "Sự kiện chuyển đổi",
-      "adsAnalytics": "Phân tích quảng cáo",
-      "reporting": "Báo cáo",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Sắp ra mắt"
-    },
     "connectAccounts": {
-      "title": "Quản lý tất cả tài khoản quảng cáo",
-      "description": "Theo dõi chuyển đổi và tối ưu chiến dịch quảng cáo nhấp vào WhatsApp.",
-      "learnMore": "Tìm hiểu thêm",
       "connectAdAccount": "Kết nối tài khoản quảng cáo",
       "adAccountName": "Tên tài khoản quảng cáo",
-      "disconnect": "Ngắt kết nối",
-      "empty": "Chưa có tài khoản quảng cáo nào được kết nối.",
-      "adAccountsTitle": "Tài khoản quảng cáo Meta",
-      "adAccountsDescription": "Kết nối Facebook Ads để tải các tài khoản quảng cáo dùng cho chiến dịch nhấp vào WhatsApp.",
       "adAccountsReconnectBanner": "Token tài khoản quảng cáo Meta đã hết hạn hoặc mất quyền. Hãy kết nối lại Facebook Ads để tiếp tục xem báo cáo quảng cáo.",
       "adAccountsNotConnected": "Chưa có tài khoản quảng cáo Meta nào được kết nối.",
       "adAccountsEmpty": "Không tìm thấy tài khoản quảng cáo Meta nào cho kết nối Facebook Ads này.",
-      "adAccountsNote": "Chi tiêu và đối tượng retarget được lấy từ các tài khoản quảng cáo này.",
-      "reconnectBanner": "Kết nối lại tài khoản WhatsApp để bật gửi sự kiện chuyển đổi về Meta.",
       "reconnect": "Kết nối lại",
       "reconnectSuccess": "Đã kết nối lại tài khoản WhatsApp.",
       "selectAccountLabel": "Tài khoản WhatsApp",
@@ -2375,22 +2355,9 @@
         "unverified": "Chưa xác minh quyền"
       },
       "table": {
-        "name": "Tên",
-        "phoneNumber": "Số điện thoại",
-        "wabaId": "WABA ID",
-        "permission": "Automatic Events"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "WABA ID"
       },
       "connectWhatsapp": {
-        "title": "Kết nối tài khoản WhatsApp trước",
-        "description": "Theo dõi chuyển đổi quảng cáo nhấp vào WhatsApp cần một tài khoản WhatsApp đã kết nối trước khi có thể liên kết tài khoản quảng cáo và tạo tập dữ liệu chuyển đổi.",
-        "step1": "Kết nối tài khoản WhatsApp Business trong mục Kênh.",
-        "step2": "Quay lại đây để cấp quyền cho Meta Ads và chọn tài khoản quảng cáo.",
-        "step3": "Chúng tôi sẽ tự động tạo tập dữ liệu chuyển đổi bằng tài khoản WhatsApp Business của bạn.",
         "cta": "Kết nối tài khoản WhatsApp"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Mẫu tin nhắn",
       "profile": "Hồ sơ",
       "usefulLinks": "Liên kết hữu ích",
-      "conversionsApi": "Tối ưu quảng cáo"
+      "conversionsApi": "Tối ưu quảng cáo",
+      "settings": "Cài đặt"
     },
     "accountHealths": {
       "title": "Quản lý tài khoản WhatsApp của bạn",
@@ -3518,7 +3486,13 @@
       "label": "Tiêu đề mẫu"
     },
     "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
-    "signupSessionExpired": "Phiên đăng ký WhatsApp đã hết hạn. Vui lòng bắt đầu kết nối lại."
+    "signupSessionExpired": "Phiên đăng ký WhatsApp đã hết hạn. Vui lòng bắt đầu kết nối lại.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatic Events",
+        "description": "Tự động gửi sự kiện chuyển đổi từ số WhatsApp này đến Meta. Nếu thiếu quyền, hãy kết nối lại tài khoản để cấp quyền."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

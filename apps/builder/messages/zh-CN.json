@@ -292,32 +292,14 @@
     },
     "connectAccounts": {
       "adAccountName": "广告账号名称",
-      "adAccountsDescription": "连接 Facebook Ads 以加载用于点击 WhatsApp 广告活动的广告账号。",
       "adAccountsEmpty": "此 Facebook Ads 连接中未找到任何 Meta 广告账号。",
       "adAccountsNotConnected": "尚未连接任何 Meta 广告账号。",
-      "adAccountsNote": "广告花费和再营销受众来自这些广告账号。",
       "adAccountsReconnectBanner": "您的 Meta 广告账号令牌已过期或权限已丢失。请重新连接 Facebook Ads 以继续使用广告报表功能。",
-      "adAccountsTitle": "Meta 广告账号",
       "connectAdAccount": "连接广告账号",
       "connectWhatsapp": {
-        "cta": "连接 WhatsApp 账号",
-        "description": "点击 WhatsApp 转化跟踪需要先连接 WhatsApp 账号，之后您才能关联广告账号并创建转化数据集。",
-        "step1": "在“频道”中连接您的 WhatsApp Business 账号。",
-        "step2": "返回此处授权 Meta Ads，并选择您的广告账号。",
-        "step3": "我们会使用您的 WhatsApp Business 账号自动创建转化数据集。",
-        "title": "请先连接您的 WhatsApp 账号"
-      },
-      "description": "跟踪转化并优化您的点击 WhatsApp 广告活动。",
-      "disconnect": "断开连接",
-      "empty": "尚未连接任何广告账号。",
-      "learnMore": "了解更多",
-      "providers": {
-        "googleAds": "Google Ads",
-        "meta": "Meta",
-        "tiktok": "TikTok"
+        "cta": "连接 WhatsApp 账号"
       },
       "reconnect": "重新连接",
-      "reconnectBanner": "重新连接您的 WhatsApp 账号，以启用将转化事件发送到 Meta。",
       "reconnectSuccess": "WhatsApp 账号已重新连接。",
       "selectAccountLabel": "WhatsApp 账号",
       "status": {
@@ -326,12 +308,8 @@
         "unverified": "权限尚未验证"
       },
       "table": {
-        "name": "名称",
-        "permission": "Automatic Events",
-        "phoneNumber": "电话号码",
         "wabaId": "WABA ID"
-      },
-      "title": "管理您的所有广告账号"
+      }
     },
     "conversionEvents": {
       "dealWon": "商机成交",
@@ -397,17 +375,6 @@
         "tagApplied": "已为联系人添加标签",
         "templateSent": "已发送符合条件的模板消息"
       }
-    },
-    "nav": {
-      "adsAnalytics": "广告分析",
-      "clickToTiktokAds": "点击 TikTok 广告",
-      "clickToWhatsappAds": "点击 WhatsApp 广告",
-      "comingSoon": "即将推出",
-      "connectAccounts": "连接账号",
-      "conversionEvents": "转化事件",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "reporting": "报表"
     },
     "title": "广告"
   },
@@ -4658,7 +4625,8 @@
       "messageTemplates": "消息范本",
       "profile": "简介",
       "usefulLinks": "有用链接",
-      "conversionsApi": "广告优化"
+      "conversionsApi": "广告优化",
+      "settings": "设置"
     },
     "templateFooter": {
       "label": "范本页脚"
@@ -4666,7 +4634,13 @@
     "templateHeader": {
       "label": "范本标头"
     },
-    "transferPhoneNumber": "从其他 Whatsapp 供应商转接电话"
+    "transferPhoneNumber": "从其他 Whatsapp 供应商转接电话",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatic Events",
+        "description": "自动将此 WhatsApp 号码的转化事件发送到 Meta。如果缺少权限,请重新连接账户以授予权限。"
+      }
+    }
   },
   "workspace": {
     "deletion": {

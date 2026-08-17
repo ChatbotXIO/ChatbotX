@@ -64,9 +64,13 @@ export default async function WhatsappCapiPage(props: {
       hasManualCapiAccessToken={Boolean(resolved.capiAccessToken)}
       integrationWhatsapp={{
         id: resolved.id,
+        name: resolved.name,
+        displayPhoneNumber: resolved.displayPhoneNumber,
+        wabaId: resolved.wabaId,
         hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
       }}
+      whatsappCredentialPublic={whatsappCredential?.publicConfig ?? null}
     />
   )
 }

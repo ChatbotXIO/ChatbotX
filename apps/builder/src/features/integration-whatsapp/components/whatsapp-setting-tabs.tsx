@@ -16,8 +16,8 @@ const TAB_CONFIGS: readonly TabConfig[] = [
     translationKey: "whatsapp.tabs.usefulLinks",
   },
   {
-    value: "profile",
-    translationKey: "whatsapp.tabs.profile",
+    value: "settings",
+    translationKey: "whatsapp.tabs.settings",
   },
   {
     value: "message-templates",
@@ -26,10 +26,6 @@ const TAB_CONFIGS: readonly TabConfig[] = [
   {
     value: "flows",
     translationKey: "whatsapp.tabs.flows",
-  },
-  {
-    value: "automation",
-    translationKey: "whatsapp.tabs.automation",
   },
   {
     value: "ecommerce",

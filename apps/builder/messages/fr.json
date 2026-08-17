@@ -2266,32 +2266,12 @@
   },
   "ads": {
     "title": "Annonces",
-    "nav": {
-      "clickToWhatsappAds": "Annonces Click to WhatsApp",
-      "clickToTiktokAds": "Annonces Click to TikTok",
-      "connectAccounts": "Connecter des comptes",
-      "conversionEvents": "Événements de conversion",
-      "adsAnalytics": "Analyse des annonces",
-      "reporting": "Rapports",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Bientôt disponible"
-    },
     "connectAccounts": {
-      "title": "Gérez tous vos comptes publicitaires",
-      "description": "Suivez les conversions et optimisez vos campagnes publicitaires Click to WhatsApp.",
-      "learnMore": "En savoir plus",
       "connectAdAccount": "Connecter un compte publicitaire",
       "adAccountName": "Nom du compte publicitaire",
-      "disconnect": "Déconnecter",
-      "empty": "Aucun compte publicitaire connecté pour le moment.",
-      "adAccountsTitle": "Comptes publicitaires Meta",
-      "adAccountsDescription": "Connectez Facebook Ads pour charger les comptes publicitaires utilisés pour les campagnes Click to WhatsApp.",
       "adAccountsReconnectBanner": "Le jeton de votre compte publicitaire Meta a expiré ou a perdu ses autorisations. Reconnectez Facebook Ads pour continuer à bénéficier des rapports publicitaires.",
       "adAccountsNotConnected": "Aucun compte publicitaire Meta n’est encore connecté.",
       "adAccountsEmpty": "Aucun compte publicitaire Meta n’a été trouvé pour cette connexion Facebook Ads.",
-      "adAccountsNote": "Les dépenses et les audiences de reciblage proviennent de ces comptes publicitaires.",
-      "reconnectBanner": "Reconnectez votre compte WhatsApp pour permettre l’envoi des événements de conversion à Meta.",
       "reconnect": "Reconnecter",
       "reconnectSuccess": "Compte WhatsApp reconnecté.",
       "selectAccountLabel": "Compte WhatsApp",
@@ -2301,22 +2281,9 @@
         "unverified": "Autorisation non vérifiée"
       },
       "table": {
-        "name": "Nom",
-        "phoneNumber": "Numéro de téléphone",
-        "wabaId": "ID WABA",
-        "permission": "Événements automatiques"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "ID WABA"
       },
       "connectWhatsapp": {
-        "title": "Connectez d’abord votre compte WhatsApp",
-        "description": "Le suivi des conversions Click to WhatsApp nécessite un compte WhatsApp connecté avant de pouvoir associer des comptes publicitaires et créer des ensembles de données de conversion.",
-        "step1": "Connectez votre compte WhatsApp Business dans Canaux.",
-        "step2": "Revenez ici pour autoriser Meta Ads et sélectionner votre compte publicitaire.",
-        "step3": "Nous créerons automatiquement l’ensemble de données de conversion à partir de votre compte WhatsApp Business.",
         "cta": "Connecter le compte WhatsApp"
       }
     },
@@ -3388,7 +3355,8 @@
       "messageTemplates": "Modèles de message",
       "profile": "Profil",
       "usefulLinks": "Liens utiles",
-      "conversionsApi": "Optimisation des publicités"
+      "conversionsApi": "Optimisation des publicités",
+      "settings": "Paramètres"
     },
     "accountHealths": {
       "title": "Gérer votre compte WhatsApp",
@@ -3518,7 +3486,13 @@
       "label": "En-tête du modèle"
     },
     "transferPhoneNumber": "Transférer le téléphone depuis un autre fournisseur WhatsApp",
-    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion."
+    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Événements automatiques",
+        "description": "Envoyez automatiquement les événements de conversion de ce numéro WhatsApp vers Meta. Si l’autorisation manque, reconnectez le compte pour l’accorder."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
