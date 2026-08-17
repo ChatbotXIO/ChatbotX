@@ -5,8 +5,9 @@
     // tsbuildinfo. Declaring it as an output lets turbo restore it on a cache
     // miss, which is the only way `incremental` does anything in CI (a fresh
     // runner otherwise starts every check-types from cold — ~30s here).
+    // `dependsOn` is deliberately absent — see the root turbo.json. `outputs`
+    // is orthogonal to ordering and still governs the tsbuildinfo restore.
     "check-types": {
-      "dependsOn": ["^check-types"],
       "outputs": ["tsconfig.tsbuildinfo"]
     }
   }
