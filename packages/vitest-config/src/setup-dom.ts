@@ -147,6 +147,36 @@ export function setViewportWidth(width: number): void {
   window.dispatchEvent(new Event("resize"))
 }
 
+/**
+ * jsdom has no `ResizeObserver`. Anything that measures its own box — the
+ * resizable panel group behind the inbox, chart containers — throws on mount
+ * without it. Observation is a no-op: jsdom reports zero-size boxes anyway, so
+ * a callback would carry no information. The constructor existing is what these
+ * components actually need.
+ */
+class NoopResizeObserver implements ResizeObserver {
+  disconnect(): void {
+    // no-op
+  }
+  observe(): void {
+    // no-op
+  }
+  unobserve(): void {
+    // no-op
+  }
+}
+
+if (
+  typeof window !== "undefined" &&
+  typeof window.ResizeObserver !== "function"
+) {
+  Object.defineProperty(window, "ResizeObserver", {
+    configurable: true,
+    writable: true,
+    value: NoopResizeObserver,
+  })
+}
+
 if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
