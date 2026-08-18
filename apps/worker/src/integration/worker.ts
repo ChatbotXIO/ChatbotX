@@ -3,6 +3,7 @@ import { conversationService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply } from "@chatbotx.io/sdk"
 import {
+  closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
   IntegrationJobAction,
@@ -344,7 +345,11 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
-      await Promise.all([worker.close(), closeChatQueueEvents()])
+      await Promise.all([
+        worker.close(),
+        closeChatQueueEvents(),
+        closeIntegrationQueueEvents(),
+      ])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[IntegrationWorker] Error during shutdown")

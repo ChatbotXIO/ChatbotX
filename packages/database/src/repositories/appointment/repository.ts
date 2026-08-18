@@ -163,6 +163,26 @@ export const appointmentRepository = {
     })
   },
 
+  async findLatestForContact(
+    input: { workspaceId: string; contactId: string },
+    tx: DatabaseClient = db,
+  ) {
+    return await tx.query.appointmentModel.findFirst({
+      where: {
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        status: "scheduled",
+        deletedAt: { isNull: true },
+      },
+      orderBy: { createdAt: "desc" },
+      with: {
+        calendar: true,
+        contact: true,
+        conversation: true,
+      },
+    })
+  },
+
   async create(input: CreateAppointmentInput, tx: DatabaseClient = db) {
     const [row] = await tx
       .insert(appointmentModel)

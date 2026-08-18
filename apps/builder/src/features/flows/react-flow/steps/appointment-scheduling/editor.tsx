@@ -1,5 +1,6 @@
 "use client"
 
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import {
   type AppointmentSchedulingStepSchema,
   appointmentSchedulingModes,
@@ -28,6 +29,51 @@ import { useAppointmentCalendarSelectOptions } from "@/features/appointment-cale
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 import { useParentStepCommit } from "../base/use-parent-step-commit"
+
+const datetimeFieldSelectProps: {
+  allowCreate: true
+  createDefaultType: CustomFieldType
+  customFieldTypes: CustomFieldType[]
+} = {
+  allowCreate: true,
+  createDefaultType: "datetime",
+  customFieldTypes: ["date", "datetime"],
+}
+
+type TranslationKey = Parameters<ReturnType<typeof useTranslations>>[0]
+
+function DateTimeFieldSelect({
+  labelKey,
+  name,
+}: {
+  labelKey: TranslationKey
+  name: "dateTimeFieldId" | "startDateFieldId" | "endDateFieldId"
+}) {
+  const t = useTranslations()
+  return (
+    <CustomFieldSelect
+      {...datetimeFieldSelectProps}
+      label={t(labelKey)}
+      name={name}
+      required
+    />
+  )
+}
+
+function DateRangeFields({
+  endLabelKey,
+  startLabelKey,
+}: {
+  endLabelKey: TranslationKey
+  startLabelKey: TranslationKey
+}) {
+  return (
+    <>
+      <DateTimeFieldSelect labelKey={startLabelKey} name="startDateFieldId" />
+      <DateTimeFieldSelect labelKey={endLabelKey} name="endDateFieldId" />
+    </>
+  )
+}
 
 export function AppointmentSchedulingStepEditor({
   parentName,
@@ -112,37 +158,18 @@ function AppointmentSchedulingDialog({ parentName }: { parentName: string }) {
               placeholder={t("actions.pleaseSelect")}
               required
             />
-            {mode === appointmentSchedulingModes.enum.book ? (
-              <CustomFieldSelect
-                allowCreate
-                createDefaultType="datetime"
-                customFieldTypes={["date", "datetime"]}
-                label={t("appointmentScheduling.fields.dateTimeFieldId")}
+            {mode === appointmentSchedulingModes.enum.bookFromCustomField ? (
+              <DateTimeFieldSelect
+                labelKey="appointmentScheduling.fields.dateTimeFieldIdSource"
                 name="dateTimeFieldId"
-                required
               />
             ) : null}
-            {mode === appointmentSchedulingModes.enum.checkAvailability ? (
+            {mode ===
+            appointmentSchedulingModes.enum.checkAvailabilityFromCustomField ? (
               <>
-                <CustomFieldSelect
-                  allowCreate
-                  createDefaultType="datetime"
-                  customFieldTypes={["date", "datetime"]}
-                  label={t(
-                    "appointmentScheduling.fields.startDateFieldIdSelected",
-                  )}
-                  name="startDateFieldId"
-                  required
-                />
-                <CustomFieldSelect
-                  allowCreate
-                  createDefaultType="datetime"
-                  customFieldTypes={["date", "datetime"]}
-                  label={t(
-                    "appointmentScheduling.fields.endDateFieldIdSelected",
-                  )}
-                  name="endDateFieldId"
-                  required
+                <DateRangeFields
+                  endLabelKey="appointmentScheduling.fields.endDateFieldId"
+                  startLabelKey="appointmentScheduling.fields.startDateFieldId"
                 />
                 <SwitchField
                   label={t("appointmentScheduling.fields.resultUsedByAI")}
@@ -157,6 +184,18 @@ function AppointmentSchedulingDialog({ parentName }: { parentName: string }) {
                   required
                 />
               </>
+            ) : null}
+            {mode === appointmentSchedulingModes.enum.book ? (
+              <DateTimeFieldSelect
+                labelKey="appointmentScheduling.fields.dateTimeFieldId"
+                name="dateTimeFieldId"
+              />
+            ) : null}
+            {mode === appointmentSchedulingModes.enum.checkAvailability ? (
+              <DateRangeFields
+                endLabelKey="appointmentScheduling.fields.endDateFieldIdSelected"
+                startLabelKey="appointmentScheduling.fields.startDateFieldIdSelected"
+              />
             ) : null}
             <div className="flex justify-end gap-2">
               <Button

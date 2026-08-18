@@ -12,6 +12,7 @@ export const contactAppointmentResource = z.object({
   endAt: z.date(),
   inviteeTimezone: z.string(),
   status: appointmentStatuses,
+  scheduleUrl: z.string(),
 })
 
 export type ContactAppointmentResource = z.infer<

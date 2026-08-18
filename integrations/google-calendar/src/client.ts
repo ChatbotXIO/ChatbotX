@@ -3,7 +3,10 @@ import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
 import type { GoogleCalendarConfig } from "./schemas"
 
-export const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar"
+export const GOOGLE_CALENDAR_SCOPES = [
+  "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events",
+]
 
 export function getClient(props: GoogleCalendarConfig | Oauth2AuthValue) {
   const client = new OAuth2Client(
@@ -29,7 +32,7 @@ export function generateAuthUrl(props: GoogleCalendarConfig): string {
   return getClient(props).generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
-    scope: [GOOGLE_CALENDAR_SCOPE],
+    scope: GOOGLE_CALENDAR_SCOPES,
     state: btoa(JSON.stringify(props.stateParams)),
   })
 }

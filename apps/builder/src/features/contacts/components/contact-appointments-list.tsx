@@ -32,9 +32,12 @@ export const ContactAppointmentsList = ({
   return (
     <div className="grid gap-2 px-2 text-sm">
       {appointments.map((appointment) => (
-        <div
-          className="flex items-start gap-2 rounded-md border p-2"
+        <a
+          className="flex items-start gap-2 rounded-md border p-2 transition-colors hover:bg-muted"
+          href={appointment.scheduleUrl}
           key={appointment.id}
+          rel="noopener noreferrer"
+          target="_blank"
         >
           <CalendarClockIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
@@ -55,7 +58,7 @@ export const ContactAppointmentsList = ({
           >
             {t(statusLabelKey[appointment.status])}
           </Badge>
-        </div>
+        </a>
       ))}
     </div>
   )

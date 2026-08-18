@@ -318,15 +318,18 @@
     "description": "Skapa och hantera din tidsbokning.",
     "title": "Tidsbokning",
     "flowModes": {
-      "book": "Boka tid",
-      "cancel": "Avboka tid",
-      "checkAvailability": "Kontrollera tillgänglighet"
+      "bookFromCustomField": "Boka tid",
+      "checkAvailabilityFromCustomField": "Kontrollera tillgänglighet",
+      "book": "Datum- och tidsväljare",
+      "checkAvailability": "Datumintervallväljare",
+      "cancel": "Avboka tid"
     },
     "fields": {
       "mode": "Läge",
       "dateTimeFieldId": "Datum och tid för bokning",
-      "startDateFieldId": "Startdatum",
-      "endDateFieldId": "Slutdatum",
+      "dateTimeFieldIdSource": "Datum-/tidsfält",
+      "startDateFieldId": "Startdatumfält",
+      "endDateFieldId": "Slutdatumfält",
       "resultUsedByAI": "Använd resultat för AI",
       "outputCustomFieldId": "Spara resultat i",
       "startDateFieldIdSelected": "Spara valt startdatum till",
@@ -2647,6 +2650,9 @@
     "bookingDate": {
       "label": "Bokningsdatum"
     },
+    "bookingLink": {
+      "label": "Bokningslänk"
+    },
     "n8nEvents": {
       "description": "Lägg till ett eller flera händelsenamn. När n8n kopplar en webhook till en av dessa händelser skickas data till den när detta steg körs.",
       "label": "Händelser",
@@ -4855,6 +4861,7 @@
       "endDate": "Slutdatum",
       "specificDate": "Datum",
       "maxAppointmentsPerUser": "Max antal bokningar per användare",
+      "maxAppointmentsUnlimited": "Obegränsat",
       "dailyLimitEnabled": "Daglig gräns",
       "maxPerDay": "Max per dag",
       "allowGroupMeeting": "Tillåt gruppmöte",

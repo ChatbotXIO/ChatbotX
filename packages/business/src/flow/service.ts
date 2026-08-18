@@ -88,6 +88,76 @@ class FlowService extends BaseService {
     return newFlowId
   }
 
+  /**
+   * Inserts a flow, its analytics session, a draft version, and a published
+   * version — all in the caller's transaction — then points
+   * `flowModel.currentVersionId` at the published version. Second parallel
+   * implementation of the "insert version isLatest:true + update
+   * currentVersionId" logic in `publish-flow-action.ts` (builder layer can't
+   * share it: that action doesn't accept an external `tx`). Callers must
+   * invalidate `flowVersionService.invalidateList(flowId)` themselves after
+   * their transaction commits.
+   */
+  async createPublishedDefault(
+    tx: DatabaseClient,
+    input: {
+      name: string
+      workspaceId: string
+      folderId?: string | null
+      startNodeId: string
+      nodes: FlowVersionModel["nodes"]
+      edges: FlowVersionModel["edges"]
+    },
+  ): Promise<{
+    flowId: string
+    draftVersionId: string
+    publishedVersionId: string
+  }> {
+    const flowId = createId()
+    const draftVersionId = createId()
+    const publishedVersionId = createId()
+
+    await tx.insert(flowModel).values({
+      id: flowId,
+      name: input.name,
+      active: true,
+      enableInInbox: false,
+      workspaceId: input.workspaceId,
+      folderId: input.folderId ?? null,
+      currentVersionId: publishedVersionId,
+      draftVersionId,
+    })
+    await tx.insert(flowAnalyticsSessionModel).values({
+      id: createId(),
+      flowId,
+      workspaceId: input.workspaceId,
+    })
+    await tx.insert(flowVersionModel).values([
+      {
+        id: draftVersionId,
+        workspaceId: input.workspaceId,
+        flowId,
+        nodes: input.nodes,
+        edges: input.edges,
+        isDraft: true,
+        isLatest: false,
+        startNodeId: input.startNodeId,
+      },
+      {
+        id: publishedVersionId,
+        workspaceId: input.workspaceId,
+        flowId,
+        nodes: input.nodes,
+        edges: input.edges,
+        isDraft: false,
+        isLatest: true,
+        startNodeId: input.startNodeId,
+      },
+    ])
+
+    return { flowId, draftVersionId, publishedVersionId }
+  }
+
   duplicate(input: { workspaceId: string; id: string }): Promise<string> {
     return db.transaction(async (tx) => {
       const flow = await this.findBy(input, tx)

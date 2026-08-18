@@ -109,6 +109,12 @@ vi.mock("../src/contact-inbox/service", () => ({
   },
 }))
 
+vi.mock("../src/platform/settings", () => ({
+  resolveTenantSettings: vi.fn(async () => ({
+    appUrl: "https://app.example.test",
+  })),
+}))
+
 const { appointmentService } = await import("../src/appointment/service")
 
 const futureAppointment = {
@@ -345,6 +351,47 @@ describe("appointmentService.cancelAppointmentByToken", () => {
   })
 })
 
+describe("appointmentService.cancelAppointment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.transaction.mockImplementation(
+      async (fn: (tx: unknown) => unknown) => await fn("tx"),
+    )
+    mocks.listFutureScheduledForContact.mockResolvedValue([futureAppointment])
+    mocks.cancelScheduled.mockResolvedValue({
+      ...futureAppointment,
+      status: "cancelled",
+      cancelledAt: new Date("2099-01-01T09:00:00.000Z"),
+    })
+    mocks.markCancelledByAppointment.mockResolvedValue([])
+    mocks.defaultQueueRemove.mockResolvedValue(0)
+  })
+
+  test("enqueues the cancellation flow with the cancelled appointmentId", async () => {
+    await expect(
+      appointmentService.cancelAppointment({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        contactId: "contact-1",
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+      }),
+    ).resolves.toMatchObject({ id: "appointment-1", status: "cancelled" })
+
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: {
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        flowId: "flow-1",
+        metadata: undefined,
+        appointmentId: "appointment-1",
+        origin: "channel",
+      },
+    })
+  })
+})
+
 describe("appointmentService.cancelAppointmentById", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -520,6 +567,7 @@ describe("appointmentService.completeWebviewBooking", () => {
       locationDetail: null,
       externalConnectionId: null,
       confirmationFlowId: "confirmation-flow-1",
+      maxAppointmentsPerUser: 1,
     })
     mocks.prepareAvailabilityContext.mockResolvedValue({
       calendarFingerprint: {
@@ -546,7 +594,7 @@ describe("appointmentService.completeWebviewBooking", () => {
     mocks.integrationQueueAdd.mockResolvedValue(undefined)
   })
 
-  test("books the slot, sends the default confirmation, then enqueues the configured confirmation flow", async () => {
+  test("books the slot and enqueues the configured confirmation flow, without a duplicate chat confirmation", async () => {
     await expect(
       appointmentService.completeWebviewBooking({
         tokenPayload: {
@@ -570,25 +618,7 @@ describe("appointmentService.completeWebviewBooking", () => {
       cancelUrl: expect.stringContaining("/booking/cancel?token="),
     })
 
-    expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
-      type: "sendChatMessage",
-      data: expect.objectContaining({
-        conversation,
-        contactInbox,
-        text: [
-          "Appointment Confirmation - Demo Calendar",
-          "",
-          "Date: 01/Jan/2099\n10:00",
-        ].join("\n"),
-        quickReplies: [
-          expect.objectContaining({
-            buttonType: "url",
-            label: "More Information",
-            url: expect.stringContaining("/booking/schedule?token="),
-          }),
-        ],
-      }),
-    })
+    expect(mocks.chatQueueAdd).not.toHaveBeenCalled()
     expect(mocks.txExecute).toHaveBeenCalledTimes(2)
     expect(mocks.hasExternalBusyConflictForSlot).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -604,6 +634,7 @@ describe("appointmentService.completeWebviewBooking", () => {
         conversationId: "conversation-1",
         contactInboxId: "contact-inbox-1",
         flowId: "confirmation-flow-1",
+        appointmentId: "appointment-1",
       }),
     })
     expect(
@@ -650,6 +681,49 @@ describe("appointmentService.completeWebviewBooking", () => {
     expect(mocks.create).not.toHaveBeenCalled()
     expect(mocks.chatQueueAdd).not.toHaveBeenCalled()
     expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("books past the default cap when maxAppointmentsPerUser is null (unlimited)", async () => {
+    mocks.findCalendarByOrFail.mockResolvedValue({
+      id: "calendar-1",
+      name: "Demo Calendar",
+      active: true,
+      timezone: "UTC",
+      updatedAt: new Date("2099-01-01T00:00:00.000Z"),
+      durationMinutes: 30,
+      locationType: "onlineMeeting",
+      locationDetail: null,
+      externalConnectionId: null,
+      confirmationFlowId: "confirmation-flow-1",
+      maxAppointmentsPerUser: null,
+    })
+    mocks.listFutureScheduledForContact.mockResolvedValueOnce([
+      futureAppointment,
+    ])
+
+    await expect(
+      appointmentService.completeWebviewBooking({
+        tokenPayload: {
+          workspaceId: "workspace-1",
+          calendarId: "calendar-1",
+          contactId: "contact-1",
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          channel: "messenger",
+          flowId: "flow-1",
+          flowVersionId: "flow-version-1",
+          stepId: "step-1",
+          expiresAt: Date.now() + 60_000,
+        },
+        selectedStartAt: new Date("2099-01-01T10:00:00.000Z"),
+        inviteeTimezone: "UTC",
+        appUrl: "https://app.example.test",
+      }),
+    ).resolves.toMatchObject({
+      scheduleUrl: expect.stringContaining("/booking/schedule?token="),
+    })
+
+    expect(mocks.create).toHaveBeenCalled()
   })
 
   test("throws slot unavailable when external slot revalidation conflicts", async () => {
@@ -708,102 +782,5 @@ describe("appointmentService.completeWebviewBooking", () => {
 
     expect(mocks.create).not.toHaveBeenCalled()
     expect(mocks.chatQueueAdd).not.toHaveBeenCalled()
-  })
-
-  test("keeps the fixed confirmation body for Vietnamese contacts", async () => {
-    const vietnameseAppointment = {
-      ...fullAppointment,
-      contact: {
-        ...fullAppointment.contact,
-        language: "vi",
-      },
-    }
-    mocks.findBy
-      .mockResolvedValueOnce(vietnameseAppointment)
-      .mockResolvedValueOnce(vietnameseAppointment)
-
-    await appointmentService.completeWebviewBooking({
-      tokenPayload: {
-        workspaceId: "workspace-1",
-        calendarId: "calendar-1",
-        contactId: "contact-1",
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        channel: "messenger",
-        flowId: "flow-1",
-        flowVersionId: "flow-version-1",
-        stepId: "step-1",
-        expiresAt: Date.now() + 60_000,
-      },
-      selectedStartAt: new Date("2099-01-01T10:00:00.000Z"),
-      inviteeTimezone: "UTC",
-      appUrl: "https://app.example.test",
-    })
-
-    expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
-      type: "sendChatMessage",
-      data: expect.objectContaining({
-        text: [
-          "Appointment Confirmation - Demo Calendar",
-          "",
-          "Date: 01/Jan/2099\n10:00",
-        ].join("\n"),
-        quickReplies: [
-          expect.objectContaining({
-            buttonType: "url",
-            label: "Xem thêm",
-          }),
-        ],
-      }),
-    })
-  })
-
-  test("ignores custom confirmation message in the booking confirmation body", async () => {
-    const customMessageAppointment = {
-      ...fullAppointment,
-      calendar: {
-        ...fullAppointment.calendar,
-        confirmationMessage: "  Cuộc hẹn sẽ bắt đầu sau 10 phút  ",
-      },
-    }
-    mocks.findBy
-      .mockResolvedValueOnce(customMessageAppointment)
-      .mockResolvedValueOnce(customMessageAppointment)
-
-    await appointmentService.completeWebviewBooking({
-      tokenPayload: {
-        workspaceId: "workspace-1",
-        calendarId: "calendar-1",
-        contactId: "contact-1",
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        channel: "messenger",
-        flowId: "flow-1",
-        flowVersionId: "flow-version-1",
-        stepId: "step-1",
-        expiresAt: Date.now() + 60_000,
-      },
-      selectedStartAt: new Date("2099-01-01T10:00:00.000Z"),
-      inviteeTimezone: "UTC",
-      appUrl: "https://app.example.test",
-    })
-
-    expect(mocks.chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
-      type: "sendChatMessage",
-      data: expect.objectContaining({
-        text: [
-          "Appointment Confirmation - Demo Calendar",
-          "",
-          "Date: 01/Jan/2099\n10:00",
-        ].join("\n"),
-        quickReplies: [
-          expect.objectContaining({
-            buttonType: "url",
-            label: "More Information",
-            url: expect.stringContaining("/booking/schedule?token="),
-          }),
-        ],
-      }),
-    })
   })
 })

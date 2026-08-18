@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Data de agendamento"
     },
+    "bookingLink": {
+      "label": "Link de agendamento"
+    },
     "n8nEvents": {
       "label": "Eventos",
       "placeholder": "Digite o nome de um evento e pressione Enter",
@@ -4131,15 +4134,18 @@
     "title": "Agendamento de compromissos",
     "description": "Crie e gerencie seus agendamentos de compromissos.",
     "flowModes": {
-      "book": "Agendar compromisso",
-      "cancel": "Cancelar compromisso",
-      "checkAvailability": "Verificar disponibilidade"
+      "bookFromCustomField": "Agendar compromisso",
+      "checkAvailabilityFromCustomField": "Verificar disponibilidade",
+      "book": "Seletor de data e hora",
+      "checkAvailability": "Seletor de intervalo de datas",
+      "cancel": "Cancelar compromisso"
     },
     "fields": {
       "mode": "Modo",
       "dateTimeFieldId": "Salvar data selecionada em",
-      "startDateFieldId": "Data de início",
-      "endDateFieldId": "Data de término",
+      "dateTimeFieldIdSource": "Campo de data/hora",
+      "startDateFieldId": "Campo de data de início",
+      "endDateFieldId": "Campo de data de término",
       "resultUsedByAI": "Usar resultado para IA",
       "outputCustomFieldId": "Salvar resposta em um campo personalizado",
       "startDateFieldIdSelected": "Salvar data de início selecionada em",
@@ -4855,6 +4861,7 @@
       "endDate": "Data de término",
       "specificDate": "Data",
       "maxAppointmentsPerUser": "Máximo de compromissos por usuário",
+      "maxAppointmentsUnlimited": "Ilimitado",
       "dailyLimitEnabled": "Limite diário",
       "maxPerDay": "Máximo por dia",
       "allowGroupMeeting": "Permitir reunião em grupo",

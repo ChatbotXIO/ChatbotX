@@ -11,7 +11,7 @@ describe("appointmentScheduling step registration", () => {
   test("defines the type and default state tuple", () => {
     const defaults = appointmentSchedulingStepDefaultFn()
     expect(stepTypes.enum.appointmentScheduling).toBe("appointmentScheduling")
-    expect(defaults.mode).toBe("book")
+    expect(defaults.mode).toBe("bookFromCustomField")
     expect(defaults.states).toHaveLength(2)
   })
 

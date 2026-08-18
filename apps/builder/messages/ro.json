@@ -2723,6 +2723,9 @@
     "bookingDate": {
       "label": "Data programării"
     },
+    "bookingLink": {
+      "label": "Link de programare"
+    },
     "n8nEvents": {
       "label": "Evenimente",
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
@@ -3843,15 +3846,18 @@
     "description": "Creează și gestionează programările tale.",
     "title": "Programări",
     "flowModes": {
-      "book": "Programează o întâlnire",
-      "cancel": "Anulează întâlnirea",
-      "checkAvailability": "Verifică disponibilitatea"
+      "bookFromCustomField": "Programează o întâlnire",
+      "checkAvailabilityFromCustomField": "Verifică disponibilitatea",
+      "book": "Selector dată și oră",
+      "checkAvailability": "Selector interval de date",
+      "cancel": "Anulează întâlnirea"
     },
     "fields": {
       "mode": "Mod",
       "dateTimeFieldId": "Data și ora întâlnirii",
-      "startDateFieldId": "Data de început",
-      "endDateFieldId": "Data de sfârșit",
+      "dateTimeFieldIdSource": "Câmp dată/oră",
+      "startDateFieldId": "Câmp dată de început",
+      "endDateFieldId": "Câmp dată de sfârșit",
       "resultUsedByAI": "Folosește rezultatul pentru AI",
       "outputCustomFieldId": "Salvează rezultatul în",
       "startDateFieldIdSelected": "Salvează data de început selectată în",
@@ -4855,6 +4861,7 @@
       "endDate": "Data de sfârșit",
       "specificDate": "Dată",
       "maxAppointmentsPerUser": "Numărul maxim de programări per utilizator",
+      "maxAppointmentsUnlimited": "Nelimitat",
       "dailyLimitEnabled": "Limită zilnică",
       "maxPerDay": "Maxim pe zi",
       "allowGroupMeeting": "Permite întâlniri de grup",

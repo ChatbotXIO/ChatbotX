@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Date de réservation"
     },
+    "bookingLink": {
+      "label": "Lien de réservation"
+    },
     "n8nEvents": {
       "label": "Événements",
       "placeholder": "Saisissez le nom d’un événement et appuyez sur Entrée",
@@ -4131,15 +4134,18 @@
     "title": "Planification des rendez-vous",
     "description": "Créez et gérez la planification de vos rendez-vous.",
     "flowModes": {
-      "book": "Réserver un rendez-vous",
-      "cancel": "Annuler un rendez-vous",
-      "checkAvailability": "Vérifier les disponibilités"
+      "bookFromCustomField": "Réserver un rendez-vous",
+      "checkAvailabilityFromCustomField": "Vérifier les disponibilités",
+      "book": "Sélecteur de date et d’heure",
+      "checkAvailability": "Sélecteur de plage de dates",
+      "cancel": "Annuler un rendez-vous"
     },
     "fields": {
       "mode": "Mode",
       "dateTimeFieldId": "Enregistrer la date sélectionnée dans",
-      "startDateFieldId": "Date de début",
-      "endDateFieldId": "Date de fin",
+      "dateTimeFieldIdSource": "Champ date/heure",
+      "startDateFieldId": "Champ date de début",
+      "endDateFieldId": "Champ date de fin",
       "resultUsedByAI": "Utiliser le résultat pour l’IA",
       "outputCustomFieldId": "Enregistrer la réponse dans un champ personnalisé",
       "startDateFieldIdSelected": "Enregistrer la date de début sélectionnée dans",
@@ -4855,6 +4861,7 @@
       "endDate": "Date de fin",
       "specificDate": "Date",
       "maxAppointmentsPerUser": "Nombre maximum de rendez-vous par utilisateur",
+      "maxAppointmentsUnlimited": "Illimité",
       "dailyLimitEnabled": "Limite quotidienne",
       "maxPerDay": "Maximum par jour",
       "allowGroupMeeting": "Autoriser les réunions de groupe",

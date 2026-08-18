@@ -2050,6 +2050,9 @@
     "bookingDate": {
       "label": "Fecha de reserva"
     },
+    "bookingLink": {
+      "label": "Enlace de reserva"
+    },
     "n8nEvents": {
       "label": "Eventos",
       "placeholder": "Escribe el nombre de un evento y pulsa Enter",
@@ -4131,15 +4134,18 @@
     "title": "Programación de citas",
     "description": "Crea y gestiona tu programación de citas.",
     "flowModes": {
-      "book": "Reservar cita",
-      "cancel": "Cancelar cita",
-      "checkAvailability": "Comprobar disponibilidad"
+      "bookFromCustomField": "Reservar cita",
+      "checkAvailabilityFromCustomField": "Comprobar disponibilidad",
+      "book": "Selector de fecha y hora",
+      "checkAvailability": "Selector de rango de fechas",
+      "cancel": "Cancelar cita"
     },
     "fields": {
       "mode": "Modo",
       "dateTimeFieldId": "Guardar fecha seleccionada en",
-      "startDateFieldId": "Fecha de inicio",
-      "endDateFieldId": "Fecha de fin",
+      "dateTimeFieldIdSource": "Campo de fecha/hora",
+      "startDateFieldId": "Campo de fecha de inicio",
+      "endDateFieldId": "Campo de fecha de fin",
       "resultUsedByAI": "Usar resultado para IA",
       "outputCustomFieldId": "Guardar respuesta en un campo personalizado",
       "startDateFieldIdSelected": "Guardar fecha de inicio seleccionada en",
@@ -4855,6 +4861,7 @@
       "endDate": "Fecha de fin",
       "specificDate": "Fecha",
       "maxAppointmentsPerUser": "Máximo de citas por usuario",
+      "maxAppointmentsUnlimited": "Ilimitado",
       "dailyLimitEnabled": "Límite diario",
       "maxPerDay": "Máximo por día",
       "allowGroupMeeting": "Permitir reunión grupal",

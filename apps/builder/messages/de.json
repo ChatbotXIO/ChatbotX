@@ -1976,6 +1976,9 @@
     "bookingDate": {
       "label": "Buchungsdatum"
     },
+    "bookingLink": {
+      "label": "Buchungslink"
+    },
     "n8nEvents": {
       "label": "Ereignisse",
       "placeholder": "Ereignisnamen eingeben und Enter drücken",
@@ -4131,15 +4134,18 @@
     "title": "Terminplanung",
     "description": "Erstellen und verwalten Sie Ihre Terminplanung.",
     "flowModes": {
-      "book": "Termin buchen",
-      "cancel": "Termin absagen",
-      "checkAvailability": "Verfügbarkeit prüfen"
+      "bookFromCustomField": "Termin buchen",
+      "checkAvailabilityFromCustomField": "Verfügbarkeit prüfen",
+      "book": "Datums-/Zeitauswahl",
+      "checkAvailability": "Datumsbereichsauswahl",
+      "cancel": "Termin absagen"
     },
     "fields": {
       "mode": "Modus",
       "dateTimeFieldId": "Ausgewähltes Datum speichern in",
-      "startDateFieldId": "Startdatum",
-      "endDateFieldId": "Enddatum",
+      "dateTimeFieldIdSource": "Datum-/Zeitfeld",
+      "startDateFieldId": "Startdatumfeld",
+      "endDateFieldId": "Enddatumfeld",
       "resultUsedByAI": "Ergebnis für KI verwenden",
       "outputCustomFieldId": "Antwort in benutzerdefiniertem Feld speichern",
       "startDateFieldIdSelected": "Ausgewähltes Startdatum speichern in",
@@ -4855,6 +4861,7 @@
       "endDate": "Enddatum",
       "specificDate": "Datum",
       "maxAppointmentsPerUser": "Maximale Termine pro Nutzer",
+      "maxAppointmentsUnlimited": "Unbegrenzt",
       "dailyLimitEnabled": "Tageslimit",
       "maxPerDay": "Max. pro Tag",
       "allowGroupMeeting": "Gruppentermine erlauben",

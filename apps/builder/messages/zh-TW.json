@@ -1358,6 +1358,9 @@
     "bookingDate": {
       "label": "預約日期"
     },
+    "bookingLink": {
+      "label": "預約連結"
+    },
     "n8nEvents": {
       "label": "活動",
       "placeholder": "輸入事件名稱並按 Enter",
@@ -4164,16 +4167,19 @@
     "title": "預約安排",
     "description": "建立並管理您的預約安排。",
     "flowModes": {
-      "book": "預約",
-      "cancel": "取消預約",
-      "checkAvailability": "查看可預約時間"
+      "bookFromCustomField": "預約",
+      "checkAvailabilityFromCustomField": "查看可預約時間",
+      "book": "日期時間選擇器",
+      "checkAvailability": "日期範圍選擇器",
+      "cancel": "取消預約"
     },
     "fields": {
       "mode": "模式",
       "dateTimeFieldId": "將所選日期儲存至",
-      "startDateFieldId": "開始日期",
+      "dateTimeFieldIdSource": "日期時間欄位",
+      "startDateFieldId": "開始日期欄位",
       "startDateFieldIdSelected": "將所選開始日期儲存至",
-      "endDateFieldId": "結束日期",
+      "endDateFieldId": "結束日期欄位",
       "endDateFieldIdSelected": "將所選結束日期儲存至",
       "resultUsedByAI": "將結果用於 AI",
       "outputCustomFieldId": "將回應儲存至自訂欄位"
@@ -4784,6 +4790,7 @@
       "endDate": "結束日期",
       "specificDate": "日期",
       "maxAppointmentsPerUser": "每位使用者最多預約數",
+      "maxAppointmentsUnlimited": "無限制",
       "dailyLimitEnabled": "每日上限",
       "maxPerDay": "每日最多",
       "allowGroupMeeting": "允許團體會議",

@@ -134,6 +134,11 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.bookingDate.label",
   },
   {
+    id: systemFieldTypes.enum.booking_link,
+    type: "shortText",
+    labelKey: "fields.bookingLink.label",
+  },
+  {
     id: systemFieldTypes.enum.last_seen,
     type: "datetime",
     labelKey: "fields.lastSeen.label",

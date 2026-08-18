@@ -59,9 +59,7 @@ export function DateTimePicker({
   const t = useTranslations("bookingWebview")
   const commonT = useTranslations()
   const router = useRouter()
-  const [selectedTimezone, setSelectedTimezone] = useState(() =>
-    resolveBrowserTimezone(timezone),
-  )
+  const [selectedTimezone, setSelectedTimezone] = useState(timezone)
   const [selectedDate, setSelectedDate] = useState<string | null>(() =>
     slots[0] ? getDateKey(slots[0].startAt, timezone) : null,
   )
@@ -377,14 +375,6 @@ function closeWebview(
   }
 
   window.close()
-}
-
-function resolveBrowserTimezone(fallback: string) {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || fallback
-  } catch {
-    return fallback
-  }
 }
 
 function getDateKey(value: string, timezone: string) {

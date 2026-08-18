@@ -9,9 +9,11 @@ import {
 import { stepTypes } from "./step-action"
 
 export const appointmentSchedulingModes = z.enum([
+  "bookFromCustomField",
+  "checkAvailabilityFromCustomField",
   "book",
-  "cancel",
   "checkAvailability",
+  "cancel",
 ])
 export type AppointmentSchedulingMode = z.infer<
   typeof appointmentSchedulingModes
@@ -27,6 +29,21 @@ const appointmentSchedulingBaseFields = {
 export const appointmentSchedulingStepSchema = z.discriminatedUnion("mode", [
   z.object({
     ...appointmentSchedulingBaseFields,
+    mode: z.literal(appointmentSchedulingModes.enum.bookFromCustomField),
+    dateTimeFieldId: z.string().trim().min(1),
+  }),
+  z.object({
+    ...appointmentSchedulingBaseFields,
+    mode: z.literal(
+      appointmentSchedulingModes.enum.checkAvailabilityFromCustomField,
+    ),
+    startDateFieldId: z.string().trim().min(1),
+    endDateFieldId: z.string().trim().min(1),
+    resultUsedByAI: z.boolean().default(false),
+    outputCustomFieldId: z.string().trim().min(1),
+  }),
+  z.object({
+    ...appointmentSchedulingBaseFields,
     mode: z.literal(appointmentSchedulingModes.enum.book),
     dateTimeFieldId: z.string().trim().min(1),
   }),
@@ -39,8 +56,6 @@ export const appointmentSchedulingStepSchema = z.discriminatedUnion("mode", [
     mode: z.literal(appointmentSchedulingModes.enum.checkAvailability),
     startDateFieldId: z.string().trim().min(1),
     endDateFieldId: z.string().trim().min(1),
-    resultUsedByAI: z.boolean().default(false),
-    outputCustomFieldId: z.string().trim().min(1),
   }),
 ])
 export type AppointmentSchedulingStepSchema = z.infer<
@@ -51,7 +66,7 @@ export const appointmentSchedulingStepDefaultFn =
   (): AppointmentSchedulingStepSchema => ({
     id: createId(),
     stepType: stepTypes.enum.appointmentScheduling,
-    mode: appointmentSchedulingModes.enum.book,
+    mode: appointmentSchedulingModes.enum.bookFromCustomField,
     calendarId: "",
     dateTimeFieldId: "",
     states: [successStateDefaultFn(), errorStateDefaultFn()],

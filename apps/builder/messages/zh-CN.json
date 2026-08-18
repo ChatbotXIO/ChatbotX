@@ -483,16 +483,19 @@
     "description": "创建并管理您的预约安排。",
     "title": "预约安排",
     "flowModes": {
-      "book": "预约",
-      "cancel": "取消预约",
-      "checkAvailability": "查看可预约时间"
+      "bookFromCustomField": "预约",
+      "checkAvailabilityFromCustomField": "查看可预约时间",
+      "book": "日期时间选择器",
+      "checkAvailability": "日期范围选择器",
+      "cancel": "取消预约"
     },
     "fields": {
       "mode": "模式",
       "dateTimeFieldId": "将所选日期保存至",
-      "startDateFieldId": "开始日期",
+      "dateTimeFieldIdSource": "日期时间字段",
+      "startDateFieldId": "开始日期字段",
       "startDateFieldIdSelected": "将所选开始日期保存至",
-      "endDateFieldId": "结束日期",
+      "endDateFieldId": "结束日期字段",
       "endDateFieldIdSelected": "将所选结束日期保存至",
       "resultUsedByAI": "将结果用于 AI",
       "outputCustomFieldId": "将回应保存到自订字段"
@@ -2649,6 +2652,9 @@
     },
     "bookingDate": {
       "label": "预约日期"
+    },
+    "bookingLink": {
+      "label": "预约链接"
     },
     "n8nEvents": {
       "label": "事件",
@@ -4880,6 +4886,7 @@
       "endDate": "结束日期",
       "specificDate": "日期",
       "maxAppointmentsPerUser": "每位用户的最大预约数",
+      "maxAppointmentsUnlimited": "无限制",
       "dailyLimitEnabled": "每日限额",
       "maxPerDay": "每日最大数量",
       "allowGroupMeeting": "允许团体会议",

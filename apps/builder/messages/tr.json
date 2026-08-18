@@ -2050,6 +2050,9 @@
     "bookingDate": {
       "label": "Randevu Tarihi"
     },
+    "bookingLink": {
+      "label": "Randevu bağlantısı"
+    },
     "n8nEvents": {
       "label": "Etkinlikler",
       "placeholder": "Bir etkinlik adı yazın ve Enter'a basın",
@@ -4131,15 +4134,18 @@
     "title": "Randevu Planlama",
     "description": "Randevu planlamanızı oluşturun ve yönetin.",
     "flowModes": {
-      "book": "Randevu al",
-      "cancel": "Randevuyu iptal et",
-      "checkAvailability": "Uygunluğu kontrol et"
+      "bookFromCustomField": "Randevu al",
+      "checkAvailabilityFromCustomField": "Uygunluğu kontrol et",
+      "book": "Tarih ve saat seçici",
+      "checkAvailability": "Tarih aralığı seçici",
+      "cancel": "Randevuyu iptal et"
     },
     "fields": {
       "mode": "Mod",
       "dateTimeFieldId": "Seçilen tarihi şuraya kaydet",
-      "startDateFieldId": "Başlangıç tarihi",
-      "endDateFieldId": "Bitiş tarihi",
+      "dateTimeFieldIdSource": "Tarih/saat alanı",
+      "startDateFieldId": "Başlangıç tarihi alanı",
+      "endDateFieldId": "Bitiş tarihi alanı",
       "resultUsedByAI": "Sonucu AI için kullan",
       "outputCustomFieldId": "Sonucu şuraya kaydet",
       "startDateFieldIdSelected": "Seçilen başlangıç tarihini şuraya kaydet",
@@ -4855,6 +4861,7 @@
       "endDate": "Bitiş Tarihi",
       "specificDate": "Tarih",
       "maxAppointmentsPerUser": "Kullanıcı başına maksimum randevu",
+      "maxAppointmentsUnlimited": "Sınırsız",
       "dailyLimitEnabled": "Günlük limit",
       "maxPerDay": "Gün Başına Maksimum",
       "allowGroupMeeting": "Grup Toplantısına İzin Ver",

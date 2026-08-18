@@ -1,6 +1,7 @@
 export const loopableItemsCount = 1000
 
 export * from "./lib/connection"
+export * from "./lib/job-wait"
 export * from "./lib/types"
 export * from "./message-queue"
 export * from "./queues/ai-agent"

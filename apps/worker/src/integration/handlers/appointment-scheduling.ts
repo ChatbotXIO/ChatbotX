@@ -1,9 +1,12 @@
 import {
+  AppointmentAlreadyScheduledException,
+  AppointmentAvailabilityChangedException,
   appointmentCalendarService,
   appointmentService,
   contactCustomFieldService,
   normalizeLanguage,
   resolveTenantSettings,
+  SlotUnavailableException,
 } from "@chatbotx.io/business"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import {
@@ -27,6 +30,7 @@ type AppointmentSchedulingCopy = {
   bookingButton: string
   rangePrompt: string
   rangeButton: string
+  noSlotsFound: string
 }
 
 const APPOINTMENT_SCHEDULING_COPY = {
@@ -35,12 +39,14 @@ const APPOINTMENT_SCHEDULING_COPY = {
     bookingButton: "Select Date",
     rangePrompt: "Choose a date range to check availability",
     rangeButton: "Check Availability",
+    noSlotsFound: "No available slots found.",
   },
   vi: {
     bookingPrompt: "Chọn thời gian đặt lịch",
     bookingButton: "Chọn ngày",
     rangePrompt: "Chọn khoảng ngày cần kiểm tra lịch trống",
     rangeButton: "Kiểm tra lịch trống",
+    noSlotsFound: "Không có lịch trống.",
   },
 } satisfies Record<string, AppointmentSchedulingCopy>
 
@@ -54,6 +60,38 @@ function getAppointmentSchedulingCopy(input: {
 
 const toInstant = (dateTime: string, timezone: string) =>
   fromZonedTime(dateTime, timezone)
+
+async function bookAppointmentAndMapErrors(
+  input: Parameters<typeof appointmentService.bookAppointment>[0],
+): Promise<ExecuteStepResult> {
+  try {
+    const appointment = await appointmentService.bookAppointment(input)
+    return { status: "success", result: appointment }
+  } catch (err) {
+    if (err instanceof SlotUnavailableException) {
+      return {
+        status: "error",
+        errorMessage: "slot_unavailable",
+        result: null,
+      }
+    }
+    if (err instanceof AppointmentAvailabilityChangedException) {
+      return {
+        status: "error",
+        errorMessage: "availability_changed",
+        result: null,
+      }
+    }
+    if (err instanceof AppointmentAlreadyScheduledException) {
+      return {
+        status: "error",
+        errorMessage: "appointment_already_scheduled",
+        result: null,
+      }
+    }
+    throw err
+  }
+}
 
 export async function appointmentScheduling(
   props: ExecuteStepProps<AppointmentSchedulingStepSchema>,
@@ -71,20 +109,22 @@ export async function appointmentScheduling(
 
   try {
     switch (step.mode) {
-      case appointmentSchedulingModes.enum.book: {
-        if (
-          metadata?.type === APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE &&
-          metadata.stepId === step.id
-        ) {
-          return { status: "success", result: metadata }
-        }
+      case appointmentSchedulingModes.enum.bookFromCustomField: {
+        const bookFromCustomFieldCalendar =
+          await appointmentCalendarService.findByOrFail({
+            workspaceId: conversation.workspaceId,
+            id: step.calendarId,
+          })
 
         if (
-          await appointmentService.hasFutureScheduledAppointmentForContact({
-            workspaceId: conversation.workspaceId,
-            calendarId: step.calendarId,
-            contactId: conversation.contactId,
-          })
+          await appointmentService.hasFutureScheduledAppointmentForContact(
+            {
+              workspaceId: conversation.workspaceId,
+              calendarId: step.calendarId,
+              contactId: conversation.contactId,
+            },
+            bookFromCustomFieldCalendar.maxAppointmentsPerUser,
+          )
         ) {
           return {
             status: "error",
@@ -93,11 +133,102 @@ export async function appointmentScheduling(
           }
         }
 
+        const fieldValue = await contactCustomFieldService.findValue({
+          contactId: conversation.contactId,
+          customFieldId: step.dateTimeFieldId,
+        })
+        const startAt = fieldValue ? new Date(fieldValue) : null
+        if (!startAt || Number.isNaN(startAt.getTime())) {
+          return {
+            status: "error",
+            errorMessage: "invalidDateTimeFieldValue",
+            result: null,
+          }
+        }
+
+        return await bookAppointmentAndMapErrors({
+          workspaceId: conversation.workspaceId,
+          calendarId: step.calendarId,
+          contactId: conversation.contactId,
+          conversationId: conversation.id,
+          contactInboxId: contactInbox.id,
+          startAt,
+          metadata,
+        })
+      }
+      case appointmentSchedulingModes.enum.checkAvailabilityFromCustomField: {
+        const calendar = await appointmentCalendarService.findByOrFail({
+          workspaceId: conversation.workspaceId,
+          id: step.calendarId,
+        })
+
+        const [startValue, endValue] = await Promise.all([
+          contactCustomFieldService.findValue({
+            contactId: conversation.contactId,
+            customFieldId: step.startDateFieldId,
+          }),
+          contactCustomFieldService.findValue({
+            contactId: conversation.contactId,
+            customFieldId: step.endDateFieldId,
+          }),
+        ])
+
+        const startDate = startValue
+          ? toInstant(startValue, calendar.timezone)
+          : null
+        const endDate = endValue ? toInstant(endValue, calendar.timezone) : null
+
+        if (
+          !(startDate && endDate) ||
+          Number.isNaN(startDate.getTime()) ||
+          Number.isNaN(endDate.getTime()) ||
+          startDate > endDate
+        ) {
+          return {
+            status: "error",
+            errorMessage: "invalidAvailabilityRange",
+            result: null,
+          }
+        }
+
+        const availability = await appointmentService.checkAvailability({
+          workspaceId: conversation.workspaceId,
+          calendarId: step.calendarId,
+          contactId: conversation.contactId,
+          startDate,
+          endDate,
+        })
+
+        const outputText =
+          availability.slots.length === 0
+            ? copy.noSlotsFound
+            : availability.text
+
+        await contactCustomFieldService.setValueByKey({
+          workspaceId: conversation.workspaceId,
+          contactId: conversation.contactId,
+          keyword: step.outputCustomFieldId,
+          value: outputText,
+        })
+
+        return {
+          status: "success",
+          result: { ...availability, text: outputText },
+        }
+      }
+      case appointmentSchedulingModes.enum.book: {
+        if (
+          metadata?.type === APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE &&
+          metadata.stepId === step.id
+        ) {
+          return { status: "success", result: metadata }
+        }
+
         const { appUrl } = await resolveTenantSettings({
           workspaceId: conversation.workspaceId,
         })
         const token = await signAppointmentWebviewToken({
-          mode: "book",
+          mode: "selectAvailability",
           workspaceId: conversation.workspaceId,
           calendarId: step.calendarId,
           contactId: conversation.contactId,
@@ -107,7 +238,7 @@ export async function appointmentScheduling(
           flowId: flowVersion.flowId,
           flowVersionId: flowVersion.id,
           stepId: step.id,
-          nodeId: props.targetId,
+          nodeId: props.targetNodeId,
           selectedDateCustomFieldId: step.dateTimeFieldId,
         })
         const pickerUrl = new URL("/booking/picker", appUrl)
@@ -142,7 +273,6 @@ export async function appointmentScheduling(
           contactId: conversation.contactId,
           conversationId: conversation.id,
           contactInboxId: contactInbox.id,
-          flowVersionId: flowVersion.id,
           metadata,
         })
 
@@ -184,11 +314,9 @@ export async function appointmentScheduling(
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
             stepId: step.id,
-            nodeId: props.targetId,
+            nodeId: props.targetNodeId,
             startDateCustomFieldId: step.startDateFieldId,
             endDateCustomFieldId: step.endDateFieldId,
-            resultCustomFieldId: step.outputCustomFieldId,
-            resultUsedByAI: step.resultUsedByAI,
           })
           const pickerUrl = new URL("/booking/range-picker", appUrl)
           pickerUrl.searchParams.set("token", token)
@@ -228,8 +356,6 @@ export async function appointmentScheduling(
           workspaceId: conversation.workspaceId,
           id: step.calendarId,
         })
-        const startDate = toInstant(metadata.startDate, calendar.timezone)
-        const endDate = toInstant(metadata.endDate, calendar.timezone)
 
         await contactCustomFieldService.setValues({
           workspaceId: conversation.workspaceId,
@@ -248,30 +374,7 @@ export async function appointmentScheduling(
           temporalInputParsing: TemporalInputParsing.Lenient,
         })
 
-        const availability = await appointmentService.checkAvailability({
-          workspaceId: conversation.workspaceId,
-          calendarId: step.calendarId,
-          contactId: conversation.contactId,
-          startDate,
-          endDate,
-        })
-
-        await contactCustomFieldService.setValueByKey({
-          workspaceId: conversation.workspaceId,
-          contactId: conversation.contactId,
-          keyword: step.outputCustomFieldId,
-          value: availability.text,
-        })
-
-        if (availability.slots.length === 0) {
-          logger.warn(
-            { ...baseLogContext, stepId: step.id, reason: "noSlotsAvailable" },
-            "Appointment scheduling availability check found no slots",
-          )
-          return { status: "error", result: availability }
-        }
-
-        return { status: "success", result: availability }
+        return { status: "success", result: null }
       }
       default:
         return { status: "error", result: null }
