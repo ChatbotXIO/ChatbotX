@@ -246,7 +246,7 @@ export function DateRangePresetFilter({
 
   return (
     <Form {...form}>
-      <form className="flex items-end justify-end gap-3">
+      <form className="flex flex-wrap items-end justify-end gap-2 sm:gap-3">
         <Button
           onClick={() => handlePresetChange("last7")}
           type="button"

@@ -29,9 +29,9 @@ export function ConversationsDashboard({
         workspaceCreatedAt={workspaceCreatedAt}
       />
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         {nav}
-        <div className="grid min-w-0 flex-1 grid-cols-2 gap-4">
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2">
           {/* <AvgResponseMinutesChart /> */}
           {/* <AvgFirstResponseMinutesByAdminChart /> */}
           {/* <AvgResponseMinutesByAdminChart /> */}

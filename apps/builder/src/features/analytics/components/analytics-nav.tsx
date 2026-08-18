@@ -43,16 +43,21 @@ export function AnalyticsNav({
   ]
 
   return (
-    <nav aria-label={t("fields.analytics.label")} className="w-56 shrink-0">
-      <ul className="flex flex-col gap-1">
+    // Below `md` the dashboard stacks, so the rail becomes a scrollable strip
+    // above the charts instead of eating 224px of a phone's width.
+    <nav
+      aria-label={t("fields.analytics.label")}
+      className="w-full md:w-56 md:shrink-0"
+    >
+      <ul className="flex flex-row gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:flex-col md:overflow-visible [&::-webkit-scrollbar]:hidden">
         {links.map((link) => {
           const href = `${base}/${link.segment}`
           const isActive = pathname.startsWith(href)
           return (
-            <li key={link.segment}>
+            <li className="shrink-0" key={link.segment}>
               <Link
                 className={cn(
-                  "block rounded-md px-3 py-2 text-sm transition-colors",
+                  "block whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors",
                   isActive
                     ? "bg-accent font-medium text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
