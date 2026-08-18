@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
+import { FullBleed } from "@/components/full-bleed"
 import { ChatLayout } from "@/features/chat/chat-layout"
 import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
@@ -37,7 +38,7 @@ export default async function InboxPage({ params }: InboxPageProps) {
   )
 
   return (
-    <div className="-m-6">
+    <FullBleed>
       <ChatStoreProvider>
         <InboxStoreProvider workspaceId={workspaceId}>
           <UserStoreProvider workspaceId={workspaceId}>
@@ -62,6 +63,6 @@ export default async function InboxPage({ params }: InboxPageProps) {
           </UserStoreProvider>
         </InboxStoreProvider>
       </ChatStoreProvider>
-    </div>
+    </FullBleed>
   )
 }
