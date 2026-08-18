@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/business"
 import {
   SidebarInset,
+  SidebarMobileTrigger,
   SidebarProvider,
   SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
@@ -121,7 +122,20 @@ export default async function WorkspaceLayout({
         workspaceId={workspaceId}
       />
       <SidebarInset>
-        <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+        {/*
+          Below `md` the sidebar collapses into a Sheet, and `SidebarTrigger`
+          below is positioned off the inset's inline edge — where nothing can
+          reach it. This bar is the only way in on a phone, so it stays pinned
+          while the page scrolls (the body is the scroll container: the sidebar
+          wrapper is `min-h-svh` with no overflow of its own).
+        */}
+        <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-2 pt-[env(safe-area-inset-top)] md:hidden">
+          <SidebarMobileTrigger />
+          <span className="truncate font-medium text-sm">
+            {targetWorkspaceMember.workspace.name}
+          </span>
+        </header>
+        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
           <WorkspaceDeletionTabSync
             scheduledForDeletion={scheduledForDeletion}
             workspaceId={workspaceId}
@@ -142,7 +156,7 @@ export default async function WorkspaceLayout({
             {children}
           </CouponTopicStoreProvider>
         </main>
-        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 border" />
+        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 hidden border md:inline-flex" />
       </SidebarInset>
     </SidebarProvider>
   )
