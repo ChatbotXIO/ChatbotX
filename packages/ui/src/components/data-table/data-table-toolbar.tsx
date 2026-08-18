@@ -41,7 +41,9 @@ export function DataTableToolbar<TData>({
       role="toolbar"
       aria-orientation="horizontal"
       className={cn(
-        "flex w-full items-start justify-between gap-2 p-1",
+        // Stacked on a phone: the filter row and the action row cannot share a
+        // line once a filter grows to the full width.
+        "flex w-full flex-col items-stretch justify-between gap-2 p-1 sm:flex-row sm:items-start",
         className,
       )}
       {...props}
@@ -67,9 +69,7 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        {children}
-      </div>
+      <div className="flex items-center justify-end gap-2">{children}</div>
     </div>
   )
 }
@@ -95,20 +95,23 @@ function DataTableToolbarFilter<TData>({
               placeholder={columnMeta.placeholder ?? columnMeta.label}
               value={(column.getFilterValue() as string) ?? ""}
               onChange={(event) => column.setFilterValue(event.target.value)}
-              className="h-8 w-40 lg:w-56"
+              className="h-8 w-full sm:w-40 lg:w-56"
             />
           )
 
         case "number":
           return (
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Input
                 type="number"
                 inputMode="numeric"
                 placeholder={columnMeta.placeholder ?? columnMeta.label}
                 value={(column.getFilterValue() as string) ?? ""}
                 onChange={(event) => column.setFilterValue(event.target.value)}
-                className={cn("h-8 w-[120px]", columnMeta.unit && "pe-8")}
+                className={cn(
+                  "h-8 w-full sm:w-[120px]",
+                  columnMeta.unit && "pe-8",
+                )}
               />
               {columnMeta.unit && (
                 <span className="absolute top-0 end-0 bottom-0 flex items-center rounded-e-md bg-accent px-2 text-muted-foreground text-sm">
