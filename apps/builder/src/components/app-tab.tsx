@@ -20,7 +20,9 @@ type AppTabProps = {
 }
 
 function getTabClassName(tab: AppTabProps["tabs"][number]) {
-  const base = "border-b-2 py-6 text-sm"
+  // `shrink-0` + `whitespace-nowrap` keep each tab at its natural width so
+  // the strip overflows (and scrolls) instead of squeezing labels.
+  const base = "shrink-0 whitespace-nowrap border-b-2 py-4 text-sm md:py-6"
   if (tab.disabled) {
     const disabledPresentation =
       tab.disabledPresentation === "normal"
@@ -37,7 +39,14 @@ function getTabClassName(tab: AppTabProps["tabs"][number]) {
 export function AppTab({ tabs }: AppTabProps) {
   return (
     <Card className="py-0">
-      <CardContent className="flex items-center gap-8 px-8">
+      {/*
+        Several surfaces render 5-6 tabs, which cannot fit a phone. Scrolling
+        the strip keeps every tab reachable without pushing the page itself
+        into horizontal overflow. The scrollbar is hidden because the strip
+        sits directly under a card edge, where a persistent bar reads as a
+        rendering artefact; touch scrolling needs no visible track.
+      */}
+      <CardContent className="flex flex-nowrap items-center gap-4 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-8 md:px-8 [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) =>
           tab.disabled ? (
             <Tooltip key={tab.href}>
