@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
-import { BotIcon } from "lucide-react"
+import { ArrowLeftIcon, BotIcon, UserRoundIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -17,7 +17,18 @@ import { UpdateConversationAssignee } from "../conversations/components/update-c
 import { ConversationAction } from "../conversations/conversation-action"
 import { isConversationActive } from "../conversations/utils/bot-state"
 
-export default function MessageHead() {
+/**
+ * `onBack` and `onOpenContact` are supplied only by the mobile inbox layout,
+ * where the conversation list and the contact panel are separate views rather
+ * than adjacent columns. On desktop both are omitted and nothing extra renders.
+ */
+export default function MessageHead({
+  onBack,
+  onOpenContact,
+}: {
+  onBack?: () => void
+  onOpenContact?: () => void
+} = {}) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
@@ -54,7 +65,18 @@ export default function MessageHead() {
   return (
     activeConversation && (
       <div className="flex items-center gap-2 border-b px-3 pb-3">
-        <div className="flex flex-1 flex-col">
+        {onBack && (
+          <Button
+            aria-label={t("actions.back")}
+            className="shrink-0"
+            onClick={onBack}
+            size="icon"
+            variant="ghost"
+          >
+            <ArrowLeftIcon className="rtl:rotate-180" />
+          </Button>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
           <div className="truncate font-medium text-semibold">
             {activeConversation?.contact?.fullName}
           </div>
@@ -82,6 +104,17 @@ export default function MessageHead() {
               <p>{t("actions.transferConversationToBot")}</p>
             </TooltipContent>
           </Tooltip>
+        )}
+        {onOpenContact && (
+          <Button
+            aria-label={t("fields.contact.label")}
+            className="shrink-0"
+            onClick={onOpenContact}
+            size="icon"
+            variant="ghost"
+          >
+            <UserRoundIcon />
+          </Button>
         )}
         <ConversationAction conversation={activeConversation} />
       </div>
