@@ -982,6 +982,15 @@
       "description": "It is the default response that your workspace will send to users when the workspace doesn't know how to respond to the user message.",
       "label": "Default Reply"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Set how long the bot waits before replying after the user’s last message. If the user sends another message, the timer resets and messages are queued into a single response.",
       "label": "Bot reply delay",

@@ -1,7 +1,9 @@
 "use client"
 
+import { defaultReplyFrequencies } from "@chatbotx.io/database/partials"
 import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
@@ -30,6 +32,12 @@ export function UpdateWorkspaceAdvancedForm({
 }) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
+  const defaultReplyFrequencyOptions = defaultReplyFrequencies.options.map(
+    (frequency) => ({
+      value: frequency,
+      label: t(`fields.defaultReplyFrequency.options.${frequency}`),
+    }),
+  )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateWorkspaceAdvancedAction.bind(null, workspace.id),
@@ -53,6 +61,7 @@ export function UpdateWorkspaceAdvancedForm({
         mode: "onChange",
         defaultValues: {
           defaultReply: workspace.defaultReply ?? "",
+          defaultReplyFrequency: workspace.defaultReplyFrequency,
           targetCountry: workspace.targetCountry ?? UNKNOWN_COUNTRY,
           language: workspace.language,
           timezone: workspace.timezone,
@@ -83,6 +92,17 @@ export function UpdateWorkspaceAdvancedForm({
                 emptyValue={null}
                 name="defaultReply"
                 options={flowOptions}
+                placeholder={t("actions.pleaseSelect")}
+              />
+            </SettingRow>
+
+            <SettingRow
+              description={t("fields.defaultReplyFrequency.description")}
+              label={t("fields.defaultReplyFrequency.label")}
+            >
+              <SelectField
+                name="defaultReplyFrequency"
+                options={defaultReplyFrequencyOptions}
                 placeholder={t("actions.pleaseSelect")}
               />
             </SettingRow>

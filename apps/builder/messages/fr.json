@@ -899,6 +899,15 @@
       "description": "Réponse par défaut envoyée aux utilisateurs lorsque votre espace de travail ne sait pas comment répondre à leur message.",
       "label": "Réponse par défaut"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Définissez le délai d’attente du bot après le dernier message de l’utilisateur. Si celui-ci envoie un autre message, le minuteur redémarre et les messages sont regroupés en une seule réponse.",
       "label": "Délai de réponse du bot",

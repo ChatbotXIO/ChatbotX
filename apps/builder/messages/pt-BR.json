@@ -899,6 +899,15 @@
       "description": "É a resposta padrão que seu espaço de trabalho enviará aos usuários quando não souber como responder à mensagem recebida.",
       "label": "Resposta padrão"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Defina quanto tempo o bot aguarda antes de responder após a última mensagem do usuário. Se o usuário enviar outra mensagem, o cronômetro será reiniciado e as mensagens serão agrupadas em uma única resposta.",
       "label": "Atraso da resposta do bot",

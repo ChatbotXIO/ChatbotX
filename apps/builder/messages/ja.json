@@ -899,6 +899,15 @@
       "description": "ユーザーのメッセージへの応答方法がワークスペースで判別できない場合に送信するデフォルトの応答です。",
       "label": "デフォルト返信"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "ユーザーの最後のメッセージからボットが返信するまでの待機時間を設定します。ユーザーが別のメッセージを送信するとタイマーがリセットされ、メッセージが1つの応答にまとめられます。",
       "label": "ボットの返信遅延",

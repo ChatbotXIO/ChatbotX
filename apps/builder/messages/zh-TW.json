@@ -295,6 +295,15 @@
       "description": "這是當工作區不知道如何回應使用者訊息時，工作區會傳送給使用者的預設回應。",
       "label": "預設回覆"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "delayType": {
       "label": "延遲型",
       "placeholder": "延遲型"

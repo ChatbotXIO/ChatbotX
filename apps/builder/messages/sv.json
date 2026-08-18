@@ -1562,6 +1562,15 @@
       "description": "Det är standardsvaret som din arbetsyta skickar till användare när arbetsytan inte vet hur den ska svara på användarens meddelande.",
       "label": "Standardsvar"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "delayType": {
       "label": "Fördröjningstyp",
       "placeholder": "Fördröjningstyp"

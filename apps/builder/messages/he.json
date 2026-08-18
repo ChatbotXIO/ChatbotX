@@ -3295,6 +3295,15 @@
       "description": "זוהי תגובת ברירת המחדל שסביבת העבודה שלכם תשלח למשתמשים כאשר אינה יודעת כיצד להשיב להודעת המשתמש.",
       "label": "תשובת ברירת מחדל"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "הגדירו כמה זמן הבוט ימתין לפני שישיב לאחר ההודעה האחרונה של המשתמש. אם המשתמש שולח הודעה נוספת, הטיימר מתאפס וההודעות מצורפות לתגובה אחת.",
       "label": "השהיית תגובת הבוט",
