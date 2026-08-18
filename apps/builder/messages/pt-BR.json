@@ -2932,6 +2932,8 @@
     "toggleHelper": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte.",
     "toggleHelperMessenger": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte a página do Messenger.",
     "toggleHelperWhatsapp": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte o número do WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "A IA lê o histórico sincronizado",
+    "aiReadsSyncedHistoryHelper": "Quando desativado, a IA vê apenas mensagens novas.",
     "success": {
       "enabled": "Sincronização iniciada. Os contatos e as mensagens do histórico aparecerão em breve.",
       "disabled": "Sincronização desativada."

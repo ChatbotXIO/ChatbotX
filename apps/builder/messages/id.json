@@ -2948,6 +2948,8 @@
     "toggleHelper": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali.",
     "toggleHelperMessenger": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali halaman Messenger.",
     "toggleHelperWhatsapp": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali nomor WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "AI membaca riwayat sinkronisasi",
+    "aiReadsSyncedHistoryHelper": "Saat nonaktif, AI hanya melihat pesan baru.",
     "success": {
       "enabled": "Sinkronisasi dimulai. Kontak dan pesan historis akan segera muncul.",
       "disabled": "Sinkronisasi dinonaktifkan."

@@ -2981,6 +2981,8 @@
     "toggleHelper": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接。",
     "toggleHelperMessenger": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接Messenger頁面。",
     "toggleHelperWhatsapp": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則，請斷開並重新連接WhatsApp號碼。",
+    "aiReadsSyncedHistoryLabel": "AI 讀取同步歷史",
+    "aiReadsSyncedHistoryHelper": "關閉時，AI 僅查看新訊息。",
     "success": {
       "enabled": "同步已開始。歷史聯絡人和訊息很快就會出現。",
       "disabled": "同步已停用。"

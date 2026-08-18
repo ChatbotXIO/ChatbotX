@@ -2948,6 +2948,8 @@
     "toggleHelper": "Eine erneute Aktivierung funktioniert nur, wenn Meta Daten gepuffert hat (innerhalb von 24 Stunden nach dem Onboarding). Andernfalls trennen und erneut verbinden.",
     "toggleHelperMessenger": "Eine erneute Aktivierung funktioniert nur, wenn Meta Daten gepuffert hat (innerhalb von 24 Stunden nach dem Onboarding). Andernfalls die Messenger-Seite trennen und erneut verbinden.",
     "toggleHelperWhatsapp": "Eine erneute Aktivierung funktioniert nur, wenn Meta Daten gepuffert hat (innerhalb von 24 Stunden nach dem Onboarding). Andernfalls die WhatsApp-Nummer trennen und erneut verbinden.",
+    "aiReadsSyncedHistoryLabel": "KI liest Synchronverlauf",
+    "aiReadsSyncedHistoryHelper": "Wenn aus, sieht die KI nur neue Nachrichten.",
     "success": {
       "enabled": "Synchronisierung gestartet. Historische Kontakte und Nachrichten werden in Kürze angezeigt.",
       "disabled": "Synchronisierung deaktiviert."

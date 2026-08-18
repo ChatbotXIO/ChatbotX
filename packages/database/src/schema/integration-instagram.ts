@@ -34,6 +34,7 @@ export const integrationInstagramModel = pgTable(
     name: text().notNull(),
     username: text().notNull(),
     coexistEnabled: boolean().notNull().default(false),
+    coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     hasCapiScope: boolean().notNull().default(false),
     capiScopeCheckedAt: timestamp(timestampConfig),
     datasetId: text(),

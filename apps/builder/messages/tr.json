@@ -2948,6 +2948,8 @@
     "toggleHelper": "Yeniden etkinleştirme yalnızca Meta'da arabelleğe alınmış veri varsa (katılımdan itibaren 24 saat içinde) çalışır. Aksi halde bağlantıyı kesip yeniden bağlayın.",
     "toggleHelperMessenger": "Yeniden etkinleştirme yalnızca Meta'da arabelleğe alınmış veri varsa (katılımdan itibaren 24 saat içinde) çalışır. Aksi halde Messenger sayfasının bağlantısını kesip yeniden bağlayın.",
     "toggleHelperWhatsapp": "Yeniden etkinleştirme yalnızca Meta'da arabelleğe alınmış veri varsa (katılımdan itibaren 24 saat içinde) çalışır. Aksi halde WhatsApp numarasının bağlantısını kesip yeniden bağlayın.",
+    "aiReadsSyncedHistoryLabel": "AI eşitlenen geçmişi okur",
+    "aiReadsSyncedHistoryHelper": "Kapalıyken AI yalnızca yeni mesajları görür.",
     "success": {
       "enabled": "Senkronizasyon başlatıldı. Geçmiş kişiler ve mesajlar kısa süre içinde görünecek.",
       "disabled": "Senkronizasyon devre dışı bırakıldı."

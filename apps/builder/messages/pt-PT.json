@@ -2948,6 +2948,8 @@
     "toggleHelper": "A reativação só funciona se a Meta tiver dados em memória intermédia (nas 24 horas após a integração). Caso contrário, desligue e volte a ligar.",
     "toggleHelperMessenger": "A reativação só funciona se a Meta tiver dados em memória intermédia (nas 24 horas após a integração). Caso contrário, desligue e volte a ligar a página do Messenger.",
     "toggleHelperWhatsapp": "A reativação só funciona se a Meta tiver dados em memória intermédia (nas 24 horas após a integração). Caso contrário, desligue e volte a ligar o número do WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "A IA lê o histórico sincronizado",
+    "aiReadsSyncedHistoryHelper": "Quando desativado, a IA vê apenas mensagens novas.",
     "success": {
       "enabled": "Sincronização iniciada. Os contactos e as mensagens do histórico aparecerão em breve.",
       "disabled": "Sincronização desativada."

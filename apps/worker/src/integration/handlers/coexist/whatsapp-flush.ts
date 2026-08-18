@@ -964,6 +964,7 @@ export const coexistWhatsappFlush = async (
           workspaceId: integration.workspaceId,
           runId,
           batch: flat,
+          aiReadsSyncedHistory: integration.coexistAiReadsSyncedHistory,
         })
       } catch (error) {
         // Count every message in this batch as failed; staging rows are NOT

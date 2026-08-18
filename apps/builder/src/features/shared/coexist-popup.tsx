@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -65,6 +66,9 @@ export function CoexistPopup({
 }: CoexistPopupProps) {
   const t = useTranslations()
   const [pending, setPending] = useState<"enable" | "decline" | null>(null)
+  // Default OFF: the AI ignores coexist-synced history (the marker advances)
+  // unless the user explicitly opts in.
+  const [aiReadsSyncedHistory, setAiReadsSyncedHistory] = useState(false)
 
   const handleChoice = async (enabled: boolean) => {
     setPending(enabled ? "enable" : "decline")
@@ -72,7 +76,7 @@ export function CoexistPopup({
       const endpoint = `/api/workspaces/${workspaceId}/integrations/${channel}/${integrationId}/coexist`
       const result = await ky
         .post<CoexistResponse>(endpoint, {
-          json: { workspaceId, integrationId, enabled },
+          json: { workspaceId, integrationId, enabled, aiReadsSyncedHistory },
         })
         .json()
 
@@ -124,6 +128,22 @@ export function CoexistPopup({
         <p className="text-muted-foreground text-xs">
           {t("coexist.billingNote")}
         </p>
+
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={aiReadsSyncedHistory}
+              disabled={isPending}
+              onCheckedChange={setAiReadsSyncedHistory}
+            />
+            <span className="font-medium text-sm">
+              {t("coexist.aiReadsSyncedHistoryLabel")}
+            </span>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {t("coexist.aiReadsSyncedHistoryHelper")}
+          </p>
+        </div>
 
         <DialogFooter>
           <Button

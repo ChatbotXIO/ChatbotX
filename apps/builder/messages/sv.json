@@ -613,6 +613,8 @@
     "toggleHelper": "Återaktivering fungerar endast om Meta har buffrad data (inom 24 timmar efter introduktionen). Annars behöver du koppla från och återansluta.",
     "toggleHelperMessenger": "Återaktivering fungerar endast om Meta har buffrad data (inom 24 timmar efter introduktionen). Annars behöver du koppla från och återansluta Messenger-sidan.",
     "toggleHelperWhatsapp": "Återaktivering fungerar endast om Meta har buffrad data (inom 24 timmar efter introduktionen). Annars behöver du koppla från och återansluta WhatsApp-numret.",
+    "aiReadsSyncedHistoryLabel": "AI läser synkad historik",
+    "aiReadsSyncedHistoryHelper": "När av ser AI endast nya meddelanden.",
     "toggleLabel": "Synkronisera befintliga kontakter och chatthistorik"
   },
   "condition": {

@@ -3044,6 +3044,8 @@
     "toggleHelper": "Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect.",
     "toggleHelperMessenger": "Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect the Messenger page.",
     "toggleHelperWhatsapp": "Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect the WhatsApp number.",
+    "aiReadsSyncedHistoryLabel": "AI reads synced history",
+    "aiReadsSyncedHistoryHelper": "When off, AI only sees new messages.",
     "success": {
       "enabled": "Sync started. Historical contacts and messages will appear shortly.",
       "disabled": "Sync disabled."
