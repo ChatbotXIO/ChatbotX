@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
@@ -26,11 +27,13 @@ function NavItemContent({
   className,
   isDisabled,
   isCrossZone,
+  onNavigate,
 }: {
   item: NavItem
   className: string
   isDisabled: boolean
   isCrossZone: boolean
+  onNavigate: () => void
 }) {
   const label = (
     <>
@@ -49,6 +52,7 @@ function NavItemContent({
       <a
         className={className}
         href={item.url}
+        onClick={onNavigate}
         rel="noopener noreferrer"
         target="_blank"
       >
@@ -58,7 +62,7 @@ function NavItemContent({
   }
 
   return (
-    <Link className={className} href={item.url}>
+    <Link className={className} href={item.url} onClick={onNavigate}>
       {label}
     </Link>
   )
@@ -76,6 +80,12 @@ export function NavMain({
   disabledTooltip?: string
 }) {
   const pathname = usePathname()
+  const { setOpenMobile } = useSidebar()
+
+  // On mobile the sidebar is a Sheet rendered over the page. Navigating leaves
+  // it open on top of the destination, so close it as the link is followed.
+  // No-op on desktop, where `openMobile` is not read.
+  const closeMobileSidebar = () => setOpenMobile(false)
 
   return (
     <SidebarGroup>
@@ -98,6 +108,7 @@ export function NavMain({
                   isCrossZone={crossZone || Boolean(item.crossZone)}
                   isDisabled={isDisabled}
                   item={item}
+                  onNavigate={closeMobileSidebar}
                 />
               </SidebarMenuButton>
             </SidebarMenuItem>
