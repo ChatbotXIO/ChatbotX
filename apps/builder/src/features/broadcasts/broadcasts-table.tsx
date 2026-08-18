@@ -2,6 +2,7 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { DataTableRowCard } from "@chatbotx.io/ui/components/data-table/data-table-row-card"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
@@ -418,7 +419,10 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         <BroadcastsEmptyState filtered={filtered} />
       ) : (
         <div className="flex flex-col gap-4 p-6">
-          <DataTable table={table}>
+          <DataTable
+            mobileCard={(row) => <DataTableRowCard row={row} />}
+            table={table}
+          >
             <div className="flex items-center justify-end p-1">
               <BroadcastsTableToolbarActions
                 table={table}

@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { Column, ColumnDef } from "@tanstack/react-table"
+import type { Column, ColumnDef, Row } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import { useSearchParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
@@ -34,6 +34,56 @@ import type { ExportContactsFilter } from "./schema/action"
 import type { ListContactsResponse } from "./schema/query"
 import type { ContactResource } from "./schema/resource"
 import { getLatestContactLastReadAt } from "./utils"
+
+/**
+ * One contact rendered as a card, for the narrow-viewport view of the table.
+ *
+ * Only the fields worth a phone's width survive: identity, who owns the
+ * conversation, and when the contact arrived. Source and last-read stay in the
+ * table, which takes over from `md` up. Every label is a key the table columns
+ * already use, so the card adds no translation surface.
+ */
+function ContactCard({
+  row,
+  workspaceId,
+}: {
+  row: Row<ListContactsResponse["data"][number]>
+  workspaceId: string
+}) {
+  const t = useTranslations()
+  const contact = row.original
+
+  return (
+    <div className="flex items-start gap-3 rounded-md border p-3">
+      <Checkbox
+        aria-label={t("actions.selectRow")}
+        checked={row.getIsSelected()}
+        className="mt-1 shrink-0"
+        onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+      />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <ContactNameCell contact={contact} workspaceId={workspaceId} />
+        <dl className="flex flex-col gap-1 text-muted-foreground text-xs">
+          <div className="flex items-baseline justify-between gap-3">
+            <dt>{t("fields.assignee.label")}</dt>
+            <dd className="truncate text-foreground">
+              {getUserName(
+                contact.conversation?.assignedUser,
+                t("assignAdmin.unAssigned"),
+              )}
+            </dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-3">
+            <dt>{t("fields.createdAt.label")}</dt>
+            <dd className="text-foreground">
+              {format(contact.createdAt, "yyyy/MM/dd")}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  )
+}
 
 const parseSortParam = (value: string | null) => {
   if (!value) {
@@ -393,6 +443,7 @@ export function ContactsTable({
   return (
     <DataTable
       className="[&_tbody_td]:py-3 [&_tbody_td]:text-[15px] [&_tbody_tr]:h-16"
+      mobileCard={(row) => <ContactCard row={row} workspaceId={workspaceId} />}
       table={table}
     >
       {showContactFilterPanel && (
