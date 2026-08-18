@@ -1,5 +1,11 @@
 {
   "extends": "@chatbotx.io/typescript-config/base.json",
+  "compilerOptions": {
+    // `setup-dom.ts` runs inside the jsdom environment this package configures,
+    // so it needs the DOM lib the base config leaves out. Same override as
+    // `@chatbotx.io/typescript-config/react-library.json`.
+    "lib": ["ESNext", "DOM"]
+  },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
