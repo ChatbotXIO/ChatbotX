@@ -775,8 +775,8 @@
     "toggleHelper": "仅当Meta 有缓冲数据时（启动后 24 小时内），重新激活才有效。否则断开并重新连接。",
     "toggleHelperMessenger": "仅当Meta 有缓冲数据时（启动后 24 小时内），重新激活才有效。否则断开并重新连接Messenger页面。",
     "toggleHelperWhatsapp": "仅当Meta 有缓冲数据时（启动后 24 小时内），重新激活才有效。否则，请断开并重新连接WhatsApp号码。",
-    "aiReadsSyncedHistoryLabel": "允许 AI 读取同步历史",
-    "aiReadsSyncedHistoryHelper": "开启后，AI 也会使用此次同步导入的消息。关闭后，AI 仅考虑新消息。",
+    "aiReadsSyncedHistoryLabel": "AI 读取同步历史",
+    "aiReadsSyncedHistoryHelper": "关闭时，AI 仅查看新消息。",
     "toggleLabel": "同步现有联系人与聊天记录"
   },
   "condition": {

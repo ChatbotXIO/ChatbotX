@@ -2945,8 +2945,8 @@
     "toggleHelper": "La riattivazione funziona solo se Meta dispone ancora dei dati nel buffer (entro 24 ore dall'onboarding). In caso contrario, disconnetti e riconnetti.",
     "toggleHelperMessenger": "La riattivazione funziona solo se Meta dispone ancora dei dati nel buffer (entro 24 ore dall'onboarding). In caso contrario, disconnetti e riconnetti la Pagina Messenger.",
     "toggleHelperWhatsapp": "La riattivazione funziona solo se Meta dispone ancora dei dati nel buffer (entro 24 ore dall'onboarding). In caso contrario, disconnetti e riconnetti il numero WhatsApp.",
-    "aiReadsSyncedHistoryLabel": "Consenti all'IA di leggere la cronologia sincronizzata",
-    "aiReadsSyncedHistoryHelper": "Se attivo, l'IA usa anche i messaggi importati da questa sincronizzazione. Se disattivo, l'IA considera solo i nuovi messaggi.",
+    "aiReadsSyncedHistoryLabel": "L'IA legge la cronologia sincronizzata",
+    "aiReadsSyncedHistoryHelper": "Se disattivo, l'IA vede solo i nuovi messaggi.",
     "success": {
       "enabled": "Sincronizzazione avviata. I contatti e i messaggi storici appariranno a breve.",
       "disabled": "Sincronizzazione disattivata."

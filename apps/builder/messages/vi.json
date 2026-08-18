@@ -2945,8 +2945,8 @@
     "toggleHelper": "Bật lại chỉ hoạt động nếu Meta còn đệm dữ liệu (trong vòng 24 giờ kể từ khi onboarding). Nếu không, hãy ngắt kết nối và kết nối lại.",
     "toggleHelperMessenger": "Bật lại chỉ hoạt động nếu Meta còn đệm dữ liệu (trong vòng 24 giờ kể từ khi onboarding). Nếu không, hãy ngắt kết nối và kết nối lại trang Messenger.",
     "toggleHelperWhatsapp": "Bật lại chỉ hoạt động nếu Meta còn đệm dữ liệu (trong vòng 24 giờ kể từ khi onboarding). Nếu không, hãy ngắt kết nối và kết nối lại số WhatsApp.",
-    "aiReadsSyncedHistoryLabel": "Cho AI dùng lịch sử đồng bộ",
-    "aiReadsSyncedHistoryHelper": "Khi bật, AI dùng cả tin nhắn được nhập từ lần đồng bộ này. Khi tắt, AI chỉ xét tin nhắn mới.",
+    "aiReadsSyncedHistoryLabel": "AI đọc lịch sử đồng bộ",
+    "aiReadsSyncedHistoryHelper": "Khi tắt, AI chỉ xét tin nhắn mới.",
     "success": {
       "enabled": "Đã bắt đầu đồng bộ. Liên hệ và tin nhắn lịch sử sẽ xuất hiện sớm.",
       "disabled": "Đã tắt đồng bộ."

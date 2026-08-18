@@ -2945,8 +2945,8 @@
     "toggleHelper": "Uudelleen käyttöönotto toimii vain, jos Metalla on puskuroidut tiedot (24 tunnin kuluessa käyttöönotosta). Muussa tapauksessa katkaise yhteys ja yhdistä uudelleen.",
     "toggleHelperMessenger": "Uudelleen käyttöönotto toimii vain, jos Metalla on puskuroidut tiedot (24 tunnin kuluessa käyttöönotosta). Muussa tapauksessa katkaise Messenger-sivun yhteys ja yhdistä uudelleen.",
     "toggleHelperWhatsapp": "Uudelleen käyttöönotto toimii vain, jos Metalla on puskuroidut tiedot (24 tunnin kuluessa käyttöönotosta). Muussa tapauksessa katkaise WhatsApp-numeron yhteys ja yhdistä uudelleen.",
-    "aiReadsSyncedHistoryLabel": "Salli tekoälyn lukea synkronoitu historia",
-    "aiReadsSyncedHistoryHelper": "Kun päällä, tekoäly käyttää myös tämän synkronoinnin tuomia viestejä. Kun pois päältä, tekoäly huomioi vain uudet viestit.",
+    "aiReadsSyncedHistoryLabel": "Tekoäly lukee synkronoidun historian",
+    "aiReadsSyncedHistoryHelper": "Pois päältä: tekoäly näkee vain uudet viestit.",
     "success": {
       "enabled": "Synkronointi aloitettu. Historialliset yhteystiedot ja viestit tulevat pian näkyviin.",
       "disabled": "Synkronointi poistettu käytöstä."
