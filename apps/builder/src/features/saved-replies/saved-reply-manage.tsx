@@ -69,7 +69,7 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
           </Button>
         }
       />
-      <PopoverContent align="end" className="w-100 p-0">
+      <PopoverContent align="end" className="w-[min(100vw-2rem,25rem)] p-0">
         {view.type === "create" ? (
           <SavedReplyCreateForm
             onCancel={() => setView({ type: "list" })}

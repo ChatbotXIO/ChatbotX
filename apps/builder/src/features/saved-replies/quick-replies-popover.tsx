@@ -145,7 +145,7 @@ export const QuickRepliesPopover = ({
         <PopoverTrigger nativeButton={false} render={children} />
         <PopoverContent
           align="start"
-          className="max-h-75 w-100 overflow-y-auto p-0"
+          className="max-h-75 w-[min(100vw-2rem,25rem)] overflow-y-auto p-0"
           initialFocus={false}
           side="top"
         >

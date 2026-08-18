@@ -413,7 +413,7 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
         return (
           <Link href={attachmentUrl} target="_blank">
             <div
-              className="relative max-w-80 overflow-hidden rounded-xl"
+              className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
               style={{ aspectRatio: "4/3" }}
             >
               <Image
@@ -430,7 +430,7 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
         <Link href={attachmentUrl} target="_blank">
           <Image
             alt={attachmentLabel}
-            className="max-w-80 rounded-xl"
+            className="max-w-full rounded-xl sm:max-w-80"
             height={attachment.height}
             src={attachmentUrl}
             width={attachment.width}
@@ -538,7 +538,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
               }
               return (
                 <Button
-                  className="min-w-60 bg-secondary text-secondary-foreground disabled:bg-muted disabled:text-muted-foreground dark:bg-secondary dark:text-secondary-foreground dark:disabled:bg-muted dark:disabled:text-muted-foreground"
+                  className="w-full bg-secondary text-secondary-foreground disabled:bg-muted disabled:text-muted-foreground sm:w-auto sm:min-w-60 dark:bg-secondary dark:text-secondary-foreground dark:disabled:bg-muted dark:disabled:text-muted-foreground"
                   disabled={!onPostback}
                   key={button.id}
                   onClick={() => {
