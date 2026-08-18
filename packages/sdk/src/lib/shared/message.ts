@@ -14,6 +14,67 @@ export type IncomingContact = {
   locale?: string
   language?: string
   timezone?: string
+  /**
+   * Alternate stable channel-scoped user id, independent of `sourceId`
+   * (e.g. WhatsApp Business-Scoped User ID). Channel-agnostic name — see
+   * `ContactInbox.sourceUserId`.
+   */
+  sourceUserId?: string
+  /**
+   * Channel handle/username for this contact (e.g. WhatsApp `@username`).
+   * Display-only, never used as a matching key.
+   */
+  sourceUsername?: string
+}
+
+/** The `{ sourceId, sourceUserId }` slice shared by contact-inbox rows and SDK contacts. */
+export type SourceScopedIdentity = {
+  sourceId: string
+  sourceUserId?: string | null
+}
+
+/**
+ * An identity is "scoped-user-id keyed" when its primary `sourceId` IS its
+ * channel-scoped user id (e.g. a WhatsApp BSUID) — set once at contact
+ * creation for users whose phone number is hidden, and never rewritten.
+ * Such identities must be addressed by the scoped id on outbound sends.
+ */
+export const isSourceUserIdKeyedIdentity = (
+  identity: SourceScopedIdentity,
+): boolean =>
+  Boolean(identity.sourceUserId) && identity.sourceId === identity.sourceUserId
+
+/**
+ * Whether an outbound send must address this identity by its scoped user id
+ * instead of `sourceId`: either the row is scoped-user-id keyed, or its
+ * `sourceId` is empty (no primary address at all — e.g. a WhatsApp contact
+ * whose phone was never known) while a scoped id exists. Addressing an empty
+ * `sourceId` would silently fail, so the scoped id is the only valid route.
+ */
+export const shouldAddressBySourceUserId = (
+  identity: SourceScopedIdentity,
+): boolean =>
+  isSourceUserIdKeyedIdentity(identity) ||
+  (Boolean(identity.sourceUserId) && identity.sourceId === "")
+
+/**
+ * The ordered contact-inbox identity lookup every consumer shares: probe the
+ * primary `sourceId` first, then the scoped user id (e.g. a WhatsApp BSUID)
+ * only when the first probe missed and a scoped id exists. Callers supply the
+ * actual query, so each site keeps its own relations and extra filters —
+ * only the ordering contract lives here and cannot drift between them.
+ */
+export const resolveWithSourceUserIdFallback = async <T>(
+  identity: SourceScopedIdentity,
+  lookup: (
+    where: { sourceId: string } | { sourceUserId: string },
+  ) => Promise<T | undefined>,
+): Promise<T | undefined> => {
+  const bySourceId = await lookup({ sourceId: identity.sourceId })
+  if (bySourceId || !identity.sourceUserId) {
+    return bySourceId
+  }
+  return await lookup({ sourceUserId: identity.sourceUserId })
 }
 
 export type OutgoingContact = {
@@ -28,6 +89,12 @@ export type OutgoingContact = {
    * `ContactInbox.personaId`.
    */
   personaId?: string | null
+  /**
+   * Alternate stable channel-scoped user id, independent of `sourceId`
+   * (e.g. WhatsApp Business-Scoped User ID). Sourced from
+   * `ContactInbox.sourceUserId`.
+   */
+  sourceUserId?: string | null
 }
 
 export type OutgoingMessage = {

@@ -23,6 +23,7 @@ export const contactImportFields = z.enum([
   "email",
   "firstName",
   "lastName",
+  "sourceUserId",
 ])
 export type ContactImportField = z.infer<typeof contactImportFields>
 
@@ -33,6 +34,10 @@ export const contactImportColumnMapSchema = z
     email: z.string().optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
+    // Channel-agnostic column-map key mirroring `ContactInbox.sourceUserId`
+    // (e.g. a WhatsApp Business-Scoped User ID). Only whatsapp import extracts
+    // it today — see `extractRowData`.
+    sourceUserId: z.string().optional(),
   })
   .strip()
 export type ContactImportColumnMap = z.infer<

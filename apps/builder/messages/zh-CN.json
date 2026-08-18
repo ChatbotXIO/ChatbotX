@@ -2149,6 +2149,12 @@
     "pageUserName": {
       "label": "粉丝专页用户名"
     },
+    "waUserId": {
+      "label": "WhatsApp 用户ID"
+    },
+    "waUserName": {
+      "label": "WhatsApp 用户名"
+    },
     "password": {
       "label": "密码",
       "placeholder": "••••••••"

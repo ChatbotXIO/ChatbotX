@@ -1273,6 +1273,12 @@
     "pageUserName": {
       "label": "ページユーザー名"
     },
+    "waUserId": {
+      "label": "WhatsAppユーザーID"
+    },
+    "waUserName": {
+      "label": "WhatsAppユーザー名"
+    },
     "purpose": {
       "label": "目的",
       "placeholder": "この関数は何をしますか？"

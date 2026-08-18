@@ -1347,6 +1347,12 @@
     "pageUserName": {
       "label": "Sayfa Kullanıcı Adı"
     },
+    "waUserId": {
+      "label": "WhatsApp Kullanıcı Kimliği"
+    },
+    "waUserName": {
+      "label": "WhatsApp Kullanıcı Adı"
+    },
     "purpose": {
       "label": "Amaç",
       "placeholder": "Bu işlev ne yapar?"

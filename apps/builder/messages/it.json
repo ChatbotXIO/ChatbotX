@@ -655,6 +655,12 @@
     "pageUserName": {
       "label": "Nome utente della pagina"
     },
+    "waUserId": {
+      "label": "ID utente WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nome utente WhatsApp"
+    },
     "purpose": {
       "label": "Scopo",
       "placeholder": "Che cosa fa questa funzione?"

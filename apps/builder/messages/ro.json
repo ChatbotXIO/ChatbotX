@@ -2020,6 +2020,12 @@
     "pageUserName": {
       "label": "Numele utilizatorului paginii"
     },
+    "waUserId": {
+      "label": "ID utilizator WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nume utilizator WhatsApp"
+    },
     "purpose": {
       "label": "Scop",
       "placeholder": "Ce face această funcție?"

@@ -92,9 +92,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 const workspaceFind = vi.fn()
-// Returns the set of source ids already linked to the inbox. Per call so the
-// processBatch pre-check and the insert-time re-check can return different sets.
-const findExistingSourceIds = vi.fn(async () => new Set<string>())
+// Returns the sourceId/sourceUserId identities already linked to the inbox.
+// Per call so the processBatch pre-check and the insert-time re-check can
+// return different sets.
+const findExistingSourceIdentities = vi.fn(async () => ({
+  sourceIds: new Set<string>(),
+  sourceUserIds: new Set<string>(),
+}))
 // MAC spies: the import handler must never touch these (see the
 // "does not increment MAC" regression test below). Present in the mock only
 // so a future accidental import surfaces as a call these tests can assert
@@ -162,8 +166,8 @@ vi.mock("@chatbotx.io/business", () => ({
     find: (...args: unknown[]) => workspaceFind(...args),
   },
   contactInboxService: {
-    findExistingSourceIds: (...args: unknown[]) =>
-      findExistingSourceIds(...args),
+    findExistingSourceIdentities: (...args: unknown[]) =>
+      findExistingSourceIdentities(...args),
   },
   contactCustomFieldService: {
     setValues: (...args: unknown[]) => setCustomFieldValues(...args),
@@ -278,8 +282,11 @@ beforeEach(() => {
   findManyCustomFields.mockResolvedValue([])
   findManyContactInbox.mockReset()
   findManyContactInbox.mockResolvedValue([])
-  findExistingSourceIds.mockReset()
-  findExistingSourceIds.mockResolvedValue(new Set<string>())
+  findExistingSourceIdentities.mockReset()
+  findExistingSourceIdentities.mockResolvedValue({
+    sourceIds: new Set<string>(),
+    sourceUserIds: new Set<string>(),
+  })
   updateSet.mockReset()
   updateWhere.mockReset()
   insertValues.mockReset()
@@ -409,7 +416,10 @@ describe("contacts import pipeline", () => {
 
   test("skips a row that already exists in the inbox", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
-    findExistingSourceIds.mockResolvedValue(new Set(["ext-1"]))
+    findExistingSourceIdentities.mockResolvedValue({
+      sourceIds: new Set(["ext-1"]),
+      sourceUserIds: new Set<string>(),
+    })
     getObjectStream.mockResolvedValue(
       streamOf([
         "external_id,phone,email",
@@ -429,9 +439,15 @@ describe("contacts import pipeline", () => {
 
   test("rechecks duplicates before insert", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
-    findExistingSourceIds
-      .mockResolvedValueOnce(new Set<string>())
-      .mockResolvedValueOnce(new Set(["ext-1"]))
+    findExistingSourceIdentities
+      .mockResolvedValueOnce({
+        sourceIds: new Set<string>(),
+        sourceUserIds: new Set<string>(),
+      })
+      .mockResolvedValueOnce({
+        sourceIds: new Set(["ext-1"]),
+        sourceUserIds: new Set<string>(),
+      })
     getObjectStream.mockResolvedValue(
       streamOf([
         "external_id,phone,email",
@@ -681,7 +697,10 @@ describe("contacts import pipeline", () => {
 
   test("does not touch the contacts quota when no row is actually inserted", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
-    findExistingSourceIds.mockResolvedValue(new Set(["ext-1"]))
+    findExistingSourceIdentities.mockResolvedValue({
+      sourceIds: new Set(["ext-1"]),
+      sourceUserIds: new Set<string>(),
+    })
     getObjectStream.mockResolvedValue(
       streamOf([
         "external_id,phone,email",
@@ -698,5 +717,75 @@ describe("contacts import pipeline", () => {
     })
     expect(incrementBy).not.toHaveBeenCalled()
     expect(workspaceUsageIncrement).not.toHaveBeenCalled()
+  })
+})
+
+describe("contacts import: whatsapp sourceUserId (BSUID)", () => {
+  const whatsappMeta = {
+    channel: "whatsapp",
+    columnMap: { sourceUserId: "wa_user_id" },
+  }
+
+  // Finds the ContactInbox rows array among everything passed to `insert().values()`
+  // (both Contact and ContactInbox rows flow through the same spy) by the
+  // presence of the `sourceId` column that only ContactInbox rows carry.
+  const insertedContactInboxRows = (): Array<{
+    sourceId: string
+    sourceUserId: string | null
+  }> => {
+    const rows = insertValues.mock.calls
+      .map((call) => call[0])
+      .find(
+        (
+          value,
+        ): value is Array<{ sourceId: string; sourceUserId: string | null }> =>
+          Array.isArray(value) &&
+          value.length > 0 &&
+          typeof value[0] === "object" &&
+          value[0] !== null &&
+          "sourceId" in value[0],
+      )
+    return rows ?? []
+  }
+
+  test("BSUID-only row creates a BSUID-keyed ContactInbox: sourceId equals sourceUserId", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "whatsapp" })
+    getObjectStream.mockResolvedValue(
+      streamOf(["wa_user_id", "user.9373928427292738"]),
+    )
+
+    await runContactsImport(buildRow({ meta: whatsappMeta }))
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 1,
+      failedCount: 0,
+    })
+
+    const [contactInbox] = insertedContactInboxRows()
+    expect(contactInbox).toMatchObject({
+      sourceId: "user.9373928427292738",
+      sourceUserId: "user.9373928427292738",
+    })
+  })
+
+  test("skips an import row whose sourceUserId matches an existing phone-keyed row's backfilled BSUID", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "whatsapp" })
+    findExistingSourceIdentities.mockResolvedValue({
+      sourceIds: new Set(["84912345678"]),
+      sourceUserIds: new Set(["user.9373928427292738"]),
+    })
+    getObjectStream.mockResolvedValue(
+      streamOf(["wa_user_id", "user.9373928427292738"]),
+    )
+
+    await runContactsImport(buildRow({ meta: whatsappMeta }))
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 0,
+      failedCount: 1,
+    })
+    expect(transactionFn).not.toHaveBeenCalled()
   })
 })

@@ -402,6 +402,8 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.fb_chat_link:
     case systemFieldTypes.enum.user_code:
     case systemFieldTypes.enum.webchat:
+    case systemFieldTypes.enum.wa_user_id:
+    case systemFieldTypes.enum.wa_user_name:
       return await getIntegrationField(
         contact,
         key,

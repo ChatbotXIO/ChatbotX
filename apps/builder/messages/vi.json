@@ -1320,6 +1320,12 @@
     "pageUserName": {
       "label": "Tên người dùng trang"
     },
+    "waUserId": {
+      "label": "ID người dùng WhatsApp"
+    },
+    "waUserName": {
+      "label": "Tên người dùng WhatsApp"
+    },
     "purpose": {
       "label": "Mục đích",
       "placeholder": "Chức năng này làm gì?"

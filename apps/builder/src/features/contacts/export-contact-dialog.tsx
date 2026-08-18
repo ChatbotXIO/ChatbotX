@@ -96,6 +96,10 @@ export function ExportContactDialog({
           label: t("fields.phoneNumber.label"),
           value: `${contactPrefix}:phoneNumber`,
         },
+        {
+          label: t("fields.waUserId.label"),
+          value: `${contactPrefix}:sourceUserId`,
+        },
       ],
     },
     {

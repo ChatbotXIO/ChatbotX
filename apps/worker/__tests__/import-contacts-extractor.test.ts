@@ -102,6 +102,62 @@ describe("extractRowData externalId resolution", () => {
     })
     expect(row).toBeNull()
   })
+
+  it("resolves the whatsapp externalId from the phone when no sourceUserId column is mapped (regression)", () => {
+    const row = extractRowData(
+      { phone: "+84912345678" },
+      columnMap,
+      undefined,
+      { channel: "whatsapp" },
+    )
+    expect(row?.externalId).toBe("84912345678")
+    expect(row?.sourceUserId).toBeUndefined()
+  })
+})
+
+describe("extractRowData sourceUserId (BSUID) resolution", () => {
+  const columnMapWithSourceUserId: ContactImportColumnMap = {
+    ...columnMap,
+    sourceUserId: "wa_user_id",
+  }
+
+  it("whatsapp phone + BSUID column: externalId comes from the phone, sourceUserId is kept", () => {
+    const row = extractRowData(
+      { phone: "+84912345678", wa_user_id: "user.9373928427292738" },
+      columnMapWithSourceUserId,
+      undefined,
+      { channel: "whatsapp" },
+    )
+    expect(row?.externalId).toBe("84912345678")
+    expect(row?.sourceUserId).toBe("user.9373928427292738")
+  })
+
+  it("whatsapp BSUID only (no phone): externalId falls back to sourceUserId", () => {
+    const row = extractRowData(
+      { wa_user_id: "user.9373928427292738" },
+      columnMapWithSourceUserId,
+      undefined,
+      { channel: "whatsapp" },
+    )
+    expect(row?.externalId).toBe("user.9373928427292738")
+    expect(row?.sourceUserId).toBe("user.9373928427292738")
+  })
+
+  it("whatsapp with neither phone, BSUID, nor email is rejected (regression)", () => {
+    const row = extractRowData({}, columnMapWithSourceUserId, undefined, {
+      channel: "whatsapp",
+    })
+    expect(row).toBeNull()
+  })
+
+  it("does not extract sourceUserId for a non-whatsapp channel even when the column is mapped", () => {
+    const row = extractRowData(
+      { id: "ext-1", wa_user_id: "user.9373928427292738" },
+      columnMapWithSourceUserId,
+    )
+    expect(row?.externalId).toBe("ext-1")
+    expect(row?.sourceUserId).toBeUndefined()
+  })
 })
 
 describe("extractRowData field handling", () => {

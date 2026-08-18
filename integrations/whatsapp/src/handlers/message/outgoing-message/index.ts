@@ -22,6 +22,10 @@ import { getWhatsappClient } from "../../../client"
 import { API_URL, DEFAULT_API_VERSION } from "../../../constants"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
+import {
+  isBsuidRecipient,
+  resolveRecipientParams,
+} from "../../../lib/recipient"
 import type { RawWhatsappMessage, WhatsappAuthValue } from "../../../schema"
 import { generateOutgoingMessages as convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepImage } from "./send-image"
@@ -144,19 +148,42 @@ const isRawWhatsappMessage = (
 ): message is RawWhatsappMessage =>
   message._type === "template" || message._type === "interactive_carousel"
 
+/**
+ * Builds the Cloud API message-body fields (everything after
+ * `messaging_product`/`recipient_type`/recipient params). `RawWhatsappMessage`
+ * shapes already carry `type`/`<type>` as their own top-level fields, so they
+ * spread as-is. A plain `ClientMessage` instance (e.g. `Text`) does not — its
+ * own fields ARE the type-specific payload — so it's wrapped as
+ * `{ type: msg._type, [msg._type]: msg }`, matching what
+ * `whatsapp-api-js`'s lib sender builds internally. This is the shape a
+ * BSUID-keyed lib-path send is routed through here instead (D4: the library
+ * cannot emit `recipient`).
+ */
+const toRawMessageBody = (
+  message: ClientMessage | RawWhatsappMessage,
+): Record<string, unknown> => {
+  if (isRawWhatsappMessage(message)) {
+    const { _type, ...messageBody } = message
+    return messageBody
+  }
+  return { type: message._type, [message._type]: message }
+}
+
 async function postRawMessage(props: {
   client: ReturnType<typeof getWhatsappClient>
   phoneNumberId: string
-  recipientId: string
-  message: RawWhatsappMessage
+  recipientParams: ReturnType<typeof resolveRecipientParams>
+  message: ClientMessage | RawWhatsappMessage
 }): Promise<ServerErrorResponse | ServerSentMessageResponse> {
-  const { _type, ...messageBody } = props.message
-  console.log("postRawMessage", {
-    phoneId: props.phoneNumberId,
-    recipientId: props.recipientId,
-    message: messageBody,
-    messageRaw: JSON.stringify(messageBody, null, 2),
-  })
+  const messageBody = toRawMessageBody(props.message)
+  logger.debug(
+    {
+      phoneId: props.phoneNumberId,
+      recipientMode: "recipient" in props.recipientParams ? "recipient" : "to",
+      messageType: props.message._type,
+    },
+    "postRawMessage",
+  )
   const response = await props.client.$$apiFetch$$(
     `${API_URL}/${DEFAULT_API_VERSION}/${props.phoneNumberId}/messages`,
     {
@@ -167,7 +194,7 @@ async function postRawMessage(props: {
       body: JSON.stringify({
         messaging_product: "whatsapp",
         recipient_type: "individual",
-        to: props.recipientId,
+        ...props.recipientParams,
         ...messageBody,
       }),
     },
@@ -175,11 +202,7 @@ async function postRawMessage(props: {
 
   if (!response.ok) {
     const errorBody = await response.json()
-    logger.error(errorBody, `Failed to send ${_type} message`)
-    console.log("errorBody", {
-      errorBody,
-      errorBody1: JSON.stringify(errorBody, null, 2),
-    })
+    logger.error(errorBody, `Failed to send ${props.message._type} message`)
     // Pass the HTTP status alongside Meta's raw body so the mapper surfaces the
     // real error code and detail instead of collapsing to an "unknown" (-1).
     throw mapToChannelError({
@@ -199,6 +222,8 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
+    const recipientParams = resolveRecipientParams(contact)
+    const isBsuidKeyedRecipient = isBsuidRecipient(recipientParams)
 
     try {
       for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
@@ -207,16 +232,26 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           continue
         }
 
-        console.log("whatsappMessage", {
-          phoneId: ctx.auth.metadata.phoneNumber.id,
-          recipientId: contact.sourceId,
-          message: whatsappMessage,
-        })
-        const sendResponse = await whatsappClient.sendMessage(
-          ctx.auth.metadata.phoneNumber.id,
-          contact.sourceId,
-          whatsappMessage,
+        logger.debug(
+          {
+            phoneId: ctx.auth.metadata.phoneNumber.id,
+            recipientMode: isBsuidKeyedRecipient ? "recipient" : "to",
+            messageType: whatsappMessage._type,
+          },
+          "sendMessage: dispatching outgoing message",
         )
+        const sendResponse = isBsuidKeyedRecipient
+          ? await postRawMessage({
+              client: whatsappClient,
+              phoneNumberId: ctx.auth.metadata.phoneNumber.id,
+              recipientParams,
+              message: whatsappMessage,
+            })
+          : await whatsappClient.sendMessage(
+              ctx.auth.metadata.phoneNumber.id,
+              contact.sourceId,
+              whatsappMessage,
+            )
 
         const serverError = sendResponse as ServerErrorResponse
 
@@ -267,6 +302,8 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
+    const recipientParams = resolveRecipientParams(contact)
+    const isBsuidKeyedRecipient = isBsuidRecipient(recipientParams)
 
     try {
       for (const whatsappMessage of convertFlowStepToWhatsappMessage(props)) {
@@ -277,26 +314,28 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
 
         let sendResponse: ServerErrorResponse | ServerSentMessageResponse
 
-        if (isRawWhatsappMessage(whatsappMessage)) {
+        if (isRawWhatsappMessage(whatsappMessage) || isBsuidKeyedRecipient) {
           sendResponse = await postRawMessage({
             client: whatsappClient,
             phoneNumberId: ctx.auth.metadata.phoneNumber.id,
-            recipientId: contact.sourceId,
+            recipientParams,
             message: whatsappMessage,
           })
         } else {
-          console.log("whatsappMessage", {
-            phoneId: ctx.auth.metadata.phoneNumber.id,
-            recipientId: contact.sourceId,
-            message: whatsappMessage,
-          })
+          logger.debug(
+            {
+              phoneId: ctx.auth.metadata.phoneNumber.id,
+              recipientMode: isBsuidKeyedRecipient ? "recipient" : "to",
+              messageType: whatsappMessage._type,
+            },
+            "sendFlowStep: dispatching outgoing message",
+          )
           sendResponse = await whatsappClient.sendMessage(
             ctx.auth.metadata.phoneNumber.id,
             contact.sourceId,
             whatsappMessage,
           )
         }
-        console.log("sendResponse", sendResponse)
         const serverError = sendResponse as ServerErrorResponse
 
         if (serverError?.error) {

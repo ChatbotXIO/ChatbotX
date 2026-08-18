@@ -138,6 +138,7 @@ describe("buildSelectedFields", () => {
         ["source", "Source"],
         ["lastReadAt", "Last Read At"],
         ["blockedAt", "Blocked At"],
+        ["sourceUserId", "WhatsApp User ID"],
       ]
 
       for (const [value, expectedHeader] of cases) {

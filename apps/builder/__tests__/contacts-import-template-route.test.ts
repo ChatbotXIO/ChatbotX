@@ -19,11 +19,11 @@ vi.mock("@/features/contacts/permissions", () => ({
 const UTF8_BOM_BYTES = [0xef, 0xbb, 0xbf]
 
 const EN_TEMPLATE =
-  '"Contact ID","Phone number","Email","First name","Last name"\n' +
-  '"1234567890","+14155550100","john.doe@example.com","John","Doe"\n'
+  '"Contact ID","Phone number","Email","First name","Last name","WhatsApp User ID"\n' +
+  '"1234567890","+14155550100","john.doe@example.com","John","Doe","user.9187654321098765"\n'
 const VI_TEMPLATE =
-  '"ID Liên hệ","Số điện thoại","Email","Tên","Họ"\n' +
-  '"1234567890","+84155550100","an.nguyen@example.com","An","Nguyễn"\n'
+  '"ID Liên hệ","Số điện thoại","Email","Tên","Họ","ID người dùng WhatsApp"\n' +
+  '"1234567890","+84155550100","an.nguyen@example.com","An","Nguyễn","user.9187654321098765"\n'
 
 const { GET } = await import(
   "../src/app/(no-sidebar)/space/[workspaceId]/contacts/import/template/route"

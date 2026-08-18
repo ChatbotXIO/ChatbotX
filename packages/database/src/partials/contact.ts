@@ -104,6 +104,8 @@ export const systemFieldTypes = z.enum([
   "workspace_name",
   "current_time",
   "page_user_name",
+  "wa_user_id",
+  "wa_user_name",
 ])
 export type SystemFieldType = z.infer<typeof systemFieldTypes>
 

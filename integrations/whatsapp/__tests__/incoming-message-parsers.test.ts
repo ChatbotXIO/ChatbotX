@@ -11,7 +11,7 @@ import {
 import { logger } from "../src/lib/logger"
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { warn: vi.fn(), error: vi.fn() },
+  logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
 const MEDIA_URL = "https://cdn.example.com/media"

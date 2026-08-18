@@ -1347,6 +1347,12 @@
     "pageUserName": {
       "label": "Nombre de usuario de la página"
     },
+    "waUserId": {
+      "label": "ID de usuario de WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nombre de usuario de WhatsApp"
+    },
     "purpose": {
       "label": "Finalidad",
       "placeholder": "¿Qué hace esta función?"

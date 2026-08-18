@@ -655,6 +655,12 @@
     "pageUserName": {
       "label": "粉絲專頁使用者名稱"
     },
+    "waUserId": {
+      "label": "WhatsApp 使用者ID"
+    },
+    "waUserName": {
+      "label": "WhatsApp 使用者名稱"
+    },
     "purpose": {
       "label": "目的",
       "placeholder": "這個函數有什麼作用？"

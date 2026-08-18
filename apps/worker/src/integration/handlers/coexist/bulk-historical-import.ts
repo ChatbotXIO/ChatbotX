@@ -6,8 +6,10 @@ import {
   messageCleanupService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
+import { buildContactInboxIdentityWhere } from "@chatbotx.io/business/contact-inbox"
 import {
   and,
+  type DatabaseClient,
   db,
   describeDatabaseError,
   eq,
@@ -423,6 +425,65 @@ export type BulkImportHistoricalResult = {
  * created). Callers use this map to dispatch downstream avatar / message
  * fetches without an additional DB lookup.
  */
+type ContactInboxIdentityRow = {
+  id: string
+  sourceId: string
+  sourceUserId: string | null
+  contactId: string
+}
+
+const rowsBySourceUserId = <T extends { sourceUserId: string | null }>(
+  rows: readonly T[],
+): Map<string, T> =>
+  new Map(
+    rows.flatMap((row) =>
+      row.sourceUserId === null ? [] : [[row.sourceUserId, row] as const],
+    ),
+  )
+
+/**
+ * Resolves raced entries whose ContactInbox insert was skipped by the partial
+ * (inboxId, sourceUserId) unique index: finds the winner row owning each
+ * entry's scoped user id, keyed by the entry's own import sourceId so the
+ * caller can alias the import key to the winner's link.
+ */
+const resolveScopedIdRaceWinners = async (props: {
+  tx: DatabaseClient
+  inboxId: string
+  racedEntries: ReadonlyArray<readonly [string, string]>
+}): Promise<Map<string, ContactInboxIdentityRow>> => {
+  const { tx, inboxId, racedEntries } = props
+  if (racedEntries.length === 0) {
+    return new Map()
+  }
+  const winners = await tx
+    .select({
+      id: contactInboxModel.id,
+      sourceId: contactInboxModel.sourceId,
+      sourceUserId: contactInboxModel.sourceUserId,
+      contactId: contactInboxModel.contactId,
+    })
+    .from(contactInboxModel)
+    .where(
+      and(
+        eq(contactInboxModel.inboxId, inboxId),
+        inArray(
+          contactInboxModel.sourceUserId,
+          racedEntries.map(([, scopedId]) => scopedId),
+        ),
+      ),
+    )
+  const winnerByScopedId = rowsBySourceUserId(winners)
+  const aliases = new Map<string, ContactInboxIdentityRow>()
+  for (const [entrySourceId, scopedId] of racedEntries) {
+    const winner = winnerByScopedId.get(scopedId)
+    if (winner) {
+      aliases.set(entrySourceId, winner)
+    }
+  }
+  return aliases
+}
+
 export const bulkImportContacts = async (props: {
   inbox: InboxModel
   workspaceId: string
@@ -460,6 +521,8 @@ export const bulkImportContacts = async (props: {
       email: existing.email ?? entry.email,
       avatar: existing.avatar ?? entry.avatar,
       gender: existing.gender ?? entry.gender,
+      sourceUserId: existing.sourceUserId ?? entry.sourceUserId,
+      sourceUsername: existing.sourceUsername ?? entry.sourceUsername,
     })
   }
 
@@ -486,20 +549,30 @@ export const bulkImportContacts = async (props: {
   const failureReason: string | undefined = undefined
   const contactInboxIds = new Map<string, ContactImportLink>()
 
+  // A thread's scoped user id (e.g. a WhatsApp BSUID) may already belong to a
+  // row in this inbox under a different sourceId. Matching on it up front
+  // resolves the thread to that row instead of attempting an insert that
+  // would violate the partial unique index (inboxId, sourceUserId).
+  const sourceUserIds = [...dedup.values()].flatMap((entry) =>
+    entry.sourceUserId ? [entry.sourceUserId] : [],
+  )
+
   await db.transaction(async (tx) => {
-    // 1. Find existing ContactInbox rows.
+    // 1. Find existing ContactInbox rows — by sourceId or scoped user id.
     const existingRows = await tx
       .select({
         id: contactInboxModel.id,
         sourceId: contactInboxModel.sourceId,
+        sourceUserId: contactInboxModel.sourceUserId,
         contactId: contactInboxModel.contactId,
       })
       .from(contactInboxModel)
       .where(
-        and(
-          eq(contactInboxModel.inboxId, inbox.id),
-          inArray(contactInboxModel.sourceId, sourceIds),
-        ),
+        buildContactInboxIdentityWhere({
+          inboxId: inbox.id,
+          sourceIds,
+          sourceUserIds,
+        }),
       )
 
     const resolved = new Map<string, ContactImportLink>()
@@ -508,6 +581,23 @@ export const bulkImportContacts = async (props: {
     for (const row of existingRows) {
       existingContactIds.add(row.contactId)
       resolved.set(row.sourceId, {
+        contactInboxId: row.id,
+        contactId: row.contactId,
+        conversationId: "",
+      })
+    }
+
+    const existingBySourceUserId = rowsBySourceUserId(existingRows)
+    for (const [sourceId, entry] of dedup) {
+      if (resolved.has(sourceId) || !entry.sourceUserId) {
+        continue
+      }
+      const row = existingBySourceUserId.get(entry.sourceUserId)
+      if (!row) {
+        continue
+      }
+      existingContactIds.add(row.contactId)
+      resolved.set(sourceId, {
         contactInboxId: row.id,
         contactId: row.contactId,
         conversationId: "",
@@ -582,13 +672,15 @@ export const bulkImportContacts = async (props: {
 
       await tx.insert(contactModel).values(contactRows)
 
-      const contactInboxRows = acceptedNew.map(([sourceId], i) => ({
+      const contactInboxRows = acceptedNew.map(([sourceId, entry], i) => ({
         id: createId(),
         inboxId: inbox.id,
         contactId: contactRows[i]?.id,
         originalContactId: contactRows[i]?.id,
         source: contactSources.enum.inboundMessage,
         sourceId,
+        sourceUserId: entry.sourceUserId ?? null,
+        sourceUsername: entry.sourceUsername ?? null,
         channel: inbox.channel,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -600,12 +692,13 @@ export const bulkImportContacts = async (props: {
         contactId: contactRows[i]?.id,
       }))
 
+      // Targetless DO NOTHING: a concurrent import can win EITHER identity
+      // index — (inboxId, sourceId) or the partial (inboxId, sourceUserId) —
+      // and a targeted clause would let the second one abort the whole batch.
       const insertedInboxes = await tx
         .insert(contactInboxModel)
         .values(contactInboxRows)
-        .onConflictDoNothing({
-          target: [contactInboxModel.inboxId, contactInboxModel.sourceId],
-        })
+        .onConflictDoNothing()
         .returning({
           id: contactInboxModel.id,
           sourceId: contactInboxModel.sourceId,
@@ -619,6 +712,11 @@ export const bulkImportContacts = async (props: {
       const racedSourceIds = acceptedNew
         .map(([sourceId]) => sourceId)
         .filter((s) => !insertedSourceIds.has(s))
+
+      // Maps a raced entry's import key to the winner row that claimed its
+      // scoped user id under a DIFFERENT sourceId — the final link mapping is
+      // keyed by row.sourceId, so these aliases are re-keyed at the end.
+      let scopedWinnerAliases = new Map<string, ContactInboxIdentityRow>()
 
       if (racedSourceIds.length > 0) {
         const winners = await tx
@@ -637,6 +735,27 @@ export const bulkImportContacts = async (props: {
         for (const w of winners) {
           insertedInboxes.push(w)
           insertedSourceIds.add(w.sourceId)
+        }
+
+        // A raced row skipped on the scoped-user-id index has no winner under
+        // its own sourceId — resolve it through the row owning that scoped id.
+        scopedWinnerAliases = await resolveScopedIdRaceWinners({
+          tx,
+          inboxId: inbox.id,
+          racedEntries: racedSourceIds.flatMap((sourceId) => {
+            if (insertedSourceIds.has(sourceId)) {
+              return []
+            }
+            const scopedId = dedup.get(sourceId)?.sourceUserId
+            return scopedId ? [[sourceId, scopedId] as const] : []
+          }),
+        })
+        for (const winner of scopedWinnerAliases.values()) {
+          insertedInboxes.push({
+            id: winner.id,
+            sourceId: winner.sourceId,
+            contactId: winner.contactId,
+          })
         }
 
         const racedSet = new Set(racedSourceIds)
@@ -715,6 +834,16 @@ export const bulkImportContacts = async (props: {
             source: contactSources.enum.inboundMessage,
             createdAt: new Date(),
           })
+        }
+      }
+
+      // Scoped-id winners resolve under their own sourceId above; alias the
+      // raced entry's import key to the same link so downstream message
+      // imports keyed by the entry's sourceId still find their contact.
+      for (const [entrySourceId, winner] of scopedWinnerAliases) {
+        const link = resolved.get(winner.sourceId)
+        if (link) {
+          resolved.set(entrySourceId, link)
         }
       }
     }

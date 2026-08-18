@@ -242,6 +242,14 @@ function SettingsSection({ csvHeaders }: { csvHeaders: string[] }) {
           label={t("fields.phoneNumber.label")}
           name="phoneNumber"
         />
+        {channel === channelTypes.enum.whatsapp && (
+          <HeaderConnectField
+            allowClear
+            csvHeaders={csvHeaders}
+            label={t("fields.waUserId.label")}
+            name="sourceUserId"
+          />
+        )}
         <HeaderConnectField
           allowClear
           csvHeaders={csvHeaders}
