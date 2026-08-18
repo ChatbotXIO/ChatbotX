@@ -8,6 +8,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  MenuIcon,
 } from "lucide-react"
 
 import { useIsMobile } from "@chatbotx.io/ui/hooks/use-mobile"
@@ -287,6 +288,43 @@ function SidebarTrigger({
       ) : (
         <ChevronRightIcon className="size-5 rtl:rotate-180" />
       )}
+      <span className="sr-only">Toggle Sidebar</span>
+    </Button>
+  )
+}
+
+/**
+ * Menu button for the mobile layout, where `Sidebar` renders as a `Sheet`.
+ *
+ * `SidebarTrigger` is a rail-collapse affordance: a small chevron that only
+ * reads as "collapse this column" next to a visible sidebar. Below the mobile
+ * breakpoint there is no column to collapse, so the same control needs the
+ * conventional hamburger shape and a full touch target.
+ *
+ * Render this inside a container that is itself hidden from `md` up; the button
+ * does not hide itself, so a caller can also use it in an always-mobile shell.
+ */
+function SidebarMobileTrigger({
+  className,
+  onClick,
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  const { toggleSidebar } = useSidebar()
+
+  return (
+    <Button
+      className={cn("size-9", className)}
+      data-sidebar="mobile-trigger"
+      data-slot="sidebar-mobile-trigger"
+      onClick={(event) => {
+        onClick?.(event)
+        toggleSidebar()
+      }}
+      size="icon"
+      variant="ghost"
+      {...props}
+    >
+      <MenuIcon className="size-5" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -739,6 +777,7 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarMobileTrigger,
   SidebarProvider,
   SidebarRail,
   SidebarSeparator,
