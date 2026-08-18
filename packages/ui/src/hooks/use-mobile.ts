@@ -14,7 +14,19 @@ import * as React from "react"
  */
 export const MOBILE_BREAKPOINT = 768
 
-export function useIsMobile() {
+/**
+ * Whether the viewport is narrower than {@link MOBILE_BREAKPOINT}, or
+ * `undefined` before the first client-side measurement.
+ *
+ * Prefer {@link useIsMobile} for anything a CSS `md:` branch could also express:
+ * guessing "desktop" for one frame is invisible when the swap is only styling.
+ *
+ * Reach for this hook instead when the two layouts mount *different, expensive*
+ * subtrees — the inbox, where a wrong first guess would mount the conversation
+ * list, message list, and contact panel twice and fire their fetches twice.
+ * Hold rendering until this resolves.
+ */
+export function useIsMobileState(): boolean | undefined {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
@@ -27,5 +39,9 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return !!isMobile
+  return isMobile
+}
+
+export function useIsMobile() {
+  return !!useIsMobileState()
 }
