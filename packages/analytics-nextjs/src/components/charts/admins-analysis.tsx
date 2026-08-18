@@ -122,7 +122,7 @@ export function AdminsAnalysis() {
   })
 
   return (
-    <Card className="col-span-2 w-full">
+    <Card className="w-full md:col-span-2">
       <CardHeader>
         <CardTitle>{t("analytics.admins")}</CardTitle>
       </CardHeader>
