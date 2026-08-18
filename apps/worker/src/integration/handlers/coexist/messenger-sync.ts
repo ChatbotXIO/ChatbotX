@@ -173,10 +173,11 @@ type SyncContext = {
   jobStart: number
   /** Mutated by handlers to surface non-fatal failures into currentError. */
   errorRef: { current: string | undefined }
-  /** `IntegrationMessenger.coexistSkipAiContext` — when true, advance
-   *  `Conversation.aiContextLastMessageId` to the newest sync-inserted
-   *  message id so the AI ignores this synced history. */
-  skipAiContext: boolean
+  /** `IntegrationMessenger.coexistAiReadsSyncedHistory` — when false (the
+   *  default), `Conversation.aiContextLastMessageId` is advanced to the newest
+   *  sync-inserted message id so the AI ignores this synced history; when
+   *  true, the marker is left untouched and the AI reads the history. */
+  aiReadsSyncedHistory: boolean
 }
 
 type PhaseResult = {
@@ -542,9 +543,9 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
                 },
               })
 
-              const aiMarkerMessageId = ctx.skipAiContext
-                ? convNewestMessageId
-                : null
+              const aiMarkerMessageId = ctx.aiReadsSyncedHistory
+                ? null
+                : convNewestMessageId
               if (convNewest || aiMarkerMessageId) {
                 activityUpdates.push({
                   contactInboxId: link.contactInboxId,
@@ -826,7 +827,7 @@ export const coexistMessengerSync = async (
     getLimit: () => currentLimit,
     jobStart,
     errorRef,
-    skipAiContext: integration.coexistSkipAiContext,
+    aiReadsSyncedHistory: integration.coexistAiReadsSyncedHistory,
   }
 
   let finalStatus: "succeeded" | "failed" | "partial" | null = null

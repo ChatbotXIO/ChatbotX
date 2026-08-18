@@ -139,7 +139,7 @@ describe("coexistInstagramSync", () => {
     mockLoadContext.mockResolvedValue({
       inbox: { id: "inbox-1" },
       workspaceId: "workspace-1",
-      integration: { coexistSkipAiContext: false },
+      integration: { coexistAiReadsSyncedHistory: false },
     })
     mockClaimRun.mockResolvedValue({
       attempts: 1,
@@ -245,12 +245,8 @@ describe("coexistInstagramSync", () => {
     expect(mockMarkSucceeded).toHaveBeenCalledWith({ runId: "run-ig-1" })
   })
 
-  it("threads coexistSkipAiContext=true into the row's aiMarkerMessageId, carrying the newest inserted message id", async () => {
-    mockLoadContext.mockResolvedValue({
-      inbox: { id: "inbox-1" },
-      workspaceId: "workspace-1",
-      integration: { coexistSkipAiContext: true },
-    })
+  it("advances the AI marker by default (coexistAiReadsSyncedHistory off), carrying the newest inserted message id", async () => {
+    // beforeEach already wires mockLoadContext with coexistAiReadsSyncedHistory: false.
     mockFetchConversationMessages.mockResolvedValue({
       messages: [{ id: "message-1", message: "hi" }],
     })
@@ -273,7 +269,12 @@ describe("coexistInstagramSync", () => {
     expect(updates[0]?.aiMarkerMessageId).toBe("100000000000001")
   })
 
-  it("passes a null aiMarkerMessageId when coexistSkipAiContext is off", async () => {
+  it("passes a null aiMarkerMessageId when coexistAiReadsSyncedHistory is on (AI reads synced history)", async () => {
+    mockLoadContext.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      workspaceId: "workspace-1",
+      integration: { coexistAiReadsSyncedHistory: true },
+    })
     mockFetchConversationMessages.mockResolvedValue({
       messages: [{ id: "message-1", message: "hi" }],
     })

@@ -57,7 +57,7 @@ export const integrationWhatsappModel = pgTable(
     name: text().notNull(),
     displayPhoneNumber: text().notNull().default(""),
     coexistEnabled: boolean().notNull().default(false),
-    coexistSkipAiContext: boolean().notNull().default(false),
+    coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),
     historyDeclined: boolean().notNull().default(false),

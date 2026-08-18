@@ -116,12 +116,12 @@ describe("CoexistPopup", () => {
       button.textContent?.includes("coexist.decline"),
     )
 
-  test("renders the skip-AI-context switch defaulted OFF", () => {
+  test("renders the AI-reads-synced-history switch defaulted OFF (AI ignores synced history by default)", () => {
     expect(switchEl()).not.toBeNull()
     expect(switchEl()?.getAttribute("aria-checked")).toBe("false")
   })
 
-  test("POSTs skipAiContext: false by default when confirming enable", async () => {
+  test("POSTs aiReadsSyncedHistory: false by default when confirming enable", async () => {
     await act(async () => {
       enableButton()?.click()
       await Promise.resolve()
@@ -134,13 +134,13 @@ describe("CoexistPopup", () => {
           workspaceId: "ws-1",
           integrationId: "int-1",
           enabled: true,
-          skipAiContext: false,
+          aiReadsSyncedHistory: false,
         }),
       }),
     )
   })
 
-  test("POSTs skipAiContext: true after toggling the switch on", async () => {
+  test("POSTs aiReadsSyncedHistory: true after toggling the switch on", async () => {
     act(() => {
       switchEl()?.click()
     })
@@ -154,12 +154,12 @@ describe("CoexistPopup", () => {
     expect(mockKyPost).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        json: expect.objectContaining({ skipAiContext: true }),
+        json: expect.objectContaining({ aiReadsSyncedHistory: true }),
       }),
     )
   })
 
-  test("POSTs skipAiContext in the decline body too (enabled: false)", async () => {
+  test("POSTs aiReadsSyncedHistory in the decline body too (enabled: false)", async () => {
     act(() => {
       switchEl()?.click()
     })
@@ -174,7 +174,7 @@ describe("CoexistPopup", () => {
       expect.objectContaining({
         json: expect.objectContaining({
           enabled: false,
-          skipAiContext: true,
+          aiReadsSyncedHistory: true,
         }),
       }),
     )

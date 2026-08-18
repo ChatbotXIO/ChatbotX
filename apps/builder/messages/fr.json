@@ -2945,8 +2945,8 @@
     "toggleHelper": "La réactivation ne fonctionne que si Meta dispose encore de données en mémoire tampon, dans les 24 heures suivant l’intégration. Sinon, déconnectez et reconnectez.",
     "toggleHelperMessenger": "La réactivation ne fonctionne que si Meta dispose encore de données en mémoire tampon, dans les 24 heures suivant l’intégration. Sinon, déconnectez et reconnectez la page Messenger.",
     "toggleHelperWhatsapp": "La réactivation ne fonctionne que si Meta dispose encore de données en mémoire tampon, dans les 24 heures suivant l’intégration. Sinon, déconnectez et reconnectez le numéro WhatsApp.",
-    "skipAiContextLabel": "L'IA ignore l'historique synchronisé",
-    "skipAiContextHelper": "Lorsque cette option est activée, l'IA ignore les messages importés par cette synchronisation et ne prend en compte que les nouveaux messages.",
+    "aiReadsSyncedHistoryLabel": "Laisser l'IA lire l'historique synchronisé",
+    "aiReadsSyncedHistoryHelper": "Si activé, l'IA utilise aussi les messages importés par cette synchronisation. Si désactivé, l'IA ne prend en compte que les nouveaux messages.",
     "success": {
       "enabled": "Synchronisation démarrée. Les anciens contacts et messages apparaîtront prochainement.",
       "disabled": "Synchronisation désactivée."

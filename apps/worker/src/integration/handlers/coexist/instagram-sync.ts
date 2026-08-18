@@ -40,7 +40,7 @@ type InstagramIntegrationType = IntegrationInstagramModel["type"]
 const runInstagramCoexistPull = async <
   Ctx extends {
     inbox: InboxModel
-    integration: { coexistSkipAiContext: boolean }
+    integration: { coexistAiReadsSyncedHistory: boolean }
   },
   Conv extends { id: string },
   Msg,
@@ -303,9 +303,9 @@ const runInstagramCoexistPull = async <
                 attachmentIds.push(...imported.insertedAttachmentIds)
 
                 const aiMarkerMessageId = context.integration
-                  .coexistSkipAiContext
-                  ? imported.newestMessageId
-                  : null
+                  .coexistAiReadsSyncedHistory
+                  ? null
+                  : imported.newestMessageId
                 if (
                   imported.newestMessageAt !== null ||
                   aiMarkerMessageId !== null

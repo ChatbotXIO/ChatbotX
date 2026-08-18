@@ -167,10 +167,11 @@ describe("setCoexistWhatsappAPI", () => {
 
     // Flag flipped on via the atomic UPDATE … RETURNING (one update on success).
     expect(db.update).toHaveBeenCalledTimes(1)
-    // skipAiContext defaults to false (zod default) and is written on enable.
+    // aiReadsSyncedHistory defaults to false (zod default) and is written on
+    // enable — the default advances the AI marker (AI ignores synced history).
     expect(dbUpdateBuilder.set).toHaveBeenCalledWith({
       coexistEnabled: true,
-      coexistSkipAiContext: false,
+      coexistAiReadsSyncedHistory: false,
     })
 
     // CoexistSyncRun insert with the init-row values.
@@ -192,14 +193,14 @@ describe("setCoexistWhatsappAPI", () => {
     expect(mockQueueAdd).not.toHaveBeenCalled()
   })
 
-  test("enabled:true, skipAiContext:true — writes coexistSkipAiContext alongside coexistEnabled", async () => {
+  test("enabled:true, aiReadsSyncedHistory:true — writes coexistAiReadsSyncedHistory alongside coexistEnabled", async () => {
     const result = await call(
       procedure,
       {
         workspaceId: "ws-1",
         integrationId: "int-1",
         enabled: true,
-        skipAiContext: true,
+        aiReadsSyncedHistory: true,
       },
       { context: stubContext },
     )
@@ -207,7 +208,7 @@ describe("setCoexistWhatsappAPI", () => {
     expect(result).toEqual({ success: true })
     expect(dbUpdateBuilder.set).toHaveBeenCalledWith({
       coexistEnabled: true,
-      coexistSkipAiContext: true,
+      coexistAiReadsSyncedHistory: true,
     })
   })
 
@@ -231,21 +232,21 @@ describe("setCoexistWhatsappAPI", () => {
     expect(mockQueueAdd).not.toHaveBeenCalled()
   })
 
-  test("enabled:false (decline) — never writes coexistSkipAiContext, even when the popup sent skipAiContext:true", async () => {
+  test("enabled:false (decline) — never writes coexistAiReadsSyncedHistory, even when the popup sent aiReadsSyncedHistory:true", async () => {
     const result = await call(
       procedure,
       {
         workspaceId: "ws-1",
         integrationId: "int-1",
         enabled: false,
-        skipAiContext: true,
+        aiReadsSyncedHistory: true,
       },
       { context: stubContext },
     )
 
     expect(result).toEqual({ success: true })
     // The UPDATE runs BEFORE the `if (enabled)` branch — decline must never
-    // write coexistSkipAiContext, regardless of what the popup sent.
+    // write coexistAiReadsSyncedHistory, regardless of what the popup sent.
     expect(dbUpdateBuilder.set).toHaveBeenCalledWith({ coexistEnabled: false })
   })
 
@@ -335,37 +336,37 @@ describe("i18n key presence (H12)", () => {
     ).toBeDefined()
   })
 
-  test("coexist.skipAiContextLabel is defined in en.json and vi.json", () => {
+  test("coexist.aiReadsSyncedHistoryLabel is defined in en.json and vi.json", () => {
     expect(
       (
         enMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
-      ).coexist.skipAiContextLabel,
+      ).coexist.aiReadsSyncedHistoryLabel,
     ).toBeDefined()
     expect(
       (
         viMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
-      ).coexist.skipAiContextLabel,
+      ).coexist.aiReadsSyncedHistoryLabel,
     ).toBeDefined()
   })
 
-  test("coexist.skipAiContextHelper is defined in en.json and vi.json", () => {
+  test("coexist.aiReadsSyncedHistoryHelper is defined in en.json and vi.json", () => {
     expect(
       (
         enMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
-      ).coexist.skipAiContextHelper,
+      ).coexist.aiReadsSyncedHistoryHelper,
     ).toBeDefined()
     expect(
       (
         viMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
-      ).coexist.skipAiContextHelper,
+      ).coexist.aiReadsSyncedHistoryHelper,
     ).toBeDefined()
   })
 

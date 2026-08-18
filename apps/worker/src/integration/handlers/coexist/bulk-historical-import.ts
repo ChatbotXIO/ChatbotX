@@ -231,8 +231,9 @@ export type CoexistActivityUpdate = {
   oldestMessageAt: Date | null
   newestIncomingMessageAt: Date | null
   /** Id of the newest sync-inserted message for this conversation (either
-   *  direction), set by callers ONLY when the integration opted into
-   *  skipping synced history for AI; null = do not advance the marker. */
+   *  direction). Set by default so the AI ignores synced history; callers
+   *  null it out only when the integration opted into letting the AI read
+   *  synced history. Null = do not advance the marker. */
   aiMarkerMessageId: string | null
 }
 
@@ -1068,12 +1069,13 @@ export const bulkImportHistorical = async (props: {
   workspaceId: string
   runId: string
   batch: HistoricalContactMessages[]
-  /** `IntegrationWhatsapp.coexistSkipAiContext` — when true, advance
-   *  `Conversation.aiContextLastMessageId` to the newest sync-inserted
-   *  message id so the AI ignores this synced history. */
-  skipAiContext: boolean
+  /** `IntegrationWhatsapp.coexistAiReadsSyncedHistory` — when false (the
+   *  default), `Conversation.aiContextLastMessageId` is advanced to the newest
+   *  sync-inserted message id so the AI ignores this synced history; when
+   *  true, the marker is left untouched and the AI reads the history. */
+  aiReadsSyncedHistory: boolean
 }): Promise<BulkImportHistoricalResult> => {
-  const { inbox, workspaceId, runId, batch, skipAiContext } = props
+  const { inbox, workspaceId, runId, batch, aiReadsSyncedHistory } = props
 
   const contactsResult = await bulkImportContacts({
     inbox,
@@ -1125,7 +1127,9 @@ export const bulkImportHistorical = async (props: {
           for (const id of res.insertedAttachmentIds) {
             insertedAttachmentIds.push(id)
           }
-          const aiMarkerMessageId = skipAiContext ? res.newestMessageId : null
+          const aiMarkerMessageId = aiReadsSyncedHistory
+            ? null
+            : res.newestMessageId
           if (res.newestMessageAt !== null || aiMarkerMessageId !== null) {
             activityUpdates.push({
               contactInboxId: link.contactInboxId,

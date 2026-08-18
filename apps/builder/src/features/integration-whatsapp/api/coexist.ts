@@ -15,7 +15,7 @@ const setCoexistWhatsappRequest = z.object({
   workspaceId: z.string(),
   integrationId: z.string(),
   enabled: z.boolean(),
-  skipAiContext: z.boolean().optional().default(false),
+  aiReadsSyncedHistory: z.boolean().optional().default(false),
 })
 export type SetCoexistWhatsappRequest = z.infer<
   typeof setCoexistWhatsappRequest
@@ -53,20 +53,23 @@ export const integrationWhatsappCoexistAPIs = {
     .output(setCoexistWhatsappResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { workspaceId, integrationId, enabled, skipAiContext } = input
+      const { workspaceId, integrationId, enabled, aiReadsSyncedHistory } =
+        input
 
       // Atomic UPDATE + RETURNING gates on workspaceId (tenancy) and yields
       // phoneNumberId + auth in one round trip — no separate findFirst, no
       // race window between flag write and queue enqueue.
       //
-      // `coexistSkipAiContext` is set ONLY when enabling — the popup also
+      // `coexistAiReadsSyncedHistory` is set ONLY when enabling — the popup also
       // POSTs on decline (`enabled: false`), and this UPDATE runs before the
       // `if (enabled)` branch below, so a decline must never write it.
       const [updated] = await db
         .update(integrationWhatsappModel)
         .set({
           coexistEnabled: enabled,
-          ...(enabled ? { coexistSkipAiContext: skipAiContext } : {}),
+          ...(enabled
+            ? { coexistAiReadsSyncedHistory: aiReadsSyncedHistory }
+            : {}),
         })
         .where(
           and(

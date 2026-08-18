@@ -171,7 +171,7 @@ const fakeIntegration = {
   workspaceId,
   pageId: PAGE_ID,
   coexistEnabled: true,
-  coexistSkipAiContext: false,
+  coexistAiReadsSyncedHistory: false,
   inboxId: "inbox-messenger-1",
   auth: {
     tokens: { accessToken: "access-token-abc" },
@@ -443,11 +443,8 @@ describe("coexistMessengerSync", () => {
     expect(bulkArgs.messages[0]?.sourceId).toBe("msg-xyz")
   })
 
-  it("threads coexistSkipAiContext=true into the row's aiMarkerMessageId, carrying the newest message id", async () => {
-    mockFindFirstMessenger.mockResolvedValue({
-      ...fakeIntegration,
-      coexistSkipAiContext: true,
-    })
+  it("advances the AI marker by default (coexistAiReadsSyncedHistory off), carrying the newest message id", async () => {
+    mockFindFirstMessenger.mockResolvedValue(fakeIntegration)
     mockFindOrFail.mockResolvedValue(fakeInbox)
 
     mockListConversations.mockResolvedValueOnce({
@@ -480,8 +477,11 @@ describe("coexistMessengerSync", () => {
     expect(updates[0]?.aiMarkerMessageId).toBe("100000000000001")
   })
 
-  it("passes a null aiMarkerMessageId when coexistSkipAiContext is off", async () => {
-    mockFindFirstMessenger.mockResolvedValue(fakeIntegration)
+  it("passes a null aiMarkerMessageId when coexistAiReadsSyncedHistory is on (AI reads synced history)", async () => {
+    mockFindFirstMessenger.mockResolvedValue({
+      ...fakeIntegration,
+      coexistAiReadsSyncedHistory: true,
+    })
     mockFindOrFail.mockResolvedValue(fakeInbox)
 
     mockListConversations.mockResolvedValueOnce({

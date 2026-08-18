@@ -66,9 +66,9 @@ export function CoexistPopup({
 }: CoexistPopupProps) {
   const t = useTranslations()
   const [pending, setPending] = useState<"enable" | "decline" | null>(null)
-  // Default OFF: coexist-synced history feeds the AI unless explicitly opted
-  // out.
-  const [skipAiContext, setSkipAiContext] = useState(false)
+  // Default OFF: the AI ignores coexist-synced history (the marker advances)
+  // unless the user explicitly opts in.
+  const [aiReadsSyncedHistory, setAiReadsSyncedHistory] = useState(false)
 
   const handleChoice = async (enabled: boolean) => {
     setPending(enabled ? "enable" : "decline")
@@ -76,7 +76,7 @@ export function CoexistPopup({
       const endpoint = `/api/workspaces/${workspaceId}/integrations/${channel}/${integrationId}/coexist`
       const result = await ky
         .post<CoexistResponse>(endpoint, {
-          json: { workspaceId, integrationId, enabled, skipAiContext },
+          json: { workspaceId, integrationId, enabled, aiReadsSyncedHistory },
         })
         .json()
 
@@ -132,16 +132,16 @@ export function CoexistPopup({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Switch
-              checked={skipAiContext}
+              checked={aiReadsSyncedHistory}
               disabled={isPending}
-              onCheckedChange={setSkipAiContext}
+              onCheckedChange={setAiReadsSyncedHistory}
             />
             <span className="font-medium text-sm">
-              {t("coexist.skipAiContextLabel")}
+              {t("coexist.aiReadsSyncedHistoryLabel")}
             </span>
           </div>
           <p className="text-muted-foreground text-xs">
-            {t("coexist.skipAiContextHelper")}
+            {t("coexist.aiReadsSyncedHistoryHelper")}
           </p>
         </div>
 

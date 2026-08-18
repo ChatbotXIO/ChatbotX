@@ -7,7 +7,7 @@ const setCoexistMessengerRequest = z.object({
   workspaceId: z.string(),
   integrationId: z.string(),
   enabled: z.boolean(),
-  skipAiContext: z.boolean().optional().default(false),
+  aiReadsSyncedHistory: z.boolean().optional().default(false),
 })
 export type SetCoexistMessengerRequest = z.infer<
   typeof setCoexistMessengerRequest
@@ -37,13 +37,14 @@ export const integrationMessengerCoexistAPIs = {
     .output(setCoexistMessengerResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { workspaceId, integrationId, enabled, skipAiContext } = input
+      const { workspaceId, integrationId, enabled, aiReadsSyncedHistory } =
+        input
       return await (enabled
         ? coexistService.enable({
             workspaceId,
             integrationId,
             channel: "messenger",
-            skipAiContext,
+            aiReadsSyncedHistory,
           })
         : coexistService.disable({
             workspaceId,

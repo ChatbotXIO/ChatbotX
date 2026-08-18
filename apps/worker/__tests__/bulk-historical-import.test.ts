@@ -349,7 +349,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [],
     })
 
@@ -382,7 +382,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [{ contact: contact("src-1"), messages: [msg("m-src-1")] }],
     })
 
@@ -408,7 +408,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [{ contact: contact("src-1"), messages: [msg("m-src-1")] }],
     })
 
@@ -436,7 +436,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [{ contact: contact("src-1"), messages: [] }],
     })
 
@@ -468,7 +468,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [
         {
           contact: contact("src-1"),
@@ -504,7 +504,7 @@ describe("bulkImportHistorical", () => {
     })
   })
 
-  it("advances the AI-context marker via conversationService when skipAiContext is true", async () => {
+  it("advances the AI marker by default (aiReadsSyncedHistory: false) so the AI ignores synced history", async () => {
     stubNewContactsTransaction([
       {
         sourceId: "src-1",
@@ -523,7 +523,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: true,
+      aiReadsSyncedHistory: false,
       batch: [
         {
           contact: contact("src-1"),
@@ -546,7 +546,7 @@ describe("bulkImportHistorical", () => {
     )
   })
 
-  it("passes a null aiMarkerMessageId to conversationService for every row when skipAiContext is false", async () => {
+  it("leaves the marker untouched (null) for every row when aiReadsSyncedHistory is true, so the AI reads synced history", async () => {
     stubNewContactsTransaction([
       {
         sourceId: "src-1",
@@ -563,14 +563,14 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: true,
       batch: [
         {
           contact: contact("src-1"),
           // A valid API createdAt so the activity row still carries a
           // non-null `newestMessageAt` and reaches conversationService: with
-          // skipAiContext=false AND no valid timestamp at all, no row would
-          // be pushed at all (see bulk-import-messages.test.ts's
+          // aiReadsSyncedHistory=true AND no valid timestamp at all, no row
+          // would be pushed at all (see bulk-import-messages.test.ts's
           // applyCoexistActivityUpdates suite for that absence case).
           messages: [
             msg("m-src-1", { createdAt: new Date("2026-07-01T00:00:00Z") }),
@@ -602,7 +602,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [
         {
           contact: contact("src-1"),
@@ -632,7 +632,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [
         { contact: contact("src-1"), messages: [msg("m-1"), msg("m-2")] },
       ],
@@ -663,7 +663,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch: [
         { contact: contact("src-shared"), messages: [msg("m-a")] },
         { contact: contact("src-shared"), messages: [msg("m-b")] },
@@ -736,7 +736,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch,
     })
 
@@ -831,7 +831,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
-      skipAiContext: false,
+      aiReadsSyncedHistory: false,
       batch,
     })
 

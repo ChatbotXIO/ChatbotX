@@ -2978,8 +2978,8 @@
     "toggleHelper": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接。",
     "toggleHelperMessenger": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接Messenger頁面。",
     "toggleHelperWhatsapp": "僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則，請斷開並重新連接WhatsApp號碼。",
-    "skipAiContextLabel": "AI 略過同步歷史",
-    "skipAiContextHelper": "開啟後，AI 將忽略此次同步匯入的訊息，僅考慮新訊息。",
+    "aiReadsSyncedHistoryLabel": "允許 AI 讀取同步歷史",
+    "aiReadsSyncedHistoryHelper": "開啟後，AI 也會使用此次同步匯入的訊息。關閉後，AI 僅考慮新訊息。",
     "success": {
       "enabled": "同步已開始。歷史聯絡人和訊息很快就會出現。",
       "disabled": "同步已停用。"

@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "89bbf5d4-f236-4619-959b-4b1fc8a19885",
+  "id": "e968e468-5978-4041-beb1-d80d960074d8",
   "prevIds": ["c6c81c93-f885-4d75-a258-b2279580dd1e"],
   "ddl": [
     {
@@ -14165,7 +14165,7 @@
       "default": "false",
       "generated": null,
       "identity": null,
-      "name": "coexistSkipAiContext",
+      "name": "coexistAiReadsSyncedHistory",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationInstagram"
@@ -14724,7 +14724,7 @@
       "default": "false",
       "generated": null,
       "identity": null,
-      "name": "coexistSkipAiContext",
+      "name": "coexistAiReadsSyncedHistory",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -16570,7 +16570,7 @@
       "default": "false",
       "generated": null,
       "identity": null,
-      "name": "coexistSkipAiContext",
+      "name": "coexistAiReadsSyncedHistory",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationWhatsapp"

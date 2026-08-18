@@ -153,7 +153,7 @@ const fakeIntegration = {
   workspaceId: "ws-1",
   phoneNumberId,
   coexistEnabled: true,
-  coexistSkipAiContext: false,
+  coexistAiReadsSyncedHistory: false,
   inboxId: "inbox-1",
 }
 
@@ -378,7 +378,7 @@ describe("coexistWhatsappFlush", () => {
     expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("msg-row-1")
   })
 
-  it("passes skipAiContext=false through to bulkImportHistorical when coexistSkipAiContext is off", async () => {
+  it("passes aiReadsSyncedHistory=false through to bulkImportHistorical when coexistAiReadsSyncedHistory is off", async () => {
     mockFindFirst.mockResolvedValue(fakeIntegration)
     mockFindOrFail.mockResolvedValue(fakeInbox)
     wireSelect(defaultRunRow(), [makeStagedRow("row-1")])
@@ -386,15 +386,15 @@ describe("coexistWhatsappFlush", () => {
     await coexistWhatsappFlush({ runId, phoneNumberId })
 
     const [bulkArgs] = mockBulkImport.mock.calls[0] as [
-      { skipAiContext: boolean },
+      { aiReadsSyncedHistory: boolean },
     ]
-    expect(bulkArgs.skipAiContext).toBe(false)
+    expect(bulkArgs.aiReadsSyncedHistory).toBe(false)
   })
 
-  it("passes skipAiContext=true through to bulkImportHistorical when coexistSkipAiContext is on", async () => {
+  it("passes aiReadsSyncedHistory=true through to bulkImportHistorical when coexistAiReadsSyncedHistory is on", async () => {
     mockFindFirst.mockResolvedValue({
       ...fakeIntegration,
-      coexistSkipAiContext: true,
+      coexistAiReadsSyncedHistory: true,
     })
     mockFindOrFail.mockResolvedValue(fakeInbox)
     wireSelect(defaultRunRow(), [makeStagedRow("row-1")])
@@ -402,9 +402,9 @@ describe("coexistWhatsappFlush", () => {
     await coexistWhatsappFlush({ runId, phoneNumberId })
 
     const [bulkArgs] = mockBulkImport.mock.calls[0] as [
-      { skipAiContext: boolean },
+      { aiReadsSyncedHistory: boolean },
     ]
-    expect(bulkArgs.skipAiContext).toBe(true)
+    expect(bulkArgs.aiReadsSyncedHistory).toBe(true)
   })
 
   it("does not synthesize system time when a WhatsApp history message has no API timestamp", async () => {
