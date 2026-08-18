@@ -2,6 +2,7 @@
 
 import {
   contactInboxService,
+  conversationService,
   messageCleanupService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
@@ -124,6 +125,30 @@ export const decodeHistoricalId = (
   }
 }
 
+/** Keep the numerically larger of two message-id strings (null-safe). The
+ *  single "newest id wins" rule shared by `maxMessageId`, the per-conversation
+ *  merge below, and messenger-sync's per-page fold. */
+export const maxNumericId = (
+  a: string | null,
+  b: string | null,
+): string | null => {
+  if (a === null) {
+    return b
+  }
+  if (b === null) {
+    return a
+  }
+  return BigInt(a) < BigInt(b) ? b : a
+}
+
+/** Ids are time-ordered snowflakes (ORDER BY id ≡ ORDER BY createdAt), so the
+ *  max id over the rows bulkCreate actually inserted IS the newest
+ *  sync-inserted message — direction-agnostic (incoming and outgoing both
+ *  count). Duplicates skipped by onConflictDoNothing are absent from
+ *  insertedRows and never drive the marker. */
+const maxMessageId = (rows: ReadonlyArray<{ id: string }>): string | null =>
+  rows.reduce<string | null>((max, row) => maxNumericId(max, row.id), null)
+
 const isUniqueMessagePkViolation = (err: unknown): boolean => {
   // Drizzle wraps the pg error, so code/constraint live on `.cause` (sometimes
   // nested). Walk the cause chain. pg exposes the constraint as `constraint`
@@ -184,115 +209,177 @@ export type BulkImportMessagesResult = {
   /** Newest API-provided incoming message createdAt in this call (null when
    *  none). Used only for ContactInbox.lastIncomingMessageAt. */
   newestIncomingMessageAt: Date | null
+  /** Id of the newest message actually inserted by this call, either
+   *  direction; null when nothing was inserted. Computed from ALL
+   *  `insertedRows`, independent of `newestMessageAt` — a message inserted
+   *  with `fallbackCreatedAt` (invalid/missing API timestamp) still counts
+   *  here even though it never counts toward `newestMessageAt`. */
+  newestMessageId: string | null
 }
 
-/** One contact's activity-timestamp bump, collected by a batching caller. */
+/** One contact's activity-timestamp bump, collected by a batching caller.
+ *  A whole batch belongs to one workspace — the caller passes `workspaceId`
+ *  to `applyCoexistActivityUpdates` instead of repeating it per row. */
 export type CoexistActivityUpdate = {
   contactInboxId: string
   contactId: string
-  workspaceId: string
   conversationId: string
+  /** Null when no message in this update carried a valid API timestamp
+   *  (e.g. all inserted with `fallbackCreatedAt`) — the row can still exist
+   *  purely to carry `aiMarkerMessageId` for the AI-context marker. */
+  newestMessageAt: Date | null
+  oldestMessageAt: Date | null
+  newestIncomingMessageAt: Date | null
+  /** Id of the newest sync-inserted message for this conversation (either
+   *  direction), set by callers ONLY when the integration opted into
+   *  skipping synced history for AI; null = do not advance the marker. */
+  aiMarkerMessageId: string | null
+}
+
+type ContactInboxMerge = {
   newestMessageAt: Date
   oldestMessageAt: Date
   newestIncomingMessageAt: Date | null
+  contactId: string
+}
+
+type ConversationMerge = {
+  newestMessageAt: Date | null
+  aiMarkerMessageId: string | null
+}
+
+/** Fold one update into the per-ContactInbox tracking map. Rows without valid
+ *  API timestamps carry nothing for ContactInbox and are skipped. */
+const mergeContactInboxUpdate = (
+  map: Map<string, ContactInboxMerge>,
+  u: CoexistActivityUpdate,
+): void => {
+  if (u.newestMessageAt === null || u.oldestMessageAt === null) {
+    return
+  }
+  const existing = map.get(u.contactInboxId)
+  if (!existing) {
+    map.set(u.contactInboxId, {
+      contactId: u.contactId,
+      newestMessageAt: u.newestMessageAt,
+      oldestMessageAt: u.oldestMessageAt,
+      newestIncomingMessageAt: u.newestIncomingMessageAt,
+    })
+    return
+  }
+  if (existing.newestMessageAt < u.newestMessageAt) {
+    existing.newestMessageAt = u.newestMessageAt
+  }
+  if (existing.oldestMessageAt > u.oldestMessageAt) {
+    existing.oldestMessageAt = u.oldestMessageAt
+  }
+  if (
+    u.newestIncomingMessageAt &&
+    (!existing.newestIncomingMessageAt ||
+      existing.newestIncomingMessageAt < u.newestIncomingMessageAt)
+  ) {
+    existing.newestIncomingMessageAt = u.newestIncomingMessageAt
+  }
+}
+
+/** Fold one update into the per-Conversation map: newest timestamp and newest
+ *  marker id advance independently of each other. */
+const mergeConversationUpdate = (
+  map: Map<string, ConversationMerge>,
+  u: CoexistActivityUpdate,
+): void => {
+  const existing = map.get(u.conversationId)
+  if (!existing) {
+    map.set(u.conversationId, {
+      newestMessageAt: u.newestMessageAt,
+      aiMarkerMessageId: u.aiMarkerMessageId,
+    })
+    return
+  }
+  if (
+    u.newestMessageAt &&
+    (!existing.newestMessageAt || existing.newestMessageAt < u.newestMessageAt)
+  ) {
+    existing.newestMessageAt = u.newestMessageAt
+  }
+  existing.aiMarkerMessageId = maxNumericId(
+    existing.aiMarkerMessageId,
+    u.aiMarkerMessageId,
+  )
 }
 
 /**
- * Bump activity timestamps for a whole bulk in ONE statement per table (not two
- * queries per contact in the import loop). In coexist these columns must mirror
- * the newest API-provided message time, not the sync worker's wall clock:
+ * Bump activity timestamps (and the AI-context marker, when the caller set
+ * `aiMarkerMessageId` on its rows) for a whole bulk in ONE statement per
+ * table (not two+ queries per contact in the import loop). In coexist these
+ * columns must mirror the newest API-provided message time, not the sync
+ * worker's wall clock:
  *
  *   - ContactInbox.firstInteractionAt: set once from the oldest message.
  *   - ContactInbox.lastMessageAt: set from the newest message.
  *   - ContactInbox.lastIncomingMessageAt: advance from the newest incoming
  *     message only; outgoing history must not move this field.
  *   - Conversation.lastActivityAt: set from the newest message.
+ *   - Conversation.aiContextLastMessageId: advance to `aiMarkerMessageId`
+ *     (rows where the caller left it null leave the marker untouched).
  *
- * Each UPDATE joins a VALUES table of the deduped rows. This keeps the write
- * batched while avoiding pg array-parameter casting differences. Failures must
+ * Rows with a null `newestMessageAt`/`oldestMessageAt` (every message in that
+ * update used `fallbackCreatedAt`) skip the ContactInbox tracking bump — a
+ * row can exist purely to carry `aiMarkerMessageId` — but still reach the
+ * Conversation update so the marker still advances.
+ *
+ * The conversation UPDATE routes through `conversationService` (not raw
+ * `db.execute`) so it gets the same advance-only, NULL-guarded semantics for
+ * both columns plus the required cache invalidation. Failures must
  * propagate: otherwise a coexist run can be marked succeeded while these
  * denormalized activity columns remain null or stuck at row-creation time.
  */
 export const applyCoexistActivityUpdates = async (
   updates: CoexistActivityUpdate[],
+  options: { workspaceId: string },
 ): Promise<void> => {
   if (updates.length === 0) {
     return
   }
 
-  // Dedup by id, keeping the newest ts. ids are unique per contact within a
-  // batch, but a resumed/overlapping batch could repeat one — and a duplicate
-  // join key in VALUES would update the row twice with no defined winner.
-  const newestByContactInbox = new Map<
-    string,
-    {
-      newestMessageAt: Date
-      oldestMessageAt: Date
-      newestIncomingMessageAt: Date | null
-      contactId: string
-      workspaceId: string
-    }
-  >()
-  const newestByConversation = new Map<string, Date>()
+  // Dedup by id, keeping the newest ts (and newest marker id). ids are
+  // unique per contact within a batch, but a resumed/overlapping batch could
+  // repeat one — and a duplicate join key in VALUES would update the row
+  // twice with no defined winner.
+  const newestByContactInbox = new Map<string, ContactInboxMerge>()
+  const newestByConversation = new Map<string, ConversationMerge>()
   for (const u of updates) {
-    const ci = newestByContactInbox.get(u.contactInboxId)
-    if (ci) {
-      if (ci.newestMessageAt < u.newestMessageAt) {
-        ci.newestMessageAt = u.newestMessageAt
-      }
-      if (ci.oldestMessageAt > u.oldestMessageAt) {
-        ci.oldestMessageAt = u.oldestMessageAt
-      }
-      if (
-        u.newestIncomingMessageAt &&
-        (!ci.newestIncomingMessageAt ||
-          ci.newestIncomingMessageAt < u.newestIncomingMessageAt)
-      ) {
-        ci.newestIncomingMessageAt = u.newestIncomingMessageAt
-      }
-    } else {
-      newestByContactInbox.set(u.contactInboxId, {
-        contactId: u.contactId,
-        workspaceId: u.workspaceId,
-        newestMessageAt: u.newestMessageAt,
-        oldestMessageAt: u.oldestMessageAt,
-        newestIncomingMessageAt: u.newestIncomingMessageAt,
-      })
-    }
-    const cv = newestByConversation.get(u.conversationId)
-    if (!cv || cv < u.newestMessageAt) {
-      newestByConversation.set(u.conversationId, u.newestMessageAt)
-    }
+    mergeContactInboxUpdate(newestByContactInbox, u)
+    mergeConversationUpdate(newestByConversation, u)
   }
 
-  if (newestByContactInbox.size > 0) {
-    await contactInboxService.bulkUpdateTracking({
-      rows: [...newestByContactInbox.entries()].map(([id, update]) => ({
-        contactInboxId: id,
-        contactId: update.contactId,
-        workspaceId: update.workspaceId,
-        firstInteractionAt: update.oldestMessageAt,
-        lastMessageAt: update.newestMessageAt,
-        lastIncomingMessageAt: update.newestIncomingMessageAt,
-      })),
-    })
-  }
-
-  if (newestByConversation.size > 0) {
-    const conversationRows = [...newestByConversation.entries()].map(
-      ([id, ts]) => sql`(${id}::int8, ${ts}::timestamptz)`,
-    )
-
-    await db.execute(sql`
-      UPDATE "Conversation" AS t
-      SET "lastActivityAt" = CASE
-        WHEN t."lastActivityAt" IS NULL OR t."lastActivityAt" < u.ts THEN u.ts
-        ELSE t."lastActivityAt"
-      END
-      FROM (VALUES ${sql.join(conversationRows, sql`, `)}) AS u(id, ts)
-      WHERE t."id" = u.id
-    `)
-  }
+  // The two writes touch disjoint tables from disjoint maps — run in parallel.
+  await Promise.all([
+    newestByContactInbox.size > 0
+      ? contactInboxService.bulkUpdateTracking({
+          rows: [...newestByContactInbox.entries()].map(([id, update]) => ({
+            contactInboxId: id,
+            contactId: update.contactId,
+            workspaceId: options.workspaceId,
+            firstInteractionAt: update.oldestMessageAt,
+            lastMessageAt: update.newestMessageAt,
+            lastIncomingMessageAt: update.newestIncomingMessageAt,
+          })),
+        })
+      : Promise.resolve(),
+    newestByConversation.size > 0
+      ? conversationService.bulkAdvanceActivityAndAiContextMarker({
+          workspaceId: options.workspaceId,
+          rows: [...newestByConversation.entries()].map(
+            ([conversationId, v]) => ({
+              conversationId,
+              newestMessageAt: v.newestMessageAt,
+              aiMarkerMessageId: v.aiMarkerMessageId,
+            }),
+          ),
+        })
+      : Promise.resolve(),
+  ])
 }
 
 const isValidDate = (date: Date | undefined): date is Date =>
@@ -737,6 +824,7 @@ export const bulkImportMessages = async (props: {
     newestMessageAt: null,
     oldestMessageAt: null,
     newestIncomingMessageAt: null,
+    newestMessageId: null,
   }
 
   const hasEnrichment =
@@ -953,6 +1041,11 @@ export const bulkImportMessages = async (props: {
     null,
   )
 
+  // Independent of `newestMessageAt` — computed from ALL insertedRows so a
+  // message inserted with `fallbackCreatedAt` (no valid API timestamp) still
+  // counts for the AI-context marker. See `maxMessageId` doc comment.
+  const newestMessageId = maxMessageId(insertedRows)
+
   return {
     importedMessages,
     skippedMessages,
@@ -960,6 +1053,7 @@ export const bulkImportMessages = async (props: {
     newestMessageAt,
     oldestMessageAt,
     newestIncomingMessageAt,
+    newestMessageId,
   }
 }
 
@@ -974,8 +1068,12 @@ export const bulkImportHistorical = async (props: {
   workspaceId: string
   runId: string
   batch: HistoricalContactMessages[]
+  /** `IntegrationWhatsapp.coexistSkipAiContext` — when true, advance
+   *  `Conversation.aiContextLastMessageId` to the newest sync-inserted
+   *  message id so the AI ignores this synced history. */
+  skipAiContext: boolean
 }): Promise<BulkImportHistoricalResult> => {
-  const { inbox, workspaceId, runId, batch } = props
+  const { inbox, workspaceId, runId, batch, skipAiContext } = props
 
   const contactsResult = await bulkImportContacts({
     inbox,
@@ -1027,19 +1125,16 @@ export const bulkImportHistorical = async (props: {
           for (const id of res.insertedAttachmentIds) {
             insertedAttachmentIds.push(id)
           }
-          if (res.newestMessageAt) {
-            let oldestMessageAt = res.oldestMessageAt
-            if (!oldestMessageAt) {
-              oldestMessageAt = res.newestMessageAt
-            }
+          const aiMarkerMessageId = skipAiContext ? res.newestMessageId : null
+          if (res.newestMessageAt !== null || aiMarkerMessageId !== null) {
             activityUpdates.push({
               contactInboxId: link.contactInboxId,
               contactId: link.contactId,
-              workspaceId,
               conversationId: link.conversationId,
               newestMessageAt: res.newestMessageAt,
-              oldestMessageAt,
+              oldestMessageAt: res.oldestMessageAt ?? res.newestMessageAt,
               newestIncomingMessageAt: res.newestIncomingMessageAt,
+              aiMarkerMessageId,
             })
           }
         } catch (error) {
@@ -1054,7 +1149,7 @@ export const bulkImportHistorical = async (props: {
   )
 
   // One UPDATE per table for the whole bulk (not two per contact in the loop).
-  await applyCoexistActivityUpdates(activityUpdates)
+  await applyCoexistActivityUpdates(activityUpdates, { workspaceId })
 
   return {
     importedContacts: contactsResult.importedContacts,

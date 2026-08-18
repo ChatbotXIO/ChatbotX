@@ -2945,6 +2945,8 @@
     "toggleHelper": "Opnieuw inschakelen werkt alleen als Meta gegevens heeft gebufferd (binnen 24 uur na onboarding). Koppel anders los en opnieuw.",
     "toggleHelperMessenger": "Opnieuw inschakelen werkt alleen als Meta gegevens heeft gebufferd (binnen 24 uur na onboarding). Koppel anders de Messenger-pagina los en opnieuw.",
     "toggleHelperWhatsapp": "Opnieuw inschakelen werkt alleen als Meta gegevens heeft gebufferd (binnen 24 uur na onboarding). Koppel anders het WhatsApp-nummer los en opnieuw.",
+    "skipAiContextLabel": "AI slaat gesynchroniseerde geschiedenis over",
+    "skipAiContextHelper": "Indien ingeschakeld, negeert de AI berichten die door deze synchronisatie zijn geïmporteerd en houdt alleen rekening met nieuwe berichten.",
     "success": {
       "enabled": "Synchronisatie gestart. Historische contacten en berichten verschijnen binnenkort.",
       "disabled": "Synchronisatie uitgeschakeld."

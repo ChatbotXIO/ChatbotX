@@ -7,6 +7,7 @@ const setCoexistInstagramRequest = z.object({
   workspaceId: z.string(),
   integrationId: z.string(),
   enabled: z.boolean(),
+  skipAiContext: z.boolean().optional().default(false),
 })
 export type SetCoexistInstagramRequest = z.infer<
   typeof setCoexistInstagramRequest
@@ -41,6 +42,7 @@ export const integrationInstagramCoexistAPIs = {
             workspaceId: input.workspaceId,
             integrationId: input.integrationId,
             channel: "instagram",
+            skipAiContext: input.skipAiContext,
           })
         : coexistService.disable({
             workspaceId: input.workspaceId,

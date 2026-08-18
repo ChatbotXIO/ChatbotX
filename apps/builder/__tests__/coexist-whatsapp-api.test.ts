@@ -167,7 +167,11 @@ describe("setCoexistWhatsappAPI", () => {
 
     // Flag flipped on via the atomic UPDATE … RETURNING (one update on success).
     expect(db.update).toHaveBeenCalledTimes(1)
-    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({ coexistEnabled: true })
+    // skipAiContext defaults to false (zod default) and is written on enable.
+    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({
+      coexistEnabled: true,
+      coexistSkipAiContext: false,
+    })
 
     // CoexistSyncRun insert with the init-row values.
     expect(db.insert).toHaveBeenCalledTimes(1)
@@ -188,6 +192,25 @@ describe("setCoexistWhatsappAPI", () => {
     expect(mockQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("enabled:true, skipAiContext:true — writes coexistSkipAiContext alongside coexistEnabled", async () => {
+    const result = await call(
+      procedure,
+      {
+        workspaceId: "ws-1",
+        integrationId: "int-1",
+        enabled: true,
+        skipAiContext: true,
+      },
+      { context: stubContext },
+    )
+
+    expect(result).toEqual({ success: true })
+    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({
+      coexistEnabled: true,
+      coexistSkipAiContext: true,
+    })
+  })
+
   test("enabled:false — flag-only: flips coexistEnabled, no run insert, no delete, no job", async () => {
     const result = await call(
       procedure,
@@ -206,6 +229,24 @@ describe("setCoexistWhatsappAPI", () => {
     expect(dbExecute).not.toHaveBeenCalled()
     expect(mockTriggerSmbAppDataSync).not.toHaveBeenCalled()
     expect(mockQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("enabled:false (decline) — never writes coexistSkipAiContext, even when the popup sent skipAiContext:true", async () => {
+    const result = await call(
+      procedure,
+      {
+        workspaceId: "ws-1",
+        integrationId: "int-1",
+        enabled: false,
+        skipAiContext: true,
+      },
+      { context: stubContext },
+    )
+
+    expect(result).toEqual({ success: true })
+    // The UPDATE runs BEFORE the `if (enabled)` branch — decline must never
+    // write coexistSkipAiContext, regardless of what the popup sent.
+    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({ coexistEnabled: false })
   })
 
   test("enabled:true — surfaces failure reason and marks the run failed when smb_app_data fails", async () => {
@@ -291,6 +332,40 @@ describe("i18n key presence (H12)", () => {
           coexist: Record<string, unknown>
         }
       ).coexist.toggleHelperWhatsapp,
+    ).toBeDefined()
+  })
+
+  test("coexist.skipAiContextLabel is defined in en.json and vi.json", () => {
+    expect(
+      (
+        enMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.skipAiContextLabel,
+    ).toBeDefined()
+    expect(
+      (
+        viMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.skipAiContextLabel,
+    ).toBeDefined()
+  })
+
+  test("coexist.skipAiContextHelper is defined in en.json and vi.json", () => {
+    expect(
+      (
+        enMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.skipAiContextHelper,
+    ).toBeDefined()
+    expect(
+      (
+        viMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.skipAiContextHelper,
     ).toBeDefined()
   })
 

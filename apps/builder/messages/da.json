@@ -2945,6 +2945,8 @@
     "toggleHelper": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen.",
     "toggleHelperMessenger": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen den Messenger page.",
     "toggleHelperWhatsapp": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen den WhatsApp nummer.",
+    "skipAiContextLabel": "AI springer synket historik over",
+    "skipAiContextHelper": "Når dette er slået til, ignorerer AI'en beskeder importeret af denne synkronisering og overvejer kun nye beskeder.",
     "success": {
       "enabled": "Synkroniser started. Historical kontakter og beskeder vil appear shortly.",
       "disabled": "Synkroniser deaktiveret."

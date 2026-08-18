@@ -18,6 +18,10 @@ export type CoexistEnableInput = {
   integrationId: string
   channel: CoexistChannel
   triggerSource?: CoexistTriggerSource
+  /** When true, coexist-synced history advances
+   *  `Conversation.aiContextLastMessageId` so the AI ignores it. Written only
+   *  on enable — `disable` never touches the column. */
+  skipAiContext?: boolean
 }
 
 export type CoexistEnableResult =

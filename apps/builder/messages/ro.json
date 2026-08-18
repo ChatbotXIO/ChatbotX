@@ -2945,6 +2945,8 @@
     "toggleHelper": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează.",
     "toggleHelperMessenger": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează pagina Messenger.",
     "toggleHelperWhatsapp": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează numărul WhatsApp.",
+    "skipAiContextLabel": "AI ignoră istoricul sincronizat",
+    "skipAiContextHelper": "Când este activat, AI-ul ignoră mesajele importate prin această sincronizare și ia în considerare doar mesajele noi.",
     "success": {
       "enabled": "Sincronizarea a început. Contactele și mesajele istorice vor apărea în curând.",
       "disabled": "Sincronizare dezactivată."

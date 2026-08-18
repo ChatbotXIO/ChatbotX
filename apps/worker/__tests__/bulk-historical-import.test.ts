@@ -22,6 +22,7 @@ const {
   mockCreateMessageRepository,
   mockWorkspaceFind,
   mockWorkspaceUsageIncrement,
+  mockBulkAdvanceActivityAndAiContextMarker,
 } = vi.hoisted(() => {
   const mockBulkCreate = vi.fn().mockResolvedValue([])
   const mockBulkCreateAttachments = vi.fn().mockResolvedValue([])
@@ -45,6 +46,9 @@ const {
     mockCreateMessageRepository,
     mockWorkspaceFind: vi.fn(),
     mockWorkspaceUsageIncrement: vi.fn().mockResolvedValue(undefined),
+    mockBulkAdvanceActivityAndAiContextMarker: vi
+      .fn()
+      .mockResolvedValue(undefined),
   }
 })
 
@@ -113,6 +117,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     bulkUpdateTracking: mockBulkUpdateTracking,
+  },
+  conversationService: {
+    bulkAdvanceActivityAndAiContextMarker:
+      mockBulkAdvanceActivityAndAiContextMarker,
   },
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
@@ -324,6 +332,7 @@ describe("bulkImportHistorical", () => {
     // Re-wire repository mock after clearAllMocks.
     mockBulkCreate.mockResolvedValue([])
     mockBulkUpdateTracking.mockResolvedValue(null)
+    mockBulkAdvanceActivityAndAiContextMarker.mockResolvedValue(undefined)
     mockCreateMessageRepository.mockResolvedValue({
       bulkCreate: mockBulkCreate,
       bulkCreateAttachments: vi.fn().mockResolvedValue([]),
@@ -340,6 +349,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [],
     })
 
@@ -372,6 +382,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [{ contact: contact("src-1"), messages: [msg("m-src-1")] }],
     })
 
@@ -397,6 +408,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [{ contact: contact("src-1"), messages: [msg("m-src-1")] }],
     })
 
@@ -424,6 +436,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [{ contact: contact("src-1"), messages: [] }],
     })
 
@@ -455,6 +468,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [
         {
           contact: contact("src-1"),
@@ -490,6 +504,88 @@ describe("bulkImportHistorical", () => {
     })
   })
 
+  it("advances the AI-context marker via conversationService when skipAiContext is true", async () => {
+    stubNewContactsTransaction([
+      {
+        sourceId: "src-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ])
+    // Numeric ids so `maxMessageId` (BigInt-based) resolves a real marker.
+    mockBulkCreate.mockResolvedValueOnce([
+      { id: "100000000000001", sourceId: "m-src-1" },
+      { id: "200000000000002", sourceId: "m-src-2" },
+    ])
+
+    await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      skipAiContext: true,
+      batch: [
+        {
+          contact: contact("src-1"),
+          messages: [msg("m-src-1"), msg("m-src-2")],
+        },
+      ],
+    })
+
+    expect(mockBulkAdvanceActivityAndAiContextMarker).toHaveBeenCalledTimes(1)
+    expect(mockBulkAdvanceActivityAndAiContextMarker).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        rows: expect.arrayContaining([
+          expect.objectContaining({
+            conversationId: "conv-1",
+            aiMarkerMessageId: "200000000000002",
+          }),
+        ]),
+      }),
+    )
+  })
+
+  it("passes a null aiMarkerMessageId to conversationService for every row when skipAiContext is false", async () => {
+    stubNewContactsTransaction([
+      {
+        sourceId: "src-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ])
+    mockBulkCreate.mockResolvedValueOnce([
+      { id: "100000000000001", sourceId: "m-src-1" },
+    ])
+
+    await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      skipAiContext: false,
+      batch: [
+        {
+          contact: contact("src-1"),
+          // A valid API createdAt so the activity row still carries a
+          // non-null `newestMessageAt` and reaches conversationService: with
+          // skipAiContext=false AND no valid timestamp at all, no row would
+          // be pushed at all (see bulk-import-messages.test.ts's
+          // applyCoexistActivityUpdates suite for that absence case).
+          messages: [
+            msg("m-src-1", { createdAt: new Date("2026-07-01T00:00:00Z") }),
+          ],
+        },
+      ],
+    })
+
+    expect(mockBulkAdvanceActivityAndAiContextMarker).toHaveBeenCalledTimes(1)
+    const [call] = mockBulkAdvanceActivityAndAiContextMarker.mock.calls[0]
+    for (const row of call.rows) {
+      expect(row.aiMarkerMessageId).toBeNull()
+    }
+  })
+
   it("counts duplicates as skippedMessages when message INSERT returns fewer rows than input", async () => {
     stubNewContactsTransaction([
       {
@@ -506,6 +602,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [
         {
           contact: contact("src-1"),
@@ -535,6 +632,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [
         { contact: contact("src-1"), messages: [msg("m-1"), msg("m-2")] },
       ],
@@ -557,14 +655,15 @@ describe("bulkImportHistorical", () => {
       },
     ])
     mockBulkCreate.mockResolvedValueOnce([
-      { id: "m-1", sourceId: "m-a" },
-      { id: "m-2", sourceId: "m-b" },
+      { id: "100000000000001", sourceId: "m-a" },
+      { id: "100000000000002", sourceId: "m-b" },
     ])
 
     const result = await bulkImportHistorical({
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch: [
         { contact: contact("src-shared"), messages: [msg("m-a")] },
         { contact: contact("src-shared"), messages: [msg("m-b")] },
@@ -637,6 +736,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch,
     })
 
@@ -731,6 +831,7 @@ describe("bulkImportHistorical", () => {
       inbox,
       workspaceId,
       runId: "12345",
+      skipAiContext: false,
       batch,
     })
 

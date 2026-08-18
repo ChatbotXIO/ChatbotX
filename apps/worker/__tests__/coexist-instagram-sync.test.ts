@@ -139,6 +139,7 @@ describe("coexistInstagramSync", () => {
     mockLoadContext.mockResolvedValue({
       inbox: { id: "inbox-1" },
       workspaceId: "workspace-1",
+      integration: { coexistSkipAiContext: false },
     })
     mockClaimRun.mockResolvedValue({
       attempts: 1,
@@ -176,6 +177,7 @@ describe("coexistInstagramSync", () => {
         newestIncomingMessageAt: new Date("2026-08-01T00:00:00Z"),
         newestMessageAt: new Date("2026-08-01T00:00:00Z"),
         oldestMessageAt: new Date("2026-08-01T00:00:00Z"),
+        newestMessageId: "100000000000001",
         skippedMessages: 0,
       }),
     )
@@ -241,6 +243,57 @@ describe("coexistInstagramSync", () => {
       }),
     )
     expect(mockMarkSucceeded).toHaveBeenCalledWith({ runId: "run-ig-1" })
+  })
+
+  it("threads coexistSkipAiContext=true into the row's aiMarkerMessageId, carrying the newest inserted message id", async () => {
+    mockLoadContext.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      workspaceId: "workspace-1",
+      integration: { coexistSkipAiContext: true },
+    })
+    mockFetchConversationMessages.mockResolvedValue({
+      messages: [{ id: "message-1", message: "hi" }],
+    })
+    mockToHistoricalMessage.mockReturnValue({
+      sourceId: "message-1",
+      messageType: "incoming",
+      contentType: "text",
+      text: "hi",
+    })
+
+    await coexistInstagramSync(syncData)
+
+    expect(mockApplyCoexistActivityUpdates).toHaveBeenCalledWith(
+      expect.any(Array),
+      { workspaceId: "workspace-1" },
+    )
+    const [updates] = mockApplyCoexistActivityUpdates.mock.calls[0] as [
+      Array<{ aiMarkerMessageId: string | null }>,
+    ]
+    expect(updates[0]?.aiMarkerMessageId).toBe("100000000000001")
+  })
+
+  it("passes a null aiMarkerMessageId when coexistSkipAiContext is off", async () => {
+    mockFetchConversationMessages.mockResolvedValue({
+      messages: [{ id: "message-1", message: "hi" }],
+    })
+    mockToHistoricalMessage.mockReturnValue({
+      sourceId: "message-1",
+      messageType: "incoming",
+      contentType: "text",
+      text: "hi",
+    })
+
+    await coexistInstagramSync(syncData)
+
+    expect(mockApplyCoexistActivityUpdates).toHaveBeenCalledWith(
+      expect.any(Array),
+      { workspaceId: "workspace-1" },
+    )
+    const [updates] = mockApplyCoexistActivityUpdates.mock.calls[0] as [
+      Array<{ aiMarkerMessageId: string | null }>,
+    ]
+    expect(updates[0]?.aiMarkerMessageId).toBeNull()
   })
 
   it("does not wipe the resume watermark when a page processes no conversation", async () => {

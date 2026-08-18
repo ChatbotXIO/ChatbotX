@@ -39,6 +39,7 @@ import {
   type CoexistActivityUpdate,
   type ContactImportLink,
   createHistoricalIdFactory,
+  maxNumericId,
 } from "./bulk-historical-import"
 import {
   fetchConvMessages,
@@ -172,6 +173,10 @@ type SyncContext = {
   jobStart: number
   /** Mutated by handlers to surface non-fatal failures into currentError. */
   errorRef: { current: string | undefined }
+  /** `IntegrationMessenger.coexistSkipAiContext` — when true, advance
+   *  `Conversation.aiContextLastMessageId` to the newest sync-inserted
+   *  message id so the AI ignores this synced history. */
+  skipAiContext: boolean
 }
 
 type PhaseResult = {
@@ -480,6 +485,7 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
             let convNewest: Date | null = null
             let convOldest: Date | null = null
             let convNewestIncoming: Date | null = null
+            let convNewestMessageId: string | null = null
 
             try {
               await fetchConvMessages({
@@ -529,22 +535,25 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
                   ) {
                     convNewestIncoming = result.newestIncomingMessageAt
                   }
+                  convNewestMessageId = maxNumericId(
+                    convNewestMessageId,
+                    result.newestMessageId,
+                  )
                 },
               })
 
-              if (convNewest) {
-                let oldestMessageAt: Date = convNewest
-                if (convOldest) {
-                  oldestMessageAt = convOldest
-                }
+              const aiMarkerMessageId = ctx.skipAiContext
+                ? convNewestMessageId
+                : null
+              if (convNewest || aiMarkerMessageId) {
                 activityUpdates.push({
                   contactInboxId: link.contactInboxId,
                   contactId: link.contactId,
-                  workspaceId: ctx.workspaceId,
                   conversationId: link.conversationId,
                   newestMessageAt: convNewest,
-                  oldestMessageAt,
+                  oldestMessageAt: convOldest ?? convNewest,
                   newestIncomingMessageAt: convNewestIncoming,
+                  aiMarkerMessageId,
                 })
               }
 
@@ -568,7 +577,7 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       )
 
       // One UPDATE per table for the whole chunk (not per conv/page in the loop).
-      await applyCoexistActivityUpdates(activityUpdates)
+      await applyCoexistActivityUpdates(activityUpdates, { workspaceId })
 
       // Bulk-enqueue per-attachment download jobs. The handler is idempotent
       // (prefix-checked + jobId-dedup'd), so a retry of this whole chunk
@@ -817,6 +826,7 @@ export const coexistMessengerSync = async (
     getLimit: () => currentLimit,
     jobStart,
     errorRef,
+    skipAiContext: integration.coexistSkipAiContext,
   }
 
   let finalStatus: "succeeded" | "failed" | "partial" | null = null

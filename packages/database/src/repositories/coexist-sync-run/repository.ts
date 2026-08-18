@@ -362,11 +362,17 @@ export class CoexistSyncRunRepository {
     })
   }
 
+  /**
+   * `skipAiContext` is optional and only written when provided —
+   * `undefined` leaves `coexistSkipAiContext` untouched (e.g. `disable`
+   * must never clear a previously-set value).
+   */
   setIntegrationCoexistEnabled(input: {
     channel: CoexistChannel
     workspaceId: string
     integrationId: string
     enabled: boolean
+    skipAiContext?: boolean
     tx?: DatabaseClient
   }): Promise<CoexistIntegrationRow | null> {
     const { tx = db } = input
@@ -376,6 +382,7 @@ export class CoexistSyncRunRepository {
       workspaceId: input.workspaceId,
       integrationId: input.integrationId,
       enabled: input.enabled,
+      skipAiContext: input.skipAiContext,
     })
   }
 }
@@ -388,6 +395,8 @@ type IntegrationAccessInput = {
 
 type IntegrationUpdateInput = IntegrationAccessInput & {
   enabled: boolean
+  /** Undefined = leave `coexistSkipAiContext` untouched. */
+  skipAiContext?: boolean
 }
 
 const integrationLookups = {
@@ -435,10 +444,16 @@ const integrationUpdates = {
     workspaceId,
     integrationId,
     enabled,
+    skipAiContext,
   }: IntegrationUpdateInput): Promise<CoexistIntegrationRow | null> => {
     const [row] = await tx
       .update(integrationMessengerModel)
-      .set({ coexistEnabled: enabled })
+      .set({
+        coexistEnabled: enabled,
+        ...(skipAiContext === undefined
+          ? {}
+          : { coexistSkipAiContext: skipAiContext }),
+      })
       .where(
         and(
           eq(integrationMessengerModel.id, integrationId),
@@ -453,10 +468,16 @@ const integrationUpdates = {
     workspaceId,
     integrationId,
     enabled,
+    skipAiContext,
   }: IntegrationUpdateInput): Promise<CoexistIntegrationRow | null> => {
     const [row] = await tx
       .update(integrationInstagramModel)
-      .set({ coexistEnabled: enabled })
+      .set({
+        coexistEnabled: enabled,
+        ...(skipAiContext === undefined
+          ? {}
+          : { coexistSkipAiContext: skipAiContext }),
+      })
       .where(
         and(
           eq(integrationInstagramModel.id, integrationId),
@@ -471,10 +492,16 @@ const integrationUpdates = {
     workspaceId,
     integrationId,
     enabled,
+    skipAiContext,
   }: IntegrationUpdateInput): Promise<CoexistIntegrationRow | null> => {
     const [row] = await tx
       .update(integrationWhatsappModel)
-      .set({ coexistEnabled: enabled })
+      .set({
+        coexistEnabled: enabled,
+        ...(skipAiContext === undefined
+          ? {}
+          : { coexistSkipAiContext: skipAiContext }),
+      })
       .where(
         and(
           eq(integrationWhatsappModel.id, integrationId),
