@@ -9,6 +9,7 @@ import customFieldWorkspaceTokenAPIs from "@/features/custom-fields/api/workspac
 import errorLogWorkspaceTokenAPIs from "@/features/error-logs/api/workspace-token"
 import flowWorkspaceTokenAPIs from "@/features/flows/api/workspace-token"
 import inboxWorkspaceTokenAPIs from "@/features/inboxes/api/workspace-token"
+import { channelApiAPIs } from "@/features/integration-api/api"
 import whatsappMessageTemplateWorkspaceTokenAPIs from "@/features/integration-whatsapp/message-templates/api/workspace-token"
 import integrationsWorkspaceTokenAPIs from "@/features/integrations/api/workspace-token"
 import savedReplyWorkspaceTokenAPIs from "@/features/saved-replies/api/workspace-token"
@@ -40,4 +41,5 @@ export const publicRouter = {
   ...aiAgentsWorkspaceTokenAPIs,
   ...keywordsWorkspaceTokenAPIs,
   ...integrationsWorkspaceTokenAPIs,
+  ...channelApiAPIs,
 }

@@ -2004,6 +2004,26 @@
     },
     "enabled": {
       "label": "Activé"
+    },
+    "api": {
+      "label": "API",
+      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "We POST outbound replies here, signed with your per-inbox secret.",
+        "notSet": "Not set"
+      },
+      "token": "Token",
+      "rotateToken": "Rotate token",
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "tokenReveal": {
+        "title": "Copy your API token",
+        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
+        "done": "Done"
+      }
     }
   },
   "flows": {
