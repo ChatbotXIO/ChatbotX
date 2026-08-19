@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Anda belum memiliki ruang kerja.",
     "owner": "Pemilik"
   },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "description": "Halaman yang Anda cari tidak ada atau mungkin telah dipindahkan.",
+    "backToHome": "Kembali ke halaman utama"
+  },
   "editProfile": {
     "title": "Edit Profil"
   },

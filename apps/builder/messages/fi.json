@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Sinulla ei ole vielä työtiloja.",
     "owner": "Omistaja"
   },
+  "notFound": {
+    "title": "Sivua ei löytynyt",
+    "description": "Etsimääsi sivua ei ole olemassa tai se on voitu siirtää.",
+    "backToHome": "Takaisin etusivulle"
+  },
   "editProfile": {
     "title": "Muokkaa profiilia"
   },

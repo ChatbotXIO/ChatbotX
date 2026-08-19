@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Je hebt nog geen workspaces.",
     "owner": "Eigenaar"
   },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "description": "De pagina die je zoekt bestaat niet of is mogelijk verplaatst.",
+    "backToHome": "Terug naar de startpagina"
+  },
   "editProfile": {
     "title": "Profiel bewerken"
   },

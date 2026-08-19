@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Du don't have vilkårlig arbejdsområder yet.",
     "owner": "Owner"
   },
+  "notFound": {
+    "title": "Siden blev ikke fundet",
+    "description": "Den side, du leder efter, findes ikke eller er muligvis blevet flyttet.",
+    "backToHome": "Tilbage til forsiden"
+  },
   "editProfile": {
     "title": "Rediger profil"
   },

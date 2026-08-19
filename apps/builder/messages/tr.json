@@ -2818,6 +2818,11 @@
     "noWorkspaces": "Henüz hiç çalışma alanınız yok.",
     "owner": "Sahip"
   },
+  "notFound": {
+    "title": "Sayfa bulunamadı",
+    "description": "Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
+    "backToHome": "Ana sayfaya dön"
+  },
   "editProfile": {
     "title": "Profili Düzenle"
   },

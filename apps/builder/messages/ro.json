@@ -743,6 +743,11 @@
     "noWorkspaces": "Nu aveți încă niciun spațiu de lucru.",
     "owner": "Proprietar"
   },
+  "notFound": {
+    "title": "Pagina nu a fost găsită",
+    "description": "Pagina pe care o cauți nu există sau ar putea fi mutată.",
+    "backToHome": "Înapoi la pagina principală"
+  },
   "editProfile": {
     "title": "Editează profilul"
   },

@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Vous n’avez pas encore d’espace de travail.",
     "owner": "Propriétaire"
   },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page que vous recherchez n'existe pas ou a peut-être été déplacée.",
+    "backToHome": "Retour à l'accueil"
+  },
   "editProfile": {
     "title": "Modifier le profil"
   },

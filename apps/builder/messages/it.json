@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Non hai ancora alcuna area di lavoro.",
     "owner": "Proprietario"
   },
+  "notFound": {
+    "title": "Pagina non trovata",
+    "description": "La pagina che stai cercando non esiste o potrebbe essere stata spostata.",
+    "backToHome": "Torna alla home"
+  },
   "editProfile": {
     "title": "Modifica profilo"
   },

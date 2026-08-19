@@ -2744,6 +2744,11 @@
     "noWorkspaces": "Sie haben noch keine Arbeitsbereiche.",
     "owner": "Inhaber"
   },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde möglicherweise verschoben.",
+    "backToHome": "Zurück zur Startseite"
+  },
   "editProfile": {
     "title": "Profil bearbeiten"
   },

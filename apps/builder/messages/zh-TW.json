@@ -2969,6 +2969,11 @@
     "noWorkspaces": "您還沒有任何工作區。",
     "owner": "所有者"
   },
+  "notFound": {
+    "title": "找不到頁面",
+    "description": "您造訪的頁面不存在，或可能已被移動。",
+    "backToHome": "返回首頁"
+  },
   "editProfile": {
     "title": "編輯個人資料"
   },
