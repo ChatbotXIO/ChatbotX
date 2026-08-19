@@ -124,6 +124,7 @@
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.74.0",
     "react-qr-code": "^2.0.21",
+    "react-rnd": "^10.5.3",
     "react-virtuoso": "^4.18.6",
     "recharts": "^3.10.1",
     "remeda": "^2.34.0",

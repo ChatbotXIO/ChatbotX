@@ -865,6 +865,9 @@
     "qrCode": {
       "label": "Mã QR"
     },
+    "dynamicImage": {
+      "label": "Ảnh động"
+    },
     "savePayloadToCustomField": {
       "label": "Lưu payload vào trường tùy chỉnh"
     },
@@ -2072,6 +2075,9 @@
       "label": "Sự kiện",
       "placeholder": "Nhập tên sự kiện rồi nhấn Enter",
       "description": "Thêm một hoặc nhiều tên sự kiện. Khi n8n gắn webhook cho một trong các sự kiện này, dữ liệu sẽ được gửi đến đó khi step này chạy."
+    },
+    "enabled": {
+      "label": "Đang bật"
     }
   },
   "flows": {
@@ -3717,6 +3723,67 @@
   "qrCodes": {
     "title": "Mã QR",
     "description": "Tạo mã QR liên kết đến kịch bản chatbot của bạn."
+  },
+  "dynamicImages": {
+    "title": "Ảnh động",
+    "description": "Tạo ảnh cá nhân hóa cho từng liên hệ từ ảnh nền và các lớp văn bản/hình ảnh/mã QR.",
+    "publicUrl": {
+      "label": "URL công khai",
+      "hint": "Copy và dán url vào kịch bản của luồng/phát sóng/chăm sóc để gửi ảnh cá nhân hóa."
+    },
+    "editor": {
+      "addElement": "Thêm phần tử",
+      "addImage": "Thêm ảnh",
+      "addText": "Thêm văn bản",
+      "addQrCode": "Thêm mã QR",
+      "template": "Mẫu",
+      "templateDialogTitle": "Chọn mẫu",
+      "templateDialogDescription": "Chọn một mẫu sẽ thay thế toàn bộ các layer hiện tại.",
+      "layers": "Lớp",
+      "noLayers": "Chưa có lớp nào. Thêm một phần tử để bắt đầu.",
+      "deleteLayer": "Xoá lớp",
+      "layerNameImage": "Ảnh",
+      "layerNameText": "Văn bản",
+      "layerNameQrCode": "Mã QR",
+      "editElement": "Chỉnh sửa phần tử",
+      "selectElementHint": "Chọn một phần tử trên khung vẽ để chỉnh sửa thuộc tính.",
+      "width": "Chiều rộng",
+      "height": "Chiều cao",
+      "priority": "Ưu tiên",
+      "imageType": "Loại ảnh",
+      "imageTypeUrl": "URL ảnh",
+      "imageTypeAvatarUser": "Ảnh đại diện liên hệ",
+      "imageTypeCustomField": "Trường tuỳ chỉnh",
+      "imageUrl": "URL ảnh",
+      "uploadImage": "Tải ảnh lên",
+      "customField": "Trường tuỳ chỉnh",
+      "imageStyle": "Kiểu ảnh",
+      "imageStyleSquare": "Vuông",
+      "imageStyleCircle": "Tròn",
+      "qrText": "Nội dung mã QR",
+      "qrSize": "Kích thước",
+      "qrColor": "Màu",
+      "qrLogo": "Logo",
+      "uploadLogo": "Tải logo lên",
+      "textContent": "Nội dung văn bản",
+      "fontSize": "Cỡ chữ",
+      "fontFamily": "Kiểu chữ",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Căn chỉnh",
+      "alignLeft": "Trái",
+      "alignCenter": "Giữa",
+      "alignRight": "Phải",
+      "color": "Màu",
+      "bold": "Đậm",
+      "italic": "Nghiêng",
+      "uppercase": "Chữ hoa"
+    },
+    "preview": {
+      "error": "Không tải được ảnh động đã liên kết. Có thể ảnh đã bị xoá."
+    }
   },
   "magicLinks": {
     "title": "Magic Link",

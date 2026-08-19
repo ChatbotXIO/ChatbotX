@@ -13,6 +13,7 @@ const publicRoutes = [
   "/integrations",
   "/r",
   "/l",
+  "/dynamic-images",
   "/auth",
   "/api",
   "/ws",
@@ -116,7 +117,7 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
+    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json|dynamic-image/).*)",
     "/api/presigned-upload",
     "/api/whatsapp/:path*",
   ],

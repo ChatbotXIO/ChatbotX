@@ -45,6 +45,11 @@ export const router = {
   couponsAPI: lazy(() =>
     import("@/features/coupons/api").then((m) => ({ default: m.couponsAPI })),
   ),
+  dynamicImagesAPI: lazy(() =>
+    import("@/features/dynamic-images/api").then((m) => ({
+      default: m.dynamicImagesAPI,
+    })),
+  ),
   emailTopicsAPI: lazy(() =>
     import("@/features/email-topics/api").then((m) => ({
       default: m.emailTopicsAPI,

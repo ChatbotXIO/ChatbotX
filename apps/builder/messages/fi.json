@@ -796,6 +796,9 @@
     "qrCode": {
       "label": "QR-koodi"
     },
+    "dynamicImage": {
+      "label": "Dynaaminen kuva"
+    },
     "savePayloadToCustomField": {
       "label": "Tallenna tietosisältö mukautettuun kenttään"
     },
@@ -1998,6 +2001,9 @@
       "label": "Tapahtumat",
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
       "description": "Lisää vähintään yksi tapahtuman nimi. Kun n8n liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
+    },
+    "enabled": {
+      "label": "Käytössä"
     }
   },
   "flows": {
@@ -3565,6 +3571,67 @@
   "qrCodes": {
     "title": "QR-koodit",
     "description": "Luo QR-koodeja, jotka linkittävät chatbot-flow'ihisi."
+  },
+  "dynamicImages": {
+    "title": "Dynaamiset kuvat",
+    "description": "Luo yksilöllisiä kuvia kontaktikohtaisesti taustakuvasta sekä teksti-, kuva- ja QR-tasoista.",
+    "publicUrl": {
+      "label": "Julkinen URL-osoite",
+      "hint": "Kopioi ja liitä URL-osoite flow'hun, joukkolähetykseen tai sekvenssiin lähettääksesi yksilöityjä kuvia."
+    },
+    "editor": {
+      "addElement": "Lisää elementti",
+      "addImage": "Lisää kuva",
+      "addText": "Lisää teksti",
+      "addQrCode": "Lisää QR-koodi",
+      "template": "Malli",
+      "templateDialogTitle": "Valitse malli",
+      "templateDialogDescription": "Mallin valitseminen korvaa kaikki nykyiset tasot.",
+      "layers": "Tasot",
+      "noLayers": "Ei tasoja vielä. Lisää elementti aloittaaksesi.",
+      "deleteLayer": "Poista taso",
+      "layerNameImage": "Kuva",
+      "layerNameText": "Teksti",
+      "layerNameQrCode": "QR-koodi",
+      "editElement": "Muokkaa elementtiä",
+      "selectElementHint": "Valitse elementti canvasilta muokataksesi sen ominaisuuksia.",
+      "width": "Leveys",
+      "height": "Korkeus",
+      "priority": "Prioriteetti",
+      "imageType": "Kuvan tyyppi",
+      "imageTypeUrl": "Kuvan URL-osoite",
+      "imageTypeAvatarUser": "Kontaktin profiilikuva",
+      "imageTypeCustomField": "Mukautettu kenttä",
+      "imageUrl": "Kuvan URL-osoite",
+      "uploadImage": "Lataa kuva",
+      "customField": "Mukautettu kenttä",
+      "imageStyle": "Kuvan tyyli",
+      "imageStyleSquare": "Neliö",
+      "imageStyleCircle": "Ympyrä",
+      "qrText": "QR-koodin sisältö",
+      "qrSize": "Koko",
+      "qrColor": "Väri",
+      "qrLogo": "Logo",
+      "uploadLogo": "Lataa logo",
+      "textContent": "Tekstisisältö",
+      "fontSize": "Fontin koko",
+      "fontFamily": "Fontti",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Tasaus",
+      "alignLeft": "Vasemmalle",
+      "alignCenter": "Keskelle",
+      "alignRight": "Oikealle",
+      "color": "Väri",
+      "bold": "Lihavoitu",
+      "italic": "Kursivoitu",
+      "uppercase": "Isot kirjaimet"
+    },
+    "preview": {
+      "error": "Linkitettyä dynaamista kuvaa ei voitu ladata. Se on saatettu poistaa."
+    }
   },
   "magicLinks": {
     "title": "Taikalinkit",

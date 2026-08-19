@@ -2255,6 +2255,9 @@
     "qrCode": {
       "label": "QR Code"
     },
+    "dynamicImage": {
+      "label": "动态图片"
+    },
     "quality": {
       "label": "品质",
       "options": {
@@ -2677,6 +2680,9 @@
       "label": "事件",
       "placeholder": "输入事件名称并按 Enter",
       "description": "添加一个或多个事件名称。当 n8n 为其中某个事件附加 webhook 时，此步骤运行时会将数据发送给它。"
+    },
+    "enabled": {
+      "label": "已激活"
     }
   },
   "flowAnalytics": {
@@ -4031,6 +4037,67 @@
   "qrCodes": {
     "description": "创建链接到聊天机器人流程的 QR 代码。",
     "title": "QR Code"
+  },
+  "dynamicImages": {
+    "title": "动态图片",
+    "description": "根据背景以及文字/图片/QR Code 图层，为每个联系人生成个性化图片。",
+    "publicUrl": {
+      "label": "公开 URL",
+      "hint": "复制并粘贴此 URL 到流程、广播或串行中，以发送个性化图片。"
+    },
+    "editor": {
+      "addElement": "添加元素",
+      "addImage": "添加图片",
+      "addText": "添加文字",
+      "addQrCode": "添加 QR Code",
+      "template": "模板",
+      "templateDialogTitle": "选择模板",
+      "templateDialogDescription": "选择模板将替换当前所有图层。",
+      "layers": "图层",
+      "noLayers": "暂无图层。添加一个元素以开始。",
+      "deleteLayer": "删除图层",
+      "layerNameImage": "图片",
+      "layerNameText": "文字",
+      "layerNameQrCode": "QR Code",
+      "editElement": "编辑元素",
+      "selectElementHint": "在画布上选择一个元素以编辑其属性。",
+      "width": "宽度",
+      "height": "高度",
+      "priority": "优先级",
+      "imageType": "图片类型",
+      "imageTypeUrl": "图片 URL",
+      "imageTypeAvatarUser": "联系人头像",
+      "imageTypeCustomField": "自订字段",
+      "imageUrl": "图片 URL",
+      "uploadImage": "上传图片",
+      "customField": "自订字段",
+      "imageStyle": "图片样式",
+      "imageStyleSquare": "方形",
+      "imageStyleCircle": "圆形",
+      "qrText": "QR Code 内容",
+      "qrSize": "尺寸",
+      "qrColor": "颜色",
+      "qrLogo": "标志",
+      "uploadLogo": "上传标志",
+      "textContent": "文字内容",
+      "fontSize": "字体大小",
+      "fontFamily": "字体",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "对齐方式",
+      "alignLeft": "左对齐",
+      "alignCenter": "居中",
+      "alignRight": "右对齐",
+      "color": "颜色",
+      "bold": "粗体",
+      "italic": "斜体",
+      "uppercase": "大写"
+    },
+    "preview": {
+      "error": "加载关联的动态图片失败,可能已被删除。"
+    }
   },
   "questionnaires": {
     "activeQuestion": "活动",

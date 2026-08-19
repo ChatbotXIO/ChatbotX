@@ -9,6 +9,7 @@ import {
   CardSimIcon,
   CircleQuestionMarkIcon,
   CopyIcon,
+  ImagesIcon,
   LinkIcon,
   MapIcon,
   QrCodeIcon,
@@ -70,6 +71,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "qrCodeGenerator.description",
     icon: QrCodeIcon,
     getLink: (id: string) => `/space/${id}/qr-codes`,
+  },
+  {
+    id: "dynamic-image",
+    labelKey: "dynamicImages.title",
+    descriptionKey: "dynamicImages.description",
+    icon: ImagesIcon,
+    getLink: (id: string) => `/space/${id}/dynamic-images`,
   },
   {
     id: "templates",

@@ -215,6 +215,37 @@ class ContactInboxService extends BaseService {
     })
   }
 
+  /**
+   * The most recently active contact inbox for a `sourceId` alone, scoped to
+   * one workspace — for callers that only have `{{user_id}}` (the system
+   * field, which resolves to `sourceId`) and no `inboxId` to disambiguate.
+   * `sourceId` is only unique per `(inboxId, sourceId)` — the SAME external
+   * id can legitimately belong to different contacts across different
+   * inboxes even within one workspace (e.g. the same phone number messaging
+   * two WhatsApp numbers), so a caller that also has the exact `inboxId`
+   * should use `findLatestBySource` instead; this is a best-effort fallback
+   * for surfaces (like the Dynamic Image trigger URL) that don't.
+   */
+  async findLatestBySourceId(props: {
+    tx?: DatabaseClient
+    sourceId: string
+    workspaceId: string
+  }): Promise<ContactInboxModel | undefined> {
+    const { tx = db, sourceId, workspaceId } = props
+    const rows = await tx
+      .select()
+      .from(contactInboxModel)
+      .where(
+        and(
+          eq(contactInboxModel.sourceId, sourceId),
+          this.workspaceScope(workspaceId),
+        ),
+      )
+      .orderBy(sql`${contactInboxModel.lastMessageAt} DESC NULLS LAST`)
+      .limit(1)
+    return rows[0]
+  }
+
   async findBy(props: {
     tx?: DatabaseClient
     where: Partial<FindByProps>

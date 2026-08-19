@@ -1837,6 +1837,67 @@
     "title": "קודי QR",
     "description": "צרו קודי QR המקשרים לתהליכי הצ'אטבוט שלכם."
   },
+  "dynamicImages": {
+    "title": "תמונות דינמיות",
+    "description": "יצירת תמונות מותאמות אישית לכל איש קשר מרקע ושכבות טקסט/תמונה/קוד QR.",
+    "publicUrl": {
+      "label": "כתובת URL ציבורית",
+      "hint": "העתיקו והדביקו את כתובת ה-URL בתהליך, בשידור או ברצף שלכם כדי לשלוח תמונות מותאמות אישית."
+    },
+    "editor": {
+      "addElement": "הוספת רכיב",
+      "addImage": "הוספת תמונה",
+      "addText": "הוספת טקסט",
+      "addQrCode": "הוספת קוד QR",
+      "template": "תבנית",
+      "templateDialogTitle": "בחר תבנית",
+      "templateDialogDescription": "בחירת תבנית תחליף את כל השכבות הנוכחיות.",
+      "layers": "שכבות",
+      "noLayers": "אין עדיין שכבות. הוסיפו רכיב כדי להתחיל.",
+      "deleteLayer": "מחיקת שכבה",
+      "layerNameImage": "תמונה",
+      "layerNameText": "טקסט",
+      "layerNameQrCode": "קוד QR",
+      "editElement": "עריכת רכיב",
+      "selectElementHint": "בחרו רכיב על גבי הקנבס כדי לערוך את מאפייניו.",
+      "width": "רוחב",
+      "height": "גובה",
+      "priority": "עדיפות",
+      "imageType": "סוג תמונה",
+      "imageTypeUrl": "כתובת URL של תמונה",
+      "imageTypeAvatarUser": "תמונת פרופיל של איש קשר",
+      "imageTypeCustomField": "שדה מותאם אישית",
+      "imageUrl": "כתובת URL של תמונה",
+      "uploadImage": "העלאת תמונה",
+      "customField": "שדה מותאם אישית",
+      "imageStyle": "סגנון תמונה",
+      "imageStyleSquare": "מרובע",
+      "imageStyleCircle": "עיגול",
+      "qrText": "תוכן קוד QR",
+      "qrSize": "גודל",
+      "qrColor": "צבע",
+      "qrLogo": "לוגו",
+      "uploadLogo": "העלאת לוגו",
+      "textContent": "תוכן הטקסט",
+      "fontSize": "גודל גופן",
+      "fontFamily": "משפחת גופן",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "יישור",
+      "alignLeft": "שמאל",
+      "alignCenter": "מרכז",
+      "alignRight": "ימין",
+      "color": "צבע",
+      "bold": "מודגש",
+      "italic": "נטוי",
+      "uppercase": "אותיות רישיות"
+    },
+    "preview": {
+      "error": "טעינת התמונה הדינמית המקושרת נכשלה. ייתכן שהיא נמחקה."
+    }
+  },
   "magicLinks": {
     "title": "קישורי קסם",
     "description": "צרו קישורים עמוקים המפנים לכתובת ה-URL שלכם עם פרמטרים של שאילתה."
@@ -3197,6 +3258,9 @@
     "qrCode": {
       "label": "קוד QR"
     },
+    "dynamicImage": {
+      "label": "תמונה דינמית"
+    },
     "savePayloadToCustomField": {
       "label": "שמירת המטען בשדה מותאם אישית"
     },
@@ -4399,6 +4463,9 @@
       "label": "אירועים",
       "placeholder": "הקלידו שם אירוע ולחצו Enter",
       "description": "הוסיפו שם אירוע אחד או יותר. כאשר n8n מצרף Webhook לאחד מהאירועים האלה, הנתונים נשלחים אליו בעת הפעלת שלב זה."
+    },
+    "enabled": {
+      "label": "מופעל"
     }
   },
   "billing": {

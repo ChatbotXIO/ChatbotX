@@ -870,6 +870,9 @@
     "qrCode": {
       "label": "QR Code"
     },
+    "dynamicImage": {
+      "label": "Dynamic Image"
+    },
     "savePayloadToCustomField": {
       "label": "Save payload to custom field"
     },
@@ -2072,6 +2075,9 @@
       "label": "Events",
       "placeholder": "Type an event name and press Enter",
       "description": "Add one or more event names. When n8n attaches a webhook for one of these events, data is sent to it when this step runs."
+    },
+    "enabled": {
+      "label": "Enabled"
     }
   },
   "metaConversions": {
@@ -3661,6 +3667,67 @@
   "qrCodes": {
     "title": "QR Codes",
     "description": "Create QR codes that link to your chatbot flows."
+  },
+  "dynamicImages": {
+    "title": "Dynamic Images",
+    "description": "Generate personalized images per contact from a background and text/image/QR layers.",
+    "publicUrl": {
+      "label": "Public URL",
+      "hint": "Copy and paste the URL into your flow, broadcast, or sequence to send personalized images."
+    },
+    "editor": {
+      "addElement": "Add element",
+      "addImage": "Add image",
+      "addText": "Add text",
+      "addQrCode": "Add QR code",
+      "template": "Template",
+      "templateDialogTitle": "Choose a template",
+      "templateDialogDescription": "Selecting a template replaces all current layers.",
+      "layers": "Layers",
+      "noLayers": "No layers yet. Add an element to get started.",
+      "deleteLayer": "Delete layer",
+      "layerNameImage": "Image",
+      "layerNameText": "Text",
+      "layerNameQrCode": "QR code",
+      "editElement": "Edit element",
+      "selectElementHint": "Select an element on the canvas to edit its properties.",
+      "width": "Width",
+      "height": "Height",
+      "priority": "Priority",
+      "imageType": "Image type",
+      "imageTypeUrl": "Image URL",
+      "imageTypeAvatarUser": "Contact avatar",
+      "imageTypeCustomField": "Custom field",
+      "imageUrl": "Image URL",
+      "uploadImage": "Upload image",
+      "customField": "Custom field",
+      "imageStyle": "Image style",
+      "imageStyleSquare": "Square",
+      "imageStyleCircle": "Circle",
+      "qrText": "QR code content",
+      "qrSize": "Size",
+      "qrColor": "Color",
+      "qrLogo": "Logo",
+      "uploadLogo": "Upload logo",
+      "textContent": "Text content",
+      "fontSize": "Font size",
+      "fontFamily": "Font family",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alignment",
+      "alignLeft": "Left",
+      "alignCenter": "Center",
+      "alignRight": "Right",
+      "color": "Color",
+      "bold": "Bold",
+      "italic": "Italic",
+      "uppercase": "Uppercase"
+    },
+    "preview": {
+      "error": "Failed to load the linked dynamic image. It may have been deleted."
+    }
   },
   "magicLinks": {
     "title": "Magic Links",

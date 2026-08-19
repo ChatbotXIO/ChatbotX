@@ -11,6 +11,7 @@
     "./contact-locale": "./src/contact-locale/index.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
     "./coupon": "./src/coupon/index.ts",
+    "./dynamic-image": "./src/dynamic-image/index.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
@@ -39,6 +40,7 @@
     "@chatbotx.io/sequence-scheduler": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
+    "@napi-rs/canvas": "^1.0.6",
     "@t3-oss/env-core": "^0.13.11",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
@@ -46,6 +48,7 @@
     "drizzle-orm": "1.0.0-beta.22",
     "jose": "^6.2.3",
     "libphonenumber-js": "^1.12.42",
+    "qrcode": "^1.5.4",
     "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"
   },
@@ -53,6 +56,7 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
+    "@types/qrcode": "^1.5.6",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },

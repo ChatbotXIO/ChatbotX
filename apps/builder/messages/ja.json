@@ -796,6 +796,9 @@
     "qrCode": {
       "label": "QRコード"
     },
+    "dynamicImage": {
+      "label": "ダイナミック画像"
+    },
     "savePayloadToCustomField": {
       "label": "ペイロードをカスタムフィールドに保存"
     },
@@ -1998,6 +2001,9 @@
       "label": "イベント",
       "placeholder": "イベント名を入力してEnterキーを押してください",
       "description": "1つ以上のイベント名を追加します。n8nがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
+    },
+    "enabled": {
+      "label": "有効"
     }
   },
   "flows": {
@@ -3544,6 +3550,67 @@
   "qrCodes": {
     "title": "QRコード",
     "description": "チャットボットのフローにリンクするQRコードを作成します。"
+  },
+  "dynamicImages": {
+    "title": "ダイナミック画像",
+    "description": "背景とテキスト/画像/QRコードのレイヤーから、コンタクトごとにパーソナライズされた画像を生成します。",
+    "publicUrl": {
+      "label": "公開URL",
+      "hint": "URLをコピーして、フロー、一斉配信、またはシーケンスに貼り付けると、パーソナライズされた画像を送信できます。"
+    },
+    "editor": {
+      "addElement": "要素を追加",
+      "addImage": "画像を追加",
+      "addText": "テキストを追加",
+      "addQrCode": "QRコードを追加",
+      "template": "テンプレート",
+      "templateDialogTitle": "テンプレートを選択",
+      "templateDialogDescription": "テンプレートを選択すると、現在のすべてのレイヤーが置き換えられます。",
+      "layers": "レイヤー",
+      "noLayers": "まだレイヤーがありません。要素を追加して開始してください。",
+      "deleteLayer": "レイヤーを削除",
+      "layerNameImage": "画像",
+      "layerNameText": "テキスト",
+      "layerNameQrCode": "QRコード",
+      "editElement": "要素を編集",
+      "selectElementHint": "キャンバス上の要素を選択してプロパティを編集します。",
+      "width": "幅",
+      "height": "高さ",
+      "priority": "優先度",
+      "imageType": "画像タイプ",
+      "imageTypeUrl": "画像URL",
+      "imageTypeAvatarUser": "コンタクトのアバター",
+      "imageTypeCustomField": "カスタムフィールド",
+      "imageUrl": "画像URL",
+      "uploadImage": "画像をアップロード",
+      "customField": "カスタムフィールド",
+      "imageStyle": "画像スタイル",
+      "imageStyleSquare": "正方形",
+      "imageStyleCircle": "円形",
+      "qrText": "QRコードの内容",
+      "qrSize": "サイズ",
+      "qrColor": "色",
+      "qrLogo": "ロゴ",
+      "uploadLogo": "ロゴをアップロード",
+      "textContent": "テキスト内容",
+      "fontSize": "フォントサイズ",
+      "fontFamily": "フォント",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "配置",
+      "alignLeft": "左",
+      "alignCenter": "中央",
+      "alignRight": "右",
+      "color": "色",
+      "bold": "太字",
+      "italic": "斜体",
+      "uppercase": "大文字"
+    },
+    "preview": {
+      "error": "リンクされたダイナミック画像を読み込めませんでした。削除された可能性があります。"
+    }
   },
   "magicLinks": {
     "title": "マジックリンク",

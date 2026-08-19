@@ -796,6 +796,9 @@
     "qrCode": {
       "label": "Code QR"
     },
+    "dynamicImage": {
+      "label": "Image dynamique"
+    },
     "savePayloadToCustomField": {
       "label": "Enregistrer la charge utile dans un champ personnalisé"
     },
@@ -1998,6 +2001,9 @@
       "label": "Événements",
       "placeholder": "Saisissez le nom d’un événement et appuyez sur Entrée",
       "description": "Ajoutez un ou plusieurs noms d’événements. Lorsque n8n associe un webhook à l’un de ces événements, des données lui sont envoyées lors de l’exécution de cette étape."
+    },
+    "enabled": {
+      "label": "Activé"
     }
   },
   "flows": {
@@ -3565,6 +3571,67 @@
   "qrCodes": {
     "title": "Codes QR",
     "description": "Créez des codes QR qui renvoient vers les flux de votre chatbot."
+  },
+  "dynamicImages": {
+    "title": "Images dynamiques",
+    "description": "Générez des images personnalisées par contact à partir d’un arrière-plan et de calques de texte, d’image ou de QR code.",
+    "publicUrl": {
+      "label": "URL publique",
+      "hint": "Copiez et collez l'URL dans votre flux, votre diffusion ou votre séquence pour envoyer des images personnalisées."
+    },
+    "editor": {
+      "addElement": "Ajouter un élément",
+      "addImage": "Ajouter une image",
+      "addText": "Ajouter du texte",
+      "addQrCode": "Ajouter un code QR",
+      "template": "Modèle",
+      "templateDialogTitle": "Choisir un modèle",
+      "templateDialogDescription": "La sélection d'un modèle remplace tous les calques actuels.",
+      "layers": "Calques",
+      "noLayers": "Aucun calque pour le moment. Ajoutez un élément pour commencer.",
+      "deleteLayer": "Supprimer le calque",
+      "layerNameImage": "Image",
+      "layerNameText": "Texte",
+      "layerNameQrCode": "Code QR",
+      "editElement": "Modifier l’élément",
+      "selectElementHint": "Sélectionnez un élément sur le canevas pour modifier ses propriétés.",
+      "width": "Largeur",
+      "height": "Hauteur",
+      "priority": "Priorité",
+      "imageType": "Type d’image",
+      "imageTypeUrl": "URL de l’image",
+      "imageTypeAvatarUser": "Avatar du contact",
+      "imageTypeCustomField": "Champ personnalisé",
+      "imageUrl": "URL de l’image",
+      "uploadImage": "Importer une image",
+      "customField": "Champ personnalisé",
+      "imageStyle": "Style d’image",
+      "imageStyleSquare": "Carré",
+      "imageStyleCircle": "Cercle",
+      "qrText": "Contenu du code QR",
+      "qrSize": "Taille",
+      "qrColor": "Couleur",
+      "qrLogo": "Logo",
+      "uploadLogo": "Importer un logo",
+      "textContent": "Contenu du texte",
+      "fontSize": "Taille de police",
+      "fontFamily": "Police",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alignement",
+      "alignLeft": "Gauche",
+      "alignCenter": "Centre",
+      "alignRight": "Droite",
+      "color": "Couleur",
+      "bold": "Gras",
+      "italic": "Italique",
+      "uppercase": "Majuscules"
+    },
+    "preview": {
+      "error": "Échec du chargement de l'image dynamique liée. Elle a peut-être été supprimée."
+    }
   },
   "magicLinks": {
     "title": "Liens magiques",
