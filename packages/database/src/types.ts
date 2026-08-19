@@ -212,3 +212,5 @@ export type QuestionnaireAnswerModel =
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
 export type ContactActiveHourlyModel =
   typeof schema.contactActiveHourlyModel.$inferSelect
+export type AutomationThrottleModel =
+  typeof schema.automationThrottleModel.$inferSelect

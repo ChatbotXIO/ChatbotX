@@ -1,43 +1,42 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// defaultReplyThrottleService — atomic per-contact/per-channel claim gating
-// the Default Reply flow. Verifies: the window map, the Redis key format,
-// the NX/EX claim call, `allTime` never touching Redis, `release` deleting
-// the claim key, and fail-open behavior on any Redis error.
+// defaultReplyThrottleService — thin default-reply-facing facade over the
+// generic automationThrottleService (docs/plans/default-reply-throttle-hybrid.md).
+// Verifies: the frequency->window map (`allTime` -> 0, the unbounded
+// record-and-allow window), delegation to the generic service with the fixed
+// throttleType/subjectId pinned by the wrapper, and `release` threading both
+// `frequency` and `claimId` through so the generic service can reconstruct its
+// fast-path key.
 // ---------------------------------------------------------------------------
 
-const warnMock = vi.fn()
-vi.mock("../src/logger", () => ({
-  logger: { warn: warnMock, error: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}))
-
-const setNumberIfNotExistsMock = vi.fn(async () => true)
-const deleteMock = vi.fn(async () => undefined)
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedStore: {
-    setNumberIfNotExists: setNumberIfNotExistsMock,
-    delete: deleteMock,
+const tryAcquireMock = vi.fn()
+const releaseMock = vi.fn(async () => undefined)
+vi.mock("../src/automation-throttle", () => ({
+  automationThrottleService: {
+    tryAcquire: tryAcquireMock,
+    release: releaseMock,
   },
 }))
 
-const {
-  defaultReplyThrottleService,
-  defaultReplyThrottleKey,
-  DEFAULT_REPLY_FREQUENCY_WINDOW_SECONDS,
-} = await import("../src/default-reply/throttle")
+const { defaultReplyThrottleService, DEFAULT_REPLY_FREQUENCY_WINDOW_SECONDS } =
+  await import("../src/default-reply/throttle")
 
 const WORKSPACE_ID = "ws-1"
 const CONTACT_INBOX_ID = "contact-inbox-1"
 
 beforeEach(() => {
   vi.clearAllMocks()
-  setNumberIfNotExistsMock.mockResolvedValue(true)
+  tryAcquireMock.mockResolvedValue({
+    result: "acquired",
+    claimId: "claim-1",
+    remainingSeconds: 3600,
+  })
 })
 
 describe("DEFAULT_REPLY_FREQUENCY_WINDOW_SECONDS", () => {
   test.each([
-    ["allTime", null],
+    ["allTime", 0],
     ["oncePerHour", 3600],
     ["oncePerDay", 86_400],
   ] as const)("%s maps to %s seconds", (frequency, expected) => {
@@ -45,49 +44,44 @@ describe("DEFAULT_REPLY_FREQUENCY_WINDOW_SECONDS", () => {
   })
 })
 
-describe("defaultReplyThrottleKey", () => {
-  test("builds a workspace + contactInbox scoped key", () => {
-    expect(defaultReplyThrottleKey(WORKSPACE_ID, CONTACT_INBOX_ID)).toBe(
-      `default-reply:last-sent:${WORKSPACE_ID}:${CONTACT_INBOX_ID}`,
-    )
-  })
-})
-
 describe("defaultReplyThrottleService.tryAcquire", () => {
-  test("allTime reports 'bypassed' (no claim to own) and never touches Redis", async () => {
-    const claim = await defaultReplyThrottleService.tryAcquire({
+  test("allTime delegates with windowSeconds 0 (record-and-allow, matching v1's EVERY_TIME)", async () => {
+    await defaultReplyThrottleService.tryAcquire({
       workspaceId: WORKSPACE_ID,
       contactInboxId: CONTACT_INBOX_ID,
       frequency: "allTime",
     })
 
-    expect(claim).toBe("bypassed")
-    expect(setNumberIfNotExistsMock).not.toHaveBeenCalled()
+    expect(tryAcquireMock).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactInboxId: CONTACT_INBOX_ID,
+      throttleType: "defaultReply",
+      subjectId: "0",
+      windowSeconds: 0,
+    })
   })
 
   test.each([
     ["oncePerHour", 3600],
     ["oncePerDay", 86_400],
-  ] as const)("%s claims the key via SET NX EX with the correct TTL", async (frequency, ttlSeconds) => {
-    const claim = await defaultReplyThrottleService.tryAcquire({
+  ] as const)("%s delegates to the generic service pinned to throttleType 'defaultReply' and subjectId '0'", async (frequency, windowSeconds) => {
+    await defaultReplyThrottleService.tryAcquire({
       workspaceId: WORKSPACE_ID,
       contactInboxId: CONTACT_INBOX_ID,
       frequency,
     })
 
-    expect(claim).toBe("acquired")
-    expect(setNumberIfNotExistsMock).toHaveBeenCalledTimes(1)
-    const [key, , ttl] = setNumberIfNotExistsMock.mock.calls[0] as [
-      string,
-      number,
-      number,
-    ]
-    expect(key).toBe(defaultReplyThrottleKey(WORKSPACE_ID, CONTACT_INBOX_ID))
-    expect(ttl).toBe(ttlSeconds)
+    expect(tryAcquireMock).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactInboxId: CONTACT_INBOX_ID,
+      throttleType: "defaultReply",
+      subjectId: "0",
+      windowSeconds,
+    })
   })
 
-  test("reports 'denied' when the claim already exists (second call within the window)", async () => {
-    setNumberIfNotExistsMock.mockResolvedValueOnce(false)
+  test("returns whatever the generic service reports (denied)", async () => {
+    tryAcquireMock.mockResolvedValueOnce({ result: "denied" })
 
     const claim = await defaultReplyThrottleService.tryAcquire({
       workspaceId: WORKSPACE_ID,
@@ -95,44 +89,44 @@ describe("defaultReplyThrottleService.tryAcquire", () => {
       frequency: "oncePerHour",
     })
 
-    expect(claim).toBe("denied")
-  })
-
-  test("fails open as 'bypassed' (not 'acquired') and logs a warning when Redis throws", async () => {
-    setNumberIfNotExistsMock.mockRejectedValueOnce(new Error("redis down"))
-
-    const claim = await defaultReplyThrottleService.tryAcquire({
-      workspaceId: WORKSPACE_ID,
-      contactInboxId: CONTACT_INBOX_ID,
-      frequency: "oncePerHour",
-    })
-
-    expect(claim).toBe("bypassed")
-    expect(warnMock).toHaveBeenCalled()
+    expect(claim).toEqual({ result: "denied" })
   })
 })
 
 describe("defaultReplyThrottleService.release", () => {
-  test("deletes the claim key for the workspace/contactInbox pair", async () => {
+  test("threads frequency (as windowSeconds) and claimId into the generic release", async () => {
     await defaultReplyThrottleService.release({
       workspaceId: WORKSPACE_ID,
       contactInboxId: CONTACT_INBOX_ID,
+      frequency: "oncePerDay",
+      claimId: "claim-1",
     })
 
-    expect(deleteMock).toHaveBeenCalledWith(
-      defaultReplyThrottleKey(WORKSPACE_ID, CONTACT_INBOX_ID),
-    )
+    expect(releaseMock).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactInboxId: CONTACT_INBOX_ID,
+      throttleType: "defaultReply",
+      subjectId: "0",
+      windowSeconds: 86_400,
+      claimId: "claim-1",
+    })
   })
 
-  test("swallows Redis errors rather than throwing", async () => {
-    deleteMock.mockRejectedValueOnce(new Error("redis down"))
+  test("allTime release delegates with windowSeconds 0 (rolls back the recorded trigger)", async () => {
+    await defaultReplyThrottleService.release({
+      workspaceId: WORKSPACE_ID,
+      contactInboxId: CONTACT_INBOX_ID,
+      frequency: "allTime",
+      claimId: "claim-1",
+    })
 
-    await expect(
-      defaultReplyThrottleService.release({
-        workspaceId: WORKSPACE_ID,
-        contactInboxId: CONTACT_INBOX_ID,
-      }),
-    ).resolves.toBeUndefined()
-    expect(warnMock).toHaveBeenCalled()
+    expect(releaseMock).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      contactInboxId: CONTACT_INBOX_ID,
+      throttleType: "defaultReply",
+      subjectId: "0",
+      windowSeconds: 0,
+      claimId: "claim-1",
+    })
   })
 })

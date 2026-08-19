@@ -22,10 +22,16 @@ const warnMock = vi.hoisted(() => vi.fn())
 const errorMock = vi.hoisted(() => vi.fn())
 // Defaults to "acquired" so existing (non-throttle-focused) tests keep
 // enqueuing without needing to opt in explicitly.
+type DefaultReplyThrottleClaim =
+  | { result: "acquired"; claimId: string; remainingSeconds: number }
+  | { result: "denied" }
+  | { result: "bypassed" }
 const tryAcquireMock = vi.hoisted(() =>
-  vi.fn<() => Promise<"acquired" | "denied" | "bypassed">>(
-    async () => "acquired",
-  ),
+  vi.fn<() => Promise<DefaultReplyThrottleClaim>>(async () => ({
+    result: "acquired",
+    claimId: "claim-1",
+    remainingSeconds: 3600,
+  })),
 )
 const releaseMock = vi.hoisted(() => vi.fn(async () => undefined))
 
@@ -237,7 +243,11 @@ beforeEach(() => {
   appendHistoryMock.mockClear()
   warnMock.mockClear()
   errorMock.mockClear()
-  tryAcquireMock.mockReset().mockResolvedValue("acquired")
+  tryAcquireMock.mockReset().mockResolvedValue({
+    result: "acquired",
+    claimId: "claim-1",
+    remainingSeconds: 3600,
+  })
   releaseMock.mockReset().mockResolvedValue(undefined)
   vi.mocked(streamText).mockClear()
   vi.mocked(contactVariableService.replaceAll).mockClear()
@@ -390,7 +400,7 @@ describe("triggerDefaultReplyFlow", () => {
       active: true,
       currentVersionId: "v1",
     })
-    tryAcquireMock.mockResolvedValueOnce("denied")
+    tryAcquireMock.mockResolvedValueOnce({ result: "denied" })
 
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
@@ -411,8 +421,12 @@ describe("triggerDefaultReplyFlow", () => {
       currentVersionId: "v1",
     })
     tryAcquireMock
-      .mockResolvedValueOnce("acquired")
-      .mockResolvedValueOnce("denied")
+      .mockResolvedValueOnce({
+        result: "acquired",
+        claimId: "claim-1",
+        remainingSeconds: 86_400,
+      })
+      .mockResolvedValueOnce({ result: "denied" })
 
     const first = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
@@ -456,19 +470,21 @@ describe("triggerDefaultReplyFlow", () => {
     expect(releaseMock).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactInboxId: contactInbox.id,
+      frequency: "oncePerHour",
+      claimId: "claim-1",
     })
   })
 
   test("does NOT release on enqueue failure when the claim was 'bypassed' (fail-open owns no claim)", async () => {
-    // If tryAcquire failed open (Redis error → "bypassed"), no claim of ours
-    // exists — releasing would delete a window a concurrent worker may have
-    // legitimately claimed once Redis recovered.
+    // If tryAcquire failed open (Postgres error → "bypassed"), no claim of
+    // ours exists — releasing would delete a window a concurrent worker may
+    // have legitimately claimed once Postgres recovered.
     findByFlowMock.mockResolvedValueOnce({
       id: "flow-1",
       active: true,
       currentVersionId: "v1",
     })
-    tryAcquireMock.mockResolvedValueOnce("bypassed")
+    tryAcquireMock.mockResolvedValueOnce({ result: "bypassed" })
     integrationQueueAddMock.mockRejectedValueOnce(
       new Error("queue unavailable"),
     )
@@ -486,17 +502,18 @@ describe("triggerDefaultReplyFlow", () => {
     expect(releaseMock).not.toHaveBeenCalled()
   })
 
-  test("fails open (still triggers, no claim owned) when the throttle service reports 'bypassed' after an internal Redis error", async () => {
+  test("fails open (still triggers, no claim owned) when the throttle service reports 'bypassed' after an internal Postgres error", async () => {
     // `defaultReplyThrottleService.tryAcquire` fails open internally (logs +
     // resolves "bypassed") rather than rejecting — see the business-layer
-    // test suite for the direct fail-open assertion against a throwing Redis
-    // client. Here we confirm the worker still enqueues on "bypassed".
+    // test suite for the direct fail-open assertion against a throwing
+    // Postgres client. Here we confirm the worker still enqueues on
+    // "bypassed".
     findByFlowMock.mockResolvedValueOnce({
       id: "flow-1",
       active: true,
       currentVersionId: "v1",
     })
-    tryAcquireMock.mockResolvedValueOnce("bypassed")
+    tryAcquireMock.mockResolvedValueOnce({ result: "bypassed" })
 
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
@@ -592,7 +609,7 @@ describe("replyByAI — default reply flow fallback", () => {
       active: true,
       currentVersionId: "v1",
     })
-    tryAcquireMock.mockResolvedValueOnce("denied")
+    tryAcquireMock.mockResolvedValueOnce({ result: "denied" })
 
     const result = await replyByAI({
       ...baseProps,

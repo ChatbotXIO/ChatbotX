@@ -67,7 +67,7 @@ export async function triggerDefaultReplyFlow(props: {
     contactInboxId: contactInbox.id,
     frequency: defaultReplyFrequency,
   })
-  if (claim === "denied") {
+  if (claim.result === "denied") {
     logger.debug(
       { workspaceId, contactInboxId: contactInbox.id, defaultReplyFrequency },
       "[default-reply] throttled: activation window still open for this contact",
@@ -87,13 +87,15 @@ export async function triggerDefaultReplyFlow(props: {
       },
     })
   } catch (error) {
-    // Roll back only a claim we actually own — a `bypassed` claim (allTime
-    // or Redis fail-open) has no key of ours, and deleting the bare key
-    // could erase a window claimed by a concurrent worker.
-    if (claim === "acquired") {
+    // Roll back only a claim we actually own — a `bypassed` claim (Postgres
+    // fail-open) has no row of ours, and releasing anyway could delete a window
+    // claimed by a concurrent worker.
+    if (claim.result === "acquired") {
       await defaultReplyThrottleService.release({
         workspaceId,
         contactInboxId: contactInbox.id,
+        frequency: defaultReplyFrequency,
+        claimId: claim.claimId,
       })
     }
     throw error

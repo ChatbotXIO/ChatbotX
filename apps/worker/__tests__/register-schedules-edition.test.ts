@@ -37,6 +37,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     purgeCoexistStaging: "purgeCoexistStaging",
     purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
     purgeWorkspaces: "purgeWorkspaces",
+    purgeAutomationThrottle: "purgeAutomationThrottle",
     refreshChannelTokens: "refreshChannelTokens",
     unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   },

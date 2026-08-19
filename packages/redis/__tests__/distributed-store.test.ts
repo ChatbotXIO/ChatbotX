@@ -13,3 +13,28 @@ describe("distributedStoreFactory.exists", () => {
     await expect(store.exists("missing")).resolves.toBe(false)
   })
 })
+
+describe("distributedStoreFactory.setNumber", () => {
+  test("always writes via plain SET key val EX ttl (no NX)", async () => {
+    const set = vi.fn(async () => "OK")
+    const store = distributedStoreFactory(
+      async () => ({ set }) as unknown as Redis,
+    )
+
+    await store.setNumber("throttle:key", 1, 300)
+
+    expect(set).toHaveBeenCalledWith("throttle:key", "1", "EX", 300)
+  })
+
+  test("overwrites an existing value, unlike setNumberIfNotExists", async () => {
+    const set = vi.fn(async () => "OK")
+    const store = distributedStoreFactory(
+      async () => ({ set }) as unknown as Redis,
+    )
+
+    await store.setNumber("throttle:key", 1, 300)
+    await store.setNumber("throttle:key", 1, 300)
+
+    expect(set).toHaveBeenCalledTimes(2)
+  })
+})
