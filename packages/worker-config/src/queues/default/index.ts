@@ -15,16 +15,16 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
-export const defaultQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<DefaultJobData>(queueNames.enum.default, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const defaultQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<DefaultJobData>(queueNames.enum.default, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",

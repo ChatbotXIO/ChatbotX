@@ -5,6 +5,18 @@ import { keys } from "../keys"
 let permanentRedis: IORedis | null = null
 const env = keys()
 
+/**
+ * True when no Redis is reachable and module-scope consumers must not dial:
+ * `next build` collecting page data, and vitest (setup-env points REDIS_URL at
+ * the non-routable 127.0.0.1:1, and an eager client would retry forever).
+ */
+export function isNoRedisEnv(): boolean {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.VITEST === "true"
+  )
+}
+
 export function getRedisConnection() {
   if (permanentRedis) {
     return permanentRedis
@@ -14,9 +26,10 @@ export function getRedisConnection() {
     maxRetriesPerRequest: null,
     enableReadyCheck: true,
     // Module-scope consumers (event buses, queues) are evaluated while
-    // `next build` collects page data with no Redis reachable; lazyConnect
-    // keeps the build from dialing 127.0.0.1:6379 in an infinite retry loop.
-    lazyConnect: env.NEXT_PHASE === "phase-production-build",
+    // `next build` collects page data with no Redis reachable, and under
+    // vitest (setup-env points REDIS_URL at the non-routable 127.0.0.1:1);
+    // lazyConnect keeps these from dialing in an infinite retry loop.
+    lazyConnect: isNoRedisEnv(),
     retryStrategy: (times) => {
       const delay = Math.min(times * 50, 2000)
       return delay

@@ -12,6 +12,7 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
@@ -574,13 +575,12 @@ export type IntegrationJobData =
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
 
-export const integrationQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<IntegrationJobData>(queueNames.enum.integration, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const integrationQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<IntegrationJobData>(queueNames.enum.integration, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
 
 // Ads-conversion jobs need a stronger retry policy than the integration
 // queue default (`attempts: 2` / 5s) — CAPI sends and retarget syncs call
