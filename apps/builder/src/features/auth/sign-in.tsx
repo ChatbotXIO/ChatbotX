@@ -9,10 +9,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { ArrowLeftIcon, LinkIcon, MailIcon } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { isCommunity } from "@/env"
 import SSOSignIn from "@/features/auth/sso-sign-in"
+import { withCallbackUrlParam } from "@/lib/safe-callback-url"
 import { useTenantSettings } from "../tenant"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
@@ -25,19 +27,22 @@ import {
 type SignInMethod = "email" | "magicLink"
 
 export type SignInFormProps = {
-  callbackUrl?: string
   /** Social providers configured for this tenant (own app or platform default). */
   enabledProviders?: SocialProvider[]
 }
 
 export const SignInForm = ({
-  callbackUrl,
   enabledProviders = [],
   ...props
 }: SignInFormProps) => {
   const t = useTranslations()
   const { name, policyUrl, termsOfServiceUrl } = useTenantSettings()
   const [activeMethod, setActiveMethod] = useState<SignInMethod | null>(null)
+  const searchParams = useSearchParams()
+  const signUpHref = withCallbackUrlParam(
+    "/auth/sign-up",
+    searchParams.get("callbackURL"),
+  )
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -101,7 +106,7 @@ export const SignInForm = ({
 
             <div className="text-center font-medium text-foreground/60 text-sm">
               {t("auth.dontHaveAnAccount")}{" "}
-              <Link className="text-foreground underline" href="/auth/sign-up">
+              <Link className="text-foreground underline" href={signUpHref}>
                 {t("auth.signUp")}
               </Link>
             </div>
