@@ -30,6 +30,7 @@ import {
   extractVariables,
   getSystemFieldValue,
   interpolate,
+  interpolateIntoJavascript,
   resolveContactVariablesDeep,
 } from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
@@ -362,10 +363,12 @@ export async function handleExecuteJavascript({
       input[systemField] = value
     }
 
+    const code = await interpolateIntoJavascript(step.code, variables)
+
     await javascriptExecutionService.executeAndMap({
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
-      code: step.code,
+      code,
       input,
       customFieldId: step.customFieldId,
     })

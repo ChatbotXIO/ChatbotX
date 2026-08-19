@@ -28,6 +28,7 @@ import {
   formatCustomFieldValueInTimeZone,
   formatWithFallback,
 } from "@chatbotx.io/utils/datetime"
+import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import {
   getAssignedTeamName,
   resolveAssigneeEmail,
@@ -52,11 +53,15 @@ import { getChatHistory } from "./helpers/message"
 import { getQueuedMessages } from "./helpers/queued-messages"
 import { toPublicStorageUrl } from "./helpers/storage-url"
 import { logger } from "./logger"
-import type { ContactVariableContext } from "./schema"
+import type {
+  ContactCustomFieldValue,
+  ContactVariableContext,
+  ReplaceVariableProps,
+} from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
 const VARIABLE_PLACEHOLDER_REGEX =
-  /\{\{([\w.]+|coupon:[^{}\n]+|raw:[^{}\n]+)\}\}/g
+  /\{\{(coupon:[^{}\n]+|raw:[^{}\n]+|[^{}\n]+)\}\}/g
 // `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
 // where the placeholder sits — a call the position-independent mapping can't
 // make. resolveGenderLabel returns the opening form; inside a sentence it is
@@ -130,6 +135,293 @@ export const interpolate = (
         : value.toLowerCase()
     },
   )
+
+const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
+
+type QuoteChar = '"' | "'" | "`"
+
+const CONTROL_CHAR_ESCAPES: Record<string, string> = {
+  "\n": "\\n",
+  "\r": "\\r",
+  "\t": "\\t",
+}
+
+// Escapes a resolved value for splicing into JS source *without* adding
+// quotes of its own, appropriate to the quote character the text will sit
+// inside once spliced back in (or, for a "whole-literal" placement, the
+// quote character that gets re-added around it). Always escapes `` ` `` and
+// `${` in addition to the active quote/backslash/control chars, because a
+// value quoted with `"` or `'` today is still exposed if the author's code
+// (or a later edit) wraps it in a template literal.
+const escapeForQuote = (value: string, quote: QuoteChar): string => {
+  let escaped = value.replace(/\\/g, "\\\\")
+  escaped =
+    quote === "`"
+      ? escaped.replace(/`/g, "\\`")
+      : escaped.replaceAll(quote, `\\${quote}`)
+  return escaped
+    .replace(/\$\{/g, "\\${")
+    .replace(/[\n\r\t]/g, (char) => CONTROL_CHAR_ESCAPES[char] ?? char)
+}
+
+const NUMERIC_LITERAL_RE = /^-?\d+(\.\d+)?$/
+
+// Numeric/boolean custom fields are stored as plain strings, so the raw text
+// must be parsed and re-serialized rather than passed through — that
+// round-trip is what rejects `"25; drop()"`-style injection attempts, and
+// what stops `1e999`/`NaN` (both technically parseable numbers) from landing
+// as bare, unquoted source.
+const numberLiteral = (value: string): string => {
+  if (!NUMERIC_LITERAL_RE.test(value.trim())) {
+    return "null"
+  }
+  const parsed = Number(value.trim())
+  return Number.isFinite(parsed) ? String(parsed) : "null"
+}
+
+const booleanLiteral = (value: string): string =>
+  value.trim().toLowerCase() === "true" ? "true" : "false"
+
+// Emits a JS literal (or bare escaped text) for a resolved variable value,
+// appropriate to its custom-field type, so `{{age}} + 1` becomes `25 + 1`
+// (not `"25" + 1"`). `wrapQuote` is set when the placeholder must supply its
+// own quotes (a "whole-literal" or "bare" placement); it is `null` when the
+// text is dropped inside an author-written literal that already has its own
+// delimiters ("inside-literal" — see classifyPlaceholderContext).
+const literalForField = (
+  field: ContactCustomFieldValue | null,
+  wrapQuote: QuoteChar | null,
+): string => {
+  if (!field || field.value === null || field.value === undefined) {
+    return "null"
+  }
+  switch (field.type) {
+    case "number":
+      return numberLiteral(field.value)
+    case "boolean":
+      return booleanLiteral(field.value)
+    default: {
+      const quote = wrapQuote ?? '"'
+      const escaped = escapeForQuote(field.value, quote)
+      return wrapQuote ? `${quote}${escaped}${quote}` : escaped
+    }
+  }
+}
+
+type PlaceholderContext = "whole-literal" | "inside-literal" | "bare"
+
+type PlaceholderClassification = {
+  context: PlaceholderContext
+  consumeStart: number
+  consumeEnd: number
+  quote: QuoteChar | null
+}
+
+const isQuoteChar = (char: string | undefined): char is QuoteChar =>
+  char === '"' || char === "'" || char === "`"
+
+// Scans backward from `index` for the nearest unescaped quote character that
+// isn't itself closed before `index` — i.e. the opening delimiter of a
+// string literal that `index` sits inside, or undefined if none is open.
+// Backtracking stops at a newline for `"`/`'` (they can't span lines in
+// valid JS) but not for `` ` ``, since template literals can. This is a
+// heuristic, not a tokenizer: a quote inside a comment, or one belonging to
+// a different (already-closed) literal on the same line, can confuse it —
+// documented limit, not a full JS parse.
+const findEnclosingQuote = (
+  code: string,
+  index: number,
+): { quote: QuoteChar; openIndex: number } | null => {
+  let open: { quote: QuoteChar; openIndex: number } | null = null
+  for (let i = 0; i < index; i++) {
+    const char = code[i]
+    if (char === "\\") {
+      i++
+      continue
+    }
+    if (open) {
+      if (char === open.quote) {
+        open = null
+      } else if (char === "\n" && open.quote !== "`") {
+        // An unterminated "/'/ literal can't survive a newline in valid JS;
+        // treat it as closed so a later real quote isn't misread as nested.
+        open = null
+      }
+      continue
+    }
+    if (isQuoteChar(char)) {
+      open = { quote: char, openIndex: i }
+    }
+  }
+  return open
+}
+
+// Finds the index just after the closing quote that matches `quote`, opened
+// at `openIndex`, searching forward from `from`. Returns -1 if unterminated
+// before the code ends (or, for `"`/`'`, before a newline).
+const findClosingQuote = (
+  code: string,
+  from: number,
+  quote: QuoteChar,
+): number => {
+  for (let i = from; i < code.length; i++) {
+    const char = code[i]
+    if (char === "\\") {
+      i++
+      continue
+    }
+    if (char === quote) {
+      return i
+    }
+    if (char === "\n" && quote !== "`") {
+      return -1
+    }
+  }
+  return -1
+}
+
+// Classifies how a `{{...}}` match sits relative to its surrounding quotes,
+// without a full JS parse (see findEnclosingQuote for the heuristic's
+// documented limits):
+//   - "whole-literal": the match, including one quote on each side, is the
+//     entire string literal (`"{{x}}"`) — the surrounding quotes are
+//     consumed and a fresh pair of the same quote character is re-added.
+//   - "inside-literal": the match sits inside a larger string literal
+//     (`"a {{x}} b"` or a template literal) — only the escaped inner text is
+//     substituted, the surrounding quotes stay put.
+//   - "bare": the match is not inside any string literal (`{{age}} + 1`) —
+//     used for numeric/boolean bare substitution, or a fresh double-quoted
+//     string literal when a string-type field ends up bare.
+const classifyPlaceholderContext = (
+  code: string,
+  start: number,
+  end: number,
+): PlaceholderClassification => {
+  const enclosing = findEnclosingQuote(code, start)
+  if (!enclosing) {
+    return {
+      context: "bare",
+      consumeStart: start,
+      consumeEnd: end,
+      quote: null,
+    }
+  }
+
+  const { quote, openIndex } = enclosing
+  const closeIndex = findClosingQuote(code, end, quote)
+  const isWholeLiteral =
+    closeIndex === end && openIndex === start - 1 && code[end] === quote
+
+  if (isWholeLiteral) {
+    return {
+      context: "whole-literal",
+      consumeStart: openIndex,
+      consumeEnd: end + 1,
+      quote,
+    }
+  }
+
+  return {
+    context: "inside-literal",
+    consumeStart: start,
+    consumeEnd: end,
+    quote,
+  }
+}
+
+const toRawCustomFieldName = (variable: string): string =>
+  variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
+
+// System-field and coupon values are always plain strings (no custom-field
+// `type`), so they're treated as shortText for literal emission — quoted
+// unless the placeholder sits bare in code.
+const stringFieldValue = (
+  value: string | null,
+): ContactCustomFieldValue | null =>
+  value === null ? null : { key: "", type: "shortText", value, description: "" }
+
+// Resolution order mirrors contact-variable.ts's variableResolvers so
+// `{{first_name}}` behaves the same in JS-step code as in message text:
+// system fields, then `raw:`, then custom fields, then coupons. Returns
+// undefined for an unknown name (left as the literal placeholder) vs. null
+// for a known name with no value (emitted as `null`).
+const resolveJavascriptVariable = async (
+  name: string,
+  context: ReplaceVariableProps,
+): Promise<ContactCustomFieldValue | null | undefined> => {
+  if (Object.values(systemFieldTypes.enum).includes(name as SystemFieldType)) {
+    return stringFieldValue(
+      await getSystemFieldValue(context, name as SystemFieldType),
+    )
+  }
+  if (name.startsWith(RAW_CUSTOM_FIELD_VARIABLE_PREFIX)) {
+    const rawField = context.customFieldsMap.get(toRawCustomFieldName(name))
+    return rawField ? rawField : undefined
+  }
+  if (context.customFieldsMap.has(name)) {
+    return context.customFieldsMap.get(name) ?? null
+  }
+  if (isCouponVariable(name)) {
+    return stringFieldValue(await resolveCouponVariable(context, name))
+  }
+  return
+}
+
+/**
+ * Substitutes `{{...}}` placeholders inside JavaScript source (an Execute
+ * JavaScript flow step's code) with type-aware, escaped JS literals, so
+ * authors can reference contact/system/custom fields directly in code the
+ * same way they do in message text.
+ *
+ * Deliberately not a full JS parse — see classifyPlaceholderContext for the
+ * documented limits of the quote-context heuristic. Unknown names are left
+ * as the literal `{{...}}` (matching interpolate's existing behavior), which
+ * then surfaces as a JS syntax error: a loud failure, not a silent `null`.
+ */
+export const interpolateIntoJavascript = async (
+  code: string,
+  context: ReplaceVariableProps,
+): Promise<string> => {
+  const names = extractVariables(code)
+  const resolved = new Map<string, ContactCustomFieldValue | null>()
+
+  for (const name of names) {
+    const value = await resolveJavascriptVariable(name, context)
+    if (value !== undefined) {
+      resolved.set(name, value)
+    }
+  }
+
+  let result = ""
+  let cursor = 0
+  for (const match of code.matchAll(VARIABLE_PLACEHOLDER_REGEX)) {
+    const name = match[1].trim()
+    if (!resolved.has(name) || match.index === undefined) {
+      continue
+    }
+    const start = match.index
+    const end = start + match[0].length
+    const {
+      context: placeholderContext,
+      consumeStart,
+      consumeEnd,
+      quote,
+    } = classifyPlaceholderContext(code, start, end)
+
+    result += code.slice(cursor, consumeStart)
+    const field = resolved.get(name) ?? null
+    // "inside-literal" splices bare escaped text into an existing literal
+    // (no quotes of its own); "whole-literal" re-wraps in the quote it
+    // consumed; "bare" (quote is null) needs its own quotes — default `"`.
+    const wrapQuote: QuoteChar | null =
+      placeholderContext === "inside-literal" ? null : (quote ?? '"')
+    result += literalForField(field, wrapQuote)
+    cursor = consumeEnd
+  }
+  result += code.slice(cursor)
+
+  return result
+}
 
 const getTimezone = ({
   contact,
