@@ -115,11 +115,22 @@ jobs:
       - check
     # PRs never push an image (see the "Build image for pull request" step
     # below) and ci.yml already gates types/lint/tests, so the PR run's only
-    # value is a Dockerfile-buildability signal. Keep just the builder leg
-    # for that on `pull_request` — it's the one most likely to break and has
-    # by far the longest build (~16 min vs ~1-2 min for the other four) — and
-    # skip the remaining four legs to cut wasted runner time on every PR.
-    if: github.event_name != 'pull_request' || matrix.label == 'builder'
+    # value is a Dockerfile-buildability signal. Keep just the builder leg for
+    # that on `pull_request` — it's the one most likely to break and has by
+    # far the longest build (~16 min vs ~1-2 min for the other four).
+    #
+    # This gate lives on the "Build image for pull request" step below, NOT
+    # here at job level: `jobs.<job_id>.if` only has access to the `github`,
+    # `needs`, `vars`, and `inputs` contexts — `matrix` isn't expanded yet at
+    # that point, so a job-level `if: matrix.label == 'builder'` is invalid
+    # YAML that fails workflow validation for every trigger, not just this
+    # job (this broke the whole file for several hours — see git blame /
+    # incident notes before changing this again). `runs-on` above CAN see
+    # `matrix` because it's evaluated after matrix expansion; step-level `if`
+    # can too, for the same reason. The other four legs still spin up a
+    # runner on `pull_request` and no-op immediately (all three build steps'
+    # conditions are false), which costs a few seconds each rather than the
+    # full build — not free, but the only place GitHub allows this check.
     strategy:
       fail-fast: false
       matrix:
@@ -215,7 +226,7 @@ jobs:
           # Turbo remote cache secrets omitted — see "Build and push main image".
 
       - name: Build image for pull request
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.label == 'builder'
         uses: docker/build-push-action@v6
         with:
           context: .
