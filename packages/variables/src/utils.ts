@@ -136,7 +136,10 @@ export const interpolate = (
     },
   )
 
-const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
+// Canonical definition — contact-variable.ts imports this instead of
+// redefining it, so the `raw:` prefix can't drift between the message-text
+// resolver and the JS-code resolver in this file.
+export const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
 
 type QuoteChar = '"' | "'" | "`"
 
@@ -147,30 +150,38 @@ const CONTROL_CHAR_ESCAPES: Record<string, string> = {
 }
 
 // Escapes a resolved value for splicing into JS source *without* adding
-// quotes of its own, appropriate to the quote character the text will sit
-// inside once spliced back in (or, for a "whole-literal" placement, the
-// quote character that gets re-added around it). Always escapes `` ` `` and
-// `${` in addition to the active quote/backslash/control chars, because a
-// value quoted with `"` or `'` today is still exposed if the author's code
-// (or a later edit) wraps it in a template literal.
-const escapeForQuote = (value: string, quote: QuoteChar): string => {
-  let escaped = value.replace(/\\/g, "\\\\")
-  escaped =
-    quote === "`"
-      ? escaped.replace(/`/g, "\\`")
-      : escaped.replaceAll(quote, `\\${quote}`)
-  return escaped
+// quotes of its own. Escapes ALL THREE quote characters (`"`, `'`, `` ` ``)
+// unconditionally, plus `${` and control chars — not just the one quote
+// character classifyPlaceholderContext guesses is "active" at the splice
+// point. That guess comes from a heuristic character scan (see
+// findEnclosingQuote), not a real parse, and can be wrong — e.g. a `'`
+// inside a `/* comment */` earlier on the same line throws off the scan. If
+// escaping only trusted the guessed quote, a wrong guess would leave the
+// *real* enclosing quote unescaped in the substituted text, letting a
+// contact-controlled value break out of its literal and inject additional
+// statements. Escaping defensively against all three means a wrong guess
+// degrades to harmless over-escaping (e.g. an unnecessary `\'` inside a
+// `"`-delimited string, which is valid JS and round-trips to the same
+// character) instead of an exploitable gap.
+const escapeForQuote = (value: string): string =>
+  value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'")
+    .replace(/`/g, "\\`")
     .replace(/\$\{/g, "\\${")
     .replace(/[\n\r\t]/g, (char) => CONTROL_CHAR_ESCAPES[char] ?? char)
-}
 
 const NUMERIC_LITERAL_RE = /^-?\d+(\.\d+)?$/
 
 // Numeric/boolean custom fields are stored as plain strings, so the raw text
 // must be parsed and re-serialized rather than passed through — that
-// round-trip is what rejects `"25; drop()"`-style injection attempts, and
-// what stops `1e999`/`NaN` (both technically parseable numbers) from landing
-// as bare, unquoted source.
+// round-trip is the injection guard for this branch: NUMERIC_LITERAL_RE
+// rejects anything that isn't a plain (optionally signed, optionally
+// decimal) digit run — including "25; drop()", "1e999", and "NaN" — before
+// Number() ever sees it. The Number.isFinite check after that catches the
+// remaining case the regex admits but IEEE 754 can't represent exactly: a
+// digit run long enough to overflow to Infinity (e.g. 400 nines).
 const numberLiteral = (value: string): string => {
   if (!NUMERIC_LITERAL_RE.test(value.trim())) {
     return "null"
@@ -179,8 +190,17 @@ const numberLiteral = (value: string): string => {
   return Number.isFinite(parsed) ? String(parsed) : "null"
 }
 
-const booleanLiteral = (value: string): string =>
-  value.trim().toLowerCase() === "true" ? "true" : "false"
+// Mirrors numberLiteral: only the two exact boolean spellings succeed, and
+// anything else (empty, corrupted, "yes", "1", ...) emits `null` rather than
+// silently defaulting to `false` — a corrupt/unmigrated boolean should be
+// detectably absent, not indistinguishable from a real negative answer.
+const booleanLiteral = (value: string): string => {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === "true" || normalized === "false") {
+    return normalized
+  }
+  return "null"
+}
 
 // Emits a JS literal (or bare escaped text) for a resolved variable value,
 // appropriate to its custom-field type, so `{{age}} + 1` becomes `25 + 1`
@@ -201,20 +221,55 @@ const literalForField = (
     case "boolean":
       return booleanLiteral(field.value)
     default: {
-      const quote = wrapQuote ?? '"'
-      const escaped = escapeForQuote(field.value, quote)
-      return wrapQuote ? `${quote}${escaped}${quote}` : escaped
+      const escaped = escapeForQuote(field.value)
+      return wrapQuote ? `${wrapQuote}${escaped}${wrapQuote}` : escaped
     }
   }
 }
 
-type PlaceholderContext = "whole-literal" | "inside-literal" | "bare"
+// A discriminated union, not a product type: "bare" never carries a quote
+// (there's no enclosing literal to reuse), while "whole-literal" and
+// "inside-literal" always do — encoding that as a shared nullable `quote`
+// field would let combinations like { context: "bare", quote: '"' } (or the
+// reverse) typecheck even though they can't occur. "ambiguous" carries
+// neither, since it's a refusal to classify at all (see
+// classifyPlaceholderContext's regex-literal note).
+type PlaceholderClassification =
+  | { context: "bare"; consumeStart: number; consumeEnd: number }
+  | {
+      context: "whole-literal"
+      consumeStart: number
+      consumeEnd: number
+      quote: QuoteChar
+    }
+  | {
+      context: "inside-literal"
+      consumeStart: number
+      consumeEnd: number
+      quote: QuoteChar
+    }
+  | { context: "ambiguous" }
 
-type PlaceholderClassification = {
-  context: PlaceholderContext
-  consumeStart: number
-  consumeEnd: number
-  quote: QuoteChar | null
+// The quote character literalForField should wrap a substitution in, given
+// how it's placed: "inside-literal" splices bare escaped text into an
+// existing literal (no quotes of its own — null); "whole-literal" re-wraps
+// in the quote it consumed; "bare" has no enclosing literal to reuse, so it
+// needs its own quotes — default `"`. Never called for "ambiguous" (the
+// main loop skips substitution for that variant entirely, the same as
+// "unknown" — see classifyPlaceholderContext).
+const wrapQuoteFor = (
+  classification: PlaceholderClassification,
+): QuoteChar | null => {
+  if (classification.context === "inside-literal") {
+    return null
+  }
+  if (classification.context === "whole-literal") {
+    return classification.quote
+  }
+  if (classification.context === "bare") {
+    return '"'
+  }
+  throw new Error("wrapQuoteFor called for an ambiguous classification")
 }
 
 const isQuoteChar = (char: string | undefined): char is QuoteChar =>
@@ -256,9 +311,10 @@ const findEnclosingQuote = (
   return open
 }
 
-// Finds the index just after the closing quote that matches `quote`, opened
-// at `openIndex`, searching forward from `from`. Returns -1 if unterminated
-// before the code ends (or, for `"`/`'`, before a newline).
+// Finds the index *of* the closing quote character matching `quote`,
+// searching forward from `from` (the caller adds its own `+ 1` where it
+// needs the position just past it). Returns -1 if unterminated before the
+// code ends (or, for `"`/`'`, before a newline).
 const findClosingQuote = (
   code: string,
   from: number,
@@ -280,6 +336,41 @@ const findClosingQuote = (
   return -1
 }
 
+// A `/`-delimited regex literal is a fourth kind of enclosing "quote" that
+// findEnclosingQuote doesn't recognize at all — so a placeholder inside one
+// (`const re = /{{name}}/;`) is misclassified as "bare", and the fresh `"`
+// wrap that implies does not close the still-open regex literal, letting a
+// value containing `"` break out and inject statements (confirmed
+// exploitable: verified end to end with a real side effect firing).
+// Properly tokenizing regex-vs-division is the classic JS lexer ambiguity
+// (context-dependent on the preceding token) and out of scope for a
+// heuristic scanner. Instead: detect *ambiguity* — an odd count of
+// unescaped, non-comment `/` characters on the current line before `start`
+// — and refuse to classify rather than guess. This also flags plain
+// division (`a / {{b}}`) as ambiguous, which is a safe false positive: it
+// forces a loud JS syntax error (the same "unknown name" failure mode),
+// never a silent injection.
+const hasUnclosedSlashOnLine = (code: string, index: number): boolean => {
+  const lineStart = code.lastIndexOf("\n", index - 1) + 1
+  let openSlash = false
+  for (let i = lineStart; i < index; i++) {
+    const char = code[i]
+    if (char === "\\") {
+      i++
+      continue
+    }
+    if (char === "/") {
+      if (code[i + 1] === "/" && !openSlash) {
+        // A `//` line comment starts here and runs to the newline, so
+        // nothing after it on this line is real code to scan.
+        return openSlash
+      }
+      openSlash = !openSlash
+    }
+  }
+  return openSlash
+}
+
 // Classifies how a `{{...}}` match sits relative to its surrounding quotes,
 // without a full JS parse (see findEnclosingQuote for the heuristic's
 // documented limits):
@@ -292,6 +383,9 @@ const findClosingQuote = (
 //   - "bare": the match is not inside any string literal (`{{age}} + 1`) —
 //     used for numeric/boolean bare substitution, or a fresh double-quoted
 //     string literal when a string-type field ends up bare.
+//   - "ambiguous": would-be "bare", but an odd count of unescaped `/` on the
+//     same line means it might actually be inside a regex literal — refused
+//     rather than guessed (see hasUnclosedSlashOnLine).
 const classifyPlaceholderContext = (
   code: string,
   start: number,
@@ -299,18 +393,18 @@ const classifyPlaceholderContext = (
 ): PlaceholderClassification => {
   const enclosing = findEnclosingQuote(code, start)
   if (!enclosing) {
-    return {
-      context: "bare",
-      consumeStart: start,
-      consumeEnd: end,
-      quote: null,
+    if (hasUnclosedSlashOnLine(code, start)) {
+      return { context: "ambiguous" }
     }
+    return { context: "bare", consumeStart: start, consumeEnd: end }
   }
 
   const { quote, openIndex } = enclosing
   const closeIndex = findClosingQuote(code, end, quote)
-  const isWholeLiteral =
-    closeIndex === end && openIndex === start - 1 && code[end] === quote
+  // closeIndex === end already means code[end] === quote (that's the only
+  // way findClosingQuote returns a non-(-1) index), so checking both would
+  // be a redundant, always-true conjunct.
+  const isWholeLiteral = closeIndex === end && openIndex === start - 1
 
   if (isWholeLiteral) {
     return {
@@ -329,42 +423,77 @@ const classifyPlaceholderContext = (
   }
 }
 
-const toRawCustomFieldName = (variable: string): string =>
+// Canonical definition — contact-variable.ts imports this instead of
+// redefining it, so the `raw:` prefix and name-stripping logic can't drift
+// between the message-text resolver and this JS-code resolver. Matches
+// custom-field names exactly (no trimming): the map is keyed by the raw
+// `customField.name`, and the token is built from that same name, so any
+// normalisation here would break names with meaningful surrounding
+// whitespace.
+export const toRawCustomFieldName = (variable: string): string =>
   variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
 
 // System-field and coupon values are always plain strings (no custom-field
 // `type`), so they're treated as shortText for literal emission — quoted
-// unless the placeholder sits bare in code.
+// unless the placeholder sits bare in code. Also used for `raw:` fields
+// (see resolveJavascriptVariable), whose contract is "unformatted string",
+// regardless of the field's own declared type.
 const stringFieldValue = (
   value: string | null,
 ): ContactCustomFieldValue | null =>
   value === null ? null : { key: "", type: "shortText", value, description: "" }
 
+// "Unknown name": leave the literal `{{...}}` in place (a bare placement
+// then surfaces as a JS syntax error — a loud failure; a quoted placement
+// ships the literal text silently, see interpolateIntoJavascript's doc
+// comment). "Resolved": substitute `field` (`null` becomes the `null`
+// literal). A plain `ContactCustomFieldValue | null | undefined` return
+// would let the two meanings collapse into an ambiguous `Map.get` read at
+// the call site; this keeps them distinct through resolution.
+type ResolvedVariable =
+  | { kind: "unknown" }
+  | { kind: "resolved"; field: ContactCustomFieldValue | null }
+
 // Resolution order mirrors contact-variable.ts's variableResolvers so
 // `{{first_name}}` behaves the same in JS-step code as in message text:
-// system fields, then `raw:`, then custom fields, then coupons. Returns
-// undefined for an unknown name (left as the literal placeholder) vs. null
-// for a known name with no value (emitted as `null`).
+// system fields, then `raw:`, then custom fields, then coupons. `raw:`
+// falls through to the later checks when its stripped name doesn't match a
+// custom field, exactly like rawCustomFieldResolver.matches does — so a
+// custom field literally named e.g. "raw:foo" (not itself found under
+// "foo") is still reachable by its own literal name.
 const resolveJavascriptVariable = async (
   name: string,
   context: ReplaceVariableProps,
-): Promise<ContactCustomFieldValue | null | undefined> => {
+): Promise<ResolvedVariable> => {
   if (Object.values(systemFieldTypes.enum).includes(name as SystemFieldType)) {
-    return stringFieldValue(
-      await getSystemFieldValue(context, name as SystemFieldType),
-    )
+    return {
+      kind: "resolved",
+      field: stringFieldValue(
+        await getSystemFieldValue(context, name as SystemFieldType),
+      ),
+    }
   }
   if (name.startsWith(RAW_CUSTOM_FIELD_VARIABLE_PREFIX)) {
     const rawField = context.customFieldsMap.get(toRawCustomFieldName(name))
-    return rawField ? rawField : undefined
+    if (rawField) {
+      // raw: is "unformatted value", always a plain string — never the
+      // field's own type-aware literal (e.g. a number field's bare digits).
+      return { kind: "resolved", field: stringFieldValue(rawField.value) }
+    }
   }
   if (context.customFieldsMap.has(name)) {
-    return context.customFieldsMap.get(name) ?? null
+    return {
+      kind: "resolved",
+      field: context.customFieldsMap.get(name) ?? null,
+    }
   }
   if (isCouponVariable(name)) {
-    return stringFieldValue(await resolveCouponVariable(context, name))
+    return {
+      kind: "resolved",
+      field: stringFieldValue(await resolveCouponVariable(context, name)),
+    }
   }
-  return
+  return { kind: "unknown" }
 }
 
 /**
@@ -374,49 +503,67 @@ const resolveJavascriptVariable = async (
  * same way they do in message text.
  *
  * Deliberately not a full JS parse — see classifyPlaceholderContext for the
- * documented limits of the quote-context heuristic. Unknown names are left
- * as the literal `{{...}}` (matching interpolate's existing behavior), which
- * then surfaces as a JS syntax error: a loud failure, not a silent `null`.
+ * documented limits of the quote-context heuristic; escapeForQuote's
+ * unconditional escaping of all three quote characters is what keeps a
+ * misclassification safe (over-escaping) rather than exploitable. Unknown
+ * names are left as the literal `{{...}}` (matching interpolate's existing
+ * behavior): in a "bare" position that then surfaces as a JS syntax error —
+ * a loud failure — but inside a quoted literal it ships silently as inert
+ * string data, since the surrounding literal parses fine either way.
  */
 export const interpolateIntoJavascript = async (
   code: string,
   context: ReplaceVariableProps,
 ): Promise<string> => {
   const names = extractVariables(code)
-  const resolved = new Map<string, ContactCustomFieldValue | null>()
+  const resolved = new Map<string, ResolvedVariable>()
 
   for (const name of names) {
-    const value = await resolveJavascriptVariable(name, context)
-    if (value !== undefined) {
-      resolved.set(name, value)
-    }
+    resolved.set(name, await resolveJavascriptVariable(name, context))
   }
 
   let result = ""
   let cursor = 0
+  // Tracks the end of the previous substitution *only* when it emitted a
+  // standalone, self-quoting literal token ("bare" or "whole-literal") —
+  // "inside-literal" splices into text that's already part of a larger,
+  // still-open literal, so it can't create a new token boundary against
+  // whatever follows.
+  let previousSelfQuotingEnd: number | null = null
   for (const match of code.matchAll(VARIABLE_PLACEHOLDER_REGEX)) {
     const name = match[1].trim()
-    if (!resolved.has(name) || match.index === undefined) {
+    const resolution = resolved.get(name)
+    if (
+      !resolution ||
+      resolution.kind === "unknown" ||
+      match.index === undefined
+    ) {
       continue
     }
     const start = match.index
     const end = start + match[0].length
-    const {
-      context: placeholderContext,
-      consumeStart,
-      consumeEnd,
-      quote,
-    } = classifyPlaceholderContext(code, start, end)
+    const classification = classifyPlaceholderContext(code, start, end)
+    if (classification.context === "ambiguous") {
+      // Refuse rather than guess (see classifyPlaceholderContext) — leave
+      // the literal `{{...}}` in place, same as an unknown name.
+      previousSelfQuotingEnd = null
+      continue
+    }
+    const { consumeStart, consumeEnd } = classification
+    const isSelfQuoting = classification.context !== "inside-literal"
 
     result += code.slice(cursor, consumeStart)
-    const field = resolved.get(name) ?? null
-    // "inside-literal" splices bare escaped text into an existing literal
-    // (no quotes of its own); "whole-literal" re-wraps in the quote it
-    // consumed; "bare" (quote is null) needs its own quotes — default `"`.
-    const wrapQuote: QuoteChar | null =
-      placeholderContext === "inside-literal" ? null : (quote ?? '"')
-    result += literalForField(field, wrapQuote)
+    // Two adjacent self-quoting substitutions — "bare" (`{{a}}{{b}}`) or
+    // "whole-literal" (`"{{a}}""{{b}}"`) in any combination — would
+    // otherwise each emit their own literal with nothing between them,
+    // producing invalid JS (`"A""B"`); joining them with `+` keeps the
+    // result valid.
+    if (isSelfQuoting && previousSelfQuotingEnd === consumeStart) {
+      result += "+"
+    }
+    result += literalForField(resolution.field, wrapQuoteFor(classification))
     cursor = consumeEnd
+    previousSelfQuotingEnd = isSelfQuoting ? consumeEnd : null
   }
   result += code.slice(cursor)
 

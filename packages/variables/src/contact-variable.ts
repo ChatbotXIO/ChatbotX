@@ -18,10 +18,10 @@ import {
   getContactTimezone,
   getSystemFieldValue,
   interpolate,
+  RAW_CUSTOM_FIELD_VARIABLE_PREFIX,
   renderCustomFieldValue,
+  toRawCustomFieldName,
 } from "./utils"
-
-const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
 
 type VariableResolver = {
   readonly matches: (variable: string, context: ReplaceVariableProps) => boolean
@@ -38,12 +38,6 @@ const systemFieldResolver: VariableResolver = {
   resolve: async (variable, context) =>
     (await getSystemFieldValue(context, variable as SystemFieldType)) ?? "",
 }
-
-// Match custom-field names exactly (no trimming): the map is keyed by the raw
-// `customField.name`, and the token is built from that same name, so any
-// normalisation here would break names with meaningful surrounding whitespace.
-const toRawCustomFieldName = (variable: string): string =>
-  variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
 
 const rawCustomFieldResolver: VariableResolver = {
   matches: (variable, context) =>
