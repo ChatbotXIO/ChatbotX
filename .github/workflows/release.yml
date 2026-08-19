@@ -21,15 +21,22 @@ env:
   BUILD_PLATFORMS: linux/amd64 #,linux/arm64
   DOCKER_REGISTRY: ghcr.io
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # `next build` runs with `typescript.ignoreBuildErrors: true` and the Docker
   # build never runs `check-types`, so without this gate a `v*` tag (or a
   # workflow_dispatch on any branch) could push an image that never
-  # type-checked — ci.yml only runs on pull_request and push-to-main, and
-  # nothing forces a tag to point at a commit that passed it. This job makes
-  # the quality gate travel with the artifact rather than with the ref.
+  # type-checked. ci.yml already gates `pull_request` and push-to-main with
+  # the same (stronger — see the two run steps below) checks, so this job
+  # only needs to re-run for events ci.yml does not cover: a version tag or a
+  # manual dispatch. That keeps the quality gate traveling with the artifact
+  # without duplicating ci.yml's jobs on every PR.
   check:
     name: Type-check, lint, test
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -53,14 +60,23 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
-      - name: Type-check, lint, and test
-        run: pnpm turbo run check-types lint test
+      # `pnpm lint` covers everything, cheapest-first: check:agent-instructions,
+      # `turbo run lint` for apps/builder's i18n check, then repo-wide Biome
+      # last (slowest). Type-check and test are separate turbo tasks with no
+      # lint overlap, so they run standalone here instead of double-running
+      # lint via a combined `turbo run check-types lint test`.
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check and test
+        run: pnpm turbo run check-types test
 
   prepare-metadata:
     runs-on: ubuntu-latest
+    # Only checks out and computes tag/label strings via docker/metadata-
+    # action — never touches the registry, so packages: write is unneeded.
     permissions:
       contents: read
-      packages: write
     environment: ${{ github.event.inputs.environment || 'dev' }}
     outputs:
       version: ${{ steps.meta.outputs.version }}
@@ -97,6 +113,13 @@ jobs:
     needs:
       - prepare-metadata
       - check
+    # PRs never push an image (see the "Build image for pull request" step
+    # below) and ci.yml already gates types/lint/tests, so the PR run's only
+    # value is a Dockerfile-buildability signal. Keep just the builder leg
+    # for that on `pull_request` — it's the one most likely to break and has
+    # by far the longest build (~16 min vs ~1-2 min for the other four) — and
+    # skip the remaining four legs to cut wasted runner time on every PR.
+    if: github.event_name != 'pull_request' || matrix.label == 'builder'
     strategy:
       fail-fast: false
       matrix:
@@ -210,16 +233,16 @@ jobs:
       - prepare-metadata
       - build-image
     if: github.event_name != 'pull_request'
+    # Only prints strings computed from `needs` outputs — no registry call.
     permissions:
       contents: read
-      packages: write
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Output image URLs
         run: |
           VERSION="${{ needs.prepare-metadata.outputs.version }}"
           REGISTRY="${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}"
-          if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "ghcr" ]]; then
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
             printf '%s\n' \
               "Builder image (main): ${REGISTRY}/chatbotx-builder:main" \
               "Worker image (main): ${REGISTRY}/chatbotx-worker:main" \

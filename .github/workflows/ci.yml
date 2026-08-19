@@ -18,6 +18,11 @@ on:
   push:
     branches: [main]
 
+# Read-only: these jobs only check out, install, and run local scripts —
+# none of them need to write contents, packages, or PR/issue state.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -80,18 +85,13 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
-      # The root script (`check:agent-instructions && ultracite check`) is the
-      # real repo-wide lint — biome.json already globs apps/**, packages/**,
-      # and integrations/**. It was previously never run in CI: `turbo run lint`
-      # resolves to 57 <NONEXISTENT> placeholders plus builder's own script.
+      # Root `pnpm lint` runs cheapest-first: check:agent-instructions, then
+      # `turbo run lint` (apps/builder's i18n key-parity check plus 57
+      # <NONEXISTENT> placeholders), then the slowest step — repo-wide Biome
+      # (biome.json globs apps/**, packages/**, integrations/**). One script
+      # covers everything; no separate turbo invocation needed.
       - name: Lint
         run: pnpm lint
-
-      # builder is the one workspace with a real `lint` script, and it carries
-      # the i18n key-parity check across all locales. Keep it — `pnpm lint`
-      # above does not cover it.
-      - name: Check builder i18n and lint rules
-        run: pnpm turbo run lint --concurrency=4
 
   test:
     name: Tests
