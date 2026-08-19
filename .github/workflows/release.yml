@@ -189,7 +189,7 @@ jobs:
 
       - name: Build and push main image
         if: github.event_name != 'pull_request' && github.ref_name == 'main'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -211,7 +211,7 @@ jobs:
 
       - name: Build and push version image
         if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -227,7 +227,7 @@ jobs:
 
       - name: Build image for pull request
         if: github.event_name == 'pull_request' && matrix.label == 'builder'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
