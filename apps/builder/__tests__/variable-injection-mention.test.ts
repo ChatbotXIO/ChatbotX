@@ -20,6 +20,11 @@ const RAW_CUSTOM_FIELD_OPTION = {
   value: "raw:Full Name",
 }
 
+const BOOKING_CALENDAR_OPTION = {
+  label: "Booking Calendar",
+  value: "booking_calendar",
+}
+
 const nodeWithAttrs = (attrs: MentionNodeAttrs) =>
   ({ attrs }) as unknown as Parameters<
     typeof renderVariableMentionText
@@ -50,6 +55,20 @@ describe("variable injection mention", () => {
     } as unknown as Parameters<typeof renderVariableMentionHTML>[0])
 
     expect(html).toEqual(["span", { "data-type": "mention" }, "{{Coupon 1}}"])
+  })
+
+  it("renders mention html with the raw id for non-coupon variables", () => {
+    const html = renderVariableMentionHTML({
+      options: { HTMLAttributes: { "data-type": "mention" } },
+      node: nodeWithAttrs(toVariableMentionAttrs(BOOKING_CALENDAR_OPTION)),
+      suggestion: null,
+    } as unknown as Parameters<typeof renderVariableMentionHTML>[0])
+
+    expect(html).toEqual([
+      "span",
+      { "data-type": "mention" },
+      "{{booking_calendar}}",
+    ])
   })
 
   it("hydrates saved coupon variable text into a labeled mention node", () => {

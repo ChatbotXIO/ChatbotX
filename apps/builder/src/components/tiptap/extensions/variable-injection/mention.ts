@@ -12,7 +12,11 @@ type MentionRenderText = MentionOptions["renderText"]
 const LINE_BREAK_REGEX = /\r\n?|\n/
 const VARIABLE_TOKEN_REGEX = /\{\{([^{}\n]+)\}\}/g
 const COUPON_VARIABLE_TOKEN_REGEX = /\{\{coupon:([^{}\n]+)\}\}/g
+const COUPON_VARIABLE_ID_PREFIX = "coupon:"
 const TRAILING_DOUBLE_BRACE_REGEX = /\}\}$/
+
+const isCouponMentionId = (id: unknown) =>
+  typeof id === "string" && id.startsWith(COUPON_VARIABLE_ID_PREFIX)
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -44,7 +48,11 @@ export const renderVariableMentionHTML: MentionRenderHTML = ({
   [
     "span",
     options.HTMLAttributes,
-    variableText(node.attrs.label ?? node.attrs.id),
+    variableText(
+      isCouponMentionId(node.attrs.id)
+        ? (node.attrs.label ?? node.attrs.id)
+        : node.attrs.id,
+    ),
   ] as const
 
 const mentionHtml = (attrs: MentionNodeAttrs) =>
