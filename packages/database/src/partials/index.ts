@@ -1,6 +1,7 @@
 export * from "./ai"
 export * from "./appointment"
 export * from "./automated-response"
+export * from "./automation-throttle"
 export * from "./broadcast"
 export * from "./channel"
 export * from "./contact"

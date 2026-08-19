@@ -899,6 +899,15 @@
       "description": "Ini adalah respons default yang akan dikirim workspace Anda saat tidak mengetahui cara membalas pesan pengguna.",
       "label": "Balasan Default"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Atur berapa lama bot menunggu sebelum membalas setelah pesan terakhir pengguna. Jika pengguna mengirim pesan lain, waktu akan diatur ulang dan pesan-pesan akan diantrekan menjadi satu respons.",
       "label": "Bot balasan delay",

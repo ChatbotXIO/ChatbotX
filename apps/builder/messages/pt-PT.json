@@ -899,6 +899,15 @@
       "description": "É a resposta predefinida que o seu espaço de trabalho enviará aos utilizadores quando não souber como responder à mensagem recebida.",
       "label": "Resposta predefinida"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Defina quanto tempo o bot aguarda antes de responder após a última mensagem do utilizador. Se o utilizador enviar outra mensagem, o temporizador é reiniciado e as mensagens são agrupadas numa única resposta.",
       "label": "Atraso da resposta do bot",

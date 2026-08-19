@@ -267,6 +267,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeAutomationThrottle,
+    {
+      pattern: "0 * * * *",
+    },
+    {
+      name: ScheduleJobData.purgeAutomationThrottle,
+      data: {
+        type: ScheduleJobData.purgeAutomationThrottle,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.refreshChannelTokens,
     {
       pattern: "0 2 * * *",

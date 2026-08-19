@@ -899,6 +899,15 @@
       "description": "Dies ist die Standardantwort, die Ihr Arbeitsbereich an Benutzer sendet, wenn er nicht weiß, wie er auf die Benutzernachricht antworten soll.",
       "label": "Standardantwort"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Legen Sie fest, wie lange der Bot nach der letzten Nachricht des Benutzers wartet, bevor er antwortet. Sendet der Benutzer eine weitere Nachricht, wird der Timer zurückgesetzt und die Nachrichten werden zu einer einzigen Antwort zusammengefasst.",
       "label": "Antwortverzögerung des Bots",

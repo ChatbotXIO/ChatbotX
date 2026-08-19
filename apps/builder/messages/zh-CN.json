@@ -1565,6 +1565,15 @@
       "description": "这是当工作区不知道如何回应用户消息时，工作区会发送给用户的缺省回应。",
       "label": "缺省回复"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "delayType": {
       "label": "延迟型",
       "placeholder": "延迟型"

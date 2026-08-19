@@ -899,6 +899,15 @@
       "description": "It er den standard svar that din arbejdsområde vil send til brugere når den arbejdsområde doesn't know how til respond til den bruger besked.",
       "label": "Standard Svar"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Set how long den bot waits før replying efter den bruger’s seneste besked. Hvis den bruger sends another besked, den timer resets og beskeder er queued into a single svar.",
       "label": "Bot svar forsinkelse",

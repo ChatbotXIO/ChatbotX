@@ -973,6 +973,15 @@
       "description": "هذا هو الرد الافتراضي الذي ترسله مساحة عملك إلى المستخدمين عندما لا تعرف كيفية الرد على رسالة المستخدم.",
       "label": "الرد الافتراضي"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "حدد مدة انتظار البوت قبل الرد بعد آخر رسالة للمستخدم. إذا أرسل المستخدم رسالة أخرى، يُعاد ضبط المؤقت وتُجمع الرسائل في رد واحد.",
       "label": "تأخير رد البوت",

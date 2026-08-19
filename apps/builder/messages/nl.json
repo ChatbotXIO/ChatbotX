@@ -713,6 +713,15 @@
       "description": "Dit is het standaardantwoord dat je werkruimte naar gebruikers stuurt wanneer de werkruimte niet weet hoe ze op het bericht van de gebruiker moet reageren.",
       "label": "Standaardantwoord"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Stel in hoelang de bot na het laatste bericht van de gebruiker wacht voordat hij antwoordt. Als de gebruiker nog een bericht stuurt, wordt de timer opnieuw gestart en worden de berichten in één antwoord samengevoegd.",
       "label": "Vertraging van botantwoord",

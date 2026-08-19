@@ -1646,6 +1646,15 @@
       "description": "Acesta este răspunsul implicit pe care spațiul tău de lucru îl va trimite utilizatorilor atunci când nu știe cum să răspundă la mesajul utilizatorului.",
       "label": "Răspuns implicit"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Setează cât timp așteaptă botul înainte de a răspunde după ultimul mesaj al utilizatorului. Dacă utilizatorul trimite alt mesaj, temporizatorul se resetează, iar mesajele sunt grupate într-un singur răspuns.",
       "label": "Întârzierea răspunsului botului",

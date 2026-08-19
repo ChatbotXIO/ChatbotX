@@ -25,6 +25,7 @@ import { accountRelations } from "./auth-account"
 import { invitationRelations } from "./auth-invitation"
 import { sessionRelations } from "./auth-session"
 import { automatedResponseRelations } from "./automated-response"
+import { automationThrottleRelations } from "./automation-throttle"
 import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
@@ -252,4 +253,5 @@ export const relations = {
   ...coexistSyncRunRelations,
   ...userPersistentMenuRelations,
   ...whatsappSignupSessionRelations,
+  ...automationThrottleRelations,
 }

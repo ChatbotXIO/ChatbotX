@@ -974,6 +974,15 @@
       "description": "Đây là phản hồi mặc định mà workspace của bạn sẽ gửi cho người dùng khi workspace không biết cách trả lời tin nhắn của người dùng.",
       "label": "Trả lời mặc định"
     },
+    "defaultReplyFrequency": {
+      "description": "Kiểm soát tần suất luồng Trả lời mặc định có thể được kích hoạt cho cùng một liên hệ trên một kênh.",
+      "label": "Tần suất trả lời mặc định",
+      "options": {
+        "allTime": "Mọi lúc",
+        "oncePerHour": "Một lần mỗi 1h",
+        "oncePerDay": "Một lần mỗi 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Đặt thời gian bot chờ trước khi trả lời sau khi người dùng gửi tin nhắn cuối cùng. Nếu người dùng gửi tin nhắn khác, bộ đếm sẽ được đặt lại và các tin nhắn được xếp hàng thành một phản hồi duy nhất.",
       "label": "Trì hoãn phản hồi bot",

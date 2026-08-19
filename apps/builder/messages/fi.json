@@ -899,6 +899,15 @@
       "description": "Tämä on oletusvastaus, jonka työtilasi lähettää käyttäjälle, kun työtila ei tiedä, miten käyttäjän viestiin vastataan.",
       "label": "Oletusvastaus"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Määritä, kuinka kauan botti odottaa ennen vastaamista käyttäjän viimeisimmän viestin jälkeen. Jos käyttäjä lähettää uuden viestin, ajastin nollautuu ja viestit kootaan yhdeksi vastaukseksi.",
       "label": "Botin vastausviive",

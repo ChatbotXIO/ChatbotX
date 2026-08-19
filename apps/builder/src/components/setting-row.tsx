@@ -1,9 +1,9 @@
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 type SettingRowProps = {
   label: string
-  description: string
+  description?: ReactNode
   readMoreUrl?: string
   children: ReactElement
 }
@@ -17,9 +17,9 @@ export const SettingRow = (props: SettingRowProps) => {
       </div>
       <div>{children}</div>
       {description && (
-        <p className="wrap-break-words col-span-2 mt-1.5 text-muted-foreground text-sm">
+        <div className="wrap-break-words col-span-2 mt-1.5 flex flex-col gap-2 text-muted-foreground text-sm">
           {description}
-        </p>
+        </div>
       )}
     </div>
   )
