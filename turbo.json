@@ -8,12 +8,23 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "passThroughEnv": ["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"]
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"]
-    },
+    // No `dependsOn: ["^lint"]`: Biome lints every file independently, so the
+    // fan-in conveyed no ordering. Worse, only builder defines a real `lint`
+    // script — the other 57 workspace tasks are <NONEXISTENT> placeholders
+    // that turbo still scheduled and hash-checked behind the chain.
+    "lint": {},
+    // No `dependsOn: ["^check-types"]`: nothing in this repo sets `composite`
+    // or `references`, and every package `exports` resolves to `./src/*.ts`
+    // (no package ships a `dist`). So each `tsc --noEmit` re-parses its
+    // dependencies' source itself and consumes nothing a prior task emitted —
+    // the edge transmitted no data and only serialized 56 tasks 13 deep.
+    //
+    // Only the two workspaces whose tsconfig sets `incremental: true`
+    // (apps/builder, packages/ui — both extend typescript-config/nextjs.json)
+    // emit a tsbuildinfo, so `outputs` is declared in their own turbo.json
+    // rather than here: a root-level key makes turbo warn "no output files
+    // found" for the other 56 check-types tasks.
+    "check-types": {},
     "test": {
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -26,7 +37,13 @@
         "**/*.spec.ts",
         "**/*.spec.tsx"
       ],
-      "outputs": []
+      "outputs": [],
+      // turbo runs in strict env mode, so without this the escape hatch in
+      // packages/vitest-config/src/node.ts never reaches vitest through
+      // `turbo run test` — which is how CI invokes it. passThroughEnv (not
+      // env) is deliberate: worker count changes timing, not test results, so
+      // it must not become part of the cache hash.
+      "passThroughEnv": ["VITEST_MAX_WORKERS"]
     },
     "dev": {
       "cache": false,

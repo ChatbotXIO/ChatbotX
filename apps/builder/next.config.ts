@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
     // there is nothing for this optimization to rewrite.
     optimizePackageImports: ["@icons-pack/react-simple-icons"],
     // turbopackServerFastRefresh: false,
+    // The Docker build starts from a clean layer and `.next/cache` is not
+    // persisted across CI runs, so this cache is written and never read.
+    turbopackFileSystemCacheForBuild: false,
   },
   poweredByHeader: false,
   async rewrites() {

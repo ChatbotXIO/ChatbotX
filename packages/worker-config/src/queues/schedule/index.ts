@@ -4,6 +4,7 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
@@ -199,10 +200,9 @@ export type ScheduleJobData =
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
 
-export const scheduleQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const scheduleQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
