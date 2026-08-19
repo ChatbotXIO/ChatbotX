@@ -3014,6 +3014,11 @@
     "subtitle": "Välj en arbetsyta för att fortsätta där du slutade, eller skapa en ny.",
     "welcomeBack": "Välkommen tillbaka, {name}"
   },
+  "notFound": {
+    "title": "Sidan hittades inte",
+    "description": "Sidan du letar efter finns inte eller kan ha flyttats.",
+    "backToHome": "Tillbaka till startsidan"
+  },
   "editProfile": {
     "title": "Redigera profil"
   },

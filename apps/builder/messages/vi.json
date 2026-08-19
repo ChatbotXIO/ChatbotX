@@ -2809,6 +2809,11 @@
     "noWorkspaces": "Bạn chưa có không gian làm việc nào.",
     "owner": "Chủ sở hữu"
   },
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "description": "Trang bạn đang tìm không tồn tại hoặc có thể đã được di chuyển.",
+    "backToHome": "Về trang chủ"
+  },
   "editProfile": {
     "title": "Chỉnh sửa hồ sơ"
   },

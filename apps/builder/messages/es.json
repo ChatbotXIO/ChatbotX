@@ -2809,6 +2809,11 @@
     "noWorkspaces": "You don't tiene cualquier espacio de trabajos yet.",
     "owner": "Propietario"
   },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o puede que se haya movido.",
+    "backToHome": "Volver al inicio"
+  },
   "editProfile": {
     "title": "Editar perfil"
   },

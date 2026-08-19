@@ -2735,6 +2735,11 @@
     "noWorkspaces": "Ainda não tem espaços de trabalho.",
     "owner": "Proprietário"
   },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "A página que procura não existe ou pode ter sido movida.",
+    "backToHome": "Voltar à página inicial"
+  },
   "editProfile": {
     "title": "Editar perfil"
   },

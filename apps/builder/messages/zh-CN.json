@@ -3017,6 +3017,11 @@
     "subtitle": "选择要跳回的工作区，或创建新工作区。",
     "welcomeBack": "欢迎回来，{name}"
   },
+  "notFound": {
+    "title": "页面未找到",
+    "description": "您访问的页面不存在，或可能已被移动。",
+    "backToHome": "返回首页"
+  },
   "inboxTeams": {
     "title": "收件匣团队"
   },

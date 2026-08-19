@@ -4131,6 +4131,11 @@
     "noWorkspaces": "ワークスペースはまだありません。",
     "owner": "所有者"
   },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "description": "お探しのページは存在しないか、移動された可能性があります。",
+    "backToHome": "ホームに戻る"
+  },
   "editProfile": {
     "title": "プロフィールを編集"
   },

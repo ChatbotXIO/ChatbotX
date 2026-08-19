@@ -2905,6 +2905,11 @@
     "noWorkspaces": "You don't have any workspaces yet.",
     "owner": "Owner"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or may have been moved.",
+    "backToHome": "Back to homepage"
+  },
   "editProfile": {
     "title": "Edit Profile"
   },
