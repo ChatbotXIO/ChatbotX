@@ -7,9 +7,11 @@ import {
   CardHeader,
 } from "@chatbotx.io/ui/components/ui/card"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { isCommunity } from "@/env"
 import SSOSignUp from "@/features/auth/sso-sign-in"
+import { withCallbackUrlParam } from "@/lib/safe-callback-url"
 import { useTenantSettings } from "../tenant"
 import { EmailPasswordSignUp } from "./components/email-password-sign-up"
 import {
@@ -19,18 +21,21 @@ import {
 } from "./components/shared"
 
 export type SignUpFormProps = {
-  callbackUrl?: string
   /** Social providers configured for this tenant (own app or platform default). */
   enabledProviders?: SocialProvider[]
 }
 
 export const SignUpForm = ({
-  callbackUrl,
   enabledProviders = [],
   ...props
 }: SignUpFormProps) => {
   const t = useTranslations()
   const { name, policyUrl, termsOfServiceUrl } = useTenantSettings()
+  const searchParams = useSearchParams()
+  const signInHref = withCallbackUrlParam(
+    "/auth/sign-in",
+    searchParams.get("callbackURL"),
+  )
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -52,7 +57,7 @@ export const SignUpForm = ({
 
             <div className="text-center font-medium text-foreground/60 text-sm">
               {t("auth.alreadyHaveAnAccount")}{" "}
-              <Link className="text-foreground underline" href="/auth/sign-in">
+              <Link className="text-foreground underline" href={signInHref}>
                 {t("auth.signIn")}
               </Link>
             </div>
