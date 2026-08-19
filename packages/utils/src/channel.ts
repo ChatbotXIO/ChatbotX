@@ -42,13 +42,13 @@ export type ChannelType = z.infer<typeof channelTypes>
  * silently go missing from the picker or the settings accordion the way the
  * old plain-array lists allowed.
  *
- * `order` is alphabetical by channel name rather than copying either legacy
- * list's order: the create picker (`whatsapp, messenger, instagram, zalo,
- * tiktok, telegram, webchat`) and the settings accordion (`whatsapp,
- * messenger, instagram, zalo, telegram, tiktok, webchat, smtp`) already
- * disagreed with each other before this registry existed, so there was no
- * single order that preserved both — alphabetical is a neutral, unambiguous
- * default going forward.
+ * `order` is a deliberate product-priority order — whatsapp, messenger,
+ * instagram, tiktok, telegram, zalo, webchat, then smtp (Email) — rather than
+ * alphabetical or either legacy list's order: the create picker (`whatsapp,
+ * messenger, instagram, zalo, tiktok, telegram, webchat`) and the settings
+ * accordion (`whatsapp, messenger, instagram, zalo, telegram, tiktok,
+ * webchat, smtp`) already disagreed with each other before this registry
+ * existed. `omnichannel` (the non-connectable fallback) always sorts last.
  */
 export type ChannelCapability = {
   /** Shown as an option on the "create new channel" picker. */
@@ -66,7 +66,7 @@ export type ChannelCapability = {
 }
 
 export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
-  instagram: {
+  whatsapp: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
@@ -78,40 +78,40 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     requiresCredential: true,
     order: 2,
   },
-  smtp: {
-    creatable: false,
-    manageable: true,
-    requiresCredential: false,
-    order: 3,
-  },
-  telegram: {
+  instagram: {
     creatable: true,
     manageable: true,
-    requiresCredential: false,
-    order: 4,
+    requiresCredential: true,
+    order: 3,
   },
   tiktok: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 5,
+    order: 4,
   },
-  webchat: {
+  telegram: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
-    order: 6,
-  },
-  whatsapp: {
-    creatable: true,
-    manageable: true,
-    requiresCredential: true,
-    order: 7,
+    order: 5,
   },
   zalo: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
+    order: 6,
+  },
+  webchat: {
+    creatable: true,
+    manageable: true,
+    requiresCredential: false,
+    order: 7,
+  },
+  smtp: {
+    creatable: false,
+    manageable: true,
+    requiresCredential: false,
     order: 8,
   },
   // Not a real connectable channel — the fallback icon/label for unknown
