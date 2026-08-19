@@ -42,6 +42,7 @@ import { conversationParticipantRelations } from "./conversation-participant"
 import { couponRelations } from "./coupon"
 import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
+import { dynamicImageRelations } from "./dynamic-image"
 import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
@@ -156,6 +157,7 @@ export const relations = {
   ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
+  ...dynamicImageRelations,
   ...broadcastRelations,
   ...inboxTeamRelations,
   ...inboxRelations,

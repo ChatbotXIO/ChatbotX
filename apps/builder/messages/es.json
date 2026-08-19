@@ -870,6 +870,9 @@
     "qrCode": {
       "label": "Código QR"
     },
+    "dynamicImage": {
+      "label": "Imagen dinámica"
+    },
     "savePayloadToCustomField": {
       "label": "Guardar la carga útil en un campo personalizado"
     },
@@ -2054,6 +2057,9 @@
       "label": "Eventos",
       "placeholder": "Escribe el nombre de un evento y pulsa Enter",
       "description": "Añade uno o más nombres de eventos. Cuando n8n vincula un webhook a uno de estos eventos, se envían datos a él cuando se ejecuta este paso."
+    },
+    "enabled": {
+      "label": "Activado"
     }
   },
   "flows": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "Códigos QR",
     "description": "Crear QR códigos that enlace un tu chatbot flows."
+  },
+  "dynamicImages": {
+    "title": "Imágenes dinámicas",
+    "description": "Genera imágenes personalizadas por contacto a partir de un fondo y capas de texto, imagen o QR.",
+    "publicUrl": {
+      "label": "URL pública",
+      "hint": "Copia y pega la URL en tu flujo, difusión o secuencia para enviar imágenes personalizadas."
+    },
+    "editor": {
+      "addElement": "Añadir elemento",
+      "addImage": "Añadir imagen",
+      "addText": "Añadir texto",
+      "addQrCode": "Añadir código QR",
+      "template": "Plantilla",
+      "templateDialogTitle": "Elegir una plantilla",
+      "templateDialogDescription": "Al seleccionar una plantilla se reemplazan todas las capas actuales.",
+      "layers": "Capas",
+      "noLayers": "Aún no hay capas. Añade un elemento para empezar.",
+      "deleteLayer": "Eliminar capa",
+      "layerNameImage": "Imagen",
+      "layerNameText": "Texto",
+      "layerNameQrCode": "Código QR",
+      "editElement": "Editar elemento",
+      "selectElementHint": "Selecciona un elemento en el lienzo para editar sus propiedades.",
+      "width": "Ancho",
+      "height": "Alto",
+      "priority": "Prioridad",
+      "imageType": "Tipo de imagen",
+      "imageTypeUrl": "URL de imagen",
+      "imageTypeAvatarUser": "Avatar del contacto",
+      "imageTypeCustomField": "Campo personalizado",
+      "imageUrl": "URL de imagen",
+      "uploadImage": "Subir imagen",
+      "customField": "Campo personalizado",
+      "imageStyle": "Estilo de imagen",
+      "imageStyleSquare": "Cuadrado",
+      "imageStyleCircle": "Círculo",
+      "qrText": "Contenido del código QR",
+      "qrSize": "Tamaño",
+      "qrColor": "Color",
+      "qrLogo": "Logotipo",
+      "uploadLogo": "Subir logotipo",
+      "textContent": "Contenido del texto",
+      "fontSize": "Tamaño de fuente",
+      "fontFamily": "Familia de fuente",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alineación",
+      "alignLeft": "Izquierda",
+      "alignCenter": "Centro",
+      "alignRight": "Derecha",
+      "color": "Color",
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "uppercase": "Mayúsculas"
+    },
+    "preview": {
+      "error": "No se pudo cargar la imagen dinámica vinculada. Es posible que se haya eliminado."
+    }
   },
   "magicLinks": {
     "title": "Enlaces mágicos",

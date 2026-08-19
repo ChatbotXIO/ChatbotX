@@ -796,6 +796,9 @@
     "qrCode": {
       "label": "QR-Code"
     },
+    "dynamicImage": {
+      "label": "Dynamisches Bild"
+    },
     "savePayloadToCustomField": {
       "label": "Nutzdaten in benutzerdefiniertem Feld speichern"
     },
@@ -1980,6 +1983,9 @@
       "label": "Ereignisse",
       "placeholder": "Ereignisnamen eingeben und Enter drücken",
       "description": "Fügen Sie einen oder mehrere Ereignisnamen hinzu. Wenn n8n einen Webhook mit einem dieser Ereignisse verknüpft, werden beim Ausführen dieses Schritts Daten an ihn gesendet."
+    },
+    "enabled": {
+      "label": "Aktiviert"
     }
   },
   "flows": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "QR-Codes",
     "description": "Erstellen Sie QR-Codes, die auf Ihre Chatbot-Flows verweisen."
+  },
+  "dynamicImages": {
+    "title": "Dynamische Bilder",
+    "description": "Generieren Sie personalisierte Bilder pro Kontakt aus einem Hintergrund und Text-/Bild-/QR-Ebenen.",
+    "publicUrl": {
+      "label": "Öffentliche URL",
+      "hint": "Kopieren Sie die URL und fügen Sie sie in Ihren Flow, Broadcast oder Ihre Sequenz ein, um personalisierte Bilder zu senden."
+    },
+    "editor": {
+      "addElement": "Element hinzufügen",
+      "addImage": "Bild hinzufügen",
+      "addText": "Text hinzufügen",
+      "addQrCode": "QR-Code hinzufügen",
+      "template": "Vorlage",
+      "templateDialogTitle": "Vorlage auswählen",
+      "templateDialogDescription": "Die Auswahl einer Vorlage ersetzt alle aktuellen Ebenen.",
+      "layers": "Ebenen",
+      "noLayers": "Noch keine Ebenen. Fügen Sie ein Element hinzu, um zu beginnen.",
+      "deleteLayer": "Ebene löschen",
+      "layerNameImage": "Bild",
+      "layerNameText": "Text",
+      "layerNameQrCode": "QR-Code",
+      "editElement": "Element bearbeiten",
+      "selectElementHint": "Wählen Sie ein Element auf der Zeichenfläche aus, um seine Eigenschaften zu bearbeiten.",
+      "width": "Breite",
+      "height": "Höhe",
+      "priority": "Priorität",
+      "imageType": "Bildtyp",
+      "imageTypeUrl": "Bild-URL",
+      "imageTypeAvatarUser": "Kontakt-Avatar",
+      "imageTypeCustomField": "Benutzerdefiniertes Feld",
+      "imageUrl": "Bild-URL",
+      "uploadImage": "Bild hochladen",
+      "customField": "Benutzerdefiniertes Feld",
+      "imageStyle": "Bildstil",
+      "imageStyleSquare": "Quadratisch",
+      "imageStyleCircle": "Kreis",
+      "qrText": "QR-Code-Inhalt",
+      "qrSize": "Größe",
+      "qrColor": "Farbe",
+      "qrLogo": "Logo",
+      "uploadLogo": "Logo hochladen",
+      "textContent": "Textinhalt",
+      "fontSize": "Schriftgröße",
+      "fontFamily": "Schriftart",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Ausrichtung",
+      "alignLeft": "Links",
+      "alignCenter": "Zentriert",
+      "alignRight": "Rechts",
+      "color": "Farbe",
+      "bold": "Fett",
+      "italic": "Kursiv",
+      "uppercase": "Großbuchstaben"
+    },
+    "preview": {
+      "error": "Das verknüpfte dynamische Bild konnte nicht geladen werden. Es wurde möglicherweise gelöscht."
+    }
   },
   "magicLinks": {
     "title": "Magic Links",

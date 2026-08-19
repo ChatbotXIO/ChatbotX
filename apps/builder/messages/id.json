@@ -796,6 +796,9 @@
     "qrCode": {
       "label": "Kode QR"
     },
+    "dynamicImage": {
+      "label": "Gambar Dinamis"
+    },
     "savePayloadToCustomField": {
       "label": "Simpan payload ke custom kolom"
     },
@@ -1980,6 +1983,9 @@
       "label": "Peristiwa",
       "placeholder": "Ketik nama peristiwa lalu tekan Enter",
       "description": "Tambahkan satu atau beberapa nama peristiwa. Saat n8n memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
+    },
+    "enabled": {
+      "label": "Diaktifkan"
     }
   },
   "flows": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "Kode QR",
     "description": "Buat kode QR yang tertaut ke alur chatbot Anda."
+  },
+  "dynamicImages": {
+    "title": "Gambar Dinamis",
+    "description": "Buat gambar yang dipersonalisasi untuk setiap kontak dari latar belakang dan lapisan teks/gambar/kode QR.",
+    "publicUrl": {
+      "label": "URL Publik",
+      "hint": "Salin dan tempel URL ke alur, broadcast, atau urutan Anda untuk mengirim gambar yang dipersonalisasi."
+    },
+    "editor": {
+      "addElement": "Tambah elemen",
+      "addImage": "Tambah gambar",
+      "addText": "Tambah teks",
+      "addQrCode": "Tambah kode QR",
+      "template": "Templat",
+      "templateDialogTitle": "Pilih templat",
+      "templateDialogDescription": "Memilih templat akan mengganti semua layer yang ada saat ini.",
+      "layers": "Lapisan",
+      "noLayers": "Belum ada lapisan. Tambahkan elemen untuk memulai.",
+      "deleteLayer": "Hapus lapisan",
+      "layerNameImage": "Gambar",
+      "layerNameText": "Teks",
+      "layerNameQrCode": "Kode QR",
+      "editElement": "Edit elemen",
+      "selectElementHint": "Pilih elemen pada kanvas untuk mengedit propertinya.",
+      "width": "Lebar",
+      "height": "Tinggi",
+      "priority": "Prioritas",
+      "imageType": "Jenis gambar",
+      "imageTypeUrl": "URL gambar",
+      "imageTypeAvatarUser": "Avatar kontak",
+      "imageTypeCustomField": "Kolom kustom",
+      "imageUrl": "URL gambar",
+      "uploadImage": "Unggah gambar",
+      "customField": "Kolom kustom",
+      "imageStyle": "Gaya gambar",
+      "imageStyleSquare": "Persegi",
+      "imageStyleCircle": "Lingkaran",
+      "qrText": "Konten kode QR",
+      "qrSize": "Ukuran",
+      "qrColor": "Warna",
+      "qrLogo": "Logo",
+      "uploadLogo": "Unggah logo",
+      "textContent": "Konten teks",
+      "fontSize": "Ukuran huruf",
+      "fontFamily": "Jenis huruf",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Perataan",
+      "alignLeft": "Kiri",
+      "alignCenter": "Tengah",
+      "alignRight": "Kanan",
+      "color": "Warna",
+      "bold": "Tebal",
+      "italic": "Miring",
+      "uppercase": "Huruf kapital"
+    },
+    "preview": {
+      "error": "Gagal memuat gambar dinamis yang tertaut. Gambar mungkin telah dihapus."
+    }
   },
   "magicLinks": {
     "title": "Tautan Ajaib",

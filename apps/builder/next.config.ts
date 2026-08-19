@@ -130,11 +130,14 @@ const nextConfig: NextConfig = {
   ],
 
   // Resolve bull-board and bullmq from node_modules at runtime, not from the bundle.
+  // @napi-rs/canvas ships a native .node addon (per-platform binary) that the
+  // bundler can't inline — it must stay a runtime require() too.
   serverExternalPackages: [
     "@bull-board/api",
     "@bull-board/ui",
     "@bull-board/hono",
     "bullmq",
+    "@napi-rs/canvas",
   ],
 
   outputFileTracingRoot: require("path").join(import.meta.dirname, "../../"),

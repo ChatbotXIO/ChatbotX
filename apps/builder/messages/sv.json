@@ -2232,6 +2232,9 @@
     "qrCode": {
       "label": "QR-kod"
     },
+    "dynamicImage": {
+      "label": "Dynamisk bild"
+    },
     "quality": {
       "label": "Kvalitet",
       "options": {
@@ -2651,6 +2654,9 @@
       "description": "Lägg till ett eller flera händelsenamn. När n8n kopplar en webhook till en av dessa händelser skickas data till den när detta steg körs.",
       "label": "Händelser",
       "placeholder": "Skriv ett händelsenamn och tryck på Retur"
+    },
+    "enabled": {
+      "label": "Aktiverad"
     }
   },
   "flowAnalytics": {
@@ -3995,6 +4001,67 @@
   "qrCodes": {
     "description": "Skapa QR-koder som länkar till dina chatbotflöden.",
     "title": "QR-koder"
+  },
+  "dynamicImages": {
+    "title": "Dynamiska bilder",
+    "description": "Skapa personliga bilder per kontakt utifrån en bakgrund och lager med text/bild/QR.",
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopiera och klistra in URL:en i ditt flöde, utskick eller sekvens för att skicka personliga bilder."
+    },
+    "editor": {
+      "addElement": "Lägg till element",
+      "addImage": "Lägg till bild",
+      "addText": "Lägg till text",
+      "addQrCode": "Lägg till QR-kod",
+      "template": "Mall",
+      "templateDialogTitle": "Välj en mall",
+      "templateDialogDescription": "Om du väljer en mall ersätts alla aktuella lager.",
+      "layers": "Lager",
+      "noLayers": "Inga lager ännu. Lägg till ett element för att komma igång.",
+      "deleteLayer": "Ta bort lager",
+      "layerNameImage": "Bild",
+      "layerNameText": "Text",
+      "layerNameQrCode": "QR-kod",
+      "editElement": "Redigera element",
+      "selectElementHint": "Välj ett element på ytan för att redigera dess egenskaper.",
+      "width": "Bredd",
+      "height": "Höjd",
+      "priority": "Prioritet",
+      "imageType": "Bildtyp",
+      "imageTypeUrl": "Bild-URL",
+      "imageTypeAvatarUser": "Kontaktens profilbild",
+      "imageTypeCustomField": "Anpassat fält",
+      "imageUrl": "Bild-URL",
+      "uploadImage": "Ladda upp bild",
+      "customField": "Anpassat fält",
+      "imageStyle": "Bildstil",
+      "imageStyleSquare": "Kvadrat",
+      "imageStyleCircle": "Cirkel",
+      "qrText": "Innehåll i QR-koden",
+      "qrSize": "Storlek",
+      "qrColor": "Färg",
+      "qrLogo": "Logotyp",
+      "uploadLogo": "Ladda upp logotyp",
+      "textContent": "Textinnehåll",
+      "fontSize": "Textstorlek",
+      "fontFamily": "Typsnitt",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Justering",
+      "alignLeft": "Vänster",
+      "alignCenter": "Centrerad",
+      "alignRight": "Höger",
+      "color": "Färg",
+      "bold": "Fet",
+      "italic": "Kursiv",
+      "uppercase": "Versaler"
+    },
+    "preview": {
+      "error": "Det gick inte att läsa in den länkade dynamiska bilden. Den kan ha tagits bort."
+    }
   },
   "questionnaires": {
     "activeQuestion": "Aktiv",

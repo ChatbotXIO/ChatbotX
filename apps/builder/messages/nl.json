@@ -610,6 +610,9 @@
     "qrCode": {
       "label": "QR-code"
     },
+    "dynamicImage": {
+      "label": "Dynamische afbeelding"
+    },
     "savePayloadToCustomField": {
       "label": "Payload opslaan in aangepast veld"
     },
@@ -1794,6 +1797,9 @@
       "label": "Gebeurtenissen",
       "placeholder": "Typ een gebeurtenisnaam en druk op Enter",
       "description": "Voeg een of meer gebeurtenisnamen toe. Wanneer n8n een webhook aan een van deze gebeurtenissen koppelt, worden er gegevens naartoe gestuurd wanneer deze stap wordt uitgevoerd."
+    },
+    "enabled": {
+      "label": "Ingeschakeld"
     }
   },
   "condition": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "QR-codes",
     "description": "Maak QR-codes die naar je chatbotflows linken."
+  },
+  "dynamicImages": {
+    "title": "Dynamische afbeeldingen",
+    "description": "Genereer gepersonaliseerde afbeeldingen per contact op basis van een achtergrond en tekst-/afbeeldings-/QR-lagen.",
+    "publicUrl": {
+      "label": "Openbare URL",
+      "hint": "Kopieer en plak de URL in je flow, broadcast of reeks om gepersonaliseerde afbeeldingen te versturen."
+    },
+    "editor": {
+      "addElement": "Element toevoegen",
+      "addImage": "Afbeelding toevoegen",
+      "addText": "Tekst toevoegen",
+      "addQrCode": "QR-code toevoegen",
+      "template": "Sjabloon",
+      "templateDialogTitle": "Kies een sjabloon",
+      "templateDialogDescription": "Het selecteren van een sjabloon vervangt alle huidige lagen.",
+      "layers": "Lagen",
+      "noLayers": "Nog geen lagen. Voeg een element toe om te beginnen.",
+      "deleteLayer": "Laag verwijderen",
+      "layerNameImage": "Afbeelding",
+      "layerNameText": "Tekst",
+      "layerNameQrCode": "QR-code",
+      "editElement": "Element bewerken",
+      "selectElementHint": "Selecteer een element op het canvas om de eigenschappen te bewerken.",
+      "width": "Breedte",
+      "height": "Hoogte",
+      "priority": "Prioriteit",
+      "imageType": "Afbeeldingstype",
+      "imageTypeUrl": "Afbeeldings-URL",
+      "imageTypeAvatarUser": "Profielfoto van contact",
+      "imageTypeCustomField": "Aangepast veld",
+      "imageUrl": "Afbeeldings-URL",
+      "uploadImage": "Afbeelding uploaden",
+      "customField": "Aangepast veld",
+      "imageStyle": "Afbeeldingsstijl",
+      "imageStyleSquare": "Vierkant",
+      "imageStyleCircle": "Cirkel",
+      "qrText": "QR-code-inhoud",
+      "qrSize": "Grootte",
+      "qrColor": "Kleur",
+      "qrLogo": "Logo",
+      "uploadLogo": "Logo uploaden",
+      "textContent": "Tekstinhoud",
+      "fontSize": "Lettergrootte",
+      "fontFamily": "Lettertype",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Uitlijning",
+      "alignLeft": "Links",
+      "alignCenter": "Gecentreerd",
+      "alignRight": "Rechts",
+      "color": "Kleur",
+      "bold": "Vet",
+      "italic": "Cursief",
+      "uppercase": "Hoofdletters"
+    },
+    "preview": {
+      "error": "De gekoppelde dynamische afbeelding kon niet worden geladen. Deze is mogelijk verwijderd."
+    }
   },
   "magicLinks": {
     "title": "Magische links",

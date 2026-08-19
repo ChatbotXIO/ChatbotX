@@ -201,6 +201,9 @@
     "qrCode": {
       "label": "QR Code"
     },
+    "dynamicImage": {
+      "label": "動態圖片"
+    },
     "savePayloadToCustomField": {
       "label": "將負載儲存到自訂欄位"
     },
@@ -1362,6 +1365,9 @@
       "label": "活動",
       "placeholder": "輸入事件名稱並按 Enter",
       "description": "新增一個或多個事件名稱。當 n8n 為其中某個事件附加 Webhook 時，此步驟執行時就會把資料傳送過去。"
+    },
+    "enabled": {
+      "label": "已啟用"
     }
   },
   "messages": {
@@ -3565,6 +3571,67 @@
   "qrCodes": {
     "title": "QR Code",
     "description": "建立連結到聊天機器人流程的 QR 程式碼。"
+  },
+  "dynamicImages": {
+    "title": "動態圖片",
+    "description": "根據背景與文字/圖片/QR Code 圖層，為每位聯絡人產生個人化圖片。",
+    "publicUrl": {
+      "label": "公開網址",
+      "hint": "複製並貼上此網址到流程、廣播或序列中，以傳送個人化圖片。"
+    },
+    "editor": {
+      "addElement": "新增元素",
+      "addImage": "新增圖片",
+      "addText": "新增文字",
+      "addQrCode": "新增 QR Code",
+      "template": "範本",
+      "templateDialogTitle": "選擇範本",
+      "templateDialogDescription": "選擇範本將取代目前所有圖層。",
+      "layers": "圖層",
+      "noLayers": "尚無圖層。新增一個元素開始使用。",
+      "deleteLayer": "刪除圖層",
+      "layerNameImage": "圖片",
+      "layerNameText": "文字",
+      "layerNameQrCode": "QR Code",
+      "editElement": "編輯元素",
+      "selectElementHint": "在畫布上選取一個元素以編輯其屬性。",
+      "width": "寬度",
+      "height": "高度",
+      "priority": "優先順序",
+      "imageType": "圖片類型",
+      "imageTypeUrl": "圖片網址",
+      "imageTypeAvatarUser": "聯絡人頭像",
+      "imageTypeCustomField": "自訂欄位",
+      "imageUrl": "圖片網址",
+      "uploadImage": "上傳圖片",
+      "customField": "自訂欄位",
+      "imageStyle": "圖片樣式",
+      "imageStyleSquare": "方形",
+      "imageStyleCircle": "圓形",
+      "qrText": "QR Code 內容",
+      "qrSize": "大小",
+      "qrColor": "顏色",
+      "qrLogo": "標誌",
+      "uploadLogo": "上傳標誌",
+      "textContent": "文字內容",
+      "fontSize": "字型大小",
+      "fontFamily": "字型",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "對齊方式",
+      "alignLeft": "靠左",
+      "alignCenter": "居中",
+      "alignRight": "靠右",
+      "color": "顏色",
+      "bold": "粗體",
+      "italic": "斜體",
+      "uppercase": "大寫"
+    },
+    "preview": {
+      "error": "載入關聯的動態圖片失敗,可能已被刪除。"
+    }
   },
   "magicLinks": {
     "title": "Magic Link",

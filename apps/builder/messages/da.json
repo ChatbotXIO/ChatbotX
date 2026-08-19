@@ -796,6 +796,9 @@
     "qrCode": {
       "label": "QR Kode"
     },
+    "dynamicImage": {
+      "label": "Dynamisk billede"
+    },
     "savePayloadToCustomField": {
       "label": "Gem payload til brugerdefineret felt"
     },
@@ -1980,6 +1983,9 @@
       "label": "Hændelser",
       "placeholder": "Skriv et hændelsenavn og tryk på Enter",
       "description": "Tilføj et eller flere hændelsenavne. Når n8n tilføjer et webhook for en af disse hændelser, sendes data til det, når dette trin køres."
+    },
+    "enabled": {
+      "label": "Aktiveret"
     }
   },
   "flows": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "QR-koder",
     "description": "Opret QR codes at link til din chatbot flows."
+  },
+  "dynamicImages": {
+    "title": "Dynamiske billeder",
+    "description": "Generer personaliserede billeder pr. kontakt fra en baggrund og tekst-/billede-/QR-lag.",
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopiér og indsæt URL'en i dit flow, din udsendelse eller sekvens for at sende personaliserede billeder."
+    },
+    "editor": {
+      "addElement": "Tilføj element",
+      "addImage": "Tilføj billede",
+      "addText": "Tilføj tekst",
+      "addQrCode": "Tilføj QR-kode",
+      "template": "Skabelon",
+      "templateDialogTitle": "Vælg en skabelon",
+      "templateDialogDescription": "Valg af en skabelon udskifter alle nuværende lag.",
+      "layers": "Lag",
+      "noLayers": "Ingen lag endnu. Tilføj et element for at komme i gang.",
+      "deleteLayer": "Slet lag",
+      "layerNameImage": "Billede",
+      "layerNameText": "Tekst",
+      "layerNameQrCode": "QR-kode",
+      "editElement": "Rediger element",
+      "selectElementHint": "Vælg et element på canvasset for at redigere dets egenskaber.",
+      "width": "Bredde",
+      "height": "Højde",
+      "priority": "Prioritet",
+      "imageType": "Billedtype",
+      "imageTypeUrl": "Billed-URL",
+      "imageTypeAvatarUser": "Kontaktens profilbillede",
+      "imageTypeCustomField": "Brugerdefineret felt",
+      "imageUrl": "Billed-URL",
+      "uploadImage": "Upload billede",
+      "customField": "Brugerdefineret felt",
+      "imageStyle": "Billedstil",
+      "imageStyleSquare": "Kvadratisk",
+      "imageStyleCircle": "Cirkel",
+      "qrText": "QR-kodeindhold",
+      "qrSize": "Størrelse",
+      "qrColor": "Farve",
+      "qrLogo": "Logo",
+      "uploadLogo": "Upload logo",
+      "textContent": "Tekstindhold",
+      "fontSize": "Skriftstørrelse",
+      "fontFamily": "Skrifttype",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Justering",
+      "alignLeft": "Venstre",
+      "alignCenter": "Centreret",
+      "alignRight": "Højre",
+      "color": "Farve",
+      "bold": "Fed",
+      "italic": "Kursiv",
+      "uppercase": "Store bogstaver"
+    },
+    "preview": {
+      "error": "Kunne ikke indlæse det tilknyttede dynamiske billede. Det er muligvis blevet slettet."
+    }
   },
   "magicLinks": {
     "title": "Magic Links",

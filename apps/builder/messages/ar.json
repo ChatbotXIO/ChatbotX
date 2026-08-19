@@ -870,6 +870,9 @@
     "qrCode": {
       "label": "رمز QR"
     },
+    "dynamicImage": {
+      "label": "صورة ديناميكية"
+    },
     "savePayloadToCustomField": {
       "label": "حفظ الحمولة في حقل مخصص"
     },
@@ -2054,6 +2057,9 @@
       "label": "الأحداث",
       "placeholder": "اكتب اسم حدث واضغط Enter",
       "description": "أضف اسم حدث واحدًا أو أكثر. عندما يربط n8n خطاف ويب بأحد هذه الأحداث، تُرسل إليه البيانات عند تشغيل هذه الخطوة."
+    },
+    "enabled": {
+      "label": "مفعّل"
     }
   },
   "flows": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "رموز QR",
     "description": "أنشئ رموز QR مرتبطة بمسارات البوت."
+  },
+  "dynamicImages": {
+    "title": "الصور الديناميكية",
+    "description": "أنشئ صورًا مخصصة لكل جهة اتصال من خلفية وطبقات نص/صورة/رمز QR.",
+    "publicUrl": {
+      "label": "الرابط العام",
+      "hint": "انسخ الرابط والصقه في المسار أو البث أو التسلسل الخاص بك لإرسال صور مخصصة."
+    },
+    "editor": {
+      "addElement": "إضافة عنصر",
+      "addImage": "إضافة صورة",
+      "addText": "إضافة نص",
+      "addQrCode": "إضافة رمز QR",
+      "template": "قالب",
+      "templateDialogTitle": "اختر قالبًا",
+      "templateDialogDescription": "اختيار قالب سيستبدل جميع الطبقات الحالية.",
+      "layers": "الطبقات",
+      "noLayers": "لا توجد طبقات بعد. أضف عنصرًا للبدء.",
+      "deleteLayer": "حذف الطبقة",
+      "layerNameImage": "صورة",
+      "layerNameText": "نص",
+      "layerNameQrCode": "رمز QR",
+      "editElement": "تعديل العنصر",
+      "selectElementHint": "حدد عنصرًا في اللوحة لتعديل خصائصه.",
+      "width": "العرض",
+      "height": "الارتفاع",
+      "priority": "الأولوية",
+      "imageType": "نوع الصورة",
+      "imageTypeUrl": "رابط الصورة",
+      "imageTypeAvatarUser": "صورة جهة الاتصال",
+      "imageTypeCustomField": "حقل مخصص",
+      "imageUrl": "رابط الصورة",
+      "uploadImage": "رفع صورة",
+      "customField": "حقل مخصص",
+      "imageStyle": "نمط الصورة",
+      "imageStyleSquare": "مربع",
+      "imageStyleCircle": "دائري",
+      "qrText": "محتوى رمز QR",
+      "qrSize": "الحجم",
+      "qrColor": "اللون",
+      "qrLogo": "الشعار",
+      "uploadLogo": "رفع شعار",
+      "textContent": "محتوى النص",
+      "fontSize": "حجم الخط",
+      "fontFamily": "نوع الخط",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "المحاذاة",
+      "alignLeft": "يسار",
+      "alignCenter": "وسط",
+      "alignRight": "يمين",
+      "color": "اللون",
+      "bold": "غامق",
+      "italic": "مائل",
+      "uppercase": "أحرف كبيرة"
+    },
+    "preview": {
+      "error": "فشل تحميل الصورة الديناميكية المرتبطة. ربما تم حذفها."
+    }
   },
   "magicLinks": {
     "title": "الروابط السحرية",

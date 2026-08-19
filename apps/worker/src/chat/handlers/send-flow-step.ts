@@ -618,9 +618,9 @@ export async function sendFlowStep({
     let attachmentInput:
       | Parameters<typeof repository.createWithAttachments>[1][0]
       | undefined
-    if ("url" in step) {
+    if ("url" in stepWithSignedBookingLinks) {
       const uploadedFile = await uploadFileFromUrl(
-        step.url,
+        stepWithSignedBookingLinks.url,
         `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
       )
       attachmentInput = {

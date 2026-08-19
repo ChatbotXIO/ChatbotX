@@ -1535,6 +1535,9 @@
     "qrCode": {
       "label": "Cod QR"
     },
+    "dynamicImage": {
+      "label": "Imagine dinamică"
+    },
     "savePayloadToCustomField": {
       "label": "Salvează conținutul în câmpul personalizat"
     },
@@ -2719,6 +2722,9 @@
       "label": "Evenimente",
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
       "description": "Adăugați unul sau mai multe nume de evenimente. Când n8n atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
+    },
+    "enabled": {
+      "label": "Activat"
     }
   },
   "channels": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "Coduri QR",
     "description": "Creează coduri QR care leagă la fluxurile tale de chatbot."
+  },
+  "dynamicImages": {
+    "title": "Imagini dinamice",
+    "description": "Generează imagini personalizate pentru fiecare contact dintr-un fundal și straturi de text/imagine/cod QR.",
+    "publicUrl": {
+      "label": "URL public",
+      "hint": "Copiază și lipește URL-ul în fluxul, difuzarea sau secvența ta pentru a trimite imagini personalizate."
+    },
+    "editor": {
+      "addElement": "Adaugă element",
+      "addImage": "Adaugă imagine",
+      "addText": "Adaugă text",
+      "addQrCode": "Adaugă cod QR",
+      "template": "Șablon",
+      "templateDialogTitle": "Alege un șablon",
+      "templateDialogDescription": "Selectarea unui șablon înlocuiește toate straturile curente.",
+      "layers": "Straturi",
+      "noLayers": "Niciun strat încă. Adaugă un element pentru a începe.",
+      "deleteLayer": "Șterge stratul",
+      "layerNameImage": "Imagine",
+      "layerNameText": "Text",
+      "layerNameQrCode": "Cod QR",
+      "editElement": "Editează elementul",
+      "selectElementHint": "Selectează un element pe canvas pentru a-i edita proprietățile.",
+      "width": "Lățime",
+      "height": "Înălțime",
+      "priority": "Prioritate",
+      "imageType": "Tip de imagine",
+      "imageTypeUrl": "URL imagine",
+      "imageTypeAvatarUser": "Avatarul contactului",
+      "imageTypeCustomField": "Câmp personalizat",
+      "imageUrl": "URL imagine",
+      "uploadImage": "Încarcă imagine",
+      "customField": "Câmp personalizat",
+      "imageStyle": "Stil imagine",
+      "imageStyleSquare": "Pătrat",
+      "imageStyleCircle": "Cerc",
+      "qrText": "Conținutul codului QR",
+      "qrSize": "Dimensiune",
+      "qrColor": "Culoare",
+      "qrLogo": "Logo",
+      "uploadLogo": "Încarcă logo",
+      "textContent": "Conținutul textului",
+      "fontSize": "Dimensiunea fontului",
+      "fontFamily": "Familie de fonturi",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alinierea",
+      "alignLeft": "Stânga",
+      "alignCenter": "Centru",
+      "alignRight": "Dreapta",
+      "color": "Culoare",
+      "bold": "Bold",
+      "italic": "Italic",
+      "uppercase": "Majuscule"
+    },
+    "preview": {
+      "error": "Nu s-a putut încărca imaginea dinamică asociată. Este posibil să fi fost ștearsă."
+    }
   },
   "magicLinks": {
     "title": "Linkuri magice",

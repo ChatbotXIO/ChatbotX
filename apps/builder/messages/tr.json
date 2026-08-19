@@ -870,6 +870,9 @@
     "qrCode": {
       "label": "QR Kodu"
     },
+    "dynamicImage": {
+      "label": "Dinamik Görsel"
+    },
     "savePayloadToCustomField": {
       "label": "Yükü özel alana kaydet"
     },
@@ -2054,6 +2057,9 @@
       "label": "Etkinlikler",
       "placeholder": "Bir etkinlik adı yazın ve Enter'a basın",
       "description": "Bir veya daha fazla etkinlik adı ekleyin. n8n bu etkinliklerden biri için bir webhook eklediğinde, bu adım çalıştığında veri gönderilir."
+    },
+    "enabled": {
+      "label": "Etkin"
     }
   },
   "flows": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "QR Kodları",
     "description": "Chatbot akışlarınıza bağlanan QR kodları oluşturun."
+  },
+  "dynamicImages": {
+    "title": "Dinamik Görseller",
+    "description": "Bir arka plan ile metin/görsel/QR katmanlarından her kişi için kişiselleştirilmiş görseller oluşturun.",
+    "publicUrl": {
+      "label": "Herkese Açık URL",
+      "hint": "URL'yi akışınıza, toplu gönderiminize veya sıranıza kopyalayıp yapıştırarak kişiselleştirilmiş görseller gönderin."
+    },
+    "editor": {
+      "addElement": "Öğe ekle",
+      "addImage": "Görsel ekle",
+      "addText": "Metin ekle",
+      "addQrCode": "QR kod ekle",
+      "template": "Şablon",
+      "templateDialogTitle": "Bir şablon seçin",
+      "templateDialogDescription": "Bir şablon seçmek mevcut tüm katmanların yerini alır.",
+      "layers": "Katmanlar",
+      "noLayers": "Henüz katman yok. Başlamak için bir öğe ekleyin.",
+      "deleteLayer": "Katmanı sil",
+      "layerNameImage": "Görsel",
+      "layerNameText": "Metin",
+      "layerNameQrCode": "QR kod",
+      "editElement": "Öğeyi düzenle",
+      "selectElementHint": "Özelliklerini düzenlemek için tuval üzerinde bir öğe seçin.",
+      "width": "Genişlik",
+      "height": "Yükseklik",
+      "priority": "Öncelik",
+      "imageType": "Görsel türü",
+      "imageTypeUrl": "Görsel URL'si",
+      "imageTypeAvatarUser": "Kişi profil resmi",
+      "imageTypeCustomField": "Özel alan",
+      "imageUrl": "Görsel URL'si",
+      "uploadImage": "Görsel yükle",
+      "customField": "Özel alan",
+      "imageStyle": "Görsel stili",
+      "imageStyleSquare": "Kare",
+      "imageStyleCircle": "Daire",
+      "qrText": "QR kod içeriği",
+      "qrSize": "Boyut",
+      "qrColor": "Renk",
+      "qrLogo": "Logo",
+      "uploadLogo": "Logo yükle",
+      "textContent": "Metin içeriği",
+      "fontSize": "Yazı boyutu",
+      "fontFamily": "Yazı tipi ailesi",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Hizalama",
+      "alignLeft": "Sol",
+      "alignCenter": "Orta",
+      "alignRight": "Sağ",
+      "color": "Renk",
+      "bold": "Kalın",
+      "italic": "İtalik",
+      "uppercase": "Büyük harf"
+    },
+    "preview": {
+      "error": "Bağlantılı dinamik görsel yüklenemedi. Silinmiş olabilir."
+    }
   },
   "magicLinks": {
     "title": "Sihirli Bağlantılar",

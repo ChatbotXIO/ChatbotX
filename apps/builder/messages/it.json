@@ -178,6 +178,9 @@
     "qrCode": {
       "label": "Codice QR"
     },
+    "dynamicImage": {
+      "label": "Immagine dinamica"
+    },
     "savePayloadToCustomField": {
       "label": "Salva il payload nel campo personalizzato"
     },
@@ -1362,6 +1365,9 @@
       "label": "Eventi",
       "placeholder": "Digita un nome di evento e premi Invio",
       "description": "Aggiungi uno o più nomi di eventi. Quando n8n collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
+    },
+    "enabled": {
+      "label": "Attivo"
     }
   },
   "actions": {
@@ -3532,6 +3538,67 @@
   "qrCodes": {
     "title": "Codici QR",
     "description": "Crea codici QR che rimandano ai flussi del tuo chatbot."
+  },
+  "dynamicImages": {
+    "title": "Immagini dinamiche",
+    "description": "Genera immagini personalizzate per ogni contatto a partire da uno sfondo e livelli di testo, immagine o QR.",
+    "publicUrl": {
+      "label": "URL pubblico",
+      "hint": "Copia e incolla l'URL nel tuo flusso, broadcast o sequenza per inviare immagini personalizzate."
+    },
+    "editor": {
+      "addElement": "Aggiungi elemento",
+      "addImage": "Aggiungi immagine",
+      "addText": "Aggiungi testo",
+      "addQrCode": "Aggiungi codice QR",
+      "template": "Modello",
+      "templateDialogTitle": "Scegli un modello",
+      "templateDialogDescription": "La selezione di un modello sostituisce tutti i livelli attuali.",
+      "layers": "Livelli",
+      "noLayers": "Ancora nessun livello. Aggiungi un elemento per iniziare.",
+      "deleteLayer": "Elimina livello",
+      "layerNameImage": "Immagine",
+      "layerNameText": "Testo",
+      "layerNameQrCode": "Codice QR",
+      "editElement": "Modifica elemento",
+      "selectElementHint": "Seleziona un elemento sulla tela per modificarne le proprietà.",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "priority": "Priorità",
+      "imageType": "Tipo di immagine",
+      "imageTypeUrl": "URL immagine",
+      "imageTypeAvatarUser": "Avatar del contatto",
+      "imageTypeCustomField": "Campo personalizzato",
+      "imageUrl": "URL immagine",
+      "uploadImage": "Carica immagine",
+      "customField": "Campo personalizzato",
+      "imageStyle": "Stile immagine",
+      "imageStyleSquare": "Quadrato",
+      "imageStyleCircle": "Cerchio",
+      "qrText": "Contenuto del codice QR",
+      "qrSize": "Dimensione",
+      "qrColor": "Colore",
+      "qrLogo": "Logo",
+      "uploadLogo": "Carica logo",
+      "textContent": "Contenuto del testo",
+      "fontSize": "Dimensione carattere",
+      "fontFamily": "Tipo di carattere",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Allineamento",
+      "alignLeft": "Sinistra",
+      "alignCenter": "Centro",
+      "alignRight": "Destra",
+      "color": "Colore",
+      "bold": "Grassetto",
+      "italic": "Corsivo",
+      "uppercase": "Maiuscolo"
+    },
+    "preview": {
+      "error": "Impossibile caricare l'immagine dinamica collegata. Potrebbe essere stata eliminata."
+    }
   },
   "magicLinks": {
     "title": "Link magici",
