@@ -2021,11 +2021,6 @@
       "label": "活动",
       "placeholder": "输入事件名称并按 Enter"
     },
-    "n8nEvents": {
-      "label": "事件",
-      "placeholder": "输入事件名称并按 Enter",
-      "description": "添加一个或多个事件名称。当 n8n 为其中某个事件附加 Webhook 时，此步骤运行时就会把数据发送过去。"
-    },
     "marketingFeatures": {
       "description": "客户可见的产品功能清单。显示在定价表中。",
       "label": "行销功能清单"
@@ -2752,12 +2747,9 @@
       "mailchimpAddMember": "将联系人添加到 MailChimp",
       "mailerLiteAddSubscriber": "将联系人添加到 MailerLite",
       "make": "Make.com",
-      "triggerN8n": "触发 n8n",
       "markCouponUsed": "标记优惠券",
       "markEmailVerified": "标记电子邮件已验证",
-      "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "messenger": "Messenger",
-      "metaConversions": "Meta 转化 API",
       "moosendCreateContact": "将联系人添加到 Moosend",
       "noFlowsAvailable": "无可用流量",
       "noTemplatesAvailable": "目前没有可用的范本",
@@ -3552,102 +3544,6 @@
     "title": "Facebook Messenger",
     "welcomeMessage": "欢迎消息",
     "welcomeMessageDescription": "这是用户将从您的机器人收到的第一则消息。当用户通过点击「开始」按钮第一次与机器人交互时，会发送此消息。"
-  },
-  "metaConversions": {
-    "flowStep": {
-      "description": "为 Messenger、Instagram 或 WhatsApp 排入一个 LeadSubmitted 事件。",
-      "whatsappNote": "WhatsApp 事件只会发送给从点击 WhatsApp 广告开始的对话。"
-    },
-    "title": "转化 API",
-    "description": "将 Messenger、Instagram 和 WhatsApp 对话中的 LeadSubmitted 事件发送到 Meta。",
-    "datasetId": "数据集 ID",
-    "reconnect": "重新连接权限",
-    "connectViaFacebook": "通过 Facebook 连接",
-    "unsupportedExplanation": "此 Instagram 帐号是通过 Instagram Business Login 连接的。请改为通过 Facebook 连接此帐号，才能使用 Meta 转化 API。",
-    "status": {
-      "title": "Meta 转化 API",
-      "ready": "已就绪",
-      "missingPermission": "需要权限",
-      "unverified": "未验证",
-      "unsupported": "不支持",
-      "notConnected": "未连接"
-    },
-    "statusDescriptions": {
-      "ready": "此集成已具备发送转化 API 事件所需的 Meta 权限。",
-      "missingPermission": "请重新连接此集成，并授予请求的 Meta 权限。",
-      "unverified": "目前无法取得平台应用设置，因此无法验证 CAPI 权限。",
-      "unsupported": "Instagram 的 Meta 转化 API 需要通过 Facebook Login for Business 连接的帐号。",
-      "notConnected": "转化 API 是一项 Meta Business Tool，可让您与 Meta 共享数据，以提升广告表现。"
-    },
-    "errors": {
-      "reconnect": "启动 Meta CAPI 重新连接失败。",
-      "messengerNotFound": "找不到 Messenger 集成。",
-      "instagramNotFound": "找不到 Instagram 集成。",
-      "instagramRequiresFacebook": "Instagram CAPI 需要通过 Facebook 连接。",
-      "saveFailed": "无法保存，请重试。",
-      "datasetRequired": "请先保存数据集 ID，再添加访问令牌。",
-      "invalidToken": "此令牌无法访问该数据集。",
-      "whatsappNotFound": "找不到 WhatsApp 集成。"
-    },
-    "fields": {
-      "eventType": {
-        "label": "事件类型",
-        "leadSubmitted": "已提交线索"
-      },
-      "value": "数值",
-      "valuePlaceholder": "例如 250",
-      "currency": "货币",
-      "currencyPlaceholder": "例如 USD",
-      "contentCategory": "内容类别",
-      "contentCategoryPlaceholder": "与此事件相关内容的类别",
-      "contentName": "内容名称",
-      "contentNamePlaceholder": "与此事件相关的页面或产品名称"
-    },
-    "datasetIdPlaceholder": "粘贴来自 Events Manager 的数据集 ID",
-    "saveDataset": "保存",
-    "accessToken": "访问令牌（可选）",
-    "accessTokenHint": "粘贴来自 Events Manager 的令牌，即可使用您自己的令牌发送事件，而不是使用已连接页面的令牌。需要先填写数据集 ID。",
-    "accessTokenPlaceholder": "Events Manager 访问令牌",
-    "saveToken": "保存令牌",
-    "tokenSaved": "令牌已保存",
-    "removeToken": "移除",
-    "saved": "已保存",
-    "help": {
-      "delay": "事件最多可能需要 40 分钟才会显示在 Events Manager 中，并在 Ads Manager 中显示为 Meta Leads。"
-    },
-    "connected": "已连接",
-    "disconnect": "断开连接",
-    "openEventManager": "打开 Events Manager",
-    "methods": {
-      "oauth": {
-        "title": "通过 Facebook 连接",
-        "description": "使用您页面现有的连接，然后选择一个数据集 ID。",
-        "connect": "通过 Facebook 连接",
-        "connectedLabel": "通过 Facebook"
-      },
-      "custom": {
-        "title": "自定义连接",
-        "description": "使用 Meta Events Manager 中的数据集 ID 和访问令牌。",
-        "start": "设置自定义连接",
-        "connect": "连接",
-        "connectedLabel": "自定义"
-      },
-      "whatsapp": {
-        "title": "通过 WhatsApp 连接",
-        "description": "使用您的 WhatsApp 连接，然后选择一个数据集 ID。",
-        "connect": "通过 WhatsApp 连接",
-        "connectedLabel": "通过 WhatsApp"
-      }
-    },
-    "finalize": {
-      "title": "选择数据集 ID",
-      "description": "输入现有的数据集 ID，或留空以自动创建一个。",
-      "save": "保存",
-      "caveat": "如果某个数据集 ID 没有关联到此页面或 Instagram 帐号，事件归因可能不正确。将此字段留空即可自动创建一个已关联的数据集。"
-    },
-    "whatsapp": {
-      "connect": "连接"
-    }
   },
   "metaCatalog": {
     "catalogId": "Meta目录ID",
@@ -4464,8 +4360,7 @@
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
-      "transferConversationToHuman": "将对话转移给人类",
-      "sendMetaCapiEvent": "发送 Meta CAPI 事件"
+      "transferConversationToHuman": "将对话转移给人类"
     },
     "after": "之后",
     "at": "在",
@@ -4832,7 +4727,6 @@
     "tabs": {
       "accountHealths": "帐户健康状况",
       "automation": "自动化",
-      "conversionsApi": "广告优化",
       "ecommerce": "电子商务",
       "flows": "流程",
       "messageTemplates": "消息范本",
