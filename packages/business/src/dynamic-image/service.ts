@@ -15,6 +15,7 @@ import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { notFoundException } from "../errors"
+import { logger } from "../logger"
 import { isSsrfUnsafeUrl } from "../net/ssrf-guard"
 import { resolveTenantSettings } from "../platform/settings"
 import { toPublicStorageUrl } from "../utils"
@@ -55,26 +56,40 @@ function getBackgroundVersion(backgroundUrl: string): string {
   return BACKGROUND_VERSION_RE.exec(backgroundUrl)?.[1] ?? String(Date.now())
 }
 
-/** Deletes every object under `prefix`, paginating through S3's listing. */
+/**
+ * Deletes every object under `prefix`, paginating through S3's listing.
+ * Best-effort: some S3-compatible backends return a client error (e.g.
+ * NoSuchKey) for ListObjectsV2 against a prefix with no matching keys yet,
+ * instead of an empty result. The file(s) this is meant to clean up are
+ * already orphaned and harmless either way, so a failure here must never
+ * abort the save that just succeeded — it's swept again on the next save.
+ */
 async function deleteObjectsByPrefix(
   prefix: string,
   options: { except?: string } = {},
 ): Promise<void> {
-  let continuationToken: string | undefined
-  do {
-    const listed = await uploader.listObjects(prefix, {
-      ContinuationToken: continuationToken,
-    })
-    const keys = (listed.Contents ?? [])
-      .map((object) => object.Key)
-      .filter((key): key is string => Boolean(key) && key !== options.except)
+  try {
+    let continuationToken: string | undefined
+    do {
+      const listed = await uploader.listObjects(prefix, {
+        ContinuationToken: continuationToken,
+      })
+      const keys = (listed.Contents ?? [])
+        .map((object) => object.Key)
+        .filter((key): key is string => Boolean(key) && key !== options.except)
 
-    await Promise.all(keys.map((key) => uploader.deleteObject(key)))
+      await Promise.all(keys.map((key) => uploader.deleteObject(key)))
 
-    continuationToken = listed.IsTruncated
-      ? listed.NextContinuationToken
-      : undefined
-  } while (continuationToken)
+      continuationToken = listed.IsTruncated
+        ? listed.NextContinuationToken
+        : undefined
+    } while (continuationToken)
+  } catch (error) {
+    logger.warn(
+      { prefix, error },
+      "dynamic-image: failed to clean up old files under prefix",
+    )
+  }
 }
 
 type ListInput = {
