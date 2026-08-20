@@ -5088,6 +5088,7 @@
       "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
       "datasetRequired": "Tallenna tietojoukon tunnus ennen käyttöoikeustunnuksen lisäämistä.",
       "invalidToken": "Tämä tunnus ei päässyt käsiksi tietojoukkoon.",
+      "invalidDatasetId": "Anna kelvollinen Dataset ID (vain numeroita).",
       "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Yhdistä Facebookin kautta",
         "description": "Käytä sivusi olemassa olevaa yhteyttä ja valitse sitten tietojoukon tunnus.",
-        "connect": "Yhdistä Facebookin kautta",
+        "connect": "Luo tietojoukko",
         "connectedLabel": "Facebookin kautta"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Yhdistä WhatsAppin kautta",
         "description": "Käytä WhatsApp-yhteyttäsi ja valitse sitten tietojoukon tunnus.",
-        "connect": "Yhdistä WhatsAppin kautta",
+        "connect": "Luo tietojoukko",
         "connectedLabel": "WhatsAppin kautta"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Valitse tietojoukon tunnus",
       "description": "Anna olemassa oleva tietojoukon tunnus tai jätä tyhjäksi luodaksesi sen automaattisesti.",
       "save": "Tallenna",
+      "createDataset": "Luo tietojoukko",
       "caveat": "Tietojoukon tunnus, jota ei ole linkitetty tähän sivuun tai Instagram-tiliin, ei ehkä kohdista tapahtumia oikein. Jätä tämä kenttä tyhjäksi luodaksesi linkitetyn tietojoukon automaattisesti."
     },
     "whatsapp": {

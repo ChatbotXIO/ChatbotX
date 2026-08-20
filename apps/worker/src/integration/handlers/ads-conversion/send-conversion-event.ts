@@ -4,6 +4,7 @@ import {
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { adsConversionEventRepository } from "@chatbotx.io/database/repositories"
+import { buildDatasetName } from "@chatbotx.io/integration-meta-conversions"
 import {
   ensureDataset,
   sendConversionEvent,
@@ -63,13 +64,18 @@ export async function handleSendConversionEvent(
       // retryable Meta error rethrows for a BullMQ retry, while a terminal one
       // is caught below and marks the event `failed` instead of stranding it
       // as `pending`.
+      // `ensureDatasetId` picks the create token (WhatsApp's agency System User
+      // token for embedded-signup connections, with a connect-token fallback),
+      // so this callback just performs the create with whatever token it is
+      // handed.
       const datasetId = await integrationWhatsappService.ensureDatasetId({
         id: integration.id,
         workspaceId: integration.workspaceId,
-        provision: ({ wabaId, accessToken }) =>
+        provision: ({ wabaId, wabaName, accessToken }) =>
           ensureDataset({
             wabaId,
             accessToken,
+            datasetName: buildDatasetName(wabaName),
             version: auth.version,
           }),
       })

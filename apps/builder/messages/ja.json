@@ -5088,6 +5088,7 @@
       "saveFailed": "保存できませんでした。もう一度お試しください。",
       "datasetRequired": "アクセストークンを追加する前にデータセットIDを保存してください。",
       "invalidToken": "このトークンではデータセットにアクセスできませんでした。",
+      "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
       "whatsappNotFound": "WhatsApp の連携が見つかりません。"
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Facebook 経由で連携",
         "description": "既存のページの連携を利用し、データセットIDを選択します。",
-        "connect": "Facebook 経由で連携",
+        "connect": "データセットを作成",
         "connectedLabel": "Facebook 経由"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "WhatsApp 経由で連携",
         "description": "既存の WhatsApp 連携を利用し、データセットIDを選択します。",
-        "connect": "WhatsApp 経由で連携",
+        "connect": "データセットを作成",
         "connectedLabel": "WhatsApp 経由"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "データセットIDを選択",
       "description": "既存のデータセットIDを入力するか、空欄のままにすると自動的に作成されます。",
       "save": "保存",
+      "createDataset": "データセットを作成",
       "caveat": "このページまたは Instagram アカウントに紐付いていないデータセットIDでは、イベントが正しく属性付けされない場合があります。このフィールドを空欄にすると、紐付いたデータセットが自動的に作成されます。"
     },
     "whatsapp": {

@@ -5088,6 +5088,7 @@
       "saveFailed": "לא ניתן היה לשמור. נסו שוב.",
       "datasetRequired": "שמרו מזהה Dataset לפני הוספת אסימון גישה.",
       "invalidToken": "האסימון הזה לא הצליח לגשת למאגר הנתונים.",
+      "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
       "whatsappNotFound": "שילוב WhatsApp לא נמצא."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "חיבור דרך Facebook",
         "description": "השתמשו בחיבור הקיים של הדף שלכם, ולאחר מכן בחרו מזהה Dataset.",
-        "connect": "חיבור דרך Facebook",
+        "connect": "יצירת מערך נתונים",
         "connectedLabel": "דרך Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "חיבור דרך WhatsApp",
         "description": "השתמשו בחיבור ה-WhatsApp שלכם, ולאחר מכן בחרו מזהה Dataset.",
-        "connect": "חיבור דרך WhatsApp",
+        "connect": "יצירת מערך נתונים",
         "connectedLabel": "דרך WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "בחרו מזהה Dataset",
       "description": "הזינו מזהה Dataset קיים, או השאירו ריק כדי ליצור אחד באופן אוטומטי.",
       "save": "שמור",
+      "createDataset": "יצירת מערך נתונים",
       "caveat": "מזהה Dataset שאינו מקושר לעמוד או לחשבון Instagram הזה עלול לא לייחס אירועים כראוי. השאירו שדה זה ריק כדי ליצור מאגר נתונים מקושר באופן אוטומטי."
     },
     "whatsapp": {

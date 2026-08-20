@@ -5088,6 +5088,7 @@
       "saveFailed": "Tidak dapat menyimpan. Silakan coba lagi.",
       "datasetRequired": "Simpan Dataset ID sebelum menambahkan token akses.",
       "invalidToken": "Token ini tidak dapat mengakses dataset.",
+      "invalidDatasetId": "Masukkan Dataset ID yang valid (hanya angka).",
       "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Hubungkan via Facebook",
         "description": "Gunakan koneksi halaman Anda yang sudah ada, lalu pilih Dataset ID.",
-        "connect": "Hubungkan via Facebook",
+        "connect": "Buat Dataset",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Hubungkan via WhatsApp",
         "description": "Gunakan koneksi WhatsApp Anda, lalu pilih Dataset ID.",
-        "connect": "Hubungkan via WhatsApp",
+        "connect": "Buat Dataset",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Pilih Dataset ID",
       "description": "Masukkan Dataset ID yang sudah ada, atau biarkan kosong untuk membuatnya secara otomatis.",
       "save": "Simpan",
+      "createDataset": "Buat Dataset",
       "caveat": "Dataset ID yang tidak tertaut ke Halaman atau akun Instagram ini mungkin tidak mengatribusikan peristiwa dengan benar. Biarkan kolom ini kosong untuk membuat dataset tertaut secara otomatis."
     },
     "whatsapp": {

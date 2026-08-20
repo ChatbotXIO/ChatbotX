@@ -5088,6 +5088,7 @@
       "saveFailed": "Det gick inte att spara. Försök igen.",
       "datasetRequired": "Spara ett Dataset-ID innan du lägger till en åtkomsttoken.",
       "invalidToken": "Den här token kunde inte komma åt datasetet.",
+      "invalidDatasetId": "Ange ett giltigt Dataset ID (endast siffror).",
       "whatsappNotFound": "WhatsApp-integrationen hittades inte."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Anslut via Facebook",
         "description": "Använd sidans befintliga anslutning och välj sedan ett Dataset-ID.",
-        "connect": "Anslut via Facebook",
+        "connect": "Skapa datauppsättning",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Anslut via WhatsApp",
         "description": "Använd din WhatsApp-anslutning och välj sedan ett Dataset-ID.",
-        "connect": "Anslut via WhatsApp",
+        "connect": "Skapa datauppsättning",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Välj ett Dataset-ID",
       "description": "Ange ett befintligt Dataset-ID, eller lämna det tomt för att skapa ett automatiskt.",
       "save": "Spara",
+      "createDataset": "Skapa datauppsättning",
       "caveat": "Ett Dataset-ID som inte är kopplat till den här sidan eller Instagram-kontot kan attribuera händelser felaktigt. Lämna fältet tomt för att skapa ett kopplat dataset automatiskt."
     },
     "whatsapp": {

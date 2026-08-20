@@ -4834,6 +4834,7 @@
       "saveFailed": "无法保存，请重试。",
       "datasetRequired": "请先保存数据集 ID，再添加访问令牌。",
       "invalidToken": "此令牌无法访问该数据集。",
+      "invalidDatasetId": "请输入有效的 Dataset ID（仅数字）。",
       "whatsappNotFound": "未找到 WhatsApp 集成。"
     },
     "fields": {
@@ -4869,7 +4870,7 @@
       "oauth": {
         "title": "通过 Facebook 连接",
         "description": "使用您页面现有的连接，然后选择数据集 ID。",
-        "connect": "通过 Facebook 连接",
+        "connect": "创建数据集",
         "connectedLabel": "通过 Facebook"
       },
       "custom": {
@@ -4882,7 +4883,7 @@
       "whatsapp": {
         "title": "通过 WhatsApp 连接",
         "description": "使用您的 WhatsApp 连接，然后选择数据集 ID。",
-        "connect": "通过 WhatsApp 连接",
+        "connect": "创建数据集",
         "connectedLabel": "通过 WhatsApp"
       }
     },
@@ -4890,6 +4891,7 @@
       "title": "选择数据集 ID",
       "description": "输入现有的数据集 ID，留空则自动创建一个。",
       "save": "保存",
+      "createDataset": "创建数据集",
       "caveat": "未关联到此页面或 Instagram 帐户的数据集 ID 可能无法正确归因事件。留空此字段可自动创建关联的数据集。"
     },
     "whatsapp": {

@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   whatsappUpdateDatasetId: vi.fn(),
   whatsappUpdateCapiAccessToken: vi.fn(),
   whatsappClearCapiAccessToken: vi.fn(),
+  whatsappResolveDatasetCreationTokens: vi.fn(),
   whatsappConnectCustomCapi: vi.fn(),
   whatsappSetCapiDisconnectedAt: vi.fn(),
   whatsappClearCapiDisconnectedAt: vi.fn(),
@@ -107,6 +108,7 @@ vi.mock("../src/integration-instagram/service", () => ({
 vi.mock("../src/integration-whatsapp/service", () => ({
   integrationWhatsappService: {
     findByInboxIdForWorkspace: mocks.whatsappFindByInboxIdForWorkspace,
+    resolveDatasetCreationTokens: mocks.whatsappResolveDatasetCreationTokens,
   },
 }))
 
@@ -131,6 +133,7 @@ const messengerIntegration = {
   workspaceId: "ws-1",
   inboxId: "inbox-1",
   pageId: "page-1",
+  name: "Acme Page",
   auth: { tokens: { accessToken: "messenger-token" } },
   capiScopeCheckedAt: null,
   datasetId: null,
@@ -143,6 +146,7 @@ const instagramFacebookIntegration = {
   inboxId: "inbox-1",
   igId: "ig-user-1",
   pageId: "page-1",
+  name: "Acme IG",
   auth: { tokens: { accessToken: "instagram-token" } },
   capiScopeCheckedAt: null,
   datasetId: null,
@@ -160,6 +164,7 @@ const whatsappIntegration = {
   workspaceId: "ws-1",
   inboxId: "inbox-1",
   wabaId: "waba-1",
+  name: "Acme WABA",
   auth: { tokens: { accessToken: "whatsapp-token" } },
   capiScopeCheckedAt: null,
   datasetId: null,
@@ -502,6 +507,7 @@ describe("MetaConversionsService", () => {
     expect(provisionDataset).toHaveBeenCalledWith({
       accessToken: "instagram-token",
       resourceId: "ig-user-1",
+      resourceName: "Acme IG",
     })
     expect(mocks.instagramUpdateDatasetIdIfNull).toHaveBeenCalledWith(
       {
@@ -638,6 +644,12 @@ describe("MetaConversionsService", () => {
       ...whatsappIntegration,
       datasetId: "dataset-waba-1",
     })
+    // The adapter picks the per-channel create token (WhatsApp's agency
+    // system-user token) with the connect token as its fallback.
+    mocks.whatsappResolveDatasetCreationTokens.mockResolvedValue({
+      primaryToken: "wa-system-token",
+      fallbackToken: "whatsapp-token",
+    })
     const provisionDataset = vi.fn().mockResolvedValue("dataset-waba-1")
 
     await expect(
@@ -648,9 +660,16 @@ describe("MetaConversionsService", () => {
       }),
     ).resolves.toBe("dataset-waba-1")
 
+    expect(mocks.whatsappResolveDatasetCreationTokens).toHaveBeenCalledWith({
+      integration: whatsappIntegration,
+      workspaceId: "ws-1",
+      connectToken: "whatsapp-token",
+    })
     expect(provisionDataset).toHaveBeenCalledWith({
-      accessToken: "whatsapp-token",
+      accessToken: "wa-system-token",
+      fallbackAccessToken: "whatsapp-token",
       resourceId: "waba-1",
+      resourceName: "Acme WABA",
     })
     expect(mocks.whatsappUpdateDatasetIdIfNull).toHaveBeenCalledWith(
       {
@@ -660,6 +679,49 @@ describe("MetaConversionsService", () => {
       },
       undefined,
     )
+  })
+
+  test("retries whatsapp dataset creation with the fallback token on an auth error", async () => {
+    mocks.whatsappUpdateDatasetIdIfNull.mockResolvedValueOnce({
+      ...whatsappIntegration,
+      datasetId: "dataset-waba-1",
+    })
+    mocks.whatsappResolveDatasetCreationTokens.mockResolvedValue({
+      primaryToken: "wa-system-token",
+      fallbackToken: "whatsapp-token",
+    })
+    // The System User token is rejected (#100), so the create is retried with
+    // the connect token.
+    const provisionDataset = vi
+      .fn()
+      .mockRejectedValueOnce(
+        Object.assign(new Error("(#100) Missing Permission"), {
+          code: 100,
+          httpStatusCode: 400,
+        }),
+      )
+      .mockResolvedValueOnce("dataset-waba-1")
+
+    await expect(
+      metaConversionsService.ensureDatasetId({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+        provisionDataset,
+      }),
+    ).resolves.toBe("dataset-waba-1")
+
+    expect(provisionDataset).toHaveBeenNthCalledWith(1, {
+      accessToken: "wa-system-token",
+      fallbackAccessToken: "whatsapp-token",
+      resourceId: "waba-1",
+      resourceName: "Acme WABA",
+    })
+    expect(provisionDataset).toHaveBeenNthCalledWith(2, {
+      accessToken: "whatsapp-token",
+      fallbackAccessToken: "whatsapp-token",
+      resourceId: "waba-1",
+      resourceName: "Acme WABA",
+    })
   })
 
   test("dispatches whatsapp readiness refresh through the send-path CAS adapter", async () => {

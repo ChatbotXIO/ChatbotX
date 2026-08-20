@@ -5,7 +5,10 @@ import {
   metaConversionsService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { ensureDataset } from "@chatbotx.io/integration-meta-conversions"
+import {
+  buildDatasetName,
+  ensureDataset,
+} from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { surfaceCapiError } from "@/features/meta-conversions/lib/surface-capi-error"
@@ -36,8 +39,13 @@ export const provisionInstagramCapiDatasetAction = workspaceActionClient
         await metaConversionsService.provisionDatasetNow({
           channel: "instagram",
           integration,
-          provisionDataset: ({ accessToken, resourceId }) =>
-            ensureDataset({ resourceType: "igUser", resourceId, accessToken }),
+          provisionDataset: ({ accessToken, resourceId, resourceName }) =>
+            ensureDataset({
+              resourceType: "igUser",
+              resourceId,
+              accessToken,
+              datasetName: buildDatasetName(resourceName),
+            }),
         })
       } catch (error) {
         surfaceCapiError(error)

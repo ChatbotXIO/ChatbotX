@@ -5088,6 +5088,7 @@
       "saveFailed": "無法儲存，請再試一次。",
       "datasetRequired": "請先儲存資料集 ID，再新增存取權杖。",
       "invalidToken": "此權杖無法存取該資料集。",
+      "invalidDatasetId": "請輸入有效的 Dataset ID（僅數字）。",
       "whatsappNotFound": "找不到 WhatsApp 整合。"
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "透過 Facebook 連接",
         "description": "使用您粉專現有的連接，然後選擇資料集 ID。",
-        "connect": "透過 Facebook 連接",
+        "connect": "建立資料集",
         "connectedLabel": "透過 Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "透過 WhatsApp 連接",
         "description": "使用您的 WhatsApp 連接，然後選擇資料集 ID。",
-        "connect": "透過 WhatsApp 連接",
+        "connect": "建立資料集",
         "connectedLabel": "透過 WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "選擇資料集 ID",
       "description": "輸入現有的資料集 ID，或留空以自動建立一個。",
       "save": "儲存",
+      "createDataset": "建立資料集",
       "caveat": "未連結至此粉專或 Instagram 帳戶的資料集 ID 可能無法正確歸因事件。將此欄位留空即可自動建立已連結的資料集。"
     },
     "whatsapp": {

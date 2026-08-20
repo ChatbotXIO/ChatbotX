@@ -26,10 +26,30 @@ const datasetIdResponseSchema = z.union([
   }),
 ])
 
+/** Suffix Meta itself appends to the auto-generated dataset name. */
+export const DATASET_NAME_SUFFIX = "Event Data"
+
+/**
+ * Builds the dataset name shown in Events Manager from a resource's display
+ * name, e.g. `"Acme Page"` -> `"Acme Page Event Data"`. Falls back to the bare
+ * suffix when the resource has no usable name.
+ */
+export const buildDatasetName = (resourceName: string): string => {
+  const trimmed = resourceName.trim()
+  return trimmed ? `${trimmed} ${DATASET_NAME_SUFFIX}` : DATASET_NAME_SUFFIX
+}
+
 export type EnsureDatasetInput = {
   resourceType: "page" | "igUser" | "waba"
   resourceId: string
   accessToken: string
+  /**
+   * Human-readable name for the dataset (e.g. `"Acme Page Event Data"`). When
+   * omitted or blank, Meta assigns its default ("unknown Event Data"), so
+   * callers should always pass one for a freshly created dataset. The edge is
+   * idempotent, so this only names the dataset on first creation.
+   */
+  datasetName?: string
   version?: string
 }
 
@@ -57,13 +77,16 @@ export const ensureDataset = ({
   resourceType,
   resourceId,
   accessToken,
+  datasetName,
   version = DEFAULT_API_VERSION,
 }: EnsureDatasetInput): Promise<string> =>
   rescueMetaConversions(async () => {
+    const trimmedName = datasetName?.trim()
     const response = await metaConversionsGraphClient.post<unknown>(
       `${version}/${datasetEndpointByResourceType[resourceType](resourceId)}`,
       {
         headers: graphAuthHeaders(accessToken),
+        ...(trimmedName ? { json: { dataset_name: trimmedName } } : {}),
       },
     )
 

@@ -382,6 +382,31 @@ class PlatformCredentialService extends BaseService {
   }
 
   /**
+   * The agency **System User** access token from the owner's WhatsApp platform
+   * credential. Used to create WhatsApp assets (e.g. CAPI datasets) on behalf
+   * of a client WABA so Meta attributes the dataset "Creator" to the business
+   * system user instead of the personal user who connected the integration —
+   * the embedded-signup flow already grants this system user access to the WABA
+   * (`addSystemUser`). Returns `null` when the owner has no WhatsApp credential,
+   * so callers can fall back to the connecting user's token and never break
+   * provisioning.
+   */
+  async resolveWhatsappSystemUserToken(props: {
+    ownerId: string
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<string | null> {
+    const credential = await this.resolveForOwner({
+      ownerId: props.ownerId,
+      type: "whatsapp",
+      livemode: props.livemode,
+      tx: props.tx,
+    })
+
+    return credential?.config.systemUserToken ?? null
+  }
+
+  /**
    * Resolve the public (non-secret) credential config for a user, falling back
    * to the platform-global default when the user has not configured their own.
    * Used by the manage UI so a reseller sees the credential their workspaces

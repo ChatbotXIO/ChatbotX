@@ -5088,6 +5088,7 @@
       "saveFailed": "Opslaan is mislukt. Probeer het opnieuw.",
       "datasetRequired": "Sla een Dataset-ID op voordat je een toegangstoken toevoegt.",
       "invalidToken": "Dit token kreeg geen toegang tot de dataset.",
+      "invalidDatasetId": "Voer een geldig Dataset ID in (alleen cijfers).",
       "whatsappNotFound": "WhatsApp-integratie niet gevonden."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Koppelen via Facebook",
         "description": "Gebruik de bestaande koppeling van je pagina en kies daarna een Dataset-ID.",
-        "connect": "Koppelen via Facebook",
+        "connect": "Dataset maken",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Koppelen via WhatsApp",
         "description": "Gebruik je WhatsApp-koppeling en kies daarna een Dataset-ID.",
-        "connect": "Koppelen via WhatsApp",
+        "connect": "Dataset maken",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Kies een Dataset-ID",
       "description": "Voer een bestaande Dataset-ID in, of laat dit veld leeg om er automatisch een aan te maken.",
       "save": "Opslaan",
+      "createDataset": "Dataset maken",
       "caveat": "Een Dataset-ID die niet aan deze pagina of dit Instagram-account is gekoppeld, kan gebeurtenissen mogelijk niet correct toewijzen. Laat dit veld leeg om automatisch een gekoppelde dataset aan te maken."
     },
     "whatsapp": {

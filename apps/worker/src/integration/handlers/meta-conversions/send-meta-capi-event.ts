@@ -24,6 +24,7 @@ import {
   toAppAccessToken as toMessengerAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import {
+  buildDatasetName,
   type EnsureDatasetInput,
   ensureDataset,
   sendConversionEvent,
@@ -422,11 +423,15 @@ export async function handleSendMetaCapiEvent(
           : await metaConversionsService.ensureDatasetId({
               channel: event.channel,
               integration: integrationForSend,
-              provisionDataset: ({ resourceId }) =>
+              // The adapter's `buildDatasetProvisionInput` resolves the correct
+              // per-channel dataset-creation token (e.g. WhatsApp's agency
+              // System User token), so this stays channel-generic.
+              provisionDataset: ({ accessToken, resourceId, resourceName }) =>
                 ensureDataset({
                   resourceType: datasetResourceTypeByChannel[event.channel],
                   resourceId,
-                  accessToken: auth.accessToken,
+                  accessToken,
+                  datasetName: buildDatasetName(resourceName),
                 }),
             })
 

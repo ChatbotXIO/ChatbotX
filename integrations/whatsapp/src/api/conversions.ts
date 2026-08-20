@@ -44,6 +44,12 @@ export type ConversionEventInput = {
 type EnsureDatasetInput = {
   wabaId: string
   accessToken: string
+  /**
+   * Human-readable dataset name (e.g. `"Acme WABA Event Data"`). When omitted
+   * or blank, Meta falls back to its default "unknown Event Data". The edge is
+   * idempotent, so this only names the dataset on first creation.
+   */
+  datasetName?: string
   version?: string
 }
 
@@ -108,14 +114,17 @@ function readDatasetId(response: unknown): string {
 export function ensureDataset({
   wabaId,
   accessToken,
+  datasetName,
   version = DEFAULT_API_VERSION,
 }: EnsureDatasetInput): Promise<string> {
   return conversionRescue(async () => {
+    const trimmedName = datasetName?.trim()
     const response = await ky
       .post<unknown>(`${API_URL}/${version}/${wabaId}/dataset`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
+        ...(trimmedName ? { json: { dataset_name: trimmedName } } : {}),
       })
       .json()
 

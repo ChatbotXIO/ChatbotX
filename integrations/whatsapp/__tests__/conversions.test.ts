@@ -10,7 +10,9 @@ vi.mock("ky", async () => {
   }
 })
 
-const { sendConversionEvent } = await import("../src/api/conversions")
+const { sendConversionEvent, ensureDataset } = await import(
+  "../src/api/conversions"
+)
 
 const okResponse = () => ({
   json: vi.fn().mockResolvedValue({ events_received: 1 }),
@@ -67,6 +69,48 @@ describe("Conversions API", () => {
           ],
           partner_agent: "ChatbotX",
         },
+      },
+    )
+  })
+
+  test("ensureDataset names the WABA dataset via dataset_name", async () => {
+    postMock.mockReturnValueOnce({
+      json: vi.fn().mockResolvedValue({ id: "dataset-1" }),
+    })
+
+    await expect(
+      ensureDataset({
+        wabaId: "waba-1",
+        accessToken: "token-1",
+        datasetName: "Shop Trần Event Data",
+        version: "v23.0",
+      }),
+    ).resolves.toBe("dataset-1")
+
+    expect(postMock).toHaveBeenCalledWith(
+      "https://graph.facebook.com/v23.0/waba-1/dataset",
+      {
+        headers: { Authorization: "Bearer token-1" },
+        json: { dataset_name: "Shop Trần Event Data" },
+      },
+    )
+  })
+
+  test("ensureDataset omits dataset_name when no name is given", async () => {
+    postMock.mockReturnValueOnce({
+      json: vi.fn().mockResolvedValue({ id: "dataset-1" }),
+    })
+
+    await ensureDataset({
+      wabaId: "waba-1",
+      accessToken: "token-1",
+      version: "v23.0",
+    })
+
+    expect(postMock).toHaveBeenCalledWith(
+      "https://graph.facebook.com/v23.0/waba-1/dataset",
+      {
+        headers: { Authorization: "Bearer token-1" },
       },
     )
   })

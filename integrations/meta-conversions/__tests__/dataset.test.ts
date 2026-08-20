@@ -15,7 +15,9 @@ vi.mock("../src/lib/http-client", () => ({
   }),
 }))
 
-const { ensureDataset, getDataset } = await import("../src/apis/dataset")
+const { ensureDataset, getDataset, buildDatasetName } = await import(
+  "../src/apis/dataset"
+)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -70,6 +72,47 @@ describe("Meta Conversions dataset API", () => {
     expect(mocks.post).toHaveBeenCalledWith("v24.0/waba-1/dataset", {
       headers: { Authorization: "Bearer token-1" },
     })
+  })
+
+  test("names the dataset via dataset_name when a name is provided", async () => {
+    mocks.post.mockResolvedValue({ data: { id: "dataset-page-1" } })
+
+    await expect(
+      ensureDataset({
+        resourceType: "page",
+        resourceId: "page-1",
+        accessToken: "token-1",
+        datasetName: "Acme Page Event Data",
+        version: "v24.0",
+      }),
+    ).resolves.toBe("dataset-page-1")
+
+    expect(mocks.post).toHaveBeenCalledWith("v24.0/page-1/dataset", {
+      headers: { Authorization: "Bearer token-1" },
+      json: { dataset_name: "Acme Page Event Data" },
+    })
+  })
+
+  test("omits dataset_name when the provided name is blank", async () => {
+    mocks.post.mockResolvedValue({ data: { id: "dataset-page-1" } })
+
+    await ensureDataset({
+      resourceType: "page",
+      resourceId: "page-1",
+      accessToken: "token-1",
+      datasetName: "   ",
+      version: "v24.0",
+    })
+
+    expect(mocks.post).toHaveBeenCalledWith("v24.0/page-1/dataset", {
+      headers: { Authorization: "Bearer token-1" },
+    })
+  })
+
+  test("buildDatasetName appends the Event Data suffix", () => {
+    expect(buildDatasetName("Acme Page")).toBe("Acme Page Event Data")
+    expect(buildDatasetName("  Shop Trần  ")).toBe("Shop Trần Event Data")
+    expect(buildDatasetName("   ")).toBe("Event Data")
   })
 
   test("validates dataset access by reading the dataset id", async () => {

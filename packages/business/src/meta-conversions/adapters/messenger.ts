@@ -20,6 +20,7 @@ export const messengerCapiReadinessAdapter: CapiReadinessAdapter<"messenger"> =
       return {
         accessToken: auth.accessToken,
         resourceId: integration.pageId,
+        resourceName: integration.name,
       }
     },
     buildScopeCheckInput(integration) {

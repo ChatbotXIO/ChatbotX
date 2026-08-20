@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 type DatasetProvisionInput = {
   accessToken: string
   resourceId: string
+  resourceName: string
 }
 
 type MessengerIntegration = typeof integration
@@ -57,6 +58,8 @@ vi.mock("@chatbotx.io/business", async () => {
 
 vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
   ensureDataset: mocks.ensureDataset,
+  buildDatasetName: (name: string) =>
+    name.trim() ? `${name.trim()} Event Data` : "Event Data",
   sendConversionEvent: mocks.sendConversionEvent,
 }))
 
@@ -164,6 +167,7 @@ describe("handleSendMetaCapiEvent", () => {
         await input.provisionDataset({
           accessToken: "token-1",
           resourceId: "page-1",
+          resourceName: "Acme Page",
         }),
     )
     mocks.sendConversionEvent.mockResolvedValue(undefined)
@@ -190,6 +194,7 @@ describe("handleSendMetaCapiEvent", () => {
       resourceType: "page",
       resourceId: "page-1",
       accessToken: "token-1",
+      datasetName: "Acme Page Event Data",
     })
     expect(mocks.sendConversionEvent).toHaveBeenCalledWith({
       datasetId: "dataset-1",
@@ -454,9 +459,12 @@ describe("handleSendMetaCapiEvent", () => {
         async (input: {
           provisionDataset: (data: DatasetProvisionInput) => Promise<string>
         }) =>
+          // The adapter supplies the dataset-creation token (WhatsApp's agency
+          // system-user token); the handler just forwards it.
           await input.provisionDataset({
-            accessToken: "token-1",
+            accessToken: "wa-system-token",
             resourceId: "waba-1",
+            resourceName: "Acme WABA",
           }),
       )
     })
@@ -468,10 +476,12 @@ describe("handleSendMetaCapiEvent", () => {
         id: "wa-1",
         workspaceId: "ws-1",
       })
+      // The handler forwards the adapter-resolved creation token unchanged.
       expect(mocks.ensureDataset).toHaveBeenCalledWith({
         resourceType: "waba",
         resourceId: "waba-1",
-        accessToken: "token-1",
+        accessToken: "wa-system-token",
+        datasetName: "Acme WABA Event Data",
       })
       expect(mocks.sendConversionEvent).toHaveBeenCalledWith({
         datasetId: "dataset-1",

@@ -5088,6 +5088,7 @@
       "saveFailed": "Speichern nicht möglich. Bitte versuchen Sie es erneut.",
       "datasetRequired": "Speichern Sie eine Dataset-ID, bevor Sie ein Zugriffstoken hinzufügen.",
       "invalidToken": "Mit diesem Token konnte nicht auf das Dataset zugegriffen werden.",
+      "invalidDatasetId": "Gib eine gültige Dataset-ID ein (nur Zahlen).",
       "whatsappNotFound": "WhatsApp-Integration nicht gefunden."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Über Facebook verbinden",
         "description": "Nutzen Sie die bestehende Verbindung Ihrer Seite und wählen Sie dann eine Dataset-ID aus.",
-        "connect": "Über Facebook verbinden",
+        "connect": "Datensatz erstellen",
         "connectedLabel": "über Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Über WhatsApp verbinden",
         "description": "Nutzen Sie Ihre WhatsApp-Verbindung und wählen Sie dann eine Dataset-ID aus.",
-        "connect": "Über WhatsApp verbinden",
+        "connect": "Datensatz erstellen",
         "connectedLabel": "über WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Dataset-ID auswählen",
       "description": "Geben Sie eine vorhandene Dataset-ID ein oder lassen Sie das Feld leer, um automatisch eine zu erstellen.",
       "save": "Speichern",
+      "createDataset": "Datensatz erstellen",
       "caveat": "Eine Dataset-ID, die nicht mit dieser Seite oder diesem Instagram-Konto verknüpft ist, kann Ereignisse möglicherweise nicht korrekt zuordnen. Lassen Sie dieses Feld leer, um automatisch ein verknüpftes Dataset zu erstellen."
     },
     "whatsapp": {
