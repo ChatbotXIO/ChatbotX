@@ -5088,6 +5088,7 @@
       "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin.",
       "datasetRequired": "Erişim jetonu eklemeden önce bir Veri Kümesi ID'si kaydedin.",
       "invalidToken": "Bu jeton veri kümesine erişemedi.",
+      "invalidDatasetId": "Geçerli bir Dataset ID girin (yalnızca rakamlar).",
       "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Facebook üzerinden bağlan",
         "description": "Sayfanızın mevcut bağlantısını kullanın, ardından bir Veri Kümesi ID'si seçin.",
-        "connect": "Facebook üzerinden bağlan",
+        "connect": "Veri kümesi oluştur",
         "connectedLabel": "Facebook üzerinden"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "WhatsApp üzerinden bağlan",
         "description": "WhatsApp bağlantınızı kullanın, ardından bir Veri Kümesi ID'si seçin.",
-        "connect": "WhatsApp üzerinden bağlan",
+        "connect": "Veri kümesi oluştur",
         "connectedLabel": "WhatsApp üzerinden"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Bir Veri Kümesi ID'si seçin",
       "description": "Mevcut bir Veri Kümesi ID'si girin veya otomatik olarak oluşturmak için boş bırakın.",
       "save": "Kaydet",
+      "createDataset": "Veri kümesi oluştur",
       "caveat": "Bu Sayfa veya Instagram hesabına bağlı olmayan bir Veri Kümesi ID'si etkinlikleri doğru şekilde ilişkilendirmeyebilir. Bağlı bir veri kümesini otomatik olarak oluşturmak için bu alanı boş bırakın."
     },
     "whatsapp": {

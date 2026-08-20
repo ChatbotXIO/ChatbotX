@@ -68,8 +68,22 @@ export type CapiScopeCheckInput = {
 }
 
 export type DatasetProvisionInput = {
+  /** Preferred token for the create call (e.g. WhatsApp's System User token). */
   accessToken: string
+  /**
+   * Token to retry the create with when Meta rejects `accessToken` for
+   * authorization reasons, or `null`/omitted when the channel has no alternative
+   * token. `ensureDatasetId` handles the retry channel-agnostically.
+   */
+  fallbackAccessToken?: string | null
   resourceId: string
+  /**
+   * Display name of the underlying Meta resource (page / IG page / WABA name).
+   * Callers turn this into the dataset name so a freshly provisioned dataset
+   * reads as `"{resourceName} Event Data"` in Events Manager instead of Meta's
+   * default "unknown Event Data".
+   */
+  resourceName: string
 }
 
 export type DatasetValidationInput = {

@@ -28,6 +28,7 @@ import {
   formatCustomFieldValueInTimeZone,
   formatWithFallback,
 } from "@chatbotx.io/utils/datetime"
+import { VARIABLE_PLACEHOLDER_SOURCE } from "@chatbotx.io/utils/variables"
 import {
   getAssignedTeamName,
   resolveAssigneeEmail,
@@ -55,10 +56,14 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-// Exported so javascript-interpolation.ts scans the same placeholder syntax
-// as the message-text path — one definition, so the two can't drift.
-export const VARIABLE_PLACEHOLDER_REGEX =
-  /\{\{(coupon:[^{}\n]+|raw:[^{}\n]+|[^{}\n]+)\}\}/g
+// Exported so javascript-interpolation.ts scans the same placeholder syntax as
+// the message-text path. Built (global, for `matchAll`/`replace`) from the
+// shared canonical grammar in `@chatbotx.io/utils` — the single source of truth,
+// so both resolvers and the flow-builder validators can't drift.
+export const VARIABLE_PLACEHOLDER_REGEX = new RegExp(
+  VARIABLE_PLACEHOLDER_SOURCE,
+  "g",
+)
 // `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
 // where the placeholder sits — a call the position-independent mapping can't
 // make. resolveGenderLabel returns the opening form; inside a sentence it is

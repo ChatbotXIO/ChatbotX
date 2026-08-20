@@ -5088,6 +5088,7 @@
       "saveFailed": "Nu s-a putut salva. Te rugăm să încerci din nou.",
       "datasetRequired": "Salvează un ID set de date înainte de a adăuga un token de acces.",
       "invalidToken": "Acest token nu a putut accesa setul de date.",
+      "invalidDatasetId": "Introdu un Dataset ID valid (doar cifre).",
       "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Conectează prin Facebook",
         "description": "Folosește conexiunea existentă a paginii tale, apoi alege un ID set de date.",
-        "connect": "Conectează prin Facebook",
+        "connect": "Creează set de date",
         "connectedLabel": "prin Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Conectează prin WhatsApp",
         "description": "Folosește conexiunea ta WhatsApp, apoi alege un ID set de date.",
-        "connect": "Conectează prin WhatsApp",
+        "connect": "Creează set de date",
         "connectedLabel": "prin WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Alege un ID set de date",
       "description": "Introdu un ID set de date existent, sau lasă gol pentru a crea unul automat.",
       "save": "Salvează",
+      "createDataset": "Creează set de date",
       "caveat": "Un ID set de date care nu este asociat acestei Pagini sau cont Instagram poate să nu atribuie corect evenimentele. Lasă acest câmp gol pentru a crea automat un set de date asociat."
     },
     "whatsapp": {

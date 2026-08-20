@@ -5088,6 +5088,7 @@
       "saveFailed": "Kunne ikke gemme. Prøv venligst igen.",
       "datasetRequired": "Gem et Dataset-ID, før du tilføjer en adgangstoken.",
       "invalidToken": "Denne token kunne ikke tilgå datasættet.",
+      "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
       "whatsappNotFound": "WhatsApp-integration ikke fundet."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Forbind via Facebook",
         "description": "Brug din sides eksisterende forbindelse, og vælg derefter et Dataset-ID.",
-        "connect": "Forbind via Facebook",
+        "connect": "Opret datasæt",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Forbind via WhatsApp",
         "description": "Brug din WhatsApp-forbindelse, og vælg derefter et Dataset-ID.",
-        "connect": "Forbind via WhatsApp",
+        "connect": "Opret datasæt",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Vælg et Dataset-ID",
       "description": "Indtast et eksisterende Dataset-ID, eller lad det stå tomt for automatisk at oprette et.",
       "save": "Gem",
+      "createDataset": "Opret datasæt",
       "caveat": "Et Dataset-ID, der ikke er knyttet til denne side eller Instagram-konto, tilskriver muligvis ikke hændelser korrekt. Lad dette felt stå tomt for automatisk at oprette et tilknyttet datasæt."
     },
     "whatsapp": {

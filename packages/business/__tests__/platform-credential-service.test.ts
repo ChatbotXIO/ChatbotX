@@ -99,6 +99,39 @@ describe("resolveForOwner", () => {
   })
 })
 
+describe("resolveWhatsappSystemUserToken", () => {
+  test("returns the systemUserToken from the resolved whatsapp credential", async () => {
+    const resolve = vi
+      .spyOn(platformCredentialService, "resolveForOwner")
+      .mockResolvedValue({
+        config: { systemUserToken: "sys-token-1" },
+      } as never)
+
+    const result =
+      await platformCredentialService.resolveWhatsappSystemUserToken({
+        ownerId: "owner-1",
+      })
+
+    expect(result).toBe("sys-token-1")
+    expect(resolve).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", type: "whatsapp" }),
+    )
+  })
+
+  test("returns null when the owner has no whatsapp credential", async () => {
+    vi.spyOn(platformCredentialService, "resolveForOwner").mockResolvedValue(
+      undefined,
+    )
+
+    const result =
+      await platformCredentialService.resolveWhatsappSystemUserToken({
+        ownerId: "owner-1",
+      })
+
+    expect(result).toBeNull()
+  })
+})
+
 describe("resolvePublicForUser", () => {
   test("own credential set returns it as not inherited", async () => {
     vi.spyOn(platformCredentialService, "findForUser").mockResolvedValue(

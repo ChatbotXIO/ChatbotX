@@ -2114,6 +2114,7 @@
       "saveFailed": "Could not save. Please try again.",
       "datasetRequired": "Save a Dataset ID before adding an access token.",
       "invalidToken": "This token could not access the dataset.",
+      "invalidDatasetId": "Enter a valid Dataset ID (numbers only).",
       "whatsappNotFound": "WhatsApp integration not found."
     },
     "fields": {
@@ -2149,7 +2150,7 @@
       "oauth": {
         "title": "Connect via Facebook",
         "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
+        "connect": "Create Dataset",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -2162,7 +2163,7 @@
       "whatsapp": {
         "title": "Connect via WhatsApp",
         "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
+        "connect": "Create Dataset",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -2170,6 +2171,7 @@
       "title": "Choose a Dataset ID",
       "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
       "save": "Save",
+      "createDataset": "Create Dataset",
       "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
     },
     "whatsapp": {

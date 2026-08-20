@@ -5088,6 +5088,7 @@
       "saveFailed": "Não foi possível salvar. Tente novamente.",
       "datasetRequired": "Salve um ID do conjunto de dados antes de adicionar um token de acesso.",
       "invalidToken": "Este token não conseguiu acessar o conjunto de dados.",
+      "invalidDatasetId": "Insira um Dataset ID válido (apenas números).",
       "whatsappNotFound": "Integração do WhatsApp não encontrada."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Conectar via Facebook",
         "description": "Use a conexão existente da sua página e, em seguida, escolha um ID do conjunto de dados.",
-        "connect": "Conectar via Facebook",
+        "connect": "Criar conjunto de dados",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Conectar via WhatsApp",
         "description": "Use sua conexão do WhatsApp e, em seguida, escolha um ID do conjunto de dados.",
-        "connect": "Conectar via WhatsApp",
+        "connect": "Criar conjunto de dados",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Escolha um ID do conjunto de dados",
       "description": "Informe um ID do conjunto de dados existente ou deixe em branco para criar um automaticamente.",
       "save": "Salvar",
+      "createDataset": "Criar conjunto de dados",
       "caveat": "Um ID do conjunto de dados que não está vinculado a esta Página ou conta do Instagram pode não atribuir os eventos corretamente. Deixe este campo em branco para criar um conjunto de dados vinculado automaticamente."
     },
     "whatsapp": {

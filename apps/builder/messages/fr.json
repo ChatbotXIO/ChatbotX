@@ -5088,6 +5088,7 @@
       "saveFailed": "Impossible d’enregistrer. Veuillez réessayer.",
       "datasetRequired": "Enregistrez un ID d’ensemble de données avant d’ajouter un jeton d’accès.",
       "invalidToken": "Ce jeton n’a pas pu accéder à l’ensemble de données.",
+      "invalidDatasetId": "Saisissez un Dataset ID valide (chiffres uniquement).",
       "whatsappNotFound": "Intégration WhatsApp introuvable."
     },
     "fields": {
@@ -5123,7 +5124,7 @@
       "oauth": {
         "title": "Connecter via Facebook",
         "description": "Utilisez la connexion existante de votre page, puis choisissez un ID d’ensemble de données.",
-        "connect": "Connecter via Facebook",
+        "connect": "Créer un ensemble de données",
         "connectedLabel": "via Facebook"
       },
       "custom": {
@@ -5136,7 +5137,7 @@
       "whatsapp": {
         "title": "Connecter via WhatsApp",
         "description": "Utilisez votre connexion WhatsApp, puis choisissez un ID d’ensemble de données.",
-        "connect": "Connecter via WhatsApp",
+        "connect": "Créer un ensemble de données",
         "connectedLabel": "via WhatsApp"
       }
     },
@@ -5144,6 +5145,7 @@
       "title": "Choisissez un ID d’ensemble de données",
       "description": "Saisissez un ID d’ensemble de données existant, ou laissez le champ vide pour en créer un automatiquement.",
       "save": "Enregistrer",
+      "createDataset": "Créer un ensemble de données",
       "caveat": "Un ID d’ensemble de données non lié à cette page ou à ce compte Instagram peut ne pas attribuer les événements correctement. Laissez ce champ vide pour créer automatiquement un ensemble de données lié."
     },
     "whatsapp": {

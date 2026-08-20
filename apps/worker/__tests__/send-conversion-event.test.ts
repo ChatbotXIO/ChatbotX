@@ -35,6 +35,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
+  buildDatasetName: (name: string) =>
+    name.trim() ? `${name.trim()} Event Data` : "Event Data",
+}))
+
 vi.mock("@chatbotx.io/integration-whatsapp/api/conversions", () => ({
   ensureDataset: mocks.ensureDataset,
   sendConversionEvent: mocks.sendConversionEvent,
@@ -131,6 +136,35 @@ describe("handleSendConversionEvent", () => {
       from: "pending",
       to: "sent",
       capiSentAt: expect.any(Date),
+    })
+  })
+
+  test("creates the dataset with the token chosen by ensureDatasetId", async () => {
+    // `ensureDatasetId` owns token selection (system-user token + fallback); the
+    // handler's provision callback just performs the create with the given token.
+    mocks.ensureDatasetId.mockImplementation(
+      async (input: {
+        provision: (params: {
+          wabaId: string
+          wabaName: string
+          accessToken: string
+        }) => Promise<string>
+      }) =>
+        await input.provision({
+          wabaId: "waba-1",
+          wabaName: "Shop Tran",
+          accessToken: "wa-system-token",
+        }),
+    )
+    mocks.ensureDataset.mockResolvedValue("dataset-1")
+
+    await handleSendConversionEvent(jobData)
+
+    expect(mocks.ensureDataset).toHaveBeenCalledWith({
+      wabaId: "waba-1",
+      accessToken: "wa-system-token",
+      datasetName: "Shop Tran Event Data",
+      version: "v23.0",
     })
   })
 
