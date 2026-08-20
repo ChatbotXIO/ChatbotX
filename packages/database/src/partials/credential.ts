@@ -351,12 +351,24 @@ export type MakeCredentialUpdate = z.infer<typeof makeCredentialUpdateSchema>
 
 // ─── Encrypted blob shape stored in Credential.value ─────────────────────────
 
+// Storage guard for Credential.value. Deliberately standalone rather than
+// derived from @chatbotx.io/encryption's encryptedDataSchema (even though
+// packages/database already depends on that package for other things), so
+// the field constraints below are mirrored by hand and must be kept in sync
+// with encryptedDataSchema if that shape ever changes.
+//
+// `iv`/`text`/`tag` mirror the length/non-empty checks encryptedDataSchema
+// already enforces, so a malformed row fails loudly here instead of only
+// surfacing later as an opaque hexToBytes/WebCrypto error. `aad` stays
+// optional, matching the transport schema: it is stamped by the writers
+// (upsertForUser, upsertPlatform, rotate-encryption-key.ts) and read back
+// off the blob by decrypt — no caller needs to reconstruct or pass it.
 export const credentialEncryptedSchema = z.object({
   v: z.literal(1),
   kid: z.string().optional(),
-  iv: z.string(),
-  text: z.string(),
-  tag: z.string(),
+  iv: z.string().length(24),
+  text: z.string().min(1),
+  tag: z.string().length(32),
   aad: z.string().optional(),
 })
 export type CredentialEncrypted = z.infer<typeof credentialEncryptedSchema>

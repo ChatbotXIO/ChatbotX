@@ -16,10 +16,15 @@ export async function verifyAppointmentToken<TPayload>(
 ): Promise<TPayload> {
   const json = Buffer.from(token, "base64url").toString("utf8")
   const encrypted = encryptedDataSchema.parse(JSON.parse(json))
+  // This comparison is now the SOLE enforcement of purpose separation:
+  // decryptObject reads its aad off the blob rather than taking one from the
+  // caller, so a schedule token would otherwise decrypt cleanly when
+  // verified as a cancel token. See appointment-tokens.test.ts "does not
+  // allow schedule tokens to be used as cancel tokens".
   if (encrypted.aad !== aad) {
     throw new Error("Appointment token type mismatch")
   }
-  const payload = await encryptUtils.decryptObject(encrypted, schema, aad)
+  const payload = await encryptUtils.decryptObject(encrypted, schema)
   const expiresAt =
     typeof payload === "object" && payload && "expiresAt" in payload
       ? payload.expiresAt

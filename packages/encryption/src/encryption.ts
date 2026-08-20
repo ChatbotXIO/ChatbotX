@@ -123,10 +123,7 @@ export const encryptUtils = {
     }
   },
 
-  decryptText: async (
-    encryptedData: EncryptedData,
-    aad?: string,
-  ): Promise<string> => {
+  decryptText: async (encryptedData: EncryptedData): Promise<string> => {
     assertCurrentVersion(encryptedData.v)
     const key = await getKey(encryptedData.kid)
     const iv = hexToBytes(encryptedData.iv)
@@ -135,9 +132,14 @@ export const encryptUtils = {
       hexToBytes(encryptedData.text),
       hexToBytes(encryptedData.tag),
     )
-    const resolvedAad = aad ?? encryptedData.aad
+    // The aad travels with the blob, so any holder can decrypt without
+    // reconstructing the writer's context. AES-GCM still authenticates that
+    // aad against the ciphertext and tag — a tampered aad fails here. What
+    // this does NOT detect is an intact blob copied onto a different
+    // logical row; callers that need that binding must compare the aad
+    // themselves before decrypting (see appointment-token-utils.ts).
     const raw = await crypto.subtle.decrypt(
-      buildAlgorithm(iv, resolvedAad),
+      buildAlgorithm(iv, encryptedData.aad),
       key,
       combined,
     )
@@ -150,9 +152,8 @@ export const encryptUtils = {
   decryptObject: async <T>(
     encryptedData: EncryptedData,
     schema: z.ZodType<T>,
-    aad?: string,
   ): Promise<T> => {
-    const text = await encryptUtils.decryptText(encryptedData, aad)
+    const text = await encryptUtils.decryptText(encryptedData)
     const parsed: unknown = JSON.parse(text)
     return schema.parse(parsed)
   },
