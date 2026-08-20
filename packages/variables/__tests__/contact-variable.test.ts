@@ -163,6 +163,45 @@ describe("contactVariableService.replaceAll", () => {
     ).resolves.toBe("{{not_a_field}}  active")
   })
 
+  test("resolves a bare custom field name containing spaces and diacritics", async () => {
+    // Regression: the bare-name branch of VARIABLE_PLACEHOLDER_REGEX was
+    // `[\w.]+` (ASCII word chars only), so a field named with a space or a
+    // diacritic never matched and shipped as a literal `{{...}}`.
+    await expect(
+      contactVariableService.replaceAll({
+        text: "Xin chào {{fullname upper}}!",
+        variables: createVariables([
+          {
+            key: "fullname upper",
+            value: "MÁ CHÁN",
+          },
+        ]),
+      }),
+    ).resolves.toBe("Xin chào MÁ CHÁN!")
+  })
+
+  test("still routes coupon: and raw: prefixes correctly after widening the bare-name branch", async () => {
+    mockResolveCouponVariable.mockResolvedValue("CODE1")
+
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{coupon:topic-1}} {{raw:Full Name}}",
+        variables: createVariables([
+          { key: "Full Name", value: "Ada Lovelace" },
+        ]),
+      }),
+    ).resolves.toBe("CODE1 Ada Lovelace")
+  })
+
+  test("still leaves an unknown bare key literal after widening the bare-name branch", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: "{{totally unknown}}",
+        variables: createVariables(),
+      }),
+    ).resolves.toBe("{{totally unknown}}")
+  })
+
   test("supports dotted system variables and keeps unknown dotted placeholders literal", async () => {
     await expect(
       contactVariableService.replaceAll({

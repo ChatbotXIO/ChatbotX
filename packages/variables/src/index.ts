@@ -1,5 +1,6 @@
 export * from "./contact-variable"
 export * from "./coupon-variable"
 export * from "./deep-replace-contact-variables"
+export * from "./javascript-interpolation"
 export * from "./schema"
 export * from "./utils"

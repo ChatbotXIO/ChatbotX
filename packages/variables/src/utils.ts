@@ -55,8 +55,10 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const VARIABLE_PLACEHOLDER_REGEX =
-  /\{\{([\w.]+|coupon:[^{}\n]+|raw:[^{}\n]+)\}\}/g
+// Exported so javascript-interpolation.ts scans the same placeholder syntax
+// as the message-text path — one definition, so the two can't drift.
+export const VARIABLE_PLACEHOLDER_REGEX =
+  /\{\{(coupon:[^{}\n]+|raw:[^{}\n]+|[^{}\n]+)\}\}/g
 // `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
 // where the placeholder sits — a call the position-independent mapping can't
 // make. resolveGenderLabel returns the opening form; inside a sentence it is
@@ -130,6 +132,21 @@ export const interpolate = (
         : value.toLowerCase()
     },
   )
+
+// Canonical definition — contact-variable.ts and javascript-interpolation.ts
+// both import this instead of redefining it, so the `raw:` prefix can't
+// drift between the message-text resolver and the JS-code resolver.
+export const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
+
+// Canonical definition — contact-variable.ts and javascript-interpolation.ts
+// both import this instead of redefining it, so the `raw:` prefix and
+// name-stripping logic can't drift between the message-text resolver and the
+// JS-code resolver. Matches custom-field names exactly (no trimming): the
+// map is keyed by the raw `customField.name`, and the token is built from
+// that same name, so any normalisation here would break names with
+// meaningful surrounding whitespace.
+export const toRawCustomFieldName = (variable: string): string =>
+  variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
 
 const getTimezone = ({
   contact,
