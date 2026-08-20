@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Saat tombol dilampirkan, TikTok hanya mengirim 40 karakter pertama pesan ini — sisanya akan terpotong."
-    }
+    },
+    "dataWasSaved": "Data telah disimpan"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "Tanggal Selesai harus sama dengan atau setelah Tanggal Mulai."
       },
       "timezoneHint": "Waktu ditampilkan dalam {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Pilih tanggal",
+    "date": {
+      "title": "Pilih tanggal"
+    },
+    "datetime": {
+      "title": "Pilih tanggal dan waktu"
+    },
+    "noSelection": "Pilih tanggal",
+    "actions": {
+      "submit": "Kirim"
+    },
+    "success": {
+      "title": "Data telah disimpan",
+      "description": "Anda sekarang dapat menutup tab ini."
+    },
+    "errors": {
+      "invalidTokenTitle": "Tautan ini tidak tersedia.",
+      "invalidTokenDescription": "Tautan mungkin tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+      "submitFailed": "Kami tidak dapat menyelesaikan permintaan ini. Silakan coba lagi."
     }
   },
   "appointments": {

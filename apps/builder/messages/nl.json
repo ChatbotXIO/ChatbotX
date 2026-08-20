@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Als er knoppen zijn toegevoegd, verstuurt TikTok alleen de eerste 40 tekens van dit bericht — de rest wordt afgekapt."
-    }
+    },
+    "dataWasSaved": "Gegevens zijn opgeslagen"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "Einddatum moet op of na de begindatum liggen."
       },
       "timezoneHint": "Tijden worden weergegeven in {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Datum selecteren",
+    "date": {
+      "title": "Selecteer een datum"
+    },
+    "datetime": {
+      "title": "Selecteer een datum en tijd"
+    },
+    "noSelection": "Kies een datum",
+    "actions": {
+      "submit": "Verzenden"
+    },
+    "success": {
+      "title": "Gegevens zijn opgeslagen",
+      "description": "U kunt dit tabblad nu sluiten."
+    },
+    "errors": {
+      "invalidTokenTitle": "Deze link is niet beschikbaar.",
+      "invalidTokenDescription": "De link is mogelijk ongeldig of verlopen. Vraag om een nieuwe link.",
+      "submitFailed": "We konden dit verzoek niet voltooien. Probeer het opnieuw."
     }
   },
   "appointments": {

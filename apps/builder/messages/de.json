@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Wenn Schaltflächen angehängt sind, sendet TikTok nur die ersten 40 Zeichen dieser Nachricht – der Rest wird abgeschnitten."
-    }
+    },
+    "dataWasSaved": "Daten wurden gespeichert"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "Das Enddatum muss am oder nach dem Startdatum liegen."
       },
       "timezoneHint": "Die Zeiten werden in {timezone} angezeigt."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Datum auswählen",
+    "date": {
+      "title": "Datum auswählen"
+    },
+    "datetime": {
+      "title": "Datum und Uhrzeit auswählen"
+    },
+    "noSelection": "Datum wählen",
+    "actions": {
+      "submit": "Senden"
+    },
+    "success": {
+      "title": "Daten wurden gespeichert",
+      "description": "Sie können diesen Tab jetzt schließen."
+    },
+    "errors": {
+      "invalidTokenTitle": "Dieser Link ist nicht verfügbar.",
+      "invalidTokenDescription": "Der Link ist möglicherweise ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
+      "submitFailed": "Wir konnten diese Anfrage nicht abschließen. Bitte versuchen Sie es erneut."
     }
   },
   "appointments": {

@@ -244,7 +244,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
-    }
+    },
+    "dataWasSaved": "Datele au fost salvate"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "Data de sfârșit trebuie să fie egală sau ulterioară datei de început."
       },
       "timezoneHint": "Orele sunt afișate în {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Selectează data",
+    "date": {
+      "title": "Selectează o dată"
+    },
+    "datetime": {
+      "title": "Selectează data și ora"
+    },
+    "noSelection": "Alege o dată",
+    "actions": {
+      "submit": "Trimite"
+    },
+    "success": {
+      "title": "Datele au fost salvate",
+      "description": "Poți închide această filă acum."
+    },
+    "errors": {
+      "invalidTokenTitle": "Acest link nu este disponibil.",
+      "invalidTokenDescription": "Linkul poate fi invalid sau expirat. Te rugăm să soliciți un nou link.",
+      "submitFailed": "Nu am putut finaliza această solicitare. Te rugăm să încerci din nou."
     }
   },
   "appointments": {

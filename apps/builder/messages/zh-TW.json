@@ -2482,7 +2482,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "附加按鈕後，TikTok 只會傳送這則訊息的前 40 個字元——其餘部分將被截斷。"
-    }
+    },
+    "dataWasSaved": "資料已儲存"
   },
   "folders": {
     "heading": {
@@ -5072,6 +5073,28 @@
       "cancelledDescription": "此預約已被取消。",
       "unavailableTitle": "無法取消",
       "unavailableDescription": "此預約已取消、已刪除，或時間已過。"
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "選擇日期",
+    "date": {
+      "title": "請選擇日期"
+    },
+    "datetime": {
+      "title": "請選擇日期和時間"
+    },
+    "noSelection": "選擇日期",
+    "actions": {
+      "submit": "送出"
+    },
+    "success": {
+      "title": "資料已儲存",
+      "description": "您現在可以關閉此分頁。"
+    },
+    "errors": {
+      "invalidTokenTitle": "此連結目前無法使用。",
+      "invalidTokenDescription": "此連結可能無效或已過期，請索取新的連結。",
+      "submitFailed": "我們無法完成此請求，請再試一次。"
     }
   },
   "metaConversions": {

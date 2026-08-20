@@ -2325,7 +2325,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "عند إرفاق أزرار، يرسل TikTok أول 40 حرفًا فقط من هذه الرسالة، وسيتم قص الباقي."
-    }
+    },
+    "dataWasSaved": "تم حفظ البيانات"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "يجب أن يكون تاريخ الانتهاء مطابقًا لتاريخ البدء أو بعده."
       },
       "timezoneHint": "تُعرض الأوقات بتوقيت {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "اختيار التاريخ",
+    "date": {
+      "title": "اختر تاريخًا"
+    },
+    "datetime": {
+      "title": "اختر تاريخًا ووقتًا"
+    },
+    "noSelection": "اختر تاريخًا",
+    "actions": {
+      "submit": "إرسال"
+    },
+    "success": {
+      "title": "تم حفظ البيانات",
+      "description": "يمكنك الآن إغلاق هذه العلامة."
+    },
+    "errors": {
+      "invalidTokenTitle": "هذا الرابط غير متاح.",
+      "invalidTokenDescription": "قد يكون الرابط غير صالح أو منتهي الصلاحية. يُرجى طلب رابط جديد.",
+      "submitFailed": "تعذّر إتمام هذا الطلب. يُرجى المحاولة مرة أخرى."
     }
   },
   "appointments": {

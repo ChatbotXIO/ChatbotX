@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Kun painikkeita on liitetty, TikTok lähettää vain tämän viestin ensimmäiset 40 merkkiä — loput katkaistaan."
-    }
+    },
+    "dataWasSaved": "Tiedot tallennettiin"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "Päättymispäivän on oltava sama tai myöhäisempi kuin aloituspäivä."
       },
       "timezoneHint": "Ajat näytetään aikavyöhykkeellä {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Valitse päivämäärä",
+    "date": {
+      "title": "Valitse päivämäärä"
+    },
+    "datetime": {
+      "title": "Valitse päivämäärä ja kellonaika"
+    },
+    "noSelection": "Valitse päivämäärä",
+    "actions": {
+      "submit": "Lähetä"
+    },
+    "success": {
+      "title": "Tiedot tallennettiin",
+      "description": "Voit nyt sulkea tämän välilehden."
+    },
+    "errors": {
+      "invalidTokenTitle": "Tämä linkki ei ole käytettävissä.",
+      "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi linkki.",
+      "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
     }
   },
   "appointments": {

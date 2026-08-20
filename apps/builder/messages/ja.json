@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "ボタンを追加すると、TikTokはこのメッセージの最初の40文字までしか送信しません。残りは切り捨てられます。"
-    }
+    },
+    "dataWasSaved": "データが保存されました"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "終了日は開始日以降の日付にしてください。"
       },
       "timezoneHint": "時間は {timezone} で表示されています。"
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "日付を選択",
+    "date": {
+      "title": "日付を選択してください"
+    },
+    "datetime": {
+      "title": "日付と時刻を選択してください"
+    },
+    "noSelection": "日付を選択",
+    "actions": {
+      "submit": "送信"
+    },
+    "success": {
+      "title": "データが保存されました",
+      "description": "このタブを閉じていただいて構いません。"
+    },
+    "errors": {
+      "invalidTokenTitle": "このリンクはご利用いただけません。",
+      "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しいリンクをご請求ください。",
+      "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
     }
   },
   "appointments": {

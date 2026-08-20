@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
-    }
+    },
+    "dataWasSaved": "Data blev gemt"
   },
   "folders": {
     "heading": {
@@ -4889,6 +4890,28 @@
         "invalidRange": "Slutdato skal være på eller efter startdato."
       },
       "timezoneHint": "Tidspunkter vises i {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Vælg dato",
+    "date": {
+      "title": "Vælg en dato"
+    },
+    "datetime": {
+      "title": "Vælg en dato og et klokkeslæt"
+    },
+    "noSelection": "Vælg en dato",
+    "actions": {
+      "submit": "Send"
+    },
+    "success": {
+      "title": "Data blev gemt",
+      "description": "Du kan lukke denne fane nu."
+    },
+    "errors": {
+      "invalidTokenTitle": "Dette link er ikke tilgængeligt.",
+      "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt link.",
+      "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
     }
   },
   "appointments": {
