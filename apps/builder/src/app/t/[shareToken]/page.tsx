@@ -7,12 +7,39 @@ import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUser } from "@/lib/auth/utils"
 
-export const metadata: Metadata = {
-  title: "Template",
-}
-
 type PublicTemplatePageProps = {
   params: Promise<{ shareToken: string }>
+}
+
+/**
+ * Runs the same lookup as the page body so a shared link gets a real OG
+ * preview — a disabled/expired/unknown token falls back to a generic title
+ * rather than leaking whether the token ever existed.
+ */
+export async function generateMetadata(
+  props: PublicTemplatePageProps,
+): Promise<Metadata> {
+  const { shareToken } = await props.params
+  const [t, template, { storageUrl }] = await Promise.all([
+    getTranslations("templatesPublicPage"),
+    templateService.findPublicByShareToken(shareToken),
+    getTenantSettings(),
+  ])
+  if (!template) {
+    return { title: t("invalidTitle") }
+  }
+  const imageUrl = template.imageUrl
+    ? getPublicFileUrl(template.imageUrl, storageUrl)
+    : null
+  return {
+    title: template.name,
+    description: template.description ?? undefined,
+    openGraph: {
+      title: template.name,
+      description: template.description ?? undefined,
+      images: imageUrl ? [imageUrl] : undefined,
+    },
+  }
 }
 
 /**
@@ -69,6 +96,17 @@ export default async function PublicTemplatePage(
       </div>
       {template.description ? (
         <p className="text-muted-foreground">{template.description}</p>
+      ) : null}
+      {template.youtubeVideoId ? (
+        <div className="aspect-video w-full overflow-hidden rounded-lg">
+          <iframe
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="h-full w-full"
+            src={`https://www.youtube.com/embed/${template.youtubeVideoId}`}
+            title={template.name}
+          />
+        </div>
       ) : null}
       <TemplateCategorySummary
         categoryCounts={template.categoryCounts}

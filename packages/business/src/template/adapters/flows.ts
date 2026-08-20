@@ -1,13 +1,17 @@
-import { eq } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { flowVersionModel } from "@chatbotx.io/database/schema"
-import type { TemplateFlowEntry } from "@chatbotx.io/flow-config"
+import type {
+  FlowExportedFlow,
+  TemplateFlowEntry,
+} from "@chatbotx.io/flow-config"
 import { remapFlowGraphReferences } from "@chatbotx.io/flow-config"
 import { flowService } from "../../flow"
 import { flowVersionService } from "../../flow-version"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -154,6 +158,105 @@ export const flowsAdapter: ResourceAdapter = {
       },
     ]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.flowModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.flowModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.flowModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+        columns: {
+          id: true,
+          name: true,
+          active: true,
+          enableInInbox: true,
+          folderId: true,
+        },
+      })
+      const entries = (
+        await Promise.all(
+          rows.map((flow) => buildFlowExportEntry(workspaceId, flow)),
+        )
+      ).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+
+      const folderIds = rows.flatMap((flow) =>
+        flow.folderId ? [flow.folderId] : [],
+      )
+
+      return {
+        entries,
+        folderIds,
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
+}
+
+/**
+ * Builds one `flows` resource entry in the shape `flowsAdapter.insert`
+ * expects, reusing the workspace's *draft* version — falls back from
+ * published per the plan's deviation from single-flow export ("blocking a
+ * template on one unpublished flow is hostile").
+ */
+const buildFlowExportEntry = async (
+  workspaceId: string,
+  flow: {
+    id: string
+    name: string
+    active: boolean
+    enableInInbox: boolean
+    folderId: string | null
+  },
+): Promise<(Record<string, unknown> & { sourceId: string }) | undefined> => {
+  const published = await flowVersionService.findPublished({
+    flowId: flow.id,
+    workspaceId,
+  })
+  const draft = await flowVersionService.findDraft({
+    flowId: flow.id,
+    workspaceId,
+  })
+  const version = published ?? draft
+  if (!version) {
+    return
+  }
+  return {
+    sourceId: flow.id,
+    name: flow.name,
+    active: flow.active,
+    enableInInbox: flow.enableInInbox,
+    startNodeId: version.startNodeId,
+    nodes: version.nodes as FlowExportedFlow["nodes"],
+    edges: version.edges as FlowExportedFlow["edges"],
+    folderId: flow.folderId,
+  }
 }
 
 const resolveFolderReference = (

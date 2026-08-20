@@ -27,6 +27,9 @@ type CategoryResourceListProps = {
   category: TemplateCategory
   selection: CategorySelectionState
   onChange: (next: CategorySelectionState) => void
+  /** Reports the category's unfiltered total, so the parent card can render
+   * "All (N)" for a `mode:"all"` selection instead of a blank badge. */
+  onTotalChange?: (total: number) => void
 }
 
 /**
@@ -35,17 +38,27 @@ type CategoryResourceListProps = {
  * refetches), following the `ig-comment-posts-store.ts` shape but as local
  * component state since there is no cross-component sharing need here.
  *
- * Tri-state select-all uses the checkbox's native `indeterminate` prop.
- * Unchecking a single row while `mode:"all"` downgrades the selection to an
- * explicit id list built from `allIds` (returned by the endpoint whenever
- * `total <= 1000`), so the downgrade is exact rather than limited to
- * whatever page happens to be loaded.
+ * Tri-state select-all uses the checkbox's native `indeterminate` prop,
+ * computed against `total` (the unfiltered category count) rather than the
+ * currently loaded `items`, so it doesn't under-report once pagination or a
+ * search has narrowed what's on screen.
+ *
+ * `allIds` always describes the *unfiltered* set: it's only captured from
+ * an unfiltered, first-page fetch (`cursor: null` AND no search keyword),
+ * and is never overwritten by a search result — searching narrows `items`
+ * but must never narrow what "select all" means. Unchecking a single row
+ * while `mode:"all"` downgrades to an explicit id list built from `allIds`
+ * when available (exact whenever `total <= 1000`); otherwise there is no
+ * exact base to downgrade from, so the downgrade re-fetches the full
+ * unfiltered id list rather than silently falling back to just the loaded
+ * page.
  */
 export function CategoryResourceList({
   workspaceId,
   category,
   selection,
   onChange,
+  onTotalChange,
 }: CategoryResourceListProps) {
   const t = useTranslations()
   const [items, setItems] = useState<ResourceItem[]>([])
@@ -70,8 +83,16 @@ export function CategoryResourceList({
         cursor ? [...current, ...result.items] : result.items,
       )
       setNextCursor(result.nextCursor)
-      setTotal(result.total)
-      if (!cursor) {
+      // Only an unfiltered fetch's total describes the whole category — a
+      // search's `total` is the match count, not the category size.
+      if (!searchKeyword) {
+        setTotal(result.total)
+        onTotalChange?.(result.total)
+      }
+      // `allIds` must only ever be captured/overwritten from an unfiltered
+      // first page — a search's result set is a subset and must never
+      // replace the unfiltered id list "select all" depends on.
+      if (!(cursor || searchKeyword)) {
         setAllIds(result.allIds)
       }
     } finally {
@@ -100,11 +121,20 @@ export function CategoryResourceList({
   const isRowChecked = (id: string): boolean =>
     isAllMode ? true : (selectedIds?.has(id) ?? false)
 
-  const toggleRow = (id: string, checked: boolean) => {
+  const toggleRow = async (id: string, checked: boolean) => {
     if (isAllMode) {
-      // Downgrading from "all" to an explicit list — start from every known
-      // id (exact when `allIds` was returned) minus the row just unchecked.
-      const base = allIds ?? items.map((item) => item.id)
+      // Downgrading from "all" to an explicit list must be exact — never
+      // silently fall back to just the loaded page. Use `allIds` when we
+      // already have the exact unfiltered set; otherwise fetch it fresh.
+      const base =
+        allIds ??
+        (
+          await client.templatesAPI.listSelectableResourcesAPI({
+            workspaceId,
+            category,
+            limit: total,
+          })
+        ).items.map((item) => item.id)
       const next = checked ? base : base.filter((itemId) => itemId !== id)
       onChange({ mode: "ids", ids: next })
       return
@@ -124,10 +154,8 @@ export function CategoryResourceList({
     onChange(allIds ? { mode: "ids", ids: allIds } : { mode: "all" as const })
   }
 
-  const allPageRowsSelected =
-    items.length > 0 && items.every((item) => isRowChecked(item.id))
-  const somePageRowsSelected =
-    items.some((item) => isRowChecked(item.id)) && !allPageRowsSelected
+  const allRowsSelected = total > 0 && selectedCount >= total
+  const someRowsSelected = selectedCount > 0 && !allRowsSelected
 
   return (
     <div className="flex flex-col gap-3">
@@ -151,9 +179,9 @@ export function CategoryResourceList({
 
       <div className="flex items-center gap-2 text-sm">
         <Checkbox
-          checked={allPageRowsSelected}
+          checked={allRowsSelected}
           id={`${category}-select-all`}
-          indeterminate={somePageRowsSelected}
+          indeterminate={someRowsSelected}
           onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
         />
         <Label

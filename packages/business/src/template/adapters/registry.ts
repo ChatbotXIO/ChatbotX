@@ -1,4 +1,7 @@
-import type { TemplateCategory } from "@chatbotx.io/database/partials"
+import type {
+  TemplateCategory,
+  TemplateResourceCategory,
+} from "@chatbotx.io/database/partials"
 import { aiAgentsAdapter } from "./ai-agents"
 import { aiFunctionsAdapter } from "./ai-functions"
 import { calendarsAdapter } from "./calendars"
@@ -14,14 +17,17 @@ import { webchatsAdapter } from "./webchats"
 
 /**
  * Every install-time resource adapter, keyed by category. `satisfies
- * Record<TemplateCategory, ResourceAdapter>` makes a category added to
- * `templateCategories` (`packages/database/src/partials/template.ts`)
- * without a matching adapter here a compile error, the same guard
- * `packages/imports/src/registry.ts` uses for `ImportType`.
+ * Record<TemplateResourceCategory, ResourceAdapter>` — with NO `Partial` —
+ * makes a category added to `templateResourceCategories`
+ * (`packages/database/src/partials/template.ts`) without a matching adapter
+ * here a genuine compile error, the same guard `packages/imports/src/registry.ts`
+ * uses for `ImportType`. Previously this was typed against `Partial<Record<...>>`,
+ * which let a missing adapter compile clean and fail silently at runtime.
  *
  * `customFields`/`tags`/`productCategories` are Phase-R manifest kinds
  * (`adapters/manifests/*`), not Phase-1 resource adapters — they resolve
- * before any adapter here runs and never appear in this registry.
+ * before any adapter here runs, so they live in `TemplateManifestOnlyCategory`
+ * instead and never appear in this registry.
  */
 export const templateAdapterRegistry = {
   products: productsAdapter,
@@ -35,7 +41,7 @@ export const templateAdapterRegistry = {
   entryPointLinks: entryPointLinksAdapter,
   triggers: triggersAdapter,
   fbCommentAutomations: fbCommentAutomationsAdapter,
-} satisfies Partial<Record<TemplateCategory, ResourceAdapter>>
+} satisfies Record<TemplateResourceCategory, ResourceAdapter>
 
 /**
  * Install order, hand-written to match the plan's dependency analysis

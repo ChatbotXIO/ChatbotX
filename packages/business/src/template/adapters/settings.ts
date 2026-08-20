@@ -1,9 +1,11 @@
+import { db } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { botFieldService } from "../../bot-field/service"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -90,6 +92,91 @@ export const settingsAdapter: ResourceAdapter = {
 
     return [] satisfies PatchTask[]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const [savedReplies, botFields] = await Promise.all([
+        db.query.savedReplyModel.findMany({
+          where: { workspaceId },
+          columns: { id: true },
+        }),
+        db.query.botFieldModel.findMany({
+          where: { workspaceId },
+          columns: { id: true },
+        }),
+      ])
+      return [...savedReplies, ...botFields].map((row) => row.id)
+    },
+
+    // `settings` bundles two tables under one category id space — an id may
+    // belong to either, so both are checked and their hits combined. Never
+    // ambiguous: `SavedReply`/`BotField` ids are workspace-scoped primary
+    // keys from disjoint tables, so no id can validly appear in both.
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const [savedReplies, botFields] = await Promise.all([
+        db.query.savedReplyModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+          columns: { id: true },
+        }),
+        db.query.botFieldModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+          columns: { id: true },
+        }),
+      ])
+      return [...savedReplies, ...botFields].map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const uniqueIds = [...ids]
+      const [savedReplies, botFields] = await Promise.all([
+        db.query.savedReplyModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+        }),
+        db.query.botFieldModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+        }),
+      ])
+
+      const savedReplyEntries = savedReplies.map((row) => ({
+        sourceId: row.id,
+        kind: "savedReply" as const,
+        shortcut: row.shortcut,
+        text: row.text,
+      }))
+      const botFieldEntries = botFields.map((row) => ({
+        sourceId: row.id,
+        kind: "botField" as const,
+        name: row.name,
+        type: row.type,
+        value: row.value,
+        description: row.description,
+        folderId: row.folderId,
+      }))
+
+      const folderIds = botFields.flatMap((row) =>
+        row.folderId ? [row.folderId] : [],
+      )
+
+      return {
+        entries: [...savedReplyEntries, ...botFieldEntries],
+        folderIds,
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }
 
 const resolveFolderRef = (

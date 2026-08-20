@@ -9,6 +9,7 @@ const {
   mockTransaction,
   mockUpdate,
   mockWithCache,
+  mockTemplateInstalledResourceFindMany,
 } = vi.hoisted(() => {
   const mockUpdateWhere = vi.fn()
   const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }))
@@ -17,6 +18,7 @@ const {
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
   const mockDeleteWhere = vi.fn()
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
+  const mockTemplateInstalledResourceFindMany = vi.fn(async () => [])
 
   const dbClient = {
     delete: mockDelete,
@@ -24,6 +26,9 @@ const {
     query: {
       aiAgentModel: {
         findFirst: vi.fn(),
+      },
+      templateInstalledResourceModel: {
+        findMany: mockTemplateInstalledResourceFindMany,
       },
     },
     transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
@@ -46,6 +51,7 @@ const {
         _options: { ttl: number; tags: string[] },
       ) => callback(),
     ),
+    mockTemplateInstalledResourceFindMany,
   }
 })
 
@@ -57,6 +63,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       aiAgentModel: {
         findFirst: mockFindFirst,
+      },
+      templateInstalledResourceModel: {
+        findMany: mockTemplateInstalledResourceFindMany,
       },
     },
     transaction: mockTransaction,

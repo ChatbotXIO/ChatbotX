@@ -14,11 +14,17 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import {
+  MoreHorizontalIcon,
+  PencilIcon,
+  Share2Icon,
+  Trash2Icon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { DeleteTemplateDialog } from "./delete-template-dialog"
+import { ShareTemplateDialog } from "./share-template-dialog"
 
 type TemplatesTableProps = {
   workspaceId: string
@@ -35,6 +41,9 @@ export function TemplatesTable({
   const router = useRouter()
   const [deletingTemplate, setDeletingTemplate] =
     useState<TemplateModel | null>(null)
+  const [sharingTemplate, setSharingTemplate] = useState<TemplateModel | null>(
+    null,
+  )
 
   const columns = useMemo<ColumnDef<TemplateModel>[]>(
     () => [
@@ -74,6 +83,20 @@ export function TemplatesTable({
         cell: ({ row }) => (
           <span className="tabular-nums">{row.original.installCount}</span>
         ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "categoryCounts",
+        size: 160,
+        header: t("templates.form.contents"),
+        cell: ({ row }) => {
+          const total = Object.values(row.original.categoryCounts).reduce(
+            (sum, count) => sum + count,
+            0,
+          )
+          return <span className="tabular-nums">{total}</span>
+        },
         enableSorting: false,
         enableHiding: false,
       },
@@ -120,6 +143,12 @@ export function TemplatesTable({
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
+                onClick={() => setSharingTemplate(row.original)}
+              >
+                <Share2Icon />
+                {t("templates.share.label")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={() => setDeletingTemplate(row.original)}
                 variant="destructive"
               >
@@ -159,6 +188,16 @@ export function TemplatesTable({
         }}
         open={Boolean(deletingTemplate)}
         templateId={deletingTemplate?.id ?? ""}
+        workspaceId={workspaceId}
+      />
+      <ShareTemplateDialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setSharingTemplate(null)
+          }
+        }}
+        open={Boolean(sharingTemplate)}
+        template={sharingTemplate}
         workspaceId={workspaceId}
       />
     </>

@@ -1,9 +1,11 @@
+import { db } from "@chatbotx.io/database/client"
 import { aiAgentModel } from "@chatbotx.io/database/schema"
 import { remapReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -115,6 +117,67 @@ export const aiAgentsAdapter: ResourceAdapter = {
 
     return [] satisfies PatchTask[]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.aiAgentModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.aiAgentModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.aiAgentModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+      })
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        prompt: row.prompt,
+        messages: row.messages,
+        // `models[].integrationId` (the `openaiCompatible` variant) still
+        // points at the source workspace's own credential here — dropped at
+        // install time (`keepInstallableModel`), not here, since collect
+        // has no warnings channel and the install-side drop already covers
+        // every source this row could come from.
+        models: row.models,
+        temperature: row.temperature,
+        maxOutputTokens: row.maxOutputTokens,
+        tools: row.tools,
+        isDefault: row.isDefault,
+        isRichResponse: row.isRichResponse,
+        webSearchAuthorizedDomains: row.webSearchAuthorizedDomains,
+      }))
+
+      return {
+        entries,
+        folderIds: [],
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }
 
 /**

@@ -7,11 +7,13 @@ import {
   templateInstallationModel,
   templateInstalledResourceModel,
 } from "@chatbotx.io/database/schema"
+import { updateTriggerCache } from "@chatbotx.io/events"
 import type {
   TemplateExport,
   TemplateFolderManifestEntry,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { aiAgentService } from "../ai-agent/service"
 import { automatedResponseService } from "../automated-response/service"
 import { customFieldService } from "../custom-field/service"
 import { toPublicErrorMessage } from "../errors"
@@ -334,11 +336,17 @@ const runInstall = async (
  * Cache tags touched by an install, drained by the caller strictly after
  * the transaction commits — invalidating inside `tx` risks repopulating
  * Redis from an uncommitted read, exactly as `importFlowExport` documents.
+ * Covers every category whose adapter can insert a resource with its own
+ * cache layer: custom fields, keywords (automatedResponse), triggers, and AI
+ * agents. An installed trigger or AI agent was previously served stale until
+ * something else evicted it.
  */
 const invalidateAfterCommit = async (workspaceId: string): Promise<void> => {
   await Promise.all([
     customFieldService.invalidate({ workspaceId }),
     automatedResponseService.invalidateCache(workspaceId),
+    updateTriggerCache(workspaceId),
+    aiAgentService.invalidate({ workspaceId }),
   ])
 }
 

@@ -1,4 +1,4 @@
-import { eq } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import { ChatbotXException } from "../../errors"
 import {
@@ -8,6 +8,7 @@ import {
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -142,4 +143,66 @@ export const webchatsAdapter: ResourceAdapter = {
       },
     ]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.integrationWebchatModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.integrationWebchatModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.integrationWebchatModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+      })
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        // `auth` holds the webchat's own client-side embed credentials
+        // (never a third-party OAuth token), so it is carried over as-is —
+        // the same treatment `integrationWebchatService.create` gives it on
+        // every normal create.
+        auth: row.auth,
+        enable: row.enable,
+        authorizedDomains: row.authorizedDomains,
+        conversationStarters: row.conversationStarters,
+        persistentMenus: row.persistentMenus,
+        brandColor: row.brandColor,
+        hideHeader: row.hideHeader,
+        showLogo: row.showLogo,
+        hideMessageInput: row.hideMessageInput,
+        customCss: row.customCss,
+        welcomeFlowId: row.welcomeFlowId,
+      }))
+
+      return {
+        entries,
+        folderIds: [],
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }

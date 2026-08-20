@@ -1,9 +1,10 @@
-import { eq } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import { aiFunctionModel } from "@chatbotx.io/database/schema"
 import { aiFunctionService } from "../../ai-function/service"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -97,4 +98,55 @@ export const aiFunctionsAdapter: ResourceAdapter = {
       },
     ]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.aiFunctionModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.aiFunctionModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.aiFunctionModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+      })
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        purpose: row.purpose,
+        dataCollect: row.dataCollect,
+        outputMessage: row.outputMessage,
+        triggerFlowId: row.triggerFlowId,
+      }))
+
+      return {
+        entries,
+        folderIds: [],
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }

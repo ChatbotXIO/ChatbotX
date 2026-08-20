@@ -1,8 +1,11 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { inboxService } from "../inbox/service"
+import { assertDeletable } from "../template/installed-resource.service"
+import { workspaceService } from "../workspace"
 
 export type CreateWebchatRequest = {
   name: string
@@ -80,6 +83,36 @@ class IntegrationWebchatService {
       .returning()
 
     return created
+  }
+
+  async delete(input: { workspaceId: string; id: string }): Promise<void> {
+    const [integrationWebchat, workspace] = await Promise.all([
+      findOrFail({
+        table: integrationWebchatModel,
+        where: { workspaceId: input.workspaceId, id: input.id },
+        message: "Integration Webchat not found",
+      }),
+      workspaceService.findById({ id: input.workspaceId }),
+    ])
+
+    await assertDeletable({
+      workspaceId: input.workspaceId,
+      resourceKind: "integrationWebchat",
+      resourceIds: [input.id],
+    })
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(integrationWebchatModel)
+        .where(eq(integrationWebchatModel.id, integrationWebchat.id))
+
+      await inboxService.disconnect({
+        inboxId: integrationWebchat.inboxId,
+        ownerId: workspace.ownerId,
+        workspaceId: input.workspaceId,
+        tx,
+      })
+    })
   }
 }
 

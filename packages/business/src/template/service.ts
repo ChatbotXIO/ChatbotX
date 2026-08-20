@@ -84,30 +84,13 @@ class TemplateService {
     return row
   }
 
-  /**
-   * `updateAvailable` is derived, never stored: `autoUpdate` is on AND the
-   * live `Template.updatedAt` moved past the `sourceUpdatedAt` captured at
-   * install time. A template whose source row was deleted (`templateId` set
-   * null) can never show an update — there is nothing left to compare
-   * against or reinstall from.
-   */
   async listInstallations(
     workspaceId: string,
-  ): Promise<(TemplateInstallationModel & { updateAvailable: boolean })[]> {
-    const installations = await db.query.templateInstallationModel.findMany({
+  ): Promise<TemplateInstallationModel[]> {
+    return await db.query.templateInstallationModel.findMany({
       where: { workspaceId },
       orderBy: { createdAt: "desc" },
-      with: { template: { columns: { updatedAt: true } } },
     })
-    return installations.map(({ template, ...installation }) => ({
-      ...installation,
-      updateAvailable: Boolean(
-        installation.autoUpdate &&
-          template &&
-          installation.sourceUpdatedAt &&
-          template.updatedAt.getTime() > installation.sourceUpdatedAt.getTime(),
-      ),
-    }))
   }
 
   /**
@@ -131,52 +114,6 @@ class TemplateService {
       .update(templateInstallationModel)
       .set({ autoUpdate: input.autoUpdate })
       .where(eq(templateInstallationModel.id, input.installationId))
-  }
-
-  /**
-   * Re-runs the install pipeline against the *current* template payload for
-   * an existing installation row — resets status to `pending` and refreshes
-   * `sourceUpdatedAt` so `updateAvailable` clears once the re-install
-   * enqueues, mirroring `createInstallationRecord` but reusing the
-   * installation's own id instead of minting a new row.
-   */
-  async prepareReinstall(input: {
-    workspaceId: string
-    installationId: string
-  }): Promise<TemplateInstallationModel> {
-    const existing = await db.query.templateInstallationModel.findFirst({
-      where: { id: input.installationId, workspaceId: input.workspaceId },
-    })
-    if (!existing) {
-      throw notFoundException("Template installation not found")
-    }
-    if (!existing.templateId) {
-      throw new ChatbotXException(
-        "The source template for this installation is no longer available",
-        "templateInstallationSourceMissing",
-      )
-    }
-    const template = await db.query.templateModel.findFirst({
-      where: { id: existing.templateId },
-      columns: { updatedAt: true },
-    })
-    if (!template) {
-      throw new ChatbotXException(
-        "The source template for this installation is no longer available",
-        "templateInstallationSourceMissing",
-      )
-    }
-    const [updated] = await db
-      .update(templateInstallationModel)
-      .set({
-        status: "pending",
-        sourceUpdatedAt: template.updatedAt,
-        errorMessage: null,
-        completedAt: null,
-      })
-      .where(eq(templateInstallationModel.id, input.installationId))
-      .returning()
-    return updated
   }
 
   /**

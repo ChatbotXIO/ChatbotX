@@ -4580,16 +4580,18 @@
     "share": {
       "label": "Share",
       "enabled": "Shared",
-      "disabled": "Not shared"
+      "disabled": "Not shared",
+      "dialogTitle": "Share template",
+      "dialogDescription": "Anyone with this link can install a copy of this template into a workspace in your tenant.",
+      "enableLabel": "Enable share link",
+      "linkLabel": "Share link"
     },
     "installs": {
       "title": "Installs",
       "resources": "Resources",
       "warnings": "Warnings",
       "completedAt": "Completed at",
-      "autoUpdate": "Auto-update",
-      "updateNow": "Update now",
-      "updateStarted": "Update started"
+      "autoUpdate": "Auto-update"
     },
     "form": {
       "contents": "Template contents",
@@ -4602,6 +4604,7 @@
       "allowDelete": "Allow deleting after install",
       "publisherName": "Publisher name",
       "youtubeVideoId": "YouTube video ID",
+      "youtubeVideoIdDescription": "The 11-character ID from the video's URL, e.g. the \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
       "testLink": "Test link",
       "imageUrl": "Cover image",
       "installBehavior": "Install behavior",

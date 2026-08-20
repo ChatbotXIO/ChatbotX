@@ -6,12 +6,27 @@ import { z } from "zod"
  * Record<TemplateCategory, ResourceAdapter>` and fail to compile if a
  * category is ever added here without a matching adapter.
  */
-export const templateCategories = z.enum([
-  "flows",
+/**
+ * Manifest-only categories (`customFields`/`tags`/`productCategories`)
+ * resolve in Phase R before any adapter runs and never get their own
+ * `ResourceAdapter` — kept as a separate enum so
+ * `templateResourceCategories` below can `Exclude` them and let the adapter
+ * registry `satisfies Record<TemplateResourceCategory, ResourceAdapter>` with
+ * no `Partial`, making a category added here without a matching adapter a
+ * compile error again (see `adapters/registry.ts`).
+ */
+export const templateManifestOnlyCategories = z.enum([
   "customFields",
   "tags",
-  "products",
   "productCategories",
+])
+export type TemplateManifestOnlyCategory = z.infer<
+  typeof templateManifestOnlyCategories
+>
+
+export const templateResourceCategories = z.enum([
+  "flows",
+  "products",
   "aiFunctions",
   "aiAgents",
   "calendars",
@@ -21,6 +36,14 @@ export const templateCategories = z.enum([
   "triggers",
   "fbCommentAutomations",
   "settings",
+])
+export type TemplateResourceCategory = z.infer<
+  typeof templateResourceCategories
+>
+
+export const templateCategories = z.enum([
+  ...templateResourceCategories.options,
+  ...templateManifestOnlyCategories.options,
 ])
 export type TemplateCategory = z.infer<typeof templateCategories>
 

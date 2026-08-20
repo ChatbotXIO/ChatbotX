@@ -140,6 +140,7 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
               name="publisherName"
             />
             <InputField
+              description={t("templates.form.youtubeVideoIdDescription")}
               label={t("templates.form.youtubeVideoId")}
               name="youtubeVideoId"
             />

@@ -13,13 +13,9 @@ import { useMemo } from "react"
 import { InstallAutoUpdateCell } from "./install-auto-update-cell"
 import { InstallProgressRefresher } from "./install-progress-refresher"
 
-type TemplateInstallationRow = TemplateInstallationModel & {
-  updateAvailable: boolean
-}
-
 type TemplateInstallsTableProps = {
   workspaceId: string
-  installations: TemplateInstallationRow[]
+  installations: TemplateInstallationModel[]
 }
 
 const STATUS_VARIANTS: Record<
@@ -33,7 +29,7 @@ const STATUS_VARIANTS: Record<
   failed: "destructive",
 }
 
-const hasPendingWork = (installations: TemplateInstallationRow[]): boolean =>
+const hasPendingWork = (installations: TemplateInstallationModel[]): boolean =>
   installations.some(
     (installation) =>
       installation.status === "pending" || installation.status === "installing",
@@ -45,7 +41,7 @@ export function TemplateInstallsTable({
 }: TemplateInstallsTableProps) {
   const t = useTranslations()
 
-  const columns = useMemo<ColumnDef<TemplateInstallationRow>[]>(
+  const columns = useMemo<ColumnDef<TemplateInstallationModel>[]>(
     () => [
       {
         accessorKey: "templateName",
@@ -146,7 +142,6 @@ export function TemplateInstallsTable({
           <InstallAutoUpdateCell
             autoUpdate={row.original.autoUpdate}
             installationId={row.original.id}
-            updateAvailable={row.original.updateAvailable}
             workspaceId={workspaceId}
           />
         ),

@@ -1,3 +1,4 @@
+import { db } from "@chatbotx.io/database/client"
 import type {
   AppointmentLocationType,
   AppointmentReminderTimingUnit,
@@ -8,6 +9,7 @@ import { createId } from "@chatbotx.io/utils"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -161,6 +163,104 @@ export const calendarsAdapter: ResourceAdapter = {
       },
     ]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.appointmentCalendarModel.findMany({
+        where: { workspaceId, deletedAt: { isNull: true as const } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.appointmentCalendarModel.findMany({
+        where: {
+          workspaceId,
+          id: { in: uniqueIds },
+          deletedAt: { isNull: true as const },
+        },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.appointmentCalendarModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+        with: {
+          availability: true,
+          reminders: true,
+        },
+      })
+
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        description: row.description,
+        timezone: row.timezone,
+        locationType: row.locationType,
+        locationDetail: row.locationDetail,
+        durationMinutes: row.durationMinutes,
+        bufferAfterMinutes: row.bufferAfterMinutes,
+        scheduleWindowType: row.scheduleWindowType,
+        scheduleWindowConfig: row.scheduleWindowConfig,
+        maxAppointmentsPerUser: row.maxAppointmentsPerUser,
+        dailyLimitEnabled: row.dailyLimitEnabled,
+        maxPerDay: row.maxPerDay,
+        allowGroupMeeting: row.allowGroupMeeting,
+        maxPerSlot: row.maxPerSlot,
+        confirmationMessage: row.confirmationMessage,
+        confirmationFlowId: row.confirmationFlowId,
+        cancellationFlowId: row.cancellationFlowId,
+        // Never carried over — same treatment as install time
+        // (`externalConnectionId` is dropped and warned about there); collect
+        // simply never emits it, so there is nothing for install to drop.
+        availability: row.availability.map((slot) => ({
+          weekday: slot.weekday,
+          startMinute: slot.startMinute,
+          endMinute: slot.endMinute,
+        })),
+        reminders: row.reminders.map((reminder) => ({
+          flowId: reminder.flowId,
+          timingValue: reminder.timingValue,
+          timingUnit: reminder.timingUnit,
+        })),
+      }))
+
+      // `reminders[].flowId` is NOT NULL on the row — per the same save-time
+      // rule `entryPointLinks` depends on (G9), every reminder's flow must be
+      // auto-included even if not explicitly selected. `confirmationFlowId`/
+      // `cancellationFlowId` are nullable and simply degrade to a warn+skip
+      // at install time if left unselected, so they are not hard
+      // dependencies.
+      const hardDependencies = rows.flatMap((row) =>
+        row.reminders.map((reminder) => ({
+          category: "flows" as const,
+          sourceId: reminder.flowId,
+        })),
+      )
+
+      return {
+        entries,
+        folderIds: [],
+        productCategoryIds: [],
+        hardDependencies,
+      }
+    },
+  } satisfies ResourceCollector,
 }
 
 const resolveFlowRef = (

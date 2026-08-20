@@ -1,8 +1,10 @@
+import { db } from "@chatbotx.io/database/client"
 import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import { automatedResponseService } from "../../automated-response/service"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -79,6 +81,66 @@ export const keywordsAdapter: ResourceAdapter = {
 
     return [] satisfies PatchTask[]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      // "keywords" is the inbound half of `AutomatedResponse` — the
+      // outbound half backs the unrelated "Page Automated Responses"
+      // comment-automation feature, which has no export category of its
+      // own. Without this filter, exporting "keywords" would silently
+      // bundle a workspace's outbound rows too. Mirrors
+      // `automatedResponseService.list`'s always-required `type` filter.
+      const rows = await db.query.automatedResponseModel.findMany({
+        where: { workspaceId, type: "inbound" },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.automatedResponseModel.findMany({
+        where: { workspaceId, type: "inbound", id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.automatedResponseModel.findMany({
+        where: { workspaceId, type: "inbound", id: { in: [...ids] } },
+      })
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        type: row.type,
+        text: row.text,
+        keywords: row.keywords,
+        flowId: row.flowId,
+        folderId: row.folderId,
+      }))
+      const folderIds = rows.flatMap((row) =>
+        row.folderId ? [row.folderId] : [],
+      )
+
+      return {
+        entries,
+        folderIds,
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }
 
 const resolveReference = (

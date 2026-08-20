@@ -1,3 +1,4 @@
+import { db } from "@chatbotx.io/database/client"
 import { triggerModel } from "@chatbotx.io/database/schema"
 import { remapReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
@@ -5,6 +6,7 @@ import { insertWithNameRetry } from "./naming"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -74,9 +76,11 @@ export const triggersAdapter: ResourceAdapter = {
       const folderId = resolveFolderRef(ctx, entry)
 
       const created = await insertWithNameRetry(
+        ctx.tx,
+        "Trigger_workspaceId_name_key",
         entry.name,
-        (candidateName) =>
-          ctx.tx
+        (tx, candidateName) =>
+          tx
             .insert(triggerModel)
             .values({
               id: createId(),
@@ -112,6 +116,62 @@ export const triggersAdapter: ResourceAdapter = {
 
     return [] satisfies PatchTask[]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.triggerModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.triggerModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.triggerModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+      })
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        active: row.active,
+        // Every reference inside `actions` is still the real source-workspace
+        // id at collect time — no remapping happens until install, where
+        // `remapReferences` translates them via `idMaps`.
+        actions: row.actions,
+        folderId: row.folderId,
+      }))
+      const folderIds = rows.flatMap((row) =>
+        row.folderId ? [row.folderId] : [],
+      )
+
+      return {
+        entries,
+        folderIds,
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }
 
 const resolveFolderRef = (

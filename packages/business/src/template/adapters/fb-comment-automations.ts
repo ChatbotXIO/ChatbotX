@@ -1,8 +1,10 @@
+import { db } from "@chatbotx.io/database/client"
 import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -152,4 +154,72 @@ export const fbCommentAutomationsAdapter: ResourceAdapter = {
 
     return [] satisfies PatchTask[]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.fbCommentAutomationModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.fbCommentAutomationModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.fbCommentAutomationModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+      })
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        type: row.type,
+        isActive: row.isActive,
+        startTime: row.startTime,
+        endTime: row.endTime,
+        post: row.post,
+        // `privateReply.value`/`publicReply.value` are still the real
+        // source-workspace flow/aiAgent ids at collect time — resolved only
+        // at install time (`resolveReplyValue`). Both are nullable/optional
+        // references there (degrade to warn+skip), so neither is a hard
+        // dependency.
+        privateReply: row.privateReply,
+        publicReply: row.publicReply,
+        includeKeywords: row.includeKeywords,
+        excludeKeywords: row.excludeKeywords,
+        options: row.options,
+        hideComments: row.hideComments,
+        replyAfter: row.replyAfter,
+        folderId: row.folderId,
+      }))
+      const folderIds = rows.flatMap((row) =>
+        row.folderId ? [row.folderId] : [],
+      )
+
+      return {
+        entries,
+        folderIds,
+        productCategoryIds: [],
+        hardDependencies: [],
+      }
+    },
+  } satisfies ResourceCollector,
 }

@@ -1,3 +1,4 @@
+import { db } from "@chatbotx.io/database/client"
 import type { ProductImageInput } from "../../product/service"
 import {
   type ProductWriteData,
@@ -7,6 +8,7 @@ import {
 import type {
   PatchTask,
   ResourceAdapter,
+  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -121,6 +123,114 @@ export const productsAdapter: ResourceAdapter = {
       },
     ]
   },
+
+  collector: {
+    async resolveIds(workspaceId) {
+      const rows = await db.query.productModel.findMany({
+        where: { workspaceId },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async verifyOwnership(workspaceId, ids) {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) {
+        return []
+      }
+      const rows = await db.query.productModel.findMany({
+        where: { workspaceId, id: { in: uniqueIds } },
+        columns: { id: true },
+      })
+      return rows.map((row) => row.id)
+    },
+
+    async collect(workspaceId, ids) {
+      if (ids.length === 0) {
+        return {
+          entries: [],
+          folderIds: [],
+          productCategoryIds: [],
+          hardDependencies: [],
+        }
+      }
+      const rows = await db.query.productModel.findMany({
+        where: { workspaceId, id: { in: [...ids] } },
+        with: { variantOptions: true, variants: true, addons: true },
+      })
+
+      const entries = rows.map((row) => ({
+        sourceId: row.id,
+        name: row.name,
+        shortDescription: row.shortDescription,
+        longDescription: row.longDescription,
+        price: row.price,
+        taxes: row.taxes,
+        discount: row.discount,
+        currency: row.currency,
+        productUrl: row.productUrl,
+        sku: row.sku,
+        inventoryPolicy: row.inventoryPolicy,
+        inventoryQuantity: row.inventoryQuantity,
+        allowOutOfStockPurchase: row.allowOutOfStockPurchase,
+        images: row.images,
+        tags: row.tags,
+        vendor: row.vendor,
+        rank: row.rank,
+        categoryId: row.categoryId,
+        subcategoryId: row.subcategoryId,
+        isActive: row.isActive,
+        isSearchable: row.isSearchable,
+        allowSpecialRequest: row.allowSpecialRequest,
+        isAddonOnly: row.isAddonOnly,
+        variantOptions: row.variantOptions.map((option) => ({
+          name: option.name,
+          values: option.values,
+          position: option.position,
+        })),
+        variants: row.variants.map((variant) => ({
+          combination: variant.combination,
+          price: variant.price,
+          isEnabled: variant.isEnabled,
+        })),
+        // `addonProductIds` are still the real source-workspace ids at
+        // collect time — never remapped here. A same-template addon
+        // reference that points at a product NOT in this selection becomes
+        // a hard dependency below, mirroring `entryPointLinks.flowId`
+        // (except this one is within-category, the same cyclic shape
+        // `productsAdapter.insert`'s own `deferredKinds: ["product"]`
+        // already documents).
+        addons: row.addons.map((addon) => ({
+          name: addon.name,
+          maxSelections: addon.maxSelections,
+          addonProductIds: addon.addonProductIds,
+        })),
+      }))
+
+      const productCategoryIds = [
+        ...new Set(
+          rows.flatMap((row) =>
+            [row.categoryId, row.subcategoryId].filter(
+              (id): id is string => id !== null,
+            ),
+          ),
+        ),
+      ]
+
+      const selectedIds = new Set(ids)
+      const hardDependencies = [
+        ...new Set(
+          rows.flatMap((row) =>
+            row.addons.flatMap((addon) => addon.addonProductIds),
+          ),
+        ),
+      ]
+        .filter((sourceId) => !selectedIds.has(sourceId))
+        .map((sourceId) => ({ category: "products" as const, sourceId }))
+
+      return { entries, folderIds: [], productCategoryIds, hardDependencies }
+    },
+  } satisfies ResourceCollector,
 }
 
 const resolveCategoryReference = (
