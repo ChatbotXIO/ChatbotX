@@ -5,6 +5,8 @@ import {
 } from "@chatbotx.io/database/partials"
 import {
   messengerTemplateParamsSchema,
+  validateWaTemplateSendParams,
+  type WaTemplateParams,
   waTemplateParamsSchema,
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -51,6 +53,16 @@ export const createBroadcastRequest = z
   .refine((data) => !!(data.flowId || data.templateId), {
     message: "Either flow or template must be selected",
     path: ["flowId"],
+  })
+  // Send-blocking WhatsApp template rules (MPM sections, LTO expiration):
+  // the flow editor enforces them at publish, this refinement covers the
+  // broadcast surface with the same shared rule set.
+  .superRefine((data, ctx) => {
+    if (data.channel === channelTypes.enum.whatsapp && data.templateData) {
+      validateWaTemplateSendParams(data.templateData as WaTemplateParams, ctx, [
+        "templateData",
+      ])
+    }
   })
 export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>
 

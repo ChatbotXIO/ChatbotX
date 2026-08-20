@@ -771,6 +771,9 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                             selectedTemplate.components as TemplateComponent[]
                           }
                           headerParams={watchedTemplateData?.header || []}
+                          limitedTimeOfferParam={
+                            watchedTemplateData?.limited_time_offer
+                          }
                         />
                       </div>
                     </div>

@@ -221,6 +221,7 @@ function SendWaTemplateMessageStepEditor(
               buttonParams={templateParams.button || []}
               components={selectedTemplate.components as TemplateComponent[]}
               headerParams={templateParams.header || []}
+              limitedTimeOfferParam={templateParams.limited_time_offer}
             />
           </div>
         )}

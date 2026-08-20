@@ -1,12 +1,16 @@
 "use client"
 
 import {
+  type ButtonSubType,
+  dateToExpirationTimeMs,
+  expirationTimeMsToDate,
   extractParameterInfos,
   type ParameterInfo,
   type TemplateComponent,
   type WhatsappFlowFieldMapping,
 } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { DateTimePicker } from "@chatbotx.io/ui/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -18,8 +22,14 @@ import { Label } from "@chatbotx.io/ui/components/ui/label"
 import ky from "ky"
 import { Pencil } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { useFormContext } from "react-hook-form"
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
+import { Controller, useFormContext } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
@@ -31,6 +41,11 @@ import type {
 } from "@/features/integration-whatsapp/flows/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
 import { buildFlowFieldMappings } from "../lib/build-flow-field-mappings"
+import {
+  type MetaCatalogProductOption,
+  MetaCatalogProductSelect,
+} from "./meta-catalog-product-select"
+import { MpmSectionsField } from "./mpm-sections-field"
 
 type TemplateParamsFormProps = {
   components: TemplateComponent[]
@@ -61,65 +76,120 @@ function getFieldName(param: ParameterInfo, parentName: string): string {
   return `${parentName}.${param.type}[${param.index}]`
 }
 
-function ButtonParamField({
-  param,
-  fieldName,
-}: {
+type ButtonParamFieldProps = {
   param: ParameterInfo
   fieldName: string
-}) {
+}
+
+function UrlButtonParamField({ param, fieldName }: ButtonParamFieldProps) {
+  return (
+    <div className="grid grid-cols-[90px_18px_1fr] items-start gap-2">
+      <div className="flex h-7 items-center justify-center rounded-md border bg-muted text-muted-foreground text-xs">
+        {`{{${param.paramName}}}`}
+      </div>
+      <div className="flex h-7 items-center justify-center text-muted-foreground">
+        →
+      </div>
+      <TiptapEditorField
+        channels={["whatsapp"]}
+        name={`${fieldName}.text`}
+        placeholder=""
+        showEmojiPicker={false}
+      />
+    </div>
+  )
+}
+
+function CopyCodeButtonParamField({ fieldName }: ButtonParamFieldProps) {
   const t = useTranslations()
   const { register } = useFormContext()
 
-  switch (param.buttonSubType) {
-    case "copy_code":
-      return (
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {t("whatsapp.messageTemplate.params.couponCode")}
-          </Label>
-          <Input
-            {...register(`${fieldName}.coupon_code`)}
-            placeholder={t(
-              "whatsapp.messageTemplate.params.couponCodePlaceholder",
-            )}
-          />
-        </div>
-      )
-    case "flow":
-      return <TemplateFlowFieldMappings fieldName={fieldName} param={param} />
-    case "catalog":
-      return (
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {t("whatsapp.messageTemplate.params.catalogProductId")}
-          </Label>
-          <Input
-            {...register(`${fieldName}.thumbnail_product_retailer_id`)}
-            placeholder={t(
-              "whatsapp.messageTemplate.params.catalogProductIdPlaceholder",
-            )}
-          />
-        </div>
-      )
-    default:
-      return (
-        <div className="grid grid-cols-[90px_18px_1fr] items-start gap-2">
-          <div className="flex h-7 items-center justify-center rounded-md border bg-muted text-muted-foreground text-xs">
-            {`{{${param.paramName}}}`}
-          </div>
-          <div className="flex h-7 items-center justify-center text-muted-foreground">
-            →
-          </div>
-          <TiptapEditorField
-            channels={["whatsapp"]}
-            name={`${fieldName}.text`}
-            placeholder=""
-            showEmojiPicker={false}
-          />
-        </div>
-      )
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">
+        {t("whatsapp.messageTemplate.params.couponCode")}
+      </Label>
+      <Input
+        {...register(`${fieldName}.coupon_code`)}
+        placeholder={t("whatsapp.messageTemplate.params.couponCodePlaceholder")}
+      />
+    </div>
+  )
+}
+
+function CatalogButtonParamField({ fieldName }: ButtonParamFieldProps) {
+  const t = useTranslations()
+  const { setValue, watch } = useFormContext()
+  const retailerId = watch(`${fieldName}.thumbnail_product_retailer_id`) as
+    | string
+    | undefined
+
+  const handleChange = (option: MetaCatalogProductOption | undefined) => {
+    setValue(
+      `${fieldName}.thumbnail_product_retailer_id`,
+      option?.retailerId ?? "",
+      { shouldDirty: true },
+    )
+    setValue(
+      `${fieldName}.thumbnail_product_retailer_name`,
+      option?.name ?? "",
+      { shouldDirty: false },
+    )
   }
+
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">
+        {t("whatsapp.messageTemplate.params.catalogProductId")}
+      </Label>
+      <MetaCatalogProductSelect
+        onChange={handleChange}
+        placeholder={t(
+          "whatsapp.messageTemplate.params.catalogProductIdPlaceholder",
+        )}
+        value={retailerId}
+      />
+      <p className="text-muted-foreground text-xs">
+        {t("whatsapp.messageTemplate.params.catalogUseDefault")}
+      </p>
+    </div>
+  )
+}
+
+function UnsupportedButtonParamField() {
+  const t = useTranslations()
+  return (
+    <p className="text-muted-foreground text-xs">
+      {t("whatsapp.messageTemplate.params.unsupportedButtonParam")}
+    </p>
+  )
+}
+
+/**
+ * One renderer per button sub_type — extend this map for any future
+ * sub_type instead of adding another switch branch. A sub_type the map
+ * doesn't recognise (defensive: extraction only ever emits the keys below)
+ * falls back to the neutral "unsupported" notice, never a raw text input.
+ */
+const buttonParamFieldRenderers: Record<
+  ButtonSubType,
+  (props: ButtonParamFieldProps) => ReactNode
+> = {
+  url: UrlButtonParamField,
+  copy_code: CopyCodeButtonParamField,
+  flow: TemplateFlowFieldMappings,
+  catalog: CatalogButtonParamField,
+  mpm: MpmSectionsField,
+  quick_reply: UnsupportedButtonParamField,
+}
+
+function ButtonParamField(props: ButtonParamFieldProps) {
+  const Renderer =
+    (props.param.buttonSubType &&
+      buttonParamFieldRenderers[props.param.buttonSubType]) ||
+    UnsupportedButtonParamField
+
+  return <Renderer {...props} />
 }
 
 function TemplateFlowFieldMappings({
@@ -396,21 +466,33 @@ function CarouselParamField({
 
 function LimitedTimeOfferField({ fieldName }: { fieldName: string }) {
   const t = useTranslations()
-  const { register } = useFormContext()
+  const { control } = useFormContext()
+  // Computed per render (not module scope) so the cutoff keeps advancing
+  // with real time across a long-lived editor session, rather than freezing
+  // at whenever this component first mounted.
+  const disablePastDates = { before: new Date() }
 
   return (
     <div className="space-y-1">
       <Label className="text-xs">
         {t("whatsapp.messageTemplate.params.limitedTimeOffer")}
       </Label>
-      <Input
-        {...register(`${fieldName}.expiration_time_ms`, {
-          valueAsNumber: true,
-        })}
-        placeholder={t(
-          "whatsapp.messageTemplate.params.limitedTimeOfferPlaceholder",
+      <Controller
+        control={control}
+        name={`${fieldName}.expiration_time_ms`}
+        render={({ field }) => (
+          <DateTimePicker
+            disabled={disablePastDates}
+            granularity="minute"
+            onChange={(date) =>
+              field.onChange(date ? dateToExpirationTimeMs(date) : undefined)
+            }
+            placeholder={t(
+              "whatsapp.messageTemplate.params.limitedTimeOfferPlaceholder",
+            )}
+            value={expirationTimeMsToDate(field.value as number | undefined)}
+          />
         )}
-        type="number"
       />
       <p className="text-muted-foreground text-xs">
         {t("whatsapp.messageTemplate.params.limitedTimeOfferHelp")}
