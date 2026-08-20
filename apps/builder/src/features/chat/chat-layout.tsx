@@ -32,9 +32,6 @@ type ChatLayoutProps = {
   layout?: [number, number, number]
 }
 
-/** Height of the shell's mobile header (`h-12`), which sits above this view. */
-const MOBILE_SHELL_HEADER = "3rem"
-
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
   const {
@@ -105,10 +102,9 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         </div>
       )}
       {isMobile === true && (
-        <div
-          className="flex flex-col"
-          style={{ height: `calc(100dvh - ${MOBILE_SHELL_HEADER})` }}
-        >
+        // The shell has no mobile top bar to subtract: the page owns the
+        // whole viewport. `dvh` for the same reason as the desktop group.
+        <div className="flex h-[100dvh] flex-col">
           {activeConversationId ? (
             <MessageThreadPane
               {...paneState}

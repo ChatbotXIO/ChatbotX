@@ -98,6 +98,17 @@ describe("ChatLayout", () => {
     expect(container.querySelector("[data-panel-group]")).toBeNull()
   })
 
+  test("fills the viewport, with no shell header height to subtract", () => {
+    setViewportWidth(375)
+    render()
+
+    // This used to be `calc(100dvh - 3rem)`, a copy of the shell's `h-12`
+    // mobile header. The review on #970 removed that header, so the pane owns
+    // the whole viewport and no longer tracks a value from another module.
+    const pane = find("list-pane")?.closest("div.flex")
+    expect(pane?.className).toContain("h-[100dvh]")
+  })
+
   test("shows the thread with a back control once a conversation is active", () => {
     storeState.activeConversationId = "c1"
     setViewportWidth(375)
