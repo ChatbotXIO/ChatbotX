@@ -2,31 +2,13 @@ import {
   createJavascriptExecutorClient,
   JavascriptSandboxError,
 } from "@chatbotx.io/javascript-sandbox"
+import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
 import { BaseService } from "../base.service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
-import { ChatbotXException } from "../errors"
+import { customFieldService } from "../custom-field/service"
+import { ChatbotXException, notFoundException } from "../errors"
 import { javascriptExecutionEnv } from "./keys"
-
-const MAX_OUTPUT_BYTES = 64 * 1024
-
-const toCustomFieldValue = (value: unknown): string | null => {
-  if (value === undefined || value === null) {
-    return null
-  }
-
-  const encoded = typeof value === "string" ? value : JSON.stringify(value)
-  if (encoded === undefined) {
-    return null
-  }
-  if (Buffer.byteLength(encoded, "utf8") > MAX_OUTPUT_BYTES) {
-    throw new ChatbotXException(
-      "JavaScript output is too large to save",
-      "javascriptOutputTooLarge",
-      400,
-    )
-  }
-  return encoded
-}
+import { toValidatedCustomFieldValue } from "./output-value"
 
 class JavascriptExecutionService extends BaseService {
   async execute(props: {
@@ -55,14 +37,36 @@ class JavascriptExecutionService extends BaseService {
     input: Record<string, unknown>
     customFieldId: string
   }): Promise<{ value: unknown }> {
-    const result = await this.execute({ code: props.code, input: props.input })
-    const encodedValue = toCustomFieldValue(result.value)
+    // Resolved before running the code so a step pointing at a deleted field
+    // fails fast instead of burning a sandbox execution, and so a stale id
+    // is a visible error rather than writeValues' silent no-op.
+    const customField = await customFieldService.findBy({
+      where: { id: props.customFieldId, workspaceId: props.workspaceId },
+    })
+    if (!customField) {
+      throw notFoundException(
+        "The output custom field for this step no longer exists.",
+      )
+    }
 
-    if (encodedValue !== null) {
+    const result = await this.execute({ code: props.code, input: props.input })
+
+    const value = toValidatedCustomFieldValue({
+      value: result.value,
+      type: customField.type,
+      fieldName: customField.name,
+    })
+
+    if (value !== null) {
       await contactCustomFieldService.setValues({
         workspaceId: props.workspaceId,
         contactId: props.contactId,
-        fields: [{ customFieldId: props.customFieldId, value: encodedValue }],
+        fields: [{ customFieldId: props.customFieldId, value }],
+        // date/datetime were only pre-flighted for parseability in
+        // toValidatedCustomFieldValue; the authoritative, timezone-aware
+        // normalization happens here, where the contact/workspace zone is
+        // resolvable.
+        temporalInputParsing: TemporalInputParsing.Lenient,
       })
     }
 

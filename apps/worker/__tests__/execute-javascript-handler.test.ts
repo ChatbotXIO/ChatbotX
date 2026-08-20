@@ -9,16 +9,38 @@ const mocks = vi.hoisted(() => ({
     workspace: null,
   })),
   getSystemFieldValue: vi.fn(async () => null as string | null),
-  resolveJavascriptInput: vi.fn(async () => new Map<string, string | null>()),
+  resolveJavascriptInput: vi.fn(
+    async () => new Map<string, string | number | boolean | null>(),
+  ),
   interpolateIntoJavascript: vi.fn((code: string) => code),
   executeAndMap: vi.fn(async () => ({ value: null })),
 }))
+
+// Mirrors packages/variables/src/javascript-interpolation.ts's real
+// implementation exactly (a pure number/boolean coercion, no DB
+// dependency), since `@chatbotx.io/variables`'s barrel can't be imported
+// actual here without resurrecting the Snowflake-collision problem
+// documented at the bottom of this file.
+const coerceCustomFieldValueForJavascript = (
+  value: string,
+  type: string,
+): string | number | boolean | null => {
+  if (type === "number") {
+    const numberValue = Number(value)
+    return Number.isFinite(numberValue) ? numberValue : null
+  }
+  if (type === "boolean") {
+    return value === "true"
+  }
+  return value
+}
 
 vi.mock("@chatbotx.io/variables", () => ({
   contactVariableService: { getAll: mocks.getAll },
   getSystemFieldValue: mocks.getSystemFieldValue,
   resolveJavascriptInput: mocks.resolveJavascriptInput,
   interpolateIntoJavascript: mocks.interpolateIntoJavascript,
+  coerceCustomFieldValueForJavascript,
 }))
 
 vi.mock("@chatbotx.io/business/javascript-execution", () => ({
@@ -137,6 +159,54 @@ describe("handleExecuteJavascript", () => {
       errorMessage: "JavaScript execution failed",
       result: null,
     })
+  })
+
+  test("routes an output type mismatch to the error result with its actionable message", async () => {
+    // executeAndMap throws a ChatbotXException (which extends Error) when
+    // the sandbox's result doesn't fit the output field's declared type —
+    // this proves that failure reaches the step's error branch instead of
+    // being swallowed or reported as a generic success.
+    mocks.executeAndMap.mockRejectedValue(
+      new Error(
+        'JavaScript returned "Abcd 123", which is not a valid number value for the output field "Age".',
+      ),
+    )
+
+    await expect(handleExecuteJavascript(createProps())).resolves.toEqual({
+      status: "error",
+      errorMessage:
+        'JavaScript returned "Abcd 123", which is not a valid number value for the output field "Age".',
+      result: null,
+    })
+  })
+
+  test("coerces every custom field seeded into input, not only ones referenced via {{...}}", async () => {
+    // A field read directly as input.age (never as {{age}}) must still be
+    // typed consistently with one read via {{age}} — both come from the
+    // same customFieldsMap, so both must go through the same coercion.
+    mocks.getAll.mockResolvedValue({
+      contact: { id: "contact-1", email: "a@example.com" },
+      contactInbox: null,
+      conversation: null,
+      customFieldsMap: new Map([
+        ["age", { key: "age", type: "number", value: "30", description: "" }],
+        [
+          "is_vip",
+          { key: "is_vip", type: "boolean", value: "true", description: "" },
+        ],
+      ]),
+      workspace: null,
+    })
+
+    const props = createProps()
+    props.step.code = "return input.age + 1"
+    await handleExecuteJavascript(props)
+
+    const call = mocks.executeAndMap.mock.calls[0]?.[0] as {
+      input: Record<string, unknown>
+    }
+    expect(call.input.age).toBe(30)
+    expect(call.input.is_vip).toBe(true)
   })
 })
 
