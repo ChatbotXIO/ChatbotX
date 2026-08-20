@@ -363,6 +363,108 @@ describe("button component hygiene", () => {
     ])
   })
 
+  test("catalog button with a blank thumbnail emits NO button component (Meta default thumbnail applies)", async () => {
+    await sendTemplate({
+      button: [
+        { sub_type: "catalog", index: 0, thumbnail_product_retailer_id: "" },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([])
+  })
+
+  test("catalog button with a whitespace-only thumbnail is also omitted", async () => {
+    await sendTemplate({
+      button: [
+        {
+          sub_type: "catalog",
+          index: 0,
+          thumbnail_product_retailer_id: "   ",
+        },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([])
+  })
+
+  test("catalog button with a real thumbnail is sent exactly as before (regression)", async () => {
+    await sendTemplate({
+      button: [
+        {
+          sub_type: "catalog",
+          index: 0,
+          thumbnail_product_retailer_id: "sku-123",
+        },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "catalog",
+        index: 0,
+        parameters: [
+          {
+            type: "action",
+            action: { thumbnail_product_retailer_id: "sku-123" },
+          },
+        ],
+      },
+    ])
+  })
+
+  test("MPM button with configured sections is emitted unchanged", async () => {
+    await sendTemplate({
+      button: [
+        {
+          sub_type: "mpm",
+          index: 0,
+          sections: [
+            {
+              title: "Best sellers",
+              product_items: [
+                { product_retailer_id: "sku-1" },
+                { product_retailer_id: "sku-2" },
+              ],
+            },
+            {
+              title: "New arrivals",
+              product_items: [{ product_retailer_id: "sku-3" }],
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "mpm",
+        index: 0,
+        parameters: [
+          {
+            type: "action",
+            action: {
+              sections: [
+                {
+                  title: "Best sellers",
+                  product_items: [
+                    { product_retailer_id: "sku-1" },
+                    { product_retailer_id: "sku-2" },
+                  ],
+                },
+                {
+                  title: "New arrivals",
+                  product_items: [{ product_retailer_id: "sku-3" }],
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ])
+  })
+
   test("carousel card quick replies with blank payloads are omitted from the card", async () => {
     await sendTemplate({
       carousel: [

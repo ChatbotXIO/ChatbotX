@@ -190,6 +190,26 @@ const buttonSubTypeOf = (param: WaTemplateButtonParam): string =>
 const hasButtonParamContent = (param: WaTemplateButtonParam): boolean =>
   buttonParamContentChecks[buttonSubTypeOf(param)]?.(param) ?? true
 
+/**
+ * Sub_types whose whole button component must be OMITTED (not sent with an
+ * empty value) when the entry carries no content — Meta rejects an explicit
+ * `payload: ""`/`thumbnail_product_retailer_id: ""` rather than treating it
+ * as "no value". The catalog thumbnail is documented optional: Meta applies
+ * the catalog's own default thumbnail when the component is left out
+ * entirely, exactly like a quick reply falls back to its button text.
+ * The blank predicate itself lives in `buttonParamContentChecks` — this set
+ * only declares WHICH sub_types get omit-instead-of-send-blank treatment,
+ * so the two can never drift.
+ */
+const OMIT_WHEN_BLANK_SUB_TYPES: ReadonlySet<string> = new Set([
+  "quick_reply",
+  "catalog",
+])
+
+const shouldOmitWhenBlank = (param: WaTemplateButtonParam): boolean =>
+  OMIT_WHEN_BLANK_SUB_TYPES.has(buttonSubTypeOf(param)) &&
+  !hasButtonParamContent(param)
+
 type ResolvedButtonParam = {
   param: WaTemplateButtonParam
   /** Template button index, resolved from the entry's own array position when absent. */
@@ -236,11 +256,13 @@ function dedupeExplicitIndexParams(
 
 /**
  * Normalizes persisted button params before they become Graph API components:
- * drops null holes from sparse form arrays, drops quick replies without a
- * payload (Meta rejects `payload: ""`; omitting the component makes the tap
- * return the button text instead), and collapses legacy duplicates. Indexes are
- * resolved from the ORIGINAL array positions so removals never shift the
- * positional fallback of the remaining entries.
+ * drops null holes from sparse form arrays, drops entries whose sub_type must
+ * be omitted rather than sent blank (quick reply without a payload — Meta
+ * rejects `payload: ""`; omitting the component makes the tap return the
+ * button text instead — and catalog without a thumbnail, which falls back to
+ * the catalog's own default when the component is left out), and collapses
+ * legacy duplicates. Indexes are resolved from the ORIGINAL array positions
+ * so removals never shift the positional fallback of the remaining entries.
  */
 function resolveButtonParams(
   buttons: ReadonlyArray<WaTemplateButtonParam | null | undefined>,
@@ -257,13 +279,11 @@ function resolveButtonParams(
       : [],
   )
 
-  const withoutBlankQuickReplies = resolved.filter(
-    (entry) =>
-      buttonSubTypeOf(entry.param) !== "quick_reply" ||
-      !isBlank(entry.param.payload),
+  const withoutOmittedBlanks = resolved.filter(
+    (entry) => !shouldOmitWhenBlank(entry.param),
   )
 
-  return dedupeExplicitIndexParams(withoutBlankQuickReplies)
+  return dedupeExplicitIndexParams(withoutOmittedBlanks)
 }
 
 function buildButtonComponents(

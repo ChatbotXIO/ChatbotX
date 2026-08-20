@@ -1,15 +1,24 @@
 import {
   and,
+  asc,
   type DatabaseClient,
   db,
   eq,
+  ilike,
   inArray,
   ne,
   or,
   sql,
 } from "@chatbotx.io/database/client"
-import { metaCatalogItemModel } from "@chatbotx.io/database/schema"
+import {
+  metaCatalogItemModel,
+  productModel,
+} from "@chatbotx.io/database/schema"
+import { likeContains } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
+
+/** Keeps a single "type to search" list from ever returning an unbounded page. */
+const DEFAULT_SEARCH_LIMIT = 20
 
 /**
  * Every lookup is scoped to a single catalog. Rebinding a connection to another
@@ -131,6 +140,41 @@ export const metaCatalogItemRepository = {
           inArray(metaCatalogItemModel.retailerId, input.retailerIds),
         ),
       )
+  },
+
+  /**
+   * Workspace-scoped product picker for template button params (catalog
+   * thumbnail, MPM sections): every linked item in the connection's current
+   * catalog, optionally name-filtered, joined to `Product` for the display
+   * name and image the picker needs. Never returns a bare `retailerId` — the
+   * picker's whole point is that the end user never has to type one.
+   */
+  async searchWithProductInfo(
+    input: CatalogScope & { keyword?: string; limit?: number },
+    tx: DatabaseClient = db,
+  ) {
+    const limit = input.limit ?? DEFAULT_SEARCH_LIMIT
+    return await tx
+      .select({
+        retailerId: metaCatalogItemModel.retailerId,
+        name: productModel.name,
+        images: productModel.images,
+      })
+      .from(metaCatalogItemModel)
+      .innerJoin(
+        productModel,
+        eq(metaCatalogItemModel.productId, productModel.id),
+      )
+      .where(
+        and(
+          inCatalog(input),
+          input.keyword
+            ? ilike(productModel.name, likeContains(input.keyword))
+            : undefined,
+        ),
+      )
+      .orderBy(asc(productModel.name))
+      .limit(limit)
   },
 
   async findByProductIds(
