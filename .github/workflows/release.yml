@@ -198,8 +198,15 @@ jobs:
           tags: |
             ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:main
           labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Per-leg scope: the five matrix legs otherwise share one unscoped GHA
+          # cache namespace and evict each other against the 10GB LRU budget.
+          # mode=min (not max): `max` exports every intermediate layer of every
+          # stage — "preparing build cache for export" alone cost 236.8s of a
+          # 340.3s export — while a same-SHA rebuild still ran `pnpm install`
+          # cold and `next build` in full, so the intermediate layers were never
+          # usefully restored. See the phase table in the plan for measurements.
+          cache-from: type=gha,scope=${{ matrix.label }}
+          cache-to: type=gha,scope=${{ matrix.label }},mode=min
           platforms: ${{ env.BUILD_PLATFORMS }}
           # Turbo remote cache: deliberately NOT passed. buildx rejects an
           # empty-valued secret outright, so passing the partial set that exists
@@ -221,8 +228,15 @@ jobs:
             ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:${{ needs.prepare-metadata.outputs.version }}
             ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Per-leg scope: the five matrix legs otherwise share one unscoped GHA
+          # cache namespace and evict each other against the 10GB LRU budget.
+          # mode=min (not max): `max` exports every intermediate layer of every
+          # stage — "preparing build cache for export" alone cost 236.8s of a
+          # 340.3s export — while a same-SHA rebuild still ran `pnpm install`
+          # cold and `next build` in full, so the intermediate layers were never
+          # usefully restored. See the phase table in the plan for measurements.
+          cache-from: type=gha,scope=${{ matrix.label }}
+          cache-to: type=gha,scope=${{ matrix.label }},mode=min
           platforms: ${{ env.BUILD_PLATFORMS }}
           # Turbo remote cache secrets omitted — see "Build and push main image".
 
