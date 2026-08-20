@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
-    "mjml": "^5.2.0",
+    "mjml": "^5.4.0",
     "nodemailer": "^8.0.7",
     "zod": "^4.3.6"
   },

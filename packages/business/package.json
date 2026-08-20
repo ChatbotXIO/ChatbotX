@@ -44,10 +44,10 @@
     "@t3-oss/env-core": "^0.13.11",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
-    "dot-prop": "^10.1.0",
+    "dot-prop": "^10.2.0",
     "drizzle-orm": "1.0.0-beta.22",
-    "jose": "^6.2.3",
-    "libphonenumber-js": "^1.12.42",
+    "jose": "^6.2.9",
+    "libphonenumber-js": "^1.13.11",
     "qrcode": "^1.5.4",
     "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"
