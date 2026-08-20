@@ -59,6 +59,15 @@ export type TiktokDmMessageContent = z.infer<
 
 // ─── API response schemas ─────────────────────────────────────────────────────
 
+// business-api.tiktok.com wraps every response as { code, message, data },
+// distinct from open.tiktokapis.com's { data, error } (TiktokApiResponse below)
+// — a rejection still comes back HTTP 200, so `code` must be checked explicitly.
+export type BusinessApiResponse<T> = {
+  code: number
+  message?: string
+  data: T
+}
+
 export const tiktokApiResponseSchema = z.object({
   data: z.unknown(),
   error: z

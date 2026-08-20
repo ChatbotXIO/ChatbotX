@@ -1,6 +1,7 @@
 import ky from "ky"
 import { BUSINESS_API_BASE_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
+import type { BusinessApiResponse } from "../schema"
 
 const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 // Business API OAuth — required for Business Messaging API tokens
@@ -47,12 +48,6 @@ type BusinessTokenData = {
   refresh_token_expires_in: number
   refresh_token: string
   scope: string
-}
-
-type BusinessApiResponse<T> = {
-  code: number
-  message?: string
-  data: T
 }
 
 export type TiktokTokenResponse = {

@@ -2322,6 +2322,9 @@
     },
     "setCustomField": {
       "temporalHint": "Để trống để lưu ngày/giờ hiện tại."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Khi có gắn nút, TikTok chỉ gửi tối đa 40 ký tự đầu của tin nhắn này — phần còn lại sẽ bị cắt bỏ."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại.",
     "redoHistoryCleared": "Đã xoá lịch sử làm lại",
     "historyDepth": "({count})",
-    "none": "Không có"
+    "none": "Không có",
+    "tiktokCardTitleTooLong": "TikTok sẽ cắt ngắn tin nhắn này: khi có gắn nút, chỉ 40 ký tự đầu được gửi đi. Hãy rút ngắn nội dung hoặc gỡ bớt nút."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

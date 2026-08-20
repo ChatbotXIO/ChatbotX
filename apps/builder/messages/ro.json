@@ -241,6 +241,9 @@
     },
     "setCustomField": {
       "temporalHint": "Lăsați necompletat pentru a salva data și ora curente."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
     "redoHistoryCleared": "Istoricul de refacere a fost șters",
     "historyDepth": "({count})",
-    "none": "Niciuna"
+    "none": "Niciuna",
+    "tiktokCardTitleTooLong": "TikTok va scurta acest mesaj: cu butoane atașate, sunt trimise doar primele 40 de caractere. Scurtează mesajul sau elimină butoanele."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

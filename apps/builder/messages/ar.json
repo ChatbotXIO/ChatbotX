@@ -2322,6 +2322,9 @@
     },
     "setCustomField": {
       "temporalHint": "اتركه فارغًا لحفظ التاريخ/الوقت الحالي."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "عند إرفاق أزرار، يرسل TikTok أول 40 حرفًا فقط من هذه الرسالة، وسيتم قص الباقي."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "تعذّر حذف الكتلة. يُرجى المحاولة مرة أخرى.",
     "redoHistoryCleared": "تم مسح سجل الإعادة",
     "historyDepth": "({count})",
-    "none": "لا شيء"
+    "none": "لا شيء",
+    "tiktokCardTitleTooLong": "سيقوم TikTok بتقصير هذه الرسالة: عند إرفاق أزرار، يتم إرسال أول 40 حرفًا فقط. قم بتقصير الرسالة أو إزالة الأزرار."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",
