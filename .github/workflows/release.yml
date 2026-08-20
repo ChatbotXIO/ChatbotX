@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -29,11 +27,12 @@ jobs:
   # `next build` runs with `typescript.ignoreBuildErrors: true` and the Docker
   # build never runs `check-types`, so without this gate a `v*` tag (or a
   # workflow_dispatch on any branch) could push an image that never
-  # type-checked. ci.yml already gates `pull_request` and push-to-main with
-  # the same (stronger — see the two run steps below) checks, so this job
-  # only needs to re-run for events ci.yml does not cover: a version tag or a
-  # manual dispatch. That keeps the quality gate traveling with the artifact
-  # without duplicating ci.yml's jobs on every PR.
+  # type-checked. This workflow no longer triggers on `pull_request` at all —
+  # ci.yml already runs lint/check-types/test on every PR and push-to-main,
+  # and a Docker build was the only thing this workflow added on a PR, which
+  # duplicated ci.yml's build-buildability signal for no benefit once ci.yml
+  # covers it. So this job only needs to re-run for events ci.yml does not
+  # cover: a version tag or a manual dispatch.
   check:
     name: Type-check, lint, test
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
@@ -102,7 +101,6 @@ jobs:
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-javascript-executor
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
@@ -113,24 +111,27 @@ jobs:
     needs:
       - prepare-metadata
       - check
-    # PRs never push an image (see the "Build image for pull request" step
-    # below) and ci.yml already gates types/lint/tests, so the PR run's only
-    # value is a Dockerfile-buildability signal. Keep just the builder leg for
-    # that on `pull_request` — it's the one most likely to break and has by
-    # far the longest build (~16 min vs ~1-2 min for the other four).
+    # `check` deliberately does not run on push-to-main (see its `if:` above —
+    # this workflow no longer triggers on `pull_request` at all; ci.yml covers
+    # PRs). A skipped `needs` job skips its dependents by default, which
+    # silently stopped every merge to main from publishing an image between
+    # 2026-08-19 and this fix. This condition lets the build proceed when
+    # `check` is skipped, while still blocking it when `check` actually fails
+    # (tags / workflow_dispatch). NOT `always()` — that would ship images
+    # whose quality gate failed.
     #
-    # This gate lives on the "Build image for pull request" step below, NOT
-    # here at job level: `jobs.<job_id>.if` only has access to the `github`,
-    # `needs`, `vars`, and `inputs` contexts — `matrix` isn't expanded yet at
-    # that point, so a job-level `if: matrix.label == 'builder'` is invalid
-    # YAML that fails workflow validation for every trigger, not just this
-    # job (this broke the whole file for several hours — see git blame /
-    # incident notes before changing this again). `runs-on` above CAN see
-    # `matrix` because it's evaluated after matrix expansion; step-level `if`
-    # can too, for the same reason. The other four legs still spin up a
-    # runner on `pull_request` and no-op immediately (all three build steps'
-    # conditions are false), which costs a few seconds each rather than the
-    # full build — not free, but the only place GitHub allows this check.
+    # Note for any future job-level `if:` edit here: `jobs.<job_id>.if` only
+    # has access to the `github`, `needs`, `vars`, and `inputs` contexts —
+    # `matrix` isn't expanded yet at that point, so a job-level
+    # `if: matrix.label == 'builder'` is invalid YAML that fails workflow
+    # validation for every trigger, not just this job (this broke the whole
+    # file for several hours — see git blame / incident notes before adding
+    # a `matrix` reference here). `runs-on` above CAN see `matrix` because
+    # it's evaluated after matrix expansion; step-level `if` can too.
+    if: >-
+      !cancelled()
+      && needs.prepare-metadata.result == 'success'
+      && needs.check.result != 'failure'
     strategy:
       fail-fast: false
       matrix:
@@ -188,7 +189,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push main image
-        if: github.event_name != 'pull_request' && github.ref_name == 'main'
+        if: github.ref_name == 'main'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -210,7 +211,7 @@ jobs:
           # turborepo-remote-cache is provisioned and TURBO_API is set.
 
       - name: Build and push version image
-        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -225,25 +226,16 @@ jobs:
           platforms: ${{ env.BUILD_PLATFORMS }}
           # Turbo remote cache secrets omitted — see "Build and push main image".
 
-      - name: Build image for pull request
-        if: github.event_name == 'pull_request' && matrix.label == 'builder'
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: false
-          labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: ${{ env.BUILD_PLATFORMS }}
-          # Turbo remote cache secrets omitted — see "Build and push main image".
-
   output-image-urls:
     runs-on: ubuntu-latest
     needs:
       - prepare-metadata
       - build-image
-    if: github.event_name != 'pull_request'
+    # Requiring build-image to have succeeded (not just skipped/cancelled)
+    # keeps this job from announcing image URLs for a build that didn't run.
+    if: >-
+      !cancelled()
+      && needs.build-image.result == 'success'
     # Only prints strings computed from `needs` outputs — no registry call.
     permissions:
       contents: read
