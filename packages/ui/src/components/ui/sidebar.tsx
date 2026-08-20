@@ -8,7 +8,6 @@ import { cva, type VariantProps } from "class-variance-authority"
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  MenuIcon,
 } from "lucide-react"
 
 import { useIsMobile } from "@chatbotx.io/ui/hooks/use-mobile"
@@ -294,39 +293,45 @@ function SidebarTrigger({
 }
 
 /**
- * Menu button for the mobile layout, where `Sidebar` renders as a `Sheet`.
+ * Pull handle for the mobile layout, where `Sidebar` renders as a `Sheet`.
  *
  * `SidebarTrigger` is a rail-collapse affordance: a small chevron that only
  * reads as "collapse this column" next to a visible sidebar. Below the mobile
- * breakpoint there is no column to collapse, so the same control needs the
- * conventional hamburger shape and a full touch target.
+ * breakpoint there is no column to collapse — and no top bar to host a menu
+ * button, because the shells hand the whole viewport to page content. So the
+ * control lives on the screen's inline-start edge as a drawer handle: `fixed`,
+ * so it reserves no space in the document flow, and half-clipped by the edge,
+ * so a thumb sliding in from off-screen lands on it.
  *
- * Render this inside a container that is itself hidden from `md` up; the button
- * does not hide itself, so a caller can also use it in an always-mobile shell.
+ * It hides itself from `md` up — the caller only has to render it.
  */
-function SidebarMobileTrigger({
+function SidebarMobileHandle({
   className,
   onClick,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Button
-      className={cn("size-9", className)}
-      data-sidebar="mobile-trigger"
-      data-slot="sidebar-mobile-trigger"
+    <button
+      className={cn(
+        "fixed start-0 top-1/2 z-30 flex h-16 w-6 -translate-y-1/2 items-center justify-center rounded-e-full border border-s-0 bg-background/95 text-muted-foreground shadow-sm backdrop-blur md:hidden",
+        // Clears the notch when the phone is held in landscape.
+        "ms-[env(safe-area-inset-left)] rtl:ms-[env(safe-area-inset-right)]",
+        className,
+      )}
+      data-sidebar="mobile-handle"
+      data-slot="sidebar-mobile-handle"
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
-      size="icon"
-      variant="ghost"
+      type="button"
       {...props}
     >
-      <MenuIcon className="size-5" />
+      <ChevronRightIcon className="size-4 rtl:rotate-180" />
       <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    </button>
   )
 }
 
@@ -777,7 +782,7 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarMobileTrigger,
+  SidebarMobileHandle,
   SidebarProvider,
   SidebarRail,
   SidebarSeparator,

@@ -3,7 +3,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import {
-  SidebarMobileTrigger,
+  SidebarMobileHandle,
   SidebarProvider,
   useSidebar,
 } from "../src/components/ui/sidebar"
@@ -18,7 +18,7 @@ function SidebarStateProbe({
   return null
 }
 
-describe("SidebarMobileTrigger", () => {
+describe("SidebarMobileHandle", () => {
   let container: HTMLDivElement
   let root: Root
   let state: { openMobile: boolean; isMobile: boolean } | undefined
@@ -27,7 +27,7 @@ describe("SidebarMobileTrigger", () => {
     act(() => {
       root.render(
         <SidebarProvider>
-          <SidebarMobileTrigger />
+          <SidebarMobileHandle />
           <SidebarStateProbe
             onRead={(next) => {
               state = next
@@ -38,9 +38,9 @@ describe("SidebarMobileTrigger", () => {
     })
   }
 
-  const trigger = () =>
+  const handle = () =>
     container.querySelector<HTMLButtonElement>(
-      '[data-slot="sidebar-mobile-trigger"]',
+      '[data-slot="sidebar-mobile-handle"]',
     )
 
   const click = (element: HTMLElement) => {
@@ -70,7 +70,7 @@ describe("SidebarMobileTrigger", () => {
     setViewportWidth(375)
     renderShell()
 
-    const button = trigger()
+    const button = handle()
     expect(button).not.toBeNull()
     expect(button?.textContent).toContain("Toggle Sidebar")
   })
@@ -81,9 +81,9 @@ describe("SidebarMobileTrigger", () => {
     expect(state?.isMobile).toBe(true)
     expect(state?.openMobile).toBe(false)
 
-    const button = trigger()
+    const button = handle()
     if (!button) {
-      throw new Error("mobile trigger did not render")
+      throw new Error("mobile handle did not render")
     }
     click(button)
 
@@ -94,9 +94,9 @@ describe("SidebarMobileTrigger", () => {
     setViewportWidth(375)
     renderShell()
 
-    const button = trigger()
+    const button = handle()
     if (!button) {
-      throw new Error("mobile trigger did not render")
+      throw new Error("mobile handle did not render")
     }
     click(button)
     expect(state?.openMobile).toBe(true)
@@ -105,13 +105,22 @@ describe("SidebarMobileTrigger", () => {
     expect(state?.openMobile).toBe(false)
   })
 
-  test("still renders above the breakpoint so callers control visibility", () => {
-    // The button hides itself nowhere — the shell wraps it in an `md:hidden`
-    // container. A caller with an always-mobile shell can render it unwrapped.
+  test("hides itself from md up, so the shell only has to render it", () => {
+    // The shell no longer wraps this in an `md:hidden` header — the review on
+    // PR #970 asked for the whole viewport to go to page content — so the
+    // control has to carry its own breakpoint.
     setViewportWidth(1440)
     renderShell()
 
-    expect(trigger()).not.toBeNull()
-    expect(state?.isMobile).toBe(false)
+    expect(handle()?.className).toContain("md:hidden")
+  })
+
+  test("reserves no space in the document flow", () => {
+    // A drawer handle, not a bar: it floats over the content instead of
+    // pushing it down.
+    setViewportWidth(375)
+    renderShell()
+
+    expect(handle()?.className).toContain("fixed")
   })
 })
