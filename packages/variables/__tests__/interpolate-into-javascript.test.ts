@@ -139,10 +139,10 @@ describe("interpolateIntoJavascript + resolveJavascriptInput", () => {
         context,
       )
       expect(rewritten).toBe('return input["age"] + 1;')
-      // input["age"] is the raw stored string, the same contract `input`
-      // already has for every other field — string concatenation, not
-      // numeric addition, exactly like referencing `input.age` directly
-      // does today.
+      // A shortText-typed field (createCustomFieldsMap's default) stays a
+      // raw string, so this is still string concatenation, not numeric
+      // addition — the type-coercion cases below cover `number`-typed
+      // fields, where the same code produces a numeric result instead.
       expect(execute(rewritten, input)).toBe("251")
     })
 
@@ -247,6 +247,94 @@ describe("interpolateIntoJavascript + resolveJavascriptInput", () => {
       )
       expect(rewritten).toBe('return ("" + input["a"] + " and {{unk}}!");')
       expect(execute(rewritten, input)).toBe("X and {{unk}}!")
+    })
+  })
+
+  describe("typed custom field coercion", () => {
+    test("a number-typed field resolves to a JS number, so arithmetic is numeric rather than string concatenation", async () => {
+      const context = createContext([
+        { key: "age", type: "number", value: "30" },
+      ])
+      const { rewritten, input } = await runInterpolation(
+        "let age = {{age}}; let addYears = 5; return age + addYears;",
+        context,
+      )
+      expect(input.age).toBe(30)
+      expect(execute(rewritten, input)).toBe(35)
+    })
+
+    test("a number-typed field with a non-numeric stored value resolves to null", async () => {
+      const context = createContext([
+        { key: "age", type: "number", value: "not-a-number" },
+      ])
+      const { input } = await runInterpolation("return {{age}};", context)
+      expect(input.age).toBeNull()
+    })
+
+    test("a boolean-typed field with value 'true' resolves to true", async () => {
+      const context = createContext([
+        { key: "subscribed", type: "boolean", value: "true" },
+      ])
+      const { rewritten, input } = await runInterpolation(
+        "return {{subscribed}} && 1;",
+        context,
+      )
+      expect(input.subscribed).toBe(true)
+      expect(execute(rewritten, input)).toBe(1)
+    })
+
+    test("a boolean-typed field with value 'false' resolves to false", async () => {
+      const context = createContext([
+        { key: "subscribed", type: "boolean", value: "false" },
+      ])
+      const { input } = await runInterpolation(
+        "return {{subscribed}};",
+        context,
+      )
+      expect(input.subscribed).toBe(false)
+    })
+
+    test("a boolean-typed field with an unrecognized stored value resolves to false", async () => {
+      const context = createContext([
+        { key: "subscribed", type: "boolean", value: "garbage" },
+      ])
+      const { input } = await runInterpolation(
+        "return {{subscribed}};",
+        context,
+      )
+      expect(input.subscribed).toBe(false)
+    })
+
+    test("date and datetime-typed fields are left as the raw ISO string, not coerced to a JS Date", async () => {
+      const context = createContext([
+        { key: "birthday", type: "date", value: "1990-01-01" },
+        {
+          key: "signedUpAt",
+          type: "datetime",
+          value: "2024-01-01T00:00:00.000Z",
+        },
+      ])
+      const { input } = await runInterpolation(
+        "return {{birthday}} + {{signedUpAt}};",
+        context,
+      )
+      expect(input.birthday).toBe("1990-01-01")
+      expect(input.signedUpAt).toBe("2024-01-01T00:00:00.000Z")
+    })
+
+    test("shortText, longText, email, and phoneNumber fields remain untouched strings", async () => {
+      const context = createContext([
+        { key: "notes", type: "longText", value: "42" },
+        { key: "contactEmail", type: "email", value: "a@b.com" },
+        { key: "mobileNumber", type: "phoneNumber", value: "+15551234567" },
+      ])
+      const { input } = await runInterpolation(
+        "return {{notes}} + {{contactEmail}} + {{mobileNumber}};",
+        context,
+      )
+      expect(input.notes).toBe("42")
+      expect(input.contactEmail).toBe("a@b.com")
+      expect(input.mobileNumber).toBe("+15551234567")
     })
   })
 

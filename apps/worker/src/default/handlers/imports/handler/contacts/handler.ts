@@ -6,6 +6,7 @@ import {
   workspaceService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
+import { validateCustomFieldValue } from "@chatbotx.io/business/javascript-execution"
 import { db, inArray } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
@@ -28,7 +29,6 @@ import type {
   ImportRow,
   ImportTypeHandler,
 } from "../../base-import"
-import { validateCustomFieldValue } from "../../validations/custom-field-value"
 import { type ContactRow, extractRowData } from "./extractor"
 
 type ContactDeps = {
