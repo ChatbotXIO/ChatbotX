@@ -81,3 +81,32 @@ export const buttonStepDefaultFn = (
   steps: [],
   ...props,
 })
+
+/**
+ * Reconciles template-derived buttons with the buttons a user already
+ * configured on the step, pairing by position. The existing button always
+ * keeps its id and configured action (buttonType/beforeStep/steps) so edges
+ * and behavior survive template edits; only the label follows the template.
+ * Returns the existing object untouched when nothing changes, so callers can
+ * detect a no-op reseed by reference equality.
+ */
+export function mergeTemplateButtonsWithExisting(
+  templateButtons: ButtonStepProps[],
+  existingButtons: ButtonStepProps[] = [],
+): ButtonStepProps[] {
+  return templateButtons.map((templateButton, index) => {
+    const existingButton = existingButtons[index]
+
+    if (!existingButton) {
+      return templateButton
+    }
+    if (existingButton.label === templateButton.label) {
+      return existingButton
+    }
+
+    return {
+      ...existingButton,
+      label: templateButton.label,
+    }
+  })
+}

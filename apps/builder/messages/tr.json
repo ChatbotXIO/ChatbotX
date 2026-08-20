@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Kupon Kodu",
         "couponCodePlaceholder": "Kupon kodunu girin",
-        "quickReplyPayload": "Hızlı Yanıt Verisi",
-        "quickReplyPayloadPlaceholder": "Veriyi girin (isteğe bağlı)",
         "flowToken": "Akış Token'ı",
         "flowTokenPlaceholder": "Akış token'ını girin",
         "flowNotSynced": "Gönderilen alanları eşlemek için WhatsApp akışlarını senkronize edin.",

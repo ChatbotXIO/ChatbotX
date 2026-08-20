@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Kuponkikoodi",
         "couponCodePlaceholder": "Kirjoita kuponkikoodi",
-        "quickReplyPayload": "Pikavastauksen tietosisältö",
-        "quickReplyPayloadPlaceholder": "Kirjoita tietosisältö (valinnainen)",
         "flowToken": "Flow-tunnus",
         "flowTokenPlaceholder": "Kirjoita flow-tunnus",
         "flowNotSynced": "Synkronoi WhatsApp-flow't lähetettyjen kenttien yhdistämiseksi.",

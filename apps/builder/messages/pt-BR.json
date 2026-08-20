@@ -3335,8 +3335,6 @@
       "params": {
         "couponCode": "Código do cupom",
         "couponCodePlaceholder": "Insira o código do cupom",
-        "quickReplyPayload": "Carga útil da resposta rápida",
-        "quickReplyPayloadPlaceholder": "Insira a carga útil (opcional)",
         "flowToken": "Token do fluxo",
         "flowTokenPlaceholder": "Insira o token do fluxo",
         "flowNotSynced": "Sincronize os fluxos do WhatsApp para mapear os campos enviados.",

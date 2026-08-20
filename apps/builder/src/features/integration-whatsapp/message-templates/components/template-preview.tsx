@@ -8,7 +8,20 @@ type TemplatePreviewProps = {
   components: TemplateComponent[]
   headerParams: Array<{ text?: string; image?: { link: string } }>
   bodyParams: Array<{ text?: string }>
-  buttonParams: Array<{ text?: string }>
+  buttonParams: Array<{ text?: string; index?: number }>
+}
+
+// Button param entries are stored densely and carry the template button index
+// in their `index` field, so lookups must match on it (with the array position
+// as a legacy fallback for entries saved without an index).
+function findButtonParam(
+  buttonParams: TemplatePreviewProps["buttonParams"],
+  templateButtonIndex: number,
+): { text?: string; index?: number } | undefined {
+  return (
+    buttonParams?.find((param) => param?.index === templateButtonIndex) ??
+    buttonParams?.[templateButtonIndex]
+  )
 }
 
 export function TemplatePreview({
@@ -90,12 +103,13 @@ export function TemplatePreview({
             <div className="mt-2 space-y-1" key={`buttons-${component.type}`}>
               {component.buttons.map((button, btnIdx) => {
                 let url = button.url || ""
+                const buttonParam = findButtonParam(buttonParams, btnIdx)
                 if (
                   button.type === "URL" &&
                   url.includes("{{1}}") &&
-                  buttonParams?.[btnIdx]?.text
+                  buttonParam?.text
                 ) {
-                  url = url.replace("{{1}}", buttonParams[btnIdx].text)
+                  url = url.replace("{{1}}", buttonParam.text)
                 }
                 return (
                   <div

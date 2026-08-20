@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Kortingscode",
         "couponCodePlaceholder": "Voer kortingscode in",
-        "quickReplyPayload": "Payload voor snel antwoord",
-        "quickReplyPayloadPlaceholder": "Voer payload in (optioneel)",
         "flowToken": "Flowtoken",
         "flowTokenPlaceholder": "Voer flowtoken in",
         "flowNotSynced": "Synchroniseer WhatsApp-flows om ingediende velden te koppelen.",

@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "رمز القسيمة",
         "couponCodePlaceholder": "أدخل رمز القسيمة",
-        "quickReplyPayload": "بيانات الرد السريع",
-        "quickReplyPayloadPlaceholder": "أدخل البيانات (اختياري)",
         "flowToken": "رمز المسار",
         "flowTokenPlaceholder": "أدخل رمز المسار",
         "flowNotSynced": "زامن مسارات واتساب لربط الحقول المُرسلة.",

@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Mã giảm giá",
         "couponCodePlaceholder": "Nhập mã giảm giá",
-        "quickReplyPayload": "Payload trả lời nhanh",
-        "quickReplyPayloadPlaceholder": "Nhập payload (tùy chọn)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Nhập flow token",
         "flowNotSynced": "Đồng bộ luồng WhatsApp để ánh xạ các trường đã gửi.",

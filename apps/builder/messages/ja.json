@@ -3335,8 +3335,6 @@
       "params": {
         "couponCode": "クーポンコード",
         "couponCodePlaceholder": "クーポンコードを入力",
-        "quickReplyPayload": "クイック返信のペイロード",
-        "quickReplyPayloadPlaceholder": "ペイロードを入力（任意）",
         "flowToken": "フロートークン",
         "flowTokenPlaceholder": "フロートークンを入力",
         "flowNotSynced": "送信されたフィールドをマッピングするには、WhatsAppフローを同期してください。",
