@@ -104,7 +104,7 @@
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
     "emoji-picker-react": "^4.19.1",
-    "hono": "^4.12.34",
+    "hono": "^4.13.3",
     "html-to-text": "^9.0.5",
     "ky": "^2.0.2",
     "libphonenumber-js": "^1.12.42",
