@@ -1,5 +1,5 @@
+import { validateCustomFieldValue } from "@chatbotx.io/business/javascript-execution"
 import { describe, expect, it } from "vitest"
-import { validateCustomFieldValue } from "../src/default/handlers/imports/validations/custom-field-value"
 
 describe("validateCustomFieldValue", () => {
   describe("shortText / longText", () => {
