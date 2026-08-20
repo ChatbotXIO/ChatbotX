@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Code de coupon",
         "couponCodePlaceholder": "Saisissez le code du coupon",
-        "quickReplyPayload": "Charge utile de la réponse rapide",
-        "quickReplyPayloadPlaceholder": "Saisissez la charge utile (facultatif)",
         "flowToken": "Jeton du flux",
         "flowTokenPlaceholder": "Saisissez le jeton du flux",
         "flowNotSynced": "Synchronisez les flux WhatsApp pour mapper les champs soumis.",

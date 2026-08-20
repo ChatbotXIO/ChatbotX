@@ -1,22 +1,26 @@
 "use client"
 
 import {
+  type ButtonStepProps,
   extractParameterInfos,
   extractTemplateParams,
   type ParameterInfo,
+  seedWaTemplateStepButtons,
   type TemplateComponent,
+  WA_TEMPLATE_STATUS_BUTTON_COUNT,
 } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useFormContext } from "react-hook-form"
+import { useFieldArray, useFormContext } from "react-hook-form"
 import { useWhatsappInboxOptions } from "@/features/inboxes/provider/inbox-hook"
 import { TemplateParamsForm } from "@/features/integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
 import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 import { useFlowTemplate } from "../../stores/flow-template-store-provider"
 import { BaseStepEditor } from "../base/editor"
+import { ButtonStepEditor } from "../button/editor"
 
 type SendWaTemplateMessageStepEditorProps = {
   parentName: string
@@ -27,7 +31,7 @@ function SendWaTemplateMessageStepEditor(
 ) {
   const { parentName } = props
   const t = useTranslations()
-  const { setValue, unregister, watch } = useFormContext()
+  const { control, getValues, setValue, unregister, watch } = useFormContext()
   const [selectedTemplate, setSelectedTemplate] =
     useState<FlowTemplateResource | null>(null)
   const [parameters, setParameters] = useState<ParameterInfo[]>([])
@@ -40,16 +44,59 @@ function SendWaTemplateMessageStepEditor(
   const integrationInboxId = watch(`${parentName}.template.inboxId`)
   const templateId = watch(`${parentName}.template.id`)
   const templateParams = watch(`${parentName}.template.params`) || {}
+  // `fields` only changes on structural mutations (seed/reseed), never on
+  // per-field edits inside a button's dialog — unlike watch(), which would
+  // re-render this whole editor (and the unrelated params form and preview)
+  // on every nested button change.
+  const { fields: stepButtonFields } = useFieldArray({
+    control,
+    name: `${parentName}.buttons`,
+  })
+  const quickReplySlotCount = Math.max(
+    0,
+    stepButtonFields.length - WA_TEMPLATE_STATUS_BUTTON_COUNT,
+  )
+  // Keeps the leading status branches (Delivered/Failed) and reseeds the
+  // quick-reply tail so each template quick reply gets a connectable handle.
+  // Idempotent: seedWaTemplateStepButtons returns unchanged buttons by
+  // reference, so a no-op reseed leaves the form untouched — reopening a
+  // saved step never dirties it or drops edges.
+  const reconcileStepButtons = useCallback(
+    (components: TemplateComponent[]) => {
+      const existingButtons =
+        (getValues(`${parentName}.buttons`) as ButtonStepProps[]) ?? []
+      const seededButtons = seedWaTemplateStepButtons(
+        existingButtons,
+        components,
+      )
+      const isUnchanged =
+        seededButtons.length === existingButtons.length &&
+        seededButtons.every(
+          (button, index) => button === existingButtons[index],
+        )
+      if (isUnchanged) {
+        return
+      }
+      setValue(`${parentName}.buttons`, seededButtons, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    },
+    [getValues, parentName, setValue],
+  )
+
   const resetTemplateParams = useCallback(
     (template: FlowTemplateResource) => {
+      const components = template.components as TemplateComponent[]
       unregister(`${parentName}.template.params`)
       setValue(
         `${parentName}.template.params`,
-        extractTemplateParams(template.components as TemplateComponent[]),
+        extractTemplateParams(components),
         { shouldDirty: true, shouldValidate: true },
       )
+      reconcileStepButtons(components)
     },
-    [parentName, setValue, unregister],
+    [parentName, reconcileStepButtons, setValue, unregister],
   )
 
   useEffect(() => {
@@ -80,6 +127,10 @@ function SendWaTemplateMessageStepEditor(
         setValue(`${parentName}.template.language`, template.language)
         if (hasTemplateChanged) {
           resetTemplateParams(template)
+        } else {
+          // Saved steps predating quick-reply seeding open without a tail;
+          // reconcile on load so their quick replies gain handles too.
+          reconcileStepButtons(template.components as TemplateComponent[])
         }
         const params = extractParameterInfos(
           template.components as TemplateComponent[],
@@ -88,7 +139,14 @@ function SendWaTemplateMessageStepEditor(
       }
     }
     prevTemplateIdRef.current = templateId
-  }, [templateId, whatsappTemplates, parentName, resetTemplateParams, setValue])
+  }, [
+    templateId,
+    whatsappTemplates,
+    parentName,
+    reconcileStepButtons,
+    resetTemplateParams,
+    setValue,
+  ])
 
   const filteredTemplates = useMemo(
     () =>
@@ -164,6 +222,23 @@ function SendWaTemplateMessageStepEditor(
               components={selectedTemplate.components as TemplateComponent[]}
               headerParams={templateParams.header || []}
             />
+          </div>
+        )}
+
+        {quickReplySlotCount > 0 && (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: quickReplySlotCount }, (_slot, index) => (
+              <ButtonStepEditor
+                editorConfig={{
+                  lockLabel: true,
+                  hiddenButtonTypes: ["openWebsite"],
+                  hideDelete: true,
+                }}
+                // biome-ignore lint/suspicious/noArrayIndexKey: stable seeded list
+                key={index}
+                parentName={`${parentName}.buttons.${WA_TEMPLATE_STATUS_BUTTON_COUNT + index}`}
+              />
+            ))}
           </div>
         )}
       </div>

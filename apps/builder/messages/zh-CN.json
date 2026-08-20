@@ -4653,9 +4653,7 @@
         "location": "位置",
         "locationAddress": "地址（可选）",
         "locationName": "位置名称（可选）",
-        "longitude": "经度",
-        "quickReplyPayload": "快速回复负载",
-        "quickReplyPayloadPlaceholder": "输入酬载（选填）"
+        "longitude": "经度"
       },
       "text": {
         "label": "文本"

@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Cod cupon",
         "couponCodePlaceholder": "Introdu codul cuponului",
-        "quickReplyPayload": "Payload răspuns rapid",
-        "quickReplyPayloadPlaceholder": "Introdu payload-ul (opțional)",
         "flowToken": "Token flux",
         "flowTokenPlaceholder": "Introdu tokenul fluxului",
         "flowNotSynced": "Sincronizează fluxurile WhatsApp pentru a asocia câmpurile trimise.",

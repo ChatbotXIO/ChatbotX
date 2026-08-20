@@ -38,18 +38,22 @@ type TemplateParamsFormProps = {
 }
 
 function getFieldName(param: ParameterInfo, parentName: string): string {
+  // Button entries are stored densely (only parameterized buttons get an
+  // entry), so fields must write at `paramIndex`; writing at the template's
+  // `buttonIndex` duplicates entries when a static button precedes this one.
+  const buttonSlot = param.paramIndex ?? param.buttonIndex
   if (
     param.type === "button" &&
     param.cardIndex !== undefined &&
     param.buttonIndex !== undefined
   ) {
-    return `${parentName}.carousel[${param.cardIndex}].button[${param.buttonIndex}]`
+    return `${parentName}.carousel[${param.cardIndex}].button[${buttonSlot}]`
   }
   if (param.type === "carousel" && param.cardIndex !== undefined) {
     return `${parentName}.carousel[${param.cardIndex}]`
   }
   if (param.type === "button") {
-    return `${parentName}.button[${param.buttonIndex}]`
+    return `${parentName}.button[${buttonSlot}]`
   }
   if (param.type === "limited_time_offer") {
     return `${parentName}.limited_time_offer`
@@ -78,20 +82,6 @@ function ButtonParamField({
             {...register(`${fieldName}.coupon_code`)}
             placeholder={t(
               "whatsapp.messageTemplate.params.couponCodePlaceholder",
-            )}
-          />
-        </div>
-      )
-    case "quick_reply":
-      return (
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {t("whatsapp.messageTemplate.params.quickReplyPayload")}
-          </Label>
-          <Input
-            {...register(`${fieldName}.payload`)}
-            placeholder={t(
-              "whatsapp.messageTemplate.params.quickReplyPayloadPlaceholder",
             )}
           />
         </div>

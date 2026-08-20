@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Kode Kupon",
         "couponCodePlaceholder": "Masukkan kode kupon",
-        "quickReplyPayload": "Payload Balasan Cepat",
-        "quickReplyPayloadPlaceholder": "Masukkan payload (opsional)",
         "flowToken": "Token Alur",
         "flowTokenPlaceholder": "Masukkan token alur",
         "flowNotSynced": "Sinkronkan alur WhatsApp untuk memetakan kolom yang dikirim.",

@@ -3389,8 +3389,6 @@
       "params": {
         "couponCode": "優惠券代碼",
         "couponCodePlaceholder": "輸入優惠券代碼",
-        "quickReplyPayload": "快速回覆負載",
-        "quickReplyPayloadPlaceholder": "輸入酬載（選填）",
         "flowToken": "流程代幣",
         "flowTokenPlaceholder": "輸入流權杖",
         "flowNotSynced": "同步WhatsApp 流以映射提交的欄位。",

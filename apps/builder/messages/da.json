@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Kupon Kode",
         "couponCodePlaceholder": "Indtast kupon kode",
-        "quickReplyPayload": "Quick Svar Payload",
-        "quickReplyPayloadPlaceholder": "Indtast payload (valgfri)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Indtast flow token",
         "flowNotSynced": "Synkroniser WhatsApp-flows for at knytte indsendte felter.",

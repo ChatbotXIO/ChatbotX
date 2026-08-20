@@ -3454,8 +3454,6 @@
       "params": {
         "couponCode": "Coupon Code",
         "couponCodePlaceholder": "Enter coupon code",
-        "quickReplyPayload": "Quick Reply Payload",
-        "quickReplyPayloadPlaceholder": "Enter payload (optional)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Enter flow token",
         "flowNotSynced": "Sync WhatsApp flows to map submitted fields.",

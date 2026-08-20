@@ -1,9 +1,17 @@
+import type { TemplateComponent } from "@chatbotx.io/flow-config"
 import {
+  bindWaTemplateQuickReplyButtons,
+  buttonStepDefaultFn,
+  decodeButtonPayload,
   decodeTemplateFlowToken,
+  encodeButtonPayload,
+  extractTemplateParams,
+  seedWaTemplateStepButtons,
   TemplateFlowOrigin,
 } from "@chatbotx.io/flow-config"
 import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { readTemplateButtonReply } from "../src/handlers/message/incoming-reply"
 
 const { mockApiFetch, mockGetWhatsappClient, mockLogger } = vi.hoisted(() => {
   const apiFetch = vi.fn()
@@ -74,26 +82,38 @@ const sendFlowTemplate = (
     },
   } as never)
 
+type TemplatePayloadComponent = {
+  type: string
+  sub_type?: string
+  index?: number
+  parameters: Array<{
+    type: string
+    text?: string
+    payload?: string
+    parameter_name?: string
+    action?: {
+      flow_token?: string
+      flow_action_data?: Record<string, unknown>
+    }
+  }>
+  cards?: Array<{
+    card_index: number
+    components: TemplatePayloadComponent[]
+  }>
+}
+
 const templatePayload = () =>
   JSON.parse((mockApiFetch.mock.calls[0][1] as RequestInit).body as string) as {
     template: {
-      components: Array<{
-        type: string
-        parameters: Array<{
-          type: string
-          text?: string
-          parameter_name?: string
-          action?: {
-            flow_token?: string
-            flow_action_data?: Record<string, unknown>
-          }
-        }>
-      }>
+      components: TemplatePayloadComponent[]
     }
   }
 
 const componentOfType = (type: string) =>
   templatePayload().template.components.find((c) => c.type === type)
+
+const componentsOfType = (type: string) =>
+  templatePayload().template.components.filter((c) => c.type === type)
 
 describe("whatsapp outgoing template parameters", () => {
   beforeEach(() => {
@@ -206,6 +226,296 @@ describe("whatsapp outgoing template parameters", () => {
       broadcastId: "11612473309626371",
       buttonIndex: 1,
     })
+  })
+})
+
+describe("button component hygiene", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockApiFetch.mockResolvedValue(
+      new Response(JSON.stringify({ messages: [{ id: "wamid.raw-1" }] }), {
+        status: 200,
+      }),
+    )
+  })
+
+  test("quick reply with a blank payload emits NO button component (Meta rejects payload: '')", async () => {
+    await sendTemplate({
+      body: [{ type: "text", text: "Hello" }],
+      button: [{ sub_type: "quick_reply", index: 1, payload: "" }],
+    })
+
+    expect(componentsOfType("button")).toEqual([])
+  })
+
+  test("quick reply with a whitespace-only payload is also omitted", async () => {
+    await sendTemplate({
+      button: [{ sub_type: "quick_reply", index: 0, payload: "   " }],
+    })
+
+    expect(componentsOfType("button")).toEqual([])
+  })
+
+  test("quick reply with a real payload is sent byte-for-byte with its template index", async () => {
+    await sendTemplate({
+      button: [{ sub_type: "quick_reply", index: 1, payload: " f1:v1:btn-9 " }],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "quick_reply",
+        index: 1,
+        parameters: [{ type: "payload", payload: " f1:v1:btn-9 " }],
+      },
+    ])
+  })
+
+  test("legacy duplicate quick reply entries collapse to the one carrying content", async () => {
+    // Shape persisted by the old form: a stale blank entry plus the entry the
+    // visible input actually wrote, both at the same template index.
+    await sendTemplate({
+      button: [
+        { sub_type: "quick_reply", index: 1, payload: "" },
+        { sub_type: "quick_reply", index: 1, payload: "KEEP" },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "quick_reply",
+        index: 1,
+        parameters: [{ type: "payload", payload: "KEEP" }],
+      },
+    ])
+  })
+
+  test("legacy duplicate dynamic-URL entries collapse to the one carrying text", async () => {
+    await sendTemplate({
+      button: [
+        { sub_type: "url", index: 1, text: "" },
+        { sub_type: "url", index: 1, text: "summer-sale" },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "url",
+        index: 1,
+        parameters: [{ type: "text", text: "summer-sale" }],
+      },
+    ])
+  })
+
+  test("null holes from sparse form arrays are skipped without crashing or shifting indexes", async () => {
+    await sendTemplate({
+      button: [null, { sub_type: "url", index: 1, text: "suffix" }],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "url",
+        index: 1,
+        parameters: [{ type: "text", text: "suffix" }],
+      },
+    ])
+  })
+
+  test("a lone dynamic-URL entry with empty text is still emitted (missing suffix must surface as an error)", async () => {
+    await sendTemplate({
+      button: [{ sub_type: "url", index: 0, text: "" }],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "url",
+        index: 0,
+        parameters: [{ type: "text", text: "" }],
+      },
+    ])
+  })
+
+  test("entries without an explicit index keep their positional fallback and never collapse", async () => {
+    await sendTemplate({
+      button: [
+        { sub_type: "url", text: "a" },
+        { sub_type: "url", text: "b" },
+      ],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "url",
+        index: 0,
+        parameters: [{ type: "text", text: "a" }],
+      },
+      {
+        type: "button",
+        sub_type: "url",
+        index: 1,
+        parameters: [{ type: "text", text: "b" }],
+      },
+    ])
+  })
+
+  test("carousel card quick replies with blank payloads are omitted from the card", async () => {
+    await sendTemplate({
+      carousel: [
+        {
+          card_index: 0,
+          body: [{ type: "text", text: "Card body" }],
+          button: [
+            { sub_type: "quick_reply", index: 0, payload: "" },
+            { sub_type: "url", index: 1, text: "card-suffix" },
+          ],
+        },
+      ],
+    })
+
+    const card = componentOfType("carousel")?.cards?.[0]
+    const cardButtons =
+      card?.components.filter((c) => c.type === "button") ?? []
+    expect(cardButtons).toEqual([
+      {
+        type: "button",
+        sub_type: "url",
+        index: 1,
+        parameters: [{ type: "text", text: "card-suffix" }],
+      },
+    ])
+  })
+})
+
+describe("customer scenario — approved template with static URL + quick reply (error #132018)", () => {
+  // Exact component shape of the customer's APPROVED template that failed in
+  // production: IMAGE header, 3 positional body variables, static URL button
+  // at index 0, quick-reply button at index 1.
+  const customerComponents = [
+    { type: "HEADER", format: "IMAGE" },
+    {
+      type: "BODY",
+      text: "Olá, {{1}}\n\n{{2}}\n\n{{3}}\n\nPara mais informações, clique no botão abaixo.",
+    },
+    {
+      type: "BUTTONS",
+      buttons: [
+        {
+          url: "https://sfvtwj.short.gy/a7awnm0p",
+          text: "Clique aqui",
+          type: "URL",
+        },
+        { text: "Parar mensagens", type: "QUICK_REPLY" },
+      ],
+    },
+  ] as unknown as TemplateComponent[]
+
+  // What the broadcast/flow form produces after template selection: seeded
+  // defaults from the real extractor, then the user's typed values.
+  const filledCustomerParams = () => {
+    const params = extractTemplateParams(customerComponents)
+    return {
+      ...params,
+      header: [{ type: "image", image: { link: "https://cdn.example/x.png" } }],
+      body: params.body?.map((param, position) => ({
+        ...param,
+        text: `${position + 1}`,
+      })),
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockApiFetch.mockResolvedValue(
+      new Response(JSON.stringify({ messages: [{ id: "wamid.raw-1" }] }), {
+        status: 200,
+      }),
+    )
+  })
+
+  test("broadcast send produces the exact Graph payload Meta accepts — no button components at all", async () => {
+    await sendTemplate(filledCustomerParams())
+
+    expect(templatePayload().template.components).toEqual([
+      {
+        type: "header",
+        parameters: [
+          { type: "image", image: { link: "https://cdn.example/x.png" } },
+        ],
+      },
+      {
+        type: "body",
+        parameters: [
+          { type: "text", text: "1" },
+          { type: "text", text: "2" },
+          { type: "text", text: "3" },
+        ],
+      },
+    ])
+  })
+
+  test("flow send routes the quick reply end-to-end: seeded button → Graph payload → inbound postback", async () => {
+    // Real seeding exactly as the flow editor does it.
+    const stepButtons = seedWaTemplateStepButtons(
+      [
+        buttonStepDefaultFn({ label: "Delivered" }),
+        buttonStepDefaultFn({ label: "Failed" }),
+      ],
+      customerComponents,
+    )
+    // Real binding + encoding exactly as the worker does it.
+    const [binding] = bindWaTemplateQuickReplyButtons(
+      customerComponents,
+      stepButtons,
+    )
+    const postback = encodeButtonPayload({
+      flowId: "11612473309626368",
+      flowVersionId: "11612473309626369",
+      buttonId: binding.stepButton.id,
+    })
+
+    await sendTemplate({
+      ...filledCustomerParams(),
+      button: [{ sub_type: "quick_reply", index: 1, payload: postback }],
+    })
+
+    expect(componentsOfType("button")).toEqual([
+      {
+        type: "button",
+        sub_type: "quick_reply",
+        index: 1,
+        parameters: [{ type: "payload", payload: postback }],
+      },
+    ])
+
+    // Meta echoes the payload back in messages.button.payload — verify the
+    // real inbound parser + payload codec route it to the seeded button.
+    const reply = readTemplateButtonReply({
+      payload: postback,
+      text: "Parar mensagens",
+    })
+    expect(reply.postbackAction).toBe(postback)
+    expect(decodeButtonPayload(reply.postbackAction ?? "")).toEqual({
+      flowId: "11612473309626368",
+      flowVersionId: "11612473309626369",
+      buttonId: binding.stepButton.id,
+    })
+  })
+
+  test("a tap on a quick reply sent WITHOUT payload (broadcast) falls back to the button text", () => {
+    const reply = readTemplateButtonReply({
+      payload: "Parar mensagens",
+      text: "Parar mensagens",
+    })
+
+    // Not a flow postback — the worker's sanitizeFlowAction drops it and the
+    // message is handled as plain text by keyword automation.
+    expect(decodeButtonPayload(reply.postbackAction ?? "")).toBeNull()
+    expect(reply.text).toBe("Parar mensagens")
   })
 })
 

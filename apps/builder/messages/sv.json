@@ -4660,9 +4660,7 @@
         "location": "Plats",
         "locationAddress": "Adress (valfritt)",
         "locationName": "Platsnamn (valfritt)",
-        "longitude": "Longitud",
-        "quickReplyPayload": "Nyttolast för snabbsvar",
-        "quickReplyPayloadPlaceholder": "Ange nyttolast (valfritt)"
+        "longitude": "Longitud"
       },
       "text": {
         "label": "Text"

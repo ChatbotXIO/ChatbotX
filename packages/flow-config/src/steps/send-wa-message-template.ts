@@ -44,6 +44,20 @@ export const waTemplateButtonParamSchema = z.object({
 })
 export type WaTemplateButtonParam = z.infer<typeof waTemplateButtonParamSchema>
 
+/**
+ * Button params persisted before the dense-slot form fix could contain `null`
+ * holes (the form wrote at the template button index, leaving earlier slots
+ * empty; JSON serialization turned the holes into nulls). Accept and strip
+ * them so those saved flows and broadcasts keep validating and sending.
+ */
+const waTemplateButtonParamListSchema = z
+  .array(waTemplateButtonParamSchema.nullable())
+  .transform((buttons) =>
+    buttons.filter(
+      (button): button is WaTemplateButtonParam => button !== null,
+    ),
+  )
+
 export const waTemplateCarouselCardSchema = z.object({
   card_index: z.number(),
   header: z
@@ -63,7 +77,7 @@ export const waTemplateCarouselCardSchema = z.object({
       }),
     )
     .optional(),
-  button: z.array(waTemplateButtonParamSchema).optional(),
+  button: waTemplateButtonParamListSchema.optional(),
 })
 export type WaTemplateCarouselCard = z.infer<
   typeof waTemplateCarouselCardSchema
@@ -103,7 +117,7 @@ export const waTemplateParamsSchema = z.object({
       }),
     )
     .optional(),
-  button: z.array(waTemplateButtonParamSchema).optional(),
+  button: waTemplateButtonParamListSchema.optional(),
   carousel: z.array(waTemplateCarouselCardSchema).optional(),
   limited_time_offer: z
     .object({
@@ -221,12 +235,6 @@ function extractButtonParams(
         sub_type: "copy_code",
         index: idx,
         coupon_code: "",
-      })
-    } else if (buttonType === "QUICK_REPLY") {
-      buttonParams.push({
-        sub_type: "quick_reply",
-        index: idx,
-        payload: "",
       })
     } else if (buttonType === "FLOW") {
       buttonParams.push({
@@ -373,23 +381,19 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
   buttons: z
     .array(buttonStepSchema)
     .default([])
+    // Buttons are kept as-is: the leading pair are the delivery status
+    // branches, and any tail buttons are template quick replies whose
+    // configured actions (Send Message, Perform Action, ...) must survive
+    // publish. Only a missing list falls back to the status defaults.
     .transform((buttons) => {
-      const templateButtons = buttons.map((btn) => ({
-        id: btn.id,
-        label: btn.label,
-        beforeStep: null,
-        steps: [],
-        buttonType: null,
-      }))
-
-      if (templateButtons.length === 0) {
+      if (buttons.length === 0) {
         return [
           buttonStepDefaultFn({ label: "Delivered" }),
           buttonStepDefaultFn({ label: "Failed" }),
         ]
       }
 
-      return templateButtons
+      return buttons
     }),
 })
 

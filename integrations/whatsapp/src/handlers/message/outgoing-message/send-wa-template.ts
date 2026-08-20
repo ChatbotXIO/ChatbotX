@@ -163,26 +163,120 @@ function buildTemplateFlowToken(
   return null
 }
 
+const DEFAULT_BUTTON_SUB_TYPE = "url"
+
+const isBlank = (value: string | undefined): boolean => !value?.trim()
+
+/**
+ * Whether the entry carries a real value for its sub_type. Used to pick the
+ * winner among duplicate entries; sub_types whose value is generated at send
+ * time (flow tokens) always count as content.
+ */
+const buttonParamContentChecks: Record<
+  string,
+  (param: WaTemplateButtonParam) => boolean
+> = {
+  url: (param) => !isBlank(param.text),
+  quick_reply: (param) => !isBlank(param.payload),
+  copy_code: (param) => !isBlank(param.coupon_code),
+  flow: () => true,
+  catalog: (param) => !isBlank(param.thumbnail_product_retailer_id),
+  mpm: (param) => (param.sections?.length ?? 0) > 0,
+}
+
+const buttonSubTypeOf = (param: WaTemplateButtonParam): string =>
+  param.sub_type || DEFAULT_BUTTON_SUB_TYPE
+
+const hasButtonParamContent = (param: WaTemplateButtonParam): boolean =>
+  buttonParamContentChecks[buttonSubTypeOf(param)]?.(param) ?? true
+
+type ResolvedButtonParam = {
+  param: WaTemplateButtonParam
+  /** Template button index, resolved from the entry's own array position when absent. */
+  index: number
+  hasExplicitIndex: boolean
+}
+
+const explicitIndexKey = (entry: ResolvedButtonParam): string =>
+  `${buttonSubTypeOf(entry.param)}:${entry.index}`
+
+/**
+ * Collapses duplicate `(sub_type, index)` entries left behind by forms that
+ * wrote at the wrong array slot, keeping the FIRST entry that carries content.
+ * Entries without an explicit index keep today's positional behavior and are
+ * never collapsed. The worker's `withQuickReplyButtonParams` relies on this
+ * first-with-content tie-break: it removes legacy quick-reply entries at
+ * indexes it re-binds, so change the winner rule here and there together.
+ */
+function dedupeExplicitIndexParams(
+  entries: ResolvedButtonParam[],
+): ResolvedButtonParam[] {
+  const winners = new Map<string, ResolvedButtonParam>()
+
+  for (const entry of entries) {
+    if (!entry.hasExplicitIndex) {
+      continue
+    }
+    const key = explicitIndexKey(entry)
+    const current = winners.get(key)
+    if (
+      !current ||
+      (!hasButtonParamContent(current.param) &&
+        hasButtonParamContent(entry.param))
+    ) {
+      winners.set(key, entry)
+    }
+  }
+
+  return entries.filter(
+    (entry) =>
+      !entry.hasExplicitIndex || winners.get(explicitIndexKey(entry)) === entry,
+  )
+}
+
+/**
+ * Normalizes persisted button params before they become Graph API components:
+ * drops null holes from sparse form arrays, drops quick replies without a
+ * payload (Meta rejects `payload: ""`; omitting the component makes the tap
+ * return the button text instead), and collapses legacy duplicates. Indexes are
+ * resolved from the ORIGINAL array positions so removals never shift the
+ * positional fallback of the remaining entries.
+ */
+function resolveButtonParams(
+  buttons: ReadonlyArray<WaTemplateButtonParam | null | undefined>,
+): ResolvedButtonParam[] {
+  const resolved = buttons.flatMap((param, position) =>
+    param
+      ? [
+          {
+            param,
+            index: param.index ?? position,
+            hasExplicitIndex: typeof param.index === "number",
+          },
+        ]
+      : [],
+  )
+
+  const withoutBlankQuickReplies = resolved.filter(
+    (entry) =>
+      buttonSubTypeOf(entry.param) !== "quick_reply" ||
+      !isBlank(entry.param.payload),
+  )
+
+  return dedupeExplicitIndexParams(withoutBlankQuickReplies)
+}
+
 function buildButtonComponents(
-  buttons: WaTemplateButtonParam[],
+  buttons: ReadonlyArray<WaTemplateButtonParam | null | undefined>,
   tokenContext: TemplateFlowTokenContext,
   cardIndex?: number,
 ): WhatsAppTemplateComponent[] {
-  const components: WhatsAppTemplateComponent[] = []
-
-  for (let i = 0; i < buttons.length; i++) {
-    const param = buttons[i]
-    const subType = param.sub_type || "url"
-
-    components.push({
-      type: "button",
-      sub_type: subType,
-      index: param.index ?? i,
-      parameters: [buildButtonParameter(param, tokenContext, cardIndex)],
-    })
-  }
-
-  return components
+  return resolveButtonParams(buttons).map(({ param, index }) => ({
+    type: "button",
+    sub_type: buttonSubTypeOf(param),
+    index,
+    parameters: [buildButtonParameter(param, tokenContext, cardIndex)],
+  }))
 }
 
 function buildCarouselComponent(

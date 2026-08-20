@@ -3356,8 +3356,6 @@
       "params": {
         "couponCode": "Gutscheincode",
         "couponCodePlaceholder": "Gutscheincode eingeben",
-        "quickReplyPayload": "Schnellantwort-Nutzdaten",
-        "quickReplyPayloadPlaceholder": "Nutzdaten eingeben (optional)",
         "flowToken": "Flow-Token",
         "flowTokenPlaceholder": "Flow-Token eingeben",
         "flowNotSynced": "WhatsApp-Flows synchronisieren, um übermittelte Felder zuzuordnen.",

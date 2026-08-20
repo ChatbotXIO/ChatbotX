@@ -1621,8 +1621,6 @@
       "params": {
         "couponCode": "קוד קופון",
         "couponCodePlaceholder": "הזנת קוד קופון",
-        "quickReplyPayload": "מטען תשובה מהירה",
-        "quickReplyPayloadPlaceholder": "הזנת מטען (אופציונלי)",
         "flowToken": "אסימון תהליך",
         "flowTokenPlaceholder": "הזנת אסימון תהליך",
         "flowNotSynced": "סנכרן תהליכי WhatsApp כדי למפות את השדות שנשלחו.",
