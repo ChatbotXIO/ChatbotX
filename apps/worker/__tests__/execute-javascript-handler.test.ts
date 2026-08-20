@@ -9,13 +9,15 @@ const mocks = vi.hoisted(() => ({
     workspace: null,
   })),
   getSystemFieldValue: vi.fn(async () => null as string | null),
-  interpolateIntoJavascript: vi.fn(async (code: string) => code),
+  resolveJavascriptInput: vi.fn(async () => new Map<string, string | null>()),
+  interpolateIntoJavascript: vi.fn((code: string) => code),
   executeAndMap: vi.fn(async () => ({ value: null })),
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({
   contactVariableService: { getAll: mocks.getAll },
   getSystemFieldValue: mocks.getSystemFieldValue,
+  resolveJavascriptInput: mocks.resolveJavascriptInput,
   interpolateIntoJavascript: mocks.interpolateIntoJavascript,
 }))
 
@@ -54,60 +56,60 @@ beforeEach(() => {
     workspace: null,
   })
   mocks.getSystemFieldValue.mockResolvedValue(null)
-  mocks.interpolateIntoJavascript.mockImplementation(
-    async (code: string) => code,
-  )
+  mocks.resolveJavascriptInput.mockResolvedValue(new Map())
+  mocks.interpolateIntoJavascript.mockImplementation((code: string) => code)
   mocks.executeAndMap.mockResolvedValue({ value: null })
 })
 
 describe("handleExecuteJavascript", () => {
-  test("substitutes step.code through interpolateIntoJavascript before sending it to the sandbox", async () => {
-    const substitutedCode = 'return "MÁ CHÁN ".toLowerCase();'
-    mocks.interpolateIntoJavascript.mockResolvedValue(substitutedCode)
+  test("rewrites step.code through interpolateIntoJavascript before sending it to the sandbox", async () => {
+    const knownNames = new Map([["fullname upper", "MÁ CHÁN"]])
+    const rewrittenCode =
+      'return ("" + input["fullname upper"] + " ").toLowerCase();'
+    mocks.resolveJavascriptInput.mockResolvedValue(knownNames)
+    mocks.interpolateIntoJavascript.mockReturnValue(rewrittenCode)
 
     const props = createProps()
     await handleExecuteJavascript(props)
 
-    expect(mocks.interpolateIntoJavascript).toHaveBeenCalledWith(
+    expect(mocks.resolveJavascriptInput).toHaveBeenCalledWith(
       props.step.code,
       expect.objectContaining({ contact: expect.anything() }),
+    )
+    expect(mocks.interpolateIntoJavascript).toHaveBeenCalledWith(
+      props.step.code,
+      new Set(knownNames.keys()),
     )
     expect(mocks.executeAndMap).toHaveBeenCalledTimes(1)
     const call = mocks.executeAndMap.mock.calls[0]?.[0] as {
       code: string
       input: Record<string, unknown>
     }
-    // The sandbox receives the substituted code, not the raw step.code.
-    expect(call.code).toBe(substitutedCode)
+    // The sandbox receives the rewritten code, not the raw step.code.
+    expect(call.code).toBe(rewrittenCode)
   })
 
-  test("passes the contact/system-field variables through to interpolateIntoJavascript for substitution", async () => {
-    // The deep escaping/injection guarantees (a malicious display name
-    // can't break out of its string literal, type-aware literals, quote
-    // classification, etc.) are unit-tested against the real
-    // interpolateIntoJavascript in packages/variables/__tests__. This test
-    // only pins that the handler wires step.code and the loaded variables
-    // through to it — replacing the old assertion that step.code reached
-    // the sandbox byte-identical, which this feature intentionally changes.
-    const maliciousFirstName = 'x"; return "pwned'
-    mocks.getSystemFieldValue.mockImplementation(async (_context, key) =>
-      key === "first_name" ? maliciousFirstName : null,
+  test("merges every resolved {{...}} name into the input object alongside the existing custom/system fields", async () => {
+    // resolveJavascriptInput's results (e.g. a coupon: value, which isn't
+    // already in `input` from the customFieldsMap/systemFieldTypes loops
+    // above it) must reach the sandbox's `input` object, since
+    // interpolateIntoJavascript's rewritten code reads them via
+    // input["name"], never as a spliced literal.
+    mocks.resolveJavascriptInput.mockResolvedValue(
+      new Map([["coupon:123", "SAVE10"]]),
     )
-    mocks.interpolateIntoJavascript.mockResolvedValue(
-      'return "x\\"; return \\"pwned";',
+    mocks.interpolateIntoJavascript.mockReturnValue(
+      'return input["coupon:123"];',
     )
 
     const props = createProps()
-    props.step.code = 'return "{{first_name}}";'
+    props.step.code = "return {{coupon:123}};"
     await handleExecuteJavascript(props)
 
-    expect(mocks.interpolateIntoJavascript).toHaveBeenCalledWith(
-      props.step.code,
-      expect.objectContaining({ contact: expect.anything() }),
-    )
-    const call = mocks.executeAndMap.mock.calls[0]?.[0] as { code: string }
-    expect(call.code).toBe('return "x\\"; return \\"pwned";')
-    expect(call.code).not.toContain('return "pwned')
+    const call = mocks.executeAndMap.mock.calls[0]?.[0] as {
+      input: Record<string, unknown>
+    }
+    expect(call.input["coupon:123"]).toBe("SAVE10")
   })
 
   test("returns a success result on successful execution", async () => {
@@ -136,44 +138,21 @@ describe("handleExecuteJavascript", () => {
       result: null,
     })
   })
-
-  test("passes a space-containing custom field name and the raw step code through to interpolateIntoJavascript", async () => {
-    // The actual resolution of a space-containing name (the reported bug)
-    // is covered end-to-end against the real implementation in
-    // packages/variables/__tests__/interpolate-into-javascript.test.ts and
-    // packages/variables/__tests__/contact-variable.test.ts. Here we only
-    // pin that the handler forwards the custom field map it loaded.
-    const customFieldsMap = new Map([
-      [
-        "fullname upper",
-        {
-          key: "fullname upper",
-          type: "shortText" as const,
-          value: "MÁ CHÁN",
-          description: "",
-        },
-      ],
-    ])
-    mocks.getAll.mockResolvedValue({
-      contact: { id: "contact-1", email: "a@example.com" },
-      contactInbox: null,
-      conversation: null,
-      customFieldsMap,
-      workspace: null,
-    })
-    mocks.interpolateIntoJavascript.mockResolvedValue(
-      'return "MÁ CHÁN ".toLowerCase();',
-    )
-
-    const props = createProps()
-    props.step.code = 'return "{{fullname upper}} ".toLowerCase();'
-    await handleExecuteJavascript(props)
-
-    expect(mocks.interpolateIntoJavascript).toHaveBeenCalledWith(
-      props.step.code,
-      expect.objectContaining({ customFieldsMap }),
-    )
-    const call = mocks.executeAndMap.mock.calls[0]?.[0] as { code: string }
-    expect(call.code).toBe('return "MÁ CHÁN ".toLowerCase();')
-  })
 })
+
+// The suite above mocks @chatbotx.io/variables entirely, so it only pins the
+// WIRING between the handler and resolveJavascriptInput/
+// interpolateIntoJavascript — not their actual placement/injection
+// behavior. An unmocked, `vi.importActual` end-to-end test was tried here
+// and dropped: @chatbotx.io/variables's barrel (its only export path — see
+// package.json) re-exports contact-variable.ts, which pulls in
+// @chatbotx.io/database and re-initializes a module-singleton Snowflake ID
+// generator, colliding with the one this test file's own transitive imports
+// already initialized ("Place ID 0 already in use"). Reproducing the
+// @chatbotx.io/business/* submodule mocks needed to import utils.ts in
+// isolation would duplicate the setup already in
+// packages/variables/__tests__/interpolate-into-javascript.test.ts, which is
+// exactly where that coverage belongs (see AGENTS.md's test-placement
+// guidance) — including the precedence case (`"{{fullname upper}} "
+// .toLowerCase()` with value "MÁ CHÁN" executing to "má chán ") and the
+// injection-is-structurally-impossible regression suite.

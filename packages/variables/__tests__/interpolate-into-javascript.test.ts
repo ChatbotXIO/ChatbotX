@@ -34,7 +34,9 @@ vi.mock("@chatbotx.io/business/utils", () => ({
     new URL(path, baseUrl).toString(),
 }))
 
-const { interpolateIntoJavascript } = await import("../src/utils")
+const { interpolateIntoJavascript, resolveJavascriptInput } = await import(
+  "../src/javascript-interpolation"
+)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -71,441 +73,366 @@ const createCustomFieldsMap = (
 
 const createContext = (
   fields: Array<Partial<ContactCustomFieldValue> & { key: string }> = [],
+  contactOverrides: Partial<ContactModel> = {},
 ) => ({
-  contact,
+  contact: { ...contact, ...contactOverrides },
   contactInbox: null,
   customFieldsMap: createCustomFieldsMap(fields),
   workspace,
 })
 
-describe("interpolateIntoJavascript", () => {
+/**
+ * Runs the two functions exactly the way handleExecuteJavascript composes
+ * them: resolve every referenced name to a value, then rewrite the code's
+ * placeholders to `input["name"]` for the names that resolved. Returns both
+ * the rewritten code and the `input` object the rewritten code depends on,
+ * so tests can execute the result the same way the sandbox would.
+ */
+const runInterpolation = async (
+  code: string,
+  context: Parameters<typeof resolveJavascriptInput>[1],
+) => {
+  const resolved = await resolveJavascriptInput(code, context)
+  const input: Record<string, unknown> = Object.fromEntries(resolved)
+  const rewritten = interpolateIntoJavascript(code, new Set(resolved.keys()))
+  return { rewritten, input }
+}
+
+/** Executes rewritten code with a given `input` object, as the sandbox does. */
+const execute = (
+  rewrittenCode: string,
+  input: Record<string, unknown>,
+): unknown => {
+  const fn = new Function("input", `"use strict"; ${rewrittenCode}`) as (
+    i: Record<string, unknown>,
+  ) => unknown
+  return fn(input)
+}
+
+describe("interpolateIntoJavascript + resolveJavascriptInput", () => {
   describe("the reported case", () => {
-    const context = createContext([{ key: "fullname upper", value: "MÁ CHÁN" }])
-
-    test("embedded placeholder with trailing text stays escaped inner text", async () => {
-      await expect(
-        interpolateIntoJavascript(
-          'return "{{fullname upper}} ".toLowerCase();',
-          context,
-        ),
-      ).resolves.toBe('return "MÁ CHÁN ".toLowerCase();')
-    })
-
-    test("whole-literal placeholder consumes the quotes without doubling them", async () => {
-      await expect(
-        interpolateIntoJavascript('return "{{fullname upper}}";', context),
-      ).resolves.toBe('return "MÁ CHÁN";')
-    })
-
-    test("placeholder inside a template literal does not let a template interpolation marker escape", async () => {
-      const dollarBrace = ["$", "{"].join("")
-      await expect(
-        interpolateIntoJavascript(
-          `return \`x ${dollarBrace}"{{fullname upper}}"} y\`;`,
-          context,
-        ),
-      ).resolves.toBe(`return \`x ${dollarBrace}"MÁ CHÁN"} y\`;`)
+    test("a space-containing custom field name resolves, and a trailing method call still applies to the whole result", async () => {
+      const context = createContext([
+        { key: "fullname upper", value: "MÁ CHÁN" },
+      ])
+      const { rewritten, input } = await runInterpolation(
+        'return "{{fullname upper}} ".toLowerCase();',
+        context,
+      )
+      // The placeholder sits inside a string literal, so the literal is
+      // split and re-joined with `+`, then the whole thing is parenthesized
+      // — otherwise `.toLowerCase()` would bind to only the trailing " "
+      // segment instead of the full concatenated string (a precedence bug
+      // this parenthesization exists specifically to prevent).
+      expect(rewritten).toBe(
+        'return ("" + input["fullname upper"] + " ").toLowerCase();',
+      )
+      expect(execute(rewritten, input)).toBe("má chán ")
     })
   })
 
-  describe("type-aware substitution", () => {
-    test("substitutes a number field as a bare numeric literal", async () => {
+  describe("placement classification", () => {
+    test("bare: rewrites to a direct property access", async () => {
+      const context = createContext([{ key: "age", value: "25" }])
+      const { rewritten, input } = await runInterpolation(
+        "return {{age}} + 1;",
+        context,
+      )
+      expect(rewritten).toBe('return input["age"] + 1;')
+      // input["age"] is the raw stored string, the same contract `input`
+      // already has for every other field — string concatenation, not
+      // numeric addition, exactly like referencing `input.age` directly
+      // does today.
+      expect(execute(rewritten, input)).toBe("251")
+    })
+
+    test("whole-literal: the surrounding quotes are dropped entirely, since the property access is already a valid expression", async () => {
+      const context = createContext([{ key: "name", value: "Bob" }])
+      const { rewritten, input } = await runInterpolation(
+        'return "{{name}}";',
+        context,
+      )
+      expect(rewritten).toBe('return input["name"];')
+      expect(execute(rewritten, input)).toBe("Bob")
+    })
+
+    test("inside a double-quoted literal: the literal is split and joined with +, then parenthesized", async () => {
+      const context = createContext([{ key: "name", value: "Bob" }])
+      const { rewritten, input } = await runInterpolation(
+        'return "hi {{name}}!";',
+        context,
+      )
+      expect(rewritten).toBe('return ("hi " + input["name"] + "!");')
+      expect(execute(rewritten, input)).toBe("hi Bob!")
+    })
+
+    test("inside a single-quoted literal: same splice, using the same quote character", async () => {
+      const context = createContext([{ key: "name", value: "Bob" }])
+      const { rewritten, input } = await runInterpolation(
+        "return 'hi {{name}}!';",
+        context,
+      )
+      expect(rewritten).toBe("return ('hi ' + input[\"name\"] + '!');")
+      expect(execute(rewritten, input)).toBe("hi Bob!")
+    })
+
+    test("inside a template literal: splices as an interpolation hole, the idiomatic form", async () => {
+      const dollarBrace = ["$", "{"].join("")
+      const context = createContext([{ key: "name", value: "Bob" }])
+      const { rewritten, input } = await runInterpolation(
+        "return `hi {{name}}!`;",
+        context,
+      )
+      expect(rewritten).toBe(`return \`hi ${dollarBrace}input["name"]}!\`;`)
+      expect(execute(rewritten, input)).toBe("hi Bob!")
+    })
+
+    test("multiple non-adjacent placeholders in the same literal are grouped into one spliced expression", async () => {
       const context = createContext([
-        { key: "age", type: "number", value: "25" },
+        { key: "a", value: "X" },
+        { key: "b", value: "Y" },
       ])
-      await expect(
-        interpolateIntoJavascript("return {{age}} + 1;", context),
-      ).resolves.toBe("return 25 + 1;")
+      const { rewritten, input } = await runInterpolation(
+        'return "{{a}} and {{b}}!";',
+        context,
+      )
+      expect(rewritten).toBe(
+        'return ("" + input["a"] + " and " + input["b"] + "!");',
+      )
+      expect(execute(rewritten, input)).toBe("X and Y!")
     })
 
-    test("substitutes a boolean field as a bare boolean literal", async () => {
+    test("multiple adjacent placeholders in a template literal are two separate holes, not a reconstituted marker", async () => {
+      const dollarBrace = ["$", "{"].join("")
       const context = createContext([
-        { key: "isVip", type: "boolean", value: "true" },
+        { key: "a", value: "X" },
+        { key: "b", value: "Y" },
       ])
-      await expect(
-        interpolateIntoJavascript("return {{isVip}};", context),
-      ).resolves.toBe("return true;")
+      const { rewritten, input } = await runInterpolation(
+        "return `{{a}}{{b}}`;",
+        context,
+      )
+      expect(rewritten).toBe(
+        `return \`${dollarBrace}input["a"]}${dollarBrace}input["b"]}\`;`,
+      )
+      expect(execute(rewritten, input)).toBe("XY")
     })
 
-    test("substitutes a boolean field storing the literal string false as the false literal, not null", async () => {
-      const context = createContext([
-        { key: "isVip", type: "boolean", value: "false" },
-      ])
-      await expect(
-        interpolateIntoJavascript("return {{isVip}};", context),
-      ).resolves.toBe("return false;")
-    })
-
-    test.each([
-      "",
-      "yes",
-      "1",
-      "garbage",
-    ])("a boolean field with an unparseable stored value %j emits null, not a silent false", async (value) => {
-      const context = createContext([{ key: "isVip", type: "boolean", value }])
-      await expect(
-        interpolateIntoJavascript("return {{isVip}};", context),
-      ).resolves.toBe("return null;")
-    })
-
-    test("substitutes a date field as a quoted ISO string, not a Date call", async () => {
-      const context = createContext([
-        { key: "signupDate", type: "date", value: "2026-07-23T00:00:00.000Z" },
-      ])
-      await expect(
-        interpolateIntoJavascript('return "{{signupDate}}";', context),
-      ).resolves.toBe('return "2026-07-23T00:00:00.000Z";')
-    })
-
-    test("substitutes a missing value as null", async () => {
+    test("a resolved-but-null value rewrites to a property access that evaluates to null at runtime", async () => {
       const context = createContext([
         { key: "plan", value: null as unknown as string },
       ])
-      await expect(
-        interpolateIntoJavascript('return {{plan}} ?? "fallback";', context),
-      ).resolves.toBe('return null ?? "fallback";')
+      const { rewritten, input } = await runInterpolation(
+        'return {{plan}} ?? "fallback";',
+        context,
+      )
+      expect(rewritten).toBe('return input["plan"] ?? "fallback";')
+      expect(execute(rewritten, input)).toBe("fallback")
+    })
+
+    test("leaves an unknown placeholder as the literal {{...}} text", async () => {
+      const context = createContext([])
+      const { rewritten } = await runInterpolation(
+        'return "{{not_a_field}}";',
+        context,
+      )
+      expect(rewritten).toBe('return "{{not_a_field}}";')
+    })
+
+    test("a mix of a known and an unknown placeholder in the same literal only rewrites the known one", async () => {
+      const context = createContext([{ key: "a", value: "X" }])
+      const { rewritten, input } = await runInterpolation(
+        'return "{{a}} and {{unk}}!";',
+        context,
+      )
+      expect(rewritten).toBe('return ("" + input["a"] + " and {{unk}}!");')
+      expect(execute(rewritten, input)).toBe("X and {{unk}}!")
     })
   })
 
-  describe("injection guards", () => {
-    test("a system field value (e.g. an inbound visitor's display name) cannot break out of its surrounding string literal", async () => {
-      // Mirrors the removed handler test's fixture: on Messenger/WhatsApp/
-      // webchat, an inbound visitor controls their own display name, which
-      // resolves through first_name (a system field), not a custom field.
-      const context = {
-        ...createContext([]),
-        contact: { ...contact, firstName: 'x"; return "pwned' },
-      }
-      const result = await interpolateIntoJavascript(
+  describe("no value is ever spliced into source — injection is structurally impossible", () => {
+    // These mirror every exploit found across two rounds of review of the
+    // prior source-splicing implementation this replaced (a misclassified
+    // regex literal, a /* block comment */ breakout, and adjacent
+    // template-literal placeholders reconstituting `${`). None of these
+    // scenarios are "guarded against" here — they are inapplicable by
+    // construction: interpolateIntoJavascript only ever writes the fixed,
+    // JSON-stringified *name* of an `input` key into the code. The
+    // resolved *value* only ever reaches the sandbox as data (isolated-vm's
+    // ExternalCopy), never as source text, so no character it contains can
+    // ever be interpreted as JavaScript.
+
+    test("a contact-controlled display name containing quotes and statement text has no effect on the generated code", async () => {
+      const context = createContext([], { firstName: 'x"; return "pwned' })
+      const { rewritten, input } = await runInterpolation(
         'return "{{first_name}}";',
         context,
       )
-      expect(result).toBe('return "x\\"; return \\"pwned";')
-      // The unescaped literal `return "pwned` would only appear if the
-      // value had broken out of its enclosing string literal.
-      expect(result).not.toContain('return "pwned')
+      expect(rewritten).toBe('return input["first_name"];')
+      expect(rewritten).not.toContain("pwned")
+      expect(execute(rewritten, input)).toBe('x"; return "pwned')
     })
 
-    test("a misclassified enclosing quote (an apostrophe in a same-line comment before the real literal) does not let a value escape into executable statements", async () => {
-      // Confirmed exploit this test pins: findEnclosingQuote's character
-      // scan reads the apostrophe in `/* it's ok */` as an *opening* single
-      // quote, so classifyPlaceholderContext misidentifies the active quote
-      // as `'` when the placeholder actually sits inside a `"`-delimited
-      // literal. Before escapeForQuote escaped all three quote characters
-      // unconditionally, escaping only against the (wrong) guessed `'`
-      // left the payload's real `"` unescaped, so it closed the actual
-      // string early and injected a second, executable statement:
-      //   const x = 1; /* it's ok */ return ""; return globalThis.process...
-      // Escaping defensively against all three quote characters closes
-      // this regardless of which one the heuristic guesses.
+    test("a value crafted to close a /regex/ literal has no effect, because no value is ever in the code", async () => {
       const context = createContext([
-        {
-          key: "name",
-          value: '"; return globalThis.process.exit ? "danger" : "safe"; //',
-        },
+        { key: "n", value: 'x"/;globalThis.PWNED=1;//' },
       ])
-      const code = `const x = 1; /* it's ok */ return "{{name}}";`
-      const result = await interpolateIntoJavascript(code, context)
-
-      // The payload's quote must be escaped, so the substitution stays a
-      // single string and does not introduce a second statement.
-      expect(result).toBe(
-        'const x = 1; /* it\'s ok */ return "\\"; return globalThis.process.exit ? \\"danger\\" : \\"safe\\"; //";',
+      const { rewritten } = await runInterpolation(
+        "const a=1/2, re = /{{n}}/;",
+        context,
       )
-      expect(() => new Function(result)).not.toThrow()
-      // Executing it must run exactly the original single return statement
-      // — nothing from the payload should ever execute as code.
-      const fn = new Function(result) as () => unknown
-      expect(fn()).toBe(
-        '"; return globalThis.process.exit ? "danger" : "safe"; //',
-      )
+      expect(rewritten).toBe('const a=1/2, re = /input["n"]/;')
+      expect(rewritten).not.toContain("PWNED")
+      expect(() => new Function(rewritten)).not.toThrow()
     })
 
-    test("a value containing a template expression does not evaluate", async () => {
+    test("a value crafted to close a /* block comment */ has no effect, because no value is ever in the code", async () => {
+      const context = createContext([
+        { key: "x", value: "*/globalThis.PWNED=1;/*" },
+      ])
+      const { rewritten } = await runInterpolation(
+        'const a = 1;\n/* note: "{{x}}" */\nreturn a;',
+        context,
+      )
+      expect(rewritten).toBe('const a = 1;\n/* note: input["x"] */\nreturn a;')
+      expect(rewritten).not.toContain("PWNED")
+      expect(() => new Function(rewritten)).not.toThrow()
+    })
+
+    test("a value containing a template interpolation marker has no effect", async () => {
       const dollarBrace = ["$", "{"].join("")
       const context = createContext([
         { key: "payload", value: `${dollarBrace}(()=>{throw 1})()}` },
       ])
-      await expect(
-        interpolateIntoJavascript("return `{{payload}}`;", context),
-      ).resolves.toBe(`return \`\\${dollarBrace}(()=>{throw 1})()}\`;`)
+      const { rewritten, input } = await runInterpolation(
+        "return `{{payload}}`;",
+        context,
+      )
+      // The whole template literal is just the placeholder ("whole-literal"
+      // — same as `"{{name}}"` with a `"` — so the backticks are dropped
+      // entirely rather than kept with a `${...}` hole inside them).
+      expect(rewritten).toBe('return input["payload"];')
+      expect(execute(rewritten, input)).toBe(`${dollarBrace}(()=>{throw 1})()}`)
     })
 
-    test("a placeholder inside a /regex/ literal is left unresolved rather than let a value break out of it", async () => {
-      // Confirmed exploit this test pins: {{name}} inside `/{{name}}/` has
-      // no recognized enclosing quote (findEnclosingQuote only knows ", ',
-      // `), so it would classify as "bare" and get wrapped in a fresh `"` —
-      // which does not close the still-open regex literal, so a value
-      // containing `"` breaks out and injects a statement:
-      //   const re = /"x/; globalThis.__pwned__=true; //"/;
-      // Verified end to end with a real side effect firing before this fix.
-      // The fix refuses to classify (an odd count of unescaped `/` on the
-      // line is ambiguous — could be a regex or division), leaving the
-      // literal `{{name}}` in place, which then fails loudly as invalid
-      // regex syntax rather than silently executing.
-      const context = createContext([
-        { key: "name", value: "x/; globalThis.__pwned__=true; //" },
-      ])
-      const code = "const re = /{{name}}/;"
-      await expect(interpolateIntoJavascript(code, context)).resolves.toBe(code)
-    })
-
-    test("plain division on the same line as a bare placeholder is also left unresolved (a safe false positive, not a silent guess)", async () => {
+    test("plain division on the same line as a bare placeholder is left unresolved (a safe false positive, not a silent guess)", async () => {
       // An odd count of unescaped `/` on the line is ambiguous by
       // construction — a real division and a regex literal are
       // indistinguishable without a full parse. Refusing here means this
       // authoring pattern fails loudly (a syntax error from the literal
-      // {{...}} surviving) rather than risking a wrong guess; documented
-      // trade-off, not a bug.
+      // {{...}} surviving) rather than risking a wrong splice.
       const context = createContext([{ key: "b", value: "5" }])
       const code = "return a / {{b}};"
-      await expect(interpolateIntoJavascript(code, context)).resolves.toBe(code)
+      const { rewritten } = await runInterpolation(code, context)
+      expect(rewritten).toBe(code)
     })
 
     test("an even count of unescaped / on the line (e.g. two real divisions) is not treated as ambiguous", async () => {
-      const context = createContext([{ key: "b", value: "5", type: "number" }])
-      const code = "const y = 10 / 2 / 5; return {{b}};"
-      await expect(interpolateIntoJavascript(code, context)).resolves.toBe(
-        "const y = 10 / 2 / 5; return 5;",
-      )
-    })
-
-    test("a number field with a non-numeric stored value emits null, not raw text", async () => {
-      const context = createContext([
-        { key: "age", type: "number", value: "25; while(1){}" },
-      ])
-      await expect(
-        interpolateIntoJavascript("return {{age}};", context),
-      ).resolves.toBe("return null;")
-    })
-
-    test("a number field storing NaN emits null", async () => {
-      const context = createContext([
-        { key: "age", type: "number", value: "NaN" },
-      ])
-      await expect(
-        interpolateIntoJavascript("return {{age}};", context),
-      ).resolves.toBe("return null;")
-    })
-
-    test("a number field storing an unsafe magnitude emits null", async () => {
-      const context = createContext([
-        { key: "age", type: "number", value: "1e999" },
-      ])
-      await expect(
-        interpolateIntoJavascript("return {{age}};", context),
-      ).resolves.toBe("return null;")
-    })
-  })
-
-  describe("context classification", () => {
-    const context = createContext([{ key: "name", value: "Bob" }])
-
-    test("whole-literal: quotes are consumed and not doubled", async () => {
-      await expect(
-        interpolateIntoJavascript('return "{{name}}";', context),
-      ).resolves.toBe('return "Bob";')
-    })
-
-    test("embedded: placeholder inside a larger string keeps the outer quotes", async () => {
-      await expect(
-        interpolateIntoJavascript('return "hi {{name}}!";', context),
-      ).resolves.toBe('return "hi Bob!";')
-    })
-
-    test("bare: placeholder outside any literal splices unquoted text", async () => {
-      const numericContext = createContext([
-        { key: "age", type: "number", value: "25" },
-      ])
-      await expect(
-        interpolateIntoJavascript("return {{age}} + 1;", numericContext),
-      ).resolves.toBe("return 25 + 1;")
-    })
-
-    test("two adjacent bare placeholders are joined with + instead of producing invalid JS", async () => {
-      // Each bare placeholder self-quotes with no separator; without a
-      // joiner, two adjacent ones (both string-typed) would produce
-      // `return "A""B";`, a SyntaxError.
-      const context2 = createContext([
-        { key: "a", value: "A" },
-        { key: "b", value: "B" },
-      ])
-      const result = await interpolateIntoJavascript(
-        "return {{a}}{{b}};",
-        context2,
-      )
-      expect(result).toBe('return "A"+"B";')
-      expect(() => new Function(result)).not.toThrow()
-      const fn = new Function(result) as () => unknown
-      expect(fn()).toBe("AB")
-    })
-
-    test("adjacent bare numeric and string placeholders are joined with +", async () => {
-      const context2 = createContext([{ key: "label", value: "items:" }])
-      const numericContext = { ...context2, contact }
-      numericContext.customFieldsMap.set("count", {
-        key: "count",
-        type: "number",
-        value: "3",
-        description: "",
-      })
-      const result = await interpolateIntoJavascript(
-        "return {{label}}{{count}};",
-        numericContext,
-      )
-      expect(result).toBe('return "items:"+3;')
-      expect(() => new Function(result)).not.toThrow()
-    })
-
-    test("a whole-literal placeholder immediately followed by a bare placeholder is also joined with +", async () => {
-      // Regression: joining previously only tracked bare-then-bare
-      // adjacency. A "whole-literal" substitution is just as self-quoting
-      // as "bare" — `"{{name}}"{{age}}` would otherwise produce `"Ada"25`,
-      // two adjacent literal tokens with no operator between them, a
-      // SyntaxError.
-      const context2 = createContext([{ key: "name", value: "Ada" }])
-      context2.customFieldsMap.set("age", {
-        key: "age",
-        type: "number",
-        value: "25",
-        description: "",
-      })
-      const result = await interpolateIntoJavascript(
-        'return "{{name}}"{{age}};',
-        context2,
-      )
-      expect(result).toBe('return "Ada"+25;')
-      expect(() => new Function(result)).not.toThrow()
-    })
-
-    test("a bare placeholder immediately followed by a whole-literal placeholder is also joined with +", async () => {
-      const context2 = createContext([{ key: "name", value: "Ada" }])
-      context2.customFieldsMap.set("age", {
-        key: "age",
-        type: "number",
-        value: "25",
-        description: "",
-      })
-      const result = await interpolateIntoJavascript(
-        'return {{age}}"{{name}}";',
-        context2,
-      )
-      expect(result).toBe('return 25+"Ada";')
-      expect(() => new Function(result)).not.toThrow()
-    })
-
-    test("two adjacent whole-literal placeholders are also joined with +", async () => {
-      const context2 = createContext([
-        { key: "a", value: "A" },
-        { key: "b", value: "B" },
-      ])
-      const result = await interpolateIntoJavascript(
-        '"{{a}}""{{b}}";',
-        context2,
-      )
-      expect(result).toBe('"A"+"B";')
-      expect(() => new Function(result)).not.toThrow()
-    })
-
-    test("inside a template literal expression, quoted with a different quote char", async () => {
-      const dollarBrace = ["$", "{"].join("")
-      await expect(
-        interpolateIntoJavascript(
-          `return \`Hi ${dollarBrace}"{{name}}"}\`;`,
-          context,
-        ),
-      ).resolves.toBe(`return \`Hi ${dollarBrace}"Bob"}\`;`)
-    })
-
-    test("documented limit: a placeholder nested in its own backticks inside a template expression is misread, but the output stays syntactically valid, quoted JS", async () => {
-      // The heuristic scans quotes by raw character matching, not real JS
-      // grammar, so the inner backtick closing the nested template literal
-      // reads as closing the *outer* one instead. The substitution still
-      // lands as a properly quoted, syntactically valid string — never
-      // unescaped source — it's just quoted with `"` instead of preserving
-      // the backtick.
-      const dollarBrace = ["$", "{"].join("")
-      const nested = `return \`Hi ${dollarBrace}\`{{name}}\`}\`;`
-      const expected = `return \`Hi ${dollarBrace}\`"Bob"\`}\`;`
-      await expect(interpolateIntoJavascript(nested, context)).resolves.toBe(
-        expected,
-      )
-    })
-  })
-
-  test("leaves an unknown placeholder as the literal {{...}}", async () => {
-    const context = createContext([])
-    await expect(
-      interpolateIntoJavascript('return "{{not_a_field}}";', context),
-    ).resolves.toBe('return "{{not_a_field}}";')
-  })
-
-  test("an escaped quote earlier in the surrounding code does not confuse the enclosing-literal scan", async () => {
-    // `"a\\"b"` is a single, complete string literal containing an escaped
-    // quote — the scanner must not treat that escaped `"` as closing it
-    // early and misreading `{{name}}` as bare.
-    const context = createContext([{ key: "name", value: "Bob" }])
-    await expect(
-      interpolateIntoJavascript(
-        'const s = "a\\"b"; return "{{name}}";',
+      const context = createContext([{ key: "b", value: "5" }])
+      const { rewritten, input } = await runInterpolation(
+        "const y = 10 / 2 / 5; return {{b}};",
         context,
-      ),
-    ).resolves.toBe('const s = "a\\"b"; return "Bob";')
+      )
+      expect(rewritten).toBe('const y = 10 / 2 / 5; return input["b"];')
+      expect(execute(rewritten, input)).toBe("5")
+    })
   })
 
-  test("escapes all quote characters (not just the active one), backslashes, a template interpolation marker, and newlines", async () => {
-    // escapeForQuote escapes ", ', and ` unconditionally, regardless of
-    // which one is "active" at the splice point — that's what keeps a
-    // misclassified enclosing quote (see the injection-guard tests below)
-    // safe rather than exploitable.
-    const dollarBrace = ["$", "{"].join("")
-    const trickyValue = `a"b'c\`d\\e${dollarBrace}f}\ng`
-    const context = createContext([{ key: "tricky", value: trickyValue }])
-    const result = await interpolateIntoJavascript(
-      "return `{{tricky}}`;",
-      context,
-    )
-    const expectedEscaped = `a\\"b\\'c\\\`d\\\\e\\${dollarBrace}f}\\ng`
-    expect(result).toBe(`return \`${expectedEscaped}\`;`)
+  describe("documented heuristic limit", () => {
+    test("a placeholder inside a string literal nested within another literal's expression hole may fail to parse, but never produces contact-exploitable output", async () => {
+      // findEnclosingQuote's plain character-toggle scan doesn't distinguish
+      // a `"` nested inside a template literal's expression hole from the
+      // outer backtick — a heuristic limit, not a full parse. The worst
+      // case is a syntax error in the author's own code (a loud, safe
+      // failure), never contact data becoming executable, since the only
+      // thing ever spliced is the fixed placeholder name.
+      const dollarBrace = ["$", "{"].join("")
+      const context = createContext([{ key: "name", value: "Bob" }])
+      const { rewritten } = await runInterpolation(
+        `const x = \`${dollarBrace} "{{name}}" }\`;`,
+        context,
+      )
+      expect(() => new Function(rewritten)).toThrow(SyntaxError)
+    })
+
+    test("a placeholder nested in its own backticks inside a template expression still produces syntactically valid code", async () => {
+      const dollarBrace = ["$", "{"].join("")
+      const context = createContext([{ key: "name", value: "Bob" }])
+      const { rewritten, input } = await runInterpolation(
+        `return \`Hi ${dollarBrace}\`{{name}}\`}\`;`,
+        context,
+      )
+      expect(() => new Function(rewritten)).not.toThrow()
+      expect(execute(rewritten, input)).toBe('Hi input["name"]')
+    })
   })
 
-  test("resolves a raw: custom field verbatim", async () => {
-    const context = createContext([
-      { key: "Full Name", type: "longText", value: "Ada Lovelace" },
-    ])
-    await expect(
-      interpolateIntoJavascript('return "{{raw:Full Name}}";', context),
-    ).resolves.toBe('return "Ada Lovelace";')
-  })
+  describe("raw: and coupon: prefixes", () => {
+    test("resolves a raw: custom field verbatim (never re-formatted)", async () => {
+      const context = createContext([
+        { key: "Full Name", type: "longText", value: "Ada Lovelace" },
+      ])
+      const { rewritten, input } = await runInterpolation(
+        'return "{{raw:Full Name}}";',
+        context,
+      )
+      expect(rewritten).toBe('return input["raw:Full Name"];')
+      expect(execute(rewritten, input)).toBe("Ada Lovelace")
+    })
 
-  test("raw: always emits a plain quoted string, even for a number-typed field (never the field's own type-aware literal)", async () => {
-    const context = createContext([{ key: "age", type: "number", value: "25" }])
-    await expect(
-      interpolateIntoJavascript('return "{{raw:age}}";', context),
-    ).resolves.toBe('return "25";')
-  })
+    test("raw: falls through to a literal custom field of that exact name when the stripped name doesn't match", async () => {
+      // Matches contact-variable.ts's rawCustomFieldResolver.matches, which
+      // requires the stripped name to exist before matching, letting an
+      // unmatched raw: prefix fall through to later resolvers instead of
+      // short-circuiting to "unknown".
+      const context = createContext([
+        { key: "raw:something", type: "shortText", value: "literal field" },
+      ])
+      const { rewritten, input } = await runInterpolation(
+        'return "{{raw:something}}";',
+        context,
+      )
+      expect(rewritten).toBe('return input["raw:something"];')
+      expect(execute(rewritten, input)).toBe("literal field")
+    })
 
-  test("raw: falls through to a literal custom field of that exact name when the stripped name doesn't match", async () => {
-    // Matches contact-variable.ts's rawCustomFieldResolver.matches, which
-    // requires the stripped name to exist before matching, letting an
-    // unmatched raw: prefix fall through to later resolvers instead of
-    // short-circuiting to "unknown".
-    const context = createContext([
-      { key: "raw:something", type: "shortText", value: "literal field" },
-    ])
-    await expect(
-      interpolateIntoJavascript('return "{{raw:something}}";', context),
-    ).resolves.toBe('return "literal field";')
-  })
-
-  test("resolves a coupon: placeholder", async () => {
-    mockResolveCouponVariable.mockResolvedValue("HHFgpe")
-    const context = createContext([])
-    await expect(
-      interpolateIntoJavascript(
+    test("resolves a coupon: placeholder by merging it into input", async () => {
+      mockResolveCouponVariable.mockResolvedValue("HHFgpe")
+      const context = createContext([])
+      const { rewritten, input } = await runInterpolation(
         'return "{{coupon:11619011544072192}}";',
         context,
-      ),
-    ).resolves.toBe('return "HHFgpe";')
+      )
+      expect(rewritten).toBe('return input["coupon:11619011544072192"];')
+      expect(execute(rewritten, input)).toBe("HHFgpe")
+    })
+  })
+
+  describe("resolveJavascriptInput", () => {
+    test("does not include names the code never references", async () => {
+      const context = createContext([
+        { key: "unused", value: "should not appear" },
+      ])
+      const resolved = await resolveJavascriptInput("return 1;", context)
+      expect(resolved.size).toBe(0)
+    })
+
+    test("resolves independent names concurrently rather than sequentially", async () => {
+      let concurrent = 0
+      let maxConcurrent = 0
+      mockResolveCouponVariable.mockImplementation(async () => {
+        concurrent++
+        maxConcurrent = Math.max(maxConcurrent, concurrent)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        concurrent--
+        return "code"
+      })
+      const context = createContext([])
+      await resolveJavascriptInput(
+        "return {{coupon:a}} + {{coupon:b}} + {{coupon:c}};",
+        context,
+      )
+      expect(maxConcurrent).toBeGreaterThan(1)
+    })
   })
 })

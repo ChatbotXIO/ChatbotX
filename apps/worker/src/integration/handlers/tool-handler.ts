@@ -32,6 +32,7 @@ import {
   interpolate,
   interpolateIntoJavascript,
   resolveContactVariablesDeep,
+  resolveJavascriptInput,
 } from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
 import { formatInTimeZone } from "date-fns-tz"
@@ -363,7 +364,23 @@ export async function handleExecuteJavascript({
       input[systemField] = value
     }
 
-    const code = await interpolateIntoJavascript(step.code, variables)
+    // Authors can reference contact/system/custom/coupon fields as
+    // `{{name}}` in the code, same as the Tiptap picker inserts elsewhere.
+    // Every referenced name is resolved to a plain value and merged into
+    // `input` (coupons are the only name here not already in `input` above),
+    // then `step.code`'s placeholders are rewritten to `input["name"]`
+    // property-access expressions — never a spliced value — so a
+    // contact-controlled value can never be interpreted as JavaScript. See
+    // resolveJavascriptInput / interpolateIntoJavascript in
+    // @chatbotx.io/variables.
+    const jsInputEntries = await resolveJavascriptInput(step.code, variables)
+    for (const [name, value] of jsInputEntries) {
+      input[name] = value
+    }
+    const code = interpolateIntoJavascript(
+      step.code,
+      new Set(jsInputEntries.keys()),
+    )
 
     await javascriptExecutionService.executeAndMap({
       workspaceId: conversation.workspaceId,
