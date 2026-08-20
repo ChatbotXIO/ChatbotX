@@ -14,6 +14,7 @@
 export const flowValidationCodes = {
   whatsappCarouselButtonsMismatch: "whatsappCarouselButtonsMismatch",
   whatsappCarouselLinkButtonNotAlone: "whatsappCarouselLinkButtonNotAlone",
+  tiktokCardTitleTooLong: "tiktokCardTitleTooLong",
 } as const
 
 export type FlowValidationCode =

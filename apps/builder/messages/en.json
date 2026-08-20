@@ -2418,6 +2418,9 @@
     },
     "setCustomField": {
       "temporalHint": "Leave it empty to save the current date/time."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "With buttons attached, TikTok only sends the first 40 characters of this message — the rest will be cut off."
     }
   },
   "folders": {
@@ -3044,7 +3047,8 @@
     "deleteNodeError": "Could not delete the block. Please try again.",
     "redoHistoryCleared": "Redo history cleared",
     "historyDepth": "({count})",
-    "none": "None"
+    "none": "None",
+    "tiktokCardTitleTooLong": "TikTok will cut this message short: with buttons attached, only the first 40 characters are sent. Shorten the message or remove the buttons."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

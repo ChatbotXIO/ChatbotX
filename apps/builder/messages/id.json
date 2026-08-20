@@ -2248,6 +2248,9 @@
     },
     "setCustomField": {
       "temporalHint": "Biarkan kosong untuk menyimpan tanggal/waktu saat ini."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Saat tombol dilampirkan, TikTok hanya mengirim 40 karakter pertama pesan ini — sisanya akan terpotong."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
     "redoHistoryCleared": "Riwayat pengulangan dihapus",
     "historyDepth": "({count})",
-    "none": "Tidak ada"
+    "none": "Tidak ada",
+    "tiktokCardTitleTooLong": "TikTok akan memotong pesan ini: saat tombol dilampirkan, hanya 40 karakter pertama yang dikirim. Persingkat pesan atau hapus tombolnya."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

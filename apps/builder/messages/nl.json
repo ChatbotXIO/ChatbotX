@@ -2248,6 +2248,9 @@
     },
     "setCustomField": {
       "temporalHint": "Laat dit leeg om de huidige datum/tijd op te slaan."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Als er knoppen zijn toegevoegd, verstuurt TikTok alleen de eerste 40 tekens van dit bericht — de rest wordt afgekapt."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Het blok kon niet worden verwijderd. Probeer het opnieuw.",
     "redoHistoryCleared": "Geschiedenis voor opnieuw uitvoeren gewist",
     "historyDepth": "({count})",
-    "none": "Geen"
+    "none": "Geen",
+    "tiktokCardTitleTooLong": "TikTok verkort dit bericht: als er knoppen zijn toegevoegd, worden alleen de eerste 40 tekens verzonden. Verkort het bericht of verwijder de knoppen."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

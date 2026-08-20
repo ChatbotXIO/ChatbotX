@@ -2248,6 +2248,9 @@
     },
     "setCustomField": {
       "temporalHint": "Leave it empty til gem den current dato/tid."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
     "redoHistoryCleared": "Gentag historik cleared",
     "historyDepth": "({count})",
-    "none": "Ingen"
+    "none": "Ingen",
+    "tiktokCardTitleTooLong": "TikTok vil forkorte denne besked: når der er tilføjet knapper, sendes kun de første 40 tegn. Forkort beskeden, eller fjern knapperne."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

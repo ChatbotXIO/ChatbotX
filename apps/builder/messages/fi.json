@@ -2248,6 +2248,9 @@
     },
     "setCustomField": {
       "temporalHint": "Jätä tyhjäksi tallentaaksesi nykyisen päivämäärän ja ajan."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Kun painikkeita on liitetty, TikTok lähettää vain tämän viestin ensimmäiset 40 merkkiä — loput katkaistaan."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Lohkoa ei voitu poistaa. Yritä uudelleen.",
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",
     "historyDepth": "({count})",
-    "none": "Ei mitään"
+    "none": "Ei mitään",
+    "tiktokCardTitleTooLong": "TikTok lyhentää tätä viestiä: kun painikkeita on liitetty, vain ensimmäiset 40 merkkiä lähetetään. Lyhennä viestiä tai poista painikkeet."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

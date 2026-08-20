@@ -2248,6 +2248,9 @@
     },
     "setCustomField": {
       "temporalHint": "Leer lassen, um das aktuelle Datum/die aktuelle Uhrzeit zu speichern."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Wenn Schaltflächen angehängt sind, sendet TikTok nur die ersten 40 Zeichen dieser Nachricht – der Rest wird abgeschnitten."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Der Block konnte nicht gelöscht werden. Versuchen Sie es erneut.",
     "redoHistoryCleared": "Wiederholungsverlauf gelöscht",
     "historyDepth": "({count})",
-    "none": "Keine"
+    "none": "Keine",
+    "tiktokCardTitleTooLong": "TikTok kürzt diese Nachricht: Sind Schaltflächen angehängt, werden nur die ersten 40 Zeichen gesendet. Kürze die Nachricht oder entferne die Schaltflächen."
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

@@ -2322,6 +2322,9 @@
     },
     "setCustomField": {
       "temporalHint": "Geçerli tarih/saati kaydetmek için boş bırakın."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Butonlar eklendiğinde TikTok bu mesajın yalnızca ilk 40 karakterini gönderir — geri kalanı kesilir."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Blok silinemedi. Lütfen tekrar deneyin.",
     "redoHistoryCleared": "Yinele geçmişi temizlendi",
     "historyDepth": "({count})",
-    "none": "Yok"
+    "none": "Yok",
+    "tiktokCardTitleTooLong": "TikTok bu mesajı kısaltacak: butonlar eklendiğinde yalnızca ilk 40 karakter gönderilir. Mesajı kısaltın veya butonları kaldırın."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

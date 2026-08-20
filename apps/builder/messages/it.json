@@ -2248,6 +2248,9 @@
     },
     "setCustomField": {
       "temporalHint": "Lascia vuoto per salvare la data e l'ora attuali."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Quando sono presenti pulsanti, TikTok invia solo i primi 40 caratteri di questo messaggio: il resto verrà troncato."
     }
   },
   "folders": {
@@ -2948,7 +2951,8 @@
     "deleteNodeError": "Impossibile eliminare il blocco. Riprova.",
     "redoHistoryCleared": "Cronologia delle operazioni ripetibili cancellata",
     "historyDepth": "({count})",
-    "none": "Nessuno"
+    "none": "Nessuno",
+    "tiktokCardTitleTooLong": "TikTok abbrevierà questo messaggio: con i pulsanti allegati, vengono inviati solo i primi 40 caratteri. Accorcia il messaggio o rimuovi i pulsanti."
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",

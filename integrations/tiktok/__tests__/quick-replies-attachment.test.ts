@@ -1,4 +1,4 @@
-import { buttonTypes } from "@chatbotx.io/flow-config"
+import { buttonTypes, TIKTOK_CARD_TITLE_MAX } from "@chatbotx.io/flow-config"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { describe, expect, test } from "vitest"
 import { convertFlowStepText } from "../src/handlers/message/outgoing-message/send-text"
@@ -189,5 +189,49 @@ describe("tiktok quick replies attachment", () => {
         title: "Open",
       }),
     ])
+  })
+
+  test("clamps a long message text to TikTok's card title limits instead of sending it raw", () => {
+    const longText = "x".repeat(TIKTOK_CARD_TITLE_MAX + 50)
+
+    const [payload] = Array.from(
+      convertFlowStepText("business-1", {
+        data: {
+          contact: { id: "ci-1", sourceConversationId: "conv-1" },
+          flowId: "flow-1",
+          step: {
+            id: "step-1",
+            stepType: "sendText",
+            text: longText,
+            buttons: [],
+          },
+          quickReplies,
+        },
+      } as never),
+    )
+
+    expect(payload?.template?.title).toBe(
+      longText.slice(0, TIKTOK_CARD_TITLE_MAX),
+    )
+
+    const [linkPayload] = Array.from(
+      convertFlowStepText("business-1", {
+        data: {
+          contact: { id: "ci-1", sourceConversationId: "conv-1" },
+          flowId: "flow-1",
+          step: {
+            id: "step-1",
+            stepType: "sendText",
+            text: longText,
+            buttons: [],
+          },
+          quickReplies: urlQuickReplies,
+        },
+      } as never),
+    )
+
+    expect(linkPayload?.template?.title).toBe(
+      longText.slice(0, TIKTOK_CARD_TITLE_MAX),
+    )
   })
 })

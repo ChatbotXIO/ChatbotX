@@ -2937,6 +2937,9 @@
       "editOptionTitle": "Redigera alternativ",
       "optionDescription": "Beskrivning",
       "optionTitle": "Rubrik"
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "När knappar är kopplade skickar TikTok bara de första 40 tecknen i det här meddelandet — resten klipps bort."
     }
   },
   "folders": {
@@ -3454,7 +3457,8 @@
     "viewMessage": "Visa meddelande",
     "viewPost": "Visa inlägg",
     "warning": "Varning!",
-    "none": "Ingen"
+    "none": "Ingen",
+    "tiktokCardTitleTooLong": "TikTok kommer att korta ner det här meddelandet: med knappar kopplade skickas bara de första 40 tecknen. Korta ner meddelandet eller ta bort knapparna."
   },
   "messenger": {
     "botProfile": "Botprofil",
