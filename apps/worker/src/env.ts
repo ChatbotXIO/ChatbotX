@@ -31,6 +31,16 @@ export const env = createEnv({
       .min(1000)
       .max(9 * 60 * 1000)
       .default(120_000),
+    NOTIFICATION_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(200)
+      .default(10),
+    // Firebase Cloud Messaging service account JSON, serialized to a single
+    // env string. Optional — when unset, push notifications are disabled and
+    // the worker logs once instead of throwing.
+    FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
   },
   runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

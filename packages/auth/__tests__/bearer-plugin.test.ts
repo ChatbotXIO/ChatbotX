@@ -4,15 +4,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { listActiveDomains, betterAuthMock } = vi.hoisted(() => ({
-  listActiveDomains: vi.fn(),
+const { betterAuthMock } = vi.hoisted(() => ({
   betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
 }))
 
-// better-auth's real init eagerly resolves `trustedOrigins` at instance
-// creation, which is the exact behavior under test (see server.ts). Stub it
-// to just hand back the config object so we can extract and call the
-// `trustedOrigins` thunk ourselves without booting a real better-auth instance.
+// Mirrors trusted-origins-build-phase.test.ts's approach: stub `betterAuth` to
+// just hand back its config object so we can inspect the `plugins` array
+// without booting a real better-auth instance (which needs a live DB).
 vi.mock("better-auth", async () => {
   const actual =
     await vi.importActual<typeof import("better-auth")>("better-auth")
@@ -49,7 +47,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  customDomainService: { listActiveDomains },
+  customDomainService: { listActiveDomains: vi.fn().mockResolvedValue([]) },
   platformCredentialService: {
     findDecryptedPlatform: vi.fn(),
     findPlatform: vi.fn(),
@@ -57,9 +55,6 @@ vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettingsByDomain: vi.fn(),
 }))
 
-// @chatbotx.io/utils sets up a process-global Snowflake ID generator at
-// module scope; re-importing it after `vi.resetModules()` collides on the
-// same "Place ID" and throws. Stub it since these tests never generate ids.
 vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "test-id",
   getPublicOriginFromRequest: vi.fn(),
@@ -77,56 +72,39 @@ vi.mock("@chatbotx.io/mail", () => ({
 const BROKER_URL = "https://broker.example.com"
 const BUILDER_URL = "https://app.example.com"
 
-describe("trustedOrigins during next build", () => {
+describe("bearer plugin wiring", () => {
   beforeEach(() => {
     vi.resetModules()
     betterAuthMock.mockClear()
-    listActiveDomains.mockReset()
     vi.stubEnv("SKIP_ENV_CHECK", "true")
     vi.stubEnv("NEXT_PUBLIC_BUILDER_URL", BUILDER_URL)
     vi.stubEnv("NEXT_PUBLIC_BROKER_URL", BROKER_URL)
     vi.stubEnv("BETTER_AUTH_SECRET", "test-secret")
+    vi.stubEnv("NEXT_PHASE", "phase-production-build")
   })
 
   afterEach(() => {
     vi.unstubAllEnvs()
   })
 
-  test("skips the CustomDomain lookup when NEXT_PHASE is phase-production-build", async () => {
-    vi.stubEnv("NEXT_PHASE", "phase-production-build")
-
+  test("registers the bearer plugin after oneTimeToken and before nextCookies", async () => {
     const { createAuth } = await import("../src/server")
     createAuth({})
 
     const config = betterAuthMock.mock.calls[0]?.[0] as {
-      trustedOrigins: () => Promise<string[]>
+      plugins: Array<{ id: string }>
     }
-    const origins = await config.trustedOrigins()
+    const ids = config.plugins.map((plugin) => plugin.id)
 
-    expect(origins).toEqual(expect.arrayContaining([BROKER_URL, BUILDER_URL]))
-    expect(origins).toHaveLength(2)
-    expect(listActiveDomains).not.toHaveBeenCalled()
-  })
+    const oneTimeTokenIndex = ids.indexOf("one-time-token")
+    const bearerIndex = ids.indexOf("bearer")
+    const nextCookiesIndex = ids.indexOf("next-cookies")
 
-  test("includes active custom domains outside the build phase", async () => {
-    vi.stubEnv("NEXT_PHASE", "")
-    listActiveDomains.mockResolvedValue(["custom.example.com"])
-
-    const { createAuth } = await import("../src/server")
-    createAuth({})
-
-    const config = betterAuthMock.mock.calls[0]?.[0] as {
-      trustedOrigins: () => Promise<string[]>
-    }
-    const origins = await config.trustedOrigins()
-
-    expect(listActiveDomains).toHaveBeenCalledTimes(1)
-    expect(origins).toEqual(
-      expect.arrayContaining([
-        BROKER_URL,
-        BUILDER_URL,
-        "https://custom.example.com",
-      ]),
-    )
+    expect(bearerIndex).toBeGreaterThan(-1)
+    expect(bearerIndex).toBeGreaterThan(oneTimeTokenIndex)
+    // nextCookies must stay last so it mirrors every other plugin's cookie
+    // writes, including bearer's `set-auth-token` response header.
+    expect(nextCookiesIndex).toBe(ids.length - 1)
+    expect(bearerIndex).toBeLessThan(nextCookiesIndex)
   })
 })

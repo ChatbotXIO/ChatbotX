@@ -1,12 +1,49 @@
+import {
+  contactInboxService,
+  conversationService,
+  userService,
+} from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import z from "zod"
+import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { changeMessageAttributes } from "../actions/change-message-attributes.action"
+import { createMessage } from "../actions/create-message.action"
+import { deleteMessage } from "../actions/delete-message.action"
+import { editMessage } from "../actions/edit-message.action"
 import { findMessage, listMessages } from "../queries"
+import {
+  changeMessageAttributesRequest,
+  createMessageRequest,
+  deleteMessageRequest,
+  editMessageRequest,
+} from "../schema/mutation"
 import {
   findMessageRequest,
   listMessagesRequest,
   listMessagesResponse,
 } from "../schema/query"
 import { messageResourceWithRelations } from "../schema/resource"
+
+const workspaceIdAndConversationIdRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  conversationId: zodBigintAsString(),
+})
+
+const assertWorkspaceNotBlocked = async (ownerId: string) => {
+  const { blocked, blockReason } = await resolveWorkspaceBlockState(ownerId)
+  if (blocked) {
+    throw new ChatbotXException(
+      blockReason === "mac"
+        ? "Contact limit reached for this plan"
+        : "This workspace's plan/trial has expired",
+      "workspaceBlocked",
+      402,
+    )
+  }
+}
 
 export const messagesAuthenticatedAPI = {
   listMessagesAuthenticatedAPI: authorizedAPI
@@ -32,4 +69,98 @@ export const messagesAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(messageResourceWithRelations)
     .handler(async ({ input }) => await findMessage(input)),
+
+  createMessageAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: "/workspaces/{workspaceId}/conversations/{conversationId}/messages",
+      summary: "Send a message on a conversation",
+      tags: ["Messages"],
+    })
+    .input(createMessageRequest.and(workspaceIdAndConversationIdRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
+      const conversation = await conversationService.findByOrFail({
+        where: { id: input.conversationId, workspaceId: input.workspaceId },
+      })
+
+      const inboxId =
+        "inboxId" in input && input.inboxId ? input.inboxId : undefined
+      const contactInbox = inboxId
+        ? await contactInboxService.findBy({
+            where: { contactId: conversation.contactId, inboxId },
+          })
+        : await contactInboxService.findRecentByContactId({
+            contactId: conversation.contactId,
+          })
+      if (!contactInbox) {
+        throw new ChatbotXException("Inbox not found")
+      }
+
+      // createMessage expects a full UserModel (needs tenantId); the oRPC
+      // session context only carries the lighter better-auth user shape.
+      const user = await userService.findByIdOrFail(context.user.id)
+
+      return createMessage({
+        conversation,
+        contactInbox,
+        parsedInput: input,
+        user,
+      })
+    }),
+
+  editMessageAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "PATCH",
+      path: "/workspaces/{workspaceId}/conversations/{conversationId}/messages/{messageId}",
+      summary: "Edit a comment message",
+      tags: ["Messages"],
+    })
+    .input(editMessageRequest.and(workspaceIdAndConversationIdRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input }) =>
+      editMessage({
+        workspaceId: input.workspaceId,
+        conversationId: input.conversationId,
+        parsedInput: input,
+      }),
+    ),
+
+  deleteMessageAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "DELETE",
+      path: "/workspaces/{workspaceId}/conversations/{conversationId}/messages/{id}",
+      summary: "Delete a comment message",
+      tags: ["Messages"],
+    })
+    .input(deleteMessageRequest.and(workspaceIdAndConversationIdRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input }) =>
+      deleteMessage({
+        workspaceId: input.workspaceId,
+        conversationId: input.conversationId,
+        parsedInput: input,
+      }),
+    ),
+
+  changeMessageAttributesAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: "/workspaces/{workspaceId}/conversations/{conversationId}/messages/{messageId}/attributes",
+      summary: "Change a message's liked/hidden attributes",
+      tags: ["Messages"],
+    })
+    .input(
+      changeMessageAttributesRequest.and(workspaceIdAndConversationIdRequest),
+    )
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input }) =>
+      changeMessageAttributes({
+        workspaceId: input.workspaceId,
+        conversationId: input.conversationId,
+        parsedInput: input,
+      }),
+    ),
 }

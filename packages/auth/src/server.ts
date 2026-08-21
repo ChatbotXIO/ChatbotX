@@ -24,7 +24,7 @@ import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
-import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
+import { anonymous, bearer, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
@@ -703,6 +703,12 @@ export function createAuth(config: AuthConfig) {
         },
       }),
       oneTimeToken(),
+      // Enables mobile (bearer-only) clients: a before-hook rewrites
+      // `Authorization: Bearer <token>` into the session cookie header, and an
+      // after-hook mirrors session Set-Cookie into a `set-auth-token` response
+      // header. Since it rewrites `context.headers`, `auth.api.getSession`
+      // (and everything built on it — oRPC, authMiddleware) works unchanged.
+      bearer(),
       anonymous({
         emailDomainName: "anonymous.example.com",
         generateName: () => `Anonymous ${createId()}`,
