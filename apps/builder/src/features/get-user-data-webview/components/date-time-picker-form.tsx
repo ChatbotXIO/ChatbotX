@@ -3,7 +3,7 @@
 import { CalendarCheckIcon, Loader2Icon, MoveRightIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import type { ReactNode } from "react"
+import type { CSSProperties, ReactNode } from "react"
 import { useEffect, useState } from "react"
 import { submitDateTimeAction } from "@/app/extensions/datetime-picker/actions/submit-date-time.action"
 import { InlineDateTimePicker } from "@/features/get-user-data-webview/components/inline-date-time-picker"
@@ -115,9 +115,34 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
   )
 }
 
+/**
+ * The picker always renders light, like the Chatrace page it mirrors — the
+ * contact opening the webview has no relationship to the workspace's builder
+ * theme, and the builder app shares this origin, so its dark preference
+ * would otherwise leak in. Redeclaring the surface tokens locally keeps
+ * every descendant token class (bg-background, border-input, ...) resolving
+ * to the light palette regardless of the <html> theme class; `--primary` is
+ * identical in both palettes, so the brand color needs no override.
+ */
+const LIGHT_SURFACE_TOKENS = {
+  colorScheme: "light",
+  "--background": "oklch(1 0 0)",
+  "--foreground": "oklch(0.141 0.005 285.823)",
+  "--muted": "oklch(0.967 0.001 286.375)",
+  "--muted-foreground": "oklch(0.552 0.016 285.938)",
+  "--border": "oklch(0.92 0.004 286.32)",
+  "--input": "oklch(0.92 0.004 286.32)",
+  "--destructive": "oklch(0.577 0.245 27.325)",
+} as CSSProperties
+
 function PublicShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">{children}</div>
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={LIGHT_SURFACE_TOKENS}
+    >
+      {children}
+    </div>
   )
 }
 
