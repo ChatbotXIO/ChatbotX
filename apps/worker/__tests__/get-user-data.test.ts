@@ -530,6 +530,39 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
       }),
     })
   })
+
+  test("falls back to the step message when retryMessage is blank (empty text is silently dropped downstream)", async () => {
+    await getUserData(makeProps(ReplyFormat.email, { retryMessage: "" }, 1))
+
+    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
+      type: "sendFlowMessage",
+      data: expect.objectContaining({
+        step: expect.objectContaining({
+          text: "Please enter your email",
+        }),
+      }),
+    })
+  })
+
+  test("falls back to the step message on date retry so the picker prompt is re-sent with its button", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "not a date" })
+    await getUserData(
+      makeProps(ReplyFormat.date, {
+        message: "Pick your date",
+        retryMessage: "  ",
+      }),
+    )
+
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          text: "Pick your date",
+          quickReplies: [expect.objectContaining({ buttonType: "url" })],
+        }),
+      }),
+    )
+  })
 })
 
 describe("getUserData — auto-skip", () => {

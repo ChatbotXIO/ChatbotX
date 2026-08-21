@@ -328,9 +328,15 @@ async function handleSkipOrError(
     "getUserData: input rejected, retrying",
   )
 
+  // `retryMessage` defaults to "" (schema has no minimum), and an empty
+  // prompt is silently dropped by sendChatMessage — the contact would see
+  // nothing at all on an invalid reply. Fall back to the step's main
+  // message whenever retryMessage is blank, so the retry always re-prompts
+  // (and, for date/datetime on capable channels, re-offers the picker
+  // button).
   await sendMessage(
     props,
-    step.retryMessage ?? step.message,
+    step.retryMessage.trim() || step.message,
     ((ctx?.variables.conversation.challengeAttempts?.value as number) ?? 1) + 1,
   )
 
